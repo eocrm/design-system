@@ -51,6 +51,23 @@ Process for those:
 
 **Explicit override**: the user may authorize a direct push for any specific change ("just push it", "no PR needed", etc.). When in doubt, default to branch + PR for code; default to direct-push for standalone docs.
 
+## Git hooks
+
+**Hooks MUST be installed.** A `pre-push` hook (managed by Husky) runs prettier, stylelint, and typecheck before every push. It exists because the CI quality gate runs the same checks — local failures are cheaper than a red PR.
+
+Installation is automatic: `npm install` (or `make install`) triggers the `prepare` script which sets `core.hooksPath` to `.husky/_` and wires every hook in `.husky/`.
+
+Before doing any work in this repo, verify:
+
+```bash
+git config --get core.hooksPath   # must print: .husky/_
+test -x .husky/pre-push           # exit 0
+```
+
+If either fails, run `npm install` again — do not proceed with code changes until both pass.
+
+**Never bypass with `--no-verify` on your own initiative.** If the hook blocks a push you believe is correct, the right move is to (a) fix the failing check, or (b) explain the failure to the user and let them decide whether to authorize the bypass. A hook bypass without authorization defeats the purpose of having the hook.
+
 ## Common commands
 
 - `make up` — start playground at http://localhost:8080 (browser opens automatically)
