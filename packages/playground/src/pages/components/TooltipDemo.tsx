@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import { Button, Cluster, DropdownMenu, Stack, Tooltip } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -72,20 +73,34 @@ export function TooltipDemo() {
 
       <Example
         title="Rich content"
-        description="content is a ReactNode — inline a <kbd>, an icon, or short structured copy."
-        code={`<Tooltip content={<>Save&nbsp;<kbd>⌘S</kbd></>}>
-  <Button>Save</Button>
+        description="content is a ReactNode — combine an icon, an emphasised label, secondary copy, and an inline <kbd> shortcut."
+        code={`<Tooltip
+  content={
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <Sparkles size={14} aria-hidden="true" />
+      <span>
+        <strong>Smart save</strong> — autoformats
+      </span>
+      <kbd>⌘⇧S</kbd>
+    </span>
+  }
+>
+  <Button>Smart save</Button>
 </Tooltip>`}
       >
         <Cluster gap="md" justify="center">
           <Tooltip
             content={
-              <>
-                Save&nbsp;<kbd>⌘S</kbd>
-              </>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Sparkles size={14} aria-hidden="true" />
+                <span>
+                  <strong>Smart save</strong> — autoformats
+                </span>
+                <kbd>⌘⇧S</kbd>
+              </span>
             }
           >
-            <Button>Save</Button>
+            <Button>Smart save</Button>
           </Tooltip>
         </Cluster>
       </Example>
