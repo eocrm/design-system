@@ -90,3 +90,48 @@ describe('Popover.Trigger', () => {
     expect(consumer).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('Popover.Content — minimal portal', () => {
+  it('renders nothing when closed', () => {
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('renders the panel as a portaled dialog when defaultOpen', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    const panel = screen.getByRole('dialog');
+    expect(panel).toHaveTextContent('panel body');
+    expect(panel).toHaveAttribute('aria-modal', 'false');
+    expect(panel).toHaveAttribute('tabIndex', '-1');
+    // Portaled to document.body, NOT inside the test container.
+    expect(document.body.contains(panel)).toBe(true);
+  });
+
+  it('panel id matches the trigger aria-controls when open', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    const panel = screen.getByRole('dialog');
+    expect(trigger.getAttribute('aria-controls')).toBe(panel.id);
+  });
+});
