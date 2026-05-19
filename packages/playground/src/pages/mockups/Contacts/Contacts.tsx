@@ -6,7 +6,7 @@ import { Button } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
-import { contacts, statusTone, statusLabel } from '../../data/mock';
+import { contacts, statusTone, statusLabel } from '../../../data/mock';
 import styles from './Contacts.module.scss';
 
 export function Contacts() {

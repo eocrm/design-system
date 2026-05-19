@@ -8,7 +8,7 @@ import { Card } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
-import { getContact, statusLabel, statusTone } from '../../data/mock';
+import { getContact, statusLabel, statusTone } from '../../../data/mock';
 import styles from './ContactDetail.module.scss';
 
 const tabs = [

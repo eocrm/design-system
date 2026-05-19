@@ -8,7 +8,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
-import { members, pendingInvites, roleTone, roleLabel, seatLimit } from '../../data/mock';
+import { members, pendingInvites, roleTone, roleLabel, seatLimit } from '../../../data/mock';
 import styles from './Members.module.scss';
 
 export function Members() {

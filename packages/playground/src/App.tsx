@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppShell } from './layout/AppShell';
-import { Dashboard } from './pages/Dashboard/Dashboard';
-import { Deals } from './pages/Deals/Deals';
-import { Contacts } from './pages/Contacts/Contacts';
-import { ContactDetail } from './pages/ContactDetail/ContactDetail';
-import { Members } from './pages/Members/Members';
+import { Dashboard } from './pages/mockups/Dashboard/Dashboard';
+import { Deals } from './pages/mockups/Deals/Deals';
+import { Contacts } from './pages/mockups/Contacts/Contacts';
+import { ContactDetail } from './pages/mockups/ContactDetail/ContactDetail';
+import { Members } from './pages/mockups/Members/Members';
 import { DemoIndex } from './pages/demo/DemoIndex';
 import { ButtonDemo } from './pages/demo/ButtonDemo';
 import { InputDemo } from './pages/demo/InputDemo';
