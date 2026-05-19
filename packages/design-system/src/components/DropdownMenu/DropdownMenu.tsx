@@ -231,7 +231,7 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
 
   const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;
 
-  const { refs, floatingStyles } = useFloating({
+  const { refs, floatingStyles, placement: resolvedPlacement } = useFloating({
     open: ctx.open,
     placement,
     middleware: [
@@ -254,6 +254,11 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
     whileElementsMounted: autoUpdate,
     elements: { reference: ctx.triggerRef.current },
   });
+
+  const [resolvedSide, resolvedAlign = 'center'] = resolvedPlacement.split('-') as [
+    DropdownMenuSide,
+    DropdownMenuAlign | undefined,
+  ];
 
   const setFloatingRef = mergeRefs<HTMLDivElement>(refs.setFloating, forwardedRef);
 
@@ -437,6 +442,8 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
       role="menu"
       tabIndex={-1}
       aria-orientation="vertical"
+      data-side={resolvedSide}
+      data-align={resolvedAlign}
       style={floatingStyles}
       className={clsx(styles.content, className)}
       onKeyDown={handleKeyDown}

@@ -547,6 +547,40 @@ describe('DropdownMenu — controlled open', () => {
   });
 });
 
+describe('DropdownMenu — placement props', () => {
+  async function openWith(props: {
+    side?: 'top' | 'bottom';
+    align?: 'start' | 'center' | 'end';
+  }) {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content {...props}>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+  }
+
+  it('writes data-side and data-align on Content', async () => {
+    await openWith({ side: 'top', align: 'end' });
+    const menu = screen.getByRole('menu');
+    expect(menu).toHaveAttribute('data-side', 'top');
+    expect(menu).toHaveAttribute('data-align', 'end');
+  });
+
+  it('defaults to side=bottom and align=start', async () => {
+    await openWith({});
+    const menu = screen.getByRole('menu');
+    expect(menu).toHaveAttribute('data-side', 'bottom');
+    expect(menu).toHaveAttribute('data-align', 'start');
+  });
+});
+
 describe('DropdownMenu — typeahead', () => {
   beforeEach(() => {
     vi.useFakeTimers();
