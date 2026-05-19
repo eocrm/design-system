@@ -73,8 +73,9 @@ export interface DropdownMenuProps {
  *   not.
  * - ❌ `tone="danger"` for non-destructive actions like "Filter" or "Sort".
  *   Reserve danger for irreversible destructive operations.
- * - ❌ Nesting `<DropdownMenu>` inside another DropdownMenu. Submenus are
- *   out of scope for v1 and the focus / dismissal logic will fight you.
+ * - ❌ Nesting a full `<DropdownMenu>` root inside another DropdownMenu.
+ *   Use `<DropdownMenu.Sub>` for nested menus — see the Sub component's
+ *   JSDoc for the canonical pattern.
  */
 export function DropdownMenuRoot({
   children,
