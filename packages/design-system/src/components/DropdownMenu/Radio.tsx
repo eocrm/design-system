@@ -15,25 +15,49 @@ import { RadioGroupContext, useDropdownMenuContext, useRadioGroupContext } from 
 import { mergeRefs } from './utils';
 import { ItemIndicator } from './ItemIndicator';
 
+/**
+ * Props for `<DropdownMenu.RadioGroup>`.
+ *
+ * Extends standard `div` HTML attributes. `value` and `onValueChange` drive
+ * the controlled selection; they are also distributed to child `RadioItem`s
+ * via context, so no prop-drilling is required.
+ */
 export interface DropdownMenuRadioGroupProps extends HTMLAttributes<HTMLDivElement> {
-  /** The currently-selected value. */
+  /** The currently-selected value. Must match the `value` prop of one of the child RadioItems. */
   value: string;
-  /** Called with the new value when a RadioItem is activated. */
+  /** Called with the new value when a `<DropdownMenu.RadioItem>` is activated. */
   onValueChange: (value: string) => void;
+  /** `<DropdownMenu.RadioItem>` children (and optionally `<DropdownMenu.Label>`). */
   children: ReactNode;
 }
 
 /**
- * Mutually exclusive selection group. Children should be `<DropdownMenu.RadioItem>`s.
- *
- * Renders `<div role="radiogroup">` and provides the current `value` and
- * `onValueChange` to all descendant `RadioItem`s via context.
+ * Mutually exclusive selection group. Children should be
+ * `<DropdownMenu.RadioItem>`s. Renders `<div role="radiogroup">` and provides
+ * the current `value` and `onValueChange` to all descendant `RadioItem`s via
+ * context so they don't need prop drilling.
  *
  * @example
  * <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
  *   <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
  *   <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+ *   <DropdownMenu.RadioItem value="size">Size</DropdownMenu.RadioItem>
  * </DropdownMenu.RadioGroup>
+ *
+ * @example
+ * // Wrapped in a Group + Label for accessible section heading:
+ * <DropdownMenu.Group>
+ *   <DropdownMenu.Label>Sort by</DropdownMenu.Label>
+ *   <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
+ *     <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+ *     <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+ *   </DropdownMenu.RadioGroup>
+ * </DropdownMenu.Group>
+ *
+ * @remarks When NOT to use
+ * - For an action menu where you want one of many actions to fire. Use
+ *   separate `<DropdownMenu.Item>`s — RadioGroup persists a selection.
+ * - For multi-select. Use `<DropdownMenu.CheckboxItem>`s.
  */
 export const RadioGroup = forwardRef<HTMLDivElement, DropdownMenuRadioGroupProps>(
   function RadioGroup({ value, onValueChange, className, children, ...rest }, ref) {
@@ -48,33 +72,47 @@ export const RadioGroup = forwardRef<HTMLDivElement, DropdownMenuRadioGroupProps
   },
 );
 
+/**
+ * Props for `<DropdownMenu.RadioItem>`.
+ *
+ * Extends standard `div` HTML attributes, omitting `onSelect` (selection is
+ * communicated via the parent `RadioGroup`'s `onValueChange`). The ARIA
+ * contract attributes (`role`, `aria-checked`, `aria-disabled`) are always
+ * set by the component.
+ */
 export interface DropdownMenuRadioItemProps
   extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
-  /** The value this item represents. Activating sets the group's value to this. */
+  /** The value this item represents. Activating sets the parent RadioGroup's value to this. */
   value: string;
   /**
    * Whether activating closes the entire menu chain. Defaults to `true` —
    * radio selection IS the action; the menu's job is done once a value is chosen.
+   * Set to `false` for preview-style selection where the menu stays open.
    */
   closeOnSelect?: boolean;
-  /** Disabled items don't fire onValueChange, are skipped by keyboard nav, and render dimmed. */
+  /** Disabled items don't fire `onValueChange`, are skipped by keyboard nav, and render dimmed. */
   disabled?: boolean;
-  /** Optional trailing shortcut hint (e.g. `'⌘N'`). */
+  /** Optional trailing shortcut hint (e.g. `'⌘N'`). Visual cue only — does NOT register a global key handler. */
   shortcut?: string;
+  /**
+   * Item content. May include a `<DropdownMenu.ItemIndicator>` as a direct
+   * child to provide a custom indicator glyph.
+   */
   children: ReactNode;
 }
 
 /**
- * Single radio item inside a `<DropdownMenu.RadioGroup>`.
+ * Single radio item inside a `<DropdownMenu.RadioGroup>`. `role="menuitemradio"`,
+ * `aria-checked` reflects whether this item's `value` matches the group's
+ * current value. Defaults to `closeOnSelect=true` — radio is "the selection
+ * IS the action," so picking a value closes the menu chain.
  *
- * `role="menuitemradio"`, `aria-checked` reflects whether this item's `value`
- * matches the group's current value. Defaults to `closeOnSelect=true`.
+ * Indicator follows the same pattern as `<DropdownMenu.CheckboxItem>`:
+ * provide an `<ItemIndicator>` as a direct child for a custom glyph, or get
+ * a default `●` when none is provided. Detection is shallow — ItemIndicator
+ * must be a direct child.
  *
- * Indicator: provide a `<DropdownMenu.ItemIndicator>` as a direct child to
- * customize the glyph. Without one, a default `●` renders when selected.
- * Detection is shallow — ItemIndicator must be a direct child.
- *
- * Must be used inside `<DropdownMenu.RadioGroup>` — throws otherwise.
+ * Must be used inside `<DropdownMenu.RadioGroup>` — throws in dev otherwise.
  *
  * @example
  * <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
@@ -83,10 +121,18 @@ export interface DropdownMenuRadioItemProps
  * </DropdownMenu.RadioGroup>
  *
  * @example
- * // Keep menu open for preview-style radio (uncommon)
+ * // Keep menu open after selection (e.g. live-preview):
  * <DropdownMenu.RadioItem value="compact" closeOnSelect={false}>
  *   Compact
  * </DropdownMenu.RadioItem>
+ *
+ * @remarks When NOT to use
+ * - Outside a `<DropdownMenu.RadioGroup>` — throws in dev. Wrap in RadioGroup.
+ * - For multi-select. Use `<DropdownMenu.CheckboxItem>` instead.
+ *
+ * @remarks Anti-patterns
+ * - ❌ Nesting an `<ItemIndicator>` deeper than a direct child. Detection is
+ *   shallow; deeper nesting renders the default glyph instead.
  */
 export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(
   function RadioItem(

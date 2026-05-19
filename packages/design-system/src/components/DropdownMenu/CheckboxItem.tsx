@@ -15,32 +15,46 @@ import { useDropdownMenuContext } from './context';
 import { mergeRefs } from './utils';
 import { ItemIndicator } from './ItemIndicator';
 
+/**
+ * Props for `<DropdownMenu.CheckboxItem>`.
+ *
+ * Extends standard `div` HTML attributes, omitting `onSelect` (use
+ * `onCheckedChange` instead). The ARIA contract attributes (`role`,
+ * `aria-checked`, `aria-disabled`) are always set by the component.
+ */
 export interface DropdownMenuCheckboxItemProps
   extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
   /** Whether the item is checked. */
   checked: boolean;
-  /** Called with the new checked state when activated. */
+  /** Called with the new checked state when activated (click or Enter/Space). */
   onCheckedChange: (checked: boolean) => void;
   /**
    * Whether activating closes the entire menu chain. Defaults to `false` —
    * checkbox items typically toggle in place inside a multi-select menu.
+   * Set to `true` for single-toggle "apply and close" patterns.
    */
   closeOnSelect?: boolean;
-  /** Disabled items don't fire onCheckedChange, are skipped by keyboard nav, render dimmed. */
+  /** Disabled items don't fire `onCheckedChange`, are skipped by keyboard nav, and render dimmed. */
   disabled?: boolean;
-  /** Optional trailing shortcut hint (e.g. `'⌘D'`). */
+  /** Optional trailing shortcut hint (e.g. `'⌘D'`). Visual cue only — does NOT register a global key handler. */
   shortcut?: string;
+  /**
+   * Item content. May include a `<DropdownMenu.ItemIndicator>` as a direct
+   * child to provide a custom indicator glyph.
+   */
   children: ReactNode;
 }
 
 /**
  * Toggleable menu item with `role="menuitemcheckbox"` and `aria-checked`.
- * Defaults to `closeOnSelect=false` — multi-select menus stay open after
- * each toggle.
+ * Defaults to `closeOnSelect=false` — multi-select menus stay open after each
+ * toggle, which matches the typical filter-menu interaction. Override to
+ * `true` for single-toggle menus.
  *
  * Indicator: provide a `<DropdownMenu.ItemIndicator>` as a direct child to
  * customize the glyph. Without one, a default `✓` renders when `checked`.
- * Detection is shallow — ItemIndicator must be a direct child.
+ * Detection is shallow — ItemIndicator must be a direct child of CheckboxItem
+ * (not nested deeper in a wrapper).
  *
  * @example
  * <DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn}>
@@ -48,9 +62,28 @@ export interface DropdownMenuCheckboxItemProps
  * </DropdownMenu.CheckboxItem>
  *
  * @example
+ * <DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn}>
+ *   <DropdownMenu.ItemIndicator>
+ *     <CheckIcon size={14} />
+ *   </DropdownMenu.ItemIndicator>
+ *   Show archived
+ * </DropdownMenu.CheckboxItem>
+ *
+ * @example
+ * // Apply-then-close pattern:
  * <DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn} closeOnSelect>
  *   Apply and close
  * </DropdownMenu.CheckboxItem>
+ *
+ * @remarks When NOT to use
+ * - For a one-off action that fires a function. Use `<DropdownMenu.Item>` —
+ *   CheckboxItem implies persistent boolean state.
+ * - For mutually exclusive selections. Use `<DropdownMenu.RadioGroup>` instead.
+ *
+ * @remarks Anti-patterns
+ * - ❌ Nesting an `<ItemIndicator>` deeper than a direct child. Detection is
+ *   shallow; deeper nesting renders the default glyph instead.
+ * - ❌ Multiple checked CheckboxItems in a "pick one" context. Switch to RadioGroup.
  */
 export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemProps>(
   function CheckboxItem(

@@ -1,6 +1,13 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 
+/**
+ * Props for `<DropdownMenu.ItemIndicator>`.
+ *
+ * Extends standard `span` HTML attributes so consumers can apply
+ * `className`, `style`, `data-*`, etc. to the indicator wrapper.
+ */
 export interface DropdownMenuItemIndicatorProps extends HTMLAttributes<HTMLSpanElement> {
+  /** The indicator glyph or icon to display when the parent item is checked/selected. */
   children?: ReactNode;
 }
 
@@ -23,6 +30,21 @@ export interface DropdownMenuItemIndicatorProps extends HTMLAttributes<HTMLSpanE
  *   </DropdownMenu.ItemIndicator>
  *   Show archived
  * </DropdownMenu.CheckboxItem>
+ *
+ * @example
+ * <DropdownMenu.RadioItem value="compact">
+ *   <DropdownMenu.ItemIndicator>
+ *     <DotIcon size={10} />
+ *   </DropdownMenu.ItemIndicator>
+ *   Compact
+ * </DropdownMenu.RadioItem>
+ *
+ * @remarks Anti-patterns
+ * - ❌ Nesting ItemIndicator deeper than a direct child of CheckboxItem /
+ *   RadioItem. Detection is shallow; deeper nesting falls through and the
+ *   default glyph renders instead.
+ * - ❌ Using ItemIndicator inside a regular `<Item>`. Item doesn't extract
+ *   it — the indicator content just renders inline like any other child.
  */
 export const ItemIndicator = forwardRef<HTMLSpanElement, DropdownMenuItemIndicatorProps>(
   function ItemIndicator({ children, ...rest }, ref) {
