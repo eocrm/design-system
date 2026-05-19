@@ -1,10 +1,8 @@
 import {
   cloneElement,
-  createContext,
   forwardRef,
   isValidElement,
   useCallback,
-  useContext,
   useEffect,
   useId,
   useLayoutEffect,
@@ -29,54 +27,14 @@ import {
   type Placement,
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
+import {
+  DropdownMenuContext,
+  useDropdownMenuContext,
+  type DropdownMenuContextValue,
+  type RegisteredItem,
+} from './context';
+import { mergeRefs, chain, sanitizeId } from './utils';
 import styles from './DropdownMenu.module.scss';
-
-interface RegisteredItem {
-  id: string;
-  ref: React.RefObject<HTMLDivElement | null>;
-  disabled: boolean;
-  label: string;
-}
-
-interface DropdownMenuContextValue {
-  open: boolean;
-  setOpen: (next: boolean) => void;
-  triggerRef: React.MutableRefObject<HTMLElement | null>;
-  contentId: string;
-  /** Where the focus should land when Content registers its first item. Null when no intent is pending. */
-  openIntent: 'first' | 'last' | null;
-  setOpenIntent: (intent: 'first' | 'last' | null) => void;
-  registerItem: (item: RegisteredItem) => () => void;
-  itemsRef: React.MutableRefObject<RegisteredItem[]>;
-  activeIndex: number;
-  setActiveIndex: (i: number) => void;
-}
-
-const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(null);
-
-function useDropdownMenuContext(component: string): DropdownMenuContextValue {
-  const ctx = useContext(DropdownMenuContext);
-  if (!ctx) {
-    throw new Error(`<DropdownMenu.${component}> must be used inside <DropdownMenu>`);
-  }
-  return ctx;
-}
-
-function mergeRefs<T>(...refs: Array<Ref<T> | undefined | null>): Ref<T> {
-  return (value: T | null) => {
-    for (const ref of refs) {
-      if (!ref) continue;
-      if (typeof ref === 'function') ref(value);
-      else (ref as React.MutableRefObject<T | null>).current = value;
-    }
-  };
-}
-
-function chain<E>(...fns: Array<((event: E) => void) | undefined>): (event: E) => void {
-  return (event: E) => {
-    for (const fn of fns) fn?.(event);
-  };
-}
 
 export interface DropdownMenuProps {
   /** Must contain exactly one `<DropdownMenu.Trigger>` and one `<DropdownMenu.Content>`. */
@@ -172,7 +130,7 @@ function DropdownMenuRoot({
 
   const triggerRef = useRef<HTMLElement | null>(null);
   const reactId = useId();
-  const contentId = `dropdown-menu-${reactId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+  const contentId = `dropdown-menu-${sanitizeId(reactId)}`;
 
   const [openIntent, setOpenIntent] = useState<'first' | 'last' | null>(null);
 
@@ -207,6 +165,8 @@ function DropdownMenuRoot({
     itemsRef,
     activeIndex,
     setActiveIndex,
+    closeAll: () => setOpen(false), // root just closes itself; submenus will wrap this in a later task
+    depth: 0,
   };
 
   return <DropdownMenuContext.Provider value={value}>{children}</DropdownMenuContext.Provider>;
