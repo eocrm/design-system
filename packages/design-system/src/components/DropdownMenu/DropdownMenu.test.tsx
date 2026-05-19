@@ -333,3 +333,40 @@ describe('DropdownMenu — dismissal', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 });
+
+describe('DropdownMenu — Trigger keyboard open', () => {
+  function renderMenu() {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>First</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Second</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it.each(['{Enter}', ' ', '{ArrowDown}'])(
+    'opens the menu when Trigger receives %s',
+    async (key) => {
+      const { user } = renderMenu();
+      const trigger = screen.getByRole('button', { name: 'Open' });
+      trigger.focus();
+      await user.keyboard(key);
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    },
+  );
+
+  it('opens the menu when Trigger receives ArrowUp', async () => {
+    const { user } = renderMenu();
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    trigger.focus();
+    await user.keyboard('{ArrowUp}');
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+});

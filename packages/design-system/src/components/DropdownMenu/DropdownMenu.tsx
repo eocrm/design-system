@@ -35,6 +35,9 @@ interface DropdownMenuContextValue {
   setOpen: (next: boolean) => void;
   triggerRef: React.MutableRefObject<HTMLElement | null>;
   contentId: string;
+  /** Where the focus should land when Content registers its first item. Null when no intent is pending. */
+  openIntent: 'first' | 'last' | null;
+  setOpenIntent: (intent: 'first' | 'last' | null) => void;
 }
 
 const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(null);
@@ -71,6 +74,7 @@ export interface DropdownMenuProps {
 
 function DropdownMenuRoot({ children }: DropdownMenuProps) {
   const [open, setOpen] = useState(false);
+  const [openIntent, setOpenIntent] = useState<'first' | 'last' | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const reactId = useId();
   const contentId = `dropdown-menu-${reactId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
@@ -80,6 +84,8 @@ function DropdownMenuRoot({ children }: DropdownMenuProps) {
     setOpen,
     triggerRef,
     contentId,
+    openIntent,
+    setOpenIntent,
   };
 
   return <DropdownMenuContext.Provider value={value}>{children}</DropdownMenuContext.Provider>;
@@ -98,17 +104,33 @@ function Trigger({ children }: DropdownMenuTriggerProps) {
 
   const childProps = children.props as {
     onPointerDown?: (e: PointerEvent) => void;
+    onKeyDown?: (e: ReactKeyboardEvent<HTMLElement>) => void;
     ref?: Ref<HTMLElement>;
   };
 
   // Toggle on pointerdown rather than click. Keyboard activation (Enter/Space)
-  // would otherwise fire a synthesized click that races the keydown-open
-  // handler (added in a later task) and double-toggles the menu shut.
-  // Pointerdown is mouse/touch only; keyboard activation will route through
-  // onKeyDown when that handler lands.
+  // fires a synthesized click that would race a keydown-open handler and
+  // double-toggle the menu shut. Pointerdown is mouse/touch only; keyboard
+  // activation routes through onKeyDown below.
   const handlePointerDown = useCallback(
     (_e: PointerEvent) => {
       ctx.setOpen(!ctx.open);
+    },
+    [ctx],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLElement>) => {
+      if (ctx.open) return;
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        ctx.setOpenIntent('first');
+        ctx.setOpen(true);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        ctx.setOpenIntent('last');
+        ctx.setOpen(true);
+      }
     },
     [ctx],
   );
@@ -119,6 +141,7 @@ function Trigger({ children }: DropdownMenuTriggerProps) {
     'aria-expanded': ctx.open,
     'aria-controls': ctx.open ? ctx.contentId : undefined,
     onPointerDown: chain(childProps.onPointerDown, handlePointerDown),
+    onKeyDown: chain(childProps.onKeyDown, handleKeyDown),
   } as Partial<unknown> as object);
 }
 
