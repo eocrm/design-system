@@ -174,6 +174,7 @@ const [tab, setTab] = useState('overview');
 - `activationMode`: `auto` (default — Arrow keys fire onChange) or `manual` (Arrow only focuses; Enter/Space activates). Use `manual` when panels lazy-load expensive content.
 - `orientation`: `horizontal` (default) or `vertical`.
 - `panelIdPrefix`: optional. When set, each tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link.
+- The active-tab underline slides between tabs when `activeId` changes. Respects `prefers-reduced-motion: reduce`.
 
 ### `<DropdownMenu>` — action menus from a trigger
 

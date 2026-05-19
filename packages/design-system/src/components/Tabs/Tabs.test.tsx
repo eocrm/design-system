@@ -266,4 +266,41 @@ describe('Tabs', () => {
     await user.keyboard('{Escape}');
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  describe('active indicator', () => {
+    it('renders a single indicator element inside the tablist', () => {
+      const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+      const indicators = container.querySelectorAll('[class*="indicator"]');
+      expect(indicators).toHaveLength(1);
+    });
+
+    it('marks the indicator aria-hidden so AT does not announce it', () => {
+      const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+      const indicator = container.querySelector('[class*="indicator"]');
+      expect(indicator).toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('writes inline transform and width styles on the indicator after mount', () => {
+      const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+      const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
+      expect(indicator.style.transform).toMatch(/translateX\(/);
+      expect(indicator.style.width).toMatch(/px$/);
+    });
+
+    it('re-measures and rewrites inline styles when activeId changes', () => {
+      const { container, rerender } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+      const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
+      const before = indicator.getAttribute('style');
+      rerender(<Tabs items={items} activeId="c" onChange={noop} />);
+      const after = indicator.getAttribute('style');
+      expect(typeof before).toBe('string');
+      expect(typeof after).toBe('string');
+    });
+
+    it('hides the indicator when activeId does not match any item', () => {
+      const { container } = render(<Tabs items={items} activeId="missing" onChange={noop} />);
+      const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
+      expect(indicator.style.opacity).toBe('0');
+    });
+  });
 });
