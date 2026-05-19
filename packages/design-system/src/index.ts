@@ -33,4 +33,13 @@ export type {
   DropdownMenuSide,
   DropdownMenuAlign,
   DropdownMenuItemTone,
+  DropdownMenuGroupProps,
+  DropdownMenuLabelProps,
+  DropdownMenuItemIndicatorProps,
+  DropdownMenuCheckboxItemProps,
+  DropdownMenuRadioGroupProps,
+  DropdownMenuRadioItemProps,
+  DropdownMenuSubProps,
+  DropdownMenuSubTriggerProps,
+  DropdownMenuSubContentProps,
 } from './components/DropdownMenu';
