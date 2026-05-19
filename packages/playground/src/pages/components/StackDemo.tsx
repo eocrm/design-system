@@ -1,5 +1,4 @@
 import { Stack } from '@eocrm/design-system';
-import { Card } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
@@ -69,19 +68,17 @@ export function StackDemo() {
 
       <Example
         title="Form (the canonical use)"
-        description="Stack a label/input pair vertically, with a button row at the bottom. Works inside a Card."
-        code={`<Card padding="md">
-  <Stack gap="md">
-    <Input placeholder="Name" />
-    <Input placeholder="Email" />
-    <Cluster justify="end" gap="sm">
-      <Button variant="secondary">Cancel</Button>
-      <Button>Save</Button>
-    </Cluster>
-  </Stack>
-</Card>`}
+        description="Stack a label/input pair vertically, with a button row at the bottom."
+        code={`<Stack gap="md">
+  <Input placeholder="Name" />
+  <Input placeholder="Email" />
+  <Cluster justify="end" gap="sm">
+    <Button variant="secondary">Cancel</Button>
+    <Button>Save</Button>
+  </Cluster>
+</Stack>`}
       >
-        <Card padding="md" style={{ maxWidth: 360 }}>
+        <div style={{ maxWidth: 360 }}>
           <Stack gap="md" className={outlineStyles.outlined}>
             <Input placeholder="Name" />
             <Input placeholder="Email" />
@@ -90,7 +87,7 @@ export function StackDemo() {
               <Button>Save</Button>
             </Cluster>
           </Stack>
-        </Card>
+        </div>
       </Example>
 
       <Example
