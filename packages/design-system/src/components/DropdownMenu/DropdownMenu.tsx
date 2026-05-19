@@ -10,11 +10,7 @@ import { Sub, SubTrigger, SubContent } from './Sub';
 
 export type { DropdownMenuProps } from './Root';
 export type { DropdownMenuTriggerProps } from './Trigger';
-export type {
-  DropdownMenuContentProps,
-  DropdownMenuSide,
-  DropdownMenuAlign,
-} from './Content';
+export type { DropdownMenuContentProps, DropdownMenuSide, DropdownMenuAlign } from './Content';
 export type {
   DropdownMenuItemProps,
   DropdownMenuItemTone,
@@ -23,10 +19,7 @@ export type {
 export type { DropdownMenuGroupProps, DropdownMenuLabelProps } from './Group';
 export type { DropdownMenuItemIndicatorProps } from './ItemIndicator';
 export type { DropdownMenuCheckboxItemProps } from './CheckboxItem';
-export type {
-  DropdownMenuRadioGroupProps,
-  DropdownMenuRadioItemProps,
-} from './Radio';
+export type { DropdownMenuRadioGroupProps, DropdownMenuRadioItemProps } from './Radio';
 export type {
   DropdownMenuSubProps,
   DropdownMenuSubTriggerProps,

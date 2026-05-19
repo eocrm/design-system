@@ -22,8 +22,10 @@ import { ItemIndicator } from './ItemIndicator';
  * `onCheckedChange` instead). The ARIA contract attributes (`role`,
  * `aria-checked`, `aria-disabled`) are always set by the component.
  */
-export interface DropdownMenuCheckboxItemProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+export interface DropdownMenuCheckboxItemProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onSelect'
+> {
   /** Whether the item is checked. */
   checked: boolean;
   /** Called with the new checked state when activated (click or Enter/Space). */
@@ -105,12 +107,9 @@ export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemP
 
     // Extract any ItemIndicator from direct children.
     const childrenArray = Children.toArray(children);
-    const indicator = childrenArray.find(
-      (c) => isValidElement(c) && c.type === ItemIndicator,
-    );
+    const indicator = childrenArray.find((c) => isValidElement(c) && c.type === ItemIndicator);
     const labelContent = childrenArray.filter((c) => c !== indicator);
-    const labelText =
-      labelContent.find((c): c is string => typeof c === 'string') ?? '';
+    const labelText = labelContent.find((c): c is string => typeof c === 'string') ?? '';
 
     useLayoutEffect(() => {
       return ctx.registerItem({ id, ref: itemRef, disabled, label: labelText });

@@ -1,16 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
-import {
-  DropdownMenuContext,
-  type DropdownMenuContextValue,
-  type RegisteredItem,
-} from './context';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { DropdownMenuContext, type DropdownMenuContextValue, type RegisteredItem } from './context';
 import { sanitizeId } from './utils';
 
 export interface DropdownMenuProps {

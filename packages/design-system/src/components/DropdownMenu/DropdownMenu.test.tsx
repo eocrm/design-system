@@ -855,8 +855,14 @@ describe('DropdownMenu — RadioGroup and RadioItem', () => {
     const user = userEvent.setup();
     renderRadio('date');
     await user.click(screen.getByRole('button', { name: 'Open' }));
-    expect(screen.getByRole('menuitemradio', { name: 'Name' })).toHaveAttribute('aria-checked', 'false');
-    expect(screen.getByRole('menuitemradio', { name: 'Date' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('menuitemradio', { name: 'Name' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+    expect(screen.getByRole('menuitemradio', { name: 'Date' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
   });
 
   it('clicking a RadioItem fires onValueChange with its value', async () => {
@@ -962,7 +968,10 @@ describe('DropdownMenu — CheckboxItem', () => {
       </DropdownMenu>,
     );
     await user.click(screen.getByRole('button', { name: 'Open' }));
-    expect(screen.getByRole('menuitemcheckbox', { name: /Show archived/ })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('menuitemcheckbox', { name: /Show archived/ })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
   });
 
   it('fires onCheckedChange with !checked when clicked', async () => {
@@ -1078,7 +1087,9 @@ describe('DropdownMenu — CheckboxItem', () => {
       </DropdownMenu>,
     );
     await user.click(screen.getByRole('button', { name: 'Open' }));
-    expect(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent).not.toContain('✓');
+    expect(
+      screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent,
+    ).not.toContain('✓');
   });
 
   it('renders a custom ItemIndicator when provided and checked', async () => {
@@ -1100,7 +1111,9 @@ describe('DropdownMenu — CheckboxItem', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Open' }));
     expect(screen.getByTestId('custom-indicator')).toBeInTheDocument();
-    expect(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent).not.toContain('✓');
+    expect(
+      screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent,
+    ).not.toContain('✓');
   });
 });
 
@@ -1180,7 +1193,10 @@ describe('DropdownMenu — SubTrigger (click only — hover/keyboard in later ta
     );
     await user.click(screen.getByRole('button', { name: 'Open' }));
     await user.click(screen.getByRole('menuitem', { name: /More/ }));
-    expect(screen.getByRole('menuitem', { name: /More/ })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('menuitem', { name: /More/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
   });
 });
 

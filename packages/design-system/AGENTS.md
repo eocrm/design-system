@@ -295,9 +295,9 @@ All available as CSS custom properties after you import `global.scss`:
 | 3-digit hex (`#fff`) anywhere                                                         | Always 6-digit (`#ffffff`)                                                                                    |
 | `margin` on or around design-system components in your SCSS                           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                      |
 | `<DropdownMenu.Item disabled>--- Section ---</DropdownMenu.Item>` as a section header | Use `<DropdownMenu.Separator />` between groups                                                               |
-| `<DropdownMenu.RadioItem>` outside `<DropdownMenu.RadioGroup>` | Always wrap radio items in a RadioGroup; otherwise the value/onValueChange contract is broken |
-| `<DropdownMenu.ItemIndicator>` nested deeper than direct child | Detection is shallow; nest it directly under CheckboxItem/RadioItem |
-| Submenus 3+ levels deep | Discouraged — UX gets confusing fast; refactor to a different IA |
+| `<DropdownMenu.RadioItem>` outside `<DropdownMenu.RadioGroup>`                        | Always wrap radio items in a RadioGroup; otherwise the value/onValueChange contract is broken                 |
+| `<DropdownMenu.ItemIndicator>` nested deeper than direct child                        | Detection is shallow; nest it directly under CheckboxItem/RadioItem                                           |
+| Submenus 3+ levels deep                                                               | Discouraged — UX gets confusing fast; refactor to a different IA                                              |
 
 ---
 

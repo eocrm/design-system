@@ -80,8 +80,10 @@ export const RadioGroup = forwardRef<HTMLDivElement, DropdownMenuRadioGroupProps
  * contract attributes (`role`, `aria-checked`, `aria-disabled`) are always
  * set by the component.
  */
-export interface DropdownMenuRadioItemProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+export interface DropdownMenuRadioItemProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onSelect'
+> {
   /** The value this item represents. Activating sets the parent RadioGroup's value to this. */
   value: string;
   /**
@@ -134,69 +136,56 @@ export interface DropdownMenuRadioItemProps
  * - ❌ Nesting an `<ItemIndicator>` deeper than a direct child. Detection is
  *   shallow; deeper nesting renders the default glyph instead.
  */
-export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(
-  function RadioItem(
-    {
-      value,
-      closeOnSelect = true,
-      disabled = false,
-      shortcut,
-      className,
-      children,
-      ...rest
-    },
-    forwardedRef,
-  ) {
-    const ctx = useDropdownMenuContext('RadioItem');
-    const groupCtx = useRadioGroupContext('RadioItem');
-    const itemRef = useRef<HTMLDivElement | null>(null);
-    const id = useId();
+export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(function RadioItem(
+  { value, closeOnSelect = true, disabled = false, shortcut, className, children, ...rest },
+  forwardedRef,
+) {
+  const ctx = useDropdownMenuContext('RadioItem');
+  const groupCtx = useRadioGroupContext('RadioItem');
+  const itemRef = useRef<HTMLDivElement | null>(null);
+  const id = useId();
 
-    const checked = groupCtx.value === value;
+  const checked = groupCtx.value === value;
 
-    // Extract any ItemIndicator from direct children.
-    const childrenArray = Children.toArray(children);
-    const indicator = childrenArray.find(
-      (c) => isValidElement(c) && c.type === ItemIndicator,
-    );
-    const labelContent = childrenArray.filter((c) => c !== indicator);
-    const labelText =
-      labelContent.find((c): c is string => typeof c === 'string') ?? '';
+  // Extract any ItemIndicator from direct children.
+  const childrenArray = Children.toArray(children);
+  const indicator = childrenArray.find((c) => isValidElement(c) && c.type === ItemIndicator);
+  const labelContent = childrenArray.filter((c) => c !== indicator);
+  const labelText = labelContent.find((c): c is string => typeof c === 'string') ?? '';
 
-    useLayoutEffect(() => {
-      return ctx.registerItem({ id, ref: itemRef, disabled, label: labelText });
-    }, [ctx, id, disabled, labelText]);
+  useLayoutEffect(() => {
+    return ctx.registerItem({ id, ref: itemRef, disabled, label: labelText });
+  }, [ctx, id, disabled, labelText]);
 
-    const index = ctx.itemsRef.current.findIndex((x) => x.id === id);
-    const isActive = index !== -1 && index === ctx.activeIndex;
+  const index = ctx.itemsRef.current.findIndex((x) => x.id === id);
+  const isActive = index !== -1 && index === ctx.activeIndex;
 
-    const handleClick = (_e: MouseEvent) => {
-      if (disabled) return;
-      groupCtx.onValueChange(value);
-      if (closeOnSelect) {
-        ctx.closeAll();
-      }
-    };
+  const handleClick = (_e: MouseEvent) => {
+    if (disabled) return;
+    groupCtx.onValueChange(value);
+    if (closeOnSelect) {
+      ctx.closeAll();
+    }
+  };
 
-    return (
-      // {...rest} first so consumer props don't override the menuitemradio ARIA contract.
-      <div
-        {...rest}
-        ref={mergeRefs<HTMLDivElement>(itemRef, forwardedRef)}
-        role="menuitemradio"
-        tabIndex={isActive ? 0 : -1}
-        aria-checked={checked}
-        aria-disabled={disabled || undefined}
-        className={clsx(styles.item, className)}
-        onClick={handleClick}
-      >
-        {/* aria-hidden: the indicator is purely visual; aria-checked already conveys selection state. */}
-        <span aria-hidden="true" className={styles.indicatorSlot}>
-          {checked && (indicator ?? <span className={styles.defaultIndicator}>●</span>)}
-        </span>
-        <span className={styles.itemLabel}>{labelContent}</span>
-        {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
-      </div>
-    );
-  },
-);
+  return (
+    // {...rest} first so consumer props don't override the menuitemradio ARIA contract.
+    <div
+      {...rest}
+      ref={mergeRefs<HTMLDivElement>(itemRef, forwardedRef)}
+      role="menuitemradio"
+      tabIndex={isActive ? 0 : -1}
+      aria-checked={checked}
+      aria-disabled={disabled || undefined}
+      className={clsx(styles.item, className)}
+      onClick={handleClick}
+    >
+      {/* aria-hidden: the indicator is purely visual; aria-checked already conveys selection state. */}
+      <span aria-hidden="true" className={styles.indicatorSlot}>
+        {checked && (indicator ?? <span className={styles.defaultIndicator}>●</span>)}
+      </span>
+      <span className={styles.itemLabel}>{labelContent}</span>
+      {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
+    </div>
+  );
+});

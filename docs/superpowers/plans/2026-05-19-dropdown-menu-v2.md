@@ -61,6 +61,7 @@ No commit in this task.
 Behavior-preserving extraction. After this task: `DropdownMenu.tsx` imports from `./context` and `./utils`. All 186 tests still pass.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DropdownMenu/context.ts`
 - Create: `packages/design-system/src/components/DropdownMenu/utils.ts`
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.tsx`
@@ -194,6 +195,7 @@ git commit -m "Refactor: extract DropdownMenu context.ts and utils.ts"
 The bulk of the split. Each subcomponent moves to its own file; `DropdownMenu.tsx` becomes a thin composer.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DropdownMenu/Root.tsx` — DropdownMenuRoot
 - Create: `packages/design-system/src/components/DropdownMenu/Trigger.tsx`
 - Create: `packages/design-system/src/components/DropdownMenu/Content.tsx`
@@ -208,11 +210,7 @@ Other files stay where they are (`context.ts`, `utils.ts`, `DropdownMenu.module.
 ```tsx
 // Root.tsx
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import {
-  DropdownMenuContext,
-  type DropdownMenuContextValue,
-  type RegisteredItem,
-} from './context';
+import { DropdownMenuContext, type DropdownMenuContextValue, type RegisteredItem } from './context';
 import { sanitizeId } from './utils';
 
 export interface DropdownMenuProps {
@@ -299,12 +297,11 @@ export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement>
   minWidth?: number | string;
 }
 
-export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Content(
-  props,
-  forwardedRef,
-) {
-  /* (paste existing Content body) */
-});
+export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(
+  function Content(props, forwardedRef) {
+    /* (paste existing Content body) */
+  },
+);
 ```
 
 - [ ] **Step 4: Move `Item` + `Separator` and their types to `Item.tsx`**
@@ -336,21 +333,17 @@ export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElemen
   disabled?: boolean;
 }
 
-export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
-  props,
-  ref,
-) {
+export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(props, ref) {
   /* (paste existing Item body) */
 });
 
 export interface DropdownMenuSeparatorProps extends HTMLAttributes<HTMLDivElement> {}
 
-export const Separator = forwardRef<HTMLDivElement, DropdownMenuSeparatorProps>(function Separator(
-  props,
-  ref,
-) {
-  /* (paste existing Separator body) */
-});
+export const Separator = forwardRef<HTMLDivElement, DropdownMenuSeparatorProps>(
+  function Separator(props, ref) {
+    /* (paste existing Separator body) */
+  },
+);
 ```
 
 Note: when Item's `handleClick` is moved, it currently calls `ctx.setOpen(false)` then `ctx.triggerRef.current?.focus()`. Task 9 will refactor this to use `ctx.closeAll()` and a separate "close all + focus root trigger" helper. For Task 3, preserve existing behavior (closes own context's menu via setOpen(false), focuses own context's triggerRef — for root these are equivalent).
@@ -423,6 +416,7 @@ git commit -m "Refactor: split DropdownMenu into per-component files"
 ## Task 4: Add `<Label>` and `<Group>` + `GroupContext`
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DropdownMenu/Group.tsx`
 - Modify: `packages/design-system/src/components/DropdownMenu/context.ts` — add GroupContext
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.tsx` — wire into compound export
@@ -632,6 +626,7 @@ git commit -m "DropdownMenu: add Group and Label subcomponents"
 Pure passthrough component. CheckboxItem and RadioItem (Tasks 6-7) will detect and extract it.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DropdownMenu/ItemIndicator.tsx`
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.tsx` — wire into compound + export
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.test.tsx` — minimal test
@@ -752,6 +747,7 @@ git commit -m "DropdownMenu: add ItemIndicator marker component"
 ## Task 6: Add `<CheckboxItem>`
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DropdownMenu/CheckboxItem.tsx`
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.tsx` — wire into compound
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.module.scss` — `.indicatorSlot` styles
@@ -967,8 +963,10 @@ import { useDropdownMenuContext } from './context';
 import { mergeRefs } from './utils';
 import { ItemIndicator } from './ItemIndicator';
 
-export interface DropdownMenuCheckboxItemProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+export interface DropdownMenuCheckboxItemProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onSelect'
+> {
   /** Whether the item is checked. */
   checked: boolean;
   /** Called with the new checked state when activated. */
@@ -1005,12 +1003,9 @@ export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemP
 
     // Children-extraction: find an ItemIndicator among the direct children.
     const childrenArray = Children.toArray(children);
-    const indicator = childrenArray.find(
-      (c) => isValidElement(c) && c.type === ItemIndicator,
-    );
+    const indicator = childrenArray.find((c) => isValidElement(c) && c.type === ItemIndicator);
     const labelContent = childrenArray.filter((c) => c !== indicator);
-    const labelText =
-      labelContent.find((c): c is string => typeof c === 'string') ?? '';
+    const labelText = labelContent.find((c): c is string => typeof c === 'string') ?? '';
 
     useLayoutEffect(() => {
       return ctx.registerItem({ id, ref: itemRef, disabled, label: labelText });
@@ -1139,6 +1134,7 @@ git commit -m "DropdownMenu: add CheckboxItem with ItemIndicator support"
 ## Task 7: Add `<RadioGroup>` + `<RadioItem>`
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DropdownMenu/Radio.tsx`
 - Modify: `packages/design-system/src/components/DropdownMenu/context.ts` — RadioGroupContext
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.tsx` — wire into compound
@@ -1316,8 +1312,10 @@ export const RadioGroup = forwardRef<HTMLDivElement, DropdownMenuRadioGroupProps
   },
 );
 
-export interface DropdownMenuRadioItemProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+export interface DropdownMenuRadioItemProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onSelect'
+> {
   /** The value this item represents. Activating sets the group's value to this. */
   value: string;
   /**
@@ -1330,69 +1328,56 @@ export interface DropdownMenuRadioItemProps
   children: ReactNode;
 }
 
-export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(
-  function RadioItem(
-    {
-      value,
-      closeOnSelect = true,
-      disabled = false,
-      shortcut,
-      className,
-      children,
-      ...rest
-    },
-    forwardedRef,
-  ) {
-    const ctx = useDropdownMenuContext('RadioItem');
-    const groupCtx = useRadioGroupContext('RadioItem');
-    const itemRef = useRef<HTMLDivElement | null>(null);
-    const id = useId();
+export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(function RadioItem(
+  { value, closeOnSelect = true, disabled = false, shortcut, className, children, ...rest },
+  forwardedRef,
+) {
+  const ctx = useDropdownMenuContext('RadioItem');
+  const groupCtx = useRadioGroupContext('RadioItem');
+  const itemRef = useRef<HTMLDivElement | null>(null);
+  const id = useId();
 
-    const checked = groupCtx.value === value;
+  const checked = groupCtx.value === value;
 
-    const childrenArray = Children.toArray(children);
-    const indicator = childrenArray.find(
-      (c) => isValidElement(c) && c.type === ItemIndicator,
-    );
-    const labelContent = childrenArray.filter((c) => c !== indicator);
-    const labelText =
-      labelContent.find((c): c is string => typeof c === 'string') ?? '';
+  const childrenArray = Children.toArray(children);
+  const indicator = childrenArray.find((c) => isValidElement(c) && c.type === ItemIndicator);
+  const labelContent = childrenArray.filter((c) => c !== indicator);
+  const labelText = labelContent.find((c): c is string => typeof c === 'string') ?? '';
 
-    useLayoutEffect(() => {
-      return ctx.registerItem({ id, ref: itemRef, disabled, label: labelText });
-    }, [ctx, id, disabled, labelText]);
+  useLayoutEffect(() => {
+    return ctx.registerItem({ id, ref: itemRef, disabled, label: labelText });
+  }, [ctx, id, disabled, labelText]);
 
-    const index = ctx.itemsRef.current.findIndex((x) => x.id === id);
-    const isActive = index !== -1 && index === ctx.activeIndex;
+  const index = ctx.itemsRef.current.findIndex((x) => x.id === id);
+  const isActive = index !== -1 && index === ctx.activeIndex;
 
-    const handleClick = (_e: MouseEvent) => {
-      if (disabled) return;
-      groupCtx.onValueChange(value);
-      if (closeOnSelect) {
-        ctx.closeAll();
-      }
-    };
+  const handleClick = (_e: MouseEvent) => {
+    if (disabled) return;
+    groupCtx.onValueChange(value);
+    if (closeOnSelect) {
+      ctx.closeAll();
+    }
+  };
 
-    return (
-      <div
-        {...rest}
-        ref={mergeRefs<HTMLDivElement>(itemRef, forwardedRef)}
-        role="menuitemradio"
-        tabIndex={isActive ? 0 : -1}
-        aria-checked={checked}
-        aria-disabled={disabled || undefined}
-        className={clsx(styles.item, className)}
-        onClick={handleClick}
-      >
-        <span className={styles.indicatorSlot}>
-          {checked && (indicator ?? <span className={styles.defaultIndicator}>●</span>)}
-        </span>
-        <span className={styles.itemLabel}>{labelContent}</span>
-        {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
-      </div>
-    );
-  },
-);
+  return (
+    <div
+      {...rest}
+      ref={mergeRefs<HTMLDivElement>(itemRef, forwardedRef)}
+      role="menuitemradio"
+      tabIndex={isActive ? 0 : -1}
+      aria-checked={checked}
+      aria-disabled={disabled || undefined}
+      className={clsx(styles.item, className)}
+      onClick={handleClick}
+    >
+      <span className={styles.indicatorSlot}>
+        {checked && (indicator ?? <span className={styles.defaultIndicator}>●</span>)}
+      </span>
+      <span className={styles.itemLabel}>{labelContent}</span>
+      {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
+    </div>
+  );
+});
 ```
 
 - [ ] **Step 4: Wire into compound**
@@ -1402,10 +1387,7 @@ In `DropdownMenu.tsx`:
 ```tsx
 import { RadioGroup, RadioItem } from './Radio';
 
-export {
-  type DropdownMenuRadioGroupProps,
-  type DropdownMenuRadioItemProps,
-} from './Radio';
+export { type DropdownMenuRadioGroupProps, type DropdownMenuRadioItemProps } from './Radio';
 
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Trigger,
@@ -1446,6 +1428,7 @@ git commit -m "DropdownMenu: add RadioGroup and RadioItem"
 This task adds the `<Sub>` provider that creates a new context shadowing the parent. SubTrigger and SubContent come in Tasks 9-10. After this task: `<DropdownMenu.Sub>` exists, has its own open state, but does nothing visible yet — placeholder test verifies the context wiring.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DropdownMenu/Sub.tsx` — Sub only (SubTrigger and SubContent in next tasks)
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.tsx` — wire Sub into compound
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.test.tsx` — placeholder test
@@ -1480,14 +1463,7 @@ describe('DropdownMenu — Sub (scaffolding)', () => {
 
 ```tsx
 // Sub.tsx
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import {
   DropdownMenuContext,
   useDropdownMenuContext,
@@ -1572,6 +1548,7 @@ export function Sub({
 ```
 
 Note this looks similar to `DropdownMenuRoot`, but key differences:
+
 - Reads parent context to wrap `closeAll`.
 - `depth = parent.depth + 1`.
 
@@ -1624,6 +1601,7 @@ git commit -m "DropdownMenu: add Sub provider with recursive context"
 SubTrigger is the menuitem in the parent menu that opens the sub on click / hover / keyboard. It does NOT yet handle hover delays (Task 11) or ArrowRight (Task 12) — just click-to-open in this task.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DropdownMenu/Sub.tsx` — add SubTrigger
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.tsx`
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.module.scss` — chevron
@@ -1868,10 +1846,7 @@ In `DropdownMenu.tsx`:
 ```tsx
 import { Sub, SubTrigger } from './Sub';
 
-export {
-  type DropdownMenuSubProps,
-  type DropdownMenuSubTriggerProps,
-} from './Sub';
+export { type DropdownMenuSubProps, type DropdownMenuSubTriggerProps } from './Sub';
 
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   /* ... */
@@ -1932,6 +1907,7 @@ git commit -m "DropdownMenu: add SubTrigger (click-to-open)"
 SubContent is a variant of Content that anchors to its SubTrigger via the sub's `triggerRef`. Same Floating UI usage with `placement='right-start'`. Same outside-click + Escape + Tab dismissal. Adds ArrowLeft to close just this level.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DropdownMenu/Sub.tsx` — add SubContent
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.tsx`
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.test.tsx` — suite
@@ -2123,6 +2099,7 @@ closeAll: () => {
 ```
 
 This way:
+
 - Item.onClick → `ctx.closeAll()` → walks up the chain, ultimately closes root + focuses root trigger.
 - Escape on a sub → `ctx.setOpen(false)` (NOT closeAll) → only this level closes; focus moves to SubTrigger.
 
@@ -2216,6 +2193,7 @@ git commit -m "DropdownMenu: add SubContent and cascading closeAll for subs"
 ## Task 11: Submenu hover behavior — 100ms open, 200ms close
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DropdownMenu/Sub.tsx` — SubTrigger gets hover handlers
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.test.tsx` — suite
 
@@ -2277,7 +2255,7 @@ describe('DropdownMenu — Submenu hover', () => {
     await user.click(screen.getByRole('button', { name: 'Open' }));
     const subTrigger = screen.getByRole('menuitem', { name: /Export/ });
     await user.hover(subTrigger);
-    vi.advanceTimersByTime(50);  // before threshold
+    vi.advanceTimersByTime(50); // before threshold
     await user.unhover(subTrigger);
     vi.advanceTimersByTime(100); // past original threshold
     expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
@@ -2349,8 +2327,8 @@ const handlePointerLeave = useCallback(() => {
 Wire them onto the SubTrigger `<div>`:
 
 ```tsx
-onPointerEnter={handlePointerEnter}
-onPointerLeave={handlePointerLeave}
+onPointerEnter = { handlePointerEnter };
+onPointerLeave = { handlePointerLeave };
 ```
 
 Add `useCallback`, `useEffect` to the React imports if not already present.
@@ -2599,6 +2577,7 @@ git commit -m "DropdownMenu: submenu hover behavior (100ms open, 200ms close)"
 ArrowLeft is already in Content's `handleKeyDown` from Task 10. This task adds ArrowRight on the parent menu: when the active item in the parent is a SubTrigger, ArrowRight invokes its registered `openSubmenu` callback.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DropdownMenu/Content.tsx` — extend handleKeyDown
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.test.tsx` — suite
 
@@ -2721,6 +2700,7 @@ git commit -m "DropdownMenu: ArrowRight opens sub, ArrowLeft closes (keyboard na
 These tests verify the four feature families compose correctly. No new code, just tests.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.test.tsx`
 
 - [ ] **Step 1: Append integration tests**
@@ -2867,6 +2847,7 @@ git commit -m "DropdownMenu: cross-feature integration tests"
 Apply Hard rule 7: every new exported symbol gets JSDoc with examples and remarks.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DropdownMenu/Group.tsx`
 - Modify: `packages/design-system/src/components/DropdownMenu/CheckboxItem.tsx`
 - Modify: `packages/design-system/src/components/DropdownMenu/Radio.tsx`
@@ -2874,6 +2855,7 @@ Apply Hard rule 7: every new exported symbol gets JSDoc with examples and remark
 - Modify: `packages/design-system/src/components/DropdownMenu/ItemIndicator.tsx`
 
 For each new component (Group, Label, CheckboxItem, RadioGroup, RadioItem, Sub, SubTrigger, SubContent, ItemIndicator), add:
+
 - One-paragraph description on the component function.
 - 2-3 `@example` blocks for canonical usage.
 - `@remarks When NOT to use` and `@remarks Anti-patterns` on the more substantive ones (CheckboxItem, RadioGroup, Sub).
@@ -2928,6 +2910,7 @@ git commit -m "DropdownMenu v2: full JSDoc on all new exports"
 ## Task 15: Update `AGENTS.md` with new subcomponent sections
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 
 - [ ] **Step 1: Add a "v2 subcomponents" section to the DropdownMenu entry**
@@ -3004,6 +2987,7 @@ git commit -m "AGENTS.md: document DropdownMenu v2 subcomponents"
 ## Task 16: Update playground demo with 4 new examples
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/DropdownMenuDemo.tsx`
 
 - [ ] **Step 1: Add 4 new `<Example>` blocks**
@@ -3145,6 +3129,7 @@ make dev
 ```
 
 Open http://localhost:8080/components/dropdown-menu. Confirm each new Example works:
+
 - Multi-select filter: clicking checkboxes toggles state, menu stays open.
 - Sort radio: clicking a radio sets state, menu closes.
 - Nested Sub: hover Export → submenu opens after 100ms; ArrowRight from focused Export also opens; ArrowLeft inside sub closes.
@@ -3208,6 +3193,7 @@ Use the Agent tool with `subagent_type: general-purpose`. Brief it explicitly:
 > Evaluate against the 10 review categories from CLAUDE.md Hard rule 8: bugs, a11y, API inconsistencies, type safety, Rules 1–7 compliance, test coverage, token discipline, SCSS, cross-package leakage, package/distribution.
 >
 > Pay particular attention to:
+>
 > - The recursive context shadowing pattern in `<Sub>`. Are there focus management bugs across levels?
 > - The `SubParentContext` + `SubHoverContext` design — over-engineered or appropriate?
 > - The shallow ItemIndicator detection. Documented well? Edge cases?
@@ -3231,6 +3217,7 @@ All four gates green. Test count ≥ 225 (may grow if review adds tests).
 Repeat fix-and-review until verdict is `clean enough to stop`.
 
 Hard exit criteria:
+
 - 0 Critical, 0 Important (or each remaining has a documented skip)
 - All four gates green
 - `npm pack --dry-run` clean

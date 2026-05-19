@@ -199,8 +199,10 @@ Going with the simpler form: always emit `aria-labelledby={labelId}`. If no Labe
 ```
 
 ```ts
-export interface DropdownMenuCheckboxItemProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+export interface DropdownMenuCheckboxItemProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onSelect'
+> {
   /** Whether the item is checked. */
   checked: boolean;
   /** Called with the new checked state when the item is activated. */
@@ -221,6 +223,7 @@ export interface DropdownMenuCheckboxItemProps
 **ARIA:** `role="menuitemcheckbox"`, `aria-checked={checked}`, `aria-disabled={disabled || undefined}`.
 
 **Behavior:**
+
 - Activating (click / Enter / Space): fires `onCheckedChange(!checked)`.
 - If `closeOnSelect={true}`: also calls `ctx.closeAll()` (closes the entire menu chain).
 - If `closeOnSelect={false}` (default): the menu stays open, focus stays on the item.
@@ -253,8 +256,10 @@ export interface DropdownMenuRadioGroupProps extends HTMLAttributes<HTMLDivEleme
   children: ReactNode;
 }
 
-export interface DropdownMenuRadioItemProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+export interface DropdownMenuRadioItemProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onSelect'
+> {
   /** The value this item represents. Activating sets the group's value to this. */
   value: string;
   /**
@@ -389,11 +394,13 @@ export type DropdownMenuSubContentProps = DropdownMenuContentProps;
 ```
 
 **Sub** is a provider that:
+
 - Creates a new context instance (its own open state, registry, etc.).
 - Reads the PARENT context to grab `closeAll` and increments `depth`.
 - Wraps its `closeAll` to call parent's `closeAll` after closing self.
 
 **SubTrigger** is a hybrid:
+
 - Renders an Item-like row (`role="menuitem"`) WITH an `aria-haspopup="menu"` + `aria-expanded={subOpen}` because it's also a trigger.
 - Has a right-side chevron `▶` (rendered via CSS `::after` or as an explicit child).
 - Registers with the PARENT context's `registerItem`, including an `openSubmenu` callback that opens the sub.
@@ -405,6 +412,7 @@ export type DropdownMenuSubContentProps = DropdownMenuContentProps;
 - Enter / Space (when active): same as ArrowRight.
 
 **SubContent** is a Content variant:
+
 - Uses Floating UI with `placement` defaulting to `'right-start'` (submenus open to the right of the trigger; flip to left if no room).
 - Same portal + outside-click + dismissal as Content, with extra:
   - ArrowLeft inside SubContent → close this sub, focus its SubTrigger.
@@ -419,15 +427,15 @@ When mouse moves over a sibling Item in the parent menu (or another SubTrigger),
 
 ### Combined keyboard semantics across the chain
 
-| Key | Action |
-| --- | --- |
-| ArrowDown / Up / Home / End | Move active item in the CURRENT (deepest open) menu. Skips disabled and separators. |
-| ArrowRight | If active is a SubTrigger: open its sub, focus its first item. Otherwise no-op. |
-| ArrowLeft | If we're in a sub (depth > 0): close THIS sub, focus its SubTrigger. Otherwise no-op. |
-| Enter / Space | Activate the active item. SubTrigger → open the sub + focus first. CheckboxItem → toggle. RadioItem → set + (default) close all. Item → onSelect + close all. |
-| Escape | Close the current (deepest) menu, return focus to its trigger (which may be a SubTrigger in the parent). Pressing Escape again closes the next level up. |
-| Tab / Shift+Tab | Close ENTIRE chain (root and all subs), focus root trigger, do NOT preventDefault (browser continues Tab from root trigger). |
-| Printable char | Typeahead in the CURRENT menu only. Buffer is per-menu, not shared. |
+| Key                         | Action                                                                                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ArrowDown / Up / Home / End | Move active item in the CURRENT (deepest open) menu. Skips disabled and separators.                                                                           |
+| ArrowRight                  | If active is a SubTrigger: open its sub, focus its first item. Otherwise no-op.                                                                               |
+| ArrowLeft                   | If we're in a sub (depth > 0): close THIS sub, focus its SubTrigger. Otherwise no-op.                                                                         |
+| Enter / Space               | Activate the active item. SubTrigger → open the sub + focus first. CheckboxItem → toggle. RadioItem → set + (default) close all. Item → onSelect + close all. |
+| Escape                      | Close the current (deepest) menu, return focus to its trigger (which may be a SubTrigger in the parent). Pressing Escape again closes the next level up.      |
+| Tab / Shift+Tab             | Close ENTIRE chain (root and all subs), focus root trigger, do NOT preventDefault (browser continues Tab from root trigger).                                  |
+| Printable char              | Typeahead in the CURRENT menu only. Buffer is per-menu, not shared.                                                                                           |
 
 **Implementation note on the keyboard handlers:** the existing v1 `handleKeyDown` and document-level keydown listener in Content stay as-is for the root. SubContent has its own equivalents (the same logic applies at any level — each Content/SubContent instance has its own listeners scoped to `ctx.open` of its own context).
 
@@ -446,12 +454,15 @@ When click-outside: each Content's outside-click listener calls its OWN setOpen(
 Existing SCSS module gets additions, no fundamental restructuring.
 
 **New tokens** (add to `tokens.scss`):
+
 - None expected. The check and bullet are colored with `--color-fg` or `--color-accent`. Layout uses existing spacing.
 
 Possible additions if needed:
+
 - `--size-dropdown-indicator-slot: 16px` — width of the leading indicator slot. If we don't add this, hardcode in SCSS (raw value warning from stylelint may force us to add the token).
 
 **SCSS additions** (will land in implementation):
+
 - `.indicatorSlot` — fixed-width leading column, centered content.
 - `.subTriggerChevron` — pseudo-element or span on the right side of SubTrigger.
 - `.label` (for `<Label>` component, distinct from `.label` for item text) — small uppercase muted text. Rename existing `.label` (item-text) to `.itemLabel` to avoid collision.
