@@ -8,8 +8,9 @@ import { Card } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
-import { getContact, statusLabel, statusTone } from '../../data/mock';
+import { getContact, statusLabel, statusTone } from '../../../data/mock';
 import styles from './ContactDetail.module.scss';
+import { CrossLinks } from '../../shared/CrossLinks';
 
 const tabs = [
   { id: 'overview', label: 'Overview' },
@@ -23,12 +24,12 @@ export function ContactDetail() {
   const contact = id ? getContact(id) : undefined;
   const [activeTab, setActiveTab] = useState('overview');
 
-  if (!contact) return <Navigate to="/contacts" replace />;
+  if (!contact) return <Navigate to="/mockups/contacts" replace />;
 
   return (
     <Stack gap="lg">
       <nav className={styles.breadcrumb}>
-        <Link to="/contacts">Contacts</Link>
+        <Link to="/mockups/contacts">Contacts</Link>
         <ChevronRight size={14} aria-hidden />
         <span>{contact.name}</span>
       </nav>
@@ -157,6 +158,8 @@ export function ContactDetail() {
           </p>
         </Card>
       )}
+
+      <CrossLinks kind="mockup" slug="contact-detail" />
     </Stack>
   );
 }

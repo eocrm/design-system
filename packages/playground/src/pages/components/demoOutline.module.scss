@@ -1,0 +1,8 @@
+// Playground-only utility: dashed outline applied to the Stack/Cluster
+// instance that is the subject of its demo, so readers can see where the
+// component's edges sit relative to its children.
+
+.outlined {
+  border: var(--border-width) dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}

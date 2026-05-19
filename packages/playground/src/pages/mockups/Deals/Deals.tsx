@@ -4,8 +4,9 @@ import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
-import { dealStages, deals, type DealStage } from '../../data/mock';
+import { dealStages, deals, type DealStage } from '../../../data/mock';
 import styles from './Deals.module.scss';
+import { CrossLinks } from '../../shared/CrossLinks';
 
 export function Deals() {
   return (
@@ -77,6 +78,8 @@ export function Deals() {
           );
         })}
       </div>
+
+      <CrossLinks kind="mockup" slug="deals" />
     </Stack>
   );
 }

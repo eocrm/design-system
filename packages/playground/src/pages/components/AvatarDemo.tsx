@@ -15,6 +15,7 @@ export function AvatarDemo() {
       scssSource={scssSource}
       tsxFilename="Avatar.tsx"
       scssFilename="Avatar.module.scss"
+      componentName="Avatar"
     >
       <Example
         title="Sizes"

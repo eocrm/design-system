@@ -4,6 +4,8 @@ import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
 import { CodeBlock } from './CodeBlock';
+import { CrossLinks } from '../shared/CrossLinks';
+import type { ComponentName } from '../mockups/registry';
 import styles from './DemoLayout.module.scss';
 
 export interface DemoLayoutProps {
@@ -13,6 +15,7 @@ export interface DemoLayoutProps {
   scssSource: string;
   tsxFilename: string;
   scssFilename: string;
+  componentName?: ComponentName;
   children: ReactNode;
 }
 
@@ -23,6 +26,7 @@ export function DemoLayout({
   scssSource,
   tsxFilename,
   scssFilename,
+  componentName,
   children,
 }: DemoLayoutProps) {
   const [sourceTab, setSourceTab] = useState<'tsx' | 'scss'>('tsx');
@@ -66,6 +70,8 @@ export function DemoLayout({
 
       <h2 className={styles.sectionTitle}>Examples</h2>
       <Stack gap="xl">{children}</Stack>
+
+      {componentName && <CrossLinks kind="component" name={componentName} />}
     </Stack>
   );
 }

@@ -1,0 +1,73 @@
+.eyebrow {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-fg-muted);
+  font-weight: var(--font-weight-semibold);
+}
+
+.title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  margin: var(--space-1) 0 var(--space-2);
+  color: var(--color-fg);
+}
+
+.description {
+  font-size: var(--font-size-md);
+  color: var(--color-fg-muted);
+  max-width: 60ch;
+
+  code {
+    padding: 1px 6px;
+    background: var(--color-bg-muted);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-code);
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.card {
+  display: block;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  text-decoration: none;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+
+  &:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+  }
+}
+
+.cardName {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+}
+
+.cardBlurb {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  margin-top: var(--space-1);
+}
+
+.chips {
+  margin-top: var(--space-3);
+}

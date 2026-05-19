@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   KanbanSquare,
   Users,
   UserCog,
-  Settings,
   Search,
   Bell,
   Plus,
@@ -18,32 +17,89 @@ import {
   CircleUser,
   Tag,
   PanelTop,
+  Layers,
+  ArrowRight,
+  type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/deals', label: 'Deals', icon: KanbanSquare, end: false },
-  { to: '/contacts', label: 'Contacts', icon: Users, end: false },
+const mockupItems = [
+  { to: '/mockups', label: 'Overview', icon: LayoutDashboard, end: true },
+  { to: '/mockups/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/mockups/deals', label: 'Deals', icon: KanbanSquare, end: false },
+  { to: '/mockups/contacts', label: 'Contacts', icon: Users, end: false },
+  { to: '/mockups/members', label: 'Members', icon: UserCog, end: false },
 ];
 
-const settingsItems = [{ to: '/members', label: 'Members', icon: UserCog, end: false }];
+const componentOverview = {
+  to: '/components',
+  label: 'Overview',
+  icon: Component,
+  end: true,
+};
 
-const demoItems = [
-  { to: '/demo', label: 'Overview', icon: Component, end: true },
-  { to: '/demo/button', label: 'Button', icon: MousePointer2, end: false },
-  { to: '/demo/input', label: 'Input', icon: TextCursorInput, end: false },
-  { to: '/demo/card', label: 'Card', icon: RectangleHorizontal, end: false },
-  { to: '/demo/stack', label: 'Stack', icon: Rows3, end: false },
-  { to: '/demo/cluster', label: 'Cluster', icon: Columns3, end: false },
-  { to: '/demo/avatar', label: 'Avatar', icon: CircleUser, end: false },
-  { to: '/demo/badge', label: 'Badge', icon: Tag, end: false },
-  { to: '/demo/tabs', label: 'Tabs', icon: PanelTop, end: false },
+const componentGroups = [
+  {
+    heading: 'Layout',
+    items: [
+      { to: '/components/stack', label: 'Stack', icon: Rows3, end: false },
+      { to: '/components/cluster', label: 'Cluster', icon: Columns3, end: false },
+      { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
+    ],
+  },
+  {
+    heading: 'Forms',
+    items: [
+      { to: '/components/button', label: 'Button', icon: MousePointer2, end: false },
+      { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
+    ],
+  },
+  {
+    heading: 'Display',
+    items: [
+      { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
+      { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
+    ],
+  },
+  {
+    heading: 'Navigation',
+    items: [{ to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false }],
+  },
 ];
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  end: boolean;
+}
+
+function renderItem({ to, label, icon: Icon, end }: NavItem) {
+  return (
+    <NavLink
+      key={to}
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
+      }
+    >
+      <Icon size={16} />
+      {label}
+    </NavLink>
+  );
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
+  const inComponents = pathname.startsWith('/components');
+
+  const switchLink = inComponents
+    ? { to: '/mockups', label: 'Mockups', icon: Layers }
+    : { to: '/components', label: 'Components', icon: Component };
+
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
@@ -56,55 +112,31 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className={styles.nav}>
-          <div className={styles.navSection}>Workspace</div>
-          {navItems.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
-              }
-            >
-              <Icon size={16} />
-              {label}
-            </NavLink>
-          ))}
-
-          <div className={styles.navSection}>Demo</div>
-          {demoItems.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
-              }
-            >
-              <Icon size={16} />
-              {label}
-            </NavLink>
-          ))}
-
-          <div className={styles.navSection}>Settings</div>
-          {settingsItems.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
-              }
-            >
-              <Icon size={16} />
-              {label}
-            </NavLink>
-          ))}
-          <a className={styles.navItem} href="#" onClick={(e) => e.preventDefault()}>
-            <Settings size={16} />
-            Preferences
-          </a>
+          {inComponents ? (
+            <>
+              {renderItem(componentOverview)}
+              {componentGroups.map(({ heading, items }) => (
+                <div key={heading} className={styles.navGroup}>
+                  <div className={styles.navSection}>{heading}</div>
+                  {items.map(renderItem)}
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className={styles.navSection}>Mockups</div>
+              {mockupItems.map(renderItem)}
+            </>
+          )}
         </nav>
+
+        <div className={styles.navFooter}>
+          <NavLink to={switchLink.to} className={styles.switchLink}>
+            <switchLink.icon size={16} />
+            <span>{switchLink.label}</span>
+            <ArrowRight size={14} className={styles.switchArrow} aria-hidden />
+          </NavLink>
+        </div>
       </aside>
 
       <header className={styles.topbar}>

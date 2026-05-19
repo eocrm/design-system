@@ -19,6 +19,7 @@ export function TabsDemo() {
       scssSource={scssSource}
       tsxFilename="Tabs.tsx"
       scssFilename="Tabs.module.scss"
+      componentName="Tabs"
     >
       <Example
         title="Basic"
