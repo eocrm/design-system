@@ -10,4 +10,5 @@ export type {
   DropdownMenuItemTone,
   DropdownMenuGroupProps,
   DropdownMenuLabelProps,
+  DropdownMenuItemIndicatorProps,
 } from './DropdownMenu';

@@ -802,3 +802,26 @@ describe('DropdownMenu — typeahead', () => {
     expect(screen.getByRole('menuitem', { name: 'Edit' })).toHaveFocus();
   });
 });
+
+describe('DropdownMenu — ItemIndicator', () => {
+  it('is a passthrough wrapper component', async () => {
+    // Standalone test: ItemIndicator inside a regular Item just renders its
+    // children inline (Item doesn't extract it — only CheckboxItem/RadioItem do).
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>
+            <DropdownMenu.ItemIndicator>marker</DropdownMenu.ItemIndicator>
+            Edit
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByText('marker')).toBeInTheDocument();
+  });
+});
