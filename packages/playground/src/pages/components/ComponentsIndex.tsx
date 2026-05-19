@@ -9,6 +9,7 @@ import { Input } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
+import { Tooltip } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
 const items: { to: string; name: string; description: string; preview: React.ReactNode }[] = [
@@ -132,6 +133,20 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu>
+      </Cluster>
+    ),
+  },
+  {
+    to: '/components/tooltip',
+    name: 'Tooltip',
+    description: 'Small floating label on hover/focus, with a pointer arrow.',
+    preview: (
+      <Cluster gap="sm" justify="center">
+        <Tooltip content="Save (⌘S)" defaultOpen>
+          <Button size="sm" variant="secondary">
+            Save
+          </Button>
+        </Tooltip>
       </Cluster>
     ),
   },

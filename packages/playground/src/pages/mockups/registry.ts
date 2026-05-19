@@ -9,7 +9,8 @@ export type ComponentName =
   | 'Avatar'
   | 'Badge'
   | 'Tabs'
-  | 'DropdownMenu';
+  | 'DropdownMenu'
+  | 'Tooltip';
 
 export interface MockupEntry {
   slug: string;
