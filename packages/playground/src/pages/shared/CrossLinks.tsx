@@ -7,7 +7,10 @@ import styles from './CrossLinks.module.scss';
 type Props = { kind: 'mockup'; slug: MockupSlug } | { kind: 'component'; name: ComponentName };
 
 function componentPath(name: ComponentName): string {
-  return `/components/${name.toLowerCase()}`;
+  // PascalCase → kebab-case so multi-word names match their route slugs
+  // (e.g. DropdownMenu → /components/dropdown-menu).
+  const slug = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  return `/components/${slug}`;
 }
 
 export function CrossLinks(props: Props) {
