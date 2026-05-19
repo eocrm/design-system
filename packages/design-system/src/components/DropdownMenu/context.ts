@@ -56,3 +56,6 @@ export function useRadioGroupContext(component: string): RadioGroupContextValue 
   }
   return ctx;
 }
+
+/** Provided by `<Sub>` so `<SubTrigger>` can read the PARENT context (where it registers as a menuitem) while still being inside the SUB's DropdownMenuContext provider. */
+export const SubParentContext = createContext<DropdownMenuContextValue | null>(null);

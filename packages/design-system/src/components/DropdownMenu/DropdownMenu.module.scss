@@ -111,3 +111,21 @@
   line-height: var(--line-height-none);
   color: currentColor;
 }
+
+.subTrigger {
+  // .subTrigger inherits all .item styles via the className composition.
+  // This class exists so we can target data-state in the rule below.
+  display: flex;
+}
+
+.subTriggerChevron {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-subtle);
+  padding-left: var(--space-2);
+}
+
+.subTrigger[data-state='open'] {
+  background: var(--color-bg-muted);
+}

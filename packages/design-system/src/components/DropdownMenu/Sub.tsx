@@ -1,18 +1,26 @@
 import {
+  forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
+  type HTMLAttributes,
+  type MouseEvent,
   type ReactNode,
 } from 'react';
+import clsx from 'clsx';
 import {
   DropdownMenuContext,
+  SubParentContext,
   useDropdownMenuContext,
   type DropdownMenuContextValue,
   type RegisteredItem,
 } from './context';
-import { sanitizeId } from './utils';
+import { mergeRefs, sanitizeId } from './utils';
+import styles from './DropdownMenu.module.scss';
 
 export interface DropdownMenuSubProps {
   /** The submenu trigger and content to render. */
@@ -109,5 +117,99 @@ export function Sub({
     depth: parentCtx.depth + 1,
   };
 
-  return <DropdownMenuContext.Provider value={value}>{children}</DropdownMenuContext.Provider>;
+  return (
+    <SubParentContext.Provider value={parentCtx}>
+      <DropdownMenuContext.Provider value={value}>{children}</DropdownMenuContext.Provider>
+    </SubParentContext.Provider>
+  );
 }
+
+export interface DropdownMenuSubTriggerProps extends HTMLAttributes<HTMLDivElement> {
+  /** Disabled SubTrigger renders dimmed and doesn't open the sub. */
+  disabled?: boolean;
+  /** Optional leading icon, matching Item's icon slot. */
+  icon?: ReactNode;
+  children: ReactNode;
+}
+
+/**
+ * Trigger for a submenu. Renders as a menuitem in the PARENT menu with a
+ * trailing chevron. Click / hover (Task 11) / ArrowRight (Task 12) opens
+ * the sub.
+ *
+ * @remarks
+ * Must be a direct child of `<DropdownMenu.Sub>`. Do NOT place SubTrigger
+ * outside a Sub — it has no meaning without the sub context pair.
+ *
+ * @example
+ * <DropdownMenu.Sub>
+ *   <DropdownMenu.SubTrigger>More options</DropdownMenu.SubTrigger>
+ *   <DropdownMenu.SubContent>
+ *     <DropdownMenu.Item onSelect={...}>Nested item</DropdownMenu.Item>
+ *   </DropdownMenu.SubContent>
+ * </DropdownMenu.Sub>
+ */
+export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps>(
+  function SubTrigger({ disabled = false, icon, className, children, ...rest }, forwardedRef) {
+    const subCtx = useDropdownMenuContext('SubTrigger');
+    const parentCtx = useContext(SubParentContext);
+    if (!parentCtx) {
+      throw new Error('<DropdownMenu.SubTrigger> must be used inside <DropdownMenu.Sub>');
+    }
+
+    const triggerRefLocal = useRef<HTMLDivElement | null>(null);
+    const id = useId();
+    const labelText = typeof children === 'string' ? children : '';
+
+    // Register with PARENT's registry — SubTrigger IS a menuitem in the parent
+    // menu. openSubmenu lets ArrowRight (Task 12) invoke this from the parent.
+    useLayoutEffect(() => {
+      return parentCtx.registerItem({
+        id,
+        ref: triggerRefLocal,
+        disabled,
+        label: labelText,
+        openSubmenu: () => {
+          subCtx.setOpenIntent('first');
+          subCtx.setOpen(true);
+        },
+      });
+    }, [parentCtx, id, disabled, labelText, subCtx]);
+
+    const index = parentCtx.itemsRef.current.findIndex((x) => x.id === id);
+    const isActive = index !== -1 && index === parentCtx.activeIndex;
+
+    // Also save into subCtx.triggerRef so SubContent (Task 10) positions
+    // against the SubTrigger element.
+    useLayoutEffect(() => {
+      subCtx.triggerRef.current = triggerRefLocal.current;
+    });
+
+    const handleClick = (_e: MouseEvent) => {
+      if (disabled) return;
+      subCtx.setOpen(true);
+    };
+
+    return (
+      <div
+        {...rest}
+        ref={mergeRefs<HTMLDivElement>(triggerRefLocal, forwardedRef)}
+        role="menuitem"
+        tabIndex={isActive ? 0 : -1}
+        aria-haspopup="menu"
+        aria-expanded={subCtx.open}
+        aria-controls={subCtx.open ? subCtx.contentId : undefined}
+        aria-disabled={disabled || undefined}
+        data-state={subCtx.open ? 'open' : 'closed'}
+        className={clsx(styles.item, styles.subTrigger, className)}
+        onClick={handleClick}
+      >
+        {icon !== undefined && <span className={styles.icon}>{icon}</span>}
+        <span className={styles.itemLabel}>{children}</span>
+        <span className={styles.subTriggerChevron} aria-hidden="true">
+          ▶
+        </span>
+      </div>
+    );
+  },
+);

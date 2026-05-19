@@ -1123,3 +1123,63 @@ describe('DropdownMenu — Sub (scaffolding)', () => {
     expect(screen.getByTestId('sub-child')).toBeInTheDocument();
   });
 });
+
+describe('DropdownMenu — SubTrigger (click only — hover/keyboard in later tasks)', () => {
+  function renderSub() {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Regular</DropdownMenu.Item>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>More</DropdownMenu.SubTrigger>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('SubTrigger renders as a menuitem in the parent menu', async () => {
+    const { user } = renderSub();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitem', { name: /More/ })).toBeInTheDocument();
+  });
+
+  it('SubTrigger has aria-haspopup="menu" and aria-expanded=false initially', async () => {
+    const { user } = renderSub();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const sub = screen.getByRole('menuitem', { name: /More/ });
+    expect(sub).toHaveAttribute('aria-haspopup', 'menu');
+    expect(sub).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('clicking SubTrigger sets aria-expanded=true', async () => {
+    const { user } = renderSub();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /More/ }));
+    expect(screen.getByRole('menuitem', { name: /More/ })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('disabled SubTrigger does not open the sub on click', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger disabled>More</DropdownMenu.SubTrigger>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /More/ }));
+    expect(screen.getByRole('menuitem', { name: /More/ })).toHaveAttribute('aria-expanded', 'false');
+  });
+});
