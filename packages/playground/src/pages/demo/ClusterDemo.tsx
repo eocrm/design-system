@@ -106,7 +106,9 @@ export function ClusterDemo() {
   {tags.map(t => <Badge tone={t.tone}>{t.label}</Badge>)}
 </Cluster>`}
       >
-        <div style={{ maxWidth: 360, border: '1px dashed var(--color-border-strong)', padding: 12 }}>
+        <div
+          style={{ maxWidth: 360, border: '1px dashed var(--color-border-strong)', padding: 12 }}
+        >
           <Cluster gap="xs">
             <Badge tone="purple">Enterprise</Badge>
             <Badge tone="info">Pipeline 2026</Badge>

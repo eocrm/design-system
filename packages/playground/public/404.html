@@ -1,28 +1,40 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta http-equiv="refresh" content="0">
-  <title>Redirecting…</title>
-  <script>
-    // SPA routing on GitHub Pages — adapted from https://github.com/rafgraph/spa-github-pages
-    // GitHub Pages returns this 404.html for any unmatched path. We rewrite the
-    // URL to /<repo>/?/<encoded-path> and bounce to the SPA root, where the
-    // snippet in index.html decodes it back into the real URL via
-    // history.replaceState — so the React Router sees the right path.
-    //
-    // pathSegmentsToKeep = 1 because GH Pages project sites prefix one segment
-    // (the repo name). On a user/org root site it would be 0.
-    var pathSegmentsToKeep = 1;
-    var l = window.location;
-    l.replace(
-      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-      l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-      l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-      (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-      l.hash
-    );
-  </script>
-</head>
-<body></body>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="0" />
+    <title>Redirecting…</title>
+    <script>
+      // SPA routing on GitHub Pages — adapted from https://github.com/rafgraph/spa-github-pages
+      // GitHub Pages returns this 404.html for any unmatched path. We rewrite the
+      // URL to /<repo>/?/<encoded-path> and bounce to the SPA root, where the
+      // snippet in index.html decodes it back into the real URL via
+      // history.replaceState — so the React Router sees the right path.
+      //
+      // pathSegmentsToKeep = 1 because GH Pages project sites prefix one segment
+      // (the repo name). On a user/org root site it would be 0.
+      var pathSegmentsToKeep = 1;
+      var l = window.location;
+      l.replace(
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname
+            .split('/')
+            .slice(0, 1 + pathSegmentsToKeep)
+            .join('/') +
+          '/?/' +
+          l.pathname
+            .slice(1)
+            .split('/')
+            .slice(pathSegmentsToKeep)
+            .join('/')
+            .replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash,
+      );
+    </script>
+  </head>
+  <body></body>
 </html>

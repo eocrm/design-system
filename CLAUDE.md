@@ -33,19 +33,21 @@ Missing any of these = component does not exist as far as the design system is c
 **Code, configs, and workflows go through PRs — direct pushes to `main` are prohibited.**
 
 Applies to:
+
 - Source code (`*.ts`, `*.tsx`, `*.scss`, `*.css`, `*.js`)
 - Build / lint / test config (`package.json`, `tsconfig*.json`, `.stylelintrc.json`, `vite.config.ts`, `vitest.*.ts`, `Makefile`)
 - GitHub workflows (`.github/workflows/**`)
 - `.gitignore`, `.npmignore`, `.npmrc`, anything that affects the build, test, or release pipeline
 
 Process for those:
+
 1. Branch off `main` (`git checkout -b <kind>/<short-description>`)
 2. Commit + push the branch
 3. Open a PR (`gh pr create`)
 4. Wait for the `Quality / check` status check to pass
 5. Merge (squash or merge commit — caller's choice)
 
-**Standalone docs may be direct-pushed.** A `.md` change that is NOT bundled with a code/config/workflow change — typo fixes, restructures, new clarifications, JSDoc-style markdown — can go straight to `main`. Examples: editing root `README.md`, root `CLAUDE.md`, `packages/design-system/AGENTS.md`, `packages/design-system/guidance.md`. If the doc change is *part of* a code change (e.g., adding a component AND its guidance.md entry), it goes through the same PR as the code.
+**Standalone docs may be direct-pushed.** A `.md` change that is NOT bundled with a code/config/workflow change — typo fixes, restructures, new clarifications, JSDoc-style markdown — can go straight to `main`. Examples: editing root `README.md`, root `CLAUDE.md`, `packages/design-system/AGENTS.md`, `packages/design-system/guidance.md`. If the doc change is _part of_ a code change (e.g., adding a component AND its guidance.md entry), it goes through the same PR as the code.
 
 **Explicit override**: the user may authorize a direct push for any specific change ("just push it", "no PR needed", etc.). When in doubt, default to branch + PR for code; default to direct-push for standalone docs.
 

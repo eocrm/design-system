@@ -29,9 +29,7 @@ const navItems = [
   { to: '/contacts', label: 'Contacts', icon: Users, end: false },
 ];
 
-const settingsItems = [
-  { to: '/members', label: 'Members', icon: UserCog, end: false },
-];
+const settingsItems = [{ to: '/members', label: 'Members', icon: UserCog, end: false }];
 
 const demoItems = [
   { to: '/demo', label: 'Overview', icon: Component, end: true },

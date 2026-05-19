@@ -32,9 +32,7 @@ npm install @eocrm/design-system
 import '@eocrm/design-system/styles/global.scss';
 
 // Anywhere:
-import {
-  Button, Input, Card, Stack, Cluster, Badge, Avatar, Tabs,
-} from '@eocrm/design-system';
+import { Button, Input, Card, Stack, Cluster, Badge, Avatar, Tabs } from '@eocrm/design-system';
 ```
 
 ---
@@ -66,16 +64,16 @@ If TypeScript can't resolve types, set `moduleResolution: "bundler"` (or `"node1
 
 ## Components
 
-| Component | One-line | Detail |
-|---|---|---|
-| `<Button>` | Action triggers | Hover in editor for JSDoc |
-| `<Input>` | Single-line text | Hover in editor for JSDoc |
-| `<Card>` | Bordered content container | Hover in editor for JSDoc |
-| `<Stack>` | Vertical layout primitive | Hover in editor for JSDoc |
-| `<Cluster>` | Horizontal layout (wraps) | Hover in editor for JSDoc |
-| `<Avatar>` | Profile circle | Hover in editor for JSDoc |
-| `<Badge>` | Status / category pill | Hover in editor for JSDoc |
-| `<Tabs>` | Horizontal tab strip | Hover in editor for JSDoc |
+| Component   | One-line                   | Detail                    |
+| ----------- | -------------------------- | ------------------------- |
+| `<Button>`  | Action triggers            | Hover in editor for JSDoc |
+| `<Input>`   | Single-line text           | Hover in editor for JSDoc |
+| `<Card>`    | Bordered content container | Hover in editor for JSDoc |
+| `<Stack>`   | Vertical layout primitive  | Hover in editor for JSDoc |
+| `<Cluster>` | Horizontal layout (wraps)  | Hover in editor for JSDoc |
+| `<Avatar>`  | Profile circle             | Hover in editor for JSDoc |
+| `<Badge>`   | Status / category pill     | Hover in editor for JSDoc |
+| `<Tabs>`    | Horizontal tab strip       | Hover in editor for JSDoc |
 
 Every prop and variant is JSDoc'd at the source. For a quick reference + canonical snippets + tokens table + anti-patterns, see [AGENTS.md](./AGENTS.md).
 
@@ -90,6 +88,7 @@ The library publishes to GitHub Packages via a manual GitHub Actions workflow (`
 3. Choose a bump (`patch` default) or set an explicit version.
 
 The workflow:
+
 - Reads the latest `v*` git tag and computes the next version (or uses your override).
 - Refuses if the tag already exists.
 - Runs `typecheck`, `test`, and a playground smoke build.

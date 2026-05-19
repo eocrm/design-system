@@ -69,10 +69,21 @@
   border-radius: var(--radius-full);
 }
 
-.stage-lead { background: var(--color-fg-disabled); }
-.stage-qualified { background: var(--color-info); }
-.stage-proposal { background: var(--color-warning); }
-.stage-won { background: var(--color-success); }
+.stage-lead {
+  background: var(--color-fg-disabled);
+}
+
+.stage-qualified {
+  background: var(--color-info);
+}
+
+.stage-proposal {
+  background: var(--color-warning);
+}
+
+.stage-won {
+  background: var(--color-success);
+}
 
 .columnList {
   flex: 1;

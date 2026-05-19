@@ -1,11 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import {
-  Cluster,
-  type ClusterAlign,
-  type ClusterGap,
-  type ClusterJustify,
-} from './Cluster';
+import { Cluster, type ClusterAlign, type ClusterGap, type ClusterJustify } from './Cluster';
 
 const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1);
 
@@ -24,14 +19,11 @@ describe('Cluster', () => {
     expect(el.className).toMatch(/wrap/);
   });
 
-  it.each<ClusterGap>(['xs', 'sm', 'md', 'lg', 'xl', '2xl'])(
-    'applies the %s gap class',
-    (gap) => {
-      const { container } = render(<Cluster gap={gap}>x</Cluster>);
-      const expected = gap === '2xl' ? 'gap2xl' : `gap${capitalize(gap)}`;
-      expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(expected));
-    },
-  );
+  it.each<ClusterGap>(['xs', 'sm', 'md', 'lg', 'xl', '2xl'])('applies the %s gap class', (gap) => {
+    const { container } = render(<Cluster gap={gap}>x</Cluster>);
+    const expected = gap === '2xl' ? 'gap2xl' : `gap${capitalize(gap)}`;
+    expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(expected));
+  });
 
   it.each<ClusterJustify>(['start', 'center', 'end', 'between'])(
     'applies the %s justify class',

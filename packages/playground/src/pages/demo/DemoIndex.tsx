@@ -124,7 +124,8 @@ export function DemoIndex() {
         <h1 className={styles.title}>Component library</h1>
         <p className={styles.description}>
           Every component shipped with this design system. Each page shows the live component, the
-          source of <code>.tsx</code> and <code>.module.scss</code>, and usage snippets you can copy.
+          source of <code>.tsx</code> and <code>.module.scss</code>, and usage snippets you can
+          copy.
         </p>
       </header>
 

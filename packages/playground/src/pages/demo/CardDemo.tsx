@@ -31,9 +31,15 @@ export function CardDemo() {
           <Card padding="none" style={{ minWidth: 100, textAlign: 'center' }}>
             <div style={{ padding: 4 }}>none</div>
           </Card>
-          <Card padding="sm" style={{ minWidth: 100 }}>sm</Card>
-          <Card padding="md" style={{ minWidth: 100 }}>md</Card>
-          <Card padding="lg" style={{ minWidth: 100 }}>lg</Card>
+          <Card padding="sm" style={{ minWidth: 100 }}>
+            sm
+          </Card>
+          <Card padding="md" style={{ minWidth: 100 }}>
+            md
+          </Card>
+          <Card padding="lg" style={{ minWidth: 100 }}>
+            lg
+          </Card>
         </Cluster>
       </Example>
 

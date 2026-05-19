@@ -99,10 +99,22 @@ describe('Avatar', () => {
   it('avatarColorIndex covers the full 1–6 palette over a varied input set', () => {
     // 16 distinct names should hit every palette slot at least once.
     const names = [
-      'Alex Rivera', 'Jordan Park', 'Sam Chen', 'Maya Owens',
-      'Priya Shah', 'Marcus Lin', 'Diana Okafor', 'Tomás Reyes',
-      'Ola Berg', 'Hideo Tanaka', 'Lena Ivanova', 'Aki Tanaka',
-      'Chris Park', 'Noah West', 'Emma Bell', 'Kai Fischer',
+      'Alex Rivera',
+      'Jordan Park',
+      'Sam Chen',
+      'Maya Owens',
+      'Priya Shah',
+      'Marcus Lin',
+      'Diana Okafor',
+      'Tomás Reyes',
+      'Ola Berg',
+      'Hideo Tanaka',
+      'Lena Ivanova',
+      'Aki Tanaka',
+      'Chris Park',
+      'Noah West',
+      'Emma Bell',
+      'Kai Fischer',
     ];
     const slots = new Set(names.map((n) => avatarColorIndex(n)));
     expect(slots.size).toBeGreaterThanOrEqual(5);
@@ -127,9 +139,7 @@ describe('Avatar', () => {
   });
 
   it('does not emit an empty style attribute when the consumer passes style={{}}', () => {
-    const { container } = render(
-      <Avatar name="Alex" src="https://example.com/a.jpg" style={{}} />,
-    );
+    const { container } = render(<Avatar name="Alex" src="https://example.com/a.jpg" style={{}} />);
     expect(container.firstChild).not.toHaveAttribute('style');
   });
 });
