@@ -500,6 +500,53 @@ describe('DropdownMenu — item activation by keyboard', () => {
   });
 });
 
+describe('DropdownMenu — controlled open', () => {
+  it('respects the controlled `open` prop', async () => {
+    const { rerender } = render(
+      <DropdownMenu open={false} onOpenChange={() => {}}>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    expect(screen.queryByRole('menu')).toBeNull();
+
+    rerender(
+      <DropdownMenu open={true} onOpenChange={() => {}}>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('calls onOpenChange when internal toggles fire (controlled mode)', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <DropdownMenu open={false} onOpenChange={onOpenChange}>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+    // Internal state is NOT mutated when controlled — menu stays closed.
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+});
+
 describe('DropdownMenu — typeahead', () => {
   beforeEach(() => {
     vi.useFakeTimers();

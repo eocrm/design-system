@@ -81,15 +81,39 @@ function chain<E>(
 }
 
 export interface DropdownMenuProps {
+  /** Must contain a Trigger and (typically) a Content. */
   children: ReactNode;
+  /** Controlled open state. When provided alongside `onOpenChange`, the consumer owns open. */
+  open?: boolean;
+  /** Fired whenever DropdownMenu wants to change open state. Required when `open` is provided. */
+  onOpenChange?: (open: boolean) => void;
+  /** Default open state for uncontrolled usage. Defaults to `false`. */
+  defaultOpen?: boolean;
 }
 
-function DropdownMenuRoot({ children }: DropdownMenuProps) {
-  const [open, setOpen] = useState(false);
-  const [openIntent, setOpenIntent] = useState<'first' | 'last' | null>(null);
+function DropdownMenuRoot({
+  children,
+  open: controlledOpen,
+  onOpenChange,
+  defaultOpen = false,
+}: DropdownMenuProps) {
+  const isControlled = controlledOpen !== undefined;
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const open = isControlled ? (controlledOpen as boolean) : uncontrolledOpen;
+
+  const setOpen = useCallback(
+    (next: boolean) => {
+      onOpenChange?.(next);
+      if (!isControlled) setUncontrolledOpen(next);
+    },
+    [isControlled, onOpenChange],
+  );
+
   const triggerRef = useRef<HTMLElement | null>(null);
   const reactId = useId();
   const contentId = `dropdown-menu-${reactId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+
+  const [openIntent, setOpenIntent] = useState<'first' | 'last' | null>(null);
 
   const itemsRef = useRef<RegisteredItem[]>([]);
   const [activeIndex, setActiveIndex] = useState<number>(-1);
