@@ -119,21 +119,23 @@ export function DropdownMenuDemo() {
   </DropdownMenu.Content>
 </DropdownMenu>`}
       >
-        <DropdownMenu>
-          <DropdownMenu.Trigger>
-            <Button variant="secondary">Manage ▾</Button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content>
-            <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
-            <DropdownMenu.Item onSelect={() => {}} shortcut="⌘D">
-              Duplicate
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator />
-            <DropdownMenu.Item onSelect={() => {}} tone="danger">
-              Delete
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu>
+        <Cluster gap="sm">
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button variant="secondary">Manage ▾</Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}} shortcut="⌘D">
+                Duplicate
+              </DropdownMenu.Item>
+              <DropdownMenu.Separator />
+              <DropdownMenu.Item onSelect={() => {}} tone="danger">
+                Delete
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        </Cluster>
       </Example>
 
       <Example
@@ -151,17 +153,19 @@ export function DropdownMenuDemo() {
   </DropdownMenu.Content>
 </DropdownMenu>`}
       >
-        <DropdownMenu>
-          <DropdownMenu.Trigger>
-            <Button variant="secondary">Actions ▾</Button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content>
-            <DropdownMenu.Item onSelect={() => {}}>Available</DropdownMenu.Item>
-            <DropdownMenu.Item onSelect={() => {}} disabled>
-              Not yet permitted
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu>
+        <Cluster gap="sm">
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button variant="secondary">Actions ▾</Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onSelect={() => {}}>Available</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}} disabled>
+                Not yet permitted
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        </Cluster>
       </Example>
     </DemoLayout>
   );
