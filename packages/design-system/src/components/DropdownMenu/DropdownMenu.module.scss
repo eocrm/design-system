@@ -59,6 +59,10 @@
 
 // Hover/focus on a checked item keeps the info tint instead of falling through
 // to the neutral bg-muted hover. The left accent remains visible.
+// NOTE: `tone="danger"` is not a valid prop on CheckboxItem or RadioItem
+// today. If ever added, re-examine this rule's source-order relationship
+// with `.item[data-tone='danger']:hover` — equal specificity means later
+// rule wins, and this rule would silently suppress the danger color.
 .item[aria-checked='true']:hover:not([aria-disabled='true']),
 .item[aria-checked='true']:focus:not([aria-disabled='true']) {
   background: var(--color-badge-info-bg);
