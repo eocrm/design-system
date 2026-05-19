@@ -599,10 +599,7 @@ describe('DropdownMenu — Item variants', () => {
       </DropdownMenu>,
     );
     await user.click(screen.getByRole('button', { name: 'Open' }));
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute(
-      'data-tone',
-      'danger',
-    );
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute('data-tone', 'danger');
   });
 
   it('renders icon in leading slot before label', async () => {

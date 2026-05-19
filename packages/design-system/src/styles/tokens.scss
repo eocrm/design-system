@@ -113,6 +113,11 @@
   --size-badge-dot: 6px;
   --size-chip: 18px;
 
+  // Minimum width for popover-shaped surfaces (DropdownMenu, future Tooltip,
+  // Popover). Picks a value wide enough for short labels without overflowing
+  // trigger-tight clusters.
+  --size-dropdown-min-width: 160px;
+
   // Border weights — emphasis = tab underline/focus rings; strong = accent
   // stripes on cards or other "this stands out" visuals.
   --border-width: 1px;

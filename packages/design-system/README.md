@@ -32,7 +32,17 @@ npm install @eocrm/design-system
 import '@eocrm/design-system/styles/global.scss';
 
 // Anywhere:
-import { Avatar, Badge, Button, Card, Cluster, DropdownMenu, Input, Stack, Tabs } from '@eocrm/design-system';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Cluster,
+  DropdownMenu,
+  Input,
+  Stack,
+  Tabs,
+} from '@eocrm/design-system';
 ```
 
 ---
@@ -64,16 +74,16 @@ If TypeScript can't resolve types, set `moduleResolution: "bundler"` (or `"node1
 
 ## Components
 
-| Component   | One-line                   | Detail                    |
-| ----------- | -------------------------- | ------------------------- |
-| `<Button>`  | Action triggers            | Hover in editor for JSDoc |
-| `<Input>`   | Single-line text           | Hover in editor for JSDoc |
-| `<Card>`    | Bordered content container | Hover in editor for JSDoc |
-| `<Stack>`   | Vertical layout primitive  | Hover in editor for JSDoc |
-| `<Cluster>` | Horizontal layout (wraps)  | Hover in editor for JSDoc |
-| `<Avatar>`  | Profile circle             | Hover in editor for JSDoc |
-| `<Badge>`   | Status / category pill     | Hover in editor for JSDoc |
-| `<Tabs>`    | Horizontal tab strip       | Hover in editor for JSDoc |
+| Component        | One-line                   | Detail                    |
+| ---------------- | -------------------------- | ------------------------- |
+| `<Button>`       | Action triggers            | Hover in editor for JSDoc |
+| `<Input>`        | Single-line text           | Hover in editor for JSDoc |
+| `<Card>`         | Bordered content container | Hover in editor for JSDoc |
+| `<Stack>`        | Vertical layout primitive  | Hover in editor for JSDoc |
+| `<Cluster>`      | Horizontal layout (wraps)  | Hover in editor for JSDoc |
+| `<Avatar>`       | Profile circle             | Hover in editor for JSDoc |
+| `<Badge>`        | Status / category pill     | Hover in editor for JSDoc |
+| `<Tabs>`         | Horizontal tab strip       | Hover in editor for JSDoc |
 | `<DropdownMenu>` | Action menu from a trigger | Hover in editor for JSDoc |
 
 Every prop and variant is JSDoc'd at the source. For a quick reference + canonical snippets + tokens table + anti-patterns, see [AGENTS.md](./AGENTS.md).
