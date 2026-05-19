@@ -22,7 +22,7 @@ import { mergeRefs } from './utils';
 import styles from './DropdownMenu.module.scss';
 
 /** Which side of the trigger the menu prefers. Floating UI auto-flips if it doesn't fit. */
-export type DropdownMenuSide = 'top' | 'bottom';
+export type DropdownMenuSide = 'top' | 'bottom' | 'left' | 'right';
 /** Which edge of the menu aligns to the corresponding trigger edge. */
 export type DropdownMenuAlign = 'start' | 'center' | 'end';
 

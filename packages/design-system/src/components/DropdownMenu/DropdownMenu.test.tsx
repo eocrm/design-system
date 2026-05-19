@@ -716,6 +716,28 @@ describe('DropdownMenu — Group and Label', () => {
     expect(label.id).toBeTruthy();
   });
 
+  it('forwards refs on Group and Label', async () => {
+    const user = userEvent.setup();
+    const groupRef = createRef<HTMLDivElement>();
+    const labelRef = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Group ref={groupRef}>
+            <DropdownMenu.Label ref={labelRef}>Sort by</DropdownMenu.Label>
+            <DropdownMenu.Item onSelect={() => {}}>Name</DropdownMenu.Item>
+          </DropdownMenu.Group>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(groupRef.current).toBeInstanceOf(HTMLDivElement);
+    expect(labelRef.current).toBeInstanceOf(HTMLDivElement);
+  });
+
   it('Label outside a Group renders without aria id wiring', async () => {
     const user = userEvent.setup();
     render(
@@ -914,6 +936,29 @@ describe('DropdownMenu — RadioGroup and RadioItem', () => {
     expect(screen.getByRole('menuitemradio', { name: 'Name' }).textContent).not.toContain('●');
   });
 
+  it('forwards refs on RadioGroup and RadioItem', async () => {
+    const user = userEvent.setup();
+    const groupRef = createRef<HTMLDivElement>();
+    const itemRef = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup ref={groupRef} value="name" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem ref={itemRef} value="name">
+              Name
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(groupRef.current).toBeInstanceOf(HTMLDivElement);
+    expect(itemRef.current).toBeInstanceOf(HTMLDivElement);
+  });
+
   it('RadioItem outside a RadioGroup throws a helpful error', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // open={true} so Content renders immediately and RadioItem mounts synchronously.
@@ -1092,6 +1137,25 @@ describe('DropdownMenu — CheckboxItem', () => {
     ).not.toContain('✓');
   });
 
+  it('forwards refs to the menuitemcheckbox div', async () => {
+    const user = userEvent.setup();
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem ref={ref} checked={false} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
   it('renders a custom ItemIndicator when provided and checked', async () => {
     const user = userEvent.setup();
     render(
@@ -1267,6 +1331,31 @@ describe('DropdownMenu — SubContent', () => {
     expect(screen.queryAllByRole('menu')).toHaveLength(1);
   });
 
+  it('SubContent opens to the right of SubTrigger by default', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    // Two open menus: root (data-side="bottom"), sub (data-side="right").
+    const menus = screen.getAllByRole('menu');
+    const subMenu = menus[1];
+    expect(subMenu).toHaveAttribute('data-side', 'right');
+  });
+
   it('clicking far outside closes the entire chain', async () => {
     const user = userEvent.setup();
     render(
@@ -1292,6 +1381,33 @@ describe('DropdownMenu — SubContent', () => {
     expect(screen.getAllByRole('menu')).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: 'Outside' }));
     expect(screen.queryAllByRole('menu')).toHaveLength(0);
+  });
+});
+
+describe('DropdownMenu — SubTrigger and SubContent forwardRef', () => {
+  it('forwards refs on SubTrigger and SubContent', async () => {
+    const user = userEvent.setup();
+    const triggerRef = createRef<HTMLDivElement>();
+    const contentRef = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger ref={triggerRef}>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent ref={contentRef}>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(triggerRef.current).toBeInstanceOf(HTMLDivElement);
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    expect(contentRef.current).toBeInstanceOf(HTMLDivElement);
   });
 });
 

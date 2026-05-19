@@ -342,7 +342,7 @@ export type DropdownMenuSubContentProps = DropdownMenuContentProps;
  * </DropdownMenu.Sub>
  */
 export const SubContent = forwardRef<HTMLDivElement, DropdownMenuSubContentProps>(
-  function SubContent(props, ref) {
+  function SubContent({ side = 'right', ...props }, ref) {
     const hoverCtx = useSubHoverContext('SubContent');
     const subCtx = useDropdownMenuContext('SubContent');
 
@@ -366,6 +366,7 @@ export const SubContent = forwardRef<HTMLDivElement, DropdownMenuSubContentProps
     return (
       <Content
         ref={ref}
+        side={side}
         {...props}
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
