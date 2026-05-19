@@ -1,4 +1,4 @@
-import { configure, render, screen } from '@testing-library/react';
+import { act, configure, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
@@ -1276,5 +1276,80 @@ describe('DropdownMenu — SubContent', () => {
     expect(screen.getAllByRole('menu')).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: 'Outside' }));
     expect(screen.queryAllByRole('menu')).toHaveLength(0);
+  });
+});
+
+describe('DropdownMenu — Submenu hover', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    configure({ asyncWrapper: async (cb) => cb() });
+  });
+
+  function renderNested() {
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('hovering SubTrigger opens the sub after 100ms', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const subTrigger = screen.getByRole('menuitem', { name: /Export/ });
+    await user.hover(subTrigger);
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
+    act(() => vi.advanceTimersByTime(100));
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toBeInTheDocument();
+  });
+
+  it('hovering away from SubTrigger cancels pending open', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const subTrigger = screen.getByRole('menuitem', { name: /Export/ });
+    await user.hover(subTrigger);
+    act(() => vi.advanceTimersByTime(50)); // before 100ms threshold
+    await user.unhover(subTrigger);
+    act(() => vi.advanceTimersByTime(100)); // past original threshold
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
+  });
+
+  it('hovering away from open sub closes it after 200ms', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const subTrigger = screen.getByRole('menuitem', { name: /Export/ });
+    await user.hover(subTrigger);
+    act(() => vi.advanceTimersByTime(100)); // sub opens
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toBeInTheDocument();
+    await user.unhover(subTrigger);
+    act(() => vi.advanceTimersByTime(100)); // before 200ms close threshold
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(100)); // past 200ms total
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
   });
 });

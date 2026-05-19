@@ -1,4 +1,5 @@
 import {
+  createContext,
   forwardRef,
   useCallback,
   useContext,
@@ -22,6 +23,20 @@ import {
 import { mergeRefs, sanitizeId } from './utils';
 import styles from './DropdownMenu.module.scss';
 import { Content, type DropdownMenuContentProps } from './Content';
+
+interface SubHoverContextValue {
+  closeTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
+}
+
+const SubHoverContext = createContext<SubHoverContextValue | null>(null);
+
+function useSubHoverContext(component: string) {
+  const ctx = useContext(SubHoverContext);
+  if (!ctx) {
+    throw new Error(`<DropdownMenu.${component}> must be used inside <DropdownMenu.Sub>`);
+  }
+  return ctx;
+}
 
 export interface DropdownMenuSubProps {
   /** The submenu trigger and content to render. */
@@ -75,6 +90,8 @@ export function Sub({
     [isControlled, onOpenChange],
   );
 
+  const sharedCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const triggerRef = useRef<HTMLElement | null>(null);
   const reactId = useId();
   const contentId = `dropdown-menu-sub-${sanitizeId(reactId)}`;
@@ -120,7 +137,9 @@ export function Sub({
 
   return (
     <SubParentContext.Provider value={parentCtx}>
-      <DropdownMenuContext.Provider value={value}>{children}</DropdownMenuContext.Provider>
+      <SubHoverContext.Provider value={{ closeTimerRef: sharedCloseTimerRef }}>
+        <DropdownMenuContext.Provider value={value}>{children}</DropdownMenuContext.Provider>
+      </SubHoverContext.Provider>
     </SubParentContext.Provider>
   );
 }
@@ -157,8 +176,11 @@ export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps
     if (!parentCtx) {
       throw new Error('<DropdownMenu.SubTrigger> must be used inside <DropdownMenu.Sub>');
     }
+    const hoverCtx = useSubHoverContext('SubTrigger');
+    const closeTimerRef = hoverCtx.closeTimerRef;
 
     const triggerRefLocal = useRef<HTMLDivElement | null>(null);
+    const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const id = useId();
     const labelText = typeof children === 'string' ? children : '';
 
@@ -186,6 +208,41 @@ export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps
       subCtx.triggerRef.current = triggerRefLocal.current;
     });
 
+    // Cleanup on unmount.
+    useEffect(() => {
+      return () => {
+        if (openTimerRef.current) clearTimeout(openTimerRef.current);
+        if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      };
+    }, [closeTimerRef]);
+
+    const handlePointerEnter = useCallback(() => {
+      if (disabled) return;
+      // Cancel any pending close.
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+      if (subCtx.open) return;
+      openTimerRef.current = setTimeout(() => {
+        subCtx.setOpen(true);
+        openTimerRef.current = null;
+      }, 100);
+    }, [disabled, subCtx, closeTimerRef]);
+
+    const handlePointerLeave = useCallback(() => {
+      // Cancel pending open.
+      if (openTimerRef.current) {
+        clearTimeout(openTimerRef.current);
+        openTimerRef.current = null;
+      }
+      if (!subCtx.open) return;
+      closeTimerRef.current = setTimeout(() => {
+        subCtx.setOpen(false);
+        closeTimerRef.current = null;
+      }, 200);
+    }, [subCtx, closeTimerRef]);
+
     const handleClick = (_e: MouseEvent) => {
       if (disabled) return;
       subCtx.setOpen(true);
@@ -204,6 +261,8 @@ export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps
         data-state={subCtx.open ? 'open' : 'closed'}
         className={clsx(styles.item, styles.subTrigger, className)}
         onClick={handleClick}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
       >
         {icon !== undefined && <span className={styles.icon}>{icon}</span>}
         <span className={styles.itemLabel}>{children}</span>
@@ -225,6 +284,33 @@ export type DropdownMenuSubContentProps = DropdownMenuContentProps;
  */
 export const SubContent = forwardRef<HTMLDivElement, DropdownMenuSubContentProps>(
   function SubContent(props, ref) {
-    return <Content ref={ref} {...props} />;
+    const hoverCtx = useSubHoverContext('SubContent');
+    const subCtx = useDropdownMenuContext('SubContent');
+
+    const handlePointerEnter = useCallback(() => {
+      // Cancel pending close — mouse is back inside the chain.
+      if (hoverCtx.closeTimerRef.current) {
+        clearTimeout(hoverCtx.closeTimerRef.current);
+        hoverCtx.closeTimerRef.current = null;
+      }
+    }, [hoverCtx]);
+
+    const handlePointerLeave = useCallback(() => {
+      if (!subCtx.open) return;
+      if (hoverCtx.closeTimerRef.current) clearTimeout(hoverCtx.closeTimerRef.current);
+      hoverCtx.closeTimerRef.current = setTimeout(() => {
+        subCtx.setOpen(false);
+        hoverCtx.closeTimerRef.current = null;
+      }, 200);
+    }, [hoverCtx, subCtx]);
+
+    return (
+      <Content
+        ref={ref}
+        {...props}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
+      />
+    );
   },
 );
