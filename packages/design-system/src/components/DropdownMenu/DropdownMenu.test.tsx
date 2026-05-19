@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import { createRef, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
 
 beforeEach(() => {
@@ -368,5 +368,96 @@ describe('DropdownMenu — Trigger keyboard open', () => {
     trigger.focus();
     await user.keyboard('{ArrowUp}');
     expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+});
+
+describe('DropdownMenu — item navigation', () => {
+  function renderMenu(extra?: ReactNode) {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Alpha</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}} disabled>
+            Beta
+          </DropdownMenu.Item>
+          <DropdownMenu.Separator />
+          <DropdownMenu.Item onSelect={() => {}}>Gamma</DropdownMenu.Item>
+          {extra}
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('first enabled item is active on open via ArrowDown', async () => {
+    const { user } = renderMenu();
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    trigger.focus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('menuitem', { name: 'Alpha' })).toHaveFocus();
+  });
+
+  it('last enabled item is active on open via ArrowUp', async () => {
+    const { user } = renderMenu();
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    trigger.focus();
+    await user.keyboard('{ArrowUp}');
+    expect(screen.getByRole('menuitem', { name: 'Gamma' })).toHaveFocus();
+  });
+
+  it('ArrowDown skips disabled items and separators', async () => {
+    const { user } = renderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}'); // Alpha
+    await user.keyboard('{ArrowDown}'); // skip Beta (disabled), skip Separator → Gamma
+    expect(screen.getByRole('menuitem', { name: 'Gamma' })).toHaveFocus();
+  });
+
+  it('ArrowDown wraps from last enabled to first enabled', async () => {
+    const { user } = renderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowUp}'); // open at last → Gamma
+    await user.keyboard('{ArrowDown}'); // wrap → Alpha
+    expect(screen.getByRole('menuitem', { name: 'Alpha' })).toHaveFocus();
+  });
+
+  it('ArrowUp wraps from first enabled to last enabled', async () => {
+    const { user } = renderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}'); // Alpha
+    await user.keyboard('{ArrowUp}'); // wrap → Gamma
+    expect(screen.getByRole('menuitem', { name: 'Gamma' })).toHaveFocus();
+  });
+
+  it('Home jumps to first enabled item', async () => {
+    const { user } = renderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowUp}'); // Gamma
+    await user.keyboard('{Home}'); // → Alpha
+    expect(screen.getByRole('menuitem', { name: 'Alpha' })).toHaveFocus();
+  });
+
+  it('End jumps to last enabled item', async () => {
+    const { user } = renderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}'); // Alpha
+    await user.keyboard('{End}'); // → Gamma
+    expect(screen.getByRole('menuitem', { name: 'Gamma' })).toHaveFocus();
+  });
+
+  it('only the active item has tabIndex=0', async () => {
+    const { user } = renderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}');
+    const alpha = screen.getByRole('menuitem', { name: 'Alpha' });
+    const beta = screen.getByRole('menuitem', { name: 'Beta' });
+    const gamma = screen.getByRole('menuitem', { name: 'Gamma' });
+    expect(alpha.tabIndex).toBe(0);
+    expect(beta.tabIndex).toBe(-1);
+    expect(gamma.tabIndex).toBe(-1);
   });
 });

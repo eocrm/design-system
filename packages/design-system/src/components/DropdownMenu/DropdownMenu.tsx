@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type HTMLAttributes,
@@ -30,6 +31,13 @@ import {
 import clsx from 'clsx';
 import styles from './DropdownMenu.module.scss';
 
+interface RegisteredItem {
+  id: string;
+  ref: React.RefObject<HTMLDivElement | null>;
+  disabled: boolean;
+  label: string;
+}
+
 interface DropdownMenuContextValue {
   open: boolean;
   setOpen: (next: boolean) => void;
@@ -38,6 +46,10 @@ interface DropdownMenuContextValue {
   /** Where the focus should land when Content registers its first item. Null when no intent is pending. */
   openIntent: 'first' | 'last' | null;
   setOpenIntent: (intent: 'first' | 'last' | null) => void;
+  registerItem: (item: RegisteredItem) => () => void;
+  itemsRef: React.MutableRefObject<RegisteredItem[]>;
+  activeIndex: number;
+  setActiveIndex: (i: number) => void;
 }
 
 const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(null);
@@ -79,6 +91,26 @@ function DropdownMenuRoot({ children }: DropdownMenuProps) {
   const reactId = useId();
   const contentId = `dropdown-menu-${reactId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 
+  const itemsRef = useRef<RegisteredItem[]>([]);
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
+
+  const registerItem = useCallback((item: RegisteredItem) => {
+    if (!itemsRef.current.some((x) => x.id === item.id)) {
+      itemsRef.current.push(item);
+    }
+    return () => {
+      itemsRef.current = itemsRef.current.filter((x) => x.id !== item.id);
+    };
+  }, []);
+
+  // Reset registry indicator when menu closes. The registry array itself is
+  // cleared by item unmount cleanups.
+  useEffect(() => {
+    if (!open) {
+      setActiveIndex(-1);
+    }
+  }, [open]);
+
   const value: DropdownMenuContextValue = {
     open,
     setOpen,
@@ -86,6 +118,10 @@ function DropdownMenuRoot({ children }: DropdownMenuProps) {
     contentId,
     openIntent,
     setOpenIntent,
+    registerItem,
+    itemsRef,
+    activeIndex,
+    setActiveIndex,
   };
 
   return <DropdownMenuContext.Provider value={value}>{children}</DropdownMenuContext.Provider>;
@@ -243,6 +279,26 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [ctx, refs]);
 
+  // When the menu opens, set activeIndex from openIntent and focus the active item.
+  // useLayoutEffect (not useEffect) so this runs after Items' layout effects
+  // have populated itemsRef.current (layout effects fire bottom-up: children first).
+  useLayoutEffect(() => {
+    if (!ctx.open) return;
+    const enabled = ctx.itemsRef.current.filter((x) => !x.disabled);
+    if (enabled.length === 0) return;
+    const target =
+      ctx.openIntent === 'last' ? enabled[enabled.length - 1] : enabled[0];
+    const idx = ctx.itemsRef.current.findIndex((x) => x.id === target.id);
+    ctx.setActiveIndex(idx);
+    // Focus on next microtask so the ref has attached and the re-render with
+    // updated tabIndex has committed.
+    queueMicrotask(() => target.ref.current?.focus());
+    ctx.setOpenIntent(null);
+    // Intentionally depend only on ctx.open so this fires exactly when the
+    // menu transitions to open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx.open]);
+
   const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -257,6 +313,47 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
       ctx.setOpen(false);
       ctx.triggerRef.current?.focus();
       return;
+    }
+
+    const items = ctx.itemsRef.current;
+    const enabledIndices = items
+      .map((it, i) => (it.disabled ? -1 : i))
+      .filter((i) => i !== -1);
+    if (enabledIndices.length === 0) return;
+
+    const currentPos = enabledIndices.indexOf(ctx.activeIndex);
+
+    const focusAt = (registryIndex: number) => {
+      ctx.setActiveIndex(registryIndex);
+      queueMicrotask(() => items[registryIndex].ref.current?.focus());
+    };
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const nextPos = currentPos === -1 ? 0 : (currentPos + 1) % enabledIndices.length;
+        focusAt(enabledIndices[nextPos]);
+        return;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const prevPos =
+          currentPos === -1
+            ? enabledIndices.length - 1
+            : (currentPos - 1 + enabledIndices.length) % enabledIndices.length;
+        focusAt(enabledIndices[prevPos]);
+        return;
+      }
+      case 'Home': {
+        e.preventDefault();
+        focusAt(enabledIndices[0]);
+        return;
+      }
+      case 'End': {
+        e.preventDefault();
+        focusAt(enabledIndices[enabledIndices.length - 1]);
+        return;
+      }
     }
   };
 
@@ -292,9 +389,24 @@ export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElemen
 
 const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
   { onSelect, tone = 'default', icon, shortcut, disabled = false, className, children, ...rest },
-  ref,
+  forwardedRef,
 ) {
   const ctx = useDropdownMenuContext('Item');
+  const itemRef = useRef<HTMLDivElement | null>(null);
+  const id = useId();
+
+  // String children become the typeahead label. Non-string fall back to '';
+  // typeahead won't match those, which is acceptable.
+  const label = typeof children === 'string' ? children : '';
+
+  // useLayoutEffect (not useEffect) so item registration completes BEFORE
+  // Content's parent useLayoutEffect runs to set activeIndex on open.
+  useLayoutEffect(() => {
+    return ctx.registerItem({ id, ref: itemRef, disabled, label });
+  }, [ctx, id, disabled, label]);
+
+  const index = ctx.itemsRef.current.findIndex((x) => x.id === id);
+  const isActive = index !== -1 && index === ctx.activeIndex;
 
   const handleClick = (_e: MouseEvent) => {
     if (disabled) return;
@@ -304,12 +416,10 @@ const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
   };
 
   return (
-    // {...rest} last so consumer can override non-semantic props; role/aria-disabled are
-    // set explicitly after the spread to preserve the ARIA contract.
     <div
-      ref={ref}
+      ref={mergeRefs<HTMLDivElement>(itemRef, forwardedRef)}
       role="menuitem"
-      tabIndex={-1}
+      tabIndex={isActive ? 0 : -1}
       aria-disabled={disabled || undefined}
       data-tone={tone}
       className={clsx(styles.item, className)}
