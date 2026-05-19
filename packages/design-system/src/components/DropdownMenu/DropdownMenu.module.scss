@@ -1,3 +1,8 @@
+// `.content` carries both the visual chrome and the open-only entrance
+// animation. The animation half (transition + @starting-style + per-side
+// transform-origin rules below) relies on Floating UI being in `transform:
+// false` mode (see Content.tsx) so the CSS `transform` property is free for
+// the scale/translate entrance without clobbering placement.
 .content {
   display: flex;
   flex-direction: column;
@@ -10,6 +15,18 @@
   box-shadow: var(--shadow-md);
   z-index: var(--z-dropdown);
   outline: none;
+  transform: none;
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+
+  // Open-only entrance — Content unmounts on close so there is no exit.
+  // @starting-style only applies while a transition is active; the
+  // prefers-reduced-motion override below disables the transition, which
+  // neutralises @starting-style (panel renders directly at its rest style).
+  @starting-style {
+    opacity: var(--opacity-hidden);
+  }
 }
 
 .item {
@@ -155,4 +172,46 @@
 
 .subTrigger[data-state='open'] {
   background: var(--color-bg-muted);
+}
+
+// --- Open-only entrance: per-side origin + starting-transform -------------
+// Each data-side variant sets transform-origin so the panel appears to grow
+// toward the trigger, and a 4px directional translate in @starting-style for
+// a subtle slide cue layered on top of the scale-fade declared on .content.
+.content[data-side='bottom'] {
+  transform-origin: top center;
+
+  @starting-style {
+    transform: scale(0.96) translateY(-4px);
+  }
+}
+
+.content[data-side='top'] {
+  transform-origin: bottom center;
+
+  @starting-style {
+    transform: scale(0.96) translateY(4px);
+  }
+}
+
+.content[data-side='right'] {
+  transform-origin: left center;
+
+  @starting-style {
+    transform: scale(0.96) translateX(-4px);
+  }
+}
+
+.content[data-side='left'] {
+  transform-origin: right center;
+
+  @starting-style {
+    transform: scale(0.96) translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    transition: none;
+  }
 }
