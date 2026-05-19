@@ -84,6 +84,12 @@
   letter-spacing: 0.05em;
 }
 
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .navItem {
   display: flex;
   align-items: center;

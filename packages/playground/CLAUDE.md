@@ -16,7 +16,7 @@ The cross-link is registry-driven and bidirectional: every mockup page lists "Co
 
 Routes: `/mockups/*` for mockups, `/components/*` for component demos. Root `/` redirects to `/mockups`.
 
-The sidebar rail is section-contextual: when you're under `/mockups/*` it shows only the Mockups items; under `/components/*` it shows only the Components items. A single switch link pinned to the bottom of the rail jumps between sections.
+The sidebar rail is section-contextual: when you're under `/mockups/*` it shows only the Mockups items; under `/components/*` it shows only the Components items, grouped by category (Layout, Forms, Display, Navigation). A single switch link pinned to the bottom of the rail jumps between sections.
 
 ## Hard rules
 
@@ -78,7 +78,7 @@ export function <Name>Demo() {
 For a new demo page to be reachable:
 
 1. `src/App.tsx` — add a `<Route path="/components/<name>" element={<<Name>Demo />} />`
-2. `src/layout/AppShell/AppShell.tsx` — add to the `componentItems` array (the sidebar array for Components)
+2. `src/layout/AppShell/AppShell.tsx` — add the item to the appropriate group in `componentGroups` (`Layout`, `Forms`, `Display`, `Navigation`). If none of the existing groups fit, add a new group rather than stuffing the item somewhere it doesn't belong.
 3. `src/pages/components/ComponentsIndex.tsx` — add a card to the overview grid with a small live preview
 4. `src/pages/mockups/registry.ts` — if the new component is used by any mockup, add its name to that mockup's `usesComponents` list (and extend the `ComponentName` union if it's a brand-new component name)
 

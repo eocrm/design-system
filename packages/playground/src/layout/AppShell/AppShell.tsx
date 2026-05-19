@@ -19,6 +19,7 @@ import {
   PanelTop,
   Layers,
   ArrowRight,
+  type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
@@ -32,24 +33,69 @@ const mockupItems = [
   { to: '/mockups/members', label: 'Members', icon: UserCog, end: false },
 ];
 
-const componentItems = [
-  { to: '/components', label: 'Overview', icon: Component, end: true },
-  { to: '/components/button', label: 'Button', icon: MousePointer2, end: false },
-  { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
-  { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
-  { to: '/components/stack', label: 'Stack', icon: Rows3, end: false },
-  { to: '/components/cluster', label: 'Cluster', icon: Columns3, end: false },
-  { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
-  { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
-  { to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false },
+const componentOverview = {
+  to: '/components',
+  label: 'Overview',
+  icon: Component,
+  end: true,
+};
+
+const componentGroups = [
+  {
+    heading: 'Layout',
+    items: [
+      { to: '/components/stack', label: 'Stack', icon: Rows3, end: false },
+      { to: '/components/cluster', label: 'Cluster', icon: Columns3, end: false },
+      { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
+    ],
+  },
+  {
+    heading: 'Forms',
+    items: [
+      { to: '/components/button', label: 'Button', icon: MousePointer2, end: false },
+      { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
+    ],
+  },
+  {
+    heading: 'Display',
+    items: [
+      { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
+      { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
+    ],
+  },
+  {
+    heading: 'Navigation',
+    items: [{ to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false }],
+  },
 ];
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  end: boolean;
+}
+
+function renderItem({ to, label, icon: Icon, end }: NavItem) {
+  return (
+    <NavLink
+      key={to}
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
+      }
+    >
+      <Icon size={16} />
+      {label}
+    </NavLink>
+  );
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const inComponents = pathname.startsWith('/components');
 
-  const activeItems = inComponents ? componentItems : mockupItems;
-  const sectionLabel = inComponents ? 'Components' : 'Mockups';
   const switchLink = inComponents
     ? { to: '/mockups', label: 'Mockups', icon: Layers }
     : { to: '/components', label: 'Components', icon: Component };
@@ -66,20 +112,22 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className={styles.nav}>
-          <div className={styles.navSection}>{sectionLabel}</div>
-          {activeItems.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
-              }
-            >
-              <Icon size={16} />
-              {label}
-            </NavLink>
-          ))}
+          {inComponents ? (
+            <>
+              {renderItem(componentOverview)}
+              {componentGroups.map(({ heading, items }) => (
+                <div key={heading} className={styles.navGroup}>
+                  <div className={styles.navSection}>{heading}</div>
+                  {items.map(renderItem)}
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className={styles.navSection}>Mockups</div>
+              {mockupItems.map(renderItem)}
+            </>
+          )}
         </nav>
 
         <div className={styles.navFooter}>
