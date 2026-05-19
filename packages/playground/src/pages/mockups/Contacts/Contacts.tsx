@@ -66,7 +66,7 @@ export function Contacts() {
                   <Cluster gap="sm" align="center" wrap={false}>
                     <Avatar name={c.name} size="sm" />
                     <Stack gap="xs">
-                      <Link to={`/contacts/${c.id}`} className={styles.nameLink}>
+                      <Link to={`/mockups/contacts/${c.id}`} className={styles.nameLink}>
                         {c.name}
                       </Link>
                       <span className={styles.meta}>{c.title}</span>
@@ -90,7 +90,7 @@ export function Contacts() {
                 </td>
                 <td className={styles.meta}>{c.lastActivity}</td>
                 <td className={styles.rowActions}>
-                  <Link to={`/contacts/${c.id}`} className={styles.viewLink}>
+                  <Link to={`/mockups/contacts/${c.id}`} className={styles.viewLink}>
                     View
                   </Link>
                 </td>

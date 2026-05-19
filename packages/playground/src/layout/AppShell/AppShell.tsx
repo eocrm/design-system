@@ -5,7 +5,6 @@ import {
   KanbanSquare,
   Users,
   UserCog,
-  Settings,
   Search,
   Bell,
   Plus,
@@ -23,24 +22,24 @@ import { Avatar } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/deals', label: 'Deals', icon: KanbanSquare, end: false },
-  { to: '/contacts', label: 'Contacts', icon: Users, end: false },
+const mockupItems = [
+  { to: '/mockups', label: 'Overview', icon: LayoutDashboard, end: true },
+  { to: '/mockups/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/mockups/deals', label: 'Deals', icon: KanbanSquare, end: false },
+  { to: '/mockups/contacts', label: 'Contacts', icon: Users, end: false },
+  { to: '/mockups/members', label: 'Members', icon: UserCog, end: false },
 ];
 
-const settingsItems = [{ to: '/members', label: 'Members', icon: UserCog, end: false }];
-
-const demoItems = [
-  { to: '/demo', label: 'Overview', icon: Component, end: true },
-  { to: '/demo/button', label: 'Button', icon: MousePointer2, end: false },
-  { to: '/demo/input', label: 'Input', icon: TextCursorInput, end: false },
-  { to: '/demo/card', label: 'Card', icon: RectangleHorizontal, end: false },
-  { to: '/demo/stack', label: 'Stack', icon: Rows3, end: false },
-  { to: '/demo/cluster', label: 'Cluster', icon: Columns3, end: false },
-  { to: '/demo/avatar', label: 'Avatar', icon: CircleUser, end: false },
-  { to: '/demo/badge', label: 'Badge', icon: Tag, end: false },
-  { to: '/demo/tabs', label: 'Tabs', icon: PanelTop, end: false },
+const componentItems = [
+  { to: '/components', label: 'Overview', icon: Component, end: true },
+  { to: '/components/button', label: 'Button', icon: MousePointer2, end: false },
+  { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
+  { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
+  { to: '/components/stack', label: 'Stack', icon: Rows3, end: false },
+  { to: '/components/cluster', label: 'Cluster', icon: Columns3, end: false },
+  { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
+  { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
+  { to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -56,8 +55,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className={styles.nav}>
-          <div className={styles.navSection}>Workspace</div>
-          {navItems.map(({ to, label, icon: Icon, end }) => (
+          <div className={styles.navSection}>Mockups</div>
+          {mockupItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -71,8 +70,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
 
-          <div className={styles.navSection}>Demo</div>
-          {demoItems.map(({ to, label, icon: Icon, end }) => (
+          <div className={styles.navSection}>Components</div>
+          {componentItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -85,25 +84,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               {label}
             </NavLink>
           ))}
-
-          <div className={styles.navSection}>Settings</div>
-          {settingsItems.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
-              }
-            >
-              <Icon size={16} />
-              {label}
-            </NavLink>
-          ))}
-          <a className={styles.navItem} href="#" onClick={(e) => e.preventDefault()}>
-            <Settings size={16} />
-            Preferences
-          </a>
         </nav>
       </aside>
 

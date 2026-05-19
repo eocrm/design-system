@@ -12,7 +12,7 @@ import styles from './ComponentsIndex.module.scss';
 
 const items: { to: string; name: string; description: string; preview: React.ReactNode }[] = [
   {
-    to: '/demo/button',
+    to: '/components/button',
     name: 'Button',
     description: 'Action triggers with variants and sizes.',
     preview: (
@@ -25,7 +25,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
-    to: '/demo/input',
+    to: '/components/input',
     name: 'Input',
     description: 'Single-line text field with focus + invalid states.',
     preview: (
@@ -35,7 +35,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
-    to: '/demo/card',
+    to: '/components/card',
     name: 'Card',
     description: 'Bordered container that groups related content.',
     preview: (
@@ -49,7 +49,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
-    to: '/demo/stack',
+    to: '/components/stack',
     name: 'Stack',
     description: 'Vertical layout with consistent gap.',
     preview: (
@@ -61,7 +61,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
-    to: '/demo/cluster',
+    to: '/components/cluster',
     name: 'Cluster',
     description: 'Horizontal wrapping layout with gap + alignment.',
     preview: (
@@ -74,7 +74,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
-    to: '/demo/avatar',
+    to: '/components/avatar',
     name: 'Avatar',
     description: 'Profile circle with image or auto-colored initials.',
     preview: (
@@ -86,7 +86,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
-    to: '/demo/badge',
+    to: '/components/badge',
     name: 'Badge',
     description: 'Small status/category pill with semantic tones.',
     preview: (
@@ -98,7 +98,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
-    to: '/demo/tabs',
+    to: '/components/tabs',
     name: 'Tabs',
     description: 'Horizontal tab strip with optional count chips.',
     preview: (
@@ -120,7 +120,7 @@ export function ComponentsIndex() {
   return (
     <Stack gap="lg">
       <header>
-        <span className={styles.eyebrow}>Demo</span>
+        <span className={styles.eyebrow}>Components</span>
         <h1 className={styles.title}>Component library</h1>
         <p className={styles.description}>
           Every component shipped with this design system. Each page shows the live component, the

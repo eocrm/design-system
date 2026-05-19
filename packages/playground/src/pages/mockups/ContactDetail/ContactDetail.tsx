@@ -23,12 +23,12 @@ export function ContactDetail() {
   const contact = id ? getContact(id) : undefined;
   const [activeTab, setActiveTab] = useState('overview');
 
-  if (!contact) return <Navigate to="/contacts" replace />;
+  if (!contact) return <Navigate to="/mockups/contacts" replace />;
 
   return (
     <Stack gap="lg">
       <nav className={styles.breadcrumb}>
-        <Link to="/contacts">Contacts</Link>
+        <Link to="/mockups/contacts">Contacts</Link>
         <ChevronRight size={14} aria-hidden />
         <span>{contact.name}</span>
       </nav>
