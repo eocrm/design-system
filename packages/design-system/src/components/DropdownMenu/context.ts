@@ -35,3 +35,9 @@ export function useDropdownMenuContext(component: string): DropdownMenuContextVa
   }
   return ctx;
 }
+
+export interface GroupContextValue {
+  labelId: string;
+}
+
+export const GroupContext = createContext<GroupContextValue | null>(null);

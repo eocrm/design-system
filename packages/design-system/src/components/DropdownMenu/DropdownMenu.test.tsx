@@ -674,6 +674,67 @@ describe('DropdownMenu — Item variants', () => {
   });
 });
 
+describe('DropdownMenu — Group and Label', () => {
+  it('Label renders as a non-interactive text row', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Label>Sort by</DropdownMenu.Label>
+          <DropdownMenu.Item onSelect={() => {}}>Name</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByText('Sort by')).toBeInTheDocument();
+    // Label is not a menuitem and not focusable.
+    expect(screen.queryByRole('menuitem', { name: 'Sort by' })).toBeNull();
+  });
+
+  it('Group renders with role="group" and aria-labelledby points at Label id', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Group>
+            <DropdownMenu.Label>Sort by</DropdownMenu.Label>
+            <DropdownMenu.Item onSelect={() => {}}>Name</DropdownMenu.Item>
+          </DropdownMenu.Group>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const group = screen.getByRole('group');
+    const label = screen.getByText('Sort by');
+    expect(group).toHaveAttribute('aria-labelledby', label.id);
+    expect(label.id).toBeTruthy();
+  });
+
+  it('Label outside a Group renders without aria id wiring', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Label>Quick actions</DropdownMenu.Label>
+          <DropdownMenu.Item onSelect={() => {}}>Refresh</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByText('Quick actions')).toBeInTheDocument();
+    expect(screen.queryByRole('group')).toBeNull();
+  });
+});
+
 describe('DropdownMenu — typeahead', () => {
   beforeEach(() => {
     vi.useFakeTimers();

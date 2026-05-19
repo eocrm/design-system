@@ -79,3 +79,21 @@
   height: var(--border-width);
   background: var(--color-border);
 }
+
+.group {
+  display: flex;
+  flex-direction: column;
+  padding-block: var(--space-1);
+}
+
+// Temporarily named .groupLabel to avoid collision with Item's .label (flex: 1 1 auto).
+// Will be renamed to .label once Item's .label is renamed to .itemLabel in a later task.
+.groupLabel {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--color-fg-subtle);
+  user-select: none;
+}

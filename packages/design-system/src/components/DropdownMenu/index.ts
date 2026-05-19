@@ -8,4 +8,6 @@ export type {
   DropdownMenuSide,
   DropdownMenuAlign,
   DropdownMenuItemTone,
+  DropdownMenuGroupProps,
+  DropdownMenuLabelProps,
 } from './DropdownMenu';
