@@ -282,6 +282,15 @@ export type DropdownMenuSide = 'top' | 'bottom';
 /** Which edge of the menu aligns to the corresponding trigger edge. */
 export type DropdownMenuAlign = 'start' | 'center' | 'end';
 
+/**
+ * Content props.
+ *
+ * Note: the `style` prop from `HTMLAttributes` is reserved — Floating UI sets
+ * inline `position`/`top`/`left` styles to position the menu. A consumer
+ * `style` value is silently overridden. Set `minWidth` via the prop, not via
+ * `style`. Class-based styling (`className` / SCSS module) is the supported
+ * customization surface.
+ */
 export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement> {
   /** Preferred side. Default `'bottom'`. Auto-flips on collision. */
   side?: DropdownMenuSide;
@@ -615,7 +624,11 @@ const Separator = forwardRef<HTMLDivElement, DropdownMenuSeparatorProps>(functio
   { className, ...rest },
   ref,
 ) {
-  return <div ref={ref} role="separator" className={clsx(styles.separator, className)} {...rest} />;
+  return (
+    // {...rest} last; Separator is decorative and a consumer is free to
+    // override role/className for their own grouping conventions.
+    <div ref={ref} role="separator" className={clsx(styles.separator, className)} {...rest} />
+  );
 });
 
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
