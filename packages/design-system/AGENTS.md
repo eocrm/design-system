@@ -148,6 +148,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 
 - `tone`: `neutral` (default) / `info` / `success` / `warning` / `danger` / `purple`
 - `size`: `md` (20, default) / `sm` (16). `md` is the uppercase tracked "loud label" pill. `sm` drops the uppercase + tracking and renders case as-typed — use it for dense table cells, compact toolbars, or anywhere the uppercase treatment shouts next to body copy.
+- `dot`: `start` / `end` — adds a small filled circle in the badge's text color before or after the content. Use for Slack/GitHub-style status indicators (`<Badge tone="success" dot="start">Online</Badge>`). Decorative only (`aria-hidden`); the text is still the accessible label.
 - **Non-interactive.** If it's clickable, use `<Button>` instead.
 - Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced.
 
