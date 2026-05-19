@@ -8,6 +8,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
+import { DropdownMenu } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
 const items: { to: string; name: string; description: string; preview: React.ReactNode }[] = [
@@ -112,6 +113,26 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           onChange={() => undefined}
         />
       </div>
+    ),
+  },
+  {
+    to: '/components/dropdown-menu',
+    name: 'DropdownMenu',
+    description: 'Action menu opened from a trigger button. Compound API.',
+    preview: (
+      <Cluster gap="sm" justify="center">
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <Button size="sm" variant="secondary">
+              Actions ▾
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+      </Cluster>
     ),
   },
 ];
