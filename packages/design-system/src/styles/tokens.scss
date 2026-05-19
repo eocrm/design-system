@@ -117,6 +117,7 @@
   // Popover). Picks a value wide enough for short labels without overflowing
   // trigger-tight clusters.
   --size-dropdown-min-width: 160px;
+  --size-popover-min-width: 220px; // slightly wider than dropdown — popovers carry richer content
 
   // Width/height of the leading indicator slot in DropdownMenu checkbox/radio items.
   --size-dropdown-indicator: 16px;
@@ -152,6 +153,7 @@
   // Layering — only library-relevant layers are defined here. App-shell layers
   // (sidebar, topbar) live in the consuming app's own SCSS.
   --z-dropdown: 1000;
+  --z-popover: 1050; // above dropdown, below modal — popover can open from a menu item
   --z-modal: 1100;
   --z-toast: 1200;
   --z-tooltip: 1300; // above modal + toast so tooltips remain visible inside any host UI
