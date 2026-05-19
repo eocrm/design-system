@@ -16,6 +16,8 @@ The cross-link is registry-driven and bidirectional: every mockup page lists "Co
 
 Routes: `/mockups/*` for mockups, `/components/*` for component demos. Root `/` redirects to `/mockups`.
 
+The sidebar rail is section-contextual: when you're under `/mockups/*` it shows only the Mockups items; under `/components/*` it shows only the Components items. A single switch link pinned to the bottom of the rail jumps between sections.
+
 ## Hard rules
 
 ### 1. Every library component has a demo page here

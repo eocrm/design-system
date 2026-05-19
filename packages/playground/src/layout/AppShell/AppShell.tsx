@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   KanbanSquare,
@@ -17,6 +17,8 @@ import {
   CircleUser,
   Tag,
   PanelTop,
+  Layers,
+  ArrowRight,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
@@ -43,6 +45,15 @@ const componentItems = [
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
+  const inComponents = pathname.startsWith('/components');
+
+  const activeItems = inComponents ? componentItems : mockupItems;
+  const sectionLabel = inComponents ? 'Components' : 'Mockups';
+  const switchLink = inComponents
+    ? { to: '/mockups', label: 'Mockups', icon: Layers }
+    : { to: '/components', label: 'Components', icon: Component };
+
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
@@ -55,23 +66,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className={styles.nav}>
-          <div className={styles.navSection}>Mockups</div>
-          {mockupItems.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
-              }
-            >
-              <Icon size={16} />
-              {label}
-            </NavLink>
-          ))}
-
-          <div className={styles.navSection}>Components</div>
-          {componentItems.map(({ to, label, icon: Icon, end }) => (
+          <div className={styles.navSection}>{sectionLabel}</div>
+          {activeItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -85,6 +81,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
+
+        <div className={styles.navFooter}>
+          <NavLink to={switchLink.to} className={styles.switchLink}>
+            <switchLink.icon size={16} />
+            <span>{switchLink.label}</span>
+            <ArrowRight size={14} className={styles.switchArrow} aria-hidden />
+          </NavLink>
+        </div>
       </aside>
 
       <header className={styles.topbar}>
