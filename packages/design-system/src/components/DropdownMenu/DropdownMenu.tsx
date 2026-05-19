@@ -388,8 +388,9 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
         const content = refs.floating.current;
         const activeEl = document.activeElement as Node | null;
         // Only intercept Tab when focus is inside the menu.
+        // Do NOT preventDefault — browser continues Tab traversal from the
+        // (now-focused) trigger to the next focusable element (WAI-ARIA menu pattern).
         if (content && activeEl && content.contains(activeEl)) {
-          e.preventDefault();
           ctx.setOpen(false);
           ctx.triggerRef.current?.focus();
         }
@@ -426,9 +427,9 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
       return;
     }
     if (e.key === 'Tab') {
-      // Close and move focus to trigger; preventDefault so focus stays on
-      // the trigger (jsdom/userEvent would otherwise advance past it).
-      e.preventDefault();
+      // Close, focus trigger, do NOT preventDefault — browser continues Tab
+      // traversal from the (now-focused) trigger to the next focusable element
+      // (the WAI-ARIA menu pattern).
       ctx.setOpen(false);
       ctx.triggerRef.current?.focus();
       return;
@@ -513,7 +514,10 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
   if (!ctx.open) return null;
 
   return createPortal(
+    // {...rest} first so consumer-supplied props don't override the menu
+    // ARIA contract or our event wiring.
     <div
+      {...rest}
       ref={setFloatingRef}
       id={ctx.contentId}
       role="menu"
@@ -524,7 +528,6 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
       style={floatingStyles}
       className={clsx(styles.content, className)}
       onKeyDown={handleKeyDown}
-      {...rest}
     >
       {children}
     </div>,
@@ -585,7 +588,10 @@ const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
   };
 
   return (
+    // {...rest} first so consumer-supplied props don't override the menuitem
+    // ARIA contract (role/tabIndex/aria-disabled) or our event wiring.
     <div
+      {...rest}
       ref={mergeRefs<HTMLDivElement>(itemRef, forwardedRef)}
       role="menuitem"
       tabIndex={isActive ? 0 : -1}
@@ -593,7 +599,6 @@ const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
       data-tone={tone}
       className={clsx(styles.item, className)}
       onClick={handleClick}
-      {...rest}
     >
       {icon !== undefined && <span className={styles.icon}>{icon}</span>}
       <span className={styles.label}>{children}</span>
