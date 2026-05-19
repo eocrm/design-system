@@ -405,3 +405,71 @@ describe('Popover — animation contract', () => {
     expect(scss).toMatch(/\.content\s*{[\s\S]*@starting-style/);
   });
 });
+
+describe('Popover — cleanup + Tab traversal', () => {
+  it('removes document-level listeners on unmount while open', () => {
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    const { unmount } = render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    unmount();
+    expect(removeSpy.mock.calls.some(([type]) => type === 'pointerdown')).toBe(true);
+    expect(removeSpy.mock.calls.some(([type]) => type === 'keydown')).toBe(true);
+    removeSpy.mockRestore();
+  });
+
+  it('Tab from inside the panel walks past the panel; popover stays open (no focus trap)', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Popover defaultOpen>
+          <Popover.Trigger>
+            <button type="button">Open</button>
+          </Popover.Trigger>
+          <Popover.Content>
+            <button type="button">inside-1</button>
+          </Popover.Content>
+        </Popover>
+        <button type="button">after</button>
+      </>,
+    );
+
+    // The panel itself has focus on open; Tab moves to the first focusable inside (inside-1).
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'inside-1' })).toHaveFocus();
+
+    // Another Tab walks out of the panel. Because Content portals to document.body
+    // (the end of the body), the panel's contents are last in document order — so
+    // Tab from inside-1 wraps past the panel rather than cycling back inside it.
+    // The exact next-focused element is JSDOM-specific; the contract we lock in
+    // is that focus LEAVES the panel and the popover stays open.
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'inside-1' })).not.toHaveFocus();
+    expect(screen.getByRole('dialog')).not.toContainElement(
+      document.activeElement as HTMLElement | null,
+    );
+
+    // Popover stays open (no focus trap).
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('preserves consumer props on the cloned trigger (className, data-*)', () => {
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button" className="consumer" data-testid="t">
+            Open
+          </button>
+        </Popover.Trigger>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    const trigger = screen.getByTestId('t');
+    expect(trigger).toHaveClass('consumer');
+  });
+});
