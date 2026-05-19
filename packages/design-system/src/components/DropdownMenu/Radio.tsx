@@ -109,10 +109,12 @@ export interface DropdownMenuRadioItemProps extends Omit<
  * current value. Defaults to `closeOnSelect=true` — radio is "the selection
  * IS the action," so picking a value closes the menu chain.
  *
- * Indicator follows the same pattern as `<DropdownMenu.CheckboxItem>`:
- * provide an `<ItemIndicator>` as a direct child for a custom glyph, or get
- * a default `●` when none is provided. Detection is shallow — ItemIndicator
- * must be a direct child.
+ * **Checked-state visual**: when the item's `value` matches the group's value,
+ * the row is tinted with the info surface color (`--color-badge-info-bg` /
+ * `--color-badge-info-fg`) and gets a 2px left accent (`--color-info`). No
+ * default glyph is rendered. Provide a `<DropdownMenu.ItemIndicator>` as a
+ * direct child if you want an additional indicator glyph alongside the tinted
+ * row.
  *
  * Must be used inside `<DropdownMenu.RadioGroup>` — throws in dev otherwise.
  *
@@ -134,7 +136,7 @@ export interface DropdownMenuRadioItemProps extends Omit<
  *
  * @remarks Anti-patterns
  * - ❌ Nesting an `<ItemIndicator>` deeper than a direct child. Detection is
- *   shallow; deeper nesting renders the default glyph instead.
+ *   shallow; deeper nesting won't render in the indicator slot.
  */
 export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(function RadioItem(
   { value, closeOnSelect = true, disabled = false, shortcut, className, children, ...rest },
@@ -180,10 +182,14 @@ export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(
       className={clsx(styles.item, className)}
       onClick={handleClick}
     >
-      {/* aria-hidden: the indicator is purely visual; aria-checked already conveys selection state. */}
-      <span aria-hidden="true" className={styles.indicatorSlot}>
-        {checked && (indicator ?? <span className={styles.defaultIndicator}>●</span>)}
-      </span>
+      {/* Indicator slot only rendered when a custom ItemIndicator is provided.
+          Default checked state is conveyed via the row's tinted background +
+          left accent (.item[aria-checked='true'] in SCSS). */}
+      {indicator && (
+        <span aria-hidden="true" className={styles.indicatorSlot}>
+          {checked && indicator}
+        </span>
+      )}
       <span className={styles.itemLabel}>{labelContent}</span>
       {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
     </div>

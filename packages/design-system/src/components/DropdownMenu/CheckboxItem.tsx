@@ -53,10 +53,11 @@ export interface DropdownMenuCheckboxItemProps extends Omit<
  * toggle, which matches the typical filter-menu interaction. Override to
  * `true` for single-toggle menus.
  *
- * Indicator: provide a `<DropdownMenu.ItemIndicator>` as a direct child to
- * customize the glyph. Without one, a default `✓` renders when `checked`.
- * Detection is shallow — ItemIndicator must be a direct child of CheckboxItem
- * (not nested deeper in a wrapper).
+ * **Checked-state visual**: when checked, the row is tinted with the info
+ * surface color (`--color-badge-info-bg` / `--color-badge-info-fg`) and gets
+ * a 2px left accent (`--color-info`). No default glyph is rendered. Provide a
+ * `<DropdownMenu.ItemIndicator>` as a direct child if you want an additional
+ * indicator glyph alongside the tinted row.
  *
  * @example
  * <DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn}>
@@ -64,6 +65,7 @@ export interface DropdownMenuCheckboxItemProps extends Omit<
  * </DropdownMenu.CheckboxItem>
  *
  * @example
+ * // Augment the tinted-row indicator with a custom glyph:
  * <DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn}>
  *   <DropdownMenu.ItemIndicator>
  *     <CheckIcon size={14} />
@@ -84,7 +86,7 @@ export interface DropdownMenuCheckboxItemProps extends Omit<
  *
  * @remarks Anti-patterns
  * - ❌ Nesting an `<ItemIndicator>` deeper than a direct child. Detection is
- *   shallow; deeper nesting renders the default glyph instead.
+ *   shallow; deeper nesting won't render in the indicator slot.
  * - ❌ Multiple checked CheckboxItems in a "pick one" context. Switch to RadioGroup.
  */
 export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemProps>(
@@ -139,9 +141,11 @@ export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemP
         className={clsx(styles.item, className)}
         onClick={handleClick}
       >
-        <span className={styles.indicatorSlot} aria-hidden="true">
-          {checked && (indicator ?? <span className={styles.defaultIndicator}>✓</span>)}
-        </span>
+        {indicator && (
+          <span className={styles.indicatorSlot} aria-hidden="true">
+            {checked && indicator}
+          </span>
+        )}
         <span className={styles.itemLabel}>{labelContent}</span>
         {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
       </div>

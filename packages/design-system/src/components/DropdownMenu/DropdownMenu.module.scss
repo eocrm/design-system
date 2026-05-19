@@ -46,6 +46,35 @@
   cursor: not-allowed;
 }
 
+// Checked state for CheckboxItem / RadioItem: info-tinted row with a 2px left
+// accent. Replaces the default ✓/● glyphs from earlier versions of the API.
+// Left corners square off so the 2px accent sits flush against a straight edge.
+.item[aria-checked='true'] {
+  background: var(--color-badge-info-bg);
+  color: var(--color-badge-info-fg);
+  box-shadow: inset var(--border-width-emphasis) 0 0 var(--color-info);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+// Hover/focus on a checked item keeps the info tint instead of falling through
+// to the neutral bg-muted hover. The left accent remains visible.
+// NOTE: `tone="danger"` is not a valid prop on CheckboxItem or RadioItem
+// today. If ever added, re-examine this rule's source-order relationship
+// with `.item[data-tone='danger']:hover` — equal specificity means later
+// rule wins, and this rule would silently suppress the danger color.
+.item[aria-checked='true']:hover:not([aria-disabled='true']),
+.item[aria-checked='true']:focus:not([aria-disabled='true']) {
+  background: var(--color-badge-info-bg);
+  color: var(--color-badge-info-fg);
+}
+
+// Disabled + checked: keep the visual cue but use disabled foreground so the
+// user can still see what was selected, just not interact with it.
+.item[aria-checked='true'][aria-disabled='true'] {
+  color: var(--color-fg-disabled);
+}
+
 .icon {
   display: inline-flex;
   align-items: center;
@@ -97,6 +126,9 @@
   user-select: none;
 }
 
+// Optional indicator slot rendered when a custom <ItemIndicator> is provided
+// as a direct child of CheckboxItem/RadioItem. The default checked state has
+// no glyph (the row's tinted background + left accent IS the indicator).
 .indicatorSlot {
   display: inline-flex;
   align-items: center;
@@ -104,12 +136,6 @@
   width: var(--size-dropdown-indicator);
   height: var(--size-dropdown-indicator);
   flex-shrink: 0;
-}
-
-.defaultIndicator {
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-none);
-  color: currentColor;
 }
 
 .subTrigger {

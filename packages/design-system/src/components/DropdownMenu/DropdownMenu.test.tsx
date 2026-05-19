@@ -928,11 +928,13 @@ describe('DropdownMenu — RadioGroup and RadioItem', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 
-  it('renders default ● glyph on the selected RadioItem', async () => {
+  it('renders no default glyph on selected or unselected RadioItems (visual cue is the tinted row)', async () => {
     const user = userEvent.setup();
     renderRadio('date');
     await user.click(screen.getByRole('button', { name: 'Open' }));
-    expect(screen.getByRole('menuitemradio', { name: 'Date' }).textContent).toContain('●');
+    // The selected item conveys its state via aria-checked + tinted background;
+    // no ● or other glyph is rendered into the item text.
+    expect(screen.getByRole('menuitemradio', { name: 'Date' }).textContent).not.toContain('●');
     expect(screen.getByRole('menuitemradio', { name: 'Name' }).textContent).not.toContain('●');
   });
 
@@ -975,6 +977,36 @@ describe('DropdownMenu — RadioGroup and RadioItem', () => {
       ),
     ).toThrow(/RadioGroup/);
     spy.mockRestore();
+  });
+
+  it('renders custom ItemIndicator only on the selected RadioItem', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value="date" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem value="name">
+              <DropdownMenu.ItemIndicator>
+                <span data-testid="indicator-name">★</span>
+              </DropdownMenu.ItemIndicator>
+              Name
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="date">
+              <DropdownMenu.ItemIndicator>
+                <span data-testid="indicator-date">★</span>
+              </DropdownMenu.ItemIndicator>
+              Date
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByTestId('indicator-date')).toBeInTheDocument();
+    expect(screen.queryByTestId('indicator-name')).toBeNull();
   });
 });
 
@@ -1098,7 +1130,7 @@ describe('DropdownMenu — CheckboxItem', () => {
     expect(onCheckedChange).not.toHaveBeenCalled();
   });
 
-  it('renders default ✓ glyph when checked and no ItemIndicator child', async () => {
+  it('renders no default glyph in checked or unchecked CheckboxItems (visual cue is the tinted row)', async () => {
     const user = userEvent.setup();
     render(
       <DropdownMenu>
@@ -1107,34 +1139,21 @@ describe('DropdownMenu — CheckboxItem', () => {
         </DropdownMenu.Trigger>
         <DropdownMenu.Content>
           <DropdownMenu.CheckboxItem checked={true} onCheckedChange={() => {}}>
-            Show archived
+            Checked
           </DropdownMenu.CheckboxItem>
-        </DropdownMenu.Content>
-      </DropdownMenu>,
-    );
-    await user.click(screen.getByRole('button', { name: 'Open' }));
-    const item = screen.getByRole('menuitemcheckbox', { name: /Show archived/ });
-    expect(item.textContent).toContain('✓');
-  });
-
-  it('does NOT render default glyph when unchecked', async () => {
-    const user = userEvent.setup();
-    render(
-      <DropdownMenu>
-        <DropdownMenu.Trigger>
-          <button type="button">Open</button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Content>
           <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}}>
-            Show archived
+            Unchecked
           </DropdownMenu.CheckboxItem>
         </DropdownMenu.Content>
       </DropdownMenu>,
     );
     await user.click(screen.getByRole('button', { name: 'Open' }));
-    expect(
-      screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent,
-    ).not.toContain('✓');
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Checked' }).textContent).not.toContain(
+      '✓',
+    );
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Unchecked' }).textContent).not.toContain(
+      '✓',
+    );
   });
 
   it('forwards refs to the menuitemcheckbox div', async () => {
@@ -1178,6 +1197,30 @@ describe('DropdownMenu — CheckboxItem', () => {
     expect(
       screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent,
     ).not.toContain('✓');
+  });
+
+  it('hides custom ItemIndicator content when CheckboxItem is unchecked', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}}>
+            <DropdownMenu.ItemIndicator>
+              <span data-testid="custom-indicator">★</span>
+            </DropdownMenu.ItemIndicator>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    // Indicator content is not rendered when unchecked. The slot wrapper
+    // stays in the DOM so labels stay aligned across mixed checked/unchecked
+    // items when the consumer provides indicators throughout.
+    expect(screen.queryByTestId('custom-indicator')).toBeNull();
   });
 });
 
