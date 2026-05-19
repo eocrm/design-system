@@ -1,5 +1,7 @@
 import { act, configure, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
 
@@ -167,6 +169,60 @@ describe('DropdownMenu — Content', () => {
     await user.click(screen.getByRole('button', { name: 'Open' }));
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
     expect(ref.current?.className).toMatch(/custom-content/);
+  });
+
+  it('positions Content via inline top/left, not transform (animation contract)', async () => {
+    // Animation hooks `transform` for the scale-fade entrance. If Floating UI
+    // ever switches back to transform-based positioning, our animation
+    // transform would clobber the position. This test locks the contract in.
+    //
+    // Brittleness note: the regex matches `top:` / `left:` literally. If a
+    // future Floating UI version writes `inset:` shorthand instead, this test
+    // will fail noisily — that's desired, not a bug. Re-validate manually.
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <div>menu body</div>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const menu = screen.getByRole('menu');
+    const style = menu.getAttribute('style') ?? '';
+    expect(style).toMatch(/top:/);
+    expect(style).toMatch(/left:/);
+    // Floating UI writes either nothing or `transform: translate(...)` —
+    // assert it does NOT contain a translate(...) (the giveaway signature
+    // of transform-based positioning).
+    expect(style).not.toMatch(/translate\(/);
+  });
+
+  it('declares an @starting-style rule for the content selector (animation hook)', () => {
+    // Animation is CSS-only and uses @starting-style for the entrance.
+    //
+    // We tried walking CSSOM (document.styleSheets) here — vitest with the
+    // jsdom environment + CSS-modules plugin does NOT inject component
+    // stylesheets into the DOM (CSS modules return a class-name map only,
+    // the rules never reach document.styleSheets). So a CSSOM walk yields
+    // an empty list and gives no real contract guarantee.
+    //
+    // Fallback: read the SCSS source directly and assert the animation hooks
+    // are present. Weaker than a parsed-CSSOM check (it doesn't validate the
+    // rule actually compiles) but it catches the regression we care about:
+    // a future refactor silently dropping the @starting-style block or the
+    // --opacity-hidden token reference.
+    const scssPath = resolve(__dirname, 'DropdownMenu.module.scss');
+    const scss = readFileSync(scssPath, 'utf8');
+    expect(scss).toMatch(/@starting-style/);
+    expect(scss).toMatch(/var\(--opacity-hidden\)/);
+    // Locality: ensure the @starting-style block is anchored inside (or close
+    // to) a `.content` selector. Catches the "moved to wrong selector" case
+    // a bare substring match would miss.
+    expect(scss).toMatch(/\.content[^{]*\{[\s\S]{0,500}?@starting-style/);
   });
 });
 
