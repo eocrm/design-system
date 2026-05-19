@@ -18,14 +18,14 @@ on:
   push:
     branches: [main]
     paths:
-      - 'packages/**'
-      - '.github/workflows/**'
+      - "packages/**"
+      - ".github/workflows/**"
 
 permissions:
-  contents: write   # push the new git tag
-  packages: write   # publish to GitHub Packages
-  pages: write      # forwarded to the chained deploy-playground job
-  id-token: write   # forwarded to the chained deploy-playground job
+  contents: write # push the new git tag
+  packages: write # publish to GitHub Packages
+  pages: write # forwarded to the chained deploy-playground job
+  id-token: write # forwarded to the chained deploy-playground job
 
 env:
   BUMP: patch
@@ -84,11 +84,11 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
           # This writes .npmrc with the @eocrm scope pointed at GitHub Packages
           # and wires NODE_AUTH_TOKEN for the publish step below.
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@eocrm'
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@eocrm"
 
       - name: Install
         run: npm ci

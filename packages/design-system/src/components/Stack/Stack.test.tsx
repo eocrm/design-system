@@ -17,24 +17,18 @@ describe('Stack', () => {
     expect(el.className).toMatch(/alignStretch/);
   });
 
-  it.each<StackGap>(['xs', 'sm', 'md', 'lg', 'xl', '2xl'])(
-    'applies the %s gap class',
-    (gap) => {
-      const { container } = render(<Stack gap={gap}>x</Stack>);
-      const expected = gap === '2xl' ? 'gap2xl' : `gap${capitalize(gap)}`;
-      expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(expected));
-    },
-  );
+  it.each<StackGap>(['xs', 'sm', 'md', 'lg', 'xl', '2xl'])('applies the %s gap class', (gap) => {
+    const { container } = render(<Stack gap={gap}>x</Stack>);
+    const expected = gap === '2xl' ? 'gap2xl' : `gap${capitalize(gap)}`;
+    expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(expected));
+  });
 
-  it.each<StackAlign>(['start', 'center', 'end', 'stretch'])(
-    'applies the %s align class',
-    (a) => {
-      const { container } = render(<Stack align={a}>x</Stack>);
-      expect((container.firstChild as HTMLElement).className).toMatch(
-        new RegExp(`align${capitalize(a)}`),
-      );
-    },
-  );
+  it.each<StackAlign>(['start', 'center', 'end', 'stretch'])('applies the %s align class', (a) => {
+    const { container } = render(<Stack align={a}>x</Stack>);
+    expect((container.firstChild as HTMLElement).className).toMatch(
+      new RegExp(`align${capitalize(a)}`),
+    );
+  });
 
   it('merges the className prop', () => {
     const { container } = render(<Stack className="external">x</Stack>);

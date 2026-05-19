@@ -33,8 +33,18 @@ const stats = [
 ];
 
 const activity = [
-  { who: 'Priya Shah', what: 'replied to your email', when: '12m ago', target: 'Acme team plan upgrade' },
-  { who: 'Jordan Park', what: 'moved a deal to Proposal', when: '1h ago', target: 'Multi-region rollout' },
+  {
+    who: 'Priya Shah',
+    what: 'replied to your email',
+    when: '12m ago',
+    target: 'Acme team plan upgrade',
+  },
+  {
+    who: 'Jordan Park',
+    what: 'moved a deal to Proposal',
+    when: '1h ago',
+    target: 'Multi-region rollout',
+  },
   { who: 'Diana Okafor', what: 'booked a demo', when: '3h ago', target: 'Globex' },
   { who: 'Sam Chen', what: 'added a note on', when: 'Yesterday', target: 'Pilot conversion' },
   { who: 'Maya Owens', what: 'created a deal', when: '2d ago', target: 'Add-on: API gateway' },

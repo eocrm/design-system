@@ -13,14 +13,16 @@ If `@eocrm/design-system` exports a component and the playground doesn't have a 
 ### 2. Imports use `@eocrm/design-system` — never relative paths into the library
 
 Yes:
+
 ```ts
 import { Button } from '@eocrm/design-system';
 import '@eocrm/design-system/styles/global.scss';
 ```
 
 No:
+
 ```ts
-import { Button } from '../../../design-system/src/components/Button';  // ❌
+import { Button } from '../../../design-system/src/components/Button'; // ❌
 ```
 
 The whole point of the workspace split is that the playground exercises the library's public API the same way the CRM does. Relative imports defeat that.
@@ -72,14 +74,14 @@ Skipping any of these → users can navigate to the URL but the page is unreacha
 
 ## What goes here vs in the library
 
-| | Playground | Library |
-|---|---|---|
-| `pages/`, `layout/AppShell` | ✅ | ❌ |
-| Mock data (`data/mock.ts`) | ✅ | ❌ |
-| Demo helpers (`CodeBlock`, `Example`, `DemoLayout`) | ✅ | ❌ |
-| Prism setup | ✅ | ❌ |
-| Reusable visual primitives (`Button`, `Card`, `Stack`...) | ❌ | ✅ |
-| Tokens, reset, typography, mixins | ❌ | ✅ |
+|                                                           | Playground | Library |
+| --------------------------------------------------------- | ---------- | ------- |
+| `pages/`, `layout/AppShell`                               | ✅         | ❌      |
+| Mock data (`data/mock.ts`)                                | ✅         | ❌      |
+| Demo helpers (`CodeBlock`, `Example`, `DemoLayout`)       | ✅         | ❌      |
+| Prism setup                                               | ✅         | ❌      |
+| Reusable visual primitives (`Button`, `Card`, `Stack`...) | ❌         | ✅      |
+| Tokens, reset, typography, mixins                         | ❌         | ✅      |
 
 Heuristic: "would the CRM benefit from this?" If yes → library. If no → playground.
 

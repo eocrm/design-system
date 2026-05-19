@@ -69,10 +69,6 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   ref,
 ) {
   return (
-    <div
-      ref={ref}
-      className={clsx(styles.card, paddingClass[padding], className)}
-      {...props}
-    />
+    <div ref={ref} className={clsx(styles.card, paddingClass[padding], className)} {...props} />
   );
 });

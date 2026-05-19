@@ -31,12 +31,7 @@ export function CodeBlock({ code, language = 'tsx', filename, className }: CodeB
     <div className={clsx(styles.block, className)}>
       <div className={styles.bar}>
         <span className={styles.filename}>{filename ?? language.toUpperCase()}</span>
-        <button
-          type="button"
-          className={styles.copyBtn}
-          onClick={onCopy}
-          aria-label="Copy code"
-        >
+        <button type="button" className={styles.copyBtn} onClick={onCopy} aria-label="Copy code">
           {copied ? <Check size={12} /> : <Copy size={12} />}
           {copied ? 'Copied' : 'Copy'}
         </button>

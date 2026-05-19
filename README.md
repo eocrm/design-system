@@ -77,9 +77,9 @@ eocrm/design-system/
 
 ## CI/CD
 
-| Trigger | What runs |
-|---|---|
-| **Pull request** | `quality.yml` — typecheck + test + lint + build + tarball-contents check |
+| Trigger            | What runs                                                                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pull request**   | `quality.yml` — typecheck + test + lint + build + tarball-contents check                                                                                                      |
 | **Push to `main`** | `release.yml` → quality, then auto-bumps patch version, publishes `@eocrm/design-system` to GitHub Packages, creates `vX.Y.Z` git tag, deploys the playground to GitHub Pages |
 
 Every release is gated by quality. There are no manual workflow buttons — the only way to release is to merge to `main`. To force a minor/major bump, edit `BUMP` in `release.yml` on a branch and merge.

@@ -33,7 +33,10 @@ export function Deals() {
             <section key={stage.id} className={styles.column}>
               <header className={styles.columnHeader}>
                 <Cluster gap="sm" align="center">
-                  <span className={`${styles.stageDot} ${styles[`stage-${stage.id}`]}`} aria-hidden />
+                  <span
+                    className={`${styles.stageDot} ${styles[`stage-${stage.id}`]}`}
+                    aria-hidden
+                  />
                   <span className={styles.columnTitle}>{stage.label}</span>
                   <span className={styles.columnCount}>{stageDeals.length}</span>
                 </Cluster>
@@ -45,11 +48,7 @@ export function Deals() {
                   <article key={d.id} className={styles.dealCard}>
                     <Cluster justify="between" align="start" gap="sm" wrap={false}>
                       <span className={styles.dealId}>{d.id}</span>
-                      <button
-                        type="button"
-                        aria-label="More"
-                        className={styles.cardActionBtn}
-                      >
+                      <button type="button" aria-label="More" className={styles.cardActionBtn}>
                         <MoreHorizontal size={14} />
                       </button>
                     </Cluster>

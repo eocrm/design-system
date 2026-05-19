@@ -24,11 +24,7 @@ describe('Tabs', () => {
   it('marks only the active tab with aria-selected="true"', () => {
     render(<Tabs items={items} activeId="b" onChange={noop} />);
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.map((t) => t.getAttribute('aria-selected'))).toEqual([
-      'false',
-      'true',
-      'false',
-    ]);
+    expect(tabs.map((t) => t.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
   });
 
   it('renders count chips for items with a count', () => {
@@ -68,20 +64,12 @@ describe('Tabs', () => {
     const user = userEvent.setup();
     render(<Wrapper />);
     await user.click(screen.getByRole('tab', { name: /Notes/ }));
-    expect(screen.getByRole('tab', { name: /Notes/ })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute(
-      'aria-selected',
-      'false',
-    );
+    expect(screen.getByRole('tab', { name: /Notes/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'false');
   });
 
   it('merges the className prop on the tablist', () => {
-    render(
-      <Tabs items={items} activeId="a" onChange={noop} className="external" />,
-    );
+    render(<Tabs items={items} activeId="a" onChange={noop} className="external" />);
     expect(screen.getByRole('tablist').className).toMatch(/external/);
   });
 
@@ -183,14 +171,7 @@ describe('Tabs', () => {
     it('moves focus on arrow keys without firing onChange', async () => {
       const onChange = vi.fn();
       const user = userEvent.setup();
-      render(
-        <Tabs
-          items={items}
-          activeId="a"
-          onChange={onChange}
-          activationMode="manual"
-        />,
-      );
+      render(<Tabs items={items} activeId="a" onChange={onChange} activationMode="manual" />);
       screen.getByRole('tab', { name: 'Overview' }).focus();
       await user.keyboard('{ArrowRight}');
       expect(document.activeElement).toBe(screen.getByRole('tab', { name: /Activity/ }));
@@ -205,14 +186,7 @@ describe('Tabs', () => {
     it('fires onChange when the user presses Enter on a focused tab', async () => {
       const onChange = vi.fn();
       const user = userEvent.setup();
-      render(
-        <Tabs
-          items={items}
-          activeId="a"
-          onChange={onChange}
-          activationMode="manual"
-        />,
-      );
+      render(<Tabs items={items} activeId="a" onChange={onChange} activationMode="manual" />);
       screen.getByRole('tab', { name: 'Overview' }).focus();
       await user.keyboard('{ArrowRight}');
       await user.keyboard('{Enter}');
@@ -222,14 +196,7 @@ describe('Tabs', () => {
     it('fires onChange when the user presses Space on a focused tab', async () => {
       const onChange = vi.fn();
       const user = userEvent.setup();
-      render(
-        <Tabs
-          items={items}
-          activeId="a"
-          onChange={onChange}
-          activationMode="manual"
-        />,
-      );
+      render(<Tabs items={items} activeId="a" onChange={onChange} activationMode="manual" />);
       screen.getByRole('tab', { name: 'Overview' }).focus();
       await user.keyboard('{ArrowRight}');
       await user.keyboard(' ');

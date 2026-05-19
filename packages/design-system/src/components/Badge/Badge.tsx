@@ -69,11 +69,5 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
   { tone = 'neutral', className, ...props },
   ref,
 ) {
-  return (
-    <span
-      ref={ref}
-      className={clsx(styles.badge, toneClass[tone], className)}
-      {...props}
-    />
-  );
+  return <span ref={ref} className={clsx(styles.badge, toneClass[tone], className)} {...props} />;
 });

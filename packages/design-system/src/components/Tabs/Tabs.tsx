@@ -71,8 +71,7 @@ function sanitizeId(raw: string): string {
 
 // Some consumer environments (RSC, edge runtimes) don't define `process`.
 // Read NODE_ENV defensively so the library never throws at module init.
-const IS_DEV =
-  typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
+const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
 /**
  * Horizontal tab strip with optional count chips. Controlled by the caller —
@@ -159,8 +158,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   // empty). When `focusedId` doesn't match any item — e.g. activeId is invalid
   // or the active item was just deleted — we fall back to items[0] so the
   // tablist stays keyboard-reachable.
-  const effectiveFocusedId =
-    items.find((i) => i.id === focusedId)?.id ?? items[0]?.id ?? null;
+  const effectiveFocusedId = items.find((i) => i.id === focusedId)?.id ?? items[0]?.id ?? null;
 
   const focusTab = (id: string) => {
     setFocusedId(id);

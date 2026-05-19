@@ -51,7 +51,13 @@ export function BadgeDemo() {
       >
         <Stack gap="md">
           <div>
-            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)', marginBottom: 6 }}>
+            <div
+              style={{
+                fontSize: 'var(--font-size-sm)',
+                color: 'var(--color-fg-subtle)',
+                marginBottom: 6,
+              }}
+            >
               Contact status
             </div>
             <Cluster gap="sm">
@@ -61,7 +67,13 @@ export function BadgeDemo() {
             </Cluster>
           </div>
           <div>
-            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)', marginBottom: 6 }}>
+            <div
+              style={{
+                fontSize: 'var(--font-size-sm)',
+                color: 'var(--color-fg-subtle)',
+                marginBottom: 6,
+              }}
+            >
               Member role
             </div>
             <Cluster gap="sm">
@@ -71,7 +83,13 @@ export function BadgeDemo() {
             </Cluster>
           </div>
           <div>
-            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)', marginBottom: 6 }}>
+            <div
+              style={{
+                fontSize: 'var(--font-size-sm)',
+                color: 'var(--color-fg-subtle)',
+                marginBottom: 6,
+              }}
+            >
               Deal stage
             </div>
             <Cluster gap="sm">

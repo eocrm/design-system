@@ -50,11 +50,7 @@ export function InputDemo() {
 />`}
       >
         <div style={{ maxWidth: 320 }}>
-          <Input
-            invalid
-            value={invalidValue}
-            onChange={(e) => setInvalidValue(e.target.value)}
-          />
+          <Input invalid value={invalidValue} onChange={(e) => setInvalidValue(e.target.value)} />
         </div>
       </Example>
 

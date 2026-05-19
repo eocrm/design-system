@@ -13,13 +13,7 @@ describe('Input', () => {
   it('round-trips a controlled value via onChange', async () => {
     function Wrapper() {
       const [v, setV] = useState('');
-      return (
-        <Input
-          placeholder="email"
-          value={v}
-          onChange={(e) => setV(e.target.value)}
-        />
-      );
+      return <Input placeholder="email" value={v} onChange={(e) => setV(e.target.value)} />;
     }
     const user = userEvent.setup();
     render(<Wrapper />);
@@ -54,9 +48,7 @@ describe('Input', () => {
   });
 
   it('forwards native HTML attributes (type, autoComplete)', () => {
-    render(
-      <Input placeholder="email" type="email" autoComplete="email" />,
-    );
+    render(<Input placeholder="email" type="email" autoComplete="email" />);
     const input = screen.getByPlaceholderText('email');
     expect(input).toHaveAttribute('type', 'email');
     expect(input).toHaveAttribute('autocomplete', 'email');
@@ -84,9 +76,7 @@ describe('Input', () => {
   it('honors readOnly — the attribute is set and typing does not change the value', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Input placeholder="email" value="locked" readOnly onChange={onChange} />,
-    );
+    render(<Input placeholder="email" value="locked" readOnly onChange={onChange} />);
     const input = screen.getByPlaceholderText('email') as HTMLInputElement;
     expect(input).toHaveAttribute('readonly');
     await user.type(input, 'x');

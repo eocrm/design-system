@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  useEffect,
-  useState,
-  type CSSProperties,
-  type HTMLAttributes,
-} from 'react';
+import { forwardRef, useEffect, useState, type CSSProperties, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import styles from './Avatar.module.scss';
 
@@ -113,8 +107,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
 
   // Treat empty/whitespace `src` as "no image" so we don't render <img src="">.
   // Same effect when the image fails to load — fall back to initials.
-  const hasImage =
-    typeof src === 'string' && src.trim() !== '' && !imageBroken;
+  const hasImage = typeof src === 'string' && src.trim() !== '' && !imageBroken;
 
   // Always derive a safe label/alt — even if the consumer passes a whitespace
   // name with an image, we want a meaningful accessible name.
@@ -128,9 +121,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   // Only emit a style attribute when we actually have something to set —
   // checking truthiness alone would let an empty `style={{}}` prop emit `style=""`.
   const mergedStyle: StyleWithVars | undefined =
-    hasOwnProps(fallbackStyle) || hasOwnProps(style)
-      ? { ...fallbackStyle, ...style }
-      : undefined;
+    hasOwnProps(fallbackStyle) || hasOwnProps(style) ? { ...fallbackStyle, ...style } : undefined;
 
   if (hasImage) {
     // When showing a real image, the <img> itself carries the image role
@@ -146,11 +137,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
         className={clsx(styles.avatar, sizeClass[size], className)}
         style={mergedStyle}
       >
-        <img
-          src={src}
-          alt={accessibleName}
-          onError={() => setImageBroken(true)}
-        />
+        <img src={src} alt={accessibleName} onError={() => setImageBroken(true)} />
       </span>
     );
   }

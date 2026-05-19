@@ -21,6 +21,7 @@ A new `<Name>.tsx` requires `<Name>.test.tsx` next to it. Minimum coverage:
 **Vitest is configured with `globals: true`.** Tests do NOT import `describe`, `it`, `expect`, or `vi` — they're global. React Testing Library auto-cleans the DOM between tests.
 
 Imports tests DO need:
+
 - `render`, `screen` from `@testing-library/react`
 - `userEvent` (default) from `@testing-library/user-event`
 - The component under test
@@ -46,7 +47,7 @@ Forbidden inside a component's `.module.scss`:
 - `width` other than `100%` of intrinsic / `auto`
 - `grid-column` / `grid-row`
 
-These are the *parent's* responsibility. If a CRM page needs to position a Button, it does so via its own `.module.scss` (passed via `className`) or by wrapping in `Stack`/`Cluster`.
+These are the _parent's_ responsibility. If a CRM page needs to position a Button, it does so via its own `.module.scss` (passed via `className`) or by wrapping in `Stack`/`Cluster`.
 
 ### 5. Export discipline
 
@@ -112,6 +113,7 @@ Before pushing changes that touch `packages/design-system/**`, run the review-fi
 7. **Repeat** until the verdict is `clean enough to stop`.
 
 **Hard exit criteria**:
+
 - 0 Critical, 0 Important findings (or each remaining one has an explicit documented skip)
 - All four gates (test, typecheck, lint, build) green
 - `npm pack --dry-run` shows no test files or internal-only paths in the tarball
@@ -143,6 +145,7 @@ src/components/<Name>/
 ```
 
 Then:
+
 - Update `src/index.ts` (rule 5)
 - Add the playground demo (rule 2)
 - Update `AGENTS.md` with a one-section TL;DR + canonical snippet for the new component

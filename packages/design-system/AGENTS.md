@@ -61,7 +61,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
   };
   <Button variant={saved ? 'success' : 'primary'} onClick={handleSave}>
     {saved ? 'Saved!' : 'Save'}
-  </Button>
+  </Button>;
   ```
 
 ### `<Input>` — single-line text
@@ -162,8 +162,10 @@ const [tab, setTab] = useState('overview');
   ]}
   activeId={tab}
   onChange={setTab}
-/>
-{tab === 'overview' && <OverviewPanel />}
+/>;
+{
+  tab === 'overview' && <OverviewPanel />;
+}
 ```
 
 - `items: { id, label, count? }[]` — `id` must be unique.
@@ -177,46 +179,46 @@ const [tab, setTab] = useState('overview');
 
 All available as CSS custom properties after you import `global.scss`:
 
-| Family | Tokens |
-|---|---|
-| Neutral colors | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted`, `--color-fg-subtle`, `--color-fg-disabled` |
-| Accent colors | `--color-accent`, `--color-accent-hover`, `--color-accent-pressed`, `--color-accent-fg`, `--color-accent-subtle-bg` |
-| Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info` |
-| Badge palette | `--color-badge-{neutral,info,success,warning,danger,purple}-{bg,fg}` |
-| Avatar palette | `--color-avatar-fg`, `--color-avatar-1` through `--color-avatar-6` |
-| Spacing | `--space-0` `--space-1` (4) `--space-2` (8) `--space-3` (12) `--space-4` (16) `--space-5` (20) `--space-6` (24) `--space-8` (32) `--space-10` (40) `--space-12` (48) `--space-16` (64) |
-| Radii | `--radius-sm` (3) / `--radius-md` (4) / `--radius-lg` (8) / `--radius-full` |
-| Font sizes | `--font-size-xs/sm/md/lg/xl/2xl/3xl`, `--font-size-code` (0.92em for inline mono) |
-| Font weights | `--font-weight-regular/medium/semibold/bold` |
-| Line heights | `--line-height-tight` / `--line-height-normal` / `--line-height-none` (1) |
-| Control sizes | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-chip` (18) |
-| Borders | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3) |
-| Letter spacing | `--letter-spacing-caps` (0.03em) |
-| Shadows | `--shadow-sm` / `--shadow-md` / `--shadow-lg` |
-| Focus rings | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width` |
-| Motion | `--transition-fast` (100ms) / `--transition-base` (140ms) |
-| Layer (z-index) | `--z-dropdown` / `--z-modal` / `--z-toast` |
+| Family          | Tokens                                                                                                                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Neutral colors  | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted`, `--color-fg-subtle`, `--color-fg-disabled` |
+| Accent colors   | `--color-accent`, `--color-accent-hover`, `--color-accent-pressed`, `--color-accent-fg`, `--color-accent-subtle-bg`                                                                                 |
+| Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info`                                  |
+| Badge palette   | `--color-badge-{neutral,info,success,warning,danger,purple}-{bg,fg}`                                                                                                                                |
+| Avatar palette  | `--color-avatar-fg`, `--color-avatar-1` through `--color-avatar-6`                                                                                                                                  |
+| Spacing         | `--space-0` `--space-1` (4) `--space-2` (8) `--space-3` (12) `--space-4` (16) `--space-5` (20) `--space-6` (24) `--space-8` (32) `--space-10` (40) `--space-12` (48) `--space-16` (64)              |
+| Radii           | `--radius-sm` (3) / `--radius-md` (4) / `--radius-lg` (8) / `--radius-full`                                                                                                                         |
+| Font sizes      | `--font-size-xs/sm/md/lg/xl/2xl/3xl`, `--font-size-code` (0.92em for inline mono)                                                                                                                   |
+| Font weights    | `--font-weight-regular/medium/semibold/bold`                                                                                                                                                        |
+| Line heights    | `--line-height-tight` / `--line-height-normal` / `--line-height-none` (1)                                                                                                                           |
+| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-chip` (18)                                                                                                                                |
+| Borders         | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3)                                                                                                                  |
+| Letter spacing  | `--letter-spacing-caps` (0.03em)                                                                                                                                                                    |
+| Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
+| Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width`                                                                                                                               |
+| Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
+| Layer (z-index) | `--z-dropdown` / `--z-modal` / `--z-toast`                                                                                                                                                          |
 
 ---
 
 ## Anti-patterns to never generate
 
-| Don't write | Write instead |
-|---|---|
-| `color: #ffffff` in any SCSS | `color: var(--color-bg)` (or the right semantic token) |
-| `border: 1px solid var(--color-border)` | `border: var(--border-width) solid var(--color-border)` |
-| `opacity: 0.5` | `opacity: var(--opacity-disabled)` (or use the `disabled` attribute) |
-| `<button onClick={...}>Save</button>` | `<Button onClick={...}>Save</Button>` |
-| `<input value={...} onChange={...} />` | `<Input value={...} onChange={...} />` |
-| `<Card><Card>...</Card></Card>` | Use spacing or a divider inside one card |
-| `<Button style={{ marginLeft: 'auto' }}>` | `<Cluster justify="between">` or `<Cluster justify="end">` |
-| Two `<Button variant="primary">` in the same section | One primary, others `secondary` |
-| `<Button variant="success">Save</Button>` rendered on initial mount | `success` is transient — start as `primary`, flip to `success` for ~1.5s after the action resolves, flip back |
-| `<Avatar name="" />` | `name` is required and is the accessible label |
-| `import { Button } from '@eocrm/design-system/src/components/Button'` | `import { Button } from '@eocrm/design-system'` |
-| `<Badge onClick={...}>` | Badges are non-interactive — use a `Button` |
-| 3-digit hex (`#fff`) anywhere | Always 6-digit (`#ffffff`) |
-| `margin` on or around design-system components in your SCSS | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid |
+| Don't write                                                           | Write instead                                                                                                 |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `color: #ffffff` in any SCSS                                          | `color: var(--color-bg)` (or the right semantic token)                                                        |
+| `border: 1px solid var(--color-border)`                               | `border: var(--border-width) solid var(--color-border)`                                                       |
+| `opacity: 0.5`                                                        | `opacity: var(--opacity-disabled)` (or use the `disabled` attribute)                                          |
+| `<button onClick={...}>Save</button>`                                 | `<Button onClick={...}>Save</Button>`                                                                         |
+| `<input value={...} onChange={...} />`                                | `<Input value={...} onChange={...} />`                                                                        |
+| `<Card><Card>...</Card></Card>`                                       | Use spacing or a divider inside one card                                                                      |
+| `<Button style={{ marginLeft: 'auto' }}>`                             | `<Cluster justify="between">` or `<Cluster justify="end">`                                                    |
+| Two `<Button variant="primary">` in the same section                  | One primary, others `secondary`                                                                               |
+| `<Button variant="success">Save</Button>` rendered on initial mount   | `success` is transient — start as `primary`, flip to `success` for ~1.5s after the action resolves, flip back |
+| `<Avatar name="" />`                                                  | `name` is required and is the accessible label                                                                |
+| `import { Button } from '@eocrm/design-system/src/components/Button'` | `import { Button } from '@eocrm/design-system'`                                                               |
+| `<Badge onClick={...}>`                                               | Badges are non-interactive — use a `Button`                                                                   |
+| 3-digit hex (`#fff`) anywhere                                         | Always 6-digit (`#ffffff`)                                                                                    |
+| `margin` on or around design-system components in your SCSS           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                      |
 
 ---
 
