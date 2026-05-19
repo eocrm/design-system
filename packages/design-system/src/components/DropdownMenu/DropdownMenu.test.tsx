@@ -461,3 +461,41 @@ describe('DropdownMenu — item navigation', () => {
     expect(gamma.tabIndex).toBe(-1);
   });
 });
+
+describe('DropdownMenu — item activation by keyboard', () => {
+  function renderMenu(onSelect: () => void) {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={onSelect}>Alpha</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Beta</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('Enter on the active item fires onSelect and closes', async () => {
+    const onSelect = vi.fn();
+    const { user } = renderMenu(onSelect);
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('{Enter}');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('Space on the active item fires onSelect and closes', async () => {
+    const onSelect = vi.fn();
+    const { user } = renderMenu(onSelect);
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard(' ');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+});

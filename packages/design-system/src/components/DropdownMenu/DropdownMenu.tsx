@@ -315,6 +315,18 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
       return;
     }
 
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const items = ctx.itemsRef.current;
+      if (ctx.activeIndex >= 0 && ctx.activeIndex < items.length) {
+        const target = items[ctx.activeIndex];
+        if (!target.disabled) {
+          target.ref.current?.click();
+        }
+      }
+      return;
+    }
+
     const items = ctx.itemsRef.current;
     const enabledIndices = items
       .map((it, i) => (it.disabled ? -1 : i))
