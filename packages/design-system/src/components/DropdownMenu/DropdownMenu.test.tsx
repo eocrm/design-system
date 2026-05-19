@@ -265,3 +265,71 @@ describe('DropdownMenu — Item / Separator', () => {
     expect(screen.getByRole('separator').className).toMatch(/custom-sep/);
   });
 });
+
+describe('DropdownMenu — dismissal', () => {
+  function setup() {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <div>
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button">Open</button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Item onSelect={onSelect}>Edit</DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+        <button type="button">Outside</button>
+      </div>,
+    );
+    return { user, onSelect };
+  }
+
+  it('closes on outside click (pointerdown on document)', async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('closes on Escape and returns focus to the trigger', async () => {
+    const { user } = setup();
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    await user.click(trigger);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('closes on Tab from inside the menu and focuses the trigger', async () => {
+    const { user } = setup();
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    await user.click(trigger);
+    screen.getByRole('menu').focus();
+    await user.tab();
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('fires onSelect, closes, and refocuses the trigger when clicking an item', async () => {
+    const { user, onSelect } = setup();
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    await user.click(trigger);
+    await user.click(screen.getByRole('menuitem', { name: 'Edit' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('clicking the trigger while open closes the menu (no re-open via outside-click)', async () => {
+    const { user } = setup();
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    await user.click(trigger);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await user.click(trigger);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+});

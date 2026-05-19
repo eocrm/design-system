@@ -5,10 +5,12 @@ import {
   isValidElement,
   useCallback,
   useContext,
+  useEffect,
   useId,
   useRef,
   useState,
   type HTMLAttributes,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
   type PointerEvent,
   type ReactElement,
@@ -172,6 +174,69 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
 
   const setFloatingRef = mergeRefs<HTMLDivElement>(refs.setFloating, forwardedRef);
 
+  // Outside-click: pointerdown on document, target is neither inside Content
+  // nor inside the Trigger. Excluding the trigger prevents fighting the
+  // trigger's own toggle handler.
+  useEffect(() => {
+    if (!ctx.open) return;
+    const onPointerDown = (e: globalThis.PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      const content = refs.floating.current;
+      const trigger = ctx.triggerRef.current;
+      if (content && content.contains(target)) return;
+      if (trigger && trigger.contains(target)) return;
+      ctx.setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [ctx, refs]);
+
+  // Escape: close from anywhere (focus may be on the trigger or inside the menu).
+  // Tab: close and return focus to trigger when focus is inside the menu.
+  // These use document-level listeners so they fire regardless of which element
+  // currently holds focus.
+  useEffect(() => {
+    if (!ctx.open) return;
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        ctx.setOpen(false);
+        ctx.triggerRef.current?.focus();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const content = refs.floating.current;
+        const activeEl = document.activeElement as Node | null;
+        // Only intercept Tab when focus is inside the menu.
+        if (content && activeEl && content.contains(activeEl)) {
+          e.preventDefault();
+          ctx.setOpen(false);
+          ctx.triggerRef.current?.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [ctx, refs]);
+
+  const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      ctx.setOpen(false);
+      ctx.triggerRef.current?.focus();
+      return;
+    }
+    if (e.key === 'Tab') {
+      // Close and move focus to trigger; preventDefault so focus stays on
+      // the trigger (jsdom/userEvent would otherwise advance past it).
+      e.preventDefault();
+      ctx.setOpen(false);
+      ctx.triggerRef.current?.focus();
+      return;
+    }
+  };
+
   if (!ctx.open) return null;
 
   return createPortal(
@@ -183,6 +248,7 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
       aria-orientation="vertical"
       style={floatingStyles}
       className={clsx(styles.content, className)}
+      onKeyDown={handleKeyDown}
       {...rest}
     >
       {children}
@@ -205,14 +271,13 @@ const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
   { onSelect, tone = 'default', icon, shortcut, disabled = false, className, children, ...rest },
   ref,
 ) {
-  // Context is required (Item must live inside a DropdownMenu), but in this
-  // task we don't yet use it directly; the registry hook-up lands in a later
-  // task. The hook call enforces the structural rule.
-  useDropdownMenuContext('Item');
+  const ctx = useDropdownMenuContext('Item');
 
   const handleClick = (_e: MouseEvent) => {
     if (disabled) return;
     onSelect();
+    ctx.setOpen(false);
+    ctx.triggerRef.current?.focus();
   };
 
   return (
