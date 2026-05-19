@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Pin } from 'lucide-react';
 import { Button } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
@@ -283,6 +284,47 @@ export function DropdownMenuDemo() {
       >
         <ViewSettingsExample />
       </Example>
+
+      <Example
+        title="Custom indicators (ItemIndicator)"
+        description="Checked items already get the info-tinted row + 2px left accent for free. Use <DropdownMenu.ItemIndicator> as a direct child to add a custom glyph on top — a Pin icon, a colored dot for a label-color picker, a custom animated check, etc. Indicators only render when the parent item is checked / selected."
+        code={`<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="secondary">Label color ▾</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.RadioGroup value={color} onValueChange={setColor}>
+      <DropdownMenu.RadioItem value="red">
+        <DropdownMenu.ItemIndicator>
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: 'var(--color-danger)' }} />
+        </DropdownMenu.ItemIndicator>
+        Red
+      </DropdownMenu.RadioItem>
+      <DropdownMenu.RadioItem value="green">
+        <DropdownMenu.ItemIndicator>
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: 'var(--color-success)' }} />
+        </DropdownMenu.ItemIndicator>
+        Green
+      </DropdownMenu.RadioItem>
+      <DropdownMenu.RadioItem value="blue">
+        <DropdownMenu.ItemIndicator>
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: 'var(--color-accent)' }} />
+        </DropdownMenu.ItemIndicator>
+        Blue
+      </DropdownMenu.RadioItem>
+    </DropdownMenu.RadioGroup>
+    <DropdownMenu.Separator />
+    <DropdownMenu.CheckboxItem checked={pinned} onCheckedChange={setPinned}>
+      <DropdownMenu.ItemIndicator>
+        <Pin size={14} />
+      </DropdownMenu.ItemIndicator>
+      Pin to top
+    </DropdownMenu.CheckboxItem>
+  </DropdownMenu.Content>
+</DropdownMenu>`}
+      >
+        <CustomIndicatorExample />
+      </Example>
     </DemoLayout>
   );
 }
@@ -361,6 +403,64 @@ function ViewSettingsExample() {
               <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
             </DropdownMenu.RadioGroup>
           </DropdownMenu.Group>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </Cluster>
+  );
+}
+
+function ColorDot({ color }: { color: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        display: 'inline-block',
+        width: 10,
+        height: 10,
+        borderRadius: 999,
+        background: color,
+      }}
+    />
+  );
+}
+
+function CustomIndicatorExample() {
+  const [color, setColor] = useState('blue');
+  const [pinned, setPinned] = useState(false);
+  return (
+    <Cluster gap="sm">
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="secondary">Label color ▾</Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value={color} onValueChange={setColor}>
+            <DropdownMenu.RadioItem value="red">
+              <DropdownMenu.ItemIndicator>
+                <ColorDot color="var(--color-danger)" />
+              </DropdownMenu.ItemIndicator>
+              Red
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="green">
+              <DropdownMenu.ItemIndicator>
+                <ColorDot color="var(--color-success)" />
+              </DropdownMenu.ItemIndicator>
+              Green
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="blue">
+              <DropdownMenu.ItemIndicator>
+                <ColorDot color="var(--color-accent)" />
+              </DropdownMenu.ItemIndicator>
+              Blue
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+          <DropdownMenu.Separator />
+          <DropdownMenu.CheckboxItem checked={pinned} onCheckedChange={setPinned}>
+            <DropdownMenu.ItemIndicator>
+              <Pin size={14} />
+            </DropdownMenu.ItemIndicator>
+            Pin to top
+          </DropdownMenu.CheckboxItem>
         </DropdownMenu.Content>
       </DropdownMenu>
     </Cluster>
