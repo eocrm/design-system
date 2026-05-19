@@ -233,6 +233,17 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
 
   const setFloatingRef = mergeRefs<HTMLDivElement>(refs.setFloating, forwardedRef);
 
+  const typeaheadRef = useRef<{ buffer: string; timer: ReturnType<typeof setTimeout> | null }>({
+    buffer: '',
+    timer: null,
+  });
+
+  useEffect(() => {
+    return () => {
+      if (typeaheadRef.current.timer) clearTimeout(typeaheadRef.current.timer);
+    };
+  }, []);
+
   // Outside-click: pointerdown on document, target is neither inside Content
   // nor inside the Trigger. Excluding the trigger prevents fighting the
   // trigger's own toggle handler.
@@ -366,6 +377,30 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
         focusAt(enabledIndices[enabledIndices.length - 1]);
         return;
       }
+    }
+
+    // Typeahead: printable characters (length 1) with no modifier keys append
+    // to a debounced buffer and jump to the first non-disabled matching item.
+    // This block comes AFTER Enter/Space and Arrow/Home/End so those keys are
+    // not accidentally consumed here (' ' is length 1 but is caught above).
+    if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      const ta = typeaheadRef.current;
+      ta.buffer += e.key.toLowerCase();
+      if (ta.timer) clearTimeout(ta.timer);
+      ta.timer = setTimeout(() => {
+        ta.buffer = '';
+        ta.timer = null;
+      }, 500);
+
+      const match = items.findIndex(
+        (it) => !it.disabled && it.label.toLowerCase().startsWith(ta.buffer),
+      );
+      if (match !== -1) {
+        e.preventDefault();
+        ctx.setActiveIndex(match);
+        queueMicrotask(() => items[match].ref.current?.focus());
+      }
+      return;
     }
   };
 

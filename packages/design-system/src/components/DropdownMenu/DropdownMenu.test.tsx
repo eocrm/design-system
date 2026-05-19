@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { configure, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
@@ -497,5 +497,73 @@ describe('DropdownMenu — item activation by keyboard', () => {
     await user.keyboard(' ');
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('menu')).toBeNull();
+  });
+});
+
+describe('DropdownMenu — typeahead', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    // @testing-library/react's asyncWrapper has a setTimeout(0) drain step that
+    // only knows how to advance Jest fake timers. Override it to also advance
+    // Vitest fake timers so the internal act() wrapper doesn't deadlock.
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    // Restore the default asyncWrapper for all other test suites.
+    configure({ asyncWrapper: async (cb) => cb() });
+  });
+
+  function renderMenu() {
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Delete</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('single-character typeahead jumps to first matching label', async () => {
+    const { user } = renderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}'); // Edit active
+    await user.keyboard('d');
+    expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toHaveFocus();
+  });
+
+  it('multi-character typeahead accumulates within 500ms', async () => {
+    const { user } = renderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('d');
+    await user.keyboard('e'); // "de"
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveFocus();
+  });
+
+  it('buffer resets after 500ms of inactivity', async () => {
+    const { user } = renderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('d');
+    vi.advanceTimersByTime(600);
+    await user.keyboard('e'); // 'e' alone, "Edit"
+    expect(screen.getByRole('menuitem', { name: 'Edit' })).toHaveFocus();
   });
 });
