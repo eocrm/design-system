@@ -1,4 +1,4 @@
-import { useContext, useId, type HTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useContext, useId, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import styles from './DropdownMenu.module.scss';
 import { GroupContext } from './context';
@@ -45,7 +45,10 @@ export interface DropdownMenuGroupProps extends HTMLAttributes<HTMLDivElement> {
  * - Around a RadioGroup if you don't need a visible Label too — RadioGroup
  *   already provides `role="radiogroup"`. Group adds a second role layer.
  */
-export function Group({ children, className, ...rest }: DropdownMenuGroupProps) {
+export const Group = forwardRef<HTMLDivElement, DropdownMenuGroupProps>(function Group(
+  { children, className, ...rest },
+  ref,
+) {
   const reactId = useId();
   const labelId = `dropdown-menu-label-${sanitizeId(reactId)}`;
   return (
@@ -53,6 +56,7 @@ export function Group({ children, className, ...rest }: DropdownMenuGroupProps) 
       {/* {...rest} first so role and aria-labelledby always win */}
       <div
         {...rest}
+        ref={ref}
         role="group"
         aria-labelledby={labelId}
         className={clsx(styles.group, className)}
@@ -61,7 +65,7 @@ export function Group({ children, className, ...rest }: DropdownMenuGroupProps) 
       </div>
     </GroupContext.Provider>
   );
-}
+});
 
 /**
  * Props for `<DropdownMenu.Label>`.
@@ -105,15 +109,18 @@ export interface DropdownMenuLabelProps extends HTMLAttributes<HTMLDivElement> {
  *   there is no `aria-labelledby` wiring.
  */
 
-export function Label({ children, className, id: idProp, ...rest }: DropdownMenuLabelProps) {
+export const Label = forwardRef<HTMLDivElement, DropdownMenuLabelProps>(function Label(
+  { children, className, id: idProp, ...rest },
+  ref,
+) {
   const groupCtx = useContext(GroupContext);
   // If inside a Group, use the group's label id so aria-labelledby resolves.
   // Otherwise leave id as the consumer's (or undefined).
   const id = idProp ?? groupCtx?.labelId;
   return (
     // {...rest} first so id always wins (component controls it)
-    <div {...rest} id={id} className={clsx(styles.label, className)}>
+    <div {...rest} ref={ref} id={id} className={clsx(styles.label, className)}>
       {children}
     </div>
   );
-}
+});
