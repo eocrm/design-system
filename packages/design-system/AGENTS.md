@@ -147,6 +147,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 ```
 
 - `tone`: `neutral` (default) / `info` / `success` / `warning` / `danger` / `purple`
+- `size`: `md` (20, default) / `sm` (16). `md` is the uppercase tracked "loud label" pill. `sm` drops the uppercase + tracking and renders case as-typed — use it for dense table cells, compact toolbars, or anywhere the uppercase treatment shouts next to body copy.
 - **Non-interactive.** If it's clickable, use `<Button>` instead.
 - Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced.
 
@@ -191,7 +192,7 @@ All available as CSS custom properties after you import `global.scss`:
 | Font sizes      | `--font-size-xs/sm/md/lg/xl/2xl/3xl`, `--font-size-code` (0.92em for inline mono)                                                                                                                   |
 | Font weights    | `--font-weight-regular/medium/semibold/bold`                                                                                                                                                        |
 | Line heights    | `--line-height-tight` / `--line-height-normal` / `--line-height-none` (1)                                                                                                                           |
-| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-chip` (18)                                                                                                                                |
+| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-badge-sm` (16), `--size-chip` (18)                                                                                                        |
 | Borders         | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3)                                                                                                                  |
 | Letter spacing  | `--letter-spacing-caps` (0.03em)                                                                                                                                                                    |
 | Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |

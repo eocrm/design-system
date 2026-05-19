@@ -38,6 +38,45 @@ export function BadgeDemo() {
       </Example>
 
       <Example
+        title="Sizes"
+        description="Two emphases. md (20px, default) is the loud label pill — uppercase and tracked. sm (16px) is the quiet inline tag — case as-typed, no tracking. Use sm in dense table cells, compact toolbars, or anywhere the uppercase treatment shouts next to body copy."
+        code={`// md (default), all tones
+<Badge tone="neutral">Neutral</Badge>
+<Badge tone="info">Info</Badge>
+<Badge tone="success">Success</Badge>
+<Badge tone="warning">Warning</Badge>
+<Badge tone="danger">Danger</Badge>
+<Badge tone="purple">Purple</Badge>
+
+// sm, all tones
+<Badge size="sm" tone="neutral">Neutral</Badge>
+<Badge size="sm" tone="info">Info</Badge>
+<Badge size="sm" tone="success">Success</Badge>
+<Badge size="sm" tone="warning">Warning</Badge>
+<Badge size="sm" tone="danger">Danger</Badge>
+<Badge size="sm" tone="purple">Purple</Badge>`}
+      >
+        <Stack gap="md">
+          <Cluster gap="sm" align="center">
+            <Badge tone="neutral">Neutral</Badge>
+            <Badge tone="info">Info</Badge>
+            <Badge tone="success">Success</Badge>
+            <Badge tone="warning">Warning</Badge>
+            <Badge tone="danger">Danger</Badge>
+            <Badge tone="purple">Purple</Badge>
+          </Cluster>
+          <Cluster gap="sm" align="center">
+            <Badge size="sm" tone="neutral">Neutral</Badge>
+            <Badge size="sm" tone="info">Info</Badge>
+            <Badge size="sm" tone="success">Success</Badge>
+            <Badge size="sm" tone="warning">Warning</Badge>
+            <Badge size="sm" tone="danger">Danger</Badge>
+            <Badge size="sm" tone="purple">Purple</Badge>
+          </Cluster>
+        </Stack>
+      </Example>
+
+      <Example
         title="Status patterns"
         description="The most common CRM usage: status pill on a contact, deal, or invitation."
         code={`// Contact statuses

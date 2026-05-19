@@ -5,6 +5,13 @@ import styles from './Badge.module.scss';
 /** Semantic tone. Use consistently across pages — `success` should never mean "bad". */
 export type BadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'purple';
 
+/**
+ * Pill height. See BadgeProps#size for when to use each. Intentionally only
+ * two heights — a 40px badge would be Button-shaped. If you need something
+ * larger, use `<Button>` or rethink the layout.
+ */
+export type BadgeSize = 'sm' | 'md';
+
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   /**
    * Semantic tone.
@@ -16,6 +23,17 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
    * - `purple` — special / highlighted categories ("Enterprise", "VIP").
    */
   tone?: BadgeTone;
+  /**
+   * Pill height and emphasis.
+   * - `md` (20px, default) — the standard "loud label" pill. Uppercase, tracked,
+   *   semibold. Reads as a deliberate status marker.
+   * - `sm` (16px) — quieter inline tag for tight table cells, compact toolbars,
+   *   or anywhere a 20px uppercase pill visually crowds adjacent text. Drops
+   *   the uppercase transform and caps tracking so it sits next to body copy
+   *   without shouting; case is preserved as-typed (write `Active`, get
+   *   `Active`). Same 11px size and semibold weight as `md`.
+   */
+  size?: BadgeSize;
 }
 
 const toneClass: Record<BadgeTone, string> = {
@@ -25,6 +43,11 @@ const toneClass: Record<BadgeTone, string> = {
   warning: styles.warning,
   danger: styles.danger,
   purple: styles.purple,
+};
+
+const sizeClass: Record<BadgeSize, string> = {
+  sm: styles.sm,
+  md: styles.md,
 };
 
 /**
@@ -66,8 +89,15 @@ const toneClass: Record<BadgeTone, string> = {
  *   with an appropriate variant instead.
  */
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
-  { tone = 'neutral', className, ...props },
+  { tone = 'neutral', size = 'md', className, ...props },
   ref,
 ) {
-  return <span ref={ref} className={clsx(styles.badge, toneClass[tone], className)} {...props} />;
+  // {...props} last so consumer overrides win (Pattern A).
+  return (
+    <span
+      ref={ref}
+      className={clsx(styles.badge, toneClass[tone], sizeClass[size], className)}
+      {...props}
+    />
+  );
 });

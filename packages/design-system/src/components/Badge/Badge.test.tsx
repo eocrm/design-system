@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import { Badge, type BadgeTone } from './Badge';
+import { Badge, type BadgeSize, type BadgeTone } from './Badge';
 
 describe('Badge', () => {
   it('renders its children', () => {
@@ -20,6 +20,16 @@ describe('Badge', () => {
       expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(tone));
     },
   );
+
+  it('defaults to the md size', () => {
+    const { container } = render(<Badge>x</Badge>);
+    expect((container.firstChild as HTMLElement).className).toMatch(/md/);
+  });
+
+  it.each<BadgeSize>(['sm', 'md'])('applies the %s size class', (size) => {
+    const { container } = render(<Badge size={size}>x</Badge>);
+    expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(size));
+  });
 
   it('merges the className prop with internal classes', () => {
     const { container } = render(<Badge className="external">x</Badge>);
