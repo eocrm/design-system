@@ -1,17 +1,22 @@
 name: Release
 
 # Triggered on pushes to main that touch packages/** or workflows/**.
-# Root-only changes (README, CLAUDE.md, Makefile) skip the release.
+# Root-only changes (README, CLAUDE.md, Makefile) skip the workflow entirely.
 #
-# Quality gate runs first; on green, the library auto-publishes a patch bump
-# and the playground re-deploys. To force a major/minor bump, edit BUMP below
-# on a branch and merge — there is no manual UI by design.
+# Inside the workflow:
+# - quality runs always
+# - publish runs ONLY if the library actually changed (packages/design-system
+#   or one of the release-related workflow files). Playground-only changes
+#   skip the publish step → no version bump just because a demo page tweaked.
+# - deploy-playground runs whenever quality passed and publish either
+#   succeeded or was skipped — so playground changes still go live.
+#
+# To force a major/minor bump, edit BUMP below on a branch and merge — there
+# is no manual UI by design.
 
 on:
   push:
     branches: [main]
-    # Skip releases for root-level doc/config changes. Library + playground
-    # + workflow changes still trigger a release.
     paths:
       - 'packages/**'
       - '.github/workflows/**'
@@ -29,8 +34,42 @@ jobs:
   quality:
     uses: ./.github/workflows/quality.yml
 
+  detect-library-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Need previous commit to diff against.
+          fetch-depth: 2
+
+      - name: Detect library changes
+        id: diff
+        run: |
+          set -euo pipefail
+          if ! git rev-parse HEAD^ >/dev/null 2>&1; then
+            # No previous commit (initial push) — treat as a library change.
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "No previous commit — assuming library changed."
+            exit 0
+          fi
+
+          # Library changes include the package itself plus the workflow files
+          # that actually publish it. Quality.yml is here because if the gate
+          # logic changes, we want a real publish run to verify it end-to-end.
+          if git diff --name-only HEAD^ HEAD | grep -qE '^packages/design-system/|^\.github/workflows/(release|quality|deploy-playground)\.yml$'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Library changed — publish will run."
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Library unchanged — publish will be skipped."
+          fi
+
   publish:
-    needs: quality
+    needs: [quality, detect-library-changes]
+    if: needs.detect-library-changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -116,10 +155,16 @@ jobs:
             echo "- Registry: https://npm.pkg.github.com"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # Re-deploy the playground so the live site reflects the just-published version.
-  # Skipped automatically if `publish` failed (including the tag-exists guard).
+  # Re-deploy the playground so the live site reflects the just-released code.
+  # Runs whenever quality passed and publish either succeeded or was skipped
+  # (skipped = no library change, but a playground-only change still needs to
+  # go live). Doesn't run if publish failed.
   deploy-playground:
-    needs: publish
+    needs: [quality, publish]
+    if: |
+      always() &&
+      needs.quality.result == 'success' &&
+      (needs.publish.result == 'success' || needs.publish.result == 'skipped')
     uses: ./.github/workflows/deploy-playground.yml
     permissions:
       contents: read
