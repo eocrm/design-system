@@ -81,9 +81,13 @@ function chain<E>(
 }
 
 export interface DropdownMenuProps {
-  /** Must contain a Trigger and (typically) a Content. */
+  /** Must contain exactly one `<DropdownMenu.Trigger>` and one `<DropdownMenu.Content>`. */
   children: ReactNode;
-  /** Controlled open state. When provided alongside `onOpenChange`, the consumer owns open. */
+  /**
+   * Controlled open state. Provide alongside `onOpenChange` to drive open
+   * externally. Omit both to let DropdownMenu own its own state (the common
+   * case).
+   */
   open?: boolean;
   /** Fired whenever DropdownMenu wants to change open state. Required when `open` is provided. */
   onOpenChange?: (open: boolean) => void;
@@ -91,6 +95,65 @@ export interface DropdownMenuProps {
   defaultOpen?: boolean;
 }
 
+/**
+ * Action menu that opens from a trigger button. Compound API — pair `<Trigger>`,
+ * `<Content>`, `<Item>`, and `<Separator>` as direct (or nested) children.
+ * Implements the WAI-ARIA menu pattern: roving tabindex inside Content,
+ * Arrow/Home/End nav, typeahead, Enter/Space to activate, Escape/Tab to
+ * dismiss. Content portals to `document.body` and positions itself relative
+ * to the trigger via Floating UI (auto-flip, viewport-aware).
+ *
+ * @example
+ * <DropdownMenu>
+ *   <DropdownMenu.Trigger>
+ *     <Button variant="secondary">Actions</Button>
+ *   </DropdownMenu.Trigger>
+ *   <DropdownMenu.Content align="end">
+ *     <DropdownMenu.Item onSelect={edit}>Edit</DropdownMenu.Item>
+ *     <DropdownMenu.Item onSelect={duplicate} shortcut="⌘D">Duplicate</DropdownMenu.Item>
+ *     <DropdownMenu.Separator />
+ *     <DropdownMenu.Item onSelect={remove} tone="danger">Delete</DropdownMenu.Item>
+ *   </DropdownMenu.Content>
+ * </DropdownMenu>
+ *
+ * @example
+ * // Table row kebab — minimal trigger via the ghost variant:
+ * <DropdownMenu>
+ *   <DropdownMenu.Trigger>
+ *     <Button variant="ghost" aria-label="Row actions">⋯</Button>
+ *   </DropdownMenu.Trigger>
+ *   <DropdownMenu.Content align="end">
+ *     <DropdownMenu.Item onSelect={() => view(row)}>View</DropdownMenu.Item>
+ *     <DropdownMenu.Item onSelect={() => archive(row)}>Archive</DropdownMenu.Item>
+ *   </DropdownMenu.Content>
+ * </DropdownMenu>
+ *
+ * @example
+ * // Controlled open (rare — usually let DropdownMenu manage state):
+ * const [open, setOpen] = useState(false);
+ * <DropdownMenu open={open} onOpenChange={setOpen}>...</DropdownMenu>
+ *
+ * @remarks When NOT to use
+ * - For form value selection ("pick a status", "pick a country") → use
+ *   `<Select>` (not yet shipped) so the value lives in form state.
+ * - For an always-visible row of actions → use a `<Cluster>` of Buttons in
+ *   a toolbar. Menus are for actions that don't deserve permanent screen real
+ *   estate.
+ * - For navigation between pages → use the sidebar or a `<Link>` (not yet
+ *   shipped). Menu items are for *actions*, not page transitions.
+ *
+ * @remarks Anti-patterns
+ * - ❌ Multiple `<DropdownMenu.Trigger>` inside one `<DropdownMenu>`. Use one
+ *   DropdownMenu per trigger.
+ * - ❌ Trigger child that doesn't accept a ref. The cloneElement contract
+ *   needs `forwardRef` on the trigger element. `<Button>` qualifies; a raw
+ *   `<button>` qualifies; a custom component that doesn't forward refs does
+ *   not.
+ * - ❌ `tone="danger"` for non-destructive actions like "Filter" or "Sort".
+ *   Reserve danger for irreversible destructive operations.
+ * - ❌ Nesting `<DropdownMenu>` inside another DropdownMenu. Submenus are
+ *   out of scope for v1 and the focus / dismissal logic will fight you.
+ */
 function DropdownMenuRoot({
   children,
   open: controlledOpen,
@@ -152,9 +215,20 @@ function DropdownMenuRoot({
 }
 
 export interface DropdownMenuTriggerProps {
+  /**
+   * Exactly one React element. The Trigger clones this element to inject a
+   * ref, `aria-haspopup="menu"`, `aria-expanded`, `aria-controls`, and the
+   * pointerdown/keyboard handlers that open the menu. The child must accept
+   * a ref (i.e. use `forwardRef` if it's a custom component); a raw
+   * `<button>` or the library's `<Button>` both qualify.
+   */
   children: ReactElement;
 }
 
+/**
+ * Clones its single child element to inject the open-toggle handlers and
+ * ARIA. The child must accept a ref (forwardRef or a native element).
+ */
 function Trigger({ children }: DropdownMenuTriggerProps) {
   const ctx = useDropdownMenuContext('Trigger');
 
@@ -205,16 +279,28 @@ function Trigger({ children }: DropdownMenuTriggerProps) {
   } as Partial<unknown> as object);
 }
 
+/** Which side of the trigger the menu prefers. Floating UI auto-flips if it doesn't fit. */
 export type DropdownMenuSide = 'top' | 'bottom';
+/** Which edge of the menu aligns to the corresponding trigger edge. */
 export type DropdownMenuAlign = 'start' | 'center' | 'end';
 
 export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement> {
+  /** Preferred side. Default `'bottom'`. Auto-flips on collision. */
   side?: DropdownMenuSide;
+  /** Edge alignment. Default `'start'`. */
   align?: DropdownMenuAlign;
+  /** Gap in px between trigger and menu. Default `4`. */
   sideOffset?: number;
+  /** Minimum width in px or any CSS length. Defaults to the trigger's width. */
   minWidth?: number | string;
 }
 
+/**
+ * The floating menu panel. Renders only when the menu is open, portaled to
+ * `document.body`, positioned by Floating UI. Owns the keyboard handlers
+ * (Escape, Tab, Arrow, Home/End, Enter/Space, typeahead) and outside-click
+ * dismissal.
+ */
 const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Content(
   {
     side = 'bottom',
@@ -455,16 +541,30 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
   );
 });
 
+/** Item color treatment. */
 export type DropdownMenuItemTone = 'default' | 'danger';
 
 export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+  /** Called when the item is activated (click or Enter/Space). The consumer performs the action. */
   onSelect: () => void;
+  /**
+   * Visual tone.
+   * - `'default'` — normal action.
+   * - `'danger'` — destructive (Delete, Revoke, Remove). Reserve for irreversible operations.
+   */
   tone?: DropdownMenuItemTone;
+  /** Leading icon. Rendered in a fixed-size slot so labels stay aligned across items. */
   icon?: ReactNode;
+  /** Trailing shortcut hint (e.g. `'⌘D'`). Visual cue only — does NOT register a global key handler. */
   shortcut?: string;
+  /** Disabled items are skipped by keyboard nav, dimmed, and don't fire `onSelect` on click. */
   disabled?: boolean;
 }
 
+/**
+ * A selectable menu item. Self-registers with the DropdownMenu context for
+ * keyboard navigation and typeahead. Fires `onSelect` on activation.
+ */
 const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
   { onSelect, tone = 'default', icon, shortcut, disabled = false, className, children, ...rest },
   forwardedRef,
@@ -511,8 +611,10 @@ const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
   );
 });
 
+/** Visual divider between groups of items. Decorative — `role="separator"`. */
 export interface DropdownMenuSeparatorProps extends HTMLAttributes<HTMLDivElement> {}
 
+/** Decorative visual divider between groups of items. `role="separator"`, not focusable. */
 const Separator = forwardRef<HTMLDivElement, DropdownMenuSeparatorProps>(function Separator(
   { className, ...rest },
   ref,
