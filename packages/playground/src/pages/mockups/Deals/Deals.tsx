@@ -4,6 +4,7 @@ import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
+import { DropdownMenu } from '@eocrm/design-system';
 import { dealStages, deals, type DealStage } from '../../../data/mock';
 import styles from './Deals.module.scss';
 import { CrossLinks } from '../../shared/CrossLinks';
@@ -49,9 +50,33 @@ export function Deals() {
                   <article key={d.id} className={styles.dealCard}>
                     <Cluster justify="between" align="start" gap="sm" wrap={false}>
                       <span className={styles.dealId}>{d.id}</span>
-                      <button type="button" aria-label="More" className={styles.cardActionBtn}>
-                        <MoreHorizontal size={14} />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenu.Trigger>
+                          <button type="button" aria-label="More" className={styles.cardActionBtn}>
+                            <MoreHorizontal size={14} />
+                          </button>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Content align="end">
+                          <DropdownMenu.Item onSelect={() => {}}>Open</DropdownMenu.Item>
+                          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+                          <DropdownMenu.Sub>
+                            <DropdownMenu.SubTrigger>Move to stage</DropdownMenu.SubTrigger>
+                            <DropdownMenu.SubContent>
+                              {dealStages
+                                .filter((s) => s.id !== stage.id)
+                                .map((s) => (
+                                  <DropdownMenu.Item key={s.id} onSelect={() => {}}>
+                                    {s.label}
+                                  </DropdownMenu.Item>
+                                ))}
+                            </DropdownMenu.SubContent>
+                          </DropdownMenu.Sub>
+                          <DropdownMenu.Separator />
+                          <DropdownMenu.Item onSelect={() => {}} tone="danger">
+                            Delete
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu>
                     </Cluster>
                     <h3 className={styles.dealTitle}>{d.title}</h3>
                     <span className={styles.dealCompany}>{d.company}</span>
