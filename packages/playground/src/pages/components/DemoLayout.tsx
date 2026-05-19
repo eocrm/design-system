@@ -69,7 +69,7 @@ export function DemoLayout({
       </Card>
 
       <h2 className={styles.sectionTitle}>Examples</h2>
-      <Stack gap="xl">{children}</Stack>
+      <div className={styles.examplesGrid}>{children}</div>
 
       {componentName && <CrossLinks kind="component" name={componentName} />}
     </Stack>
