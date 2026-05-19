@@ -1,4 +1,5 @@
-import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
+import { cloneElement, isValidElement, useRef, type ReactElement, type ReactNode, type Ref } from 'react';
+import { mergeRefs } from '../_internal/refs';
 
 export type TooltipSide = 'top' | 'right' | 'bottom' | 'left';
 export type TooltipAlign = 'start' | 'center' | 'end';
@@ -27,5 +28,9 @@ export function Tooltip({ children }: TooltipProps) {
   if (!isValidElement(children)) {
     throw new Error('<Tooltip> requires exactly one React element child.');
   }
-  return cloneElement(children);
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const childProps = children.props as { ref?: Ref<HTMLElement> };
+  return cloneElement(children, {
+    ref: mergeRefs(triggerRef, childProps.ref),
+  } as object);
 }
