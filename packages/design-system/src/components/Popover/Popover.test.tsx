@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Popover } from './Popover';
 
 describe('Popover — initial render', () => {
@@ -10,5 +11,82 @@ describe('Popover — initial render', () => {
     );
     expect(screen.getByTestId('children-marker')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+describe('Popover.Trigger', () => {
+  it('renders its child unchanged and sets aria-haspopup="dialog" and aria-expanded="false"', () => {
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+      </Popover>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    expect(trigger).toBeInTheDocument();
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('toggles aria-expanded on click', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+      </Popover>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('opens on Enter or Space when focused', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+      </Popover>,
+    );
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Open' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('button', { name: 'Open' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('throws a clear error when children is not a valid React element', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() =>
+      render(
+        <Popover>
+          {/* @ts-expect-error — intentionally invalid */}
+          <Popover.Trigger>{null}</Popover.Trigger>
+        </Popover>,
+      ),
+    ).toThrow(/exactly one React element/);
+    spy.mockRestore();
+  });
+
+  it('chains consumer onClick (consumer runs first)', async () => {
+    const user = userEvent.setup();
+    const consumer = vi.fn();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button" onClick={consumer}>
+            Open
+          </button>
+        </Popover.Trigger>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(consumer).toHaveBeenCalledTimes(1);
   });
 });

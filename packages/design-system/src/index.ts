@@ -48,4 +48,4 @@ export { Tooltip } from './components/Tooltip';
 export type { TooltipProps, TooltipSide, TooltipAlign } from './components/Tooltip';
 
 export { Popover } from './components/Popover';
-export type { PopoverProps } from './components/Popover';
+export type { PopoverProps, PopoverTriggerProps } from './components/Popover';
