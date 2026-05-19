@@ -548,10 +548,7 @@ describe('DropdownMenu — controlled open', () => {
 });
 
 describe('DropdownMenu — placement props', () => {
-  async function openWith(props: {
-    side?: 'top' | 'bottom';
-    align?: 'start' | 'center' | 'end';
-  }) {
+  async function openWith(props: { side?: 'top' | 'bottom'; align?: 'start' | 'center' | 'end' }) {
     const user = userEvent.setup();
     render(
       <DropdownMenu>

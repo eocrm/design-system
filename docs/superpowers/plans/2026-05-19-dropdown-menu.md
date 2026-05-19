@@ -143,7 +143,9 @@ export interface DropdownMenuProps {
 }
 
 function DropdownMenuRoot({ children }: DropdownMenuProps) {
-  return <DropdownMenuContext.Provider value={{ open: false }}>{children}</DropdownMenuContext.Provider>;
+  return (
+    <DropdownMenuContext.Provider value={{ open: false }}>{children}</DropdownMenuContext.Provider>
+  );
 }
 
 // Compound surface. Real implementations land in later tasks.
@@ -265,7 +267,7 @@ describe('DropdownMenu — Trigger', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('preserves the child element\'s own onClick', async () => {
+  it("preserves the child element's own onClick", async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     render(
@@ -352,9 +354,7 @@ function mergeRefs<T>(...refs: Array<Ref<T> | undefined | null>): Ref<T> {
   };
 }
 
-function chain<E>(
-  ...fns: Array<((event: E) => void) | undefined>
-): (event: E) => void {
+function chain<E>(...fns: Array<((event: E) => void) | undefined>): (event: E) => void {
   return (event: E) => {
     for (const fn of fns) fn?.(event);
   };
@@ -611,15 +611,7 @@ export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement>
 }
 
 const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Content(
-  {
-    side = 'bottom',
-    align = 'start',
-    sideOffset = 4,
-    minWidth,
-    className,
-    children,
-    ...rest
-  },
+  { side = 'bottom', align = 'start', sideOffset = 4, minWidth, className, children, ...rest },
   forwardedRef,
 ) {
   const ctx = useDropdownMenuContext('Content');
@@ -640,7 +632,7 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
             minWidth:
               typeof minWidth === 'number'
                 ? `${minWidth}px`
-                : (minWidth as string | undefined) ?? `${rects.reference.width}px`,
+                : ((minWidth as string | undefined) ?? `${rects.reference.width}px`),
           });
         },
         padding: 8,
@@ -1542,8 +1534,7 @@ useLayoutEffect(() => {
   if (!ctx.open) return;
   const enabled = ctx.itemsRef.current.filter((x) => !x.disabled);
   if (enabled.length === 0) return;
-  const target =
-    ctx.openIntent === 'last' ? enabled[enabled.length - 1] : enabled[0];
+  const target = ctx.openIntent === 'last' ? enabled[enabled.length - 1] : enabled[0];
   const idx = ctx.itemsRef.current.findIndex((x) => x.id === target.id);
   ctx.setActiveIndex(idx);
   // Focus on next microtask so the ref has attached.
@@ -1575,9 +1566,7 @@ const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
   }
 
   const items = ctx.itemsRef.current;
-  const enabledIndices = items
-    .map((it, i) => (it.disabled ? -1 : i))
-    .filter((i) => i !== -1);
+  const enabledIndices = items.map((it, i) => (it.disabled ? -1 : i)).filter((i) => i !== -1);
   if (enabledIndices.length === 0) return;
 
   const currentPos = enabledIndices.indexOf(ctx.activeIndex);
@@ -1944,7 +1933,12 @@ export interface DropdownMenuProps {
   defaultOpen?: boolean;
 }
 
-function DropdownMenuRoot({ children, open: controlledOpen, onOpenChange, defaultOpen = false }: DropdownMenuProps) {
+function DropdownMenuRoot({
+  children,
+  open: controlledOpen,
+  onOpenChange,
+  defaultOpen = false,
+}: DropdownMenuProps) {
   const isControlled = controlledOpen !== undefined;
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const open = isControlled ? (controlledOpen as boolean) : uncontrolledOpen;
@@ -2035,7 +2029,13 @@ Expected: FAIL.
 In `Content`'s JSX, add the data attributes — preferring the actual placement Floating UI resolved to (`placement` from `useFloating`'s return) over the requested side/align so consumers can style based on where the menu actually landed after `flip()`:
 
 ```tsx
-const { refs, floatingStyles, placement: resolvedPlacement } = useFloating({ /* … */ });
+const {
+  refs,
+  floatingStyles,
+  placement: resolvedPlacement,
+} = useFloating({
+  /* … */
+});
 
 // resolvedPlacement is e.g. 'top-end' or 'bottom' — split into side/align.
 const [resolvedSide, resolvedAlign = 'center'] = resolvedPlacement.split('-') as [
@@ -2175,7 +2175,7 @@ Expected: green.
 }
 ```
 
-Note on layout-rule exception (Hard rule 4): `.item` uses `flex: 1 1 auto` on `.label` — that's an internal layout property *inside the component's own subtree*, which is allowed. The disallowed pattern is using these properties on the component's root element to claim space from a parent. The root `.content` is positioned by Floating UI's inline styles, not by SCSS.
+Note on layout-rule exception (Hard rule 4): `.item` uses `flex: 1 1 auto` on `.label` — that's an internal layout property _inside the component's own subtree_, which is allowed. The disallowed pattern is using these properties on the component's root element to claim space from a parent. The root `.content` is positioned by Floating UI's inline styles, not by SCSS.
 
 - [ ] **Step 4: Run tests + lint + typecheck**
 

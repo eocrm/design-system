@@ -55,13 +55,13 @@ import { DropdownMenu, Button } from '@eocrm/design-system';
 
 ### Subcomponent surface
 
-| Subcomponent              | Renders             | Required          | Notes                                                                                                       |
-| ------------------------- | ------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------- |
-| `DropdownMenu`            | nothing (provider)  | yes               | Owns open state, refs, ids, item registry. No DOM.                                                          |
-| `DropdownMenu.Trigger`    | the child element   | exactly 1 child   | Clones its single React-element child to inject `ref`, `aria-haspopup="menu"`, `aria-expanded`, `aria-controls`, `onClick`, `onKeyDown`. Child must accept a ref via `forwardRef`. `<Button>` qualifies. |
-| `DropdownMenu.Content`    | a `div role="menu"` | yes when open     | Portaled to `document.body`. Positioned by Floating UI. Owns keyboard nav, dismissal, focus management.     |
-| `DropdownMenu.Item`       | a `div role="menuitem"` | 0+            | Optional `icon`, `shortcut`, `disabled`, `tone` (`'default'` \| `'danger'`), required `onSelect`.           |
-| `DropdownMenu.Separator`  | a `div role="separator"` | 0+           | Decorative divider. Not focusable. No props beyond `className`.                                             |
+| Subcomponent             | Renders                  | Required        | Notes                                                                                                                                                                                                    |
+| ------------------------ | ------------------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DropdownMenu`           | nothing (provider)       | yes             | Owns open state, refs, ids, item registry. No DOM.                                                                                                                                                       |
+| `DropdownMenu.Trigger`   | the child element        | exactly 1 child | Clones its single React-element child to inject `ref`, `aria-haspopup="menu"`, `aria-expanded`, `aria-controls`, `onClick`, `onKeyDown`. Child must accept a ref via `forwardRef`. `<Button>` qualifies. |
+| `DropdownMenu.Content`   | a `div role="menu"`      | yes when open   | Portaled to `document.body`. Positioned by Floating UI. Owns keyboard nav, dismissal, focus management.                                                                                                  |
+| `DropdownMenu.Item`      | a `div role="menuitem"`  | 0+              | Optional `icon`, `shortcut`, `disabled`, `tone` (`'default'` \| `'danger'`), required `onSelect`.                                                                                                        |
+| `DropdownMenu.Separator` | a `div role="separator"` | 0+              | Decorative divider. Not focusable. No props beyond `className`.                                                                                                                                          |
 
 ### Props in detail
 
@@ -150,16 +150,16 @@ The provider exposes a controlled-open API (`open` + `onOpenChange`) for consume
 
 The `role="menu"` panel implements roving tabindex: exactly one item has `tabindex="0"` (the "active" one) at a time, others have `tabindex="-1"`.
 
-| Key                   | Action                                                                                |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| ArrowDown             | Move active to next non-disabled item; wrap to first at end.                          |
-| ArrowUp               | Move active to previous non-disabled item; wrap to last at start.                     |
-| Home                  | Move active to first non-disabled item.                                               |
-| End                   | Move active to last non-disabled item.                                                |
-| Enter / Space         | Activate the active item (fire its `onSelect`, close menu, return focus to trigger).  |
-| Escape                | Close, return focus to trigger.                                                       |
-| Tab / Shift+Tab       | Close, focus trigger, do not preventDefault — browser continues Tab from the trigger. |
-| Printable character   | Typeahead: append to a 500ms-debounced buffer; jump to first non-disabled item whose label starts with the buffer (case-insensitive). |
+| Key                 | Action                                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| ArrowDown           | Move active to next non-disabled item; wrap to first at end.                                                                          |
+| ArrowUp             | Move active to previous non-disabled item; wrap to last at start.                                                                     |
+| Home                | Move active to first non-disabled item.                                                                                               |
+| End                 | Move active to last non-disabled item.                                                                                                |
+| Enter / Space       | Activate the active item (fire its `onSelect`, close menu, return focus to trigger).                                                  |
+| Escape              | Close, return focus to trigger.                                                                                                       |
+| Tab / Shift+Tab     | Close, focus trigger, do not preventDefault — browser continues Tab from the trigger.                                                 |
+| Printable character | Typeahead: append to a 500ms-debounced buffer; jump to first non-disabled item whose label starts with the buffer (case-insensitive). |
 
 Separators are not focusable and are skipped entirely by all navigation keys.
 
@@ -185,8 +185,9 @@ useFloating({
       apply({ availableHeight, rects, elements }) {
         elements.floating.style.maxHeight = `${availableHeight}px`;
         elements.floating.style.minWidth =
-          typeof minWidth === 'number' ? `${minWidth}px` :
-          minWidth ?? `${rects.reference.width}px`;
+          typeof minWidth === 'number'
+            ? `${minWidth}px`
+            : (minWidth ?? `${rects.reference.width}px`);
       },
     }),
   ],
@@ -207,7 +208,12 @@ interface DropdownMenuContextValue {
   triggerRef: RefObject<HTMLElement | null>;
   contentId: string;
   // Item registry — items self-register on mount so Content can do roving tabindex / typeahead.
-  registerItem: (id: string, ref: RefObject<HTMLDivElement | null>, label: string, disabled: boolean) => () => void;
+  registerItem: (
+    id: string,
+    ref: RefObject<HTMLDivElement | null>,
+    label: string,
+    disabled: boolean,
+  ) => () => void;
   items: RegisteredItem[];
   activeIndex: number;
   setActiveIndex: (i: number) => void;
@@ -218,12 +224,12 @@ interface DropdownMenuContextValue {
 
 ### ARIA
 
-| Element                 | Attributes                                                                                                     |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Trigger (cloned child)  | `aria-haspopup="menu"`, `aria-expanded={open}`, `aria-controls={open ? contentId : undefined}`                 |
-| Content (`div`)         | `role="menu"`, `id={contentId}`, `tabIndex={-1}`, `aria-orientation="vertical"`                                |
-| Item (`div`)            | `role="menuitem"`, `tabIndex={active ? 0 : -1}`, `aria-disabled={disabled || undefined}`, `data-tone={tone}`   |
-| Separator (`div`)       | `role="separator"`                                                                                             |
+| Element                | Attributes                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------- | --- | ------------------------------- |
+| Trigger (cloned child) | `aria-haspopup="menu"`, `aria-expanded={open}`, `aria-controls={open ? contentId : undefined}` |
+| Content (`div`)        | `role="menu"`, `id={contentId}`, `tabIndex={-1}`, `aria-orientation="vertical"`                |
+| Item (`div`)           | `role="menuitem"`, `tabIndex={active ? 0 : -1}`, `aria-disabled={disabled                      |     | undefined}`, `data-tone={tone}` |
+| Separator (`div`)      | `role="separator"`                                                                             |
 
 `role="menuitem"` is correct here per the WAI-ARIA APG menu pattern. The looser `role="button"` pattern is for non-menu popovers; we're a menu of actions.
 
@@ -307,8 +313,14 @@ All styles in `DropdownMenu.module.scss` against tokens only (Hard rule 3). Anti
   cursor: not-allowed;
 }
 
-.icon { /* fixed-size slot */ }
-.shortcut { margin-left: auto; color: var(--color-fg-subtle); font-size: var(--font-size-sm); }
+.icon {
+  /* fixed-size slot */
+}
+.shortcut {
+  margin-left: auto;
+  color: var(--color-fg-subtle);
+  font-size: var(--font-size-sm);
+}
 .separator {
   height: var(--border-width);
   background: var(--color-border);

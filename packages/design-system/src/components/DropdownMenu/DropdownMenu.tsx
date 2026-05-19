@@ -72,9 +72,7 @@ function mergeRefs<T>(...refs: Array<Ref<T> | undefined | null>): Ref<T> {
   };
 }
 
-function chain<E>(
-  ...fns: Array<((event: E) => void) | undefined>
-): (event: E) => void {
+function chain<E>(...fns: Array<((event: E) => void) | undefined>): (event: E) => void {
   return (event: E) => {
     for (const fn of fns) fn?.(event);
   };
@@ -302,22 +300,18 @@ export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement>
  * dismissal.
  */
 const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Content(
-  {
-    side = 'bottom',
-    align = 'start',
-    sideOffset = 4,
-    minWidth,
-    className,
-    children,
-    ...rest
-  },
+  { side = 'bottom', align = 'start', sideOffset = 4, minWidth, className, children, ...rest },
   forwardedRef,
 ) {
   const ctx = useDropdownMenuContext('Content');
 
   const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;
 
-  const { refs, floatingStyles, placement: resolvedPlacement } = useFloating({
+  const {
+    refs,
+    floatingStyles,
+    placement: resolvedPlacement,
+  } = useFloating({
     open: ctx.open,
     placement,
     middleware: [
@@ -331,7 +325,7 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
             minWidth:
               typeof minWidth === 'number'
                 ? `${minWidth}px`
-                : (minWidth as string | undefined) ?? `${rects.reference.width}px`,
+                : ((minWidth as string | undefined) ?? `${rects.reference.width}px`),
           });
         },
         padding: 8,
@@ -412,8 +406,7 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
     if (!ctx.open) return;
     const enabled = ctx.itemsRef.current.filter((x) => !x.disabled);
     if (enabled.length === 0) return;
-    const target =
-      ctx.openIntent === 'last' ? enabled[enabled.length - 1] : enabled[0];
+    const target = ctx.openIntent === 'last' ? enabled[enabled.length - 1] : enabled[0];
     const idx = ctx.itemsRef.current.findIndex((x) => x.id === target.id);
     ctx.setActiveIndex(idx);
     // Focus on next microtask so the ref has attached and the re-render with
@@ -454,9 +447,7 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
     }
 
     const items = ctx.itemsRef.current;
-    const enabledIndices = items
-      .map((it, i) => (it.disabled ? -1 : i))
-      .filter((i) => i !== -1);
+    const enabledIndices = items.map((it, i) => (it.disabled ? -1 : i)).filter((i) => i !== -1);
     if (enabledIndices.length === 0) return;
 
     const currentPos = enabledIndices.indexOf(ctx.activeIndex);

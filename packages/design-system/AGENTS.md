@@ -232,23 +232,23 @@ All available as CSS custom properties after you import `global.scss`:
 
 ## Anti-patterns to never generate
 
-| Don't write                                                           | Write instead                                                                                                 |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `color: #ffffff` in any SCSS                                          | `color: var(--color-bg)` (or the right semantic token)                                                        |
-| `border: 1px solid var(--color-border)`                               | `border: var(--border-width) solid var(--color-border)`                                                       |
-| `opacity: 0.5`                                                        | `opacity: var(--opacity-disabled)` (or use the `disabled` attribute)                                          |
-| `<button onClick={...}>Save</button>`                                 | `<Button onClick={...}>Save</Button>`                                                                         |
-| `<input value={...} onChange={...} />`                                | `<Input value={...} onChange={...} />`                                                                        |
-| `<Card><Card>...</Card></Card>`                                       | Use spacing or a divider inside one card                                                                      |
-| `<Button style={{ marginLeft: 'auto' }}>`                             | `<Cluster justify="between">` or `<Cluster justify="end">`                                                    |
-| Two `<Button variant="primary">` in the same section                  | One primary, others `secondary`                                                                               |
-| `<Button variant="success">Save</Button>` rendered on initial mount   | `success` is transient — start as `primary`, flip to `success` for ~1.5s after the action resolves, flip back |
-| `<Avatar name="" />`                                                  | `name` is required and is the accessible label                                                                |
-| `import { Button } from '@eocrm/design-system/src/components/Button'` | `import { Button } from '@eocrm/design-system'`                                                               |
-| `<Badge onClick={...}>`                                               | Badges are non-interactive — use a `Button`                                                                   |
-| 3-digit hex (`#fff`) anywhere                                         | Always 6-digit (`#ffffff`)                                                                                    |
-| `margin` on or around design-system components in your SCSS           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                      |
-| `<DropdownMenu.Item disabled>--- Section ---</DropdownMenu.Item>` as a section header | Use `<DropdownMenu.Separator />` between groups |
+| Don't write                                                                           | Write instead                                                                                                 |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `color: #ffffff` in any SCSS                                                          | `color: var(--color-bg)` (or the right semantic token)                                                        |
+| `border: 1px solid var(--color-border)`                                               | `border: var(--border-width) solid var(--color-border)`                                                       |
+| `opacity: 0.5`                                                                        | `opacity: var(--opacity-disabled)` (or use the `disabled` attribute)                                          |
+| `<button onClick={...}>Save</button>`                                                 | `<Button onClick={...}>Save</Button>`                                                                         |
+| `<input value={...} onChange={...} />`                                                | `<Input value={...} onChange={...} />`                                                                        |
+| `<Card><Card>...</Card></Card>`                                                       | Use spacing or a divider inside one card                                                                      |
+| `<Button style={{ marginLeft: 'auto' }}>`                                             | `<Cluster justify="between">` or `<Cluster justify="end">`                                                    |
+| Two `<Button variant="primary">` in the same section                                  | One primary, others `secondary`                                                                               |
+| `<Button variant="success">Save</Button>` rendered on initial mount                   | `success` is transient — start as `primary`, flip to `success` for ~1.5s after the action resolves, flip back |
+| `<Avatar name="" />`                                                                  | `name` is required and is the accessible label                                                                |
+| `import { Button } from '@eocrm/design-system/src/components/Button'`                 | `import { Button } from '@eocrm/design-system'`                                                               |
+| `<Badge onClick={...}>`                                                               | Badges are non-interactive — use a `Button`                                                                   |
+| 3-digit hex (`#fff`) anywhere                                                         | Always 6-digit (`#ffffff`)                                                                                    |
+| `margin` on or around design-system components in your SCSS                           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                      |
+| `<DropdownMenu.Item disabled>--- Section ---</DropdownMenu.Item>` as a section header | Use `<DropdownMenu.Separator />` between groups                                                               |
 
 ---
 
