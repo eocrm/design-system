@@ -18,6 +18,7 @@ export function CardDemo() {
       scssSource={scssSource}
       tsxFilename="Card.tsx"
       scssFilename="Card.module.scss"
+      componentName="Card"
     >
       <Example
         title="Padding sizes"

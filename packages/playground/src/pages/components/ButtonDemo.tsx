@@ -47,6 +47,7 @@ export function ButtonDemo() {
       scssSource={scssSource}
       tsxFilename="Button.tsx"
       scssFilename="Button.module.scss"
+      componentName="Button"
     >
       <Example
         title="Variants"

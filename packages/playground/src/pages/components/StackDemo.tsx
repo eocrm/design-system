@@ -32,6 +32,7 @@ export function StackDemo() {
       scssSource={scssSource}
       tsxFilename="Stack.tsx"
       scssFilename="Stack.module.scss"
+      componentName="Stack"
     >
       <Example
         title="Gap sizes"

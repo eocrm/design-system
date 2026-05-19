@@ -18,6 +18,7 @@ export function InputDemo() {
       scssSource={scssSource}
       tsxFilename="Input.tsx"
       scssFilename="Input.module.scss"
+      componentName="Input"
     >
       <Example
         title="Default"

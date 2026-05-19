@@ -15,6 +15,7 @@ export function BadgeDemo() {
       scssSource={scssSource}
       tsxFilename="Badge.tsx"
       scssFilename="Badge.module.scss"
+      componentName="Badge"
     >
       <Example
         title="Tones"

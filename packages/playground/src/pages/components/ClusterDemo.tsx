@@ -31,6 +31,7 @@ export function ClusterDemo() {
       scssSource={scssSource}
       tsxFilename="Cluster.tsx"
       scssFilename="Cluster.module.scss"
+      componentName="Cluster"
     >
       <Example
         title="Justify (main-axis)"
