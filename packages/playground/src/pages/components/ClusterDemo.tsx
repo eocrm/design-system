@@ -4,6 +4,7 @@ import { Button } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
+import outlineStyles from './demoOutline.module.scss';
 import tsxSource from '@lib-source/components/Cluster/Cluster.tsx?raw';
 import scssSource from '@lib-source/components/Cluster/Cluster.module.scss?raw';
 
@@ -56,7 +57,7 @@ export function ClusterDemo() {
               >
                 justify={j}
               </div>
-              <Cluster gap="sm" justify={j}>
+              <Cluster gap="sm" justify={j} className={outlineStyles.outlined}>
                 <Block>One</Block>
                 <Block>Two</Block>
                 <Block>Three</Block>
@@ -74,7 +75,7 @@ export function ClusterDemo() {
   <Button>Save</Button>
 </Cluster>`}
       >
-        <Cluster justify="end" gap="sm">
+        <Cluster justify="end" gap="sm" className={outlineStyles.outlined}>
           <Button variant="secondary">Cancel</Button>
           <Button>Save changes</Button>
         </Cluster>
@@ -91,9 +92,9 @@ export function ClusterDemo() {
   </Cluster>
 </Cluster>`}
       >
-        <Cluster justify="between" gap="md">
+        <Cluster justify="between" gap="md" className={outlineStyles.outlined}>
           <h2 style={{ margin: 0 }}>Users</h2>
-          <Cluster gap="sm">
+          <Cluster gap="sm" className={outlineStyles.outlined}>
             <Button variant="secondary">Filter</Button>
             <Button>Add user</Button>
           </Cluster>
@@ -107,10 +108,8 @@ export function ClusterDemo() {
   {tags.map(t => <Badge tone={t.tone}>{t.label}</Badge>)}
 </Cluster>`}
       >
-        <div
-          style={{ maxWidth: 360, border: '1px dashed var(--color-border-strong)', padding: 12 }}
-        >
-          <Cluster gap="xs">
+        <div style={{ maxWidth: 360 }}>
+          <Cluster gap="xs" className={outlineStyles.outlined}>
             <Badge tone="purple">Enterprise</Badge>
             <Badge tone="info">Pipeline 2026</Badge>
             <Badge tone="success">Champion</Badge>
@@ -130,7 +129,7 @@ export function ClusterDemo() {
   <Button variant="ghost" size="sm">Revoke</Button>
 </Cluster>`}
       >
-        <Cluster gap="xs" wrap={false}>
+        <Cluster gap="xs" wrap={false} className={outlineStyles.outlined}>
           <Button variant="ghost" size="sm">
             Resend
           </Button>

@@ -6,6 +6,7 @@ import { Button } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
+import outlineStyles from './demoOutline.module.scss';
 import tsxSource from '@lib-source/components/Stack/Stack.tsx?raw';
 import scssSource from '@lib-source/components/Stack/Stack.module.scss?raw';
 
@@ -56,7 +57,7 @@ export function StackDemo() {
               >
                 gap={g}
               </div>
-              <Stack gap={g}>
+              <Stack gap={g} className={outlineStyles.outlined}>
                 <Block>1</Block>
                 <Block>2</Block>
                 <Block>3</Block>
@@ -81,7 +82,7 @@ export function StackDemo() {
 </Card>`}
       >
         <Card padding="md" style={{ maxWidth: 360 }}>
-          <Stack gap="md">
+          <Stack gap="md" className={outlineStyles.outlined}>
             <Input placeholder="Name" />
             <Input placeholder="Email" />
             <Cluster justify="end" gap="sm">
@@ -114,7 +115,7 @@ export function StackDemo() {
               >
                 align={a}
               </div>
-              <Stack gap="sm" align={a}>
+              <Stack gap="sm" align={a} className={outlineStyles.outlined}>
                 <Badge tone="info">Short</Badge>
                 <Badge tone="info">Medium width</Badge>
               </Stack>
