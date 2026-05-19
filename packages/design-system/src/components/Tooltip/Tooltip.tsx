@@ -6,6 +6,7 @@ import {
   useId,
   useRef,
   useState,
+  type FocusEvent as ReactFocusEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactElement,
   type ReactNode,
@@ -90,6 +91,35 @@ export function Tooltip({
     [cancelPendingOpen, setOpen],
   );
 
+  const handleFocus = useCallback(
+    (e: ReactFocusEvent<HTMLElement>) => {
+      // `:focus-visible` gate: only open on keyboard focus, not mouse focus
+      // following a click. Falls open if matches() is unavailable or throws
+      // (jsdom selector parsing has historically been spotty).
+      const node = e.currentTarget;
+      let focusVisible = true;
+      try {
+        if (typeof node.matches === 'function') {
+          focusVisible = node.matches(':focus-visible');
+        }
+      } catch {
+        focusVisible = true;
+      }
+      if (!focusVisible) return;
+      cancelPendingOpen();
+      setOpen(true);
+    },
+    [cancelPendingOpen, setOpen],
+  );
+
+  const handleBlur = useCallback(
+    (_e: ReactFocusEvent<HTMLElement>) => {
+      cancelPendingOpen();
+      setOpen(false);
+    },
+    [cancelPendingOpen, setOpen],
+  );
+
   // Document-level pointerdown: close any open tooltip on click anywhere.
   // Capture phase so a click on a button-like element that also unmounts the
   // tooltip's host (e.g., navigating away) still fires.
@@ -103,11 +133,25 @@ export function Tooltip({
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
   }, [open, cancelPendingOpen, setOpen]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        cancelPendingOpen();
+        setOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [open, cancelPendingOpen, setOpen]);
+
   const isEmpty = content == null || content === '';
   const childProps = children.props as {
     ref?: Ref<HTMLElement>;
     onPointerEnter?: (e: ReactPointerEvent) => void;
     onPointerLeave?: (e: ReactPointerEvent) => void;
+    onFocus?: (e: ReactFocusEvent<HTMLElement>) => void;
+    onBlur?: (e: ReactFocusEvent<HTMLElement>) => void;
   };
 
   if (isEmpty) {
@@ -120,6 +164,8 @@ export function Tooltip({
     ref: mergeRefs(triggerRef, childProps.ref),
     onPointerEnter: chain(childProps.onPointerEnter, handlePointerEnter),
     onPointerLeave: chain(childProps.onPointerLeave, handlePointerLeave),
+    onFocus: chain(childProps.onFocus, handleFocus),
+    onBlur: chain(childProps.onBlur, handleBlur),
   } as object);
 
   return (

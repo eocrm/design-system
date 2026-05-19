@@ -200,3 +200,96 @@ describe('Tooltip — hover open / close', () => {
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 });
+
+describe('Tooltip — focus open / close', () => {
+  // jsdom 29 implements `:focus-visible` but its "last interaction was keyboard"
+  // heuristic flips to false once any prior test has run, so userEvent.tab() in
+  // later tests returns `:focus-visible = false` and the production gate would
+  // (correctly) suppress the open. To exercise the keyboard-open path
+  // deterministically, stub matches(':focus-visible') to true. The gated test
+  // below stubs to false instead to exercise the mouse-focus suppression path.
+  let originalMatches: typeof Element.prototype.matches;
+  function stubFocusVisible(value: boolean) {
+    Element.prototype.matches = function (this: Element, selector: string) {
+      if (selector === ':focus-visible') return value;
+      return originalMatches.call(this, selector);
+    };
+  }
+  beforeEach(() => {
+    originalMatches = Element.prototype.matches;
+  });
+  afterEach(() => {
+    Element.prototype.matches = originalMatches;
+  });
+
+  it('opens immediately on focus (no delay) when :focus-visible matches', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(
+      <Tooltip content="Hello" delay={400}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    await user.tab(); // keyboard focus to the only focusable element
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Hello');
+  });
+
+  it('does NOT open on focus when :focus-visible does not match (mouse-focus path)', () => {
+    stubFocusVisible(false);
+    render(
+      <Tooltip content="Hello" delay={400}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Trigger' });
+    trigger.focus();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('closes on blur', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(
+      <>
+        <Tooltip content="Hello">
+          <button type="button">Trigger</button>
+        </Tooltip>
+        <button type="button">Next</button>
+      </>,
+    );
+    await user.tab();
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    await user.tab();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('closes on Escape', () => {
+    render(
+      <Tooltip content="Hello" defaultOpen>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('does not move focus when Escape closes the tooltip', () => {
+    render(
+      <Tooltip content="Hello" defaultOpen>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Trigger' });
+    // Initial render: focus is on document.body — Tooltip never owns focus.
+    expect(document.activeElement).not.toBe(trigger);
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    // Still not on the trigger — Tooltip's Escape close must not steal/return focus,
+    // unlike DropdownMenu which returns focus to its trigger on Escape.
+    expect(document.activeElement).not.toBe(trigger);
+  });
+});
