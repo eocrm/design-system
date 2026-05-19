@@ -69,4 +69,27 @@ describe('Tooltip — controlled / uncontrolled', () => {
     );
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
+
+  it('flips the panel when controlled open prop changes across rerenders', () => {
+    const { rerender } = render(
+      <Tooltip content="Hello" open={false} onOpenChange={() => undefined}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    rerender(
+      <Tooltip content="Hello" open onOpenChange={() => undefined}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Hello');
+
+    rerender(
+      <Tooltip content="Hello" open={false} onOpenChange={() => undefined}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
 });
