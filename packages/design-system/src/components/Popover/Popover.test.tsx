@@ -135,3 +135,62 @@ describe('Popover.Content — minimal portal', () => {
     expect(trigger.getAttribute('aria-controls')).toBe(panel.id);
   });
 });
+
+describe('Popover.Heading', () => {
+  it('renders as h3 by default with an auto id', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover.Heading>Filters</Popover.Heading>
+        </Popover.Content>
+      </Popover>,
+    );
+    const heading = screen.getByRole('heading', { name: 'Filters', level: 3 });
+    expect(heading.id).toMatch(/^popover-heading-/);
+  });
+
+  it('respects the `as` prop', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover.Heading as="h2">Filters</Popover.Heading>
+        </Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('heading', { name: 'Filters', level: 2 })).toBeInTheDocument();
+  });
+
+  it('wires aria-labelledby on Content to the heading id', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover.Heading>Filters</Popover.Heading>
+        </Popover.Content>
+      </Popover>,
+    );
+    const dialog = screen.getByRole('dialog');
+    const heading = screen.getByRole('heading', { name: 'Filters' });
+    expect(dialog.getAttribute('aria-labelledby')).toBe(heading.id);
+  });
+
+  it('Content has no aria-labelledby when no Heading is present', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>plain body</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-labelledby');
+  });
+});
