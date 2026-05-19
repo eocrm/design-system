@@ -315,10 +315,11 @@ Plus:
 - `packages/design-system/src/index.ts` — re-export `Tooltip` + types.
 - `packages/design-system/src/styles/tokens.scss` — add `--z-tooltip: 1300;`.
 - `packages/design-system/AGENTS.md` — new TL;DR section after DropdownMenu's, plus an anti-patterns table row for `<Tooltip><Button disabled>…</Button></Tooltip>`.
-- `packages/playground/src/pages/demo/TooltipDemo.tsx` — playground demo (see Playground section).
+- `packages/playground/src/pages/components/TooltipDemo.tsx` — playground demo (see Playground section).
 - `packages/playground/src/App.tsx` — route entry.
-- `packages/playground/src/components/AppShell.tsx` — sidebar nav entry.
-- `packages/playground/src/pages/DemoIndex.tsx` — overview-grid card.
+- `packages/playground/src/layout/AppShell/AppShell.tsx` — sidebar nav entry (Overlays group, alongside DropdownMenu).
+- `packages/playground/src/pages/components/ComponentsIndex.tsx` — overview-grid card with a live preview.
+- `packages/playground/src/pages/mockups/registry.ts` — extend the `ComponentName` union to include `'Tooltip'` (no mockup uses it yet; just keeps the union ready).
 
 ## Tests
 
@@ -390,7 +391,7 @@ Plus:
 
 ## Playground
 
-`packages/playground/src/pages/demo/TooltipDemo.tsx` covers:
+`packages/playground/src/pages/components/TooltipDemo.tsx` covers:
 
 - **Side / align grid** — eight buttons in a centered layout, each with a tooltip on a different (`side`, `align`) combination, so flips and the arrow are visible.
 - **Long content / wrapping** — verify a long string wraps within a sensible max-width without breaking the arrow.
