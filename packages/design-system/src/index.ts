@@ -57,3 +57,6 @@ export type {
   PopoverSide,
   PopoverAlign,
 } from './components/Popover';
+
+export { ConfirmationPopover } from './components/ConfirmationPopover';
+export type { ConfirmationPopoverProps, ConfirmationVariant } from './components/ConfirmationPopover';
