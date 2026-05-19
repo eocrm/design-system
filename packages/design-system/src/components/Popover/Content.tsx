@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from 'react';
+import { forwardRef, useEffect, useLayoutEffect, type HTMLAttributes } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { usePopoverContext } from './context';
@@ -35,8 +35,28 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
 ) {
   const ctx = usePopoverContext('Content');
 
-  // Floating UI integration lands in Task 9. For now the panel is portaled
-  // with no positioning — useful only for verifying ARIA + structure.
+  // Focus the panel on open. preventScroll: same reason DropdownMenu uses
+  // it — the portal renders at document origin before Floating UI positions
+  // it, focusing without preventScroll would yank the page.
+  useLayoutEffect(() => {
+    if (!ctx.open) return;
+    queueMicrotask(() => ctx.contentRef.current?.focus({ preventScroll: true }));
+  }, [ctx.open, ctx.contentRef]);
+
+  // Document Escape listener while open. Capture phase so it runs before
+  // focused widgets that may stopPropagation.
+  useEffect(() => {
+    if (!ctx.open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        ctx.closeAll();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [ctx.open, ctx.closeAll]);
+
   if (!ctx.open) return null;
 
   return createPortal(
