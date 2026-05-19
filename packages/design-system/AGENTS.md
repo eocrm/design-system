@@ -39,9 +39,30 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 <Button variant="secondary" disabled>Cancel</Button>
 ```
 
-- `variant`: `primary` (default — one per section) / `secondary` / `ghost` / `danger`
+- `variant`: `primary` (default — one per section) / `secondary` / `ghost` / `danger` / `success`
 - `size`: `sm` / `md` (default) / `lg`
 - Always renders `<button type="button">` unless you pass `type="submit"`.
+- `variant="success"` is a **transient confirmation state**, not an action intent. Flip to it for ~1.5s after the action resolves, then flip back to `primary`. The timer is the consumer's responsibility — Button stays stateless. Never render a button as `success` on initial mount. Track the timer in a `useRef` and clear on unmount + on rapid re-clicks so the flash doesn't outlive the component or get cut short.
+
+  ```tsx
+  const [saved, setSaved] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
+  const handleSave = async () => {
+    await save();
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setSaved(true);
+    timerRef.current = setTimeout(() => setSaved(false), 1500);
+  };
+  <Button variant={saved ? 'success' : 'primary'} onClick={handleSave}>
+    {saved ? 'Saved!' : 'Save'}
+  </Button>
+  ```
 
 ### `<Input>` — single-line text
 
@@ -160,7 +181,7 @@ All available as CSS custom properties after you import `global.scss`:
 |---|---|
 | Neutral colors | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted`, `--color-fg-subtle`, `--color-fg-disabled` |
 | Accent colors | `--color-accent`, `--color-accent-hover`, `--color-accent-pressed`, `--color-accent-fg`, `--color-accent-subtle-bg` |
-| Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-success`, `--color-warning`, `--color-info` |
+| Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info` |
 | Badge palette | `--color-badge-{neutral,info,success,warning,danger,purple}-{bg,fg}` |
 | Avatar palette | `--color-avatar-fg`, `--color-avatar-1` through `--color-avatar-6` |
 | Spacing | `--space-0` `--space-1` (4) `--space-2` (8) `--space-3` (12) `--space-4` (16) `--space-5` (20) `--space-6` (24) `--space-8` (32) `--space-10` (40) `--space-12` (48) `--space-16` (64) |
@@ -172,7 +193,7 @@ All available as CSS custom properties after you import `global.scss`:
 | Borders | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3) |
 | Letter spacing | `--letter-spacing-caps` (0.03em) |
 | Shadows | `--shadow-sm` / `--shadow-md` / `--shadow-lg` |
-| Focus rings | `--ring-accent` / `--ring-danger` / `--ring-width` |
+| Focus rings | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width` |
 | Motion | `--transition-fast` (100ms) / `--transition-base` (140ms) |
 | Layer (z-index) | `--z-dropdown` / `--z-modal` / `--z-toast` |
 
@@ -190,6 +211,7 @@ All available as CSS custom properties after you import `global.scss`:
 | `<Card><Card>...</Card></Card>` | Use spacing or a divider inside one card |
 | `<Button style={{ marginLeft: 'auto' }}>` | `<Cluster justify="between">` or `<Cluster justify="end">` |
 | Two `<Button variant="primary">` in the same section | One primary, others `secondary` |
+| `<Button variant="success">Save</Button>` rendered on initial mount | `success` is transient — start as `primary`, flip to `success` for ~1.5s after the action resolves, flip back |
 | `<Avatar name="" />` | `name` is required and is the accessible label |
 | `import { Button } from '@eocrm/design-system/src/components/Button'` | `import { Button } from '@eocrm/design-system'` |
 | `<Badge onClick={...}>` | Badges are non-interactive — use a `Button` |

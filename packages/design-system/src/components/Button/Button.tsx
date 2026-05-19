@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import styles from './Button.module.scss';
 
 /** Visual variant. See ButtonProps#variant for when to use each. */
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 
 /** Control height. See ButtonProps#size for when to use each. */
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -15,6 +15,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * - `secondary` — supporting actions like "Cancel", "Export", "Filter".
    * - `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).
    * - `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.
+   * - `success` — **transient confirmation only**, not an initial state. Flip to
+   *   `success` for ~1.5s after an action resolves (Save → "Saved!"), then
+   *   flip back. Never render a button as `success` on mount — it has no
+   *   action-intent meaning, only post-action feedback. See the `@example`
+   *   below for the timer pattern.
    */
   variant?: ButtonVariant;
   /**
@@ -46,6 +51,30 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *   <Button type="submit">Save</Button>
  * </Cluster>
  *
+ * @example
+ * // Transient success confirmation (~1.5s). The timer is the consumer's
+ * // responsibility — the variant is just paint. Track the timer in a ref so
+ * // you can clear it on unmount (prevents a setState-after-unmount warning)
+ * // and on a rapid second click (prevents the new flash from being cut short
+ * // by the previous timer firing).
+ * const [saved, setSaved] = useState(false);
+ * const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ * useEffect(
+ *   () => () => {
+ *     if (timerRef.current) clearTimeout(timerRef.current);
+ *   },
+ *   [],
+ * );
+ * const handleSave = async () => {
+ *   await save();
+ *   if (timerRef.current) clearTimeout(timerRef.current);
+ *   setSaved(true);
+ *   timerRef.current = setTimeout(() => setSaved(false), 1500);
+ * };
+ * <Button variant={saved ? 'success' : 'primary'} onClick={handleSave}>
+ *   {saved ? 'Saved!' : 'Save'}
+ * </Button>
+ *
  * @remarks When NOT to use
  * - Navigation to another URL → use a router-aware `<Link>` (not yet shipped).
  * - Toggle state (on/off) → use `Switch` or `Checkbox` (not yet shipped), not
@@ -62,6 +91,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *   visual size, that's a missing variant — request it, don't hack it.
  * - ❌ Using `variant="ghost"` for the page's primary action. Users won't
  *   discover it.
+ * - ❌ Rendering `<Button variant="success">Save</Button>` on initial mount.
+ *   `success` is a confirmation state, not an action intent — start as
+ *   `primary` and flip to `success` after the action resolves.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant = 'primary', size = 'md', className, type = 'button', ...props },
