@@ -100,3 +100,16 @@
   font-weight: var(--font-weight-semibold);
   color: var(--color-fg);
 }
+
+.examplesGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+@media (min-width: 1200px) {
+  .examplesGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
