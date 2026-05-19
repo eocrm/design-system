@@ -1,14 +1,20 @@
 name: Release
 
-# Triggered on every push to main. Quality gate runs first; on green, the
-# library auto-publishes a patch bump and the playground re-deploys.
+# Triggered on pushes to main that touch packages/** or workflows/**.
+# Root-only changes (README, CLAUDE.md, Makefile) skip the release.
 #
-# To force a major/minor bump, edit this workflow's BUMP env var on a branch
-# and merge — there is no manual UI by design.
+# Quality gate runs first; on green, the library auto-publishes a patch bump
+# and the playground re-deploys. To force a major/minor bump, edit BUMP below
+# on a branch and merge — there is no manual UI by design.
 
 on:
   push:
     branches: [main]
+    # Skip releases for root-level doc/config changes. Library + playground
+    # + workflow changes still trigger a release.
+    paths:
+      - 'packages/**'
+      - '.github/workflows/**'
 
 permissions:
   contents: write   # push the new git tag
