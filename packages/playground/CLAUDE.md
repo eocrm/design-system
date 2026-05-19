@@ -4,11 +4,23 @@ Local dev gallery + demo pages. **This package is private (`"private": true`) an
 
 The playground exists to be the most realistic possible preview of `@eocrm/design-system` as the CRM will see it — it imports the library through the workspace symlink exactly the way the CRM will import it from GitHub Packages.
 
+## Mockups vs. components
+
+The playground has two top-level sections, each with its own sidebar group and overview page.
+
+**Mockups** live under `src/pages/mockups/`. They are believable CRM screens built entirely from `@eocrm/design-system` primitives. Each mockup declares which library components it uses via `src/pages/mockups/registry.ts` — that file is the single source of truth for the cross-link.
+
+**Components** live under `src/pages/components/`. One demo page per shipped component, using `DemoLayout` + `Example`.
+
+The cross-link is registry-driven and bidirectional: every mockup page lists "Components used" and every component demo lists "Seen in". To make a new mockup's components show up under each component's "Seen in" list, add the mockup to the registry.
+
+Routes: `/mockups/*` for mockups, `/components/*` for component demos. Root `/` redirects to `/mockups`.
+
 ## Hard rules
 
 ### 1. Every library component has a demo page here
 
-If `@eocrm/design-system` exports a component and the playground doesn't have a corresponding `src/pages/demo/<Name>Demo.tsx`, that's a bug. Fix it. The demo grid + sidebar must list every shipped component.
+If `@eocrm/design-system` exports a component and the playground doesn't have a corresponding `src/pages/components/<Name>Demo.tsx`, that's a bug. Fix it. The demo grid + sidebar must list every shipped component.
 
 ### 2. Imports use `@eocrm/design-system` — never relative paths into the library
 
@@ -43,6 +55,7 @@ export function <Name>Demo() {
   return (
     <DemoLayout
       name="<Name>"
+      componentName="<Name>"
       description="One sentence on what it is and when to use it."
       tsxSource={tsxSource}
       scssSource={scssSource}
@@ -58,15 +71,16 @@ export function <Name>Demo() {
 }
 ```
 
-### 4. Wire new demos into three places
+### 4. Wire new demos into four places
 
 For a new demo page to be reachable:
 
-1. `src/App.tsx` — add a `<Route path="/demo/<name>" element={<<Name>Demo />} />`
-2. `src/layout/AppShell/AppShell.tsx` — add to the `demoItems` array with a Lucide icon
-3. `src/pages/demo/DemoIndex.tsx` — add a card to the overview grid with a small live preview
+1. `src/App.tsx` — add a `<Route path="/components/<name>" element={<<Name>Demo />} />`
+2. `src/layout/AppShell/AppShell.tsx` — add to the `componentItems` array (the sidebar array for Components)
+3. `src/pages/components/ComponentsIndex.tsx` — add a card to the overview grid with a small live preview
+4. `src/pages/mockups/registry.ts` — if the new component is used by any mockup, add its name to that mockup's `usesComponents` list (and extend the `ComponentName` union if it's a brand-new component name)
 
-Skipping any of these → users can navigate to the URL but the page is unreachable through nav.
+Skipping 1–3 → users can navigate to the URL but the page is unreachable through nav. Skipping 4 → the cross-link between mockups and component demos is broken.
 
 ### 5. Demo-only deps stay here
 
