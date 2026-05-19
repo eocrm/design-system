@@ -21,6 +21,17 @@ export interface PopoverTriggerProps {
   children: ReactElement;
 }
 
+/**
+ * Clones its single child element to inject ref + ARIA + the click handler
+ * that toggles the popover. Child must accept a ref (`forwardRef` if it's
+ * a custom component; raw `<button>` or this library's `<Button>` both
+ * qualify).
+ *
+ * @example
+ * <Popover.Trigger>
+ *   <Button variant="secondary">Filters</Button>
+ * </Popover.Trigger>
+ */
 export function Trigger({ children }: PopoverTriggerProps) {
   const ctx = usePopoverContext('Trigger');
 

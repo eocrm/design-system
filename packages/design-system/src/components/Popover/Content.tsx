@@ -14,7 +14,7 @@ import { usePopoverContext } from './context';
 import { mergeRefs } from '../_internal/refs';
 import styles from './Popover.module.scss';
 
-/** Which side of the trigger the popover prefers. Floating UI auto-flips on collision. */
+/** Which side of the trigger the popover prefers. Floating UI auto-flips if it doesn't fit. */
 export type PopoverSide = 'top' | 'right' | 'bottom' | 'left';
 /** Which edge of the popover aligns to the corresponding trigger edge. */
 export type PopoverAlign = 'start' | 'center' | 'end';
@@ -26,10 +26,20 @@ export interface PopoverContentProps extends HTMLAttributes<HTMLDivElement> {
   align?: PopoverAlign;
   /** Gap in px between trigger and panel. Default `10` (room for the arrow). */
   sideOffset?: number;
-  /** Minimum width in px or any CSS length. Defaults to `--size-popover-min-width` (220). */
+  /**
+   * Minimum width in px or any CSS length. Defaults to the token
+   * `--size-popover-min-width` (220px) applied via SCSS.
+   */
   minWidth?: number | string;
 }
 
+/**
+ * The floating panel itself. Portaled to `document.body`, positioned by
+ * Floating UI (auto-flip, viewport-aware), animated via `@starting-style`
+ * on open. `role="dialog"`, `aria-modal="false"`, `tabIndex={-1}` so it
+ * can receive focus on open. Renders an aria-hidden arrow that tracks
+ * the trigger.
+ */
 export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function Content(
   { side = 'bottom', align = 'center', sideOffset = 10, minWidth, className, children, ...rest },
   forwardedRef,

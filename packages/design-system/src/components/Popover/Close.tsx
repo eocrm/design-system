@@ -17,6 +17,16 @@ export interface PopoverCloseProps {
   children: ReactElement;
 }
 
+/**
+ * Wraps any single element with an onClick that closes the popover.
+ * Useful for "Cancel", "Apply", or "✕" buttons inside `<Popover.Content>`.
+ * Consumer's onClick chains and runs first.
+ *
+ * @example
+ * <Popover.Close>
+ *   <Button variant="secondary" size="sm">Cancel</Button>
+ * </Popover.Close>
+ */
 export function Close({ children }: PopoverCloseProps) {
   const ctx = usePopoverContext('Close');
 

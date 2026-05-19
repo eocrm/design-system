@@ -3,10 +3,24 @@ import { usePopoverContext } from './context';
 import { sanitizeId } from '../_internal/refs';
 
 export interface PopoverHeadingProps extends HTMLAttributes<HTMLHeadingElement> {
-  /** Heading level. Defaults to `'h3'`. */
+  /**
+   * Heading level. Defaults to `'h3'`. Pick the level that fits the
+   * surrounding document outline (Popover content is usually a level 3
+   * inside a level 2 section).
+   */
   as?: 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 }
 
+/**
+ * Renders a semantic heading element (default `h3`) and registers its
+ * auto-generated id via context so `<Popover.Content>` can wire
+ * `aria-labelledby` to it. The registration unsubscribes on unmount.
+ *
+ * @example
+ * <Popover.Content>
+ *   <Popover.Heading>Filter results</Popover.Heading>
+ * </Popover.Content>
+ */
 export function Heading({ as = 'h3', id: idProp, children, ...rest }: PopoverHeadingProps) {
   const ctx = usePopoverContext('Heading');
   const reactId = useId();
