@@ -73,16 +73,16 @@ export function TooltipDemo() {
 
       <Example
         title="Rich content"
-        description="content is a ReactNode — combine an icon, an emphasised label, secondary copy, and an inline <kbd> shortcut."
+        description="content is a ReactNode — combine an icon, an emphasised label, secondary copy, and an inline <kbd> shortcut. Use <Cluster> for layout so it wraps gracefully if the copy grows."
         code={`<Tooltip
   content={
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+    <Cluster gap="xs" align="center">
       <Sparkles size={14} aria-hidden="true" />
       <span>
         <strong>Smart save</strong> — autoformats
       </span>
       <kbd>⌘⇧S</kbd>
-    </span>
+    </Cluster>
   }
 >
   <Button>Smart save</Button>
@@ -91,13 +91,13 @@ export function TooltipDemo() {
         <Cluster gap="md" justify="center">
           <Tooltip
             content={
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Cluster gap="xs" align="center">
                 <Sparkles size={14} aria-hidden="true" />
                 <span>
                   <strong>Smart save</strong> — autoformats
                 </span>
                 <kbd>⌘⇧S</kbd>
-              </span>
+              </Cluster>
             }
           >
             <Button>Smart save</Button>
