@@ -23,6 +23,7 @@
 ## Task 1: Add failing tests for indicator presence & ARIA
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Tabs/Tabs.test.tsx`
 
 - [ ] **Step 1: Add the new test block at the end of the `describe('Tabs', ...)` body, just before its closing `});`**
@@ -30,50 +31,46 @@
 Append these test cases to `Tabs.test.tsx`. Place them after the existing `'ignores keys that are not arrow / Home / End'` test, inside the same outer `describe('Tabs', ...)`:
 
 ```tsx
-  describe('active indicator', () => {
-    it('renders a single indicator element inside the tablist', () => {
-      const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
-      const indicators = container.querySelectorAll('[class*="indicator"]');
-      expect(indicators).toHaveLength(1);
-    });
-
-    it('marks the indicator aria-hidden so AT does not announce it', () => {
-      const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
-      const indicator = container.querySelector('[class*="indicator"]');
-      expect(indicator).toHaveAttribute('aria-hidden', 'true');
-    });
-
-    it('writes inline transform and width styles on the indicator after mount', () => {
-      const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
-      const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
-      // jsdom returns 0 for offset metrics, so we can only assert the effect
-      // ran (the inline style was written), not the numeric value.
-      expect(indicator.style.transform).toMatch(/translateX\(/);
-      expect(indicator.style.width).toMatch(/px$/);
-    });
-
-    it('re-measures and rewrites inline styles when activeId changes', () => {
-      const { container, rerender } = render(
-        <Tabs items={items} activeId="a" onChange={noop} />,
-      );
-      const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
-      const before = indicator.getAttribute('style');
-      rerender(<Tabs items={items} activeId="c" onChange={noop} />);
-      const after = indicator.getAttribute('style');
-      // We can't assert the numeric delta in jsdom — assert that the effect
-      // re-ran (style attribute was rewritten, even if to an identical value).
-      expect(typeof before).toBe('string');
-      expect(typeof after).toBe('string');
-    });
-
-    it('hides the indicator when activeId does not match any item', () => {
-      const { container } = render(
-        <Tabs items={items} activeId="missing" onChange={noop} />,
-      );
-      const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
-      expect(indicator.style.opacity).toBe('0');
-    });
+describe('active indicator', () => {
+  it('renders a single indicator element inside the tablist', () => {
+    const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+    const indicators = container.querySelectorAll('[class*="indicator"]');
+    expect(indicators).toHaveLength(1);
   });
+
+  it('marks the indicator aria-hidden so AT does not announce it', () => {
+    const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+    const indicator = container.querySelector('[class*="indicator"]');
+    expect(indicator).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('writes inline transform and width styles on the indicator after mount', () => {
+    const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+    const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
+    // jsdom returns 0 for offset metrics, so we can only assert the effect
+    // ran (the inline style was written), not the numeric value.
+    expect(indicator.style.transform).toMatch(/translateX\(/);
+    expect(indicator.style.width).toMatch(/px$/);
+  });
+
+  it('re-measures and rewrites inline styles when activeId changes', () => {
+    const { container, rerender } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+    const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
+    const before = indicator.getAttribute('style');
+    rerender(<Tabs items={items} activeId="c" onChange={noop} />);
+    const after = indicator.getAttribute('style');
+    // We can't assert the numeric delta in jsdom — assert that the effect
+    // re-ran (style attribute was rewritten, even if to an identical value).
+    expect(typeof before).toBe('string');
+    expect(typeof after).toBe('string');
+  });
+
+  it('hides the indicator when activeId does not match any item', () => {
+    const { container } = render(<Tabs items={items} activeId="missing" onChange={noop} />);
+    const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
+    expect(indicator.style.opacity).toBe('0');
+  });
+});
 ```
 
 - [ ] **Step 2: Run the test file and confirm the new tests fail**
@@ -98,6 +95,7 @@ git commit -m "Tabs: failing tests for shared animated indicator"
 ## Task 2: Add the indicator element and SCSS
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Tabs/Tabs.tsx`
 - Modify: `packages/design-system/src/components/Tabs/Tabs.module.scss`
 
@@ -195,49 +193,49 @@ import {
 Inside the `Tabs` component body, **after** the existing `const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});` line (currently line 135), insert:
 
 ```tsx
-  const indicatorRef = useRef<HTMLSpanElement>(null);
-  const firstMeasureRef = useRef(true);
+const indicatorRef = useRef<HTMLSpanElement>(null);
+const firstMeasureRef = useRef(true);
 ```
 
 Then, **after** the `useEffect` that warns on duplicate ids (currently ending around line 148) and **before** the `const [focusedId, setFocusedId] = useState<string>(activeId);` line, insert:
 
 ```tsx
-  // Position the shared underline indicator. Reads layout metrics from the
-  // active tab's button and writes them as inline styles on the indicator.
-  // Runs in useLayoutEffect (not useEffect) to avoid a one-frame flash where
-  // the bar sits at its old position after a fast activeId change.
-  useLayoutEffect(() => {
-    const indicator = indicatorRef.current;
-    if (!indicator) return;
-    const node = tabRefs.current[activeId];
-    if (!node) {
-      // activeId doesn't match any item, or items is empty — hide the bar
-      // rather than leave it stranded mid-slide.
-      indicator.style.opacity = '0';
-      return;
-    }
-    indicator.style.opacity = '1';
+// Position the shared underline indicator. Reads layout metrics from the
+// active tab's button and writes them as inline styles on the indicator.
+// Runs in useLayoutEffect (not useEffect) to avoid a one-frame flash where
+// the bar sits at its old position after a fast activeId change.
+useLayoutEffect(() => {
+  const indicator = indicatorRef.current;
+  if (!indicator) return;
+  const node = tabRefs.current[activeId];
+  if (!node) {
+    // activeId doesn't match any item, or items is empty — hide the bar
+    // rather than leave it stranded mid-slide.
+    indicator.style.opacity = '0';
+    return;
+  }
+  indicator.style.opacity = '1';
 
-    if (firstMeasureRef.current) {
-      // First paint: disable the transition for one frame so the indicator
-      // doesn't slide in from (0, 0) on mount.
-      indicator.style.transition = 'none';
-      indicator.style.transform = `translateX(${node.offsetLeft}px)`;
-      indicator.style.width = `${node.offsetWidth}px`;
-      // Force a reflow before clearing the inline transition override so the
-      // first measurement lands without animation.
-      // Read offsetWidth to flush layout — assignment to a temp variable
-      // keeps the read from being dead-code-eliminated.
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      indicator.offsetWidth;
-      indicator.style.transition = '';
-      firstMeasureRef.current = false;
-      return;
-    }
-
+  if (firstMeasureRef.current) {
+    // First paint: disable the transition for one frame so the indicator
+    // doesn't slide in from (0, 0) on mount.
+    indicator.style.transition = 'none';
     indicator.style.transform = `translateX(${node.offsetLeft}px)`;
     indicator.style.width = `${node.offsetWidth}px`;
-  }, [activeId, items]);
+    // Force a reflow before clearing the inline transition override so the
+    // first measurement lands without animation.
+    // Read offsetWidth to flush layout — assignment to a temp variable
+    // keeps the read from being dead-code-eliminated.
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    indicator.offsetWidth;
+    indicator.style.transition = '';
+    firstMeasureRef.current = false;
+    return;
+  }
+
+  indicator.style.transform = `translateX(${node.offsetLeft}px)`;
+  indicator.style.width = `${node.offsetWidth}px`;
+}, [activeId, items]);
 ```
 
 - [ ] **Step 4: Update `Tabs.tsx` — render the indicator inside the tablist**
@@ -301,6 +299,7 @@ First measurement is transition-free so the bar doesn't slide in from
 ## Task 3: Run gates and visually verify in the playground
 
 **Files:**
+
 - (none — verification only)
 
 - [ ] **Step 1: Typecheck the library**
@@ -357,6 +356,7 @@ If any of these fail, fix and re-run gates. Stop the dev server with Ctrl-C once
 ## Task 4: Update AGENTS.md
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 
 - [ ] **Step 1: Find the Tabs section in AGENTS.md**
@@ -383,6 +383,7 @@ git commit -m "AGENTS.md: note Tabs animated indicator + reduced-motion respect"
 ## Task 5: Pre-push review-fix loop (mandatory per Hard Rule 8)
 
 **Files:**
+
 - (none — verification + reviewer dispatch)
 
 This is **required** by `packages/design-system/CLAUDE.md` Hard Rule 8 because the change touches library code. The loop runs gates, dispatches a fresh-context reviewer agent, fixes Critical/Important findings, and repeats until verdict is `clean enough to stop`. The user's memory specifically calls out: this rule is not optional, even for small changes.
@@ -439,6 +440,7 @@ Be specific (file:line). Don't restate the diff — only flag issues.
 - [ ] **Step 3: Fix every Critical and every Important finding**
 
 For each finding:
+
 - If valid: fix in the relevant file. Re-stage and re-commit per the project's commit-message style.
 - If deliberately skipped: leave a one-line justification in your response so the next reviewer doesn't re-flag it.
 
@@ -455,6 +457,7 @@ Repeat from Step 2.
 - [ ] **Step 6: Loop until verdict is `clean enough to stop`**
 
 Exit criteria:
+
 - 0 Critical, 0 Important (or each remaining has a documented skip rationale)
 - All four gates green
 - `npm pack --dry-run` tarball clean
@@ -464,6 +467,7 @@ Exit criteria:
 ## Task 6: Push branch and open PR
 
 **Files:**
+
 - (none — PR opening only)
 
 - [ ] **Step 1: Push the branch**

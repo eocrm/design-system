@@ -281,11 +281,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
             </button>
           );
         })}
-        <span
-          ref={indicatorRef}
-          className={styles.indicator}
-          aria-hidden="true"
-        />
+        <span ref={indicatorRef} className={styles.indicator} aria-hidden="true" />
       </div>
     </div>
   );

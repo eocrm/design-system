@@ -288,9 +288,7 @@ describe('Tabs', () => {
     });
 
     it('re-measures and rewrites inline styles when activeId changes', () => {
-      const { container, rerender } = render(
-        <Tabs items={items} activeId="a" onChange={noop} />,
-      );
+      const { container, rerender } = render(<Tabs items={items} activeId="a" onChange={noop} />);
       const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
       const before = indicator.getAttribute('style');
       rerender(<Tabs items={items} activeId="c" onChange={noop} />);
@@ -300,9 +298,7 @@ describe('Tabs', () => {
     });
 
     it('hides the indicator when activeId does not match any item', () => {
-      const { container } = render(
-        <Tabs items={items} activeId="missing" onChange={noop} />,
-      );
+      const { container } = render(<Tabs items={items} activeId="missing" onChange={noop} />);
       const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
       expect(indicator.style.opacity).toBe('0');
     });
