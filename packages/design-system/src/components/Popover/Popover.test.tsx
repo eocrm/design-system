@@ -347,3 +347,52 @@ describe('Popover — outside click dismissal', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
   });
 });
+
+describe('Popover — Floating UI positioning + arrow', () => {
+  beforeEach(() => {
+    window.ResizeObserver = class ResizeObserverMock {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+  });
+
+  it('data-side reflects the configured side (default bottom)', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog').getAttribute('data-side')).toBe('bottom');
+  });
+
+  it('respects side="top"', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content side="top">panel body</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog').getAttribute('data-side')).toBe('top');
+  });
+
+  it('renders an arrow span with aria-hidden inside the panel', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    const panel = screen.getByRole('dialog');
+    const arrow = panel.querySelector('span[aria-hidden="true"]');
+    expect(arrow).not.toBeNull();
+    expect((arrow as HTMLElement).className).toMatch(/arrow/);
+  });
+});

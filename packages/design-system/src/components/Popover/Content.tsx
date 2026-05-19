@@ -1,5 +1,14 @@
-import { forwardRef, useEffect, useLayoutEffect, type HTMLAttributes } from 'react';
+import { forwardRef, useEffect, useLayoutEffect, useRef, type HTMLAttributes } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  arrow,
+  autoUpdate,
+  flip,
+  offset,
+  shift,
+  useFloating,
+  type Placement,
+} from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { usePopoverContext } from './context';
 import { mergeRefs } from '../_internal/refs';
@@ -22,29 +31,46 @@ export interface PopoverContentProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function Content(
-  {
-    side: _side = 'bottom',
-    align: _align = 'center',
-    sideOffset: _sideOffset = 10,
-    minWidth: _minWidth,
-    className,
-    children,
-    ...rest
-  },
+  { side = 'bottom', align = 'center', sideOffset = 10, minWidth, className, children, ...rest },
   forwardedRef,
 ) {
   const ctx = usePopoverContext('Content');
+  const arrowRef = useRef<HTMLSpanElement | null>(null);
 
-  // Focus the panel on open. preventScroll: same reason DropdownMenu uses
-  // it — the portal renders at document origin before Floating UI positions
-  // it, focusing without preventScroll would yank the page.
+  const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;
+
+  const {
+    refs,
+    floatingStyles,
+    placement: resolvedPlacement,
+    middlewareData,
+  } = useFloating({
+    open: ctx.open,
+    placement,
+    transform: false,
+    middleware: [
+      offset(sideOffset),
+      flip(),
+      shift({ padding: 8 }),
+      arrow({ element: arrowRef }),
+    ],
+    whileElementsMounted: autoUpdate,
+    elements: { reference: ctx.triggerRef.current },
+  });
+
+  const resolvedSide = resolvedPlacement.split('-')[0] as PopoverSide;
+  const staticSide = (
+    { top: 'bottom', bottom: 'top', left: 'right', right: 'left' } as const
+  )[resolvedSide];
+
+  // Focus the panel on open. preventScroll matches DropdownMenu/Tooltip.
   useLayoutEffect(() => {
     if (!ctx.open) return;
     queueMicrotask(() => ctx.contentRef.current?.focus({ preventScroll: true }));
   }, [ctx.open, ctx.contentRef]);
 
-  // Document Escape listener while open. Capture phase so it runs before
-  // focused widgets that may stopPropagation.
+  // Escape closes; capture phase fires before focused widgets that may
+  // stopPropagation.
   useEffect(() => {
     if (!ctx.open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -57,10 +83,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [ctx.open, ctx.closeAll]);
 
-  // Outside-click: close if pointerdown lands outside the panel AND outside
-  // the trigger. Capture phase fires before focused widgets that may
-  // stopPropagation. The check uses contains() so clicks on descendants of
-  // the panel (e.g. a button inside) don't dismiss.
+  // Outside-click closes.
   useEffect(() => {
     if (!ctx.open) return;
     const onPointerDown = (e: PointerEvent) => {
@@ -78,20 +101,39 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
 
   if (!ctx.open) return null;
 
+  const arrowXY = middlewareData.arrow;
+  const minWidthStyle =
+    minWidth !== undefined
+      ? typeof minWidth === 'number'
+        ? `${minWidth}px`
+        : minWidth
+      : undefined;
+
   return createPortal(
     <div
       {...rest}
-      ref={mergeRefs(ctx.contentRef, forwardedRef)}
+      ref={mergeRefs(ctx.contentRef, refs.setFloating, forwardedRef)}
       id={ctx.contentId}
       role="dialog"
       aria-modal="false"
       aria-labelledby={ctx.headingId ?? undefined}
       tabIndex={-1}
-      data-side="bottom"
+      data-side={resolvedSide}
       data-popover-content=""
+      style={{ ...floatingStyles, minWidth: minWidthStyle }}
       className={clsx(styles.content, className)}
     >
       {children}
+      <span
+        ref={arrowRef}
+        aria-hidden="true"
+        className={styles.arrow}
+        style={{
+          left: typeof arrowXY?.x === 'number' ? `${arrowXY.x}px` : undefined,
+          top: typeof arrowXY?.y === 'number' ? `${arrowXY.y}px` : undefined,
+          [staticSide]: '-6px',
+        }}
+      />
     </div>,
     document.body,
   );
