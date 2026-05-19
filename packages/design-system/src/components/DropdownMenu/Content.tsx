@@ -237,13 +237,29 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       return;
     }
 
+    if (e.key === 'ArrowRight') {
+      const items = ctx.itemsRef.current;
+      if (ctx.activeIndex >= 0 && ctx.activeIndex < items.length) {
+        const target = items[ctx.activeIndex];
+        if (target.openSubmenu) {
+          e.preventDefault();
+          target.openSubmenu();
+        }
+      }
+      return;
+    }
+
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       const items = ctx.itemsRef.current;
       if (ctx.activeIndex >= 0 && ctx.activeIndex < items.length) {
         const target = items[ctx.activeIndex];
         if (!target.disabled) {
-          target.ref.current?.click();
+          if (target.openSubmenu) {
+            target.openSubmenu();
+          } else {
+            target.ref.current?.click();
+          }
         }
       }
       return;

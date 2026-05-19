@@ -1279,6 +1279,57 @@ describe('DropdownMenu — SubContent', () => {
   });
 });
 
+describe('DropdownMenu — Submenu keyboard', () => {
+  function renderNested() {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>JSON</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('ArrowRight on SubTrigger opens the sub and focuses first item', async () => {
+    const { user } = renderNested();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}'); // opens root, focuses Edit
+    await user.keyboard('{ArrowDown}'); // focuses SubTrigger (Export)
+    expect(screen.getByRole('menuitem', { name: /Export/ })).toHaveFocus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toHaveFocus();
+  });
+
+  it('ArrowLeft inside sub closes the sub and focuses the SubTrigger', async () => {
+    const { user } = renderNested();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowRight}'); // opens sub, focuses CSV
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
+    expect(screen.getByRole('menuitem', { name: /Export/ })).toHaveFocus();
+  });
+
+  it('Enter on SubTrigger opens the sub (like ArrowRight)', async () => {
+    const { user } = renderNested();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}{ArrowDown}'); // focuses SubTrigger
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toHaveFocus();
+  });
+});
+
 describe('DropdownMenu — Submenu hover', () => {
   beforeEach(() => {
     vi.useFakeTimers();
