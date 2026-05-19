@@ -2,6 +2,7 @@ import {
   forwardRef,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type HTMLAttributes,
@@ -133,6 +134,8 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   const reactId = useId();
   const prefix = panelIdPrefix ?? sanitizeId(reactId);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+  const firstMeasureRef = useRef(true);
 
   // Dev-only: warn on duplicate ids. The ref map would silently collapse them
   // and roving tabindex would behave unpredictably. Run as an effect (not in
@@ -146,6 +149,41 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
       console.warn('[Tabs] items contains duplicate ids:', ids);
     }
   }, [items]);
+
+  // Position the shared underline indicator. Reads layout metrics from the
+  // active tab's button and writes them as inline styles on the indicator.
+  // useLayoutEffect (not useEffect) so the bar's new position is committed
+  // before paint — avoids a one-frame flash at the old location.
+  useLayoutEffect(() => {
+    const indicator = indicatorRef.current;
+    if (!indicator) return;
+    const node = tabRefs.current[activeId];
+    if (!node) {
+      // activeId doesn't match any item, or items is empty — hide the bar
+      // rather than leave it stranded mid-slide.
+      indicator.style.opacity = '0';
+      return;
+    }
+    indicator.style.opacity = '1';
+
+    if (firstMeasureRef.current) {
+      // First paint: disable the transition for one frame so the indicator
+      // doesn't slide in from (0, 0) on mount.
+      indicator.style.transition = 'none';
+      indicator.style.transform = `translateX(${node.offsetLeft}px)`;
+      indicator.style.width = `${node.offsetWidth}px`;
+      // Force a reflow before clearing the inline transition override so the
+      // first measurement lands without animation.
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      indicator.offsetWidth;
+      indicator.style.transition = '';
+      firstMeasureRef.current = false;
+      return;
+    }
+
+    indicator.style.transform = `translateX(${node.offsetLeft}px)`;
+    indicator.style.width = `${node.offsetWidth}px`;
+  }, [activeId, items]);
 
   // Focused tab can drift from activeId in manual activation mode. In auto
   // mode they stay in sync because focusTab also calls onChange.
@@ -241,6 +279,11 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
             </button>
           );
         })}
+        <span
+          ref={indicatorRef}
+          className={styles.indicator}
+          aria-hidden="true"
+        />
       </div>
     </div>
   );
