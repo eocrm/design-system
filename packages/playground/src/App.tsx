@@ -15,6 +15,7 @@ import { ClusterDemo } from './pages/components/ClusterDemo';
 import { AvatarDemo } from './pages/components/AvatarDemo';
 import { BadgeDemo } from './pages/components/BadgeDemo';
 import { TabsDemo } from './pages/components/TabsDemo';
+import { DropdownMenuDemo } from './pages/components/DropdownMenuDemo';
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/components/avatar" element={<AvatarDemo />} />
           <Route path="/components/badge" element={<BadgeDemo />} />
           <Route path="/components/tabs" element={<TabsDemo />} />
+          <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
         </Routes>
       </AppShell>
     </BrowserRouter>

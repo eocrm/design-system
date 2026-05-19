@@ -19,6 +19,7 @@ import {
   PanelTop,
   Layers,
   ArrowRight,
+  MoreHorizontal,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
@@ -66,6 +67,12 @@ const componentGroups = [
   {
     heading: 'Navigation',
     items: [{ to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false }],
+  },
+  {
+    heading: 'Overlays',
+    items: [
+      { to: '/components/dropdown-menu', label: 'DropdownMenu', icon: MoreHorizontal, end: false },
+    ],
   },
 ];
 

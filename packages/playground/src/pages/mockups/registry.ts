@@ -8,7 +8,8 @@ export type ComponentName =
   | 'Cluster'
   | 'Avatar'
   | 'Badge'
-  | 'Tabs';
+  | 'Tabs'
+  | 'DropdownMenu';
 
 export interface MockupEntry {
   slug: string;

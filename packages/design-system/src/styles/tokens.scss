@@ -4,6 +4,12 @@
   --color-bg-subtle: #fafbfc;
   --color-bg-muted: #f4f5f7;
   --color-bg-sunken: #ebecf0;
+
+  // Subtle danger surface — used for hover/highlight backgrounds on
+  // destructive controls (e.g. DropdownMenu danger items). Same hex as
+  // --color-badge-danger-bg by design, but semantically a surface token,
+  // not a badge token.
+  --color-bg-danger-subtle: #ffebe6;
   --color-border: #dfe1e6;
   --color-border-strong: #c1c7d0;
   --color-fg: #172b4d;
@@ -106,6 +112,11 @@
   --size-badge-sm: 16px;
   --size-badge-dot: 6px;
   --size-chip: 18px;
+
+  // Minimum width for popover-shaped surfaces (DropdownMenu, future Tooltip,
+  // Popover). Picks a value wide enough for short labels without overflowing
+  // trigger-tight clusters.
+  --size-dropdown-min-width: 160px;
 
   // Border weights — emphasis = tab underline/focus rings; strong = accent
   // stripes on cards or other "this stands out" visuals.

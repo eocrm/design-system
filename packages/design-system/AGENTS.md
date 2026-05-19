@@ -175,6 +175,33 @@ const [tab, setTab] = useState('overview');
 - `orientation`: `horizontal` (default) or `vertical`.
 - `panelIdPrefix`: optional. When set, each tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link.
 
+### `<DropdownMenu>` — action menus from a trigger
+
+```tsx
+<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="secondary">Actions</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content align="end">
+    <DropdownMenu.Item onSelect={edit}>Edit</DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={duplicate} shortcut="⌘D">
+      Duplicate
+    </DropdownMenu.Item>
+    <DropdownMenu.Separator />
+    <DropdownMenu.Item onSelect={remove} tone="danger">
+      Delete
+    </DropdownMenu.Item>
+  </DropdownMenu.Content>
+</DropdownMenu>
+```
+
+- Compound API: `<DropdownMenu>` is the provider; `<Trigger>` clones its single child to inject ARIA + handlers; `<Content>` portals to `document.body` and positions itself with Floating UI; `<Item>` renders a `menuitem`; `<Separator>` renders a divider.
+- Trigger child must accept a ref via `forwardRef`. `<Button>` does.
+- `<Item>` props: `onSelect` (required), `disabled`, `tone` (`'default'` | `'danger'`), `icon`, `shortcut`.
+- `<Content>` props: `side` (`'top'` | `'bottom'`, default `'bottom'`), `align` (`'start'` | `'center'` | `'end'`, default `'start'`), `sideOffset` (default `4`), `minWidth`.
+- Keyboard: Enter/Space/ArrowDown on trigger opens with first item active; ArrowUp opens with last; Arrow/Home/End navigate skipping disabled and separators; Enter/Space activates; Escape closes and returns focus to trigger; Tab closes and returns focus to trigger (then continues normal traversal); typeahead jumps to first matching label (500ms debounce).
+- For value selection (pick a status, country, etc.), use `<Select>` (not yet shipped) — DropdownMenu is for actions, not form values.
+
 ---
 
 ## Tokens (the only "values" you write)
@@ -185,7 +212,7 @@ All available as CSS custom properties after you import `global.scss`:
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Neutral colors  | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted`, `--color-fg-subtle`, `--color-fg-disabled` |
 | Accent colors   | `--color-accent`, `--color-accent-hover`, `--color-accent-pressed`, `--color-accent-fg`, `--color-accent-subtle-bg`                                                                                 |
-| Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info`                                  |
+| Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-bg-danger-subtle`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info`      |
 | Badge palette   | `--color-badge-{neutral,info,success,warning,danger,purple}-{bg,fg}`                                                                                                                                |
 | Avatar palette  | `--color-avatar-fg`, `--color-avatar-1` through `--color-avatar-6`                                                                                                                                  |
 | Spacing         | `--space-0` `--space-1` (4) `--space-2` (8) `--space-3` (12) `--space-4` (16) `--space-5` (20) `--space-6` (24) `--space-8` (32) `--space-10` (40) `--space-12` (48) `--space-16` (64)              |
@@ -193,7 +220,7 @@ All available as CSS custom properties after you import `global.scss`:
 | Font sizes      | `--font-size-xs/sm/md/lg/xl/2xl/3xl`, `--font-size-code` (0.92em for inline mono)                                                                                                                   |
 | Font weights    | `--font-weight-regular/medium/semibold/bold`                                                                                                                                                        |
 | Line heights    | `--line-height-tight` / `--line-height-normal` / `--line-height-none` (1)                                                                                                                           |
-| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-badge-sm` (16), `--size-chip` (18)                                                                                                        |
+| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-badge-sm` (16), `--size-chip` (18), `--size-dropdown-min-width` (160)                                                                     |
 | Borders         | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3)                                                                                                                  |
 | Letter spacing  | `--letter-spacing-caps` (0.03em)                                                                                                                                                                    |
 | Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
@@ -205,22 +232,23 @@ All available as CSS custom properties after you import `global.scss`:
 
 ## Anti-patterns to never generate
 
-| Don't write                                                           | Write instead                                                                                                 |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `color: #ffffff` in any SCSS                                          | `color: var(--color-bg)` (or the right semantic token)                                                        |
-| `border: 1px solid var(--color-border)`                               | `border: var(--border-width) solid var(--color-border)`                                                       |
-| `opacity: 0.5`                                                        | `opacity: var(--opacity-disabled)` (or use the `disabled` attribute)                                          |
-| `<button onClick={...}>Save</button>`                                 | `<Button onClick={...}>Save</Button>`                                                                         |
-| `<input value={...} onChange={...} />`                                | `<Input value={...} onChange={...} />`                                                                        |
-| `<Card><Card>...</Card></Card>`                                       | Use spacing or a divider inside one card                                                                      |
-| `<Button style={{ marginLeft: 'auto' }}>`                             | `<Cluster justify="between">` or `<Cluster justify="end">`                                                    |
-| Two `<Button variant="primary">` in the same section                  | One primary, others `secondary`                                                                               |
-| `<Button variant="success">Save</Button>` rendered on initial mount   | `success` is transient — start as `primary`, flip to `success` for ~1.5s after the action resolves, flip back |
-| `<Avatar name="" />`                                                  | `name` is required and is the accessible label                                                                |
-| `import { Button } from '@eocrm/design-system/src/components/Button'` | `import { Button } from '@eocrm/design-system'`                                                               |
-| `<Badge onClick={...}>`                                               | Badges are non-interactive — use a `Button`                                                                   |
-| 3-digit hex (`#fff`) anywhere                                         | Always 6-digit (`#ffffff`)                                                                                    |
-| `margin` on or around design-system components in your SCSS           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                      |
+| Don't write                                                                           | Write instead                                                                                                 |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `color: #ffffff` in any SCSS                                                          | `color: var(--color-bg)` (or the right semantic token)                                                        |
+| `border: 1px solid var(--color-border)`                                               | `border: var(--border-width) solid var(--color-border)`                                                       |
+| `opacity: 0.5`                                                                        | `opacity: var(--opacity-disabled)` (or use the `disabled` attribute)                                          |
+| `<button onClick={...}>Save</button>`                                                 | `<Button onClick={...}>Save</Button>`                                                                         |
+| `<input value={...} onChange={...} />`                                                | `<Input value={...} onChange={...} />`                                                                        |
+| `<Card><Card>...</Card></Card>`                                                       | Use spacing or a divider inside one card                                                                      |
+| `<Button style={{ marginLeft: 'auto' }}>`                                             | `<Cluster justify="between">` or `<Cluster justify="end">`                                                    |
+| Two `<Button variant="primary">` in the same section                                  | One primary, others `secondary`                                                                               |
+| `<Button variant="success">Save</Button>` rendered on initial mount                   | `success` is transient — start as `primary`, flip to `success` for ~1.5s after the action resolves, flip back |
+| `<Avatar name="" />`                                                                  | `name` is required and is the accessible label                                                                |
+| `import { Button } from '@eocrm/design-system/src/components/Button'`                 | `import { Button } from '@eocrm/design-system'`                                                               |
+| `<Badge onClick={...}>`                                                               | Badges are non-interactive — use a `Button`                                                                   |
+| 3-digit hex (`#fff`) anywhere                                                         | Always 6-digit (`#ffffff`)                                                                                    |
+| `margin` on or around design-system components in your SCSS                           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                      |
+| `<DropdownMenu.Item disabled>--- Section ---</DropdownMenu.Item>` as a section header | Use `<DropdownMenu.Separator />` between groups                                                               |
 
 ---
 
