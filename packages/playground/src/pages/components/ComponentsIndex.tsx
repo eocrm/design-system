@@ -8,7 +8,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
-import styles from './DemoIndex.module.scss';
+import styles from './ComponentsIndex.module.scss';
 
 const items: { to: string; name: string; description: string; preview: React.ReactNode }[] = [
   {
@@ -116,7 +116,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   },
 ];
 
-export function DemoIndex() {
+export function ComponentsIndex() {
   return (
     <Stack gap="lg">
       <header>

@@ -5,15 +5,15 @@ import { Deals } from './pages/mockups/Deals/Deals';
 import { Contacts } from './pages/mockups/Contacts/Contacts';
 import { ContactDetail } from './pages/mockups/ContactDetail/ContactDetail';
 import { Members } from './pages/mockups/Members/Members';
-import { DemoIndex } from './pages/demo/DemoIndex';
-import { ButtonDemo } from './pages/demo/ButtonDemo';
-import { InputDemo } from './pages/demo/InputDemo';
-import { CardDemo } from './pages/demo/CardDemo';
-import { StackDemo } from './pages/demo/StackDemo';
-import { ClusterDemo } from './pages/demo/ClusterDemo';
-import { AvatarDemo } from './pages/demo/AvatarDemo';
-import { BadgeDemo } from './pages/demo/BadgeDemo';
-import { TabsDemo } from './pages/demo/TabsDemo';
+import { ComponentsIndex } from './pages/components/ComponentsIndex';
+import { ButtonDemo } from './pages/components/ButtonDemo';
+import { InputDemo } from './pages/components/InputDemo';
+import { CardDemo } from './pages/components/CardDemo';
+import { StackDemo } from './pages/components/StackDemo';
+import { ClusterDemo } from './pages/components/ClusterDemo';
+import { AvatarDemo } from './pages/components/AvatarDemo';
+import { BadgeDemo } from './pages/components/BadgeDemo';
+import { TabsDemo } from './pages/components/TabsDemo';
 
 export default function App() {
   return (
@@ -25,7 +25,7 @@ export default function App() {
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/contacts/:id" element={<ContactDetail />} />
           <Route path="/members" element={<Members />} />
-          <Route path="/demo" element={<DemoIndex />} />
+          <Route path="/demo" element={<ComponentsIndex />} />
           <Route path="/demo/button" element={<ButtonDemo />} />
           <Route path="/demo/input" element={<InputDemo />} />
           <Route path="/demo/card" element={<CardDemo />} />
