@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
-import { Button, Cluster, DropdownMenu, Stack, Tooltip } from '@eocrm/design-system';
+import { Button, Cluster, DropdownMenu, Tooltip } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/Tooltip/Tooltip.tsx?raw';
@@ -168,10 +168,10 @@ export function TooltipDemo() {
 function ControlledExample() {
   const [open, setOpen] = useState(false);
   return (
-    <Stack gap="sm" align="center">
+    <Cluster gap="md" justify="center">
       <Tooltip content="Controlled programmatically" open={open} onOpenChange={setOpen}>
         <Button onClick={() => setOpen((prev) => !prev)}>Toggle</Button>
       </Tooltip>
-    </Stack>
+    </Cluster>
   );
 }
