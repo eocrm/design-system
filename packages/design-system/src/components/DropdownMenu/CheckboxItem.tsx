@@ -139,7 +139,7 @@ export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemP
         className={clsx(styles.item, className)}
         onClick={handleClick}
       >
-        <span className={styles.indicatorSlot}>
+        <span className={styles.indicatorSlot} aria-hidden="true">
           {checked && (indicator ?? <span className={styles.defaultIndicator}>✓</span>)}
         </span>
         <span className={styles.itemLabel}>{labelContent}</span>
