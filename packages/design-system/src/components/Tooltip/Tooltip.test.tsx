@@ -41,3 +41,32 @@ describe('Tooltip — initial render', () => {
     expect(ref.current?.textContent).toBe('Save');
   });
 });
+
+describe('Tooltip — controlled / uncontrolled', () => {
+  it('renders the tooltip when defaultOpen=true', () => {
+    render(
+      <Tooltip content="Hello" defaultOpen>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Hello');
+  });
+
+  it('renders the tooltip when open={true} (controlled)', () => {
+    render(
+      <Tooltip content="Hello" open onOpenChange={() => undefined}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Hello');
+  });
+
+  it('does not render the tooltip when open={false} (controlled)', () => {
+    render(
+      <Tooltip content="Hello" open={false} onOpenChange={() => undefined}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+});
