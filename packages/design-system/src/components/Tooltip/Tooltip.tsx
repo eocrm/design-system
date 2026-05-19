@@ -52,10 +52,18 @@ export function Tooltip({
   // setOpen will be used by later tasks (hover, focus, escape, pointerdown).
   void setOpen;
 
+  const isEmpty = content == null || content === '';
   const triggerRef = useRef<HTMLElement | null>(null);
   const reactId = useId();
   const tooltipId = `tooltip-${sanitizeId(reactId)}`;
   const childProps = children.props as { ref?: Ref<HTMLElement> };
+
+  // Empty-content escape hatch: no listeners, no aria, no portal.
+  if (isEmpty) {
+    return cloneElement(children, {
+      ref: mergeRefs(triggerRef, childProps.ref),
+    } as object);
+  }
 
   const trigger = cloneElement(children, {
     ref: mergeRefs(triggerRef, childProps.ref),

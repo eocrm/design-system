@@ -1,4 +1,4 @@
-import { createRef } from 'react';
+import { createRef, type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { Tooltip } from './Tooltip';
 
@@ -90,6 +90,24 @@ describe('Tooltip — controlled / uncontrolled', () => {
         <button type="button">Trigger</button>
       </Tooltip>,
     );
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+});
+
+describe('Tooltip — empty content', () => {
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['empty string', ''],
+  ])('renders trigger with no listeners or aria when content is %s', (_label, value) => {
+    render(
+      <Tooltip content={value as ReactNode}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Trigger' });
+    expect(trigger).not.toHaveAttribute('aria-describedby');
+    // No tooltip element should exist no matter what.
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 });
