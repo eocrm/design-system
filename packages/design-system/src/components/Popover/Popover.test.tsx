@@ -194,3 +194,64 @@ describe('Popover.Heading', () => {
     expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-labelledby');
   });
 });
+
+describe('Popover.Close', () => {
+  it('clicking the wrapped child closes the popover', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover.Close>
+            <button type="button">Done</button>
+          </Popover.Close>
+        </Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('chains the consumer onClick (consumer first, then close)', async () => {
+    const user = userEvent.setup();
+    const consumer = vi.fn();
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover.Close>
+            <button type="button" onClick={consumer}>
+              Done
+            </button>
+          </Popover.Close>
+        </Popover.Content>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    expect(consumer).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('throws when children is not a valid React element', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() =>
+      render(
+        <Popover defaultOpen>
+          <Popover.Trigger>
+            <button type="button">Open</button>
+          </Popover.Trigger>
+          <Popover.Content>
+            {/* @ts-expect-error — intentionally invalid */}
+            <Popover.Close>{null}</Popover.Close>
+          </Popover.Content>
+        </Popover>,
+      ),
+    ).toThrow(/exactly one React element/);
+    spy.mockRestore();
+  });
+});

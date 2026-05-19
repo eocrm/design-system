@@ -53,6 +53,7 @@ export type {
   PopoverTriggerProps,
   PopoverContentProps,
   PopoverHeadingProps,
+  PopoverCloseProps,
   PopoverSide,
   PopoverAlign,
 } from './components/Popover';
