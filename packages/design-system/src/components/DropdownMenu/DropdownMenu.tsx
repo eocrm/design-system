@@ -4,6 +4,7 @@ import { Content } from './Content';
 import { Item, Separator } from './Item';
 import { Group, Label } from './Group';
 import { ItemIndicator } from './ItemIndicator';
+import { CheckboxItem } from './CheckboxItem';
 
 export type { DropdownMenuProps } from './Root';
 export type { DropdownMenuTriggerProps } from './Trigger';
@@ -19,6 +20,7 @@ export type {
 } from './Item';
 export type { DropdownMenuGroupProps, DropdownMenuLabelProps } from './Group';
 export type { DropdownMenuItemIndicatorProps } from './ItemIndicator';
+export type { DropdownMenuCheckboxItemProps } from './CheckboxItem';
 
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Trigger,
@@ -28,4 +30,5 @@ export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Group,
   Label,
   ItemIndicator,
+  CheckboxItem,
 });

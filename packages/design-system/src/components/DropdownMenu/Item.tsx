@@ -78,7 +78,7 @@ export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function I
       onClick={handleClick}
     >
       {icon !== undefined && <span className={styles.icon}>{icon}</span>}
-      <span className={styles.label}>{children}</span>
+      <span className={styles.itemLabel}>{children}</span>
       {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
     </div>
   );

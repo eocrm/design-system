@@ -825,3 +825,180 @@ describe('DropdownMenu — ItemIndicator', () => {
     expect(screen.getByText('marker')).toBeInTheDocument();
   });
 });
+
+describe('DropdownMenu — CheckboxItem', () => {
+  it('renders as role="menuitemcheckbox" with aria-checked', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={true} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const item = screen.getByRole('menuitemcheckbox', { name: /Show archived/ });
+    expect(item).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('aria-checked is false when checked=false', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: /Show archived/ })).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('fires onCheckedChange with !checked when clicked', async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={onCheckedChange}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }));
+    expect(onCheckedChange).toHaveBeenCalledTimes(1);
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  it('default closeOnSelect=false — menu stays open after click', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('closeOnSelect={true} closes the menu after click', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}} closeOnSelect>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }));
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('disabled CheckboxItem does not fire onCheckedChange', async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={onCheckedChange} disabled>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }));
+    expect(onCheckedChange).not.toHaveBeenCalled();
+  });
+
+  it('renders default ✓ glyph when checked and no ItemIndicator child', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={true} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const item = screen.getByRole('menuitemcheckbox', { name: /Show archived/ });
+    expect(item.textContent).toContain('✓');
+  });
+
+  it('does NOT render default glyph when unchecked', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent).not.toContain('✓');
+  });
+
+  it('renders a custom ItemIndicator when provided and checked', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={true} onCheckedChange={() => {}}>
+            <DropdownMenu.ItemIndicator>
+              <span data-testid="custom-indicator">★</span>
+            </DropdownMenu.ItemIndicator>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByTestId('custom-indicator')).toBeInTheDocument();
+    expect(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent).not.toContain('✓');
+  });
+});

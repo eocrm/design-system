@@ -11,4 +11,5 @@ export type {
   DropdownMenuGroupProps,
   DropdownMenuLabelProps,
   DropdownMenuItemIndicatorProps,
+  DropdownMenuCheckboxItemProps,
 } from './DropdownMenu';

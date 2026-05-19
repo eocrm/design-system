@@ -81,7 +81,7 @@ export function Label({ children, className, id: idProp, ...rest }: DropdownMenu
   const id = idProp ?? groupCtx?.labelId;
   return (
     // {...rest} first so id always wins (component controls it)
-    <div {...rest} id={id} className={clsx(styles.groupLabel, className)}>
+    <div {...rest} id={id} className={clsx(styles.label, className)}>
       {children}
     </div>
   );

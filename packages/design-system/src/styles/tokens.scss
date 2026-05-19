@@ -118,6 +118,9 @@
   // trigger-tight clusters.
   --size-dropdown-min-width: 160px;
 
+  // Width/height of the leading indicator slot in DropdownMenu checkbox/radio items.
+  --size-dropdown-indicator: 16px;
+
   // Border weights — emphasis = tab underline/focus rings; strong = accent
   // stripes on cards or other "this stands out" visuals.
   --border-width: 1px;
