@@ -155,15 +155,17 @@ Then:
 
 Wishlist for the CRM, in rough priority order. Until each exists, CRM pages should NOT roll their own — use a placeholder + token-correct native HTML, or request the component.
 
-- `Select` / `Combobox` (Radix Select + Radix Combobox)
-- `Modal` / `Dialog` (Radix Dialog)
-- `Dropdown menu` (Radix DropdownMenu)
-- `Tooltip` (Radix Tooltip)
-- `Toast` / notification (Radix Toast or Sonner)
+**Dependency policy:** No UI / component libraries. `@floating-ui/react-dom` is used for collision-aware positioning (DropdownMenu and any future popover-shaped component); everything else — ARIA, focus, keyboard, dismissal — is hand-rolled per WAI-ARIA APG patterns. When CSS anchor positioning has acceptable browser support, Floating UI can be removed without changing public APIs.
+
+- `Select` / `Combobox` (hand-roll on Floating UI)
+- `Modal` / `Dialog` (hand-roll, no positioning needed; needs focus trap + scroll lock)
+- `Tooltip` (hand-roll on Floating UI; lightweight, no focus trap)
+- `Popover` (hand-roll on Floating UI; generalized non-menu floating panel)
+- `Toast` / notification (hand-roll; no Floating UI — fixed corner placement)
 - `Textarea`
 - `Checkbox`, `Radio`, `Switch`
-- `DatePicker` (react-day-picker)
-- `Table` (TanStack Table headless — the demo currently uses raw `<table>` with page-level SCSS, which is fine for small lists but won't scale to sorting/filtering/pagination)
+- `DatePicker` (hand-roll; calendar grid is the bulk of the work)
+- `Table` (TanStack Table headless is acceptable here — it's a behavioral hook, not a UI library, and the alternative is rebuilding sort/filter/pagination state. Revisit when we actually need it.)
 - `Skeleton` (loading state)
 - `EmptyState`
 - `Pagination`
