@@ -63,7 +63,5 @@ export function getMockup(slug: MockupSlug): MockupEntry | undefined {
 }
 
 export function mockupsUsing(component: ComponentName): readonly MockupEntry[] {
-  return MOCKUPS.filter((m) =>
-    (m.usesComponents as readonly ComponentName[]).includes(component),
-  );
+  return MOCKUPS.filter((m) => (m.usesComponents as readonly ComponentName[]).includes(component));
 }

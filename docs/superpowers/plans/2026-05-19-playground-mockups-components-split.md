@@ -325,17 +325,10 @@ If any of these token names are missing, fall back to the closest existing token
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { Cluster } from '@eocrm/design-system';
-import {
-  type ComponentName,
-  type MockupSlug,
-  getMockup,
-  mockupsUsing,
-} from '../mockups/registry';
+import { type ComponentName, type MockupSlug, getMockup, mockupsUsing } from '../mockups/registry';
 import styles from './CrossLinks.module.scss';
 
-type Props =
-  | { kind: 'mockup'; slug: MockupSlug }
-  | { kind: 'component'; name: ComponentName };
+type Props = { kind: 'mockup'; slug: MockupSlug } | { kind: 'component'; name: ComponentName };
 
 function componentPath(name: ComponentName): string {
   return `/components/${name.toLowerCase()}`;
@@ -466,7 +459,9 @@ Overview card grid mirroring `ComponentsIndex`. Driven by `MOCKUPS`. No live pre
   background: var(--color-bg-default);
   color: var(--color-text-default);
   text-decoration: none;
-  transition: border-color 120ms ease, transform 120ms ease;
+  transition:
+    border-color 120ms ease,
+    transform 120ms ease;
 
   &:hover {
     border-color: var(--color-border-strong);
@@ -513,9 +508,8 @@ export function MockupsIndex() {
         <span className={styles.eyebrow}>Mockups</span>
         <h1 className={styles.title}>CRM mockups</h1>
         <p className={styles.description}>
-          Full-page mockups built only from <code>@eocrm/design-system</code> primitives. Each
-          page links the components it uses, and each component links back to the mockups it
-          appears in.
+          Full-page mockups built only from <code>@eocrm/design-system</code> primitives. Each page
+          links the components it uses, and each component links back to the mockups it appears in.
         </p>
       </header>
 
@@ -907,13 +901,13 @@ import { CrossLinks } from '../../shared/CrossLinks';
 
 Each page's top-level render is a single `Stack` or `<>`. Add `<CrossLinks kind="mockup" slug="<slug>" />` as the last child:
 
-| File                                          | `slug`             |
-| --------------------------------------------- | ------------------ |
-| `mockups/Dashboard/Dashboard.tsx`             | `"dashboard"`      |
-| `mockups/Deals/Deals.tsx`                     | `"deals"`          |
-| `mockups/Contacts/Contacts.tsx`               | `"contacts"`       |
-| `mockups/ContactDetail/ContactDetail.tsx`     | `"contact-detail"` |
-| `mockups/Members/Members.tsx`                 | `"members"`        |
+| File                                      | `slug`             |
+| ----------------------------------------- | ------------------ |
+| `mockups/Dashboard/Dashboard.tsx`         | `"dashboard"`      |
+| `mockups/Deals/Deals.tsx`                 | `"deals"`          |
+| `mockups/Contacts/Contacts.tsx`           | `"contacts"`       |
+| `mockups/ContactDetail/ContactDetail.tsx` | `"contact-detail"` |
+| `mockups/Members/Members.tsx`             | `"members"`        |
 
 Example for `Dashboard.tsx` — the existing render is a `Stack`; append the cross-link block as the last child:
 
@@ -1062,21 +1056,21 @@ Per repo `CLAUDE.md`: wait for the `Quality / check` status check, then squash-o
 
 **Spec coverage check:**
 
-| Spec section                                       | Implemented by         |
-| -------------------------------------------------- | ---------------------- |
-| Two top-level sections (Mockups, Components)       | Task 6 (sidebar)       |
-| `/` redirects to `/mockups`                        | Task 6                 |
-| URL scheme (`/mockups/*`, `/components/*`)         | Task 6                 |
-| `mockups/registry.ts` central registry             | Task 3                 |
-| Bidirectional cross-link via `CrossLinks`          | Tasks 4, 7, 8, 9       |
-| File layout (`pages/mockups/`, `pages/components/`)| Tasks 1, 2             |
-| `MockupsIndex` mirroring `ComponentsIndex`         | Task 5                 |
-| `DemoLayout` keeps name; gets `componentName` prop | Task 7                 |
-| Members moves out of Settings group                | Task 6 (no settings)   |
-| No library changes                                 | none touch the library |
-| No new playground tests                            | none added             |
-| Updated playground CLAUDE.md                       | Task 10                |
-| Verification = `make build` + `make lint` + manual | Task 11                |
+| Spec section                                        | Implemented by         |
+| --------------------------------------------------- | ---------------------- |
+| Two top-level sections (Mockups, Components)        | Task 6 (sidebar)       |
+| `/` redirects to `/mockups`                         | Task 6                 |
+| URL scheme (`/mockups/*`, `/components/*`)          | Task 6                 |
+| `mockups/registry.ts` central registry              | Task 3                 |
+| Bidirectional cross-link via `CrossLinks`           | Tasks 4, 7, 8, 9       |
+| File layout (`pages/mockups/`, `pages/components/`) | Tasks 1, 2             |
+| `MockupsIndex` mirroring `ComponentsIndex`          | Task 5                 |
+| `DemoLayout` keeps name; gets `componentName` prop  | Task 7                 |
+| Members moves out of Settings group                 | Task 6 (no settings)   |
+| No library changes                                  | none touch the library |
+| No new playground tests                             | none added             |
+| Updated playground CLAUDE.md                        | Task 10                |
+| Verification = `make build` + `make lint` + manual  | Task 11                |
 
 All spec sections traced to a task.
 

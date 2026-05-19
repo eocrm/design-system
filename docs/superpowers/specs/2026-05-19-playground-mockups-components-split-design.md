@@ -30,17 +30,17 @@ Each section has an overview/index page at its root path. The site root `/` redi
 
 ### URL scheme
 
-| Section    | Path                          | Notes                                     |
-| ---------- | ----------------------------- | ----------------------------------------- |
-| Mockups    | `/mockups`                    | new overview grid                         |
-|            | `/mockups/dashboard`          | was `/`                                   |
-|            | `/mockups/deals`              | was `/deals`                              |
-|            | `/mockups/contacts`           | was `/contacts`                           |
-|            | `/mockups/contacts/:id`       | was `/contacts/:id`                       |
-|            | `/mockups/members`            | was `/members` (was in "Settings" group)  |
-| Components | `/components`                 | was `/demo` (existing `DemoIndex`)        |
-|            | `/components/button`          | was `/demo/button`                        |
-|            | `/components/input` … `/tabs` | analogous renames for every demo          |
+| Section    | Path                          | Notes                                    |
+| ---------- | ----------------------------- | ---------------------------------------- |
+| Mockups    | `/mockups`                    | new overview grid                        |
+|            | `/mockups/dashboard`          | was `/`                                  |
+|            | `/mockups/deals`              | was `/deals`                             |
+|            | `/mockups/contacts`           | was `/contacts`                          |
+|            | `/mockups/contacts/:id`       | was `/contacts/:id`                      |
+|            | `/mockups/members`            | was `/members` (was in "Settings" group) |
+| Components | `/components`                 | was `/demo` (existing `DemoIndex`)       |
+|            | `/components/button`          | was `/demo/button`                       |
+|            | `/components/input` … `/tabs` | analogous renames for every demo         |
 
 No redirects from the old paths. The playground is dev-only, never published as a stable URL for consumers, and the deploy URL is the GitHub Pages preview. Hard rename keeps router and nav state simple.
 
@@ -63,17 +63,19 @@ export type ComponentName =
   | 'Tabs';
 
 export interface MockupEntry {
-  slug: string;              // 'dashboard'
-  title: string;             // 'Dashboard'
-  path: string;              // '/mockups/dashboard'
-  blurb: string;             // one-line description for the index card
+  slug: string; // 'dashboard'
+  title: string; // 'Dashboard'
+  path: string; // '/mockups/dashboard'
+  blurb: string; // one-line description for the index card
   usesComponents: ComponentName[];
 }
 
-export const MOCKUPS: MockupEntry[] = [ /* … one entry per mockup … */ ];
+export const MOCKUPS: MockupEntry[] = [
+  /* … one entry per mockup … */
+];
 
 export function mockupsUsing(component: ComponentName): MockupEntry[] {
-  return MOCKUPS.filter(m => m.usesComponents.includes(component));
+  return MOCKUPS.filter((m) => m.usesComponents.includes(component));
 }
 ```
 

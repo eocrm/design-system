@@ -1,17 +1,10 @@
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { Cluster } from '@eocrm/design-system';
-import {
-  type ComponentName,
-  type MockupSlug,
-  getMockup,
-  mockupsUsing,
-} from '../mockups/registry';
+import { type ComponentName, type MockupSlug, getMockup, mockupsUsing } from '../mockups/registry';
 import styles from './CrossLinks.module.scss';
 
-type Props =
-  | { kind: 'mockup'; slug: MockupSlug }
-  | { kind: 'component'; name: ComponentName };
+type Props = { kind: 'mockup'; slug: MockupSlug } | { kind: 'component'; name: ComponentName };
 
 function componentPath(name: ComponentName): string {
   return `/components/${name.toLowerCase()}`;

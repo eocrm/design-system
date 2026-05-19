@@ -13,9 +13,8 @@ export function MockupsIndex() {
         <span className={styles.eyebrow}>Mockups</span>
         <h1 className={styles.title}>CRM mockups</h1>
         <p className={styles.description}>
-          Full-page mockups built only from <code>@eocrm/design-system</code> primitives. Each
-          page links the components it uses, and each component links back to the mockups it
-          appears in.
+          Full-page mockups built only from <code>@eocrm/design-system</code> primitives. Each page
+          links the components it uses, and each component links back to the mockups it appears in.
         </p>
       </header>
 
