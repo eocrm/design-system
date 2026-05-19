@@ -312,9 +312,7 @@ describe('Tooltip — aria wiring', () => {
         <button type="button">Trigger</button>
       </Tooltip>,
     );
-    expect(screen.getByRole('button', { name: 'Trigger' })).not.toHaveAttribute(
-      'aria-describedby',
-    );
+    expect(screen.getByRole('button', { name: 'Trigger' })).not.toHaveAttribute('aria-describedby');
   });
 
   it('merges a consumer aria-describedby (consumer first), then de-merges on close', () => {
@@ -340,5 +338,50 @@ describe('Tooltip — aria wiring', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'close' }));
     expect(trigger.getAttribute('aria-describedby')).toBe('hint-1');
+  });
+});
+
+describe('Tooltip — positioning + arrow', () => {
+  beforeEach(() => {
+    window.ResizeObserver = class ResizeObserverMock {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+  });
+
+  it('sets data-side on the tooltip panel to the resolved side (default top)', () => {
+    render(
+      <Tooltip content="Hello" defaultOpen>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.getByRole('tooltip').getAttribute('data-side')).toBe('top');
+  });
+
+  it('uses the configured side', () => {
+    render(
+      <Tooltip content="Hello" side="bottom" defaultOpen>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.getByRole('tooltip').getAttribute('data-side')).toBe('bottom');
+  });
+
+  it('renders an arrow element with aria-hidden inside the tooltip panel', () => {
+    render(
+      <Tooltip content="Hello" defaultOpen>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    const panel = screen.getByRole('tooltip');
+    // The arrow is a span with aria-hidden inside the panel.
+    const arrow = panel.querySelector('span[aria-hidden="true"]');
+    expect(arrow).not.toBeNull();
+    // Confirm it's via the SCSS class hook by class membership (not exact name).
+    expect((arrow as HTMLElement).className).toMatch(/arrow/);
+    // Sanity sweep against document.body (where the portal lives) so the test
+    // fails loudly if the arrow ever escapes the panel.
+    expect(document.body.querySelector('[role="tooltip"] span[aria-hidden="true"]')).not.toBeNull();
   });
 });

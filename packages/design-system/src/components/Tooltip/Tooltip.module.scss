@@ -1,4 +1,9 @@
-// Chrome + animation rules land in later tasks. Empty for now so the import
-// resolves and CSS-Modules generates an empty classes object.
+// Chrome + animation rules land in Task 11. Empty for now so the import
+// resolves and CSS-Modules generates class hooks.
+/* stylelint-disable block-no-empty */
 .content {
 }
+
+.arrow {
+}
+/* stylelint-enable block-no-empty */

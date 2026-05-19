@@ -13,7 +13,17 @@ import {
   type Ref,
 } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  arrow,
+  autoUpdate,
+  flip,
+  offset,
+  shift,
+  useFloating,
+  type Placement,
+} from '@floating-ui/react-dom';
 import { chain, mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
+import styles from './Tooltip.module.scss';
 
 export type TooltipSide = 'top' | 'right' | 'bottom' | 'left';
 export type TooltipAlign = 'start' | 'center' | 'end';
@@ -33,6 +43,9 @@ export interface TooltipProps {
 export function Tooltip({
   content,
   children,
+  side = 'top',
+  align = 'center',
+  sideOffset = 6,
   delay = 400,
   open: controlledOpen,
   onOpenChange,
@@ -55,9 +68,31 @@ export function Tooltip({
   );
 
   const triggerRef = useRef<HTMLElement | null>(null);
+  const arrowRef = useRef<HTMLSpanElement | null>(null);
   const reactId = useId();
   const tooltipId = `tooltip-${sanitizeId(reactId)}`;
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;
+
+  const {
+    refs,
+    floatingStyles,
+    placement: resolvedPlacement,
+    middlewareData,
+  } = useFloating({
+    open,
+    placement,
+    transform: false,
+    middleware: [offset(sideOffset), flip(), shift({ padding: 8 }), arrow({ element: arrowRef })],
+    whileElementsMounted: autoUpdate,
+    elements: { reference: triggerRef.current },
+  });
+
+  const resolvedSide = resolvedPlacement.split('-')[0] as TooltipSide;
+  const staticSide = ({ top: 'bottom', bottom: 'top', left: 'right', right: 'left' } as const)[
+    resolvedSide
+  ];
 
   const cancelPendingOpen = useCallback(() => {
     if (openTimerRef.current !== null) {
@@ -172,13 +207,32 @@ export function Tooltip({
     onBlur: chain(childProps.onBlur, handleBlur),
   } as object);
 
+  const arrowXY = middlewareData.arrow;
+
   return (
     <>
       {trigger}
       {open &&
         createPortal(
-          <div id={tooltipId} role="tooltip">
+          <div
+            ref={refs.setFloating}
+            id={tooltipId}
+            role="tooltip"
+            data-side={resolvedSide}
+            style={floatingStyles}
+            className={styles.content}
+          >
             {content}
+            <span
+              ref={arrowRef}
+              aria-hidden="true"
+              className={styles.arrow}
+              style={{
+                left: typeof arrowXY?.x === 'number' ? `${arrowXY.x}px` : undefined,
+                top: typeof arrowXY?.y === 'number' ? `${arrowXY.y}px` : undefined,
+                [staticSide]: '-4px',
+              }}
+            />
           </div>,
           document.body,
         )}
