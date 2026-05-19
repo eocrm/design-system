@@ -290,6 +290,7 @@ export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps
     };
 
     return (
+      // {...rest} first so role / aria / event wiring always win.
       <div
         {...rest}
         ref={mergeRefs<HTMLDivElement>(triggerRefLocal, forwardedRef)}

@@ -123,7 +123,10 @@ export function DropdownMenuRoot({
 
   const closeAll = useCallback(() => {
     setOpen(false);
-    triggerRef.current?.focus();
+    // preventScroll: focus() on the trigger after close shouldn't trigger
+    // browser auto-scroll if the page happens to be scrolled (trigger is
+    // already visible since the user just interacted with it).
+    triggerRef.current?.focus({ preventScroll: true });
   }, [setOpen]);
 
   const value: DropdownMenuContextValue = {

@@ -118,7 +118,7 @@ export const Label = forwardRef<HTMLDivElement, DropdownMenuLabelProps>(function
   // Otherwise leave id as the consumer's (or undefined).
   const id = idProp ?? groupCtx?.labelId;
   return (
-    // {...rest} first so id always wins (component controls it)
+    // {...rest} first so the resolved id (consumer prop ?? GroupContext) always wins.
     <div {...rest} ref={ref} id={id} className={clsx(styles.label, className)}>
       {children}
     </div>

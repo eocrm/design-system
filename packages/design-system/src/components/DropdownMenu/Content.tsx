@@ -167,7 +167,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
           e.stopImmediatePropagation();
         }
         ctx.setOpen(false);
-        ctx.triggerRef.current?.focus();
+        ctx.triggerRef.current?.focus({ preventScroll: true });
         return;
       }
       if (e.key === 'Tab') {
@@ -178,7 +178,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
         // (now-focused) trigger to the next focusable element (WAI-ARIA menu pattern).
         if (content && activeEl && content.contains(activeEl)) {
           ctx.setOpen(false);
-          ctx.triggerRef.current?.focus();
+          ctx.triggerRef.current?.focus({ preventScroll: true });
         }
       }
     };
@@ -197,7 +197,10 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       // itself so subsequent Arrow keys still route through handleKeyDown,
       // and so Escape works from inside the menu.
       ctx.setActiveIndex(-1);
-      queueMicrotask(() => refs.floating.current?.focus());
+      // preventScroll: the portaled menu starts at the document origin until
+      // Floating UI's autoUpdate computes the real coords. Focusing it without
+      // preventScroll yanks the page to the top.
+      queueMicrotask(() => refs.floating.current?.focus({ preventScroll: true }));
       return;
     }
 
@@ -207,7 +210,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
     const target = ctx.openIntent === 'last' ? enabled[enabled.length - 1] : enabled[0];
     const idx = ctx.itemsRef.current.findIndex((x) => x.id === target.id);
     ctx.setActiveIndex(idx);
-    queueMicrotask(() => target.ref.current?.focus());
+    queueMicrotask(() => target.ref.current?.focus({ preventScroll: true }));
     ctx.setOpenIntent(null);
     // Depend only on ctx.open so this fires exactly when the menu transitions
     // to open. openIntent is read but not re-fired on its own.
@@ -218,7 +221,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
     if (e.key === 'Escape') {
       e.preventDefault();
       ctx.setOpen(false);
-      ctx.triggerRef.current?.focus();
+      ctx.triggerRef.current?.focus({ preventScroll: true });
       return;
     }
     if (e.key === 'Tab') {
@@ -226,14 +229,14 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       // traversal from the (now-focused) trigger to the next focusable element
       // (the WAI-ARIA menu pattern).
       ctx.setOpen(false);
-      ctx.triggerRef.current?.focus();
+      ctx.triggerRef.current?.focus({ preventScroll: true });
       return;
     }
 
     if (e.key === 'ArrowLeft' && ctx.depth > 0) {
       e.preventDefault();
       ctx.setOpen(false);
-      ctx.triggerRef.current?.focus();
+      ctx.triggerRef.current?.focus({ preventScroll: true });
       return;
     }
 
@@ -273,7 +276,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
 
     const focusAt = (registryIndex: number) => {
       ctx.setActiveIndex(registryIndex);
-      queueMicrotask(() => items[registryIndex].ref.current?.focus());
+      queueMicrotask(() => items[registryIndex].ref.current?.focus({ preventScroll: true }));
     };
 
     switch (e.key) {
@@ -323,7 +326,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       if (match !== -1) {
         e.preventDefault();
         ctx.setActiveIndex(match);
-        queueMicrotask(() => items[match].ref.current?.focus());
+        queueMicrotask(() => items[match].ref.current?.focus({ preventScroll: true }));
       }
       return;
     }
