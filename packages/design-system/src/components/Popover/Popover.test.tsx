@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Popover } from './Popover';
@@ -394,5 +396,12 @@ describe('Popover — Floating UI positioning + arrow', () => {
     const arrow = panel.querySelector('span[aria-hidden="true"]');
     expect(arrow).not.toBeNull();
     expect((arrow as HTMLElement).className).toMatch(/arrow/);
+  });
+});
+
+describe('Popover — animation contract', () => {
+  it('the compiled .content rule contains an @starting-style block', () => {
+    const scss = readFileSync(resolve(__dirname, './Popover.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.content\s*{[\s\S]*@starting-style/);
   });
 });

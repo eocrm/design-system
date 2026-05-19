@@ -1,8 +1,103 @@
-/* stylelint-disable block-no-empty */
-// Chrome + animation rules land in Task 9. Empty placeholders for now so
-// the import resolves and CSS-Modules generates class hooks.
+// `.content` carries chrome + the open-only scale-fade entrance. The animation
+// (transition + @starting-style + per-side transform-origin) relies on
+// Floating UI being in `transform: false` mode (see Content.tsx) so the CSS
+// `transform` property is free for the entrance.
 .content {
+  position: relative;
+  min-width: var(--size-popover-min-width);
+  max-width: 360px;
+  padding: var(--space-3);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-popover);
+  outline: none;
+
+  // Explicit so each per-side @starting-style transform has a defined
+  // resting target to interpolate to.
+  transform: none;
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+
+  @starting-style {
+    opacity: var(--opacity-hidden);
+  }
 }
+
 .arrow {
+  position: absolute;
+  width: var(--space-3);
+  height: var(--space-3);
+  background: var(--color-bg);
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  transform: rotate(45deg);
+  pointer-events: none;
 }
-/* stylelint-enable block-no-empty */
+
+// Each data-side rotates the arrow so the "visible" two borders face outward
+// (i.e. away from the panel chrome). The default rule above uses bottom +
+// right borders (panel above trigger → arrow pokes downward), which matches
+// data-side='top'. Override for the other three sides:
+.content[data-side='bottom'] .arrow {
+  border-top: var(--border-width) solid var(--color-border);
+  border-left: var(--border-width) solid var(--color-border);
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.content[data-side='left'] .arrow {
+  border-top: var(--border-width) solid var(--color-border);
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: 0;
+  border-left: 0;
+}
+
+.content[data-side='right'] .arrow {
+  border-bottom: var(--border-width) solid var(--color-border);
+  border-left: var(--border-width) solid var(--color-border);
+  border-top: 0;
+  border-right: 0;
+}
+
+// --- Open-only entrance: per-side origin + starting transform -----------
+.content[data-side='top'] {
+  transform-origin: bottom center;
+
+  @starting-style {
+    transform: scale(0.95) translateY(4px);
+  }
+}
+
+.content[data-side='bottom'] {
+  transform-origin: top center;
+
+  @starting-style {
+    transform: scale(0.95) translateY(-4px);
+  }
+}
+
+.content[data-side='left'] {
+  transform-origin: right center;
+
+  @starting-style {
+    transform: scale(0.95) translateX(4px);
+  }
+}
+
+.content[data-side='right'] {
+  transform-origin: left center;
+
+  @starting-style {
+    transform: scale(0.95) translateX(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    transition: none;
+  }
+}
