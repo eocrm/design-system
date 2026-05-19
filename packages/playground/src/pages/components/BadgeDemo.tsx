@@ -66,12 +66,24 @@ export function BadgeDemo() {
             <Badge tone="purple">Purple</Badge>
           </Cluster>
           <Cluster gap="sm" align="center">
-            <Badge size="sm" tone="neutral">Neutral</Badge>
-            <Badge size="sm" tone="info">Info</Badge>
-            <Badge size="sm" tone="success">Success</Badge>
-            <Badge size="sm" tone="warning">Warning</Badge>
-            <Badge size="sm" tone="danger">Danger</Badge>
-            <Badge size="sm" tone="purple">Purple</Badge>
+            <Badge size="sm" tone="neutral">
+              Neutral
+            </Badge>
+            <Badge size="sm" tone="info">
+              Info
+            </Badge>
+            <Badge size="sm" tone="success">
+              Success
+            </Badge>
+            <Badge size="sm" tone="warning">
+              Warning
+            </Badge>
+            <Badge size="sm" tone="danger">
+              Danger
+            </Badge>
+            <Badge size="sm" tone="purple">
+              Purple
+            </Badge>
           </Cluster>
         </Stack>
       </Example>
