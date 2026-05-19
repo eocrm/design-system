@@ -88,3 +88,16 @@
     @include focus-ring(var(--ring-danger));
   }
 }
+
+.success {
+  background: var(--color-success);
+  color: var(--color-success-fg);
+
+  &:hover:not(:disabled) {
+    background: var(--color-success-hover);
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--ring-success));
+  }
+}

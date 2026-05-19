@@ -1,10 +1,42 @@
-import { Plus, Search, Trash2 } from 'lucide-react';
-import { Button } from '@eocrm/design-system';
-import { Cluster } from '@eocrm/design-system';
+import { useEffect, useRef, useState } from 'react';
+import { Check, Plus, Search, Trash2 } from 'lucide-react';
+import { Button, Cluster } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/Button/Button.tsx?raw';
 import scssSource from '@lib-source/components/Button/Button.module.scss?raw';
+
+function SaveWithSuccessFlash() {
+  const [saved, setSaved] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
+  const handleClick = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setSaved(true);
+    timerRef.current = setTimeout(() => setSaved(false), 1500);
+  };
+
+  return (
+    <Cluster gap="sm">
+      <Button variant={saved ? 'success' : 'primary'} onClick={handleClick}>
+        {saved ? (
+          <>
+            <Check size={14} /> Saved!
+          </>
+        ) : (
+          'Save'
+        )}
+      </Button>
+    </Cluster>
+  );
+}
 
 export function ButtonDemo() {
   return (
@@ -18,18 +50,52 @@ export function ButtonDemo() {
     >
       <Example
         title="Variants"
-        description="Four visual variants. Use primary for the page's main action, secondary for supporting actions, ghost for tertiary actions in dense UIs, danger for destructive operations."
+        description="Five visual variants. Use primary for the page's main action, secondary for supporting actions, ghost for tertiary actions in dense UIs, danger for destructive operations. The success variant is a transient confirmation state — see the next example."
         code={`<Button variant="primary">Primary</Button>
 <Button variant="secondary">Secondary</Button>
 <Button variant="ghost">Ghost</Button>
-<Button variant="danger">Danger</Button>`}
+<Button variant="danger">Danger</Button>
+<Button variant="success">Success</Button>`}
       >
         <Cluster gap="sm">
           <Button variant="primary">Primary</Button>
           <Button variant="secondary">Secondary</Button>
           <Button variant="ghost">Ghost</Button>
           <Button variant="danger">Danger</Button>
+          <Button variant="success">Success</Button>
         </Cluster>
+      </Example>
+
+      <Example
+        title="Success flash (transient confirmation)"
+        description="Use the success variant for ~1.5s after an action resolves, then flip back. The timer lives in the consumer, not in Button — this keeps Button stateless and lets you pick any duration. Click Save to try it."
+        code={`function SaveWithSuccessFlash() {
+  const [saved, setSaved] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
+  const handleClick = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setSaved(true);
+    timerRef.current = setTimeout(() => setSaved(false), 1500);
+  };
+
+  return (
+    <Cluster gap="sm">
+      <Button variant={saved ? 'success' : 'primary'} onClick={handleClick}>
+        {saved ? <><Check size={14} /> Saved!</> : 'Save'}
+      </Button>
+    </Cluster>
+  );
+}`}
+      >
+        <SaveWithSuccessFlash />
       </Example>
 
       <Example

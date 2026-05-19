@@ -23,6 +23,8 @@
   --color-danger-hover: #bf2600;
   --color-danger-fg: #ffffff;
   --color-success: #00875a;
+  --color-success-hover: #006644;
+  --color-success-fg: #ffffff;
   --color-warning: #ff991f;
   --color-info: #0052cc;
 
@@ -54,6 +56,7 @@
   // Focus rings
   --ring-accent: rgb(76 154 255 / 50%);
   --ring-danger: rgb(222 53 11 / 40%);
+  --ring-success: rgb(0 135 90 / 40%);
   --ring-width: 2px;
 
   // Spacing — 4px scale

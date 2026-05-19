@@ -25,6 +25,11 @@ describe('Button', () => {
     expect(btn.className).toMatch(/lg/);
   });
 
+  it('applies the success variant class name', () => {
+    render(<Button variant="success">Saved!</Button>);
+    expect(screen.getByRole('button', { name: 'Saved!' }).className).toMatch(/success/);
+  });
+
   it('merges the className prop with internal classes', () => {
     render(<Button className="external">Hi</Button>);
     const btn = screen.getByRole('button', { name: 'Hi' });
