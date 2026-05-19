@@ -1183,3 +1183,98 @@ describe('DropdownMenu — SubTrigger (click only — hover/keyboard in later ta
     expect(screen.getByRole('menuitem', { name: /More/ })).toHaveAttribute('aria-expanded', 'false');
   });
 });
+
+describe('DropdownMenu — SubContent', () => {
+  function renderNested() {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>JSON</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('SubContent renders the sub items when sub is open', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toBeInTheDocument();
+  });
+
+  it('selecting an Item inside SubContent closes the ENTIRE chain', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={onSelect}>CSV</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'CSV' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(screen.queryAllByRole('menu')).toHaveLength(0);
+  });
+
+  it('Escape from inside SubContent closes only the sub (root stays open)', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    expect(screen.getAllByRole('menu')).toHaveLength(2);
+    const subMenu = screen.getAllByRole('menu')[1];
+    subMenu.focus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryAllByRole('menu')).toHaveLength(1);
+  });
+
+  it('clicking far outside closes the entire chain', async () => {
+    const user = userEvent.setup();
+    render(
+      <div>
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button">Open</button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+              <DropdownMenu.SubContent>
+                <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Sub>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+        <button type="button">Outside</button>
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    expect(screen.getAllByRole('menu')).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    expect(screen.queryAllByRole('menu')).toHaveLength(0);
+  });
+});

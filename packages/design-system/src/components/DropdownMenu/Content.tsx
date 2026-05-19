@@ -106,9 +106,10 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
     };
   }, []);
 
-  // Outside-click: pointerdown on document, target is neither inside Content
-  // nor inside the Trigger. Excluding the trigger prevents fighting the
-  // trigger's own toggle handler.
+  // Outside-click: pointerdown on document, target is neither inside this
+  // Content nor inside the Trigger, AND not inside any other open submenu
+  // panel (recognised by [data-dropdown-menu-content]). Excluding the trigger
+  // prevents fighting the trigger's own toggle handler.
   useEffect(() => {
     if (!ctx.open) return;
     const onPointerDown = (e: globalThis.PointerEvent) => {
@@ -118,6 +119,11 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       const trigger = ctx.triggerRef.current;
       if (content && content.contains(target)) return;
       if (trigger && trigger.contains(target)) return;
+      // If the click is inside a deeper submenu panel, let that sub handle it.
+      const allPanels = document.querySelectorAll('[data-dropdown-menu-content]');
+      for (const panel of allPanels) {
+        if (panel !== content && panel.contains(target)) return;
+      }
       ctx.setOpen(false);
     };
     document.addEventListener('pointerdown', onPointerDown, true);
@@ -128,11 +134,38 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
   // Tab: close and return focus to trigger when focus is inside the menu.
   // These use document-level listeners so they fire regardless of which element
   // currently holds focus.
+  // For subs (depth > 0): stop propagation after handling Escape so the
+  // parent Content's listener does not also close the parent.
   useEffect(() => {
     if (!ctx.open) return;
     const onKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
+        // Only handle Escape for this level if focus is inside this panel or
+        // no deeper sub is open. A deeper sub (higher depth) will have
+        // registered its own capture listener and should handle Escape first.
+        // Since deeper subs register their listener AFTER this one (they mount
+        // later), and both listeners are on document in capture phase, this
+        // listener fires BEFORE the sub's listener. Skip here if a deeper
+        // panel is open — the sub's listener will handle it and stop propagation.
+        if (ctx.depth === 0) {
+          const deeperPanels = document.querySelectorAll(
+            `[data-dropdown-menu-content][data-dropdown-depth]`,
+          );
+          let hasDeeper = false;
+          for (const panel of deeperPanels) {
+            const depth = Number(panel.getAttribute('data-dropdown-depth') ?? '0');
+            if (depth > ctx.depth) {
+              hasDeeper = true;
+              break;
+            }
+          }
+          if (hasDeeper) return;
+        }
+        if (ctx.depth > 0) {
+          // Stop propagation so the parent Content's listener does not fire.
+          e.stopImmediatePropagation();
+        }
         ctx.setOpen(false);
         ctx.triggerRef.current?.focus();
         return;
@@ -192,6 +225,13 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       // Close, focus trigger, do NOT preventDefault — browser continues Tab
       // traversal from the (now-focused) trigger to the next focusable element
       // (the WAI-ARIA menu pattern).
+      ctx.setOpen(false);
+      ctx.triggerRef.current?.focus();
+      return;
+    }
+
+    if (e.key === 'ArrowLeft' && ctx.depth > 0) {
+      e.preventDefault();
       ctx.setOpen(false);
       ctx.triggerRef.current?.focus();
       return;
@@ -287,6 +327,8 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       aria-orientation="vertical"
       data-side={resolvedSide}
       data-align={resolvedAlign}
+      data-dropdown-menu-content=""
+      data-dropdown-depth={ctx.depth}
       style={floatingStyles}
       className={clsx(styles.content, className)}
       onKeyDown={handleKeyDown}

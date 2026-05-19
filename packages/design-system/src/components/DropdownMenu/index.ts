@@ -16,4 +16,5 @@ export type {
   DropdownMenuRadioItemProps,
   DropdownMenuSubProps,
   DropdownMenuSubTriggerProps,
+  DropdownMenuSubContentProps,
 } from './DropdownMenu';

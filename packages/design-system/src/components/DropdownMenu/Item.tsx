@@ -60,8 +60,7 @@ export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function I
   const handleClick = (_e: MouseEvent) => {
     if (disabled) return;
     onSelect();
-    ctx.setOpen(false);
-    ctx.triggerRef.current?.focus();
+    ctx.closeAll();
   };
 
   return (

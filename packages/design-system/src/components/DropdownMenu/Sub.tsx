@@ -21,6 +21,7 @@ import {
 } from './context';
 import { mergeRefs, sanitizeId } from './utils';
 import styles from './DropdownMenu.module.scss';
+import { Content, type DropdownMenuContentProps } from './Content';
 
 export interface DropdownMenuSubProps {
   /** The submenu trigger and content to render. */
@@ -211,5 +212,19 @@ export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps
         </span>
       </div>
     );
+  },
+);
+
+export type DropdownMenuSubContentProps = DropdownMenuContentProps;
+
+/**
+ * Floating panel for a submenu. Thin wrapper around `<Content>` — Content's
+ * existing handleKeyDown handles ArrowLeft when `depth > 0` (closes this sub,
+ * focuses its SubTrigger). Position defaults match `<Content>`; consumers
+ * may set `side="right"` for classic side-by-side submenu layout.
+ */
+export const SubContent = forwardRef<HTMLDivElement, DropdownMenuSubContentProps>(
+  function SubContent(props, ref) {
+    return <Content ref={ref} {...props} />;
   },
 );

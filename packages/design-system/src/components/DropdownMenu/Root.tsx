@@ -131,6 +131,11 @@ export function DropdownMenuRoot({
     }
   }, [open]);
 
+  const closeAll = useCallback(() => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }, [setOpen]);
+
   const value: DropdownMenuContextValue = {
     open,
     setOpen,
@@ -142,7 +147,7 @@ export function DropdownMenuRoot({
     itemsRef,
     activeIndex,
     setActiveIndex,
-    closeAll: () => setOpen(false), // root just closes itself; submenus will wrap this in a later task
+    closeAll,
     depth: 0,
   };
 
