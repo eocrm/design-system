@@ -1,4 +1,8 @@
-// Styles added incrementally as the component is built (Task 13).
-.placeholder {
-  // empty
+.content {
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-dropdown);
+  outline: none;
 }

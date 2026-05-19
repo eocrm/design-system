@@ -1,17 +1,31 @@
 import {
   cloneElement,
   createContext,
+  forwardRef,
   isValidElement,
   useCallback,
   useContext,
   useId,
   useRef,
   useState,
+  type HTMLAttributes,
   type PointerEvent,
   type ReactElement,
   type ReactNode,
   type Ref,
 } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  autoUpdate,
+  flip,
+  offset,
+  shift,
+  size,
+  useFloating,
+  type Placement,
+} from '@floating-ui/react-dom';
+import clsx from 'clsx';
+import styles from './DropdownMenu.module.scss';
 
 interface DropdownMenuContextValue {
   open: boolean;
@@ -105,11 +119,80 @@ function Trigger({ children }: DropdownMenuTriggerProps) {
   } as Partial<unknown> as object);
 }
 
+export type DropdownMenuSide = 'top' | 'bottom';
+export type DropdownMenuAlign = 'start' | 'center' | 'end';
+
+export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement> {
+  side?: DropdownMenuSide;
+  align?: DropdownMenuAlign;
+  sideOffset?: number;
+  minWidth?: number | string;
+}
+
+const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Content(
+  {
+    side = 'bottom',
+    align = 'start',
+    sideOffset = 4,
+    minWidth,
+    className,
+    children,
+    ...rest
+  },
+  forwardedRef,
+) {
+  const ctx = useDropdownMenuContext('Content');
+
+  const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;
+
+  const { refs, floatingStyles } = useFloating({
+    open: ctx.open,
+    placement,
+    middleware: [
+      offset(sideOffset),
+      flip(),
+      shift({ padding: 8 }),
+      size({
+        apply({ availableHeight, rects, elements }) {
+          Object.assign(elements.floating.style, {
+            maxHeight: `${availableHeight}px`,
+            minWidth:
+              typeof minWidth === 'number'
+                ? `${minWidth}px`
+                : (minWidth as string | undefined) ?? `${rects.reference.width}px`,
+          });
+        },
+        padding: 8,
+      }),
+    ],
+    whileElementsMounted: autoUpdate,
+    elements: { reference: ctx.triggerRef.current },
+  });
+
+  const setFloatingRef = mergeRefs<HTMLDivElement>(refs.setFloating, forwardedRef);
+
+  if (!ctx.open) return null;
+
+  return createPortal(
+    <div
+      ref={setFloatingRef}
+      id={ctx.contentId}
+      role="menu"
+      tabIndex={-1}
+      aria-orientation="vertical"
+      style={floatingStyles}
+      className={clsx(styles.content, className)}
+      {...rest}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+});
+
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Trigger,
-  Content: function Content() {
-    return null;
-  },
+  Content,
   Item: function Item() {
     return null;
   },

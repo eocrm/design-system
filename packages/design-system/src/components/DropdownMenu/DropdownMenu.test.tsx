@@ -3,6 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { DropdownMenu } from './DropdownMenu';
 
+beforeEach(() => {
+  window.ResizeObserver = class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+});
+
 describe('DropdownMenu — Trigger', () => {
   it('renders its child unchanged', () => {
     render(
@@ -72,5 +80,92 @@ describe('DropdownMenu — Trigger', () => {
       </DropdownMenu>,
     );
     expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+  });
+});
+
+describe('DropdownMenu — Content', () => {
+  it('does not render Content when closed', () => {
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <div>menu body</div>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('renders Content with role="menu" when open', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <div>menu body</div>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getByText('menu body')).toBeInTheDocument();
+  });
+
+  it('portals Content outside its parent tree', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <div>menu body</div>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const menu = screen.getByRole('menu');
+    expect(container.contains(menu)).toBe(false);
+    expect(document.body.contains(menu)).toBe(true);
+  });
+
+  it('links trigger to content via aria-controls', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <div>menu body</div>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    await user.click(trigger);
+    const menu = screen.getByRole('menu');
+    expect(trigger).toHaveAttribute('aria-controls', menu.id);
+  });
+
+  it('forwards ref and merges className on Content', async () => {
+    const user = userEvent.setup();
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content ref={ref} className="custom-content">
+          <div>menu body</div>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(ref.current).toBeInstanceOf(HTMLDivElement);
+    expect(ref.current?.className).toMatch(/custom-content/);
   });
 });
