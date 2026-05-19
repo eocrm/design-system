@@ -45,12 +45,25 @@ Per-component contracts: hover any import for JSDoc; see [`packages/design-syste
 ## Quickstart (contributing)
 
 ```bash
-make install          # npm install (sets up workspaces)
+make install          # npm install (sets up workspaces AND installs git hooks)
 make up               # dev server at http://localhost:8080 + opens browser
 make test             # Vitest (library only)
 make lint             # stylelint
 make build            # production build of playground (also typechecks library)
 ```
+
+### Git hooks (mandatory)
+
+`npm install` auto-installs a `pre-push` hook via Husky that runs **prettier**, **stylelint**, and **typecheck**. Pushes are blocked if any of those fail — this catches the static-analysis subset of the CI quality gate before you wait on CI.
+
+Verify the hook is wired:
+
+```bash
+git config --get core.hooksPath   # must print: .husky/_
+ls .husky/pre-push                # must exist
+```
+
+If either check fails, run `npm install` again. **Do not push with `--no-verify`** unless you've coordinated the bypass with a reviewer — the hook exists to catch issues that will otherwise come back as red CI on the PR.
 
 Repo conventions live in [`CLAUDE.md`](./CLAUDE.md) (cross-package) and [`packages/design-system/CLAUDE.md`](./packages/design-system/CLAUDE.md) (library-specific rules).
 
