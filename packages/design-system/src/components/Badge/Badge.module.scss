@@ -2,8 +2,6 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  height: var(--size-badge);
-  padding: 0 var(--space-2);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
@@ -11,6 +9,19 @@
   text-transform: uppercase;
   white-space: nowrap;
   line-height: var(--line-height-none);
+}
+
+// Sizes
+.sm {
+  height: var(--size-badge-sm);
+  padding: 0 var(--space-1);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.md {
+  height: var(--size-badge);
+  padding: 0 var(--space-2);
 }
 
 .neutral {
