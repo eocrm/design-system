@@ -8,6 +8,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
+import { DropdownMenu } from '@eocrm/design-system';
 import { members, pendingInvites, roleTone, roleLabel, seatLimit } from '../../../data/mock';
 import styles from './Members.module.scss';
 import { CrossLinks } from '../../shared/CrossLinks';
@@ -104,9 +105,32 @@ export function Members() {
                     </td>
                     <td className={styles.meta}>{m.lastActive}</td>
                     <td className={styles.rowActions}>
-                      <button type="button" className={styles.rowActionBtn} aria-label="More">
-                        <MoreHorizontal size={16} />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenu.Trigger>
+                          <button type="button" className={styles.rowActionBtn} aria-label="More">
+                            <MoreHorizontal size={16} />
+                          </button>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Content align="end">
+                          <DropdownMenu.Item onSelect={() => {}}>View profile</DropdownMenu.Item>
+                          <DropdownMenu.Sub>
+                            <DropdownMenu.SubTrigger>Change role</DropdownMenu.SubTrigger>
+                            <DropdownMenu.SubContent>
+                              <DropdownMenu.RadioGroup value={m.role} onValueChange={() => {}}>
+                                <DropdownMenu.RadioItem value="admin">Admin</DropdownMenu.RadioItem>
+                                <DropdownMenu.RadioItem value="member">
+                                  Member
+                                </DropdownMenu.RadioItem>
+                                <DropdownMenu.RadioItem value="guest">Guest</DropdownMenu.RadioItem>
+                              </DropdownMenu.RadioGroup>
+                            </DropdownMenu.SubContent>
+                          </DropdownMenu.Sub>
+                          <DropdownMenu.Separator />
+                          <DropdownMenu.Item onSelect={() => {}} tone="danger">
+                            Remove member
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}

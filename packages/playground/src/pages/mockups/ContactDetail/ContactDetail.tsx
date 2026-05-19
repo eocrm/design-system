@@ -8,6 +8,7 @@ import { Card } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
+import { DropdownMenu } from '@eocrm/design-system';
 import { getContact, statusLabel, statusTone } from '../../../data/mock';
 import styles from './ContactDetail.module.scss';
 import { CrossLinks } from '../../shared/CrossLinks';
@@ -55,9 +56,25 @@ export function ContactDetail() {
             <Phone size={14} /> Call
           </Button>
           <Button>Edit</Button>
-          <Button variant="ghost" aria-label="More">
-            <MoreHorizontal size={16} />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button variant="ghost" aria-label="More">
+                <MoreHorizontal size={16} />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content align="end">
+              <DropdownMenu.Item onSelect={() => {}}>Add to list</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>Log a call</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>Create deal</DropdownMenu.Item>
+              <DropdownMenu.Separator />
+              <DropdownMenu.Item onSelect={() => {}}>Merge contact…</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>Archive</DropdownMenu.Item>
+              <DropdownMenu.Separator />
+              <DropdownMenu.Item onSelect={() => {}} tone="danger">
+                Delete contact
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
         </Cluster>
       </div>
 
