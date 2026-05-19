@@ -202,6 +202,52 @@ const [tab, setTab] = useState('overview');
 - Keyboard: Enter/Space/ArrowDown on trigger opens with first item active; ArrowUp opens with last; Arrow/Home/End navigate skipping disabled and separators; Enter/Space activates; Escape closes and returns focus to trigger; Tab closes and returns focus to trigger (then continues normal traversal); typeahead jumps to first matching label (500ms debounce).
 - For value selection (pick a status, country, etc.), use `<Select>` (not yet shipped) — DropdownMenu is for actions, not form values.
 
+#### v2 — submenus, checkboxes, radios, groups
+
+```tsx
+<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="secondary">Filters</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.Group>
+      <DropdownMenu.Label>Status</DropdownMenu.Label>
+      <DropdownMenu.CheckboxItem checked={active} onCheckedChange={setActive}>
+        Active
+      </DropdownMenu.CheckboxItem>
+      <DropdownMenu.CheckboxItem checked={pending} onCheckedChange={setPending}>
+        Pending
+      </DropdownMenu.CheckboxItem>
+    </DropdownMenu.Group>
+
+    <DropdownMenu.Separator />
+
+    <DropdownMenu.Group>
+      <DropdownMenu.Label>Sort by</DropdownMenu.Label>
+      <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
+        <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+        <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+      </DropdownMenu.RadioGroup>
+    </DropdownMenu.Group>
+
+    <DropdownMenu.Sub>
+      <DropdownMenu.SubTrigger>More</DropdownMenu.SubTrigger>
+      <DropdownMenu.SubContent>
+        <DropdownMenu.Item onSelect={exportCsv}>Export CSV</DropdownMenu.Item>
+        <DropdownMenu.Item onSelect={exportJson}>Export JSON</DropdownMenu.Item>
+      </DropdownMenu.SubContent>
+    </DropdownMenu.Sub>
+  </DropdownMenu.Content>
+</DropdownMenu>
+```
+
+- `<CheckboxItem>` — `role="menuitemcheckbox"`, `aria-checked`. Default `closeOnSelect={false}` (multi-select friendly). Pass `closeOnSelect` to override.
+- `<RadioGroup>` + `<RadioItem>` — `role="radiogroup"` / `role="menuitemradio"`. Default `closeOnSelect={true}` (radio = the selection IS the action).
+- `<Group>` + `<Label>` — wrap a section. Group is `role="group"` with `aria-labelledby` to the Label. Label outside Group still renders, no aria wiring.
+- `<Sub>` + `<SubTrigger>` + `<SubContent>` — nested menu. SubTrigger registers in the parent menu; SubContent is its own portaled panel. Opens on click, hover (100ms delay), Enter, or ArrowRight. Closes on ArrowLeft (level-only), Escape (level-only), click-outside (all levels), or selecting an item with `closeOnSelect=true` (all levels — cascading close).
+- `<ItemIndicator>` — optional slot child of CheckboxItem/RadioItem to override the default check (`✓`) or bullet (`●`) glyph. Detection is shallow: must be a direct child.
+- Per WAI-ARIA, mixing CheckboxItem and RadioItem in the same RadioGroup is invalid; CheckboxItems live outside RadioGroup.
+
 ---
 
 ## Tokens (the only "values" you write)
@@ -220,7 +266,7 @@ All available as CSS custom properties after you import `global.scss`:
 | Font sizes      | `--font-size-xs/sm/md/lg/xl/2xl/3xl`, `--font-size-code` (0.92em for inline mono)                                                                                                                   |
 | Font weights    | `--font-weight-regular/medium/semibold/bold`                                                                                                                                                        |
 | Line heights    | `--line-height-tight` / `--line-height-normal` / `--line-height-none` (1)                                                                                                                           |
-| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-badge-sm` (16), `--size-chip` (18), `--size-dropdown-min-width` (160)                                                                     |
+| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-badge-sm` (16), `--size-chip` (18), `--size-dropdown-min-width` (160), `--size-dropdown-indicator` (16)                                   |
 | Borders         | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3)                                                                                                                  |
 | Letter spacing  | `--letter-spacing-caps` (0.03em)                                                                                                                                                                    |
 | Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
@@ -249,6 +295,9 @@ All available as CSS custom properties after you import `global.scss`:
 | 3-digit hex (`#fff`) anywhere                                                         | Always 6-digit (`#ffffff`)                                                                                    |
 | `margin` on or around design-system components in your SCSS                           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                      |
 | `<DropdownMenu.Item disabled>--- Section ---</DropdownMenu.Item>` as a section header | Use `<DropdownMenu.Separator />` between groups                                                               |
+| `<DropdownMenu.RadioItem>` outside `<DropdownMenu.RadioGroup>` | Always wrap radio items in a RadioGroup; otherwise the value/onValueChange contract is broken |
+| `<DropdownMenu.ItemIndicator>` nested deeper than direct child | Detection is shallow; nest it directly under CheckboxItem/RadioItem |
+| Submenus 3+ levels deep | Discouraged — UX gets confusing fast; refactor to a different IA |
 
 ---
 
