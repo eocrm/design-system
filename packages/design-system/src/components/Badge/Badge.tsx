@@ -12,6 +12,9 @@ export type BadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 
  */
 export type BadgeSize = 'sm' | 'md';
 
+/** Position of the optional status dot relative to the badge content. */
+export type BadgeDot = 'start' | 'end';
+
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   /**
    * Semantic tone.
@@ -34,6 +37,17 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
    *   `Active`). Same 11px size and semibold weight as `md`.
    */
   size?: BadgeSize;
+  /**
+   * Render a small filled circle in the badge's text color alongside the
+   * content. Useful when the dot is the primary status signal and the label
+   * is supporting context ("● Active", "Failed ●").
+   * - `start` — dot before the content.
+   * - `end` — dot after the content.
+   *
+   * Omit for no dot. The dot is purely decorative (`aria-hidden`) — the badge
+   * text remains the accessible label.
+   */
+  dot?: BadgeDot;
 }
 
 const toneClass: Record<BadgeTone, string> = {
@@ -89,7 +103,7 @@ const sizeClass: Record<BadgeSize, string> = {
  *   with an appropriate variant instead.
  */
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
-  { tone = 'neutral', size = 'md', className, ...props },
+  { tone = 'neutral', size = 'md', dot, className, children, ...props },
   ref,
 ) {
   // {...props} last so consumer overrides win (Pattern A).
@@ -98,6 +112,10 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
       ref={ref}
       className={clsx(styles.badge, toneClass[tone], sizeClass[size], className)}
       {...props}
-    />
+    >
+      {dot === 'start' && <span aria-hidden="true" className={styles.dot} />}
+      {children}
+      {dot === 'end' && <span aria-hidden="true" className={styles.dot} />}
+    </span>
   );
 });

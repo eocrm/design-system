@@ -53,3 +53,11 @@
   background: var(--color-badge-purple-bg);
   color: var(--color-badge-purple-fg);
 }
+
+.dot {
+  width: var(--size-badge-dot);
+  height: var(--size-badge-dot);
+  border-radius: var(--radius-full);
+  background: currentColor;
+  flex-shrink: 0;
+}

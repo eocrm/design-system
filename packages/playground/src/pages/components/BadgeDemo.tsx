@@ -89,6 +89,79 @@ export function BadgeDemo() {
       </Example>
 
       <Example
+        title="Status dot"
+        description={`Add dot="start" or dot="end" to render a small filled circle in the badge's text color. Useful when the dot is the primary status signal (Slack/GitHub-style online/offline indicators) and the label is supporting context. Works with every tone and both sizes.`}
+        code={`// Dot at the start
+<Badge tone="success" dot="start">Active</Badge>
+<Badge tone="warning" dot="start">Pending</Badge>
+<Badge tone="danger" dot="start">Failed</Badge>
+
+// Dot at the end
+<Badge tone="info" dot="end">Lead</Badge>
+
+// Works at sm size too
+<Badge size="sm" tone="success" dot="start">Online</Badge>
+<Badge size="sm" tone="neutral" dot="start">Away</Badge>`}
+      >
+        <Stack gap="md">
+          <Cluster gap="sm" align="center">
+            <Badge tone="neutral" dot="start">
+              Neutral
+            </Badge>
+            <Badge tone="info" dot="start">
+              Info
+            </Badge>
+            <Badge tone="success" dot="start">
+              Success
+            </Badge>
+            <Badge tone="warning" dot="start">
+              Warning
+            </Badge>
+            <Badge tone="danger" dot="start">
+              Danger
+            </Badge>
+            <Badge tone="purple" dot="start">
+              Purple
+            </Badge>
+          </Cluster>
+          <Cluster gap="sm" align="center">
+            <Badge tone="neutral" dot="end">
+              Neutral
+            </Badge>
+            <Badge tone="info" dot="end">
+              Info
+            </Badge>
+            <Badge tone="success" dot="end">
+              Success
+            </Badge>
+            <Badge tone="warning" dot="end">
+              Warning
+            </Badge>
+            <Badge tone="danger" dot="end">
+              Danger
+            </Badge>
+            <Badge tone="purple" dot="end">
+              Purple
+            </Badge>
+          </Cluster>
+          <Cluster gap="sm" align="center">
+            <Badge size="sm" tone="success" dot="start">
+              Online
+            </Badge>
+            <Badge size="sm" tone="warning" dot="start">
+              Away
+            </Badge>
+            <Badge size="sm" tone="danger" dot="start">
+              Offline
+            </Badge>
+            <Badge size="sm" tone="neutral" dot="start">
+              Unknown
+            </Badge>
+          </Cluster>
+        </Stack>
+      </Example>
+
+      <Example
         title="Status patterns"
         description="The most common CRM usage: status pill on a contact, deal, or invitation."
         code={`// Contact statuses
