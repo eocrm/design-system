@@ -14,4 +14,5 @@ export type {
   DropdownMenuCheckboxItemProps,
   DropdownMenuRadioGroupProps,
   DropdownMenuRadioItemProps,
+  DropdownMenuSubProps,
 } from './DropdownMenu';

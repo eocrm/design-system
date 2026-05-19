@@ -1103,3 +1103,23 @@ describe('DropdownMenu — CheckboxItem', () => {
     expect(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent).not.toContain('✓');
   });
 });
+
+describe('DropdownMenu — Sub (scaffolding)', () => {
+  it('Sub renders its children inside a fresh context (depth > 0)', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <span data-testid="sub-child">child of sub</span>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByTestId('sub-child')).toBeInTheDocument();
+  });
+});
