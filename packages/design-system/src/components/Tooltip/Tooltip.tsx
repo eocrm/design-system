@@ -25,21 +25,106 @@ import {
 import { chain, mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import styles from './Tooltip.module.scss';
 
+/** Which side of the trigger the tooltip prefers. Floating UI auto-flips if it doesn't fit. */
 export type TooltipSide = 'top' | 'right' | 'bottom' | 'left';
+
+/** Which edge of the tooltip aligns to the corresponding trigger edge. */
 export type TooltipAlign = 'start' | 'center' | 'end';
 
 export interface TooltipProps {
+  /**
+   * Tooltip body. ReactNode so you can include inline `<kbd>` or icons.
+   * If `null`, `undefined`, or `""`, the trigger renders as-is with no
+   * listeners and no `aria-describedby` — useful for conditional UIs.
+   */
   content: ReactNode;
+
+  /**
+   * Exactly one React element that accepts a ref. Cloned to inject the
+   * tooltip's ref + listeners + aria. `<Button>` and raw `<button>` both
+   * qualify; a custom component without `forwardRef` does not.
+   */
   children: ReactElement;
+
+  /** Preferred side. Default `'top'`. Auto-flips on collision via Floating UI. */
   side?: TooltipSide;
+
+  /** Edge alignment. Default `'center'`. */
   align?: TooltipAlign;
+
+  /** Gap in px between trigger and tooltip. Default `6` (room for the arrow). */
   sideOffset?: number;
+
+  /**
+   * Delay in ms before hover opens the tooltip. Default `400`. Keyboard
+   * focus is always immediate (a11y). Close is always immediate.
+   */
   delay?: number;
+
+  /**
+   * Controlled open state. Provide alongside `onOpenChange` to drive open
+   * externally. Omit both to let Tooltip own its state (the common case).
+   */
   open?: boolean;
+
+  /** Fired whenever Tooltip wants to change open state. Required when `open` is provided. */
   onOpenChange?: (open: boolean) => void;
+
+  /** Default open state for uncontrolled usage. Defaults to `false`. */
   defaultOpen?: boolean;
 }
 
+/**
+ * Renders a small floating label anchored to a single trigger element. Opens
+ * on hover (after `delay` ms) or immediately on keyboard focus, with a
+ * directional arrow pointing at the trigger and a short scale-fade entrance.
+ * Hand-rolled on `@floating-ui/react-dom` — no UI library.
+ *
+ * The trigger child must accept a ref (`forwardRef` if it's a custom
+ * component; a raw `<button>` or this library's `<Button>` both qualify) and
+ * must already have its own accessible name (visible text or `aria-label`).
+ * The tooltip provides **supplementary description** via `aria-describedby`,
+ * never the label itself.
+ *
+ * @example
+ * <Tooltip content="Save the record (⌘S)">
+ *   <Button onClick={save}>Save</Button>
+ * </Tooltip>
+ *
+ * @example
+ * // Icon-only trigger — give it its own aria-label; tooltip describes:
+ * <Tooltip content="Filter results">
+ *   <Button variant="ghost" aria-label="Filter">⏷</Button>
+ * </Tooltip>
+ *
+ * @example
+ * // Controlled open (rare — usually let Tooltip manage state):
+ * const [open, setOpen] = useState(false);
+ * <Tooltip content="…" open={open} onOpenChange={setOpen}>
+ *   <Button>Edit</Button>
+ * </Tooltip>
+ *
+ * @remarks When NOT to use
+ * - For content the user must click to interact with → use Popover (separate
+ *   wishlist item). Tooltips are not hoverable; moving the pointer into the
+ *   tooltip body does not keep it open.
+ * - For form-value selection → use Select (separate wishlist item).
+ * - As the only source of essential information. Tooltips are progressive
+ *   enhancement for pointer + keyboard users; touch users will not see them.
+ *
+ * @remarks Anti-patterns
+ * - ❌ `<Tooltip><Button disabled>…</Button></Tooltip>` — `disabled` buttons
+ *   do not fire pointerenter or focus events in any browser. If you need a
+ *   tooltip explaining *why* a button is disabled, render the button with
+ *   `aria-disabled="true"` and intercept its click handler, or wrap the
+ *   disabled element in a `<span>` and pass the span as the Tooltip child.
+ * - ❌ Putting essential info only in the tooltip. Make it visible in copy
+ *   or, for icon buttons, in the trigger's `aria-label`.
+ * - ❌ Trigger child that does not accept a ref — cloneElement needs a ref
+ *   contract on the child.
+ * - ❌ Multi-paragraph tooltip content. If you have that much to say, it's
+ *   Popover territory.
+ */
 export function Tooltip({
   content,
   children,
