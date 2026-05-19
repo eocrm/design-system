@@ -291,3 +291,59 @@ describe('Popover — focus + Escape', () => {
     expect(document.activeElement).toBe(trigger);
   });
 });
+
+describe('Popover — outside click dismissal', () => {
+  it('closes when pointerdown fires outside the panel and outside the trigger', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Popover>
+          <Popover.Trigger>
+            <button type="button">Open</button>
+          </Popover.Trigger>
+          <Popover.Content>panel body</Popover.Content>
+        </Popover>
+        <div data-testid="elsewhere">elsewhere</div>
+      </>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await user.pointer({ keys: '[MouseLeft>]', target: screen.getByTestId('elsewhere') });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('does NOT close when pointerdown fires inside the panel', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <div data-testid="inside">panel body</div>
+        </Popover.Content>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.pointer({ keys: '[MouseLeft>]', target: screen.getByTestId('inside') });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('does NOT close when pointerdown fires on the trigger (trigger toggles it)', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    await user.click(trigger);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await user.click(trigger);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  });
+});

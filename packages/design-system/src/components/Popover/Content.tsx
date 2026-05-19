@@ -57,6 +57,25 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [ctx.open, ctx.closeAll]);
 
+  // Outside-click: close if pointerdown lands outside the panel AND outside
+  // the trigger. Capture phase fires before focused widgets that may
+  // stopPropagation. The check uses contains() so clicks on descendants of
+  // the panel (e.g. a button inside) don't dismiss.
+  useEffect(() => {
+    if (!ctx.open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      const panel = ctx.contentRef.current;
+      const trigger = ctx.triggerRef.current;
+      if (panel && panel.contains(target)) return;
+      if (trigger && trigger.contains(target)) return;
+      ctx.setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [ctx.open, ctx.contentRef, ctx.triggerRef, ctx.setOpen]);
+
   if (!ctx.open) return null;
 
   return createPortal(
