@@ -400,3 +400,88 @@ describe('Tooltip — animation contract', () => {
     expect(scss).toMatch(/\.content\s*{[\s\S]*@starting-style/);
   });
 });
+
+describe('Tooltip — cleanup + props preservation', () => {
+  // Mirror the hover describe's asyncWrapper override so the timer-using
+  // tests below don't deadlock inside Testing Library's internal act() drain.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    configure({ asyncWrapper: async (cb) => cb() });
+  });
+
+  it('does not throw when unmounted while a delay timer is pending', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const { unmount } = render(
+      <Tooltip content="Hello" delay={400}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    await user.hover(screen.getByRole('button', { name: 'Trigger' }));
+    expect(() => unmount()).not.toThrow();
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+  });
+
+  it('removes document-level listeners on unmount while open', () => {
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    const { unmount } = render(
+      <Tooltip content="Hello" defaultOpen>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    unmount();
+    // Both pointerdown and keydown were registered while open; both should
+    // have been removed during unmount cleanup.
+    expect(
+      removeSpy.mock.calls.some(([type]) => type === 'pointerdown'),
+    ).toBe(true);
+    expect(removeSpy.mock.calls.some(([type]) => type === 'keydown')).toBe(true);
+    removeSpy.mockRestore();
+  });
+
+  it('preserves consumer props on the cloned trigger (className, data-*)', () => {
+    render(
+      <Tooltip content="Hello">
+        <button type="button" className="consumer" data-testid="t">
+          Trigger
+        </button>
+      </Tooltip>,
+    );
+    const trigger = screen.getByTestId('t');
+    expect(trigger).toHaveClass('consumer');
+  });
+
+  it('fires onOpenChange(true) after the hover delay and onOpenChange(false) on close', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const onOpenChange = vi.fn();
+    render(
+      <Tooltip content="Hello" delay={300} onOpenChange={onOpenChange}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Trigger' });
+
+    await user.hover(trigger);
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+
+    await user.unhover(trigger);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
