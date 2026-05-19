@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type HTMLAttributes,
+  type MouseEvent,
   type PointerEvent,
   type ReactElement,
   type ReactNode,
@@ -190,13 +191,62 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
   );
 });
 
+export type DropdownMenuItemTone = 'default' | 'danger';
+
+export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+  onSelect: () => void;
+  tone?: DropdownMenuItemTone;
+  icon?: ReactNode;
+  shortcut?: string;
+  disabled?: boolean;
+}
+
+const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
+  { onSelect, tone = 'default', icon, shortcut, disabled = false, className, children, ...rest },
+  ref,
+) {
+  // Context is required (Item must live inside a DropdownMenu), but in this
+  // task we don't yet use it directly; the registry hook-up lands in a later
+  // task. The hook call enforces the structural rule.
+  useDropdownMenuContext('Item');
+
+  const handleClick = (_e: MouseEvent) => {
+    if (disabled) return;
+    onSelect();
+  };
+
+  return (
+    // {...rest} last so consumer can override non-semantic props; role/aria-disabled are
+    // set explicitly after the spread to preserve the ARIA contract.
+    <div
+      ref={ref}
+      role="menuitem"
+      tabIndex={-1}
+      aria-disabled={disabled || undefined}
+      data-tone={tone}
+      className={clsx(styles.item, className)}
+      onClick={handleClick}
+      {...rest}
+    >
+      {icon !== undefined && <span className={styles.icon}>{icon}</span>}
+      <span className={styles.label}>{children}</span>
+      {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
+    </div>
+  );
+});
+
+export interface DropdownMenuSeparatorProps extends HTMLAttributes<HTMLDivElement> {}
+
+const Separator = forwardRef<HTMLDivElement, DropdownMenuSeparatorProps>(function Separator(
+  { className, ...rest },
+  ref,
+) {
+  return <div ref={ref} role="separator" className={clsx(styles.separator, className)} {...rest} />;
+});
+
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Trigger,
   Content,
-  Item: function Item() {
-    return null;
-  },
-  Separator: function Separator() {
-    return null;
-  },
+  Item,
+  Separator,
 });

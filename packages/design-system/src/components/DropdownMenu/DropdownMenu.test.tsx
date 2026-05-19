@@ -169,3 +169,99 @@ describe('DropdownMenu — Content', () => {
     expect(ref.current?.className).toMatch(/custom-content/);
   });
 });
+
+describe('DropdownMenu — Item / Separator', () => {
+  async function openMenu() {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          <DropdownMenu.Separator />
+          <DropdownMenu.Item onSelect={() => {}} disabled>
+            Disabled
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    return { user };
+  }
+
+  it('renders items with role="menuitem"', async () => {
+    await openMenu();
+    expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeInTheDocument();
+  });
+
+  it('renders Separator with role="separator"', async () => {
+    await openMenu();
+    expect(screen.getByRole('separator')).toBeInTheDocument();
+  });
+
+  it('fires onSelect on click of enabled item', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={onSelect}>Edit</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Edit' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fire onSelect on click of disabled item', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={onSelect} disabled>
+            Edit
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Edit' }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('sets aria-disabled="true" on disabled items', async () => {
+    await openMenu();
+    const disabled = screen.getByRole('menuitem', { name: 'Disabled' });
+    expect(disabled).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('merges className on Item and Separator', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}} className="custom-item">
+            Edit
+          </DropdownMenu.Item>
+          <DropdownMenu.Separator className="custom-sep" />
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitem', { name: 'Edit' }).className).toMatch(/custom-item/);
+    expect(screen.getByRole('separator').className).toMatch(/custom-sep/);
+  });
+});

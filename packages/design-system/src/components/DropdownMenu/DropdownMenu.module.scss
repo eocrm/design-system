@@ -6,3 +6,27 @@
   z-index: var(--z-dropdown);
   outline: none;
 }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.label {
+  flex: 1 1 auto;
+}
+
+.icon {
+  display: inline-flex;
+}
+
+.shortcut {
+  color: var(--color-fg-subtle);
+  font-size: var(--font-size-sm);
+}
+
+.separator {
+  height: var(--border-width);
+  background: var(--color-border);
+}
