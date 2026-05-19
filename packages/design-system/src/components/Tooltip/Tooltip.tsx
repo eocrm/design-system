@@ -13,7 +13,7 @@ import {
   type Ref,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { chain, mergeRefs, sanitizeId } from '../_internal/refs';
+import { chain, mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 
 export type TooltipSide = 'top' | 'right' | 'bottom' | 'left';
 export type TooltipAlign = 'start' | 'center' | 'end';
@@ -152,6 +152,7 @@ export function Tooltip({
     onPointerLeave?: (e: ReactPointerEvent) => void;
     onFocus?: (e: ReactFocusEvent<HTMLElement>) => void;
     onBlur?: (e: ReactFocusEvent<HTMLElement>) => void;
+    'aria-describedby'?: string;
   };
 
   if (isEmpty) {
@@ -162,6 +163,9 @@ export function Tooltip({
 
   const trigger = cloneElement(children, {
     ref: mergeRefs(triggerRef, childProps.ref),
+    'aria-describedby': open
+      ? mergeAriaDescribedby(childProps['aria-describedby'], tooltipId)
+      : childProps['aria-describedby'],
     onPointerEnter: chain(childProps.onPointerEnter, handlePointerEnter),
     onPointerLeave: chain(childProps.onPointerLeave, handlePointerLeave),
     onFocus: chain(childProps.onFocus, handleFocus),

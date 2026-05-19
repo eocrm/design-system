@@ -1,5 +1,5 @@
-import { createRef, type ReactNode } from 'react';
-import { act, configure, render, screen } from '@testing-library/react';
+import { createRef, useState, type ReactNode } from 'react';
+import { act, configure, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Tooltip } from './Tooltip';
 
@@ -291,5 +291,54 @@ describe('Tooltip — focus open / close', () => {
     // Still not on the trigger — Tooltip's Escape close must not steal/return focus,
     // unlike DropdownMenu which returns focus to its trigger on Escape.
     expect(document.activeElement).not.toBe(trigger);
+  });
+});
+
+describe('Tooltip — aria wiring', () => {
+  it('sets aria-describedby on the trigger to the tooltip id while open', () => {
+    render(
+      <Tooltip content="Hello" defaultOpen>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Trigger' });
+    const tooltip = screen.getByRole('tooltip');
+    expect(trigger.getAttribute('aria-describedby')).toBe(tooltip.id);
+  });
+
+  it('does not set aria-describedby while closed (and no consumer value)', () => {
+    render(
+      <Tooltip content="Hello">
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    expect(screen.getByRole('button', { name: 'Trigger' })).not.toHaveAttribute(
+      'aria-describedby',
+    );
+  });
+
+  it('merges a consumer aria-describedby (consumer first), then de-merges on close', () => {
+    function Harness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <Tooltip content="tip" open={open} onOpenChange={setOpen}>
+            <button type="button" aria-describedby="hint-1">
+              Trigger
+            </button>
+          </Tooltip>
+          <button type="button" onClick={() => setOpen(false)}>
+            close
+          </button>
+        </>
+      );
+    }
+    render(<Harness />);
+    const trigger = screen.getByRole('button', { name: 'Trigger' });
+    const tooltipId = screen.getByRole('tooltip').id;
+    expect(trigger.getAttribute('aria-describedby')).toBe(`hint-1 ${tooltipId}`);
+
+    fireEvent.click(screen.getByRole('button', { name: 'close' }));
+    expect(trigger.getAttribute('aria-describedby')).toBe('hint-1');
   });
 });
