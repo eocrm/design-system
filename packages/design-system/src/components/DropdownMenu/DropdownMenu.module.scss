@@ -56,7 +56,7 @@
   color: var(--color-fg-subtle);
 }
 
-.label {
+.itemLabel {
   flex: 1 1 auto;
 }
 
@@ -78,4 +78,55 @@
   width: 100%;
   height: var(--border-width);
   background: var(--color-border);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  padding-block: var(--space-1);
+}
+
+// Section label: uppercase muted text identifying a group of items.
+.label {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--color-fg-subtle);
+  user-select: none;
+}
+
+.indicatorSlot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-dropdown-indicator);
+  height: var(--size-dropdown-indicator);
+  flex-shrink: 0;
+}
+
+.defaultIndicator {
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-none);
+  color: currentColor;
+}
+
+.subTrigger {
+  // .subTrigger inherits all .item styles via the className composition.
+  // This class exists so we can target data-state in the rule below.
+  display: flex;
+}
+
+.subTriggerChevron {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-none);
+  color: var(--color-fg-subtle);
+  padding-left: var(--space-2);
+}
+
+.subTrigger[data-state='open'] {
+  background: var(--color-bg-muted);
 }

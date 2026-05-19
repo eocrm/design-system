@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
@@ -167,6 +168,201 @@ export function DropdownMenuDemo() {
           </DropdownMenu>
         </Cluster>
       </Example>
+
+      <Example
+        title="Multi-select filter (CheckboxItem)"
+        description="Checkbox items toggle in place and don't close the menu by default — natural for a filter chip menu."
+        code={`<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="secondary">Filter ▾</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.CheckboxItem checked={active} onCheckedChange={setActive}>
+      Active
+    </DropdownMenu.CheckboxItem>
+    <DropdownMenu.CheckboxItem checked={pending} onCheckedChange={setPending}>
+      Pending
+    </DropdownMenu.CheckboxItem>
+    <DropdownMenu.CheckboxItem checked={churned} onCheckedChange={setChurned}>
+      Churned
+    </DropdownMenu.CheckboxItem>
+  </DropdownMenu.Content>
+</DropdownMenu>`}
+      >
+        <FilterExample />
+      </Example>
+
+      <Example
+        title="Single-select sort (RadioGroup)"
+        description="Radio items default to close-on-select — picking a sort closes the menu."
+        code={`<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="secondary">Sort: {sort} ▾</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
+      <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+      <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+      <DropdownMenu.RadioItem value="size">Size</DropdownMenu.RadioItem>
+    </DropdownMenu.RadioGroup>
+  </DropdownMenu.Content>
+</DropdownMenu>`}
+      >
+        <SortExample />
+      </Example>
+
+      <Example
+        title="Nested actions (Sub)"
+        description={`A "More" submenu opens beside the parent. Hover to open after 100ms, or click. Use Escape to close just the sub, click outside to close everything.`}
+        code={`<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="secondary">Actions ▾</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+    <DropdownMenu.Sub>
+      <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+      <DropdownMenu.SubContent>
+        <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+        <DropdownMenu.Item onSelect={() => {}}>JSON</DropdownMenu.Item>
+        <DropdownMenu.Item onSelect={() => {}}>PDF</DropdownMenu.Item>
+      </DropdownMenu.SubContent>
+    </DropdownMenu.Sub>
+  </DropdownMenu.Content>
+</DropdownMenu>`}
+      >
+        <Cluster gap="sm">
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button variant="secondary">Actions ▾</Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+              <DropdownMenu.Sub>
+                <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+                <DropdownMenu.SubContent>
+                  <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+                  <DropdownMenu.Item onSelect={() => {}}>JSON</DropdownMenu.Item>
+                  <DropdownMenu.Item onSelect={() => {}}>PDF</DropdownMenu.Item>
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Sub>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        </Cluster>
+      </Example>
+
+      <Example
+        title="Grouped + labeled (Group + Label)"
+        description="A combined menu — filters as checkboxes, sort as a radio group, both organized with labels. The View settings pattern."
+        code={`<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="secondary">View ▾</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.Group>
+      <DropdownMenu.Label>Show</DropdownMenu.Label>
+      <DropdownMenu.CheckboxItem checked={active} onCheckedChange={setActive}>
+        Active
+      </DropdownMenu.CheckboxItem>
+      <DropdownMenu.CheckboxItem checked={archived} onCheckedChange={setArchived}>
+        Archived
+      </DropdownMenu.CheckboxItem>
+    </DropdownMenu.Group>
+    <DropdownMenu.Separator />
+    <DropdownMenu.Group>
+      <DropdownMenu.Label>Sort by</DropdownMenu.Label>
+      <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
+        <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+        <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+      </DropdownMenu.RadioGroup>
+    </DropdownMenu.Group>
+  </DropdownMenu.Content>
+</DropdownMenu>`}
+      >
+        <ViewSettingsExample />
+      </Example>
     </DemoLayout>
+  );
+}
+
+function FilterExample() {
+  const [active, setActive] = useState(true);
+  const [pending, setPending] = useState(false);
+  const [churned, setChurned] = useState(false);
+  return (
+    <Cluster gap="sm">
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="secondary">Filter ▾</Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={active} onCheckedChange={setActive}>
+            Active
+          </DropdownMenu.CheckboxItem>
+          <DropdownMenu.CheckboxItem checked={pending} onCheckedChange={setPending}>
+            Pending
+          </DropdownMenu.CheckboxItem>
+          <DropdownMenu.CheckboxItem checked={churned} onCheckedChange={setChurned}>
+            Churned
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </Cluster>
+  );
+}
+
+function SortExample() {
+  const [sort, setSort] = useState('name');
+  return (
+    <Cluster gap="sm">
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="secondary">Sort: {sort} ▾</Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
+            <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="size">Size</DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </Cluster>
+  );
+}
+
+function ViewSettingsExample() {
+  const [active, setActive] = useState(true);
+  const [archived, setArchived] = useState(false);
+  const [sort, setSort] = useState('name');
+  return (
+    <Cluster gap="sm">
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="secondary">View ▾</Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Group>
+            <DropdownMenu.Label>Show</DropdownMenu.Label>
+            <DropdownMenu.CheckboxItem checked={active} onCheckedChange={setActive}>
+              Active
+            </DropdownMenu.CheckboxItem>
+            <DropdownMenu.CheckboxItem checked={archived} onCheckedChange={setArchived}>
+              Archived
+            </DropdownMenu.CheckboxItem>
+          </DropdownMenu.Group>
+          <DropdownMenu.Separator />
+          <DropdownMenu.Group>
+            <DropdownMenu.Label>Sort by</DropdownMenu.Label>
+            <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
+              <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+              <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+            </DropdownMenu.RadioGroup>
+          </DropdownMenu.Group>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </Cluster>
   );
 }

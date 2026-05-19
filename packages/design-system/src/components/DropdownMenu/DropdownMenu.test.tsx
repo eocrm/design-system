@@ -1,4 +1,4 @@
-import { configure, render, screen } from '@testing-library/react';
+import { act, configure, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
@@ -674,6 +674,89 @@ describe('DropdownMenu — Item variants', () => {
   });
 });
 
+describe('DropdownMenu — Group and Label', () => {
+  it('Label renders as a non-interactive text row', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Label>Sort by</DropdownMenu.Label>
+          <DropdownMenu.Item onSelect={() => {}}>Name</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByText('Sort by')).toBeInTheDocument();
+    // Label is not a menuitem and not focusable.
+    expect(screen.queryByRole('menuitem', { name: 'Sort by' })).toBeNull();
+  });
+
+  it('Group renders with role="group" and aria-labelledby points at Label id', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Group>
+            <DropdownMenu.Label>Sort by</DropdownMenu.Label>
+            <DropdownMenu.Item onSelect={() => {}}>Name</DropdownMenu.Item>
+          </DropdownMenu.Group>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const group = screen.getByRole('group');
+    const label = screen.getByText('Sort by');
+    expect(group).toHaveAttribute('aria-labelledby', label.id);
+    expect(label.id).toBeTruthy();
+  });
+
+  it('forwards refs on Group and Label', async () => {
+    const user = userEvent.setup();
+    const groupRef = createRef<HTMLDivElement>();
+    const labelRef = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Group ref={groupRef}>
+            <DropdownMenu.Label ref={labelRef}>Sort by</DropdownMenu.Label>
+            <DropdownMenu.Item onSelect={() => {}}>Name</DropdownMenu.Item>
+          </DropdownMenu.Group>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(groupRef.current).toBeInstanceOf(HTMLDivElement);
+    expect(labelRef.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('Label outside a Group renders without aria id wiring', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Label>Quick actions</DropdownMenu.Label>
+          <DropdownMenu.Item onSelect={() => {}}>Refresh</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByText('Quick actions')).toBeInTheDocument();
+    expect(screen.queryByRole('group')).toBeNull();
+  });
+});
+
 describe('DropdownMenu — typeahead', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -739,5 +822,832 @@ describe('DropdownMenu — typeahead', () => {
     vi.advanceTimersByTime(600);
     await user.keyboard('e'); // 'e' alone, "Edit"
     expect(screen.getByRole('menuitem', { name: 'Edit' })).toHaveFocus();
+  });
+});
+
+describe('DropdownMenu — ItemIndicator', () => {
+  it('is a passthrough wrapper component', async () => {
+    // Standalone test: ItemIndicator inside a regular Item just renders its
+    // children inline (Item doesn't extract it — only CheckboxItem/RadioItem do).
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>
+            <DropdownMenu.ItemIndicator>marker</DropdownMenu.ItemIndicator>
+            Edit
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByText('marker')).toBeInTheDocument();
+  });
+});
+
+describe('DropdownMenu — RadioGroup and RadioItem', () => {
+  function renderRadio(value: string, onValueChange: (v: string) => void = () => {}) {
+    return render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value={value} onValueChange={onValueChange}>
+            <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="size">Size</DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+  }
+
+  it('renders RadioGroup with role="radiogroup"', async () => {
+    const user = userEvent.setup();
+    renderRadio('name');
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+  });
+
+  it('RadioItems have role="menuitemradio" and aria-checked reflects value', async () => {
+    const user = userEvent.setup();
+    renderRadio('date');
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitemradio', { name: 'Name' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+    expect(screen.getByRole('menuitemradio', { name: 'Date' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+  });
+
+  it('clicking a RadioItem fires onValueChange with its value', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    renderRadio('name', onValueChange);
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Date' }));
+    expect(onValueChange).toHaveBeenCalledWith('date');
+  });
+
+  it('default closeOnSelect=true — menu closes after click', async () => {
+    const user = userEvent.setup();
+    renderRadio('name');
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Date' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('closeOnSelect={false} keeps menu open after click', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value="name" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem value="name" closeOnSelect={false}>
+              Name
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="date" closeOnSelect={false}>
+              Date
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Date' }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('renders default ● glyph on the selected RadioItem', async () => {
+    const user = userEvent.setup();
+    renderRadio('date');
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitemradio', { name: 'Date' }).textContent).toContain('●');
+    expect(screen.getByRole('menuitemradio', { name: 'Name' }).textContent).not.toContain('●');
+  });
+
+  it('forwards refs on RadioGroup and RadioItem', async () => {
+    const user = userEvent.setup();
+    const groupRef = createRef<HTMLDivElement>();
+    const itemRef = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup ref={groupRef} value="name" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem ref={itemRef} value="name">
+              Name
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(groupRef.current).toBeInstanceOf(HTMLDivElement);
+    expect(itemRef.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('RadioItem outside a RadioGroup throws a helpful error', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // open={true} so Content renders immediately and RadioItem mounts synchronously.
+    expect(() =>
+      render(
+        <DropdownMenu open={true} onOpenChange={() => {}}>
+          <DropdownMenu.Trigger>
+            <button type="button">Open</button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.RadioItem value="x">X</DropdownMenu.RadioItem>
+          </DropdownMenu.Content>
+        </DropdownMenu>,
+      ),
+    ).toThrow(/RadioGroup/);
+    spy.mockRestore();
+  });
+});
+
+describe('DropdownMenu — CheckboxItem', () => {
+  it('renders as role="menuitemcheckbox" with aria-checked', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={true} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const item = screen.getByRole('menuitemcheckbox', { name: /Show archived/ });
+    expect(item).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('aria-checked is false when checked=false', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: /Show archived/ })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+  });
+
+  it('fires onCheckedChange with !checked when clicked', async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={onCheckedChange}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }));
+    expect(onCheckedChange).toHaveBeenCalledTimes(1);
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  it('default closeOnSelect=false — menu stays open after click', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('closeOnSelect={true} closes the menu after click', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}} closeOnSelect>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }));
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('disabled CheckboxItem does not fire onCheckedChange', async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={onCheckedChange} disabled>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }));
+    expect(onCheckedChange).not.toHaveBeenCalled();
+  });
+
+  it('renders default ✓ glyph when checked and no ItemIndicator child', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={true} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const item = screen.getByRole('menuitemcheckbox', { name: /Show archived/ });
+    expect(item.textContent).toContain('✓');
+  });
+
+  it('does NOT render default glyph when unchecked', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={false} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(
+      screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent,
+    ).not.toContain('✓');
+  });
+
+  it('forwards refs to the menuitemcheckbox div', async () => {
+    const user = userEvent.setup();
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem ref={ref} checked={false} onCheckedChange={() => {}}>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('renders a custom ItemIndicator when provided and checked', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked={true} onCheckedChange={() => {}}>
+            <DropdownMenu.ItemIndicator>
+              <span data-testid="custom-indicator">★</span>
+            </DropdownMenu.ItemIndicator>
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByTestId('custom-indicator')).toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitemcheckbox', { name: /Show archived/ }).textContent,
+    ).not.toContain('✓');
+  });
+});
+
+describe('DropdownMenu — Sub (scaffolding)', () => {
+  it('Sub renders its children inside a fresh context (depth > 0)', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <span data-testid="sub-child">child of sub</span>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByTestId('sub-child')).toBeInTheDocument();
+  });
+});
+
+describe('DropdownMenu — SubTrigger (click only — hover/keyboard in later tasks)', () => {
+  function renderSub() {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Regular</DropdownMenu.Item>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>More</DropdownMenu.SubTrigger>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('SubTrigger renders as a menuitem in the parent menu', async () => {
+    const { user } = renderSub();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitem', { name: /More/ })).toBeInTheDocument();
+  });
+
+  it('SubTrigger has aria-haspopup="menu" and aria-expanded=false initially', async () => {
+    const { user } = renderSub();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const sub = screen.getByRole('menuitem', { name: /More/ });
+    expect(sub).toHaveAttribute('aria-haspopup', 'menu');
+    expect(sub).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('clicking SubTrigger sets aria-expanded=true', async () => {
+    const { user } = renderSub();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /More/ }));
+    expect(screen.getByRole('menuitem', { name: /More/ })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('disabled SubTrigger does not open the sub on click', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger disabled>More</DropdownMenu.SubTrigger>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /More/ }));
+    expect(screen.getByRole('menuitem', { name: /More/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+});
+
+describe('DropdownMenu — SubContent', () => {
+  function renderNested() {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>JSON</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('SubContent renders the sub items when sub is open', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toBeInTheDocument();
+  });
+
+  it('selecting an Item inside SubContent closes the ENTIRE chain', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={onSelect}>CSV</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'CSV' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(screen.queryAllByRole('menu')).toHaveLength(0);
+  });
+
+  it('Escape from inside SubContent closes only the sub (root stays open)', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    expect(screen.getAllByRole('menu')).toHaveLength(2);
+    const subMenu = screen.getAllByRole('menu')[1];
+    subMenu.focus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryAllByRole('menu')).toHaveLength(1);
+  });
+
+  it('SubContent opens to the right of SubTrigger by default', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    // Two open menus: root (data-side="bottom"), sub (data-side="right").
+    const menus = screen.getAllByRole('menu');
+    const subMenu = menus[1];
+    expect(subMenu).toHaveAttribute('data-side', 'right');
+  });
+
+  it('clicking far outside closes the entire chain', async () => {
+    const user = userEvent.setup();
+    render(
+      <div>
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button">Open</button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+              <DropdownMenu.SubContent>
+                <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Sub>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+        <button type="button">Outside</button>
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    expect(screen.getAllByRole('menu')).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    expect(screen.queryAllByRole('menu')).toHaveLength(0);
+  });
+});
+
+describe('DropdownMenu — SubTrigger and SubContent forwardRef', () => {
+  it('forwards refs on SubTrigger and SubContent', async () => {
+    const user = userEvent.setup();
+    const triggerRef = createRef<HTMLDivElement>();
+    const contentRef = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger ref={triggerRef}>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent ref={contentRef}>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(triggerRef.current).toBeInstanceOf(HTMLDivElement);
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    expect(contentRef.current).toBeInstanceOf(HTMLDivElement);
+  });
+});
+
+describe('DropdownMenu — Submenu keyboard', () => {
+  function renderNested() {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>JSON</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('ArrowRight on SubTrigger opens the sub and focuses first item', async () => {
+    const { user } = renderNested();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}'); // opens root, focuses Edit
+    await user.keyboard('{ArrowDown}'); // focuses SubTrigger (Export)
+    expect(screen.getByRole('menuitem', { name: /Export/ })).toHaveFocus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toHaveFocus();
+  });
+
+  it('ArrowLeft inside sub closes the sub and focuses the SubTrigger', async () => {
+    const { user } = renderNested();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowRight}'); // opens sub, focuses CSV
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
+    expect(screen.getByRole('menuitem', { name: /Export/ })).toHaveFocus();
+  });
+
+  it('Enter on SubTrigger opens the sub (like ArrowRight)', async () => {
+    const { user } = renderNested();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}{ArrowDown}'); // focuses SubTrigger
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toHaveFocus();
+  });
+});
+
+describe('DropdownMenu — Submenu hover', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    configure({ asyncWrapper: async (cb) => cb() });
+  });
+
+  function renderNested() {
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    return { user };
+  }
+
+  it('hovering SubTrigger opens the sub after 100ms', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const subTrigger = screen.getByRole('menuitem', { name: /Export/ });
+    await user.hover(subTrigger);
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
+    act(() => vi.advanceTimersByTime(100));
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toBeInTheDocument();
+  });
+
+  it('hovering away from SubTrigger cancels pending open', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const subTrigger = screen.getByRole('menuitem', { name: /Export/ });
+    await user.hover(subTrigger);
+    act(() => vi.advanceTimersByTime(50)); // before 100ms threshold
+    await user.unhover(subTrigger);
+    act(() => vi.advanceTimersByTime(100)); // past original threshold
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
+  });
+
+  it('hovering away from open sub closes it after 200ms', async () => {
+    const { user } = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const subTrigger = screen.getByRole('menuitem', { name: /Export/ });
+    await user.hover(subTrigger);
+    act(() => vi.advanceTimersByTime(100)); // sub opens
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toBeInTheDocument();
+    await user.unhover(subTrigger);
+    act(() => vi.advanceTimersByTime(100)); // before 200ms close threshold
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(100)); // past 200ms total
+    expect(screen.queryByRole('menuitem', { name: 'CSV' })).toBeNull();
+  });
+});
+
+describe('DropdownMenu — cross-feature integration', () => {
+  it('CheckboxItem inside a Sub toggles without closing the chain (closeOnSelect=false default)', async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Filters</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.CheckboxItem checked={false} onCheckedChange={onCheckedChange}>
+                Show archived
+              </DropdownMenu.CheckboxItem>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Filters/ }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: /Show archived/ }));
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+    expect(screen.getAllByRole('menu')).toHaveLength(2);
+  });
+
+  it('RadioItem inside a Sub closes the entire chain by default', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Sort</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.RadioGroup value="name" onValueChange={onValueChange}>
+                <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+                <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+              </DropdownMenu.RadioGroup>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Sort/ }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Date' }));
+    expect(onValueChange).toHaveBeenCalledWith('date');
+    expect(screen.queryAllByRole('menu')).toHaveLength(0);
+  });
+
+  it('Group with Label wrapping a RadioGroup has correct aria wiring', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Group>
+            <DropdownMenu.Label>Sort by</DropdownMenu.Label>
+            <DropdownMenu.RadioGroup value="name" onValueChange={() => {}}>
+              <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+              <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+            </DropdownMenu.RadioGroup>
+          </DropdownMenu.Group>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const group = screen.getByRole('group');
+    const radiogroup = screen.getByRole('radiogroup');
+    const label = screen.getByText('Sort by');
+    expect(group).toHaveAttribute('aria-labelledby', label.id);
+    expect(radiogroup).toBeInTheDocument();
+  });
+
+  it('Two-level nested submenus close all on Item selection', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Sub>
+                <DropdownMenu.SubTrigger>Format</DropdownMenu.SubTrigger>
+                <DropdownMenu.SubContent>
+                  <DropdownMenu.Item onSelect={onSelect}>JSON</DropdownMenu.Item>
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Sub>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Format/ }));
+    expect(screen.getAllByRole('menu')).toHaveLength(3);
+    await user.click(screen.getByRole('menuitem', { name: 'JSON' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(screen.queryAllByRole('menu')).toHaveLength(0);
   });
 });
