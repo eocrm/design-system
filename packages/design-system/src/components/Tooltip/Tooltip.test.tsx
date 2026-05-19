@@ -390,10 +390,7 @@ describe('Tooltip — positioning + arrow', () => {
 
 describe('Tooltip — animation contract', () => {
   it('the compiled .content rule contains an @starting-style block', () => {
-    const scss = readFileSync(
-      resolve(__dirname, './Tooltip.module.scss'),
-      'utf8',
-    );
+    const scss = readFileSync(resolve(__dirname, './Tooltip.module.scss'), 'utf8');
     // Conservative check: the file contains an @starting-style block
     // nested inside a .content selector. We do not parse the SCSS — a
     // substring match is enough to lock the contract in.
@@ -446,9 +443,7 @@ describe('Tooltip — cleanup + props preservation', () => {
     unmount();
     // Both pointerdown and keydown were registered while open; both should
     // have been removed during unmount cleanup.
-    expect(
-      removeSpy.mock.calls.some(([type]) => type === 'pointerdown'),
-    ).toBe(true);
+    expect(removeSpy.mock.calls.some(([type]) => type === 'pointerdown')).toBe(true);
     expect(removeSpy.mock.calls.some(([type]) => type === 'keydown')).toBe(true);
     removeSpy.mockRestore();
   });

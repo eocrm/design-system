@@ -47,17 +47,17 @@ import { Tooltip } from '@eocrm/design-system';
 
 ### Props
 
-| Prop           | Type                                         | Default      | Notes                                                                                                                                  |
-| -------------- | -------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `content`      | `ReactNode`                                  | — (required) | Tooltip body. If `null` / `undefined` / `""` → trigger renders as-is; no listeners, no `aria-describedby`. Useful for conditional UIs. |
-| `children`     | `ReactElement`                               | — (required) | Exactly one element that accepts a ref. Same contract as `<DropdownMenu.Trigger>`.                                                     |
-| `side`         | `'top' \| 'right' \| 'bottom' \| 'left'`     | `'top'`      | Preferred placement; Floating UI's `flip()` auto-corrects on collision.                                                                |
-| `align`        | `'start' \| 'center' \| 'end'`               | `'center'`   | Edge alignment.                                                                                                                        |
-| `sideOffset`   | `number`                                     | `6`          | Gap in px between trigger and tooltip. Slightly larger than DropdownMenu's 4 to fit the arrow.                                         |
-| `delay`        | `number`                                     | `400`        | ms before hover-in opens. Focus-in is always immediate. Close is always immediate.                                                     |
-| `open`         | `boolean`                                    | —            | Optional controlled open. Pair with `onOpenChange`.                                                                                    |
-| `onOpenChange` | `(open: boolean) => void`                    | —            | Required when `open` is provided.                                                                                                      |
-| `defaultOpen`  | `boolean`                                    | `false`      | Uncontrolled initial state. Mostly for tests / Storybook-style demos.                                                                  |
+| Prop           | Type                                     | Default      | Notes                                                                                                                                  |
+| -------------- | ---------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`      | `ReactNode`                              | — (required) | Tooltip body. If `null` / `undefined` / `""` → trigger renders as-is; no listeners, no `aria-describedby`. Useful for conditional UIs. |
+| `children`     | `ReactElement`                           | — (required) | Exactly one element that accepts a ref. Same contract as `<DropdownMenu.Trigger>`.                                                     |
+| `side`         | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'`      | Preferred placement; Floating UI's `flip()` auto-corrects on collision.                                                                |
+| `align`        | `'start' \| 'center' \| 'end'`           | `'center'`   | Edge alignment.                                                                                                                        |
+| `sideOffset`   | `number`                                 | `6`          | Gap in px between trigger and tooltip. Slightly larger than DropdownMenu's 4 to fit the arrow.                                         |
+| `delay`        | `number`                                 | `400`        | ms before hover-in opens. Focus-in is always immediate. Close is always immediate.                                                     |
+| `open`         | `boolean`                                | —            | Optional controlled open. Pair with `onOpenChange`.                                                                                    |
+| `onOpenChange` | `(open: boolean) => void`                | —            | Required when `open` is provided.                                                                                                      |
+| `defaultOpen`  | `boolean`                                | `false`      | Uncontrolled initial state. Mostly for tests / Storybook-style demos.                                                                  |
 
 Exported types: `TooltipProps`, `TooltipSide`, `TooltipAlign`.
 
@@ -70,17 +70,17 @@ Exported types: `TooltipProps`, `TooltipSide`, `TooltipAlign`.
 - While closed, the trigger's `aria-describedby` reverts to whatever the consumer provided (or is absent).
 - The trigger must already have its own accessible name (visible text or `aria-label`). Tooltip is supplementary description, never the label. This is documented as a hard rule in JSDoc `@remarks`.
 
-**Why `describedby`, not `labelledby`:** screen readers append described-by text after the trigger's own name. With `labelledby`, the tooltip would *replace* the label, so an icon button's `aria-label` would be discarded. `describedby` composes; `labelledby` overwrites.
+**Why `describedby`, not `labelledby`:** screen readers append described-by text after the trigger's own name. With `labelledby`, the tooltip would _replace_ the label, so an icon button's `aria-label` would be discarded. `describedby` composes; `labelledby` overwrites.
 
 ### Open / close triggers
 
-| Event on trigger              | Behavior                                                                                       |
-| ----------------------------- | ---------------------------------------------------------------------------------------------- |
-| `pointerenter` (mouse)        | Start `delay` (default 400 ms) → open.                                                         |
-| `pointerleave` (mouse)        | Cancel any pending open OR close immediately if already open.                                  |
-| `focus` (`:focus-visible`)    | Open immediately, no delay. Keyboard users should not wait.                                    |
-| `blur`                        | Close immediately.                                                                             |
-| `pointerdown` (anywhere)      | Close immediately. A click that mutates UI should not leave a tooltip hanging over the result. |
+| Event on trigger               | Behavior                                                                                       |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `pointerenter` (mouse)         | Start `delay` (default 400 ms) → open.                                                         |
+| `pointerleave` (mouse)         | Cancel any pending open OR close immediately if already open.                                  |
+| `focus` (`:focus-visible`)     | Open immediately, no delay. Keyboard users should not wait.                                    |
+| `blur`                         | Close immediately.                                                                             |
+| `pointerdown` (anywhere)       | Close immediately. A click that mutates UI should not leave a tooltip hanging over the result. |
 | `Escape` (anywhere while open) | Close immediately. Tooltip never had focus, so dismissal is silent w.r.t. focus.               |
 
 ### `:focus-visible` detection
@@ -97,7 +97,7 @@ No special handling. Tap does not open. The trigger's existing accessible name (
 
 `<button disabled>` does not fire `pointerenter` / `focus` in any browser, so tooltips will not appear. Documented in JSDoc:
 
-> If you need a tooltip explaining *why* a button is disabled, render the button as enabled with `aria-disabled="true"` and intercept its click — or wrap the disabled control in a `<span>` and pass the span as the Tooltip child.
+> If you need a tooltip explaining _why_ a button is disabled, render the button as enabled with `aria-disabled="true"` and intercept its click — or wrap the disabled control in a `<span>` and pass the span as the Tooltip child.
 
 ### Multiple tooltips
 
@@ -111,10 +111,10 @@ useFloating({
   placement, // computed from side + align (same shape as DropdownMenu.Content)
   transform: false, // CSS transform reserved for the entrance animation
   middleware: [
-    offset(sideOffset),            // default 6
-    flip(),                        // auto side-flip on collision
-    shift({ padding: 8 }),         // 8px viewport edge padding
-    arrow({ element: arrowRef }),  // populates middlewareData.arrow.{x, y}
+    offset(sideOffset), // default 6
+    flip(), // auto side-flip on collision
+    shift({ padding: 8 }), // 8px viewport edge padding
+    arrow({ element: arrowRef }), // populates middlewareData.arrow.{x, y}
   ],
   whileElementsMounted: autoUpdate,
   elements: { reference: triggerRef.current },
@@ -144,12 +144,12 @@ Existing layer tokens (verified):
 
 ```scss
 --z-dropdown: 1000;
---z-modal:    1100;
---z-toast:    1200;
---z-tooltip:  1300; // new
+--z-modal: 1100;
+--z-toast: 1200;
+--z-tooltip: 1300; // new
 ```
 
-**Rationale for going *above* toast:** a tooltip inside a Modal must still be visible above the modal backdrop. Since tooltips portal to `document.body` (sibling to the modal portal in the DOM), the only way to keep them above any host UI is a strictly higher z. Toast at 1200 stays above modal; tooltip at 1300 stays above all. Stale tooltips lingering over a newly-opened modal are mitigated by the `pointerdown`-closes-tooltip rule.
+**Rationale for going _above_ toast:** a tooltip inside a Modal must still be visible above the modal backdrop. Since tooltips portal to `document.body` (sibling to the modal portal in the DOM), the only way to keep them above any host UI is a strictly higher z. Toast at 1200 stays above modal; tooltip at 1300 stays above all. Stale tooltips lingering over a newly-opened modal are mitigated by the `pointerdown`-closes-tooltip rule.
 
 This **revises** the design discussion's earlier "below `--z-modal`" framing — the revised value reflects what was discovered when reading the existing token file.
 
@@ -162,21 +162,43 @@ Reuses DropdownMenu's `@starting-style` scale-fade, scaled down for the smaller 
   /* ...chrome (background, border, radius, shadow, padding) — see below... */
   transform: none;
   transition:
-    opacity var(--transition-base),    /* 140ms */
-    transform var(--transition-base);
+    opacity var(--transition-base),
+    /* 140ms */ transform var(--transition-base);
 
   @starting-style {
     opacity: var(--opacity-hidden);
   }
 }
 
-.content[data-side='top']    { transform-origin: bottom center; @starting-style { transform: scale(0.92) translateY(2px); } }
-.content[data-side='bottom'] { transform-origin: top center;    @starting-style { transform: scale(0.92) translateY(-2px); } }
-.content[data-side='right']  { transform-origin: left center;   @starting-style { transform: scale(0.92) translateX(-2px); } }
-.content[data-side='left']   { transform-origin: right center;  @starting-style { transform: scale(0.92) translateX(2px); } }
+.content[data-side='top'] {
+  transform-origin: bottom center;
+  @starting-style {
+    transform: scale(0.92) translateY(2px);
+  }
+}
+.content[data-side='bottom'] {
+  transform-origin: top center;
+  @starting-style {
+    transform: scale(0.92) translateY(-2px);
+  }
+}
+.content[data-side='right'] {
+  transform-origin: left center;
+  @starting-style {
+    transform: scale(0.92) translateX(-2px);
+  }
+}
+.content[data-side='left'] {
+  transform-origin: right center;
+  @starting-style {
+    transform: scale(0.92) translateX(2px);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .content { transition: none; }
+  .content {
+    transition: none;
+  }
 }
 ```
 
@@ -210,10 +232,13 @@ export function Tooltip({
   const isControlled = controlledOpen !== undefined;
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const open = isControlled ? (controlledOpen as boolean) : uncontrolled;
-  const setOpen = useCallback((next: boolean) => {
-    onOpenChange?.(next);
-    if (!isControlled) setUncontrolled(next);
-  }, [isControlled, onOpenChange]);
+  const setOpen = useCallback(
+    (next: boolean) => {
+      onOpenChange?.(next);
+      if (!isControlled) setUncontrolled(next);
+    },
+    [isControlled, onOpenChange],
+  );
 
   // Refs.
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -225,7 +250,12 @@ export function Tooltip({
   // Cleared on every close, on every cancel, and on unmount.
 
   // Floating UI — only used while open (matches DropdownMenu).
-  const { refs, floatingStyles, placement: resolvedPlacement, middlewareData } = useFloating({
+  const {
+    refs,
+    floatingStyles,
+    placement: resolvedPlacement,
+    middlewareData,
+  } = useFloating({
     open,
     placement: align === 'center' ? side : `${side}-${align}`,
     transform: false,
@@ -239,7 +269,9 @@ export function Tooltip({
 
   // Empty-content escape hatch: clone child with merged ref only, no handlers, no aria.
   if (content == null || content === '') {
-    return cloneElement(children, { ref: mergeRefs(triggerRef, (children.props as { ref?: Ref<HTMLElement> }).ref) });
+    return cloneElement(children, {
+      ref: mergeRefs(triggerRef, (children.props as { ref?: Ref<HTMLElement> }).ref),
+    });
   }
 
   const trigger = cloneElement(children, {
@@ -256,25 +288,26 @@ export function Tooltip({
   return (
     <>
       {trigger}
-      {open && createPortal(
-        <div
-          ref={refs.setFloating}
-          id={tooltipId}
-          role="tooltip"
-          data-side={resolvedSide}
-          style={floatingStyles}
-          className={styles.content}
-        >
-          {content}
-          <span
-            ref={arrowRef}
-            aria-hidden="true"
-            className={styles.arrow}
-            style={{ left: middlewareData.arrow?.x, top: middlewareData.arrow?.y }}
-          />
-        </div>,
-        document.body,
-      )}
+      {open &&
+        createPortal(
+          <div
+            ref={refs.setFloating}
+            id={tooltipId}
+            role="tooltip"
+            data-side={resolvedSide}
+            style={floatingStyles}
+            className={styles.content}
+          >
+            {content}
+            <span
+              ref={arrowRef}
+              aria-hidden="true"
+              className={styles.arrow}
+              style={{ left: middlewareData.arrow?.x, top: middlewareData.arrow?.y }}
+            />
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
@@ -428,7 +461,7 @@ Add a new TL;DR section after the DropdownMenu section. Shape mirrors the other 
 - **Helper-move regression in DropdownMenu.** Mitigated by re-running the full DropdownMenu test suite after the move; expected to pass with zero behavioral changes.
 - **Rapid open/close.** Each open re-mounts the panel, so `@starting-style` re-fires every time. No animation queue, no half-closed state — same robustness as DropdownMenu's entrance.
 - **Tooltip on a non-focusable child** (e.g. `<Tooltip><div /></Tooltip>`). Hover still works, but keyboard users see nothing. Documented as anti-pattern in AGENTS.md; not enforced in code.
-- **Consumer passes their own `onPointerEnter` / `onFocus` and expects them to run first/last.** Handlers are *chained* (consumer's runs before the tooltip's). Consumer can `e.preventDefault()` to short-circuit if needed — same pattern as DropdownMenu's Trigger.
+- **Consumer passes their own `onPointerEnter` / `onFocus` and expects them to run first/last.** Handlers are _chained_ (consumer's runs before the tooltip's). Consumer can `e.preventDefault()` to short-circuit if needed — same pattern as DropdownMenu's Trigger.
 
 ## Acceptance
 
