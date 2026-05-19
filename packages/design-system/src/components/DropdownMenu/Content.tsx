@@ -67,6 +67,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
   } = useFloating({
     open: ctx.open,
     placement,
+    transform: false,
     middleware: [
       offset(sideOffset),
       flip(),

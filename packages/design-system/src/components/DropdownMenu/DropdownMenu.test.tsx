@@ -168,6 +168,32 @@ describe('DropdownMenu — Content', () => {
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
     expect(ref.current?.className).toMatch(/custom-content/);
   });
+
+  it('positions Content via inline top/left, not transform (animation contract)', async () => {
+    // Animation hooks `transform` for the scale-fade entrance. If Floating UI
+    // ever switches back to transform-based positioning, our animation
+    // transform would clobber the position. This test locks the contract in.
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <div>menu body</div>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const menu = screen.getByRole('menu');
+    const style = menu.getAttribute('style') ?? '';
+    expect(style).toMatch(/top:/);
+    expect(style).toMatch(/left:/);
+    // Floating UI writes either nothing or `transform: translate(...)` —
+    // assert it does NOT contain a translate(...) (the giveaway signature
+    // of transform-based positioning).
+    expect(style).not.toMatch(/translate\(/);
+  });
 });
 
 describe('DropdownMenu — Item / Separator', () => {
