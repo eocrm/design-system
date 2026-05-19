@@ -414,17 +414,26 @@ const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Co
   // have populated itemsRef.current (layout effects fire bottom-up: children first).
   useLayoutEffect(() => {
     if (!ctx.open) return;
+
+    if (ctx.openIntent === null) {
+      // Mouse-opened: don't pre-highlight any item. Focus the menu container
+      // itself so subsequent Arrow keys still route through handleKeyDown,
+      // and so Escape works from inside the menu.
+      ctx.setActiveIndex(-1);
+      queueMicrotask(() => refs.floating.current?.focus());
+      return;
+    }
+
+    // Keyboard-opened: focus first/last enabled item per intent.
     const enabled = ctx.itemsRef.current.filter((x) => !x.disabled);
     if (enabled.length === 0) return;
     const target = ctx.openIntent === 'last' ? enabled[enabled.length - 1] : enabled[0];
     const idx = ctx.itemsRef.current.findIndex((x) => x.id === target.id);
     ctx.setActiveIndex(idx);
-    // Focus on next microtask so the ref has attached and the re-render with
-    // updated tabIndex has committed.
     queueMicrotask(() => target.ref.current?.focus());
     ctx.setOpenIntent(null);
-    // Intentionally depend only on ctx.open so this fires exactly when the
-    // menu transitions to open.
+    // Depend only on ctx.open so this fires exactly when the menu transitions
+    // to open. openIntent is read but not re-fired on its own.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx.open]);
 

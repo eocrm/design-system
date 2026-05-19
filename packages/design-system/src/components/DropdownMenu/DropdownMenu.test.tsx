@@ -337,6 +337,28 @@ describe('DropdownMenu — dismissal', () => {
     await user.click(trigger);
     expect(screen.queryByRole('menu')).toBeNull();
   });
+
+  it('mouse-opening does NOT auto-focus an item; ArrowDown then focuses first', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Alpha</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Beta</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    // Menu is open, but no item has focus yet.
+    expect(screen.getByRole('menuitem', { name: 'Alpha' })).not.toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: 'Beta' })).not.toHaveFocus();
+    // First ArrowDown moves to first enabled item.
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('menuitem', { name: 'Alpha' })).toHaveFocus();
+  });
 });
 
 describe('DropdownMenu — Trigger keyboard open', () => {
