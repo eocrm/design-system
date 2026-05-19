@@ -175,6 +175,33 @@ const [tab, setTab] = useState('overview');
 - `orientation`: `horizontal` (default) or `vertical`.
 - `panelIdPrefix`: optional. When set, each tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link.
 
+### `<DropdownMenu>` — action menus from a trigger
+
+```tsx
+<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="secondary">Actions</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content align="end">
+    <DropdownMenu.Item onSelect={edit}>Edit</DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={duplicate} shortcut="⌘D">
+      Duplicate
+    </DropdownMenu.Item>
+    <DropdownMenu.Separator />
+    <DropdownMenu.Item onSelect={remove} tone="danger">
+      Delete
+    </DropdownMenu.Item>
+  </DropdownMenu.Content>
+</DropdownMenu>
+```
+
+- Compound API: `<DropdownMenu>` is the provider; `<Trigger>` clones its single child to inject ARIA + handlers; `<Content>` portals to `document.body` and positions itself with Floating UI; `<Item>` renders a `menuitem`; `<Separator>` renders a divider.
+- Trigger child must accept a ref via `forwardRef`. `<Button>` does.
+- `<Item>` props: `onSelect` (required), `disabled`, `tone` (`'default'` | `'danger'`), `icon`, `shortcut`.
+- `<Content>` props: `side` (`'top'` | `'bottom'`, default `'bottom'`), `align` (`'start'` | `'center'` | `'end'`, default `'start'`), `sideOffset` (default `4`), `minWidth`.
+- Keyboard: Enter/Space/ArrowDown on trigger opens with first item active; ArrowUp opens with last; Arrow/Home/End navigate skipping disabled and separators; Enter/Space activates; Escape closes and returns focus to trigger; Tab closes and returns focus to trigger (then continues normal traversal); typeahead jumps to first matching label (500ms debounce).
+- For value selection (pick a status, country, etc.), use `<Select>` (not yet shipped) — DropdownMenu is for actions, not form values.
+
 ---
 
 ## Tokens (the only "values" you write)
@@ -221,6 +248,7 @@ All available as CSS custom properties after you import `global.scss`:
 | `<Badge onClick={...}>`                                               | Badges are non-interactive — use a `Button`                                                                   |
 | 3-digit hex (`#fff`) anywhere                                         | Always 6-digit (`#ffffff`)                                                                                    |
 | `margin` on or around design-system components in your SCSS           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                      |
+| `<DropdownMenu.Item disabled>--- Section ---</DropdownMenu.Item>` as a section header | Use `<DropdownMenu.Separator />` between groups |
 
 ---
 
