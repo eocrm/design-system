@@ -1,5 +1,7 @@
 import { act, configure, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
 
@@ -193,6 +195,26 @@ describe('DropdownMenu — Content', () => {
     // assert it does NOT contain a translate(...) (the giveaway signature
     // of transform-based positioning).
     expect(style).not.toMatch(/translate\(/);
+  });
+
+  it('declares an @starting-style rule for the content selector (animation hook)', () => {
+    // Animation is CSS-only and uses @starting-style for the entrance.
+    //
+    // We tried walking CSSOM (document.styleSheets) here — vitest with the
+    // jsdom environment + CSS-modules plugin does NOT inject component
+    // stylesheets into the DOM (CSS modules return a class-name map only,
+    // the rules never reach document.styleSheets). So a CSSOM walk yields
+    // an empty list and gives no real contract guarantee.
+    //
+    // Fallback: read the SCSS source directly and assert the animation hooks
+    // are present. Weaker than a parsed-CSSOM check (it doesn't validate the
+    // rule actually compiles) but it catches the regression we care about:
+    // a future refactor silently dropping the @starting-style block or the
+    // --opacity-hidden token reference.
+    const scssPath = resolve(__dirname, 'DropdownMenu.module.scss');
+    const scss = readFileSync(scssPath, 'utf8');
+    expect(scss).toMatch(/@starting-style/);
+    expect(scss).toMatch(/var\(--opacity-hidden\)/);
   });
 });
 
