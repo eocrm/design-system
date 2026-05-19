@@ -10,6 +10,7 @@ import { Tabs } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { members, pendingInvites, roleTone, roleLabel, seatLimit } from '../../../data/mock';
 import styles from './Members.module.scss';
+import { CrossLinks } from '../../shared/CrossLinks';
 
 export function Members() {
   const [activeTab, setActiveTab] = useState('active');
@@ -169,6 +170,8 @@ export function Members() {
           </table>
         </div>
       )}
+
+      <CrossLinks kind="mockup" slug="members" />
     </Stack>
   );
 }

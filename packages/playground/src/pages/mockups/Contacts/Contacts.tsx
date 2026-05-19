@@ -8,6 +8,7 @@ import { Stack } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { contacts, statusTone, statusLabel } from '../../../data/mock';
 import styles from './Contacts.module.scss';
+import { CrossLinks } from '../../shared/CrossLinks';
 
 export function Contacts() {
   return (
@@ -99,6 +100,8 @@ export function Contacts() {
           </tbody>
         </table>
       </div>
+
+      <CrossLinks kind="mockup" slug="contacts" />
     </Stack>
   );
 }

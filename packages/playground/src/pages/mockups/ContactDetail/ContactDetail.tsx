@@ -10,6 +10,7 @@ import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { getContact, statusLabel, statusTone } from '../../../data/mock';
 import styles from './ContactDetail.module.scss';
+import { CrossLinks } from '../../shared/CrossLinks';
 
 const tabs = [
   { id: 'overview', label: 'Overview' },
@@ -157,6 +158,8 @@ export function ContactDetail() {
           </p>
         </Card>
       )}
+
+      <CrossLinks kind="mockup" slug="contact-detail" />
     </Stack>
   );
 }

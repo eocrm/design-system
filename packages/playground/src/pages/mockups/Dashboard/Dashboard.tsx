@@ -7,6 +7,7 @@ import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { contacts, deals } from '../../../data/mock';
 import styles from './Dashboard.module.scss';
+import { CrossLinks } from '../../shared/CrossLinks';
 
 const stats = [
   {
@@ -151,6 +152,8 @@ export function Dashboard() {
           ))}
         </div>
       </Card>
+
+      <CrossLinks kind="mockup" slug="dashboard" />
     </Stack>
   );
 }
