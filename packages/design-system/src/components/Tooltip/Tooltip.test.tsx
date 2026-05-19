@@ -1,5 +1,6 @@
 import { createRef, type ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, configure, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Tooltip } from './Tooltip';
 
 describe('Tooltip — initial render', () => {
@@ -108,6 +109,94 @@ describe('Tooltip — empty content', () => {
     const trigger = screen.getByRole('button', { name: 'Trigger' });
     expect(trigger).not.toHaveAttribute('aria-describedby');
     // No tooltip element should exist no matter what.
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+});
+
+describe('Tooltip — hover open / close', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    // @testing-library/react's asyncWrapper has a setTimeout(0) drain step that
+    // only knows how to advance Jest fake timers. Override it to also advance
+    // Vitest fake timers so the internal act() wrapper doesn't deadlock.
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    // Restore the default asyncWrapper for all other test suites.
+    configure({ asyncWrapper: async (cb) => cb() });
+  });
+
+  it('opens after the delay on pointerenter and closes on pointerleave', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <Tooltip content="Hello" delay={400}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Trigger' });
+
+    await user.hover(trigger);
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Hello');
+
+    await user.unhover(trigger);
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('cancels the pending open if pointerleave fires before the delay elapses', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <Tooltip content="Hello" delay={400}>
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Trigger' });
+
+    await user.hover(trigger);
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    await user.unhover(trigger);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('closes an open tooltip when pointerdown fires anywhere on the document', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <>
+        <Tooltip content="Hello" delay={0}>
+          <button type="button">Trigger</button>
+        </Tooltip>
+        <div data-testid="elsewhere">elsewhere</div>
+      </>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Trigger' });
+
+    await user.hover(trigger);
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+
+    await user.pointer({ keys: '[MouseLeft>]', target: screen.getByTestId('elsewhere') });
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 });
