@@ -266,9 +266,9 @@ const [tab, setTab] = useState('overview');
 </Tooltip>
 ```
 
-- Wrapper API: `<Tooltip content="…">` cloneElement's its single child to inject the ref, listeners (`pointerenter` / `pointerleave` / `focus` / `blur`), and `aria-describedby`. Child must accept a ref (`<Button>` does; raw `<button>` does).
+- Wrapper API: `<Tooltip content="…">` cloneElement's its single child to inject the ref, listeners (`pointerenter` / `pointerleave` / `focus` / `blur`), and `aria-describedby`. Child must accept a ref — `<Button>` qualifies, as does a raw `<button>`.
 - Trigger MUST already have its own accessible name (visible text or `aria-label`). Tooltip is _supplementary description_ via `aria-describedby` — never the label.
-- `content` props: `ReactNode`. If `null` / `undefined` / `''`, the trigger renders as-is with no listeners and no aria. Useful for conditional UIs.
+- `content` prop: `ReactNode`. If `null` / `undefined` / `''`, the trigger renders as-is with no listeners and no aria. Useful for conditional UIs.
 - `side` (`'top'` default) / `align` (`'center'` default) / `sideOffset` (default `6`) — Floating UI auto-flips on collision.
 - `delay` — ms before hover opens. Default `400`. Keyboard focus is always immediate (a11y); close is always immediate.
 - `open` / `onOpenChange` / `defaultOpen` — controlled mode, same shape as DropdownMenu.
@@ -301,7 +301,7 @@ All available as CSS custom properties after you import `global.scss`:
 | Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
 | Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width`                                                                                                                               |
 | Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
-| Layer (z-index) | `--z-dropdown` / `--z-modal` / `--z-toast`                                                                                                                                                          |
+| Layer (z-index) | `--z-dropdown` / `--z-modal` / `--z-toast` / `--z-tooltip`                                                                                                                                          |
 
 ---
 
