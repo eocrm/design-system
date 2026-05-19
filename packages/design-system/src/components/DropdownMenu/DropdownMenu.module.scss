@@ -121,7 +121,8 @@
 .subTriggerChevron {
   display: inline-flex;
   align-items: center;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-none);
   color: var(--color-fg-subtle);
   padding-left: var(--space-2);
 }

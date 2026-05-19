@@ -189,7 +189,7 @@ export interface DropdownMenuSubTriggerProps extends HTMLAttributes<HTMLDivEleme
 
 /**
  * Trigger for a submenu. Renders as a menuitem in the PARENT menu with a
- * trailing chevron (`▶`). Click, hover (100 ms delay), Enter, Space, or
+ * trailing chevron (`›`). Click, hover (100 ms delay), Enter, Space, or
  * ArrowRight opens the sub; ArrowLeft (when inside the sub) closes it.
  *
  * Internally registers itself in the parent context's item registry so it
@@ -308,7 +308,7 @@ export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps
         {icon !== undefined && <span className={styles.icon}>{icon}</span>}
         <span className={styles.itemLabel}>{children}</span>
         <span className={styles.subTriggerChevron} aria-hidden="true">
-          ▶
+          ›
         </span>
       </div>
     );
