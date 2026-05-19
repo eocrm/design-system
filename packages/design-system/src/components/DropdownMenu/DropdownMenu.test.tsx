@@ -175,6 +175,10 @@ describe('DropdownMenu — Content', () => {
     // Animation hooks `transform` for the scale-fade entrance. If Floating UI
     // ever switches back to transform-based positioning, our animation
     // transform would clobber the position. This test locks the contract in.
+    //
+    // Brittleness note: the regex matches `top:` / `left:` literally. If a
+    // future Floating UI version writes `inset:` shorthand instead, this test
+    // will fail noisily — that's desired, not a bug. Re-validate manually.
     const user = userEvent.setup();
     render(
       <DropdownMenu>
@@ -215,6 +219,10 @@ describe('DropdownMenu — Content', () => {
     const scss = readFileSync(scssPath, 'utf8');
     expect(scss).toMatch(/@starting-style/);
     expect(scss).toMatch(/var\(--opacity-hidden\)/);
+    // Locality: ensure the @starting-style block is anchored inside (or close
+    // to) a `.content` selector. Catches the "moved to wrong selector" case
+    // a bare substring match would miss.
+    expect(scss).toMatch(/\.content[^{]*\{[\s\S]{0,500}?@starting-style/);
   });
 });
 
