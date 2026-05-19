@@ -5,6 +5,7 @@ import { Item, Separator } from './Item';
 import { Group, Label } from './Group';
 import { ItemIndicator } from './ItemIndicator';
 import { CheckboxItem } from './CheckboxItem';
+import { RadioGroup, RadioItem } from './Radio';
 
 export type { DropdownMenuProps } from './Root';
 export type { DropdownMenuTriggerProps } from './Trigger';
@@ -21,6 +22,10 @@ export type {
 export type { DropdownMenuGroupProps, DropdownMenuLabelProps } from './Group';
 export type { DropdownMenuItemIndicatorProps } from './ItemIndicator';
 export type { DropdownMenuCheckboxItemProps } from './CheckboxItem';
+export type {
+  DropdownMenuRadioGroupProps,
+  DropdownMenuRadioItemProps,
+} from './Radio';
 
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Trigger,
@@ -31,4 +36,6 @@ export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Label,
   ItemIndicator,
   CheckboxItem,
+  RadioGroup,
+  RadioItem,
 });

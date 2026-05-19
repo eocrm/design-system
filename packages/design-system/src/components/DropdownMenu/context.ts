@@ -41,3 +41,18 @@ export interface GroupContextValue {
 }
 
 export const GroupContext = createContext<GroupContextValue | null>(null);
+
+export interface RadioGroupContextValue {
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
+export const RadioGroupContext = createContext<RadioGroupContextValue | null>(null);
+
+export function useRadioGroupContext(component: string): RadioGroupContextValue {
+  const ctx = useContext(RadioGroupContext);
+  if (!ctx) {
+    throw new Error(`<DropdownMenu.${component}> must be used inside <DropdownMenu.RadioGroup>`);
+  }
+  return ctx;
+}

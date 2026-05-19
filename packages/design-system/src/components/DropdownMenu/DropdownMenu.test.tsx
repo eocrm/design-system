@@ -826,6 +826,107 @@ describe('DropdownMenu — ItemIndicator', () => {
   });
 });
 
+describe('DropdownMenu — RadioGroup and RadioItem', () => {
+  function renderRadio(value: string, onValueChange: (v: string) => void = () => {}) {
+    return render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value={value} onValueChange={onValueChange}>
+            <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="size">Size</DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+  }
+
+  it('renders RadioGroup with role="radiogroup"', async () => {
+    const user = userEvent.setup();
+    renderRadio('name');
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+  });
+
+  it('RadioItems have role="menuitemradio" and aria-checked reflects value', async () => {
+    const user = userEvent.setup();
+    renderRadio('date');
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitemradio', { name: 'Name' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('menuitemradio', { name: 'Date' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('clicking a RadioItem fires onValueChange with its value', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    renderRadio('name', onValueChange);
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Date' }));
+    expect(onValueChange).toHaveBeenCalledWith('date');
+  });
+
+  it('default closeOnSelect=true — menu closes after click', async () => {
+    const user = userEvent.setup();
+    renderRadio('name');
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Date' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('closeOnSelect={false} keeps menu open after click', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value="name" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem value="name" closeOnSelect={false}>
+              Name
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="date" closeOnSelect={false}>
+              Date
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Date' }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('renders default ● glyph on the selected RadioItem', async () => {
+    const user = userEvent.setup();
+    renderRadio('date');
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitemradio', { name: 'Date' }).textContent).toContain('●');
+    expect(screen.getByRole('menuitemradio', { name: 'Name' }).textContent).not.toContain('●');
+  });
+
+  it('RadioItem outside a RadioGroup throws a helpful error', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // open={true} so Content renders immediately and RadioItem mounts synchronously.
+    expect(() =>
+      render(
+        <DropdownMenu open={true} onOpenChange={() => {}}>
+          <DropdownMenu.Trigger>
+            <button type="button">Open</button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.RadioItem value="x">X</DropdownMenu.RadioItem>
+          </DropdownMenu.Content>
+        </DropdownMenu>,
+      ),
+    ).toThrow(/RadioGroup/);
+    spy.mockRestore();
+  });
+});
+
 describe('DropdownMenu — CheckboxItem', () => {
   it('renders as role="menuitemcheckbox" with aria-checked', async () => {
     const user = userEvent.setup();
