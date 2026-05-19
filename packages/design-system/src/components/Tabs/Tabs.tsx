@@ -160,7 +160,9 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     const node = tabRefs.current[activeId];
     if (!node) {
       // activeId doesn't match any item, or items is empty — hide the bar
-      // rather than leave it stranded mid-slide.
+      // rather than leave it stranded mid-slide. Important: we return BEFORE
+      // touching firstMeasureRef, so a later "missing → valid" transition
+      // still gets the no-animation first-paint treatment.
       indicator.style.opacity = '0';
       return;
     }
