@@ -1,0 +1,62 @@
+name: Deploy playground
+
+# Manually triggered. Builds the playground with the correct GitHub Pages
+# base path and deploys it. The site lives at:
+#   https://<owner>.github.io/<repo>/
+
+on:
+  # Reusable only — chained by the Release workflow after a successful publish
+  # so the live playground reflects the version that was just released. No
+  # standalone trigger by design: every Pages deploy goes through Release.
+  workflow_call:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One Pages deploy at a time. Don't cancel in flight — pending deploys queue.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build playground
+        run: npm run build -w playground
+        env:
+          # Vite reads this as the `base` config — must match the GH Pages path.
+          # `${{ github.event.repository.name }}` is the repo slug, e.g. "design-system".
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/playground/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

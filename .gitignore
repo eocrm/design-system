@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+*.local
+.vite
+*.tsbuildinfo
+
+# Playwright MCP cache (snapshots, screenshots, console logs)
+.playwright-mcp/
+
+# Screenshots captured by the design-system dev workflow
+*.png
+
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea

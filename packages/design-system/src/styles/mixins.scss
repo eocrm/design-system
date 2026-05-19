@@ -1,0 +1,25 @@
+// Mixins for use inside component .module.scss files via `@use '@styles/mixins' as *;`
+// NEVER includes raw colors or sizes — only structural patterns using tokens.
+
+@mixin focus-ring($color: var(--ring-accent)) {
+  outline: none;
+  box-shadow: 0 0 0 var(--ring-width) #{$color};
+}
+
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,121 @@
+name: Release
+
+# Triggered on every push to main. Quality gate runs first; on green, the
+# library auto-publishes a patch bump and the playground re-deploys.
+#
+# To force a major/minor bump, edit this workflow's BUMP env var on a branch
+# and merge — there is no manual UI by design.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write   # push the new git tag
+  packages: write   # publish to GitHub Packages
+  pages: write      # forwarded to the chained deploy-playground job
+  id-token: write   # forwarded to the chained deploy-playground job
+
+env:
+  BUMP: patch
+
+jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
+
+  publish:
+    needs: quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Need full history so we can read existing tags.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          # This writes .npmrc with the @eocrm scope pointed at GitHub Packages
+          # and wires NODE_AUTH_TOKEN for the publish step below.
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@eocrm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Determine next version
+        id: version
+        run: |
+          set -euo pipefail
+          LATEST=$(git tag --list 'v*' --sort=-v:refname | head -n 1 || true)
+          if [ -z "${LATEST:-}" ]; then
+            CURRENT="0.0.0"
+            echo "No existing v* tag — starting from $CURRENT"
+          else
+            CURRENT="${LATEST#v}"
+            echo "Latest version tag: $LATEST (parsed as $CURRENT)"
+          fi
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          case "$BUMP" in
+            major) NEW="$((MAJOR + 1)).0.0" ;;
+            minor) NEW="${MAJOR}.$((MINOR + 1)).0" ;;
+            patch) NEW="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+            *) echo "::error::Unknown BUMP value: $BUMP"; exit 1 ;;
+          esac
+
+          if ! [[ "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Computed version '$NEW' is not valid semver"
+            exit 1
+          fi
+
+          if git rev-parse "v$NEW" >/dev/null 2>&1; then
+            echo "::error::Tag v$NEW already exists; refusing to overwrite"
+            exit 1
+          fi
+
+          echo "Next version: $NEW"
+          echo "value=$NEW" >> "$GITHUB_OUTPUT"
+
+      - name: Set library version
+        working-directory: packages/design-system
+        run: npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
+
+      - name: Publish to GitHub Packages
+        working-directory: packages/design-system
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and push
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git tag -a "v${{ steps.version.outputs.value }}" -m "Release v${{ steps.version.outputs.value }}"
+          git push origin "v${{ steps.version.outputs.value }}"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Published"
+            echo ""
+            echo "- Package: \`@eocrm/design-system\`"
+            echo "- Version: \`${{ steps.version.outputs.value }}\`"
+            echo "- Tag: \`v${{ steps.version.outputs.value }}\`"
+            echo "- Registry: https://npm.pkg.github.com"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Re-deploy the playground so the live site reflects the just-published version.
+  # Skipped automatically if `publish` failed (including the tag-exists guard).
+  deploy-playground:
+    needs: publish
+    uses: ./.github/workflows/deploy-playground.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

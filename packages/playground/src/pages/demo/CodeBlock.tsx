@@ -1,0 +1,62 @@
+import './prismLangs'; // must run first — registers SCSS grammar on prism-react-renderer
+import { useState } from 'react';
+import { Check, Copy } from 'lucide-react';
+import clsx from 'clsx';
+import { Highlight, themes } from 'prism-react-renderer';
+import styles from './CodeBlock.module.scss';
+
+export interface CodeBlockProps {
+  code: string;
+  language?: 'tsx' | 'scss' | 'css' | 'json';
+  filename?: string;
+  className?: string;
+}
+
+export function CodeBlock({ code, language = 'tsx', filename, className }: CodeBlockProps) {
+  const [copied, setCopied] = useState(false);
+
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard may be unavailable (http, sandboxed) — ignore silently
+    }
+  };
+
+  const trimmed = code.trimEnd();
+
+  return (
+    <div className={clsx(styles.block, className)}>
+      <div className={styles.bar}>
+        <span className={styles.filename}>{filename ?? language.toUpperCase()}</span>
+        <button
+          type="button"
+          className={styles.copyBtn}
+          onClick={onCopy}
+          aria-label="Copy code"
+        >
+          {copied ? <Check size={12} /> : <Copy size={12} />}
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+      <Highlight code={trimmed} language={language} theme={themes.github}>
+        {({ tokens, getLineProps, getTokenProps }) => (
+          <pre className={styles.pre}>
+            <code className={styles.code}>
+              {tokens.map((line, i) => (
+                <span key={i} {...getLineProps({ line })} className={styles.line}>
+                  {line.map((token, k) => (
+                    <span key={k} {...getTokenProps({ token })} />
+                  ))}
+                  {'\n'}
+                </span>
+              ))}
+            </code>
+          </pre>
+        )}
+      </Highlight>
+    </div>
+  );
+}

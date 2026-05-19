@@ -1,0 +1,6 @@
+// Single global entry. Import this once from main.tsx.
+// Component-specific styles do NOT belong here — they go in *.module.scss next to the component.
+
+@use 'tokens';
+@use 'reset';
+@use 'typography';

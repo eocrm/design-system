@@ -1,0 +1,33 @@
+{
+  "name": "playground",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Dev playground for @eocrm/design-system — never publishes.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@eocrm/design-system": "*",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.460.0",
+    "prism-react-renderer": "^2.4.1",
+    "prismjs": "^1.30.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.15.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.0",
+    "@types/prismjs": "^1.26.6",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "sass-embedded": "^1.83.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.0"
+  }
+}

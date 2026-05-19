@@ -1,0 +1,72 @@
+{
+  "extends": ["stylelint-config-standard-scss"],
+  "plugins": ["stylelint-declaration-strict-value"],
+  "rules": {
+    "scale-unlimited/declaration-strict-value": [
+      [
+        "/color$/",
+        "background",
+        "background-color",
+        "fill",
+        "stroke",
+        "border-color",
+        "/^border-.*-color$/",
+        "border-width",
+        "/^border-(top|right|bottom|left)-width$/",
+        "opacity"
+      ],
+      {
+        "ignoreValues": [
+          "transparent",
+          "inherit",
+          "currentcolor",
+          "currentColor",
+          "none",
+          "unset",
+          "initial"
+        ],
+        "ignoreFunctions": false
+      }
+    ],
+    "declaration-property-value-disallowed-list": {
+      "/^border(-(top|right|bottom|left))?$/": ["/\\d+(px|em|rem)/"],
+      "position": ["fixed"]
+    },
+    "selector-class-pattern": null,
+    "scss/no-global-function-names": null,
+    "no-descending-specificity": null,
+    "color-function-notation": "modern",
+    "value-keyword-case": null,
+    "custom-property-empty-line-before": null,
+    "declaration-block-no-redundant-longhand-properties": null,
+    "media-feature-range-notation": null,
+    "number-max-precision": 5,
+    "color-hex-length": "long"
+  },
+  "overrides": [
+    {
+      "files": ["packages/design-system/src/components/**/*.module.scss"],
+      "rules": {
+        "property-disallowed-list": [
+          "margin",
+          "margin-top",
+          "margin-right",
+          "margin-bottom",
+          "margin-left",
+          "margin-block",
+          "margin-block-start",
+          "margin-block-end",
+          "margin-inline",
+          "margin-inline-start",
+          "margin-inline-end",
+          "flex-grow",
+          "flex-basis",
+          "align-self",
+          "justify-self",
+          "grid-column",
+          "grid-row"
+        ]
+      }
+    }
+  ]
+}

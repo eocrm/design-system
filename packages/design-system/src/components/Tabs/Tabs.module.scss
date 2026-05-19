@@ -1,0 +1,81 @@
+// The outer wrapper handles horizontal scrolling. Putting overflow here
+// instead of on .tabs means the tablist itself remains an overflow-visible
+// box, so the active-tab underline (positioned just below its baseline) is
+// never clipped by overflow-y's auto-promotion.
+.scrollWrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tabs {
+  // inline-flex sizes the tablist to its content, so it overflows .scrollWrap
+  // when there are many tabs. min-width: 100% makes it span the wrapper when
+  // there are few tabs (so the bottom border extends edge-to-edge).
+  display: inline-flex;
+  gap: var(--space-1);
+  border-bottom: var(--border-width-emphasis) solid var(--color-border);
+  min-width: 100%;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--color-fg-muted);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+
+  // Hover applies only to non-active tabs — explicit selector beats relying on
+  // rule order with `.active:hover` later in the file.
+  &:not(.active):hover {
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+    border-radius: var(--radius-sm);
+  }
+}
+
+.active {
+  color: var(--color-accent);
+
+  // Underline rendered as an overlay so we don't need a negative margin to
+  // sit on top of the tablist's bottom border (Rule 4: no margin on components).
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(-1 * var(--border-width-emphasis));
+    height: var(--border-width-emphasis);
+    background: var(--color-accent);
+  }
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--size-badge);
+  height: var(--size-chip);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-muted);
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+
+  .active & {
+    background: var(--color-accent-subtle-bg);
+    color: var(--color-accent);
+  }
+}
