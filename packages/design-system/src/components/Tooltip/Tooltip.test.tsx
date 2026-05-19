@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef, useState, type ReactNode } from 'react';
 import { act, configure, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -383,5 +385,18 @@ describe('Tooltip — positioning + arrow', () => {
     // Sanity sweep against document.body (where the portal lives) so the test
     // fails loudly if the arrow ever escapes the panel.
     expect(document.body.querySelector('[role="tooltip"] span[aria-hidden="true"]')).not.toBeNull();
+  });
+});
+
+describe('Tooltip — animation contract', () => {
+  it('the compiled .content rule contains an @starting-style block', () => {
+    const scss = readFileSync(
+      resolve(__dirname, './Tooltip.module.scss'),
+      'utf8',
+    );
+    // Conservative check: the file contains an @starting-style block
+    // nested inside a .content selector. We do not parse the SCSS — a
+    // substring match is enough to lock the contract in.
+    expect(scss).toMatch(/\.content\s*{[\s\S]*@starting-style/);
   });
 });
