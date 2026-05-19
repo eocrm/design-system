@@ -15,6 +15,7 @@
   box-shadow: var(--shadow-md);
   z-index: var(--z-dropdown);
   outline: none;
+
   // Explicit so each per-side @starting-style transform has a defined
   // resting target to interpolate to. `none` is the CSS default; declaring
   // it here prevents a future cleanup PR from removing the "redundant" line.

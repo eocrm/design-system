@@ -18,7 +18,7 @@ When `DropdownMenu.Content` (and `SubContent`) opens, the panel scale-fades in f
 
 ## Approach
 
-Use CSS `@starting-style` to interpolate from a pre-mount state (`opacity: 0; transform: scale(0.96) translate(...)`) to the resting state (`opacity: 1; transform: none`) on initial render. The `data-side` attribute that `Content` already sets drives `transform-origin` and the translate direction so the panel always appears to come *toward* the trigger.
+Use CSS `@starting-style` to interpolate from a pre-mount state (`opacity: 0; transform: scale(0.96) translate(...)`) to the resting state (`opacity: 1; transform: none`) on initial render. The `data-side` attribute that `Content` already sets drives `transform-origin` and the translate direction so the panel always appears to come _toward_ the trigger.
 
 `@starting-style` browser support in May 2026: Chrome 117+ (Sep 2023), Safari 17.5+ (May 2024), Firefox 129+ (Aug 2024) — universal across the last two major versions of every supported browser. Falls back gracefully (panel just appears at final state, no animation) on older browsers.
 
@@ -54,19 +54,27 @@ Append to `DropdownMenu.module.scss`:
 // appears to grow toward the trigger.
 .content[data-side='bottom'] {
   transform-origin: top center;
-  @starting-style { transform: scale(0.96) translateY(-4px); }
+  @starting-style {
+    transform: scale(0.96) translateY(-4px);
+  }
 }
 .content[data-side='top'] {
   transform-origin: bottom center;
-  @starting-style { transform: scale(0.96) translateY(4px); }
+  @starting-style {
+    transform: scale(0.96) translateY(4px);
+  }
 }
 .content[data-side='right'] {
   transform-origin: left center;
-  @starting-style { transform: scale(0.96) translateX(-4px); }
+  @starting-style {
+    transform: scale(0.96) translateX(-4px);
+  }
 }
 .content[data-side='left'] {
   transform-origin: right center;
-  @starting-style { transform: scale(0.96) translateX(4px); }
+  @starting-style {
+    transform: scale(0.96) translateX(4px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

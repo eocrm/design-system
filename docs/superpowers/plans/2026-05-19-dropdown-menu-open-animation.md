@@ -38,8 +38,8 @@ In `tokens.scss`, find the line `--opacity-disabled: 0.5;` (around line 140). Th
 Replace the existing `--opacity-disabled: 0.5;` line with the pair:
 
 ```scss
-  --opacity-disabled: 0.5;
-  --opacity-hidden: 0;
+--opacity-disabled: 0.5;
+--opacity-hidden: 0;
 ```
 
 Match the indentation of surrounding tokens (the block sits inside `:root { ... }`, so use the same leading whitespace as `--opacity-disabled`).
@@ -79,31 +79,31 @@ The goal of this task is to make Floating UI position via inline `top` / `left` 
 Open `DropdownMenu.test.tsx`. Find the end of the `describe('DropdownMenu — Content', ...)` block — its closing `});` is at the line just before `describe('DropdownMenu — Item / Separator', ...)`. Insert this new test just before the closing `});` of that block:
 
 ```tsx
-  it('positions Content via inline top/left, not transform (animation contract)', async () => {
-    // Animation hooks `transform` for the scale-fade entrance. If Floating UI
-    // ever switches back to transform-based positioning, our animation
-    // transform would clobber the position. This test locks the contract in.
-    const user = userEvent.setup();
-    render(
-      <DropdownMenu>
-        <DropdownMenu.Trigger>
-          <button type="button">Open</button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Content>
-          <div>menu body</div>
-        </DropdownMenu.Content>
-      </DropdownMenu>,
-    );
-    await user.click(screen.getByRole('button', { name: 'Open' }));
-    const menu = screen.getByRole('menu');
-    const style = menu.getAttribute('style') ?? '';
-    expect(style).toMatch(/top:/);
-    expect(style).toMatch(/left:/);
-    // Floating UI writes either nothing or `transform: translate(...)` —
-    // assert it does NOT contain a translate(...) (the giveaway signature
-    // of transform-based positioning).
-    expect(style).not.toMatch(/translate\(/);
-  });
+it('positions Content via inline top/left, not transform (animation contract)', async () => {
+  // Animation hooks `transform` for the scale-fade entrance. If Floating UI
+  // ever switches back to transform-based positioning, our animation
+  // transform would clobber the position. This test locks the contract in.
+  const user = userEvent.setup();
+  render(
+    <DropdownMenu>
+      <DropdownMenu.Trigger>
+        <button type="button">Open</button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content>
+        <div>menu body</div>
+      </DropdownMenu.Content>
+    </DropdownMenu>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  const menu = screen.getByRole('menu');
+  const style = menu.getAttribute('style') ?? '';
+  expect(style).toMatch(/top:/);
+  expect(style).toMatch(/left:/);
+  // Floating UI writes either nothing or `transform: translate(...)` —
+  // assert it does NOT contain a translate(...) (the giveaway signature
+  // of transform-based positioning).
+  expect(style).not.toMatch(/translate\(/);
+});
 ```
 
 - [ ] **Step 2: Run the new test and confirm it fails**
@@ -119,34 +119,34 @@ Expected: FAIL — the style attribute will contain `transform: translate(...)` 
 In `Content.tsx`, find the `useFloating({ ... })` call (around line 67). Add `transform: false` between `placement` and `middleware`:
 
 ```tsx
-  const {
-    refs,
-    floatingStyles,
-    placement: resolvedPlacement,
-  } = useFloating({
-    open: ctx.open,
-    placement,
-    transform: false,
-    middleware: [
-      offset(sideOffset),
-      flip(),
-      shift({ padding: 8 }),
-      size({
-        apply({ availableHeight, rects, elements }) {
-          Object.assign(elements.floating.style, {
-            maxHeight: `${availableHeight}px`,
-            minWidth:
-              typeof minWidth === 'number'
-                ? `${minWidth}px`
-                : ((minWidth as string | undefined) ?? `${rects.reference.width}px`),
-          });
-        },
-        padding: 8,
-      }),
-    ],
-    whileElementsMounted: autoUpdate,
-    elements: { reference: ctx.triggerRef.current },
-  });
+const {
+  refs,
+  floatingStyles,
+  placement: resolvedPlacement,
+} = useFloating({
+  open: ctx.open,
+  placement,
+  transform: false,
+  middleware: [
+    offset(sideOffset),
+    flip(),
+    shift({ padding: 8 }),
+    size({
+      apply({ availableHeight, rects, elements }) {
+        Object.assign(elements.floating.style, {
+          maxHeight: `${availableHeight}px`,
+          minWidth:
+            typeof minWidth === 'number'
+              ? `${minWidth}px`
+              : ((minWidth as string | undefined) ?? `${rects.reference.width}px`),
+        });
+      },
+      padding: 8,
+    }),
+  ],
+  whileElementsMounted: autoUpdate,
+  elements: { reference: ctx.triggerRef.current },
+});
 ```
 
 - [ ] **Step 4: Run the same test again and confirm it now passes**
@@ -224,19 +224,27 @@ Append the following block to the END of `DropdownMenu.module.scss`. Do NOT modi
 
 .content[data-side='bottom'] {
   transform-origin: top center;
-  @starting-style { transform: scale(0.96) translateY(-4px); }
+  @starting-style {
+    transform: scale(0.96) translateY(-4px);
+  }
 }
 .content[data-side='top'] {
   transform-origin: bottom center;
-  @starting-style { transform: scale(0.96) translateY(4px); }
+  @starting-style {
+    transform: scale(0.96) translateY(4px);
+  }
 }
 .content[data-side='right'] {
   transform-origin: left center;
-  @starting-style { transform: scale(0.96) translateX(-4px); }
+  @starting-style {
+    transform: scale(0.96) translateX(-4px);
+  }
 }
 .content[data-side='left'] {
   transform-origin: right center;
-  @starting-style { transform: scale(0.96) translateX(4px); }
+  @starting-style {
+    transform: scale(0.96) translateX(4px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -253,6 +261,7 @@ make lint
 ```
 
 Expected outcome — one of:
+
 - PASS: stylelint accepts `@starting-style` and the new rules cleanly. Proceed.
 - FAIL with `at-rule-no-unknown` complaining about `@starting-style`: fall through to Step 3.
 
@@ -318,58 +327,58 @@ transition, which neutralises @starting-style (panel snaps in)."
 Locate the `describe('DropdownMenu — Content', ...)` block. Insert this new test just before its closing `});` (same location strategy as Task 2's test):
 
 ```tsx
-  it('declares an @starting-style rule for the content selector (animation hook)', () => {
-    // Animation is CSS-only and uses @starting-style for the entrance.
-    // jsdom does not run the animation, but it does parse the rules into
-    // CSSOM. Confirm the rule exists so a future refactor doesn't silently
-    // drop the animation.
-    render(
-      <DropdownMenu>
-        <DropdownMenu.Trigger>
-          <button type="button">Open</button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Content>
-          <div>menu body</div>
-        </DropdownMenu.Content>
-      </DropdownMenu>,
-    );
+it('declares an @starting-style rule for the content selector (animation hook)', () => {
+  // Animation is CSS-only and uses @starting-style for the entrance.
+  // jsdom does not run the animation, but it does parse the rules into
+  // CSSOM. Confirm the rule exists so a future refactor doesn't silently
+  // drop the animation.
+  render(
+    <DropdownMenu>
+      <DropdownMenu.Trigger>
+        <button type="button">Open</button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content>
+        <div>menu body</div>
+      </DropdownMenu.Content>
+    </DropdownMenu>,
+  );
 
-    let foundStartingStyle = false;
-    for (const sheet of Array.from(document.styleSheets)) {
-      let rules: CSSRuleList | null = null;
-      try {
-        rules = sheet.cssRules;
-      } catch {
-        continue;
+  let foundStartingStyle = false;
+  for (const sheet of Array.from(document.styleSheets)) {
+    let rules: CSSRuleList | null = null;
+    try {
+      rules = sheet.cssRules;
+    } catch {
+      continue;
+    }
+    if (!rules) continue;
+    for (const rule of Array.from(rules)) {
+      // CSSStartingStyleRule has cssText starting with `@starting-style`.
+      // We don't rely on a specific rule-type constant because jsdom's
+      // CSSRule constants may not include CSSStartingStyleRule.
+      const text = (rule as CSSRule).cssText ?? '';
+      if (text.includes('@starting-style') && text.includes('content')) {
+        foundStartingStyle = true;
+        break;
       }
-      if (!rules) continue;
-      for (const rule of Array.from(rules)) {
-        // CSSStartingStyleRule has cssText starting with `@starting-style`.
-        // We don't rely on a specific rule-type constant because jsdom's
-        // CSSRule constants may not include CSSStartingStyleRule.
-        const text = (rule as CSSRule).cssText ?? '';
-        if (text.includes('@starting-style') && text.includes('content')) {
-          foundStartingStyle = true;
-          break;
-        }
-        // Walk into nested rules (e.g. inside another at-rule) in case the
-        // CSS Modules processor wraps them.
-        const inner = (rule as unknown as { cssRules?: CSSRuleList }).cssRules;
-        if (inner) {
-          for (const child of Array.from(inner)) {
-            const childText = (child as CSSRule).cssText ?? '';
-            if (childText.includes('@starting-style')) {
-              foundStartingStyle = true;
-              break;
-            }
+      // Walk into nested rules (e.g. inside another at-rule) in case the
+      // CSS Modules processor wraps them.
+      const inner = (rule as unknown as { cssRules?: CSSRuleList }).cssRules;
+      if (inner) {
+        for (const child of Array.from(inner)) {
+          const childText = (child as CSSRule).cssText ?? '';
+          if (childText.includes('@starting-style')) {
+            foundStartingStyle = true;
+            break;
           }
         }
-        if (foundStartingStyle) break;
       }
       if (foundStartingStyle) break;
     }
-    expect(foundStartingStyle).toBe(true);
-  });
+    if (foundStartingStyle) break;
+  }
+  expect(foundStartingStyle).toBe(true);
+});
 ```
 
 - [ ] **Step 2: Run the new test**
@@ -379,6 +388,7 @@ npm test -w @eocrm/design-system -- --run src/components/DropdownMenu/DropdownMe
 ```
 
 Expected: PASS. If FAIL, the SCSS-to-CSSOM pipeline didn't include the rule. Two likely causes:
+
 - The Vitest CSS Modules processor stripped the `@starting-style` block. Inspect the rendered stylesheet text to see what made it through; if needed, switch the assertion to match the substring more loosely (e.g. drop the `content` requirement and rely only on `@starting-style`).
 - jsdom's CSS parser doesn't understand `@starting-style` and silently drops the rule. If this is the case, the test is unprovable in jsdom — replace it with a regex check against the raw SCSS file contents (read the file with `fs`, assert the string appears). That's a weaker but verifiable contract.
 
@@ -432,6 +442,7 @@ in a background terminal.
 Open `http://localhost:8080/components/dropdown-menu` in a browser (or use Playwright MCP to drive it).
 
 Check each:
+
 1. Click a default-bottom-aligned trigger — panel scales/fades down from the trigger's bottom edge.
 2. Click a trigger configured with `side="top"` (if the demo has one — otherwise rely on collision-flip near the viewport edge) — panel scales/fades up from the trigger's top edge.
 3. Open a SubContent (hover or click a SubTrigger) — submenu scales/fades from its left edge (default `side="right"`).
@@ -529,6 +540,7 @@ Output as Critical / Important / Nice-to-have / Regression-watch + final verdict
 - [ ] **Step 3: Fix every Critical and every Important finding**
 
 For each finding:
+
 - If valid: fix, re-stage, and create a NEW commit per the project's commit-message style.
 - If deliberately skipped: leave a one-line justification in your response so the next reviewer doesn't re-flag it.
 
@@ -545,6 +557,7 @@ Repeat from Step 2.
 - [ ] **Step 6: Loop until verdict is `clean enough to stop`**
 
 Exit criteria:
+
 - 0 Critical, 0 Important (or each remaining has an explicit documented skip rationale)
 - All four gates green
 - `npm pack --dry-run` tarball clean
