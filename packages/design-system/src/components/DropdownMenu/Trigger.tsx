@@ -8,7 +8,7 @@ import {
   type Ref,
 } from 'react';
 import { useDropdownMenuContext } from './context';
-import { chain, mergeRefs } from './utils';
+import { chain, mergeRefs } from '../_internal/refs';
 
 export interface DropdownMenuTriggerProps {
   /**

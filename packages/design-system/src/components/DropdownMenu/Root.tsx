@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { DropdownMenuContext, type DropdownMenuContextValue, type RegisteredItem } from './context';
-import { sanitizeId } from './utils';
+import { sanitizeId } from '../_internal/refs';
 
 export interface DropdownMenuProps {
   /** Must contain exactly one `<DropdownMenu.Trigger>` and one `<DropdownMenu.Content>`. */

@@ -12,7 +12,11 @@ const indexPath = join(__dirname, 'index.ts');
 
 const components = readdirSync(componentsDir, { withFileTypes: true })
   .filter((e) => e.isDirectory())
-  .map((e) => e.name);
+  .map((e) => e.name)
+  // Underscore-prefixed directories (e.g. `_internal`) are private helpers
+  // shared between components, not components themselves. They have no
+  // public export and aren't subject to the four-file rule.
+  .filter((name) => !name.startsWith('_'));
 
 const indexContent = readFileSync(indexPath, 'utf-8');
 

@@ -12,7 +12,7 @@ import {
 import clsx from 'clsx';
 import styles from './DropdownMenu.module.scss';
 import { useDropdownMenuContext } from './context';
-import { mergeRefs } from './utils';
+import { mergeRefs } from '../_internal/refs';
 import { ItemIndicator } from './ItemIndicator';
 
 /**

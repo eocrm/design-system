@@ -9,7 +9,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { useDropdownMenuContext } from './context';
-import { mergeRefs } from './utils';
+import { mergeRefs } from '../_internal/refs';
 import styles from './DropdownMenu.module.scss';
 
 /** Item color treatment. */

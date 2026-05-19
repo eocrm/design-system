@@ -2,7 +2,7 @@ import { forwardRef, useContext, useId, type HTMLAttributes, type ReactNode } fr
 import clsx from 'clsx';
 import styles from './DropdownMenu.module.scss';
 import { GroupContext } from './context';
-import { sanitizeId } from './utils';
+import { sanitizeId } from '../_internal/refs';
 
 /**
  * Props for `<DropdownMenu.Group>`.
