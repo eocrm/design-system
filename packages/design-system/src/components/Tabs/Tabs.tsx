@@ -174,8 +174,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
       indicator.style.width = `${node.offsetWidth}px`;
       // Force a reflow before clearing the inline transition override so the
       // first measurement lands without animation.
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      indicator.offsetWidth;
+      void indicator.offsetWidth;
       indicator.style.transition = '';
       firstMeasureRef.current = false;
       return;
@@ -232,8 +231,9 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
 
   return (
     // The scroll wrapper owns overflow-x so the tablist itself stays an
-    // overflow-visible box — that keeps the active-tab underline (`::after`
-    // at bottom: -2px) from being clipped by the auto-promoted overflow-y.
+    // overflow-visible box — that keeps the indicator span (positioned just
+    // below the tablist's baseline) from being clipped by the auto-promoted
+    // overflow-y.
     <div className={styles.scrollWrap}>
       <div
         // Consumer-controlled props come first so component-owned attrs below
