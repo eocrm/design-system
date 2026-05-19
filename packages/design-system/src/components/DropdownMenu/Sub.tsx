@@ -20,7 +20,7 @@ import {
   type DropdownMenuContextValue,
   type RegisteredItem,
 } from './context';
-import { mergeRefs, sanitizeId } from './utils';
+import { mergeRefs, sanitizeId } from '../_internal/refs';
 import styles from './DropdownMenu.module.scss';
 import { Content, type DropdownMenuContentProps } from './Content';
 

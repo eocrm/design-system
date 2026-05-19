@@ -19,6 +19,7 @@ import {
   PanelTop,
   Layers,
   ArrowRight,
+  MessageSquare,
   MoreHorizontal,
   type LucideIcon,
 } from 'lucide-react';
@@ -72,6 +73,7 @@ const componentGroups = [
     heading: 'Overlays',
     items: [
       { to: '/components/dropdown-menu', label: 'DropdownMenu', icon: MoreHorizontal, end: false },
+      { to: '/components/tooltip', label: 'Tooltip', icon: MessageSquare, end: false },
     ],
   },
 ];

@@ -1,0 +1,86 @@
+// `.content` carries the chrome AND the open-only scale-fade entrance. The
+// animation half (transition + @starting-style + per-side transform-origin
+// rules) relies on Floating UI being in `transform: false` mode (see
+// Tooltip.tsx) so the CSS `transform` property is free for the entrance.
+.content {
+  position: relative;
+  max-width: 240px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-fg);
+  color: var(--color-bg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  z-index: var(--z-tooltip);
+  outline: none;
+
+  // Explicit so each per-side @starting-style transform has a defined
+  // resting target to interpolate to. Mirrors DropdownMenu's animation
+  // pattern (see DropdownMenu.module.scss for the original).
+  transform: none;
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+
+  // Open-only entrance — the tooltip unmounts on close, so there is no
+  // exit. @starting-style only applies while a transition is active; the
+  // prefers-reduced-motion override below disables the transition, which
+  // neutralises @starting-style (tooltip renders directly at its rest style).
+  @starting-style {
+    opacity: var(--opacity-hidden);
+  }
+}
+
+.arrow {
+  position: absolute;
+  width: var(--space-2);
+  height: var(--space-2);
+  background: var(--color-fg);
+
+  // 45° rotation makes the diamond's corners point along ±x and ±y axes;
+  // pairing this with `[data-side]`-based positioning of the arrow against
+  // the trigger-facing edge of the panel makes one of those corners point
+  // straight at the trigger.
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+// --- Open-only entrance: per-side origin + starting transform -----------
+.content[data-side='top'] {
+  transform-origin: bottom center;
+
+  @starting-style {
+    transform: scale(0.92) translateY(2px);
+  }
+}
+
+.content[data-side='bottom'] {
+  transform-origin: top center;
+
+  @starting-style {
+    transform: scale(0.92) translateY(-2px);
+  }
+}
+
+.content[data-side='left'] {
+  transform-origin: right center;
+
+  @starting-style {
+    transform: scale(0.92) translateX(2px);
+  }
+}
+
+.content[data-side='right'] {
+  transform-origin: left center;
+
+  @starting-style {
+    transform: scale(0.92) translateX(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    transition: none;
+  }
+}

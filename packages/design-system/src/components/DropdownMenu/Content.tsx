@@ -18,7 +18,7 @@ import {
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { useDropdownMenuContext } from './context';
-import { mergeRefs } from './utils';
+import { mergeRefs } from '../_internal/refs';
 import styles from './DropdownMenu.module.scss';
 
 /** Which side of the trigger the menu prefers. Floating UI auto-flips if it doesn't fit. */

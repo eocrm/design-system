@@ -43,3 +43,6 @@ export type {
   DropdownMenuSubTriggerProps,
   DropdownMenuSubContentProps,
 } from './components/DropdownMenu';
+
+export { Tooltip } from './components/Tooltip';
+export type { TooltipProps, TooltipSide, TooltipAlign } from './components/Tooltip';

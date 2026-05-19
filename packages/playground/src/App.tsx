@@ -16,6 +16,7 @@ import { AvatarDemo } from './pages/components/AvatarDemo';
 import { BadgeDemo } from './pages/components/BadgeDemo';
 import { TabsDemo } from './pages/components/TabsDemo';
 import { DropdownMenuDemo } from './pages/components/DropdownMenuDemo';
+import { TooltipDemo } from './pages/components/TooltipDemo';
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/components/badge" element={<BadgeDemo />} />
           <Route path="/components/tabs" element={<TabsDemo />} />
           <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
+          <Route path="/components/tooltip" element={<TooltipDemo />} />
         </Routes>
       </AppShell>
     </BrowserRouter>

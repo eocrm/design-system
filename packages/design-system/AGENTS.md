@@ -250,6 +250,33 @@ const [tab, setTab] = useState('overview');
 - `<ItemIndicator>` — optional slot child of CheckboxItem/RadioItem that adds a custom indicator glyph alongside the tinted-row treatment. Omit entirely when the row tint is sufficient (the common case). Detection is shallow: must be a direct child.
 - Per WAI-ARIA, mixing CheckboxItem and RadioItem in the same RadioGroup is invalid; CheckboxItems live outside RadioGroup.
 
+### `<Tooltip>` — small floating label on hover / keyboard focus
+
+```tsx
+<Tooltip content="Save the record (⌘S)">
+  <Button onClick={save}>Save</Button>
+</Tooltip>
+
+<Tooltip content="Filter">
+  <Button variant="ghost" aria-label="Filter">⏷</Button>
+</Tooltip>
+
+<Tooltip content={<>Save&nbsp;<kbd>⌘S</kbd></>}>
+  <Button>Save</Button>
+</Tooltip>
+```
+
+- Wrapper API: `<Tooltip content="…">` cloneElement's its single child to inject the ref, listeners (`pointerenter` / `pointerleave` / `focus` / `blur`), and `aria-describedby`. Child must accept a ref — `<Button>` qualifies, as does a raw `<button>`.
+- Trigger MUST already have its own accessible name (visible text or `aria-label`). Tooltip is _supplementary description_ via `aria-describedby` — never the label.
+- `content` prop: `ReactNode`. If `null` / `undefined` / `''`, the trigger renders as-is with no listeners and no aria. Useful for conditional UIs.
+- `side` (`'top'` default) / `align` (`'center'` default) / `sideOffset` (default `6`) — Floating UI auto-flips on collision.
+- `delay` — ms before hover opens. Default `400`. Keyboard focus is always immediate (a11y); close is always immediate.
+- `open` / `onOpenChange` / `defaultOpen` — controlled mode, same shape as DropdownMenu.
+- Dismissal: `pointerleave`, `blur`, document `pointerdown`, `Escape`. Tooltip never owns focus.
+- Touch devices: no tap-to-open. Tooltips are progressive enhancement for pointer + keyboard users; rely on the trigger's accessible name on touch.
+- Opens with a short scale-fade (140 ms) from the trigger side. Closes instantly. Respects `prefers-reduced-motion: reduce`.
+- Z-layer `--z-tooltip: 1300` is above modal and toast, so tooltips inside any host UI remain visible.
+
 ---
 
 ## Tokens (the only "values" you write)
@@ -274,32 +301,35 @@ All available as CSS custom properties after you import `global.scss`:
 | Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
 | Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width`                                                                                                                               |
 | Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
-| Layer (z-index) | `--z-dropdown` / `--z-modal` / `--z-toast`                                                                                                                                                          |
+| Layer (z-index) | `--z-dropdown` / `--z-modal` / `--z-toast` / `--z-tooltip`                                                                                                                                          |
 
 ---
 
 ## Anti-patterns to never generate
 
-| Don't write                                                                           | Write instead                                                                                                 |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `color: #ffffff` in any SCSS                                                          | `color: var(--color-bg)` (or the right semantic token)                                                        |
-| `border: 1px solid var(--color-border)`                                               | `border: var(--border-width) solid var(--color-border)`                                                       |
-| `opacity: 0.5`                                                                        | `opacity: var(--opacity-disabled)` (or use the `disabled` attribute)                                          |
-| `<button onClick={...}>Save</button>`                                                 | `<Button onClick={...}>Save</Button>`                                                                         |
-| `<input value={...} onChange={...} />`                                                | `<Input value={...} onChange={...} />`                                                                        |
-| `<Card><Card>...</Card></Card>`                                                       | Use spacing or a divider inside one card                                                                      |
-| `<Button style={{ marginLeft: 'auto' }}>`                                             | `<Cluster justify="between">` or `<Cluster justify="end">`                                                    |
-| Two `<Button variant="primary">` in the same section                                  | One primary, others `secondary`                                                                               |
-| `<Button variant="success">Save</Button>` rendered on initial mount                   | `success` is transient — start as `primary`, flip to `success` for ~1.5s after the action resolves, flip back |
-| `<Avatar name="" />`                                                                  | `name` is required and is the accessible label                                                                |
-| `import { Button } from '@eocrm/design-system/src/components/Button'`                 | `import { Button } from '@eocrm/design-system'`                                                               |
-| `<Badge onClick={...}>`                                                               | Badges are non-interactive — use a `Button`                                                                   |
-| 3-digit hex (`#fff`) anywhere                                                         | Always 6-digit (`#ffffff`)                                                                                    |
-| `margin` on or around design-system components in your SCSS                           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                      |
-| `<DropdownMenu.Item disabled>--- Section ---</DropdownMenu.Item>` as a section header | Use `<DropdownMenu.Separator />` between groups                                                               |
-| `<DropdownMenu.RadioItem>` outside `<DropdownMenu.RadioGroup>`                        | Always wrap radio items in a RadioGroup; otherwise the value/onValueChange contract is broken                 |
-| `<DropdownMenu.ItemIndicator>` nested deeper than direct child                        | Detection is shallow; nest it directly under CheckboxItem/RadioItem                                           |
-| Submenus 3+ levels deep                                                               | Discouraged — UX gets confusing fast; refactor to a different IA                                              |
+| Don't write                                                                           | Write instead                                                                                                                      |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `color: #ffffff` in any SCSS                                                          | `color: var(--color-bg)` (or the right semantic token)                                                                             |
+| `border: 1px solid var(--color-border)`                                               | `border: var(--border-width) solid var(--color-border)`                                                                            |
+| `opacity: 0.5`                                                                        | `opacity: var(--opacity-disabled)` (or use the `disabled` attribute)                                                               |
+| `<button onClick={...}>Save</button>`                                                 | `<Button onClick={...}>Save</Button>`                                                                                              |
+| `<input value={...} onChange={...} />`                                                | `<Input value={...} onChange={...} />`                                                                                             |
+| `<Card><Card>...</Card></Card>`                                                       | Use spacing or a divider inside one card                                                                                           |
+| `<Button style={{ marginLeft: 'auto' }}>`                                             | `<Cluster justify="between">` or `<Cluster justify="end">`                                                                         |
+| Two `<Button variant="primary">` in the same section                                  | One primary, others `secondary`                                                                                                    |
+| `<Button variant="success">Save</Button>` rendered on initial mount                   | `success` is transient — start as `primary`, flip to `success` for ~1.5s after the action resolves, flip back                      |
+| `<Avatar name="" />`                                                                  | `name` is required and is the accessible label                                                                                     |
+| `import { Button } from '@eocrm/design-system/src/components/Button'`                 | `import { Button } from '@eocrm/design-system'`                                                                                    |
+| `<Badge onClick={...}>`                                                               | Badges are non-interactive — use a `Button`                                                                                        |
+| 3-digit hex (`#fff`) anywhere                                                         | Always 6-digit (`#ffffff`)                                                                                                         |
+| `margin` on or around design-system components in your SCSS                           | Wrap in `<Stack>` / `<Cluster>` or set spacing on the parent's flex/grid                                                           |
+| `<DropdownMenu.Item disabled>--- Section ---</DropdownMenu.Item>` as a section header | Use `<DropdownMenu.Separator />` between groups                                                                                    |
+| `<DropdownMenu.RadioItem>` outside `<DropdownMenu.RadioGroup>`                        | Always wrap radio items in a RadioGroup; otherwise the value/onValueChange contract is broken                                      |
+| `<DropdownMenu.ItemIndicator>` nested deeper than direct child                        | Detection is shallow; nest it directly under CheckboxItem/RadioItem                                                                |
+| Submenus 3+ levels deep                                                               | Discouraged — UX gets confusing fast; refactor to a different IA                                                                   |
+| `<Tooltip><Button disabled>…</Button></Tooltip>`                                      | `disabled` buttons don't fire pointer/focus events; render with `aria-disabled="true"` + intercept the click, or wrap in `<span>`. |
+| Putting essential info _only_ in a tooltip                                            | Make it visible in copy or in the trigger's `aria-label`. Touch users will never see the tooltip.                                  |
+| `<Tooltip content="">…</Tooltip>` expecting a no-op listener attach                   | Empty content **is** a no-op — listeners and aria are skipped entirely. That's by design.                                          |
 
 ---
 
