@@ -122,7 +122,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
   return createPortal(
     <div
       {...rest}
-      ref={mergeRefs(ctx.contentRef, refs.setFloating, forwardedRef)}
+      ref={mergeRefs<HTMLDivElement>(ctx.contentRef, refs.setFloating, forwardedRef)}
       id={ctx.contentId}
       role="dialog"
       aria-modal="false"
