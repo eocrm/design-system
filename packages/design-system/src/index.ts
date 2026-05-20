@@ -73,3 +73,52 @@ export type {
   SelectSize,
   SelectTriggerDisplay,
 } from './components/Select';
+
+// i18n
+export { LocaleProvider, useLocale } from './i18n';
+export type { LocaleProviderProps } from './i18n';
+
+// Calendar primitives (hooks + date math + Intl formatters + locale week info).
+// The Calendar UI components ship in a follow-up PR; these primitives are the
+// substrate they (and a future DatePicker) compose against.
+export {
+  useMonth,
+  useWeek,
+  useDay,
+  useAgenda,
+  isSameDay,
+  isSameMonth,
+  isToday,
+  isWeekend,
+  addDays,
+  addMonths,
+  addWeeks,
+  startOfDay,
+  startOfWeek,
+  startOfMonth,
+  endOfMonth,
+  daysBetween,
+  toDateKey,
+  fromDateKey,
+  formatMonth,
+  formatWeekdayShort,
+  formatWeekdayNarrow,
+  formatDayShort,
+  formatDayLong,
+  formatRange,
+  formatHour,
+  getFirstDayOfWeek,
+  getWeekendDays,
+} from './calendar';
+export type {
+  Day,
+  Week,
+  MonthGrid,
+  UseMonthOptions,
+  UseWeekOptions,
+  UseDayOptions,
+  UseAgendaOptions,
+  WeekResult,
+  DayResult,
+  AgendaResult,
+} from './calendar';
