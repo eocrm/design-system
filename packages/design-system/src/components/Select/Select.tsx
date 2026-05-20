@@ -22,13 +22,18 @@ import { Trigger } from './Trigger';
 import { Listbox } from './Listbox';
 import { HiddenInputs } from './HiddenInputs';
 
-/** Trigger height + type-scale step. Mirrors `<Input>`'s `size`. */
+/**
+ * Visual size of the trigger. Mirrors `<Input>` and `<Button>` sizes.
+ * - `'sm'` — 24px tall; dense toolbars and tables.
+ * - `'md'` — 32px tall (default).
+ * - `'lg'` — 40px tall; hero-form prominence.
+ */
 export type SelectSize = 'sm' | 'md' | 'lg';
 
 /**
- * How multi-select renders the selected value(s) inside the trigger.
- * - `'chips'` — render one removable chip per value (the default).
- * - `'summary'` — render a single condensed string like "Foo, Bar, …".
+ * How a multi-select renders its selections inside the trigger.
+ * - `'chips'` — inline removable chips; wraps vertically as needed (default).
+ * - `'summary'` — comma-joined labels with ellipsis on overflow; reads as a single line.
  */
 export type SelectTriggerDisplay = 'chips' | 'summary';
 
@@ -77,6 +82,12 @@ export interface SelectProps<T = unknown> extends Omit<
   'onChange' | 'defaultValue'
 > {
   // ─── data ─────────────────────────────────────────────────────────────────
+  /**
+   * Sync options — flat list or list of groups. Ignored when `loadOptions`
+   * is provided (dev warning fires if both are non-empty). For grouped
+   * input, every element must carry an `options` field; mixing flat options
+   * with groups at the same level is not supported.
+   */
   options?: SelectOptions<T>;
 
   // ─── async data ───────────────────────────────────────────────────────────
@@ -84,7 +95,9 @@ export interface SelectProps<T = unknown> extends Omit<
    * Async fetcher that returns the options for a given query. When set, the
    * Select switches to async mode: the local substring filter is bypassed
    * (the server filters), loading/error/empty rows replace the listbox
-   * body, and `options` is ignored (with a dev warning).
+   * body, and `options` is ignored (with a dev warning). The `signal`
+   * argument is aborted whenever a newer query supersedes this one — wire
+   * it through to `fetch` to cancel in-flight requests.
    */
   loadOptions?: (query: string, signal: AbortSignal) => Promise<SelectOptions<T>>;
   /**
@@ -93,15 +106,34 @@ export interface SelectProps<T = unknown> extends Omit<
    */
   loadOnOpen?: boolean;
   /**
-   * Debounce window (ms) between the last `query` keystroke and the next
-   * `loadOptions` call. Default 250 ms.
+   * Debounce window (ms) between the last query keystroke and the next
+   * `loadOptions` call. Default `250`.
    */
   searchDebounceMs?: number;
 
   // ─── mode ─────────────────────────────────────────────────────────────────
+  /**
+   * Enables multi-select. `value` / `defaultValue` become `string[]` and
+   * `onChange` emits arrays. Picking a row toggles it in/out of the
+   * selection instead of replacing-and-closing.
+   */
   multiple?: boolean;
+  /**
+   * How the trigger renders the selected value(s) in multi mode. Ignored
+   * in single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`.
+   */
   triggerDisplay?: SelectTriggerDisplay;
+  /**
+   * Renders the trigger as a combobox text input with substring filtering
+   * over the (sync) options. In async mode the filter is delegated to the
+   * server. Required by `creatable`.
+   */
   searchable?: boolean;
+  /**
+   * Adds a "+ Create <query>" row when the trimmed query has no exact
+   * label match. Activating it fires `onCreate(label)` and folds the new
+   * value into the selection. Requires `searchable` (throws in dev otherwise).
+   */
   creatable?: boolean;
   /**
    * Fires when the user activates the "+ Create" row (creatable mode).
@@ -117,41 +149,136 @@ export interface SelectProps<T = unknown> extends Omit<
   onCreate?: (label: string) => void;
 
   // ─── value ────────────────────────────────────────────────────────────────
+  /**
+   * Controlled selection. `string` in single mode, `string[]` in multi.
+   * Provide alongside `onChange` to drive the value externally.
+   */
   value?: string | string[];
+  /**
+   * Initial selection for uncontrolled usage. `string` in single mode,
+   * `string[]` in multi. Ignored when `value` is provided.
+   */
   defaultValue?: string | string[];
+  /**
+   * Fires when the selection changes. The first argument is the next
+   * value (`string` in single mode, `string[]` in multi). The second
+   * argument is the matched `SelectOption` (single), the matched array
+   * (multi), or `null` when the selection clears in single mode. For
+   * creatable rows not present in `options`, a synthetic
+   * `{ value, label: value }` is supplied.
+   */
   onChange?: (value: string | string[], option: SelectOption<T> | SelectOption<T>[] | null) => void;
 
   // ─── open state (controlled, rare) ────────────────────────────────────────
+  /**
+   * Controlled open state. Pair with `onOpenChange`. Omit both to let
+   * Select own its open state (the common case).
+   */
   open?: boolean;
+  /** Initial open state for uncontrolled usage. Defaults to `false`. */
   defaultOpen?: boolean;
+  /** Fires whenever Select wants to change open state. */
   onOpenChange?: (open: boolean) => void;
 
   // ─── visuals ──────────────────────────────────────────────────────────────
+  /** Trigger height + type scale. See `SelectSize`. Defaults to `'md'`. */
   size?: SelectSize;
+  /**
+   * Marks the trigger as invalid — applies the error border + sets
+   * `aria-invalid="true"`. Pair with an external error message linked via
+   * `aria-describedby`.
+   */
   invalid?: boolean;
+  /**
+   * Placeholder shown when nothing is selected. In searchable mode, also
+   * the input's `placeholder` until the user types.
+   */
   placeholder?: string;
+  /**
+   * Shows a `✕` button in the trigger that clears the selection. Default
+   * is `true` in single mode (when not `required`), `false` in multi mode.
+   * Forced `false` when `disabled` or `readOnly`.
+   */
   clearable?: boolean;
 
   // ─── states ───────────────────────────────────────────────────────────────
+  /**
+   * Disables the trigger entirely — non-interactive, dimmed, focusable
+   * only via assistive tech. Hidden form inputs are also disabled.
+   */
   disabled?: boolean;
+  /**
+   * Read-only — trigger is focusable but cannot open or change the
+   * selection. Useful for displaying a value inside a form that's not yet
+   * editable.
+   */
   readOnly?: boolean;
 
-  // ─── form integration (wired in later phases) ─────────────────────────────
+  // ─── form integration ─────────────────────────────────────────────────────
+  /**
+   * Name attribute for native form submission. In multi mode, one hidden
+   * `<input>` per selected value is emitted (so `FormData.getAll(name)`
+   * returns the array).
+   */
   name?: string;
+  /**
+   * Marks the field as required for native form validation. When `true`,
+   * `clearable` defaults to `false` and an empty selection blocks submit.
+   */
   required?: boolean;
+  /** `form` attribute forwarded to the hidden `<input>` elements. */
   form?: string;
 
-  // ─── render escape hatches (wired in later phases) ────────────────────────
+  // ─── render escape hatches ────────────────────────────────────────────────
+  /**
+   * Custom renderer for a row inside the listbox. Receives the option and
+   * its current `{ active, selected }` state (active = keyboard-focused
+   * row, selected = part of the current value). The returned node
+   * replaces the default label / description layout — chrome (padding,
+   * background, `aria-*`) stays.
+   */
   renderOption?: (opt: SelectOption<T>, state: { active: boolean; selected: boolean }) => ReactNode;
+  /**
+   * Custom renderer for the selected value inside the single-mode trigger.
+   * Ignored in multi mode (see `renderTag`).
+   */
   renderValue?: (opt: SelectOption<T>) => ReactNode;
+  /**
+   * Custom renderer for a chip inside the multi-mode `chips` trigger.
+   * Receives the option and a `remove` callback that deselects it. Ignored
+   * in single mode and in `triggerDisplay='summary'`.
+   */
   renderTag?: (opt: SelectOption<T>, remove: () => void) => ReactNode;
+  /**
+   * Custom empty-state renderer. Fires when the filtered listbox has no
+   * rows. Receives the current trimmed query for use in messages like
+   * "No matches for 'foo'".
+   */
   renderEmpty?: (query: string) => ReactNode;
+  /** Custom loading-state renderer for async mode. */
   renderLoading?: () => ReactNode;
+  /**
+   * Custom error-state renderer for async mode. Receives the thrown
+   * `Error` and a `retry` callback that re-invokes `loadOptions` with the
+   * current query.
+   */
   renderError?: (err: Error, retry: () => void) => ReactNode;
 
   // ─── ARIA ─────────────────────────────────────────────────────────────────
+  /**
+   * Accessible name for the trigger. Use this when a visible `<label>` is
+   * not present. Mutually exclusive with `aria-labelledby`.
+   */
   'aria-label'?: string;
+  /**
+   * ID of an element that labels the trigger. Use when the label is a
+   * sibling node (e.g. a `<Field>` label).
+   */
   'aria-labelledby'?: string;
+  /**
+   * ID of an element that describes the trigger — e.g. an error message
+   * or helper hint paired with `invalid`.
+   */
   'aria-describedby'?: string;
 }
 
@@ -453,23 +580,81 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
 });
 
 /**
- * `<Select>` — combo of trigger + popover listbox.
+ * Value picker — covers single, multi (chips and summary), searchable,
+ * grouped, async-loaded, and creatable patterns in one component.
+ * Implements the WAI-ARIA combobox 1.2 pattern with a `role="listbox"`
+ * popup, full keyboard navigation (Arrow keys, Home/End, typeahead,
+ * Enter/Space to select, Escape to dismiss), and ARIA wiring suitable for
+ * screen readers.
  *
- * Phase 2 covers the single-value, non-searchable, sync-options shape:
- * button-styled trigger that opens a portaled listbox. Click an option
- * (or `Enter` on the active row) to select; `Escape` / outside click
- * dismisses. The full prop surface is declared on `SelectProps` so the
- * type-level contract is stable across later phases.
+ * The mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` ×
+ * `searchable`. Tag-input is the composition
+ * `multiple + searchable + creatable + triggerDisplay='chips'`.
  *
  * @example
- *   const [status, setStatus] = useState('');
- *   <Select
- *     options={STATUSES}
- *     value={status}
- *     onChange={(v) => setStatus(v as string)}
- *     placeholder="Pick one"
- *   />
+ * // Single, non-searchable status picker
+ * <Select
+ *   options={[{ value: 'active', label: 'Active' }, { value: 'pending', label: 'Pending' }]}
+ *   value={status}
+ *   onChange={(v) => setStatus(v as Status)}
+ *   placeholder="Pick a status"
+ * />
+ *
+ * @example
+ * // Async assignee picker with custom rendering
+ * <Select
+ *   searchable
+ *   loadOptions={async (q, signal) => {
+ *     const users = await api.searchUsers(q, { signal });
+ *     return users.map((u) => ({ value: u.id, label: u.name, data: u }));
+ *   }}
+ *   renderOption={(opt) => (
+ *     <Cluster gap="sm">
+ *       <Avatar name={opt.label} src={opt.data?.avatarUrl} size="sm" />
+ *       <span>{opt.label}</span>
+ *     </Cluster>
+ *   )}
+ *   value={assigneeId}
+ *   onChange={(id) => setAssigneeId(id as string)}
+ * />
+ *
+ * @example
+ * // Tag input with creatable
+ * <Select
+ *   multiple
+ *   searchable
+ *   creatable
+ *   options={existingTags}
+ *   value={tags}
+ *   onChange={(v) => setTags(v as string[])}
+ *   onCreate={(label) => api.tags.create({ label })}
+ *   placeholder="Add tags…"
+ * />
+ *
+ * @remarks When NOT to use
+ * - For action menus (Edit / Delete / Duplicate) → use `<DropdownMenu>`.
+ * - For free-form text with no constrained value set → use `<Input>`.
+ * - For yes/no/maybe with strong defaults → use `<Tabs>` or radio buttons.
+ *
+ * @remarks Anti-patterns
+ * - ❌ Passing both `options` and `loadOptions`. `loadOptions` always
+ *   wins; the conflict is logged as a dev warning.
+ * - ❌ `creatable` without `searchable`. There's no way to capture the
+ *   new label without a search input. Throws in dev.
+ * - ❌ Using `triggerDisplay='summary'` for tag input. Summary collapses
+ *   the active set into a comma-joined line; chips communicate selection
+ *   at a glance and expose per-item remove affordances.
+ * - ❌ Embedding stale-closure business logic in `loadOptions`. The
+ *   fetcher is called on every debounced query — read fresh props from a
+ *   stable reference (e.g. `useCallback` in the consumer) instead of
+ *   capturing values that drift.
  */
+// `Select` is exposed via a cast so the public type is generic over `T`
+// — `forwardRef` does not preserve the generic parameter through its own
+// signature. Internally `SelectImpl` is the forwardRef component; the cast
+// only rewrites its type surface. Do not "fix" this by dropping the cast —
+// you'll lose the `T` inference that flows from `options` into `onChange`'s
+// option payload.
 export const Select = SelectImpl as <T = unknown>(
   props: SelectProps<T> & { ref?: Ref<HTMLDivElement> },
 ) => React.ReactElement;
