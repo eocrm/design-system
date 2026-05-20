@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import React, { createRef } from 'react';
 import { Select, type SelectOption } from './Select';
 import styles from './Select.module.scss';
 
@@ -81,5 +81,51 @@ describe('Select — open/close', () => {
     await user.click(trigger);
     const listbox = screen.getByRole('listbox');
     expect(trigger.getAttribute('aria-controls')).toBe(listbox.id);
+  });
+});
+
+describe('Select — selection (single)', () => {
+  it('selecting an option fires onChange(value, option) and closes the popover', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select options={STATUSES} onChange={onChange} />);
+    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('option', { name: 'Pending' }));
+    expect(onChange).toHaveBeenCalledWith('pending', STATUSES[1]);
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('controlled value round-trip — parent re-renders new value, trigger updates', async () => {
+    const user = userEvent.setup();
+    const Wrapper = () => {
+      const [v, setV] = React.useState<string>('');
+      return (
+        <Select
+          options={STATUSES}
+          value={v}
+          onChange={(next) => setV(next as string)}
+          placeholder="Pick"
+        />
+      );
+    };
+    render(<Wrapper />);
+    expect(screen.getByRole('button')).toHaveTextContent('Pick');
+    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('option', { name: 'Archived' }));
+    expect(screen.getByRole('button')).toHaveTextContent('Archived');
+  });
+
+  it('clicking a disabled option does nothing', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const opts: SelectOption[] = [
+      { value: 'a', label: 'A' },
+      { value: 'b', label: 'B', disabled: true },
+    ];
+    render(<Select options={opts} onChange={onChange} />);
+    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('option', { name: 'B' }));
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.queryByRole('listbox')).toBeInTheDocument();
   });
 });
