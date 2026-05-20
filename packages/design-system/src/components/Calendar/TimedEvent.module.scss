@@ -1,0 +1,87 @@
+@use '../../styles/mixins' as *;
+
+.block {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    filter var(--transition-fast),
+    background var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.time {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  opacity: var(--opacity-muted);
+  flex-shrink: 0;
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltipBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tooltipTime {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-bg-subtle);
+}
+
+.tooltipTitle {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-bg);
+}
+
+.neutral {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg);
+}
+
+.accent {
+  background: var(--color-accent-bg-subtle);
+  color: var(--color-accent);
+}
+
+.success {
+  background: var(--color-success-bg-subtle);
+  color: var(--color-success);
+}
+
+.warning {
+  background: var(--color-warning-bg-subtle);
+  color: var(--color-warning);
+}
+
+.danger {
+  background: var(--color-danger-bg-subtle);
+  color: var(--color-danger);
+}

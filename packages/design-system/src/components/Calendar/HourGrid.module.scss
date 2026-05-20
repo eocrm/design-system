@@ -1,0 +1,75 @@
+.scroll {
+  overflow: auto;
+  max-height: 70vh;
+}
+
+.grid {
+  display: grid;
+  background: var(--color-bg);
+}
+
+.cornerCell {
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.columnHeader {
+  padding: var(--space-2);
+  background: var(--color-bg-subtle);
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  text-align: center;
+}
+
+.weekendHeader {
+  background: var(--color-bg-muted);
+}
+
+.todayHeader {
+  background: var(--color-accent-bg-subtle);
+  color: var(--color-accent);
+}
+
+.hourLabel {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-muted);
+  text-align: right;
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.dayColumn {
+  position: relative;
+  border-right: var(--border-width) solid var(--color-border);
+}
+
+.weekendColumn {
+  background: var(--color-bg-muted);
+}
+
+.todayColumn {
+  background: var(--color-accent-bg-subtle);
+}
+
+.hourSeparator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--border-width);
+  background: var(--color-border);
+}
+
+.nowLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-danger);
+  z-index: 1;
+}
