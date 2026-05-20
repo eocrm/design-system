@@ -158,6 +158,7 @@ export function ConfirmationPopover({
               disabled={pending}
               onClick={handleConfirm}
             >
+              {pending && <span className={styles.spinner} aria-hidden="true" />}
               {confirmLabel}
             </Button>
           </Cluster>

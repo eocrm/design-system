@@ -1,9 +1,32 @@
-/* stylelint-disable block-no-empty */
-// Rules land in Task 18. Empty for now so the import resolves.
-.title {
-}
 .description {
+  /* stylelint-disable-next-line property-disallowed-list -- neutralizing UA <p> default, not component layout */
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-fg-muted);
 }
+
 .spinner {
+  display: inline-block;
+  width: var(--space-3);
+  height: var(--space-3);
+  /* stylelint-disable-next-line property-disallowed-list -- internal spacing between spinner disc and label inside Button */
+  margin-right: var(--space-1);
+  border: var(--border-width-emphasis) solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--radius-full);
+  animation: confirm-spin 0.6s linear infinite;
+  vertical-align: middle;
 }
-/* stylelint-enable block-no-empty */
+
+@keyframes confirm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
