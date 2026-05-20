@@ -988,3 +988,55 @@ describe('Select — form integration (single)', () => {
     expect(captured!.get('status')).toBe('active');
   });
 });
+
+describe('Select — form integration (multi)', () => {
+  const OPTS = [
+    { value: 'a', label: 'A' },
+    { value: 'b', label: 'B' },
+  ];
+
+  it('renders one hidden input per selected value', () => {
+    const { container } = render(
+      <Select multiple options={OPTS} value={['a', 'b']} name="tags" />,
+    );
+    const hiddens = container.querySelectorAll<HTMLInputElement>('input[name="tags"]');
+    expect(hiddens).toHaveLength(2);
+    expect(Array.from(hiddens).map((h) => h.value).sort()).toEqual(['a', 'b']);
+  });
+
+  it('FormData.getAll returns the array', () => {
+    let captured: FormData | null = null;
+    render(
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          captured = new FormData(e.currentTarget);
+        }}
+      >
+        <Select multiple options={OPTS} defaultValue={['a', 'b']} name="tags" />
+        <button type="submit">Go</button>
+      </form>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+    expect(captured!.getAll('tags')).toEqual(['a', 'b']);
+  });
+
+  it('empty + required renders one empty required input', () => {
+    const { container } = render(
+      <Select multiple options={OPTS} value={[]} name="tags" required />,
+    );
+    const hiddens = container.querySelectorAll<HTMLInputElement>('input[name="tags"]');
+    expect(hiddens).toHaveLength(1);
+    expect(hiddens[0].required).toBe(true);
+    expect(hiddens[0].value).toBe('');
+  });
+
+  it('with values + required, no input is required (the presence is enough)', () => {
+    const { container } = render(
+      <Select multiple options={OPTS} value={['a']} name="tags" required />,
+    );
+    const hiddens = container.querySelectorAll<HTMLInputElement>('input[name="tags"]');
+    expect(hiddens).toHaveLength(1);
+    expect(hiddens[0].required).toBe(false);
+  });
+});
