@@ -6,7 +6,7 @@ import styles from './Button.module.scss';
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 
 /** Control height. See ButtonProps#size for when to use each. */
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**
@@ -24,11 +24,28 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   /**
    * Control height (matches the shared `--size-*` scale used by Input and Avatar).
+   * - `xs` (20px) — icon-only or very dense inline actions (row controls,
+   *   chip-adjacent buttons). Pass `aria-label` when icon-only. Below WCAG
+   *   2.5.5 Level AAA touch-target guidance; reserve for desktop-first surfaces.
    * - `sm` (24px) — dense toolbars, tables, inline actions.
    * - `md` (32px, default) — most contexts.
    * - `lg` (40px) — marketing-style empty states or emphasized primary actions.
    */
   size?: ButtonSize;
+  /**
+   * Render the button as a square icon-only target — `aspect-ratio` is forced
+   * to 1 so width tracks the size's `height` token (`xs` → 20×20, `sm` → 24×24,
+   * `md` → 32×32, `lg` → 40×40) and `padding` is tightened to a small inset
+   * (4px) so the icon has breathing room without changing the outer shape.
+   *
+   * **Always pass `aria-label`** when `iconOnly` is set, otherwise the button
+   * has no accessible name. Pass a single icon as `children`.
+   *
+   * Use for inline density (row controls, chip-adjacent actions, toolbar
+   * affordances). For an icon + short text label, leave `iconOnly` off — the
+   * button will lay out as a normal rectangle with the existing gap.
+   */
+  iconOnly?: boolean;
 }
 
 /**
@@ -42,6 +59,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * @example
  * <Button variant="danger" size="sm" onClick={remove}>
  *   <Trash2 size={14} /> Delete
+ * </Button>
+ *
+ * @example
+ * // Icon-only square button — pass `iconOnly` for a square shape (20×20 at
+ * // xs, 32×32 at md, etc.) and `aria-label` so screen readers announce it.
+ * <Button size="xs" variant="ghost" iconOnly aria-label="Remove">
+ *   <X size={12} />
  * </Button>
  *
  * @example
@@ -81,6 +105,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *   a Button with internal state.
  * - A clickable table row → make the row itself the interactive surface;
  *   don't nest a button.
+ * - On touch-first surfaces, prefer `size="sm"` or larger. `xs` (20px×~28px, or
+ *   20×20 with `iconOnly`) is below WCAG 2.5.5 Level AAA touch-target
+ *   guidance (24×24); acceptable here because the CRM is desktop-first.
  *
  * @remarks Anti-patterns
  * - ❌ Two `variant="primary"` Buttons in the same section. Pick one; others
@@ -94,16 +121,28 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * - ❌ Rendering `<Button variant="success">Save</Button>` on initial mount.
  *   `success` is a confirmation state, not an action intent — start as
  *   `primary` and flip to `success` after the action resolves.
+ * - ❌ Using `size="xs"` for the primary or most prominent action in a
+ *   section. `xs` is for inline density, not emphasis — reach for `md` or
+ *   `lg` when the button should draw the eye.
+ * - ❌ `<Button iconOnly><X /></Button>` without `aria-label`. The button has
+ *   no accessible name; screen readers announce nothing. Always pair
+ *   `iconOnly` with `aria-label="…"`.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', className, type = 'button', ...props },
+  { variant = 'primary', size = 'md', iconOnly = false, className, type = 'button', ...props },
   ref,
 ) {
   return (
     <button
       ref={ref}
       type={type}
-      className={clsx(styles.button, styles[variant], styles[size], className)}
+      className={clsx(
+        styles.button,
+        styles[variant],
+        styles[size],
+        iconOnly && styles.iconOnly,
+        className,
+      )}
       {...props}
     />
   );

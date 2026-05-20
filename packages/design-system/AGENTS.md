@@ -40,7 +40,8 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 ```
 
 - `variant`: `primary` (default — one per section) / `secondary` / `ghost` / `danger` / `success`
-- `size`: `sm` / `md` (default) / `lg`
+- `size`: `xs` / `sm` / `md` (default) / `lg` — use `xs` for icon-only or dense inline actions; pass `aria-label` when icon-only.
+- `iconOnly`: boolean. Renders a square icon-only button (`aspect-ratio: 1`, tight 4px padding). Width tracks the size's height token. **Always pair with `aria-label`** — there's no other accessible name.
 - Always renders `<button type="button">` unless you pass `type="submit"`.
 - `variant="success"` is a **transient confirmation state**, not an action intent. Flip to it for ~1.5s after the action resolves, then flip back to `primary`. The timer is the consumer's responsibility — Button stays stateless. Never render a button as `success` on initial mount. Track the timer in a `useRef` and clear on unmount + on rapid re-clicks so the flash doesn't outlive the component or get cut short.
 

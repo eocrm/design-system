@@ -25,6 +25,11 @@ describe('Button', () => {
     expect(btn.className).toMatch(/lg/);
   });
 
+  it('applies the xs size class', () => {
+    render(<Button size="xs">Tiny</Button>);
+    expect(screen.getByRole('button', { name: 'Tiny' }).className).toMatch(/xs/);
+  });
+
   it('applies the success variant class name', () => {
     render(<Button variant="success">Saved!</Button>);
     expect(screen.getByRole('button', { name: 'Saved!' }).className).toMatch(/success/);
@@ -63,5 +68,24 @@ describe('Button', () => {
     render(<Button ref={ref}>Hi</Button>);
     expect(ref.current).toBeInstanceOf(HTMLButtonElement);
     expect(ref.current?.textContent).toBe('Hi');
+  });
+
+  it('renders as an icon-only button at size xs with an accessible name', () => {
+    render(
+      <Button size="xs" aria-label="Remove">
+        <svg data-testid="icon" aria-hidden="true" />
+      </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+    expect(screen.getByTestId('icon')).toBeInTheDocument();
+  });
+
+  it('applies the iconOnly class when iconOnly is set', () => {
+    render(
+      <Button iconOnly aria-label="Remove">
+        <svg data-testid="icon" aria-hidden="true" />
+      </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Remove' }).className).toMatch(/iconOnly/);
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Plus, Search, Trash2 } from 'lucide-react';
+import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { Button, Cluster } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -101,15 +101,43 @@ export function ButtonDemo() {
 
       <Example
         title="Sizes"
-        description="Three sizes. sm for dense toolbars/tables, md (default) for most contexts, lg for emphasis."
-        code={`<Button size="sm">Small</Button>
+        description="Four sizes. xs for icon-only or very dense inline actions, sm for dense toolbars/tables, md (default) for most contexts, lg for emphasis."
+        code={`<Button size="xs">Extra small</Button>
+<Button size="sm">Small</Button>
 <Button size="md">Medium</Button>
 <Button size="lg">Large</Button>`}
       >
         <Cluster gap="sm" align="center">
+          <Button size="xs">Extra small</Button>
           <Button size="sm">Small</Button>
           <Button size="md">Medium</Button>
           <Button size="lg">Large</Button>
+        </Cluster>
+      </Example>
+
+      <Example
+        title="Icon-only (square)"
+        description="Pass iconOnly for a square shape that tracks the size's height — 20×20 at xs, 32×32 at md. Always pair iconOnly with aria-label."
+        code={`<Button size="xs" variant="ghost" iconOnly aria-label="Remove">
+  <X size={12} />
+</Button>
+<Button size="xs" variant="secondary" iconOnly aria-label="Edit">
+  <Pencil size={12} />
+</Button>
+<Button size="md" variant="secondary" iconOnly aria-label="Search">
+  <Search size={16} />
+</Button>`}
+      >
+        <Cluster gap="sm" align="center">
+          <Button size="xs" variant="ghost" iconOnly aria-label="Remove">
+            <X size={12} />
+          </Button>
+          <Button size="xs" variant="secondary" iconOnly aria-label="Edit">
+            <Pencil size={12} />
+          </Button>
+          <Button size="md" variant="secondary" iconOnly aria-label="Search">
+            <Search size={16} />
+          </Button>
         </Cluster>
       </Example>
 
@@ -137,15 +165,21 @@ export function ButtonDemo() {
         title="Disabled"
         description="Native disabled attribute. Visually muted, pointer-events disabled."
         code={`<Button disabled>Primary</Button>
-<Button variant="secondary" disabled>Secondary</Button>`}
+<Button variant="secondary" disabled>Secondary</Button>
+<Button size="xs" variant="ghost" iconOnly disabled aria-label="Remove">
+  <X size={12} />
+</Button>`}
       >
-        <Cluster gap="sm">
+        <Cluster gap="sm" align="center">
           <Button disabled>Primary</Button>
           <Button variant="secondary" disabled>
             Secondary
           </Button>
           <Button variant="danger" disabled>
             Danger
+          </Button>
+          <Button size="xs" variant="ghost" iconOnly disabled aria-label="Remove">
+            <X size={12} />
           </Button>
         </Cluster>
       </Example>
