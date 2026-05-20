@@ -1,4 +1,4 @@
-import { act, configure, render, screen, waitFor } from '@testing-library/react';
+import { act, configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Select, type SelectOption } from './Select';
@@ -949,5 +949,42 @@ describe('Select — creatable', () => {
     await user.click(input);
     await user.type(input, 'Foo');
     expect(screen.queryByText(/\+ Create "Foo"/i)).toBeNull();
+  });
+});
+
+describe('Select — form integration (single)', () => {
+  it('renders a hidden input named `name` with the current value', () => {
+    const { container } = render(
+      <Select options={STATUSES} value="pending" name="status" />,
+    );
+    const hidden = container.querySelector<HTMLInputElement>('input[name="status"]');
+    expect(hidden).not.toBeNull();
+    expect(hidden!.type).toBe('hidden');
+    expect(hidden!.value).toBe('pending');
+  });
+
+  it('hidden input is required when `required`', () => {
+    const { container } = render(
+      <Select options={STATUSES} name="status" required />,
+    );
+    const hidden = container.querySelector<HTMLInputElement>('input[name="status"]');
+    expect(hidden!.required).toBe(true);
+  });
+
+  it('FormData picks up the value on submit', () => {
+    let captured: FormData | null = null;
+    render(
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          captured = new FormData(e.currentTarget);
+        }}
+      >
+        <Select options={STATUSES} name="status" defaultValue="active" />
+        <button type="submit">Go</button>
+      </form>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+    expect(captured!.get('status')).toBe('active');
   });
 });

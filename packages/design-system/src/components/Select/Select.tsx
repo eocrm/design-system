@@ -20,6 +20,7 @@ import { flattenOptions, findOption, findOptions, hasExactLabelMatch } from './u
 import type { FlatRow } from './utils';
 import { Trigger } from './Trigger';
 import { Listbox } from './Listbox';
+import { HiddenInputs } from './HiddenInputs';
 
 /** Trigger height + type-scale step. Mirrors `<Input>`'s `size`. */
 export type SelectSize = 'sm' | 'md' | 'lg';
@@ -180,9 +181,9 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     clearable,
     disabled = false,
     readOnly = false,
-    name: _name,
-    required: _required,
-    form: _form,
+    name,
+    required,
+    form,
     renderOption,
     renderValue,
     renderTag,
@@ -192,12 +193,6 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     className,
     ...rest
   } = props;
-
-  // `_name` / `_required` / `_form` are accepted in the prop surface so the
-  // public API is stable across phases; form integration is wired in Phase 9.
-  void _name;
-  void _required;
-  void _form;
 
   // Dev-only invariant: a creatable picker without a search input has no
   // way to capture the new label. Throw early so the misconfiguration is
@@ -434,6 +429,14 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
           aria-describedby={props['aria-describedby']}
         />
         {state.open && <Listbox />}
+        <HiddenInputs
+          name={name}
+          value={state.value}
+          multiple={multiple}
+          required={required ?? false}
+          form={form}
+          disabled={disabled}
+        />
       </div>
     </SelectContext.Provider>
   );
