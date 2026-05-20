@@ -134,6 +134,15 @@
 }
 
 // ─── Listbox panel ──────────────────────────────────────────────────────────
+// Open animation uses CSS `@keyframes` (NOT DropdownMenu's `@starting-style`
+// + `transition: transform` pattern) because Floating UI runs in default
+// `transform: true` mode here — the positioning transform on the floating
+// element is needed every frame, so we can't repurpose the `transform`
+// property for an entrance animation. Keyframes leave the inline transform
+// from Floating UI alone and animate via the `animation` property instead.
+// `transform-origin: top` is a static approximation (panel scales from the
+// top edge). A future polish task can wire dynamic origin off Floating UI's
+// resolved placement so the panel grows toward the trigger on flip.
 .listbox {
   z-index: var(--z-popover);
   overflow-y: auto;
@@ -143,6 +152,26 @@
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   list-style: none;
+  animation: select-open 140ms ease-out;
+  transform-origin: top;
+}
+
+@keyframes select-open {
+  from {
+    opacity: var(--opacity-hidden);
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: var(--opacity-visible);
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listbox {
+    animation: none;
+  }
 }
 
 .groupHeader {
