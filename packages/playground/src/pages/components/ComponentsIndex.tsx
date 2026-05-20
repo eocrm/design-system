@@ -202,16 +202,16 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <div
         style={{
           width: '100%',
-          maxWidth: 280,
-          height: 200,
+          maxWidth: 220,
+          height: 100,
           overflow: 'hidden',
           pointerEvents: 'none',
         }}
       >
         <div
           style={{
-            width: '200%',
-            transform: 'scale(0.5)',
+            width: '250%',
+            transform: 'scale(0.4)',
             transformOrigin: 'top left',
           }}
         >
