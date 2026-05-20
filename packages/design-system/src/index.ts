@@ -65,4 +65,11 @@ export type {
 } from './components/ConfirmationPopover';
 
 export { Select } from './components/Select';
-export type { SelectProps } from './components/Select';
+export type {
+  SelectProps,
+  SelectOption,
+  SelectGroup,
+  SelectOptions,
+  SelectSize,
+  SelectTriggerDisplay,
+} from './components/Select';
