@@ -1,0 +1,67 @@
+@use '../../styles/mixins' as *;
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  min-height: 6.5rem;
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  cursor: pointer;
+  outline: none;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.today {
+  background: var(--color-accent-bg-subtle);
+}
+
+.weekend {
+  background: var(--color-bg-muted);
+}
+
+.otherMonth .dayNumber {
+  opacity: var(--opacity-disabled);
+}
+
+.dayNumber {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  line-height: 1;
+}
+
+.today .dayNumber {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.moreChipWrapper {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.moreChip {
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
