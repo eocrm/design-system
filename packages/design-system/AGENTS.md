@@ -418,7 +418,7 @@ const locale = useLocale(); // 'ru-RU', or navigator.language fallback
 - No `<LocaleProvider>` mounted? `useLocale()` falls back to `navigator.language` (or `'en-US'` in SSR / Node).
 - Stateless. To switch locale at runtime, re-render the Provider with a new `locale` prop. Nested Providers override outer ones.
 
-### `<Calendar>` — month / week / day views
+### `<Calendar>` — month / week / day / agenda views
 
 ```tsx
 const [cursor, setCursor] = useState(new Date());
@@ -433,7 +433,7 @@ const [view, setView] = useState<'month' | 'week' | 'day'>('month');
 />;
 ```
 
-- Three views in v3: `'month'` (continuous event bars across the grid), `'week'` (7 columns × hour rows + all-day band), `'day'` (single column × hour rows). Agenda view comes in PR 4.
+- Four views: `'month'` (continuous event bars across the grid), `'week'` (7 columns × hour rows + all-day band), `'day'` (single column × hour rows), `'agenda'` (chronological list of the cursor's current week, grouped by day with empty days hidden).
 - Events are `{ id, title, startsAt, endsAt?, tone?, allDay? }`. Multi-day events render as continuous bars in both the month grid and the week/day all-day band.
 - Tones: `neutral` (default) / `accent` / `success` / `warning` / `danger`. `allDay: true` renders as a tone-filled band (no time prefix).
 - Controlled cursor via `value` / `onChange`, or uncontrolled via `defaultValue`. Controlled view via `view` / `onViewChange`, or uncontrolled via `defaultView`.

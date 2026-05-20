@@ -1,0 +1,150 @@
+@use '../../styles/mixins' as *;
+
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+}
+
+.empty {
+  padding: var(--space-6);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+}
+
+.dayGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+  border-left: var(--border-width-emphasis) solid transparent;
+}
+
+// Today's group draws an accent border on its left edge — same emphasis
+// language as month view's today cell, no background tint to compete with
+// tone dots on event rows.
+.todayGroup {
+  border-left-color: var(--color-accent);
+}
+
+.dayHeader {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.rowButton {
+  display: grid;
+  grid-template-columns: 8rem auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-subtle);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.timeGutter {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.allDay {
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+}
+
+// The tone dot sits between gutter and body to color-code the event
+// without tinting the whole row (which would clash with the today-group
+// accent and the hover background).
+.toneDot {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.body {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+}
+
+.tooltipBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tooltipTime {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-bg-subtle);
+}
+
+.tooltipTitle {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-bg);
+}
+
+// Tone -> color of the dot (via currentColor inheritance).
+.neutral {
+  color: var(--color-border-strong);
+}
+
+.accent {
+  color: var(--color-accent);
+}
+
+.success {
+  color: var(--color-success);
+}
+
+.warning {
+  color: var(--color-warning);
+}
+
+.danger {
+  color: var(--color-danger);
+}

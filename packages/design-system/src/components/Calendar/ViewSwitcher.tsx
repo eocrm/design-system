@@ -9,11 +9,13 @@ export interface ViewSwitcherProps {
   monthLabel: string;
   weekLabel: string;
   dayLabel: string;
+  agendaLabel: string;
 }
 
 /**
- * Internal: segmented control for switching between month / week / day views.
- * Uses the design system's `<Tabs>` for ARIA + keyboard navigation.
+ * Internal: segmented control for switching between month / week / day /
+ * agenda views. Uses the design system's `<Tabs>` for ARIA + keyboard
+ * navigation.
  *
  * @remarks
  * **When NOT to use:** Do not render `ViewSwitcher` directly. It is composed
@@ -25,14 +27,16 @@ export function ViewSwitcher({
   monthLabel,
   weekLabel,
   dayLabel,
+  agendaLabel,
 }: ViewSwitcherProps) {
   const items = useMemo(
     () => [
       { id: 'month', label: monthLabel },
       { id: 'week', label: weekLabel },
       { id: 'day', label: dayLabel },
+      { id: 'agenda', label: agendaLabel },
     ],
-    [monthLabel, weekLabel, dayLabel],
+    [monthLabel, weekLabel, dayLabel, agendaLabel],
   );
 
   return (
