@@ -81,6 +81,7 @@ export function DayView({
         renderEvent={renderEvent}
         onEventClick={onEventClick}
         onDayClick={onDayClick}
+        ariaLabel={day.dayLabel}
       />
     </div>
   );

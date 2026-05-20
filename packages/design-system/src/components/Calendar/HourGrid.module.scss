@@ -72,11 +72,15 @@
   background: var(--color-border);
 }
 
+// The now-line sits above lane-stacked event blocks (z-index = lane + 1,
+// max ~10) but below the hover-lifted block (z-index 100), so it stays
+// visible across resting events and yields when a consumer is focused on
+// reading a specific block.
 .nowLine {
   position: absolute;
   left: 0;
   right: 0;
   height: var(--border-width-emphasis);
   background: var(--color-danger);
-  z-index: 1;
+  z-index: 50;
 }

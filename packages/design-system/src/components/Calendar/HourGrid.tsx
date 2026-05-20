@@ -31,6 +31,8 @@ export interface HourGridProps {
   onEventClick?: (event: CalendarEvent) => void;
   /** Fires when empty space inside a day column is clicked, with that column's date. */
   onDayClick?: (date: Date) => void;
+  /** ARIA label for the outer `role="grid"` container (e.g., week range or day label). */
+  ariaLabel: string;
 }
 
 /**
@@ -56,6 +58,7 @@ export function HourGrid({
   renderEvent,
   onEventClick,
   onDayClick,
+  ariaLabel,
 }: HourGridProps) {
   const locale = useLocale();
   const [tick, setTick] = useState(0);
@@ -99,6 +102,9 @@ export function HourGrid({
   return (
     <div className={styles.scroll}>
       <div
+        role="grid"
+        aria-readonly="true"
+        aria-label={ariaLabel}
         className={styles.grid}
         style={{
           gridTemplateColumns: `${HOUR_GUTTER_WIDTH}px repeat(${columnCount}, 1fr)`,

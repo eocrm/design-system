@@ -99,6 +99,7 @@ export function WeekView({
         onEventClick={onEventClick}
         onDayClick={onDayClick}
         now={now}
+        ariaLabel={week.weekLabel}
       />
     </div>
   );

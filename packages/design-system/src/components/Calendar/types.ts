@@ -84,10 +84,8 @@ export interface TimedEventBlock {
   startMinutes: number;
   /** Minutes from `hourRange[0] * 60`. May exceed `(hourRange[1] - hourRange[0]) * 60`. */
   endMinutes: number;
-  /** 0..laneCount-1 — horizontal lane within the collision group. */
+  /** Cascade lane within the collision group (0..N). Drives both left offset and z-index. */
   lane: number;
-  /** Lane count for this block's collision group. */
-  laneCount: number;
 }
 
 /**

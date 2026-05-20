@@ -84,9 +84,9 @@ const SAMPLE_EVENTS: CalendarEvent[] = [
     endsAt: fromToday(6, 14, 0),
     tone: 'neutral',
   },
-  // Overlapping events on the same day — demonstrate the collision-lane
-  // layout in week / day views (events at the same time share a column
-  // with equal-width lanes).
+  // Overlapping events on the same day — demonstrate the cascade layout in
+  // week / day views (each lane offset right by a small step; later lanes
+  // overlay earlier ones; hover lifts a block to full width on top).
   {
     id: 'overlap-a',
     title: 'Design review',
@@ -108,7 +108,8 @@ const SAMPLE_EVENTS: CalendarEvent[] = [
     endsAt: fromToday(1, 12, 30),
     tone: 'warning',
   },
-  // Two simultaneously-starting events same day → 50/50 split.
+  // Two simultaneously-starting events same day → cascade with the second
+  // event offset right and layered on top of the first.
   {
     id: 'concurrent-a',
     title: 'Interview: Sarah',
@@ -262,7 +263,7 @@ export function CalendarDemo() {
 
       <Example
         title="Week view"
-        description="7 columns × hour rows. Timed events position by hour; overlapping events split into equal-width lanes side-by-side. All-day and multi-day events render in the band above the hour grid. A horizontal line marks the current time in today's column."
+        description="7 columns × hour rows. Timed events position by hour; overlapping events cascade — each lane offset right by a small step, later lanes overlay earlier ones, and hover lifts a block to full width on top. All-day and multi-day events render in the band above the hour grid. A horizontal line marks the current time in today's column."
         code={`<Calendar
   defaultValue={new Date()}
   defaultView="week"

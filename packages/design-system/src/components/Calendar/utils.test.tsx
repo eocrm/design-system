@@ -253,7 +253,7 @@ describe('layoutEventsForHourGrid', () => {
     expect(out.allDayBars).toEqual([]);
   });
 
-  it('places a single timed event in column 0 with lane=0, laneCount=1', () => {
+  it('places a single timed event in column 0 with lane=0', () => {
     const out = layoutEventsForHourGrid([tev('a', 20, 9, 10)], day1, [7, 19]);
     expect(out.timedBlocks).toHaveLength(1);
     expect(out.timedBlocks[0]).toMatchObject({
@@ -261,7 +261,6 @@ describe('layoutEventsForHourGrid', () => {
       startMinutes: 120,
       endMinutes: 180,
       lane: 0,
-      laneCount: 1,
     });
   });
 
@@ -270,37 +269,30 @@ describe('layoutEventsForHourGrid', () => {
     expect(out.timedBlocks).toHaveLength(2);
     expect(out.timedBlocks[0].lane).toBe(0);
     expect(out.timedBlocks[1].lane).toBe(0);
-    expect(out.timedBlocks[0].laneCount).toBe(1);
-    expect(out.timedBlocks[1].laneCount).toBe(1);
   });
 
-  it('places two overlapping events on lanes 0 and 1, both laneCount=2', () => {
+  it('places two overlapping events on lanes 0 and 1', () => {
     const out = layoutEventsForHourGrid([tev('a', 20, 9, 11), tev('b', 20, 10, 12)], day1, [7, 19]);
     expect(out.timedBlocks).toHaveLength(2);
     const byId = new Map(out.timedBlocks.map((b) => [b.event.id, b]));
     expect(byId.get('a')!.lane).toBe(0);
     expect(byId.get('b')!.lane).toBe(1);
-    expect(byId.get('a')!.laneCount).toBe(2);
-    expect(byId.get('b')!.laneCount).toBe(2);
   });
 
-  it('places three mutually overlapping events with laneCount=3', () => {
+  it('places three mutually overlapping events on lanes 0, 1, 2', () => {
     const out = layoutEventsForHourGrid(
       [tev('a', 20, 9, 11), tev('b', 20, 9, 11), tev('c', 20, 9, 11)],
       day1,
       [7, 19],
     );
     expect(out.timedBlocks).toHaveLength(3);
-    out.timedBlocks.forEach((b) => expect(b.laneCount).toBe(3));
     const lanes = out.timedBlocks.map((b) => b.lane).sort();
     expect(lanes).toEqual([0, 1, 2]);
   });
 
-  it('chain A-B-C: recycles A’s lane for C; laneCount=2 across the transitive group', () => {
+  it('chain A-B-C: recycles A’s lane for C (lanes 0, 1, 0 in transitive group)', () => {
     // A (9:00-10:30) and B (10:00-11:00) overlap → A=lane0, B=lane1.
     // C (10:45-12:00) starts after A ends → reuses lane 0.
-    // Group has 3 transitive members but only 2 lanes are ever active at once,
-    // so the cascade renders with laneCount=2 (10% offset for lane 1).
     const out = layoutEventsForHourGrid(
       [
         {
@@ -325,7 +317,6 @@ describe('layoutEventsForHourGrid', () => {
       day1,
       [7, 19],
     );
-    out.timedBlocks.forEach((b) => expect(b.laneCount).toBe(2));
     const byId = new Map(out.timedBlocks.map((b) => [b.event.id, b]));
     expect(byId.get('a')!.lane).toBe(0);
     expect(byId.get('b')!.lane).toBe(1);

@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import { EventChip } from './EventChip';
 import type { AllDayBar, CalendarEvent, CalendarView, RenderEvent } from './types';
 import styles from './AllDayBand.module.scss';
@@ -54,11 +53,7 @@ export function AllDayBand({
       {bars.map((bar) => (
         <div
           key={bar.event.id}
-          className={clsx(
-            styles.barSlot,
-            bar.continuesLeft && styles.continuesLeft,
-            bar.continuesRight && styles.continuesRight,
-          )}
+          className={styles.barSlot}
           style={{
             // +2 because column 1 is the gutter; day index 0 → outer column 2
             gridColumn: `${bar.startCol + 2} / ${bar.endCol + 3}`,

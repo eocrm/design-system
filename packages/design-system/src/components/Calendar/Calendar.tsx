@@ -56,7 +56,10 @@ export interface CalendarProps extends Omit<
    * Fires when the user clicks a day cell's empty space.
    * - Month view: empty space in a day cell, the "+N more" overflow chip, or
    *   keyboard activation (Enter/Space) on a focused cell.
-   * - Week/Day view: empty hour-grid space inside that day's column.
+   * - Week/Day view: empty hour-grid space inside that day's column —
+   *   **mouse click only**. There is no keyboard equivalent in v3; consumers
+   *   needing keyboard activation in week/day should surface their detail UI
+   *   through the focusable event chips (which fire `onEventClick`).
    */
   onDayClick?: (date: Date) => void;
   /** Fires when the user clicks an event chip. */
