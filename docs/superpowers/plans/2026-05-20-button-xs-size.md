@@ -12,33 +12,23 @@
 
 ---
 
-## Task 1: Branch from fresh main
+## Task 1: Verify branch + hooks are ready
+
+**Branch state at the start of implementation:** `feat/button-xs` has already been branched from a fresh `main`, with this spec and plan committed on top of it. The executor starts work on that branch — do **not** re-create or rebase the branch.
 
 **Files:** (no edits — git only)
 
-- [ ] **Step 1: Confirm a clean working tree**
-
-Run: `git status`
-Expected: working tree clean. If not, stop and surface the dirty state to the user before proceeding.
-
-- [ ] **Step 2: Update local main**
+- [ ] **Step 1: Confirm the branch and a clean working tree**
 
 Run:
 ```bash
-git checkout main
-git pull --ff-only
+git status
+git rev-parse --abbrev-ref HEAD
+git log --oneline -4
 ```
-Expected: fast-forward (or "Already up to date").
+Expected: working tree clean; current branch is `feat/button-xs`; the top three commits include the spec + plan additions, with the fourth being an earlier merge into `main`. If anything else, stop and surface the unexpected state.
 
-- [ ] **Step 3: Create the feature branch**
-
-Run:
-```bash
-git checkout -b feat/button-xs
-```
-Expected: switches to a new branch tracking from current main.
-
-- [ ] **Step 4: Verify hooks are wired**
+- [ ] **Step 2: Verify hooks are wired**
 
 Run:
 ```bash
