@@ -125,6 +125,143 @@ describe('WeekView', () => {
     expect(b.style.getPropertyValue('--cal-block-z')).toBe('2');
   });
 
+  it('fires onDayClick when empty hour-grid space is clicked', async () => {
+    const onDayClick = vi.fn<(d: Date) => void>();
+    const events: CalendarEvent[] = [
+      {
+        id: 'a',
+        title: 'Standup',
+        startsAt: new Date(2026, 4, 20, 9),
+        endsAt: new Date(2026, 4, 20, 10),
+      },
+    ];
+    const { container } = render(
+      <WeekView
+        cursor={cursor}
+        events={events}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        onDayClick={onDayClick}
+      />,
+      { wrapper: wrap() },
+    );
+    // Click the empty hour-grid column for Wed May 20 (column index 3 when
+    // week starts on Sunday in en-US).
+    const columns = container.querySelectorAll<HTMLDivElement>('[class*="dayColumn"]');
+    await userEvent.click(columns[3]);
+    expect(onDayClick).toHaveBeenCalledTimes(1);
+    expect(onDayClick.mock.calls[0][0].getDate()).toBe(20);
+  });
+
+  it('clicking a timed event does NOT also fire onDayClick (stopPropagation)', async () => {
+    const onDayClick = vi.fn();
+    const events: CalendarEvent[] = [
+      {
+        id: 'a',
+        title: 'Standup',
+        startsAt: new Date(2026, 4, 20, 9),
+        endsAt: new Date(2026, 4, 20, 10),
+      },
+    ];
+    render(
+      <WeekView
+        cursor={cursor}
+        events={events}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        onDayClick={onDayClick}
+      />,
+      { wrapper: wrap() },
+    );
+    await userEvent.click(screen.getByRole('button', { name: /Standup/ }));
+    expect(onDayClick).not.toHaveBeenCalled();
+  });
+
+  it('renderEvent receives view-aware context for timed and all-day events', () => {
+    const calls: Array<{ id: string; view: string; asAllDay: boolean; duration: string }> = [];
+    const events: CalendarEvent[] = [
+      {
+        id: 'timed',
+        title: 'Standup',
+        startsAt: new Date(2026, 4, 20, 9),
+        endsAt: new Date(2026, 4, 20, 9, 30),
+      },
+      {
+        id: 'all',
+        title: 'Conference',
+        startsAt: new Date(2026, 4, 20),
+        endsAt: new Date(2026, 4, 21),
+        allDay: true,
+      },
+    ];
+    render(
+      <WeekView
+        cursor={cursor}
+        events={events}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        renderEvent={(event, ctx) => {
+          calls.push({
+            id: event.id,
+            view: ctx.view,
+            asAllDay: ctx.asAllDay,
+            duration: ctx.duration,
+          });
+          return <span>{event.title}</span>;
+        }}
+      />,
+      { wrapper: wrap() },
+    );
+    const timed = calls.find((c) => c.id === 'timed');
+    const all = calls.find((c) => c.id === 'all');
+    expect(timed).toMatchObject({ view: 'week', asAllDay: false, duration: '30m' });
+    expect(all).toMatchObject({ view: 'week', asAllDay: true });
+  });
+
+  it('renders the now-line only when the current time falls inside hourRange and inside today’s column', () => {
+    // Set "now" to noon on cursor day (Wed May 20) — inside the 7-19 range.
+    const insideNow = new Date(2026, 4, 20, 12, 0);
+    const { container, rerender } = render(
+      <WeekView
+        cursor={cursor}
+        events={[]}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        now={insideNow}
+      />,
+      { wrapper: wrap() },
+    );
+    const nowLines = container.querySelectorAll('[class*="nowLine"]');
+    expect(nowLines).toHaveLength(1);
+    // Sits in today's column — the one with the todayColumn class on its parent.
+    const todayColumn = nowLines[0].parentElement!;
+    expect(todayColumn.className).toMatch(/dayColumn/);
+
+    // Re-render with `now` BEFORE the hourRange start — no line.
+    rerender(
+      <WeekView
+        cursor={cursor}
+        events={[]}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        now={new Date(2026, 4, 20, 5, 0)}
+      />,
+    );
+    expect(container.querySelectorAll('[class*="nowLine"]')).toHaveLength(0);
+
+    // Re-render with `now` AT the hourRange end (exclusive upper bound) — no line.
+    rerender(
+      <WeekView
+        cursor={cursor}
+        events={[]}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        now={new Date(2026, 4, 20, 19, 0)}
+      />,
+    );
+    expect(container.querySelectorAll('[class*="nowLine"]')).toHaveLength(0);
+  });
+
   it('uses locale-aware column headers (ru-RU has Cyrillic)', () => {
     render(
       <WeekView

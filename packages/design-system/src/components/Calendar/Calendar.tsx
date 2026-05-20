@@ -52,7 +52,12 @@ export interface CalendarProps extends Omit<
   defaultValue?: Date;
   /** Fires on prev/next/today/keyboard navigation. */
   onChange?: (date: Date) => void;
-  /** Fires when the user clicks empty space in a day cell. */
+  /**
+   * Fires when the user clicks a day cell's empty space.
+   * - Month view: empty space in a day cell, the "+N more" overflow chip, or
+   *   keyboard activation (Enter/Space) on a focused cell.
+   * - Week/Day view: empty hour-grid space inside that day's column.
+   */
   onDayClick?: (date: Date) => void;
   /** Fires when the user clicks an event chip. */
   onEventClick?: (event: CalendarEvent) => void;
@@ -267,6 +272,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           locale={locale}
           weekStartsOn={weekStartsOn}
           onEventClick={onEventClick}
+          onDayClick={onDayClick}
           renderEvent={renderEvent}
         />
       )}
@@ -278,6 +284,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           hourRowHeight={hourRowHeight}
           locale={locale}
           onEventClick={onEventClick}
+          onDayClick={onDayClick}
           renderEvent={renderEvent}
         />
       )}

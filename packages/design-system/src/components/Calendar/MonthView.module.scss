@@ -50,7 +50,7 @@
    `min-height` makes empty weeks still look like cells without inflating
    the day-number row (events sit immediately below the day number). */
 .dayColumn {
-  min-height: 6.5rem;
+  min-height: var(--size-calendar-day-cell-min-height);
   border-right: var(--border-width) solid var(--color-border);
   border-bottom: var(--border-width) solid var(--color-border);
 }

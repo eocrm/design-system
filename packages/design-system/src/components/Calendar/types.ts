@@ -67,15 +67,14 @@ export interface MonthLayout {
  * by `layoutEventsForHourGrid` and consumed by `WeekView`/`DayView`.
  *
  * Horizontal placement (Google-Calendar-style cascade):
- * - Lanes are offset to the right by a fixed step rather than partitioning
- *   the column. Higher lanes overlay earlier ones (z-index = lane index),
- *   so a later/right-side event partially covers the one beneath it.
- * - With `step = 100 / (laneCount + 1)` percent, a singleton in any lane is
- *   `2 * step` wide. For 2 overlapping events the geometry comes out to
- *   ~67% each with a ~33% offset; for 3, ~50% each with ~25% offset.
- * - `widthInLanes` lets a block expand further right when no higher-lane
- *   neighbour overlaps it in time. Render with
- *   `left = lane * step` and `width = (widthInLanes + 1) * step`.
+ * - Lanes are offset to the right by a small constant step per lane
+ *   (`LANE_OFFSET_PERCENT` in TimedEvent.tsx — currently 10% of the column
+ *   width). Every block still extends to the column's right edge.
+ * - Higher lanes overlay earlier ones via `z-index = lane + 1`, so the
+ *   later/right-side event partially covers the one beneath while keeping
+ *   the predecessor's left edge visible.
+ * - On hover or keyboard focus, a block lifts to `left: 0; width: 100%`
+ *   above all neighbours — see TimedEvent.module.scss.
  */
 export interface TimedEventBlock {
   event: CalendarEvent;
@@ -146,6 +145,12 @@ export interface RenderEventContext {
  * of the default chip. The chip wrapper still handles positioning, click,
  * tooltip, and tone background — return content with inline `background` /
  * `style` to override colors.
+ *
+ * Note on layout: for hour-grid blocks shorter than ~30px tall (`isShort`),
+ * the wrapping `<button>` switches from `flex-direction: column` to `row`
+ * to keep the start time visible alongside the title. Author your inner
+ * content so it works in both layouts (e.g., let text shrink with
+ * `min-width: 0; overflow: hidden` instead of pinning a fixed width).
  */
 export type RenderEvent = (
   event: CalendarEvent,

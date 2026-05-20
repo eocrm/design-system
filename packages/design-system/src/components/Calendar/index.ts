@@ -6,4 +6,6 @@ export type {
   CalendarView,
   EventBar,
   MonthLayout,
+  RenderEvent,
+  RenderEventContext,
 } from './types';

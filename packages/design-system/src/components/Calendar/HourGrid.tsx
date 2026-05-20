@@ -29,6 +29,8 @@ export interface HourGridProps {
   renderEvent?: RenderEvent;
   /** Fires when a timed-event block in a day column is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
+  /** Fires when empty space inside a day column is clicked, with that column's date. */
+  onDayClick?: (date: Date) => void;
 }
 
 /**
@@ -53,6 +55,7 @@ export function HourGrid({
   view = 'week',
   renderEvent,
   onEventClick,
+  onDayClick,
 }: HourGridProps) {
   const locale = useLocale();
   const [tick, setTick] = useState(0);
@@ -102,20 +105,25 @@ export function HourGrid({
           gridTemplateRows: `auto repeat(${totalHours}, ${hourRowHeight}px)`,
         }}
       >
-        <div className={styles.cornerCell} aria-hidden="true" />
-        {columnHeaders.map((header, i) => (
-          <div
-            key={`header-${days[i].key}`}
-            role="columnheader"
-            className={clsx(
-              styles.columnHeader,
-              days[i].isWeekend && styles.weekendHeader,
-              todayColumnIndex === i && styles.todayHeader,
-            )}
-          >
-            {header}
-          </div>
-        ))}
+        {/* `display: contents` flattens this ARIA-row wrapper so each header
+           is a direct grid child of `.grid` while still satisfying the
+           WAI-ARIA grid contract (columnheader must live inside a row). */}
+        <div role="row" className={styles.headerRow}>
+          <div className={styles.cornerCell} aria-hidden="true" />
+          {columnHeaders.map((header, i) => (
+            <div
+              key={`header-${days[i].key}`}
+              role="columnheader"
+              className={clsx(
+                styles.columnHeader,
+                days[i].isWeekend && styles.weekendHeader,
+                todayColumnIndex === i && styles.todayHeader,
+              )}
+            >
+              {header}
+            </div>
+          ))}
+        </div>
         {hourLabels.map((label, h) => (
           <div
             key={`hour-${h}`}
@@ -127,15 +135,16 @@ export function HourGrid({
         ))}
         {days.map((day, i) => {
           const blocks = blocksByDay.get(i) ?? [];
+          // Background clicks on the day column fire `onDayClick`; clicks on
+          // a TimedEvent button stopPropagation in TimedEvent so they don't
+          // also fire this handler.
+          const handleColumnClick = onDayClick ? () => onDayClick(day.date) : undefined;
           return (
             <div
               key={day.key}
-              className={clsx(
-                styles.dayColumn,
-                day.isWeekend && styles.weekendColumn,
-                todayColumnIndex === i && styles.todayColumn,
-              )}
+              className={clsx(styles.dayColumn, day.isWeekend && styles.weekendColumn)}
               style={{ gridColumn: i + 2, gridRow: `2 / span ${totalHours}` }}
+              onClick={handleColumnClick}
             >
               {Array.from({ length: totalHours }).map((_, h) => (
                 <div

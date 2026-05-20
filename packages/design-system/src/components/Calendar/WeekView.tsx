@@ -23,8 +23,12 @@ export interface WeekViewProps {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   /** Fires when a timed-event block or all-day chip is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
+  /** Fires when empty hour-grid space inside a day column is clicked, with that column's date. */
+  onDayClick?: (date: Date) => void;
   /** Optional custom event renderer (see `RenderEvent`). */
   renderEvent?: RenderEvent;
+  /** Override the "now" clock for the now-line. For tests; defaults to `new Date()`. */
+  now?: Date;
 }
 
 /**
@@ -44,7 +48,9 @@ export function WeekView({
   locale: localeOverride,
   weekStartsOn,
   onEventClick,
+  onDayClick,
   renderEvent,
+  now,
 }: WeekViewProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
@@ -91,6 +97,8 @@ export function WeekView({
         view="week"
         renderEvent={renderEvent}
         onEventClick={onEventClick}
+        onDayClick={onDayClick}
+        now={now}
       />
     </div>
   );

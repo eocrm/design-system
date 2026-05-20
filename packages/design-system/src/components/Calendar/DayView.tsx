@@ -20,6 +20,8 @@ export interface DayViewProps {
   locale?: string;
   /** Fires when a timed-event block or all-day chip is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
+  /** Fires when empty hour-grid space is clicked, with the day's date. */
+  onDayClick?: (date: Date) => void;
   /** Optional custom event renderer (see `RenderEvent`). */
   renderEvent?: RenderEvent;
 }
@@ -39,6 +41,7 @@ export function DayView({
   hourRowHeight,
   locale: localeOverride,
   onEventClick,
+  onDayClick,
   renderEvent,
 }: DayViewProps) {
   const contextLocale = useLocale();
@@ -77,6 +80,7 @@ export function DayView({
         view="day"
         renderEvent={renderEvent}
         onEventClick={onEventClick}
+        onDayClick={onDayClick}
       />
     </div>
   );

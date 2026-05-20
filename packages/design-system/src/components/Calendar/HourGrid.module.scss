@@ -8,6 +8,13 @@
   background: var(--color-bg);
 }
 
+// ARIA-row wrapper: `display: contents` keeps the corner cell + column
+// headers as direct grid children of `.grid` while satisfying the
+// WAI-ARIA contract that `columnheader` live inside `row`.
+.headerRow {
+  display: contents;
+}
+
 .cornerCell {
   border-right: var(--border-width) solid var(--color-border);
   border-bottom: var(--border-width) solid var(--color-border);
@@ -54,11 +61,8 @@
 }
 
 // Today's column body intentionally has NO tint — only the column header
-// carries the accent color. A tinted body makes events with the `accent`
-// tone vanish into the background.
-.todayColumn {
-  // no background — header alone signals "today"
-}
+// (`.todayHeader`) carries the accent color. A tinted body would make
+// events with the `accent` tone vanish into the background.
 
 .hourSeparator {
   position: absolute;
@@ -72,7 +76,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 2px;
+  height: var(--border-width-emphasis);
   background: var(--color-danger);
   z-index: 1;
 }
