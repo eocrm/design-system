@@ -1,7 +1,8 @@
 import { type MouseEvent } from 'react';
 import clsx from 'clsx';
-import { formatHour } from '../../calendar';
+import { formatTime } from '../../calendar';
 import { useLocale } from '../../i18n/useLocale';
+import { Tooltip } from '../Tooltip';
 import type { CalendarEvent, CalendarEventTone } from './types';
 import styles from './EventChip.module.scss';
 
@@ -18,11 +19,14 @@ export interface EventChipProps {
 
 /**
  * Internal: a single event bar inside a Calendar month grid. Renders as a
- * tone-styled button. Use the `continuesLeft` / `continuesRight` flags to
- * flatten edges where the event spans into adjacent weeks.
+ * tone-styled button wrapped in a Tooltip so the full "time + title" is
+ * always reachable even when the chip text is ellipsis-clipped in narrow
+ * day columns.
  *
- * - Non-`allDay` events show a subtle tinted background with a time prefix.
- * - `allDay` events use a filled tone background with a contrast foreground.
+ * - Non-`allDay` events show a subtle tinted background with a time prefix
+ *   in the chip and "<time> <title>" in the tooltip.
+ * - `allDay` events use a filled tone background, no time prefix, and the
+ *   tooltip shows just the title.
  * - Tone defaults to `'neutral'` when not set on the event.
  *
  * @remarks
@@ -39,6 +43,15 @@ export function EventChip({
   const locale = useLocale();
   const tone: CalendarEventTone = event.tone ?? 'neutral';
   const isAllDay = event.allDay === true;
+  const time = isAllDay ? '' : formatTime(event.startsAt, locale);
+  const tooltipContent = isAllDay ? (
+    <span className={styles.tooltipTitle}>{event.title}</span>
+  ) : (
+    <span className={styles.tooltipBody}>
+      <span className={styles.tooltipTime}>{time}</span>
+      <span className={styles.tooltipTitle}>{event.title}</span>
+    </span>
+  );
 
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -46,22 +59,21 @@ export function EventChip({
   };
 
   return (
-    <button
-      type="button"
-      className={clsx(
-        styles.chip,
-        styles[tone],
-        isAllDay && styles.allDay,
-        continuesLeft && styles.continuesLeft,
-        continuesRight && styles.continuesRight,
-      )}
-      onClick={handleClick}
-      title={event.title}
-    >
-      {!isAllDay && (
-        <span className={styles.time}>{formatHour(event.startsAt.getHours(), locale)}</span>
-      )}
-      <span className={styles.title}>{event.title}</span>
-    </button>
+    <Tooltip content={tooltipContent}>
+      <button
+        type="button"
+        className={clsx(
+          styles.chip,
+          styles[tone],
+          isAllDay && styles.allDay,
+          continuesLeft && styles.continuesLeft,
+          continuesRight && styles.continuesRight,
+        )}
+        onClick={handleClick}
+      >
+        {!isAllDay && <span className={styles.time}>{time}</span>}
+        <span className={styles.title}>{event.title}</span>
+      </button>
+    </Tooltip>
   );
 }

@@ -10,24 +10,36 @@ import scssSource from '@lib-source/components/Calendar/Calendar.module.scss?raw
 const may15 = new Date(2026, 4, 15);
 
 const SAMPLE_EVENTS: CalendarEvent[] = [
-  { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 11, 9), tone: 'accent' },
+  // Recurring standups
+  { id: 's1', title: 'Team standup', startsAt: new Date(2026, 4, 4, 9, 30), tone: 'accent' },
+  { id: 's2', title: 'Team standup', startsAt: new Date(2026, 4, 11, 9, 30), tone: 'accent' },
+  { id: 's3', title: 'Team standup', startsAt: new Date(2026, 4, 18, 9, 30), tone: 'accent' },
+  { id: 's4', title: 'Team standup', startsAt: new Date(2026, 4, 25, 9, 30), tone: 'accent' },
+  // 1:1s
+  { id: '1on1-a', title: '1:1 Sam', startsAt: new Date(2026, 4, 5, 11, 0), tone: 'neutral' },
+  { id: '1on1-b', title: '1:1 Priya', startsAt: new Date(2026, 4, 7, 14, 30), tone: 'neutral' },
+  { id: '1on1-c', title: '1:1 Yusuf', startsAt: new Date(2026, 4, 12, 11, 0), tone: 'neutral' },
+  { id: '1on1-d', title: '1:1 Mei', startsAt: new Date(2026, 4, 19, 11, 0), tone: 'neutral' },
+  // Customer meetings
+  { id: 'q1', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14, 0), endsAt: new Date(2026, 4, 13, 17, 0), tone: 'success' },
+  { id: 'ac', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'accent' },
+  { id: 'cust2', title: 'Onboarding: Globex', startsAt: new Date(2026, 4, 20, 15, 30), tone: 'accent' },
+  { id: 'cust3', title: 'QBR: Initech', startsAt: new Date(2026, 4, 26, 10, 0), endsAt: new Date(2026, 4, 26, 11, 30), tone: 'success' },
+  // Long conference — spans 3 weeks, exercises the multi-week continuation bars
   {
-    id: '2',
-    title: 'Quarterly review',
-    startsAt: new Date(2026, 4, 13, 14),
-    endsAt: new Date(2026, 4, 13, 17),
+    id: 'conf',
+    title: 'Web Summit 2026',
+    startsAt: new Date(2026, 4, 6),
+    endsAt: new Date(2026, 4, 20),
     tone: 'success',
-  },
-  { id: '3', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11), tone: 'accent' },
-  {
-    id: '4',
-    title: 'Vacation',
-    startsAt: new Date(2026, 4, 18),
-    endsAt: new Date(2026, 4, 22),
-    tone: 'warning',
     allDay: true,
   },
-  { id: '5', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27), tone: 'danger' },
+  // Renewals & risk
+  { id: 'rn1', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27, 9, 0), tone: 'danger' },
+  { id: 'rn2', title: 'Renewal: Hooli', startsAt: new Date(2026, 4, 29, 13, 0), tone: 'danger' },
+  // Misc
+  { id: 'demo', title: 'Pipeline demo', startsAt: new Date(2026, 4, 14, 13, 0), tone: 'success' },
+  { id: 'lunch', title: 'Team lunch', startsAt: new Date(2026, 4, 21, 12, 30), endsAt: new Date(2026, 4, 21, 14, 0), tone: 'neutral' },
 ];
 
 const OVERFLOW_EVENTS: CalendarEvent[] = [

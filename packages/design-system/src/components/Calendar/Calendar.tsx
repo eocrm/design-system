@@ -1,10 +1,11 @@
-import { forwardRef, useCallback, useState, type HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useState, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
 import { addMonths } from '../../calendar/dateMath';
 import { useMonth } from '../../calendar/useMonth';
+import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { MonthView } from './MonthView';
 import type { CalendarEvent, CalendarView } from './types';
 import styles from './Calendar.module.scss';
@@ -129,7 +130,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
   const goNext = () => handleChange(addMonths(cursor, 1));
   const goToday = () => handleChange(new Date());
 
-  return (
+  const body: ReactNode = (
     <div ref={ref} className={clsx(styles.calendar, className)} {...rest}>
       <header className={styles.header}>
         <h2 className={styles.title}>{grid.monthLabel}</h2>
@@ -171,4 +172,9 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
       )}
     </div>
   );
+
+  // When an explicit `locale` prop is provided, wrap the subtree so internal
+  // descendants (EventChip's `formatHour`, etc.) read the override via
+  // `useLocale()` rather than the ambient Context.
+  return locale !== undefined ? <LocaleProvider locale={locale}>{body}</LocaleProvider> : body;
 });

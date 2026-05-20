@@ -55,10 +55,18 @@ export function formatRange(from: Date, to: Date, locale: string): string {
   );
 }
 
-/** "9 AM" / "09:00" — 12/24-hour determined by locale default. */
+/** "9 AM" / "09:00" — hour only, 12/24-hour determined by locale default. */
 export function formatHour(hour: number, locale: string): string {
   const date = new Date(2000, 0, 1, hour);
   return getFormatter(locale, { hour: 'numeric' }).format(date);
+}
+
+/**
+ * "9:00 AM" / "09:00" — hour + minute, suitable for event start times.
+ * 12/24-hour determined by locale default.
+ */
+export function formatTime(date: Date, locale: string): string {
+  return getFormatter(locale, { hour: 'numeric', minute: '2-digit' }).format(date);
 }
 
 /** Test-only helper. Resets the formatter cache between tests. */

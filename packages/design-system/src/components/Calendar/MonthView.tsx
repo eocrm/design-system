@@ -2,10 +2,6 @@ import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'r
 import clsx from 'clsx';
 import type { MonthGrid } from '../../calendar/types';
 import { addDays, addMonths, isSameDay, startOfWeek } from '../../calendar/dateMath';
-import { useLocale } from '../../i18n/useLocale';
-import { formatDayLong } from '../../calendar/formatters';
-import { Popover } from '../Popover';
-import { Stack } from '../Stack';
 import type { CalendarEvent, EventBar } from './types';
 import { layoutEventsForMonth } from './utils';
 import { DayCell } from './DayCell';
@@ -84,7 +80,6 @@ export function MonthView({
   onEventClick,
   moreEventsLabel = (n) => `${n} more events`,
 }: MonthViewProps) {
-  const locale = useLocale();
   const layout = useMemo(
     () => layoutEventsForMonth(events, grid.weeks, maxLanesPerWeek),
     [events, grid.weeks, maxLanesPerWeek],
@@ -244,7 +239,7 @@ export function MonthView({
               return laneBars.map((bar) => (
                 <div
                   key={bar.event.id}
-                  aria-hidden="true"
+                  role="presentation"
                   className={styles.barSlot}
                   style={{
                     gridRow: lane + 2,
@@ -261,42 +256,30 @@ export function MonthView({
               ));
             })}
             {/* "+N more" overflow chips — placed at the row right after the
-                last visible lane, in each affected day's column. Each chip
-                triggers a Popover listing every event on that day. */}
+                last visible lane, in each affected day's column. Click fires
+                `onDayClick(date)` so the consumer can open their own detail
+                UI (popover, modal, drawer) — Calendar stays read-only. */}
             {hasHidden &&
               week.map((day, i) => {
                 const hiddenCount = layout.hiddenCounts.get(day.key) ?? 0;
                 if (hiddenCount === 0) return null;
-                const dayEvents = layout.eventsByDay.get(day.key) ?? [];
                 return (
                   <div
                     key={`more-${day.key}`}
                     className={styles.moreChipWrapper}
                     style={{ gridColumn: i + 1, gridRow: laneCount + 2 }}
                   >
-                    <Popover>
-                      <Popover.Trigger>
-                        <button
-                          type="button"
-                          className={styles.moreChip}
-                          aria-label={moreEventsLabel(hiddenCount)}
-                        >
-                          +{hiddenCount} more
-                        </button>
-                      </Popover.Trigger>
-                      <Popover.Content>
-                        <Popover.Heading>{formatDayLong(day.date, locale)}</Popover.Heading>
-                        <Stack gap="xs">
-                          {dayEvents.map((ev) => (
-                            <EventChip
-                              key={ev.id}
-                              event={ev}
-                              onClick={(clicked) => onEventClick?.(clicked)}
-                            />
-                          ))}
-                        </Stack>
-                      </Popover.Content>
-                    </Popover>
+                    <button
+                      type="button"
+                      className={styles.moreChip}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDayClick?.(day.date);
+                      }}
+                      aria-label={moreEventsLabel(hiddenCount)}
+                    >
+                      +{hiddenCount} more
+                    </button>
                   </div>
                 );
               })}

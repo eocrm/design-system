@@ -33,6 +33,7 @@ export {
   formatDayLong,
   formatRange,
   formatHour,
+  formatTime,
 } from './formatters';
 
 export { getFirstDayOfWeek, getWeekendDays } from './weekInfo';

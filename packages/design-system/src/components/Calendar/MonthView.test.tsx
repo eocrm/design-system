@@ -49,7 +49,7 @@ describe('MonthView', () => {
       <MonthView grid={grid} events={events} maxLanesPerWeek={3} cursor={new Date(2026, 4, 15)} />,
       { wrapper: wrap() },
     );
-    expect(screen.getByTitle('Meeting')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Meeting/ })).toBeInTheDocument();
   });
 
   it('fires onEventClick when an event chip is clicked', async () => {
@@ -69,7 +69,7 @@ describe('MonthView', () => {
       />,
       { wrapper: wrap() },
     );
-    await user.click(screen.getByTitle('Meeting'));
+    await user.click(screen.getByRole('button', { name: /Meeting/ }));
     expect(onEventClick).toHaveBeenCalledOnce();
     expect(onEventClick).toHaveBeenCalledWith(events[0]);
   });

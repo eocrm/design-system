@@ -107,6 +107,7 @@ export {
   formatDayLong,
   formatRange,
   formatHour,
+  formatTime,
   getFirstDayOfWeek,
   getWeekendDays,
 } from './calendar';

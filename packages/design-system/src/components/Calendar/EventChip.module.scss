@@ -51,6 +51,29 @@
   text-overflow: ellipsis;
 }
 
+// Tooltip content markup — small dim time prefix on its own line above the
+// event name so the two are visually distinct even when the event title is
+// long enough to wrap.
+.tooltipBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+// Tooltip background is dark (var(--color-fg)); foreground colors here are
+// the inverse so the time and title are readable.
+.tooltipTime {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-bg-subtle);
+}
+
+.tooltipTitle {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-bg);
+}
+
 // Tones — non-allDay (tinted background, strong-color foreground)
 .neutral {
   background: var(--color-bg-subtle);
