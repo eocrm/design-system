@@ -9,6 +9,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { useSelectContext } from './context';
+import { Chip } from './Chip';
 import styles from './Select.module.scss';
 
 export interface TriggerProps {
@@ -465,6 +466,112 @@ function ComboboxInputTrigger(props: TriggerProps) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// ChipsButtonTrigger — multi + chips + !searchable. Renders selected options
+// as removable inline chips inside a div with role="button". Cannot be a
+// native <button> because chip ✕ buttons nest inside it (no <button> in
+// <button>). Outside-click detection still works because Listbox tests
+// `triggerRef.contains(target)` and the wrapper IS the triggerRef.
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Chips trigger for multi-select without inline search. Wrapper is a
+ * keyboard-focusable `<div role="button">` (so the chips' own ✕ buttons
+ * can nest). Chip resolution walks `ctx.allRows`, not `ctx.rows`, so the
+ * chip list stays stable even if a future hover-search filters the
+ * popover — unselected options never show as chips, but selected ones
+ * never disappear.
+ *
+ * Keyboard:
+ *  - Closed: ArrowDown/Up/Enter open via the shared hook; printable chars
+ *    open + start typeahead; Space opens.
+ *  - Open: shared hook owns Arrow/Home/End/PageUp/Down/Enter/Escape/Tab.
+ *    Enter toggles the active option without closing (multi semantics).
+ *  - Backspace is NOT bound here (no input to detect emptiness against);
+ *    the searchable variant handles it.
+ */
+function ChipsButtonTrigger(props: TriggerProps) {
+  const ctx = useSelectContext('Trigger');
+  const { handleNavKey, stepTypeahead } = useTriggerKeyboard({
+    disabled: props.disabled,
+    readOnly: props.readOnly,
+  });
+  const activeOptionId = useActiveOptionId();
+
+  const selectedValues = Array.isArray(ctx.value) ? (ctx.value as string[]) : [];
+  // Walk `allRows` (not `rows`) so chips remain present even when a future
+  // search query filters the popover — selection is independent of filter.
+  const selectedOptions: { value: string; label: string }[] = [];
+  for (const row of ctx.allRows) {
+    if (row.kind === 'option' && selectedValues.includes(row.option.value)) {
+      selectedOptions.push({ value: row.option.value, label: row.option.label });
+    }
+  }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (props.disabled || props.readOnly) return;
+    if (handleNavKey(e)) return;
+    if (e.key === ' ') {
+      e.preventDefault();
+      if (!ctx.open) ctx.setOpen(true);
+      return;
+    }
+    if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      e.preventDefault();
+      if (!ctx.open) ctx.setOpen(true);
+      stepTypeahead(e.key);
+    }
+  };
+
+  // Mirrors ButtonTrigger's computedAriaLabel pattern: consumer's
+  // aria-label wins; otherwise synthesize from selections so screen
+  // readers hear the full list even when chips overflow visually.
+  const labelForAria = selectedOptions.map((o) => o.label).join(', ');
+  const computedAriaLabel =
+    props['aria-label'] ??
+    (selectedOptions.length > 0 ? `Selected: ${labelForAria}` : 'Open select');
+
+  return (
+    <div
+      ref={ctx.triggerRef as Ref<HTMLDivElement>}
+      id={ctx.triggerId}
+      role="button"
+      tabIndex={props.disabled ? -1 : 0}
+      className={clsx(styles.trigger, styles.triggerChips)}
+      aria-haspopup="listbox"
+      aria-expanded={ctx.open}
+      aria-controls={ctx.open ? ctx.listboxId : undefined}
+      aria-activedescendant={activeOptionId}
+      aria-label={computedAriaLabel}
+      aria-labelledby={props['aria-labelledby']}
+      aria-describedby={props['aria-describedby']}
+      aria-invalid={props.invalid || undefined}
+      aria-readonly={props.readOnly || undefined}
+      aria-disabled={props.disabled || undefined}
+      onClick={() => {
+        if (props.disabled || props.readOnly) return;
+        ctx.setOpen(!ctx.open);
+      }}
+      onKeyDown={handleKeyDown}
+    >
+      {selectedOptions.map((o) => (
+        <Chip
+          key={o.value}
+          label={o.label}
+          disabled={props.disabled}
+          onRemove={() => {
+            if (props.disabled || props.readOnly) return;
+            ctx.toggleValue(o.value);
+          }}
+        />
+      ))}
+      {selectedOptions.length === 0 && (
+        <span className={styles.placeholder}>{props.placeholder ?? ''}</span>
+      )}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // Dispatcher — picks the variant based on context flags. The public
 // `Trigger` export is what `<Select>` renders; the variants stay module-
 // local so the future Phase 5/6 multi-mode variants slot in here too.
@@ -474,18 +581,21 @@ function ComboboxInputTrigger(props: TriggerProps) {
  * Internal dispatcher rendered by `<Select>`. Routes to the appropriate
  * trigger variant based on mode flags from context.
  *
- *  - `single + !searchable` → `ButtonTrigger`
- *  - `single + searchable`  → `ComboboxInputTrigger`
- *  - `multi`                → `ButtonTrigger` for now; replaced by
- *                              `SummaryTrigger` / `ChipsInputTrigger` in
- *                              Phase 5 / 6.
+ *  - `single + !searchable`            → `ButtonTrigger`
+ *  - `single + searchable`             → `ComboboxInputTrigger`
+ *  - `multi + chips + !searchable`     → `ChipsButtonTrigger`
+ *  - `multi + chips + searchable`      → `ChipsInputTrigger` (Phase 6 task 15)
+ *  - `multi + summary` (both forms)    → `ButtonTrigger` w/ comma-joined labels
  */
 export function Trigger(props: TriggerProps) {
   const ctx = useSelectContext('Trigger');
   if (!ctx.multiple && ctx.searchable) {
     return <ComboboxInputTrigger {...props} />;
   }
-  // Multi-chips trigger lands in Phase 6; until then, multi always uses
-  // ButtonTrigger which now renders comma-joined summary labels.
+  if (ctx.multiple && ctx.triggerDisplay === 'chips' && !ctx.searchable) {
+    return <ChipsButtonTrigger {...props} />;
+  }
+  // Multi-summary (both searchable + non-searchable) renders as the
+  // comma-joined button. Multi-chips-searchable is added next task.
   return <ButtonTrigger {...props} />;
 }

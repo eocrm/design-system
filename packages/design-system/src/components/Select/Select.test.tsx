@@ -575,3 +575,40 @@ describe('Select — multi-summary-searchable', () => {
     expect(document.activeElement).toBe(input);
   });
 });
+
+describe('Select — multi-chips, non-searchable', () => {
+  const OPTS = [
+    { value: 'a', label: 'Alpha' },
+    { value: 'b', label: 'Beta' },
+  ];
+
+  it('renders chips for each selected option inside the trigger', () => {
+    render(<Select multiple triggerDisplay="chips" options={OPTS} value={['a', 'b']} />);
+    const chips = screen.getAllByRole('button', { name: /Remove/ });
+    expect(chips).toHaveLength(2);
+    expect(chips[0]).toHaveAttribute('aria-label', 'Remove Alpha');
+  });
+
+  it("clicking a chip's ✕ removes that option", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Select
+        multiple
+        triggerDisplay="chips"
+        options={OPTS}
+        defaultValue={['a', 'b']}
+        onChange={onChange}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Remove Alpha' }));
+    expect(onChange).toHaveBeenCalledWith(['b'], [OPTS[1]]);
+  });
+
+  it('clicking on the trigger (not a chip) opens the popover', async () => {
+    const user = userEvent.setup();
+    render(<Select multiple triggerDisplay="chips" options={OPTS} placeholder="Pick" />);
+    await user.click(screen.getByLabelText('Open select'));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+});

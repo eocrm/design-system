@@ -141,6 +141,62 @@
   }
 }
 
+// ─── Chips-mode trigger (Phase 6) ───────────────────────────────────────────
+// Wraps content (chips + optional input) onto multiple lines. Drops the
+// `.triggerButton` ellipsis rule (`white-space: nowrap`) so the chip list
+// can stack. Vertical padding shrinks from the default 0 to `--space-1`
+// so wrapped chip rows have breathing room.
+.triggerChips {
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  white-space: normal;
+}
+
+// Chip — single removable token rendered inside the chips trigger.
+// 4px vertical / 8px horizontal padding (the smallest available token
+// pair); a literal 2px-vertical would be tighter, but Rule 3 forbids
+// raw values so we accept the slightly taller chip.
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-badge-neutral-fg);
+  background: var(--color-badge-neutral-bg);
+  border-radius: var(--radius-sm);
+  user-select: none;
+}
+
+.chipLabel {
+  line-height: 1.4;
+}
+
+.chipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-danger);
+    background: var(--color-bg-danger-subtle);
+  }
+}
+
+.chipDisabled {
+  color: var(--color-fg-disabled);
+  cursor: not-allowed;
+}
+
 // ─── Visual state hooks (populated in Phase 10) ─────────────────────────────
 .size-sm,
 .size-md,
