@@ -690,4 +690,25 @@ describe('Select — multi-chips-searchable', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('chips remain visible with their correct labels while typing filters the popover', async () => {
+    const user = userEvent.setup();
+    const OPTS_LOCAL = [
+      { value: 'a', label: 'Alpha' },
+      { value: 'b', label: 'Beta' },
+    ];
+    render(
+      <Select
+        multiple
+        triggerDisplay="chips"
+        searchable
+        options={OPTS_LOCAL}
+        defaultValue={['a']}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Remove Alpha' })).toBeInTheDocument();
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.type(input, 'be');
+    expect(screen.getByRole('button', { name: 'Remove Alpha' })).toBeInTheDocument();
+  });
 });
