@@ -6,7 +6,7 @@ import styles from './Button.module.scss';
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 
 /** Control height. See ButtonProps#size for when to use each. */
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**

@@ -25,6 +25,11 @@ describe('Button', () => {
     expect(btn.className).toMatch(/lg/);
   });
 
+  it('applies the xs size class', () => {
+    render(<Button size="xs">Tiny</Button>);
+    expect(screen.getByRole('button', { name: 'Tiny' }).className).toMatch(/xs/);
+  });
+
   it('applies the success variant class name', () => {
     render(<Button variant="success">Saved!</Button>);
     expect(screen.getByRole('button', { name: 'Saved!' }).className).toMatch(/success/);

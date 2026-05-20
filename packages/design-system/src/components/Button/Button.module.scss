@@ -29,6 +29,13 @@
 }
 
 // Sizes
+.xs {
+  height: var(--size-xs);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  gap: var(--space-1);
+}
+
 .sm {
   height: var(--size-sm);
   padding: 0 var(--space-3);
