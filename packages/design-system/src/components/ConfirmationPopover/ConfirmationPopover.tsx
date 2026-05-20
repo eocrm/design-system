@@ -1,4 +1,4 @@
-import { useCallback, useId, useState, type ReactElement, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
 import { Stack } from '../Stack';
@@ -86,6 +86,17 @@ export function ConfirmationPopover({
     [onCancel, setOpen],
   );
 
+  const cancelRef = useRef<HTMLButtonElement | null>(null);
+
+  // Focus the Cancel button after Popover.Content focuses the panel.
+  // queueMicrotask runs after Popover.Content's own focus effect (which also
+  // uses queueMicrotask), so by the time this runs, the panel has focus and
+  // we override it with Cancel.
+  useEffect(() => {
+    if (!open) return;
+    queueMicrotask(() => cancelRef.current?.focus({ preventScroll: true }));
+  }, [open]);
+
   const handleConfirm = useCallback(() => {
     onConfirm();
     setOpen(false);
@@ -113,7 +124,7 @@ export function ConfirmationPopover({
             </p>
           )}
           <Cluster justify="end" gap="sm">
-            <Button variant="secondary" size="sm" onClick={handleCancel}>
+            <Button ref={cancelRef} variant="secondary" size="sm" onClick={handleCancel}>
               {cancelLabel}
             </Button>
             <Button

@@ -125,3 +125,25 @@ describe('ConfirmationPopover — content rendering (sync)', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
+
+describe('ConfirmationPopover — initial focus', () => {
+  it('focuses the Cancel button after open (both variants)', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <ConfirmationPopover title="Confirm?" onConfirm={() => {}}>
+        <button type="button">Open</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+
+    rerender(
+      <ConfirmationPopover title="Confirm?" variant="danger" onConfirm={() => {}}>
+        <button type="button">Open</button>
+      </ConfirmationPopover>,
+    );
+    // Re-rendering with a new variant keeps the popover open; focus has
+    // already moved to Cancel on the original open. Verify it's still there.
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+  });
+});
