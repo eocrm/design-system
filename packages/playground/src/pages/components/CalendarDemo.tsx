@@ -115,6 +115,13 @@ function ControlledCalendarDemo() {
   return <Calendar value={cursor} onChange={setCursor} events={SAMPLE_EVENTS} />;
 }
 
+function ViewSwitcherDemo() {
+  const [view, setView] = useState<'month' | 'week' | 'day'>('week');
+  return (
+    <Calendar defaultValue={TODAY} view={view} onViewChange={setView} events={SAMPLE_EVENTS} />
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export function CalendarDemo() {
@@ -182,7 +189,7 @@ export function CalendarDemo() {
 
       <Example
         title="ru-RU locale"
-        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings like the Today button are the consumer's responsibility; pass them via the labels prop."
+        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings like the Today button and view-switcher labels are the consumer's responsibility; pass them via the labels prop."
         code={`<Calendar
   defaultValue={new Date(2026, 4, 15)}
   events={SAMPLE_EVENTS}
@@ -192,6 +199,9 @@ export function CalendarDemo() {
     previousMonth: 'Предыдущий месяц',
     nextMonth: 'Следующий месяц',
     moreEvents: (n) => \`ещё ${'${n}'} событий\`,
+    viewMonth: 'Месяц',
+    viewWeek: 'Неделя',
+    viewDay: 'День',
   }}
 />`}
       >
@@ -204,8 +214,59 @@ export function CalendarDemo() {
             previousMonth: 'Предыдущий месяц',
             nextMonth: 'Следующий месяц',
             moreEvents: (n) => `ещё ${n} событий`,
+            viewMonth: 'Месяц',
+            viewWeek: 'Неделя',
+            viewDay: 'День',
           }}
         />
+      </Example>
+
+      <Example
+        title="Week view"
+        description="7 columns × hour rows. Timed events position by hour; overlapping events split into equal-width lanes side-by-side. All-day and multi-day events render in the band above the hour grid. A horizontal line marks the current time in today's column."
+        code={`<Calendar
+  defaultValue={new Date()}
+  defaultView="week"
+  events={SAMPLE_EVENTS}
+/>`}
+      >
+        <Calendar defaultValue={TODAY} defaultView="week" events={SAMPLE_EVENTS} />
+      </Example>
+
+      <Example
+        title="Day view"
+        description="Single-day hour grid for focused planning. Custom hourRange tightens the visible range to business hours."
+        code={`<Calendar
+  defaultValue={new Date()}
+  defaultView="day"
+  events={SAMPLE_EVENTS}
+  hourRange={[8, 18]}
+/>`}
+      >
+        <Calendar
+          defaultValue={TODAY}
+          defaultView="day"
+          events={SAMPLE_EVENTS}
+          hourRange={[8, 18]}
+        />
+      </Example>
+
+      <Example
+        title="View switching (controlled)"
+        description="Consumer owns the active view via `view` / `onViewChange`. Useful for URL-syncing the current view."
+        code={`function ViewSwitcherDemo() {
+  const [view, setView] = useState<'month' | 'week' | 'day'>('week');
+  return (
+    <Calendar
+      defaultValue={new Date()}
+      view={view}
+      onViewChange={setView}
+      events={SAMPLE_EVENTS}
+    />
+  );
+}`}
+      >
+        <ViewSwitcherDemo />
       </Example>
 
       <Example
