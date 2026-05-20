@@ -48,7 +48,7 @@
 }
 
 .item:hover:not([aria-disabled='true']),
-.item:focus:not([aria-disabled='true']) {
+.item:focus-visible:not([aria-disabled='true']) {
   background: var(--color-bg-muted);
 }
 
@@ -57,7 +57,7 @@
 }
 
 .item[data-tone='danger']:hover:not([aria-disabled='true']),
-.item[data-tone='danger']:focus:not([aria-disabled='true']) {
+.item[data-tone='danger']:focus-visible:not([aria-disabled='true']) {
   background: var(--color-bg-danger-subtle);
   color: var(--color-danger);
 }
@@ -85,7 +85,7 @@
 // with `.item[data-tone='danger']:hover` — equal specificity means later
 // rule wins, and this rule would silently suppress the danger color.
 .item[aria-checked='true']:hover:not([aria-disabled='true']),
-.item[aria-checked='true']:focus:not([aria-disabled='true']) {
+.item[aria-checked='true']:focus-visible:not([aria-disabled='true']) {
   background: var(--color-badge-info-bg);
   color: var(--color-badge-info-fg);
 }

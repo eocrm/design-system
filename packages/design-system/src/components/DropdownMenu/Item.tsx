@@ -30,6 +30,15 @@ export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElemen
   shortcut?: string;
   /** Disabled items are skipped by keyboard nav, dimmed, and don't fire `onSelect` on click. */
   disabled?: boolean;
+  /**
+   * Whether to close the menu after `onSelect` fires. Defaults to `true`.
+   *
+   * Set to `false` when this item is wrapped in a Popover/ConfirmationPopover
+   * trigger — the trigger will open its panel on this click; closing the
+   * menu would unmount the popover before the user could interact with it.
+   * The menu can be dismissed separately (Escape or outside-click).
+   */
+  closeOnSelect?: boolean;
 }
 
 /**
@@ -37,7 +46,18 @@ export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElemen
  * keyboard navigation and typeahead. Fires `onSelect` on activation.
  */
 export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
-  { onSelect, tone = 'default', icon, shortcut, disabled = false, className, children, ...rest },
+  {
+    onSelect,
+    tone = 'default',
+    icon,
+    shortcut,
+    disabled = false,
+    closeOnSelect = true,
+    className,
+    children,
+    onClick: consumerOnClick,
+    ...rest
+  },
   forwardedRef,
 ) {
   const ctx = useDropdownMenuContext('Item');
@@ -57,15 +77,24 @@ export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function I
   const index = ctx.itemsRef.current.findIndex((x) => x.id === id);
   const isActive = index !== -1 && index === ctx.activeIndex;
 
-  const handleClick = (_e: MouseEvent) => {
+  const handleClick = (e: MouseEvent<HTMLDivElement>) => {
     if (disabled) return;
+    // Run consumer's onClick first (e.g., injected by <Popover.Trigger> when
+    // this Item is wrapped as a popover trigger). Consumer can call
+    // `e.preventDefault()` to short-circuit the default onSelect+closeAll;
+    // otherwise we proceed.
+    consumerOnClick?.(e);
+    if (e.defaultPrevented) return;
     onSelect();
-    ctx.closeAll();
+    if (closeOnSelect) ctx.closeAll();
   };
 
   return (
     // {...rest} first so consumer-supplied props don't override the menuitem
     // ARIA contract (role/tabIndex/aria-disabled) or our event wiring.
+    // onClick is owned by Item — we chain the consumer's onClick inside
+    // handleClick instead of letting {...rest} spread it (it would be
+    // overridden anyway by the explicit onClick below).
     <div
       {...rest}
       ref={mergeRefs<HTMLDivElement>(itemRef, forwardedRef)}

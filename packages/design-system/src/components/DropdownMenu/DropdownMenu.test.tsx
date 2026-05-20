@@ -661,6 +661,75 @@ describe('DropdownMenu — placement props', () => {
   });
 });
 
+describe('DropdownMenu — Item closeOnSelect + consumer onClick chain', () => {
+  it('closeOnSelect={false} keeps the menu open after click; onSelect still fires', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item closeOnSelect={false} onSelect={onSelect}>
+            Stay open
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Stay open' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('chains a consumer-supplied onClick before onSelect+closeAll', async () => {
+    // Locks in the contract Popover.Trigger relies on when it clones onto a
+    // <DropdownMenu.Item>: the injected onClick must run inside Item's
+    // click handler, not be overridden by Item's own handler.
+    const user = userEvent.setup();
+    const order: string[] = [];
+    const consumerOnClick = () => order.push('consumer');
+    const onSelect = () => order.push('onSelect');
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={onSelect} onClick={consumerOnClick}>
+            Action
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Action' }));
+    expect(order).toEqual(['consumer', 'onSelect']);
+  });
+
+  it('consumer onClick e.preventDefault() short-circuits onSelect+closeAll', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={onSelect} onClick={(e) => e.preventDefault()}>
+            Guarded
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Guarded' }));
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+});
+
 describe('DropdownMenu — Item variants', () => {
   it('applies data-tone="danger" to danger items', async () => {
     const user = userEvent.setup();

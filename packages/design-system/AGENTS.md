@@ -198,7 +198,7 @@ const [tab, setTab] = useState('overview');
 
 - Compound API: `<DropdownMenu>` is the provider; `<Trigger>` clones its single child to inject ARIA + handlers; `<Content>` portals to `document.body` and positions itself with Floating UI; `<Item>` renders a `menuitem`; `<Separator>` renders a divider.
 - Trigger child must accept a ref via `forwardRef`. `<Button>` does.
-- `<Item>` props: `onSelect` (required), `disabled`, `tone` (`'default'` | `'danger'`), `icon`, `shortcut`.
+- `<Item>` props: `onSelect` (required), `disabled`, `tone` (`'default'` | `'danger'`), `icon`, `shortcut`, `closeOnSelect` (default `true`; set to `false` when wrapping the Item in a `<Popover.Trigger>` or `<ConfirmationPopover>` — otherwise the menu close would unmount the popover before it can render).
 - `<Content>` props: `side` (`'top'` | `'bottom'`, default `'bottom'`), `align` (`'start'` | `'center'` | `'end'`, default `'start'`), `sideOffset` (default `4`), `minWidth`.
 - Keyboard: Enter/Space/ArrowDown on trigger opens with first item active; ArrowUp opens with last; Arrow/Home/End navigate skipping disabled and separators; Enter/Space activates; Escape closes and returns focus to trigger; Tab closes and returns focus to trigger (then continues normal traversal); typeahead jumps to first matching label (500ms debounce).
 - Opens with a short scale-fade from the trigger side (140 ms `ease-out`). Closes instantly by design — menu close should feel like "get out of the way", not "play a transition". Respects `prefers-reduced-motion: reduce`.
@@ -277,6 +277,68 @@ const [tab, setTab] = useState('overview');
 - Opens with a short scale-fade (140 ms) from the trigger side. Closes instantly. Respects `prefers-reduced-motion: reduce`.
 - Z-layer `--z-tooltip: 1300` is above modal and toast, so tooltips inside any host UI remain visible.
 
+### `<Popover>` — non-modal floating panel for interactive content
+
+```tsx
+<Popover>
+  <Popover.Trigger>
+    <Button variant="secondary">Filters</Button>
+  </Popover.Trigger>
+  <Popover.Content>
+    <Stack gap="sm">
+      <Popover.Heading>Filter results</Popover.Heading>
+      {/* …form controls… */}
+      <Cluster justify="end" gap="sm">
+        <Popover.Close>
+          <Button variant="secondary" size="sm">
+            Cancel
+          </Button>
+        </Popover.Close>
+        <Popover.Close>
+          <Button size="sm" onClick={apply}>
+            Apply
+          </Button>
+        </Popover.Close>
+      </Cluster>
+    </Stack>
+  </Popover.Content>
+</Popover>
+```
+
+- Compound API: `<Popover>` is the provider; `<Popover.Trigger>` clones its single child to inject ARIA + click; `<Popover.Content>` portals to `document.body` and positions via Floating UI; `<Popover.Heading>` (optional) wires `aria-labelledby`; `<Popover.Close>` clones its child to inject a close-onClick.
+- Trigger child must accept a ref (`forwardRef`). `<Button>` does.
+- **Non-modal**: focus moves to the panel on open; Tab traverses INTO content, then OUT to the page behind. Click-outside or Escape dismisses. Page is NOT inert.
+- `<Popover.Content>` props: `side` (`'top'` | `'right'` | `'bottom'` | `'left'`, default `'bottom'`), `align` (default `'center'`), `sideOffset` (default `10`), `minWidth`.
+- `<Popover.Heading>` props: `as` (`'h2'` – `'h6'`, default `'h3'`).
+- Opens with a short scale-fade from the trigger side (140ms). Closes instantly. Respects `prefers-reduced-motion: reduce`.
+- **From a DropdownMenu item.** Wrap a `<DropdownMenu.Item closeOnSelect={false}>` as the `<Popover.Trigger>` child — the Item itself becomes the trigger, so the full highlighted row opens the popover. `closeOnSelect={false}` keeps the menu open while the popover is shown.
+- Z-layer `--z-popover: 1050` — above dropdown, below modal/toast/tooltip.
+- For passive hover/focus hints → `<Tooltip>`. For lists of actions → `<DropdownMenu>`. For focus-locked dialogs → `<Modal>` (not yet shipped).
+
+### `<ConfirmationPopover>` — opinionated "Are you sure?" preset
+
+```tsx
+<ConfirmationPopover
+  title="Delete record?"
+  description="This action cannot be undone."
+  confirmLabel="Delete"
+  variant="danger"
+  onConfirm={async () => {
+    await api.deleteRecord(id);
+  }}
+>
+  <Button variant="danger">Delete</Button>
+</ConfirmationPopover>
+```
+
+- Built on top of `<Popover>`. Declarative: `title` / `description` / `confirmLabel` / `cancelLabel` / `variant` / `onConfirm` / `onCancel`.
+- `variant`: `'default'` (Confirm is primary) | `'danger'` (Confirm is danger).
+- **Initial focus on Cancel** for both variants — keyboard Enter never accidentally confirms. Tab once to Confirm.
+- **Async-aware** `onConfirm`. May return a Promise. While pending, both buttons disable, Confirm shows a spinner, and Escape / click-outside are blocked.
+- **Failure mode**: on reject, popover stays open and buttons re-enable. Consumer surfaces the error externally — ConfirmationPopover does NOT render inline errors.
+- Anchors above the trigger by default (`side="top"`).
+- **From a DropdownMenu item (kebab Delete pattern).** Wrap a `<DropdownMenu.Item closeOnSelect={false}>` as the trigger — clicking anywhere on the row opens the confirmation. The menu stays open until the user dismisses it (Escape or click outside). To close the menu after the action resolves, drive `DropdownMenu`'s `open` state externally and call `setMenuOpen(false)` inside `onConfirm`.
+
 ---
 
 ## Tokens (the only "values" you write)
@@ -295,13 +357,13 @@ All available as CSS custom properties after you import `global.scss`:
 | Font sizes      | `--font-size-xs/sm/md/lg/xl/2xl/3xl`, `--font-size-code` (0.92em for inline mono)                                                                                                                   |
 | Font weights    | `--font-weight-regular/medium/semibold/bold`                                                                                                                                                        |
 | Line heights    | `--line-height-tight` / `--line-height-normal` / `--line-height-none` (1)                                                                                                                           |
-| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-badge-sm` (16), `--size-chip` (18), `--size-dropdown-min-width` (160), `--size-dropdown-indicator` (16)                                   |
+| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-badge-sm` (16), `--size-chip` (18), `--size-dropdown-min-width` (160), `--size-popover-min-width` (220), `--size-dropdown-indicator` (16) |
 | Borders         | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3)                                                                                                                  |
 | Letter spacing  | `--letter-spacing-caps` (0.03em)                                                                                                                                                                    |
 | Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
 | Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width`                                                                                                                               |
 | Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
-| Layer (z-index) | `--z-dropdown` / `--z-modal` / `--z-toast` / `--z-tooltip`                                                                                                                                          |
+| Layer (z-index) | `--z-dropdown` / `--z-popover` / `--z-modal` / `--z-toast` / `--z-tooltip`                                                                                                                          |
 
 ---
 
@@ -330,6 +392,9 @@ All available as CSS custom properties after you import `global.scss`:
 | `<Tooltip><Button disabled>…</Button></Tooltip>`                                      | `disabled` buttons don't fire pointer/focus events; render with `aria-disabled="true"` + intercept the click, or wrap in `<span>`. |
 | Putting essential info _only_ in a tooltip                                            | Make it visible in copy or in the trigger's `aria-label`. Touch users will never see the tooltip.                                  |
 | `<Tooltip content="">…</Tooltip>` expecting a no-op listener attach                   | Empty content **is** a no-op — listeners and aria are skipped entirely. That's by design.                                          |
+| `<Popover.Trigger><Button disabled>…</Button></Popover.Trigger>`                      | `disabled` buttons don't fire click; render with `aria-disabled="true"` + intercept the click, or wrap in `<span>`.                |
+| `<Popover.Content>` with no `<Popover.Close>` AND non-obvious outside-click dismissal | Keyboard / screen-reader users get no clear close affordance. Add a `<Popover.Close>` close button.                                |
+| `<ConfirmationPopover>` with `onConfirm` that never settles                           | v1 has no timeout — popover stays in pending state forever. Add a timeout/abort inside your `onConfirm` if relevant.               |
 
 ---
 

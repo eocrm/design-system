@@ -10,7 +10,9 @@ export type ComponentName =
   | 'Badge'
   | 'Tabs'
   | 'DropdownMenu'
-  | 'Tooltip';
+  | 'Tooltip'
+  | 'Popover'
+  | 'ConfirmationPopover';
 
 export interface MockupEntry {
   slug: string;

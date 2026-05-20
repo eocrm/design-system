@@ -10,6 +10,7 @@ import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
 import { Tooltip } from '@eocrm/design-system';
+import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
 const items: { to: string; name: string; description: string; preview: React.ReactNode }[] = [
@@ -147,6 +148,49 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             Save
           </Button>
         </Tooltip>
+      </Cluster>
+    ),
+  },
+  {
+    to: '/components/popover',
+    name: 'Popover',
+    description: 'Non-modal floating panel for arbitrary small surfaces.',
+    preview: (
+      <Cluster gap="sm" justify="center">
+        <Popover defaultOpen>
+          <Popover.Trigger>
+            <Button size="sm" variant="secondary">
+              Filters
+            </Button>
+          </Popover.Trigger>
+          <Popover.Content>
+            <Stack gap="xs">
+              <Popover.Heading>Filters</Popover.Heading>
+              <div>(controls)</div>
+            </Stack>
+          </Popover.Content>
+        </Popover>
+      </Cluster>
+    ),
+  },
+  {
+    to: '/components/confirmation-popover',
+    name: 'ConfirmationPopover',
+    description: '"Are you sure?" preset on top of Popover, with async-aware Confirm.',
+    preview: (
+      <Cluster gap="sm" justify="center">
+        <ConfirmationPopover
+          defaultOpen
+          title="Delete?"
+          description="Cannot be undone."
+          confirmLabel="Delete"
+          variant="danger"
+          onConfirm={() => undefined}
+        >
+          <Button size="sm" variant="danger">
+            Delete
+          </Button>
+        </ConfirmationPopover>
       </Cluster>
     ),
   },

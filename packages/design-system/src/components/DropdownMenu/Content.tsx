@@ -109,8 +109,11 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
 
   // Outside-click: pointerdown on document, target is neither inside this
   // Content nor inside the Trigger, AND not inside any other open submenu
-  // panel (recognised by [data-dropdown-menu-content]). Excluding the trigger
-  // prevents fighting the trigger's own toggle handler.
+  // panel (recognised by [data-dropdown-menu-content]) OR any open popover
+  // panel (recognised by [data-popover-content]). Excluding the trigger
+  // prevents fighting the trigger's own toggle handler. Excluding popovers
+  // lets a Popover opened from inside a menu item handle its own clicks
+  // (Cancel/Confirm buttons, form controls) without collapsing the menu.
   useEffect(() => {
     if (!ctx.open) return;
     const onPointerDown = (e: globalThis.PointerEvent) => {
@@ -120,8 +123,11 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       const trigger = ctx.triggerRef.current;
       if (content && content.contains(target)) return;
       if (trigger && trigger.contains(target)) return;
-      // If the click is inside a deeper submenu panel, let that sub handle it.
-      const allPanels = document.querySelectorAll('[data-dropdown-menu-content]');
+      // If the click is inside a deeper submenu panel or any popover panel,
+      // let that surface handle it.
+      const allPanels = document.querySelectorAll(
+        '[data-dropdown-menu-content], [data-popover-content]',
+      );
       for (const panel of allPanels) {
         if (panel !== content && panel.contains(target)) return;
       }

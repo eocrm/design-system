@@ -46,3 +46,20 @@ export type {
 
 export { Tooltip } from './components/Tooltip';
 export type { TooltipProps, TooltipSide, TooltipAlign } from './components/Tooltip';
+
+export { Popover } from './components/Popover';
+export type {
+  PopoverProps,
+  PopoverTriggerProps,
+  PopoverContentProps,
+  PopoverHeadingProps,
+  PopoverCloseProps,
+  PopoverSide,
+  PopoverAlign,
+} from './components/Popover';
+
+export { ConfirmationPopover } from './components/ConfirmationPopover';
+export type {
+  ConfirmationPopoverProps,
+  ConfirmationVariant,
+} from './components/ConfirmationPopover';
