@@ -37,6 +37,18 @@
   text-align: left;
 }
 
+// Combobox-input trigger (Phase 4 — single + searchable). Inherits the
+// `.trigger` box styling, focus ring, and disabled colors; this modifier
+// only flips the cursor (text caret over the input vs pointer over the
+// button) and styles the native HTML placeholder pseudo-element.
+.triggerInput {
+  cursor: text;
+
+  &::placeholder {
+    color: var(--color-fg-muted);
+  }
+}
+
 .placeholder {
   color: var(--color-fg-muted);
 }

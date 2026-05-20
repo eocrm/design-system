@@ -193,12 +193,41 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     onOpenChange,
   });
 
-  // Phase 2: no filter yet, so `rows` and `allRows` are identical. Phase 4
-  // (searchable) splits them — `rows` becomes the filtered subset.
   const allRows = useMemo(() => flattenOptions(options), [options]);
-  const rows = allRows;
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   const [query, setQuery] = useState<string>('');
+
+  // When `searchable`, filter `allRows` by the query (case-insensitive
+  // substring on label OR description). Group headers are retained only
+  // when at least one option underneath them matches — a header sitting
+  // alone in the listbox is noise.
+  //
+  // Empty query short-circuits to the unfiltered list so the open-effect
+  // in Listbox lands on the user's selected row, and so the first
+  // ArrowDown after open lands on row 0 instead of row 0-of-filtered.
+  const rows = useMemo(() => {
+    if (!searchable || query.trim() === '') return allRows;
+    const q = query.toLowerCase();
+    const out: typeof allRows = [];
+    let pendingHeader: (typeof allRows)[number] | null = null;
+    for (const row of allRows) {
+      if (row.kind === 'header') {
+        pendingHeader = row;
+        continue;
+      }
+      const matches =
+        row.option.label.toLowerCase().includes(q) ||
+        (row.option.description?.toLowerCase().includes(q) ?? false);
+      if (matches) {
+        if (pendingHeader) {
+          out.push(pendingHeader);
+          pendingHeader = null;
+        }
+        out.push(row);
+      }
+    }
+    return out;
+  }, [allRows, searchable, query]);
 
   const triggerRef = useRef<HTMLElement | null>(null);
   const listboxRef = useRef<HTMLUListElement | null>(null);

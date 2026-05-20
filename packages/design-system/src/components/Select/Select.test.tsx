@@ -322,6 +322,93 @@ describe('Select — typeahead (non-searchable)', () => {
   });
 });
 
+describe('Select — single, searchable (combobox input)', () => {
+  it('renders the trigger as an input with role=combobox', () => {
+    render(<Select searchable options={STATUSES} placeholder="Pick" />);
+    const input = screen.getByRole('combobox');
+    expect(input.tagName).toBe('INPUT');
+    expect(input).toHaveAttribute('aria-autocomplete', 'list');
+  });
+
+  it('shows selected label as input value when closed', () => {
+    render(<Select searchable options={STATUSES} value="pending" />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    expect(input.value).toBe('Pending');
+  });
+
+  it('typing replaces the label with the query and opens', async () => {
+    const user = userEvent.setup();
+    render(<Select searchable options={STATUSES} value="pending" />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    input.focus();
+    await user.keyboard('a');
+    expect(input.value).toBe('a');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('typing filters options by label (case-insensitive)', async () => {
+    const user = userEvent.setup();
+    render(<Select searchable options={STATUSES} />);
+    const input = screen.getByRole('combobox');
+    input.focus();
+    await user.keyboard('arc');
+    expect(screen.queryByRole('option', { name: 'Active' })).toBeNull();
+    expect(screen.queryByRole('option', { name: 'Pending' })).toBeNull();
+    expect(screen.getByRole('option', { name: 'Archived' })).toBeInTheDocument();
+  });
+
+  it('Escape reverts query to selected label', async () => {
+    const user = userEvent.setup();
+    render(<Select searchable options={STATUSES} defaultValue="pending" />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    input.focus();
+    await user.keyboard('arc');
+    expect(input.value).toBe('arc');
+    await user.keyboard('{Escape}');
+    expect(input.value).toBe('Pending');
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('Click on row commits the selection and replaces input value with new label', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select searchable options={STATUSES} onChange={onChange} />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await user.click(input);
+    await user.click(screen.getByRole('option', { name: 'Pending' }));
+    expect(onChange).toHaveBeenCalledWith('pending', STATUSES[1]);
+    expect(input.value).toBe('Pending');
+  });
+
+  it('Click outside reverts query without selecting', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <div>
+        <Select searchable options={STATUSES} defaultValue="active" onChange={onChange} />
+        <button data-testid="outside">outside</button>
+      </div>,
+    );
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    input.focus();
+    await user.keyboard('arc');
+    expect(input.value).toBe('arc');
+    await user.click(screen.getByTestId('outside'));
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input.value).toBe('Active');
+  });
+
+  it('ArrowDown on focused-but-closed combobox opens without replacing input value', async () => {
+    const user = userEvent.setup();
+    render(<Select searchable options={STATUSES} value="pending" />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    input.focus();
+    await user.keyboard('{ArrowDown}');
+    expect(input.value).toBe('Pending');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+});
+
 describe('Select — grouped options', () => {
   const GROUPED = [
     {
