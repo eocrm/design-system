@@ -1,6 +1,6 @@
 import { startOfDay, toDateKey } from '../../calendar/dateMath';
 import type { Week } from '../../calendar/types';
-import type { CalendarEvent, EventBar, MonthLayout } from './types';
+import type { AllDayBar, CalendarEvent, EventBar, HourGridLayout, MonthLayout, TimedEventBlock } from './types';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -128,4 +128,186 @@ export function layoutEventsForMonth(
   }
 
   return { bars, hiddenCounts };
+}
+
+interface DayRef {
+  date: Date;
+  key: string;
+}
+
+interface NormalizedTimed {
+  event: CalendarEvent;
+  dayIndex: number;
+  startMinutes: number;
+  endMinutes: number;
+}
+
+/**
+ * Lay out events for a Week or Day view's hour grid.
+ *
+ * - `allDay` events become bars in the AllDayBand (multi-day spans flatten
+ *   edges, like the month bars).
+ * - Timed events get positioned in their day column with greedy lane
+ *   assignment; each block's `laneCount` equals the size of its transitive
+ *   collision group (so siblings render at uniform width within the group).
+ * - Events outside the day range are dropped; events partially outside the
+ *   hour range keep their natural `startMinutes`/`endMinutes` (may be
+ *   negative or past the range) so the renderer can clip visually.
+ */
+export function layoutEventsForHourGrid(
+  events: readonly CalendarEvent[],
+  days: readonly DayRef[],
+  hourRange: readonly [number, number],
+): HourGridLayout {
+  if (events.length === 0 || days.length === 0) {
+    return { timedBlocks: [], allDayBars: [] };
+  }
+
+  const viewStart = startOfDay(days[0].date).getTime();
+  const viewEnd = startOfDay(days[days.length - 1].date).getTime() + MS_PER_DAY;
+  const baseHourMinutes = hourRange[0] * 60;
+
+  const timedNormalized: NormalizedTimed[] = [];
+  const allDayInput: CalendarEvent[] = [];
+
+  for (const ev of events) {
+    const start = ev.startsAt;
+    const end = ev.endsAt ?? ev.startsAt;
+    if (end.getTime() < viewStart || start.getTime() >= viewEnd) continue;
+    if (ev.allDay === true) {
+      allDayInput.push(ev);
+      continue;
+    }
+    const eventStartDay = startOfDay(start).getTime();
+    const dayIndex = days.findIndex((d) => startOfDay(d.date).getTime() === eventStartDay);
+    if (dayIndex === -1) continue;
+    const startMinutes = start.getHours() * 60 + start.getMinutes() - baseHourMinutes;
+    const endMinutes = end.getHours() * 60 + end.getMinutes() - baseHourMinutes;
+    timedNormalized.push({ event: ev, dayIndex, startMinutes, endMinutes });
+  }
+
+  const timedBlocks: TimedEventBlock[] = [];
+  for (let d = 0; d < days.length; d++) {
+    const dayEvents = timedNormalized
+      .filter((n) => n.dayIndex === d)
+      .sort((a, b) => a.startMinutes - b.startMinutes || b.endMinutes - a.endMinutes);
+
+    // Step 1: sweep sorted events into transitive collision groups.
+    interface Group {
+      members: NormalizedTimed[];
+    }
+    const groups: Group[] = [];
+    let currentGroup: Group | null = null;
+    let currentEndMax = -Infinity;
+    for (const ne of dayEvents) {
+      if (ne.startMinutes >= currentEndMax) {
+        if (currentGroup) groups.push(currentGroup);
+        currentGroup = { members: [ne] };
+        currentEndMax = ne.endMinutes;
+      } else {
+        currentGroup!.members.push(ne);
+        currentEndMax = Math.max(currentEndMax, ne.endMinutes);
+      }
+    }
+    if (currentGroup) groups.push(currentGroup);
+
+    // Step 2: within each group, assign a unique lane per event (greedy, no
+    // recycling within the group) so that laneCount = group.members.length
+    // and no two same-lane events ever share screen space.
+    for (const g of groups) {
+      const laneCount = g.members.length;
+      interface LaneState {
+        endMinutes: number;
+      }
+      const laneBuckets: LaneState[] = [];
+      for (const ne of g.members) {
+        let assigned = -1;
+        for (let l = 0; l < laneBuckets.length; l++) {
+          if (laneBuckets[l].endMinutes <= ne.startMinutes) {
+            assigned = l;
+            laneBuckets[l].endMinutes = ne.endMinutes;
+            break;
+          }
+        }
+        if (assigned === -1) {
+          assigned = laneBuckets.length;
+          laneBuckets.push({ endMinutes: ne.endMinutes });
+        }
+        timedBlocks.push({
+          event: ne.event,
+          dayIndex: ne.dayIndex,
+          startMinutes: ne.startMinutes,
+          endMinutes: ne.endMinutes,
+          lane: assigned,
+          laneCount,
+        });
+      }
+    }
+  }
+
+  const allDayBars = layoutAllDayBars(allDayInput, days);
+  return { timedBlocks, allDayBars };
+}
+
+function layoutAllDayBars(
+  events: readonly CalendarEvent[],
+  days: readonly DayRef[],
+): readonly AllDayBar[] {
+  if (events.length === 0) return [];
+  const viewStartMs = startOfDay(days[0].date).getTime();
+  const viewEndMs = startOfDay(days[days.length - 1].date).getTime();
+
+  interface NormalizedAllDay {
+    event: CalendarEvent;
+    startMs: number;
+    endMs: number;
+    duration: number;
+  }
+  const normalized: NormalizedAllDay[] = [];
+  for (const ev of events) {
+    let startMs = startOfDay(ev.startsAt).getTime();
+    let endMs = startOfDay(ev.endsAt ?? ev.startsAt).getTime();
+    if (endMs < startMs) [startMs, endMs] = [endMs, startMs];
+    if (endMs < viewStartMs || startMs > viewEndMs) continue;
+    normalized.push({ event: ev, startMs, endMs, duration: (endMs - startMs) / MS_PER_DAY });
+  }
+  normalized.sort((a, b) => a.startMs - b.startMs || b.duration - a.duration);
+
+  interface LaneSegment {
+    startCol: number;
+    endCol: number;
+  }
+  const lanes: LaneSegment[][] = [];
+  const bars: AllDayBar[] = [];
+
+  for (const n of normalized) {
+    const segStartMs = Math.max(n.startMs, viewStartMs);
+    const segEndMs = Math.min(n.endMs, viewEndMs);
+    const startCol = Math.round((segStartMs - viewStartMs) / MS_PER_DAY);
+    const endCol = Math.round((segEndMs - viewStartMs) / MS_PER_DAY);
+
+    let assigned = -1;
+    for (let l = 0; l < lanes.length; l++) {
+      const conflicts = lanes[l].some((s) => !(s.endCol < startCol || s.startCol > endCol));
+      if (!conflicts) {
+        assigned = l;
+        break;
+      }
+    }
+    if (assigned === -1) {
+      assigned = lanes.length;
+      lanes.push([]);
+    }
+    lanes[assigned].push({ startCol, endCol });
+
+    bars.push({
+      event: n.event,
+      startCol,
+      endCol,
+      lane: assigned,
+      continuesLeft: n.startMs < viewStartMs,
+      continuesRight: n.endMs > viewEndMs,
+    });
+  }
+  return bars;
 }
