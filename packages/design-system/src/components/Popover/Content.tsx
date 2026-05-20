@@ -58,20 +58,15 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     open: ctx.open,
     placement,
     transform: false,
-    middleware: [
-      offset(sideOffset),
-      flip(),
-      shift({ padding: 8 }),
-      arrow({ element: arrowRef }),
-    ],
+    middleware: [offset(sideOffset), flip(), shift({ padding: 8 }), arrow({ element: arrowRef })],
     whileElementsMounted: autoUpdate,
     elements: { reference: ctx.triggerRef.current },
   });
 
   const resolvedSide = resolvedPlacement.split('-')[0] as PopoverSide;
-  const staticSide = (
-    { top: 'bottom', bottom: 'top', left: 'right', right: 'left' } as const
-  )[resolvedSide];
+  const staticSide = ({ top: 'bottom', bottom: 'top', left: 'right', right: 'left' } as const)[
+    resolvedSide
+  ];
 
   // Focus the panel on open. preventScroll matches DropdownMenu/Tooltip.
   useLayoutEffect(() => {

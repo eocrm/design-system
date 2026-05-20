@@ -37,42 +37,50 @@ import { Popover } from '@eocrm/design-system';
       <Cluster justify="between" align="center">
         <Popover.Heading>Filter results</Popover.Heading>
         <Popover.Close>
-          <Button variant="ghost" size="sm" aria-label="Close">✕</Button>
+          <Button variant="ghost" size="sm" aria-label="Close">
+            ✕
+          </Button>
         </Popover.Close>
       </Cluster>
       {/* …form controls… */}
       <Cluster justify="end" gap="sm">
         <Popover.Close>
-          <Button variant="secondary" size="sm">Cancel</Button>
+          <Button variant="secondary" size="sm">
+            Cancel
+          </Button>
         </Popover.Close>
         <Popover.Close>
-          <Button size="sm" onClick={applyFilters}>Apply</Button>
+          <Button size="sm" onClick={applyFilters}>
+            Apply
+          </Button>
         </Popover.Close>
       </Cluster>
     </Stack>
   </Popover.Content>
-</Popover>
+</Popover>;
 
 // Controlled (rare):
 const [open, setOpen] = useState(false);
-<Popover open={open} onOpenChange={setOpen}>…</Popover>
+<Popover open={open} onOpenChange={setOpen}>
+  …
+</Popover>;
 ```
 
 ### `<Popover>` root props
 
-| Prop           | Type                      | Default | Notes                                                                                          |
-| -------------- | ------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| Prop           | Type                      | Default | Notes                                                                                            |
+| -------------- | ------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
 | `children`     | `ReactNode`               | —       | Must contain exactly one `<Popover.Trigger>` and one `<Popover.Content>` (validated at runtime). |
-| `open`         | `boolean`                 | —       | Optional controlled state.                                                                     |
-| `onOpenChange` | `(open: boolean) => void` | —       | Required when `open` is provided.                                                              |
-| `defaultOpen`  | `boolean`                 | `false` | Uncontrolled initial state.                                                                    |
-| `modal`        | `boolean`                 | `false` | Reserved future hint. v1 ignores the value and always renders non-modal.                       |
+| `open`         | `boolean`                 | —       | Optional controlled state.                                                                       |
+| `onOpenChange` | `(open: boolean) => void` | —       | Required when `open` is provided.                                                                |
+| `defaultOpen`  | `boolean`                 | `false` | Uncontrolled initial state.                                                                      |
+| `modal`        | `boolean`                 | `false` | Reserved future hint. v1 ignores the value and always renders non-modal.                         |
 
 ### `<Popover.Trigger>` props
 
-| Prop       | Type           | Default | Notes                                                                                                                                |
-| ---------- | -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `children` | `ReactElement` | —       | Exactly one element that accepts a ref. Same `forwardRef`-required contract as `<DropdownMenu.Trigger>`. `<Button>` qualifies.        |
+| Prop       | Type           | Default | Notes                                                                                                                          |
+| ---------- | -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `children` | `ReactElement` | —       | Exactly one element that accepts a ref. Same `forwardRef`-required contract as `<DropdownMenu.Trigger>`. `<Button>` qualifies. |
 
 Trigger clones its child to inject:
 
@@ -85,29 +93,29 @@ Trigger clones its child to inject:
 
 ### `<Popover.Content>` props
 
-| Prop         | Type                                     | Default      | Notes                                                                  |
-| ------------ | ---------------------------------------- | ------------ | ---------------------------------------------------------------------- |
-| `children`   | `ReactNode`                              | —            | Free-form. Compose with `<Stack>` / `<Cluster>` / etc.                 |
-| `side`       | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'`   | Preferred placement. Floating UI auto-flips on collision.              |
-| `align`      | `'start' \| 'center' \| 'end'`           | `'center'`   | Edge alignment.                                                        |
-| `sideOffset` | `number`                                 | `10`         | Gap in px between trigger and panel. Larger than Tooltip's 6 to fit the arrow on a larger panel. |
-| `minWidth`   | `number \| string`                       | token-driven | Override the panel's minimum width. Default uses `--size-popover-min-width` (220px). |
-| `className`  | `string`                                 | —            | Composed with the component's own className.                           |
+| Prop         | Type                                     | Default      | Notes                                                                                                            |
+| ------------ | ---------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `children`   | `ReactNode`                              | —            | Free-form. Compose with `<Stack>` / `<Cluster>` / etc.                                                           |
+| `side`       | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'`   | Preferred placement. Floating UI auto-flips on collision.                                                        |
+| `align`      | `'start' \| 'center' \| 'end'`           | `'center'`   | Edge alignment.                                                                                                  |
+| `sideOffset` | `number`                                 | `10`         | Gap in px between trigger and panel. Larger than Tooltip's 6 to fit the arrow on a larger panel.                 |
+| `minWidth`   | `number \| string`                       | token-driven | Override the panel's minimum width. Default uses `--size-popover-min-width` (220px).                             |
+| `className`  | `string`                                 | —            | Composed with the component's own className.                                                                     |
 | `style`      | reserved                                 | —            | Floating UI sets inline `position`/`top`/`left`; consumer `style` is silently overridden — same as DropdownMenu. |
 
 ### `<Popover.Heading>` props
 
-| Prop       | Type                                       | Default | Notes                                                                                |
-| ---------- | ------------------------------------------ | ------- | ------------------------------------------------------------------------------------ |
-| `children` | `ReactNode`                                | —       | The heading text.                                                                    |
-| `as`       | `'h2' \| 'h3' \| 'h4' \| 'h5' \| 'h6'`     | `'h3'`  | Semantic tag.                                                                        |
+| Prop       | Type                                   | Default | Notes             |
+| ---------- | -------------------------------------- | ------- | ----------------- |
+| `children` | `ReactNode`                            | —       | The heading text. |
+| `as`       | `'h2' \| 'h3' \| 'h4' \| 'h5' \| 'h6'` | `'h3'`  | Semantic tag.     |
 
 When present, `<Popover.Content>` gets `aria-labelledby` pointing at the heading's auto-generated id. The heading registers via context on mount and unregisters on unmount.
 
 ### `<Popover.Close>` props
 
-| Prop       | Type           | Default | Notes                                                                                |
-| ---------- | -------------- | ------- | ------------------------------------------------------------------------------------ |
+| Prop       | Type           | Default | Notes                                                                                                                    |
+| ---------- | -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `children` | `ReactElement` | —       | Exactly one element. Cloned to inject an `onClick` that closes the popover, chained with the child's existing `onClick`. |
 
 Exported types: `PopoverProps`, `PopoverTriggerProps`, `PopoverContentProps`, `PopoverHeadingProps`, `PopoverCloseProps`, `PopoverSide`, `PopoverAlign`.
@@ -143,20 +151,20 @@ import { ConfirmationPopover } from '@eocrm/design-system';
 
 ### Props
 
-| Prop           | Type                              | Default                     | Notes                                                                                                                                                                                                                                                                                                                                                       |
-| -------------- | --------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `children`     | `ReactElement`                    | — (required)                | The trigger. Same forwardRef-required contract.                                                                                                                                                                                                                                                                                                              |
-| `title`        | `string`                          | — (required)                | Renders inside `<Popover.Heading>`. Wires `aria-labelledby`.                                                                                                                                                                                                                                                                                                |
-| `description`  | `ReactNode`                       | —                           | Optional body text under the title. Wires `aria-describedby` when present.                                                                                                                                                                                                                                                                                  |
-| `confirmLabel` | `string`                          | `'Confirm'`                 | Confirm button text.                                                                                                                                                                                                                                                                                                                                        |
-| `cancelLabel`  | `string`                          | `'Cancel'`                  | Cancel button text.                                                                                                                                                                                                                                                                                                                                         |
-| `variant`      | `'default' \| 'danger'`           | `'default'`                 | `'danger'` → Confirm renders as `<Button variant="danger">`. Default → `<Button variant="primary">`.                                                                                                                                                                                                                                                          |
-| `onConfirm`    | `() => void \| Promise<void>`     | — (required)                | Async-aware. Click on Confirm runs `onConfirm()`. If it returns a Promise, both buttons disable and dismissal paths are blocked until resolve. On resolve, popover closes. On reject, popover stays open, buttons re-enable, `onCancel` is NOT fired. ConfirmationPopover does NOT render the error — the consumer surfaces it externally.                  |
-| `onCancel`     | `() => void`                      | —                           | Optional. Fires on Cancel click, Escape, or click-outside dismissal. Does NOT fire if `onConfirm` rejects.                                                                                                                                                                                                                                                  |
-| `side`         | (same as `<Popover.Content>`)     | `'top'`                     | Confirmations anchor above the trigger by default — keeps the user's eye near where they clicked.                                                                                                                                                                                                                                                          |
-| `align`        | (same as `<Popover.Content>`)     | `'center'`                  | —                                                                                                                                                                                                                                                                                                                                                           |
-| `sideOffset`   | `number`                          | `10`                        | —                                                                                                                                                                                                                                                                                                                                                           |
-| `open` / `onOpenChange` / `defaultOpen` | (same as `<Popover>`)   | —                           | Optional controlled state, forwarded to the underlying Popover.                                                                                                                                                                                                                                                                                              |
+| Prop                                    | Type                          | Default      | Notes                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------------- | ----------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `children`                              | `ReactElement`                | — (required) | The trigger. Same forwardRef-required contract.                                                                                                                                                                                                                                                                                            |
+| `title`                                 | `string`                      | — (required) | Renders inside `<Popover.Heading>`. Wires `aria-labelledby`.                                                                                                                                                                                                                                                                               |
+| `description`                           | `ReactNode`                   | —            | Optional body text under the title. Wires `aria-describedby` when present.                                                                                                                                                                                                                                                                 |
+| `confirmLabel`                          | `string`                      | `'Confirm'`  | Confirm button text.                                                                                                                                                                                                                                                                                                                       |
+| `cancelLabel`                           | `string`                      | `'Cancel'`   | Cancel button text.                                                                                                                                                                                                                                                                                                                        |
+| `variant`                               | `'default' \| 'danger'`       | `'default'`  | `'danger'` → Confirm renders as `<Button variant="danger">`. Default → `<Button variant="primary">`.                                                                                                                                                                                                                                       |
+| `onConfirm`                             | `() => void \| Promise<void>` | — (required) | Async-aware. Click on Confirm runs `onConfirm()`. If it returns a Promise, both buttons disable and dismissal paths are blocked until resolve. On resolve, popover closes. On reject, popover stays open, buttons re-enable, `onCancel` is NOT fired. ConfirmationPopover does NOT render the error — the consumer surfaces it externally. |
+| `onCancel`                              | `() => void`                  | —            | Optional. Fires on Cancel click, Escape, or click-outside dismissal. Does NOT fire if `onConfirm` rejects.                                                                                                                                                                                                                                 |
+| `side`                                  | (same as `<Popover.Content>`) | `'top'`      | Confirmations anchor above the trigger by default — keeps the user's eye near where they clicked.                                                                                                                                                                                                                                          |
+| `align`                                 | (same as `<Popover.Content>`) | `'center'`   | —                                                                                                                                                                                                                                                                                                                                          |
+| `sideOffset`                            | `number`                      | `10`         | —                                                                                                                                                                                                                                                                                                                                          |
+| `open` / `onOpenChange` / `defaultOpen` | (same as `<Popover>`)         | —            | Optional controlled state, forwarded to the underlying Popover.                                                                                                                                                                                                                                                                            |
 
 Exported types: `ConfirmationPopoverProps`, `ConfirmationVariant`.
 
@@ -187,15 +195,15 @@ Exported types: `ConfirmationPopoverProps`, `ConfirmationVariant`.
 
 ### Open / close triggers
 
-| Event                                            | Popover                                                              | ConfirmationPopover                                                                                  |
-| ------------------------------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Trigger click (or Enter / Space on focused trigger) | Toggle open.                                                       | Open.                                                                                                |
-| Click anywhere inside `<Popover.Content>`        | **No close** unless wrapped in `<Popover.Close>`.                    | Confirm runs `onConfirm`; Cancel closes + `onCancel`; other clicks ignored.                          |
-| `<Popover.Close>`-wrapped element click          | Close (chains with consumer's `onClick`).                            | n/a — internal.                                                                                      |
-| Click outside content + trigger                  | Close.                                                               | Close + `onCancel`. **Blocked while pending.**                                                       |
-| `Escape` anywhere while open                     | Close. Focus returns to trigger.                                     | Close + `onCancel`. **Blocked while pending.**                                                       |
-| `Tab` from inside content past the last focusable | Continues to next focusable on the page; popover **stays open**.   | Same.                                                                                                |
-| Trigger unmount while open                       | Cleanup listeners; ref check guards against stale state.             | Same.                                                                                                |
+| Event                                               | Popover                                                          | ConfirmationPopover                                                         |
+| --------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Trigger click (or Enter / Space on focused trigger) | Toggle open.                                                     | Open.                                                                       |
+| Click anywhere inside `<Popover.Content>`           | **No close** unless wrapped in `<Popover.Close>`.                | Confirm runs `onConfirm`; Cancel closes + `onCancel`; other clicks ignored. |
+| `<Popover.Close>`-wrapped element click             | Close (chains with consumer's `onClick`).                        | n/a — internal.                                                             |
+| Click outside content + trigger                     | Close.                                                           | Close + `onCancel`. **Blocked while pending.**                              |
+| `Escape` anywhere while open                        | Close. Focus returns to trigger.                                 | Close + `onCancel`. **Blocked while pending.**                              |
+| `Tab` from inside content past the last focusable   | Continues to next focusable on the page; popover **stays open**. | Same.                                                                       |
+| Trigger unmount while open                          | Cleanup listeners; ref check guards against stale state.         | Same.                                                                       |
 
 ### Focus management
 
@@ -231,13 +239,13 @@ Each `<Popover>` instance manages its own state and listeners. Opening Popover B
 ```ts
 useFloating({
   open,
-  placement,                              // computed from side + align
-  transform: false,                       // CSS transform reserved for entrance animation
+  placement, // computed from side + align
+  transform: false, // CSS transform reserved for entrance animation
   middleware: [
-    offset(sideOffset),                   // default 10
-    flip(),                               // auto-flip on collision
-    shift({ padding: 8 }),                // viewport edge padding
-    arrow({ element: arrowRef }),         // populates middlewareData.arrow.{x, y}
+    offset(sideOffset), // default 10
+    flip(), // auto-flip on collision
+    shift({ padding: 8 }), // viewport edge padding
+    arrow({ element: arrowRef }), // populates middlewareData.arrow.{x, y}
   ],
   whileElementsMounted: autoUpdate,
   elements: { reference: triggerRef.current },
@@ -261,14 +269,14 @@ Same `transform: false` as Tooltip — Floating UI writes `top` / `left` instead
 ```scss
 .content {
   position: relative;
-  min-width: var(--size-popover-min-width);  /* 220px — new token */
-  max-width: 360px;                          /* intrinsic geometric constraint, raw value OK */
+  min-width: var(--size-popover-min-width); /* 220px — new token */
+  max-width: 360px; /* intrinsic geometric constraint, raw value OK */
   padding: var(--space-3);
   background: var(--color-bg);
   color: var(--color-fg);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);              /* heavier than Tooltip's --shadow-md */
+  box-shadow: var(--shadow-lg); /* heavier than Tooltip's --shadow-md */
   z-index: var(--z-popover);
   outline: none;
   /* …animation rules below… */
@@ -280,7 +288,7 @@ Same `transform: false` as Tooltip — Floating UI writes `top` / `left` instead
 Add to `tokens.scss`:
 
 ```scss
---z-popover: 1050;   /* above dropdown (1000), below modal (1100), toast (1200), tooltip (1300) */
+--z-popover: 1050; /* above dropdown (1000), below modal (1100), toast (1200), tooltip (1300) */
 ```
 
 Full layer hierarchy after this change:
@@ -319,13 +327,35 @@ Reuses DropdownMenu / Tooltip's `@starting-style` scale-fade pattern. Tuned for 
   }
 }
 
-.content[data-side='top']    { transform-origin: bottom center; @starting-style { transform: scale(0.95) translateY(4px); } }
-.content[data-side='bottom'] { transform-origin: top center;    @starting-style { transform: scale(0.95) translateY(-4px); } }
-.content[data-side='right']  { transform-origin: left center;   @starting-style { transform: scale(0.95) translateX(-4px); } }
-.content[data-side='left']   { transform-origin: right center;  @starting-style { transform: scale(0.95) translateX(4px); } }
+.content[data-side='top'] {
+  transform-origin: bottom center;
+  @starting-style {
+    transform: scale(0.95) translateY(4px);
+  }
+}
+.content[data-side='bottom'] {
+  transform-origin: top center;
+  @starting-style {
+    transform: scale(0.95) translateY(-4px);
+  }
+}
+.content[data-side='right'] {
+  transform-origin: left center;
+  @starting-style {
+    transform: scale(0.95) translateX(-4px);
+  }
+}
+.content[data-side='left'] {
+  transform-origin: right center;
+  @starting-style {
+    transform: scale(0.95) translateX(4px);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .content { transition: none; }
+  .content {
+    transition: none;
+  }
 }
 ```
 
@@ -386,7 +416,7 @@ export function PopoverRoot({
   open: controlledOpen,
   onOpenChange,
   defaultOpen = false,
-  modal: _modal = false,  // reserved future hint; v1 ignores
+  modal: _modal = false, // reserved future hint; v1 ignores
 }: PopoverProps) {
   const isControlled = controlledOpen !== undefined;
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
@@ -412,7 +442,14 @@ export function PopoverRoot({
   }, [setOpen]);
 
   const value: PopoverContextValue = {
-    open, setOpen, triggerRef, contentRef, contentId, headingId, setHeadingId, closeAll,
+    open,
+    setOpen,
+    triggerRef,
+    contentRef,
+    contentId,
+    headingId,
+    setHeadingId,
+    closeAll,
   };
 
   return <PopoverContext.Provider value={value}>{children}</PopoverContext.Provider>;
@@ -439,9 +476,13 @@ export function Heading({ children, as: As = 'h3', ...rest }: PopoverHeadingProp
   useLayoutEffect(() => {
     ctx.setHeadingId(id);
     return () => ctx.setHeadingId(null);
-  }, [id]);  // eslint-disable-line react-hooks/exhaustive-deps — ctx is stable per Popover instance
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps — ctx is stable per Popover instance
 
-  return <As id={id} {...rest}>{children}</As>;
+  return (
+    <As id={id} {...rest}>
+      {children}
+    </As>
+  );
 }
 ```
 
@@ -484,7 +525,7 @@ export function ConfirmationPopover({
   // onOpenChange the consumer provided and short-circuiting when pending.
   const handleOpenChange = useCallback(
     (next: boolean) => {
-      if (pending && !next) return;  // don't allow close while pending
+      if (pending && !next) return; // don't allow close while pending
       onOpenChange?.(next);
       if (!next) onCancel?.();
     },
@@ -518,7 +559,12 @@ export function ConfirmationPopover({
   return (
     <Popover open={controlledOpen} onOpenChange={handleOpenChange} defaultOpen={defaultOpen}>
       <Popover.Trigger>{children}</Popover.Trigger>
-      <Popover.Content side={side} align={align} sideOffset={sideOffset} aria-describedby={descriptionId}>
+      <Popover.Content
+        side={side}
+        align={align}
+        sideOffset={sideOffset}
+        aria-describedby={descriptionId}
+      >
         <Stack gap="sm">
           <Popover.Heading>{title}</Popover.Heading>
           {description && <p id={descriptionId}>{description}</p>}
@@ -552,7 +598,7 @@ export function ConfirmationPopover({
 **Note:** the sketch above glosses over a few coordination details that the implementation plan must resolve:
 
 - How ConfirmationPopover triggers Popover to close after a successful `onConfirm` (probably by hoisting open state into ConfirmationPopover itself and passing it controlled to Popover).
-- How focus moves to the Cancel button after Popover focuses the panel. The cleanest approach is `useLayoutEffect` on `open` inside ConfirmationPopover that runs *after* Popover's own focus-on-open layout effect, since both fire after mount but ConfirmationPopover's effect fires after Popover's (parent effects run after child effects in React's commit phase). The plan must verify this ordering. If timing is brittle, fall back to a `queueMicrotask` from a content-level effect.
+- How focus moves to the Cancel button after Popover focuses the panel. The cleanest approach is `useLayoutEffect` on `open` inside ConfirmationPopover that runs _after_ Popover's own focus-on-open layout effect, since both fire after mount but ConfirmationPopover's effect fires after Popover's (parent effects run after child effects in React's commit phase). The plan must verify this ordering. If timing is brittle, fall back to a `queueMicrotask` from a content-level effect.
 - The `<Spinner>` is a 12×12 inline SVG owned by `ConfirmationPopover.tsx` (~10 lines). Not a separate component.
 
 ### Shared helpers — already promoted

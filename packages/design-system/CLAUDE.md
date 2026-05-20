@@ -47,7 +47,8 @@ Wrong:
 
 ```scss
 .item:hover,
-.item:focus { /* stays red after mouse click */
+.item:focus {
+  /* stays red after mouse click */
   background: var(--color-bg-danger-subtle);
 }
 ```
