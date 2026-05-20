@@ -84,7 +84,14 @@ export function SelectDemo() {
       <Example
         title="Status — single, non-searchable"
         description="The simplest case. Static options, single value, no search input."
-        code={`const [status, setStatus] = useState('');
+        code={`const STATUSES = [
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'archived', label: 'Archived' },
+];
+
+const [status, setStatus] = useState('');
+
 <Select
   options={STATUSES}
   value={status}
@@ -100,7 +107,33 @@ export function SelectDemo() {
       <Example
         title="Country — single, searchable, grouped"
         description="Options can be nested under group labels. Type to filter; arrow keys traverse across groups."
-        code={`<Select
+        code={`const COUNTRIES = [
+  {
+    label: 'Americas',
+    options: [
+      { value: 'us', label: 'United States' },
+      { value: 'ca', label: 'Canada' },
+      { value: 'br', label: 'Brazil' },
+    ],
+  },
+  {
+    label: 'Europe',
+    options: [
+      { value: 'de', label: 'Germany' },
+      { value: 'fr', label: 'France' },
+      { value: 'gb', label: 'United Kingdom' },
+    ],
+  },
+  {
+    label: 'Asia-Pacific',
+    options: [
+      { value: 'jp', label: 'Japan' },
+      { value: 'au', label: 'Australia' },
+    ],
+  },
+];
+
+<Select
   searchable
   options={COUNTRIES}
   value={country}
@@ -116,7 +149,17 @@ export function SelectDemo() {
       <Example
         title="Assignee — single, async with custom render"
         description="Pass `loadOptions(query, signal)` to fetch on demand. `renderOption` lets the dropdown show whatever you need — avatar + name + email here."
-        code={`<Select
+        code={`async function fetchUsers(query, signal) {
+  const users = await api.searchUsers(query, { signal });
+  return users.map((u) => ({
+    value: u.id,
+    label: u.name,
+    description: u.email,
+    data: u,
+  }));
+}
+
+<Select
   searchable
   loadOptions={fetchUsers}
   value={assignee}
@@ -141,7 +184,20 @@ export function SelectDemo() {
       <Example
         title="Async + error retry"
         description="The flaky fetch fails ~50% of the time. The listbox surfaces the error with a Retry affordance."
-        code={`<Select searchable loadOptions={flakyFetch} placeholder="Pick a user (may fail)" />`}
+        code={`async function flakyFetch(query, signal) {
+  await delay(200);
+  if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+  if (Math.random() < 0.5) {
+    throw new Error('Network glitched. Try again.');
+  }
+  return [
+    { value: 'u1', label: 'Alex Rivera' },
+    { value: 'u2', label: 'Bea Chen' },
+    { value: 'u3', label: 'Cam Patel' },
+  ];
+}
+
+<Select searchable loadOptions={flakyFetch} placeholder="Pick a user (may fail)" />`}
       >
         <Cluster gap="md" justify="center">
           <div style={{ width: 320 }}>
@@ -153,7 +209,15 @@ export function SelectDemo() {
       <Example
         title="Status filter — multi, summary trigger"
         description="`multiple` + `triggerDisplay='summary'` shows '2 selected' in the trigger. Best for compact filter bars."
-        code={`<Select
+        code={`const STATUSES = [
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'archived', label: 'Archived' },
+];
+
+const [statusFilter, setStatusFilter] = useState<string[]>([]);
+
+<Select
   multiple
   triggerDisplay="summary"
   searchable
@@ -171,7 +235,12 @@ export function SelectDemo() {
       <Example
         title="Owners — multi, chips trigger"
         description="`triggerDisplay='chips'` (the default for multi) renders each selection as a removable chip in the trigger."
-        code={`<Select
+        code={`async function fetchUsers(query, signal) {
+  const users = await api.searchUsers(query, { signal });
+  return users.map((u) => ({ value: u.id, label: u.name }));
+}
+
+<Select
   multiple
   triggerDisplay="chips"
   searchable
@@ -189,7 +258,15 @@ export function SelectDemo() {
       <Example
         title="Tags — multi, chips, searchable, creatable"
         description="`creatable` shows a 'Create &quot;…&quot;' row when the query has no exact match. `onCreate(label)` fires when the user picks it; you decide what to do with the new value."
-        code={`<Select
+        code={`const tagOptions = [
+  { value: 'shipping', label: 'shipping' },
+  { value: 'urgent', label: 'urgent' },
+  { value: 'vip', label: 'vip' },
+];
+
+const [tags, setTags] = useState<string[]>(['shipping']);
+
+<Select
   multiple
   searchable
   creatable
@@ -209,7 +286,13 @@ export function SelectDemo() {
       <Example
         title="Visual states — disabled, readOnly, invalid"
         description="`disabled` blocks all interaction. `readOnly` shows the value but blocks editing. `invalid` paints the trigger with the error ring."
-        code={`<Select options={STATUSES} disabled value="pending" />
+        code={`const STATUSES = [
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'archived', label: 'Archived' },
+];
+
+<Select options={STATUSES} disabled value="pending" />
 <Select options={STATUSES} readOnly value="active" />
 <Select options={STATUSES} invalid placeholder="Required" />`}
       >
@@ -229,7 +312,13 @@ export function SelectDemo() {
       <Example
         title="Sizes — sm / md / lg"
         description="`size` controls the trigger height and font size. The listbox typography scales to match."
-        code={`<Select options={STATUSES} size="sm" placeholder="sm" />
+        code={`const STATUSES = [
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'archived', label: 'Archived' },
+];
+
+<Select options={STATUSES} size="sm" placeholder="sm" />
 <Select options={STATUSES} size="md" placeholder="md" />
 <Select options={STATUSES} size="lg" placeholder="lg" />`}
       >
@@ -249,7 +338,18 @@ export function SelectDemo() {
       <Example
         title="Form integration"
         description="`name` makes Select participate in native FormData. Single values become one entry; multi values become repeated entries. `required` blocks submit when empty."
-        code={`<form onSubmit={(e) => {
+        code={`const STATUSES = [
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'archived', label: 'Archived' },
+];
+
+const tagOptions = [
+  { value: 'a', label: 'a' },
+  { value: 'b', label: 'b' },
+];
+
+<form onSubmit={(e) => {
   e.preventDefault();
   const data = new FormData(e.currentTarget);
   console.log(data.get('status'), data.getAll('tags'));
@@ -257,7 +357,7 @@ export function SelectDemo() {
   <Select options={STATUSES} name="status" required placeholder="Status (required)" />
   <Select multiple triggerDisplay="chips" searchable creatable
     options={tagOptions} name="tags" placeholder="Tags" />
-  <button type="submit">Submit</button>
+  <Button type="submit" size="sm">Submit</Button>
 </form>`}
       >
         <FormExample />
