@@ -321,3 +321,48 @@ describe('Select — typeahead (non-searchable)', () => {
     );
   });
 });
+
+describe('Select — grouped options', () => {
+  const GROUPED = [
+    {
+      label: 'Active',
+      options: [
+        { value: 'a1', label: 'Foo' },
+        { value: 'a2', label: 'Bar' },
+      ],
+    },
+    { label: 'Archived', options: [{ value: 'b1', label: 'Baz' }] },
+  ];
+
+  it('renders group headers in order before their options', async () => {
+    const user = userEvent.setup();
+    render(<Select options={GROUPED} />);
+    await user.click(screen.getByRole('button'));
+    const listbox = screen.getByRole('listbox');
+    const headers = listbox.querySelectorAll('[data-group-header]');
+    expect(headers).toHaveLength(2);
+    expect(headers[0]).toHaveTextContent('Active');
+    expect(headers[1]).toHaveTextContent('Archived');
+  });
+
+  it('group is wrapped in role=group with aria-labelledby to the header id', async () => {
+    const user = userEvent.setup();
+    render(<Select options={GROUPED} />);
+    await user.click(screen.getByRole('button'));
+    const groups = screen.getAllByRole('group');
+    expect(groups).toHaveLength(2);
+    const header0 = screen.getByText('Active');
+    expect(groups[0].getAttribute('aria-labelledby')).toBe(header0.id);
+  });
+
+  it('ArrowDown skips group headers', async () => {
+    const user = userEvent.setup();
+    render(<Select options={GROUPED} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}'); // open + 2 steps
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Baz' }).id,
+    );
+  });
+});

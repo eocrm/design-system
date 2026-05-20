@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   autoUpdate,
@@ -9,8 +9,9 @@ import {
   useFloating,
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
-import { useSelectContext } from './context';
+import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
+import type { SelectOption } from './utils-types';
 import styles from './Select.module.scss';
 
 /**
@@ -125,60 +126,120 @@ export function Listbox() {
       className={clsx(styles.listbox)}
       style={floatingStyles}
     >
-      {ctx.rows.map((row, i) => {
-        if (row.kind === 'header') {
-          return (
-            <li
-              key={`h-${i}`}
-              id={ctx.getGroupHeaderId(row.label)}
-              role="presentation"
-              className={styles.groupHeader}
-            >
-              {row.label}
-            </li>
-          );
+      {(() => {
+        // Walk the flat rows array, wrapping each header + its following
+        // option rows in `<li role="group" aria-labelledby={headerId}>` so
+        // the listbox exposes proper grouping semantics. The flat index
+        // `i` is preserved across the wrapping — Trigger's keyboard logic
+        // computes `aria-activedescendant` from it, so option rows inside
+        // groups MUST keep the same index they would have had in the flat
+        // map.
+        const nodes: ReactNode[] = [];
+        let i = 0;
+        while (i < ctx.rows.length) {
+          const row = ctx.rows[i];
+          if (row.kind === 'header') {
+            const headerLabel = row.label;
+            const headerId = ctx.getGroupHeaderId(headerLabel);
+            const groupChildren: ReactNode[] = [];
+            // Non-focusable header row; `data-group-header` is the hook
+            // grouped-options tests query against (avoids relying on the
+            // hashed CSS-module class name).
+            groupChildren.push(
+              <li
+                key={`h-${i}`}
+                id={headerId}
+                data-group-header=""
+                className={styles.groupHeader}
+              >
+                {headerLabel}
+              </li>,
+            );
+            let j = i + 1;
+            while (j < ctx.rows.length && ctx.rows[j].kind === 'option') {
+              const optRow = ctx.rows[j] as Extract<(typeof ctx.rows)[number], { kind: 'option' }>;
+              const selected = ctx.multiple
+                ? (ctx.value as string[]).includes(optRow.option.value)
+                : ctx.value === optRow.option.value;
+              const active = ctx.activeIndex === j;
+              groupChildren.push(renderOptionRow(optRow.option, j, selected, active, ctx));
+              j++;
+            }
+            nodes.push(
+              <li role="group" key={`g-${i}`} aria-labelledby={headerId}>
+                <ul role="none" className={styles.groupList}>
+                  {groupChildren}
+                </ul>
+              </li>,
+            );
+            i = j;
+            continue;
+          }
+          // Ungrouped (flat) option row.
+          const optRow = row;
+          const selected = ctx.multiple
+            ? (ctx.value as string[]).includes(optRow.option.value)
+            : ctx.value === optRow.option.value;
+          const active = ctx.activeIndex === i;
+          nodes.push(renderOptionRow(optRow.option, i, selected, active, ctx));
+          i++;
         }
-        const selected = ctx.multiple
-          ? (ctx.value as string[]).includes(row.option.value)
-          : ctx.value === row.option.value;
-        const active = ctx.activeIndex === i;
-        return (
-          <li
-            key={row.option.value}
-            id={ctx.getOptionId(row.option.value)}
-            role="option"
-            aria-selected={selected}
-            aria-disabled={row.option.disabled || undefined}
-            className={clsx(
-              styles.option,
-              active && styles.optionActive,
-              selected && styles.optionSelected,
-              row.option.disabled && styles.optionDisabled,
-            )}
-            onPointerDown={(e) => {
-              // Stop the document-level outside-click pointerdown handler
-              // from closing the listbox before the click resolves. The
-              // click handler still fires and commits the selection.
-              e.preventDefault();
-            }}
-            onClick={() => {
-              if (row.option.disabled) return;
-              if (ctx.multiple) {
-                ctx.toggleValue(row.option.value);
-              } else {
-                ctx.setValue(row.option.value);
-                ctx.closeAndFocusTrigger();
-              }
-            }}
-            onMouseEnter={() => {
-              if (!row.option.disabled) ctx.setActiveIndex(i);
-            }}
-          >
-            {row.option.label}
-          </li>
-        );
-      })}
+        return nodes;
+      })()}
     </ul>,
     document.body,
+  );
+}
+
+/**
+ * Render one `<li role="option">` row. Extracted as a module-local helper
+ * so the listbox loop can call it from two call sites — the in-group path
+ * and the flat-options path — without duplicating the JSX.
+ *
+ * `i` is the flat index into `ctx.rows`; it MUST match the index Trigger's
+ * keyboard handlers compute against, since `aria-activedescendant` and
+ * `ctx.setActiveIndex` both key off it.
+ */
+function renderOptionRow<T>(
+  opt: SelectOption<T>,
+  i: number,
+  selected: boolean,
+  active: boolean,
+  ctx: SelectContextValue<T>,
+): ReactNode {
+  return (
+    <li
+      key={opt.value}
+      id={ctx.getOptionId(opt.value)}
+      role="option"
+      aria-selected={selected}
+      aria-disabled={opt.disabled || undefined}
+      className={clsx(
+        styles.option,
+        active && styles.optionActive,
+        selected && styles.optionSelected,
+        opt.disabled && styles.optionDisabled,
+      )}
+      onPointerDown={(e) => {
+        // Stop the document-level outside-click pointerdown handler from
+        // closing the listbox before the click resolves. The click handler
+        // still fires and commits the selection.
+        e.preventDefault();
+      }}
+      onClick={() => {
+        if (opt.disabled) return;
+        if (ctx.multiple) {
+          ctx.toggleValue(opt.value);
+        } else {
+          ctx.setValue(opt.value);
+          ctx.closeAndFocusTrigger();
+        }
+      }}
+      onMouseEnter={() => {
+        if (!opt.disabled) ctx.setActiveIndex(i);
+      }}
+    >
+      {opt.label}
+    </li>
   );
 }

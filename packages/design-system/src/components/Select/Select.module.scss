@@ -62,6 +62,15 @@
   user-select: none;
 }
 
+// Reset on the nested <ul role="none"> inside each group wrapper. Padding
+// + list-style only — `margin: 0` is forbidden by Hard Rule 4 (layout is
+// the parent's job). The global UA reset zeroes ul margins, so omitting
+// it here is fine.
+.groupList {
+  padding: 0;
+  list-style: none;
+}
+
 .option {
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-md);
