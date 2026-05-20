@@ -1,0 +1,47 @@
+.grid {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--border-width) solid var(--color-border);
+  border-left: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.weekdayHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: var(--color-bg-subtle);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.weekdayLabel {
+  padding: var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+  text-align: left;
+}
+
+.week {
+  display: flex;
+  flex-direction: column;
+}
+
+.dayRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.laneRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1);
+  padding: 0 var(--space-1) var(--space-1) var(--space-1);
+}
+
+.barSlot {
+  min-width: 0;
+}
