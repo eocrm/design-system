@@ -137,6 +137,17 @@ describe('daysBetween', () => {
   it('returns negative when b is before a', () => {
     expect(daysBetween(new Date(2026, 4, 25), new Date(2026, 4, 20))).toBe(-5);
   });
+
+  it('is DST-safe across a spring-forward boundary', () => {
+    // In most US/EU locales, March 8, 2026 is the spring-forward day. The naive
+    // (b - a) / 86_400_000 computation would yield 1.958... days for a 2-day
+    // span crossing the boundary; Math.round on startOfDay-normalized values
+    // absorbs the ±1 hour drift.
+    const before = new Date(2026, 2, 7, 12);
+    const after = new Date(2026, 2, 9, 12);
+    expect(daysBetween(before, after)).toBe(2);
+    expect(daysBetween(new Date(2026, 2, 8, 12), new Date(2026, 2, 9, 12))).toBe(1);
+  });
 });
 
 describe('toDateKey / fromDateKey', () => {
