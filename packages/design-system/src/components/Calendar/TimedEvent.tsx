@@ -11,6 +11,7 @@ export interface TimedEventProps {
   block: TimedEventBlock;
   /** Pixel height per hour row (matches the hour-grid scaffold). */
   hourRowHeight: number;
+  /** Fires when the chip is clicked; receives the `CalendarEvent`. */
   onClick?: (event: CalendarEvent) => void;
 }
 

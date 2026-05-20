@@ -23,6 +23,7 @@ export interface HourGridProps {
   timedBlocks: readonly TimedEventBlock[];
   /** Today's date (injected for testability). Defaults to `new Date()`. */
   now?: Date;
+  /** Fires when a timed-event block in a day column is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
 }
 

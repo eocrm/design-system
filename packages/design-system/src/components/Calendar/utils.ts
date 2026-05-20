@@ -182,7 +182,11 @@ export function layoutEventsForHourGrid(
     const dayIndex = days.findIndex((d) => startOfDay(d.date).getTime() === eventStartDay);
     if (dayIndex === -1) continue;
     const startMinutes = start.getHours() * 60 + start.getMinutes() - baseHourMinutes;
-    const endMinutes = end.getHours() * 60 + end.getMinutes() - baseHourMinutes;
+    // If the event ends on a later day, clamp to end-of-day so the block extends
+    // to the bottom of the visible column rather than collapsing to negative height.
+    const endsOnSameDay = startOfDay(end).getTime() === eventStartDay;
+    const rawEndMinutes = end.getHours() * 60 + end.getMinutes() - baseHourMinutes;
+    const endMinutes = endsOnSameDay ? rawEndMinutes : 24 * 60 - baseHourMinutes;
     timedNormalized.push({ event: ev, dayIndex, startMinutes, endMinutes });
   }
 

@@ -437,7 +437,7 @@ const [view, setView] = useState<'month' | 'week' | 'day'>('month');
 - Events are `{ id, title, startsAt, endsAt?, tone?, allDay? }`. Multi-day events render as continuous bars in both the month grid and the week/day all-day band.
 - Tones: `neutral` (default) / `accent` / `success` / `warning` / `danger`. `allDay: true` renders as a tone-filled band (no time prefix).
 - Controlled cursor via `value` / `onChange`, or uncontrolled via `defaultValue`. Controlled view via `view` / `onViewChange`, or uncontrolled via `defaultView`.
-- `hourRange` (default `[7, 19]`) sets the visible hour window in week/day views; hours outside the range stay scroll-reachable. `hourRowHeight` (default 48) is the pixel height per hour row.
+- `hourRange` (default `[7, 19]`) sets the visible hour window in week/day views. Hours outside the range are not rendered. `hourRowHeight` (default 48) is the pixel height per hour row.
 - Overlapping timed events in week/day views split into equal-width lanes side-by-side. A horizontal "now" line marks the current time in today's column.
 - Locale-aware via `useLocale()`; override with `locale` prop. UI strings (`today`, `viewMonth`, etc.) are the consumer's responsibility via `labels`.
 - `maxLanesPerWeek` (default 3) caps event lanes per week in the month view. Events beyond the cap collapse into a `+N more` chip; click fires `onDayClick(date)`.

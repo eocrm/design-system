@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Tabs } from '../Tabs';
 import type { CalendarView } from './types';
 import styles from './ViewSwitcher.module.scss';
@@ -9,12 +10,6 @@ export interface ViewSwitcherProps {
   weekLabel: string;
   dayLabel: string;
 }
-
-const ITEMS = (monthLabel: string, weekLabel: string, dayLabel: string) => [
-  { id: 'month', label: monthLabel },
-  { id: 'week', label: weekLabel },
-  { id: 'day', label: dayLabel },
-];
 
 /**
  * Internal: segmented control for switching between month / week / day views.
@@ -31,12 +26,21 @@ export function ViewSwitcher({
   weekLabel,
   dayLabel,
 }: ViewSwitcherProps) {
+  const items = useMemo(
+    () => [
+      { id: 'month', label: monthLabel },
+      { id: 'week', label: weekLabel },
+      { id: 'day', label: dayLabel },
+    ],
+    [monthLabel, weekLabel, dayLabel],
+  );
+
   return (
     <div className={styles.switcher}>
       <Tabs
         activeId={view}
         onChange={(id) => onViewChange(id as CalendarView)}
-        items={ITEMS(monthLabel, weekLabel, dayLabel)}
+        items={items}
       />
     </div>
   );

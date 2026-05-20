@@ -66,7 +66,11 @@ export interface CalendarProps
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   /** Lane cap per week before "+N more" appears in affected cells (month view). Default 3. */
   maxLanesPerWeek?: number;
-  /** Hour range for week/day views (inclusive start, exclusive end). Default `[7, 19]`. */
+  /**
+   * Hour range shown in week/day views (inclusive start, exclusive end).
+   * Defaults to `[7, 19]` (7am–7pm). Hours outside this range are NOT
+   * rendered (no row in the grid).
+   */
   hourRange?: [number, number];
   /** Pixel height per hour row in week/day views. Default 48. */
   hourRowHeight?: number;

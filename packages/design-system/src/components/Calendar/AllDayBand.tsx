@@ -10,6 +10,7 @@ export interface AllDayBandProps {
   columnCount: number;
   /** Pixel width of the hour-gutter on the left (band aligns with the hour-grid columns). */
   gutterWidth: number;
+  /** Fires when an all-day chip is clicked; receives the `CalendarEvent`. */
   onEventClick?: (event: CalendarEvent) => void;
 }
 

@@ -404,4 +404,26 @@ describe('layoutEventsForHourGrid', () => {
     expect(out.timedBlocks[0].startMinutes).toBe(-60);
     expect(out.timedBlocks[0].endMinutes).toBe(60);
   });
+
+  it('clamps endMinutes to end-of-day when a timed event spans multiple days', () => {
+    // Event: May 19 14:00 → May 21 09:00 (spans 3 days)
+    // In a [7, 19] view rendered for the week of May 17..23, this event
+    // should appear on May 19 (dayIndex=2 in Sun-start week)
+    // with endMinutes clamped to 24*60 - 7*60 = 1020 (= end of day past
+    // the visible range; TimedEvent will render as a block extending past
+    // the bottom of the column).
+    const ev: CalendarEvent = {
+      id: 'multi',
+      title: 'Conference call',
+      startsAt: new Date(2026, 4, 19, 14, 0),
+      endsAt: new Date(2026, 4, 21, 9, 0),
+    };
+    const out = layoutEventsForHourGrid([ev], week7, [7, 19]);
+    expect(out.timedBlocks).toHaveLength(1);
+    expect(out.timedBlocks[0].dayIndex).toBe(2); // May 19 in Sun-start week 17..23
+    expect(out.timedBlocks[0].startMinutes).toBe(7 * 60); // 14:00 - 7:00 = 7h = 420min
+    // 24:00 (end-of-day) − 7:00 (hour-range base) = 17h = 1020min
+    expect(out.timedBlocks[0].endMinutes).toBe(1020);
+    expect(out.timedBlocks[0].endMinutes).toBeGreaterThan(out.timedBlocks[0].startMinutes);
+  });
 });
