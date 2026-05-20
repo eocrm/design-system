@@ -132,6 +132,7 @@ export function ConfirmationPopoverDemo() {
   </DropdownMenu.Trigger>
   <DropdownMenu.Content align="end">
     <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
     <ConfirmationPopover
       title="Delete record?"
       description="This action cannot be undone."

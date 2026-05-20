@@ -146,6 +146,7 @@ export function PopoverDemo() {
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
     <Popover>
       <Popover.Trigger>
         <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}}>
