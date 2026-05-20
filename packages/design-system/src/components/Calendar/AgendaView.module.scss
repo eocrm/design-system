@@ -1,0 +1,187 @@
+@use '../../styles/mixins' as *;
+
+.agenda {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3) 0;
+}
+
+.empty {
+  padding: var(--space-6);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+}
+
+// Each dayGroup carries its own bottom padding (in place of `gap` on
+// `.agenda`) so the today-group's accent borders extend down through the
+// spacing area, all the way to the next day-header's top border.
+// `gap` provides the breathing room between the dayHeader and the rows.
+// `padding-bottom` matches that gap so the space below the last row
+// equals the space above the first row.
+.dayGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-left: var(--border-width) solid var(--color-border);
+  border-right: var(--border-width) solid var(--color-border);
+}
+
+// The last day-group has no "next" header to provide its closing
+// horizontal line — add an explicit bottom border so the list reads as
+// closed at the bottom edge.
+.dayGroup:last-child {
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+// Today's group swaps its grey side borders for the accent color so the
+// current day is framed in blue on all four edges (together with the
+// accent top/bottom on `.dayHeader`).
+.todayGroup {
+  position: relative;
+  border-left-color: var(--color-accent);
+  border-right-color: var(--color-accent);
+}
+
+// Today's side borders end exactly at the next day-header's accent top
+// border. This pseudo-element draws a 1px accent strip spanning the full
+// width of the today-group just below it, so the bottom-left and
+// bottom-right corners both meet the next header's horizontal line
+// cleanly instead of stopping a pixel short.
+.todayGroup::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--border-width) * -1);
+  height: var(--border-width);
+  background: var(--color-accent);
+}
+
+// Today's day-header band gets an accent tint + accent border so the
+// current day is instantly findable when the agenda list is long. The
+// rows area stays untinted so event tone dots keep their contrast.
+.todayGroup .dayHeader {
+  background: var(--color-accent-bg-subtle);
+  border-top-color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+// The next day-group's top border continues the today accent so the
+// vertical left-border line lands cleanly on a matching horizontal one,
+// instead of meeting a plain grey rule.
+.todayGroup + .dayGroup .dayHeader {
+  border-top-color: var(--color-accent);
+}
+
+// Day-header reads as a full-width banded row. Top + bottom borders frame
+// the band so it doesn't float against an empty row gap; subtle fill
+// reinforces the day-group boundary visually.
+.dayHeader {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-subtle);
+  border-top: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+}
+
+.rowButton {
+  display: grid;
+  grid-template-columns: var(--size-calendar-agenda-gutter) auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-subtle);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.timeGutter {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.allDay {
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+}
+
+// The tone dot sits between gutter and body to color-code the event
+// without tinting the whole row (which would clash with the today-group
+// accent and the hover background).
+.toneDot {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.body {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+}
+
+// Tone -> color of the dot (via currentColor inheritance).
+.neutral {
+  color: var(--color-border-strong);
+}
+
+.accent {
+  color: var(--color-accent);
+}
+
+.success {
+  color: var(--color-success);
+}
+
+.warning {
+  color: var(--color-warning);
+}
+
+.danger {
+  color: var(--color-danger);
+}

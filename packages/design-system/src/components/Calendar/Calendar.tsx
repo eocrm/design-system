@@ -3,12 +3,18 @@ import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
-import { addDays, addMonths, addWeeks } from '../../calendar/dateMath';
+import { addDays, addMonths, addWeeks, startOfWeek } from '../../calendar/dateMath';
 import { useMonth } from '../../calendar/useMonth';
+import { useWeek } from '../../calendar/useWeek';
+import { useDay } from '../../calendar/useDay';
+import { useAgenda } from '../../calendar/useAgenda';
+import { useLocale } from '../../i18n/useLocale';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
+import { getFirstDayOfWeek } from '../../calendar/weekInfo';
 import { MonthView } from './MonthView';
 import { WeekView } from './WeekView';
 import { DayView } from './DayView';
+import { AgendaView } from './AgendaView';
 import { ViewSwitcher } from './ViewSwitcher';
 import type { CalendarEvent, CalendarView, RenderEvent } from './types';
 import styles from './Calendar.module.scss';
@@ -20,10 +26,22 @@ import styles from './Calendar.module.scss';
 export interface CalendarLabels {
   /** Text on the "Today" button. */
   today?: string;
-  /** ARIA label on the prev chevron. */
+  /** ARIA label on the prev chevron when month view is active (steps a month). */
   previousMonth?: string;
-  /** ARIA label on the next chevron. */
+  /** ARIA label on the next chevron when month view is active (steps a month). */
   nextMonth?: string;
+  /** ARIA label on the prev chevron when week view is active (steps a week). */
+  previousWeek?: string;
+  /** ARIA label on the next chevron when week view is active (steps a week). */
+  nextWeek?: string;
+  /** ARIA label on the prev chevron when day view is active (steps a day). */
+  previousDay?: string;
+  /** ARIA label on the next chevron when day view is active (steps a day). */
+  nextDay?: string;
+  /** ARIA label on the prev chevron when agenda view is active (steps a week). */
+  previousAgenda?: string;
+  /** ARIA label on the next chevron when agenda view is active (steps a week). */
+  nextAgenda?: string;
   /** Template for the "+N more events" aria-label. */
   moreEvents?: (count: number) => string;
   /** Segmented-control label for the month view. */
@@ -32,6 +50,10 @@ export interface CalendarLabels {
   viewWeek?: string;
   /** Segmented-control label for the day view. */
   viewDay?: string;
+  /** Segmented-control label for the agenda view. */
+  viewAgenda?: string;
+  /** Empty-state message in agenda view when no events fall in the visible week. */
+  agendaEmpty?: string;
 }
 
 export interface CalendarProps extends Omit<
@@ -100,14 +122,22 @@ const DEFAULT_LABELS: Required<CalendarLabels> = {
   today: 'Today',
   previousMonth: 'Previous month',
   nextMonth: 'Next month',
+  previousWeek: 'Previous week',
+  nextWeek: 'Next week',
+  previousDay: 'Previous day',
+  nextDay: 'Next day',
+  previousAgenda: 'Previous week',
+  nextAgenda: 'Next week',
   moreEvents: (n) => `${n} more events`,
   viewMonth: 'Month',
   viewWeek: 'Week',
   viewDay: 'Day',
+  viewAgenda: 'Agenda',
+  agendaEmpty: 'No events',
 };
 
 /**
- * Month / week / day calendar.
+ * Month / week / day / agenda calendar.
  *
  * - Controlled cursor via `value` / `onChange`, or uncontrolled via
  *   `defaultValue`.
@@ -127,7 +157,7 @@ const DEFAULT_LABELS: Required<CalendarLabels> = {
  * @example
  * // Controlled cursor + view + locale labels:
  * const [cursor, setCursor] = useState(new Date());
- * const [view, setView] = useState<'month' | 'week' | 'day'>('month');
+ * const [view, setView] = useState<CalendarView>('month');
  * <Calendar
  *   value={cursor}
  *   onChange={setCursor}
@@ -140,6 +170,7 @@ const DEFAULT_LABELS: Required<CalendarLabels> = {
  *     viewMonth: 'Месяц',
  *     viewWeek: 'Неделя',
  *     viewDay: 'День',
+ *     viewAgenda: 'Повестка',
  *   }}
  * />;
  *
@@ -200,47 +231,72 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
     [viewProp, onViewChange],
   );
 
+  const contextLocale = useLocale();
+  const resolvedWeekStartsOn = weekStartsOn ?? getFirstDayOfWeek(locale ?? contextLocale);
+
   const grid = useMonth(cursor, { locale, weekStartsOn });
+  const week = useWeek(cursor, { locale, weekStartsOn });
+  const day = useDay(cursor, { locale });
+  // Agenda window mirrors the cursor's current week (Sun-Sat or Mon-Sun
+  // depending on locale). Prev/Next on agenda steps a week, same as week view.
+  const agendaFrom = startOfWeek(cursor, resolvedWeekStartsOn);
+  const agendaTo = addDays(agendaFrom, 6);
+  const agenda = useAgenda(agendaFrom, agendaTo, { locale, weekStartsOn });
 
   // Prev/Next step matches the active view: a month in month view, a week in
-  // week view, a day in day view. Without this, multi-day events that span
-  // several weeks aren't reachable when in week/day view — each click would
-  // skip over them.
+  // week or agenda view, a day in day view. Without this, multi-day events
+  // that span several weeks aren't reachable in week/day view — each click
+  // would skip over them.
   const stepBy =
     view === 'month'
       ? (d: Date, n: number) => addMonths(d, n)
-      : view === 'week'
-        ? (d: Date, n: number) => addWeeks(d, n)
-        : (d: Date, n: number) => addDays(d, n);
+      : view === 'day'
+        ? (d: Date, n: number) => addDays(d, n)
+        : (d: Date, n: number) => addWeeks(d, n);
   const goPrev = () => handleChange(stepBy(cursor, -1));
   const goNext = () => handleChange(stepBy(cursor, 1));
   const goToday = () => handleChange(new Date());
 
+  // View-aware title + prev/next aria-labels. Each view's label/range
+  // formatter is locale-aware (Intl-driven inside the hooks).
+  const titleLabel =
+    view === 'month'
+      ? grid.monthLabel
+      : view === 'week'
+        ? week.weekLabel
+        : view === 'day'
+          ? day.dayLabel
+          : agenda.rangeLabel;
+  const prevLabel =
+    view === 'month'
+      ? resolvedLabels.previousMonth
+      : view === 'week'
+        ? resolvedLabels.previousWeek
+        : view === 'day'
+          ? resolvedLabels.previousDay
+          : resolvedLabels.previousAgenda;
+  const nextLabel =
+    view === 'month'
+      ? resolvedLabels.nextMonth
+      : view === 'week'
+        ? resolvedLabels.nextWeek
+        : view === 'day'
+          ? resolvedLabels.nextDay
+          : resolvedLabels.nextAgenda;
+
   const body: ReactNode = (
     <div ref={ref} className={clsx(styles.calendar, className)} {...rest}>
       <header className={styles.header}>
-        <h2 className={styles.title}>{grid.monthLabel}</h2>
+        <h2 className={styles.title}>{titleLabel}</h2>
         <Cluster gap="sm" align="center">
           <Cluster gap="xs" align="center">
-            <Button
-              size="xs"
-              variant="ghost"
-              iconOnly
-              aria-label={resolvedLabels.previousMonth}
-              onClick={goPrev}
-            >
+            <Button size="xs" variant="ghost" iconOnly aria-label={prevLabel} onClick={goPrev}>
               <ChevronLeft size={14} />
             </Button>
             <Button size="sm" variant="secondary" onClick={goToday}>
               {resolvedLabels.today}
             </Button>
-            <Button
-              size="xs"
-              variant="ghost"
-              iconOnly
-              aria-label={resolvedLabels.nextMonth}
-              onClick={goNext}
-            >
+            <Button size="xs" variant="ghost" iconOnly aria-label={nextLabel} onClick={goNext}>
               <ChevronRight size={14} />
             </Button>
           </Cluster>
@@ -250,6 +306,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
             monthLabel={resolvedLabels.viewMonth}
             weekLabel={resolvedLabels.viewWeek}
             dayLabel={resolvedLabels.viewDay}
+            agendaLabel={resolvedLabels.viewAgenda}
           />
         </Cluster>
       </header>
@@ -288,6 +345,17 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           locale={locale}
           onEventClick={onEventClick}
           onDayClick={onDayClick}
+          renderEvent={renderEvent}
+        />
+      )}
+      {view === 'agenda' && (
+        <AgendaView
+          days={agenda.days}
+          rangeLabel={agenda.rangeLabel}
+          events={events}
+          locale={locale}
+          emptyLabel={resolvedLabels.agendaEmpty}
+          onEventClick={onEventClick}
           renderEvent={renderEvent}
         />
       )}

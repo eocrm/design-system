@@ -27,9 +27,10 @@ export interface CalendarEvent {
 }
 
 /**
- * Active Calendar view. Month + week + day in v3. Agenda lands in PR 4.
+ * Active Calendar view. Month / week / day render a grid; agenda is a
+ * scannable list of events grouped by day for the cursor's current week.
  */
-export type CalendarView = 'month' | 'week' | 'day';
+export type CalendarView = 'month' | 'week' | 'day' | 'agenda';
 
 /**
  * One placed event bar inside the month grid. Produced by

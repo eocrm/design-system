@@ -123,4 +123,69 @@ describe('Calendar', () => {
     await user.click(screen.getByRole('tab', { name: 'Week' }));
     expect(onViewChange).toHaveBeenCalledWith('week');
   });
+
+  it('switches to AgendaView when defaultView="agenda"', () => {
+    render(
+      <Calendar
+        defaultValue={new Date(2026, 4, 20)}
+        defaultView="agenda"
+        events={[
+          {
+            id: 'a',
+            title: 'Standup',
+            startsAt: new Date(2026, 4, 20, 9),
+            endsAt: new Date(2026, 4, 20, 9, 30),
+          },
+        ]}
+      />,
+      { wrapper: wrap() },
+    );
+    expect(screen.getByRole('button', { name: /Standup/ })).toBeInTheDocument();
+    // Agenda exposes a labelled list region (cycle-1 a11y fix).
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getByRole('listitem')).toBeInTheDocument();
+  });
+
+  it('prev/next aria-labels reflect the active view (per-view labels)', async () => {
+    const user = userEvent.setup();
+    const cases: Array<{
+      defaultView: 'month' | 'week' | 'day' | 'agenda';
+      prev: string;
+      next: string;
+    }> = [
+      { defaultView: 'month', prev: 'Previous month', next: 'Next month' },
+      { defaultView: 'week', prev: 'Previous week', next: 'Next week' },
+      { defaultView: 'day', prev: 'Previous day', next: 'Next day' },
+      { defaultView: 'agenda', prev: 'Previous week', next: 'Next week' },
+    ];
+    for (const { defaultView, prev, next } of cases) {
+      const { unmount } = render(
+        <Calendar defaultValue={new Date(2026, 4, 20)} defaultView={defaultView} />,
+        { wrapper: wrap() },
+      );
+      expect(screen.getByRole('button', { name: prev })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: next })).toBeInTheDocument();
+      unmount();
+    }
+    // Prove the user can step through views and see the labels swap.
+    render(<Calendar defaultValue={new Date(2026, 4, 20)} defaultView="month" />, {
+      wrapper: wrap(),
+    });
+    expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Day' }));
+    expect(screen.getByRole('button', { name: 'Previous day' })).toBeInTheDocument();
+  });
+
+  it('prev/next steps by week in agenda view', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn<(d: Date) => void>();
+    render(
+      <Calendar defaultValue={new Date(2026, 4, 20)} defaultView="agenda" onChange={onChange} />,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('button', { name: /Next week/ }));
+    const next = onChange.mock.calls[0][0];
+    // May 20 + 7 days = May 27
+    expect(next.getDate()).toBe(27);
+  });
 });

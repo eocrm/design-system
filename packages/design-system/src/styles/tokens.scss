@@ -137,6 +137,11 @@
   // still look like cells without inflating the day-number row.
   --size-calendar-day-cell-min-height: 6.5rem;
 
+  // Calendar — fixed gutter width for the agenda-row time label column.
+  // Wide enough to fit "12:00 PM – 12:30 PM" without clipping at default
+  // font size while keeping titles readable.
+  --size-calendar-agenda-gutter: 8rem;
+
   // Border weights — emphasis = tab underline/focus rings; strong = accent
   // stripes on cards or other "this stands out" visuals.
   --border-width: 1px;

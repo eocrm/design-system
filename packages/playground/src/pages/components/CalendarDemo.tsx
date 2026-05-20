@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, type CalendarEvent } from '@eocrm/design-system';
+import { Calendar, type CalendarEvent, type CalendarView } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/Calendar/Calendar.tsx?raw';
@@ -156,7 +156,7 @@ function ControlledCalendarDemo() {
 }
 
 function ViewSwitcherDemo() {
-  const [view, setView] = useState<'month' | 'week' | 'day'>('week');
+  const [view, setView] = useState<CalendarView>('week');
   return (
     <Calendar defaultValue={TODAY} view={view} onViewChange={setView} events={SAMPLE_EVENTS} />
   );
@@ -238,10 +238,18 @@ export function CalendarDemo() {
     today: 'Сегодня',
     previousMonth: 'Предыдущий месяц',
     nextMonth: 'Следующий месяц',
+    previousWeek: 'Предыдущая неделя',
+    nextWeek: 'Следующая неделя',
+    previousDay: 'Предыдущий день',
+    nextDay: 'Следующий день',
+    previousAgenda: 'Предыдущая неделя',
+    nextAgenda: 'Следующая неделя',
     moreEvents: (n) => \`ещё ${'${n}'} событий\`,
     viewMonth: 'Месяц',
     viewWeek: 'Неделя',
     viewDay: 'День',
+    viewAgenda: 'Повестка',
+    agendaEmpty: 'Нет событий',
   }}
 />`}
       >
@@ -253,10 +261,18 @@ export function CalendarDemo() {
             today: 'Сегодня',
             previousMonth: 'Предыдущий месяц',
             nextMonth: 'Следующий месяц',
+            previousWeek: 'Предыдущая неделя',
+            nextWeek: 'Следующая неделя',
+            previousDay: 'Предыдущий день',
+            nextDay: 'Следующий день',
+            previousAgenda: 'Предыдущая неделя',
+            nextAgenda: 'Следующая неделя',
             moreEvents: (n) => `ещё ${n} событий`,
             viewMonth: 'Месяц',
             viewWeek: 'Неделя',
             viewDay: 'День',
+            viewAgenda: 'Повестка',
+            agendaEmpty: 'Нет событий',
           }}
         />
       </Example>
@@ -292,10 +308,22 @@ export function CalendarDemo() {
       </Example>
 
       <Example
+        title="Agenda view"
+        description="Chronological list of the cursor's current week, grouped by day. Days without events are hidden so the list stays scannable. Multi-day events appear under every day they span. Prev/next steps a week at a time."
+        code={`<Calendar
+  defaultValue={new Date()}
+  defaultView="agenda"
+  events={SAMPLE_EVENTS}
+/>`}
+      >
+        <Calendar defaultValue={TODAY} defaultView="agenda" events={SAMPLE_EVENTS} />
+      </Example>
+
+      <Example
         title="View switching (controlled)"
         description="Consumer owns the active view via `view` / `onViewChange`. Useful for URL-syncing the current view."
         code={`function ViewSwitcherDemo() {
-  const [view, setView] = useState<'month' | 'week' | 'day'>('week');
+  const [view, setView] = useState<CalendarView>('week');
   return (
     <Calendar
       defaultValue={new Date()}
