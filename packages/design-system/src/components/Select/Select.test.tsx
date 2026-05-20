@@ -612,3 +612,82 @@ describe('Select — multi-chips, non-searchable', () => {
     expect(screen.getByRole('listbox')).toBeInTheDocument();
   });
 });
+
+describe('Select — multi-chips-searchable', () => {
+  const OPTS = [
+    { value: 'a', label: 'Alpha' },
+    { value: 'b', label: 'Beta' },
+    { value: 'c', label: 'Gamma' },
+  ];
+
+  it('renders an inline input alongside chips', () => {
+    render(
+      <Select
+        multiple
+        triggerDisplay="chips"
+        searchable
+        options={OPTS}
+        value={['a']}
+        placeholder="Add tag…"
+      />,
+    );
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Alpha' })).toBeInTheDocument();
+  });
+
+  it('typing filters and selecting adds a chip + clears query', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Select multiple triggerDisplay="chips" searchable options={OPTS} onChange={onChange} />,
+    );
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await user.click(input);
+    await user.type(input, 'be');
+    expect(screen.getByRole('option', { name: 'Beta' })).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: 'Beta' }));
+    expect(onChange).toHaveBeenCalledWith(['b'], [OPTS[1]]);
+    expect(input.value).toBe('');
+    expect(document.activeElement).toBe(input);
+  });
+
+  it('Backspace on empty input removes the trailing chip', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Select
+        multiple
+        triggerDisplay="chips"
+        searchable
+        options={OPTS}
+        defaultValue={['a', 'b']}
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByRole('combobox');
+    input.focus();
+    await user.keyboard('{Backspace}');
+    expect(onChange).toHaveBeenCalledWith(['a'], [OPTS[0]]);
+  });
+
+  it('Backspace on non-empty input does NOT remove a chip', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Select
+        multiple
+        triggerDisplay="chips"
+        searchable
+        options={OPTS}
+        defaultValue={['a']}
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await user.type(input, 'be');
+    await user.keyboard('{Backspace}'); // deletes 'e' from 'be', not the chip
+    expect(input.value).toBe('b');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+});

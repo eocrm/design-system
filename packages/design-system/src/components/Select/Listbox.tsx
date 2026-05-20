@@ -238,6 +238,10 @@ function renderOptionRow<T>(
         if (opt.disabled) return;
         if (ctx.multiple) {
           ctx.toggleValue(opt.value);
+          // Multi + searchable mode (chips-input or in-panel search):
+          // clear the query so the user can immediately pick another
+          // option without manually erasing the previous filter.
+          if (ctx.searchable) ctx.setQuery('');
         } else {
           ctx.setValue(opt.value);
           ctx.closeAndFocusTrigger();

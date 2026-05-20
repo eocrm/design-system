@@ -5,6 +5,7 @@ import {
   useRef,
   type KeyboardEvent,
   type MutableRefObject,
+  type PointerEvent,
   type Ref,
 } from 'react';
 import clsx from 'clsx';
@@ -466,6 +467,143 @@ function ComboboxInputTrigger(props: TriggerProps) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// ChipsInputTrigger — multi + chips + searchable. Selected options render as
+// removable chips alongside an inline `<input role="combobox">` that owns
+// the live filter query. Backspace on an empty input removes the trailing
+// chip (matches GitHub label picker, Material UI Autocomplete multiple,
+// Headless UI tag inputs). Pattern reference: WAI-ARIA APG combobox + the
+// de-facto tag-input convention.
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Chips trigger with an inline `role="combobox"` input. Wrapper is a plain
+ * `<div>` (no role) because the input IS the WAI-ARIA combobox; assigning
+ * `role="button"` to the wrapper would create two competing focus targets.
+ * Outside-click detection still works — `ctx.triggerRef` points at the
+ * wrapper, and `wrapper.contains(input) === true` and `wrapper.contains(chip) === true`.
+ *
+ * Backspace behaviour: removes the trailing chip ONLY when `ctx.query === ''`.
+ * On non-empty input it falls through to the browser's native text-deletion.
+ *
+ * Enter behaviour: `useTriggerKeyboard.handleNavKey` toggles the active
+ * option in multi mode but does NOT clear the query — we clear it here in
+ * a microtask so the input is empty for the next pick. Listbox's option
+ * click handler also clears the query for multi+searchable so mouse
+ * selection follows the same UX.
+ */
+function ChipsInputTrigger(props: TriggerProps) {
+  const ctx = useSelectContext('Trigger');
+  const { handleNavKey } = useTriggerKeyboard({
+    disabled: props.disabled,
+    readOnly: props.readOnly,
+  });
+  const activeOptionId = useActiveOptionId();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selectedValues = Array.isArray(ctx.value) ? (ctx.value as string[]) : [];
+  // Walk `allRows` so chip labels persist even while typing filters
+  // `rows` down to a subset that excludes them.
+  const selectedOptions: { value: string; label: string }[] = [];
+  for (const row of ctx.allRows) {
+    if (row.kind === 'option' && selectedValues.includes(row.option.value)) {
+      selectedOptions.push({ value: row.option.value, label: row.option.label });
+    }
+  }
+
+  const handleWrapperPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (props.disabled || props.readOnly) return;
+    // Redirect any pointer landing on the wrapper itself (gap between
+    // chips, padding area) into the input so the caret position stays
+    // predictable. Don't steal events that already target the input —
+    // the browser owns selection/caret placement there.
+    if (e.target !== inputRef.current) {
+      e.preventDefault();
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleWrapperClick = () => {
+    if (props.disabled || props.readOnly) return;
+    inputRef.current?.focus();
+    if (!ctx.open) ctx.setOpen(true);
+  };
+
+  const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (props.disabled || props.readOnly) return;
+    // Enter handling is layered: handleNavKey toggles in multi mode but
+    // doesn't clear the query. Schedule the clear AFTER the toggle so the
+    // input is empty for the next selection. Microtask + open-guard so we
+    // don't blow away a query if the user pressed Enter while closed.
+    if (e.key === 'Enter' && ctx.open) {
+      queueMicrotask(() => ctx.setQuery(''));
+    }
+    if (handleNavKey(e)) return;
+    // Backspace on empty input removes the trailing chip. On non-empty
+    // input we DO NOT preventDefault — the browser handles char deletion.
+    if (e.key === 'Backspace' && ctx.query === '' && selectedOptions.length > 0) {
+      e.preventDefault();
+      const last = selectedOptions[selectedOptions.length - 1];
+      ctx.toggleValue(last.value);
+    }
+  };
+
+  // `ctx.triggerRef` is the wrapper div, NOT the input. This is correct
+  // for outside-click detection (everything inside the wrapper — chips,
+  // ✕ buttons, the input — is "inside the trigger"). The input gets its
+  // own local ref for focus management.
+  const wrapperRef = ctx.triggerRef as Ref<HTMLDivElement>;
+
+  return (
+    <div
+      ref={wrapperRef}
+      className={clsx(styles.trigger, styles.triggerChips, styles.triggerChipsInput)}
+      onClick={handleWrapperClick}
+      onPointerDown={handleWrapperPointerDown}
+    >
+      {selectedOptions.map((o) => (
+        <Chip
+          key={o.value}
+          label={o.label}
+          disabled={props.disabled}
+          onRemove={() => {
+            if (props.disabled || props.readOnly) return;
+            ctx.toggleValue(o.value);
+            inputRef.current?.focus();
+          }}
+        />
+      ))}
+      <input
+        ref={inputRef}
+        type="text"
+        id={ctx.triggerId}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-haspopup="listbox"
+        aria-expanded={ctx.open}
+        aria-controls={ctx.open ? ctx.listboxId : undefined}
+        aria-activedescendant={activeOptionId}
+        aria-label={props['aria-label']}
+        aria-labelledby={props['aria-labelledby']}
+        aria-describedby={props['aria-describedby']}
+        aria-invalid={props.invalid || undefined}
+        disabled={props.disabled}
+        readOnly={props.readOnly}
+        autoComplete="off"
+        spellCheck={false}
+        className={styles.chipsInput}
+        placeholder={selectedOptions.length === 0 ? props.placeholder : undefined}
+        value={ctx.query}
+        onChange={(e) => {
+          if (!ctx.open) ctx.setOpen(true);
+          ctx.setQuery(e.target.value);
+        }}
+        onKeyDown={handleInputKeyDown}
+      />
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // ChipsButtonTrigger — multi + chips + !searchable. Renders selected options
 // as removable inline chips inside a div with role="button". Cannot be a
 // native <button> because chip ✕ buttons nest inside it (no <button> in
@@ -592,10 +730,14 @@ export function Trigger(props: TriggerProps) {
   if (!ctx.multiple && ctx.searchable) {
     return <ComboboxInputTrigger {...props} />;
   }
-  if (ctx.multiple && ctx.triggerDisplay === 'chips' && !ctx.searchable) {
-    return <ChipsButtonTrigger {...props} />;
+  if (ctx.multiple && ctx.triggerDisplay === 'chips') {
+    return ctx.searchable ? (
+      <ChipsInputTrigger {...props} />
+    ) : (
+      <ChipsButtonTrigger {...props} />
+    );
   }
   // Multi-summary (both searchable + non-searchable) renders as the
-  // comma-joined button. Multi-chips-searchable is added next task.
+  // comma-joined button trigger.
   return <ButtonTrigger {...props} />;
 }

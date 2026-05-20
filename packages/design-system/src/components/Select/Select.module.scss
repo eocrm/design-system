@@ -197,6 +197,34 @@
   cursor: not-allowed;
 }
 
+// Chips-mode + inline input variant. `.triggerChipsInput` is composed on
+// the wrapper alongside `.triggerChips`; this rule only adds a text caret
+// (the wrapper is the click target that focuses the embedded input).
+.triggerChipsInput {
+  cursor: text;
+}
+
+// Inline search input rendered alongside chips. `flex: 0 1 4ch` is a flex
+// shorthand on a CHILD of the trigger — Rule 4 governs positioning the
+// COMPONENT in its parent, not internal flex children, so this is allowed
+// (same as Stack/Cluster's internal flex). The `4ch` basis gives the
+// input enough width to start typing without being so wide that it
+// pushes chips onto an unnecessary second line.
+.chipsInput {
+  flex: 0 1 4ch;
+  min-width: 4ch;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-fg-muted);
+  }
+}
+
 // ─── Visual state hooks (populated in Phase 10) ─────────────────────────────
 .size-sm,
 .size-md,
