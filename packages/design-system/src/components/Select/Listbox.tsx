@@ -287,6 +287,11 @@ function renderOptionRow<T>(
       </li>
     );
   }
+  // Consumer's `renderOption` wins over the default label rendering. The
+  // create-row branch above intentionally does NOT pass through here —
+  // "+ Create" is internal chrome the consumer doesn't know about.
+  const body = ctx.renderOption ? ctx.renderOption(opt, { active, selected }) : opt.label;
+
   return (
     <li
       key={opt.value}
@@ -323,7 +328,7 @@ function renderOptionRow<T>(
         if (!opt.disabled) ctx.setActiveIndex(i);
       }}
     >
-      {opt.label}
+      {body}
     </li>
   );
 }

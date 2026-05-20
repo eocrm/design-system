@@ -11,6 +11,7 @@ import {
 import clsx from 'clsx';
 import { useSelectContext } from './context';
 import { Chip } from './Chip';
+import type { SelectOption } from './Select';
 import styles from './Select.module.scss';
 
 export interface TriggerProps {
@@ -381,6 +382,29 @@ function ButtonTrigger(props: TriggerProps) {
 
   const showClear = props.clearable && hasValue;
 
+  // Resolve the visible label node. In single mode, `renderValue` (if
+  // supplied) replaces the bare string with whatever the consumer returns.
+  // Multi-summary deliberately stays as the comma-joined string — applying
+  // `renderValue` to it would mean passing N options, which doesn't fit the
+  // single-option signature; for richer multi labels use `renderTag` on
+  // chips mode instead.
+  //
+  // The accessible-name computation falls back to the option label string,
+  // not the rendered node, so screen readers still hear "Pending" even if
+  // the consumer wraps it in decoration.
+  const labelNode: React.ReactNode = (() => {
+    if (!label) return null;
+    if (!ctx.multiple && ctx.renderValue) {
+      const selRow = ctx.allRows.find(
+        (r) => r.kind === 'option' && r.option.value === (ctx.value as string),
+      );
+      if (selRow && selRow.kind === 'option') {
+        return ctx.renderValue(selRow.option as SelectOption);
+      }
+    }
+    return label;
+  })();
+
   return (
     <div className={styles.triggerWrap}>
       <button
@@ -405,7 +429,7 @@ function ButtonTrigger(props: TriggerProps) {
         onKeyDown={handleKeyDown}
       >
         {label ? (
-          <span>{label}</span>
+          <span>{labelNode}</span>
         ) : (
           <span className={styles.placeholder}>{props.placeholder ?? ''}</span>
         )}
@@ -417,6 +441,11 @@ function ButtonTrigger(props: TriggerProps) {
     </div>
   );
 }
+
+// `renderValue` deliberately does NOT apply to the ComboboxInputTrigger
+// variant: the input's `value` prop must be a string, but `renderValue`
+// returns a ReactNode. Consumers using `searchable` who want decorated
+// labels should look at non-searchable mode or compose at the option level.
 
 // ────────────────────────────────────────────────────────────────────────────
 // ComboboxInputTrigger — single + searchable (WAI-ARIA combobox 1.2
@@ -582,11 +611,13 @@ function ChipsInputTrigger(props: TriggerProps) {
 
   const selectedValues = Array.isArray(ctx.value) ? (ctx.value as string[]) : [];
   // Walk `allRows` so chip labels persist even while typing filters
-  // `rows` down to a subset that excludes them.
-  const selectedOptions: { value: string; label: string }[] = [];
+  // `rows` down to a subset that excludes them. Preserve the full
+  // SelectOption — `renderTag` callbacks receive `data` and `description`
+  // too, not just `value` / `label`.
+  const selectedOptions: SelectOption[] = [];
   for (const row of ctx.allRows) {
     if (row.kind === 'option' && selectedValues.includes(row.option.value)) {
-      selectedOptions.push({ value: row.option.value, label: row.option.label });
+      selectedOptions.push(row.option as SelectOption);
     }
   }
 
@@ -640,18 +671,19 @@ function ChipsInputTrigger(props: TriggerProps) {
       onClick={handleWrapperClick}
       onPointerDown={handleWrapperPointerDown}
     >
-      {selectedOptions.map((o) => (
-        <Chip
-          key={o.value}
-          label={o.label}
-          disabled={props.disabled}
-          onRemove={() => {
-            if (props.disabled || props.readOnly) return;
-            ctx.toggleValue(o.value);
-            inputRef.current?.focus();
-          }}
-        />
-      ))}
+      {selectedOptions.map((o) => {
+        const remove = () => {
+          if (props.disabled || props.readOnly) return;
+          ctx.toggleValue(o.value);
+          inputRef.current?.focus();
+        };
+        if (ctx.renderTag) {
+          // Wrap in a keyed Fragment so React can track ordering. The
+          // consumer owns the inner markup (click handlers, styling, etc.).
+          return <span key={o.value}>{ctx.renderTag(o, remove)}</span>;
+        }
+        return <Chip key={o.value} label={o.label} disabled={props.disabled} onRemove={remove} />;
+      })}
       <input
         ref={inputRef}
         type="text"
@@ -719,10 +751,12 @@ function ChipsButtonTrigger(props: TriggerProps) {
   const selectedValues = Array.isArray(ctx.value) ? (ctx.value as string[]) : [];
   // Walk `allRows` (not `rows`) so chips remain present even when a future
   // search query filters the popover — selection is independent of filter.
-  const selectedOptions: { value: string; label: string }[] = [];
+  // Preserve full SelectOption so `renderTag` callbacks get `data` /
+  // `description` access, not just `value` / `label`.
+  const selectedOptions: SelectOption[] = [];
   for (const row of ctx.allRows) {
     if (row.kind === 'option' && selectedValues.includes(row.option.value)) {
-      selectedOptions.push({ value: row.option.value, label: row.option.label });
+      selectedOptions.push(row.option as SelectOption);
     }
   }
 
@@ -772,17 +806,16 @@ function ChipsButtonTrigger(props: TriggerProps) {
       }}
       onKeyDown={handleKeyDown}
     >
-      {selectedOptions.map((o) => (
-        <Chip
-          key={o.value}
-          label={o.label}
-          disabled={props.disabled}
-          onRemove={() => {
-            if (props.disabled || props.readOnly) return;
-            ctx.toggleValue(o.value);
-          }}
-        />
-      ))}
+      {selectedOptions.map((o) => {
+        const remove = () => {
+          if (props.disabled || props.readOnly) return;
+          ctx.toggleValue(o.value);
+        };
+        if (ctx.renderTag) {
+          return <span key={o.value}>{ctx.renderTag(o, remove)}</span>;
+        }
+        return <Chip key={o.value} label={o.label} disabled={props.disabled} onRemove={remove} />;
+      })}
       {selectedOptions.length === 0 && (
         <span className={styles.placeholder}>{props.placeholder ?? ''}</span>
       )}

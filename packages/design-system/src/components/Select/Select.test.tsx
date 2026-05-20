@@ -1138,3 +1138,67 @@ describe('Select — clearable', () => {
     expect(onChange).toHaveBeenCalledWith([], []);
   });
 });
+
+describe('Select — render escape hatches', () => {
+  it('renderOption replaces the option row content', async () => {
+    const user = userEvent.setup();
+    render(
+      <Select
+        options={STATUSES}
+        renderOption={(opt, state) => (
+          <div data-testid={`opt-${opt.value}`}>
+            <span>{opt.label}</span>
+            <span>{state.selected ? '★' : '☆'}</span>
+          </div>
+        )}
+        value="pending"
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /Pending/i }));
+    expect(screen.getByTestId('opt-pending')).toHaveTextContent('Pending★');
+    expect(screen.getByTestId('opt-active')).toHaveTextContent('Active☆');
+  });
+
+  it('renderValue replaces the single trigger label', () => {
+    render(
+      <Select
+        options={STATUSES}
+        value="pending"
+        renderValue={(opt) => <em>~~{opt.label}~~</em>}
+      />,
+    );
+    expect(screen.getByRole('button', { name: /~~Pending~~/ })).toHaveTextContent('~~Pending~~');
+  });
+
+  it('renderTag replaces chip rendering', () => {
+    render(
+      <Select
+        multiple
+        triggerDisplay="chips"
+        options={STATUSES}
+        value={['pending']}
+        renderTag={(opt, remove) => (
+          <span data-testid={`tag-${opt.value}`} onClick={remove}>
+            {opt.label}
+          </span>
+        )}
+      />,
+    );
+    expect(screen.getByTestId('tag-pending')).toHaveTextContent('Pending');
+  });
+
+  it('renderEmpty replaces the empty state', async () => {
+    const user = userEvent.setup();
+    render(
+      <Select
+        searchable
+        options={STATUSES}
+        renderEmpty={(q) => <span>Nothing for "{q}"</span>}
+      />,
+    );
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.type(input, 'zzz');
+    expect(screen.getByText('Nothing for "zzz"')).toBeInTheDocument();
+  });
+});
