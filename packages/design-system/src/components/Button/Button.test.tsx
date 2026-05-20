@@ -69,4 +69,14 @@ describe('Button', () => {
     expect(ref.current).toBeInstanceOf(HTMLButtonElement);
     expect(ref.current?.textContent).toBe('Hi');
   });
+
+  it('renders as an icon-only button at size xs with an accessible name', () => {
+    render(
+      <Button size="xs" aria-label="Remove">
+        <svg data-testid="icon" aria-hidden="true" />
+      </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+    expect(screen.getByTestId('icon')).toBeInTheDocument();
+  });
 });
