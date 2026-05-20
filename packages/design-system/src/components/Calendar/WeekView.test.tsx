@@ -93,7 +93,11 @@ describe('WeekView', () => {
     expect(container.querySelectorAll('[class*="hourLabel"]').length).toBe(8);
   });
 
-  it('places overlapping events side-by-side (each width 50%)', () => {
+  it('renders overlapping events as a Google-style cascade (full width, small lane offset)', () => {
+    // Cascade: each lane shifts right by LANE_OFFSET_PERCENT (10%); every
+    // block still extends to the column's right edge. Later lanes overlay
+    // earlier ones via z-index, so the second event covers the first's
+    // right portion while leaving the predecessor's left edge visible.
     const events: CalendarEvent[] = [
       {
         id: 'a',
@@ -113,8 +117,12 @@ describe('WeekView', () => {
     });
     const a = screen.getByRole('button', { name: /Standup/ });
     const b = screen.getByRole('button', { name: /1:1/ });
-    expect(a).toHaveStyle({ width: '50%' });
-    expect(b).toHaveStyle({ width: '50%' });
+    expect(a.style.getPropertyValue('--cal-block-left')).toBe('0%');
+    expect(a.style.getPropertyValue('--cal-block-width')).toBe('100%');
+    expect(a.style.getPropertyValue('--cal-block-z')).toBe('1');
+    expect(b.style.getPropertyValue('--cal-block-left')).toBe('10%');
+    expect(b.style.getPropertyValue('--cal-block-width')).toBe('90%');
+    expect(b.style.getPropertyValue('--cal-block-z')).toBe('2');
   });
 
   it('uses locale-aware column headers (ru-RU has Cyrillic)', () => {

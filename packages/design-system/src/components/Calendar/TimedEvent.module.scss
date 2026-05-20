@@ -1,7 +1,13 @@
 @use '../../styles/mixins' as *;
 
 .block {
+  // Per-block cascade geometry is passed as CSS custom properties from
+  // TimedEvent.tsx so that :hover / :focus-visible can override left, width,
+  // and z-index without specificity fights with inline style.
   position: absolute;
+  left: var(--cal-block-left);
+  width: var(--cal-block-width);
+  z-index: var(--cal-block-z);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -22,10 +28,18 @@
   cursor: pointer;
   user-select: none;
   transition:
+    left var(--transition-base),
+    width var(--transition-base),
     filter var(--transition-fast),
     background var(--transition-fast);
 
-  &:hover:not(:disabled) {
+  // Hover (and keyboard-focus) lifts the block to full column width and on
+  // top of any cascade neighbours. Animated via the transition above.
+  &:hover:not(:disabled),
+  &:focus-visible {
+    left: 0;
+    width: 100%;
+    z-index: var(--cal-block-z-hover);
     filter: brightness(0.95);
   }
 
@@ -46,6 +60,7 @@
   font-weight: var(--font-weight-regular);
   opacity: var(--opacity-muted);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .title {

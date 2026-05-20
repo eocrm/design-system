@@ -296,7 +296,11 @@ describe('layoutEventsForHourGrid', () => {
     expect(lanes).toEqual([0, 1, 2]);
   });
 
-  it('groups by transitive overlap (chain A-B, B-C → all laneCount=3 even if A and C disjoint)', () => {
+  it('chain A-B-C: recycles A’s lane for C; laneCount=2 across the transitive group', () => {
+    // A (9:00-10:30) and B (10:00-11:00) overlap → A=lane0, B=lane1.
+    // C (10:45-12:00) starts after A ends → reuses lane 0.
+    // Group has 3 transitive members but only 2 lanes are ever active at once,
+    // so the cascade renders with laneCount=2 (10% offset for lane 1).
     const out = layoutEventsForHourGrid(
       [
         {
@@ -321,7 +325,11 @@ describe('layoutEventsForHourGrid', () => {
       day1,
       [7, 19],
     );
-    out.timedBlocks.forEach((b) => expect(b.laneCount).toBe(3));
+    out.timedBlocks.forEach((b) => expect(b.laneCount).toBe(2));
+    const byId = new Map(out.timedBlocks.map((b) => [b.event.id, b]));
+    expect(byId.get('a')!.lane).toBe(0);
+    expect(byId.get('b')!.lane).toBe(1);
+    expect(byId.get('c')!.lane).toBe(0);
   });
 
   it('puts a multi-day event into allDayBars when allDay is true', () => {

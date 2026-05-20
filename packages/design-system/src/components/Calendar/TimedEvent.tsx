@@ -1,4 +1,4 @@
-import { type MouseEvent } from 'react';
+import { type CSSProperties, type MouseEvent } from 'react';
 import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { formatTime } from '../../calendar';
@@ -37,6 +37,10 @@ export interface TimedEventProps {
  * `WeekView`/`DayView`) from the design system and pass events via the `events` prop.
  */
 const MIN_BLOCK_HEIGHT_PX = 20;
+/** Percent of the day column each cascade lane is offset to the right. */
+const LANE_OFFSET_PERCENT = 10;
+/** Z-index used for the hovered / focused block — sits above any lane. */
+const HOVER_Z_INDEX = 100;
 
 export function TimedEvent({
   block,
@@ -51,8 +55,14 @@ export function TimedEvent({
   const top = (block.startMinutes / 60) * hourRowHeight;
   const rawHeight = ((block.endMinutes - block.startMinutes) / 60) * hourRowHeight;
   const height = Math.max(rawHeight, MIN_BLOCK_HEIGHT_PX);
-  const width = `${100 / block.laneCount}%`;
-  const left = `${(100 / block.laneCount) * block.lane}%`;
+  // Google-Calendar-style cascade: each lane shifts right by a small,
+  // constant step but every block still extends to the column's right edge.
+  // Higher lanes overlay earlier ones via z-index, so later events
+  // partially cover the one beneath them while keeping the predecessor's
+  // left edge visible. On hover, the block lifts to full width and on top
+  // — see `:hover` rules in TimedEvent.module.scss.
+  const leftPercent = LANE_OFFSET_PERCENT * block.lane;
+  const zIndex = block.lane + 1;
 
   const startLabel = formatTime(block.event.startsAt, locale);
   const endLabel = block.event.endsAt ? formatTime(block.event.endsAt, locale) : null;
@@ -96,7 +106,16 @@ export function TimedEvent({
       <button
         type="button"
         className={clsx(styles.block, styles[tone], isShort && styles.short)}
-        style={{ top, height, width, left }}
+        style={
+          {
+            top,
+            height,
+            '--cal-block-left': `${leftPercent}%`,
+            '--cal-block-width': `${100 - leftPercent}%`,
+            '--cal-block-z': zIndex,
+            '--cal-block-z-hover': HOVER_Z_INDEX,
+          } as CSSProperties
+        }
         onClick={handleClick}
       >
         {customContent !== null ? (

@@ -222,15 +222,20 @@ export function layoutEventsForHourGrid(
     }
     if (currentGroup) groups.push(currentGroup);
 
-    // Step 2: within each group, assign a unique lane per event (greedy, no
-    // recycling within the group) so that laneCount = group.members.length
-    // and no two same-lane events ever share screen space.
+    // Step 2: within each group, assign a leftmost-available lane to each
+    // event greedily — lanes are recycled once an earlier event ends.
+    // `laneCount` is the highest lane index ever assigned, so the cascade
+    // renderer in TimedEvent.tsx knows how many lanes share the column.
     for (const g of groups) {
-      const laneCount = g.members.length;
       interface LaneState {
         endMinutes: number;
       }
       const laneBuckets: LaneState[] = [];
+      interface Placed {
+        ne: NormalizedTimed;
+        lane: number;
+      }
+      const placed: Placed[] = [];
       for (const ne of g.members) {
         let assigned = -1;
         for (let l = 0; l < laneBuckets.length; l++) {
@@ -244,12 +249,17 @@ export function layoutEventsForHourGrid(
           assigned = laneBuckets.length;
           laneBuckets.push({ endMinutes: ne.endMinutes });
         }
+        placed.push({ ne, lane: assigned });
+      }
+
+      const laneCount = laneBuckets.length;
+      for (const p of placed) {
         timedBlocks.push({
-          event: ne.event,
-          dayIndex: ne.dayIndex,
-          startMinutes: ne.startMinutes,
-          endMinutes: ne.endMinutes,
-          lane: assigned,
+          event: p.ne.event,
+          dayIndex: p.ne.dayIndex,
+          startMinutes: p.ne.startMinutes,
+          endMinutes: p.ne.endMinutes,
+          lane: p.lane,
           laneCount,
         });
       }

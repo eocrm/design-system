@@ -65,6 +65,17 @@ export interface MonthLayout {
 /**
  * One positioned timed-event block inside an `<HourGrid>` column. Produced
  * by `layoutEventsForHourGrid` and consumed by `WeekView`/`DayView`.
+ *
+ * Horizontal placement (Google-Calendar-style cascade):
+ * - Lanes are offset to the right by a fixed step rather than partitioning
+ *   the column. Higher lanes overlay earlier ones (z-index = lane index),
+ *   so a later/right-side event partially covers the one beneath it.
+ * - With `step = 100 / (laneCount + 1)` percent, a singleton in any lane is
+ *   `2 * step` wide. For 2 overlapping events the geometry comes out to
+ *   ~67% each with a ~33% offset; for 3, ~50% each with ~25% offset.
+ * - `widthInLanes` lets a block expand further right when no higher-lane
+ *   neighbour overlaps it in time. Render with
+ *   `left = lane * step` and `width = (widthInLanes + 1) * step`.
  */
 export interface TimedEventBlock {
   event: CalendarEvent;
@@ -74,9 +85,9 @@ export interface TimedEventBlock {
   startMinutes: number;
   /** Minutes from `hourRange[0] * 60`. May exceed `(hourRange[1] - hourRange[0]) * 60`. */
   endMinutes: number;
-  /** 0..laneCount-1 — horizontal lane within the day's collision group. */
+  /** 0..laneCount-1 — horizontal lane within the collision group. */
   lane: number;
-  /** Lane count for this block's collision group; bar width = `100% / laneCount`. */
+  /** Lane count for this block's collision group. */
   laneCount: number;
 }
 
