@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 export interface UseSelectStateArgs {
   /** When `true`, value is a `string[]`; when `false`, a `string`. */
@@ -17,11 +17,15 @@ export interface UseSelectStateArgs {
   onOpenChange?: (open: boolean) => void;
 }
 
-export interface UseSelectStateReturn {
+/**
+ * Return shape of `useSelectState`, parameterized by the value type so
+ * overloads can narrow `value` / `setValue` based on `multiple`.
+ */
+export interface UseSelectStateReturn<V extends string | string[] = string | string[]> {
   /** Current value — `string` in single mode, `string[]` in multi. */
-  value: string | string[];
+  value: V;
   /** Replace the entire selection. */
-  setValue: (next: string | string[]) => void;
+  setValue: (next: V) => void;
   /**
    * Multi: toggle membership of `v` (add when missing, remove when present).
    * Single: equivalent to `setValue(v)`.
@@ -31,6 +35,15 @@ export interface UseSelectStateReturn {
   open: boolean;
   /** Set open state. */
   setOpen: (next: boolean) => void;
+}
+
+interface StateRefShape {
+  multiple: boolean;
+  isControlledValue: boolean;
+  isControlledOpen: boolean;
+  currentValue: string | string[];
+  onChange?: (value: string | string[]) => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const emptyValue = (multiple: boolean): string | string[] => (multiple ? [] : '');
@@ -44,8 +57,28 @@ const emptyValue = (multiple: boolean): string | string[] => (multiple ? [] : ''
  *    `onChange` but do NOT update internal state.
  *  - `open !== undefined` → controlled. `setOpen` fires `onOpenChange`
  *    but does NOT update internal state.
+ *
+ * @example
+ *   const { value, setValue } = useSelectState({ multiple: false });
+ *   // value is typed as `string`
+ *
+ * @example
+ *   const { value, setValue } = useSelectState({ multiple: true });
+ *   // value is typed as `string[]`
  */
-export function useSelectState(args: UseSelectStateArgs): UseSelectStateReturn {
+export function useSelectState(
+  args: UseSelectStateArgs & { multiple: false },
+): UseSelectStateReturn<string>;
+export function useSelectState(
+  args: UseSelectStateArgs & { multiple: true },
+): UseSelectStateReturn<string[]>;
+export function useSelectState(args: UseSelectStateArgs): UseSelectStateReturn;
+// Implementation signature: intentionally permissive — public callers see one
+// of the three overloads above. `UseSelectStateReturn<string | string[]>`
+// would not be a valid supertype of `UseSelectStateReturn<string>` because
+// `setValue` is contravariant in V.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useSelectState(args: UseSelectStateArgs): UseSelectStateReturn<any> {
   const { multiple, value, defaultValue, onChange, open, defaultOpen, onOpenChange } = args;
 
   const [internalValue, setInternalValue] = useState<string | string[]>(
@@ -57,23 +90,29 @@ export function useSelectState(args: UseSelectStateArgs): UseSelectStateReturn {
   const isControlledOpen = open !== undefined;
 
   // Stable refs so the returned callbacks have stable identity even though
-  // they read fresh values on every invocation.
-  const stateRef = useRef({
+  // they read fresh values on every invocation. The ref is seeded with the
+  // initial values and refreshed in a layout effect — assigning during render
+  // would violate React's render-purity rule under StrictMode / concurrent
+  // rendering (a discarded render could mutate state observed by a
+  // not-yet-committed update).
+  const stateRef = useRef<StateRefShape>({
     multiple,
     isControlledValue,
     isControlledOpen,
-    currentValue: isControlledValue ? value : internalValue,
+    currentValue: isControlledValue ? (value as string | string[]) : internalValue,
     onChange,
     onOpenChange,
   });
-  stateRef.current = {
-    multiple,
-    isControlledValue,
-    isControlledOpen,
-    currentValue: isControlledValue ? value : internalValue,
-    onChange,
-    onOpenChange,
-  };
+  useLayoutEffect(() => {
+    stateRef.current = {
+      multiple,
+      isControlledValue,
+      isControlledOpen,
+      currentValue: isControlledValue ? (value as string | string[]) : internalValue,
+      onChange,
+      onOpenChange,
+    };
+  });
 
   const setValue = useCallback((next: string | string[]) => {
     const s = stateRef.current;

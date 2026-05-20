@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { createRef } from 'react';
 import { Select } from './Select';
+import styles from './Select.module.scss';
 
 describe('Select — Phase 1 scaffold', () => {
   it('renders an empty root div with the data-select marker', () => {
@@ -19,7 +20,7 @@ describe('Select — Phase 1 scaffold', () => {
   it('merges the className prop (does not replace the internal class)', () => {
     const { container } = render(<Select className="external" />);
     const root = container.firstChild as HTMLElement;
-    expect(root.className).toMatch(/external/);
-    expect(root.className).toMatch(/root/);
+    expect(root.className).toContain('external');
+    expect(root.className).toContain(styles.root);
   });
 });
