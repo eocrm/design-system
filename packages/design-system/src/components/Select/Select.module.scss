@@ -116,6 +116,31 @@
   cursor: not-allowed;
 }
 
+// ─── In-panel search input (multi-summary-searchable variant) ──────────────
+// Sits at the top of the listbox panel, above the option rows. Hard Rule 4
+// allows `width: 100%` (intrinsic 100%) — it's the natural fit for "fill
+// the parent panel". No margin / position / flex-grow here.
+.popoverSearch {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-md);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  border: 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-fg-muted);
+  }
+
+  &:focus-visible {
+    border-bottom-color: var(--color-accent);
+  }
+}
+
 // ─── Visual state hooks (populated in Phase 10) ─────────────────────────────
 .size-sm,
 .size-md,

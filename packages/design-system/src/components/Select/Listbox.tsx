@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   autoUpdate,
@@ -126,6 +126,14 @@ export function Listbox() {
       className={clsx(styles.listbox)}
       style={floatingStyles}
     >
+      {/* In-panel search for multi-summary-searchable mode. Single-mode
+          searchable Select keeps the search input AS the trigger
+          (ComboboxInputTrigger) since there's no second trigger to compete
+          with; multi-summary needs the trigger to remain a button that
+          shows the summary, so the search input lives inside the panel. */}
+      {ctx.multiple && ctx.triggerDisplay === 'summary' && ctx.searchable && (
+        <InPanelSearchInput />
+      )}
       {(() => {
         // Walk the flat rows array, wrapping each header + its following
         // option rows in `<li role="group" aria-labelledby={headerId}>` so
@@ -241,5 +249,78 @@ function renderOptionRow<T>(
     >
       {opt.label}
     </li>
+  );
+}
+
+/**
+ * Search input rendered inside the listbox panel for the multi-summary-
+ * searchable variant. The trigger remains a button that shows the
+ * comma-joined selection summary; the input lives in the popover so the
+ * user can filter without losing the selection summary.
+ *
+ * Owns its own keyboard handling: ArrowUp/Down cycle the active option,
+ * Enter toggles selection, Escape closes and returns focus to the trigger.
+ * This duplicates a small slice of `useTriggerKeyboard.moveActive` —
+ * deliberate, since the trigger hook is button-shaped and pulling the
+ * cycle logic into a shared hook would obscure both call sites at this
+ * scale. Revisit if Phase 6's chips trigger lands a third copy.
+ */
+function InPanelSearchInput() {
+  const ctx = useSelectContext('Listbox.SearchInput');
+  const ref = useRef<HTMLInputElement>(null);
+
+  // Auto-focus on mount so the user starts typing immediately after
+  // clicking the trigger. `preventScroll` avoids the portaled panel
+  // yanking the viewport on focus.
+  useLayoutEffect(() => {
+    ref.current?.focus({ preventScroll: true });
+  }, []);
+
+  const activeRow = ctx.activeIndex >= 0 ? ctx.rows[ctx.activeIndex] : undefined;
+  const activeOptionId =
+    activeRow && activeRow.kind === 'option' ? ctx.getOptionId(activeRow.option.value) : undefined;
+
+  return (
+    <input
+      ref={ref}
+      type="text"
+      role="combobox"
+      aria-expanded="true"
+      aria-controls={ctx.listboxId}
+      aria-activedescendant={activeOptionId}
+      aria-autocomplete="list"
+      className={styles.popoverSearch}
+      placeholder="Search…"
+      autoComplete="off"
+      spellCheck={false}
+      value={ctx.query}
+      onChange={(e) => ctx.setQuery(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const delta = e.key === 'ArrowDown' ? +1 : -1;
+          const len = ctx.rows.length;
+          if (len === 0) return;
+          let i = ctx.activeIndex;
+          for (let s = 0; s < len; s++) {
+            i = (i + delta + len) % len;
+            const r = ctx.rows[i];
+            if (r.kind === 'option' && !r.option.disabled) {
+              ctx.setActiveIndex(i);
+              break;
+            }
+          }
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          const row = ctx.rows[ctx.activeIndex];
+          if (row && row.kind === 'option' && !row.option.disabled) {
+            ctx.toggleValue(row.option.value);
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          ctx.closeAndFocusTrigger();
+        }
+      }}
+    />
   );
 }

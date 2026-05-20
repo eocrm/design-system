@@ -534,3 +534,44 @@ describe('Select — multi-summary aria-label', () => {
     expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Owners filter');
   });
 });
+
+describe('Select — multi-summary-searchable', () => {
+  const OPTS = [
+    { value: 'a', label: 'Alex' },
+    { value: 'b', label: 'Bea' },
+    { value: 'c', label: 'Cam' },
+  ];
+
+  it('renders a search input inside the popover when multi+summary+searchable', async () => {
+    const user = userEvent.setup();
+    render(<Select multiple triggerDisplay="summary" searchable options={OPTS} />);
+    await user.click(screen.getByRole('button'));
+    const inputs = screen.getAllByRole('combobox');
+    expect(inputs).toHaveLength(1);
+    expect(inputs[0].tagName).toBe('INPUT');
+  });
+
+  it('typing into the popover search filters options', async () => {
+    const user = userEvent.setup();
+    render(<Select multiple triggerDisplay="summary" searchable options={OPTS} />);
+    await user.click(screen.getByRole('button'));
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'be');
+    expect(screen.queryByRole('option', { name: 'Alex' })).toBeNull();
+    expect(screen.getByRole('option', { name: 'Bea' })).toBeInTheDocument();
+  });
+
+  it('selecting an option keeps popover open and refocuses search input', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Select multiple triggerDisplay="summary" searchable options={OPTS} onChange={onChange} />,
+    );
+    await user.click(screen.getByRole('button'));
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'al');
+    await user.click(screen.getByRole('option', { name: 'Alex' }));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(document.activeElement).toBe(input);
+  });
+});
