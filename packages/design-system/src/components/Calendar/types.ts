@@ -136,4 +136,7 @@ export interface RenderEventContext {
  * tooltip, and tone background — return content with inline `background` /
  * `style` to override colors.
  */
-export type RenderEvent = (event: CalendarEvent, ctx: RenderEventContext) => import('react').ReactNode;
+export type RenderEvent = (
+  event: CalendarEvent,
+  ctx: RenderEventContext,
+) => import('react').ReactNode;
