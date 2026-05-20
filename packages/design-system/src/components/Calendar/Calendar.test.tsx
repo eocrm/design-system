@@ -94,4 +94,15 @@ describe('Calendar', () => {
     const root = heading.closest('div');
     expect(root?.className).toMatch(/external/);
   });
+
+  it('restores focused cell after month navigation (some gridcell remains tab-reachable)', async () => {
+    const user = userEvent.setup();
+    render(<Calendar defaultValue={new Date(2026, 4, 15)} />, { wrapper: wrap() });
+    // Click "Next month"
+    await user.click(screen.getByLabelText('Next month'));
+    // After navigation, exactly one gridcell must have tabIndex="0" (roving-tab-index focus target)
+    const cells = screen.getAllByRole('gridcell');
+    const focusable = cells.filter((c) => c.getAttribute('tabindex') === '0');
+    expect(focusable.length).toBe(1);
+  });
 });

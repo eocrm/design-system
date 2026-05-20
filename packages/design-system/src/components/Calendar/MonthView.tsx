@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import type { MonthGrid } from '../../calendar/types';
 import { addDays, addMonths, isSameDay, startOfWeek } from '../../calendar/dateMath';
 import type { CalendarEvent, EventBar } from './types';
@@ -6,6 +6,22 @@ import { layoutEventsForMonth } from './utils';
 import { DayCell } from './DayCell';
 import { EventChip } from './EventChip';
 import styles from './MonthView.module.scss';
+
+/** Picks the initial (or re-derived) focused cell key for a given grid + cursor. */
+function pickInitialFocusKey(grid: MonthGrid, cursor: Date): string {
+  const allDays = grid.weeks.flat();
+  // Prefer the cursor's own day if it's in the grid and in the current month.
+  const cursorDay = allDays.find(
+    (d) =>
+      d.date.getFullYear() === cursor.getFullYear() &&
+      d.date.getMonth() === cursor.getMonth() &&
+      d.date.getDate() === cursor.getDate(),
+  );
+  if (cursorDay) return cursorDay.key;
+  const today = allDays.find((d) => d.isToday && d.isCurrentMonth);
+  const first = allDays.find((d) => d.isCurrentMonth);
+  return (today ?? first ?? allDays[0]).key;
+}
 
 export interface MonthViewProps {
   /** The month grid produced by `useMonth`. */
@@ -65,15 +81,20 @@ export function MonthView({
     [events, grid.weeks, maxLanesPerWeek],
   );
 
-  const [focusedKey, setFocusedKey] = useState<string>(() => {
-    const allDays = grid.weeks.flat();
-    // Prefer the cell that matches the cursor date; fall back to today, then
-    // first current-month day, then the first cell in the grid.
-    const cursorMatch = allDays.find((d) => isSameDay(d.date, cursor));
-    const today = allDays.find((d) => d.isToday && d.isCurrentMonth);
-    const first = allDays.find((d) => d.isCurrentMonth);
-    return (cursorMatch ?? today ?? first ?? allDays[0]).key;
-  });
+  const [focusedKey, setFocusedKey] = useState<string>(() =>
+    pickInitialFocusKey(grid, cursor),
+  );
+
+  // Re-sync focusedKey when the grid changes (e.g. after Prev/Next/Today nav).
+  // Preserve the existing key if it still exists in the new grid; re-derive only
+  // when the old key is no longer present (month changed).
+  useEffect(() => {
+    setFocusedKey((prev) => {
+      const allKeys = new Set(grid.weeks.flat().map((d) => d.key));
+      if (allKeys.has(prev)) return prev;
+      return pickInitialFocusKey(grid, cursor);
+    });
+  }, [grid, cursor]);
 
   const barsByWeekLane = useMemo(() => {
     const map = new Map<number, Map<number, EventBar[]>>();
@@ -153,6 +174,9 @@ export function MonthView({
             const el = document.querySelector(`[data-date-key="${exactMatch.key}"]`);
             if (el instanceof HTMLElement) el.focus();
           });
+        } else {
+          // Arrow nav went off the visible grid — ask the consumer to scroll the cursor.
+          onChange?.(nextDate);
         }
       }
     },
@@ -175,8 +199,9 @@ export function MonthView({
           ? Math.min(maxLanesPerWeek, Math.max(...weekBars.keys()) + 1)
           : 0;
         return (
-          <div key={weekIndex} role="row" className={styles.week}>
-            <div className={styles.dayRow}>
+          <div key={weekIndex} className={styles.week}>
+            {/* role="row" lives here so gridcell children are direct ARIA children */}
+            <div role="row" className={styles.dayRow}>
               {week.map((day) => (
                 <DayCell
                   key={day.key}
@@ -191,7 +216,8 @@ export function MonthView({
             {Array.from({ length: laneCount }).map((_, lane) => {
               const laneBars = weekBars?.get(lane) ?? [];
               return (
-                <div key={lane} className={styles.laneRow}>
+                // role="presentation" keeps buttons out of the ARIA grid row hierarchy
+                <div key={lane} role="presentation" className={styles.laneRow}>
                   {laneBars.map((bar) => (
                     <div
                       key={bar.event.id}

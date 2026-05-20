@@ -43,8 +43,8 @@ const MULTI_WEEK_EVENTS: CalendarEvent[] = [
   {
     id: 'm1',
     title: 'Conference',
-    startsAt: new Date(2026, 4, 11),
-    endsAt: new Date(2026, 4, 22),
+    startsAt: new Date(2026, 4, 6), // Wed May 6
+    endsAt: new Date(2026, 4, 22), // Fri May 22 — 3 bars: week 1 (continuesRight), week 2 (both edges), week 3 (continuesLeft)
     tone: 'success',
     allDay: true,
   },
@@ -112,9 +112,9 @@ export function CalendarDemo() {
 
       <Example
         title="Multi-week event"
-        description="A 12-day event spanning across two week boundaries. Bars in middle weeks have both continuation edges flattened."
+        description="A 17-day event spanning three week rows (Wed May 6 → Fri May 22). Bars in middle weeks have both continuation edges flattened."
         code={`const MULTI_WEEK_EVENTS = [
-  { id: 'm1', title: 'Conference', startsAt: new Date(2026, 4, 11), endsAt: new Date(2026, 4, 22), tone: 'success', allDay: true },
+  { id: 'm1', title: 'Conference', startsAt: new Date(2026, 4, 6), endsAt: new Date(2026, 4, 22), tone: 'success', allDay: true },
 ];
 
 <Calendar defaultValue={new Date(2026, 4, 15)} events={MULTI_WEEK_EVENTS} />`}
