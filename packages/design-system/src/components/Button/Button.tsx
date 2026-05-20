@@ -32,6 +32,20 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * - `lg` (40px) — marketing-style empty states or emphasized primary actions.
    */
   size?: ButtonSize;
+  /**
+   * Render the button as a square icon-only target — `aspect-ratio` is forced
+   * to 1 so width tracks the size's `height` token (`xs` → 20×20, `sm` → 24×24,
+   * `md` → 32×32, `lg` → 40×40) and `padding` is tightened to a small inset
+   * (4px) so the icon has breathing room without changing the outer shape.
+   *
+   * **Always pass `aria-label`** when `iconOnly` is set, otherwise the button
+   * has no accessible name. Pass a single icon as `children`.
+   *
+   * Use for inline density (row controls, chip-adjacent actions, toolbar
+   * affordances). For an icon + short text label, leave `iconOnly` off — the
+   * button will lay out as a normal rectangle with the existing gap.
+   */
+  iconOnly?: boolean;
 }
 
 /**
@@ -48,8 +62,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * </Button>
  *
  * @example
- * // Icon-only at xs — pass `aria-label` so screen readers announce the action.
- * <Button size="xs" variant="ghost" aria-label="Remove">
+ * // Icon-only square button — pass `iconOnly` for a square shape (20×20 at
+ * // xs, 32×32 at md, etc.) and `aria-label` so screen readers announce it.
+ * <Button size="xs" variant="ghost" iconOnly aria-label="Remove">
  *   <X size={12} />
  * </Button>
  *
@@ -90,6 +105,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *   a Button with internal state.
  * - A clickable table row → make the row itself the interactive surface;
  *   don't nest a button.
+ * - On touch-first surfaces, prefer `size="sm"` or larger. `xs` (20px×~28px, or
+ *   20×20 with `iconOnly`) is below WCAG 2.5.5 Level AAA touch-target
+ *   guidance (24×24); acceptable here because the CRM is desktop-first.
  *
  * @remarks Anti-patterns
  * - ❌ Two `variant="primary"` Buttons in the same section. Pick one; others
@@ -106,16 +124,25 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * - ❌ Using `size="xs"` for the primary or most prominent action in a
  *   section. `xs` is for inline density, not emphasis — reach for `md` or
  *   `lg` when the button should draw the eye.
+ * - ❌ `<Button iconOnly><X /></Button>` without `aria-label`. The button has
+ *   no accessible name; screen readers announce nothing. Always pair
+ *   `iconOnly` with `aria-label="…"`.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', className, type = 'button', ...props },
+  { variant = 'primary', size = 'md', iconOnly = false, className, type = 'button', ...props },
   ref,
 ) {
   return (
     <button
       ref={ref}
       type={type}
-      className={clsx(styles.button, styles[variant], styles[size], className)}
+      className={clsx(
+        styles.button,
+        styles[variant],
+        styles[size],
+        iconOnly && styles.iconOnly,
+        className,
+      )}
       {...props}
     />
   );

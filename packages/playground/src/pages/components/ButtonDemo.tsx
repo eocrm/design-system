@@ -116,21 +116,27 @@ export function ButtonDemo() {
       </Example>
 
       <Example
-        title="Icon-only at xs"
-        description="For inline density — row controls, chip-adjacent actions. Always pass an aria-label so screen readers announce what the button does."
-        code={`<Button size="xs" variant="ghost" aria-label="Remove">
+        title="Icon-only (square)"
+        description="Pass iconOnly for a square shape that tracks the size's height — 20×20 at xs, 32×32 at md. Always pair iconOnly with aria-label."
+        code={`<Button size="xs" variant="ghost" iconOnly aria-label="Remove">
   <X size={12} />
 </Button>
-<Button size="xs" variant="secondary" aria-label="Edit">
+<Button size="xs" variant="secondary" iconOnly aria-label="Edit">
   <Pencil size={12} />
+</Button>
+<Button size="md" variant="secondary" iconOnly aria-label="Search">
+  <Search size={16} />
 </Button>`}
       >
         <Cluster gap="sm" align="center">
-          <Button size="xs" variant="ghost" aria-label="Remove">
+          <Button size="xs" variant="ghost" iconOnly aria-label="Remove">
             <X size={12} />
           </Button>
-          <Button size="xs" variant="secondary" aria-label="Edit">
+          <Button size="xs" variant="secondary" iconOnly aria-label="Edit">
             <Pencil size={12} />
+          </Button>
+          <Button size="md" variant="secondary" iconOnly aria-label="Search">
+            <Search size={16} />
           </Button>
         </Cluster>
       </Example>
@@ -159,15 +165,21 @@ export function ButtonDemo() {
         title="Disabled"
         description="Native disabled attribute. Visually muted, pointer-events disabled."
         code={`<Button disabled>Primary</Button>
-<Button variant="secondary" disabled>Secondary</Button>`}
+<Button variant="secondary" disabled>Secondary</Button>
+<Button size="xs" variant="ghost" iconOnly disabled aria-label="Remove">
+  <X size={12} />
+</Button>`}
       >
-        <Cluster gap="sm">
+        <Cluster gap="sm" align="center">
           <Button disabled>Primary</Button>
           <Button variant="secondary" disabled>
             Secondary
           </Button>
           <Button variant="danger" disabled>
             Danger
+          </Button>
+          <Button size="xs" variant="ghost" iconOnly disabled aria-label="Remove">
+            <X size={12} />
           </Button>
         </Cluster>
       </Example>

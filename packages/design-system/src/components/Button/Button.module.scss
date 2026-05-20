@@ -54,6 +54,11 @@
   font-size: var(--font-size-lg);
 }
 
+.iconOnly {
+  aspect-ratio: 1;
+  padding: var(--space-1);
+}
+
 // Variants
 .primary {
   background: var(--color-accent);

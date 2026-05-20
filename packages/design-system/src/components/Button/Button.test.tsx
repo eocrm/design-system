@@ -79,4 +79,13 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
     expect(screen.getByTestId('icon')).toBeInTheDocument();
   });
+
+  it('applies the iconOnly class when iconOnly is set', () => {
+    render(
+      <Button iconOnly aria-label="Remove">
+        <svg data-testid="icon" aria-hidden="true" />
+      </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Remove' }).className).toMatch(/iconOnly/);
+  });
 });
