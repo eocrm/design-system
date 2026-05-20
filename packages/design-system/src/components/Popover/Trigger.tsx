@@ -45,8 +45,14 @@ export function Trigger({ children }: PopoverTriggerProps) {
     onKeyDown?: (e: ReactKeyboardEvent<HTMLElement>) => void;
   };
 
+  // stopPropagation: prevents the click from bubbling to an ancestor that
+  // might also act on it (e.g., a <DropdownMenu.Item> whose onClick fires
+  // onSelect and closes the menu, which would unmount this Popover before
+  // it gets a chance to open). The trigger's job is to consume the click;
+  // nothing meaningful should run on parents.
   const handleClick = useCallback(
-    (_e: ReactMouseEvent<HTMLElement>) => {
+    (e: ReactMouseEvent<HTMLElement>) => {
+      e.stopPropagation();
       ctx.setOpen(!ctx.open);
     },
     [ctx],
@@ -57,6 +63,7 @@ export function Trigger({ children }: PopoverTriggerProps) {
       if (ctx.open) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        e.stopPropagation();
         ctx.setOpen(true);
       }
     },

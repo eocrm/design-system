@@ -472,4 +472,25 @@ describe('Popover — cleanup + Tab traversal', () => {
     const trigger = screen.getByTestId('t');
     expect(trigger).toHaveClass('consumer');
   });
+
+  it('Trigger click does not bubble to ancestor click handlers', async () => {
+    // Locks in the fix for "<ConfirmationPopover> inside <DropdownMenu.Item>
+    // closes the dropdown instead of opening the popover" — the trigger
+    // should consume the click and not let it bubble to an ancestor.
+    const user = userEvent.setup();
+    const ancestorClick = vi.fn();
+    render(
+      <div onClick={ancestorClick}>
+        <Popover>
+          <Popover.Trigger>
+            <button type="button">Open</button>
+          </Popover.Trigger>
+          <Popover.Content>panel body</Popover.Content>
+        </Popover>
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(ancestorClick).not.toHaveBeenCalled();
+  });
 });
