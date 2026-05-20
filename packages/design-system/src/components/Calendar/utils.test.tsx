@@ -441,21 +441,21 @@ describe('formatEventDuration', () => {
   });
 
   it('returns "30m" for sub-hour events', () => {
-    expect(
-      formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 20, 9, 30)),
-    ).toBe('30m');
+    expect(formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 20, 9, 30))).toBe(
+      '30m',
+    );
   });
 
   it('returns "1h" for exact-hour events', () => {
-    expect(
-      formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 20, 10, 0)),
-    ).toBe('1h');
+    expect(formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 20, 10, 0))).toBe(
+      '1h',
+    );
   });
 
   it('returns "1h 30m" for one-and-a-half hours', () => {
-    expect(
-      formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 20, 10, 30)),
-    ).toBe('1h 30m');
+    expect(formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 20, 10, 30))).toBe(
+      '1h 30m',
+    );
   });
 
   it('returns "2d" for exact two-day events', () => {
@@ -463,8 +463,8 @@ describe('formatEventDuration', () => {
   });
 
   it('returns "2d 5h" for two-day five-hour events', () => {
-    expect(
-      formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 22, 14, 0)),
-    ).toBe('2d 5h');
+    expect(formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 22, 14, 0))).toBe(
+      '2d 5h',
+    );
   });
 });
