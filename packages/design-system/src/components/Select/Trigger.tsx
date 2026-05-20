@@ -233,12 +233,36 @@ function ButtonTrigger(props: TriggerProps) {
     readOnly: props.readOnly,
   });
 
-  const selectedRow =
-    !ctx.multiple && typeof ctx.value === 'string' && ctx.value !== ''
-      ? ctx.allRows.find((r) => r.kind === 'option' && r.option.value === ctx.value)
-      : null;
-  const hasValue = selectedRow !== null && selectedRow !== undefined;
-  const label = hasValue && selectedRow.kind === 'option' ? selectedRow.option.label : '';
+  // Resolve the visible label string for both single and multi modes.
+  //
+  // Multi: walk `ctx.allRows` (NOT `ctx.rows` which is filtered when
+  // searchable) and comma-join the labels of every selected value so chip
+  // labels don't drop out of the summary when the user types a filter
+  // query that excludes them.
+  //
+  // Single: same `allRows` lookup as before — keeps the closed-state label
+  // visible while the user is filtering in the open searchable variant
+  // (which actually renders the combobox-input trigger, but symmetry here
+  // is harmless and keeps the resolution logic in one place).
+  const label = (() => {
+    if (ctx.multiple) {
+      const selectedValues = Array.isArray(ctx.value) ? ctx.value : [];
+      if (selectedValues.length === 0) return '';
+      const labels: string[] = [];
+      for (const row of ctx.allRows) {
+        if (row.kind === 'option' && selectedValues.includes(row.option.value)) {
+          labels.push(row.option.label);
+        }
+      }
+      return labels.join(', ');
+    }
+    if (typeof ctx.value !== 'string' || ctx.value === '') return '';
+    const selRow = ctx.allRows.find(
+      (r) => r.kind === 'option' && r.option.value === (ctx.value as string),
+    );
+    return selRow && selRow.kind === 'option' ? selRow.option.label : '';
+  })();
+  const hasValue = label !== '';
 
   const activeOptionId = useActiveOptionId();
 
@@ -447,5 +471,7 @@ export function Trigger(props: TriggerProps) {
   if (!ctx.multiple && ctx.searchable) {
     return <ComboboxInputTrigger {...props} />;
   }
+  // Multi-chips trigger lands in Phase 6; until then, multi always uses
+  // ButtonTrigger which now renders comma-joined summary labels.
   return <ButtonTrigger {...props} />;
 }

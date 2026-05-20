@@ -453,3 +453,57 @@ describe('Select — grouped options', () => {
     );
   });
 });
+
+describe('Select — multi, summary, non-searchable', () => {
+  const OWNERS = [
+    { value: 'a', label: 'Alex' },
+    { value: 'b', label: 'Bea' },
+    { value: 'c', label: 'Cam' },
+  ];
+
+  it('placeholder shown when nothing selected', () => {
+    render(<Select multiple triggerDisplay="summary" options={OWNERS} placeholder="Owners" />);
+    expect(screen.getByRole('button')).toHaveTextContent('Owners');
+  });
+
+  it('renders comma-joined labels when selections exist', () => {
+    render(<Select multiple triggerDisplay="summary" options={OWNERS} value={['a', 'c']} />);
+    expect(screen.getByRole('button')).toHaveTextContent('Alex, Cam');
+  });
+
+  it('clicking a row toggles selection and does NOT close', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select multiple triggerDisplay="summary" options={OWNERS} onChange={onChange} />);
+    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('option', { name: 'Alex' }));
+    expect(onChange).toHaveBeenCalledWith(['a'], [OWNERS[0]]);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: 'Bea' }));
+    expect(onChange).toHaveBeenLastCalledWith(['a', 'b'], [OWNERS[0], OWNERS[1]]);
+  });
+
+  it('clicking a selected row removes it', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Select
+        multiple
+        triggerDisplay="summary"
+        options={OWNERS}
+        defaultValue={['a']}
+        onChange={onChange}
+      />,
+    );
+    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('option', { name: 'Alex' }));
+    expect(onChange).toHaveBeenCalledWith([], []);
+  });
+
+  it('aria-multiselectable=true on the listbox', async () => {
+    const user = userEvent.setup();
+    render(<Select multiple triggerDisplay="summary" options={OWNERS} />);
+    await user.click(screen.getByRole('button'));
+    expect(screen.getByRole('listbox')).toHaveAttribute('aria-multiselectable', 'true');
+  });
+});
