@@ -4,7 +4,13 @@ import { useLocale } from '../../i18n/useLocale';
 import { formatTime } from '../../calendar';
 import { Tooltip } from '../Tooltip';
 import { formatEventDuration } from './utils';
-import type { CalendarEvent, CalendarEventTone, TimedEventBlock } from './types';
+import type {
+  CalendarEvent,
+  CalendarEventTone,
+  CalendarView,
+  RenderEvent,
+  TimedEventBlock,
+} from './types';
 import styles from './TimedEvent.module.scss';
 
 export interface TimedEventProps {
@@ -12,6 +18,10 @@ export interface TimedEventProps {
   block: TimedEventBlock;
   /** Pixel height per hour row (matches the hour-grid scaffold). */
   hourRowHeight: number;
+  /** Which view is rendering this chip (`'week'` or `'day'`). Passed to `renderEvent` for branching. */
+  view?: CalendarView;
+  /** Optional custom inner content. When set, replaces the default time + title spans. */
+  renderEvent?: RenderEvent;
   /** Fires when the chip is clicked; receives the `CalendarEvent`. */
   onClick?: (event: CalendarEvent) => void;
 }
@@ -28,7 +38,13 @@ export interface TimedEventProps {
  */
 const MIN_BLOCK_HEIGHT_PX = 20;
 
-export function TimedEvent({ block, hourRowHeight, onClick }: TimedEventProps) {
+export function TimedEvent({
+  block,
+  hourRowHeight,
+  view = 'week',
+  renderEvent,
+  onClick,
+}: TimedEventProps) {
   const locale = useLocale();
   const tone: CalendarEventTone = block.event.tone ?? 'neutral';
 
@@ -66,6 +82,15 @@ export function TimedEvent({ block, hourRowHeight, onClick }: TimedEventProps) {
   // stack time above title in a column for more breathing room.
   const isShort = height < MIN_BLOCK_HEIGHT_PX + 10;
 
+  const customContent = renderEvent
+    ? renderEvent(block.event, {
+        view,
+        asAllDay: false,
+        timeLabel,
+        duration,
+      })
+    : null;
+
   return (
     <Tooltip content={tooltipContent}>
       <button
@@ -74,8 +99,14 @@ export function TimedEvent({ block, hourRowHeight, onClick }: TimedEventProps) {
         style={{ top, height, width, left }}
         onClick={handleClick}
       >
-        <span className={styles.time}>{timeLabel}</span>
-        <span className={styles.title}>{block.event.title}</span>
+        {customContent !== null ? (
+          customContent
+        ) : (
+          <>
+            <span className={styles.time}>{timeLabel}</span>
+            <span className={styles.title}>{block.event.title}</span>
+          </>
+        )}
       </button>
     </Tooltip>
   );

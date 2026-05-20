@@ -105,3 +105,35 @@ export interface HourGridLayout {
   /** Continuous bars in the all-day band above the hour grid. */
   allDayBars: readonly AllDayBar[];
 }
+
+/**
+ * Context passed to a `renderEvent` callback. The chip wrapper (button +
+ * tone background + tooltip + click handler + positioning) stays default;
+ * the consumer's returned ReactNode replaces the inner content (time + title
+ * labels). To override the chip's background fully, wrap your content in an
+ * element with `position: absolute; inset: 0; background: ...` so it covers
+ * the default tone fill.
+ */
+export interface RenderEventContext {
+  /** Which view is rendering this chip. */
+  view: CalendarView;
+  /** True when the chip is in the all-day band (week/day) or `event.allDay` (month). */
+  asAllDay: boolean;
+  /** True when the bar continues from a previous week (multi-day events). */
+  continuesLeft?: boolean;
+  /** True when the bar continues into a next week (multi-day events). */
+  continuesRight?: boolean;
+  /** Pre-formatted time label. Single time (e.g., "9:00 AM") for zero-duration; range otherwise. Absent for all-day. */
+  timeLabel?: string;
+  /** Pre-formatted human duration ("30m" / "1h 30m" / "2d 5h"). */
+  duration: string;
+}
+
+/**
+ * Custom event renderer. When provided on `<Calendar>`, it's called for every
+ * event chip across views; the returned ReactNode replaces the inner content
+ * of the default chip. The chip wrapper still handles positioning, click,
+ * tooltip, and tone background — return content with inline `background` /
+ * `style` to override colors.
+ */
+export type RenderEvent = (event: CalendarEvent, ctx: RenderEventContext) => import('react').ReactNode;

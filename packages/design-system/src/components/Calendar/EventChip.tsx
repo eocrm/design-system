@@ -4,7 +4,7 @@ import { formatTime } from '../../calendar';
 import { useLocale } from '../../i18n/useLocale';
 import { Tooltip } from '../Tooltip';
 import { formatEventDuration } from './utils';
-import type { CalendarEvent, CalendarEventTone } from './types';
+import type { CalendarEvent, CalendarEventTone, CalendarView, RenderEvent } from './types';
 import styles from './EventChip.module.scss';
 
 export interface EventChipProps {
@@ -16,6 +16,10 @@ export interface EventChipProps {
   continuesRight?: boolean;
   /** Called when the chip is clicked; receives the event and the native mouse event. */
   onClick?: (event: CalendarEvent, mouseEvent: MouseEvent<HTMLButtonElement>) => void;
+  /** Which view is rendering this chip (passed to `renderEvent` for branching). Defaults to `'month'`. */
+  view?: CalendarView;
+  /** Optional custom inner content. When set, replaces the default time + title spans. */
+  renderEvent?: RenderEvent;
 }
 
 /**
@@ -40,12 +44,14 @@ export function EventChip({
   continuesLeft = false,
   continuesRight = false,
   onClick,
+  view = 'month',
+  renderEvent,
 }: EventChipProps) {
   const locale = useLocale();
   const tone: CalendarEventTone = event.tone ?? 'neutral';
   const isAllDay = event.allDay === true;
   const time = isAllDay ? '' : formatTime(event.startsAt, locale);
-  const duration = formatEventDuration(event.startsAt, event.endsAt);
+  const duration = formatEventDuration(event.startsAt, event.endsAt, isAllDay);
   const tooltipContent = isAllDay ? (
     <span className={styles.tooltipBody}>
       <span className={styles.tooltipTime}>{duration}</span>
@@ -65,6 +71,17 @@ export function EventChip({
     onClick?.(event, e);
   };
 
+  const customContent = renderEvent
+    ? renderEvent(event, {
+        view,
+        asAllDay: isAllDay,
+        continuesLeft,
+        continuesRight,
+        timeLabel: isAllDay ? undefined : time,
+        duration,
+      })
+    : null;
+
   return (
     <Tooltip content={tooltipContent}>
       <button
@@ -78,8 +95,14 @@ export function EventChip({
         )}
         onClick={handleClick}
       >
-        {!isAllDay && <span className={styles.time}>{time}</span>}
-        <span className={styles.title}>{event.title}</span>
+        {customContent !== null ? (
+          customContent
+        ) : (
+          <>
+            {!isAllDay && <span className={styles.time}>{time}</span>}
+            <span className={styles.title}>{event.title}</span>
+          </>
+        )}
       </button>
     </Tooltip>
   );

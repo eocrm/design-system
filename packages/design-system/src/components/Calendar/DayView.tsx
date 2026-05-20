@@ -4,7 +4,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { AllDayBand } from './AllDayBand';
 import { HourGrid, HOUR_GUTTER_WIDTH } from './HourGrid';
 import { layoutEventsForHourGrid } from './utils';
-import type { CalendarEvent } from './types';
+import type { CalendarEvent, RenderEvent } from './types';
 import styles from './DayView.module.scss';
 
 export interface DayViewProps {
@@ -20,6 +20,8 @@ export interface DayViewProps {
   locale?: string;
   /** Fires when a timed-event block or all-day chip is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
+  /** Optional custom event renderer (see `RenderEvent`). */
+  renderEvent?: RenderEvent;
 }
 
 /**
@@ -37,6 +39,7 @@ export function DayView({
   hourRowHeight,
   locale: localeOverride,
   onEventClick,
+  renderEvent,
 }: DayViewProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
@@ -61,6 +64,8 @@ export function DayView({
         bars={layout.allDayBars}
         columnCount={1}
         gutterWidth={HOUR_GUTTER_WIDTH}
+        view="day"
+        renderEvent={renderEvent}
         onEventClick={onEventClick}
       />
       <HourGrid
@@ -69,6 +74,8 @@ export function DayView({
         hourRange={hourRange}
         hourRowHeight={hourRowHeight}
         timedBlocks={layout.timedBlocks}
+        view="day"
+        renderEvent={renderEvent}
         onEventClick={onEventClick}
       />
     </div>

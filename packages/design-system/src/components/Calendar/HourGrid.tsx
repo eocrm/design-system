@@ -4,7 +4,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { formatHour } from '../../calendar';
 import { isSameDay } from '../../calendar/dateMath';
 import { TimedEvent } from './TimedEvent';
-import type { CalendarEvent, TimedEventBlock } from './types';
+import type { CalendarEvent, CalendarView, RenderEvent, TimedEventBlock } from './types';
 import styles from './HourGrid.module.scss';
 
 /** Default hour-gutter width in pixels. */
@@ -23,6 +23,10 @@ export interface HourGridProps {
   timedBlocks: readonly TimedEventBlock[];
   /** Today's date (injected for testability). Defaults to `new Date()`. */
   now?: Date;
+  /** Which view is rendering this grid (`'week'` or `'day'`). Passed to `renderEvent`. */
+  view?: CalendarView;
+  /** Optional custom event renderer (replaces the inner chip content). */
+  renderEvent?: RenderEvent;
   /** Fires when a timed-event block in a day column is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
 }
@@ -46,6 +50,8 @@ export function HourGrid({
   hourRowHeight,
   timedBlocks,
   now,
+  view = 'week',
+  renderEvent,
   onEventClick,
 }: HourGridProps) {
   const locale = useLocale();
@@ -82,7 +88,9 @@ export function HourGrid({
   const totalHours = hourRange[1] - hourRange[0];
   const nowMinutesFromStart =
     (currentTime.getHours() - hourRange[0]) * 60 + currentTime.getMinutes();
-  const nowVisible = nowMinutesFromStart >= 0 && nowMinutesFromStart <= totalHours * 60;
+  // Strict inequality on the upper bound so the now-line doesn't render
+  // on top of the bottom border when current time hits the end of hourRange.
+  const nowVisible = nowMinutesFromStart >= 0 && nowMinutesFromStart < totalHours * 60;
   const todayColumnIndex = days.findIndex((d) => isSameDay(d.date, currentTime));
 
   return (
@@ -149,6 +157,8 @@ export function HourGrid({
                   key={b.event.id}
                   block={b}
                   hourRowHeight={hourRowHeight}
+                  view={view}
+                  renderEvent={renderEvent}
                   onClick={onEventClick}
                 />
               ))}

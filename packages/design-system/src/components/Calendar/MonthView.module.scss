@@ -55,8 +55,10 @@
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
+// Today's cell uses a 2px accent border-top instead of a tinted background,
+// so events with the `accent` tone don't visually blend into the cell.
 .dayColumnToday {
-  background: var(--color-accent-bg-subtle);
+  box-shadow: inset 0 2px 0 var(--color-accent);
 }
 
 .dayColumnWeekend {

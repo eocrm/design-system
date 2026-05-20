@@ -53,8 +53,11 @@
   background: var(--color-bg-muted);
 }
 
+// Today's column body intentionally has NO tint — only the column header
+// carries the accent color. A tinted body makes events with the `accent`
+// tone vanish into the background.
 .todayColumn {
-  background: var(--color-accent-bg-subtle);
+  // no background — header alone signals "today"
 }
 
 .hourSeparator {

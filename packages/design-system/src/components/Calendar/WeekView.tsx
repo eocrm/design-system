@@ -5,7 +5,7 @@ import { formatWeekdayShort } from '../../calendar/formatters';
 import { AllDayBand } from './AllDayBand';
 import { HourGrid, HOUR_GUTTER_WIDTH } from './HourGrid';
 import { layoutEventsForHourGrid } from './utils';
-import type { CalendarEvent } from './types';
+import type { CalendarEvent, RenderEvent } from './types';
 import styles from './WeekView.module.scss';
 
 export interface WeekViewProps {
@@ -23,6 +23,8 @@ export interface WeekViewProps {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   /** Fires when a timed-event block or all-day chip is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
+  /** Optional custom event renderer (see `RenderEvent`). */
+  renderEvent?: RenderEvent;
 }
 
 /**
@@ -42,6 +44,7 @@ export function WeekView({
   locale: localeOverride,
   weekStartsOn,
   onEventClick,
+  renderEvent,
 }: WeekViewProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
@@ -75,6 +78,8 @@ export function WeekView({
         bars={layout.allDayBars}
         columnCount={7}
         gutterWidth={HOUR_GUTTER_WIDTH}
+        view="week"
+        renderEvent={renderEvent}
         onEventClick={onEventClick}
       />
       <HourGrid
@@ -83,6 +88,8 @@ export function WeekView({
         hourRange={hourRange}
         hourRowHeight={hourRowHeight}
         timedBlocks={layout.timedBlocks}
+        view="week"
+        renderEvent={renderEvent}
         onEventClick={onEventClick}
       />
     </div>

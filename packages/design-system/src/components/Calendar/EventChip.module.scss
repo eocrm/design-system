@@ -7,7 +7,11 @@
   width: 100%;
   padding: 0 var(--space-2);
   height: var(--space-5);
-  border: var(--border-width) solid transparent;
+
+  // Border is set per-tone (see below) so neutral chips stay visible on
+  // tinted backgrounds (today column, weekend columns). Tone chips get a
+  // border matching their accent color for the same reason.
+  border: var(--border-width) solid currentColor;
   border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: var(--font-size-xs);
@@ -78,6 +82,7 @@
 .neutral {
   background: var(--color-bg-subtle);
   color: var(--color-fg);
+  border-color: var(--color-border-strong);
 }
 
 .accent {

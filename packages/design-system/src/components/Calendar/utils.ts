@@ -326,8 +326,25 @@ function layoutAllDayBars(
 /**
  * Human-readable event duration: "0m" / "30m" / "1h" / "1h 30m" / "2d" /
  * "2d 5h". For tooltip / display contexts where a compact label is wanted.
+ *
+ * When `allDay` is true, the count is inclusive of both the start and end
+ * day — so an event from `May 11` to `May 27` reads as `17d`, matching the
+ * visual span of the bar across the calendar grid (the user sees 17 days
+ * highlighted). Otherwise (timed events), it's a raw `end - start` diff:
+ * `9:00 → 9:30` reads as `30m`.
  */
-export function formatEventDuration(startsAt: Date, endsAt: Date | undefined): string {
+export function formatEventDuration(
+  startsAt: Date,
+  endsAt: Date | undefined,
+  allDay = false,
+): string {
+  if (allDay) {
+    const startDayMs = startOfDay(startsAt).getTime();
+    const endDayMs = startOfDay(endsAt ?? startsAt).getTime();
+    const dayDiff = Math.round((endDayMs - startDayMs) / 86_400_000);
+    const days = Math.max(1, dayDiff + 1);
+    return `${days}d`;
+  }
   const start = startsAt.getTime();
   const end = (endsAt ?? startsAt).getTime();
   const minutes = Math.max(0, Math.round((end - start) / 60_000));

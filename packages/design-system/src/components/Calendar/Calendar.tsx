@@ -10,7 +10,7 @@ import { MonthView } from './MonthView';
 import { WeekView } from './WeekView';
 import { DayView } from './DayView';
 import { ViewSwitcher } from './ViewSwitcher';
-import type { CalendarEvent, CalendarView } from './types';
+import type { CalendarEvent, CalendarView, RenderEvent } from './types';
 import styles from './Calendar.module.scss';
 
 /**
@@ -70,6 +70,20 @@ export interface CalendarProps extends Omit<
   hourRange?: [number, number];
   /** Pixel height per hour row in week/day views. Default 48. */
   hourRowHeight?: number;
+  /**
+   * Optional custom renderer for the inner content of every event chip
+   * across views (month chips, week/day timed blocks, all-day band chips).
+   * The returned ReactNode replaces the default `<time> · <title>` markup
+   * inside the chip's button wrapper — the wrapper still handles tone
+   * background, click, tooltip, and (for timed blocks) absolute positioning.
+   *
+   * To override colors, return content with inline styling that fills the
+   * wrapper (e.g., `position: absolute; inset: 0; background: <color>`).
+   *
+   * The `ctx` argument carries view-aware metadata: `view`, `asAllDay`,
+   * `continuesLeft`/`continuesRight` (multi-day), `timeLabel`, `duration`.
+   */
+  renderEvent?: RenderEvent;
   /** Localized UI strings. */
   labels?: CalendarLabels;
 }
@@ -147,6 +161,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
     maxLanesPerWeek = 3,
     hourRange = [7, 19],
     hourRowHeight = 48,
+    renderEvent,
     labels,
     className,
     ...rest
@@ -240,6 +255,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           onDayClick={onDayClick}
           onEventClick={onEventClick}
           moreEventsLabel={resolvedLabels.moreEvents}
+          renderEvent={renderEvent}
         />
       )}
       {view === 'week' && (
@@ -251,6 +267,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           locale={locale}
           weekStartsOn={weekStartsOn}
           onEventClick={onEventClick}
+          renderEvent={renderEvent}
         />
       )}
       {view === 'day' && (
@@ -261,6 +278,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           hourRowHeight={hourRowHeight}
           locale={locale}
           onEventClick={onEventClick}
+          renderEvent={renderEvent}
         />
       )}
     </div>

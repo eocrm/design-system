@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { EventChip } from './EventChip';
-import type { AllDayBar, CalendarEvent } from './types';
+import type { AllDayBar, CalendarEvent, CalendarView, RenderEvent } from './types';
 import styles from './AllDayBand.module.scss';
 
 export interface AllDayBandProps {
@@ -10,6 +10,10 @@ export interface AllDayBandProps {
   columnCount: number;
   /** Pixel width of the hour-gutter on the left (band aligns with the hour-grid columns). */
   gutterWidth: number;
+  /** Which view contains this band — passed to `renderEvent` (`'week'` or `'day'`). */
+  view?: CalendarView;
+  /** Optional custom event renderer (replaces the chip's default inner content). */
+  renderEvent?: RenderEvent;
   /** Fires when an all-day chip is clicked; receives the `CalendarEvent`. */
   onEventClick?: (event: CalendarEvent) => void;
 }
@@ -24,7 +28,14 @@ export interface AllDayBandProps {
  * it is an internal building block consumed by `WeekView`/`DayView`. Use `Calendar`
  * from the design system and pass events via the `events` prop.
  */
-export function AllDayBand({ bars, columnCount, gutterWidth, onEventClick }: AllDayBandProps) {
+export function AllDayBand({
+  bars,
+  columnCount,
+  gutterWidth,
+  view = 'week',
+  renderEvent,
+  onEventClick,
+}: AllDayBandProps) {
   if (bars.length === 0) return null;
   const maxLane = bars.reduce((m, b) => Math.max(m, b.lane), 0);
 
@@ -58,6 +69,8 @@ export function AllDayBand({ bars, columnCount, gutterWidth, onEventClick }: All
             event={bar.event}
             continuesLeft={bar.continuesLeft}
             continuesRight={bar.continuesRight}
+            view={view}
+            renderEvent={renderEvent}
             onClick={(ev) => onEventClick?.(ev)}
           />
         </div>

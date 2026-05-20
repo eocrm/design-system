@@ -467,4 +467,20 @@ describe('formatEventDuration', () => {
       '2d 5h',
     );
   });
+
+  it('counts allDay events inclusively (May 20 → May 22 reads as "3d")', () => {
+    expect(
+      formatEventDuration(new Date(2026, 4, 20), new Date(2026, 4, 22), true),
+    ).toBe('3d');
+  });
+
+  it('counts single-day allDay events as "1d"', () => {
+    expect(
+      formatEventDuration(new Date(2026, 4, 20), new Date(2026, 4, 20), true),
+    ).toBe('1d');
+  });
+
+  it('counts allDay event with no endsAt as "1d"', () => {
+    expect(formatEventDuration(new Date(2026, 4, 20), undefined, true)).toBe('1d');
+  });
 });
