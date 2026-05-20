@@ -30,7 +30,6 @@
 .week {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: minmax(5rem, auto);
   grid-auto-rows: auto;
   row-gap: var(--space-1);
   padding-bottom: var(--space-1);
@@ -44,8 +43,11 @@
 
 /* Background day-column layers — span all rows of the week's grid.
    These provide the visible cell box (border + today/weekend tint); the
-   foreground DayCells and bars sit on top inside the same column. */
+   foreground DayCells and bars sit on top inside the same column. The
+   `min-height` makes empty weeks still look like cells without inflating
+   the day-number row (events sit immediately below the day number). */
 .dayColumn {
+  min-height: 6.5rem;
   border-right: var(--border-width) solid var(--color-border);
   border-bottom: var(--border-width) solid var(--color-border);
 }
