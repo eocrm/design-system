@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Plus, Search, Trash2 } from 'lucide-react';
+import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { Button, Cluster } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -101,15 +101,37 @@ export function ButtonDemo() {
 
       <Example
         title="Sizes"
-        description="Three sizes. sm for dense toolbars/tables, md (default) for most contexts, lg for emphasis."
-        code={`<Button size="sm">Small</Button>
+        description="Four sizes. xs for icon-only or very dense inline actions, sm for dense toolbars/tables, md (default) for most contexts, lg for emphasis."
+        code={`<Button size="xs">Extra small</Button>
+<Button size="sm">Small</Button>
 <Button size="md">Medium</Button>
 <Button size="lg">Large</Button>`}
       >
         <Cluster gap="sm" align="center">
+          <Button size="xs">Extra small</Button>
           <Button size="sm">Small</Button>
           <Button size="md">Medium</Button>
           <Button size="lg">Large</Button>
+        </Cluster>
+      </Example>
+
+      <Example
+        title="Icon-only at xs"
+        description="For inline density — row controls, chip-adjacent actions. Always pass an aria-label so screen readers announce what the button does."
+        code={`<Button size="xs" variant="ghost" aria-label="Remove">
+  <X size={12} />
+</Button>
+<Button size="xs" variant="secondary" aria-label="Edit">
+  <Pencil size={12} />
+</Button>`}
+      >
+        <Cluster gap="sm" align="center">
+          <Button size="xs" variant="ghost" aria-label="Remove">
+            <X size={12} />
+          </Button>
+          <Button size="xs" variant="secondary" aria-label="Edit">
+            <Pencil size={12} />
+          </Button>
         </Cluster>
       </Example>
 
