@@ -21,10 +21,32 @@ const SAMPLE_EVENTS: CalendarEvent[] = [
   { id: '1on1-c', title: '1:1 Yusuf', startsAt: new Date(2026, 4, 12, 11, 0), tone: 'neutral' },
   { id: '1on1-d', title: '1:1 Mei', startsAt: new Date(2026, 4, 19, 11, 0), tone: 'neutral' },
   // Customer meetings
-  { id: 'q1', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14, 0), endsAt: new Date(2026, 4, 13, 17, 0), tone: 'success' },
-  { id: 'ac', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'accent' },
-  { id: 'cust2', title: 'Onboarding: Globex', startsAt: new Date(2026, 4, 20, 15, 30), tone: 'accent' },
-  { id: 'cust3', title: 'QBR: Initech', startsAt: new Date(2026, 4, 26, 10, 0), endsAt: new Date(2026, 4, 26, 11, 30), tone: 'success' },
+  {
+    id: 'q1',
+    title: 'Quarterly review',
+    startsAt: new Date(2026, 4, 13, 14, 0),
+    endsAt: new Date(2026, 4, 13, 17, 0),
+    tone: 'success',
+  },
+  {
+    id: 'ac',
+    title: 'Customer call: Acme',
+    startsAt: new Date(2026, 4, 15, 11, 0),
+    tone: 'accent',
+  },
+  {
+    id: 'cust2',
+    title: 'Onboarding: Globex',
+    startsAt: new Date(2026, 4, 20, 15, 30),
+    tone: 'accent',
+  },
+  {
+    id: 'cust3',
+    title: 'QBR: Initech',
+    startsAt: new Date(2026, 4, 26, 10, 0),
+    endsAt: new Date(2026, 4, 26, 11, 30),
+    tone: 'success',
+  },
   // Long conference — spans 3 weeks, exercises the multi-week continuation bars
   {
     id: 'conf',
@@ -39,7 +61,13 @@ const SAMPLE_EVENTS: CalendarEvent[] = [
   { id: 'rn2', title: 'Renewal: Hooli', startsAt: new Date(2026, 4, 29, 13, 0), tone: 'danger' },
   // Misc
   { id: 'demo', title: 'Pipeline demo', startsAt: new Date(2026, 4, 14, 13, 0), tone: 'success' },
-  { id: 'lunch', title: 'Team lunch', startsAt: new Date(2026, 4, 21, 12, 30), endsAt: new Date(2026, 4, 21, 14, 0), tone: 'neutral' },
+  {
+    id: 'lunch',
+    title: 'Team lunch',
+    startsAt: new Date(2026, 4, 21, 12, 30),
+    endsAt: new Date(2026, 4, 21, 14, 0),
+    tone: 'neutral',
+  },
 ];
 
 const OVERFLOW_EVENTS: CalendarEvent[] = [
