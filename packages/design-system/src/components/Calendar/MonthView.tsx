@@ -81,9 +81,7 @@ export function MonthView({
     [events, grid.weeks, maxLanesPerWeek],
   );
 
-  const [focusedKey, setFocusedKey] = useState<string>(() =>
-    pickInitialFocusKey(grid, cursor),
-  );
+  const [focusedKey, setFocusedKey] = useState<string>(() => pickInitialFocusKey(grid, cursor));
 
   // Re-sync focusedKey when the grid changes (e.g. after Prev/Next/Today nav).
   // Preserve the existing key if it still exists in the new grid; re-derive only

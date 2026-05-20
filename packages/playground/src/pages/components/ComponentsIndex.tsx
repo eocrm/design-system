@@ -196,7 +196,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/calendar',
     name: 'Calendar',
-    description: 'Month view with continuous multi-day event bars, overflow chips, and locale-aware weekday grids.',
+    description:
+      'Month view with continuous multi-day event bars, overflow chips, and locale-aware weekday grids.',
     preview: (
       <div style={{ width: '100%', maxWidth: 260, pointerEvents: 'none' }}>
         <Calendar defaultValue={new Date(2026, 4, 15)} />

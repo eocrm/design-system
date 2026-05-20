@@ -9,7 +9,10 @@ import { MonthView } from './MonthView';
 import type { CalendarEvent, CalendarView } from './types';
 import styles from './Calendar.module.scss';
 
-export interface CalendarProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface CalendarProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   /** Events to display. Calendar groups them internally; no pre-bucketing. */
   events?: readonly CalendarEvent[];
   /** Active view. Only `'month'` ships in this PR. */

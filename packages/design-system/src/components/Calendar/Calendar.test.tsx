@@ -28,10 +28,9 @@ describe('Calendar', () => {
   it('Prev fires onChange with -1 month', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Calendar defaultValue={new Date(2026, 4, 15)} onChange={onChange} />,
-      { wrapper: wrap() },
-    );
+    render(<Calendar defaultValue={new Date(2026, 4, 15)} onChange={onChange} />, {
+      wrapper: wrap(),
+    });
     await user.click(screen.getByLabelText('Previous month'));
     expect(onChange).toHaveBeenCalledOnce();
     const arg = onChange.mock.calls[0][0] as Date;
@@ -41,10 +40,9 @@ describe('Calendar', () => {
   it('Next fires onChange with +1 month', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Calendar defaultValue={new Date(2026, 4, 15)} onChange={onChange} />,
-      { wrapper: wrap() },
-    );
+    render(<Calendar defaultValue={new Date(2026, 4, 15)} onChange={onChange} />, {
+      wrapper: wrap(),
+    });
     await user.click(screen.getByLabelText('Next month'));
     const arg = onChange.mock.calls[0][0] as Date;
     expect(arg.getMonth()).toBe(5); // June
@@ -53,29 +51,24 @@ describe('Calendar', () => {
   it('Today fires onChange with today', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Calendar defaultValue={new Date(2026, 4, 15)} onChange={onChange} />,
-      { wrapper: wrap() },
-    );
+    render(<Calendar defaultValue={new Date(2026, 4, 15)} onChange={onChange} />, {
+      wrapper: wrap(),
+    });
     await user.click(screen.getByRole('button', { name: 'Today' }));
     expect(onChange).toHaveBeenCalledOnce();
   });
 
   it('Controlled mode — title updates when `value` changes', () => {
-    const { rerender } = render(
-      <Calendar value={new Date(2026, 4, 15)} />,
-      { wrapper: wrap() },
-    );
+    const { rerender } = render(<Calendar value={new Date(2026, 4, 15)} />, { wrapper: wrap() });
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(/May/);
     rerender(<Calendar value={new Date(2026, 5, 15)} />);
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(/June/);
   });
 
   it('locale override wins over context (ru-RU shows Cyrillic title)', () => {
-    render(
-      <Calendar defaultValue={new Date(2026, 4, 15)} locale="ru-RU" />,
-      { wrapper: wrap('en-US') },
-    );
+    render(<Calendar defaultValue={new Date(2026, 4, 15)} locale="ru-RU" />, {
+      wrapper: wrap('en-US'),
+    });
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(/[Ѐ-ӿ]/);
   });
 
@@ -86,10 +79,9 @@ describe('Calendar', () => {
   });
 
   it('merges className with internal classes', () => {
-    render(
-      <Calendar className="external" defaultValue={new Date(2026, 4, 15)} />,
-      { wrapper: wrap() },
-    );
+    render(<Calendar className="external" defaultValue={new Date(2026, 4, 15)} />, {
+      wrapper: wrap(),
+    });
     const heading = screen.getByRole('heading', { level: 2 });
     const root = heading.closest('div');
     expect(root?.className).toMatch(/external/);

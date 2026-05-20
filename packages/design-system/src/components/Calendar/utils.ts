@@ -73,7 +73,8 @@ export function layoutEventsForMonth(
     const segments: Segment[] = [];
 
     for (const ne of normalized) {
-      if (ne.end.getTime() < weekStart.getTime() || ne.start.getTime() > weekEnd.getTime()) continue;
+      if (ne.end.getTime() < weekStart.getTime() || ne.start.getTime() > weekEnd.getTime())
+        continue;
       const segStartMs = Math.max(ne.start.getTime(), weekStart.getTime());
       const segEndMs = Math.min(ne.end.getTime(), weekEnd.getTime());
       const startCol = Math.round((segStartMs - weekStart.getTime()) / MS_PER_DAY) + 1;

@@ -98,17 +98,32 @@ describe('layoutEventsForMonth', () => {
     );
     expect(out.bars).toHaveLength(3);
     const [w1, w2, w3] = out.bars;
-    expect(w1).toMatchObject({ weekIndex: 1, startCol: 4, endCol: 7, continuesLeft: false, continuesRight: true });
-    expect(w2).toMatchObject({ weekIndex: 2, startCol: 1, endCol: 7, continuesLeft: true, continuesRight: true });
-    expect(w3).toMatchObject({ weekIndex: 3, startCol: 1, endCol: 4, continuesLeft: true, continuesRight: false });
+    expect(w1).toMatchObject({
+      weekIndex: 1,
+      startCol: 4,
+      endCol: 7,
+      continuesLeft: false,
+      continuesRight: true,
+    });
+    expect(w2).toMatchObject({
+      weekIndex: 2,
+      startCol: 1,
+      endCol: 7,
+      continuesLeft: true,
+      continuesRight: true,
+    });
+    expect(w3).toMatchObject({
+      weekIndex: 3,
+      startCol: 1,
+      endCol: 4,
+      continuesLeft: true,
+      continuesRight: false,
+    });
   });
 
   it('stacks two overlapping single-day events on different lanes', () => {
     const out = layoutEventsForMonth(
-      [
-        event('a', new Date(2026, 4, 15)),
-        event('b', new Date(2026, 4, 15)),
-      ],
+      [event('a', new Date(2026, 4, 15)), event('b', new Date(2026, 4, 15))],
       may2026(),
       3,
     );
@@ -119,10 +134,7 @@ describe('layoutEventsForMonth', () => {
 
   it('places non-overlapping events on the same lane (greedy reuse)', () => {
     const out = layoutEventsForMonth(
-      [
-        event('a', new Date(2026, 4, 11)),
-        event('b', new Date(2026, 4, 13)),
-      ],
+      [event('a', new Date(2026, 4, 11)), event('b', new Date(2026, 4, 13))],
       may2026(),
       3,
     );
@@ -148,11 +160,7 @@ describe('layoutEventsForMonth', () => {
   });
 
   it('drops events entirely outside the grid', () => {
-    const out = layoutEventsForMonth(
-      [event('a', new Date(2026, 3, 20))],
-      may2026(),
-      3,
-    );
+    const out = layoutEventsForMonth([event('a', new Date(2026, 3, 20))], may2026(), 3);
     expect(out.bars).toEqual([]);
     expect(out.hiddenCounts.size).toBe(0);
   });
@@ -186,21 +194,14 @@ describe('layoutEventsForMonth', () => {
   });
 
   it('treats missing endsAt as a single-day event', () => {
-    const out = layoutEventsForMonth(
-      [event('a', new Date(2026, 4, 15))],
-      may2026(),
-      3,
-    );
+    const out = layoutEventsForMonth([event('a', new Date(2026, 4, 15))], may2026(), 3);
     expect(out.bars).toHaveLength(1);
     expect(out.bars[0].startCol).toBe(out.bars[0].endCol);
   });
 
   it('sorts events with same start by duration descending (longer events go to lower lanes)', () => {
     const out = layoutEventsForMonth(
-      [
-        event('a', new Date(2026, 4, 11)),
-        event('b', new Date(2026, 4, 11), new Date(2026, 4, 13)),
-      ],
+      [event('a', new Date(2026, 4, 11)), event('b', new Date(2026, 4, 11), new Date(2026, 4, 13))],
       may2026(),
       3,
     );
