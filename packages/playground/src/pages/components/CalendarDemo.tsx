@@ -6,85 +6,103 @@ import tsxSource from '@lib-source/components/Calendar/Calendar.tsx?raw';
 import scssSource from '@lib-source/components/Calendar/Calendar.module.scss?raw';
 
 // ── Demo data ───────────────────────────────────────────────────────────────
+//
+// Events are anchored to the CURRENT month rather than a fixed calendar date,
+// so the demo always renders "this month" no matter when you open it. The
+// `Calendar`'s defaultValue is `today`, and helpers below produce dates
+// relative to it.
 
-const may15 = new Date(2026, 4, 15);
+const TODAY = new Date();
+const Y = TODAY.getFullYear();
+const M = TODAY.getMonth();
+const D = TODAY.getDate();
+
+/** A date `offset` days from today, at the given time of day. */
+function fromToday(offset: number, hour = 0, minute = 0): Date {
+  return new Date(Y, M, D + offset, hour, minute);
+}
+
+/** Every Monday in the current calendar month, as Dates at 00:00. */
+function mondaysOfThisMonth(): Date[] {
+  const result: Date[] = [];
+  for (let d = 1; d <= 31; d++) {
+    const date = new Date(Y, M, d);
+    if (date.getMonth() !== M) break;
+    if (date.getDay() === 1) result.push(date);
+  }
+  return result;
+}
 
 const SAMPLE_EVENTS: CalendarEvent[] = [
-  // Recurring standups
-  { id: 's1', title: 'Team standup', startsAt: new Date(2026, 4, 4, 9, 30), tone: 'accent' },
-  { id: 's2', title: 'Team standup', startsAt: new Date(2026, 4, 11, 9, 30), tone: 'accent' },
-  { id: 's3', title: 'Team standup', startsAt: new Date(2026, 4, 18, 9, 30), tone: 'accent' },
-  { id: 's4', title: 'Team standup', startsAt: new Date(2026, 4, 25, 9, 30), tone: 'accent' },
-  // 1:1s
-  { id: '1on1-a', title: '1:1 Sam', startsAt: new Date(2026, 4, 5, 11, 0), tone: 'neutral' },
-  { id: '1on1-b', title: '1:1 Priya', startsAt: new Date(2026, 4, 7, 14, 30), tone: 'neutral' },
-  { id: '1on1-c', title: '1:1 Yusuf', startsAt: new Date(2026, 4, 12, 11, 0), tone: 'neutral' },
-  { id: '1on1-d', title: '1:1 Mei', startsAt: new Date(2026, 4, 19, 11, 0), tone: 'neutral' },
+  // Recurring standups — every Monday of this month
+  ...mondaysOfThisMonth().map<CalendarEvent>((d, i) => ({
+    id: `standup-${i}`,
+    title: 'Team standup',
+    startsAt: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 30),
+    tone: 'accent',
+  })),
+  // 1:1s scattered relative to today
+  { id: '1on1-a', title: '1:1 Sam', startsAt: fromToday(-5, 11, 0), tone: 'neutral' },
+  { id: '1on1-b', title: '1:1 Priya', startsAt: fromToday(-3, 14, 30), tone: 'neutral' },
+  { id: '1on1-c', title: '1:1 Yusuf', startsAt: fromToday(2, 11, 0), tone: 'neutral' },
+  { id: '1on1-d', title: '1:1 Mei', startsAt: fromToday(9, 11, 0), tone: 'neutral' },
   // Customer meetings
   {
     id: 'q1',
     title: 'Quarterly review',
-    startsAt: new Date(2026, 4, 13, 14, 0),
-    endsAt: new Date(2026, 4, 13, 17, 0),
+    startsAt: fromToday(-2, 14, 0),
+    endsAt: fromToday(-2, 17, 0),
     tone: 'success',
   },
-  {
-    id: 'ac',
-    title: 'Customer call: Acme',
-    startsAt: new Date(2026, 4, 15, 11, 0),
-    tone: 'accent',
-  },
-  {
-    id: 'cust2',
-    title: 'Onboarding: Globex',
-    startsAt: new Date(2026, 4, 20, 15, 30),
-    tone: 'accent',
-  },
+  { id: 'ac', title: 'Customer call: Acme', startsAt: fromToday(0, 11, 0), tone: 'accent' },
+  { id: 'cust2', title: 'Onboarding: Globex', startsAt: fromToday(5, 15, 30), tone: 'accent' },
   {
     id: 'cust3',
     title: 'QBR: Initech',
-    startsAt: new Date(2026, 4, 26, 10, 0),
-    endsAt: new Date(2026, 4, 26, 11, 30),
+    startsAt: fromToday(11, 10, 0),
+    endsAt: fromToday(11, 11, 30),
     tone: 'success',
   },
-  // Long conference — spans 3 weeks, exercises the multi-week continuation bars
+  // Long conference — spans across today's week boundary
   {
     id: 'conf',
-    title: 'Web Summit 2026',
-    startsAt: new Date(2026, 4, 6),
-    endsAt: new Date(2026, 4, 20),
+    title: 'Web Summit',
+    startsAt: fromToday(-8),
+    endsAt: fromToday(7),
     tone: 'success',
     allDay: true,
   },
   // Renewals & risk
-  { id: 'rn1', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27, 9, 0), tone: 'danger' },
-  { id: 'rn2', title: 'Renewal: Hooli', startsAt: new Date(2026, 4, 29, 13, 0), tone: 'danger' },
+  { id: 'rn1', title: 'Renewal: Beta Co.', startsAt: fromToday(12, 9, 0), tone: 'danger' },
+  { id: 'rn2', title: 'Renewal: Hooli', startsAt: fromToday(14, 13, 0), tone: 'danger' },
   // Misc
-  { id: 'demo', title: 'Pipeline demo', startsAt: new Date(2026, 4, 14, 13, 0), tone: 'success' },
+  { id: 'demo', title: 'Pipeline demo', startsAt: fromToday(-1, 13, 0), tone: 'success' },
   {
     id: 'lunch',
     title: 'Team lunch',
-    startsAt: new Date(2026, 4, 21, 12, 30),
-    endsAt: new Date(2026, 4, 21, 14, 0),
+    startsAt: fromToday(6, 12, 30),
+    endsAt: fromToday(6, 14, 0),
     tone: 'neutral',
   },
 ];
 
 const OVERFLOW_EVENTS: CalendarEvent[] = [
-  { id: 'a', title: 'Standup', startsAt: new Date(2026, 4, 15, 9), tone: 'accent' },
-  { id: 'b', title: '1:1 with Sam', startsAt: new Date(2026, 4, 15, 10), tone: 'neutral' },
-  { id: 'c', title: 'Demo prep', startsAt: new Date(2026, 4, 15, 11), tone: 'success' },
-  { id: 'd', title: 'Lunch', startsAt: new Date(2026, 4, 15, 12), tone: 'neutral' },
-  { id: 'e', title: 'Customer call', startsAt: new Date(2026, 4, 15, 14), tone: 'warning' },
-  { id: 'f', title: 'Triage', startsAt: new Date(2026, 4, 15, 16), tone: 'danger' },
+  { id: 'a', title: 'Standup', startsAt: fromToday(0, 9), tone: 'accent' },
+  { id: 'b', title: '1:1 with Sam', startsAt: fromToday(0, 10), tone: 'neutral' },
+  { id: 'c', title: 'Demo prep', startsAt: fromToday(0, 11), tone: 'success' },
+  { id: 'd', title: 'Lunch', startsAt: fromToday(0, 12), tone: 'neutral' },
+  { id: 'e', title: 'Customer call', startsAt: fromToday(0, 14), tone: 'warning' },
+  { id: 'f', title: 'Triage', startsAt: fromToday(0, 16), tone: 'danger' },
 ];
 
 const MULTI_WEEK_EVENTS: CalendarEvent[] = [
   {
     id: 'm1',
     title: 'Conference',
-    startsAt: new Date(2026, 4, 6), // Wed May 6
-    endsAt: new Date(2026, 4, 22), // Fri May 22 — 3 bars: week 1 (continuesRight), week 2 (both edges), week 3 (continuesLeft)
+    // ~17 days centered on today — guaranteed to cross at least 2 week
+    // boundaries regardless of where in the month "today" falls.
+    startsAt: fromToday(-9),
+    endsAt: fromToday(7),
     tone: 'success',
     allDay: true,
   },
@@ -93,7 +111,7 @@ const MULTI_WEEK_EVENTS: CalendarEvent[] = [
 // ── Controlled example ──────────────────────────────────────────────────────
 
 function ControlledCalendarDemo() {
-  const [cursor, setCursor] = useState<Date>(may15);
+  const [cursor, setCursor] = useState<Date>(TODAY);
   return <Calendar value={cursor} onChange={setCursor} events={SAMPLE_EVENTS} />;
 }
 
@@ -115,7 +133,7 @@ export function CalendarDemo() {
         description="Bare shell with prev/next/today navigation. No events yet."
         code={`<Calendar defaultValue={new Date(2026, 4, 15)} />`}
       >
-        <Calendar defaultValue={may15} />
+        <Calendar defaultValue={TODAY} />
       </Example>
 
       <Example
@@ -131,7 +149,7 @@ export function CalendarDemo() {
 
 <Calendar defaultValue={new Date(2026, 4, 15)} events={SAMPLE_EVENTS} />`}
       >
-        <Calendar defaultValue={may15} events={SAMPLE_EVENTS} />
+        <Calendar defaultValue={TODAY} events={SAMPLE_EVENTS} />
       </Example>
 
       <Example
@@ -144,7 +162,7 @@ export function CalendarDemo() {
 />`}
       >
         <Calendar
-          defaultValue={may15}
+          defaultValue={TODAY}
           events={OVERFLOW_EVENTS}
           onDayClick={(d) => alert('Day clicked: ' + d.toDateString())}
         />
@@ -159,7 +177,7 @@ export function CalendarDemo() {
 
 <Calendar defaultValue={new Date(2026, 4, 15)} events={MULTI_WEEK_EVENTS} />`}
       >
-        <Calendar defaultValue={may15} events={MULTI_WEEK_EVENTS} />
+        <Calendar defaultValue={TODAY} events={MULTI_WEEK_EVENTS} />
       </Example>
 
       <Example
@@ -178,7 +196,7 @@ export function CalendarDemo() {
 />`}
       >
         <Calendar
-          defaultValue={may15}
+          defaultValue={TODAY}
           events={SAMPLE_EVENTS}
           locale="ru-RU"
           labels={{
