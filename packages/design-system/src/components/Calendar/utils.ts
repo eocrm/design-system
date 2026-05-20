@@ -1,6 +1,13 @@
 import { startOfDay, toDateKey } from '../../calendar/dateMath';
 import type { Week } from '../../calendar/types';
-import type { AllDayBar, CalendarEvent, EventBar, HourGridLayout, MonthLayout, TimedEventBlock } from './types';
+import type {
+  AllDayBar,
+  CalendarEvent,
+  EventBar,
+  HourGridLayout,
+  MonthLayout,
+  TimedEventBlock,
+} from './types';
 
 const MS_PER_DAY = 86_400_000;
 

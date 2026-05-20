@@ -23,7 +23,12 @@ describe('DayView', () => {
 
   it('places a timed event in the single column', () => {
     const events: CalendarEvent[] = [
-      { id: 'a', title: 'Standup', startsAt: new Date(2026, 4, 20, 9), endsAt: new Date(2026, 4, 20, 10) },
+      {
+        id: 'a',
+        title: 'Standup',
+        startsAt: new Date(2026, 4, 20, 9),
+        endsAt: new Date(2026, 4, 20, 10),
+      },
     ];
     render(<DayView cursor={cursor} events={events} hourRange={[7, 19]} hourRowHeight={48} />, {
       wrapper: wrap(),
@@ -35,7 +40,12 @@ describe('DayView', () => {
     const onEventClick = vi.fn();
     const user = userEvent.setup();
     const events: CalendarEvent[] = [
-      { id: 'a', title: 'Call', startsAt: new Date(2026, 4, 20, 9), endsAt: new Date(2026, 4, 20, 10) },
+      {
+        id: 'a',
+        title: 'Call',
+        startsAt: new Date(2026, 4, 20, 9),
+        endsAt: new Date(2026, 4, 20, 10),
+      },
     ];
     render(
       <DayView

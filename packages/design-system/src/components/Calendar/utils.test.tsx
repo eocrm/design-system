@@ -266,11 +266,7 @@ describe('layoutEventsForHourGrid', () => {
   });
 
   it('places two non-overlapping events on the same lane', () => {
-    const out = layoutEventsForHourGrid(
-      [tev('a', 20, 9, 10), tev('b', 20, 11, 12)],
-      day1,
-      [7, 19],
-    );
+    const out = layoutEventsForHourGrid([tev('a', 20, 9, 10), tev('b', 20, 11, 12)], day1, [7, 19]);
     expect(out.timedBlocks).toHaveLength(2);
     expect(out.timedBlocks[0].lane).toBe(0);
     expect(out.timedBlocks[1].lane).toBe(0);
@@ -279,11 +275,7 @@ describe('layoutEventsForHourGrid', () => {
   });
 
   it('places two overlapping events on lanes 0 and 1, both laneCount=2', () => {
-    const out = layoutEventsForHourGrid(
-      [tev('a', 20, 9, 11), tev('b', 20, 10, 12)],
-      day1,
-      [7, 19],
-    );
+    const out = layoutEventsForHourGrid([tev('a', 20, 9, 11), tev('b', 20, 10, 12)], day1, [7, 19]);
     expect(out.timedBlocks).toHaveLength(2);
     const byId = new Map(out.timedBlocks.map((b) => [b.event.id, b]));
     expect(byId.get('a')!.lane).toBe(0);
@@ -307,9 +299,24 @@ describe('layoutEventsForHourGrid', () => {
   it('groups by transitive overlap (chain A-B, B-C → all laneCount=3 even if A and C disjoint)', () => {
     const out = layoutEventsForHourGrid(
       [
-        { id: 'a', title: 'a', startsAt: new Date(2026, 4, 20, 9, 0), endsAt: new Date(2026, 4, 20, 10, 30) },
-        { id: 'b', title: 'b', startsAt: new Date(2026, 4, 20, 10, 0), endsAt: new Date(2026, 4, 20, 11, 0) },
-        { id: 'c', title: 'c', startsAt: new Date(2026, 4, 20, 10, 45), endsAt: new Date(2026, 4, 20, 12, 0) },
+        {
+          id: 'a',
+          title: 'a',
+          startsAt: new Date(2026, 4, 20, 9, 0),
+          endsAt: new Date(2026, 4, 20, 10, 30),
+        },
+        {
+          id: 'b',
+          title: 'b',
+          startsAt: new Date(2026, 4, 20, 10, 0),
+          endsAt: new Date(2026, 4, 20, 11, 0),
+        },
+        {
+          id: 'c',
+          title: 'c',
+          startsAt: new Date(2026, 4, 20, 10, 45),
+          endsAt: new Date(2026, 4, 20, 12, 0),
+        },
       ],
       day1,
       [7, 19],

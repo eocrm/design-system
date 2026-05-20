@@ -15,10 +15,9 @@ describe('WeekView', () => {
   const cursor = new Date(2026, 4, 20); // Wed May 20
 
   it('renders 7 column headers', () => {
-    render(
-      <WeekView cursor={cursor} events={[]} hourRange={[7, 19]} hourRowHeight={48} />,
-      { wrapper: wrap() },
-    );
+    render(<WeekView cursor={cursor} events={[]} hourRange={[7, 19]} hourRowHeight={48} />, {
+      wrapper: wrap(),
+    });
     expect(screen.getAllByRole('columnheader').length).toBe(7);
   });
 
@@ -32,12 +31,16 @@ describe('WeekView', () => {
 
   it('renders a timed event block', () => {
     const events: CalendarEvent[] = [
-      { id: 'a', title: 'Standup', startsAt: new Date(2026, 4, 20, 9), endsAt: new Date(2026, 4, 20, 10) },
+      {
+        id: 'a',
+        title: 'Standup',
+        startsAt: new Date(2026, 4, 20, 9),
+        endsAt: new Date(2026, 4, 20, 10),
+      },
     ];
-    render(
-      <WeekView cursor={cursor} events={events} hourRange={[7, 19]} hourRowHeight={48} />,
-      { wrapper: wrap() },
-    );
+    render(<WeekView cursor={cursor} events={events} hourRange={[7, 19]} hourRowHeight={48} />, {
+      wrapper: wrap(),
+    });
     expect(screen.getByRole('button', { name: /Standup/ })).toBeInTheDocument();
   });
 
@@ -45,7 +48,12 @@ describe('WeekView', () => {
     const onEventClick = vi.fn();
     const user = userEvent.setup();
     const events: CalendarEvent[] = [
-      { id: 'a', title: 'Standup', startsAt: new Date(2026, 4, 20, 9), endsAt: new Date(2026, 4, 20, 10) },
+      {
+        id: 'a',
+        title: 'Standup',
+        startsAt: new Date(2026, 4, 20, 9),
+        endsAt: new Date(2026, 4, 20, 10),
+      },
     ];
     render(
       <WeekView
@@ -71,10 +79,9 @@ describe('WeekView', () => {
         allDay: true,
       },
     ];
-    render(
-      <WeekView cursor={cursor} events={events} hourRange={[7, 19]} hourRowHeight={48} />,
-      { wrapper: wrap() },
-    );
+    render(<WeekView cursor={cursor} events={events} hourRange={[7, 19]} hourRowHeight={48} />, {
+      wrapper: wrap(),
+    });
     expect(screen.getByRole('button', { name: /Conference/ })).toBeInTheDocument();
   });
 
@@ -88,13 +95,22 @@ describe('WeekView', () => {
 
   it('places overlapping events side-by-side (each width 50%)', () => {
     const events: CalendarEvent[] = [
-      { id: 'a', title: 'Standup', startsAt: new Date(2026, 4, 20, 9), endsAt: new Date(2026, 4, 20, 10, 30) },
-      { id: 'b', title: '1:1', startsAt: new Date(2026, 4, 20, 10), endsAt: new Date(2026, 4, 20, 11) },
+      {
+        id: 'a',
+        title: 'Standup',
+        startsAt: new Date(2026, 4, 20, 9),
+        endsAt: new Date(2026, 4, 20, 10, 30),
+      },
+      {
+        id: 'b',
+        title: '1:1',
+        startsAt: new Date(2026, 4, 20, 10),
+        endsAt: new Date(2026, 4, 20, 11),
+      },
     ];
-    render(
-      <WeekView cursor={cursor} events={events} hourRange={[7, 19]} hourRowHeight={48} />,
-      { wrapper: wrap() },
-    );
+    render(<WeekView cursor={cursor} events={events} hourRange={[7, 19]} hourRowHeight={48} />, {
+      wrapper: wrap(),
+    });
     const a = screen.getByRole('button', { name: /Standup/ });
     const b = screen.getByRole('button', { name: /1:1/ });
     expect(a).toHaveStyle({ width: '50%' });
@@ -103,7 +119,13 @@ describe('WeekView', () => {
 
   it('uses locale-aware column headers (ru-RU has Cyrillic)', () => {
     render(
-      <WeekView cursor={cursor} events={[]} hourRange={[7, 19]} hourRowHeight={48} locale="ru-RU" />,
+      <WeekView
+        cursor={cursor}
+        events={[]}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        locale="ru-RU"
+      />,
       { wrapper: wrap('ru-RU') },
     );
     const headers = screen.getAllByRole('columnheader');

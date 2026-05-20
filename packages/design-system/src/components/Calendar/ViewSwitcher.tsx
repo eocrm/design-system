@@ -37,11 +37,7 @@ export function ViewSwitcher({
 
   return (
     <div className={styles.switcher}>
-      <Tabs
-        activeId={view}
-        onChange={(id) => onViewChange(id as CalendarView)}
-        items={items}
-      />
+      <Tabs activeId={view} onChange={(id) => onViewChange(id as CalendarView)} items={items} />
     </div>
   );
 }

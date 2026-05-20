@@ -43,12 +43,7 @@ export function DayView({
   const day = useDay(cursor, { locale });
 
   const layout = useMemo(
-    () =>
-      layoutEventsForHourGrid(
-        events,
-        [{ date: day.day.date, key: day.day.key }],
-        hourRange,
-      ),
+    () => layoutEventsForHourGrid(events, [{ date: day.day.date, key: day.day.key }], hourRange),
     [events, day.day.date, day.day.key, hourRange],
   );
 

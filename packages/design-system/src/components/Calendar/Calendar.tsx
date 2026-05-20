@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  useCallback,
-  useState,
-  type HTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { forwardRef, useCallback, useState, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../Button';
@@ -40,8 +34,10 @@ export interface CalendarLabels {
   viewDay?: string;
 }
 
-export interface CalendarProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface CalendarProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   /** Events to display. */
   events?: readonly CalendarEvent[];
   /** Active view (controlled). Pair with `onViewChange`. */
