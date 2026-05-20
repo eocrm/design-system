@@ -9,6 +9,22 @@ import { MonthView } from './MonthView';
 import type { CalendarEvent, CalendarView } from './types';
 import styles from './Calendar.module.scss';
 
+/**
+ * UI strings consumed by `<Calendar>`. The design system ships locale-aware
+ * month/weekday names via `Intl`, but UI strings like "Today" are the
+ * consumer's responsibility — pass localized values via `labels`.
+ */
+export interface CalendarLabels {
+  /** Text on the "Today" button. Default: `"Today"`. */
+  today?: string;
+  /** ARIA label on the previous-month chevron. Default: `"Previous month"`. */
+  previousMonth?: string;
+  /** ARIA label on the next-month chevron. Default: `"Next month"`. */
+  nextMonth?: string;
+  /** Template for the "+N more events" `aria-label`. Receives the hidden count. Default: `(n) => `${n} more events``. */
+  moreEvents?: (count: number) => string;
+}
+
 export interface CalendarProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'defaultValue'
@@ -33,7 +49,16 @@ export interface CalendarProps extends Omit<
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   /** Lane cap per week before "+N more" appears in affected cells. Default 3. */
   maxLanesPerWeek?: number;
+  /** Localized UI strings. Each key has a sensible English default. */
+  labels?: CalendarLabels;
 }
+
+const DEFAULT_LABELS: Required<CalendarLabels> = {
+  today: 'Today',
+  previousMonth: 'Previous month',
+  nextMonth: 'Next month',
+  moreEvents: (n) => `${n} more events`,
+};
 
 /**
  * Month calendar with continuous event bars (Google-Calendar style).
@@ -80,6 +105,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
     locale,
     weekStartsOn,
     maxLanesPerWeek = 3,
+    labels,
     className,
     ...rest
   },
@@ -87,6 +113,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
 ) {
   const [uncontrolled, setUncontrolled] = useState<Date>(() => defaultValue ?? new Date());
   const cursor = value ?? uncontrolled;
+  const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
 
   const handleChange = useCallback(
     (next: Date) => {
@@ -107,13 +134,25 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
       <header className={styles.header}>
         <h2 className={styles.title}>{grid.monthLabel}</h2>
         <Cluster gap="xs" align="center">
-          <Button size="xs" variant="ghost" iconOnly aria-label="Previous month" onClick={goPrev}>
+          <Button
+            size="xs"
+            variant="ghost"
+            iconOnly
+            aria-label={resolvedLabels.previousMonth}
+            onClick={goPrev}
+          >
             <ChevronLeft size={14} />
           </Button>
           <Button size="sm" variant="secondary" onClick={goToday}>
-            Today
+            {resolvedLabels.today}
           </Button>
-          <Button size="xs" variant="ghost" iconOnly aria-label="Next month" onClick={goNext}>
+          <Button
+            size="xs"
+            variant="ghost"
+            iconOnly
+            aria-label={resolvedLabels.nextMonth}
+            onClick={goNext}
+          >
             <ChevronRight size={14} />
           </Button>
         </Cluster>
@@ -127,6 +166,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           onChange={handleChange}
           onDayClick={onDayClick}
           onEventClick={onEventClick}
+          moreEventsLabel={resolvedLabels.moreEvents}
         />
       )}
     </div>

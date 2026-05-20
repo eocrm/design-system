@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'r
 import clsx from 'clsx';
 import type { MonthGrid } from '../../calendar/types';
 import { addDays, addMonths, isSameDay, startOfWeek } from '../../calendar/dateMath';
+import { useLocale } from '../../i18n/useLocale';
+import { formatDayLong } from '../../calendar/formatters';
+import { Popover } from '../Popover';
+import { Stack } from '../Stack';
 import type { CalendarEvent, EventBar } from './types';
 import { layoutEventsForMonth } from './utils';
 import { DayCell } from './DayCell';
@@ -39,6 +43,8 @@ export interface MonthViewProps {
   onDayClick?: (date: Date) => void;
   /** Fires when an event chip is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
+  /** Localizable formatter for the "+N more" `aria-label`. */
+  moreEventsLabel?: (count: number) => string;
 }
 
 /**
@@ -76,7 +82,9 @@ export function MonthView({
   onChange,
   onDayClick,
   onEventClick,
+  moreEventsLabel = (n) => `${n} more events`,
 }: MonthViewProps) {
+  const locale = useLocale();
   const layout = useMemo(
     () => layoutEventsForMonth(events, grid.weeks, maxLanesPerWeek),
     [events, grid.weeks, maxLanesPerWeek],
@@ -200,7 +208,10 @@ export function MonthView({
         const hasHidden = week.some((d) => (layout.hiddenCounts.get(d.key) ?? 0) > 0);
         return (
           <div key={weekIndex} className={styles.week}>
-            {/* Background day-column layers — span all rows in the week's grid */}
+            {/* Background day-column layers — span all rows in the week's grid.
+                `span 99` covers implicit lane rows; `-1` would only reach the
+                end of the explicit grid (row 1), leaving events visually outside
+                the column. */}
             {week.map((day, i) => (
               <div
                 key={`bg-${day.key}`}
@@ -210,7 +221,7 @@ export function MonthView({
                   day.isToday && styles.dayColumnToday,
                   day.isWeekend && styles.dayColumnWeekend,
                 )}
-                style={{ gridColumn: i + 1, gridRow: '1 / -1' }}
+                style={{ gridColumn: i + 1, gridRow: '1 / span 99' }}
               />
             ))}
             {/* ARIA row of day cells — `display: contents` flattens this wrapper
@@ -250,29 +261,42 @@ export function MonthView({
               ));
             })}
             {/* "+N more" overflow chips — placed at the row right after the
-                last visible lane, in each affected day's column. */}
+                last visible lane, in each affected day's column. Each chip
+                triggers a Popover listing every event on that day. */}
             {hasHidden &&
               week.map((day, i) => {
                 const hiddenCount = layout.hiddenCounts.get(day.key) ?? 0;
                 if (hiddenCount === 0) return null;
+                const dayEvents = layout.eventsByDay.get(day.key) ?? [];
                 return (
                   <div
                     key={`more-${day.key}`}
-                    aria-hidden="true"
                     className={styles.moreChipWrapper}
                     style={{ gridColumn: i + 1, gridRow: laneCount + 2 }}
                   >
-                    <button
-                      type="button"
-                      className={styles.moreChip}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDayClick?.(day.date);
-                      }}
-                      aria-label={`${hiddenCount} more events`}
-                    >
-                      +{hiddenCount} more
-                    </button>
+                    <Popover>
+                      <Popover.Trigger>
+                        <button
+                          type="button"
+                          className={styles.moreChip}
+                          aria-label={moreEventsLabel(hiddenCount)}
+                        >
+                          +{hiddenCount} more
+                        </button>
+                      </Popover.Trigger>
+                      <Popover.Content>
+                        <Popover.Heading>{formatDayLong(day.date, locale)}</Popover.Heading>
+                        <Stack gap="xs">
+                          {dayEvents.map((ev) => (
+                            <EventChip
+                              key={ev.id}
+                              event={ev}
+                              onClick={(clicked) => onEventClick?.(clicked)}
+                            />
+                          ))}
+                        </Stack>
+                      </Popover.Content>
+                    </Popover>
                   </div>
                 );
               })}

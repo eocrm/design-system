@@ -42,7 +42,7 @@ export function layoutEventsForMonth(
   maxLanes: number,
 ): MonthLayout {
   if (events.length === 0 || weeks.length === 0) {
-    return { bars: [], hiddenCounts: new Map() };
+    return { bars: [], hiddenCounts: new Map(), eventsByDay: new Map() };
   }
 
   const gridStart = weeks[0][0].date;
@@ -52,13 +52,38 @@ export function layoutEventsForMonth(
     .map(normalize)
     .filter((n) => n.end.getTime() >= gridStart.getTime() && n.start.getTime() <= gridEnd.getTime())
     .sort((a, b) => {
+      // allDay events sort before timed events on the same start day
+      const aAllDay = a.event.allDay === true ? 0 : 1;
+      const bAllDay = b.event.allDay === true ? 0 : 1;
+      const allDayDiff = aAllDay - bAllDay;
       const startDiff = a.start.getTime() - b.start.getTime();
       if (startDiff !== 0) return startDiff;
+      if (allDayDiff !== 0) return allDayDiff;
       return b.duration - a.duration;
     });
 
   const bars: EventBar[] = [];
   const hiddenCounts = new Map<string, number>();
+  const eventsByDay = new Map<string, CalendarEvent[]>();
+
+  // Pre-populate eventsByDay: every day in the grid gets every event that
+  // covers it (single-day events on their day; multi-day events on every
+  // day they span). Sorted by the same key used in the lane-assignment
+  // sort so the popover order matches visual lane order.
+  for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
+    const week = weeks[weekIndex];
+    for (let col = 0; col < 7; col++) {
+      const day = week[col];
+      const dayMs = day.date.getTime();
+      const dayEnd = dayMs + MS_PER_DAY;
+      const list: CalendarEvent[] = [];
+      for (const ne of normalized) {
+        if (ne.end.getTime() < dayMs || ne.start.getTime() >= dayEnd) continue;
+        list.push(ne.event);
+      }
+      if (list.length > 0) eventsByDay.set(day.key, list);
+    }
+  }
 
   for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
     const week = weeks[weekIndex];
@@ -127,5 +152,5 @@ export function layoutEventsForMonth(
     }
   }
 
-  return { bars, hiddenCounts };
+  return { bars, hiddenCounts, eventsByDay };
 }

@@ -124,10 +124,30 @@ export function CalendarDemo() {
 
       <Example
         title="ru-RU locale"
-        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. The locale prop overrides the LocaleProvider Context."
-        code={`<Calendar defaultValue={new Date(2026, 4, 15)} events={SAMPLE_EVENTS} locale="ru-RU" />`}
+        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings like the Today button are the consumer's responsibility; pass them via the labels prop."
+        code={`<Calendar
+  defaultValue={new Date(2026, 4, 15)}
+  events={SAMPLE_EVENTS}
+  locale="ru-RU"
+  labels={{
+    today: 'Сегодня',
+    previousMonth: 'Предыдущий месяц',
+    nextMonth: 'Следующий месяц',
+    moreEvents: (n) => \`ещё ${'${n}'} событий\`,
+  }}
+/>`}
       >
-        <Calendar defaultValue={may15} events={SAMPLE_EVENTS} locale="ru-RU" />
+        <Calendar
+          defaultValue={may15}
+          events={SAMPLE_EVENTS}
+          locale="ru-RU"
+          labels={{
+            today: 'Сегодня',
+            previousMonth: 'Предыдущий месяц',
+            nextMonth: 'Следующий месяц',
+            moreEvents: (n) => `ещё ${n} событий`,
+          }}
+        />
       </Example>
 
       <Example

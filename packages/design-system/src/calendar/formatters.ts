@@ -10,9 +10,21 @@ function getFormatter(locale: string, options: Intl.DateTimeFormatOptions): Intl
   return f;
 }
 
-/** "May 2026" / "Май 2026" */
+/**
+ * "May 2026" / "Май 2026" — capitalized standalone month name + numeric year,
+ * without the locale's era suffix.
+ *
+ * `Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' })` in some
+ * locales (notably `ru-RU`) yields "май 2026 г." — lowercase genitive month
+ * with an era marker. For calendar headers we want a nominative-cased
+ * standalone month, so we format month and year separately and uppercase the
+ * first character of the month with locale-aware casing.
+ */
 export function formatMonth(date: Date, locale: string): string {
-  return getFormatter(locale, { year: 'numeric', month: 'long' }).format(date);
+  const month = getFormatter(locale, { month: 'long' }).format(date);
+  const year = date.getFullYear();
+  const capitalized = month.charAt(0).toLocaleUpperCase(locale) + month.slice(1);
+  return `${capitalized} ${year}`;
 }
 
 /** "Mon" (Intl 'short' weekday). */

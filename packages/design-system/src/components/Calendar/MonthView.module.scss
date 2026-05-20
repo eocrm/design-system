@@ -27,12 +27,15 @@
   text-align: left;
 }
 
+// No row-gap on `.week` — the dayColumn background spans implicit rows
+// (`span 99`), and row-gap applied to 99 row tracks would balloon the week
+// height. `.barSlot` and `.moreChipWrapper` carry their own padding-top to
+// space bars apart vertically. The last bar carries padding-bottom too so
+// the bottom of the cell doesn't crowd the chip.
 .week {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   grid-auto-rows: auto;
-  row-gap: var(--space-1);
-  padding-bottom: var(--space-1);
 }
 
 /* `display: contents` flattens the ARIA-row wrapper so each DayCell
@@ -62,13 +65,13 @@
 
 .barSlot {
   min-width: 0;
-  padding: 0 var(--space-1);
+  padding: var(--space-1);
 }
 
 .moreChipWrapper {
   display: flex;
   justify-content: flex-start;
-  padding: 0 var(--space-2);
+  padding: var(--space-1) var(--space-2);
 }
 
 .moreChip {

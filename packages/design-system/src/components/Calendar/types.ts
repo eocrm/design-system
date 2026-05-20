@@ -61,4 +61,11 @@ export interface MonthLayout {
    * Keyed by `toDateKey(day)`. Used by `DayCell` to render "+N more".
    */
   hiddenCounts: ReadonlyMap<string, number>;
+  /**
+   * All events that occur on each day, regardless of lane visibility.
+   * Keyed by `toDateKey(day)`; sorted by `(allDay first, startsAt ascending)`.
+   * Multi-day events appear under every day they cover. Used by the "+N more"
+   * popover to render the full event list for a day.
+   */
+  eventsByDay: ReadonlyMap<string, readonly CalendarEvent[]>;
 }
