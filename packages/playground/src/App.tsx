@@ -19,6 +19,7 @@ import { TabsDemo } from './pages/components/TabsDemo';
 import { DropdownMenuDemo } from './pages/components/DropdownMenuDemo';
 import { TooltipDemo } from './pages/components/TooltipDemo';
 import { PopoverDemo } from './pages/components/PopoverDemo';
+import { CalendarDemo } from './pages/components/CalendarDemo';
 import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverDemo';
 
 export default function App() {
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
           <Route path="/components/tooltip" element={<TooltipDemo />} />
           <Route path="/components/popover" element={<PopoverDemo />} />
+          <Route path="/components/calendar" element={<CalendarDemo />} />
           <Route path="/components/confirmation-popover" element={<ConfirmationPopoverDemo />} />
         </Routes>
       </AppShell>

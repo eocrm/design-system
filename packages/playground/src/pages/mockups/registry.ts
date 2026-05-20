@@ -13,7 +13,8 @@ export type ComponentName =
   | 'DropdownMenu'
   | 'Tooltip'
   | 'Popover'
-  | 'ConfirmationPopover';
+  | 'ConfirmationPopover'
+  | 'Calendar';
 
 export interface MockupEntry {
   slug: string;

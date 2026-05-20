@@ -11,6 +11,7 @@ import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
 import { Tooltip } from '@eocrm/design-system';
+import { Calendar } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
@@ -190,6 +191,16 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           </Popover.Content>
         </Popover>
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/calendar',
+    name: 'Calendar',
+    description: 'Month view with continuous multi-day event bars, overflow chips, and locale-aware weekday grids.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 260, pointerEvents: 'none' }}>
+        <Calendar defaultValue={new Date(2026, 4, 15)} />
+      </div>
     ),
   },
   {
