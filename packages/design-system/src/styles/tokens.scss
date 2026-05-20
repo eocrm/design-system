@@ -23,15 +23,20 @@
   --color-accent-pressed: #053585;
   --color-accent-fg: #ffffff;
   --color-accent-subtle-bg: #deebff;
+  --color-accent-bg-subtle: #deebff; // alias — consistent *-bg-subtle pattern
 
   // Semantic
   --color-danger: #de350b;
   --color-danger-hover: #bf2600;
   --color-danger-fg: #ffffff;
+  --color-danger-bg-subtle: #ffebe6; // tinted surface for event chips / highlights
   --color-success: #00875a;
   --color-success-hover: #006644;
   --color-success-fg: #ffffff;
+  --color-success-bg-subtle: #e3fcef; // tinted surface for event chips / highlights
   --color-warning: #ff991f;
+  --color-warning-fg: #ffffff;
+  --color-warning-bg-subtle: #fff7ed; // tinted surface for event chips / highlights
   --color-info: #0052cc;
 
   // Badge palette — subtle bg + readable fg pairs
@@ -145,6 +150,7 @@
 
   // States
   --opacity-disabled: 0.5;
+  --opacity-muted: 0.75; // de-emphasised secondary text (e.g. event time prefix)
   --opacity-hidden: 0;
   --opacity-visible: 1;
 

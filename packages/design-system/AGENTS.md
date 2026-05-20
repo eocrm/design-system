@@ -418,6 +418,27 @@ const locale = useLocale(); // 'ru-RU', or navigator.language fallback
 - No `<LocaleProvider>` mounted? `useLocale()` falls back to `navigator.language` (or `'en-US'` in SSR / Node).
 - Stateless. To switch locale at runtime, re-render the Provider with a new `locale` prop. Nested Providers override outer ones.
 
+### `<Calendar>` — month view with continuous event bars
+
+```tsx
+const [cursor, setCursor] = useState(new Date());
+<Calendar
+  value={cursor}
+  onChange={setCursor}
+  events={events}
+  onEventClick={(e) => openDetail(e)}
+/>;
+```
+
+- Month view only in v1; Week / Day / Agenda views ship in follow-up PRs.
+- Events are `{ id, title, startsAt, endsAt?, tone?, allDay? }`. Multi-day events render as continuous bars across days; week boundaries split into separate bars with flattened edges.
+- Tones: `neutral` (default) / `accent` / `success` / `warning` / `danger`. `allDay: true` renders as a tone-filled band (no time prefix).
+- Controlled (`value` / `onChange`) or uncontrolled (`defaultValue`).
+- Locale-aware via `useLocale()`; override with `locale` prop. `weekStartsOn` overrides the locale-derived first day.
+- `maxLanesPerWeek` (default 3) caps event lanes per week. Events beyond the cap collapse into a `+N more` chip in affected cells; click fires `onDayClick(date)` so you can open your own popover/modal with the full list.
+- Read-mostly: `onDayClick` and `onEventClick` callbacks only. No built-in popover or modal — wire your own detail UI.
+- ARIA: `role="grid" aria-readonly="true"`; arrow keys move focus, PageUp/PageDown navigates months, Enter/Space calls `onDayClick`.
+
 ### Calendar primitives — `useMonth`, `useWeek`, `useDay`, `useAgenda`
 
 ```tsx

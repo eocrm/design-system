@@ -107,6 +107,7 @@ export {
   formatDayLong,
   formatRange,
   formatHour,
+  formatTime,
   getFirstDayOfWeek,
   getWeekendDays,
 } from './calendar';
@@ -122,3 +123,14 @@ export type {
   DayResult,
   AgendaResult,
 } from './calendar';
+
+export { Calendar } from './components/Calendar';
+export type {
+  CalendarProps,
+  CalendarLabels,
+  CalendarEvent,
+  CalendarEventTone,
+  CalendarView,
+  EventBar,
+  MonthLayout,
+} from './components/Calendar';

@@ -1,0 +1,95 @@
+@use '../../styles/mixins' as *;
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--border-width) solid var(--color-border);
+  border-left: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.weekdayHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: var(--color-bg-subtle);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.weekdayLabel {
+  padding: var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+  text-align: left;
+}
+
+// No row-gap on `.week` — the dayColumn background spans implicit rows
+// (`span 99`), and row-gap applied to 99 row tracks would balloon the week
+// height. `.barSlot` and `.moreChipWrapper` carry their own padding-top to
+// space bars apart vertically. The last bar carries padding-bottom too so
+// the bottom of the cell doesn't crowd the chip.
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: auto;
+}
+
+/* `display: contents` flattens the ARIA-row wrapper so each DayCell
+   becomes a direct grid item of `.week`. */
+.dayRow {
+  display: contents;
+}
+
+/* Background day-column layers — span all rows of the week's grid.
+   These provide the visible cell box (border + today/weekend tint); the
+   foreground DayCells and bars sit on top inside the same column. The
+   `min-height` makes empty weeks still look like cells without inflating
+   the day-number row (events sit immediately below the day number). */
+.dayColumn {
+  min-height: 6.5rem;
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.dayColumnToday {
+  background: var(--color-accent-bg-subtle);
+}
+
+.dayColumnWeekend {
+  background: var(--color-bg-muted);
+}
+
+.barSlot {
+  min-width: 0;
+  padding: var(--space-1);
+}
+
+.moreChipWrapper {
+  display: flex;
+  justify-content: flex-start;
+  padding: var(--space-1) var(--space-2);
+}
+
+.moreChip {
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}

@@ -24,6 +24,7 @@ import {
   MoreHorizontal,
   PanelLeft,
   ShieldCheck,
+  CalendarDays,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
@@ -67,6 +68,7 @@ const componentGroups = [
     items: [
       { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
       { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
+      { to: '/components/calendar', label: 'Calendar', icon: CalendarDays, end: false },
     ],
   },
   {

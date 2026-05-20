@@ -1,0 +1,27 @@
+@use '../../styles/mixins' as *;
+
+.cell {
+  padding: var(--space-2);
+  cursor: pointer;
+  outline: none;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.otherMonth .dayNumber {
+  opacity: var(--opacity-disabled);
+}
+
+.dayNumber {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  line-height: 1;
+}
+
+.todayNumber {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
