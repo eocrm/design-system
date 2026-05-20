@@ -81,6 +81,7 @@ export function SelectDemo() {
   return (
     <DemoLayout
       name="Select"
+      componentName="Select"
       description="Value picker — single, multi (chips and summary), searchable, async, creatable. The generalist."
       tsxSource={tsxSource}
       scssSource={scssSource}
