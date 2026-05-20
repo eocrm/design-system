@@ -4,6 +4,7 @@
   position: absolute;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
   border: var(--border-width) solid transparent;
@@ -27,6 +28,13 @@
   &:focus-visible {
     @include focus-ring;
   }
+}
+
+// Short blocks (at min-height) use a single-line row layout so the start
+// time stays visible alongside the title in the limited vertical space.
+.short {
+  flex-direction: row;
+  align-items: center;
 }
 
 .time {

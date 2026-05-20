@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
-import { addMonths } from '../../calendar/dateMath';
+import { addDays, addMonths, addWeeks } from '../../calendar/dateMath';
 import { useMonth } from '../../calendar/useMonth';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { MonthView } from './MonthView';
@@ -179,8 +179,18 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
 
   const grid = useMonth(cursor, { locale, weekStartsOn });
 
-  const goPrev = () => handleChange(addMonths(cursor, -1));
-  const goNext = () => handleChange(addMonths(cursor, 1));
+  // Prev/Next step matches the active view: a month in month view, a week in
+  // week view, a day in day view. Without this, multi-day events that span
+  // several weeks aren't reachable when in week/day view — each click would
+  // skip over them.
+  const stepBy =
+    view === 'month'
+      ? (d: Date, n: number) => addMonths(d, n)
+      : view === 'week'
+        ? (d: Date, n: number) => addWeeks(d, n)
+        : (d: Date, n: number) => addDays(d, n);
+  const goPrev = () => handleChange(stepBy(cursor, -1));
+  const goNext = () => handleChange(stepBy(cursor, 1));
   const goToday = () => handleChange(new Date());
 
   const body: ReactNode = (

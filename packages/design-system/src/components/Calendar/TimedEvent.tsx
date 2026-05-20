@@ -1,4 +1,4 @@
-import { useMemo, type MouseEvent } from 'react';
+import { type MouseEvent } from 'react';
 import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { formatTime } from '../../calendar';
@@ -38,14 +38,13 @@ export function TimedEvent({ block, hourRowHeight, onClick }: TimedEventProps) {
   const width = `${100 / block.laneCount}%`;
   const left = `${(100 / block.laneCount) * block.lane}%`;
 
-  const timeLabel = useMemo(
-    () =>
-      `${formatTime(block.event.startsAt, locale)} – ${formatTime(
-        block.event.endsAt ?? block.event.startsAt,
-        locale,
-      )}`,
-    [block.event.startsAt, block.event.endsAt, locale],
-  );
+  const startLabel = formatTime(block.event.startsAt, locale);
+  const endLabel = block.event.endsAt ? formatTime(block.event.endsAt, locale) : null;
+
+  // For zero-duration events the start and end times are the same (or there's
+  // no endsAt) — collapse to a single time label rather than "9:30 AM – 9:30 AM".
+  const isZeroDuration = !endLabel || endLabel === startLabel;
+  const timeLabel = isZeroDuration ? startLabel : `${startLabel} – ${endLabel}`;
 
   const duration = formatEventDuration(block.event.startsAt, block.event.endsAt);
   const tooltipContent = (
@@ -62,18 +61,20 @@ export function TimedEvent({ block, hourRowHeight, onClick }: TimedEventProps) {
     onClick?.(block.event);
   };
 
-  // Short events (at or near min-height) drop the time prefix and show title only.
+  // Short events use a single-line row layout (time + title side-by-side)
+  // so the start time stays visible even on min-height blocks. Tall events
+  // stack time above title in a column for more breathing room.
   const isShort = height < MIN_BLOCK_HEIGHT_PX + 10;
 
   return (
     <Tooltip content={tooltipContent}>
       <button
         type="button"
-        className={clsx(styles.block, styles[tone])}
+        className={clsx(styles.block, styles[tone], isShort && styles.short)}
         style={{ top, height, width, left }}
         onClick={handleClick}
       >
-        {!isShort && <span className={styles.time}>{timeLabel}</span>}
+        <span className={styles.time}>{timeLabel}</span>
         <span className={styles.title}>{block.event.title}</span>
       </button>
     </Tooltip>
