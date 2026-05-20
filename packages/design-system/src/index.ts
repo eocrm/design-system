@@ -122,3 +122,13 @@ export type {
   DayResult,
   AgendaResult,
 } from './calendar';
+
+export { Calendar } from './components/Calendar';
+export type {
+  CalendarProps,
+  CalendarEvent,
+  CalendarEventTone,
+  CalendarView,
+  EventBar,
+  MonthLayout,
+} from './components/Calendar';
