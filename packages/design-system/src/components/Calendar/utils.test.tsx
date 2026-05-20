@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { useMonth } from '../../calendar/useMonth';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import type { CalendarEvent } from './types';
-import { layoutEventsForMonth, layoutEventsForHourGrid } from './utils';
+import { layoutEventsForMonth, layoutEventsForHourGrid, formatEventDuration } from './utils';
 import type { ReactNode } from 'react';
 
 function wrapEnUS({ children }: { children: ReactNode }) {
@@ -432,5 +432,39 @@ describe('layoutEventsForHourGrid', () => {
     // 24:00 (end-of-day) − 7:00 (hour-range base) = 17h = 1020min
     expect(out.timedBlocks[0].endMinutes).toBe(1020);
     expect(out.timedBlocks[0].endMinutes).toBeGreaterThan(out.timedBlocks[0].startMinutes);
+  });
+});
+
+describe('formatEventDuration', () => {
+  it('returns "0m" for zero-duration events (no endsAt)', () => {
+    expect(formatEventDuration(new Date(2026, 4, 20, 9, 0), undefined)).toBe('0m');
+  });
+
+  it('returns "30m" for sub-hour events', () => {
+    expect(
+      formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 20, 9, 30)),
+    ).toBe('30m');
+  });
+
+  it('returns "1h" for exact-hour events', () => {
+    expect(
+      formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 20, 10, 0)),
+    ).toBe('1h');
+  });
+
+  it('returns "1h 30m" for one-and-a-half hours', () => {
+    expect(
+      formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 20, 10, 30)),
+    ).toBe('1h 30m');
+  });
+
+  it('returns "2d" for exact two-day events', () => {
+    expect(formatEventDuration(new Date(2026, 4, 20), new Date(2026, 4, 22))).toBe('2d');
+  });
+
+  it('returns "2d 5h" for two-day five-hour events', () => {
+    expect(
+      formatEventDuration(new Date(2026, 4, 20, 9, 0), new Date(2026, 4, 22, 14, 0)),
+    ).toBe('2d 5h');
   });
 });

@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { formatTime } from '../../calendar';
 import { Tooltip } from '../Tooltip';
+import { formatEventDuration } from './utils';
 import type { CalendarEvent, CalendarEventTone, TimedEventBlock } from './types';
 import styles from './TimedEvent.module.scss';
 
@@ -25,12 +26,15 @@ export interface TimedEventProps {
  * it is an internal building block consumed by `HourGrid`. Use `Calendar` (or
  * `WeekView`/`DayView`) from the design system and pass events via the `events` prop.
  */
+const MIN_BLOCK_HEIGHT_PX = 20;
+
 export function TimedEvent({ block, hourRowHeight, onClick }: TimedEventProps) {
   const locale = useLocale();
   const tone: CalendarEventTone = block.event.tone ?? 'neutral';
 
   const top = (block.startMinutes / 60) * hourRowHeight;
-  const height = ((block.endMinutes - block.startMinutes) / 60) * hourRowHeight;
+  const rawHeight = ((block.endMinutes - block.startMinutes) / 60) * hourRowHeight;
+  const height = Math.max(rawHeight, MIN_BLOCK_HEIGHT_PX);
   const width = `${100 / block.laneCount}%`;
   const left = `${(100 / block.laneCount) * block.lane}%`;
 
@@ -43,9 +47,12 @@ export function TimedEvent({ block, hourRowHeight, onClick }: TimedEventProps) {
     [block.event.startsAt, block.event.endsAt, locale],
   );
 
+  const duration = formatEventDuration(block.event.startsAt, block.event.endsAt);
   const tooltipContent = (
     <span className={styles.tooltipBody}>
-      <span className={styles.tooltipTime}>{timeLabel}</span>
+      <span className={styles.tooltipTime}>
+        {timeLabel} · {duration}
+      </span>
       <span className={styles.tooltipTitle}>{block.event.title}</span>
     </span>
   );
@@ -55,8 +62,8 @@ export function TimedEvent({ block, hourRowHeight, onClick }: TimedEventProps) {
     onClick?.(block.event);
   };
 
-  // Short events (<30 visible px) drop the time prefix and show title only.
-  const isShort = height < 30;
+  // Short events (at or near min-height) drop the time prefix and show title only.
+  const isShort = height < MIN_BLOCK_HEIGHT_PX + 10;
 
   return (
     <Tooltip content={tooltipContent}>

@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { formatTime } from '../../calendar';
 import { useLocale } from '../../i18n/useLocale';
 import { Tooltip } from '../Tooltip';
+import { formatEventDuration } from './utils';
 import type { CalendarEvent, CalendarEventTone } from './types';
 import styles from './EventChip.module.scss';
 
@@ -44,11 +45,17 @@ export function EventChip({
   const tone: CalendarEventTone = event.tone ?? 'neutral';
   const isAllDay = event.allDay === true;
   const time = isAllDay ? '' : formatTime(event.startsAt, locale);
+  const duration = formatEventDuration(event.startsAt, event.endsAt);
   const tooltipContent = isAllDay ? (
-    <span className={styles.tooltipTitle}>{event.title}</span>
+    <span className={styles.tooltipBody}>
+      <span className={styles.tooltipTime}>{duration}</span>
+      <span className={styles.tooltipTitle}>{event.title}</span>
+    </span>
   ) : (
     <span className={styles.tooltipBody}>
-      <span className={styles.tooltipTime}>{time}</span>
+      <span className={styles.tooltipTime}>
+        {time} · {duration}
+      </span>
       <span className={styles.tooltipTitle}>{event.title}</span>
     </span>
   );

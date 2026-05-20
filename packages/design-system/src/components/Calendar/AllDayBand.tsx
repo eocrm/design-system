@@ -33,38 +33,35 @@ export function AllDayBand({ bars, columnCount, gutterWidth, onEventClick }: All
       className={styles.band}
       style={{
         gridTemplateColumns: `${gutterWidth}px repeat(${columnCount}, 1fr)`,
+        gridTemplateRows: `repeat(${maxLane + 1}, auto)`,
       }}
     >
-      <div className={styles.gutter} />
       <div
-        className={styles.body}
-        style={{
-          gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-          gridTemplateRows: `repeat(${maxLane + 1}, auto)`,
-        }}
-      >
-        {bars.map((bar) => (
-          <div
-            key={bar.event.id}
-            className={clsx(
-              styles.barSlot,
-              bar.continuesLeft && styles.continuesLeft,
-              bar.continuesRight && styles.continuesRight,
-            )}
-            style={{
-              gridColumn: `${bar.startCol + 1} / ${bar.endCol + 2}`,
-              gridRow: bar.lane + 1,
-            }}
-          >
-            <EventChip
-              event={bar.event}
-              continuesLeft={bar.continuesLeft}
-              continuesRight={bar.continuesRight}
-              onClick={(ev) => onEventClick?.(ev)}
-            />
-          </div>
-        ))}
-      </div>
+        className={styles.gutter}
+        style={{ gridColumn: 1, gridRow: `1 / span ${maxLane + 1}` }}
+      />
+      {bars.map((bar) => (
+        <div
+          key={bar.event.id}
+          className={clsx(
+            styles.barSlot,
+            bar.continuesLeft && styles.continuesLeft,
+            bar.continuesRight && styles.continuesRight,
+          )}
+          style={{
+            // +2 because column 1 is the gutter; day index 0 → outer column 2
+            gridColumn: `${bar.startCol + 2} / ${bar.endCol + 3}`,
+            gridRow: bar.lane + 1,
+          }}
+        >
+          <EventChip
+            event={bar.event}
+            continuesLeft={bar.continuesLeft}
+            continuesRight={bar.continuesRight}
+            onClick={(ev) => onEventClick?.(ev)}
+          />
+        </div>
+      ))}
     </div>
   );
 }

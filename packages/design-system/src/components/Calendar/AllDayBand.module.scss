@@ -1,5 +1,7 @@
 .band {
   display: grid;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
   border-bottom: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
 }
@@ -8,18 +10,12 @@
   border-right: var(--border-width) solid var(--color-border);
 }
 
-.body {
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  align-items: start;
-}
-
 .barSlot {
   min-width: 0;
+  padding: 0 var(--space-1);
 }
 
 .continuesLeft,
 .continuesRight {
-  // Visual cues are on the EventChip itself; wrapper has no styling.
+  // Visual cues on the EventChip; no wrapper styling needed.
 }
