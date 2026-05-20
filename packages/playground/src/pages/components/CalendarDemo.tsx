@@ -84,6 +84,45 @@ const SAMPLE_EVENTS: CalendarEvent[] = [
     endsAt: fromToday(6, 14, 0),
     tone: 'neutral',
   },
+  // Overlapping events on the same day — demonstrate the collision-lane
+  // layout in week / day views (events at the same time share a column
+  // with equal-width lanes).
+  {
+    id: 'overlap-a',
+    title: 'Design review',
+    startsAt: fromToday(1, 10, 0),
+    endsAt: fromToday(1, 11, 30),
+    tone: 'accent',
+  },
+  {
+    id: 'overlap-b',
+    title: 'Sync: Engineering',
+    startsAt: fromToday(1, 10, 30),
+    endsAt: fromToday(1, 12, 0),
+    tone: 'success',
+  },
+  {
+    id: 'overlap-c',
+    title: 'Sales handoff',
+    startsAt: fromToday(1, 11, 0),
+    endsAt: fromToday(1, 12, 30),
+    tone: 'warning',
+  },
+  // Two simultaneously-starting events same day → 50/50 split.
+  {
+    id: 'concurrent-a',
+    title: 'Interview: Sarah',
+    startsAt: fromToday(3, 15, 0),
+    endsAt: fromToday(3, 16, 0),
+    tone: 'accent',
+  },
+  {
+    id: 'concurrent-b',
+    title: 'Vendor demo',
+    startsAt: fromToday(3, 15, 0),
+    endsAt: fromToday(3, 16, 0),
+    tone: 'neutral',
+  },
 ];
 
 const OVERFLOW_EVENTS: CalendarEvent[] = [
