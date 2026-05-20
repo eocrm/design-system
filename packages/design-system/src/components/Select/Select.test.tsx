@@ -961,9 +961,7 @@ describe('Select — creatable', () => {
 
 describe('Select — form integration (single)', () => {
   it('renders a hidden input named `name` with the current value', () => {
-    const { container } = render(
-      <Select options={STATUSES} value="pending" name="status" />,
-    );
+    const { container } = render(<Select options={STATUSES} value="pending" name="status" />);
     const hidden = container.querySelector<HTMLInputElement>('input[name="status"]');
     expect(hidden).not.toBeNull();
     expect(hidden!.type).toBe('hidden');
@@ -971,9 +969,7 @@ describe('Select — form integration (single)', () => {
   });
 
   it('hidden input is required when `required`', () => {
-    const { container } = render(
-      <Select options={STATUSES} name="status" required />,
-    );
+    const { container } = render(<Select options={STATUSES} name="status" required />);
     const hidden = container.querySelector<HTMLInputElement>('input[name="status"]');
     expect(hidden!.required).toBe(true);
   });
@@ -1003,12 +999,14 @@ describe('Select — form integration (multi)', () => {
   ];
 
   it('renders one hidden input per selected value', () => {
-    const { container } = render(
-      <Select multiple options={OPTS} value={['a', 'b']} name="tags" />,
-    );
+    const { container } = render(<Select multiple options={OPTS} value={['a', 'b']} name="tags" />);
     const hiddens = container.querySelectorAll<HTMLInputElement>('input[name="tags"]');
     expect(hiddens).toHaveLength(2);
-    expect(Array.from(hiddens).map((h) => h.value).sort()).toEqual(['a', 'b']);
+    expect(
+      Array.from(hiddens)
+        .map((h) => h.value)
+        .sort(),
+    ).toEqual(['a', 'b']);
   });
 
   it('FormData.getAll returns the array', () => {
@@ -1181,11 +1179,7 @@ describe('Select — render escape hatches', () => {
 
   it('renderValue replaces the single trigger label', () => {
     render(
-      <Select
-        options={STATUSES}
-        value="pending"
-        renderValue={(opt) => <em>~~{opt.label}~~</em>}
-      />,
+      <Select options={STATUSES} value="pending" renderValue={(opt) => <em>~~{opt.label}~~</em>} />,
     );
     expect(screen.getByRole('button', { name: /~~Pending~~/ })).toHaveTextContent('~~Pending~~');
   });
@@ -1210,11 +1204,7 @@ describe('Select — render escape hatches', () => {
   it('renderEmpty replaces the empty state', async () => {
     const user = userEvent.setup();
     render(
-      <Select
-        searchable
-        options={STATUSES}
-        renderEmpty={(q) => <span>Nothing for "{q}"</span>}
-      />,
+      <Select searchable options={STATUSES} renderEmpty={(q) => <span>Nothing for "{q}"</span>} />,
     );
     const input = screen.getByRole('combobox');
     await user.click(input);

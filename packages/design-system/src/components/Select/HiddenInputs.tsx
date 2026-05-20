@@ -32,28 +32,12 @@ export function HiddenInputs(props: HiddenInputsProps) {
   }
   const arr = Array.isArray(value) ? value : [];
   if (arr.length === 0 && required) {
-    return (
-      <input
-        type="hidden"
-        name={name}
-        value=""
-        required
-        form={form}
-        disabled={disabled}
-      />
-    );
+    return <input type="hidden" name={name} value="" required form={form} disabled={disabled} />;
   }
   return (
     <>
       {arr.map((v) => (
-        <input
-          key={v}
-          type="hidden"
-          name={name}
-          value={v}
-          form={form}
-          disabled={disabled}
-        />
+        <input key={v} type="hidden" name={name} value={v} form={form} disabled={disabled} />
       ))}
     </>
   );

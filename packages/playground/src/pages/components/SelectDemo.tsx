@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Avatar,
-  Badge,
-  Cluster,
-  Select,
-  Stack,
-  type SelectOption,
-} from '@eocrm/design-system';
+import { Avatar, Badge, Cluster, Select, Stack, type SelectOption } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/Select/Select.tsx?raw';

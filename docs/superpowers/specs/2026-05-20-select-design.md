@@ -152,10 +152,7 @@ export type SelectProps<T = unknown> = {
    *  - single: the SelectOption or `null` (when cleared)
    *  - multi: the array of currently selected options
    */
-  onChange?: (
-    value: string | string[],
-    option: SelectOption<T> | SelectOption<T>[] | null,
-  ) => void;
+  onChange?: (value: string | string[], option: SelectOption<T> | SelectOption<T>[] | null) => void;
   /** Fired when the user activates a "+ Create" row. `onChange` fires immediately after with the new value included. */
   onCreate?: (label: string) => void;
 
@@ -190,10 +187,7 @@ export type SelectProps<T = unknown> = {
   form?: string;
 
   // ─── render escape hatches ────────────────────────────────────────────────
-  renderOption?: (
-    opt: SelectOption<T>,
-    state: { active: boolean; selected: boolean },
-  ) => ReactNode;
+  renderOption?: (opt: SelectOption<T>, state: { active: boolean; selected: boolean }) => ReactNode;
   /** Renders the selected label in single-mode triggers. Defaults to `opt.label`. */
   renderValue?: (opt: SelectOption<T>) => ReactNode;
   /** Renders a single chip in chips-mode triggers. Defaults to `<Chip>{opt.label}</Chip>` with ✕. */
@@ -213,31 +207,31 @@ export type SelectProps<T = unknown> = {
 
 ### Prop defaults table
 
-| Prop | Default | Notes |
-|---|---|---|
-| `multiple` | `false` | — |
-| `triggerDisplay` | `'chips'` | Ignored when `!multiple` |
-| `searchable` | `false` | — |
-| `creatable` | `false` | Throws in dev when `creatable && !searchable` |
-| `loadOnOpen` | `true` | Only consulted when `loadOptions` is set |
-| `searchDebounceMs` | `250` | — |
-| `size` | `'md'` | Mirrors `<Input>` |
-| `invalid` | `false` | — |
-| `clearable` | `!multiple && !required` | Multi handles per-chip removal regardless |
-| `disabled` | `false` | — |
-| `readOnly` | `false` | — |
-| `required` | `false` | — |
+| Prop               | Default                  | Notes                                         |
+| ------------------ | ------------------------ | --------------------------------------------- |
+| `multiple`         | `false`                  | —                                             |
+| `triggerDisplay`   | `'chips'`                | Ignored when `!multiple`                      |
+| `searchable`       | `false`                  | —                                             |
+| `creatable`        | `false`                  | Throws in dev when `creatable && !searchable` |
+| `loadOnOpen`       | `true`                   | Only consulted when `loadOptions` is set      |
+| `searchDebounceMs` | `250`                    | —                                             |
+| `size`             | `'md'`                   | Mirrors `<Input>`                             |
+| `invalid`          | `false`                  | —                                             |
+| `clearable`        | `!multiple && !required` | Multi handles per-chip removal regardless     |
+| `disabled`         | `false`                  | —                                             |
+| `readOnly`         | `false`                  | —                                             |
+| `required`         | `false`                  | —                                             |
 
 ## Mode matrix
 
-| `multiple` | `triggerDisplay` | `searchable` | Trigger | Search input lives in |
-|---|---|---|---|---|
-| `false` | (n/a) | `false` | Button-styled, chevron right | — |
-| `false` | (n/a) | `true` | **Combobox input** — typing replaces displayed label and filters | trigger itself |
-| `true` | `'chips'` | `false` | Input-shell with inline chips, no caret editor | — |
-| `true` | `'chips'` | `true` | Input-shell with inline chips + inline caret editor after last chip | trigger itself |
-| `true` | `'summary'` | `false` | Button-styled, shows "Foo, Bar, …" or "N selected" | — |
-| `true` | `'summary'` | `true` | Button-styled, shows summary | inside popover, top |
+| `multiple` | `triggerDisplay` | `searchable` | Trigger                                                             | Search input lives in |
+| ---------- | ---------------- | ------------ | ------------------------------------------------------------------- | --------------------- |
+| `false`    | (n/a)            | `false`      | Button-styled, chevron right                                        | —                     |
+| `false`    | (n/a)            | `true`       | **Combobox input** — typing replaces displayed label and filters    | trigger itself        |
+| `true`     | `'chips'`        | `false`      | Input-shell with inline chips, no caret editor                      | —                     |
+| `true`     | `'chips'`        | `true`       | Input-shell with inline chips + inline caret editor after last chip | trigger itself        |
+| `true`     | `'summary'`      | `false`      | Button-styled, shows "Foo, Bar, …" or "N selected"                  | —                     |
+| `true`     | `'summary'`      | `true`       | Button-styled, shows summary                                        | inside popover, top   |
 
 Tag-input pattern is `multiple={true} triggerDisplay='chips' searchable={true} creatable={true}` — no separate component.
 
@@ -291,20 +285,20 @@ We deliberately avoid the `"N selected"` shortcut by default — the comma-joine
 
 ### Common keyboard model (across all modes)
 
-| Key | Closed | Open |
-|---|---|---|
-| `Enter` | Open (single/chips), open + activate (button-styled) | Select active row; close on single, keep on multi |
-| `Space` | Open (button-styled triggers only) | Button-styled triggers: same as `Enter`. Input-style triggers (searchable single, chips-multi): Space is a literal space char in the query |
-| `ArrowDown` | Open with first active | Move active +1 (skips disabled, header rows, separators) |
-| `ArrowUp` | Open with last active | Move active -1 |
-| `Home` | (no-op) | Active = first option |
-| `End` | (no-op) | Active = last option |
-| `PageDown` | (no-op) | Active +5 (clamped) |
-| `PageUp` | (no-op) | Active -5 (clamped) |
-| `Escape` | (no-op) | Close, revert search query to last selected label (single-search) |
-| `Tab` | (no-op, normal traversal) | Close, commit current selection |
-| Printable char | Typeahead-open for non-searchable; first char of query for searchable | Typeahead step in non-searchable; query input in searchable |
-| `Backspace` | (no-op) | Remove last chip in chips-mode if input is empty; otherwise normal input behavior |
+| Key            | Closed                                                                | Open                                                                                                                                       |
+| -------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Enter`        | Open (single/chips), open + activate (button-styled)                  | Select active row; close on single, keep on multi                                                                                          |
+| `Space`        | Open (button-styled triggers only)                                    | Button-styled triggers: same as `Enter`. Input-style triggers (searchable single, chips-multi): Space is a literal space char in the query |
+| `ArrowDown`    | Open with first active                                                | Move active +1 (skips disabled, header rows, separators)                                                                                   |
+| `ArrowUp`      | Open with last active                                                 | Move active -1                                                                                                                             |
+| `Home`         | (no-op)                                                               | Active = first option                                                                                                                      |
+| `End`          | (no-op)                                                               | Active = last option                                                                                                                       |
+| `PageDown`     | (no-op)                                                               | Active +5 (clamped)                                                                                                                        |
+| `PageUp`       | (no-op)                                                               | Active -5 (clamped)                                                                                                                        |
+| `Escape`       | (no-op)                                                               | Close, revert search query to last selected label (single-search)                                                                          |
+| `Tab`          | (no-op, normal traversal)                                             | Close, commit current selection                                                                                                            |
+| Printable char | Typeahead-open for non-searchable; first char of query for searchable | Typeahead step in non-searchable; query input in searchable                                                                                |
+| `Backspace`    | (no-op)                                                               | Remove last chip in chips-mode if input is empty; otherwise normal input behavior                                                          |
 
 ### ARIA
 
@@ -512,7 +506,7 @@ Wire into:
 
 Add a new section after `<ConfirmationPopover>`:
 
-```md
+````md
 ### `<Select>` — value picker (single, multi, searchable, async, creatable)
 
 ```tsx
@@ -545,6 +539,7 @@ Add a new section after `<ConfirmationPopover>`:
   onCreate={api.tags.create}
 />
 ```
+````
 
 - One generalist; the mode matrix is `multiple` × `triggerDisplay` × `searchable`. See JSDoc for the matrix.
 - Async via `loadOptions(query, signal)`. Debounce and AbortSignal are built-in; do NOT debounce externally.
@@ -552,6 +547,7 @@ Add a new section after `<ConfirmationPopover>`:
 - For pure ACTION menus (Edit/Delete buttons), use `<DropdownMenu>`. Select is for value selection.
 - For free-form text, use `<Input>`. Select always picks from a (possibly async) set.
 - Don't reach for `triggerDisplay='summary'` for tag input — chips communicate the active filter set at a glance.
+
 ```
 
 ## Open / future-work items (NOT v1)
@@ -587,3 +583,4 @@ Listed so plan reviewers know what's deliberately excluded:
 14. Playground demo + nav wiring.
 15. AGENTS.md update.
 16. Pre-push review-fix cycle (Rule 8) until clean.
+```
