@@ -124,45 +124,71 @@ export function ConfirmationPopoverDemo() {
       </Example>
 
       <Example
-        title="Inside a DropdownMenu — kebab Delete"
-        description="A common pattern: the kebab menu's Delete item opens a ConfirmationPopover. Popover z-layer is above DropdownMenu's, so the confirmation appears over the menu."
-        code={`<DropdownMenu>
-  <DropdownMenu.Trigger><Button variant="ghost" aria-label="Row actions">⋯</Button></DropdownMenu.Trigger>
-  <DropdownMenu.Content>
-    <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
-    <DropdownMenu.Item onSelect={() => {}}>
-      <ConfirmationPopover title="Delete?" variant="danger" onConfirm={remove}>
-        <span>Delete</span>
-      </ConfirmationPopover>
-    </DropdownMenu.Item>
-  </DropdownMenu.Content>
-</DropdownMenu>`}
+        title="Triggered from a kebab menu (controlled pattern)"
+        description="Recommended pattern: the menu item's onSelect drives the popover's open state. The popover lives OUTSIDE the menu so its tree doesn't unmount when the menu closes. The popover anchors to a wrapper element next to the kebab button."
+        code={`const [open, setOpen] = useState(false);
+
+<Cluster gap="sm" align="center">
+  <DropdownMenu>
+    <DropdownMenu.Trigger>
+      <Button variant="ghost" aria-label="Row actions">⋯</Button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content align="end">
+      <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+      <DropdownMenu.Item onSelect={() => setOpen(true)} tone="danger">
+        Delete
+      </DropdownMenu.Item>
+    </DropdownMenu.Content>
+  </DropdownMenu>
+
+  <ConfirmationPopover
+    open={open}
+    onOpenChange={setOpen}
+    title="Delete record?"
+    variant="danger"
+    onConfirm={async () => { await remove(id); }}
+  >
+    {/* Hidden anchor — never clicked; popover positions relative to it. */}
+    <span aria-hidden="true" />
+  </ConfirmationPopover>
+</Cluster>`}
       >
-        <Cluster gap="md" justify="center">
-          <DropdownMenu>
-            <DropdownMenu.Trigger>
-              <Button variant="ghost" aria-label="Row actions">
-                ⋯
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content>
-              <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => {}} tone="danger">
-                <ConfirmationPopover
-                  title="Delete record?"
-                  description="This action cannot be undone."
-                  variant="danger"
-                  confirmLabel="Delete"
-                  onConfirm={() => setDeleteCount((n) => n + 1)}
-                >
-                  <span>Delete</span>
-                </ConfirmationPopover>
-              </DropdownMenu.Item>
-            </DropdownMenu.Content>
-          </DropdownMenu>
-        </Cluster>
+        <KebabConfirmExample onConfirm={() => setDeleteCount((n) => n + 1)} />
       </Example>
     </DemoLayout>
+  );
+}
+
+function KebabConfirmExample({ onConfirm }: { onConfirm: () => void | Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Cluster gap="sm" align="center" justify="center">
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="ghost" aria-label="Row actions">
+            ⋯
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => setOpen(true)} tone="danger">
+            Delete
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+
+      <ConfirmationPopover
+        open={open}
+        onOpenChange={setOpen}
+        title="Delete record?"
+        description="This action cannot be undone."
+        variant="danger"
+        confirmLabel="Delete"
+        onConfirm={onConfirm}
+      >
+        <span aria-hidden="true" />
+      </ConfirmationPopover>
+    </Cluster>
   );
 }
