@@ -88,7 +88,10 @@ export function Trigger(props: TriggerProps) {
     if (typeaheadTimerRef.current) clearTimeout(typeaheadTimerRef.current);
     typeaheadBufferRef.current += char.toLowerCase();
     const buffer = typeaheadBufferRef.current;
-    const start = ctx.activeIndex >= 0 ? ctx.activeIndex : 0;
+    // When activeIndex is -1 (no current cursor — typeahead opening the menu
+    // from the closed state), use -1 as the start so the `+1` first-char
+    // offset lands on index 0 instead of skipping past it.
+    const start = ctx.activeIndex >= 0 ? ctx.activeIndex : -1;
     const len = ctx.rows.length;
     for (let i = 0; i < len; i++) {
       const idx = (start + i + (buffer.length === 1 ? 1 : 0)) % len;

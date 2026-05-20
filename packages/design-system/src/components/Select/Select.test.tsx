@@ -303,4 +303,21 @@ describe('Select — typeahead (non-searchable)', () => {
       screen.getByRole('option', { name: 'Banana' }).id,
     );
   });
+
+  it('typing the first letter from closed state finds the first matching option (no off-by-one)', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const opts = [
+      { value: '1', label: 'Apple' },
+      { value: '2', label: 'Banana' },
+      { value: '3', label: 'Cherry' },
+    ];
+    render(<Select options={opts} />);
+    screen.getByRole('button').focus();
+    // From CLOSED state, typing 'a' must land on Apple (index 0), not skip past it
+    await user.keyboard('a');
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Apple' }).id,
+    );
+  });
 });

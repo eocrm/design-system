@@ -10,6 +10,7 @@ import {
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { useSelectContext } from './context';
+import { mergeRefs } from '../_internal/refs';
 import styles from './Select.module.scss';
 
 /**
@@ -67,7 +68,7 @@ export function Listbox() {
     };
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [ctx, ctx.open, ctx.listboxRef, ctx.triggerRef]);
+  }, [ctx.open, ctx.listboxRef, ctx.triggerRef, ctx.setOpen]);
 
   // Escape closes and returns focus to the trigger. Capture-phase so a
   // future in-panel input (Phase 5/6 search input) can't stop the event
@@ -82,7 +83,7 @@ export function Listbox() {
     };
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [ctx, ctx.open]);
+  }, [ctx.open, ctx.closeAndFocusTrigger]);
 
   // On open: pre-highlight the current selection (if any), else the
   // first non-disabled option. Trigger's ArrowUp handler may override
@@ -106,15 +107,16 @@ export function Listbox() {
     }
     const firstSelectableIdx = ctx.rows.findIndex((r) => r.kind === 'option' && !r.option.disabled);
     ctx.setActiveIndex(firstSelectableIdx >= 0 ? firstSelectableIdx : -1);
+    // Intentionally only depends on `ctx.open`: this effect seeds the active
+    // row on the open transition, and must NOT re-run when `ctx.rows` or
+    // `ctx.value` shift mid-open (that would yank the cursor out from under
+    // the user's keyboard / mouse navigation).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx.open]);
 
   return createPortal(
     <ul
-      ref={(node) => {
-        (ctx.listboxRef as React.MutableRefObject<HTMLUListElement | null>).current = node;
-        refs.setFloating(node);
-      }}
+      ref={mergeRefs<HTMLUListElement>(ctx.listboxRef, refs.setFloating)}
       id={ctx.listboxId}
       role="listbox"
       aria-multiselectable={ctx.multiple || undefined}
