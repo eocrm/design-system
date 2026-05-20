@@ -2,39 +2,71 @@
   display: inline-block;
 }
 
-// size / state hooks — populated with real visuals in Task 7 + Phase 10.
-.size-sm {
-  // populated in Task 7
+// ─── Listbox panel ──────────────────────────────────────────────────────────
+// Portaled out of the Select root by `Listbox.tsx` and positioned by
+// Floating UI. The token fallback on box-shadow / z-index lets the
+// component degrade gracefully in apps that haven't loaded `tokens.scss`
+// (test environments, isolated stories).
+.listbox {
+  z-index: var(--z-popover);
+  overflow-y: auto;
+  padding: var(--space-1);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  list-style: none;
 }
 
-.size-md {
-  // populated in Task 7
+.groupHeader {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+  user-select: none;
 }
 
-.size-lg {
-  // populated in Task 7
+.option {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-md);
+  color: var(--color-fg);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
 }
 
-.invalid {
-  // populated in Task 7 / Phase 10
+.optionActive {
+  background: var(--color-bg-muted);
 }
 
-.disabled {
-  // populated in Task 7 / Phase 10
+.optionSelected {
+  background: var(--color-accent-subtle-bg);
+  box-shadow: inset var(--border-width-emphasis) 0 0 var(--color-accent);
 }
 
-.readOnly {
-  // populated in Task 7 / Phase 10
+.optionDisabled {
+  color: var(--color-fg-disabled);
+  cursor: not-allowed;
 }
 
+// ─── Trigger + states (populated in Task 7) ─────────────────────────────────
 .trigger {
-  // populated in Task 7
+  /* populated in Task 7 */
 }
 
 .triggerButton {
-  // populated in Task 7
+  /* populated in Task 7 */
 }
 
 .placeholder {
-  // populated in Task 7
+  /* populated in Task 7 */
+}
+
+.size-sm,
+.size-md,
+.size-lg,
+.invalid,
+.disabled,
+.readOnly {
+  /* placeholder selectors; visual rules populated in Phase 10 */
 }
