@@ -36,6 +36,33 @@ When adding `src/components/<Name>/`, the same change must add `packages/playgro
 
 Colors, spacing, radii, shadows, font sizes — all via `var(--...)`. If you need a value that isn't a token, **add it to `src/styles/tokens.scss` first**, then use it. Stylelint blocks `color: #fff` and `background: red`-style raw values.
 
+### 3a. Focus styling — `:focus-visible`, not `:focus`
+
+For buttons, menu items, tabs, and other **non-input focusable elements**, style focus with `:focus-visible`, not `:focus`. The difference matters for mouse interaction:
+
+- `:focus` matches whenever the element has focus — including after a mouse click. The element stays styled until something else takes focus. Clicking a DropdownMenu.Item or a Button leaves it visually highlighted even after the cursor moves away.
+- `:focus-visible` matches only when focus arrived via the keyboard (Tab, Arrow keys, programmatic focus following a keydown). Mouse-click focus doesn't trigger it. This matches the actual UX intent — "highlight this so the user can see where they are on the keyboard."
+
+Wrong:
+
+```scss
+.item:hover,
+.item:focus { /* stays red after mouse click */
+  background: var(--color-bg-danger-subtle);
+}
+```
+
+Right:
+
+```scss
+.item:hover,
+.item:focus-visible {
+  background: var(--color-bg-danger-subtle);
+}
+```
+
+**Exception — text inputs and textareas.** A text input always needs a visible focus ring when typed into, regardless of how focus arrived. Modern browsers treat typing as keyboard interaction, so `:focus-visible` works fine here too — the library's `<Input>` uses `:focus-visible` for consistency. `:focus` is also acceptable for text inputs. Either is fine; pick one and stay consistent in a given file.
+
 ### 4. No layout properties on components
 
 Forbidden inside a component's `.module.scss`:
