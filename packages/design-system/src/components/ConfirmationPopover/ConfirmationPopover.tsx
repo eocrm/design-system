@@ -76,14 +76,19 @@ export function ConfirmationPopover({
   const reactId = useId();
   const descriptionId = description ? `confirm-desc-${sanitizeId(reactId)}` : undefined;
 
+  const [pending, setPending] = useState(false);
+
   // Wrap Popover's onOpenChange to fire onCancel when the popover closes
   // via Escape / click-outside (i.e. a close that didn't come from Confirm).
   const handleOpenChange = useCallback(
     (next: boolean) => {
+      // Block close while a confirm is pending — the in-flight Promise
+      // should resolve before we tear down the popover.
+      if (pending && !next) return;
       if (!next) onCancel?.();
       setOpen(next);
     },
-    [onCancel, setOpen],
+    [pending, onCancel, setOpen],
   );
 
   const cancelRef = useRef<HTMLButtonElement | null>(null);
@@ -96,8 +101,6 @@ export function ConfirmationPopover({
     if (!open) return;
     queueMicrotask(() => cancelRef.current?.focus({ preventScroll: true }));
   }, [open]);
-
-  const [pending, setPending] = useState(false);
 
   const handleConfirm = useCallback(() => {
     if (pending) return;

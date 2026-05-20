@@ -255,4 +255,59 @@ describe('ConfirmationPopover — async onConfirm', () => {
       resolveFn();
     });
   });
+
+  it('while pending: Escape does NOT close', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let resolveFn: () => void = () => {};
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveFn = resolve;
+        }),
+    );
+
+    render(
+      <ConfirmationPopover title="Confirm?" onConfirm={onConfirm}>
+        <button type="button">Open</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await act(async () => {
+      resolveFn();
+    });
+  });
+
+  it('while pending: click-outside does NOT close', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let resolveFn: () => void = () => {};
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveFn = resolve;
+        }),
+    );
+
+    render(
+      <>
+        <ConfirmationPopover title="Confirm?" onConfirm={onConfirm}>
+          <button type="button">Open</button>
+        </ConfirmationPopover>
+        <div data-testid="elsewhere">elsewhere</div>
+      </>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    await user.pointer({ keys: '[MouseLeft>]', target: screen.getByTestId('elsewhere') });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await act(async () => {
+      resolveFn();
+    });
+  });
 });
