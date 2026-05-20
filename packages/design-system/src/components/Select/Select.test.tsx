@@ -129,3 +129,107 @@ describe('Select — selection (single)', () => {
     expect(screen.queryByRole('listbox')).toBeInTheDocument();
   });
 });
+
+describe('Select — keyboard (single, non-searchable)', () => {
+  it('ArrowDown on closed trigger opens with first option active', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} />);
+    const trigger = screen.getByRole('button');
+    trigger.focus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    const active = screen.getByRole('option', { name: 'Active' });
+    expect(trigger).toHaveAttribute('aria-activedescendant', active.id);
+  });
+
+  it('ArrowUp on closed trigger opens with last option active', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} />);
+    const trigger = screen.getByRole('button');
+    trigger.focus();
+    await user.keyboard('{ArrowUp}');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    const active = screen.getByRole('option', { name: 'Archived' });
+    expect(trigger).toHaveAttribute('aria-activedescendant', active.id);
+  });
+
+  it('Enter on closed trigger opens', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('ArrowDown moves active row +1', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{ArrowDown}{ArrowDown}');
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Pending' }).id,
+    );
+  });
+
+  it('Home jumps to first, End jumps to last', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{ArrowDown}{End}');
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Archived' }).id,
+    );
+    await user.keyboard('{Home}');
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Active' }).id,
+    );
+  });
+
+  it('Enter on open selects the active row and closes', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select options={STATUSES} onChange={onChange} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    expect(onChange).toHaveBeenCalledWith('pending', STATUSES[1]);
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('Escape closes without changing selection', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select options={STATUSES} value="active" onChange={onChange} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{Enter}{ArrowDown}{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('button')).toHaveTextContent('Active');
+  });
+
+  it('Tab closes and commits', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{Enter}{Tab}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('ArrowDown skips disabled options', async () => {
+    const user = userEvent.setup();
+    const opts: SelectOption[] = [
+      { value: 'a', label: 'A' },
+      { value: 'b', label: 'B', disabled: true },
+      { value: 'c', label: 'C' },
+    ];
+    render(<Select options={opts} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{ArrowDown}{ArrowDown}');
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'C' }).id,
+    );
+  });
+});
