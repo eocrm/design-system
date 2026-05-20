@@ -35,6 +35,17 @@
 
 .triggerButton {
   text-align: left;
+
+  // Multi-summary text can grow longer than the trigger width — clip with
+  // an ellipsis rather than wrapping. The chips-mode trigger (Phase 6)
+  // will wrap and override this on its own variant.
+  // The `.placeholder` span is excluded because it carries the placeholder
+  // text only, never a comma-joined selection list.
+  & > :not(.placeholder) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 // Combobox-input trigger (Phase 4 — single + searchable). Inherits the

@@ -507,3 +507,30 @@ describe('Select — multi, summary, non-searchable', () => {
     expect(screen.getByRole('listbox')).toHaveAttribute('aria-multiselectable', 'true');
   });
 });
+
+describe('Select — multi-summary aria-label', () => {
+  const OPTS = [
+    { value: 'a', label: 'Alex' },
+    { value: 'b', label: 'Bea' },
+  ];
+
+  it('aria-label carries the full label list when summary is truncated visually', () => {
+    render(<Select multiple triggerDisplay="summary" options={OPTS} value={['a', 'b']} />);
+    const trigger = screen.getByRole('button');
+    expect(trigger.getAttribute('aria-label')).toContain('Alex');
+    expect(trigger.getAttribute('aria-label')).toContain('Bea');
+  });
+
+  it('does not override an explicit aria-label from props', () => {
+    render(
+      <Select
+        multiple
+        triggerDisplay="summary"
+        options={OPTS}
+        value={['a']}
+        aria-label="Owners filter"
+      />,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Owners filter');
+  });
+});

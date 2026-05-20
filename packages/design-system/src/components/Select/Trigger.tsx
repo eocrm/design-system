@@ -266,6 +266,16 @@ function ButtonTrigger(props: TriggerProps) {
 
   const activeOptionId = useActiveOptionId();
 
+  // When multi-summary text overflows it's truncated with CSS ellipsis,
+  // so screen-reader users would miss the tail of the selection. Surface
+  // the full comma-joined list via aria-label, but ONLY when the consumer
+  // didn't pass their own aria-label — their string is authoritative.
+  const computedAriaLabel = (() => {
+    if (props['aria-label']) return props['aria-label'];
+    if (ctx.multiple && label) return `Selected: ${label}`;
+    return undefined;
+  })();
+
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (props.disabled || props.readOnly) return;
 
@@ -313,7 +323,7 @@ function ButtonTrigger(props: TriggerProps) {
       aria-expanded={ctx.open}
       aria-controls={ctx.open ? ctx.listboxId : undefined}
       aria-activedescendant={activeOptionId}
-      aria-label={props['aria-label']}
+      aria-label={computedAriaLabel}
       aria-labelledby={props['aria-labelledby']}
       aria-describedby={props['aria-describedby']}
       aria-invalid={props.invalid || undefined}
@@ -325,7 +335,11 @@ function ButtonTrigger(props: TriggerProps) {
       }}
       onKeyDown={handleKeyDown}
     >
-      {label || props.placeholder || ''}
+      {label ? (
+        <span>{label}</span>
+      ) : (
+        <span className={styles.placeholder}>{props.placeholder ?? ''}</span>
+      )}
     </button>
   );
 }
