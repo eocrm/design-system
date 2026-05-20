@@ -157,7 +157,7 @@ const DEFAULT_LABELS: Required<CalendarLabels> = {
  * @example
  * // Controlled cursor + view + locale labels:
  * const [cursor, setCursor] = useState(new Date());
- * const [view, setView] = useState<'month' | 'week' | 'day'>('month');
+ * const [view, setView] = useState<CalendarView>('month');
  * <Calendar
  *   value={cursor}
  *   onChange={setCursor}
@@ -170,6 +170,7 @@ const DEFAULT_LABELS: Required<CalendarLabels> = {
  *     viewMonth: 'Месяц',
  *     viewWeek: 'Неделя',
  *     viewDay: 'День',
+ *     viewAgenda: 'Повестка',
  *   }}
  * />;
  *

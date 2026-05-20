@@ -44,7 +44,7 @@
 
 .rowButton {
   display: grid;
-  grid-template-columns: 8rem auto 1fr;
+  grid-template-columns: var(--size-calendar-agenda-gutter) auto 1fr;
   align-items: center;
   gap: var(--space-2);
   width: 100%;

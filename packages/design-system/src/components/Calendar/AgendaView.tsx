@@ -15,11 +15,11 @@ export interface AgendaViewProps {
   /** Localized range label for the agenda window (e.g., "May 18 – 24, 2026"). */
   rangeLabel: string;
   /** Events to project into the window. Multi-day events appear under every day they span. */
-  events?: readonly CalendarEvent[];
+  events: readonly CalendarEvent[];
   /** Override locale (otherwise reads `useLocale()`). */
   locale?: string;
-  /** Empty-state message shown when no events fall inside the window. */
-  emptyLabel: string;
+  /** Empty-state message shown when no events fall inside the window. Defaults to "No events". */
+  emptyLabel?: string;
   /** Fires when the user clicks an event row. */
   onEventClick?: (event: CalendarEvent) => void;
   /** Optional custom event renderer (see `RenderEvent`). */
@@ -59,28 +59,32 @@ export function AgendaView({
   rangeLabel,
   events,
   locale: localeOverride,
-  emptyLabel,
+  emptyLabel = 'No events',
   onEventClick,
   renderEvent,
 }: AgendaViewProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
 
-  const groups = useMemo(() => buildDayGroups(days, events ?? []), [days, events]);
+  const groups = useMemo(() => buildDayGroups(days, events), [days, events]);
 
   if (groups.length === 0) {
     return (
-      <div className={styles.agenda} aria-label={rangeLabel}>
+      <div className={styles.agenda} role="list" aria-label={rangeLabel}>
         <p className={styles.empty}>{emptyLabel}</p>
       </div>
     );
   }
 
   return (
-    <div className={styles.agenda} aria-label={rangeLabel}>
+    <div className={styles.agenda} role="list" aria-label={rangeLabel}>
       {groups.map(({ day, rows }) => (
-        <section key={day.key} className={clsx(styles.dayGroup, day.isToday && styles.todayGroup)}>
-          <header className={styles.dayHeader}>{formatDayLong(day.date, locale)}</header>
+        <div
+          key={day.key}
+          role="listitem"
+          className={clsx(styles.dayGroup, day.isToday && styles.todayGroup)}
+        >
+          <h3 className={styles.dayHeader}>{formatDayLong(day.date, locale)}</h3>
           <div className={styles.rows}>
             {rows.map((row) => (
               <AgendaRowItem
@@ -92,7 +96,7 @@ export function AgendaView({
               />
             ))}
           </div>
-        </section>
+        </div>
       ))}
     </div>
   );

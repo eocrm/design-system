@@ -250,6 +250,83 @@ describe('AgendaView', () => {
     expect(all).toMatchObject({ view: 'agenda', asAllDay: true });
   });
 
+  it('today’s day group carries the todayGroup accent class', () => {
+    // Build a 1-day window where the only day is flagged isToday=true.
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    const todayDay: Day = {
+      date: today,
+      dayOfMonth: today.getDate(),
+      isCurrentMonth: true,
+      isToday: true,
+      isWeekend: false,
+      weekday: 0,
+      key: toDateKey(today),
+    };
+    const events: CalendarEvent[] = [
+      {
+        id: 'a',
+        title: 'Standup',
+        startsAt: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0),
+        endsAt: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30),
+      },
+    ];
+    render(
+      <AgendaView days={[todayDay]} rangeLabel="Today" events={events} emptyLabel="No events" />,
+      { wrapper: wrap() },
+    );
+    const group = screen.getByRole('listitem');
+    expect(group.className).toMatch(/todayGroup/);
+  });
+
+  it('renders a single-time gutter for events without endsAt', () => {
+    const events: CalendarEvent[] = [
+      {
+        id: 'point',
+        title: 'Doorbell',
+        startsAt: new Date(2026, 4, 20, 9, 0),
+      },
+    ];
+    render(
+      <AgendaView
+        days={WEEK_DAYS}
+        rangeLabel="May 18 – 24, 2026"
+        events={events}
+        emptyLabel="No events"
+      />,
+      { wrapper: wrap() },
+    );
+    const button = screen.getByRole('button', { name: /Doorbell/ });
+    expect(button.textContent).toMatch(/9:00\s*(AM|am)/);
+    // No range en-dash — start only.
+    expect(button.textContent).not.toMatch(/–|—/);
+  });
+
+  it('exposes day groups as role="listitem" with an h3 day heading', () => {
+    const events: CalendarEvent[] = [
+      {
+        id: 'a',
+        title: 'Standup',
+        startsAt: new Date(2026, 4, 20, 9, 0),
+        endsAt: new Date(2026, 4, 20, 9, 30),
+      },
+    ];
+    render(
+      <AgendaView
+        days={WEEK_DAYS}
+        rangeLabel="May 18 – 24, 2026"
+        events={events}
+        emptyLabel="No events"
+      />,
+      { wrapper: wrap() },
+    );
+    expect(screen.getByRole('list', { name: 'May 18 – 24, 2026' })).toBeInTheDocument();
+    expect(screen.getByRole('listitem')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 3, name: /Wednesday, May 20/ }),
+    ).toBeInTheDocument();
+  });
+
   it('uses locale-aware day headers (ru-RU has Cyrillic)', () => {
     const events: CalendarEvent[] = [
       {
