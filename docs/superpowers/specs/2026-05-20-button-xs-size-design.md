@@ -131,3 +131,36 @@ Manual visual check at `make up`:
 
 - **Disabled visual at xs.** A 12px icon at `--opacity-disabled` on a ghost background may read as nearly invisible. If the manual visual check confirms this, raise it during the review-fix cycle and consider lifting disabled opacity slightly at xs (token addition, not Button-local override).
 - **Touch targets.** Below WCAG 2.5.5 AAA guidance. Accepted for desktop-first CRM; documented in JSDoc so consumers see the constraint at the point of use.
+
+## Addendum — 2026-05-20 — `iconOnly` boolean prop
+
+After visually checking the xs Icon-only example at `/components/button`, the rectangular shape (~28×20 with 8px horizontal padding) looked off compared to the square icon-only buttons used by Material, Radix, Ant, and Bootstrap. The initial decision was to leave Button with one padding rule and let icon-only shake out as a slightly-wider rectangle. We are reversing that — adding an opt-in `iconOnly` boolean prop.
+
+**What changes from the original spec:**
+
+- Add `iconOnly?: boolean` to `ButtonProps`.
+- When `iconOnly` is `true`, the button renders as a square: `aspect-ratio: 1; padding: 0;`. Width derives from the size's `height` token (`xs` → 20×20, `sm` → 24×24, `md` → 32×32, `lg` → 40×40).
+- The prop is independent of `size` — works at every step on the scale, not just `xs`.
+- Consumer must pass `aria-label`. JSDoc says so prominently. No type-level enforcement in this iteration (would require a discriminated union over `ButtonHTMLAttributes`); revisit if misuse appears in code review.
+- `IconButton` stays off the wishlist as a separate component — the prop covers the same ground without duplicating Button's variant/disabled/focus story.
+
+**SCSS approach:**
+
+```scss
+.iconOnly {
+  aspect-ratio: 1;
+  padding: 0;
+}
+```
+
+Source order matters — `.iconOnly` is declared **after** all size blocks so its `padding: 0` overrides the size-class horizontal padding. `aspect-ratio: 1` is not a layout property in the sense Rule 4 prohibits (it derives width from already-set height; it doesn't take parent space).
+
+**Files affected by the addendum (delta from original file list):**
+
+- `packages/design-system/src/components/Button/Button.tsx` — add `iconOnly?: boolean` to `ButtonProps`, JSDoc, class wiring.
+- `packages/design-system/src/components/Button/Button.module.scss` — add `.iconOnly` rule at the bottom of the size section.
+- `packages/design-system/src/components/Button/Button.test.tsx` — add a test that `iconOnly` adds the class.
+- `packages/playground/src/pages/components/ButtonDemo.tsx` — update the Icon-only at xs example to pass `iconOnly`; update the inline code string to match. Optionally add an md `iconOnly` example for contrast.
+- `packages/design-system/AGENTS.md` — mention `iconOnly` in the Button section.
+
+**Visual verification:** Re-screenshot `/components/button` after implementation and confirm the icon-only buttons render as 20×20 squares (xs) with the icon centered.
