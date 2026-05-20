@@ -3,6 +3,7 @@
 export type ComponentName =
   | 'Button'
   | 'Input'
+  | 'Select'
   | 'Card'
   | 'Stack'
   | 'Cluster'

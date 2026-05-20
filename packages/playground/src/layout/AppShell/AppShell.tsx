@@ -11,6 +11,7 @@ import {
   Component,
   MousePointer2,
   TextCursorInput,
+  ChevronsUpDown,
   RectangleHorizontal,
   Rows3,
   Columns3,
@@ -58,6 +59,7 @@ const componentGroups = [
     items: [
       { to: '/components/button', label: 'Button', icon: MousePointer2, end: false },
       { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
+      { to: '/components/select', label: 'Select', icon: ChevronsUpDown, end: false },
     ],
   },
   {

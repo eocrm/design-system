@@ -1,0 +1,443 @@
+.root {
+  display: block;
+  width: 100%;
+}
+
+// ─── Trigger wrapper ────────────────────────────────────────────────────────
+// `position: relative` is a Hard Rule 4 "internal child anchor" exception —
+// the absolutely-positioned ✕ + chevron sit ON the wrapper, not escape its
+// box. Block + width: 100% means Select fills its parent's column the same
+// way <Input> does — wrap in a sized container (Stack, fixed-width div, form
+// field cell) to control width.
+.triggerWrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+// ─── Trigger ────────────────────────────────────────────────────────────────
+// `:focus-visible` (Hard Rule 3a) rather than `:focus`: mouse-clicking the
+// trigger shouldn't leave the focus ring visible.
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--size-md);
+  padding: 0 var(--space-3);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-md);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+  }
+
+  &[disabled] {
+    color: var(--color-fg-disabled);
+    background: var(--color-bg-subtle);
+    cursor: not-allowed;
+  }
+}
+
+.triggerButton {
+  // Reserve `--space-8` on the right for the chevron (and the ✕ when
+  // clearable). The chevron sits at `right: var(--space-3)`, the ✕ sits
+  // at `right: var(--space-6)` — both inside the `.triggerWrap`'s padding.
+  padding-right: var(--space-8);
+  text-align: left;
+
+  // Multi-summary text can grow longer than the trigger width — clip with
+  // an ellipsis rather than wrapping. The chips-mode trigger (Phase 6)
+  // will wrap and override this on its own variant.
+  // The `.placeholder` span is excluded because it carries the placeholder
+  // text only, never a comma-joined selection list.
+  & > :not(.placeholder) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// Combobox-input trigger (Phase 4 — single + searchable). Inherits the
+// `.trigger` box styling, focus ring, and disabled colors; this modifier
+// only flips the cursor (text caret over the input vs pointer over the
+// button) and styles the native HTML placeholder pseudo-element.
+.triggerInput {
+  // Same right-side reservation as `.triggerButton` — chevron + ✕ overlay
+  // need clear space inside the `.triggerWrap`.
+  padding-right: var(--space-8);
+  cursor: text;
+
+  &::placeholder {
+    color: var(--color-fg-muted);
+  }
+}
+
+.placeholder {
+  color: var(--color-fg-muted);
+}
+
+// ─── Chevron + clear-✕ inside the trigger wrap ─────────────────────────────
+// Both are absolutely positioned siblings of the `.trigger` element. The
+// position rule lives on a CHILD of the component — Rule 4's "internal
+// child anchor" exception applies (the `.triggerWrap` is `position:relative`).
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  color: var(--color-fg-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.clearButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-fg);
+    background: var(--color-bg-muted);
+  }
+}
+
+// Overlay variant — used by the single-mode triggers (ButtonTrigger,
+// ComboboxInputTrigger). Pinned right of the trigger box, sitting just
+// inside the chevron.
+.clearButton:not(.clearButtonInline) {
+  position: absolute;
+  top: 50%;
+  right: var(--space-6);
+  width: var(--space-4);
+  height: var(--space-4);
+  transform: translateY(-50%);
+}
+
+// Inline variant — used by the chips triggers where the ✕ sits as a flex
+// child alongside chips + (optionally) an input. No `position`; layout is
+// handled by the parent's flex.
+.clearButtonInline {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+// ─── Listbox panel ──────────────────────────────────────────────────────────
+// Open animation uses CSS `@keyframes` for the scale-fade. Floating UI is
+// configured with `transform: false` in Listbox.tsx so positioning is
+// emitted as inline `top` / `left` — that leaves the `transform` property
+// free for the keyframe's `transform: scale(...)` without fighting an
+// inline translate. Matches DropdownMenu and Popover Content.
+// `transform-origin: top` is a static approximation (panel scales from the
+// top edge). A future polish task can wire dynamic origin off Floating UI's
+// resolved placement so the panel grows toward the trigger on flip.
+.listbox {
+  z-index: var(--z-popover);
+  overflow-y: auto;
+  padding: var(--space-1);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  list-style: none;
+  animation: select-open 140ms ease-out;
+  transform-origin: top;
+}
+
+@keyframes select-open {
+  from {
+    opacity: var(--opacity-hidden);
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: var(--opacity-visible);
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listbox {
+    animation: none;
+  }
+}
+
+.groupHeader {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+  user-select: none;
+}
+
+// Reset on the nested <ul role="none"> inside each group wrapper. Padding
+// + list-style only — `margin: 0` is forbidden by Hard Rule 4 (layout is
+// the parent's job). The global UA reset zeroes ul margins, so omitting
+// it here is fine.
+.groupList {
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-md);
+  color: var(--color-fg);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.optionActive {
+  background: var(--color-bg-muted);
+}
+
+.optionSelected {
+  background: var(--color-accent-subtle-bg);
+  box-shadow: inset var(--border-width-emphasis) 0 0 var(--color-accent);
+}
+
+.optionDisabled {
+  color: var(--color-fg-disabled);
+  cursor: not-allowed;
+}
+
+// Creatable "+ Create <query>" row. Italic + accent colour to visually
+// separate it from real options without inventing a new pattern.
+.optionCreate {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+// ─── In-panel search input (multi-summary-searchable variant) ──────────────
+// Sits at the top of the listbox panel, above the option rows. Hard Rule 4
+// allows `width: 100%` (intrinsic 100%) — it's the natural fit for "fill
+// the parent panel". No margin / position / flex-grow here.
+.popoverSearch {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-md);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  border: 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-fg-muted);
+  }
+
+  &:focus-visible {
+    border-bottom-color: var(--color-accent);
+  }
+}
+
+// ─── Chips-mode trigger (Phase 6) ───────────────────────────────────────────
+// Wraps content (chips + optional input) onto multiple lines. Drops the
+// `.triggerButton` ellipsis rule (`white-space: nowrap`) so the chip list
+// can stack. Vertical padding shrinks from the default 0 to `--space-1`
+// so wrapped chip rows have breathing room.
+.triggerChips {
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--space-1) var(--space-2);
+  white-space: normal;
+}
+
+// Chip — single removable token rendered inside the chips trigger.
+// 4px vertical / 8px horizontal padding (the smallest available token
+// pair); a literal 2px-vertical would be tighter, but Rule 3 forbids
+// raw values so we accept the slightly taller chip.
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-badge-neutral-fg);
+  background: var(--color-badge-neutral-bg);
+  border-radius: var(--radius-sm);
+  user-select: none;
+}
+
+.chipLabel {
+  line-height: 1.4;
+}
+
+.chipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-danger);
+    background: var(--color-bg-danger-subtle);
+  }
+}
+
+.chipDisabled {
+  color: var(--color-fg-disabled);
+  cursor: not-allowed;
+}
+
+// Chips-mode + inline input variant. `.triggerChipsInput` is composed on
+// the wrapper alongside `.triggerChips`; this rule only adds a text caret
+// (the wrapper is the click target that focuses the embedded input).
+.triggerChipsInput {
+  cursor: text;
+}
+
+// Inline search input rendered alongside chips. `flex: 0 1 4ch` is a flex
+// shorthand on a CHILD of the trigger — Rule 4 governs positioning the
+// COMPONENT in its parent, not internal flex children, so this is allowed
+// (same as Stack/Cluster's internal flex). The `4ch` basis gives the
+// input enough width to start typing without being so wide that it
+// pushes chips onto an unnecessary second line.
+.chipsInput {
+  // grow into whatever row space is left after chips (so an empty trigger
+  // shows the full placeholder); shrink to `min-width: 4ch` when chips
+  // crowd the last line, then wrap onto a new line below.
+  flex: 1 1 4ch;
+  min-width: 4ch;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-fg-muted);
+  }
+}
+
+// ─── State rows (loading / error / empty) ─────────────────────────────────
+// Rendered as `<li>`s inside the listbox `<ul>` instead of an option row
+// when there's no actual data to show (loading spinner, "no results",
+// failure + Retry). Centred so they read as a single status indicator
+// rather than aligning with the option text on the left.
+.stateRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+}
+
+// Indeterminate circular spinner. The 2-state border (most of it muted,
+// one side accent) plus rotation creates the spin. Decorative — the
+// adjacent "Loading…" label carries the meaning for screen readers.
+.spinner {
+  display: inline-block;
+  width: var(--size-spinner);
+  height: var(--size-spinner);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-top-color: var(--color-accent);
+  border-radius: var(--radius-full);
+  animation: select-spin 0.8s linear infinite;
+}
+
+@keyframes select-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Retry button inside the error state row. Subtle so it doesn't compete
+// with the message; `:focus-visible` per Hard Rule 3a (not `:focus`).
+.retryButton {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  cursor: pointer;
+  background: transparent;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-bg-muted);
+  }
+}
+
+// ─── Visual state hooks (size / invalid / disabled / readOnly) ──────────────
+// These selectors compose with `.trigger` (and its variants —
+// `.triggerButton` / `.triggerInput` / `.triggerChips` / `.triggerChipsInput`).
+// `:not(.triggerChips)` keeps the vertical padding of chips triggers intact
+// (chips wrap onto multiple lines and need the existing `--space-1` Y-padding
+// instead of a flat `0`); height-bearing `min-height` still applies.
+.size-sm .trigger {
+  min-height: var(--size-sm);
+  font-size: var(--font-size-sm);
+
+  &:not(.triggerChips) {
+    padding: 0 var(--space-2);
+  }
+}
+
+.size-md .trigger {
+  min-height: var(--size-md);
+  font-size: var(--font-size-md);
+
+  &:not(.triggerChips) {
+    padding: 0 var(--space-3);
+  }
+}
+
+.size-lg .trigger {
+  min-height: var(--size-lg);
+  font-size: var(--font-size-lg);
+
+  &:not(.triggerChips) {
+    padding: 0 var(--space-3);
+  }
+}
+
+.invalid .trigger {
+  border-color: var(--color-danger);
+
+  &:focus-visible {
+    box-shadow: 0 0 0 var(--ring-width) var(--ring-danger);
+  }
+}
+
+// `disabled` is fully inert: dim text + not-allowed cursor signals "this
+// control is off." `readOnly` keeps the normal text color so the value
+// reads cleanly — only the subtle bg + default cursor signal "you can see
+// this but not edit." Matches the convention used by native form controls.
+.disabled .trigger {
+  color: var(--color-fg-disabled);
+  cursor: not-allowed;
+  background: var(--color-bg-subtle);
+}
+
+.readOnly .trigger {
+  cursor: default;
+  background: var(--color-bg-subtle);
+}

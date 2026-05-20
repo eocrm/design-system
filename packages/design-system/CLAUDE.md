@@ -185,7 +185,6 @@ Wishlist for the CRM, in rough priority order. Until each exists, CRM pages shou
 
 **Dependency policy:** No UI / component libraries. `@floating-ui/react-dom` is used for collision-aware positioning (DropdownMenu and any future popover-shaped component); everything else — ARIA, focus, keyboard, dismissal — is hand-rolled per WAI-ARIA APG patterns. When CSS anchor positioning has acceptable browser support, Floating UI can be removed without changing public APIs.
 
-- `Select` / `Combobox` (hand-roll on Floating UI)
 - `Modal` / `Dialog` (hand-roll, no positioning needed; needs focus trap + scroll lock)
 - `Tooltip` (hand-roll on Floating UI; lightweight, no focus trap)
 - `Popover` (hand-roll on Floating UI; generalized non-menu floating panel)

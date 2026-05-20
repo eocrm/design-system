@@ -63,3 +63,13 @@ export type {
   ConfirmationPopoverProps,
   ConfirmationVariant,
 } from './components/ConfirmationPopover';
+
+export { Select } from './components/Select';
+export type {
+  SelectProps,
+  SelectOption,
+  SelectGroup,
+  SelectOptions,
+  SelectSize,
+  SelectTriggerDisplay,
+} from './components/Select';

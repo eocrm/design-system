@@ -6,6 +6,7 @@ import { Button } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
+import { Select } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
@@ -34,6 +35,24 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: (
       <div style={{ width: 200 }}>
         <Input placeholder="Type here…" />
+      </div>
+    ),
+  },
+  {
+    to: '/components/select',
+    name: 'Select',
+    description:
+      'Value picker — single, multi (chips and summary), searchable, async, creatable. The generalist.',
+    preview: (
+      <div style={{ width: 200 }}>
+        <Select
+          options={[
+            { value: 'active', label: 'Active' },
+            { value: 'pending', label: 'Pending' },
+            { value: 'archived', label: 'Archived' },
+          ]}
+          placeholder="Pick a status"
+        />
       </div>
     ),
   },

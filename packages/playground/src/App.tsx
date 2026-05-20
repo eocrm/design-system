@@ -9,6 +9,7 @@ import { Members } from './pages/mockups/Members/Members';
 import { ComponentsIndex } from './pages/components/ComponentsIndex';
 import { ButtonDemo } from './pages/components/ButtonDemo';
 import { InputDemo } from './pages/components/InputDemo';
+import { SelectDemo } from './pages/components/SelectDemo';
 import { CardDemo } from './pages/components/CardDemo';
 import { StackDemo } from './pages/components/StackDemo';
 import { ClusterDemo } from './pages/components/ClusterDemo';
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/components" element={<ComponentsIndex />} />
           <Route path="/components/button" element={<ButtonDemo />} />
           <Route path="/components/input" element={<InputDemo />} />
+          <Route path="/components/select" element={<SelectDemo />} />
           <Route path="/components/card" element={<CardDemo />} />
           <Route path="/components/stack" element={<StackDemo />} />
           <Route path="/components/cluster" element={<ClusterDemo />} />
