@@ -339,6 +339,69 @@ const [tab, setTab] = useState('overview');
 - Anchors above the trigger by default (`side="top"`).
 - **From a DropdownMenu item (kebab Delete pattern).** Wrap a `<DropdownMenu.Item closeOnSelect={false}>` as the trigger — clicking anywhere on the row opens the confirmation. The menu stays open until the user dismisses it (Escape or click outside). To close the menu after the action resolves, drive `DropdownMenu`'s `open` state externally and call `setMenuOpen(false)` inside `onConfirm`.
 
+### `<Select>` — value picker (single, multi, searchable, async, creatable)
+
+```tsx
+// Form field — single:
+<Select
+  options={statuses}
+  value={status}
+  onChange={(v) => setStatus(v as Status)}
+  placeholder="Pick a status"
+/>
+
+// Table filter — multi, summary:
+<Select
+  multiple
+  triggerDisplay="summary"
+  searchable
+  options={owners}
+  value={selectedOwners}
+  onChange={(v) => setSelectedOwners(v as string[])}
+  placeholder="Filter by owner"
+/>
+
+// Tag input — multi, chips, creatable:
+<Select
+  multiple
+  searchable
+  creatable
+  options={existingTags}
+  value={tags}
+  onChange={(v) => setTags(v as string[])}
+  onCreate={api.tags.create}
+  placeholder="Add tags…"
+/>
+
+// Async with custom row render:
+<Select
+  searchable
+  loadOptions={async (q, signal) => {
+    const users = await api.searchUsers(q, { signal });
+    return users.map((u) => ({ value: u.id, label: u.name, data: u }));
+  }}
+  renderOption={(opt) => (
+    <Cluster gap="sm">
+      <Avatar name={opt.label} src={opt.data?.avatarUrl} size="sm" />
+      <span>{opt.label}</span>
+    </Cluster>
+  )}
+  value={assigneeId}
+  onChange={(id) => setAssigneeId(id as string)}
+/>
+```
+
+- One generalist; the mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` × `searchable`. See the JSDoc on `<Select>` for the matrix and anti-patterns.
+- **Async**: pass `loadOptions(query, signal)`. Debounce (250ms default, configurable via `searchDebounceMs`) and `AbortSignal` cancellation are built-in. Do NOT debounce externally.
+- **Tag input pattern** = `multiple + searchable + creatable + triggerDisplay='chips'`. There is no separate `<Tags>` component.
+- **Form integration**: pass `name` (and `required`/`form` if needed). Hidden inputs render so `new FormData(form)` works. Multi mode renders one hidden input per selected value; `FormData.getAll(name)` returns the array.
+- **`onChange` signature** is `(value, option | options | null)` — the second arg is the matched option(s), saving you a lookup.
+- **Render escape hatches**: `renderOption`, `renderValue`, `renderTag`, `renderEmpty`, `renderLoading`, `renderError`. Use when defaults don't suffice; default rendering is always token-correct.
+- For **action menus** (Edit/Delete/Duplicate buttons), use `<DropdownMenu>` — Select is for value selection, not actions.
+- For **free-form text**, use `<Input>`. Select always picks from a (possibly async) set.
+- Don't reach for `triggerDisplay='summary'` for tag input — chips communicate the active filter set at a glance.
+- `creatable` requires `searchable` (throws in dev). Passing both `options` and `loadOptions` is also flagged (loadOptions wins).
+
 ---
 
 ## Tokens (the only "values" you write)
