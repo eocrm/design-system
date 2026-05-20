@@ -819,3 +819,50 @@ describe('Select — async loadOptions', () => {
     expect(loadOptions).not.toHaveBeenCalled();
   });
 });
+
+describe('Select — async edge cases', () => {
+  it('warns in dev when both options and loadOptions are passed', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <Select
+        searchable
+        options={[{ value: 'a', label: 'A' }]}
+        loadOptions={async () => [{ value: 'b', label: 'B' }]}
+      />,
+    );
+    expect(warnSpy).toHaveBeenCalled();
+    expect(warnSpy.mock.calls[0][0]).toMatch(/loadOptions/);
+    warnSpy.mockRestore();
+  });
+
+  it('passes an AbortSignal to loadOptions', async () => {
+    vi.useFakeTimers();
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const loadOptions = vi.fn(async (_q: string, signal: AbortSignal) => {
+        expect(signal).toBeInstanceOf(AbortSignal);
+        return [{ value: 'a', label: 'A' }];
+      });
+      render(<Select searchable loadOptions={loadOptions} />);
+      await user.click(screen.getByRole('combobox'));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(300);
+        await vi.runAllTimersAsync();
+      });
+      expect(loadOptions).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+      configure({ asyncWrapper: async (cb) => cb() });
+    }
+  });
+});
