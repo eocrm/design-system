@@ -138,36 +138,63 @@ export function PopoverDemo() {
       </Example>
 
       <Example
-        title="Triggered from a menu item (controlled pattern)"
-        description="A Popover.Trigger nested INSIDE a DropdownMenu.Item only catches clicks on its inner element — the menu item's own click handler still owns the rest of the row, which closes the menu. The right pattern: drive the popover's open state from the item's onSelect, with the popover anchored to a separate element (here, a hidden span next to the kebab)."
-        code={`const [open, setOpen] = useState(false);
-
-<Cluster gap="sm" align="center">
-  <DropdownMenu>
-    <DropdownMenu.Trigger>
-      <Button variant="secondary">Actions</Button>
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Content>
-      <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
-      <DropdownMenu.Item onSelect={() => setOpen(true)}>Move to…</DropdownMenu.Item>
-    </DropdownMenu.Content>
-  </DropdownMenu>
-
-  <Popover open={open} onOpenChange={setOpen}>
-    <Popover.Trigger>
-      <span aria-hidden="true" />
-    </Popover.Trigger>
-    <Popover.Content>
-      <Stack gap="xs">
-        <Popover.Heading>Move to folder</Popover.Heading>
-        <div>(folder picker would go here)</div>
-      </Stack>
-    </Popover.Content>
-  </Popover>
-</Cluster>`}
+        title="Inside a DropdownMenu — z-index sanity"
+        description="Wrap a <DropdownMenu.Item closeOnSelect={false}> as the Popover trigger. Popover's z-layer is above DropdownMenu's (--z-popover: 1050 > --z-dropdown: 1000), so the popover floats over the menu."
+        code={`<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="secondary">Actions</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+    <Popover>
+      <Popover.Trigger>
+        <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}}>
+          Move to…
+        </DropdownMenu.Item>
+      </Popover.Trigger>
+      <Popover.Content>
+        <Stack gap="xs">
+          <Popover.Heading>Move to folder</Popover.Heading>
+          <div>(folder picker)</div>
+          <Cluster justify="end">
+            <Popover.Close>
+              <Button size="sm">Done</Button>
+            </Popover.Close>
+          </Cluster>
+        </Stack>
+      </Popover.Content>
+    </Popover>
+  </DropdownMenu.Content>
+</DropdownMenu>`}
       >
         <Cluster gap="md" justify="center">
-          <MoveToFolderExample />
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button variant="secondary">Actions</Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+              <Popover>
+                <Popover.Trigger>
+                  <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}}>
+                    Move to…
+                  </DropdownMenu.Item>
+                </Popover.Trigger>
+                <Popover.Content>
+                  <Stack gap="xs">
+                    <Popover.Heading>Move to folder</Popover.Heading>
+                    <div>(folder picker would go here)</div>
+                    <Cluster justify="end">
+                      <Popover.Close>
+                        <Button size="sm">Done</Button>
+                      </Popover.Close>
+                    </Cluster>
+                  </Stack>
+                </Popover.Content>
+              </Popover>
+            </DropdownMenu.Content>
+          </DropdownMenu>
         </Cluster>
       </Example>
 
@@ -187,41 +214,6 @@ export function PopoverDemo() {
         </Cluster>
       </Example>
     </DemoLayout>
-  );
-}
-
-function MoveToFolderExample() {
-  const [open, setOpen] = useState(false);
-  return (
-    <Cluster gap="sm" align="center" justify="center">
-      <DropdownMenu>
-        <DropdownMenu.Trigger>
-          <Button variant="secondary">Actions</Button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Content>
-          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
-          <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
-          <DropdownMenu.Item onSelect={() => setOpen(true)}>Move to…</DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu>
-
-      <Popover open={open} onOpenChange={setOpen}>
-        <Popover.Trigger>
-          <span aria-hidden="true" />
-        </Popover.Trigger>
-        <Popover.Content>
-          <Stack gap="xs">
-            <Popover.Heading>Move to folder</Popover.Heading>
-            <div>(folder picker would go here)</div>
-            <Cluster justify="end">
-              <Popover.Close>
-                <Button size="sm">Done</Button>
-              </Popover.Close>
-            </Cluster>
-          </Stack>
-        </Popover.Content>
-      </Popover>
-    </Cluster>
   );
 }
 
