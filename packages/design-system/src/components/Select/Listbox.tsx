@@ -12,6 +12,9 @@ import clsx from 'clsx';
 import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
 import type { SelectOption } from './utils-types';
+import { Empty } from './Empty';
+import { Loading } from './Loading';
+import { ErrorRow } from './Error';
 import styles from './Select.module.scss';
 
 /**
@@ -134,69 +137,115 @@ export function Listbox() {
       {ctx.multiple && ctx.triggerDisplay === 'summary' && ctx.searchable && (
         <InPanelSearchInput />
       )}
-      {(() => {
-        // Walk the flat rows array, wrapping each header + its following
-        // option rows in `<li role="group" aria-labelledby={headerId}>` so
-        // the listbox exposes proper grouping semantics. The flat index
-        // `i` is preserved across the wrapping — Trigger's keyboard logic
-        // computes `aria-activedescendant` from it, so option rows inside
-        // groups MUST keep the same index they would have had in the flat
-        // map.
-        const nodes: ReactNode[] = [];
-        let i = 0;
-        while (i < ctx.rows.length) {
-          const row = ctx.rows[i];
-          if (row.kind === 'header') {
-            const headerLabel = row.label;
-            const headerId = ctx.getGroupHeaderId(headerLabel);
-            const groupChildren: ReactNode[] = [];
-            // Non-focusable header row; `data-group-header` is the hook
-            // grouped-options tests query against (avoids relying on the
-            // hashed CSS-module class name).
-            groupChildren.push(
-              <li
-                key={`h-${i}`}
-                id={headerId}
-                data-group-header=""
-                className={styles.groupHeader}
-              >
-                {headerLabel}
-              </li>,
-            );
-            let j = i + 1;
-            while (j < ctx.rows.length && ctx.rows[j].kind === 'option') {
-              const optRow = ctx.rows[j] as Extract<(typeof ctx.rows)[number], { kind: 'option' }>;
-              const selected = ctx.multiple
-                ? (ctx.value as string[]).includes(optRow.option.value)
-                : ctx.value === optRow.option.value;
-              const active = ctx.activeIndex === j;
-              groupChildren.push(renderOptionRow(optRow.option, j, selected, active, ctx));
-              j++;
-            }
-            nodes.push(
-              <li role="group" key={`g-${i}`} aria-labelledby={headerId}>
-                <ul role="none" className={styles.groupList}>
-                  {groupChildren}
-                </ul>
-              </li>,
-            );
-            i = j;
-            continue;
-          }
-          // Ungrouped (flat) option row.
-          const optRow = row;
-          const selected = ctx.multiple
-            ? (ctx.value as string[]).includes(optRow.option.value)
-            : ctx.value === optRow.option.value;
-          const active = ctx.activeIndex === i;
-          nodes.push(renderOptionRow(optRow.option, i, selected, active, ctx));
-          i++;
-        }
-        return nodes;
-      })()}
+      {renderListboxBody(ctx)}
     </ul>,
     document.body,
   );
+}
+
+/**
+ * Decide what goes in the listbox body. Three short-circuits ahead of the
+ * normal row walk:
+ *
+ * 1. Loading — async request is in flight AND we have nothing else to show.
+ *    Once a previous result is in `rows`, we keep showing it instead of
+ *    swapping to a spinner (UI doesn't flicker between every keystroke).
+ * 2. Error — the latest async request rejected. Surfaces a Retry button.
+ * 3. Empty — no rows after filtering and we're not loading or in error.
+ *
+ * Each branch consults the consumer's `renderLoading` / `renderError` /
+ * `renderEmpty` first, falling back to the bundled defaults.
+ */
+function renderListboxBody<T>(ctx: SelectContextValue<T>): ReactNode {
+  const showLoading = ctx.loading && ctx.rows.length === 0;
+  const showError = !!ctx.error && !ctx.loading;
+  const showEmpty = !ctx.loading && !ctx.error && ctx.rows.length === 0;
+
+  if (showLoading) {
+    return ctx.renderLoading ? (
+      <li className={styles.stateRow} role="presentation">
+        {ctx.renderLoading()}
+      </li>
+    ) : (
+      <Loading />
+    );
+  }
+  if (showError) {
+    return ctx.renderError ? (
+      <li className={styles.stateRow} role="presentation">
+        {ctx.renderError(ctx.error as Error, ctx.retry)}
+      </li>
+    ) : (
+      <ErrorRow error={ctx.error as Error} onRetry={ctx.retry} />
+    );
+  }
+  if (showEmpty) {
+    return ctx.renderEmpty ? (
+      <li className={styles.stateRow} role="presentation">
+        {ctx.renderEmpty(ctx.query)}
+      </li>
+    ) : (
+      <Empty query={ctx.query} />
+    );
+  }
+
+  // Walk the flat rows array, wrapping each header + its following option
+  // rows in `<li role="group" aria-labelledby={headerId}>` so the listbox
+  // exposes proper grouping semantics. The flat index `i` is preserved
+  // across the wrapping — Trigger's keyboard logic computes
+  // `aria-activedescendant` from it, so option rows inside groups MUST
+  // keep the same index they would have had in the flat map.
+  const nodes: ReactNode[] = [];
+  let i = 0;
+  while (i < ctx.rows.length) {
+    const row = ctx.rows[i];
+    if (row.kind === 'header') {
+      const headerLabel = row.label;
+      const headerId = ctx.getGroupHeaderId(headerLabel);
+      const groupChildren: ReactNode[] = [];
+      // Non-focusable header row; `data-group-header` is the hook
+      // grouped-options tests query against (avoids relying on the hashed
+      // CSS-module class name).
+      groupChildren.push(
+        <li
+          key={`h-${i}`}
+          id={headerId}
+          data-group-header=""
+          className={styles.groupHeader}
+        >
+          {headerLabel}
+        </li>,
+      );
+      let j = i + 1;
+      while (j < ctx.rows.length && ctx.rows[j].kind === 'option') {
+        const optRow = ctx.rows[j] as Extract<(typeof ctx.rows)[number], { kind: 'option' }>;
+        const selected = ctx.multiple
+          ? (ctx.value as string[]).includes(optRow.option.value)
+          : ctx.value === optRow.option.value;
+        const active = ctx.activeIndex === j;
+        groupChildren.push(renderOptionRow(optRow.option, j, selected, active, ctx));
+        j++;
+      }
+      nodes.push(
+        <li role="group" key={`g-${i}`} aria-labelledby={headerId}>
+          <ul role="none" className={styles.groupList}>
+            {groupChildren}
+          </ul>
+        </li>,
+      );
+      i = j;
+      continue;
+    }
+    // Ungrouped (flat) option row.
+    const optRow = row;
+    const selected = ctx.multiple
+      ? (ctx.value as string[]).includes(optRow.option.value)
+      : ctx.value === optRow.option.value;
+    const active = ctx.activeIndex === i;
+    nodes.push(renderOptionRow(optRow.option, i, selected, active, ctx));
+    i++;
+  }
+  return nodes;
 }
 
 /**

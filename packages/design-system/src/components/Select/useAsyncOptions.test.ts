@@ -37,7 +37,7 @@ describe('useAsyncOptions', () => {
   });
 
   it('calls loadOptions("") on first enable', async () => {
-    const loadOptions = vi.fn(async () => A);
+    const loadOptions = vi.fn(async (_q: string, _signal: AbortSignal) => A);
     const { result, rerender } = renderHook(
       ({ enabled }) => useAsyncOptions({ loadOptions, query: '', enabled, debounceMs: 100 }),
       { initialProps: { enabled: false } },

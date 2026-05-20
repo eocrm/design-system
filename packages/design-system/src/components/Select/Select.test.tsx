@@ -1,4 +1,4 @@
-import { configure, render, screen } from '@testing-library/react';
+import { act, configure, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Select, type SelectOption } from './Select';
@@ -710,5 +710,112 @@ describe('Select — multi-chips-searchable', () => {
     await user.click(input);
     await user.type(input, 'be');
     expect(screen.getByRole('button', { name: 'Remove Alpha' })).toBeInTheDocument();
+  });
+});
+
+describe('Select — async loadOptions', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    // RTL's waitFor polls via setInterval; under fake timers it needs an
+    // explicit tick to actually fire. Same shim ConfirmationPopover uses.
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    configure({ asyncWrapper: async (cb) => cb() });
+  });
+
+  it('calls loadOptions("") on first open when loadOnOpen=true (default)', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const loadOptions = vi.fn(async (_q: string, _signal: AbortSignal) => [
+      { value: 'a', label: 'A' },
+    ]);
+    render(<Select searchable loadOptions={loadOptions} />);
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+      await vi.runAllTimersAsync();
+    });
+    expect(loadOptions).toHaveBeenCalledTimes(1);
+    expect(loadOptions.mock.calls[0][0]).toBe('');
+  });
+
+  it('shows loading state while a request is in flight', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let resolveFn: (opts: SelectOption[]) => void = () => {};
+    const loadOptions = vi.fn(
+      () => new Promise<SelectOption[]>((res) => (resolveFn = res)),
+    );
+    render(<Select searchable loadOptions={loadOptions} />);
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    await act(async () => {
+      resolveFn([{ value: 'a', label: 'A' }]);
+      await vi.runAllTimersAsync();
+    });
+    await waitFor(() => {
+      expect(screen.queryByText(/loading/i)).toBeNull();
+      expect(screen.getByRole('option', { name: 'A' })).toBeInTheDocument();
+    });
+  });
+
+  it('shows error state with Retry that re-fires loadOptions', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const loadOptions = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce([{ value: 'a', label: 'A' }]);
+    render(<Select searchable loadOptions={loadOptions} />);
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+      await vi.runAllTimersAsync();
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: /retry/i }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+      await vi.runAllTimersAsync();
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('option', { name: 'A' })).toBeInTheDocument();
+    });
+  });
+
+  it('shows empty state when async result is []', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const loadOptions = vi.fn(async () => []);
+    render(<Select searchable loadOptions={loadOptions} />);
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+      await vi.runAllTimersAsync();
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/no options/i)).toBeInTheDocument();
+    });
+  });
+
+  it('does not call loadOptions before the popover opens (loadOnOpen)', async () => {
+    const loadOptions = vi.fn(async () => []);
+    render(<Select searchable loadOptions={loadOptions} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(loadOptions).not.toHaveBeenCalled();
   });
 });

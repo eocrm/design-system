@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -14,6 +15,7 @@ import styles from './Select.module.scss';
 import { SelectContext, type SelectContextValue } from './context';
 import { sanitizeId } from '../_internal/refs';
 import { useSelectState } from './useSelectState';
+import { useAsyncOptions } from './useAsyncOptions';
 import { flattenOptions, findOption, findOptions } from './utils';
 import { Trigger } from './Trigger';
 import { Listbox } from './Listbox';
@@ -75,6 +77,25 @@ export interface SelectProps<T = unknown> extends Omit<
   // ─── data ─────────────────────────────────────────────────────────────────
   options?: SelectOptions<T>;
 
+  // ─── async data ───────────────────────────────────────────────────────────
+  /**
+   * Async fetcher that returns the options for a given query. When set, the
+   * Select switches to async mode: the local substring filter is bypassed
+   * (the server filters), loading/error/empty rows replace the listbox
+   * body, and `options` is ignored (with a dev warning).
+   */
+  loadOptions?: (query: string, signal: AbortSignal) => Promise<SelectOptions<T>>;
+  /**
+   * When `true` (default), defers the first `loadOptions` call until the
+   * user opens the listbox. Set to `false` to fetch eagerly on mount.
+   */
+  loadOnOpen?: boolean;
+  /**
+   * Debounce window (ms) between the last `query` keystroke and the next
+   * `loadOptions` call. Default 250 ms.
+   */
+  searchDebounceMs?: number;
+
   // ─── mode ─────────────────────────────────────────────────────────────────
   multiple?: boolean;
   triggerDisplay?: SelectTriggerDisplay;
@@ -126,6 +147,9 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
 ) {
   const {
     options = [],
+    loadOptions,
+    loadOnOpen = true,
+    searchDebounceMs = 250,
     multiple = false,
     triggerDisplay = 'chips',
     searchable = false,
@@ -193,9 +217,47 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     onOpenChange,
   });
 
-  const allRows = useMemo(() => flattenOptions(options), [options]);
+  // Dev-only sanity check: a Select can't sensibly take both `options` and
+  // `loadOptions`. We pick `loadOptions` (the more specific API) and warn
+  // so the consumer notices their config conflict during dev. Stripped in
+  // prod builds by the bundler dead-code path.
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    loadOptions &&
+    Array.isArray(options) &&
+    options.length > 0
+  ) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '<Select> received both `options` and `loadOptions`. `loadOptions` wins; `options` is ignored.',
+    );
+  }
+
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   const [query, setQuery] = useState<string>('');
+
+  // `hasOpenedOnce` gates the first async fetch. The `loadOnOpen` semantic
+  // is: don't fetch anything until the user opens the popover at least
+  // once. `loadOnOpen=false` flips the gate immediately on mount.
+  const [hasOpenedOnce, setHasOpenedOnce] = useState<boolean>(!loadOnOpen);
+  useEffect(() => {
+    if (state.open && !hasOpenedOnce) setHasOpenedOnce(true);
+  }, [state.open, hasOpenedOnce]);
+
+  const asyncEnabled = !!loadOptions && hasOpenedOnce;
+  const asyncResult = useAsyncOptions({
+    loadOptions,
+    query,
+    enabled: asyncEnabled,
+    debounceMs: searchDebounceMs,
+  });
+
+  // In async mode, the backend's response replaces the local `options`
+  // entirely. The label cache for already-selected values is a Phase 8+
+  // concern — chips may temporarily render `<unknown>` while the latest
+  // server response filters their option out.
+  const effectiveOptions = loadOptions ? asyncResult.options : options;
+  const allRows = useMemo(() => flattenOptions(effectiveOptions), [effectiveOptions]);
 
   // When `searchable`, filter `allRows` by the query (case-insensitive
   // substring on label OR description). Group headers are retained only
@@ -206,6 +268,11 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   // in Listbox lands on the user's selected row, and so the first
   // ArrowDown after open lands on row 0 instead of row 0-of-filtered.
   const rows = useMemo(() => {
+    // Async mode: the backend already filtered to the current query, so
+    // local re-filtering would double-filter (e.g. backend matches by
+    // word-prefix, we'd then drop rows whose label doesn't contain the
+    // exact substring).
+    if (loadOptions) return allRows;
     if (!searchable || query.trim() === '') return allRows;
     const q = query.toLowerCase();
     const out: typeof allRows = [];
@@ -227,7 +294,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
       }
     }
     return out;
-  }, [allRows, searchable, query]);
+  }, [allRows, searchable, query, loadOptions]);
 
   const triggerRef = useRef<HTMLElement | null>(null);
   const listboxRef = useRef<HTMLUListElement | null>(null);
@@ -247,8 +314,8 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     triggerDisplay,
     rows,
     allRows,
-    loading: false,
-    error: null,
+    loading: loadOptions ? asyncResult.loading : false,
+    error: loadOptions ? asyncResult.error : null,
     value: state.value,
     setValue: state.setValue,
     toggleValue: state.toggleValue,
@@ -265,7 +332,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     triggerRef,
     listboxRef,
     closeAndFocusTrigger,
-    retry: () => {},
+    retry: asyncResult.retry,
     renderOption: renderOption as SelectContextValue['renderOption'],
     renderValue: renderValue as SelectContextValue['renderValue'],
     renderTag: renderTag as SelectContextValue['renderTag'],
