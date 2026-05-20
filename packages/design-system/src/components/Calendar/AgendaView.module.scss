@@ -3,7 +3,6 @@
 .agenda {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
   padding: var(--space-3) 0;
 }
 
@@ -14,22 +13,49 @@
   color: var(--color-fg-muted);
 }
 
+// Each dayGroup carries its own bottom padding (in place of `gap` on
+// `.agenda`) so the today-group's accent border-left extends down through
+// the spacing area, all the way to the next day-header's top border.
 .dayGroup {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding-left: var(--space-3);
+  padding-bottom: var(--space-4);
   border-left: var(--border-width-emphasis) solid transparent;
 }
 
 // Today's group draws an accent border on its left edge — same emphasis
-// language as month view's today cell, no background tint to compete with
-// tone dots on event rows.
+// language as month view's today cell, no background tint on the rows
+// area so tone dots stay legible.
 .todayGroup {
   border-left-color: var(--color-accent);
 }
 
+// Today's day-header band gets an accent tint + accent border so the
+// current day is instantly findable when the agenda list is long. The
+// rows area stays untinted so event tone dots keep their contrast.
+.todayGroup .dayHeader {
+  background: var(--color-accent-bg-subtle);
+  border-top-color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+// The next day-group's top border continues the today accent so the
+// vertical left-border line lands cleanly on a matching horizontal one,
+// instead of meeting a plain grey rule.
+.todayGroup + .dayGroup .dayHeader {
+  border-top-color: var(--color-accent);
+}
+
+// Day-header reads as a full-width banded row. Top + bottom borders frame
+// the band so it doesn't float against an empty row gap; subtle fill
+// reinforces the day-group boundary visually.
 .dayHeader {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-subtle);
+  border-top: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   color: var(--color-fg);
@@ -40,6 +66,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  padding-left: var(--space-3);
 }
 
 .rowButton {
@@ -108,24 +135,6 @@
   white-space: nowrap;
   font-weight: var(--font-weight-medium);
   color: var(--color-fg);
-}
-
-.tooltipBody {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.tooltipTime {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  color: var(--color-bg-subtle);
-}
-
-.tooltipTitle {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-bg);
 }
 
 // Tone -> color of the dot (via currentColor inheritance).

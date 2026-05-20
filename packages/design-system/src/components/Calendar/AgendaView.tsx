@@ -4,7 +4,6 @@ import { useLocale } from '../../i18n/useLocale';
 import { formatDayLong, formatTime } from '../../calendar';
 import { startOfDay } from '../../calendar/dateMath';
 import type { Day } from '../../calendar/types';
-import { Tooltip } from '../Tooltip';
 import { formatEventDuration } from './utils';
 import type { CalendarEvent, CalendarEventTone, RenderEvent } from './types';
 import styles from './AgendaView.module.scss';
@@ -117,15 +116,6 @@ function AgendaRowItem({ row, locale, onClick, renderEvent }: AgendaRowItemProps
   const timeLabel =
     !isAllDay && endLabel && endLabel !== startLabel ? `${startLabel} – ${endLabel}` : startLabel;
 
-  const tooltipBody = (
-    <span className={styles.tooltipBody}>
-      <span className={styles.tooltipTime}>
-        {isAllDay ? duration : `${startLabel} · ${duration}`}
-      </span>
-      <span className={styles.tooltipTitle}>{event.title}</span>
-    </span>
-  );
-
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     onClick?.(event);
@@ -141,21 +131,19 @@ function AgendaRowItem({ row, locale, onClick, renderEvent }: AgendaRowItemProps
     : null;
 
   return (
-    <Tooltip content={tooltipBody}>
-      <button type="button" className={clsx(styles.rowButton, styles[tone])} onClick={handleClick}>
-        <span className={styles.timeGutter}>
-          {isAllDay ? <em className={styles.allDay}>All day</em> : timeLabel}
-        </span>
-        <span className={styles.toneDot} aria-hidden="true" />
-        <span className={styles.body}>
-          {customContent !== null ? (
-            customContent
-          ) : (
-            <span className={styles.title}>{event.title}</span>
-          )}
-        </span>
-      </button>
-    </Tooltip>
+    <button type="button" className={clsx(styles.rowButton, styles[tone])} onClick={handleClick}>
+      <span className={styles.timeGutter}>
+        {isAllDay ? <em className={styles.allDay}>All day</em> : timeLabel}
+      </span>
+      <span className={styles.toneDot} aria-hidden="true" />
+      <span className={styles.body}>
+        {customContent !== null ? (
+          customContent
+        ) : (
+          <span className={styles.title}>{event.title}</span>
+        )}
+      </span>
+    </button>
   );
 }
 
