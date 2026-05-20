@@ -116,6 +116,13 @@
   cursor: not-allowed;
 }
 
+// Creatable "+ Create <query>" row. Italic + accent colour to visually
+// separate it from real options without inventing a new pattern.
+.optionCreate {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
 // ─── In-panel search input (multi-summary-searchable variant) ──────────────
 // Sits at the top of the listbox panel, above the option rows. Hard Rule 4
 // allows `width: 100%` (intrinsic 100%) — it's the natural fit for "fill

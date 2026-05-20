@@ -3,9 +3,7 @@ import { useSelectState } from './useSelectState';
 
 describe('useSelectState — single mode', () => {
   it('initializes uncontrolled value from defaultValue', () => {
-    const { result } = renderHook(() =>
-      useSelectState({ multiple: false, defaultValue: 'a' }),
-    );
+    const { result } = renderHook(() => useSelectState({ multiple: false, defaultValue: 'a' }));
     expect(result.current.value).toBe('a');
   });
 
@@ -37,9 +35,7 @@ describe('useSelectState — single mode', () => {
 
   it('setValue in controlled mode fires onChange but does NOT update internal state', () => {
     const onChange = vi.fn();
-    const { result } = renderHook(() =>
-      useSelectState({ multiple: false, value: 'a', onChange }),
-    );
+    const { result } = renderHook(() => useSelectState({ multiple: false, value: 'a', onChange }));
     act(() => {
       result.current.setValue('b');
     });
@@ -107,9 +103,7 @@ describe('useSelectState — multi mode', () => {
 
   it('toggleValue in controlled mode fires onChange but does NOT update internal state', () => {
     const onChange = vi.fn();
-    const { result } = renderHook(() =>
-      useSelectState({ multiple: true, value: ['a'], onChange }),
-    );
+    const { result } = renderHook(() => useSelectState({ multiple: true, value: ['a'], onChange }));
     act(() => {
       result.current.toggleValue('b');
     });
@@ -125,17 +119,13 @@ describe('useSelectState — open state', () => {
   });
 
   it('respects defaultOpen', () => {
-    const { result } = renderHook(() =>
-      useSelectState({ multiple: false, defaultOpen: true }),
-    );
+    const { result } = renderHook(() => useSelectState({ multiple: false, defaultOpen: true }));
     expect(result.current.open).toBe(true);
   });
 
   it('setOpen toggles uncontrolled state and fires onOpenChange', () => {
     const onOpenChange = vi.fn();
-    const { result } = renderHook(() =>
-      useSelectState({ multiple: false, onOpenChange }),
-    );
+    const { result } = renderHook(() => useSelectState({ multiple: false, onOpenChange }));
     act(() => {
       result.current.setOpen(true);
     });

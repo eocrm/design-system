@@ -83,3 +83,40 @@ export function findOptions<T>(opts: SelectOptions<T>, values: string[]): Select
   }
   return out;
 }
+
+/**
+ * Returns true if any option in `opts` has a label case-insensitively
+ * matching `query` (after trim). Used by the creatable Select to decide
+ * whether to render a "+ Create" row — when the typed query already
+ * matches an existing label, the create row would be a no-op duplicate.
+ *
+ * The empty / whitespace-only query case returns `false` so the create
+ * row never appears for blank input.
+ */
+export function hasExactLabelMatch<T>(opts: SelectOptions<T>, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (q === '') return false;
+  if (!isGrouped(opts)) {
+    return opts.some((o) => o.label.toLowerCase() === q);
+  }
+  for (const g of opts) {
+    if (g.options.some((o) => o.label.toLowerCase() === q)) return true;
+  }
+  return false;
+}
+
+/**
+ * Returns true if an option carries the internal `__create` sentinel on
+ * its `data` payload. The sentinel is injected by `<Select>` when it
+ * synthesises the "+ Create" row, and the listbox + Trigger keyboard
+ * handlers branch on it to fire `onCreate` instead of the normal
+ * select/toggle flow.
+ */
+export function isCreateRow<T>(opt: { data?: T }): boolean {
+  return (
+    typeof opt.data === 'object' &&
+    opt.data !== null &&
+    Object.prototype.hasOwnProperty.call(opt.data, '__create') &&
+    (opt.data as { __create?: boolean }).__create === true
+  );
+}

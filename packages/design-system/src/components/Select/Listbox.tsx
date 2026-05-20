@@ -12,6 +12,7 @@ import clsx from 'clsx';
 import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
 import type { SelectOption } from './utils-types';
+import { isCreateRow } from './utils';
 import { Empty } from './Empty';
 import { Loading } from './Loading';
 import { ErrorRow } from './Error';
@@ -134,9 +135,7 @@ export function Listbox() {
           (ComboboxInputTrigger) since there's no second trigger to compete
           with; multi-summary needs the trigger to remain a button that
           shows the summary, so the search input lives inside the panel. */}
-      {ctx.multiple && ctx.triggerDisplay === 'summary' && ctx.searchable && (
-        <InPanelSearchInput />
-      )}
+      {ctx.multiple && ctx.triggerDisplay === 'summary' && ctx.searchable && <InPanelSearchInput />}
       {renderListboxBody(ctx)}
     </ul>,
     document.body,
@@ -207,12 +206,7 @@ function renderListboxBody<T>(ctx: SelectContextValue<T>): ReactNode {
       // grouped-options tests query against (avoids relying on the hashed
       // CSS-module class name).
       groupChildren.push(
-        <li
-          key={`h-${i}`}
-          id={headerId}
-          data-group-header=""
-          className={styles.groupHeader}
-        >
+        <li key={`h-${i}`} id={headerId} data-group-header="" className={styles.groupHeader}>
           {headerLabel}
         </li>,
       );
@@ -264,6 +258,35 @@ function renderOptionRow<T>(
   active: boolean,
   ctx: SelectContextValue<T>,
 ): ReactNode {
+  // Creatable "+ Create <query>" row. Rendered distinctly (italic + accent
+  // colour via `.optionCreate`) and dispatches `onCreate` plus the same
+  // single-vs-multi commit flow as a normal option click.
+  if (isCreateRow(opt)) {
+    return (
+      <li
+        key="__create__"
+        id={ctx.getOptionId(opt.value)}
+        role="option"
+        aria-selected={false}
+        className={clsx(styles.option, styles.optionCreate, active && styles.optionActive)}
+        onPointerDown={(e) => e.preventDefault()}
+        onClick={() => {
+          ctx.onCreate?.(opt.label);
+          if (ctx.multiple) {
+            const next = [...((ctx.value as string[]) ?? []), opt.value];
+            ctx.setValue(next);
+            if (ctx.searchable) ctx.setQuery('');
+          } else {
+            ctx.setValue(opt.value);
+            ctx.closeAndFocusTrigger();
+          }
+        }}
+        onMouseEnter={() => ctx.setActiveIndex(i)}
+      >
+        + Create &quot;{opt.label}&quot;
+      </li>
+    );
+  }
   return (
     <li
       key={opt.value}
@@ -367,7 +390,14 @@ function InPanelSearchInput() {
           e.preventDefault();
           const row = ctx.rows[ctx.activeIndex];
           if (row && row.kind === 'option' && !row.option.disabled) {
-            ctx.toggleValue(row.option.value);
+            if (isCreateRow(row.option)) {
+              ctx.onCreate?.(row.option.label);
+              const next = [...((ctx.value as string[]) ?? []), row.option.value];
+              ctx.setValue(next);
+              ctx.setQuery('');
+            } else {
+              ctx.toggleValue(row.option.value);
+            }
           }
         } else if (e.key === 'Escape') {
           e.preventDefault();

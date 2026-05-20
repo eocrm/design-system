@@ -1,5 +1,12 @@
 import type { SelectGroup, SelectOption, SelectOptions } from './Select';
-import { findOption, findOptions, flattenOptions, isGrouped } from './utils';
+import {
+  findOption,
+  findOptions,
+  flattenOptions,
+  hasExactLabelMatch,
+  isCreateRow,
+  isGrouped,
+} from './utils';
 
 const flat: SelectOption[] = [
   { value: 'a', label: 'Apple' },
@@ -108,5 +115,36 @@ describe('findOptions', () => {
 
   it('returns an empty array for an empty input', () => {
     expect(findOptions([] as SelectOptions, ['a'])).toEqual([]);
+  });
+});
+
+describe('hasExactLabelMatch', () => {
+  it('returns false for empty query', () => {
+    expect(hasExactLabelMatch([{ value: 'a', label: 'A' }], '')).toBe(false);
+  });
+
+  it('matches case-insensitively', () => {
+    expect(hasExactLabelMatch([{ value: 'a', label: 'Alpha' }], 'alpha')).toBe(true);
+    expect(hasExactLabelMatch([{ value: 'a', label: 'Alpha' }], 'ALPHA')).toBe(true);
+  });
+
+  it('requires exact match, not substring', () => {
+    expect(hasExactLabelMatch([{ value: 'a', label: 'Alpha' }], 'Alph')).toBe(false);
+  });
+
+  it('walks grouped options', () => {
+    const opts: SelectGroup[] = [{ label: 'G', options: [{ value: 'a', label: 'Alpha' }] }];
+    expect(hasExactLabelMatch(opts, 'alpha')).toBe(true);
+  });
+});
+
+describe('isCreateRow', () => {
+  it('returns true when data has __create: true', () => {
+    expect(isCreateRow({ data: { __create: true } })).toBe(true);
+  });
+
+  it('returns false for plain options', () => {
+    expect(isCreateRow({ data: { id: 'x' } })).toBe(false);
+    expect(isCreateRow({})).toBe(false);
   });
 });

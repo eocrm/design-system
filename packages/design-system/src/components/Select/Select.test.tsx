@@ -752,9 +752,7 @@ describe('Select — async loadOptions', () => {
   it('shows loading state while a request is in flight', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     let resolveFn: (opts: SelectOption[]) => void = () => {};
-    const loadOptions = vi.fn(
-      () => new Promise<SelectOption[]>((res) => (resolveFn = res)),
-    );
+    const loadOptions = vi.fn(() => new Promise<SelectOption[]>((res) => (resolveFn = res)));
     render(<Select searchable loadOptions={loadOptions} />);
     await user.click(screen.getByRole('combobox'));
     await act(async () => {
@@ -864,5 +862,92 @@ describe('Select — async edge cases', () => {
       vi.useRealTimers();
       configure({ asyncWrapper: async (cb) => cb() });
     }
+  });
+});
+
+describe('Select — creatable', () => {
+  const OPTS: SelectOption[] = [{ value: 'a', label: 'Alpha' }];
+
+  it('throws in dev when creatable && !searchable', () => {
+    // React 18 logs the error to console.error too; suppress to keep
+    // test output clean.
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => {
+      render(<Select creatable options={OPTS} />);
+    }).toThrow(/searchable/);
+    errSpy.mockRestore();
+  });
+
+  it('shows "+ Create" row when query has no exact match', async () => {
+    const user = userEvent.setup();
+    render(<Select searchable creatable options={OPTS} />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await user.click(input);
+    await user.type(input, 'Foo');
+    expect(screen.getByText(/\+ Create "Foo"/i)).toBeInTheDocument();
+  });
+
+  it('hides "+ Create" row when query EXACTLY matches an existing option (case-insensitive)', async () => {
+    const user = userEvent.setup();
+    render(<Select searchable creatable options={OPTS} />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await user.click(input);
+    await user.type(input, 'alpha');
+    expect(screen.queryByText(/\+ Create/i)).toBeNull();
+  });
+
+  it('activating the create row fires onCreate + onChange with the new value (multi)', async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn();
+    const onChange = vi.fn();
+    render(
+      <Select
+        multiple
+        triggerDisplay="chips"
+        searchable
+        creatable
+        options={OPTS}
+        onCreate={onCreate}
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await user.click(input);
+    await user.type(input, 'Beta');
+    await user.click(screen.getByText(/\+ Create "Beta"/i));
+    expect(onCreate).toHaveBeenCalledWith('Beta');
+    expect(onChange).toHaveBeenCalledWith(['Beta'], [{ value: 'Beta', label: 'Beta' }]);
+  });
+
+  it('activating the create row in single mode replaces selection + closes', async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn();
+    const onChange = vi.fn();
+    render(<Select searchable creatable options={OPTS} onCreate={onCreate} onChange={onChange} />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await user.click(input);
+    await user.type(input, 'Foo');
+    await user.click(screen.getByText(/\+ Create "Foo"/i));
+    expect(onCreate).toHaveBeenCalledWith('Foo');
+    expect(onChange).toHaveBeenCalledWith('Foo', { value: 'Foo', label: 'Foo' });
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('hides "+ Create" row when query is in current multi selection (no dup)', async () => {
+    const user = userEvent.setup();
+    render(
+      <Select
+        multiple
+        searchable
+        creatable
+        triggerDisplay="chips"
+        options={OPTS}
+        defaultValue={['Foo']}
+      />,
+    );
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.type(input, 'Foo');
+    expect(screen.queryByText(/\+ Create "Foo"/i)).toBeNull();
   });
 });

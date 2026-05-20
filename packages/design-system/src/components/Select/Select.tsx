@@ -16,7 +16,8 @@ import { SelectContext, type SelectContextValue } from './context';
 import { sanitizeId } from '../_internal/refs';
 import { useSelectState } from './useSelectState';
 import { useAsyncOptions } from './useAsyncOptions';
-import { flattenOptions, findOption, findOptions } from './utils';
+import { flattenOptions, findOption, findOptions, hasExactLabelMatch } from './utils';
+import type { FlatRow } from './utils';
 import { Trigger } from './Trigger';
 import { Listbox } from './Listbox';
 
@@ -101,6 +102,18 @@ export interface SelectProps<T = unknown> extends Omit<
   triggerDisplay?: SelectTriggerDisplay;
   searchable?: boolean;
   creatable?: boolean;
+  /**
+   * Fires when the user activates the "+ Create" row (creatable mode).
+   * The trimmed query string is passed as `label`. After this fires,
+   * the Select also calls `onChange` with the new value: in single mode
+   * the value replaces the current selection and the listbox closes; in
+   * multi mode the value is appended to the current selection and the
+   * query is cleared.
+   *
+   * Consumers typically use this hook to persist the new option upstream
+   * (e.g. POST to a backend) and reconcile their `options` array.
+   */
+  onCreate?: (label: string) => void;
 
   // ─── value ────────────────────────────────────────────────────────────────
   value?: string | string[];
@@ -154,6 +167,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     triggerDisplay = 'chips',
     searchable = false,
     creatable = false,
+    onCreate,
     value: controlledValue,
     defaultValue,
     onChange,
@@ -185,6 +199,15 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   void _required;
   void _form;
 
+  // Dev-only invariant: a creatable picker without a search input has no
+  // way to capture the new label. Throw early so the misconfiguration is
+  // obvious during development; stripped in prod builds.
+  if (process.env.NODE_ENV !== 'production' && creatable && !searchable) {
+    throw new Error(
+      '<Select>: `creatable` requires `searchable`. A creatable picker without a search input has no way to capture the new label.',
+    );
+  }
+
   const reactId = useId();
   const idBase = sanitizeId(reactId);
   const listboxId = `select-listbox-${idBase}`;
@@ -199,17 +222,29 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   // the second arg. `findOption` / `findOptions` are O(n); for the option
   // counts a Select handles in practice this is fine and keeps the public
   // API ergonomic (consumers get the matched payload, not just the id).
+  //
+  // Creatable: when the user accepts the "+ Create" row, the new value is
+  // not in `options`. Back-fill a synthetic `{ value: v, label: v }` so
+  // consumers still receive a stable option payload for the new row —
+  // mirrors the shape the create-row carries internally.
   const state = useSelectState({
     multiple,
     value: controlledValue,
     defaultValue,
     onChange: (v) => {
       if (multiple) {
-        const opts = findOptions(options, Array.isArray(v) ? v : []);
+        const values = Array.isArray(v) ? v : [];
+        const found = findOptions(options, values);
+        const byValue = new Map(found.map((o) => [o.value, o]));
+        const opts = values.map((val) => byValue.get(val) ?? { value: val, label: val });
         onChange?.(v, opts);
       } else {
-        const opt = typeof v === 'string' && v !== '' ? findOption(options, v) : null;
-        onChange?.(v, opt);
+        if (typeof v === 'string' && v !== '') {
+          const opt = findOption(options, v) ?? { value: v, label: v };
+          onChange?.(v, opt);
+        } else {
+          onChange?.(v, null);
+        }
       }
     },
     open: controlledOpen,
@@ -296,6 +331,38 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     return out;
   }, [allRows, searchable, query, loadOptions]);
 
+  // Creatable: compute an extra "+ Create <query>" row when the trimmed
+  // query has no exact label match in the available options AND, in multi
+  // mode, isn't already in the current selection. The sentinel
+  // `{ __create: true }` on `data` is what `isCreateRow` matches, and what
+  // the listbox + keyboard handlers branch on to fire `onCreate` instead
+  // of the normal select/toggle flow.
+  const createRow: FlatRow | null = useMemo(() => {
+    const trimmed = query.trim();
+    if (!creatable || !searchable || trimmed === '') return null;
+    if (hasExactLabelMatch(effectiveOptions, trimmed)) return null;
+    if (multiple) {
+      const currentValues = Array.isArray(state.value) ? (state.value as string[]) : [];
+      if (currentValues.some((v) => v.toLowerCase() === trimmed.toLowerCase())) return null;
+    }
+    return {
+      kind: 'option' as const,
+      option: {
+        value: trimmed,
+        label: trimmed,
+        data: { __create: true } as unknown,
+      },
+    };
+  }, [creatable, searchable, query, effectiveOptions, multiple, state.value]);
+
+  // Append the create row to the end of the filtered (or async) rows. The
+  // unfiltered `allRows` deliberately does NOT include the create row —
+  // chip / summary label lookups walk `allRows` and the create row has no
+  // selected counterpart there.
+  const rowsWithCreate = useMemo(() => {
+    return createRow ? [...rows, createRow] : rows;
+  }, [rows, createRow]);
+
   const triggerRef = useRef<HTMLElement | null>(null);
   const listboxRef = useRef<HTMLUListElement | null>(null);
 
@@ -312,7 +379,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     searchable,
     creatable,
     triggerDisplay,
-    rows,
+    rows: rowsWithCreate,
     allRows,
     loading: loadOptions ? asyncResult.loading : false,
     error: loadOptions ? asyncResult.error : null,
@@ -333,6 +400,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     listboxRef,
     closeAndFocusTrigger,
     retry: asyncResult.retry,
+    onCreate,
     renderOption: renderOption as SelectContextValue['renderOption'],
     renderValue: renderValue as SelectContextValue['renderValue'],
     renderTag: renderTag as SelectContextValue['renderTag'],

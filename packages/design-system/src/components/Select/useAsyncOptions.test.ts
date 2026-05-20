@@ -29,9 +29,7 @@ describe('useAsyncOptions', () => {
 
   it('does NOT call loadOptions until enabled=true (loadOnOpen gate)', async () => {
     const loadOptions = vi.fn(async () => A);
-    renderHook(() =>
-      useAsyncOptions({ loadOptions, query: '', enabled: false, debounceMs: 100 }),
-    );
+    renderHook(() => useAsyncOptions({ loadOptions, query: '', enabled: false, debounceMs: 100 }));
     await vi.advanceTimersByTimeAsync(200);
     expect(loadOptions).not.toHaveBeenCalled();
   });

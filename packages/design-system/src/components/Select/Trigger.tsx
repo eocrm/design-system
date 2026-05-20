@@ -179,8 +179,28 @@ function useTriggerKeyboard(opts: { disabled?: boolean; readOnly?: boolean }) {
         e.preventDefault();
         const row = ctx.rows[ctx.activeIndex];
         if (row && row.kind === 'option' && !row.option.disabled) {
-          if (ctx.multiple) {
+          // Creatable: when the active row is the synthetic "+ Create"
+          // row, fire `onCreate` and commit the new value. The sentinel
+          // is `data.__create === true`; inline-detect it here rather
+          // than importing `isCreateRow` to keep the keyboard handler
+          // self-contained.
+          if (
+            typeof row.option.data === 'object' &&
+            row.option.data !== null &&
+            (row.option.data as { __create?: boolean }).__create
+          ) {
+            ctx.onCreate?.(row.option.label);
+            if (ctx.multiple) {
+              const next = [...((ctx.value as string[]) ?? []), row.option.value];
+              ctx.setValue(next);
+              if (ctx.searchable) ctx.setQuery('');
+            } else {
+              ctx.setValue(row.option.value);
+              ctx.closeAndFocusTrigger();
+            }
+          } else if (ctx.multiple) {
             ctx.toggleValue(row.option.value);
+            if (ctx.searchable) ctx.setQuery('');
           } else {
             ctx.setValue(row.option.value);
             ctx.closeAndFocusTrigger();
@@ -731,11 +751,7 @@ export function Trigger(props: TriggerProps) {
     return <ComboboxInputTrigger {...props} />;
   }
   if (ctx.multiple && ctx.triggerDisplay === 'chips') {
-    return ctx.searchable ? (
-      <ChipsInputTrigger {...props} />
-    ) : (
-      <ChipsButtonTrigger {...props} />
-    );
+    return ctx.searchable ? <ChipsInputTrigger {...props} /> : <ChipsButtonTrigger {...props} />;
   }
   // Multi-summary (both searchable + non-searchable) renders as the
   // comma-joined button trigger.
