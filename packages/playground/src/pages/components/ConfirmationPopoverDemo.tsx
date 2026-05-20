@@ -125,10 +125,8 @@ export function ConfirmationPopoverDemo() {
 
       <Example
         title="Inside a DropdownMenu — kebab Delete"
-        description="Wrap a <DropdownMenu.Item closeOnSelect={false}> as ConfirmationPopover's trigger. To close the menu after a successful confirm, drive DropdownMenu's open state externally and call setMenuOpen(false) inside onConfirm."
-        code={`const [menuOpen, setMenuOpen] = useState(false);
-
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        description="Wrap a <DropdownMenu.Item closeOnSelect={false}> as ConfirmationPopover's trigger. The Item IS the trigger, so the full highlighted row opens the confirmation. The menu stays open until the user dismisses it (Escape, click outside, or pick another item)."
+        code={`<DropdownMenu>
   <DropdownMenu.Trigger>
     <Button variant="ghost" aria-label="Row actions">⋯</Button>
   </DropdownMenu.Trigger>
@@ -139,10 +137,7 @@ export function ConfirmationPopoverDemo() {
       description="This action cannot be undone."
       variant="danger"
       confirmLabel="Delete"
-      onConfirm={async () => {
-        await remove();
-        setMenuOpen(false);  // ← close the menu after the action resolves
-      }}
+      onConfirm={remove}
     >
       <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}} tone="danger">
         Delete
@@ -152,40 +147,30 @@ export function ConfirmationPopoverDemo() {
 </DropdownMenu>`}
       >
         <Cluster gap="md" justify="center">
-          <KebabDeleteExample onDelete={() => setDeleteCount((n) => n + 1)} />
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button variant="ghost" aria-label="Row actions">
+                ⋯
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content align="end">
+              <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+              <ConfirmationPopover
+                title="Delete record?"
+                description="This action cannot be undone."
+                variant="danger"
+                confirmLabel="Delete"
+                onConfirm={() => setDeleteCount((n) => n + 1)}
+              >
+                <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}} tone="danger">
+                  Delete
+                </DropdownMenu.Item>
+              </ConfirmationPopover>
+            </DropdownMenu.Content>
+          </DropdownMenu>
         </Cluster>
       </Example>
     </DemoLayout>
-  );
-}
-
-function KebabDeleteExample({ onDelete }: { onDelete: () => void }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  return (
-    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-      <DropdownMenu.Trigger>
-        <Button variant="ghost" aria-label="Row actions">
-          ⋯
-        </Button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Content align="end">
-        <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
-        <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
-        <ConfirmationPopover
-          title="Delete record?"
-          description="This action cannot be undone."
-          variant="danger"
-          confirmLabel="Delete"
-          onConfirm={() => {
-            onDelete();
-            setMenuOpen(false);
-          }}
-        >
-          <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}} tone="danger">
-            Delete
-          </DropdownMenu.Item>
-        </ConfirmationPopover>
-      </DropdownMenu.Content>
-    </DropdownMenu>
   );
 }
