@@ -98,9 +98,11 @@ export interface AllDayBar {
 export interface CalendarProps {
   // ... existing props ...
 
-  /** Active view. Defaults to `'month'`. */
+  /** Active view (controlled). When provided, pair with `onViewChange`. */
   view?: CalendarView;
-  /** Fires when the consumer interacts with the view switcher. Controlled when paired with `view`. */
+  /** Initial view (uncontrolled). Defaults to `'month'`. */
+  defaultView?: CalendarView;
+  /** Fires when the user clicks the view switcher. */
   onViewChange?: (view: CalendarView) => void;
   /**
    * Hour range shown in week/day views (inclusive start, exclusive end).
@@ -113,20 +115,7 @@ export interface CalendarProps {
 }
 ```
 
-The view switcher is internally rendered by the Calendar shell. When `onViewChange` is omitted, view defaults to `'month'` (uncontrolled-style — no internal state for view, just initial render). Document: for switching to work, consumers must control via `view`/`onViewChange`.
-
-Actually — simpler: keep `view` uncontrolled by default (internal `useState`), fall back to controlled when consumer passes the prop. Same pattern as `value`/`defaultValue`.
-
-```ts
-export interface CalendarProps {
-  // ...
-  view?: CalendarView;
-  defaultView?: CalendarView; // initial value when uncontrolled
-  onViewChange?: (view: CalendarView) => void;
-  hourRange?: [number, number];
-  hourRowHeight?: number;
-}
-```
+`view` follows the same controlled/uncontrolled pattern as `value`/`defaultValue`: pass `view`+`onViewChange` for controlled, or `defaultView` for uncontrolled internal state. The view switcher renders inside the Calendar shell header.
 
 ### `CalendarLabels`
 
