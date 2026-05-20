@@ -1,3 +1,5 @@
+@use '../../styles/mixins' as *;
+
 .grid {
   display: flex;
   flex-direction: column;
@@ -26,22 +28,63 @@
 }
 
 .week {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: minmax(5rem, auto);
+  grid-auto-rows: auto;
+  row-gap: var(--space-1);
+  padding-bottom: var(--space-1);
 }
 
+/* `display: contents` flattens the ARIA-row wrapper so each DayCell
+   becomes a direct grid item of `.week`. */
 .dayRow {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  display: contents;
 }
 
-.laneRow {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--space-1);
-  padding: 0 var(--space-1) var(--space-1) var(--space-1);
+/* Background day-column layers — span all rows of the week's grid.
+   These provide the visible cell box (border + today/weekend tint); the
+   foreground DayCells and bars sit on top inside the same column. */
+.dayColumn {
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.dayColumnToday {
+  background: var(--color-accent-bg-subtle);
+}
+
+.dayColumnWeekend {
+  background: var(--color-bg-muted);
 }
 
 .barSlot {
   min-width: 0;
+  padding: 0 var(--space-1);
+}
+
+.moreChipWrapper {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 var(--space-2);
+}
+
+.moreChip {
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import clsx from 'clsx';
 import type { MonthGrid } from '../../calendar/types';
 import { addDays, addMonths, isSameDay, startOfWeek } from '../../calendar/dateMath';
 import type { CalendarEvent, EventBar } from './types';
@@ -196,43 +197,85 @@ export function MonthView({
         const laneCount = weekBars
           ? Math.min(maxLanesPerWeek, Math.max(...weekBars.keys()) + 1)
           : 0;
+        const hasHidden = week.some((d) => (layout.hiddenCounts.get(d.key) ?? 0) > 0);
         return (
           <div key={weekIndex} className={styles.week}>
-            {/* role="row" lives here so gridcell children are direct ARIA children */}
+            {/* Background day-column layers — span all rows in the week's grid */}
+            {week.map((day, i) => (
+              <div
+                key={`bg-${day.key}`}
+                aria-hidden="true"
+                className={clsx(
+                  styles.dayColumn,
+                  day.isToday && styles.dayColumnToday,
+                  day.isWeekend && styles.dayColumnWeekend,
+                )}
+                style={{ gridColumn: i + 1, gridRow: '1 / -1' }}
+              />
+            ))}
+            {/* ARIA row of day cells — `display: contents` flattens this wrapper
+                so each DayCell becomes a direct grid item of `.week`. */}
             <div role="row" className={styles.dayRow}>
-              {week.map((day) => (
+              {week.map((day, i) => (
                 <DayCell
                   key={day.key}
                   day={day}
                   isFocused={day.key === focusedKey}
-                  hiddenCount={layout.hiddenCounts.get(day.key) ?? 0}
                   onDayClick={onDayClick}
                   onKeyDown={handleKeyDown}
+                  style={{ gridColumn: i + 1, gridRow: 1 }}
                 />
               ))}
             </div>
-            {Array.from({ length: laneCount }).map((_, lane) => {
+            {/* Event bars in lane rows (rows 2..laneCount+1) */}
+            {Array.from({ length: laneCount }).flatMap((_, lane) => {
               const laneBars = weekBars?.get(lane) ?? [];
-              return (
-                // role="presentation" keeps buttons out of the ARIA grid row hierarchy
-                <div key={lane} role="presentation" className={styles.laneRow}>
-                  {laneBars.map((bar) => (
-                    <div
-                      key={bar.event.id}
-                      className={styles.barSlot}
-                      style={{ gridColumn: `${bar.startCol} / ${bar.endCol + 1}` }}
-                    >
-                      <EventChip
-                        event={bar.event}
-                        continuesLeft={bar.continuesLeft}
-                        continuesRight={bar.continuesRight}
-                        onClick={(ev) => onEventClick?.(ev)}
-                      />
-                    </div>
-                  ))}
+              return laneBars.map((bar) => (
+                <div
+                  key={bar.event.id}
+                  aria-hidden="true"
+                  className={styles.barSlot}
+                  style={{
+                    gridRow: lane + 2,
+                    gridColumn: `${bar.startCol} / ${bar.endCol + 1}`,
+                  }}
+                >
+                  <EventChip
+                    event={bar.event}
+                    continuesLeft={bar.continuesLeft}
+                    continuesRight={bar.continuesRight}
+                    onClick={(ev) => onEventClick?.(ev)}
+                  />
                 </div>
-              );
+              ));
             })}
+            {/* "+N more" overflow chips — placed at the row right after the
+                last visible lane, in each affected day's column. */}
+            {hasHidden &&
+              week.map((day, i) => {
+                const hiddenCount = layout.hiddenCounts.get(day.key) ?? 0;
+                if (hiddenCount === 0) return null;
+                return (
+                  <div
+                    key={`more-${day.key}`}
+                    aria-hidden="true"
+                    className={styles.moreChipWrapper}
+                    style={{ gridColumn: i + 1, gridRow: laneCount + 2 }}
+                  >
+                    <button
+                      type="button"
+                      className={styles.moreChip}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDayClick?.(day.date);
+                      }}
+                      aria-label={`${hiddenCount} more events`}
+                    >
+                      +{hiddenCount} more
+                    </button>
+                  </div>
+                );
+              })}
           </div>
         );
       })}
