@@ -97,10 +97,26 @@ export function ConfirmationPopover({
     queueMicrotask(() => cancelRef.current?.focus({ preventScroll: true }));
   }, [open]);
 
+  const [pending, setPending] = useState(false);
+
   const handleConfirm = useCallback(() => {
-    onConfirm();
-    setOpen(false);
-  }, [onConfirm, setOpen]);
+    if (pending) return;
+    const result = onConfirm();
+    if (result instanceof Promise) {
+      setPending(true);
+      result
+        .then(() => {
+          setPending(false);
+          setOpen(false);
+        })
+        .catch(() => {
+          setPending(false);
+          // Popover stays open. onCancel NOT fired — failure is its own state.
+        });
+    } else {
+      setOpen(false);
+    }
+  }, [pending, onConfirm, setOpen]);
 
   const handleCancel = useCallback(() => {
     onCancel?.();
@@ -124,12 +140,19 @@ export function ConfirmationPopover({
             </p>
           )}
           <Cluster justify="end" gap="sm">
-            <Button ref={cancelRef} variant="secondary" size="sm" onClick={handleCancel}>
+            <Button
+              ref={cancelRef}
+              variant="secondary"
+              size="sm"
+              disabled={pending}
+              onClick={handleCancel}
+            >
               {cancelLabel}
             </Button>
             <Button
               variant={variant === 'danger' ? 'danger' : 'primary'}
               size="sm"
+              disabled={pending}
               onClick={handleConfirm}
             >
               {confirmLabel}

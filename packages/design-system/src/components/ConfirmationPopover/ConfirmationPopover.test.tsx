@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, configure, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfirmationPopover } from './ConfirmationPopover';
 
@@ -145,5 +145,114 @@ describe('ConfirmationPopover — initial focus', () => {
     // Re-rendering with a new variant keeps the popover open; focus has
     // already moved to Cancel on the original open. Verify it's still there.
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+  });
+});
+
+describe('ConfirmationPopover — async onConfirm', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    // @testing-library/react's asyncWrapper has a setTimeout(0) drain step
+    // that only knows how to advance Jest fake timers. Override it to also
+    // advance Vitest fake timers (matches the pattern Tooltip uses).
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    configure({ asyncWrapper: async (cb) => cb() });
+  });
+
+  it('async onConfirm: pending → buttons disabled → resolve → close', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let resolveFn: () => void = () => {};
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveFn = resolve;
+        }),
+    );
+
+    render(
+      <ConfirmationPopover title="Confirm?" onConfirm={onConfirm}>
+        <button type="button">Open</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    await act(async () => {
+      resolveFn();
+    });
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('async onConfirm rejects → popover stays open, buttons re-enable, onCancel NOT fired', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const onCancel = vi.fn();
+    let rejectFn: (e: Error) => void = () => {};
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((_, reject) => {
+          rejectFn = reject;
+        }),
+    );
+
+    render(
+      <ConfirmationPopover title="Confirm?" onConfirm={onConfirm} onCancel={onCancel}>
+        <button type="button">Open</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    await act(async () => {
+      rejectFn(new Error('boom'));
+    });
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel' })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Confirm' })).not.toBeDisabled();
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it('double-click Confirm during pending → onConfirm runs once', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let resolveFn: () => void = () => {};
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveFn = resolve;
+        }),
+    );
+
+    render(
+      <ConfirmationPopover title="Confirm?" onConfirm={onConfirm}>
+        <button type="button">Open</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const confirmBtn = screen.getByRole('button', { name: 'Confirm' });
+    await user.click(confirmBtn);
+    await user.click(confirmBtn); // disabled → ignored
+    await user.click(confirmBtn); // disabled → ignored
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      resolveFn();
+    });
   });
 });
