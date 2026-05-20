@@ -91,7 +91,7 @@ Both tests use the existing global Vitest setup (`globals: true`) and the same i
 
    Code snippet shows both, with `aria-label` highlighted as required.
 
-`Pencil` icon import comes from `lucide-react` (already used elsewhere in the playground).
+`X` and `Pencil` are added to the existing `lucide-react` import in `ButtonDemo.tsx` (the file currently imports `Check, Plus, Search, Trash2`; `lucide-react` is already a playground dependency).
 
 ## `AGENTS.md` update
 
