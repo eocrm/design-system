@@ -1137,6 +1137,26 @@ describe('Select — clearable', () => {
     await user.click(screen.getByRole('button', { name: /clear selection/i }));
     expect(onChange).toHaveBeenCalledWith([], []);
   });
+
+  it('clear ✕ button is focusable via keyboard', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} defaultValue="active" />);
+    const trigger = screen.getByRole('button', { name: /Active/i });
+    trigger.focus();
+    await user.tab(); // moves to next focusable
+    const clearBtn = screen.getByRole('button', { name: /clear selection/i });
+    expect(document.activeElement).toBe(clearBtn);
+  });
+
+  it('Enter on focused clear ✕ clears the selection', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select options={STATUSES} defaultValue="pending" onChange={onChange} />);
+    const clearBtn = screen.getByRole('button', { name: /clear selection/i });
+    clearBtn.focus();
+    await user.keyboard('{Enter}');
+    expect(onChange).toHaveBeenCalledWith('', null);
+  });
 });
 
 describe('Select — render escape hatches', () => {

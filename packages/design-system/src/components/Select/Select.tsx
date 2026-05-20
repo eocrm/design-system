@@ -648,6 +648,11 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
  *   fetcher is called on every debounced query — read fresh props from a
  *   stable reference (e.g. `useCallback` in the consumer) instead of
  *   capturing values that drift.
+ *
+ * @remarks Keyboard limitations (v1)
+ * - In chips-mode, Backspace on an empty input removes the trailing chip;
+ *   full chip-to-chip arrow navigation (ArrowLeft from empty input stepping
+ *   into chips, ArrowLeft/Right cycling chips) is not implemented in v1.
  */
 // `Select` is exposed via a cast so the public type is generic over `T`
 // — `forwardRef` does not preserve the generic parameter through its own

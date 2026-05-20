@@ -392,6 +392,7 @@ const [tab, setTab] = useState('overview');
 ```
 
 - One generalist; the mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` × `searchable`. See the JSDoc on `<Select>` for the matrix and anti-patterns.
+- `triggerDisplay` defaults to `'chips'` when `multiple` is set. Use `'summary'` for table-filter UIs where chips would crowd the toolbar.
 - **Async**: pass `loadOptions(query, signal)`. Debounce (250ms default, configurable via `searchDebounceMs`) and `AbortSignal` cancellation are built-in. Do NOT debounce externally.
 - **Tag input pattern** = `multiple + searchable + creatable + triggerDisplay='chips'`. There is no separate `<Tags>` component.
 - **Form integration**: pass `name` (and `required`/`form` if needed). Hidden inputs render so `new FormData(form)` works. Multi mode renders one hidden input per selected value; `FormData.getAll(name)` returns the array.

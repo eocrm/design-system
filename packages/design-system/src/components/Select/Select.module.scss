@@ -134,12 +134,11 @@
 }
 
 // ─── Listbox panel ──────────────────────────────────────────────────────────
-// Open animation uses CSS `@keyframes` (NOT DropdownMenu's `@starting-style`
-// + `transition: transform` pattern) because Floating UI runs in default
-// `transform: true` mode here — the positioning transform on the floating
-// element is needed every frame, so we can't repurpose the `transform`
-// property for an entrance animation. Keyframes leave the inline transform
-// from Floating UI alone and animate via the `animation` property instead.
+// Open animation uses CSS `@keyframes` for the scale-fade. Floating UI is
+// configured with `transform: false` in Listbox.tsx so positioning is
+// emitted as inline `top` / `left` — that leaves the `transform` property
+// free for the keyframe's `transform: scale(...)` without fighting an
+// inline translate. Matches DropdownMenu and Popover Content.
 // `transform-origin: top` is a static approximation (panel scales from the
 // top edge). A future polish task can wire dynamic origin off Floating UI's
 // resolved placement so the panel grows toward the trigger on flip.

@@ -34,6 +34,14 @@ export function Listbox() {
   const { refs, floatingStyles } = useFloating({
     open: ctx.open,
     placement: 'bottom-start',
+    // `transform: false` — emit `top` / `left` positioning instead of an
+    // inline `transform: translate(...)`. The open animation in
+    // Select.module.scss animates `transform: scale(...)` on the panel; if
+    // Floating UI also wrote `transform`, the keyframe would clobber the
+    // inline translate and the panel would visibly snap to the document
+    // origin before jumping to the trigger. Matches DropdownMenu and
+    // Popover Content.
+    transform: false,
     middleware: [
       offset(4),
       flip(),

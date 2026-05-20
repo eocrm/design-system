@@ -35,13 +35,19 @@ export interface TriggerProps {
 // must NOT also open or close the listbox), and the explicit
 // `setValue('')` / `setValue([])` path bypasses `toggleValue` so a
 // multi-select wipe is one event, not N.
+//
+// `tabIndex={0}` (not `-1`) — the clear button MUST be reachable by
+// keyboard for accessibility. The default Tab order takes the user from
+// the trigger to ✕ and then on to the next focusable element on the page;
+// Enter/Space on the focused ✕ activates the native button's `onClick` so
+// no extra keyboard handler is needed.
 // ────────────────────────────────────────────────────────────────────────────
 function ClearButton({ variant }: { variant: 'overlay' | 'inline' }) {
   const ctx = useSelectContext('Trigger.ClearButton');
   return (
     <button
       type="button"
-      tabIndex={-1}
+      tabIndex={0}
       className={clsx(styles.clearButton, variant === 'inline' && styles.clearButtonInline)}
       aria-label="Clear selection"
       onPointerDown={(e) => e.stopPropagation()}

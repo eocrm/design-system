@@ -271,8 +271,7 @@ We deliberately avoid the `"N selected"` shortcut by default — the comma-joine
 
 - Trigger: input-shell that grows vertically as chips wrap. Chips render left-to-right top-to-bottom; the editable caret area is the last child, taking remaining width with `min-width: 4ch` so it always has somewhere to type.
 - Adding: typing filters, `Enter` selects active row (and immediately keeps popover open, clears query, refocuses input caret).
-- Removing: click on a chip's `✕` removes that one; `Backspace` on an empty caret removes the trailing chip and moves focus to its `✕` (next `Backspace` removes again, or arrow-keys navigate among chips like macOS pill UI).
-- `ArrowLeft` at start of empty input → focus moves to the trailing chip's `✕`. `ArrowLeft`/`ArrowRight` while on a chip navigate between chips. `Enter`/`Backspace`/`Delete` on a focused chip removes it. `Escape` returns focus to caret without removing.
+- Removing: click on a chip's `✕` removes that one; `Backspace` on an empty caret removes the trailing chip. (Full chip-to-chip arrow navigation — ArrowLeft from empty input stepping into chips, ArrowLeft/Right cycling chips, Enter/Delete on focused chip — is deferred to v2.)
 
 ### Multi, chips, non-searchable
 
