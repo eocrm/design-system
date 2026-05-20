@@ -25,6 +25,50 @@ export interface TriggerProps {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// ClearButton — the trailing ✕ rendered inside the trigger when
+// `effectiveClearable` is true AND a value is set. Wired by every variant.
+//
+// Wired as a real `<button>` so screen readers announce a focusable
+// "Clear selection" action. `stopPropagation` on both pointerdown + click
+// keeps the parent trigger's own toggle handler from firing (clicking ✕
+// must NOT also open or close the listbox), and the explicit
+// `setValue('')` / `setValue([])` path bypasses `toggleValue` so a
+// multi-select wipe is one event, not N.
+// ────────────────────────────────────────────────────────────────────────────
+function ClearButton({ variant }: { variant: 'overlay' | 'inline' }) {
+  const ctx = useSelectContext('Trigger.ClearButton');
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      className={clsx(styles.clearButton, variant === 'inline' && styles.clearButtonInline)}
+      aria-label="Clear selection"
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (ctx.multiple) {
+          ctx.setValue([]);
+        } else {
+          ctx.setValue('');
+        }
+      }}
+    >
+      <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+        <path d="M1 1 L9 9 M9 1 L1 9" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      </svg>
+    </button>
+  );
+}
+
+/** Helper: does this Select currently have a non-empty selection? */
+function selectHasValue(value: string | string[], multiple: boolean): boolean {
+  return multiple
+    ? Array.isArray(value) && value.length > 0
+    : typeof value === 'string' && value !== '';
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // Shared helpers
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -335,34 +379,42 @@ function ButtonTrigger(props: TriggerProps) {
     }
   };
 
+  const showClear = props.clearable && hasValue;
+
   return (
-    <button
-      type="button"
-      id={ctx.triggerId}
-      ref={ctx.triggerRef as Ref<HTMLButtonElement>}
-      className={clsx(styles.trigger, styles.triggerButton, !hasValue && styles.placeholder)}
-      aria-haspopup="listbox"
-      aria-expanded={ctx.open}
-      aria-controls={ctx.open ? ctx.listboxId : undefined}
-      aria-activedescendant={activeOptionId}
-      aria-label={computedAriaLabel}
-      aria-labelledby={props['aria-labelledby']}
-      aria-describedby={props['aria-describedby']}
-      aria-invalid={props.invalid || undefined}
-      aria-readonly={props.readOnly || undefined}
-      disabled={props.disabled}
-      onClick={() => {
-        if (props.disabled || props.readOnly) return;
-        ctx.setOpen(!ctx.open);
-      }}
-      onKeyDown={handleKeyDown}
-    >
-      {label ? (
-        <span>{label}</span>
-      ) : (
-        <span className={styles.placeholder}>{props.placeholder ?? ''}</span>
-      )}
-    </button>
+    <div className={styles.triggerWrap}>
+      <button
+        type="button"
+        id={ctx.triggerId}
+        ref={ctx.triggerRef as Ref<HTMLButtonElement>}
+        className={clsx(styles.trigger, styles.triggerButton, !hasValue && styles.placeholder)}
+        aria-haspopup="listbox"
+        aria-expanded={ctx.open}
+        aria-controls={ctx.open ? ctx.listboxId : undefined}
+        aria-activedescendant={activeOptionId}
+        aria-label={computedAriaLabel}
+        aria-labelledby={props['aria-labelledby']}
+        aria-describedby={props['aria-describedby']}
+        aria-invalid={props.invalid || undefined}
+        aria-readonly={props.readOnly || undefined}
+        disabled={props.disabled}
+        onClick={() => {
+          if (props.disabled || props.readOnly) return;
+          ctx.setOpen(!ctx.open);
+        }}
+        onKeyDown={handleKeyDown}
+      >
+        {label ? (
+          <span>{label}</span>
+        ) : (
+          <span className={styles.placeholder}>{props.placeholder ?? ''}</span>
+        )}
+      </button>
+      {showClear && <ClearButton variant="overlay" />}
+      <span className={styles.chevron} aria-hidden="true">
+        ▾
+      </span>
+    </div>
   );
 }
 
@@ -448,41 +500,49 @@ function ComboboxInputTrigger(props: TriggerProps) {
   // ref only need `.focus()` / `.contains()` which are on HTMLElement.
   const inputRefHolder = ctx.triggerRef as MutableRefObject<HTMLInputElement | null>;
 
+  const showClear = props.clearable && selectHasValue(ctx.value, ctx.multiple);
+
   return (
-    <input
-      type="text"
-      id={ctx.triggerId}
-      ref={(node) => {
-        inputRefHolder.current = node;
-      }}
-      className={clsx(styles.trigger, styles.triggerInput, !selectedLabel && styles.placeholder)}
-      role="combobox"
-      aria-autocomplete="list"
-      aria-haspopup="listbox"
-      aria-expanded={ctx.open}
-      aria-controls={ctx.open ? ctx.listboxId : undefined}
-      aria-activedescendant={activeOptionId}
-      aria-label={props['aria-label']}
-      aria-labelledby={props['aria-labelledby']}
-      aria-describedby={props['aria-describedby']}
-      aria-invalid={props.invalid || undefined}
-      aria-readonly={props.readOnly || undefined}
-      autoComplete="off"
-      spellCheck={false}
-      disabled={props.disabled}
-      readOnly={props.readOnly}
-      value={displayValue}
-      placeholder={selectedLabel === '' ? props.placeholder : undefined}
-      onClick={() => {
-        if (props.disabled || props.readOnly) return;
-        // Click opens but does NOT toggle — matches Headless UI Combobox
-        // and avoids the surprising "click the focused input to close
-        // it" behaviour.
-        if (!ctx.open) ctx.setOpen(true);
-      }}
-      onChange={handleChange}
-      onKeyDown={handleKeyDown}
-    />
+    <div className={styles.triggerWrap}>
+      <input
+        type="text"
+        id={ctx.triggerId}
+        ref={(node) => {
+          inputRefHolder.current = node;
+        }}
+        className={clsx(styles.trigger, styles.triggerInput, !selectedLabel && styles.placeholder)}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-haspopup="listbox"
+        aria-expanded={ctx.open}
+        aria-controls={ctx.open ? ctx.listboxId : undefined}
+        aria-activedescendant={activeOptionId}
+        aria-label={props['aria-label']}
+        aria-labelledby={props['aria-labelledby']}
+        aria-describedby={props['aria-describedby']}
+        aria-invalid={props.invalid || undefined}
+        aria-readonly={props.readOnly || undefined}
+        autoComplete="off"
+        spellCheck={false}
+        disabled={props.disabled}
+        readOnly={props.readOnly}
+        value={displayValue}
+        placeholder={selectedLabel === '' ? props.placeholder : undefined}
+        onClick={() => {
+          if (props.disabled || props.readOnly) return;
+          // Click opens but does NOT toggle — matches Headless UI Combobox
+          // and avoids the surprising "click the focused input to close
+          // it" behaviour.
+          if (!ctx.open) ctx.setOpen(true);
+        }}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+      />
+      {showClear && <ClearButton variant="overlay" />}
+      <span className={styles.chevron} aria-hidden="true">
+        ▾
+      </span>
+    </div>
   );
 }
 
@@ -619,6 +679,7 @@ function ChipsInputTrigger(props: TriggerProps) {
         }}
         onKeyDown={handleInputKeyDown}
       />
+      {props.clearable && selectedOptions.length > 0 && <ClearButton variant="inline" />}
     </div>
   );
 }
@@ -725,6 +786,7 @@ function ChipsButtonTrigger(props: TriggerProps) {
       {selectedOptions.length === 0 && (
         <span className={styles.placeholder}>{props.placeholder ?? ''}</span>
       )}
+      {props.clearable && selectedOptions.length > 0 && <ClearButton variant="inline" />}
     </div>
   );
 }

@@ -361,6 +361,16 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   const triggerRef = useRef<HTMLElement | null>(null);
   const listboxRef = useRef<HTMLUListElement | null>(null);
 
+  // `clearable` default depends on cardinality + `required`. Single-mode
+  // pickers usually want a clear button (the only way for a user to reach
+  // the empty state without typing); multi-mode users typically clear chip
+  // by chip and a "clear all" affordance is opt-in. `required` forces the
+  // ✕ off — a required field with no other selection escape would be a
+  // form-validation foot-gun. `disabled` / `readOnly` also suppress because
+  // the trigger is non-interactive in those states.
+  const effectiveClearable =
+    (clearable === undefined ? !multiple && !required : clearable) && !disabled && !readOnly;
+
   // Defined inline rather than via useCallback because it captures the
   // current `setOpen` and `triggerRef` — both stable identities — and is
   // only consumed downstream via context, which already memoizes nothing.
@@ -423,7 +433,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
           disabled={disabled}
           readOnly={readOnly}
           invalid={invalid}
-          clearable={clearable}
+          clearable={effectiveClearable}
           aria-label={props['aria-label']}
           aria-labelledby={props['aria-labelledby']}
           aria-describedby={props['aria-describedby']}

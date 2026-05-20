@@ -33,7 +33,9 @@ describe('Select — single, non-searchable, sync', () => {
 
   it('renders the selected label when value is set', () => {
     render(<Select options={STATUSES} value="pending" />);
-    expect(screen.getByRole('button')).toHaveTextContent('Pending');
+    // Two buttons in the DOM once `value` is set: the main trigger and the
+    // overlay clear ✕. Filter by accessible name so the trigger is unambiguous.
+    expect(screen.getByRole('button', { name: 'Pending' })).toBeInTheDocument();
   });
 });
 
@@ -109,10 +111,12 @@ describe('Select — selection (single)', () => {
       );
     };
     render(<Wrapper />);
+    // Closed + no value → only one button (the trigger w/ placeholder text).
     expect(screen.getByRole('button')).toHaveTextContent('Pick');
     await user.click(screen.getByRole('button'));
     await user.click(screen.getByRole('option', { name: 'Archived' }));
-    expect(screen.getByRole('button')).toHaveTextContent('Archived');
+    // After selection, the clear ✕ also renders, so name-filter the trigger.
+    expect(screen.getByRole('button', { name: 'Archived' })).toBeInTheDocument();
   });
 
   it('clicking a disabled option does nothing', async () => {
@@ -202,11 +206,14 @@ describe('Select — keyboard (single, non-searchable)', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<Select options={STATUSES} value="active" onChange={onChange} />);
-    screen.getByRole('button').focus();
+    // `value="active"` triggers the clear ✕ overlay, so filter by name to
+    // get only the main trigger.
+    const trigger = screen.getByRole('button', { name: 'Active' });
+    trigger.focus();
     await user.keyboard('{Enter}{ArrowDown}{Escape}');
     expect(screen.queryByRole('listbox')).toBeNull();
     expect(onChange).not.toHaveBeenCalled();
-    expect(screen.getByRole('button')).toHaveTextContent('Active');
+    expect(trigger).toHaveTextContent('Active');
   });
 
   it('Tab closes and commits', async () => {
@@ -1075,5 +1082,59 @@ describe('Select — visual states', () => {
     await user.click(trigger);
     expect(screen.queryByRole('listbox')).toBeNull();
     expect(trigger).toHaveTextContent('Pending');
+  });
+});
+
+describe('Select — clearable', () => {
+  it('shows ✕ button when single + clearable + has value (default behavior, not required)', () => {
+    render(<Select options={STATUSES} value="pending" />);
+    expect(screen.getByRole('button', { name: /clear selection/i })).toBeInTheDocument();
+  });
+
+  it('clicking ✕ clears the selection', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select options={STATUSES} defaultValue="pending" onChange={onChange} />);
+    await user.click(screen.getByRole('button', { name: /clear selection/i }));
+    expect(onChange).toHaveBeenCalledWith('', null);
+  });
+
+  it('does NOT show ✕ when required', () => {
+    render(<Select options={STATUSES} value="pending" required name="x" />);
+    expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();
+  });
+
+  it('does NOT show ✕ when no value', () => {
+    render(<Select options={STATUSES} />);
+    expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();
+  });
+
+  it('does NOT show ✕ in multi mode by default', () => {
+    render(<Select multiple options={STATUSES} value={['active']} triggerDisplay="summary" />);
+    expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();
+  });
+
+  it('shows ✕ in multi mode when explicitly clearable=true', () => {
+    render(
+      <Select multiple options={STATUSES} value={['active']} triggerDisplay="summary" clearable />,
+    );
+    expect(screen.getByRole('button', { name: /clear selection/i })).toBeInTheDocument();
+  });
+
+  it('clicking ✕ in multi clears the entire array', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Select
+        multiple
+        options={STATUSES}
+        defaultValue={['active', 'pending']}
+        triggerDisplay="summary"
+        clearable
+        onChange={onChange}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /clear selection/i }));
+    expect(onChange).toHaveBeenCalledWith([], []);
   });
 });

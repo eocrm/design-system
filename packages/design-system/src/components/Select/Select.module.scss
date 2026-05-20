@@ -2,6 +2,17 @@
   display: inline-block;
 }
 
+// ─── Trigger wrapper ────────────────────────────────────────────────────────
+// `position: relative` is a Hard Rule 4 "internal child anchor" exception —
+// the absolutely-positioned ✕ + chevron sit ON the wrapper, not escape its
+// box. Inline-block + width 100% lets the wrapper match the (intrinsic)
+// width the consumer asks for via the Select root.
+.triggerWrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
 // ─── Trigger ────────────────────────────────────────────────────────────────
 // `:focus-visible` (Hard Rule 3a) rather than `:focus`: mouse-clicking the
 // trigger shouldn't leave the focus ring visible.
@@ -34,6 +45,10 @@
 }
 
 .triggerButton {
+  // Reserve `--space-8` on the right for the chevron (and the ✕ when
+  // clearable). The chevron sits at `right: var(--space-3)`, the ✕ sits
+  // at `right: var(--space-6)` — both inside the `.triggerWrap`'s padding.
+  padding-right: var(--space-8);
   text-align: left;
 
   // Multi-summary text can grow longer than the trigger width — clip with
@@ -53,6 +68,9 @@
 // only flips the cursor (text caret over the input vs pointer over the
 // button) and styles the native HTML placeholder pseudo-element.
 .triggerInput {
+  // Same right-side reservation as `.triggerButton` — chevron + ✕ overlay
+  // need clear space inside the `.triggerWrap`.
+  padding-right: var(--space-8);
   cursor: text;
 
   &::placeholder {
@@ -62,6 +80,57 @@
 
 .placeholder {
   color: var(--color-fg-muted);
+}
+
+// ─── Chevron + clear-✕ inside the trigger wrap ─────────────────────────────
+// Both are absolutely positioned siblings of the `.trigger` element. The
+// position rule lives on a CHILD of the component — Rule 4's "internal
+// child anchor" exception applies (the `.triggerWrap` is `position:relative`).
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  color: var(--color-fg-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.clearButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-fg);
+    background: var(--color-bg-muted);
+  }
+}
+
+// Overlay variant — used by the single-mode triggers (ButtonTrigger,
+// ComboboxInputTrigger). Pinned right of the trigger box, sitting just
+// inside the chevron.
+.clearButton:not(.clearButtonInline) {
+  position: absolute;
+  top: 50%;
+  right: var(--space-6);
+  width: var(--space-4);
+  height: var(--space-4);
+  transform: translateY(-50%);
+}
+
+// Inline variant — used by the chips triggers where the ✕ sits as a flex
+// child alongside chips + (optionally) an input. No `position`; layout is
+// handled by the parent's flex.
+.clearButtonInline {
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 // ─── Listbox panel ──────────────────────────────────────────────────────────
