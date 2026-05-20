@@ -141,6 +141,9 @@ describe('Calendar', () => {
       { wrapper: wrap() },
     );
     expect(screen.getByRole('button', { name: /Standup/ })).toBeInTheDocument();
+    // Agenda exposes a labelled list region (cycle-1 a11y fix).
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getByRole('listitem')).toBeInTheDocument();
   });
 
   it('prev/next aria-labels reflect the active view (per-view labels)', async () => {

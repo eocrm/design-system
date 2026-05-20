@@ -79,8 +79,8 @@ export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';
 
 // Calendar primitives (hooks + date math + Intl formatters + locale week info).
-// The Calendar UI components ship in a follow-up PR; these primitives are the
-// substrate they (and a future DatePicker) compose against.
+// The Calendar UI components below and a future DatePicker compose against
+// these — use them directly when you need date math without the UI.
 export {
   useMonth,
   useWeek,

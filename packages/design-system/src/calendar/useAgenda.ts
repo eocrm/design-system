@@ -34,7 +34,7 @@ export interface AgendaResult {
  * ends). When `from > to` the result is a single-day agenda for `from` — pass
  * `from <= to` to the hook to get the intended range.
  *
- * Used by the future `<AgendaView>` to group events by day.
+ * Used by `<AgendaView>` (via the `<Calendar>` shell) to group events by day.
  */
 export function useAgenda(from: Date, to: Date, options: UseAgendaOptions = {}): AgendaResult {
   const contextLocale = useLocale();
