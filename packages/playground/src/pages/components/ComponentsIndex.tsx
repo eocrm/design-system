@@ -199,8 +199,24 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description:
       'Month view with continuous multi-day event bars, overflow chips, and locale-aware weekday grids.',
     preview: (
-      <div style={{ width: '100%', maxWidth: 260, pointerEvents: 'none' }}>
-        <Calendar defaultValue={new Date(2026, 4, 15)} />
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 280,
+          height: 200,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+        }}
+      >
+        <div
+          style={{
+            width: '200%',
+            transform: 'scale(0.5)',
+            transformOrigin: 'top left',
+          }}
+        >
+          <Calendar defaultValue={new Date(2026, 4, 15)} />
+        </div>
       </div>
     ),
   },
