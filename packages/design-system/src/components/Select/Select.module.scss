@@ -283,12 +283,50 @@
   }
 }
 
-// ─── Visual state hooks (populated in Phase 10) ─────────────────────────────
-.size-sm,
-.size-md,
-.size-lg,
-.invalid,
-.disabled,
-.readOnly {
-  /* placeholder selectors; visual rules populated in Phase 10 */
+// ─── Visual state hooks (size / invalid / disabled / readOnly) ──────────────
+// These selectors compose with `.trigger` (and its variants —
+// `.triggerButton` / `.triggerInput` / `.triggerChips` / `.triggerChipsInput`).
+// `:not(.triggerChips)` keeps the vertical padding of chips triggers intact
+// (chips wrap onto multiple lines and need the existing `--space-1` Y-padding
+// instead of a flat `0`); height-bearing `min-height` still applies.
+.size-sm .trigger {
+  min-height: var(--size-sm);
+  font-size: var(--font-size-sm);
+
+  &:not(.triggerChips) {
+    padding: 0 var(--space-2);
+  }
+}
+
+.size-md .trigger {
+  min-height: var(--size-md);
+  font-size: var(--font-size-md);
+
+  &:not(.triggerChips) {
+    padding: 0 var(--space-3);
+  }
+}
+
+.size-lg .trigger {
+  min-height: var(--size-lg);
+  font-size: var(--font-size-lg);
+
+  &:not(.triggerChips) {
+    padding: 0 var(--space-3);
+  }
+}
+
+.invalid .trigger {
+  border-color: var(--color-danger);
+
+  &:focus-visible {
+    box-shadow: 0 0 0 var(--ring-width) var(--ring-danger);
+  }
+}
+
+.disabled .trigger,
+.readOnly .trigger {
+  color: var(--color-fg-disabled);
+  cursor: not-allowed;
+  background: var(--color-bg-subtle);
 }

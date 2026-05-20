@@ -1040,3 +1040,40 @@ describe('Select — form integration (multi)', () => {
     expect(hiddens[0].required).toBe(false);
   });
 });
+
+describe('Select — visual states', () => {
+  it('size="sm" applies the sm class', () => {
+    const { container } = render(<Select options={STATUSES} size="sm" />);
+    expect(container.firstElementChild!.className).toMatch(/size-sm/);
+  });
+
+  it('size="lg" applies the lg class', () => {
+    const { container } = render(<Select options={STATUSES} size="lg" />);
+    expect(container.firstElementChild!.className).toMatch(/size-lg/);
+  });
+
+  it('invalid sets aria-invalid on the trigger and adds the invalid class', () => {
+    const { container } = render(<Select options={STATUSES} invalid />);
+    expect(screen.getByRole('button')).toHaveAttribute('aria-invalid', 'true');
+    expect(container.firstElementChild!.className).toMatch(/invalid/);
+  });
+
+  it('disabled disables the trigger and prevents opening', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} disabled />);
+    const trigger = screen.getByRole('button');
+    expect(trigger).toBeDisabled();
+    await user.click(trigger);
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('readOnly prevents opening on click', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} readOnly value="pending" />);
+    const trigger = screen.getByRole('button');
+    expect(trigger).toHaveAttribute('aria-readonly', 'true');
+    await user.click(trigger);
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(trigger).toHaveTextContent('Pending');
+  });
+});
