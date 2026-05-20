@@ -158,17 +158,17 @@ Pure functions, no React, no `Intl` — date arithmetic only:
 export function addDays(date: Date, n: number): Date;
 export function addMonths(date: Date, n: number): Date;
 export function addWeeks(date: Date, n: number): Date;
-export function startOfDay(date: Date): Date;           // local midnight
+export function startOfDay(date: Date): Date; // local midnight
 export function startOfWeek(date: Date, weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6): Date;
 export function startOfMonth(date: Date): Date;
 export function endOfMonth(date: Date): Date;
 export function isSameDay(a: Date, b: Date): boolean;
 export function isSameMonth(a: Date, b: Date): boolean;
-export function isToday(date: Date, now?: Date): boolean;  // `now` is for testability
+export function isToday(date: Date, now?: Date): boolean; // `now` is for testability
 export function isWeekend(date: Date, weekendDays: readonly number[]): boolean;
-export function daysBetween(a: Date, b: Date): number;     // calendar-day diff, DST-safe
-export function toDateKey(date: Date): string;             // 'YYYY-MM-DD' in local time
-export function fromDateKey(key: string): Date;            // parses to local midnight
+export function daysBetween(a: Date, b: Date): number; // calendar-day diff, DST-safe
+export function toDateKey(date: Date): string; // 'YYYY-MM-DD' in local time
+export function fromDateKey(key: string): Date; // parses to local midnight
 ```
 
 DST-safety: `daysBetween` uses `Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / 86_400_000)` — the round absorbs the ±1 hour DST drift across the boundary.
@@ -190,13 +190,13 @@ function getFormatter(locale: string, options: Intl.DateTimeFormatOptions): Intl
   return f;
 }
 
-export function formatMonth(date: Date, locale: string): string;          // "May 2026"
-export function formatWeekdayShort(date: Date, locale: string): string;   // "Mon" (Intl 'short' weekday)
-export function formatWeekdayNarrow(date: Date, locale: string): string;  // "M" (for tight column headers)
-export function formatDayShort(date: Date, locale: string): string;       // "Wed 20"
-export function formatDayLong(date: Date, locale: string): string;        // "Wednesday, May 20"
+export function formatMonth(date: Date, locale: string): string; // "May 2026"
+export function formatWeekdayShort(date: Date, locale: string): string; // "Mon" (Intl 'short' weekday)
+export function formatWeekdayNarrow(date: Date, locale: string): string; // "M" (for tight column headers)
+export function formatDayShort(date: Date, locale: string): string; // "Wed 20"
+export function formatDayLong(date: Date, locale: string): string; // "Wednesday, May 20"
 export function formatRange(from: Date, to: Date, locale: string): string; // "May 18 – 24, 2026"
-export function formatHour(hour: number, locale: string): string;          // "9 AM" / "09:00" (12/24-hr from locale)
+export function formatHour(hour: number, locale: string): string; // "9 AM" / "09:00" (12/24-hr from locale)
 
 /** Test helper — exported so tests can assert cache reuse. */
 export function _resetFormatterCacheForTests(): void;
@@ -215,12 +215,15 @@ Implementation: try `new Intl.Locale(locale).getWeekInfo()` (Chrome 99+, Safari 
 
 ```ts
 const FALLBACK_FIRST_DAY: Record<string, 0 | 1> = {
-  'en-US': 0, 'en-CA': 0, 'ja-JP': 0,
+  'en-US': 0,
+  'en-CA': 0,
+  'ja-JP': 0,
   // default → 1 (Monday)
 };
 
 const FALLBACK_WEEKEND: Record<string, readonly number[]> = {
-  'ar-SA': [5, 6], 'he-IL': [5, 6],
+  'ar-SA': [5, 6],
+  'he-IL': [5, 6],
   // default → [0, 6] (Sat/Sun)
 };
 ```
@@ -265,8 +268,8 @@ export interface UseDayOptions {
 
 export interface DayResult {
   day: Day;
-  dayLabel: string;       // "Wednesday, May 20"
-  dayShortLabel: string;  // "Wed 20"
+  dayLabel: string; // "Wednesday, May 20"
+  dayShortLabel: string; // "Wed 20"
 }
 
 export function useDay(date: Date, options?: UseDayOptions): DayResult;
@@ -280,7 +283,7 @@ export interface UseAgendaOptions {
 
 export interface AgendaResult {
   days: readonly Day[];
-  rangeLabel: string;     // "May 1 – 31, 2026"
+  rangeLabel: string; // "May 1 – 31, 2026"
 }
 
 export function useAgenda(from: Date, to: Date, options?: UseAgendaOptions): AgendaResult;
@@ -305,14 +308,29 @@ export { useAgenda } from './useAgenda';
 export type { UseAgendaOptions, AgendaResult } from './useAgenda';
 export type { Day, Week, MonthGrid } from './types';
 export {
-  addDays, addMonths, addWeeks,
-  startOfDay, startOfWeek, startOfMonth, endOfMonth,
-  isSameDay, isSameMonth, isToday, isWeekend,
-  daysBetween, toDateKey, fromDateKey,
+  addDays,
+  addMonths,
+  addWeeks,
+  startOfDay,
+  startOfWeek,
+  startOfMonth,
+  endOfMonth,
+  isSameDay,
+  isSameMonth,
+  isToday,
+  isWeekend,
+  daysBetween,
+  toDateKey,
+  fromDateKey,
 } from './dateMath';
 export {
-  formatMonth, formatWeekdayShort, formatWeekdayNarrow,
-  formatDayShort, formatDayLong, formatRange, formatHour,
+  formatMonth,
+  formatWeekdayShort,
+  formatWeekdayNarrow,
+  formatDayShort,
+  formatDayLong,
+  formatRange,
+  formatHour,
 } from './formatters';
 export { getFirstDayOfWeek, getWeekendDays } from './weekInfo';
 ```
@@ -326,19 +344,45 @@ export type { LocaleProviderProps } from './i18n';
 
 // Calendar primitives
 export {
-  useMonth, useWeek, useDay, useAgenda,
-  isSameDay, isSameMonth, isToday, isWeekend,
-  addDays, addMonths, addWeeks,
-  startOfDay, startOfWeek, startOfMonth, endOfMonth,
-  daysBetween, toDateKey, fromDateKey,
-  formatMonth, formatWeekdayShort, formatWeekdayNarrow,
-  formatDayShort, formatDayLong, formatRange, formatHour,
-  getFirstDayOfWeek, getWeekendDays,
+  useMonth,
+  useWeek,
+  useDay,
+  useAgenda,
+  isSameDay,
+  isSameMonth,
+  isToday,
+  isWeekend,
+  addDays,
+  addMonths,
+  addWeeks,
+  startOfDay,
+  startOfWeek,
+  startOfMonth,
+  endOfMonth,
+  daysBetween,
+  toDateKey,
+  fromDateKey,
+  formatMonth,
+  formatWeekdayShort,
+  formatWeekdayNarrow,
+  formatDayShort,
+  formatDayLong,
+  formatRange,
+  formatHour,
+  getFirstDayOfWeek,
+  getWeekendDays,
 } from './calendar';
 export type {
-  Day, Week, MonthGrid,
-  UseMonthOptions, UseWeekOptions, UseDayOptions, UseAgendaOptions,
-  WeekResult, DayResult, AgendaResult,
+  Day,
+  Week,
+  MonthGrid,
+  UseMonthOptions,
+  UseWeekOptions,
+  UseDayOptions,
+  UseAgendaOptions,
+  WeekResult,
+  DayResult,
+  AgendaResult,
 } from './calendar';
 ```
 

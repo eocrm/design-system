@@ -37,7 +37,10 @@ export function formatDayLong(date: Date, locale: string): string {
 
 /** "May 18 – 24, 2026" via Intl.DateTimeFormat#formatRange. */
 export function formatRange(from: Date, to: Date, locale: string): string {
-  return getFormatter(locale, { year: 'numeric', month: 'long', day: 'numeric' }).formatRange(from, to);
+  return getFormatter(locale, { year: 'numeric', month: 'long', day: 'numeric' }).formatRange(
+    from,
+    to,
+  );
 }
 
 /** "9 AM" / "09:00" — 12/24-hour determined by locale default. */

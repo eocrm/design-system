@@ -37,10 +37,9 @@ describe('useMonth', () => {
   });
 
   it('weekStartsOn option overrides the locale default', () => {
-    const { result } = renderHook(
-      () => useMonth(new Date(2026, 4, 1), { weekStartsOn: 0 }),
-      { wrapper: wrapWithLocale('ru-RU') },
-    );
+    const { result } = renderHook(() => useMonth(new Date(2026, 4, 1), { weekStartsOn: 0 }), {
+      wrapper: wrapWithLocale('ru-RU'),
+    });
     expect(result.current.weeks[0][0].date.getDay()).toBe(0);
   });
 

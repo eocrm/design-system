@@ -21,19 +21,20 @@ const FALLBACK_WEEKEND: Record<string, readonly DayIndex[]> = {
  * NOTE: getWeekInfo uses ISO weekday numbering (Mon=1…Sun=7).
  * We normalise to JS day numbering (Sun=0…Sat=6) via `isoDay % 7`.
  */
-function tryWeekInfo(locale: string): { firstDay: DayIndex; weekend: readonly DayIndex[] } | undefined {
+function tryWeekInfo(
+  locale: string,
+): { firstDay: DayIndex; weekend: readonly DayIndex[] } | undefined {
   try {
     const loc = new Intl.Locale(locale);
-    const getWeekInfo = (loc as Intl.Locale & { getWeekInfo?: () => { firstDay: number; weekend: number[] } })
-      .getWeekInfo;
+    const getWeekInfo = (
+      loc as Intl.Locale & { getWeekInfo?: () => { firstDay: number; weekend: number[] } }
+    ).getWeekInfo;
     if (!getWeekInfo) return undefined;
     const info = getWeekInfo.call(loc);
     if (!info) return undefined;
     // Convert ISO weekday (1=Mon…7=Sun) → JS day (0=Sun…6=Sat)
     const firstDay = (info.firstDay % 7) as DayIndex;
-    const weekend = info.weekend
-      .map((d) => (d % 7) as DayIndex)
-      .sort((a, b) => a - b);
+    const weekend = info.weekend.map((d) => (d % 7) as DayIndex).sort((a, b) => a - b);
     return { firstDay, weekend };
   } catch {
     return undefined;

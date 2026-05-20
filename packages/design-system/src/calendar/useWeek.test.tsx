@@ -32,10 +32,9 @@ describe('useWeek', () => {
   });
 
   it('weekStartsOn override wins over locale default', () => {
-    const { result } = renderHook(
-      () => useWeek(new Date(2026, 4, 20), { weekStartsOn: 0 }),
-      { wrapper: wrapWithLocale('ru-RU') },
-    );
+    const { result } = renderHook(() => useWeek(new Date(2026, 4, 20), { weekStartsOn: 0 }), {
+      wrapper: wrapWithLocale('ru-RU'),
+    });
     expect(result.current.days[0].date.getDay()).toBe(0);
   });
 
