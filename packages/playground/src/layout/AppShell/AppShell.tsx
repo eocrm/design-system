@@ -21,6 +21,8 @@ import {
   ArrowRight,
   MessageSquare,
   MoreHorizontal,
+  PanelLeft,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
@@ -74,6 +76,13 @@ const componentGroups = [
     items: [
       { to: '/components/dropdown-menu', label: 'DropdownMenu', icon: MoreHorizontal, end: false },
       { to: '/components/tooltip', label: 'Tooltip', icon: MessageSquare, end: false },
+      { to: '/components/popover', label: 'Popover', icon: PanelLeft, end: false },
+      {
+        to: '/components/confirmation-popover',
+        label: 'ConfirmationPopover',
+        icon: ShieldCheck,
+        end: false,
+      },
     ],
   },
 ];
