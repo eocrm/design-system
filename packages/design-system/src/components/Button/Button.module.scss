@@ -54,6 +54,7 @@
   font-size: var(--font-size-lg);
 }
 
+// MUST stay below the size blocks so `padding` overrides their horizontal padding.
 .iconOnly {
   aspect-ratio: 1;
   padding: var(--space-1);

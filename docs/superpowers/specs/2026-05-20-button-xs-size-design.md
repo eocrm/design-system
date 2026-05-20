@@ -155,7 +155,7 @@ After visually checking the xs Icon-only example at `/components/button`, the re
 
 Source order matters — `.iconOnly` is declared **after** all size blocks so its `padding` overrides the size-class horizontal padding. `aspect-ratio: 1` is not a layout property in the sense Rule 4 prohibits (it derives width from already-set height; it doesn't take parent space).
 
-`padding: var(--space-1)` (4px) gives the icon a small inset on all four sides so it doesn't sit flush against the border. With `box-sizing: border-box` and a 12px icon at xs, the content area is 12×12, the icon fills it, and the 4px padding shows as breathing room. At larger sizes the padding stays at 4px and the additional space goes to flex centering — the icon never looks cramped.
+`padding: var(--space-1)` (4px) gives the icon a small inset on all four sides so it doesn't sit flush against the border. With `box-sizing: border-box` at xs, the box is 20×20, the 1px border and 4px padding each subtract from inside: content area is 10×10. A 12px icon overflows the 10×10 content box by 1px on each side, extending into the padding zone but still clearing the border by ~3px. At larger sizes the padding stays at 4px and the additional space goes to flex centering — the icon never looks cramped.
 
 **Files affected by the addendum (delta from original file list):**
 
