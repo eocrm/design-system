@@ -19,14 +19,13 @@ describe('getFirstDayOfWeek', () => {
 
   it('uses the static fallback when Intl.Locale.getWeekInfo is missing', () => {
     const orig = (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo;
-    // @ts-expect-error — intentionally delete to simulate older runtime
-    delete Intl.Locale.prototype.getWeekInfo;
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo;
     try {
       expect(getFirstDayOfWeek('en-US')).toBe(0);
       expect(getFirstDayOfWeek('ru-RU')).toBe(1);
     } finally {
-      // @ts-expect-error — restore
-      Intl.Locale.prototype.getWeekInfo = orig;
+      (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo = orig;
     }
   });
 });
@@ -46,14 +45,13 @@ describe('getWeekendDays', () => {
 
   it('uses the static fallback when Intl.Locale.getWeekInfo is missing', () => {
     const orig = (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo;
-    // @ts-expect-error — intentionally delete
-    delete Intl.Locale.prototype.getWeekInfo;
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo;
     try {
       expect(getWeekendDays('ar-SA')).toEqual([5, 6]);
       expect(getWeekendDays('en-US')).toEqual([0, 6]);
     } finally {
-      // @ts-expect-error — restore
-      Intl.Locale.prototype.getWeekInfo = orig;
+      (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo = orig;
     }
   });
 });
