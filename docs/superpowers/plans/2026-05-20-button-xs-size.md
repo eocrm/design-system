@@ -21,25 +21,31 @@
 - [ ] **Step 1: Confirm the branch and a clean working tree**
 
 Run:
+
 ```bash
 git status
 git rev-parse --abbrev-ref HEAD
 git log --oneline -4
 ```
+
 Expected: working tree clean; current branch is `feat/button-xs`; the top three commits include the spec + plan additions, with the fourth being an earlier merge into `main`. If anything else, stop and surface the unexpected state.
 
 - [ ] **Step 2: Verify hooks are wired**
 
 Run:
+
 ```bash
 git config --get core.hooksPath
 test -x .husky/pre-push && echo OK
 ```
+
 Expected:
+
 ```
 .husky/_
 OK
 ```
+
 If either fails, run `npm install` from the repo root and re-check. Do not proceed until both pass.
 
 ---
@@ -47,25 +53,28 @@ If either fails, run `npm install` from the repo root and re-check. Do not proce
 ## Task 2: Add `--size-xs` token
 
 **Files:**
+
 - Modify: `packages/design-system/src/styles/tokens.scss:105-108`
 
 - [ ] **Step 1: Insert `--size-xs` above `--size-sm`**
 
 Find the block:
+
 ```scss
-  // Control sizes
-  --size-sm: 24px;
-  --size-md: 32px;
-  --size-lg: 40px;
+// Control sizes
+--size-sm: 24px;
+--size-md: 32px;
+--size-lg: 40px;
 ```
 
 Replace with:
+
 ```scss
-  // Control sizes
-  --size-xs: 20px;
-  --size-sm: 24px;
-  --size-md: 32px;
-  --size-lg: 40px;
+// Control sizes
+--size-xs: 20px;
+--size-sm: 24px;
+--size-md: 32px;
+--size-lg: 40px;
 ```
 
 - [ ] **Step 2: Verify the file still parses**
@@ -76,6 +85,7 @@ Expected: exits 0. (Token additions can't violate the existing rules.)
 - [ ] **Step 3: Commit**
 
 Run:
+
 ```bash
 git add packages/design-system/src/styles/tokens.scss
 git commit -m "Tokens: add --size-xs (20px) to control size scale"
@@ -86,6 +96,7 @@ git commit -m "Tokens: add --size-xs (20px) to control size scale"
 ## Task 3: TDD — add `xs` class assertion (red)
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Button/Button.test.tsx:17-26`
 
 - [ ] **Step 1: Extend the existing class-name test**
@@ -93,21 +104,21 @@ git commit -m "Tokens: add --size-xs (20px) to control size scale"
 Replace lines 17–26 (the whole `'applies the variant and size class names'` block) with:
 
 ```tsx
-  it('applies the variant and size class names', () => {
-    render(
-      <Button variant="danger" size="lg">
-        Delete
-      </Button>,
-    );
-    const btn = screen.getByRole('button', { name: 'Delete' });
-    expect(btn.className).toMatch(/danger/);
-    expect(btn.className).toMatch(/lg/);
-  });
+it('applies the variant and size class names', () => {
+  render(
+    <Button variant="danger" size="lg">
+      Delete
+    </Button>,
+  );
+  const btn = screen.getByRole('button', { name: 'Delete' });
+  expect(btn.className).toMatch(/danger/);
+  expect(btn.className).toMatch(/lg/);
+});
 
-  it('applies the xs size class', () => {
-    render(<Button size="xs">Tiny</Button>);
-    expect(screen.getByRole('button', { name: 'Tiny' }).className).toMatch(/xs/);
-  });
+it('applies the xs size class', () => {
+  render(<Button size="xs">Tiny</Button>);
+  expect(screen.getByRole('button', { name: 'Tiny' }).className).toMatch(/xs/);
+});
 ```
 
 - [ ] **Step 2: Run only the Button tests to verify they fail**
@@ -122,16 +133,20 @@ If the test passes here, stop — something is wrong with the test setup.
 ## Task 4: Add `xs` to the union and SCSS (green)
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Button/Button.tsx:9`
 - Modify: `packages/design-system/src/components/Button/Button.module.scss:31-36`
 
 - [ ] **Step 1: Extend `ButtonSize`**
 
 In `Button.tsx`, line 9, replace:
+
 ```ts
 export type ButtonSize = 'sm' | 'md' | 'lg';
 ```
+
 with:
+
 ```ts
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 ```
@@ -139,6 +154,7 @@ export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 - [ ] **Step 2: Add the `.xs` SCSS block above `.sm`**
 
 In `Button.module.scss`, find the block:
+
 ```scss
 // Sizes
 .sm {
@@ -149,6 +165,7 @@ In `Button.module.scss`, find the block:
 ```
 
 Replace with:
+
 ```scss
 // Sizes
 .xs {
@@ -175,15 +192,18 @@ Expected: all Button tests PASS, including both `'applies the variant and size c
 - [ ] **Step 4: Run stylelint and typecheck**
 
 Run:
+
 ```bash
 npm run lint:css
 npm run typecheck
 ```
+
 Expected: both exit 0.
 
 - [ ] **Step 5: Commit**
 
 Run:
+
 ```bash
 git add packages/design-system/src/components/Button/Button.tsx packages/design-system/src/components/Button/Button.module.scss packages/design-system/src/components/Button/Button.test.tsx
 git commit -m "Button: add xs size (20px) for icon-only and dense actions"
@@ -194,6 +214,7 @@ git commit -m "Button: add xs size (20px) for icon-only and dense actions"
 ## Task 5: Add icon-only render test
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Button/Button.test.tsx` (append to the describe block)
 
 - [ ] **Step 1: Add the icon-only test**
@@ -201,15 +222,15 @@ git commit -m "Button: add xs size (20px) for icon-only and dense actions"
 Find the last test in the file (the `'forwards a ref to the underlying button element'` test ending at line 66). Append a new test inside the `describe('Button', ...)` block, before the closing `});`:
 
 ```tsx
-  it('renders as an icon-only button at size xs with an accessible name', () => {
-    render(
-      <Button size="xs" aria-label="Remove">
-        <svg data-testid="icon" aria-hidden="true" />
-      </Button>,
-    );
-    expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
-    expect(screen.getByTestId('icon')).toBeInTheDocument();
-  });
+it('renders as an icon-only button at size xs with an accessible name', () => {
+  render(
+    <Button size="xs" aria-label="Remove">
+      <svg data-testid="icon" aria-hidden="true" />
+    </Button>,
+  );
+  expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+  expect(screen.getByTestId('icon')).toBeInTheDocument();
+});
 ```
 
 - [ ] **Step 2: Run the Button tests**
@@ -220,6 +241,7 @@ Expected: all tests pass. The new test was always going to pass once Task 4 land
 - [ ] **Step 3: Commit**
 
 Run:
+
 ```bash
 git add packages/design-system/src/components/Button/Button.test.tsx
 git commit -m "Button: test icon-only xs button exposes the accessible name"
@@ -230,12 +252,14 @@ git commit -m "Button: test icon-only xs button exposes the accessible name"
 ## Task 6: Update Button JSDoc
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Button/Button.tsx:25-31` (size prop JSDoc)
 - Modify: `packages/design-system/src/components/Button/Button.tsx:39-77` (component JSDoc — add `@example` and `@remarks` entries)
 
 - [ ] **Step 1: Update the `size` prop JSDoc**
 
 Find this block (around lines 25-31):
+
 ```ts
   /**
    * Control height (matches the shared `--size-*` scale used by Input and Avatar).
@@ -247,6 +271,7 @@ Find this block (around lines 25-31):
 ```
 
 Replace with:
+
 ```ts
   /**
    * Control height (matches the shared `--size-*` scale used by Input and Avatar).
@@ -263,6 +288,7 @@ Replace with:
 - [ ] **Step 2: Add an `@example` for icon-only xs**
 
 Find the existing `@example` block that shows the danger sm Delete button (around lines 42-46):
+
 ```ts
  * @example
  * <Button variant="danger" size="sm" onClick={remove}>
@@ -272,6 +298,7 @@ Find the existing `@example` block that shows the danger sm Delete button (aroun
 ```
 
 Immediately after it (and before the form-footer `@example`), insert:
+
 ```ts
  * @example
  * // Icon-only at xs — pass `aria-label` so screen readers announce the action.
@@ -286,6 +313,7 @@ Immediately after it (and before the form-footer `@example`), insert:
 Find the `@remarks Anti-patterns` block (starts around line 85). It currently ends with the `❌ Rendering <Button variant="success">Save</Button> on initial mount` entry.
 
 Add a new bullet at the end of that block, just before the closing `*/`:
+
 ```ts
  * - ❌ Using `size="xs"` for the primary or most prominent action in a
  *   section. `xs` is for inline density, not emphasis — reach for `md` or
@@ -301,6 +329,7 @@ Expected: exits 0. Any malformed JSDoc that breaks TypeScript parsing fails here
 - [ ] **Step 5: Commit**
 
 Run:
+
 ```bash
 git add packages/design-system/src/components/Button/Button.tsx
 git commit -m "Button: document xs size, icon-only example, and anti-pattern"
@@ -311,16 +340,19 @@ git commit -m "Button: document xs size, icon-only example, and anti-pattern"
 ## Task 7: Update AGENTS.md TL;DR
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md:43`
 
 - [ ] **Step 1: Update the size list**
 
 Line 43 currently reads:
+
 ```
 - `size`: `sm` / `md` (default) / `lg`
 ```
 
 Replace with:
+
 ```
 - `size`: `xs` / `sm` / `md` (default) / `lg` — use `xs` for icon-only or dense inline actions; pass `aria-label` when icon-only.
 ```
@@ -328,6 +360,7 @@ Replace with:
 - [ ] **Step 2: Commit**
 
 Run:
+
 ```bash
 git add packages/design-system/AGENTS.md
 git commit -m "AGENTS.md: list xs in Button size options"
@@ -338,6 +371,7 @@ git commit -m "AGENTS.md: list xs in Button size options"
 ## Task 8: Extend playground ButtonDemo
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/ButtonDemo.tsx:2` (icon imports)
 - Modify: `packages/playground/src/pages/components/ButtonDemo.tsx:102-114` (Sizes example)
 - Modify: `packages/playground/src/pages/components/ButtonDemo.tsx` (add a new `<Example>` after Sizes)
@@ -345,11 +379,13 @@ git commit -m "AGENTS.md: list xs in Button size options"
 - [ ] **Step 1: Add `X` and `Pencil` to the lucide-react import**
 
 Line 2 currently reads:
+
 ```ts
 import { Check, Plus, Search, Trash2 } from 'lucide-react';
 ```
 
 Replace with:
+
 ```ts
 import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 ```
@@ -357,39 +393,41 @@ import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 - [ ] **Step 2: Extend the Sizes example**
 
 Find the Sizes `<Example>` block (around lines 102-114):
+
 ```tsx
-      <Example
-        title="Sizes"
-        description="Three sizes. sm for dense toolbars/tables, md (default) for most contexts, lg for emphasis."
-        code={`<Button size="sm">Small</Button>
+<Example
+  title="Sizes"
+  description="Three sizes. sm for dense toolbars/tables, md (default) for most contexts, lg for emphasis."
+  code={`<Button size="sm">Small</Button>
 <Button size="md">Medium</Button>
 <Button size="lg">Large</Button>`}
-      >
-        <Cluster gap="sm" align="center">
-          <Button size="sm">Small</Button>
-          <Button size="md">Medium</Button>
-          <Button size="lg">Large</Button>
-        </Cluster>
-      </Example>
+>
+  <Cluster gap="sm" align="center">
+    <Button size="sm">Small</Button>
+    <Button size="md">Medium</Button>
+    <Button size="lg">Large</Button>
+  </Cluster>
+</Example>
 ```
 
 Replace with:
+
 ```tsx
-      <Example
-        title="Sizes"
-        description="Four sizes. xs for icon-only or very dense inline actions, sm for dense toolbars/tables, md (default) for most contexts, lg for emphasis."
-        code={`<Button size="xs">Extra small</Button>
+<Example
+  title="Sizes"
+  description="Four sizes. xs for icon-only or very dense inline actions, sm for dense toolbars/tables, md (default) for most contexts, lg for emphasis."
+  code={`<Button size="xs">Extra small</Button>
 <Button size="sm">Small</Button>
 <Button size="md">Medium</Button>
 <Button size="lg">Large</Button>`}
-      >
-        <Cluster gap="sm" align="center">
-          <Button size="xs">Extra small</Button>
-          <Button size="sm">Small</Button>
-          <Button size="md">Medium</Button>
-          <Button size="lg">Large</Button>
-        </Cluster>
-      </Example>
+>
+  <Cluster gap="sm" align="center">
+    <Button size="xs">Extra small</Button>
+    <Button size="sm">Small</Button>
+    <Button size="md">Medium</Button>
+    <Button size="lg">Large</Button>
+  </Cluster>
+</Example>
 ```
 
 - [ ] **Step 3: Add the Icon-only at xs example**
@@ -397,25 +435,25 @@ Replace with:
 Immediately after the Sizes `<Example>` (and before the "With icons" example), insert:
 
 ```tsx
-      <Example
-        title="Icon-only at xs"
-        description="For inline density — row controls, chip-adjacent actions. Always pass an aria-label so screen readers announce what the button does."
-        code={`<Button size="xs" variant="ghost" aria-label="Remove">
+<Example
+  title="Icon-only at xs"
+  description="For inline density — row controls, chip-adjacent actions. Always pass an aria-label so screen readers announce what the button does."
+  code={`<Button size="xs" variant="ghost" aria-label="Remove">
   <X size={12} />
 </Button>
 <Button size="xs" variant="secondary" aria-label="Edit">
   <Pencil size={12} />
 </Button>`}
-      >
-        <Cluster gap="sm" align="center">
-          <Button size="xs" variant="ghost" aria-label="Remove">
-            <X size={12} />
-          </Button>
-          <Button size="xs" variant="secondary" aria-label="Edit">
-            <Pencil size={12} />
-          </Button>
-        </Cluster>
-      </Example>
+>
+  <Cluster gap="sm" align="center">
+    <Button size="xs" variant="ghost" aria-label="Remove">
+      <X size={12} />
+    </Button>
+    <Button size="xs" variant="secondary" aria-label="Edit">
+      <Pencil size={12} />
+    </Button>
+  </Cluster>
+</Example>
 ```
 
 - [ ] **Step 4: Run the playground typecheck**
@@ -436,6 +474,7 @@ Stop the dev server before continuing.
 - [ ] **Step 6: Commit**
 
 Run:
+
 ```bash
 git add packages/playground/src/pages/components/ButtonDemo.tsx
 git commit -m "ButtonDemo: show xs size + icon-only example"
@@ -521,6 +560,7 @@ Expected: pre-push hook runs prettier, stylelint, typecheck. Push succeeds. **Ne
 - [ ] **Step 2: Open the pull request**
 
 Run:
+
 ```bash
 gh pr create --title "Button: add xs size for icon-only and dense inline actions" --body "$(cat <<'EOF'
 ## Summary
