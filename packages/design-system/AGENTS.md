@@ -404,6 +404,39 @@ const [tab, setTab] = useState('overview');
 - Don't reach for `triggerDisplay='summary'` for tag input — chips communicate the active filter set at a glance.
 - `creatable` requires `searchable` (throws in dev). Passing both `options` and `loadOptions` is also flagged (loadOptions wins).
 
+### `<LocaleProvider>` + `useLocale` — locale Context
+
+```tsx
+<LocaleProvider locale="ru-RU">
+  <App />
+</LocaleProvider>;
+
+const locale = useLocale(); // 'ru-RU', or navigator.language fallback
+```
+
+- `LocaleProvider` exposes a BCP-47 locale string to descendants. Any locale-aware component (Calendar primitives today; future Input formatters, currency widgets) reads via `useLocale()`.
+- No `<LocaleProvider>` mounted? `useLocale()` falls back to `navigator.language` (or `'en-US'` in SSR / Node).
+- Stateless. To switch locale at runtime, re-render the Provider with a new `locale` prop. Nested Providers override outer ones.
+
+### Calendar primitives — `useMonth`, `useWeek`, `useDay`, `useAgenda`
+
+```tsx
+const grid = useMonth(cursorDate);
+// → { year, month, monthLabel, weekdayLabels, weeks }
+
+const week = useWeek(cursorDate);
+// → { weekLabel, days, weekdayLabels }
+
+const { day, dayLabel, dayShortLabel } = useDay(date);
+
+const { days, rangeLabel } = useAgenda(rangeStart, rangeEnd);
+```
+
+- Headless. These hooks return data shapes — no rendering. The Calendar UI components (Month/Week/Day/Agenda views) consume them and ship in follow-up PRs.
+- Each hook accepts an optional `options.locale` to override the Context value, and `useMonth` / `useWeek` accept `options.weekStartsOn` to override the locale-derived first day.
+- `Day.key` is `'YYYY-MM-DD'` in local time — safe React key, comparison handle, and event-lookup index.
+- Pure date math + `Intl` formatters live alongside as utility exports: `addDays`, `startOfWeek`, `formatMonth`, `getFirstDayOfWeek`, etc. Use them if you need to derive labels or do date math outside a component.
+
 ---
 
 ## Tokens (the only "values" you write)
