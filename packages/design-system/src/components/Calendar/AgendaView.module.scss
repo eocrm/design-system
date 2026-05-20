@@ -14,21 +14,39 @@
 }
 
 // Each dayGroup carries its own bottom padding (in place of `gap` on
-// `.agenda`) so the today-group's accent border-left extends down through
-// the spacing area, all the way to the next day-header's top border.
+// `.agenda`) so the today-group's accent borders extend down through the
+// spacing area, all the way to the next day-header's top border.
 .dayGroup {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding-bottom: var(--space-4);
-  border-left: var(--border-width-emphasis) solid transparent;
+  border-left: var(--border-width) solid var(--color-border);
+  border-right: var(--border-width) solid var(--color-border);
 }
 
-// Today's group draws an accent border on its left edge — same emphasis
-// language as month view's today cell, no background tint on the rows
-// area so tone dots stay legible.
+// Today's group swaps its grey side borders for the accent color so the
+// current day is framed in blue on all four edges (together with the
+// accent top/bottom on `.dayHeader`).
 .todayGroup {
+  position: relative;
   border-left-color: var(--color-accent);
+  border-right-color: var(--color-accent);
+}
+
+// Today's side borders end exactly at the next day-header's accent top
+// border. This pseudo-element draws a 1px accent strip spanning the full
+// width of the today-group just below it, so the bottom-left and
+// bottom-right corners both meet the next header's horizontal line
+// cleanly instead of stopping a pixel short.
+.todayGroup::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--border-width) * -1);
+  height: var(--border-width);
+  background: var(--color-accent);
 }
 
 // Today's day-header band gets an accent tint + accent border so the
