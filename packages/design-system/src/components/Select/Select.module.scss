@@ -1,15 +1,17 @@
 .root {
-  display: inline-block;
+  display: block;
+  width: 100%;
 }
 
 // ─── Trigger wrapper ────────────────────────────────────────────────────────
 // `position: relative` is a Hard Rule 4 "internal child anchor" exception —
 // the absolutely-positioned ✕ + chevron sit ON the wrapper, not escape its
-// box. Inline-block + width 100% lets the wrapper match the (intrinsic)
-// width the consumer asks for via the Select root.
+// box. Block + width: 100% means Select fills its parent's column the same
+// way <Input> does — wrap in a sized container (Stack, fixed-width div, form
+// field cell) to control width.
 .triggerWrap {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 100%;
 }
 
@@ -254,6 +256,7 @@
   flex-wrap: wrap;
   gap: var(--space-1);
   align-items: center;
+  justify-content: flex-start;
   padding: var(--space-1) var(--space-2);
   white-space: normal;
 }
@@ -315,7 +318,10 @@
 // input enough width to start typing without being so wide that it
 // pushes chips onto an unnecessary second line.
 .chipsInput {
-  flex: 0 1 4ch;
+  // grow into whatever row space is left after chips (so an empty trigger
+  // shows the full placeholder); shrink to `min-width: 4ch` when chips
+  // crowd the last line, then wrap onto a new line below.
+  flex: 1 1 4ch;
   min-width: 4ch;
   padding: 0;
   font: inherit;
@@ -421,9 +427,17 @@
   }
 }
 
-.disabled .trigger,
-.readOnly .trigger {
+// `disabled` is fully inert: dim text + not-allowed cursor signals "this
+// control is off." `readOnly` keeps the normal text color so the value
+// reads cleanly — only the subtle bg + default cursor signal "you can see
+// this but not edit." Matches the convention used by native form controls.
+.disabled .trigger {
   color: var(--color-fg-disabled);
   cursor: not-allowed;
+  background: var(--color-bg-subtle);
+}
+
+.readOnly .trigger {
+  cursor: default;
   background: var(--color-bg-subtle);
 }

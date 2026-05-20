@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Avatar, Badge, Cluster, Select, Stack, type SelectOption } from '@eocrm/design-system';
+import { Avatar, Badge, Button, Cluster, Select, Stack, type SelectOption } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/Select/Select.tsx?raw';
@@ -144,7 +144,9 @@ export function SelectDemo() {
         code={`<Select searchable loadOptions={flakyFetch} placeholder="Pick a user (may fail)" />`}
       >
         <Cluster gap="md" justify="center">
-          <Select searchable loadOptions={flakyFetch} placeholder="Pick a user (may fail)" />
+          <div style={{ width: 320 }}>
+            <Select searchable loadOptions={flakyFetch} placeholder="Pick a user (may fail)" />
+          </div>
         </Cluster>
       </Example>
 
@@ -212,13 +214,13 @@ export function SelectDemo() {
 <Select options={STATUSES} invalid placeholder="Required" />`}
       >
         <Cluster gap="md" wrap justify="center">
-          <div style={{ minWidth: 200 }}>
+          <div style={{ width: 320 }}>
             <Select options={STATUSES} disabled value="pending" />
           </div>
-          <div style={{ minWidth: 200 }}>
+          <div style={{ width: 320 }}>
             <Select options={STATUSES} readOnly value="active" />
           </div>
-          <div style={{ minWidth: 200 }}>
+          <div style={{ width: 320 }}>
             <Select options={STATUSES} invalid placeholder="Required" />
           </div>
         </Cluster>
@@ -232,13 +234,13 @@ export function SelectDemo() {
 <Select options={STATUSES} size="lg" placeholder="lg" />`}
       >
         <Cluster gap="md" wrap justify="center">
-          <div style={{ width: 200 }}>
+          <div style={{ width: 320 }}>
             <Select options={STATUSES} size="sm" placeholder="sm" />
           </div>
-          <div style={{ width: 200 }}>
+          <div style={{ width: 320 }}>
             <Select options={STATUSES} size="md" placeholder="md" />
           </div>
-          <div style={{ width: 200 }}>
+          <div style={{ width: 320 }}>
             <Select options={STATUSES} size="lg" placeholder="lg" />
           </div>
         </Cluster>
@@ -269,8 +271,8 @@ export function SelectDemo() {
 function StatusExample() {
   const [status, setStatus] = useState<string>('');
   return (
-    <Stack gap="sm">
-      <div style={{ width: 240 }}>
+    <Stack gap="sm" align="start">
+      <div style={{ width: 320 }}>
         <Select
           options={STATUSES}
           value={status}
@@ -278,9 +280,7 @@ function StatusExample() {
           placeholder="Pick a status"
         />
       </div>
-      <small>
-        Current: <code>{status || '(none)'}</code>
-      </small>
+      {status ? <Badge tone="info">{status}</Badge> : <Badge tone="neutral">none</Badge>}
     </Stack>
   );
 }
@@ -288,8 +288,8 @@ function StatusExample() {
 function CountryExample() {
   const [country, setCountry] = useState<string>('');
   return (
-    <Stack gap="sm">
-      <div style={{ width: 260 }}>
+    <Stack gap="sm" align="start">
+      <div style={{ width: 320 }}>
         <Select
           searchable
           options={COUNTRIES}
@@ -298,9 +298,7 @@ function CountryExample() {
           placeholder="Search countries…"
         />
       </div>
-      <small>
-        Current: <code>{country || '(none)'}</code>
-      </small>
+      {country ? <Badge tone="info">{country}</Badge> : <Badge tone="neutral">none</Badge>}
     </Stack>
   );
 }
@@ -308,8 +306,8 @@ function CountryExample() {
 function AssigneeExample() {
   const [assignee, setAssignee] = useState<string>('');
   return (
-    <Stack gap="sm">
-      <div style={{ width: 280 }}>
+    <Stack gap="sm" align="start">
+      <div style={{ width: 320 }}>
         <Select
           searchable
           loadOptions={fakeFetchUsers}
@@ -327,9 +325,7 @@ function AssigneeExample() {
           )}
         />
       </div>
-      <small>
-        Current: <code>{assignee || '(none)'}</code>
-      </small>
+      {assignee ? <Badge tone="info">{assignee}</Badge> : <Badge tone="neutral">none</Badge>}
     </Stack>
   );
 }
@@ -337,8 +333,8 @@ function AssigneeExample() {
 function StatusFilterExample() {
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   return (
-    <Stack gap="sm">
-      <div style={{ width: 260 }}>
+    <Stack gap="sm" align="start">
+      <div style={{ width: 320 }}>
         <Select
           multiple
           triggerDisplay="summary"
@@ -351,7 +347,7 @@ function StatusFilterExample() {
       </div>
       <Cluster gap="xs">
         {statusFilter.length === 0 ? (
-          <small>(none)</small>
+          <Badge tone="neutral">none</Badge>
         ) : (
           statusFilter.map((v) => (
             <Badge key={v} tone="info">
@@ -367,7 +363,7 @@ function StatusFilterExample() {
 function OwnersExample() {
   const [owners, setOwners] = useState<string[]>([]);
   return (
-    <div style={{ width: 340 }}>
+    <div style={{ width: 320 }}>
       <Select
         multiple
         triggerDisplay="chips"
@@ -385,8 +381,8 @@ function TagsExample() {
   const [tags, setTags] = useState<string[]>(['shipping']);
   const [createdLog, setCreatedLog] = useState<string[]>([]);
   return (
-    <Stack gap="sm">
-      <div style={{ width: 340 }}>
+    <Stack gap="sm" align="start">
+      <div style={{ width: 320 }}>
         <Select
           multiple
           searchable
@@ -424,10 +420,10 @@ function FormExample() {
       }}
     >
       <Stack gap="md">
-        <div style={{ width: 280 }}>
+        <div style={{ width: 320 }}>
           <Select options={STATUSES} name="status" required placeholder="Status (required)" />
         </div>
-        <div style={{ width: 340 }}>
+        <div style={{ width: 320 }}>
           <Select
             multiple
             triggerDisplay="chips"
@@ -442,7 +438,9 @@ function FormExample() {
           />
         </div>
         <Cluster>
-          <button type="submit">Submit</button>
+          <Button type="submit" size="sm">
+            Submit
+          </Button>
         </Cluster>
       </Stack>
     </form>

@@ -616,16 +616,18 @@ function ChipsInputTrigger(props: TriggerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedValues = Array.isArray(ctx.value) ? (ctx.value as string[]) : [];
-  // Walk `allRows` so chip labels persist even while typing filters
-  // `rows` down to a subset that excludes them. Preserve the full
-  // SelectOption — `renderTag` callbacks receive `data` and `description`
-  // too, not just `value` / `label`.
-  const selectedOptions: SelectOption[] = [];
+  // Walk `selectedValues` (selection order — `ctx.value` appends new picks
+  // to the end via `useSelectState.toggleValue`) so the latest selected chip
+  // renders last. Look options up from `allRows` so labels persist while
+  // typing filters `rows` down. Synthetic `{value, label: value}` fallback
+  // covers creatable values not yet in `allRows`.
+  const optionByValue = new Map<string, SelectOption>();
   for (const row of ctx.allRows) {
-    if (row.kind === 'option' && selectedValues.includes(row.option.value)) {
-      selectedOptions.push(row.option as SelectOption);
-    }
+    if (row.kind === 'option') optionByValue.set(row.option.value, row.option as SelectOption);
   }
+  const selectedOptions: SelectOption[] = selectedValues.map(
+    (v) => optionByValue.get(v) ?? { value: v, label: v },
+  );
 
   const handleWrapperPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (props.disabled || props.readOnly) return;
@@ -755,16 +757,18 @@ function ChipsButtonTrigger(props: TriggerProps) {
   const activeOptionId = useActiveOptionId();
 
   const selectedValues = Array.isArray(ctx.value) ? (ctx.value as string[]) : [];
-  // Walk `allRows` (not `rows`) so chips remain present even when a future
-  // search query filters the popover — selection is independent of filter.
-  // Preserve full SelectOption so `renderTag` callbacks get `data` /
-  // `description` access, not just `value` / `label`.
-  const selectedOptions: SelectOption[] = [];
+  // Walk `selectedValues` (selection order — `ctx.value` appends new picks
+  // to the end via `useSelectState.toggleValue`) so the latest selected chip
+  // renders last. Look options up from `allRows` so labels persist while
+  // searching. Synthetic `{value, label: value}` fallback covers creatable
+  // values not yet in `allRows`.
+  const optionByValue = new Map<string, SelectOption>();
   for (const row of ctx.allRows) {
-    if (row.kind === 'option' && selectedValues.includes(row.option.value)) {
-      selectedOptions.push(row.option as SelectOption);
-    }
+    if (row.kind === 'option') optionByValue.set(row.option.value, row.option as SelectOption);
   }
+  const selectedOptions: SelectOption[] = selectedValues.map(
+    (v) => optionByValue.get(v) ?? { value: v, label: v },
+  );
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (props.disabled || props.readOnly) return;
