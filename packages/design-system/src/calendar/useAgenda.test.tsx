@@ -47,4 +47,36 @@ describe('useAgenda', () => {
     expect(result.current.days[0].key).toBe('2026-05-28');
     expect(result.current.days[6].key).toBe('2026-06-03');
   });
+
+  it('weekday is 0..6 (locale-aware column index) even on long ranges', () => {
+    const { result } = renderHook(
+      () => useAgenda(new Date(2026, 4, 1), new Date(2026, 4, 31)),
+      { wrapper: wrapWithLocale('en-US') },
+    );
+    result.current.days.forEach((d) => {
+      expect(d.weekday).toBeGreaterThanOrEqual(0);
+      expect(d.weekday).toBeLessThanOrEqual(6);
+    });
+  });
+
+  it('weekday reflects locale week-start (ru-RU: Monday → 0)', () => {
+    // 2026-05-04 is Monday
+    const { result } = renderHook(
+      () => useAgenda(new Date(2026, 4, 4), new Date(2026, 4, 10)),
+      { wrapper: wrapWithLocale('ru-RU') },
+    );
+    expect(result.current.days[0].weekday).toBe(0); // Mon → 0 for ru-RU
+    expect(result.current.days[6].weekday).toBe(6); // Sun → 6
+  });
+
+  it('returns referentially stable days across re-renders with same inputs', () => {
+    const from = new Date(2026, 4, 1);
+    const to = new Date(2026, 4, 7);
+    const { result, rerender } = renderHook(() => useAgenda(from, to), {
+      wrapper: wrapWithLocale('en-US'),
+    });
+    const first = result.current.days;
+    rerender();
+    expect(result.current.days).toBe(first);
+  });
 });

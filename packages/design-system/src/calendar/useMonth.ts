@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useLocale } from '../i18n/useLocale';
 import {
   addDays,
+  endOfMonth,
   isSameMonth,
   isToday,
   isWeekend,
@@ -13,6 +14,7 @@ import { formatMonth, formatWeekdayShort } from './formatters';
 import { getFirstDayOfWeek, getWeekendDays } from './weekInfo';
 import type { Day, MonthGrid, Week } from './types';
 
+/** Options for {@link useMonth}. */
 export interface UseMonthOptions {
   /** Override the active locale. Defaults to `useLocale()`. */
   locale?: string;
@@ -40,7 +42,12 @@ export function useMonth(anchor: Date, options: UseMonthOptions = {}): MonthGrid
 
     const weeks: Week[] = [];
     let cursor = gridStart;
+    const anchorEnd = endOfMonth(anchor);
     for (let w = 0; w < 6; w++) {
+      // Stop if the next week would start entirely after the anchor month.
+      if (w > 0 && cursor > anchorEnd) {
+        break;
+      }
       const week: Day[] = [];
       for (let d = 0; d < 7; d++) {
         const date = new Date(cursor);
@@ -56,10 +63,6 @@ export function useMonth(anchor: Date, options: UseMonthOptions = {}): MonthGrid
         cursor = addDays(cursor, 1);
       }
       weeks.push(week as unknown as Week);
-      const lastDay = week[6];
-      if (lastDay.date >= anchorMonth && !isSameMonth(lastDay.date, anchor)) {
-        break;
-      }
     }
 
     const weekdayLabels: string[] = [];

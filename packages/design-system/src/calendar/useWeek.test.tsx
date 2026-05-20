@@ -63,4 +63,14 @@ describe('useWeek', () => {
       expect(Math.round(diff)).toBe(1);
     }
   });
+
+  it('returns referentially stable days across re-renders with same inputs', () => {
+    const anchor = new Date(2026, 4, 20);
+    const { result, rerender } = renderHook(() => useWeek(anchor), {
+      wrapper: wrapWithLocale('en-US'),
+    });
+    const first = result.current.days;
+    rerender();
+    expect(result.current.days).toBe(first);
+  });
 });

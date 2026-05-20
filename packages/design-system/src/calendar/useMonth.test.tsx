@@ -112,4 +112,22 @@ describe('useMonth', () => {
     const may15 = result.current.weeks.flat().find((d) => d.dayOfMonth === 15 && d.isCurrentMonth);
     expect(may15?.key).toBe('2026-05-15');
   });
+
+  it('does not append a trailing week of all leading days (Feb 2026, Sun-start)', () => {
+    const { result } = renderHook(() => useMonth(new Date(2026, 1, 15)), {
+      wrapper: wrapWithLocale('en-US'),
+    });
+    const lastWeek = result.current.weeks[result.current.weeks.length - 1];
+    const allLeading = lastWeek.every((d) => !d.isCurrentMonth);
+    expect(allLeading).toBe(false);
+  });
+
+  it('Feb 2026 en-US (Sun-start) produces a tight 5-week grid (no extra trailing row)', () => {
+    const { result } = renderHook(() => useMonth(new Date(2026, 1, 15)), {
+      wrapper: wrapWithLocale('en-US'),
+    });
+    // Feb 2026: Feb 1 is Sunday, Feb 28 is Saturday → 4 weeks (28 cells exactly), no leading or trailing days needed.
+    // Sun-start grid for Feb 2026 = 4 weeks.
+    expect(result.current.weeks.length).toBe(4);
+  });
 });

@@ -5,6 +5,7 @@ import { formatRange, formatWeekdayShort } from './formatters';
 import { getFirstDayOfWeek, getWeekendDays } from './weekInfo';
 import type { Day, Week } from './types';
 
+/** Options for {@link useWeek}. */
 export interface UseWeekOptions {
   /** Override the active locale. */
   locale?: string;
@@ -12,6 +13,7 @@ export interface UseWeekOptions {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
+/** Result shape returned by {@link useWeek}. */
 export interface WeekResult {
   /** Localized range label, e.g., "May 18 – 24, 2026". */
   weekLabel: string;

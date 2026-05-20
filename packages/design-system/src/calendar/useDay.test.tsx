@@ -45,4 +45,22 @@ describe('useDay', () => {
       vi.useRealTimers();
     }
   });
+
+  it('weekday is 0 for the locale week-start day (ru-RU: Monday)', () => {
+    // 2026-05-04 is Monday
+    const { result } = renderHook(() => useDay(new Date(2026, 4, 4)), {
+      wrapper: wrapWithLocale('ru-RU'),
+    });
+    expect(result.current.day.weekday).toBe(0);
+  });
+
+  it('returns referentially stable day across re-renders with same input', () => {
+    const date = new Date(2026, 4, 20);
+    const { result, rerender } = renderHook(() => useDay(date), {
+      wrapper: wrapWithLocale('en-US'),
+    });
+    const first = result.current.day;
+    rerender();
+    expect(result.current.day).toBe(first);
+  });
 });
