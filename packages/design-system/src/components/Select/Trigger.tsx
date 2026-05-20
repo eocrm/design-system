@@ -1,4 +1,4 @@
-import { useCallback, type KeyboardEvent, type Ref } from 'react';
+import { useCallback, useEffect, useRef, type KeyboardEvent, type Ref } from 'react';
 import clsx from 'clsx';
 import { useSelectContext } from './context';
 import styles from './Select.module.scss';
@@ -70,6 +70,40 @@ export function Trigger(props: TriggerProps) {
     [ctx],
   );
 
+  // Typeahead: 500ms buffer that resets on idle. Mirrors DropdownMenu's
+  // pattern. Walks rows starting from `activeIndex + 1` on the first
+  // char (so successive typing of the same letter cycles through
+  // matches) and from `activeIndex` thereafter (so 'al' refines 'a'
+  // without skipping the current candidate).
+  const typeaheadBufferRef = useRef('');
+  const typeaheadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (typeaheadTimerRef.current) clearTimeout(typeaheadTimerRef.current);
+    };
+  }, []);
+
+  const stepTypeahead = (char: string) => {
+    if (typeaheadTimerRef.current) clearTimeout(typeaheadTimerRef.current);
+    typeaheadBufferRef.current += char.toLowerCase();
+    const buffer = typeaheadBufferRef.current;
+    const start = ctx.activeIndex >= 0 ? ctx.activeIndex : 0;
+    const len = ctx.rows.length;
+    for (let i = 0; i < len; i++) {
+      const idx = (start + i + (buffer.length === 1 ? 1 : 0)) % len;
+      const r = ctx.rows[idx];
+      if (r.kind !== 'option' || r.option.disabled) continue;
+      if (r.option.label.toLowerCase().startsWith(buffer)) {
+        ctx.setActiveIndex(idx);
+        break;
+      }
+    }
+    typeaheadTimerRef.current = setTimeout(() => {
+      typeaheadBufferRef.current = '';
+    }, 500);
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (props.disabled || props.readOnly) return;
 
@@ -88,6 +122,13 @@ export function Trigger(props: TriggerProps) {
         // microtask so this runs after the Listbox mounts and sets it.
         queueMicrotask(() => ctx.setActiveIndex(lastSelectableIdx));
         return;
+      }
+      // Typeahead-open: any printable char (no modifiers) opens the
+      // listbox and seeds the typeahead buffer with that char.
+      if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        ctx.setOpen(true);
+        stepTypeahead(e.key);
       }
       return;
     }
@@ -140,8 +181,16 @@ export function Trigger(props: TriggerProps) {
         // (now-closed) trigger to the next focusable element.
         ctx.setOpen(false);
         return;
-      default:
+      default: {
+        // Printable char (single char, no modifier keys) → typeahead.
+        // Sits after the explicit cases so Enter/Space/' ' etc. above
+        // are handled first.
+        if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          e.preventDefault();
+          stepTypeahead(e.key);
+        }
         return;
+      }
     }
   };
 

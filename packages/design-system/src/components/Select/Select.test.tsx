@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { configure, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Select, type SelectOption } from './Select';
@@ -230,6 +230,77 @@ describe('Select — keyboard (single, non-searchable)', () => {
     expect(screen.getByRole('button')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'C' }).id,
+    );
+  });
+});
+
+describe('Select — typeahead (non-searchable)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    // RTL's asyncWrapper drains with a setTimeout(0); under Vitest fake
+    // timers it needs an explicit `advanceTimersByTime` to actually fire.
+    // Without this, `userEvent.keyboard` queues forever and the test
+    // hangs to the suite timeout. Mirrors ConfirmationPopover's setup.
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    configure({ asyncWrapper: async (cb) => cb() });
+  });
+
+  it('typing a letter jumps active row to first option starting with it', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<Select options={STATUSES} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('p');
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Pending' }).id,
+    );
+  });
+
+  it('typing a sequence within 500ms matches the joined prefix', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const opts: SelectOption[] = [
+      { value: '1', label: 'Aardvark' },
+      { value: '2', label: 'Albatross' },
+      { value: '3', label: 'Antelope' },
+    ];
+    render(<Select options={opts} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('al');
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Albatross' }).id,
+    );
+  });
+
+  it('buffer resets after 500ms idle', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const opts: SelectOption[] = [
+      { value: '1', label: 'Apple' },
+      { value: '2', label: 'Banana' },
+    ];
+    render(<Select options={opts} />);
+    screen.getByRole('button').focus();
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('a');
+    vi.advanceTimersByTime(600);
+    await user.keyboard('b');
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Banana' }).id,
     );
   });
 });
