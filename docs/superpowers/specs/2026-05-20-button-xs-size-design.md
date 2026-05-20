@@ -149,11 +149,13 @@ After visually checking the xs Icon-only example at `/components/button`, the re
 ```scss
 .iconOnly {
   aspect-ratio: 1;
-  padding: 0;
+  padding: var(--space-1);
 }
 ```
 
-Source order matters — `.iconOnly` is declared **after** all size blocks so its `padding: 0` overrides the size-class horizontal padding. `aspect-ratio: 1` is not a layout property in the sense Rule 4 prohibits (it derives width from already-set height; it doesn't take parent space).
+Source order matters — `.iconOnly` is declared **after** all size blocks so its `padding` overrides the size-class horizontal padding. `aspect-ratio: 1` is not a layout property in the sense Rule 4 prohibits (it derives width from already-set height; it doesn't take parent space).
+
+`padding: var(--space-1)` (4px) gives the icon a small inset on all four sides so it doesn't sit flush against the border. With `box-sizing: border-box` and a 12px icon at xs, the content area is 12×12, the icon fills it, and the 4px padding shows as breathing room. At larger sizes the padding stays at 4px and the additional space goes to flex centering — the icon never looks cramped.
 
 **Files affected by the addendum (delta from original file list):**
 
