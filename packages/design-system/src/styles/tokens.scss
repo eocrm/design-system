@@ -133,6 +133,10 @@
   // Width/height of the leading indicator slot in DropdownMenu checkbox/radio items.
   --size-dropdown-indicator: 16px;
 
+  // Calendar — minimum height for a month-grid day cell so empty weeks
+  // still look like cells without inflating the day-number row.
+  --size-calendar-day-cell-min-height: 6.5rem;
+
   // Border weights — emphasis = tab underline/focus rings; strong = accent
   // stripes on cards or other "this stands out" visuals.
   --border-width: 1px;

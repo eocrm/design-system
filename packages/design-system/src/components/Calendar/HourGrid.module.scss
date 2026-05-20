@@ -1,0 +1,86 @@
+.scroll {
+  overflow: auto;
+  max-height: 70vh;
+}
+
+.grid {
+  display: grid;
+  background: var(--color-bg);
+}
+
+// ARIA-row wrapper: `display: contents` keeps the corner cell + column
+// headers as direct grid children of `.grid` while satisfying the
+// WAI-ARIA contract that `columnheader` live inside `row`.
+.headerRow {
+  display: contents;
+}
+
+.cornerCell {
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.columnHeader {
+  padding: var(--space-2);
+  background: var(--color-bg-subtle);
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  text-align: center;
+}
+
+.weekendHeader {
+  background: var(--color-bg-muted);
+}
+
+.todayHeader {
+  background: var(--color-accent-bg-subtle);
+  color: var(--color-accent);
+}
+
+.hourLabel {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-muted);
+  text-align: right;
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.dayColumn {
+  position: relative;
+  border-right: var(--border-width) solid var(--color-border);
+}
+
+.weekendColumn {
+  background: var(--color-bg-muted);
+}
+
+// Today's column body intentionally has NO tint — only the column header
+// (`.todayHeader`) carries the accent color. A tinted body would make
+// events with the `accent` tone vanish into the background.
+
+.hourSeparator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--border-width);
+  background: var(--color-border);
+}
+
+// The now-line sits above lane-stacked event blocks (z-index = lane + 1,
+// max ~10) but below the hover-lifted block (z-index 100), so it stays
+// visible across resting events and yields when a consumer is focused on
+// reading a specific block.
+.nowLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--border-width-emphasis);
+  background: var(--color-danger);
+  z-index: 50;
+}

@@ -1,31 +1,45 @@
 @use '../../styles/mixins' as *;
 
-.chip {
+.block {
+  // Per-block cascade geometry is passed as CSS custom properties from
+  // TimedEvent.tsx so that :hover / :focus-visible can override left, width,
+  // and z-index without specificity fights with inline style.
+  position: absolute;
+  left: var(--cal-block-left);
+  width: var(--cal-block-width);
+  z-index: var(--cal-block-z);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--space-1);
-  width: 100%;
-  padding: 0 var(--space-2);
-  height: var(--space-5);
+  padding: var(--space-1) var(--space-2);
 
-  // Border is set per-tone (see below) so neutral chips stay visible on
-  // tinted backgrounds (today column, weekend columns). Tone chips get a
+  // Border is set per-tone (see rules below) so neutral blocks stay visible
+  // on the tinted today / weekend column backgrounds. Tone blocks get a
   // border matching their accent color for the same reason.
   border: var(--border-width) solid currentColor;
   border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.2;
+  text-align: left;
   overflow: hidden;
   cursor: pointer;
   user-select: none;
   transition:
+    left var(--transition-base),
+    width var(--transition-base),
     filter var(--transition-fast),
     background var(--transition-fast);
 
-  &:hover:not(:disabled) {
+  // Hover (and keyboard-focus) lifts the block to full column width and on
+  // top of any cascade neighbours. Animated via the transition above.
+  &:hover:not(:disabled),
+  &:focus-visible {
+    left: 0;
+    width: 100%;
+    z-index: var(--cal-block-z-hover);
     filter: brightness(0.95);
   }
 
@@ -34,38 +48,34 @@
   }
 }
 
-.continuesLeft {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-}
-
-.continuesRight {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+// Short blocks (at min-height) use a single-line row layout so the start
+// time stays visible alongside the title in the limited vertical space.
+.short {
+  flex-direction: row;
+  align-items: center;
 }
 
 .time {
-  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
   opacity: var(--opacity-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .title {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-// Tooltip content markup — small dim time prefix on its own line above the
-// event name so the two are visually distinct even when the event title is
-// long enough to wrap.
 .tooltipBody {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-// Tooltip background is dark (var(--color-fg)); foreground colors here are
-// the inverse so the time and title are readable.
 .tooltipTime {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-regular);
@@ -78,7 +88,6 @@
   color: var(--color-bg);
 }
 
-// Tones — non-allDay (tinted background, strong-color foreground)
 .neutral {
   background: var(--color-bg-subtle);
   color: var(--color-fg);
@@ -103,30 +112,4 @@
 .danger {
   background: var(--color-danger-bg-subtle);
   color: var(--color-danger);
-}
-
-// allDay — tone-filled background, contrast foreground
-.allDay.neutral {
-  background: var(--color-fg);
-  color: var(--color-bg);
-}
-
-.allDay.accent {
-  background: var(--color-accent);
-  color: var(--color-accent-fg);
-}
-
-.allDay.success {
-  background: var(--color-success);
-  color: var(--color-success-fg);
-}
-
-.allDay.warning {
-  background: var(--color-warning);
-  color: var(--color-warning-fg);
-}
-
-.allDay.danger {
-  background: var(--color-danger);
-  color: var(--color-danger-fg);
 }

@@ -418,26 +418,31 @@ const locale = useLocale(); // 'ru-RU', or navigator.language fallback
 - No `<LocaleProvider>` mounted? `useLocale()` falls back to `navigator.language` (or `'en-US'` in SSR / Node).
 - Stateless. To switch locale at runtime, re-render the Provider with a new `locale` prop. Nested Providers override outer ones.
 
-### `<Calendar>` — month view with continuous event bars
+### `<Calendar>` — month / week / day views
 
 ```tsx
 const [cursor, setCursor] = useState(new Date());
+const [view, setView] = useState<'month' | 'week' | 'day'>('month');
 <Calendar
   value={cursor}
   onChange={setCursor}
+  view={view}
+  onViewChange={setView}
   events={events}
   onEventClick={(e) => openDetail(e)}
 />;
 ```
 
-- Month view only in v1; Week / Day / Agenda views ship in follow-up PRs.
-- Events are `{ id, title, startsAt, endsAt?, tone?, allDay? }`. Multi-day events render as continuous bars across days; week boundaries split into separate bars with flattened edges.
+- Three views in v3: `'month'` (continuous event bars across the grid), `'week'` (7 columns × hour rows + all-day band), `'day'` (single column × hour rows). Agenda view comes in PR 4.
+- Events are `{ id, title, startsAt, endsAt?, tone?, allDay? }`. Multi-day events render as continuous bars in both the month grid and the week/day all-day band.
 - Tones: `neutral` (default) / `accent` / `success` / `warning` / `danger`. `allDay: true` renders as a tone-filled band (no time prefix).
-- Controlled (`value` / `onChange`) or uncontrolled (`defaultValue`).
-- Locale-aware via `useLocale()`; override with `locale` prop. `weekStartsOn` overrides the locale-derived first day.
-- `maxLanesPerWeek` (default 3) caps event lanes per week. Events beyond the cap collapse into a `+N more` chip in affected cells; click fires `onDayClick(date)` so you can open your own popover/modal with the full list.
-- Read-mostly: `onDayClick` and `onEventClick` callbacks only. No built-in popover or modal — wire your own detail UI.
-- ARIA: `role="grid" aria-readonly="true"`; arrow keys move focus, PageUp/PageDown navigates months, Enter/Space calls `onDayClick`.
+- Controlled cursor via `value` / `onChange`, or uncontrolled via `defaultValue`. Controlled view via `view` / `onViewChange`, or uncontrolled via `defaultView`.
+- `hourRange` (default `[7, 19]`) sets the visible hour window in week/day views. Hours outside the range are not rendered. `hourRowHeight` (default 48) is the pixel height per hour row.
+- Overlapping timed events in week/day views render as a Google-Calendar-style cascade: each lane is offset to the right by a small constant step but every block extends to the column's right edge, with later lanes overlaying earlier ones via `z-index`. Hovering or keyboard-focusing a block lifts it to full width on top of all neighbours. A horizontal "now" line marks the current time in today's column.
+- Locale-aware via `useLocale()`; override with `locale` prop. UI strings (`today`, `viewMonth`, etc.) are the consumer's responsibility via `labels`.
+- `maxLanesPerWeek` (default 3) caps event lanes per week in the month view. Events beyond the cap collapse into a `+N more` chip; click fires `onDayClick(date)`.
+- Read-mostly: `onDayClick` and `onEventClick` callbacks only. `onDayClick` fires across all views — month-cell click, "+N more" chip, keyboard activation (Enter/Space) on a focused cell, and (in week/day views) clicks on the empty hour-grid space of a day column. No built-in popover or modal — wire your own detail UI.
+- ARIA: month view is `role="grid" aria-readonly="true"`; arrow keys move focus, PageUp/PageDown navigates months, Enter/Space calls `onDayClick`. Week/day views are also `role="grid" aria-readonly="true"` with `role="row"` + `role="columnheader"` headers and standard sequential tab order for event blocks. **Known v3 gap:** in week/day views, `onDayClick` on empty hour-grid space is **mouse-only** (no keyboard equivalent). Consumers needing keyboard activation should drive their detail UI through the focusable event chips via `onEventClick`.
 
 ### Calendar primitives — `useMonth`, `useWeek`, `useDay`, `useAgenda`
 

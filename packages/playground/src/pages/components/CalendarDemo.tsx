@@ -84,6 +84,46 @@ const SAMPLE_EVENTS: CalendarEvent[] = [
     endsAt: fromToday(6, 14, 0),
     tone: 'neutral',
   },
+  // Overlapping events on the same day — demonstrate the cascade layout in
+  // week / day views (each lane offset right by a small step; later lanes
+  // overlay earlier ones; hover lifts a block to full width on top).
+  {
+    id: 'overlap-a',
+    title: 'Design review',
+    startsAt: fromToday(1, 10, 0),
+    endsAt: fromToday(1, 11, 30),
+    tone: 'accent',
+  },
+  {
+    id: 'overlap-b',
+    title: 'Sync: Engineering',
+    startsAt: fromToday(1, 10, 30),
+    endsAt: fromToday(1, 12, 0),
+    tone: 'success',
+  },
+  {
+    id: 'overlap-c',
+    title: 'Sales handoff',
+    startsAt: fromToday(1, 11, 0),
+    endsAt: fromToday(1, 12, 30),
+    tone: 'warning',
+  },
+  // Two simultaneously-starting events same day → cascade with the second
+  // event offset right and layered on top of the first.
+  {
+    id: 'concurrent-a',
+    title: 'Interview: Sarah',
+    startsAt: fromToday(3, 15, 0),
+    endsAt: fromToday(3, 16, 0),
+    tone: 'accent',
+  },
+  {
+    id: 'concurrent-b',
+    title: 'Vendor demo',
+    startsAt: fromToday(3, 15, 0),
+    endsAt: fromToday(3, 16, 0),
+    tone: 'neutral',
+  },
 ];
 
 const OVERFLOW_EVENTS: CalendarEvent[] = [
@@ -113,6 +153,13 @@ const MULTI_WEEK_EVENTS: CalendarEvent[] = [
 function ControlledCalendarDemo() {
   const [cursor, setCursor] = useState<Date>(TODAY);
   return <Calendar value={cursor} onChange={setCursor} events={SAMPLE_EVENTS} />;
+}
+
+function ViewSwitcherDemo() {
+  const [view, setView] = useState<'month' | 'week' | 'day'>('week');
+  return (
+    <Calendar defaultValue={TODAY} view={view} onViewChange={setView} events={SAMPLE_EVENTS} />
+  );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -182,7 +229,7 @@ export function CalendarDemo() {
 
       <Example
         title="ru-RU locale"
-        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings like the Today button are the consumer's responsibility; pass them via the labels prop."
+        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings like the Today button and view-switcher labels are the consumer's responsibility; pass them via the labels prop."
         code={`<Calendar
   defaultValue={new Date(2026, 4, 15)}
   events={SAMPLE_EVENTS}
@@ -192,6 +239,9 @@ export function CalendarDemo() {
     previousMonth: 'Предыдущий месяц',
     nextMonth: 'Следующий месяц',
     moreEvents: (n) => \`ещё ${'${n}'} событий\`,
+    viewMonth: 'Месяц',
+    viewWeek: 'Неделя',
+    viewDay: 'День',
   }}
 />`}
       >
@@ -204,8 +254,59 @@ export function CalendarDemo() {
             previousMonth: 'Предыдущий месяц',
             nextMonth: 'Следующий месяц',
             moreEvents: (n) => `ещё ${n} событий`,
+            viewMonth: 'Месяц',
+            viewWeek: 'Неделя',
+            viewDay: 'День',
           }}
         />
+      </Example>
+
+      <Example
+        title="Week view"
+        description="7 columns × hour rows. Timed events position by hour; overlapping events cascade — each lane offset right by a small step, later lanes overlay earlier ones, and hover lifts a block to full width on top. All-day and multi-day events render in the band above the hour grid. A horizontal line marks the current time in today's column."
+        code={`<Calendar
+  defaultValue={new Date()}
+  defaultView="week"
+  events={SAMPLE_EVENTS}
+/>`}
+      >
+        <Calendar defaultValue={TODAY} defaultView="week" events={SAMPLE_EVENTS} />
+      </Example>
+
+      <Example
+        title="Day view"
+        description="Single-day hour grid for focused planning. Custom hourRange tightens the visible range to business hours."
+        code={`<Calendar
+  defaultValue={new Date()}
+  defaultView="day"
+  events={SAMPLE_EVENTS}
+  hourRange={[8, 18]}
+/>`}
+      >
+        <Calendar
+          defaultValue={TODAY}
+          defaultView="day"
+          events={SAMPLE_EVENTS}
+          hourRange={[8, 18]}
+        />
+      </Example>
+
+      <Example
+        title="View switching (controlled)"
+        description="Consumer owns the active view via `view` / `onViewChange`. Useful for URL-syncing the current view."
+        code={`function ViewSwitcherDemo() {
+  const [view, setView] = useState<'month' | 'week' | 'day'>('week');
+  return (
+    <Calendar
+      defaultValue={new Date()}
+      view={view}
+      onViewChange={setView}
+      events={SAMPLE_EVENTS}
+    />
+  );
+}`}
+      >
+        <ViewSwitcherDemo />
       </Example>
 
       <Example

@@ -50,13 +50,16 @@
    `min-height` makes empty weeks still look like cells without inflating
    the day-number row (events sit immediately below the day number). */
 .dayColumn {
-  min-height: 6.5rem;
+  min-height: var(--size-calendar-day-cell-min-height);
   border-right: var(--border-width) solid var(--color-border);
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
+// Today's cell uses an accent border-top (emphasis-weight) instead of a
+// tinted background, so events with the `accent` tone don't visually blend
+// into the cell.
 .dayColumnToday {
-  background: var(--color-accent-bg-subtle);
+  box-shadow: inset 0 var(--border-width-emphasis) 0 var(--color-accent);
 }
 
 .dayColumnWeekend {

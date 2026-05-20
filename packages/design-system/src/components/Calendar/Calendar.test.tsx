@@ -97,4 +97,30 @@ describe('Calendar', () => {
     const focusable = cells.filter((c) => c.getAttribute('tabindex') === '0');
     expect(focusable.length).toBe(1);
   });
+
+  it('switches to WeekView when defaultView="week"', () => {
+    render(<Calendar defaultValue={new Date(2026, 4, 20)} defaultView="week" />, {
+      wrapper: wrap(),
+    });
+    const hourLabels = document.querySelectorAll('[class*="hourLabel"]');
+    expect(hourLabels.length).toBeGreaterThan(0);
+  });
+
+  it('switches to DayView when defaultView="day"', () => {
+    render(<Calendar defaultValue={new Date(2026, 4, 20)} defaultView="day" />, {
+      wrapper: wrap(),
+    });
+    expect(document.querySelectorAll('[role="columnheader"]').length).toBe(1);
+  });
+
+  it('controlled view: clicking Week tab fires onViewChange', async () => {
+    const user = userEvent.setup();
+    const onViewChange = vi.fn();
+    render(
+      <Calendar defaultValue={new Date(2026, 4, 20)} view="month" onViewChange={onViewChange} />,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('tab', { name: 'Week' }));
+    expect(onViewChange).toHaveBeenCalledWith('week');
+  });
 });

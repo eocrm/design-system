@@ -1,6 +1,13 @@
 import { startOfDay, toDateKey } from '../../calendar/dateMath';
 import type { Week } from '../../calendar/types';
-import type { CalendarEvent, EventBar, MonthLayout } from './types';
+import type {
+  AllDayBar,
+  CalendarEvent,
+  EventBar,
+  HourGridLayout,
+  MonthLayout,
+  TimedEventBlock,
+} from './types';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -128,4 +135,223 @@ export function layoutEventsForMonth(
   }
 
   return { bars, hiddenCounts };
+}
+
+interface DayRef {
+  date: Date;
+  key: string;
+}
+
+interface NormalizedTimed {
+  event: CalendarEvent;
+  dayIndex: number;
+  startMinutes: number;
+  endMinutes: number;
+}
+
+/**
+ * Lay out events for a Week or Day view's hour grid.
+ *
+ * - `allDay` events become bars in the AllDayBand (multi-day spans flatten
+ *   edges, like the month bars).
+ * - Timed events get positioned in their day column with greedy lane
+ *   assignment (lanes recycle once an earlier event ends). The cascade
+ *   renderer in TimedEvent.tsx uses `lane` for both left-offset and z-index
+ *   stacking; every block extends to the column's right edge.
+ * - Events outside the day range are dropped; events partially outside the
+ *   hour range keep their natural `startMinutes`/`endMinutes` (may be
+ *   negative or past the range) so the renderer can clip visually.
+ */
+export function layoutEventsForHourGrid(
+  events: readonly CalendarEvent[],
+  days: readonly DayRef[],
+  hourRange: readonly [number, number],
+): HourGridLayout {
+  if (events.length === 0 || days.length === 0) {
+    return { timedBlocks: [], allDayBars: [] };
+  }
+
+  const viewStart = startOfDay(days[0].date).getTime();
+  const viewEnd = startOfDay(days[days.length - 1].date).getTime() + MS_PER_DAY;
+  const baseHourMinutes = hourRange[0] * 60;
+
+  const timedNormalized: NormalizedTimed[] = [];
+  const allDayInput: CalendarEvent[] = [];
+
+  for (const ev of events) {
+    const start = ev.startsAt;
+    const end = ev.endsAt ?? ev.startsAt;
+    if (end.getTime() < viewStart || start.getTime() >= viewEnd) continue;
+    if (ev.allDay === true) {
+      allDayInput.push(ev);
+      continue;
+    }
+    const eventStartDay = startOfDay(start).getTime();
+    const dayIndex = days.findIndex((d) => startOfDay(d.date).getTime() === eventStartDay);
+    if (dayIndex === -1) continue;
+    const startMinutes = start.getHours() * 60 + start.getMinutes() - baseHourMinutes;
+    // If the event ends on a later day, clamp to end-of-day so the block extends
+    // to the bottom of the visible column rather than collapsing to negative height.
+    const endsOnSameDay = startOfDay(end).getTime() === eventStartDay;
+    const rawEndMinutes = end.getHours() * 60 + end.getMinutes() - baseHourMinutes;
+    const endMinutes = endsOnSameDay ? rawEndMinutes : 24 * 60 - baseHourMinutes;
+    timedNormalized.push({ event: ev, dayIndex, startMinutes, endMinutes });
+  }
+
+  const timedBlocks: TimedEventBlock[] = [];
+  for (let d = 0; d < days.length; d++) {
+    const dayEvents = timedNormalized
+      .filter((n) => n.dayIndex === d)
+      .sort((a, b) => a.startMinutes - b.startMinutes || b.endMinutes - a.endMinutes);
+
+    // Step 1: sweep sorted events into transitive collision groups.
+    interface Group {
+      members: NormalizedTimed[];
+    }
+    const groups: Group[] = [];
+    let currentGroup: Group | null = null;
+    let currentEndMax = -Infinity;
+    for (const ne of dayEvents) {
+      if (ne.startMinutes >= currentEndMax) {
+        if (currentGroup) groups.push(currentGroup);
+        currentGroup = { members: [ne] };
+        currentEndMax = ne.endMinutes;
+      } else {
+        currentGroup!.members.push(ne);
+        currentEndMax = Math.max(currentEndMax, ne.endMinutes);
+      }
+    }
+    if (currentGroup) groups.push(currentGroup);
+
+    // Step 2: within each group, assign a leftmost-available lane to each
+    // event greedily — lanes are recycled once an earlier event ends.
+    for (const g of groups) {
+      interface LaneState {
+        endMinutes: number;
+      }
+      const laneBuckets: LaneState[] = [];
+      for (const ne of g.members) {
+        let assigned = -1;
+        for (let l = 0; l < laneBuckets.length; l++) {
+          if (laneBuckets[l].endMinutes <= ne.startMinutes) {
+            assigned = l;
+            laneBuckets[l].endMinutes = ne.endMinutes;
+            break;
+          }
+        }
+        if (assigned === -1) {
+          assigned = laneBuckets.length;
+          laneBuckets.push({ endMinutes: ne.endMinutes });
+        }
+        timedBlocks.push({
+          event: ne.event,
+          dayIndex: ne.dayIndex,
+          startMinutes: ne.startMinutes,
+          endMinutes: ne.endMinutes,
+          lane: assigned,
+        });
+      }
+    }
+  }
+
+  const allDayBars = layoutAllDayBars(allDayInput, days);
+  return { timedBlocks, allDayBars };
+}
+
+function layoutAllDayBars(
+  events: readonly CalendarEvent[],
+  days: readonly DayRef[],
+): readonly AllDayBar[] {
+  if (events.length === 0) return [];
+  const viewStartMs = startOfDay(days[0].date).getTime();
+  const viewEndMs = startOfDay(days[days.length - 1].date).getTime();
+
+  interface NormalizedAllDay {
+    event: CalendarEvent;
+    startMs: number;
+    endMs: number;
+    duration: number;
+  }
+  const normalized: NormalizedAllDay[] = [];
+  for (const ev of events) {
+    let startMs = startOfDay(ev.startsAt).getTime();
+    let endMs = startOfDay(ev.endsAt ?? ev.startsAt).getTime();
+    if (endMs < startMs) [startMs, endMs] = [endMs, startMs];
+    if (endMs < viewStartMs || startMs > viewEndMs) continue;
+    normalized.push({ event: ev, startMs, endMs, duration: (endMs - startMs) / MS_PER_DAY });
+  }
+  normalized.sort((a, b) => a.startMs - b.startMs || b.duration - a.duration);
+
+  interface LaneSegment {
+    startCol: number;
+    endCol: number;
+  }
+  const lanes: LaneSegment[][] = [];
+  const bars: AllDayBar[] = [];
+
+  for (const n of normalized) {
+    const segStartMs = Math.max(n.startMs, viewStartMs);
+    const segEndMs = Math.min(n.endMs, viewEndMs);
+    const startCol = Math.round((segStartMs - viewStartMs) / MS_PER_DAY);
+    const endCol = Math.round((segEndMs - viewStartMs) / MS_PER_DAY);
+
+    let assigned = -1;
+    for (let l = 0; l < lanes.length; l++) {
+      const conflicts = lanes[l].some((s) => !(s.endCol < startCol || s.startCol > endCol));
+      if (!conflicts) {
+        assigned = l;
+        break;
+      }
+    }
+    if (assigned === -1) {
+      assigned = lanes.length;
+      lanes.push([]);
+    }
+    lanes[assigned].push({ startCol, endCol });
+
+    bars.push({
+      event: n.event,
+      startCol,
+      endCol,
+      lane: assigned,
+      continuesLeft: n.startMs < viewStartMs,
+      continuesRight: n.endMs > viewEndMs,
+    });
+  }
+  return bars;
+}
+
+/**
+ * Human-readable event duration: "0m" / "30m" / "1h" / "1h 30m" / "2d" /
+ * "2d 5h". For tooltip / display contexts where a compact label is wanted.
+ *
+ * When `allDay` is true, the count is inclusive of both the start and end
+ * day — so an event from `May 11` to `May 27` reads as `17d`, matching the
+ * visual span of the bar across the calendar grid (the user sees 17 days
+ * highlighted). Otherwise (timed events), it's a raw `end - start` diff:
+ * `9:00 → 9:30` reads as `30m`.
+ */
+export function formatEventDuration(
+  startsAt: Date,
+  endsAt: Date | undefined,
+  allDay = false,
+): string {
+  if (allDay) {
+    const startDayMs = startOfDay(startsAt).getTime();
+    const endDayMs = startOfDay(endsAt ?? startsAt).getTime();
+    const dayDiff = Math.round((endDayMs - startDayMs) / 86_400_000);
+    const days = Math.max(1, dayDiff + 1);
+    return `${days}d`;
+  }
+  const start = startsAt.getTime();
+  const end = (endsAt ?? startsAt).getTime();
+  const minutes = Math.max(0, Math.round((end - start) / 60_000));
+  if (minutes === 0) return '0m';
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remMin = minutes % 60;
+  if (hours < 24) return remMin === 0 ? `${hours}h` : `${hours}h ${remMin}m`;
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  return remHours === 0 ? `${days}d` : `${days}d ${remHours}h`;
 }
