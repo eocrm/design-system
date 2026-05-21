@@ -55,14 +55,12 @@
 .cells {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
 }
 
 .weekdayRow,
 .weekRow {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: var(--space-1);
 }
 
 .weekday {
@@ -93,7 +91,10 @@
   color: var(--color-fg);
   cursor: pointer;
 
-  &:hover:not(:disabled, .disabled) {
+  // Hover-bg only on neutral cells. Selected / in-range / range-boundary
+  // cells already carry an accent fill — overriding it with bg-subtle would
+  // turn the text unreadable (white-on-grey).
+  &:hover:not(:disabled, .disabled, .selected, .inRange, .rangeStart, .rangeEnd) {
     background: var(--color-bg-subtle);
   }
 
@@ -114,15 +115,47 @@
   background: var(--color-accent);
   color: var(--color-accent-fg);
   border-color: var(--color-accent);
-
-  &:hover {
-    background: var(--color-accent);
-    color: var(--color-accent-fg);
-  }
 }
 
 .disabled {
   color: var(--color-fg-muted);
   opacity: var(--opacity-disabled);
   cursor: default;
+}
+
+// Range-mode cell markers — applied when `selectionMode='range'` and the
+// cell falls inside the [rangeStart, rangeEnd|hoverDate] window. Disabled
+// cells inside the range keep their muted color but still get .inRange so
+// the band reads as contiguous.
+.inRange {
+  background: var(--color-accent-bg-subtle);
+  color: var(--color-accent);
+  border-radius: 0;
+}
+
+// Disabled cells inside the range band keep their muted color so they
+// still read as disabled — only the background tint is inherited from
+// .inRange to keep the band visually contiguous.
+.disabled.inRange {
+  color: var(--color-fg-muted);
+}
+
+// The two range boundaries get the same fill as a regular `.selected`
+// cell, but with rounded edges only on the OUTSIDE of the range so they
+// visually anchor the band.
+.rangeStart {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.rangeEnd {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+// Single-day range — both rangeStart AND rangeEnd are the same cell.
+.rangeStart.rangeEnd {
+  border-radius: var(--radius-sm);
 }

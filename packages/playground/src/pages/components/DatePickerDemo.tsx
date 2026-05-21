@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Button, DatePicker } from '@eocrm/design-system';
+import { Button, DatePicker, Stack, toDateKey } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
+import { InputExample } from './InputExample';
 import tsxSource from '@lib-source/components/DatePicker/DatePicker.tsx?raw';
 import scssSource from '@lib-source/components/DatePicker/DatePicker.module.scss?raw';
 
@@ -11,10 +12,12 @@ const IN_90_DAYS = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate
 function ControlledDemo() {
   const [value, setValue] = useState<Date | null>(TODAY);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+    <Stack gap="xs">
       <DatePicker value={value} onChange={setValue} aria-label="Controlled date" />
-      <code>{value ? value.toISOString().slice(0, 10) : 'null'}</code>
-    </div>
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        {value ? toDateKey(value) : 'null'}
+      </code>
+    </Stack>
   );
 }
 
@@ -27,13 +30,18 @@ function FormDemo() {
         const fd = new FormData(e.currentTarget);
         setSubmitted(String(fd.get('dob') ?? ''));
       }}
-      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
     >
-      <DatePicker name="dob" defaultValue={TODAY} aria-label="Date of birth" />
-      <Button type="submit" size="sm">
-        Submit
-      </Button>
-      {submitted !== null && <code>dob = {submitted || '(empty)'}</code>}
+      <Stack gap="xs">
+        <DatePicker name="dob" defaultValue={TODAY} aria-label="Date of birth" />
+        <Button type="submit" size="sm">
+          Submit
+        </Button>
+        {submitted !== null && (
+          <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+            dob = {submitted || '(empty)'}
+          </code>
+        )}
+      </Stack>
     </form>
   );
 }
@@ -54,7 +62,9 @@ export function DatePickerDemo() {
         description="No `value` / `onChange` — the picker owns state. Type a date, click in the grid, or use the clear button."
         code={`<DatePicker defaultValue={new Date()} />`}
       >
-        <DatePicker defaultValue={TODAY} aria-label="Uncontrolled date" />
+        <InputExample>
+          <DatePicker defaultValue={TODAY} aria-label="Uncontrolled date" />
+        </InputExample>
       </Example>
 
       <Example
@@ -63,7 +73,9 @@ export function DatePickerDemo() {
         code={`const [value, setValue] = useState<Date | null>(new Date());
 <DatePicker value={value} onChange={setValue} />`}
       >
-        <ControlledDemo />
+        <InputExample>
+          <ControlledDemo />
+        </InputExample>
       </Example>
 
       <Example
@@ -77,12 +89,14 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
   max={in90Days}
 />`}
       >
-        <DatePicker
-          defaultValue={TODAY}
-          min={TODAY}
-          max={IN_90_DAYS}
-          aria-label="Date within 90 days"
-        />
+        <InputExample>
+          <DatePicker
+            defaultValue={TODAY}
+            min={TODAY}
+            max={IN_90_DAYS}
+            aria-label="Date within 90 days"
+          />
+        </InputExample>
       </Example>
 
       <Example
@@ -92,10 +106,12 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
   isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
 />`}
       >
-        <DatePicker
-          aria-label="Weekday only"
-          isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
-        />
+        <InputExample>
+          <DatePicker
+            aria-label="Weekday only"
+            isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
+          />
+        </InputExample>
       </Example>
 
       <Example
@@ -103,7 +119,9 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
         description="Use `disabled` when the field is unavailable in the current context (e.g., read-only stage of a workflow). The clear button is hidden when disabled."
         code={`<DatePicker disabled defaultValue={new Date()} />`}
       >
-        <DatePicker disabled defaultValue={TODAY} aria-label="Disabled date" />
+        <InputExample>
+          <DatePicker disabled defaultValue={TODAY} aria-label="Disabled date" />
+        </InputExample>
       </Example>
 
       <Example
@@ -112,12 +130,17 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
         code={`<DatePicker invalid aria-describedby="dob-error" />
 <p id="dob-error">Date is required.</p>`}
       >
-        <div>
-          <DatePicker invalid aria-label="Date of birth" aria-describedby="dob-error" />
-          <p id="dob-error" style={{ color: 'var(--color-danger)', marginTop: 'var(--space-1)' }}>
-            Date is required.
-          </p>
-        </div>
+        <InputExample>
+          <Stack gap="xs">
+            <DatePicker invalid aria-label="Date of birth" aria-describedby="dob-error" />
+            <p
+              id="dob-error"
+              style={{ color: 'var(--color-danger)', fontSize: 'var(--font-size-xs)' }}
+            >
+              Date is required.
+            </p>
+          </Stack>
+        </InputExample>
       </Example>
 
       <Example
@@ -128,7 +151,9 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
   <button type="submit">Submit</button>
 </form>`}
       >
-        <FormDemo />
+        <InputExample>
+          <FormDemo />
+        </InputExample>
       </Example>
 
       <Example
@@ -146,18 +171,20 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
   }}
 />`}
       >
-        <DatePicker
-          defaultValue={TODAY}
-          locale="ru-RU"
-          aria-label="Дата"
-          labels={{
-            previousMonth: 'Предыдущий месяц',
-            nextMonth: 'Следующий месяц',
-            openCalendar: 'Открыть календарь',
-            clear: 'Очистить дату',
-            dialogLabel: 'Выберите дату',
-          }}
-        />
+        <InputExample>
+          <DatePicker
+            defaultValue={TODAY}
+            locale="ru-RU"
+            aria-label="Дата"
+            labels={{
+              previousMonth: 'Предыдущий месяц',
+              nextMonth: 'Следующий месяц',
+              openCalendar: 'Открыть календарь',
+              clear: 'Очистить дату',
+              dialogLabel: 'Выберите дату',
+            }}
+          />
+        </InputExample>
       </Example>
     </DemoLayout>
   );

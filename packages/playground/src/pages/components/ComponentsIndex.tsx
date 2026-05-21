@@ -13,6 +13,7 @@ import { DropdownMenu } from '@eocrm/design-system';
 import { Tooltip } from '@eocrm/design-system';
 import { Calendar } from '@eocrm/design-system';
 import { DatePicker } from '@eocrm/design-system';
+import { DateRangePicker } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
@@ -38,6 +39,22 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: (
       <div style={{ width: 200 }}>
         <DatePicker defaultValue={new Date(2026, 4, 21)} aria-label="Preview" />
+      </div>
+    ),
+  },
+  {
+    to: '/components/daterangepicker',
+    name: 'DateRangePicker',
+    description: 'Single-field date-range input with a two-month popover.',
+    preview: (
+      <div style={{ width: 240 }}>
+        <DateRangePicker
+          defaultValue={{
+            start: new Date(2026, 4, 21),
+            end: new Date(2026, 5, 4),
+          }}
+          aria-label="Preview"
+        />
       </div>
     ),
   },

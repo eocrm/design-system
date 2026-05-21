@@ -139,3 +139,10 @@ export type {
 
 export { DatePicker } from './components/DatePicker';
 export type { DatePickerProps, DatePickerLabels } from './components/DatePicker';
+
+export { DateRangePicker } from './components/DateRangePicker';
+export type {
+  DateRangePickerProps,
+  DateRangePickerLabels,
+  DateRange,
+} from './components/DateRangePicker';

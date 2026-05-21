@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMonth } from '../../calendar/useMonth';
 import { useLocale } from '../../i18n/useLocale';
-import { isSameDay, startOfDay, toDateKey } from '../../calendar/dateMath';
+import { isSameDay, isSameMonth, startOfDay, toDateKey } from '../../calendar/dateMath';
 import { isDateOutOfRange } from './utils';
 import styles from './DatePickerGrid.module.scss';
 
@@ -26,6 +26,18 @@ export interface DatePickerGridProps {
   locale?: string;
   /** Localized strings for the chevrons. */
   labels: { previousMonth: string; nextMonth: string };
+  /** Selection model. Defaults to 'single'. */
+  selectionMode?: 'single' | 'range';
+  /** Range start (when selectionMode='range'). The left boundary of the committed range. */
+  rangeStart?: Date | null;
+  /** Range end (when selectionMode='range'). The right boundary. */
+  rangeEnd?: Date | null;
+  /** In-flight hover preview (when selectionMode='range' and only rangeStart is set). */
+  hoverDate?: Date | null;
+  /** Fires on cell mouseenter (the date) and on grid mouseleave (null). */
+  onHoverDate?: (date: Date | null) => void;
+  /** Show the prev / next month chevrons. Defaults to true; the month label is always shown. */
+  chevrons?: boolean;
 }
 
 /**
@@ -56,6 +68,12 @@ export function DatePickerGrid({
   isDateDisabled,
   locale: localeOverride,
   labels,
+  selectionMode = 'single',
+  rangeStart = null,
+  rangeEnd = null,
+  hoverDate = null,
+  onHoverDate,
+  chevrons = true,
 }: DatePickerGridProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
@@ -82,6 +100,60 @@ export function DatePickerGrid({
     (date: Date) => isDateOutOfRange(date, min, max, isDateDisabled),
     [min, max, isDateDisabled],
   );
+
+  // Range-mode helpers — no-op when selectionMode === 'single'.
+  const rangeAnchorStart = selectionMode === 'range' ? rangeStart : null;
+  const rangeAnchorEnd = selectionMode === 'range' ? (rangeEnd ?? hoverDate) : null;
+  const isInRange = useCallback(
+    (date: Date) => {
+      if (!rangeAnchorStart || !rangeAnchorEnd) return false;
+      const a = startOfDay(rangeAnchorStart).getTime();
+      const b = startOfDay(rangeAnchorEnd).getTime();
+      const t = startOfDay(date).getTime();
+      const lo = Math.min(a, b);
+      const hi = Math.max(a, b);
+      return t >= lo && t <= hi;
+    },
+    [rangeAnchorStart, rangeAnchorEnd],
+  );
+  const isRangeStartCell = (date: Date) => {
+    if (selectionMode !== 'range' || rangeStart == null) return false;
+    const other = rangeEnd ?? hoverDate;
+    if (other == null) return isSameDay(date, rangeStart);
+    // Earlier of the two acts as start.
+    const earlier =
+      startOfDay(rangeStart).getTime() <= startOfDay(other).getTime() ? rangeStart : other;
+    return isSameDay(date, earlier);
+  };
+
+  const isRangeEndCell = (date: Date) => {
+    if (selectionMode !== 'range' || rangeStart == null) return false;
+    const other = rangeEnd ?? hoverDate;
+    if (other == null) return false;
+    const later =
+      startOfDay(rangeStart).getTime() >= startOfDay(other).getTime() ? rangeStart : other;
+    return isSameDay(date, later);
+  };
+
+  const tabIndexFor = (date: Date, isTodayCell: boolean): number => {
+    if (selectionMode === 'range') {
+      if (rangeStart != null && isSameDay(date, rangeStart)) return 0;
+      // Fallback to rangeEnd when rangeStart isn't visible in this month
+      // (DateRangePicker renders two grids; the right grid often shows
+      // rangeEnd's month only). The same-month guard prevents two cells
+      // from getting tabIndex=0 when both boundaries are in the same grid.
+      if (
+        rangeStart != null &&
+        rangeEnd != null &&
+        !isSameMonth(rangeStart, cursor) &&
+        isSameDay(date, rangeEnd)
+      )
+        return 0;
+      if (rangeStart == null && isTodayCell) return 0;
+      return -1;
+    }
+    return value != null && isSameDay(date, value) ? 0 : value == null && isTodayCell ? 0 : -1;
+  };
 
   useEffect(() => {
     if (pendingFocusKey.current) {
@@ -173,27 +245,31 @@ export function DatePickerGrid({
   return (
     <div className={styles.grid}>
       <header className={styles.header}>
-        <button
-          type="button"
-          className={styles.navButton}
-          aria-label={labels.previousMonth}
-          onClick={goPrev}
-        >
-          <ChevronLeft size={14} />
-        </button>
+        {chevrons && (
+          <button
+            type="button"
+            className={styles.navButton}
+            aria-label={labels.previousMonth}
+            onClick={goPrev}
+          >
+            <ChevronLeft size={14} />
+          </button>
+        )}
         <span className={styles.monthLabel} aria-live="polite">
           {grid.monthLabel}
         </span>
-        <button
-          type="button"
-          className={styles.navButton}
-          aria-label={labels.nextMonth}
-          onClick={goNext}
-        >
-          <ChevronRight size={14} />
-        </button>
+        {chevrons && (
+          <button
+            type="button"
+            className={styles.navButton}
+            aria-label={labels.nextMonth}
+            onClick={goNext}
+          >
+            <ChevronRight size={14} />
+          </button>
+        )}
       </header>
-      <div role="grid" className={styles.cells}>
+      <div role="grid" className={styles.cells} onMouseLeave={() => onHoverDate?.(null)}>
         <div role="row" className={styles.weekdayRow}>
           {grid.weekdayLabels.map((label, i) => (
             <span key={i} role="columnheader" className={styles.weekday}>
@@ -223,14 +299,25 @@ export function DatePickerGrid({
                     isSelected && styles.selected,
                     isTodayCell && styles.today,
                     disabled && styles.disabled,
+                    isInRange(day.date) && styles.inRange,
+                    isRangeStartCell(day.date) && styles.rangeStart,
+                    isRangeEndCell(day.date) && styles.rangeEnd,
                   )}
-                  aria-selected={isSelected || undefined}
+                  aria-selected={
+                    isSelected ||
+                    isRangeStartCell(day.date) ||
+                    isRangeEndCell(day.date) ||
+                    undefined
+                  }
                   aria-disabled={disabled || undefined}
-                  tabIndex={isSelected || (value == null && isTodayCell) ? 0 : -1}
+                  tabIndex={tabIndexFor(day.date, isTodayCell)}
                   onClick={() => {
                     if (!disabled) onSelect(day.date);
                   }}
                   onKeyDown={(e) => handleCellKeyDown(e, day.date)}
+                  onMouseEnter={() => {
+                    if (!disabled && onHoverDate) onHoverDate(day.date);
+                  }}
                 >
                   {day.dayOfMonth}
                 </button>

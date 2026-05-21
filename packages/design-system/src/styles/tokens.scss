@@ -143,11 +143,18 @@
   --size-calendar-agenda-gutter: 8rem;
 
   // DatePicker — square size of a single day cell in the month grid.
-  // Wide enough to fit "30" + accent ring without crowding.
-  --size-datepicker-cell: 2.25rem;
+  // Sized for the no-gap layout: cells touch each other so the selected /
+  // in-range band reads as one continuous pill. Stays ≥ 32px for AA touch
+  // target.
+  --size-datepicker-cell: 2rem;
 
-  // DatePicker — overall width of the floating popover.
-  --size-datepicker-popover-width: 17rem;
+  // DatePicker — overall width of the floating popover. 7 cells × 2rem +
+  // popover padding (var(--space-2) × 2 = 1rem) = 15rem.
+  --size-datepicker-popover-width: 15rem;
+
+  // DateRangePicker — overall width of the floating popover. Fits two
+  // 15rem grids side-by-side + var(--space-3) gutter + popover padding.
+  --size-daterange-popover-width: 32rem;
 
   // Border weights — emphasis = tab underline/focus rings; strong = accent
   // stripes on cards or other "this stands out" visuals.
