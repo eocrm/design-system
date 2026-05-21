@@ -67,6 +67,20 @@ export type {
   ConfirmationVariant,
 } from './components/ConfirmationPopover';
 
+export { PasswordInput } from './components/PasswordInput';
+export type {
+  PasswordInputProps,
+  PasswordInputSize,
+  PasswordInputLabels,
+} from './components/PasswordInput';
+
+export { PasswordStrengthMeter } from './components/PasswordStrengthMeter';
+export type {
+  PasswordStrengthMeterProps,
+  PasswordStrengthScore,
+  PasswordStrengthLabels,
+} from './components/PasswordStrengthMeter';
+
 export { Select } from './components/Select';
 export type {
   SelectProps,
