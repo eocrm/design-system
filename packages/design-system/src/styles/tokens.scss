@@ -38,6 +38,7 @@
   --color-warning-fg: #ffffff;
   --color-warning-bg-subtle: #fff7ed; // tinted surface for event chips / highlights
   --color-info: #0052cc;
+  --color-info-bg-subtle: #ebf3ff; // very light blue tint — between white and --color-accent-bg-subtle (#deebff); used for soft "hint" surfaces like table row hover
 
   // Badge palette — subtle bg + readable fg pairs
   --color-badge-neutral-bg: #f4f5f7;
@@ -170,6 +171,23 @@
 
   // Special line-heights
   --line-height-none: 1;
+
+  // Table — component-namespaced aliases over the base palette so a future
+  // theme can shift Table colors independently. Edit the right-hand side
+  // here, not the consumers in Table.module.scss.
+  --color-table-bg: var(--color-bg);
+  --color-table-fg: var(--color-fg);
+  --color-table-border: var(--color-border);
+  --color-table-header-bg: var(--color-bg-muted); // <thead> + <tfoot> rows
+  --color-table-header-bg-hover: var(--color-bg-sunken); // sortable <th>:hover
+  --color-table-header-fg: var(--color-fg-muted);
+  --color-table-caption-fg: var(--color-fg-muted);
+  --color-table-row-bg-striped: var(--color-bg-subtle);
+  --color-table-row-bg-hover: var(
+    --color-info-bg-subtle
+  ); // light blue — distinct from striped (gray) and selected (stronger blue)
+  --color-table-row-bg-selected: var(--color-accent-bg-subtle);
+  --color-table-row-fg-selected: var(--color-fg);
 
   // Presence dots (Avatar status). Aliases over the existing semantic
   // palette — theme changes propagate.
