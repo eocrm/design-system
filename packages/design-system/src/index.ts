@@ -8,6 +8,9 @@ export type { InputProps, InputSize } from './components/Input';
 export { Card } from './components/Card';
 export type { CardProps, CardPadding } from './components/Card';
 
+export { Checkbox } from './components/Checkbox';
+export type { CheckboxProps, CheckboxSize } from './components/Checkbox';
+
 export { Stack } from './components/Stack';
 export type { StackProps, StackGap, StackAlign } from './components/Stack';
 
