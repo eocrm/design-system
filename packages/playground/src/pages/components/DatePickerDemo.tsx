@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, DatePicker, Stack, toDateKey } from '@eocrm/design-system';
-import { DemoLayout } from './DemoLayout';
+import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
 import tsxSource from '@lib-source/components/DatePicker/DatePicker.tsx?raw';
@@ -46,16 +46,14 @@ function FormDemo() {
   );
 }
 
-export function DatePickerDemo() {
+export function DatePickerDemoPanel() {
   return (
-    <DemoLayout
-      name="DatePicker"
-      componentName="DatePicker"
-      description="Single-date input with a popover month grid. Locale-aware typed parsing, min/max constraints, isDateDisabled predicate, clear button, and a hidden form mirror for native posts."
+    <DemoBody
       tsxSource={tsxSource}
       scssSource={scssSource}
       tsxFilename="DatePicker.tsx"
       scssFilename="DatePicker.module.scss"
+      componentName="DatePicker"
     >
       <Example
         title="Uncontrolled"
@@ -186,6 +184,6 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
           />
         </InputExample>
       </Example>
-    </DemoLayout>
+    </DemoBody>
   );
 }
