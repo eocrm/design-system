@@ -1,12 +1,15 @@
-# PasswordInput — design spec
+# PasswordInput + PasswordStrengthMeter — design spec
 
 **Date:** 2026-05-21
 **Branch:** `feat/password-input`
-**Scope:** New `<PasswordInput>` component — password text field with a trailing eye-toggle button to reveal/hide the value.
+**Scope:** Two new components shipped together:
+
+1. `<PasswordInput>` — password text field with trailing eye-toggle + opt-in caps-lock indicator.
+2. `<PasswordStrengthMeter>` — separate sibling component that renders a 4-segment strength visualization. Pluggable scoring; default heuristic for v1.
 
 ## Goal
 
-A single-line password input that visually matches `<Input>`, with a built-in eye toggle (`Eye` / `EyeOff` lucide icons) for showing the password as plain text. Owns all the password-specific concerns (a11y for the toggle, type-switching, `aria-pressed`) so consumers don't reinvent them.
+A single-line password input that visually matches `<Input>`, with a built-in eye toggle (`Eye` / `EyeOff` lucide icons) for showing the password as plain text. Owns all the password-specific concerns (a11y for the toggle, type-switching, `aria-pressed`, opt-in caps-lock detection) so consumers don't reinvent them. Strength visualization stays a separate component so consumers can use it without the input (e.g., on a server-validated strength API) or use the input without it (most cases).
 
 ## Why a separate component (not a flag on Input)
 
@@ -30,7 +33,7 @@ A single-line password input that visually matches `<Input>`, with a built-in ey
 - `aria-pressed` exposes the toggle state to AT.
 - Icon: `Eye` when hidden (clicking will reveal), `EyeOff` when revealed (clicking will hide). Matches GitHub / 1Password / Bitwarden convention.
 
-## Public API
+## Public API — `<PasswordInput>`
 
 ```ts
 export type PasswordInputSize = 'sm' | 'md' | 'lg';
@@ -40,6 +43,8 @@ export interface PasswordInputLabels {
   show?: string;
   /** aria-label for the toggle button when revealed ("clicking will hide"). Default: 'Hide password'. */
   hide?: string;
+  /** Live-region text announced when caps-lock is detected as on. Default: 'Caps Lock is on'. */
+  capsLockOn?: string;
 }
 
 export interface PasswordInputProps
@@ -72,7 +77,19 @@ export interface PasswordInputProps
    */
   revealable?: boolean;
 
-  /** Localized aria-labels for the toggle. */
+  /**
+   * Opt-in caps-lock detection. When `true`, on every keypress the input
+   * reads `event.getModifierState('CapsLock')`; when active, a warning
+   * icon appears inside the wrapper AND a polite `aria-live` region
+   * announces the state to AT. The state is cleared on blur (so the
+   * warning doesn't persist when focus moves elsewhere).
+   *
+   * Defaults to `false` — opt in only on screens where this matters
+   * (login, password creation, password confirmation).
+   */
+  capsLockWarning?: boolean;
+
+  /** Localized aria-labels for the toggle + caps-lock live region. */
   labels?: PasswordInputLabels;
 }
 ```
@@ -115,6 +132,7 @@ Per-size icon size lookup (matches DatePicker convention): `{ sm: 14, md: 14, lg
 - **Focus-within on wrapper** — accent border + ring (same as Input focus).
 - **Disabled** — `<input disabled>` + toggle disabled (greyed, no click). The toggle still renders (so the disabled-treatment is consistent) but the password stays hidden.
 - **Invalid** — danger border + danger focus ring.
+- **Caps-lock on (only when `capsLockWarning={true}`)** — a `--color-warning`-colored `ArrowBigUpDash` icon appears between the input and the eye toggle. A hidden `aria-live='polite'` span announces `labels.capsLockOn` to AT. Cleared on blur.
 
 ## A11y
 
@@ -123,6 +141,7 @@ Per-size icon size lookup (matches DatePicker convention): `{ sm: 14, md: 14, lg
 - When the user toggles, focus stays on the toggle (no auto-focus of the input — that would surprise keyboard users).
 - `aria-invalid` set on the input when `invalid={true}`.
 - `aria-describedby` flows through to the input via the standard spread.
+- **Caps-lock indicator** (when `capsLockWarning={true}`) — visual warning icon + a polite live region (`role='status' aria-live='polite'`) that announces `labels.capsLockOn` exactly once when caps-lock turns on. The icon also carries `aria-hidden='true'` so AT doesn't double-announce.
 
 ## File layout
 
@@ -132,11 +151,119 @@ packages/design-system/src/components/PasswordInput/
   PasswordInput.module.scss
   PasswordInput.test.tsx
   index.ts
+
+packages/design-system/src/components/PasswordStrengthMeter/
+  PasswordStrengthMeter.tsx
+  PasswordStrengthMeter.module.scss
+  PasswordStrengthMeter.test.tsx
+  index.ts
 ```
 
-Top-level `src/index.ts` re-exports `PasswordInput`, `PasswordInputProps`, `PasswordInputSize`, `PasswordInputLabels`.
+Top-level `src/index.ts` re-exports both:
 
-## Tests
+- `PasswordInput`, `PasswordInputProps`, `PasswordInputSize`, `PasswordInputLabels`
+- `PasswordStrengthMeter`, `PasswordStrengthMeterProps`, `PasswordStrengthScore`, `PasswordStrengthLabels`
+
+## `<PasswordStrengthMeter>` — separate component
+
+```tsx
+<PasswordStrengthMeter value={password} />
+// or, with a consumer-supplied scorer (e.g., zxcvbn):
+<PasswordStrengthMeter score={zxcvbnScore(password)} />
+```
+
+Rendered as 4 segments + an optional textual label. Each segment fills with a tone-appropriate color as the score climbs:
+
+| Score | Filled segments | Color                | Label (default) |
+| ----- | --------------- | -------------------- | --------------- |
+| 0     | 0               | `--color-bg-sunken`  | "" (or "Empty") |
+| 1     | 1               | `--color-danger`     | "Weak"          |
+| 2     | 2               | `--color-warning`    | "Fair"          |
+| 3     | 3               | `--color-warning`    | "Good"          |
+| 4     | 4               | `--color-success`    | "Strong"        |
+
+### API
+
+```ts
+export type PasswordStrengthScore = 0 | 1 | 2 | 3 | 4;
+
+export interface PasswordStrengthLabels {
+  empty?: string; // default: '' (no label)
+  weak?: string;  // default: 'Weak'
+  fair?: string;  // default: 'Fair'
+  good?: string;  // default: 'Good'
+  strong?: string; // default: 'Strong'
+}
+
+export interface PasswordStrengthMeterProps extends HTMLAttributes<HTMLDivElement> {
+  /**
+   * The password string to evaluate. Required UNLESS `score` is provided.
+   * Evaluated via the default `scoreFn` (basic heuristic) or a consumer-
+   * supplied `scoreFn`.
+   */
+  value?: string;
+
+  /**
+   * Pre-computed score, 0–4. Useful when the consumer is using a real
+   * scorer (zxcvbn, server-side) and just wants this component to render.
+   * Wins over `value` + `scoreFn` when both are provided.
+   */
+  score?: PasswordStrengthScore;
+
+  /**
+   * Custom scoring function. Receives the password string, returns 0–4.
+   * Defaults to a length + character-class heuristic — fine for prototypes,
+   * NOT a security check. Production deployments should pass `score` from
+   * a real scorer.
+   */
+  scoreFn?: (value: string) => PasswordStrengthScore;
+
+  /** Render the textual label next to the segments. Defaults to `true`. */
+  showLabel?: boolean;
+
+  /** Localized labels. */
+  labels?: PasswordStrengthLabels;
+}
+```
+
+### Default scoring heuristic (v1)
+
+Simple, transparent, NOT secure:
+
+```ts
+function defaultScoreFn(pw: string): PasswordStrengthScore {
+  if (!pw) return 0;
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score++;
+  return Math.min(score, 4) as PasswordStrengthScore;
+}
+```
+
+This is intentionally crude. JSDoc warns consumers that real password security needs zxcvbn or server-side scoring. The default exists so the component is usable without setup — but it's not a security control.
+
+### A11y
+
+- The component renders a visible label (when `showLabel={true}`) describing the strength.
+- The segments themselves are decorative (`aria-hidden='true'`).
+- A hidden `role='status' aria-live='polite'` span announces the strength label when it changes, so screen-reader users hear "Weak → Fair → Good" as they type.
+- The component does NOT label any particular input; it's the consumer's job to link via `aria-describedby={meterId}` on their `<PasswordInput>`.
+
+### Tests
+
+- Renders 4 segments.
+- Default scoring: empty → 0; 8+ chars → 1; 8+ chars + length 12+ → 2; mixed case → +1; digit + special → +1.
+- Score cap at 4.
+- `score` prop wins over `value` + `scoreFn`.
+- `scoreFn` is called with the password value.
+- `showLabel={false}` hides the textual label.
+- `labels` overrides the default strings.
+- Live region announces the label.
+- `className` merges on the root wrapper.
+
+## Tests — PasswordInput
 
 - Renders `type='password'` by default.
 - Clicking the toggle flips to `type='text'` and back.
@@ -153,8 +280,10 @@ Top-level `src/index.ts` re-exports `PasswordInput`, `PasswordInputProps`, `Pass
 - `ref` forwards to the native `<input>`.
 - `className` merges on the wrapper (not replaced).
 - `name` + `value` flow through for FormData round-trip.
+- `capsLockWarning={true}` — when keydown event reports `getModifierState('CapsLock')` true, the warning icon renders + the live region contains the label. When false, neither does. On blur, both clear.
+- `capsLockWarning={false}` (default) — no keydown listeners attached; no warning even if caps-lock is on.
 
-## Playground demo
+## Playground demos
 
 `PasswordInputDemo.tsx`:
 
@@ -162,26 +291,41 @@ Top-level `src/index.ts` re-exports `PasswordInput`, `PasswordInputProps`, `Pass
 2. **Sizes** — sm / md / lg side by side.
 3. **Controlled reveal** — `revealed` + `onRevealChange` echoed to a debug line.
 4. **No toggle** — `<PasswordInput revealable={false} placeholder="No toggle" />` for the compliance case.
-5. **Disabled** — `<PasswordInput disabled defaultValue="locked" />`.
-6. **Invalid** — paired with `aria-describedby` + visible error.
-7. **Localized labels (ru-RU)** — passes Russian `labels`.
-8. **Form integration** — `name="password" required` inside a `<form>`, log FormData on submit.
+5. **Caps-lock warning** — `<PasswordInput capsLockWarning placeholder="Try with Caps Lock on" />` — manual smoke note that the user needs to toggle Caps Lock to see the icon.
+6. **Disabled** — `<PasswordInput disabled defaultValue="locked" />`.
+7. **Invalid** — paired with `aria-describedby` + visible error.
+8. **Localized labels (ru-RU)** — passes Russian `labels`.
+9. **Form integration** — `name="password" required` inside a `<form>`, log FormData on submit.
+10. **With strength meter (composition)** — `<PasswordInput capsLockWarning />` + `<PasswordStrengthMeter value={pw} />` below, demonstrating the canonical signup form pattern.
+
+`PasswordStrengthMeterDemo.tsx`:
+
+1. **Live with PasswordInput** — type into a field, watch the meter update.
+2. **Standalone with `score` prop** — slider controls a `PasswordStrengthScore`, meter reflects it (illustrates the "consumer drives score" mode).
+3. **`showLabel={false}`** — segments only, no label.
+4. **Localized labels** — Russian.
 
 ## AGENTS.md
 
-Add `<PasswordInput>` section right after `<Input>` (Forms group).
+Two new sections, both in the Forms group:
+
+- `<PasswordInput>` right after `<Input>`.
+- `<PasswordStrengthMeter>` right after `<PasswordInput>`.
 
 ## Non-goals
 
-- **Caps-lock indicator**. Common, but a separate concern with its own a11y wiring (keydown listener, persistent indicator). Add later if a screen needs it.
-- **Password strength meter**. Larger feature with its own algorithms (zxcvbn) and visuals. Out of scope.
-- **Paste blocker for "confirm password"**. Same — separate prop later (`disablePaste`).
-- **Show-password-on-press (hold-to-reveal)**. Niche; ship the click-to-toggle pattern v1 and add later if asked.
+- **Paste blocker for "confirm password"** (`disablePaste`). Separate prop later if a screen needs it.
+- **Show-password-on-press (hold-to-reveal)**. Niche; ship the click-to-toggle pattern v1.
+- **Bundled zxcvbn**. The default scoring heuristic is intentionally crude — production deployments pass their own `score` or `scoreFn`. Pulling in zxcvbn (~400kb) is the consumer's choice.
+- **Async strength scoring**. The `scoreFn` is sync. If a consumer needs server-side scoring, they pass the resolved `score` directly.
 
 ## Risks / open questions
 
 - **Autofill behavior when type swaps**: Chrome / Safari attach password-manager UI to `type='password'` inputs. When toggled to `text`, the autofill chrome can disappear briefly. Acceptable — most users toggle AFTER autofill has filled.
 - **Some browsers offer their own reveal toggle**: Edge adds a built-in eye icon for `type='password'`. Our toggle stacks visually with theirs. Standard mitigation: `::-ms-reveal { display: none }` in SCSS. Add to the SCSS (one-line).
-- **`disabled` + visible toggle button**: clicking does nothing because the button is also disabled. Some DSes hide the toggle entirely on `disabled`. Going with "show but disable" — matches DatePicker's behavior (calendar button stays visible but disabled when DatePicker is disabled).
+- **`disabled` + visible toggle button**: clicking does nothing because the button is also disabled. Some DSes hide the toggle entirely on `disabled`. Going with "show but disable" — matches DatePicker's behavior.
 - **Screen-readers announcing the toggle**: with `aria-pressed`, NVDA / VoiceOver say "Show password, button, not pressed" → click → "Hide password, button, pressed". Matches expectations.
-- **Focus management on toggle click**: explicitly leave focus on the button. If the input was focused before the click, the toggle takes focus on click (native behavior); we don't restore to the input because the user explicitly moved focus.
+- **Focus management on toggle click**: explicitly leave focus on the button.
+- **Caps-lock detection limits**: `getModifierState('CapsLock')` only resolves on KEY events. We can't know caps-lock state at focus time (only at the first keypress). 1Password, GitHub, Microsoft all have the same limitation. Acceptable.
+- **Caps-lock + non-Latin keyboards**: on some keyboard layouts, caps-lock either does nothing (CJK input methods) or behaves unusually. The `getModifierState` reading is browser-driven and consistent with the user's expectation for their keyboard.
+- **PasswordStrengthMeter as a "trust me" UX**: a default-heuristic meter can give users a false sense of security ("My password is rated Strong"). JSDoc + AGENTS.md must call this out: default scoring is a UX hint, not a security control.
