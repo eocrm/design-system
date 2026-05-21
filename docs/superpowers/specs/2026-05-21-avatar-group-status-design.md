@@ -147,7 +147,7 @@ Add to `tokens.scss`:
 --avatar-overlap-lg: calc(var(--size-lg) * -0.3);
 ```
 
-Eight new tokens, all aliases or arithmetic from existing tokens. Adopting the convention "presence-*" instead of "status-*" since "status" is overloaded in the library (DatePicker has invalid status, Button has loading status, etc.).
+Eight new tokens, all aliases or arithmetic from existing tokens. Adopting the convention "presence-_" instead of "status-_" since "status" is overloaded in the library (DatePicker has invalid status, Button has loading status, etc.).
 
 ## File layout
 

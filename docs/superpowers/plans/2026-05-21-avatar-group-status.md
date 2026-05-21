@@ -37,24 +37,24 @@ test -x .husky/pre-push           # exit 0
 Find the existing `// States` section (around `--opacity-disabled`) and INSERT this block just above it:
 
 ```scss
-  // Presence dots (Avatar status). Aliases over the existing semantic
-  // palette — theme changes propagate.
-  --color-presence-online: var(--color-success);
-  --color-presence-busy: var(--color-danger);
-  --color-presence-away: var(--color-warning);
-  --color-presence-offline: var(--color-fg-disabled);
+// Presence dots (Avatar status). Aliases over the existing semantic
+// palette — theme changes propagate.
+--color-presence-online: var(--color-success);
+--color-presence-busy: var(--color-danger);
+--color-presence-away: var(--color-warning);
+--color-presence-offline: var(--color-fg-disabled);
 
-  // Presence-dot dimensions per avatar size.
-  --size-presence-sm: 8px;
-  --size-presence-md: 10px;
-  --size-presence-lg: 12px;
+// Presence-dot dimensions per avatar size.
+--size-presence-sm: 8px;
+--size-presence-md: 10px;
+--size-presence-lg: 12px;
 
-  // Avatar overlap when stacked in a group. Each child after the first
-  // slides left by this amount (negative margin-left). 30% of diameter
-  // looks like Slack at every supported size.
-  --avatar-overlap-sm: calc(var(--size-sm) * -0.3);
-  --avatar-overlap-md: calc(var(--size-md) * -0.3);
-  --avatar-overlap-lg: calc(var(--size-lg) * -0.3);
+// Avatar overlap when stacked in a group. Each child after the first
+// slides left by this amount (negative margin-left). 30% of diameter
+// looks like Slack at every supported size.
+--avatar-overlap-sm: calc(var(--size-sm) * -0.3);
+--avatar-overlap-md: calc(var(--size-md) * -0.3);
+--avatar-overlap-lg: calc(var(--size-lg) * -0.3);
 ```
 
 - [ ] **Step 2: Gates**
@@ -606,11 +606,7 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function
           +{hiddenCount}
         </button>
       ) : (
-        <span
-          className={overflowClass}
-          role="img"
-          aria-label={`${hiddenCount} more avatars`}
-        >
+        <span className={overflowClass} role="img" aria-label={`${hiddenCount} more avatars`}>
           +{hiddenCount}
         </span>
       )
@@ -986,11 +982,7 @@ function GroupDemo() {
   const [clicked, setClicked] = useState<number | null>(null);
   return (
     <Stack gap="xs">
-      <AvatarGroup
-        max={4}
-        size="md"
-        onOverflowClick={(_e, count) => setClicked(count)}
-      >
+      <AvatarGroup max={4} size="md" onOverflowClick={(_e, count) => setClicked(count)}>
         {TEAM.map((n) => (
           <Avatar key={n} name={n} />
         ))}
@@ -1031,13 +1023,19 @@ Then in the demo JSX:
 >
   <Stack gap="md">
     <AvatarGroup size="sm" max={5}>
-      {TEAM.slice(0, 6).map((n) => <Avatar key={n} name={n} />)}
+      {TEAM.slice(0, 6).map((n) => (
+        <Avatar key={n} name={n} />
+      ))}
     </AvatarGroup>
     <AvatarGroup size="md" max={5}>
-      {TEAM.slice(0, 6).map((n) => <Avatar key={n} name={n} />)}
+      {TEAM.slice(0, 6).map((n) => (
+        <Avatar key={n} name={n} />
+      ))}
     </AvatarGroup>
     <AvatarGroup size="lg" max={5}>
-      {TEAM.slice(0, 6).map((n) => <Avatar key={n} name={n} />)}
+      {TEAM.slice(0, 6).map((n) => (
+        <Avatar key={n} name={n} />
+      ))}
     </AvatarGroup>
   </Stack>
 </Example>
@@ -1056,6 +1054,7 @@ npm run build 2>&1 | tail -5
 - [ ] **Step 4: Smoke test**
 
 Browse `/components/avatar` in the dev server (use Playwright MCP or local browser). Verify:
+
 - Status dots render in the right corner with the right colors.
 - Tooltip appears on hover/focus.
 - Group with overflow shows 4 visible + a "+3" button. Clicking it logs to the debug `<code>`.
@@ -1093,14 +1092,17 @@ After the existing bullets, add:
 
 - [ ] **Step 3: Add a new `<AvatarGroup>` section RIGHT AFTER the `<Avatar>` section**
 
-```markdown
+````markdown
 ### `<AvatarGroup>` — Slack-style stacked row of avatars
 
 ```tsx
 <AvatarGroup max={4} size="md" onOverflowClick={(_e, n) => openMembersPopover(n)}>
-  {team.map((m) => <Avatar key={m.id} name={m.name} src={m.avatarUrl} status={m.presence} />)}
+  {team.map((m) => (
+    <Avatar key={m.id} name={m.name} src={m.avatarUrl} status={m.presence} />
+  ))}
 </AvatarGroup>
 ```
+````
 
 - Horizontal row of overlapping `<Avatar>`s with a `+N` overflow control when the child count exceeds `max` (default `4`).
 - `size` is set on the group, NOT per child. The group's size overrides any per-child `size`. Three sizes: `'sm' | 'md' | 'lg'`.
@@ -1108,14 +1110,15 @@ After the existing bullets, add:
 - `onOverflowClick(event, hiddenCount)` — the library does NOT render its own popover. When the user clicks `+N`, the app decides what happens (open a `<Popover>` with a list of all members, navigate to a page, open a modal, etc.). When the handler is omitted, the `+N` renders as a non-interactive `<span>`.
 - The group wrapper is `role="list"` and each visible avatar is wrapped in `role="listitem"`. The +N (button or span) is the last list item.
 - forwardRef to the outer `<div>`. `className` is merged, not replaced.
-```
+
+````
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add packages/design-system/AGENTS.md
 git commit -m "AGENTS.md: document AvatarGroup + Avatar status/tooltip"
-```
+````
 
 ---
 
