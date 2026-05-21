@@ -3,6 +3,7 @@
 export type ComponentName =
   | 'Button'
   | 'DatePicker'
+  | 'DateRangePicker'
   | 'Input'
   | 'Select'
   | 'Card'
