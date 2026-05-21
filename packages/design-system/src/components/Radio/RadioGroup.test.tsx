@@ -129,6 +129,22 @@ describe('RadioGroup', () => {
     expect(screen.getByRole('radio')).toHaveAttribute('aria-invalid', 'true');
   });
 
+  it('per-child `disabled={false}` and `invalid={false}` win over group `true`', () => {
+    render(
+      <RadioGroup name="x" disabled invalid>
+        <Radio value="a" label="A" />
+        <Radio value="b" label="B" disabled={false} invalid={false} />
+      </RadioGroup>,
+    );
+    const [a, b] = screen.getAllByRole('radio');
+    // Group-disabled + group-invalid apply to a
+    expect(a).toBeDisabled();
+    expect(a).toHaveAttribute('aria-invalid', 'true');
+    // b explicitly overrides with false — neither attribute applies
+    expect(b).not.toBeDisabled();
+    expect(b).not.toHaveAttribute('aria-invalid');
+  });
+
   it('orientation applies the right class', () => {
     const { container, rerender } = render(
       <RadioGroup name="x">

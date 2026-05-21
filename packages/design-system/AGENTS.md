@@ -125,7 +125,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - `orientation`: `'vertical'` (default) / `'horizontal'`. Vertical uses Stack-like gap; horizontal wraps with a wider gap.
 - `FormData.get(name)` returns the selected value on native `<form>` submit.
 - The group's `value` drives each child's `checked` — don't set `checked` per-child inside a group (the group already does it).
-- Per-child `onChange` fires BEFORE the group's `onChange`, so a child handler can `event.preventDefault()` to block the group's state update if needed.
+- Per-child `onChange` fires BEFORE the group's `onChange` (both run on every selection — `preventDefault` does NOT gate the group's state update). Use per-child handlers for side-effects scoped to one option; the group's handler is the single source of truth for the selected value.
 
 ### `<Card>` — bordered container
 

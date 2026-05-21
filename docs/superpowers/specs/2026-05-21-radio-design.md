@@ -85,7 +85,12 @@ export interface RadioProps extends Omit<
    */
   label?: ReactNode;
 
-  /** Toggles the error visual + `aria-invalid='true'`. Group's `invalid` overrides. */
+  /**
+   * Toggles the error visual + `aria-invalid='true'`. Group's `invalid`
+   * provides the default; explicit per-child `invalid` (including `false`)
+   * still wins. Matches the precedence convention used by `size`,
+   * `disabled`, and `required`.
+   */
   invalid?: boolean;
 
   /**
