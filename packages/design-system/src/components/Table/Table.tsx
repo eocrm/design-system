@@ -43,7 +43,7 @@ export interface TableProps extends Omit<HTMLAttributes<HTMLTableElement>, 'chil
    */
   scroll?: boolean;
   /** Compound-subcomponent children. */
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 export interface TableCaptionProps extends HTMLAttributes<HTMLTableCaptionElement> {
@@ -64,7 +64,7 @@ export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
 }
 
-export interface TableHeaderCellProps extends ThHTMLAttributes<HTMLTableCellElement> {
+export interface TableHeaderCellProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, 'align'> {
   /** Text alignment. Defaults to `'start'`. */
   align?: TableCellAlign;
   /**
@@ -80,7 +80,7 @@ export interface TableHeaderCellProps extends ThHTMLAttributes<HTMLTableCellElem
   children?: ReactNode;
 }
 
-export interface TableCellProps extends TdHTMLAttributes<HTMLTableCellElement> {
+export interface TableCellProps extends Omit<TdHTMLAttributes<HTMLTableCellElement>, 'align'> {
   /** Text alignment. Defaults to `'start'`. */
   align?: TableCellAlign;
   /**
