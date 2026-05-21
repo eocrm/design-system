@@ -8,6 +8,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { ArrowBigUpDash, Eye, EyeOff, Languages } from 'lucide-react';
+import { Tooltip } from '../Tooltip';
 import styles from './PasswordInput.module.scss';
 
 /** Field height + type scale. Same scale as `<Input>`. */
@@ -204,15 +205,26 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           className={styles.input}
         />
 
+        {/* Warning icons. While active, each icon is wrapped in a Tooltip
+            that's force-`open` so sighted users see the warning text
+            float above without needing to hover. AT users still get the
+            announcement via the separate aria-live regions below — the
+            icons themselves are aria-hidden, so the tooltip's
+            aria-describedby is intentionally inert for screen readers
+            (no double-announcement). */}
         {capsLockWarning && capsOn && (
-          <span aria-hidden="true" className={styles.warningIcon}>
-            <ArrowBigUpDash size={iconSize} />
-          </span>
+          <Tooltip content={resolvedLabels.capsLockOn} open>
+            <span aria-hidden="true" className={styles.warningIcon}>
+              <ArrowBigUpDash size={iconSize} />
+            </span>
+          </Tooltip>
         )}
         {wrongLayoutWarning && wrongLayout && (
-          <span aria-hidden="true" className={styles.warningIcon}>
-            <Languages size={iconSize} />
-          </span>
+          <Tooltip content={resolvedLabels.wrongLayoutOn} open>
+            <span aria-hidden="true" className={styles.warningIcon}>
+              <Languages size={iconSize} />
+            </span>
+          </Tooltip>
         )}
 
         {revealable && (
