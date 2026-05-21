@@ -363,10 +363,11 @@ describe('DateRangePicker', () => {
     rightMay1.focus();
     expect((document.activeElement as HTMLElement)?.textContent).toBe('1');
     // ArrowLeft from right's May 1 → target April 30 → not in right's cursor=May →
-    //   right grid calls onCursorChange(May 1) → handleRightGridCursorChange translates
-    //   to setCursor(addMonths(May, -1) = March 1) → cursor becomes March, both grids
-    //   re-render: LEFT=March, RIGHT=April. Right grid's pendingFocusKey='2026-04-30'
-    //   matches the right grid's now-visible April 30 cell → focus lands there.
+    //   right grid calls onCursorChange(April 1) → handleRightGridCursorChange
+    //   translates to setCursor(addMonths(April 1, -1) = March 1) → cursor becomes
+    //   March, both grids re-render: LEFT=March, RIGHT=April. Right grid's
+    //   pendingFocusKey='2026-04-30' matches the right grid's now-visible April 30
+    //   cell → focus lands there.
     await user.keyboard('{ArrowLeft}');
     expect((document.activeElement as HTMLElement)?.textContent).toBe('30');
   });
