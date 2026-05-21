@@ -12,6 +12,7 @@ import { Tabs } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
 import { Tooltip } from '@eocrm/design-system';
 import { Calendar } from '@eocrm/design-system';
+import { DatePicker } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
@@ -27,6 +28,17 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           Secondary
         </Button>
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/datepicker',
+    name: 'DatePicker',
+    description:
+      'Single-date input with a popover month grid. Locale-aware typed parsing and min/max constraints.',
+    preview: (
+      <div style={{ width: 200 }}>
+        <DatePicker defaultValue={new Date(2026, 4, 21)} aria-label="Preview" />
+      </div>
     ),
   },
   {

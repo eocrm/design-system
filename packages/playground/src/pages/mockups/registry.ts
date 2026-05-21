@@ -2,6 +2,7 @@
 
 export type ComponentName =
   | 'Button'
+  | 'DatePicker'
   | 'Input'
   | 'Select'
   | 'Card'

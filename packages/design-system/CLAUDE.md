@@ -191,7 +191,6 @@ Wishlist for the CRM, in rough priority order. Until each exists, CRM pages shou
 - `Toast` / notification (hand-roll; no Floating UI — fixed corner placement)
 - `Textarea`
 - `Checkbox`, `Radio`, `Switch`
-- `DatePicker` (hand-roll; calendar grid is the bulk of the work)
 - `Table` (TanStack Table headless is acceptable here — it's a behavioral hook, not a UI library, and the alternative is rebuilding sort/filter/pagination state. Revisit when we actually need it.)
 - `Skeleton` (loading state)
 - `EmptyState`

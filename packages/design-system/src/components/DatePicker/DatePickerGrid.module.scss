@@ -1,0 +1,128 @@
+@use '../../styles/mixins' as *;
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+
+  // Floating popover: fixed width is intentional (escape hatch from Rule 4 —
+  // analogous to DropdownMenu/Popover).
+  width: var(--size-datepicker-popover-width);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-1);
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.monthLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.cells {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.weekdayRow,
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1);
+}
+
+.weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--space-4);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-datepicker-cell);
+  height: var(--size-datepicker-cell);
+  padding: 0;
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-fg);
+  cursor: pointer;
+
+  &:hover:not(:disabled, .disabled) {
+    background: var(--color-bg-subtle);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.outside {
+  color: var(--color-fg-muted);
+}
+
+.today {
+  border-color: var(--color-accent);
+}
+
+.selected {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  border-color: var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent);
+    color: var(--color-accent-fg);
+  }
+}
+
+.disabled {
+  color: var(--color-fg-muted);
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}

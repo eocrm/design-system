@@ -142,6 +142,13 @@
   // font size while keeping titles readable.
   --size-calendar-agenda-gutter: 8rem;
 
+  // DatePicker — square size of a single day cell in the month grid.
+  // Wide enough to fit "30" + accent ring without crowding.
+  --size-datepicker-cell: 2.25rem;
+
+  // DatePicker — overall width of the floating popover.
+  --size-datepicker-popover-width: 17rem;
+
   // Border weights — emphasis = tab underline/focus rings; strong = accent
   // stripes on cards or other "this stands out" visuals.
   --border-width: 1px;

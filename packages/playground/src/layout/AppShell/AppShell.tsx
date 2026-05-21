@@ -12,6 +12,7 @@ import {
   MousePointer2,
   TextCursorInput,
   ChevronsUpDown,
+  CalendarCheck,
   RectangleHorizontal,
   Rows3,
   Columns3,
@@ -59,6 +60,7 @@ const componentGroups = [
     heading: 'Forms',
     items: [
       { to: '/components/button', label: 'Button', icon: MousePointer2, end: false },
+      { to: '/components/datepicker', label: 'DatePicker', icon: CalendarCheck, end: false },
       { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
       { to: '/components/select', label: 'Select', icon: ChevronsUpDown, end: false },
     ],

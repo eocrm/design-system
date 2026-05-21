@@ -136,3 +136,6 @@ export type {
   RenderEvent,
   RenderEventContext,
 } from './components/Calendar';
+
+export { DatePicker } from './components/DatePicker';
+export type { DatePickerProps, DatePickerLabels } from './components/DatePicker';
