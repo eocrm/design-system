@@ -1,0 +1,170 @@
+.radio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+
+  // Pin baseline contribution so the surrounding line-box stays stable
+  // when the dot appears/disappears. Same rationale as Checkbox.
+  vertical-align: middle;
+
+  &.disabled {
+    cursor: not-allowed;
+  }
+}
+
+// Visually-hidden native input — stays in tab order + AT tree + native
+// arrow-key navigation between same-name radios.
+// stylelint-disable property-disallowed-list -- visually-hidden recipe needs `margin: -1px`; internal-implementation detail, not a public layout property. Same precedent as Checkbox + Avatar visually-hidden inputs.
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+// stylelint-enable property-disallowed-list
+
+// The painted ring (outer circle).
+.ring {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+
+  // Constant line-box height across checked/unchecked states.
+  line-height: 1;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+// The painted inner dot — hidden (transparent bg) until checked. Diameter
+// is set per-size below to whole-pixel values so the dot always sits on
+// the pixel grid (no asymmetric sub-pixel snapping at md / lg).
+.dot {
+  border-radius: var(--radius-full);
+  background: transparent;
+  transition: background var(--transition-fast);
+}
+
+// Size modifiers — ring diameter + dot diameter + label font.
+.size-sm .ring {
+  width: var(--size-radio-sm);
+  height: var(--size-radio-sm);
+}
+
+.size-sm .dot {
+  width: var(--size-radio-dot-sm);
+  height: var(--size-radio-dot-sm);
+}
+
+.size-md .ring {
+  width: var(--size-radio-md);
+  height: var(--size-radio-md);
+}
+
+.size-md .dot {
+  width: var(--size-radio-dot-md);
+  height: var(--size-radio-dot-md);
+}
+
+.size-lg .ring {
+  width: var(--size-radio-lg);
+  height: var(--size-radio-lg);
+}
+
+.size-lg .dot {
+  width: var(--size-radio-dot-lg);
+  height: var(--size-radio-dot-lg);
+}
+
+.size-sm .labelText {
+  font-size: var(--font-size-sm);
+}
+
+.size-md .labelText {
+  font-size: var(--font-size-md);
+}
+
+.size-lg .labelText {
+  font-size: var(--font-size-lg);
+}
+
+// Hover preview — border-only shift to accent. Excludes .disabled AND
+// .invalid so the danger border stays visible on hover (same fix as
+// Checkbox cycle-1).
+.radio:not(.disabled, .invalid):hover .ring {
+  border-color: var(--color-accent);
+}
+
+// Checked — accent border + filled accent dot.
+.input:checked + .ring {
+  border-color: var(--color-accent);
+}
+
+.input:checked + .ring .dot {
+  background: var(--color-accent);
+}
+
+// Focus ring on the ring (sibling selector picks up native input focus).
+.input:focus-visible + .ring {
+  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+}
+
+// Disabled — muted bg + border + dot.
+// Specificity note: `.input:checked + .ring` is 3 classes (0,3,0); the
+// plain `.disabled .ring` rule is only (0,2,0) and loses on checked
+// radios. The `.disabled .input:checked + .ring` rule below is (0,4,0)
+// and wins so a disabled+checked radio keeps the gray border instead of
+// reverting to accent blue.
+.disabled .ring {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border);
+}
+
+.disabled .input:checked + .ring {
+  border-color: var(--color-border);
+}
+
+.disabled .input:checked + .ring .dot {
+  background: var(--color-fg-disabled);
+}
+
+.disabled .labelText {
+  color: var(--color-fg-disabled);
+}
+
+// Invalid — danger border + danger dot + danger focus ring.
+// Same specificity dance as .disabled: the plain `.invalid .ring` rule
+// (0,2,0) loses to `.input:checked + .ring` (0,3,0), so an invalid +
+// checked radio would render with an accent-blue border instead of red.
+// The explicit `.invalid .input:checked + .ring` rule (0,4,0) wins.
+.invalid .ring {
+  border-color: var(--color-danger);
+}
+
+.invalid .input:checked + .ring {
+  border-color: var(--color-danger);
+}
+
+.invalid .input:checked + .ring .dot {
+  background: var(--color-danger);
+}
+
+.invalid .input:focus-visible + .ring {
+  box-shadow: 0 0 0 var(--ring-width) var(--ring-danger);
+}
+
+.labelText {
+  line-height: var(--line-height-normal);
+}
