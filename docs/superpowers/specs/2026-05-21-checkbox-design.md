@@ -16,8 +16,10 @@ DataTable v1 (next PR) needs row-selection checkboxes. The library's `CLAUDE.md`
 
 ```tsx
 <label>
-  <input type="checkbox" class="visually-hidden" />   ← native input owns all a11y
-  <span class="box" aria-hidden>                       ← custom-painted box
+  <input type="checkbox" class="visually-hidden" /> ← native input owns all a11y
+  <span class="box" aria-hidden>
+    {' '}
+    ← custom-painted box
     {checked && <CheckIcon />}
     {indeterminate && <MinusIcon />}
   </span>
@@ -35,8 +37,10 @@ DataTable v1 (next PR) needs row-selection checkboxes. The library's `CLAUDE.md`
 ```ts
 export type CheckboxSize = 'sm' | 'md' | 'lg';
 
-export interface CheckboxProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'type' | 'checked' | 'defaultChecked'> {
+export interface CheckboxProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'size' | 'type' | 'checked' | 'defaultChecked'
+> {
   /**
    * Box diameter + label type scale. Defaults to `'md'`. Same scale as
    * `<Input>` so a checkbox paired with a labelled input lines up.
@@ -88,26 +92,26 @@ Native `<input>` attributes pass through except `size` (shadowed by the componen
 
 ## Visual / tokens
 
-| Visual                              | Token                                            |
-| ----------------------------------- | ------------------------------------------------ |
-| Box size (sm)                       | `--size-checkbox-sm` (NEW: `14px`)               |
-| Box size (md)                       | `--size-checkbox-md` (NEW: `16px`)               |
-| Box size (lg)                       | `--size-checkbox-lg` (NEW: `20px`)               |
-| Check / dash icon size              | 10px (sm) / 12px (md) / 14px (lg), `<Icon size>` literals |
-| Label font (sm)                     | `--font-size-sm`                                 |
-| Label font (md)                     | `--font-size-md`                                 |
-| Label font (lg)                     | `--font-size-lg`                                 |
-| Box border (unchecked)              | `--color-border-strong`                          |
-| Box border (hover, unchecked)       | `--color-accent` — **border only**, no fill preview |
-| Box bg (checked / indeterminate)    | `--color-accent`                                 |
-| Box border (checked / indeterminate)| `--color-accent`                                 |
-| Check / dash icon color             | `--color-accent-fg` (white)                      |
-| Box bg (disabled)                   | `--color-bg-subtle`                              |
-| Box border (disabled)               | `--color-border`                                 |
-| Box border (invalid)                | `--color-danger`                                 |
-| Focus ring                          | `--ring-accent` (or `--ring-danger` when invalid)|
-| Label gap                           | `--space-2` (all sizes)                          |
-| Box radius                          | `--radius-sm`                                    |
+| Visual                               | Token                                                     |
+| ------------------------------------ | --------------------------------------------------------- |
+| Box size (sm)                        | `--size-checkbox-sm` (NEW: `14px`)                        |
+| Box size (md)                        | `--size-checkbox-md` (NEW: `16px`)                        |
+| Box size (lg)                        | `--size-checkbox-lg` (NEW: `20px`)                        |
+| Check / dash icon size               | 10px (sm) / 12px (md) / 14px (lg), `<Icon size>` literals |
+| Label font (sm)                      | `--font-size-sm`                                          |
+| Label font (md)                      | `--font-size-md`                                          |
+| Label font (lg)                      | `--font-size-lg`                                          |
+| Box border (unchecked)               | `--color-border-strong`                                   |
+| Box border (hover, unchecked)        | `--color-accent` — **border only**, no fill preview       |
+| Box bg (checked / indeterminate)     | `--color-accent`                                          |
+| Box border (checked / indeterminate) | `--color-accent`                                          |
+| Check / dash icon color              | `--color-accent-fg` (white)                               |
+| Box bg (disabled)                    | `--color-bg-subtle`                                       |
+| Box border (disabled)                | `--color-border`                                          |
+| Box border (invalid)                 | `--color-danger`                                          |
+| Focus ring                           | `--ring-accent` (or `--ring-danger` when invalid)         |
+| Label gap                            | `--space-2` (all sizes)                                   |
+| Box radius                           | `--radius-sm`                                             |
 
 Three new tokens: `--size-checkbox-sm: 14px`, `--size-checkbox-md: 16px`, `--size-checkbox-lg: 20px`. Slot near the other component-specific sizes (`--size-spinner`, `--size-chip`).
 

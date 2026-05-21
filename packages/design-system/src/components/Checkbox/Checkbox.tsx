@@ -15,11 +15,10 @@ import styles from './Checkbox.module.scss';
 /** Box diameter + label type scale. */
 export type CheckboxSize = 'sm' | 'md' | 'lg';
 
-export interface CheckboxProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    'size' | 'type' | 'checked' | 'defaultChecked' | 'onChange'
-  > {
+export interface CheckboxProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'size' | 'type' | 'checked' | 'defaultChecked' | 'onChange'
+> {
   /**
    * Box diameter + label type scale. Defaults to `'md'`.
    * - `'sm'` — 14px box, font-size-sm label. Dense tables, inline filters.
