@@ -5,6 +5,12 @@
   cursor: pointer;
   user-select: none;
 
+  // Pin the label's baseline contribution to its middle so the surrounding
+  // line-box stays the same height whether the box is checked (SVG inside)
+  // or unchecked (empty). Without this, an inline-flex element's baseline
+  // shifts based on inner content and the parent line-box grows/shrinks ~2px.
+  vertical-align: middle;
+
   &.disabled {
     cursor: not-allowed;
   }
