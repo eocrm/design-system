@@ -5,9 +5,9 @@ import { Example } from './Example';
 import tsxSource from '@lib-source/components/DateRangePicker/DateRangePicker.tsx?raw';
 import scssSource from '@lib-source/components/DateRangePicker/DateRangePicker.module.scss?raw';
 
-const TODAY = new Date(2026, 4, 21);
-const IN_14 = new Date(2026, 5, 4);
-const IN_90 = new Date(2026, 7, 19);
+const TODAY = new Date();
+const IN_14 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 14);
+const IN_90 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 90);
 
 function ControlledDemo() {
   const [value, setValue] = useState<DateRange | null>({
@@ -49,9 +49,9 @@ function FormDemo() {
       <Button type="submit" size="sm">
         Submit
       </Button>
-      {submitted && (
+      {submitted !== null && (
         <code>
-          bookingStart = {submitted.start} · bookingEnd = {submitted.end}
+          bookingStart = {submitted.start || '(empty)'} · bookingEnd = {submitted.end || '(empty)'}
         </code>
       )}
     </form>
@@ -71,11 +71,11 @@ export function DateRangePickerDemo() {
     >
       <Example
         title="Uncontrolled"
-        description="No `value` / `onChange` — the picker owns state. Click the input or 📅 to open; pick start then end."
+        description="No `value` / `onChange` — the picker owns state. Click the input or the calendar button to open; pick start then end."
         code={`const today = new Date();
-const in14days = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);
+const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);
 
-<DateRangePicker defaultValue={{ start: today, end: in14days }} />`}
+<DateRangePicker defaultValue={{ start: today, end: in14 }} />`}
       >
         <DateRangePicker
           defaultValue={{ start: TODAY, end: IN_14 }}
@@ -116,7 +116,7 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
 
       <Example
         title="Disable weekends"
-        description="`isDateDisabled` runs per cell and per typed-input boundary. Disabled cells are non-clickable; arrow-key navigation skips them."
+        description="`isDateDisabled` runs per cell and per typed-input parse. Disabled cells are non-clickable; arrow-key navigation skips them."
         code={`<DateRangePicker
   isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
 />`}

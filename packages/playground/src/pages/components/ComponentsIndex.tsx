@@ -47,7 +47,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'DateRangePicker',
     description: 'Single-field date-range input with a two-month popover.',
     preview: (
-      <div style={{ width: 220 }}>
+      <div style={{ width: 240 }}>
         <DateRangePicker
           defaultValue={{
             start: new Date(2026, 4, 21),
