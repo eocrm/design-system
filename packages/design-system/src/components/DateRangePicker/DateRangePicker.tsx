@@ -12,30 +12,14 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
-import {
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useFloating,
-} from '@floating-ui/react-dom';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Calendar as CalendarIcon,
-  X,
-} from 'lucide-react';
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
 import { mergeRefs } from '../_internal/refs';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
-import { toIsoDate, isDateOutOfRange } from '../DatePicker/utils';
-import {
-  type DateRange,
-  autoSwapRange,
-  formatDateRange,
-  parseDateRange,
-} from './utils';
+import { toIsoDate, isDateOutOfRange, formatDate } from '../DatePicker/utils';
+import { type DateRange, autoSwapRange, formatDateRange, parseDateRange } from './utils';
 import styles from './DateRangePicker.module.scss';
 
 export interface DateRangePickerLabels {
@@ -51,11 +35,10 @@ export interface DateRangePickerLabels {
   dialogLabel?: string;
 }
 
-export interface DateRangePickerProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max' | 'name'
-  > {
+export interface DateRangePickerProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max' | 'name'
+> {
   /** Selected range. `null` = no range. Pair with `onChange` for controlled use. */
   value?: DateRange | null;
   /** Initial range for uncontrolled use. */
@@ -331,14 +314,17 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       [setValue],
     );
 
-    const handleToggle = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      setOpen((v) => {
-        const next = !v;
-        if (next) inputRef.current?.focus();
-        return next;
-      });
-    }, []);
+    const handleToggle = useCallback(
+      (e: MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        setOpen((v) => !v);
+        // pre-toggle: if currently closed, we're opening — focus the input.
+        // Reading `open` outside the updater keeps the focus call single-fire
+        // even under React StrictMode (updaters can run twice in dev).
+        if (!open) inputRef.current?.focus();
+      },
+      [open],
+    );
 
     const goPrev = useCallback(() => {
       setCursor((c) => addMonths(c, -1));
@@ -353,11 +339,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       const handler = (e: PointerEvent) => {
         const target = e.target as Node | null;
         const floating = refs.floating.current;
-        if (
-          target &&
-          !wrapperRef.current?.contains(target) &&
-          !floating?.contains(target)
-        ) {
+        if (target && !wrapperRef.current?.contains(target) && !floating?.contains(target)) {
           commit(draft);
           setOpen(false);
           setSelectionStart(null);
@@ -373,7 +355,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
     // The grids receive the in-flight selection as rangeStart while
     // selectionStart is set; otherwise the committed value drives them.
     const gridRangeStart = selectionStart ?? value?.start ?? null;
-    const gridRangeEnd = selectionStart != null ? null : value?.end ?? null;
+    const gridRangeEnd = selectionStart != null ? null : (value?.end ?? null);
 
     const rightCursor = addMonths(cursor, 1);
 
@@ -407,7 +389,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           aria-expanded={open}
           placeholder={
             placeholder ??
-            `${rangeFormatExample(locale)} — ${rangeFormatExample(locale)}`
+            `${formatDate(new Date(2000, 0, 2), locale)} — ${formatDate(new Date(2000, 0, 2), locale)}`
           }
           autoComplete="off"
         />
@@ -431,18 +413,10 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           <CalendarIcon size={14} />
         </button>
         {nameStart && (
-          <input
-            type="hidden"
-            name={nameStart}
-            value={value ? toIsoDate(value.start) : ''}
-          />
+          <input type="hidden" name={nameStart} value={value ? toIsoDate(value.start) : ''} />
         )}
         {nameEnd && (
-          <input
-            type="hidden"
-            name={nameEnd}
-            value={value ? toIsoDate(value.end) : ''}
-          />
+          <input type="hidden" name={nameEnd} value={value ? toIsoDate(value.end) : ''} />
         )}
         {open &&
           createPortal(
@@ -523,13 +497,3 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
     );
   },
 );
-
-// Locale-aware placeholder hint — uses the same example date as
-// `getLocaleDateOrder` so the placeholder reflects the actual format.
-function rangeFormatExample(locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date(2000, 0, 2));
-}

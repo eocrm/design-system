@@ -35,27 +35,19 @@ describe('DateRangePicker utils', () => {
   describe('formatDateRange', () => {
     it('formats en-US as MM/DD/YYYY — MM/DD/YYYY', () => {
       expect(
-        formatDateRange(
-          { start: new Date(2026, 4, 21), end: new Date(2026, 5, 4) },
-          'en-US',
-        ),
+        formatDateRange({ start: new Date(2026, 4, 21), end: new Date(2026, 5, 4) }, 'en-US'),
       ).toBe('05/21/2026 — 06/04/2026');
     });
 
     it('formats ru-RU as DD.MM.YYYY — DD.MM.YYYY', () => {
       expect(
-        formatDateRange(
-          { start: new Date(2026, 4, 21), end: new Date(2026, 5, 4) },
-          'ru-RU',
-        ),
+        formatDateRange({ start: new Date(2026, 4, 21), end: new Date(2026, 5, 4) }, 'ru-RU'),
       ).toBe('21.05.2026 — 04.06.2026');
     });
 
     it('single-day range still renders both halves', () => {
       const same = new Date(2026, 4, 21);
-      expect(formatDateRange({ start: same, end: same }, 'en-US')).toBe(
-        '05/21/2026 — 05/21/2026',
-      );
+      expect(formatDateRange({ start: same, end: same }, 'en-US')).toBe('05/21/2026 — 05/21/2026');
     });
   });
 
