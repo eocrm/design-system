@@ -248,7 +248,7 @@ export function DatePickerGrid({
       case 'Enter':
       case ' ':
         e.preventDefault();
-        if (!isDisabled(date)) onSelect(date);
+        if (!disabled && !isDisabled(date)) onSelect(date);
         break;
     }
   };
@@ -325,7 +325,7 @@ export function DatePickerGrid({
                   aria-disabled={isDisabledCell || undefined}
                   tabIndex={tabIndexFor(day.date, isTodayCell)}
                   onClick={() => {
-                    if (disabled || isDisabled(day.date)) return;
+                    if (disabled || isDisabledCell) return;
                     onSelect(day.date);
                   }}
                   onKeyDown={(e) => handleCellKeyDown(e, day.date)}

@@ -398,5 +398,11 @@ describe('DatePickerGrid', () => {
     // Click no-ops
     await user.click(cell15);
     expect(onSelect).not.toHaveBeenCalled();
+    // Keyboard no-ops (programmatic focus + Space/Enter)
+    cell15.focus();
+    await user.keyboard(' ');
+    expect(onSelect).not.toHaveBeenCalled();
+    await user.keyboard('{Enter}');
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });
