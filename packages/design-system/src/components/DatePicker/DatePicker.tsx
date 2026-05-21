@@ -20,6 +20,9 @@ import { DatePickerGrid } from './DatePickerGrid';
 import { formatDate, parseDate, toIsoDate, isDateOutOfRange } from './utils';
 import styles from './DatePicker.module.scss';
 
+/** Field height + type scale. Pairs with `<Input>` and `<Select>`. */
+export type DatePickerSize = 'sm' | 'md' | 'lg';
+
 export interface DatePickerLabels {
   /** aria-label for the previous-month chevron. */
   previousMonth?: string;
@@ -35,7 +38,7 @@ export interface DatePickerLabels {
 
 export interface DatePickerProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
-  'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max'
+  'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max' | 'size'
 > {
   /** Selected date. `null` = no value. Pair with `onChange` for controlled use. */
   value?: Date | null;
@@ -61,6 +64,16 @@ export interface DatePickerProps extends Omit<
   /** Form name. When set, renders a hidden mirror `<input>` with the ISO date. */
   name?: string;
 
+  /**
+   * Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`.
+   * Affects only the trigger row; the popover month grid is fixed-size.
+   *
+   * - `'sm'` — 24px tall.
+   * - `'md'` — 32px tall (default).
+   * - `'lg'` — 40px tall.
+   */
+  size?: DatePickerSize;
+
   /** Localized strings. */
   labels?: DatePickerLabels;
 }
@@ -71,6 +84,12 @@ const DEFAULT_LABELS: Required<DatePickerLabels> = {
   openCalendar: 'Open calendar',
   clear: 'Clear date',
   dialogLabel: 'Choose date',
+};
+
+const ICON_SIZE_FOR: Record<DatePickerSize, number> = {
+  sm: 14,
+  md: 14,
+  lg: 16,
 };
 
 /**
@@ -123,6 +142,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     clearable = true,
     invalid = false,
     disabled = false,
+    size = 'md',
     name,
     labels,
     placeholder,
@@ -323,6 +343,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       ref={setWrapperRef}
       className={clsx(
         styles.wrapper,
+        styles[`size-${size}`],
         invalid && styles.invalid,
         disabled && styles.disabled,
         className,
@@ -356,7 +377,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
           aria-label={resolvedLabels.clear}
           onClick={handleClear}
         >
-          <X size={14} />
+          <X size={ICON_SIZE_FOR[size]} />
         </button>
       )}
       <button
@@ -366,7 +387,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         onClick={handleToggle}
         disabled={disabled}
       >
-        <CalendarIcon size={14} />
+        <CalendarIcon size={ICON_SIZE_FOR[size]} />
       </button>
       {name && <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />}
       {open &&
