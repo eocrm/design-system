@@ -74,6 +74,19 @@ export type {
   SelectTriggerDisplay,
 } from './components/Select';
 
+export { Table } from './components/Table';
+export type {
+  TableProps,
+  TableCaptionProps,
+  TableSectionProps,
+  TableRowProps,
+  TableHeaderCellProps,
+  TableCellProps,
+  TableDensity,
+  TableCellAlign,
+  TableSortDirection,
+} from './components/Table';
+
 // i18n
 export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';
