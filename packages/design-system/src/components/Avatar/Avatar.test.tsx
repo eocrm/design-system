@@ -164,22 +164,17 @@ describe('Avatar', () => {
     expect(container.querySelector('[data-status="busy"]')).not.toBeNull();
   });
 
-  it('wraps in Tooltip by default and shows the name on hover', async () => {
-    const user = userEvent.setup();
+  it('does NOT wrap in Tooltip by default (tooltip is opt-in)', () => {
     render(<Avatar name="Alex" />);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('wraps in Tooltip when tooltip prop is true (visible on hover)', async () => {
+    const user = userEvent.setup();
+    render(<Avatar name="Alex" tooltip />);
     const avatar = screen.getByRole('img', { name: 'Alex' });
     await user.hover(avatar);
     const tip = await screen.findByRole('tooltip', {}, { timeout: 2000 });
     expect(tip).toHaveTextContent('Alex');
-  });
-
-  it('does NOT wrap in Tooltip when tooltip is false', async () => {
-    const user = userEvent.setup();
-    render(<Avatar name="Alex" tooltip={false} />);
-    const avatar = screen.getByRole('img', { name: 'Alex' });
-    await user.hover(avatar);
-    // Wait briefly past the default tooltip delay (400ms) to confirm no tooltip appears.
-    await new Promise((r) => setTimeout(r, 500));
-    expect(screen.queryByRole('tooltip')).toBeNull();
   });
 });

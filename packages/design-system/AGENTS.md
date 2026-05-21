@@ -140,7 +140,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - `src` — image URL. Empty/whitespace = no image. Falls back to initials on load failure.
 - `size`: `sm` (24) / `md` (32, default) / `lg` (40)
 - `status?` — presence dot in the bottom-right corner. `'online' | 'busy' | 'away' | 'offline'`. Omit to render no dot.
-- `tooltip?` — wraps the avatar in `<Tooltip>` with `content={name}`. **Defaults to `true`** — every Avatar shows its name on hover / keyboard focus out of the box. Pass `tooltip={false}` to opt out (e.g., when the name is already visible adjacent to the avatar). Inside `<AvatarGroup>`, the group's `tooltip` becomes the default; explicit per-child still wins.
+- `tooltip?` — wraps the avatar in `<Tooltip>` with `content={name}`. Defaults to `false` standalone (back-compat). Inside `<AvatarGroup>`, the group's `tooltip` becomes the default (which itself defaults to `true`); explicit per-child still wins.
 - Inside `<AvatarGroup>`, the group's `size` and `tooltip` become defaults — explicit per-child props still win. The avatar also picks up a `--color-bg` ring so stacked siblings read as distinct.
 - Use `avatarColorIndex(name)` if you need to match an avatar's color elsewhere (e.g. a chart segment).
 

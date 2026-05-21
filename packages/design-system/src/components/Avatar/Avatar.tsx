@@ -43,9 +43,11 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
    */
   status?: AvatarStatus;
   /**
-   * When true, wraps the avatar in a `<Tooltip>` showing `name`. Defaults
-   * to `false`. Inside `<AvatarGroup>` the default flips to the group's
-   * `tooltip` prop (default `true`).
+   * Whether to wrap the avatar in a `<Tooltip>` showing `name`. Defaults to
+   * `false` (back-compat — existing renders don't gain a hover affordance).
+   * Inside `<AvatarGroup>`, the group's `tooltip` prop becomes the default
+   * (which itself defaults to `true` for grouped avatars); explicit
+   * per-child still wins.
    */
   tooltip?: boolean;
 }
@@ -98,7 +100,7 @@ function hasOwnProps(obj: object | undefined): obj is object {
  * <Avatar name="Alex Rivera" src="https://example.com/alex.jpg" size="lg" status="online" />
  *
  * @example
- * // Hover-discoverable name:
+ * // Hover-discoverable name (off by default; opt in).
  * <Avatar name="Alex Rivera" tooltip />
  *
  * @example
@@ -127,7 +129,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
 ) {
   const group = useAvatarGroup();
   const resolvedSize: AvatarSize = size ?? group?.size ?? 'md';
-  const resolvedTooltip: boolean = tooltip ?? group?.tooltip ?? true;
+  const resolvedTooltip: boolean = tooltip ?? group?.tooltip ?? false;
 
   const [imageBroken, setImageBroken] = useState(false);
   useEffect(() => {
@@ -188,7 +190,12 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
     </span>
   );
 
-  if (resolvedTooltip && accessibleName !== '?') {
+  // Suppress the tooltip when we don't have a real name to show — the
+  // `?` fallback is for unnamed avatars and saying "?" in a tooltip
+  // would be noise. (Comparing trimmedName, not accessibleName, so a
+  // person legitimately named `?` still gets a tooltip.)
+  const hasRealName = trimmedName !== '';
+  if (resolvedTooltip && hasRealName) {
     return <Tooltip content={accessibleName}>{inner}</Tooltip>;
   }
 

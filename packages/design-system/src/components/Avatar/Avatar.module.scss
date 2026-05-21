@@ -60,7 +60,7 @@
   right: 0;
   bottom: 0;
   border-radius: var(--radius-full);
-  box-shadow: 0 0 0 2px var(--color-bg);
+  box-shadow: 0 0 0 var(--border-width-emphasis) var(--color-bg);
 
   &[data-status='online'] {
     background: var(--color-presence-online);
@@ -99,5 +99,5 @@
 // When inside an AvatarGroup, each avatar picks up a --color-bg ring so
 // stacked siblings read as distinct.
 .inGroup {
-  box-shadow: 0 0 0 2px var(--color-bg);
+  box-shadow: 0 0 0 var(--border-width-emphasis) var(--color-bg);
 }
