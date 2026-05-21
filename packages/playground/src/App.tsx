@@ -10,6 +10,8 @@ import { ComponentsIndex } from './pages/components/ComponentsIndex';
 import { ButtonDemo } from './pages/components/ButtonDemo';
 import { DatePickersDemo } from './pages/components/DatePickersDemo';
 import { InputDemo } from './pages/components/InputDemo';
+import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
+import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { CardDemo } from './pages/components/CardDemo';
@@ -43,6 +45,8 @@ export default function App() {
           <Route path="/components/button" element={<ButtonDemo />} />
           <Route path="/components/datepickers" element={<DatePickersDemo />} />
           <Route path="/components/input" element={<InputDemo />} />
+          <Route path="/components/password-input" element={<PasswordInputDemo />} />
+          <Route path="/components/password-strength-meter" element={<PasswordStrengthMeterDemo />} />
           <Route path="/components/select" element={<SelectDemo />} />
           <Route path="/components/table" element={<TableDemo />} />
           <Route path="/components/card" element={<CardDemo />} />

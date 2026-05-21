@@ -7,6 +7,8 @@ import { Card } from '@eocrm/design-system';
 import { Checkbox } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
+import { PasswordInput } from '@eocrm/design-system';
+import { PasswordStrengthMeter } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Table } from '@eocrm/design-system';
@@ -50,6 +52,28 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: (
       <div style={{ width: 200 }}>
         <Input placeholder="Type here…" />
+      </div>
+    ),
+  },
+  {
+    to: '/components/password-input',
+    name: 'PasswordInput',
+    description:
+      'Password field with eye toggle, opt-in caps-lock + wrong-keyboard-layout warnings.',
+    preview: (
+      <div style={{ width: 200 }}>
+        <PasswordInput defaultValue="hunter2" aria-label="Preview" />
+      </div>
+    ),
+  },
+  {
+    to: '/components/password-strength-meter',
+    name: 'PasswordStrengthMeter',
+    description:
+      '4-segment strength visualization. Default heuristic for prototypes; pass `score` for production scoring.',
+    preview: (
+      <div style={{ width: 200 }}>
+        <PasswordStrengthMeter value="Hunter2!@#" />
       </div>
     ),
   },
