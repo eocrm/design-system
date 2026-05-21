@@ -42,6 +42,22 @@ export function InputDemo() {
       </Example>
 
       <Example
+        title="Sizes"
+        description="Three sizes — sm (24px), md (32px, default), lg (40px). Use sm for dense toolbars, lg for hero / mobile-friendly forms."
+        code={`<Input size="sm" placeholder="Filter…" />
+<Input size="md" placeholder="Default" />
+<Input size="lg" type="search" placeholder="Search the workspace" />`}
+      >
+        <InputExample>
+          <Stack gap="sm">
+            <Input size="sm" placeholder="Filter…" aria-label="Small input" />
+            <Input size="md" placeholder="Default" aria-label="Medium input" />
+            <Input size="lg" type="search" placeholder="Search the workspace" aria-label="Large input" />
+          </Stack>
+        </InputExample>
+      </Example>
+
+      <Example
         title="Invalid state"
         description="Pass invalid to toggle the error visual. Pair with an external error message and aria-describedby."
         code={`<Input

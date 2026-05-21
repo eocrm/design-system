@@ -85,4 +85,23 @@ describe('Input', () => {
     expect(input.value).toBe('locked');
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it('applies size class names for sm / md / lg', () => {
+    const { rerender, container } = render(<Input size="sm" />);
+    expect(container.querySelector('input')!.className).toMatch(/size-sm/);
+    rerender(<Input size="md" />);
+    expect(container.querySelector('input')!.className).toMatch(/size-md/);
+    rerender(<Input size="lg" />);
+    expect(container.querySelector('input')!.className).toMatch(/size-lg/);
+  });
+
+  it('defaults to size="md" when no size prop is passed', () => {
+    const { container } = render(<Input />);
+    expect(container.querySelector('input')!.className).toMatch(/size-md/);
+  });
+
+  it('does NOT pass component size prop through to the DOM size attribute', () => {
+    const { container } = render(<Input size="sm" />);
+    expect(container.querySelector('input')).not.toHaveAttribute('size');
+  });
 });
