@@ -6,7 +6,7 @@ import {
   toDateKey,
   type DateRange,
 } from '@eocrm/design-system';
-import { DemoLayout } from './DemoLayout';
+import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
 import tsxSource from '@lib-source/components/DateRangePicker/InlineDateRangePicker.tsx?raw';
@@ -62,16 +62,14 @@ function FormDemo() {
   );
 }
 
-export function InlineDateRangePickerDemo() {
+export function InlineDateRangePickerDemoPanel() {
   return (
-    <DemoLayout
-      name="InlineDateRangePicker"
-      componentName="InlineDateRangePicker"
-      description="Date-range calendar grid (two months side-by-side) embedded directly in the page. Same click-1/click-2/restart selection, hover preview, auto-swap, and keyboard cross-grid navigation as <DateRangePicker>, without the input / popover."
+    <DemoBody
       tsxSource={tsxSource}
       scssSource={scssSource}
       tsxFilename="InlineDateRangePicker.tsx"
       scssFilename="InlineDateRangePicker.module.scss"
+      componentName="InlineDateRangePicker"
     >
       <Example
         title="Uncontrolled"
@@ -193,6 +191,6 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
           />
         </InputExample>
       </Example>
-    </DemoLayout>
+    </DemoBody>
   );
 }

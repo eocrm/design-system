@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, InlineDatePicker, Stack, toDateKey } from '@eocrm/design-system';
-import { DemoLayout } from './DemoLayout';
+import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
 import tsxSource from '@lib-source/components/DatePicker/InlineDatePicker.tsx?raw';
@@ -46,16 +46,14 @@ function FormDemo() {
   );
 }
 
-export function InlineDatePickerDemo() {
+export function InlineDatePickerDemoPanel() {
   return (
-    <DemoLayout
-      name="InlineDatePicker"
-      componentName="InlineDatePicker"
-      description="Single-date calendar grid embedded directly in the page (no input, no popover). Same selection / keyboard / locale behavior as <DatePicker>; useful for always-visible date selection (sidebar calendars, schedule editors)."
+    <DemoBody
       tsxSource={tsxSource}
       scssSource={scssSource}
       tsxFilename="InlineDatePicker.tsx"
       scssFilename="InlineDatePicker.module.scss"
+      componentName="InlineDatePicker"
     >
       <Example
         title="Uncontrolled"
@@ -158,6 +156,6 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
           />
         </InputExample>
       </Example>
-    </DemoLayout>
+    </DemoBody>
   );
 }
