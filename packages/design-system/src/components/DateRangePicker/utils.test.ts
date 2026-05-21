@@ -25,7 +25,8 @@ describe('DateRangePicker utils', () => {
       const a = new Date(2026, 4, 5, 23, 59);
       const b = new Date(2026, 4, 5, 0, 0);
       const r = autoSwapRange(a, b);
-      // Same day, either may be start; both halves are May 5.
+      // Same day — autoSwapRange returns { start: a, end: b } deterministically
+      // (startOfDay normalizes both to midnight; the equality branch picks a as start).
       expect(r.start.getDate()).toBe(5);
       expect(r.end.getDate()).toBe(5);
     });
@@ -72,6 +73,12 @@ describe('DateRangePicker utils', () => {
       expect(r!.end.getMonth()).toBe(5); // June
     });
 
+    it('parses em-dash without surrounding spaces', () => {
+      const r = parseDateRange('5/21/2026—6/4/2026', 'en-US');
+      expect(r!.start.getDate()).toBe(21);
+      expect(r!.end.getDate()).toBe(4);
+    });
+
     it('parses with en dash', () => {
       const r = parseDateRange('5/21/2026 – 6/4/2026', 'en-US');
       expect(r!.start.getDate()).toBe(21);
@@ -86,8 +93,10 @@ describe('DateRangePicker utils', () => {
     it('parses with " to " word separator (case-insensitive)', () => {
       const r1 = parseDateRange('5/21/2026 to 6/4/2026', 'en-US');
       const r2 = parseDateRange('5/21/2026 TO 6/4/2026', 'en-US');
+      const r3 = parseDateRange('5/21/2026 To 6/4/2026', 'en-US');
       expect(r1!.start.getDate()).toBe(21);
       expect(r2!.start.getDate()).toBe(21);
+      expect(r3!.start.getDate()).toBe(21);
     });
 
     it('parses ru-RU with hyphen-with-spaces', () => {
@@ -114,10 +123,9 @@ describe('DateRangePicker utils', () => {
     });
 
     it('returns null when three chunks (multiple separators)', () => {
-      // The split takes the FIRST occurrence — if there are two em dashes
-      // separating three chunks, the first split is 2-way: ["5/21", "6/4 — 7/1"].
-      // The right half then fails to parse because it contains an embedded
-      // em dash. So the function returns null.
+      // JS split without a limit returns ALL chunks — two em dashes produce
+      // three elements, not two. length === 2 check fails, no separator
+      // matches, function returns null.
       expect(parseDateRange('5/21/2026 — 6/4/2026 — 7/1/2026', 'en-US')).toBeNull();
     });
   });

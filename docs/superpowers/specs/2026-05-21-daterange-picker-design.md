@@ -216,7 +216,7 @@ Enter in the input runs the same parse-and-commit cycle, then closes the popover
 `parseDateRange(raw, locale): DateRange | null`:
 
 - Empty / whitespace → `null`.
-- Split on the first occurrence of any of these separators (case-insensitive): ` — ` (em dash with spaces), ` – ` (en dash), ` - ` (hyphen with spaces), ` to ` (word, padded).
+- Split on the first occurrence of any of these separators (case-insensitive): `—` (em dash, surrounding spaces optional), `–` (en dash, surrounding spaces optional), ` - ` (hyphen with spaces — required, to disambiguate from ISO `2026-05-21`), ` to ` (word, padded).
 - If split doesn't yield exactly 2 non-empty halves → `null`.
 - Run each half through `parseDate(half, locale)` from `components/DatePicker/utils`.
 - If either half fails → `null`.
