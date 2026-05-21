@@ -1,0 +1,40 @@
+// stylelint-disable property-disallowed-list -- fieldset/legend reset + internal layout gap; not a layout property on the public component box.
+.group {
+  // Reset the user-agent fieldset chrome — we paint our own.
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.legend {
+  // Reset the user-agent legend margin/padding.
+  padding: 0;
+  margin: 0 0 var(--space-2) 0;
+  color: var(--color-fg);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+// stylelint-enable property-disallowed-list
+
+.items {
+  display: flex;
+}
+
+.orientation-vertical .items {
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.orientation-horizontal .items {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+// Invalid state on the group — the per-radio invalid styling is handled
+// inside Radio.module.scss via the context-propagated `invalid` prop. We
+// add the danger color to the legend so the group label also signals error.
+.invalid .legend {
+  color: var(--color-danger);
+}
