@@ -341,15 +341,139 @@ export function TableDemo() {
           </Table.Body>
           <Table.Footer>
             <Table.Row>
-              <Table.Cell>
+              <Table.Cell colSpan={2}>
                 <strong>Total</strong>
               </Table.Cell>
-              <Table.Cell />
               <Table.Cell align="end">
                 <strong>${ROWS.reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</strong>
               </Table.Cell>
             </Table.Row>
           </Table.Footer>
+        </Table>
+      </Example>
+
+      <Example
+        title="Grouped header (multi-row, colSpan + rowSpan)"
+        description="Native `colSpan` / `rowSpan` work straight through on `<Table.HeaderCell>` and `<Table.Cell>`. Bordered + multi-row header is the typical 'plan vs actual per quarter' shape."
+        code={`<Table bordered>
+  <Table.Header>
+    <Table.Row>
+      <Table.HeaderCell rowSpan={2}>Region</Table.HeaderCell>
+      <Table.HeaderCell colSpan={2} align="center">Q1</Table.HeaderCell>
+      <Table.HeaderCell colSpan={2} align="center">Q2</Table.HeaderCell>
+    </Table.Row>
+    <Table.Row>
+      <Table.HeaderCell align="end">Plan</Table.HeaderCell>
+      <Table.HeaderCell align="end">Actual</Table.HeaderCell>
+      <Table.HeaderCell align="end">Plan</Table.HeaderCell>
+      <Table.HeaderCell align="end">Actual</Table.HeaderCell>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>...</Table.Body>
+</Table>`}
+      >
+        <Table bordered>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell rowSpan={2}>Region</Table.HeaderCell>
+              <Table.HeaderCell colSpan={2} align="center">
+                Q1
+              </Table.HeaderCell>
+              <Table.HeaderCell colSpan={2} align="center">
+                Q2
+              </Table.HeaderCell>
+            </Table.Row>
+            <Table.Row>
+              <Table.HeaderCell align="end">Plan</Table.HeaderCell>
+              <Table.HeaderCell align="end">Actual</Table.HeaderCell>
+              <Table.HeaderCell align="end">Plan</Table.HeaderCell>
+              <Table.HeaderCell align="end">Actual</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell>North</Table.Cell>
+              <Table.Cell align="end">100</Table.Cell>
+              <Table.Cell align="end">95</Table.Cell>
+              <Table.Cell align="end">120</Table.Cell>
+              <Table.Cell align="end">130</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.Cell>South</Table.Cell>
+              <Table.Cell align="end">80</Table.Cell>
+              <Table.Cell align="end">88</Table.Cell>
+              <Table.Cell align="end">90</Table.Cell>
+              <Table.Cell align="end">92</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.Cell>West</Table.Cell>
+              <Table.Cell align="end">60</Table.Cell>
+              <Table.Cell align="end">71</Table.Cell>
+              <Table.Cell align="end">75</Table.Cell>
+              <Table.Cell align="end">68</Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table>
+      </Example>
+
+      <Example
+        title="Row grouping (rowSpan in body)"
+        description="Use `rowSpan` on a body cell to label a category that owns several rows. Combine with `<th scope='row'>` on the spanning cell if it should be read as a row-header by AT."
+        code={`<Table bordered>
+  <Table.Header>...</Table.Header>
+  <Table.Body>
+    <Table.Row>
+      <Table.HeaderCell rowSpan={3} scope="row">Active</Table.HeaderCell>
+      <Table.Cell>Acme Corp</Table.Cell>
+      <Table.Cell align="end">$12,500</Table.Cell>
+    </Table.Row>
+    <Table.Row>
+      <Table.Cell>Cobalt Studios</Table.Cell>
+      <Table.Cell align="end">$28,400</Table.Cell>
+    </Table.Row>
+    {/* ... */}
+  </Table.Body>
+</Table>`}
+      >
+        <Table bordered>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>Status</Table.HeaderCell>
+              <Table.HeaderCell>Company</Table.HeaderCell>
+              <Table.HeaderCell align="end">Amount</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            <Table.Row>
+              <Table.HeaderCell rowSpan={3} scope="row">
+                <Badge tone="success">Active</Badge>
+              </Table.HeaderCell>
+              <Table.Cell>Acme Corp</Table.Cell>
+              <Table.Cell align="end">$12,500</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.Cell>Cobalt Studios</Table.Cell>
+              <Table.Cell align="end">$28,400</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.Cell>Echo Logistics</Table.Cell>
+              <Table.Cell align="end">$7,900</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.HeaderCell scope="row">
+                <Badge tone="warning">Pending</Badge>
+              </Table.HeaderCell>
+              <Table.Cell>Beanstalk Ltd</Table.Cell>
+              <Table.Cell align="end">$4,200</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.HeaderCell scope="row">
+                <Badge tone="neutral">Archived</Badge>
+              </Table.HeaderCell>
+              <Table.Cell>Delta Mfg</Table.Cell>
+              <Table.Cell align="end">$800</Table.Cell>
+            </Table.Row>
+          </Table.Body>
         </Table>
       </Example>
 
