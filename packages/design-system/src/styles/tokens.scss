@@ -126,6 +126,13 @@
   --size-checkbox-md: 16px;
   --size-checkbox-lg: 20px;
 
+  // Radio diameter per size — aliased over the checkbox scale so a radio
+  // and a checkbox at the same `size` line up visually (e.g., in a form
+  // row that mixes both control types).
+  --size-radio-sm: var(--size-checkbox-sm);
+  --size-radio-md: var(--size-checkbox-md);
+  --size-radio-lg: var(--size-checkbox-lg);
+
   // Indeterminate loading spinner (Select listbox loading row). Small
   // enough to fit inline next to the "Loading…" label without dominating
   // the row.
