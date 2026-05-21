@@ -22,9 +22,11 @@ Two components, one folder. RadioGroup propagates state via a small context (`Ra
 
 ```tsx
 <label class="radio size-md">
-  <input type="radio" class="visually-hidden" />   ← native input owns all a11y
-  <span class="ring" aria-hidden>                  ← painted outer ring
-    <span class="dot" />                           ← inner dot (only when checked)
+  <input type="radio" class="visually-hidden" /> ← native input owns all a11y
+  <span class="ring" aria-hidden>
+    {' '}
+    ← painted outer ring
+    <span class="dot" /> ← inner dot (only when checked)
   </span>
   {label && <span class="labelText">{label}</span>}
 </label>
@@ -55,11 +57,10 @@ Two components, one folder. RadioGroup propagates state via a small context (`Ra
 ```ts
 export type RadioSize = 'sm' | 'md' | 'lg';
 
-export interface RadioProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    'size' | 'type' | 'checked' | 'defaultChecked' | 'onChange'
-  > {
+export interface RadioProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'size' | 'type' | 'checked' | 'defaultChecked' | 'onChange'
+> {
   /** The value submitted when this radio is selected. */
   value: string;
 
@@ -146,30 +147,30 @@ export interface RadioGroupProps extends Omit<HTMLAttributes<HTMLFieldSetElement
 Three new tokens, aliased over `--size-checkbox-*` so radio + checkbox visually line up next to each other:
 
 ```scss
---size-radio-sm: var(--size-checkbox-sm);  // 14px
---size-radio-md: var(--size-checkbox-md);  // 16px
---size-radio-lg: var(--size-checkbox-lg);  // 20px
+--size-radio-sm: var(--size-checkbox-sm); // 14px
+--size-radio-md: var(--size-checkbox-md); // 16px
+--size-radio-lg: var(--size-checkbox-lg); // 20px
 ```
 
-| Visual                              | Token                                     |
-| ----------------------------------- | ----------------------------------------- |
-| Ring diameter (sm / md / lg)        | `--size-radio-{sm,md,lg}`                 |
-| Dot diameter                        | ~40% of ring (calc(...) inline; or token) |
-| Ring border (unchecked)             | `--color-border-strong`                   |
-| Ring border (hover, unchecked)      | `--color-accent` — **border only**        |
-| Ring border (checked)               | `--color-accent`                          |
-| Ring background (always)            | `--color-bg`                              |
-| Dot color (checked)                 | `--color-accent`                          |
-| Ring background (disabled)          | `--color-bg-subtle`                       |
-| Ring border (disabled)              | `--color-border`                          |
-| Dot color (disabled)                | `--color-fg-disabled`                     |
-| Ring border (invalid)               | `--color-danger`                          |
-| Dot color (invalid)                 | `--color-danger`                          |
-| Focus ring                          | `--ring-accent` (or `--ring-danger`)      |
-| Label gap                           | `--space-2` (all sizes)                   |
-| Group `<legend>` font               | `--font-size-md` semibold                 |
-| Group orientation gap (vertical)    | `--space-2`                               |
-| Group orientation gap (horizontal)  | `--space-4`                               |
+| Visual                             | Token                                     |
+| ---------------------------------- | ----------------------------------------- |
+| Ring diameter (sm / md / lg)       | `--size-radio-{sm,md,lg}`                 |
+| Dot diameter                       | ~40% of ring (calc(...) inline; or token) |
+| Ring border (unchecked)            | `--color-border-strong`                   |
+| Ring border (hover, unchecked)     | `--color-accent` — **border only**        |
+| Ring border (checked)              | `--color-accent`                          |
+| Ring background (always)           | `--color-bg`                              |
+| Dot color (checked)                | `--color-accent`                          |
+| Ring background (disabled)         | `--color-bg-subtle`                       |
+| Ring border (disabled)             | `--color-border`                          |
+| Dot color (disabled)               | `--color-fg-disabled`                     |
+| Ring border (invalid)              | `--color-danger`                          |
+| Dot color (invalid)                | `--color-danger`                          |
+| Focus ring                         | `--ring-accent` (or `--ring-danger`)      |
+| Label gap                          | `--space-2` (all sizes)                   |
+| Group `<legend>` font              | `--font-size-md` semibold                 |
+| Group orientation gap (vertical)   | `--space-2`                               |
+| Group orientation gap (horizontal) | `--space-4`                               |
 
 Three new tokens. No raw values in component SCSS.
 

@@ -130,12 +130,7 @@ export function RadioDemo() {
 </RadioGroup>`}
       >
         <InputExample>
-          <RadioGroup
-            name="align"
-            defaultValue="left"
-            label="Text align"
-            orientation="horizontal"
-          >
+          <RadioGroup name="align" defaultValue="left" label="Text align" orientation="horizontal">
             <Radio value="left" label="Left" />
             <Radio value="center" label="Center" />
             <Radio value="right" label="Right" />

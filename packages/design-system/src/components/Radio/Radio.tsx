@@ -1,9 +1,4 @@
-import {
-  forwardRef,
-  type ChangeEvent,
-  type InputHTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type ChangeEvent, type InputHTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { useRadioGroup } from './RadioGroupContext';
 import styles from './Radio.module.scss';
@@ -11,11 +6,10 @@ import styles from './Radio.module.scss';
 /** Ring diameter + label type scale. Same scale as `<Checkbox>` / `<Input>`. */
 export type RadioSize = 'sm' | 'md' | 'lg';
 
-export interface RadioProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    'size' | 'type' | 'checked' | 'defaultChecked' | 'onChange'
-  > {
+export interface RadioProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'size' | 'type' | 'checked' | 'defaultChecked' | 'onChange'
+> {
   /** The value submitted when this radio is selected. */
   value: string;
 
@@ -112,8 +106,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
   const resolvedInvalid = invalid ?? group?.invalid ?? false;
   const resolvedRequired = required ?? group?.required ?? false;
   const resolvedName = name ?? group?.name;
-  const resolvedChecked =
-    checked ?? (group != null ? group.value === value : undefined);
+  const resolvedChecked = checked ?? (group != null ? group.value === value : undefined);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange?.(value, event);
