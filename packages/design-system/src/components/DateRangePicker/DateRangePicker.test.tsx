@@ -326,4 +326,31 @@ describe('DateRangePicker', () => {
     // June 1 cell — could be in either grid depending on cursor shift; assert text content.
     expect((document.activeElement as HTMLElement)?.textContent).toBe('1');
   });
+
+  it('keyboard ArrowLeft at right-grid start-of-month crosses back into the left grid', async () => {
+    const user = userEvent.setup();
+    // defaultValue in June 2026 so the LEFT grid shows June, RIGHT shows July.
+    // Then we navigate ArrowDown into the left grid's June 1 (or wherever
+    // focus lands), then ArrowRight enough times to enter July... actually
+    // the simpler approach: set value to land focus in the RIGHT grid.
+    //
+    // Use defaultValue that anchors cursor to June; the LEFT grid will be
+    // June and the focus target is the rangeStart in the left grid.
+    // We arrow-key right past June 30 to enter July (right grid). Then
+    // arrow-key left to verify it crosses back to June 30.
+    render(
+      <DateRangePicker
+        defaultValue={{ start: new Date(2026, 5, 30), end: new Date(2026, 5, 30) }}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('textbox'));
+    await user.keyboard('{ArrowDown}'); // focus into left grid on June 30
+    expect((document.activeElement as HTMLElement)?.textContent).toBe('30');
+    await user.keyboard('{ArrowRight}'); // cross to July 1 (right grid)
+    expect((document.activeElement as HTMLElement)?.textContent).toBe('1');
+    await user.keyboard('{ArrowLeft}'); // cross BACK to June 30 (left grid)
+    expect((document.activeElement as HTMLElement)?.textContent).toBe('30');
+  });
 });

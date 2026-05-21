@@ -346,6 +346,20 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       setCursor((c) => addMonths(c, 1));
     }, []);
 
+    // Per-grid cursor-change callbacks. The right grid renders DRP cursor
+    // + 1 month, so when keyboard nav inside the right grid asks to land
+    // focus in month M (via `onCursorChange(firstOfM)`), DRP must set its
+    // own cursor to M − 1 so the right grid actually shows M. Without
+    // this translation, ArrowLeft from the right grid's first-of-month
+    // cell would no-op (DRP cursor unchanged → right grid unchanged →
+    // pendingFocusKey never consumed).
+    const handleLeftGridCursorChange = useCallback((c: Date) => {
+      setCursor(c);
+    }, []);
+    const handleRightGridCursorChange = useCallback((c: Date) => {
+      setCursor(addMonths(c, -1));
+    }, []);
+
     // Click-outside (pointerdown capture, library convention).
     useEffect(() => {
       if (!open) return;
@@ -465,7 +479,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                 <DatePickerGrid
                   cursor={cursor}
                   value={null}
-                  onCursorChange={setCursor}
+                  onCursorChange={handleLeftGridCursorChange}
                   onSelect={handleGridSelect}
                   min={min}
                   max={max}
@@ -485,7 +499,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                 <DatePickerGrid
                   cursor={rightCursor}
                   value={null}
-                  onCursorChange={setCursor}
+                  onCursorChange={handleRightGridCursorChange}
                   onSelect={handleGridSelect}
                   min={min}
                   max={max}
