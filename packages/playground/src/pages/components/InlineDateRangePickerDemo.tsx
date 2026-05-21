@@ -139,7 +139,10 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
       <Example
         title="Disabled"
         description="`disabled` blocks selection and chevron navigation; the entire grid pair mutes visually."
-        code={`<InlineDateRangePicker disabled defaultValue={{ start: today, end: in14 }} />`}
+        code={`const today = new Date();
+const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);
+
+<InlineDateRangePicker disabled defaultValue={{ start: today, end: in14 }} />`}
       >
         <InputExample width="auto">
           <InlineDateRangePicker
@@ -166,7 +169,10 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
       <Example
         title="ru-RU locale"
         description="Locale-aware labels. UI strings (chevron tooltips) localized via the labels prop."
-        code={`<InlineDateRangePicker
+        code={`const today = new Date();
+const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);
+
+<InlineDateRangePicker
   defaultValue={{ start: today, end: in14 }}
   locale="ru-RU"
   labels={{
