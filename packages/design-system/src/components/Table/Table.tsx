@@ -65,8 +65,10 @@ export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
 }
 
-export interface TableHeaderCellProps
-  extends Omit<ThHTMLAttributes<HTMLTableCellElement>, 'align' | 'scope'> {
+export interface TableHeaderCellProps extends Omit<
+  ThHTMLAttributes<HTMLTableCellElement>,
+  'align' | 'scope'
+> {
   /** Text alignment. Defaults to `'start'`. */
   align?: TableCellAlign;
   /**
