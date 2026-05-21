@@ -425,6 +425,36 @@ const [tab, setTab] = useState('overview');
 - Don't reach for `triggerDisplay='summary'` for tag input — chips communicate the active filter set at a glance.
 - `creatable` requires `searchable` (throws in dev). Passing both `options` and `loadOptions` is also flagged (loadOptions wins).
 
+### `<Table>` — tabular data primitive
+
+```tsx
+<Table>
+  <Table.Header>
+    <Table.Row>
+      <Table.HeaderCell>Name</Table.HeaderCell>
+      <Table.HeaderCell align="end">Amount</Table.HeaderCell>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
+    {rows.map((r) => (
+      <Table.Row key={r.id}>
+        <Table.Cell>{r.name}</Table.Cell>
+        <Table.Cell align="end">{r.amount}</Table.Cell>
+      </Table.Row>
+    ))}
+  </Table.Body>
+</Table>
+```
+
+- Compound subcomponents: `Table`, `Table.Caption`, `Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.HeaderCell`, `Table.Cell`. Renders native `<table>` / `<thead>` / `<tbody>` / `<tr>` / `<th>` / `<td>` / `<tfoot>` / `<caption>` — no ARIA-on-divs.
+- Visual modifiers on root: `density` (`'comfortable'` (default, 32px row) / `'dense'` (24px)), `hover` (default `true`), `striped`, `stickyHeader`, `scroll` (default `true` — wraps in `overflow-x: auto`).
+- `<Table.Row selected>` paints a tinted bg + `aria-selected="true"`. Selection state itself is the consumer's job.
+- `<Table.HeaderCell sortDirection>` is a visual hook: renders an up / down / unsorted chevron + sets `aria-sort`. Wire `onClick` to your own sort state. `<DataTable>` (not yet shipped) will compose this seam.
+- `<Table.Cell align>` / `<Table.HeaderCell align>`: `'start' | 'center' | 'end'` (CSS logical, RTL-friendly). Right-aligned headers auto-flip the sort chevron to the start side.
+- `<Table.Cell truncate>` ellipses overflow text on one line. Requires a constrained cell width (`style={{ maxWidth }}` or `<col>`).
+- The native HTML `align` attribute on `<th>` / `<td>` is shadowed by the component-level `align` prop (logical) — `Omit<…, 'align'>` on both `*Props`.
+- **Use `<DataTable>` instead** when you need sorting / filtering / pagination state. Table is the paint primitive; DataTable will be the opinionated wrapper.
+
 ### `<LocaleProvider>` + `useLocale` — locale Context
 
 ```tsx
