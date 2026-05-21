@@ -13,9 +13,6 @@ import { DropdownMenu } from '@eocrm/design-system';
 import { Tooltip } from '@eocrm/design-system';
 import { Calendar } from '@eocrm/design-system';
 import { DatePicker } from '@eocrm/design-system';
-import { DateRangePicker } from '@eocrm/design-system';
-import { InlineDatePicker } from '@eocrm/design-system';
-import { InlineDateRangePicker } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
@@ -34,50 +31,14 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
-    to: '/components/datepicker',
-    name: 'DatePicker',
+    to: '/components/datepickers',
+    name: 'Date pickers',
     description:
-      'Single-date input with a popover month grid. Locale-aware typed parsing and min/max constraints.',
+      'Four variants of the same month grid — DatePicker, DateRangePicker, and inline counterparts.',
     preview: (
       <div style={{ width: 200 }}>
         <DatePicker defaultValue={new Date(2026, 4, 21)} aria-label="Preview" />
       </div>
-    ),
-  },
-  {
-    to: '/components/daterangepicker',
-    name: 'DateRangePicker',
-    description: 'Single-field date-range input with a two-month popover.',
-    preview: (
-      <div style={{ width: 240 }}>
-        <DateRangePicker
-          defaultValue={{
-            start: new Date(2026, 4, 21),
-            end: new Date(2026, 5, 4),
-          }}
-          aria-label="Preview"
-        />
-      </div>
-    ),
-  },
-  {
-    to: '/components/inline-datepicker',
-    name: 'InlineDatePicker',
-    description: 'Single-date calendar embedded in flow (no input, no popover).',
-    preview: <InlineDatePicker defaultValue={new Date(2026, 4, 21)} aria-label="Preview" />,
-  },
-  {
-    to: '/components/inline-daterangepicker',
-    name: 'InlineDateRangePicker',
-    description: 'Date-range calendar (two months side-by-side) embedded in flow.',
-    preview: (
-      <InlineDateRangePicker
-        defaultValue={{
-          start: new Date(2026, 4, 21),
-          end: new Date(2026, 5, 4),
-        }}
-        aria-label="Preview"
-      />
     ),
   },
   {
