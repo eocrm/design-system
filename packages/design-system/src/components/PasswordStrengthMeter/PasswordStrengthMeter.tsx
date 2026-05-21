@@ -49,11 +49,19 @@ export interface PasswordStrengthMeterProps extends HTMLAttributes<HTMLDivElemen
   labels?: PasswordStrengthLabels;
 }
 
-/** Default heuristic — DO NOT TREAT AS A SECURITY CONTROL. */
+/**
+ * Default heuristic — DO NOT TREAT AS A SECURITY CONTROL.
+ *
+ * Length gates everything: passwords under 8 characters always score 1
+ * ("Weak") regardless of character variety, because a 4-char "Ab1!"
+ * with mixed case + digit + special is still trivially brute-forced.
+ * Bonuses kick in only once the password reaches the 8-char floor.
+ */
 function defaultScoreFn(pw: string): PasswordStrengthScore {
   if (!pw) return 0;
-  let score = 0;
-  if (pw.length >= 8) score++;
+  // Length floor — anything shorter than 8 chars caps at 1.
+  if (pw.length < 8) return 1;
+  let score = 1; // starts at 1 since length >= 8
   if (pw.length >= 12) score++;
   if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
   if (/\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score++;

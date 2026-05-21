@@ -21,6 +21,22 @@ describe('PasswordStrengthMeter', () => {
     expect(container.querySelector('span[class*="label"]')?.textContent).toBe('Weak');
   });
 
+  it('passwords shorter than 8 chars always score 1, regardless of character variety', () => {
+    // "Ab1!" — 4 chars but mixed-case + digit + special — used to score 2 under
+    // the old heuristic. Should cap at 1 ("Weak") because length dominates.
+    const { container, rerender } = render(<PasswordStrengthMeter value="Ab1!" />);
+    expect(container.querySelectorAll('[class*="filled"]')).toHaveLength(1);
+    expect(container.querySelector('span[class*="label"]')?.textContent).toBe('Weak');
+
+    // Even at 7 chars with full variety — still 1.
+    rerender(<PasswordStrengthMeter value="Ab1!@#$" />);
+    expect(container.querySelectorAll('[class*="filled"]')).toHaveLength(1);
+
+    // Single char — still 1 (not 0; empty is the only 0).
+    rerender(<PasswordStrengthMeter value="x" />);
+    expect(container.querySelectorAll('[class*="filled"]')).toHaveLength(1);
+  });
+
   it('default heuristic — 12+ chars + mixed case + digit + special → 4', () => {
     const { container } = render(<PasswordStrengthMeter value="Hunter2!@#xyz" />);
     expect(container.querySelectorAll('[class*="filled"]')).toHaveLength(4);
