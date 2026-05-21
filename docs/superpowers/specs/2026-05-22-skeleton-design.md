@@ -53,14 +53,14 @@ export interface SkeletonProps extends HTMLAttributes<HTMLSpanElement> {
 
 ## Visual
 
-| Visual                    | Token                              |
-| ------------------------- | ---------------------------------- |
-| Background                | `--color-bg-muted` (`#f4f5f7`)     |
-| Pulse opacity range       | 1 → 0.6 → 1                        |
-| Pulse duration            | 1.5s ease-in-out infinite          |
-| Border radius (text)      | `--radius-sm`                      |
-| Border radius (circular)  | `--radius-full`                    |
-| Border radius (rectangular)| `--radius-md`                     |
+| Visual                      | Token                          |
+| --------------------------- | ------------------------------ |
+| Background                  | `--color-bg-muted` (`#f4f5f7`) |
+| Pulse opacity range         | 1 → 0.6 → 1                    |
+| Pulse duration              | 1.5s ease-in-out infinite      |
+| Border radius (text)        | `--radius-sm`                  |
+| Border radius (circular)    | `--radius-full`                |
+| Border radius (rectangular) | `--radius-md`                  |
 
 No new tokens. Inline `@keyframes pulse` defined in the SCSS module.
 
