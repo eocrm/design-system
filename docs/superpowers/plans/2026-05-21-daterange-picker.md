@@ -72,6 +72,7 @@ Expected: `.husky/_` + `OK`. If either fails, `npm install` from repo root and r
 This task adds the new props + their plumbing through `DatePickerGrid.tsx` WITHOUT yet rendering the new cell classes. The visual styles + tests land in Task 3 (after the plumbing is in place so the test imports compile).
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DatePicker/DatePickerGrid.tsx`
 
 - [ ] **Step 1: Extend `DatePickerGridProps`**
@@ -122,28 +123,28 @@ export function DatePickerGrid({
 Inside the function body, add helpers near the existing `today` / `isDisabled` definitions:
 
 ```tsx
-  // Range-mode helpers — no-op when selectionMode === 'single'.
-  const rangeAnchorStart = selectionMode === 'range' ? rangeStart : null;
-  const rangeAnchorEnd = selectionMode === 'range' ? rangeEnd ?? hoverDate : null;
-  const isInRange = useCallback(
-    (date: Date) => {
-      if (!rangeAnchorStart || !rangeAnchorEnd) return false;
-      const a = startOfDay(rangeAnchorStart).getTime();
-      const b = startOfDay(rangeAnchorEnd).getTime();
-      const t = startOfDay(date).getTime();
-      const lo = Math.min(a, b);
-      const hi = Math.max(a, b);
-      return t >= lo && t <= hi;
-    },
-    [rangeAnchorStart, rangeAnchorEnd],
-  );
-  const isRangeStartCell = (date: Date) =>
-    selectionMode === 'range' && rangeStart != null && isSameDay(date, rangeStart);
-  const isRangeEndCell = (date: Date) =>
-    selectionMode === 'range' &&
-    (rangeEnd != null
-      ? isSameDay(date, rangeEnd)
-      : rangeStart != null && hoverDate != null && isSameDay(date, hoverDate));
+// Range-mode helpers — no-op when selectionMode === 'single'.
+const rangeAnchorStart = selectionMode === 'range' ? rangeStart : null;
+const rangeAnchorEnd = selectionMode === 'range' ? (rangeEnd ?? hoverDate) : null;
+const isInRange = useCallback(
+  (date: Date) => {
+    if (!rangeAnchorStart || !rangeAnchorEnd) return false;
+    const a = startOfDay(rangeAnchorStart).getTime();
+    const b = startOfDay(rangeAnchorEnd).getTime();
+    const t = startOfDay(date).getTime();
+    const lo = Math.min(a, b);
+    const hi = Math.max(a, b);
+    return t >= lo && t <= hi;
+  },
+  [rangeAnchorStart, rangeAnchorEnd],
+);
+const isRangeStartCell = (date: Date) =>
+  selectionMode === 'range' && rangeStart != null && isSameDay(date, rangeStart);
+const isRangeEndCell = (date: Date) =>
+  selectionMode === 'range' &&
+  (rangeEnd != null
+    ? isSameDay(date, rangeEnd)
+    : rangeStart != null && hoverDate != null && isSameDay(date, hoverDate));
 ```
 
 - [ ] **Step 4: Gate `chevrons` in the header**
@@ -201,9 +202,7 @@ Locate the cell render (the `<button role="gridcell">` inside the per-week map).
     isRangeStartCell(day.date) && styles.rangeStart,
     isRangeEndCell(day.date) && styles.rangeEnd,
   )}
-  aria-selected={
-    isSelected || isRangeStartCell(day.date) || isRangeEndCell(day.date) || undefined
-  }
+  aria-selected={isSelected || isRangeStartCell(day.date) || isRangeEndCell(day.date) || undefined}
   aria-disabled={disabled || undefined}
   tabIndex={tabIndexFor(day.date, isTodayCell)}
   onClick={() => {
@@ -227,11 +226,7 @@ const tabIndexFor = (date: Date, isTodayCell: boolean): number => {
     if (rangeStart == null && isTodayCell) return 0;
     return -1;
   }
-  return value != null && isSameDay(date, value)
-    ? 0
-    : value == null && isTodayCell
-      ? 0
-      : -1;
+  return value != null && isSameDay(date, value) ? 0 : value == null && isTodayCell ? 0 : -1;
 };
 ```
 
@@ -273,6 +268,7 @@ git commit -m "DatePickerGrid: add range-mode props (selectionMode, rangeStart/E
 ## Task 3: Range-mode SCSS + tests on DatePickerGrid
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DatePicker/DatePickerGrid.module.scss`
 - Modify: `packages/design-system/src/components/DatePicker/DatePickerGrid.test.tsx`
 
@@ -281,123 +277,123 @@ git commit -m "DatePickerGrid: add range-mode props (selectionMode, rangeStart/E
 Append the following 5 new tests at the bottom of the existing `describe('DatePickerGrid', () => { ... })` block in `DatePickerGrid.test.tsx`. Insert ABOVE the closing `});` of the describe:
 
 ```tsx
-  it('range mode: rangeStart and rangeEnd cells carry aria-selected and class markers', () => {
-    render(
-      <DatePickerGrid
-        cursor={new Date(2026, 4, 1)}
-        value={null}
-        onSelect={() => {}}
-        onCursorChange={() => {}}
-        labels={LABELS}
-        selectionMode="range"
-        rangeStart={new Date(2026, 4, 5)}
-        rangeEnd={new Date(2026, 4, 10)}
-      />,
-      { wrapper: wrap() },
-    );
-    const startCell = screen.getByRole('gridcell', { name: /^5$/ });
-    const endCell = screen.getByRole('gridcell', { name: /^10$/ });
-    expect(startCell).toHaveAttribute('aria-selected', 'true');
-    expect(endCell).toHaveAttribute('aria-selected', 'true');
-    expect(startCell.className).toMatch(/rangeStart/);
-    expect(endCell.className).toMatch(/rangeEnd/);
-    // Middle cells get .inRange
-    const middle = screen.getByRole('gridcell', { name: /^7$/ });
-    expect(middle.className).toMatch(/inRange/);
-  });
+it('range mode: rangeStart and rangeEnd cells carry aria-selected and class markers', () => {
+  render(
+    <DatePickerGrid
+      cursor={new Date(2026, 4, 1)}
+      value={null}
+      onSelect={() => {}}
+      onCursorChange={() => {}}
+      labels={LABELS}
+      selectionMode="range"
+      rangeStart={new Date(2026, 4, 5)}
+      rangeEnd={new Date(2026, 4, 10)}
+    />,
+    { wrapper: wrap() },
+  );
+  const startCell = screen.getByRole('gridcell', { name: /^5$/ });
+  const endCell = screen.getByRole('gridcell', { name: /^10$/ });
+  expect(startCell).toHaveAttribute('aria-selected', 'true');
+  expect(endCell).toHaveAttribute('aria-selected', 'true');
+  expect(startCell.className).toMatch(/rangeStart/);
+  expect(endCell.className).toMatch(/rangeEnd/);
+  // Middle cells get .inRange
+  const middle = screen.getByRole('gridcell', { name: /^7$/ });
+  expect(middle.className).toMatch(/inRange/);
+});
 
-  it('range mode: hoverDate previews end when only rangeStart is set', () => {
-    render(
-      <DatePickerGrid
-        cursor={new Date(2026, 4, 1)}
-        value={null}
-        onSelect={() => {}}
-        onCursorChange={() => {}}
-        labels={LABELS}
-        selectionMode="range"
-        rangeStart={new Date(2026, 4, 5)}
-        hoverDate={new Date(2026, 4, 12)}
-      />,
-      { wrapper: wrap() },
-    );
-    const startCell = screen.getByRole('gridcell', { name: /^5$/ });
-    const hoverEndCell = screen.getByRole('gridcell', { name: /^12$/ });
-    expect(startCell.className).toMatch(/rangeStart/);
-    expect(hoverEndCell.className).toMatch(/rangeEnd/);
-    expect(screen.getByRole('gridcell', { name: /^8$/ }).className).toMatch(/inRange/);
-  });
+it('range mode: hoverDate previews end when only rangeStart is set', () => {
+  render(
+    <DatePickerGrid
+      cursor={new Date(2026, 4, 1)}
+      value={null}
+      onSelect={() => {}}
+      onCursorChange={() => {}}
+      labels={LABELS}
+      selectionMode="range"
+      rangeStart={new Date(2026, 4, 5)}
+      hoverDate={new Date(2026, 4, 12)}
+    />,
+    { wrapper: wrap() },
+  );
+  const startCell = screen.getByRole('gridcell', { name: /^5$/ });
+  const hoverEndCell = screen.getByRole('gridcell', { name: /^12$/ });
+  expect(startCell.className).toMatch(/rangeStart/);
+  expect(hoverEndCell.className).toMatch(/rangeEnd/);
+  expect(screen.getByRole('gridcell', { name: /^8$/ }).className).toMatch(/inRange/);
+});
 
-  it('range mode: fires onHoverDate on cell mouseenter and null on grid mouseleave', async () => {
-    const user = userEvent.setup();
-    const onHoverDate = vi.fn<(d: Date | null) => void>();
-    render(
-      <DatePickerGrid
-        cursor={new Date(2026, 4, 1)}
-        value={null}
-        onSelect={() => {}}
-        onCursorChange={() => {}}
-        labels={LABELS}
-        selectionMode="range"
-        rangeStart={new Date(2026, 4, 5)}
-        onHoverDate={onHoverDate}
-      />,
-      { wrapper: wrap() },
-    );
-    const cell = screen.getByRole('gridcell', { name: /^12$/ });
-    await user.hover(cell);
-    expect(onHoverDate).toHaveBeenCalledWith(expect.any(Date));
-    expect(onHoverDate.mock.calls.at(-1)?.[0]?.getDate()).toBe(12);
+it('range mode: fires onHoverDate on cell mouseenter and null on grid mouseleave', async () => {
+  const user = userEvent.setup();
+  const onHoverDate = vi.fn<(d: Date | null) => void>();
+  render(
+    <DatePickerGrid
+      cursor={new Date(2026, 4, 1)}
+      value={null}
+      onSelect={() => {}}
+      onCursorChange={() => {}}
+      labels={LABELS}
+      selectionMode="range"
+      rangeStart={new Date(2026, 4, 5)}
+      onHoverDate={onHoverDate}
+    />,
+    { wrapper: wrap() },
+  );
+  const cell = screen.getByRole('gridcell', { name: /^12$/ });
+  await user.hover(cell);
+  expect(onHoverDate).toHaveBeenCalledWith(expect.any(Date));
+  expect(onHoverDate.mock.calls.at(-1)?.[0]?.getDate()).toBe(12);
 
-    // Move the pointer off the entire grid (somewhere outside).
-    await user.unhover(cell);
-    // userEvent.unhover only triggers cell-level mouseleave; we need
-    // the grid-container leave. Manually dispatch on the grid element.
-    const grid = document.querySelector<HTMLElement>('[role="grid"]');
-    if (grid) {
-      const evt = new MouseEvent('mouseleave', { bubbles: false });
-      grid.dispatchEvent(evt);
-    }
-    expect(onHoverDate).toHaveBeenLastCalledWith(null);
-  });
+  // Move the pointer off the entire grid (somewhere outside).
+  await user.unhover(cell);
+  // userEvent.unhover only triggers cell-level mouseleave; we need
+  // the grid-container leave. Manually dispatch on the grid element.
+  const grid = document.querySelector<HTMLElement>('[role="grid"]');
+  if (grid) {
+    const evt = new MouseEvent('mouseleave', { bubbles: false });
+    grid.dispatchEvent(evt);
+  }
+  expect(onHoverDate).toHaveBeenLastCalledWith(null);
+});
 
-  it('range mode: disabled cell does not fire onHoverDate', async () => {
-    const user = userEvent.setup();
-    const onHoverDate = vi.fn();
-    render(
-      <DatePickerGrid
-        cursor={new Date(2026, 4, 1)}
-        value={null}
-        onSelect={() => {}}
-        onCursorChange={() => {}}
-        labels={LABELS}
-        selectionMode="range"
-        rangeStart={new Date(2026, 4, 5)}
-        isDateDisabled={(d) => d.getDate() === 12}
-        onHoverDate={onHoverDate}
-      />,
-      { wrapper: wrap() },
-    );
-    const disabled = screen.getByRole('gridcell', { name: /^12$/ });
-    await user.hover(disabled);
-    expect(onHoverDate).not.toHaveBeenCalled();
-  });
+it('range mode: disabled cell does not fire onHoverDate', async () => {
+  const user = userEvent.setup();
+  const onHoverDate = vi.fn();
+  render(
+    <DatePickerGrid
+      cursor={new Date(2026, 4, 1)}
+      value={null}
+      onSelect={() => {}}
+      onCursorChange={() => {}}
+      labels={LABELS}
+      selectionMode="range"
+      rangeStart={new Date(2026, 4, 5)}
+      isDateDisabled={(d) => d.getDate() === 12}
+      onHoverDate={onHoverDate}
+    />,
+    { wrapper: wrap() },
+  );
+  const disabled = screen.getByRole('gridcell', { name: /^12$/ });
+  await user.hover(disabled);
+  expect(onHoverDate).not.toHaveBeenCalled();
+});
 
-  it('chevrons={false} hides nav buttons but keeps the month label', () => {
-    render(
-      <DatePickerGrid
-        cursor={new Date(2026, 4, 1)}
-        value={null}
-        onSelect={() => {}}
-        onCursorChange={() => {}}
-        labels={LABELS}
-        chevrons={false}
-      />,
-      { wrapper: wrap() },
-    );
-    expect(screen.queryByRole('button', { name: 'Previous month' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Next month' })).toBeNull();
-    expect(screen.getByText(/May 2026/)).toBeInTheDocument();
-  });
+it('chevrons={false} hides nav buttons but keeps the month label', () => {
+  render(
+    <DatePickerGrid
+      cursor={new Date(2026, 4, 1)}
+      value={null}
+      onSelect={() => {}}
+      onCursorChange={() => {}}
+      labels={LABELS}
+      chevrons={false}
+    />,
+    { wrapper: wrap() },
+  );
+  expect(screen.queryByRole('button', { name: 'Previous month' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Next month' })).toBeNull();
+  expect(screen.getByText(/May 2026/)).toBeInTheDocument();
+});
 ```
 
 - [ ] **Step 2: Run tests — expect failures**
@@ -476,6 +472,7 @@ git commit -m "DatePickerGrid: range-mode cell classes (.inRange, .rangeStart, .
 ## Task 4: DateRangePicker `utils.ts` + tests
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DateRangePicker/utils.ts`
 - Create: `packages/design-system/src/components/DateRangePicker/utils.test.ts`
 
@@ -594,27 +591,19 @@ describe('DateRangePicker utils', () => {
   describe('formatDateRange', () => {
     it('formats en-US as MM/DD/YYYY — MM/DD/YYYY', () => {
       expect(
-        formatDateRange(
-          { start: new Date(2026, 4, 21), end: new Date(2026, 5, 4) },
-          'en-US',
-        ),
+        formatDateRange({ start: new Date(2026, 4, 21), end: new Date(2026, 5, 4) }, 'en-US'),
       ).toBe('05/21/2026 — 06/04/2026');
     });
 
     it('formats ru-RU as DD.MM.YYYY — DD.MM.YYYY', () => {
       expect(
-        formatDateRange(
-          { start: new Date(2026, 4, 21), end: new Date(2026, 5, 4) },
-          'ru-RU',
-        ),
+        formatDateRange({ start: new Date(2026, 4, 21), end: new Date(2026, 5, 4) }, 'ru-RU'),
       ).toBe('21.05.2026 — 04.06.2026');
     });
 
     it('single-day range still renders both halves', () => {
       const same = new Date(2026, 4, 21);
-      expect(formatDateRange({ start: same, end: same }, 'en-US')).toBe(
-        '05/21/2026 — 05/21/2026',
-      );
+      expect(formatDateRange({ start: same, end: same }, 'en-US')).toBe('05/21/2026 — 05/21/2026');
     });
   });
 
@@ -713,6 +702,7 @@ git commit -m "DateRangePicker: utils — parseDateRange / formatDateRange / aut
 ## Task 5: New token + DateRangePicker SCSS skeleton
 
 **Files:**
+
 - Modify: `packages/design-system/src/styles/tokens.scss`
 - Create: `packages/design-system/src/components/DateRangePicker/DateRangePicker.module.scss`
 
@@ -721,11 +711,11 @@ git commit -m "DateRangePicker: utils — parseDateRange / formatDateRange / aut
 In `packages/design-system/src/styles/tokens.scss`, locate the `--size-datepicker-*` block (added by the DatePicker PR). Add the new range-picker token immediately after it, with a blank line before the comment block to satisfy stylelint's `scss/double-slash-comment-empty-line-before`:
 
 ```scss
-  --size-datepicker-popover-width: 17rem;
+--size-datepicker-popover-width: 17rem;
 
-  // DateRangePicker — overall width of the floating popover. Fits two
-  // 17rem month grids side-by-side with a small gutter between them.
-  --size-daterange-popover-width: 36rem;
+// DateRangePicker — overall width of the floating popover. Fits two
+// 17rem month grids side-by-side with a small gutter between them.
+--size-daterange-popover-width: 36rem;
 ```
 
 - [ ] **Step 2: Create DateRangePicker.module.scss**
@@ -896,6 +886,7 @@ git commit -m "DateRangePicker: SCSS module + --size-daterange-popover-width tok
 ## Task 6: DateRangePicker public component
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DateRangePicker/DateRangePicker.tsx`
 - Create: `packages/design-system/src/components/DateRangePicker/DateRangePicker.test.tsx`
 - Create: `packages/design-system/src/components/DateRangePicker/index.ts`
@@ -906,10 +897,7 @@ git commit -m "DateRangePicker: SCSS module + --size-daterange-popover-width tok
 
 ```ts
 export { DateRangePicker } from './DateRangePicker';
-export type {
-  DateRangePickerProps,
-  DateRangePickerLabels,
-} from './DateRangePicker';
+export type { DateRangePickerProps, DateRangePickerLabels } from './DateRangePicker';
 export type { DateRange } from './utils';
 ```
 
@@ -940,23 +928,15 @@ describe('DateRangePicker', () => {
     render(<DateRangePicker defaultValue={SAMPLE_RANGE} aria-label="Range" />, {
       wrapper: wrap(),
     });
-    expect(screen.getByRole('textbox', { name: 'Range' })).toHaveValue(
-      '05/21/2026 — 06/04/2026',
-    );
+    expect(screen.getByRole('textbox', { name: 'Range' })).toHaveValue('05/21/2026 — 06/04/2026');
   });
 
   it('controlled value updates input', () => {
-    const { rerender } = render(
-      <DateRangePicker value={SAMPLE_RANGE} aria-label="Range" />,
-      { wrapper: wrap() },
-    );
+    const { rerender } = render(<DateRangePicker value={SAMPLE_RANGE} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 — 06/04/2026');
-    rerender(
-      <DateRangePicker
-        value={{ start: MAY(1), end: MAY(7) }}
-        aria-label="Range"
-      />,
-    );
+    rerender(<DateRangePicker value={{ start: MAY(1), end: MAY(7) }} aria-label="Range" />);
     expect(screen.getByRole('textbox')).toHaveValue('05/01/2026 — 05/07/2026');
   });
 
@@ -986,9 +966,7 @@ describe('DateRangePicker', () => {
     await user.clear(input);
     await user.type(input, 'not a range');
     input.blur();
-    await waitFor(() =>
-      expect(input).toHaveValue('05/21/2026 — 06/04/2026'),
-    );
+    await waitFor(() => expect(input).toHaveValue('05/21/2026 — 06/04/2026'));
   });
 
   it('typing out-of-order auto-swaps on commit', async () => {
@@ -1040,23 +1018,16 @@ describe('DateRangePicker', () => {
     await user.click(input);
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(document.activeElement).toBe(input);
   });
 
   it('two grid clicks commit a range (start then end)', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <DateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<DateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     await user.click(screen.getByRole('textbox'));
     // Anchor cursor at May 2026 by typing then clearing — simpler: just
     // grab any visible "5" cell in the left grid. Two grids both have a 5;
@@ -1075,14 +1046,9 @@ describe('DateRangePicker', () => {
   it('clicking end before start auto-swaps', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <DateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<DateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     await user.click(screen.getByRole('textbox'));
     const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
     await user.click(tens[0]);
@@ -1097,14 +1063,9 @@ describe('DateRangePicker', () => {
   it('same-cell double-click commits a single-day range', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <DateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<DateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     await user.click(screen.getByRole('textbox'));
     const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
     await user.click(fives[0]);
@@ -1118,14 +1079,9 @@ describe('DateRangePicker', () => {
   it('third click after a committed range restarts selection', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <DateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<DateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     await user.click(screen.getByRole('textbox'));
     const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
     const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
@@ -1150,14 +1106,9 @@ describe('DateRangePicker', () => {
   it('clear button resets the value and keeps focus on the input', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <DateRangePicker
-        defaultValue={SAMPLE_RANGE}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<DateRangePicker defaultValue={SAMPLE_RANGE} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     await user.click(screen.getByRole('button', { name: 'Clear range' }));
     expect(onChange).toHaveBeenCalledWith(null);
     expect(document.activeElement).toBe(screen.getByRole('textbox'));
@@ -1185,11 +1136,7 @@ describe('DateRangePicker', () => {
 
   it('renders empty hidden mirrors when value is null', () => {
     const { container } = render(
-      <DateRangePicker
-        nameStart="bookingStart"
-        nameEnd="bookingEnd"
-        aria-label="Range"
-      />,
+      <DateRangePicker nameStart="bookingStart" nameEnd="bookingEnd" aria-label="Range" />,
       { wrapper: wrap() },
     );
     const start = container.querySelector<HTMLInputElement>(
@@ -1199,14 +1146,9 @@ describe('DateRangePicker', () => {
   });
 
   it('`disabled` disables the input and the open-calendar button', () => {
-    render(
-      <DateRangePicker
-        disabled
-        defaultValue={SAMPLE_RANGE}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<DateRangePicker disabled defaultValue={SAMPLE_RANGE} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     expect(screen.getByRole('textbox')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
   });
@@ -1227,13 +1169,7 @@ describe('DateRangePicker', () => {
     function Driver() {
       const [v, setV] = useState<DateRange | null>(SAMPLE_RANGE);
       return (
-        <DateRangePicker
-          value={v}
-          onChange={setV}
-          min={MAY(15)}
-          max={JUN(15)}
-          aria-label="Range"
-        />
+        <DateRangePicker value={v} onChange={setV} min={MAY(15)} max={JUN(15)} aria-label="Range" />
       );
     }
     render(<Driver />, { wrapper: wrap() });
@@ -1245,14 +1181,9 @@ describe('DateRangePicker', () => {
   });
 
   it('ru-RU formats DD.MM.YYYY — DD.MM.YYYY', () => {
-    render(
-      <DateRangePicker
-        defaultValue={SAMPLE_RANGE}
-        locale="ru-RU"
-        aria-label="Range"
-      />,
-      { wrapper: wrap('ru-RU') },
-    );
+    render(<DateRangePicker defaultValue={SAMPLE_RANGE} locale="ru-RU" aria-label="Range" />, {
+      wrapper: wrap('ru-RU'),
+    });
     expect(screen.getByRole('textbox')).toHaveValue('21.05.2026 — 04.06.2026');
   });
 
@@ -1267,9 +1198,7 @@ describe('DateRangePicker', () => {
     await user.type(input, '5/21/2026 — 6/4/2026');
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     await user.click(document.body);
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(onChange).toHaveBeenCalled();
   });
 });
@@ -1300,25 +1229,14 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
-import {
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useFloating,
-} from '@floating-ui/react-dom';
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
 import { mergeRefs } from '../_internal/refs';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
 import { toIsoDate, isDateOutOfRange } from '../DatePicker/utils';
-import {
-  type DateRange,
-  autoSwapRange,
-  formatDateRange,
-  parseDateRange,
-} from './utils';
+import { type DateRange, autoSwapRange, formatDateRange, parseDateRange } from './utils';
 import styles from './DateRangePicker.module.scss';
 
 export interface DateRangePickerLabels {
@@ -1329,17 +1247,10 @@ export interface DateRangePickerLabels {
   dialogLabel?: string;
 }
 
-export interface DateRangePickerProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    | 'value'
-    | 'defaultValue'
-    | 'onChange'
-    | 'type'
-    | 'min'
-    | 'max'
-    | 'name'
-  > {
+export interface DateRangePickerProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max' | 'name'
+> {
   /** Selected range. `null` = no range. Pair with `onChange` for controlled use. */
   value?: DateRange | null;
   /** Initial range for uncontrolled use. */
@@ -1637,11 +1548,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       const handler = (e: PointerEvent) => {
         const target = e.target as Node | null;
         const floating = refs.floating.current;
-        if (
-          target &&
-          !wrapperRef.current?.contains(target) &&
-          !floating?.contains(target)
-        ) {
+        if (target && !wrapperRef.current?.contains(target) && !floating?.contains(target)) {
           commit(draft);
           setOpen(false);
           setSelectionStart(null);
@@ -1657,7 +1564,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
     // The grids receive the in-flight selection as rangeStart while
     // selectionStart is set; otherwise the committed value drives them.
     const gridRangeStart = selectionStart ?? value?.start ?? null;
-    const gridRangeEnd = selectionStart != null ? null : value?.end ?? null;
+    const gridRangeEnd = selectionStart != null ? null : (value?.end ?? null);
 
     const rightCursor = addMonths(cursor, 1);
 
@@ -1690,8 +1597,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           aria-haspopup="dialog"
           aria-expanded={open}
           placeholder={
-            placeholder ??
-            `${rangeFormatExample(locale)} — ${rangeFormatExample(locale)}`
+            placeholder ?? `${rangeFormatExample(locale)} — ${rangeFormatExample(locale)}`
           }
           autoComplete="off"
         />
@@ -1715,18 +1621,10 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           <CalendarIcon size={14} />
         </button>
         {nameStart && (
-          <input
-            type="hidden"
-            name={nameStart}
-            value={value ? toIsoDate(value.start) : ''}
-          />
+          <input type="hidden" name={nameStart} value={value ? toIsoDate(value.start) : ''} />
         )}
         {nameEnd && (
-          <input
-            type="hidden"
-            name={nameEnd}
-            value={value ? toIsoDate(value.end) : ''}
-          />
+          <input type="hidden" name={nameEnd} value={value ? toIsoDate(value.end) : ''} />
         )}
         {open &&
           createPortal(
@@ -1858,6 +1756,7 @@ git commit -m "DateRangePicker: public component (typed input + dual-grid popove
 ## Task 7: Re-export from `src/index.ts`
 
 **Files:**
+
 - Modify: `packages/design-system/src/index.ts`
 
 - [ ] **Step 1: Add the export block**
@@ -1894,6 +1793,7 @@ git commit -m "DateRangePicker: re-export from package root"
 ## Task 8: Playground demo + nav wiring
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/DateRangePickerDemo.tsx`
 - Modify: `packages/playground/src/App.tsx` — route
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx` — Forms group entry
@@ -1912,11 +1812,7 @@ Use the same `DemoLayout` + `Example` pattern.
 
 ```tsx
 import { useState } from 'react';
-import {
-  Button,
-  DateRangePicker,
-  type DateRange,
-} from '@eocrm/design-system';
+import { Button, DateRangePicker, type DateRange } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/DateRangePicker/DateRangePicker.tsx?raw';
@@ -1933,11 +1829,7 @@ function ControlledDemo() {
   });
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-      <DateRangePicker
-        value={value}
-        onChange={setValue}
-        aria-label="Controlled range"
-      />
+      <DateRangePicker value={value} onChange={setValue} aria-label="Controlled range" />
       <code>
         {value
           ? `${value.start.toISOString().slice(0, 10)} → ${value.end.toISOString().slice(0, 10)}`
@@ -1948,9 +1840,7 @@ function ControlledDemo() {
 }
 
 function FormDemo() {
-  const [submitted, setSubmitted] = useState<{ start: string; end: string } | null>(
-    null,
-  );
+  const [submitted, setSubmitted] = useState<{ start: string; end: string } | null>(null);
   return (
     <form
       onSubmit={(e) => {
@@ -2066,15 +1956,8 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
 <p id="range-error">Range is required.</p>`}
       >
         <div>
-          <DateRangePicker
-            invalid
-            aria-label="Booking dates"
-            aria-describedby="range-error"
-          />
-          <p
-            id="range-error"
-            style={{ color: 'var(--color-danger)', marginTop: 'var(--space-1)' }}
-          >
+          <DateRangePicker invalid aria-label="Booking dates" aria-describedby="range-error" />
+          <p id="range-error" style={{ color: 'var(--color-danger)', marginTop: 'var(--space-1)' }}>
             Range is required.
           </p>
         </div>
@@ -2133,6 +2016,7 @@ In `packages/playground/src/App.tsx`:
   import { DateRangePickerDemo } from './pages/components/DateRangePickerDemo';
   ```
 - Add route (alphabetical with other component routes; after `/components/datepicker`):
+
   ```tsx
   <Route path="/components/daterangepicker" element={<DateRangePickerDemo />} />
   ```
@@ -2202,38 +2086,41 @@ git commit -m "playground: DateRangePicker demo + nav + components index"
 ## Task 9: AGENTS.md section
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 
 - [ ] **Step 1: Add the new section**
 
 Insert the following block in `packages/design-system/AGENTS.md` immediately AFTER the existing `### <DatePicker> — single-date input + popover` section and BEFORE `### Calendar primitives`:
 
-```markdown
+````markdown
 ### `<DateRangePicker>` — date-range input + two-month popover
 
 ```tsx
 const [range, setRange] = useState<DateRange | null>(null);
 <DateRangePicker value={range} onChange={setRange} min={new Date()} />;
 ```
+````
 
 - Date-range selection only. Single-date → `<DatePicker>`. Datetime / multi-date / preset ranges (Today, Last 7 days) — out of scope for v1.
 - Looks like an `<Input>`. Click the input or press ArrowDown to open; the popover shows two months side-by-side. The 📅 button toggles, the ✕ button clears the whole range.
 - Selection flow: first click sets the start; hover (or keyboard-focus) another cell to preview the range; second click commits and closes. If the second pick is earlier than the start, the range is auto-swapped to `[earlier, later]`. A third click in a reopened popover restarts selection.
-- Typed input parses on blur / Enter using the active locale. Accepts ` — ` (em dash), ` – ` (en dash), ` - ` (hyphen with spaces), or ` to ` (case-insensitive word) as the separator. ISO `YYYY-MM-DD` works for each half too. Out-of-order typed input is auto-swapped. Anything unparseable / out-of-range / disabled reverts to the last committed value.
+- Typed input parses on blur / Enter using the active locale. Accepts `—` (em dash), `–` (en dash), `-` (hyphen with spaces), or `to` (case-insensitive word) as the separator. ISO `YYYY-MM-DD` works for each half too. Out-of-order typed input is auto-swapped. Anything unparseable / out-of-range / disabled reverts to the last committed value.
 - `min` / `max` (inclusive) + `isDateDisabled(date) => boolean` gate both the popover grid AND typed-input parsing.
 - `clearable` (default `true`) shows the ✕ when a range is set. `nameStart` / `nameEnd` render two hidden mirror `<input>`s with ISO dates so native `<form>` submission works (post both keys, or just one — caller's choice).
 - `invalid` toggles the red border + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`.
 - ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `labels.dialogLabel`); each grid inside is `role="grid"` with `gridcell` buttons. The range-start and range-end cells (and the live hover end during selection) carry `aria-selected="true"`.
 - Keyboard inside a grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space drives the same first-click → second-click flow, Escape closes and returns focus to the input. With selection-start set, the focused cell acts as the hover end so the preview range follows arrow keys.
 - Reuses `<DatePickerGrid>` via `selectionMode='range'` + `rangeStart`/`rangeEnd`/`hoverDate`/`onHoverDate` + `chevrons={false}`. The two grids share the same cursor; the picker renders its own prev/next chevrons outside them.
-```
+
+````
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add packages/design-system/AGENTS.md
 git commit -m "DateRangePicker: AGENTS.md section"
-```
+````
 
 ---
 

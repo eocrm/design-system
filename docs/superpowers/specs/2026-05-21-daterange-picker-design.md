@@ -105,11 +105,11 @@ export interface DateRange {
 }
 
 export interface DateRangePickerLabels {
-  previousMonth?: string;     // default: "Previous month"
-  nextMonth?: string;         // default: "Next month"
-  openCalendar?: string;      // default: "Open calendar"
-  clear?: string;             // default: "Clear range"
-  dialogLabel?: string;       // default: "Choose date range"
+  previousMonth?: string; // default: "Previous month"
+  nextMonth?: string; // default: "Next month"
+  openCalendar?: string; // default: "Open calendar"
+  clear?: string; // default: "Clear range"
+  dialogLabel?: string; // default: "Choose date range"
 }
 
 export interface DateRangePickerProps {
@@ -216,7 +216,7 @@ Enter in the input runs the same parse-and-commit cycle, then closes the popover
 `parseDateRange(raw, locale): DateRange | null`:
 
 - Empty / whitespace → `null`.
-- Split on the first occurrence of any of these separators (case-insensitive): `—` (em dash, surrounding spaces optional), `–` (en dash, surrounding spaces optional), ` - ` (hyphen with spaces — required, to disambiguate from ISO `2026-05-21`), ` to ` (word, padded).
+- Split on the first occurrence of any of these separators (case-insensitive): `—` (em dash, surrounding spaces optional), `–` (en dash, surrounding spaces optional), `-` (hyphen with spaces — required, to disambiguate from ISO `2026-05-21`), `to` (word, padded).
 - If split doesn't yield exactly 2 non-empty halves → `null`.
 - Run each half through `parseDate(half, locale)` from `components/DatePicker/utils`.
 - If either half fails → `null`.
@@ -272,7 +272,7 @@ When the popover opens, `cursor` resets to `value?.start ?? new Date()`. So reop
 - `autoSwapRange` — out-of-order pair returns `{ start: earlier, end: later }`; in-order pair returns same; equal returns `{ start: same, end: same }`. Day-granular (time of day ignored).
 - `parseDateRange`:
   - Empty / whitespace → `null`.
-  - All 4 separators: ` — `, ` – `, ` - `, ` to ` (with whitespace tolerance).
+  - All 4 separators: `—`, `–`, `-`, `to` (with whitespace tolerance).
   - en-US `"5/21/2026 — 6/4/2026"` → `{ start: May 21, end: Jun 4 }`.
   - ru-RU `"4.6.2026 - 21.5.2026"` (out-of-order, hyphen sep) → auto-swapped `{ start: May 21, end: Jun 4 }`.
   - One half unparseable → `null`.

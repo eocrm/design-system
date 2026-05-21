@@ -152,11 +152,7 @@ export function DatePickerGrid({
       if (rangeStart == null && isTodayCell) return 0;
       return -1;
     }
-    return value != null && isSameDay(date, value)
-      ? 0
-      : value == null && isTodayCell
-        ? 0
-        : -1;
+    return value != null && isSameDay(date, value) ? 0 : value == null && isTodayCell ? 0 : -1;
   };
 
   useEffect(() => {
@@ -308,7 +304,10 @@ export function DatePickerGrid({
                     isRangeEndCell(day.date) && styles.rangeEnd,
                   )}
                   aria-selected={
-                    isSelected || isRangeStartCell(day.date) || isRangeEndCell(day.date) || undefined
+                    isSelected ||
+                    isRangeStartCell(day.date) ||
+                    isRangeEndCell(day.date) ||
+                    undefined
                   }
                   aria-disabled={disabled || undefined}
                   tabIndex={tabIndexFor(day.date, isTodayCell)}
