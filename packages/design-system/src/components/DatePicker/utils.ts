@@ -23,7 +23,7 @@ export function formatDate(date: Date, locale: string): string {
  * Returns `null` for empty / whitespace input, strings with the wrong
  * number of fields, and calendar-invalid dates (e.g. Feb 30).
  *
- * @see {@link ../../../docs/superpowers/specs/2026-05-21-datepicker-design.md} §Date parsing
+ * @see {@link ../../../../../docs/superpowers/specs/2026-05-21-datepicker-design.md} §Date parsing
  */
 export function parseDate(raw: string, locale: string): Date | null {
   const str = raw.trim();
