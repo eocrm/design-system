@@ -357,4 +357,62 @@ describe('Table', () => {
     expect(thRef.current).toBeInstanceOf(HTMLTableCellElement);
     expect(tdRef.current).toBeInstanceOf(HTMLTableCellElement);
   });
+
+  it('passes colSpan / rowSpan through to native <th> and <td>', () => {
+    const { container } = render(
+      <Table>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell colSpan={3}>Group header</Table.HeaderCell>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          <Table.Row>
+            <Table.Cell rowSpan={2}>Spanning two rows</Table.Cell>
+            <Table.Cell>A</Table.Cell>
+            <Table.Cell colSpan={2}>Spanning two cols</Table.Cell>
+          </Table.Row>
+          <Table.Row>
+            <Table.Cell>B</Table.Cell>
+            <Table.Cell>C</Table.Cell>
+            <Table.Cell>D</Table.Cell>
+          </Table.Row>
+        </Table.Body>
+      </Table>,
+    );
+    // colSpan on header — rendered DOM exposes the property as `colSpan`.
+    const th = container.querySelector('th')!;
+    expect(th.colSpan).toBe(3);
+    // rowSpan + colSpan on body cells.
+    const tds = container.querySelectorAll('tbody td');
+    expect((tds[0] as HTMLTableCellElement).rowSpan).toBe(2);
+    expect((tds[2] as HTMLTableCellElement).colSpan).toBe(2);
+  });
+
+  it('supports multi-row grouped header (colSpan on parent row + matching child cells)', () => {
+    const { container } = render(
+      <Table>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell rowSpan={2}>Region</Table.HeaderCell>
+            <Table.HeaderCell colSpan={2}>Q1</Table.HeaderCell>
+            <Table.HeaderCell colSpan={2}>Q2</Table.HeaderCell>
+          </Table.Row>
+          <Table.Row>
+            <Table.HeaderCell>Plan</Table.HeaderCell>
+            <Table.HeaderCell>Actual</Table.HeaderCell>
+            <Table.HeaderCell>Plan</Table.HeaderCell>
+            <Table.HeaderCell>Actual</Table.HeaderCell>
+          </Table.Row>
+        </Table.Header>
+      </Table>,
+    );
+    const headerRows = container.querySelectorAll('thead tr');
+    expect(headerRows).toHaveLength(2);
+    const firstRowCells = headerRows[0].querySelectorAll('th');
+    expect((firstRowCells[0] as HTMLTableCellElement).rowSpan).toBe(2);
+    expect((firstRowCells[1] as HTMLTableCellElement).colSpan).toBe(2);
+    expect((firstRowCells[2] as HTMLTableCellElement).colSpan).toBe(2);
+    expect(headerRows[1].querySelectorAll('th')).toHaveLength(4);
+  });
 });
