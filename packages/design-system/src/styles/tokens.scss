@@ -133,6 +133,16 @@
   --size-radio-md: var(--size-checkbox-md);
   --size-radio-lg: var(--size-checkbox-lg);
 
+  // Radio inner dot diameter. Hardcoded integers (not percentages) so the
+  // dot sits on whole-pixel grid lines — `50%` of a 14px content area is
+  // 7px, leaving 3.5px gap on each side which browsers snap asymmetrically
+  // and the dot visually drifts off-center at md / lg sizes.
+  // sm/md = 50% of inner area; lg bumped slightly above 50% so the dot
+  // reads as confidently filled at the larger size instead of dwarfed.
+  --size-radio-dot-sm: 6px;
+  --size-radio-dot-md: 8px;
+  --size-radio-dot-lg: 12px;
+
   // Indeterminate loading spinner (Select listbox loading row). Small
   // enough to fit inline next to the "Loading…" label without dominating
   // the row.

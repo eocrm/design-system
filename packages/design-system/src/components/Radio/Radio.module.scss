@@ -48,19 +48,24 @@
     box-shadow var(--transition-fast);
 }
 
-// The painted inner dot — sized as ~50% of the ring, hidden until checked.
+// The painted inner dot — hidden (transparent bg) until checked. Diameter
+// is set per-size below to whole-pixel values so the dot always sits on
+// the pixel grid (no asymmetric sub-pixel snapping at md / lg).
 .dot {
-  width: 50%;
-  height: 50%;
   border-radius: var(--radius-full);
   background: transparent;
   transition: background var(--transition-fast);
 }
 
-// Size modifiers — ring diameter + label font.
+// Size modifiers — ring diameter + dot diameter + label font.
 .size-sm .ring {
   width: var(--size-radio-sm);
   height: var(--size-radio-sm);
+}
+
+.size-sm .dot {
+  width: var(--size-radio-dot-sm);
+  height: var(--size-radio-dot-sm);
 }
 
 .size-md .ring {
@@ -68,9 +73,19 @@
   height: var(--size-radio-md);
 }
 
+.size-md .dot {
+  width: var(--size-radio-dot-md);
+  height: var(--size-radio-dot-md);
+}
+
 .size-lg .ring {
   width: var(--size-radio-lg);
   height: var(--size-radio-lg);
+}
+
+.size-lg .dot {
+  width: var(--size-radio-dot-lg);
+  height: var(--size-radio-dot-lg);
 }
 
 .size-sm .labelText {
@@ -107,8 +122,17 @@
 }
 
 // Disabled — muted bg + border + dot.
+// Specificity note: `.input:checked + .ring` is 3 classes (0,3,0); the
+// plain `.disabled .ring` rule is only (0,2,0) and loses on checked
+// radios. The `.disabled .input:checked + .ring` rule below is (0,4,0)
+// and wins so a disabled+checked radio keeps the gray border instead of
+// reverting to accent blue.
 .disabled .ring {
   background: var(--color-bg-subtle);
+  border-color: var(--color-border);
+}
+
+.disabled .input:checked + .ring {
   border-color: var(--color-border);
 }
 
@@ -121,7 +145,15 @@
 }
 
 // Invalid — danger border + danger dot + danger focus ring.
+// Same specificity dance as .disabled: the plain `.invalid .ring` rule
+// (0,2,0) loses to `.input:checked + .ring` (0,3,0), so an invalid +
+// checked radio would render with an accent-blue border instead of red.
+// The explicit `.invalid .input:checked + .ring` rule (0,4,0) wins.
 .invalid .ring {
+  border-color: var(--color-danger);
+}
+
+.invalid .input:checked + .ring {
   border-color: var(--color-danger);
 }
 
