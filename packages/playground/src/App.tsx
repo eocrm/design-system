@@ -10,6 +10,8 @@ import { ComponentsIndex } from './pages/components/ComponentsIndex';
 import { ButtonDemo } from './pages/components/ButtonDemo';
 import { DatePickerDemo } from './pages/components/DatePickerDemo';
 import { DateRangePickerDemo } from './pages/components/DateRangePickerDemo';
+import { InlineDatePickerDemo } from './pages/components/InlineDatePickerDemo';
+import { InlineDateRangePickerDemo } from './pages/components/InlineDateRangePickerDemo';
 import { InputDemo } from './pages/components/InputDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
 import { CardDemo } from './pages/components/CardDemo';
@@ -42,6 +44,11 @@ export default function App() {
           <Route path="/components/button" element={<ButtonDemo />} />
           <Route path="/components/datepicker" element={<DatePickerDemo />} />
           <Route path="/components/daterangepicker" element={<DateRangePickerDemo />} />
+          <Route path="/components/inline-datepicker" element={<InlineDatePickerDemo />} />
+          <Route
+            path="/components/inline-daterangepicker"
+            element={<InlineDateRangePickerDemo />}
+          />
           <Route path="/components/input" element={<InputDemo />} />
           <Route path="/components/select" element={<SelectDemo />} />
           <Route path="/components/card" element={<CardDemo />} />
