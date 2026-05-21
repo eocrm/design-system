@@ -146,3 +146,15 @@ export type {
   DateRangePickerLabels,
   DateRange,
 } from './components/DateRangePicker';
+
+export { InlineDatePicker } from './components/DatePicker';
+export type {
+  InlineDatePickerProps,
+  InlineDatePickerLabels,
+} from './components/DatePicker';
+
+export { InlineDateRangePicker } from './components/DateRangePicker';
+export type {
+  InlineDateRangePickerProps,
+  InlineDateRangePickerLabels,
+} from './components/DateRangePicker';
