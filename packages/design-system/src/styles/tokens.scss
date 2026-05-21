@@ -149,6 +149,10 @@
   // DatePicker — overall width of the floating popover.
   --size-datepicker-popover-width: 17rem;
 
+  // DateRangePicker — overall width of the floating popover. Fits two
+  // 17rem month grids side-by-side with a small gutter between them.
+  --size-daterange-popover-width: 36rem;
+
   // Border weights — emphasis = tab underline/focus rings; strong = accent
   // stripes on cards or other "this stands out" visuals.
   --border-width: 1px;

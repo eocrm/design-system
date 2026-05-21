@@ -1,0 +1,144 @@
+@use '../../styles/mixins' as *;
+
+// Wrapper mimics <Input> exactly — same as DatePicker.module.scss. The
+// wrapper IS the public component box; the popover is portaled so it
+// doesn't participate in flow layout.
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+
+  &:focus-within {
+    @include focus-ring;
+
+    border-color: var(--color-accent);
+  }
+}
+
+.invalid {
+  border-color: var(--color-danger);
+
+  &:focus-within {
+    @include focus-ring(var(--ring-danger));
+
+    border-color: var(--color-danger);
+  }
+}
+
+.disabled {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-muted);
+  cursor: not-allowed;
+}
+
+// The typed input flexes inside the wrapper — same Rule-4 escape hatch
+// as DatePicker.module.scss. The wrapper is `inline-flex` with fixed-
+// width sibling buttons (clear, open); the input must flex; `min-width: 0`
+// lets it shrink below intrinsic width when the wrapper is constrained.
+.input {
+  flex: 1;
+  min-width: 0;
+  height: var(--size-md);
+  padding: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  color: var(--color-fg);
+
+  &::placeholder {
+    color: var(--color-fg-muted);
+  }
+}
+
+.clearButton,
+.openButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: var(--opacity-disabled);
+  }
+}
+
+.popover {
+  z-index: var(--z-popover);
+  width: var(--size-daterange-popover-width);
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+// External chevrons (prev/next), rendered by DateRangePicker. Centered
+// vertically above the two grids; same shape as the grid's own chevrons.
+.popoverHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-1);
+}
+
+.popoverHeaderSpacer {
+  flex: 1;
+}
+
+.popoverNavButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// Two grids side by side, separated by a small gutter.
+.grids {
+  display: flex;
+  gap: var(--space-3);
+}
