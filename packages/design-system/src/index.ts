@@ -14,8 +14,8 @@ export type { StackProps, StackGap, StackAlign } from './components/Stack';
 export { Cluster } from './components/Cluster';
 export type { ClusterProps, ClusterGap, ClusterJustify, ClusterAlign } from './components/Cluster';
 
-export { Avatar } from './components/Avatar';
-export type { AvatarProps, AvatarSize } from './components/Avatar';
+export { Avatar, AvatarGroup, avatarColorIndex } from './components/Avatar';
+export type { AvatarProps, AvatarSize, AvatarStatus, AvatarGroupProps } from './components/Avatar';
 
 export { Badge } from './components/Badge';
 export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot } from './components/Badge';

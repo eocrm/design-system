@@ -1,0 +1,83 @@
+// AvatarGroup — horizontal row of stacked Avatars with optional +N overflow.
+// Rule 4 note: `.item:not(:first-child)` uses `margin-left` to overlap
+// siblings — intentional internal layout. The public component IS the
+// wrapper; consumers don't see the inner `.item` divs.
+.group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.item {
+  display: inline-flex;
+}
+
+// Per-size overlap. The group wrapper picks up a .groupSize-* class so
+// every direct .item child after the first slides left by the right amount.
+// stylelint-disable property-disallowed-list -- margin-left here is intentional
+// internal layout: .item divs are internal implementation detail, not exposed to
+// consumers. Negative margin is the only CSS mechanism that both overlaps elements
+// and reclaims space in the flow; gap and translate cannot produce negative spacing.
+.groupSize-sm > .item:not(:first-child) {
+  margin-left: var(--avatar-overlap-sm);
+}
+
+.groupSize-md > .item:not(:first-child) {
+  margin-left: var(--avatar-overlap-md);
+}
+
+.groupSize-lg > .item:not(:first-child) {
+  margin-left: var(--avatar-overlap-lg);
+}
+// stylelint-enable property-disallowed-list
+
+// +N overflow chip — same circular surface as Avatar, muted background.
+// The 2px ring matches the .inGroup ring on Avatar so the +N sits flush.
+.overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--color-bg-muted);
+  color: var(--color-fg-muted);
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 0 0 2px var(--color-bg);
+  cursor: default;
+  user-select: none;
+
+  &:is(button) {
+    cursor: pointer;
+  }
+
+  &:is(button):hover {
+    background: var(--color-bg-sunken);
+    color: var(--color-fg);
+  }
+
+  &:is(button):focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--color-bg),
+      0 0 0 calc(2px + var(--ring-width)) var(--ring-accent);
+  }
+}
+
+.overflowSize-sm {
+  width: var(--size-sm);
+  height: var(--size-sm);
+  font-size: var(--font-size-xs);
+}
+
+.overflowSize-md {
+  width: var(--size-md);
+  height: var(--size-md);
+  font-size: var(--font-size-sm);
+}
+
+.overflowSize-lg {
+  width: var(--size-lg);
+  height: var(--size-lg);
+  font-size: var(--font-size-md);
+}
