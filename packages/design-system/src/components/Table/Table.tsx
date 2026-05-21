@@ -65,16 +65,22 @@ export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
 }
 
-export interface TableHeaderCellProps extends Omit<
-  ThHTMLAttributes<HTMLTableCellElement>,
-  'align'
-> {
+export interface TableHeaderCellProps
+  extends Omit<ThHTMLAttributes<HTMLTableCellElement>, 'align' | 'scope'> {
   /** Text alignment. Defaults to `'start'`. */
   align?: TableCellAlign;
   /**
+   * Native HTML `<th scope>` attribute. Defaults to `'col'` (the cell labels
+   * its column). Use `'row'` for the leftmost cell that labels its row when
+   * rendering row-headers inside `<Table.Body>`. `'colgroup'` / `'rowgroup'`
+   * are valid HTML but rarely needed in practice.
+   */
+  scope?: 'col' | 'row' | 'colgroup' | 'rowgroup';
+  /**
    * When set, the cell renders a sort indicator (up/down/unsorted chevron)
    * and sets `aria-sort`. The consumer drives interactivity via `onClick`;
-   * this primitive only paints the indicator.
+   * this primitive only paints the indicator. Sortable headers also become
+   * keyboard-reachable (`tabIndex={0}` + Enter/Space → `onClick`).
    * - `'asc'`  → up chevron + `aria-sort="ascending"`.
    * - `'desc'` → down chevron + `aria-sort="descending"`.
    * - `'none'` → muted up/down chevron + `aria-sort="none"`.
