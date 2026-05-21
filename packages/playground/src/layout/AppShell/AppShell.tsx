@@ -184,6 +184,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               placeholder="Search contacts, deals…"
               className={styles.search}
               aria-label="Search"
+              // Tell password managers (1Password, Bitwarden) and browser autofill
+              // to leave this alone — it's a free-text search, not a username field.
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
             />
             <kbd className={styles.searchKbd}>⌘K</kbd>
           </div>
