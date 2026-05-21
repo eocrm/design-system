@@ -133,7 +133,7 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function
           </div>
         ))}
         {overflowNode && (
-          <div role="listitem" className={styles.item}>
+          <div role="listitem" className={clsx(styles.item, styles.overflowItem)}>
             {overflowNode}
           </div>
         )}

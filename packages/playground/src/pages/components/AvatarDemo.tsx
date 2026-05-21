@@ -116,11 +116,18 @@ export function AvatarDemo() {
       </Example>
 
       <Example
-        title="Name tooltip"
-        description="Set `tooltip` to surface the name on hover / keyboard focus."
-        code={`<Avatar name="Alex Rivera" tooltip />`}
+        title="Name tooltip (default on)"
+        description="Every Avatar shows its name on hover / keyboard focus by default. Pass `tooltip={false}` to opt out — useful when the name is already visible next to the avatar."
+        code={`// Default — tooltip on hover.
+<Avatar name="Alex Rivera" />
+
+// Opt out (e.g., when the name is visible adjacent to the avatar).
+<Avatar name="Alex Rivera" tooltip={false} />`}
       >
-        <Avatar name="Alex Rivera" tooltip />
+        <Cluster gap="md" align="center">
+          <Avatar name="Alex Rivera" />
+          <Avatar name="Alex Rivera" tooltip={false} />
+        </Cluster>
       </Example>
 
       <Example

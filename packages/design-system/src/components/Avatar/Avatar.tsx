@@ -127,7 +127,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
 ) {
   const group = useAvatarGroup();
   const resolvedSize: AvatarSize = size ?? group?.size ?? 'md';
-  const resolvedTooltip: boolean = tooltip ?? group?.tooltip ?? false;
+  const resolvedTooltip: boolean = tooltip ?? group?.tooltip ?? true;
 
   const [imageBroken, setImageBroken] = useState(false);
   useEffect(() => {

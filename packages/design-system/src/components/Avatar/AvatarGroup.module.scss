@@ -8,7 +8,16 @@
 }
 
 .item {
+  position: relative;
   display: inline-flex;
+}
+
+// Hovered (or keyboard-focused) item rises to the top of the stack so the
+// reader can see the full circle of the avatar they're inspecting. Without
+// this, deeper-in-the-stack avatars are clipped by their right neighbour.
+.item:hover,
+.item:focus-within {
+  z-index: 1;
 }
 
 // Per-size overlap. The group wrapper picks up a .groupSize-* class so
@@ -17,16 +26,26 @@
 // internal layout: .item divs are internal implementation detail, not exposed to
 // consumers. Negative margin is the only CSS mechanism that both overlaps elements
 // and reclaims space in the flow; gap and translate cannot produce negative spacing.
-.groupSize-sm > .item:not(:first-child) {
+.groupSize-sm > .item:not(:first-child, .overflowItem) {
   margin-left: var(--avatar-overlap-sm);
 }
 
-.groupSize-md > .item:not(:first-child) {
+.groupSize-md > .item:not(:first-child, .overflowItem) {
   margin-left: var(--avatar-overlap-md);
 }
 
-.groupSize-lg > .item:not(:first-child) {
+.groupSize-lg > .item:not(:first-child, .overflowItem) {
   margin-left: var(--avatar-overlap-lg);
+}
+
+// The +N item gets a small positive gap from its preceding sibling instead
+// of the negative overlap used between avatars. It's metadata, not a face,
+// so it should not pretend to be another stacked avatar — plus longer
+// counts (+33, +99) deserve breathing room.
+.groupSize-sm > .overflowItem,
+.groupSize-md > .overflowItem,
+.groupSize-lg > .overflowItem {
+  margin-left: var(--space-1);
 }
 // stylelint-enable property-disallowed-list
 
@@ -37,6 +56,11 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+
+  // Height is fixed per size; width stretches for multi-digit counts (+33,
+  // +99) via min-width + horizontal padding. The pill keeps full radius so
+  // a single-digit +N still reads as a perfect circle.
+  padding: 0 var(--space-2);
   background: var(--color-bg-muted);
   color: var(--color-fg-muted);
   border: none;
@@ -65,19 +89,19 @@
 }
 
 .overflowSize-sm {
-  width: var(--size-sm);
+  min-width: var(--size-sm);
   height: var(--size-sm);
   font-size: var(--font-size-xs);
 }
 
 .overflowSize-md {
-  width: var(--size-md);
+  min-width: var(--size-md);
   height: var(--size-md);
   font-size: var(--font-size-sm);
 }
 
 .overflowSize-lg {
-  width: var(--size-lg);
+  min-width: var(--size-lg);
   height: var(--size-lg);
   font-size: var(--font-size-md);
 }
