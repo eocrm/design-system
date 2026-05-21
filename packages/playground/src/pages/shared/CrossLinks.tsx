@@ -7,10 +7,22 @@ import styles from './CrossLinks.module.scss';
 type Props = { kind: 'mockup'; slug: MockupSlug } | { kind: 'component'; name: ComponentName };
 
 function componentPath(name: ComponentName): string {
-  // PascalCase → kebab-case so multi-word names match their route slugs
-  // (e.g. DropdownMenu → /components/dropdown-menu).
-  const slug = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-  return `/components/${slug}`;
+  switch (name) {
+    case 'DatePicker':
+      return '/components/datepickers?variant=datepicker';
+    case 'DateRangePicker':
+      return '/components/datepickers?variant=daterangepicker';
+    case 'InlineDatePicker':
+      return '/components/datepickers?variant=inline-datepicker';
+    case 'InlineDateRangePicker':
+      return '/components/datepickers?variant=inline-daterangepicker';
+    default: {
+      // PascalCase → kebab-case so multi-word names match their route slugs
+      // (e.g. DropdownMenu → /components/dropdown-menu).
+      const slug = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+      return `/components/${slug}`;
+    }
+  }
 }
 
 export function CrossLinks(props: Props) {
