@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DatePicker } from '@eocrm/design-system';
+import { Button, DatePicker } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/DatePicker/DatePicker.tsx?raw';
@@ -30,7 +30,9 @@ function FormDemo() {
       style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
     >
       <DatePicker name="dob" defaultValue={TODAY} aria-label="Date of birth" />
-      <button type="submit">Submit</button>
+      <Button type="submit" size="sm">
+        Submit
+      </Button>
       {submitted !== null && <code>dob = {submitted || '(empty)'}</code>}
     </form>
   );
@@ -67,9 +69,12 @@ export function DatePickerDemo() {
       <Example
         title="Min / max"
         description="`min` and `max` disable out-of-range cells in the grid AND reject typed input outside the window."
-        code={`<DatePicker
-  min={new Date()}
-  max={new Date(today + 90 days)}
+        code={`const today = new Date();
+const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 90);
+
+<DatePicker
+  min={today}
+  max={in90Days}
 />`}
       >
         <DatePicker
@@ -93,7 +98,11 @@ export function DatePickerDemo() {
         />
       </Example>
 
-      <Example title="Disabled" code={`<DatePicker disabled defaultValue={new Date()} />`}>
+      <Example
+        title="Disabled"
+        description="Use `disabled` when the field is unavailable in the current context (e.g., read-only stage of a workflow). The clear button is hidden when disabled."
+        code={`<DatePicker disabled defaultValue={new Date()} />`}
+      >
         <DatePicker disabled defaultValue={TODAY} aria-label="Disabled date" />
       </Example>
 
@@ -105,7 +114,7 @@ export function DatePickerDemo() {
       >
         <div>
           <DatePicker invalid aria-label="Date of birth" aria-describedby="dob-error" />
-          <p id="dob-error" style={{ color: 'var(--color-danger)', marginTop: '0.25rem' }}>
+          <p id="dob-error" style={{ color: 'var(--color-danger)', marginTop: 'var(--space-1)' }}>
             Date is required.
           </p>
         </div>
@@ -124,10 +133,31 @@ export function DatePickerDemo() {
 
       <Example
         title="ru-RU locale"
-        description="Input parses and formats as DD.MM.YYYY when locale is ru-RU. ISO YYYY-MM-DD is always accepted as a paste fallback."
-        code={`<DatePicker defaultValue={new Date()} locale="ru-RU" />`}
+        description="Input parses and formats as DD.MM.YYYY. UI labels (button tooltips, dialog name) are the consumer's responsibility — pass localized strings via the labels prop."
+        code={`<DatePicker
+  defaultValue={new Date()}
+  locale="ru-RU"
+  labels={{
+    previousMonth: 'Предыдущий месяц',
+    nextMonth: 'Следующий месяц',
+    openCalendar: 'Открыть календарь',
+    clear: 'Очистить дату',
+    dialogLabel: 'Выберите дату',
+  }}
+/>`}
       >
-        <DatePicker defaultValue={TODAY} locale="ru-RU" aria-label="Дата" />
+        <DatePicker
+          defaultValue={TODAY}
+          locale="ru-RU"
+          aria-label="Дата"
+          labels={{
+            previousMonth: 'Предыдущий месяц',
+            nextMonth: 'Следующий месяц',
+            openCalendar: 'Открыть календарь',
+            clear: 'Очистить дату',
+            dialogLabel: 'Выберите дату',
+          }}
+        />
       </Example>
     </DemoLayout>
   );

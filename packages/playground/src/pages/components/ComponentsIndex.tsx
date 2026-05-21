@@ -31,6 +31,17 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
+    to: '/components/datepicker',
+    name: 'DatePicker',
+    description:
+      'Single-date input with a popover month grid. Locale-aware typed parsing and min/max constraints.',
+    preview: (
+      <div style={{ width: 200 }}>
+        <DatePicker defaultValue={new Date(2026, 4, 21)} aria-label="Preview" />
+      </div>
+    ),
+  },
+  {
     to: '/components/input',
     name: 'Input',
     description: 'Single-line text field with focus + invalid states.',
@@ -55,17 +66,6 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           ]}
           placeholder="Pick a status"
         />
-      </div>
-    ),
-  },
-  {
-    to: '/components/datepicker',
-    name: 'DatePicker',
-    description:
-      'Single-date input with a popover month grid. Locale-aware typed parsing and min/max constraints.',
-    preview: (
-      <div style={{ width: 200 }}>
-        <DatePicker defaultValue={new Date(2026, 4, 21)} aria-label="Preview" />
       </div>
     ),
   },
