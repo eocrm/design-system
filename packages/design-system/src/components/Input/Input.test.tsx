@@ -104,4 +104,45 @@ describe('Input', () => {
     const { container } = render(<Input size="sm" />);
     expect(container.querySelector('input')).not.toHaveAttribute('size');
   });
+
+  it('blocks autofill by default when no autoComplete is set', () => {
+    const { container } = render(<Input />);
+    const input = container.querySelector('input')!;
+    expect(input).toHaveAttribute('autocomplete', 'off');
+    expect(input).toHaveAttribute('data-1p-ignore');
+    expect(input).toHaveAttribute('data-lpignore', 'true');
+    expect(input).toHaveAttribute('data-form-type', 'other');
+  });
+
+  it('opts INTO autofill when consumer specifies a real autoComplete value', () => {
+    const { container } = render(<Input autoComplete="email" />);
+    const input = container.querySelector('input')!;
+    expect(input).toHaveAttribute('autocomplete', 'email');
+    expect(input).not.toHaveAttribute('data-1p-ignore');
+    expect(input).not.toHaveAttribute('data-lpignore');
+    expect(input).not.toHaveAttribute('data-form-type');
+  });
+
+  it('treats autoComplete="off" the same as omitted (blocks autofill)', () => {
+    const { container } = render(<Input autoComplete="off" />);
+    const input = container.querySelector('input')!;
+    expect(input).toHaveAttribute('autocomplete', 'off');
+    expect(input).toHaveAttribute('data-1p-ignore');
+  });
+
+  it('disableAutofill={true} force-blocks even with an autoComplete hint', () => {
+    const { container } = render(<Input autoComplete="email" disableAutofill />);
+    const input = container.querySelector('input')!;
+    // Consumer's autoComplete still wins (spread order)…
+    expect(input).toHaveAttribute('autocomplete', 'email');
+    // …but the data-* opt-outs are applied.
+    expect(input).toHaveAttribute('data-1p-ignore');
+  });
+
+  it('disableAutofill={false} force-allows autofill even without an autoComplete hint', () => {
+    const { container } = render(<Input disableAutofill={false} />);
+    const input = container.querySelector('input')!;
+    expect(input).not.toHaveAttribute('autocomplete');
+    expect(input).not.toHaveAttribute('data-1p-ignore');
+  });
 });

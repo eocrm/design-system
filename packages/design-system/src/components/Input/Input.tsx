@@ -24,7 +24,30 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
    * `style` or a parent container.
    */
   size?: InputSize;
+  /**
+   * Block browser autofill AND password managers from offering to fill
+   * this input. Applies the standard set of opt-out hints:
+   * - `autoComplete="off"`
+   * - `data-1p-ignore` (1Password)
+   * - `data-lpignore="true"` (LastPass)
+   * - `data-form-type="other"` (generic "not a login field")
+   *
+   * **Smart default**: when omitted, the input blocks autofill iff `autoComplete`
+   * is also omitted (or `'off'`). Explicit autocomplete hints
+   * (`autoComplete="email"`, `"current-password"`, `"username"`, etc.) opt back
+   * IN to autofill — the assumption is that a consumer specifying autoComplete
+   * actually wants password-manager interaction. Pass `disableAutofill={true}`
+   * to force-block even with an autocomplete hint, or `false` to force-allow.
+   */
+  disableAutofill?: boolean;
 }
+
+const AUTOFILL_DISABLED_PROPS = {
+  autoComplete: 'off' as const,
+  'data-1p-ignore': '' as const,
+  'data-lpignore': 'true' as const,
+  'data-form-type': 'other' as const,
+};
 
 /**
  * Single-line text input. Forwards all native `<input>` attributes — `type`,
@@ -72,17 +95,21 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
  *   leading zeros and breaks formatting. Use `inputMode="numeric"` instead.
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { invalid, size = 'md', className, ...props },
+  { invalid, size = 'md', disableAutofill, className, ...props },
   ref,
 ) {
+  // Smart default: when `disableAutofill` is undefined, block autofill iff
+  // the consumer hasn't set a meaningful `autoComplete`. Explicit `true` /
+  // `false` always wins over the heuristic.
+  const hasAutocompleteHint =
+    typeof props.autoComplete === 'string' && props.autoComplete !== 'off';
+  const blockAutofill = disableAutofill ?? !hasAutocompleteHint;
+
   return (
     <input
       ref={ref}
-      // Default aria-invalid to the `invalid` prop, then spread {...props} so
-      // a consumer who explicitly passes aria-invalid (e.g. aria-invalid="false"
-      // for a screen-reader workflow that distinguishes empty from invalid)
-      // wins.
       aria-invalid={invalid || undefined}
+      {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
       {...props}
       className={clsx(styles.input, styles[`size-${size}`], invalid && styles.invalid, className)}
     />

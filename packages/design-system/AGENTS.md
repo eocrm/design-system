@@ -75,7 +75,40 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - All native `<input>` attributes pass through, except `size` — that's been replaced by the component-level `size` prop (the native HTML `size` attribute, visible-character count, is shadowed).
 - `invalid` toggles the error visual + sets `aria-invalid="true"`. Pair with an error message and `aria-describedby`.
 - Sizes: `sm` (24px) / `md` (32px, default) / `lg` (40px). Same scale as `<Select>`. (`<Button>` exposes `xs/sm/md/lg`; fields don't ship `xs` yet.)
+- **Autofill is BLOCKED by default** — `<Input />` carries `autoComplete="off"` + the 1Password / LastPass / generic data-\* opt-out hints so password managers don't misfire on search / filter / free-text fields. Set `autoComplete="email"` (or `"username"`, `"current-password"`, etc.) to opt INTO autofill for real form fields. Force the behavior either way via `disableAutofill={true | false}`.
 - Validation logic lives in your form layer (React Hook Form + Zod recommended), not in the component.
+
+### `<PasswordInput>` — password field with eye toggle + optional warnings
+
+```tsx
+<PasswordInput name="password" placeholder="Password" />
+<PasswordInput capsLockWarning wrongLayoutWarning name="password" required />
+<PasswordInput revealable={false} placeholder="Locked-down (no toggle)" />
+```
+
+- Renders a real `<input type='password' | 'text'>` underneath — full autofill, RHF/Zod, form-submission integration.
+- Eye toggle (`Eye` / `EyeOff`) flips `type`; `aria-pressed` exposes the state to AT. `labels.show` / `labels.hide` for i18n.
+- `revealed` / `defaultRevealed` / `onRevealChange` for controlled / uncontrolled toggle state.
+- `revealable={false}` removes the toggle entirely (compliance / kiosk screens).
+- `capsLockWarning?: boolean` (default `false`) — opt-in caps-lock detection. When active, `ArrowBigUpDash` icon appears + a polite `aria-live` region announces `labels.capsLockOn`. Cleared on blur.
+- `wrongLayoutWarning?: boolean` (default `false`) — opt-in non-ASCII-keystroke detection. Catches "typing Cyrillic on a Russian layout when you meant Latin." Heuristic: any single non-ASCII char triggers. DO NOT enable on systems that allow non-Latin passwords. Cleared on blur.
+- Both warnings can stack — they render in separate slots with separate live regions.
+- Sizes: `sm` / `md` (default) / `lg`. Same scale as `<Input>`.
+- `Omit<…, 'size' | 'type'>` — component locks `type` to password/text and shadows native `size`.
+
+### `<PasswordStrengthMeter>` — 4-segment strength visualization
+
+```tsx
+<PasswordStrengthMeter value={password} />
+// or, with a real scorer (zxcvbn / server-side):
+<PasswordStrengthMeter score={zxcvbnScore(password)} />
+```
+
+- Two driving modes: `value` (uses default heuristic) or `score` (consumer-provided 0–4). `score` wins when both are set.
+- **Default scoring is a UX hint, NOT a security control.** The heuristic flags long+mixed passwords as "Strong" even if they're in a breach corpus. Production deployments should pass `score` from a real scorer.
+- Polite `aria-live` region announces label changes ("Weak" → "Fair" → "Strong") so screen-reader users hear progress as they type.
+- `showLabel={false}` to hide the textual label (segments only).
+- Use `aria-describedby` on the paired `<PasswordInput>` to associate the meter with the field for AT.
 
 ### `<Checkbox>` — checkbox with native input + custom paint
 

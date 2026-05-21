@@ -7,6 +7,8 @@ export type ComponentName =
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'
   | 'Input'
+  | 'PasswordInput'
+  | 'PasswordStrengthMeter'
   | 'Select'
   | 'Table'
   | 'Card'

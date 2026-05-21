@@ -25,6 +25,7 @@ import {
   ArrowRight,
   MessageSquare,
   MoreHorizontal,
+  KeyRound,
   PanelLeft,
   ShieldCheck,
   CalendarDays,
@@ -66,6 +67,13 @@ const componentGroups = [
       { to: '/components/checkbox', label: 'Checkbox', icon: CheckSquare, end: false },
       { to: '/components/datepickers', label: 'Date pickers', icon: CalendarRange, end: false },
       { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
+      { to: '/components/password-input', label: 'PasswordInput', icon: KeyRound, end: false },
+      {
+        to: '/components/password-strength-meter',
+        label: 'PasswordStrengthMeter',
+        icon: ShieldCheck,
+        end: false,
+      },
       { to: '/components/radio', label: 'Radio', icon: CircleDot, end: false },
       { to: '/components/select', label: 'Select', icon: ChevronsUpDown, end: false },
     ],
@@ -178,6 +186,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               placeholder="Search contacts, deals…"
               className={styles.search}
               aria-label="Search"
+              // Tell password managers (1Password, Bitwarden) and browser autofill
+              // to leave this alone — it's a free-text search, not a username field.
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
             />
             <kbd className={styles.searchKbd}>⌘K</kbd>
           </div>
