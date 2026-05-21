@@ -4,6 +4,8 @@ export type ComponentName =
   | 'Button'
   | 'DatePicker'
   | 'DateRangePicker'
+  | 'InlineDatePicker'
+  | 'InlineDateRangePicker'
   | 'Input'
   | 'Select'
   | 'Card'

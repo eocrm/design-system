@@ -1,0 +1,7 @@
+// Inline picker wrapper — the calendar lives in flow (no popover, no
+// portal). The wrapper carries no Rule-4 layout properties of its own;
+// width is intrinsic to the underlying `<DatePickerGrid>` (~15rem) and
+// the consumer's container controls overall placement.
+.inline {
+  display: inline-block;
+}

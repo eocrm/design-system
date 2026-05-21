@@ -479,6 +479,36 @@ const [range, setRange] = useState<DateRange | null>(null);
 - Keyboard inside a grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space drives the same first-click → second-click flow, Escape closes and returns focus to the input. With selection-start set, the focused cell acts as the hover end so the preview range follows arrow keys.
 - Reuses `<DatePickerGrid>` via `selectionMode='range'` + `rangeStart`/`rangeEnd`/`hoverDate`/`onHoverDate` + `chevrons={false}`. The two grids share the same cursor; the picker renders its own prev/next chevrons outside them.
 
+### `<InlineDatePicker>` — single-date calendar in flow
+
+```tsx
+const [date, setDate] = useState<Date | null>(null);
+<InlineDatePicker value={date} onChange={setDate} min={new Date()} />;
+```
+
+- Same month-grid surface as `<DatePicker>` but always rendered in flow — no input, no popover, no portal. Use when the calendar should be visible at all times (sidebar pickers, schedule editors, quick-filter panels).
+- Cursor anchors to `value ?? new Date()` on mount and stays sticky after user navigation. Programmatic `value` changes do NOT re-anchor — consumers own scroll-into-view via `ref` if they want it.
+- `min` / `max` / `isDateDisabled` gate cell clicks just like the popover variant.
+- `name` renders a hidden `<input type="hidden">` mirror with the ISO date so native `<form>` submission works.
+- `disabled` mutes the entire grid (chevrons disabled, cells get `tabIndex=-1`, clicks no-op).
+- `forwardRef` points at the outer wrapper `<div>` (no input to forward to).
+- ARIA: same `role="grid"` + `role="gridcell"` cells from `DatePickerGrid`. No dialog role — the picker is in flow.
+
+### `<InlineDateRangePicker>` — date-range calendar in flow
+
+```tsx
+const [range, setRange] = useState<DateRange | null>(null);
+<InlineDateRangePicker value={range} onChange={setRange} />;
+```
+
+- Two-month calendar grid (side-by-side) embedded directly in the page. Same click-1/click-2/restart selection machine, hover preview, auto-swap on out-of-order picks, and keyboard cross-grid navigation as `<DateRangePicker>` — without the input + popover.
+- External prev/next chevrons in the header shift both grids by ±1 month at once.
+- Sticky cursor (anchors to `value?.start ?? new Date()` on mount; stays where the user navigated).
+- `min` / `max` / `isDateDisabled` gate both boundaries.
+- `nameStart` / `nameEnd` render independent hidden form mirrors (post both, only one, or neither — caller's choice).
+- `disabled` mutes everything; ref forwards to the outer wrapper.
+- Use when the consumer wants the calendar permanently visible. For a compact form field with the same selection model, use `<DateRangePicker>`. Don't render inside containers narrower than ~32rem — the two grids need side-by-side room.
+
 ### Calendar primitives — `useMonth`, `useWeek`, `useDay`, `useAgenda`
 
 ```tsx

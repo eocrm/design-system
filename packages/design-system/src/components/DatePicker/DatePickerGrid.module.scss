@@ -159,3 +159,13 @@
 .rangeStart.rangeEnd {
   border-radius: var(--radius-sm);
 }
+
+// Disabled state — applied to the outer grid container by inline pickers
+// that want to show the calendar but block interaction. Visual mute via
+// opacity. We deliberately do NOT use `pointer-events: none` here —
+// chevrons carry the HTML `disabled` attribute, cells get `tabIndex=-1`
+// + no-op click/keyboard handlers; layering pointer-events on top would
+// also block hover styles which is worse UX.
+.disabledGrid {
+  opacity: var(--opacity-disabled);
+}

@@ -1,0 +1,64 @@
+@use '../../styles/mixins' as *;
+
+// Inline range picker — mirrors the DateRangePicker popover content but
+// lives in flow (no popover, no portal). Wrapper carries no Rule-4
+// layout properties; the inner grid pair is intrinsically sized.
+.inline {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+// External chevron header — same shape as DateRangePicker.popoverHeader.
+// (No wrapper-level `.disabled` class: each child grid mutes itself via
+// `DatePickerGrid`'s `disabled` prop. Stacking opacity here on top of the
+// per-grid opacity made cells render at ~0.25 — visibly ghostlier than
+// the popover variants or `<InlineDatePicker>`. The chevrons in the
+// header are native `<button disabled>` and already render muted.)
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-1);
+}
+
+.headerSpacer {
+  flex: 1;
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+// Two grids side-by-side with a small gutter.
+.grids {
+  display: flex;
+  gap: var(--space-3);
+}

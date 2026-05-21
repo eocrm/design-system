@@ -3,11 +3,13 @@ import { Cluster } from '@eocrm/design-system';
 
 export interface InputExampleProps {
   /**
-   * Fixed width (in px or any CSS length) of the inner column. Defaults to
-   * `320` — enough to fit `<Input>` / `<Select>` / `<DatePicker>` with a
-   * realistic placeholder + suffix buttons. Pass a larger value for
-   * compound rows (form + submit button) or `'100%'` to fill the
-   * `<Example>` preview area.
+   * Fixed width (in px or any CSS length) of the inner column. Defaults
+   * to `320` — enough to fit `<Input>` / `<Select>` / `<DatePicker>` /
+   * `<DateRangePicker>` with a realistic placeholder + suffix buttons.
+   * Pass a larger value for compound rows (form + submit button beside
+   * the field), or `'auto'` for intrinsically-sized content (e.g.
+   * inline calendars) — the inner column then doesn't impose a width
+   * and the `<Cluster>` still centers the children.
    */
   width?: number | string;
   /** The field (single component) or composed row (Stack / form) to render inside. */
@@ -15,20 +17,24 @@ export interface InputExampleProps {
 }
 
 /**
- * Demo helper. Wraps an input-shaped component (Input, Select, DatePicker,
- * DateRangePicker, …) in a centered, width-limited container so every
- * field-component demo lays out consistently:
+ * Demo helper. Wraps an input-shaped component (Input, Select,
+ * DatePicker, DateRangePicker, InlineDatePicker, …) in a centered,
+ * width-limited container so every field-component demo lays out
+ * consistently.
  *
- * - The field renders at a realistic CRM-form width (≈ 320px) rather than
- *   stretched across the full preview area.
- * - It sits centered horizontally so the eye lands on the control.
- *
- * For multi-field examples (variants stacked vertically, form + submit
- * button beside the field) wrap the children in `<Stack>` / `<form>` /
- * a flex row as you normally would — `<InputExample>` just owns the
- * outer centering + width box.
+ * - Default width 320px centers the field at a realistic CRM-form size.
+ * - `width="auto"` skips the inner width constraint so intrinsically
+ *   sized children (inline calendars) render at their natural size,
+ *   still centered.
  */
 export function InputExample({ width = 320, children }: InputExampleProps) {
+  if (width === 'auto') {
+    return (
+      <Cluster gap="md" justify="center">
+        {children}
+      </Cluster>
+    );
+  }
   return (
     <Cluster gap="md" justify="center">
       <div style={{ width }}>{children}</div>

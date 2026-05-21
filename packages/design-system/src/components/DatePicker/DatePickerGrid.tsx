@@ -38,6 +38,15 @@ export interface DatePickerGridProps {
   onHoverDate?: (date: Date | null) => void;
   /** Show the prev / next month chevrons. Defaults to true; the month label is always shown. */
   chevrons?: boolean;
+  /**
+   * When true: cells render muted, clicks no-op, chevrons are disabled,
+   * and all cells get `tabIndex={-1}` so the grid isn't a tab stop.
+   * Used by inline pickers to surface a non-interactive grid; the
+   * field-based `<DatePicker>` / `<DateRangePicker>` don't pass this
+   * (their `disabled` lives at the wrapper level — the popover never
+   * opens, so the grid never renders).
+   */
+  disabled?: boolean;
 }
 
 /**
@@ -74,6 +83,7 @@ export function DatePickerGrid({
   hoverDate = null,
   onHoverDate,
   chevrons = true,
+  disabled = false,
 }: DatePickerGridProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
@@ -136,12 +146,9 @@ export function DatePickerGrid({
   };
 
   const tabIndexFor = (date: Date, isTodayCell: boolean): number => {
+    if (disabled) return -1;
     if (selectionMode === 'range') {
       if (rangeStart != null && isSameDay(date, rangeStart)) return 0;
-      // Fallback to rangeEnd when rangeStart isn't visible in this month
-      // (DateRangePicker renders two grids; the right grid often shows
-      // rangeEnd's month only). The same-month guard prevents two cells
-      // from getting tabIndex=0 when both boundaries are in the same grid.
       if (
         rangeStart != null &&
         rangeEnd != null &&
@@ -191,6 +198,7 @@ export function DatePickerGrid({
   );
 
   const handleCellKeyDown = (e: KeyboardEvent<HTMLButtonElement>, date: Date) => {
+    if (disabled) return;
     switch (e.key) {
       case 'ArrowRight':
         e.preventDefault();
@@ -237,13 +245,13 @@ export function DatePickerGrid({
       case 'Enter':
       case ' ':
         e.preventDefault();
-        if (!isDisabled(date)) onSelect(date);
+        if (!disabled && !isDisabled(date)) onSelect(date);
         break;
     }
   };
 
   return (
-    <div className={styles.grid}>
+    <div className={clsx(styles.grid, disabled && styles.disabledGrid)}>
       <header className={styles.header}>
         {chevrons && (
           <button
@@ -251,6 +259,7 @@ export function DatePickerGrid({
             className={styles.navButton}
             aria-label={labels.previousMonth}
             onClick={goPrev}
+            disabled={disabled}
           >
             <ChevronLeft size={14} />
           </button>
@@ -264,6 +273,7 @@ export function DatePickerGrid({
             className={styles.navButton}
             aria-label={labels.nextMonth}
             onClick={goNext}
+            disabled={disabled}
           >
             <ChevronRight size={14} />
           </button>
@@ -280,7 +290,7 @@ export function DatePickerGrid({
         {grid.weeks.map((week, wIdx) => (
           <div role="row" key={wIdx} className={styles.weekRow}>
             {week.map((day) => {
-              const disabled = isDisabled(day.date);
+              const isDisabledCell = isDisabled(day.date);
               const isSelected = value != null && isSameDay(day.date, value);
               const isTodayCell = isSameDay(day.date, today);
               const key = toDateKey(day.date);
@@ -298,7 +308,7 @@ export function DatePickerGrid({
                     !day.isCurrentMonth && styles.outside,
                     isSelected && styles.selected,
                     isTodayCell && styles.today,
-                    disabled && styles.disabled,
+                    isDisabledCell && styles.disabled,
                     isInRange(day.date) && styles.inRange,
                     isRangeStartCell(day.date) && styles.rangeStart,
                     isRangeEndCell(day.date) && styles.rangeEnd,
@@ -309,14 +319,15 @@ export function DatePickerGrid({
                     isRangeEndCell(day.date) ||
                     undefined
                   }
-                  aria-disabled={disabled || undefined}
+                  aria-disabled={isDisabledCell || disabled || undefined}
                   tabIndex={tabIndexFor(day.date, isTodayCell)}
                   onClick={() => {
-                    if (!disabled) onSelect(day.date);
+                    if (disabled || isDisabledCell) return;
+                    onSelect(day.date);
                   }}
                   onKeyDown={(e) => handleCellKeyDown(e, day.date)}
                   onMouseEnter={() => {
-                    if (!disabled && onHoverDate) onHoverDate(day.date);
+                    if (!isDisabledCell && onHoverDate) onHoverDate(day.date);
                   }}
                 >
                   {day.dayOfMonth}
