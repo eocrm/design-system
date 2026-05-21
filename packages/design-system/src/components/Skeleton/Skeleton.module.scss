@@ -1,0 +1,53 @@
+.skeleton {
+  display: inline-block;
+  background: var(--color-bg-muted);
+
+  // Prevent text selection — skeletons are decorative.
+  user-select: none;
+
+  // Ensures the inline-block lays out cleanly inside text flow.
+  vertical-align: middle;
+}
+
+.variant-text {
+  border-radius: var(--radius-sm);
+}
+
+.variant-circular {
+  border-radius: var(--radius-full);
+}
+
+.variant-rectangular {
+  display: block;
+  border-radius: var(--radius-md);
+}
+
+// Pulse — opacity cycle. Hardware-accelerated (opacity is a compositor
+// property). 1.5s read as "alive" without being distracting.
+.pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    opacity: var(--opacity-visible);
+  }
+
+  50% {
+    opacity: var(--opacity-subtle);
+  }
+
+  100% {
+    opacity: var(--opacity-visible);
+  }
+}
+
+// Respect reduced-motion. Wins over the .pulse class above because of
+// source order + the !important on the animation property (which is
+// the standard pattern for reduced-motion suppression — without it,
+// the more-specific .pulse rule would override).
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}
