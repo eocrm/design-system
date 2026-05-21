@@ -22,6 +22,9 @@ import { toIsoDate, isDateOutOfRange, formatDate } from '../DatePicker/utils';
 import { type DateRange, autoSwapRange, formatDateRange, parseDateRange } from './utils';
 import styles from './DateRangePicker.module.scss';
 
+/** Field height + type scale. Pairs with `<Input>`, `<Select>`, and `<DatePicker>`. */
+export type DateRangePickerSize = 'sm' | 'md' | 'lg';
+
 export interface DateRangePickerLabels {
   /** aria-label for the previous-month chevron. */
   previousMonth?: string;
@@ -37,7 +40,7 @@ export interface DateRangePickerLabels {
 
 export interface DateRangePickerProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
-  'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max' | 'name'
+  'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max' | 'name' | 'size'
 > {
   /** Selected range. `null` = no range. Pair with `onChange` for controlled use. */
   value?: DateRange | null;
@@ -54,6 +57,16 @@ export interface DateRangePickerProps extends Omit<
   max?: Date;
   /** Per-date disable predicate. */
   isDateDisabled?: (date: Date) => boolean;
+
+  /**
+   * Field height + type scale. Same scale as `<DatePicker>`. Defaults to `'md'`.
+   * Affects only the trigger row; the two-month popover grid is fixed-size.
+   *
+   * - `'sm'` — 24px tall.
+   * - `'md'` — 32px tall (default).
+   * - `'lg'` — 40px tall.
+   */
+  size?: DateRangePickerSize;
 
   /** Show the ✕ clear button when a range is set. Defaults to `true`. */
   clearable?: boolean;
@@ -75,6 +88,12 @@ const DEFAULT_LABELS: Required<DateRangePickerLabels> = {
   openCalendar: 'Open calendar',
   clear: 'Clear range',
   dialogLabel: 'Choose date range',
+};
+
+const ICON_SIZE_FOR: Record<DateRangePickerSize, number> = {
+  sm: 14,
+  md: 14,
+  lg: 16,
 };
 
 /**
@@ -126,6 +145,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       clearable = true,
       invalid = false,
       disabled = false,
+      size = 'md',
       nameStart,
       nameEnd,
       labels,
@@ -391,6 +411,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
         ref={setWrapperRef}
         className={clsx(
           styles.wrapper,
+          styles[`size-${size}`],
           invalid && styles.invalid,
           disabled && styles.disabled,
           className,
@@ -427,7 +448,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
             aria-label={resolvedLabels.clear}
             onClick={handleClear}
           >
-            <X size={14} />
+            <X size={ICON_SIZE_FOR[size]} />
           </button>
         )}
         <button
@@ -437,7 +458,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           onClick={handleToggle}
           disabled={disabled}
         >
-          <CalendarIcon size={14} />
+          <CalendarIcon size={ICON_SIZE_FOR[size]} />
         </button>
         {nameStart && (
           <input type="hidden" name={nameStart} value={value ? toIsoDate(value.start) : ''} />

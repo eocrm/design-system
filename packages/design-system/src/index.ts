@@ -144,6 +144,7 @@ export { DateRangePicker } from './components/DateRangePicker';
 export type {
   DateRangePickerProps,
   DateRangePickerLabels,
+  DateRangePickerSize,
   DateRange,
 } from './components/DateRangePicker';
 
