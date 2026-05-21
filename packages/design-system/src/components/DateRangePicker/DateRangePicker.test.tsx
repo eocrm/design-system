@@ -327,6 +327,20 @@ describe('DateRangePicker', () => {
     expect((document.activeElement as HTMLElement)?.textContent).toBe('1');
   });
 
+  it('applies size class names for sm / md / lg', () => {
+    const { rerender, container } = render(<DateRangePicker size="sm" aria-label="Sized" />, { wrapper: wrap() });
+    expect(container.querySelector('[class*="size-sm"]')).not.toBeNull();
+    rerender(<DateRangePicker size="md" aria-label="Sized" />);
+    expect(container.querySelector('[class*="size-md"]')).not.toBeNull();
+    rerender(<DateRangePicker size="lg" aria-label="Sized" />);
+    expect(container.querySelector('[class*="size-lg"]')).not.toBeNull();
+  });
+
+  it('defaults to size="md" when no size prop is passed', () => {
+    const { container } = render(<DateRangePicker aria-label="Default" />, { wrapper: wrap() });
+    expect(container.querySelector('[class*="size-md"]')).not.toBeNull();
+  });
+
   it('keyboard ArrowLeft from a right-grid cell shifts cursor backward and focuses the left side (exercises handleRightGridCursorChange)', async () => {
     const user = userEvent.setup();
     // defaultValue spans April→May:
