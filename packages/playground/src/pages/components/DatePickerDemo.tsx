@@ -113,6 +113,22 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       </Example>
 
       <Example
+        title="Sizes"
+        description="Three sizes — sm (24px), md (32px, default), lg (40px). The popover month grid is fixed-size; only the trigger row scales."
+        code={`<DatePicker size="sm" defaultValue={new Date()} />
+<DatePicker size="md" defaultValue={new Date()} />
+<DatePicker size="lg" defaultValue={new Date()} />`}
+      >
+        <InputExample>
+          <Stack gap="sm">
+            <DatePicker size="sm" defaultValue={TODAY} aria-label="Small date" />
+            <DatePicker size="md" defaultValue={TODAY} aria-label="Medium date" />
+            <DatePicker size="lg" defaultValue={TODAY} aria-label="Large date" />
+          </Stack>
+        </InputExample>
+      </Example>
+
+      <Example
         title="Disabled"
         description="Use `disabled` when the field is unavailable in the current context (e.g., read-only stage of a workflow). The clear button is hidden when disabled."
         code={`<DatePicker disabled defaultValue={new Date()} />`}
