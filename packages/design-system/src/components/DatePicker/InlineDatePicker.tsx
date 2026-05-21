@@ -23,7 +23,10 @@ export interface InlineDatePickerProps
   value?: Date | null;
   /** Initial selected date for uncontrolled use. */
   defaultValue?: Date | null;
-  /** Fires when the user clicks a cell. */
+  /**
+   * Fires when the user clicks a cell. Currently always fires with a
+   * `Date`; `null` is reserved for a future clear / deselect mechanism.
+   */
   onChange?: (date: Date | null) => void;
 
   /** Override locale (otherwise reads `useLocale()`). */
@@ -55,11 +58,11 @@ const DEFAULT_LABELS: Required<InlineDatePickerLabels> = {
  * always rendered in flow (no input, no popover). Composes the shared
  * `<DatePickerGrid>` in single-mode.
  *
- * Cursor is sticky after user interaction: it anchors to `value ?? new
- * Date()` on mount and stays where the user navigates with the chevrons
- * / PageUp / PageDown. Programmatic `value` changes do NOT re-anchor the
- * cursor — the consumer owns scroll/focus into the new month if they
- * want it (via `ref`).
+ * Cursor anchors to `value ?? new Date()` on mount. It re-anchors once
+ * if `value` transitions from `null` to a non-null date (e.g., loading
+ * an async initial value). After that first arrival, subsequent
+ * programmatic `value` changes do not move the cursor — the consumer
+ * owns navigation into the new month via `ref`.
  *
  * @example
  * <InlineDatePicker value={date} onChange={setDate} />
@@ -137,6 +140,7 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
     );
 
     return (
+      // {...rest} last so consumer overrides win (Pattern A).
       <div ref={ref} className={clsx(styles.inline, className)} {...rest}>
         <DatePickerGrid
           cursor={cursor}
