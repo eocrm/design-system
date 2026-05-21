@@ -30,6 +30,13 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-sizing: border-box;
+
+  // line-height: 1 keeps the box's intrinsic height constant whether it
+  // contains an SVG (checked / indeterminate) or nothing (unchecked).
+  // Without this the inline-box height jumps between states because the
+  // child SVG's baseline contributes to the line-box.
+  line-height: 1;
   border: var(--border-width) solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   background: var(--color-bg);
