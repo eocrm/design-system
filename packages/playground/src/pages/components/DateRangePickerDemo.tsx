@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, DateRangePicker, Stack, toDateKey, type DateRange } from '@eocrm/design-system';
-import { DemoLayout } from './DemoLayout';
+import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
 import tsxSource from '@lib-source/components/DateRangePicker/DateRangePicker.tsx?raw';
@@ -59,16 +59,14 @@ function FormDemo() {
   );
 }
 
-export function DateRangePickerDemo() {
+export function DateRangePickerDemoPanel() {
   return (
-    <DemoLayout
-      name="DateRangePicker"
-      componentName="DateRangePicker"
-      description="Single-field date-range input with a two-month popover, hover preview between clicks, auto-swap on out-of-order picks, and separate nameStart/nameEnd form mirrors. Built on the same DatePickerGrid as DatePicker (with a new range mode)."
+    <DemoBody
       tsxSource={tsxSource}
       scssSource={scssSource}
       tsxFilename="DateRangePicker.tsx"
       scssFilename="DateRangePicker.module.scss"
+      componentName="DateRangePicker"
     >
       <Example
         title="Uncontrolled"
@@ -224,6 +222,6 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
           />
         </InputExample>
       </Example>
-    </DemoLayout>
+    </DemoBody>
   );
 }
