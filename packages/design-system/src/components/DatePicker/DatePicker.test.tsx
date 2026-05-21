@@ -217,4 +217,20 @@ describe('DatePicker', () => {
     expect(committed.getMonth()).toBe(4);
     expect(committed.getDate()).toBe(21);
   });
+
+  it('applies size class names for sm / md / lg', () => {
+    const { rerender, container } = render(<DatePicker size="sm" aria-label="Sized" />, {
+      wrapper: wrap(),
+    });
+    expect(container.querySelector('[class*="size-sm"]')).not.toBeNull();
+    rerender(<DatePicker size="md" aria-label="Sized" />);
+    expect(container.querySelector('[class*="size-md"]')).not.toBeNull();
+    rerender(<DatePicker size="lg" aria-label="Sized" />);
+    expect(container.querySelector('[class*="size-lg"]')).not.toBeNull();
+  });
+
+  it('defaults to size="md" when no size prop is passed', () => {
+    const { container } = render(<DatePicker aria-label="Default" />, { wrapper: wrap() });
+    expect(container.querySelector('[class*="size-md"]')).not.toBeNull();
+  });
 });

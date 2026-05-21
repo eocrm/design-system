@@ -135,6 +135,37 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
       </Example>
 
       <Example
+        title="Sizes"
+        description="Three sizes — sm (24px), md (32px, default), lg (40px). The two-month popover grid is fixed-size; only the trigger row scales."
+        code={`const today = new Date();
+const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);
+
+<DateRangePicker size="sm" defaultValue={{ start: today, end: in14 }} />
+<DateRangePicker size="md" defaultValue={{ start: today, end: in14 }} />
+<DateRangePicker size="lg" defaultValue={{ start: today, end: in14 }} />`}
+      >
+        <InputExample>
+          <Stack gap="sm">
+            <DateRangePicker
+              size="sm"
+              defaultValue={{ start: TODAY, end: IN_14 }}
+              aria-label="Small range"
+            />
+            <DateRangePicker
+              size="md"
+              defaultValue={{ start: TODAY, end: IN_14 }}
+              aria-label="Medium range"
+            />
+            <DateRangePicker
+              size="lg"
+              defaultValue={{ start: TODAY, end: IN_14 }}
+              aria-label="Large range"
+            />
+          </Stack>
+        </InputExample>
+      </Example>
+
+      <Example
         title="Disabled"
         description="Use `disabled` when the range is unavailable in the current context. The clear button is hidden when disabled."
         code={`const today = new Date();

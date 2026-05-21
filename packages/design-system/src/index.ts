@@ -3,7 +3,7 @@ export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
 export { Input } from './components/Input';
-export type { InputProps } from './components/Input';
+export type { InputProps, InputSize } from './components/Input';
 
 export { Card } from './components/Card';
 export type { CardProps, CardPadding } from './components/Card';
@@ -138,12 +138,13 @@ export type {
 } from './components/Calendar';
 
 export { DatePicker } from './components/DatePicker';
-export type { DatePickerProps, DatePickerLabels } from './components/DatePicker';
+export type { DatePickerProps, DatePickerLabels, DatePickerSize } from './components/DatePicker';
 
 export { DateRangePicker } from './components/DateRangePicker';
 export type {
   DateRangePickerProps,
   DateRangePickerLabels,
+  DateRangePickerSize,
   DateRange,
 } from './components/DateRangePicker';
 

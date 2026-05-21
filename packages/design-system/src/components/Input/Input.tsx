@@ -2,18 +2,35 @@ import { forwardRef, type InputHTMLAttributes } from 'react';
 import clsx from 'clsx';
 import styles from './Input.module.scss';
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+/**
+ * Field height + type scale. Pairs with `<Button>` and `<Select>` sizes.
+ */
+export type InputSize = 'sm' | 'md' | 'lg';
+
+export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /**
    * Toggles the error visual (red border + focus ring) and sets `aria-invalid="true"`.
    * Pair with a visible error message and `aria-describedby` pointing at the message id.
    */
   invalid?: boolean;
+  /**
+   * Visual size. Defaults to `'md'`.
+   * - `'sm'` — 24px tall; toolbars, secondary forms.
+   * - `'md'` — 32px tall (default); most form contexts.
+   * - `'lg'` — 40px tall; hero search, mobile-friendly forms.
+   *
+   * Note: this shadows the native HTML `<input size>` attribute (visible
+   * character count). If you need that legacy attribute, set width via
+   * `style` or a parent container.
+   */
+  size?: InputSize;
 }
 
 /**
  * Single-line text input. Forwards all native `<input>` attributes — `type`,
  * `placeholder`, `value`/`onChange`, `disabled`, `readOnly`, `pattern`,
- * `autoComplete`, `inputMode`, etc.
+ * `autoComplete`, `inputMode`, etc. (The native HTML `size` attribute is
+ * shadowed by the component-level `size` prop — see `InputProps.size`.)
  *
  * The component is intentionally dumb. Validation logic lives in your form
  * layer (React Hook Form + Zod recommended); pass the result down via `invalid`.
@@ -31,14 +48,19 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
  * </label>
  *
  * @example
+ * // Sized:
+ * <Input size="sm" placeholder="Filter…" />
+ * <Input size="lg" type="search" placeholder="Search the workspace" />
+ *
+ * @example
  * // Error state:
  * <Input invalid value={value} aria-describedby="email-error" />
  * <p id="email-error">Enter a valid email.</p>
  *
  * @remarks When NOT to use
  * - Multi-line → use `Textarea` (not yet shipped).
- * - Choosing from a fixed list → use `Select` (not yet shipped).
- * - Date/time → use `DatePicker` (not yet shipped, plan: `react-day-picker`).
+ * - Choosing from a fixed list → use `Select`.
+ * - Date/time → use `DatePicker` / `DateRangePicker`.
  * - Password reveal/toggle → use `PasswordInput` (not yet shipped).
  *
  * @remarks Anti-patterns
@@ -50,7 +72,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
  *   leading zeros and breaks formatting. Use `inputMode="numeric"` instead.
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { invalid, className, ...props },
+  { invalid, size = 'md', className, ...props },
   ref,
 ) {
   return (
@@ -62,7 +84,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       // wins.
       aria-invalid={invalid || undefined}
       {...props}
-      className={clsx(styles.input, invalid && styles.invalid, className)}
+      className={clsx(styles.input, styles[`size-${size}`], invalid && styles.invalid, className)}
     />
   );
 });

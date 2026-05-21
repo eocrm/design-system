@@ -10,7 +10,6 @@
   width: 100%;
   align-items: center;
   gap: var(--space-1);
-  padding: 0 var(--space-2);
   background: var(--color-bg);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
@@ -47,13 +46,11 @@
 .input {
   flex: 1 1 auto;
   min-width: 0;
-  height: var(--size-md);
   padding: 0;
   background: transparent;
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: var(--font-size-md);
   color: var(--color-fg);
 
   &::placeholder {
@@ -67,8 +64,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--space-5);
-  height: var(--space-5);
   padding: 0;
   background: transparent;
   border: none;
@@ -93,4 +88,52 @@
 
 .popover {
   z-index: var(--z-popover);
+}
+
+// Size modifiers — drive wrapper padding, inner input height + font, and
+// clear/open button slot dimensions. The chevrons inside the popover grid
+// are NOT controlled here; they belong to DatePickerGrid.
+.size-sm {
+  padding: 0 var(--space-2);
+
+  .input {
+    height: var(--size-sm);
+    font-size: var(--font-size-sm);
+  }
+
+  .clearButton,
+  .openButton {
+    width: var(--space-5);
+    height: var(--space-5);
+  }
+}
+
+.size-md {
+  padding: 0 var(--space-2);
+
+  .input {
+    height: var(--size-md);
+    font-size: var(--font-size-md);
+  }
+
+  .clearButton,
+  .openButton {
+    width: var(--space-5);
+    height: var(--space-5);
+  }
+}
+
+.size-lg {
+  padding: 0 var(--space-3);
+
+  .input {
+    height: var(--size-lg);
+    font-size: var(--font-size-lg);
+  }
+
+  .clearButton,
+  .openButton {
+    width: var(--space-6);
+    height: var(--space-6);
+  }
 }
