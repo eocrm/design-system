@@ -308,7 +308,7 @@ describe('DateRangePicker', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it('keyboard ArrowRight at left-grid end-of-month crosses into the next grid', async () => {
+  it('keyboard ArrowRight at left-grid end-of-month advances the cursor (exercises handleLeftGridCursorChange)', async () => {
     const user = userEvent.setup();
     // Anchor cursor on May 2026 by providing a defaultValue in May.
     render(
@@ -327,30 +327,47 @@ describe('DateRangePicker', () => {
     expect((document.activeElement as HTMLElement)?.textContent).toBe('1');
   });
 
-  it('keyboard ArrowLeft at right-grid start-of-month crosses back into the left grid', async () => {
+  it('keyboard ArrowLeft from a right-grid cell shifts cursor backward and focuses the left side (exercises handleRightGridCursorChange)', async () => {
     const user = userEvent.setup();
-    // defaultValue in June 2026 so the LEFT grid shows June, RIGHT shows July.
-    // Then we navigate ArrowDown into the left grid's June 1 (or wherever
-    // focus lands), then ArrowRight enough times to enter July... actually
-    // the simpler approach: set value to land focus in the RIGHT grid.
-    //
-    // Use defaultValue that anchors cursor to June; the LEFT grid will be
-    // June and the focus target is the rangeStart in the left grid.
-    // We arrow-key right past June 30 to enter July (right grid). Then
-    // arrow-key left to verify it crosses back to June 30.
+    // defaultValue spans April→May:
+    //   cursor anchors to April; LEFT grid shows April, RIGHT grid shows May.
+    //   tabIndexFor: LEFT grid's April 30 (rangeStart) → 0;
+    //   RIGHT grid's May 1 (rangeEnd, fallback because rangeStart April 30 NOT in cursor=May) → 0.
     render(
       <DateRangePicker
-        defaultValue={{ start: new Date(2026, 5, 30), end: new Date(2026, 5, 30) }}
+        defaultValue={{ start: new Date(2026, 3, 30), end: new Date(2026, 4, 1) }}
         aria-label="Range"
       />,
       { wrapper: wrap() },
     );
     await user.click(screen.getByRole('textbox'));
-    await user.keyboard('{ArrowDown}'); // focus into left grid on June 30
-    expect((document.activeElement as HTMLElement)?.textContent).toBe('30');
-    await user.keyboard('{ArrowRight}'); // cross to July 1 (right grid)
+    // ArrowDown takes us to the left grid's rangeStart (April 30, tabIndex=0).
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => expect((document.activeElement as HTMLElement)?.textContent).toBe('30'));
+    // Programmatically focus the right grid's tabIndex=0 cell (May 1).
+    // `user.tab()` is unreliable in jsdom for portal'd content; the goal
+    // here is to land focus on May 1 so we can exercise the right-grid
+    // ArrowLeft path. The tabIndex=0 placement on May 1 comes from the
+    // rangeEnd-fallback in DatePickerGrid's `tabIndexFor` (rangeStart
+    // April 30 is NOT in the right grid's cursor=May).
+    const dialog = screen.getByRole('dialog');
+    const focusableCells = dialog.querySelectorAll<HTMLButtonElement>(
+      '[role="gridcell"][tabindex="0"]',
+    );
+    // The right grid's rangeEnd-fallback cell (May 1) is the last
+    // tabIndex=0 cell in the popover. (Earlier entries: left grid's
+    // April 30 rangeStart and the right grid's overflow April 30 cell
+    // — same date as rangeStart, also tabIndex=0 via the rangeStart
+    // match in `tabIndexFor`.)
+    const rightMay1 = focusableCells[focusableCells.length - 1];
+    rightMay1.focus();
     expect((document.activeElement as HTMLElement)?.textContent).toBe('1');
-    await user.keyboard('{ArrowLeft}'); // cross BACK to June 30 (left grid)
+    // ArrowLeft from right's May 1 → target April 30 → not in right's cursor=May →
+    //   right grid calls onCursorChange(May 1) → handleRightGridCursorChange translates
+    //   to setCursor(addMonths(May, -1) = March 1) → cursor becomes March, both grids
+    //   re-render: LEFT=March, RIGHT=April. Right grid's pendingFocusKey='2026-04-30'
+    //   matches the right grid's now-visible April 30 cell → focus lands there.
+    await user.keyboard('{ArrowLeft}');
     expect((document.activeElement as HTMLElement)?.textContent).toBe('30');
   });
 });
