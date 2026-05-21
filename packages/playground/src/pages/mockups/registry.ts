@@ -10,6 +10,7 @@ export type ComponentName =
   | 'PasswordInput'
   | 'PasswordStrengthMeter'
   | 'Select'
+  | 'Skeleton'
   | 'Table'
   | 'Card'
   | 'Checkbox'

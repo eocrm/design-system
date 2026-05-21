@@ -13,6 +13,7 @@ import { InputDemo } from './pages/components/InputDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
 import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
+import { SkeletonDemo } from './pages/components/SkeletonDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { CardDemo } from './pages/components/CardDemo';
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
@@ -52,6 +53,7 @@ export default function App() {
             element={<PasswordStrengthMeterDemo />}
           />
           <Route path="/components/select" element={<SelectDemo />} />
+          <Route path="/components/skeleton" element={<SkeletonDemo />} />
           <Route path="/components/table" element={<TableDemo />} />
           <Route path="/components/card" element={<CardDemo />} />
           <Route path="/components/checkbox" element={<CheckboxDemo />} />

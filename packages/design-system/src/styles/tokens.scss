@@ -234,6 +234,7 @@
   // States
   --opacity-disabled: 0.5;
   --opacity-muted: 0.75; // de-emphasised secondary text (e.g. event time prefix)
+  --opacity-subtle: 0.6; // skeleton pulse dim; slightly stronger fade than muted
   --opacity-hidden: 0;
   --opacity-visible: 1;
 

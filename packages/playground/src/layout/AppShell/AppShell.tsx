@@ -29,6 +29,7 @@ import {
   PanelLeft,
   ShieldCheck,
   CalendarDays,
+  Square,
   Table as TableIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -84,6 +85,7 @@ const componentGroups = [
       { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
       { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
       { to: '/components/calendar', label: 'Calendar', icon: CalendarDays, end: false },
+      { to: '/components/skeleton', label: 'Skeleton', icon: Square, end: false },
       { to: '/components/table', label: 'Table', icon: TableIcon, end: false },
     ],
   },

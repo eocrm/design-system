@@ -508,6 +508,22 @@ const [tab, setTab] = useState('overview');
 - Don't reach for `triggerDisplay='summary'` for tag input — chips communicate the active filter set at a glance.
 - `creatable` requires `searchable` (throws in dev). Passing both `options` and `loadOptions` is also flagged (loadOptions wins).
 
+### `<Skeleton>` — loading placeholder
+
+```tsx
+<Skeleton width={120} />                                    // text line
+<Skeleton variant="circular" width={32} />                  // avatar
+<Skeleton variant="rectangular" width="100%" height={120} /> // image
+```
+
+- Three variants: `text` (default, inline, `height=1em`), `circular` (avatar / icon, square when only one dim set), `rectangular` (image / card / button, block).
+- `width` / `height` flow to inline style — `number` becomes `px`, `string` passes through (`'60%'`, `'12rem'`).
+- `animation`: `'pulse'` (default, opacity cycle) / `'none'` (static).
+- Pulse is **automatically suppressed** when the user has `prefers-reduced-motion: reduce`.
+- `aria-hidden='true'` by default — Skeleton is decorative. Communicate "loading" from a parent live region (e.g., `aria-busy='true'` on the section being filled).
+- Composes — for a list-row placeholder, render `<Skeleton variant='circular' />` + 2–3 text skeletons + a button-shaped rectangular in a Cluster.
+- Use `<EmptyState>` (not yet shipped) for "nothing here yet" — Skeleton implies "loading," not "empty."
+
 ### `<Table>` — tabular data primitive
 
 ```tsx
