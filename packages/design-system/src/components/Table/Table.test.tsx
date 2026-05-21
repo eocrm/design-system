@@ -53,19 +53,19 @@ describe('Table', () => {
 
   it('applies density / hover / striped / bordered / stickyHeader class names', () => {
     const { container, rerender } = render(
-      <Table density="dense" striped bordered hover={false} stickyHeader />,
+      <Table density="dense" striped bordered hover stickyHeader />,
     );
     const table = container.querySelector('table')!;
     expect(table.className).toMatch(/density-dense/);
     expect(table.className).toMatch(/striped/);
     expect(table.className).toMatch(/bordered/);
-    expect(table.className).not.toMatch(/hover/);
+    expect(table.className).toMatch(/hover/);
     expect(table.className).toMatch(/stickyHeader/);
 
     rerender(<Table />);
     const table2 = container.querySelector('table')!;
     expect(table2.className).toMatch(/density-comfortable/);
-    expect(table2.className).toMatch(/hover/);
+    expect(table2.className).not.toMatch(/hover/);
     expect(table2.className).not.toMatch(/striped/);
     expect(table2.className).not.toMatch(/bordered/);
     expect(table2.className).not.toMatch(/stickyHeader/);

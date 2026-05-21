@@ -34,7 +34,12 @@ export interface TableProps extends Omit<HTMLAttributes<HTMLTableElement>, 'chil
    * (Atlassian-style minimal: header underline + row dividers only).
    */
   bordered?: boolean;
-  /** Hover highlight on body rows. Defaults to `true`. */
+  /**
+   * Hover highlight on body rows. Defaults to `false` — turn on when the
+   * table represents a list of clickable / selectable items (a row a user
+   * is likely to act on). Leave off for read-only data displays where the
+   * hover affordance would suggest interactivity that isn't there.
+   */
   hover?: boolean;
   /**
    * `position: sticky` on the header so it stays visible while body
@@ -177,7 +182,7 @@ const TableRoot = forwardRef<HTMLTableElement, TableProps>(function TableRoot(
     density = 'comfortable',
     striped,
     bordered,
-    hover = true,
+    hover = false,
     stickyHeader,
     scroll = true,
     className,

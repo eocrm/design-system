@@ -110,7 +110,7 @@ function SelectableTable() {
   const [selectedId, setSelectedId] = useState<string | null>('c');
 
   return (
-    <Table>
+    <Table hover>
       <Table.Header>
         <Table.Row>
           <Table.HeaderCell>Company</Table.HeaderCell>
@@ -195,10 +195,10 @@ export function TableDemo() {
 
       <Example
         title="Striped + hover"
-        description="Zebra stripes on even body rows. Hover is on by default; pass `hover={false}` to disable."
-        code={`<Table striped>{...}</Table>`}
+        description="Zebra stripes on even body rows + opt-in hover affordance. Both default off — use them together when the table represents a list of selectable rows."
+        code={`<Table striped hover>{...}</Table>`}
       >
-        <Table striped>
+        <Table striped hover>
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell>Company</Table.HeaderCell>
