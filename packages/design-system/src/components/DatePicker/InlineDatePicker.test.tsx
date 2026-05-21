@@ -31,7 +31,8 @@ describe('InlineDatePicker', () => {
     expect(onChange.mock.calls[0][0]!.getDate()).toBe(15);
   });
 
-  it('controlled: value updates when consumer changes it', () => {
+  it('controlled: value updates when consumer changes it', async () => {
+    const user = userEvent.setup();
     function Driver() {
       const [v, setV] = useState<Date | null>(new Date(2026, 4, 21));
       return (
@@ -43,6 +44,9 @@ describe('InlineDatePicker', () => {
     }
     render(<Driver />, { wrapper: wrap() });
     expect(screen.getByRole('gridcell', { name: /^21$/, selected: true })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Pick May 5' }));
+    expect(screen.getByRole('gridcell', { name: /^5$/, selected: true })).toBeInTheDocument();
+    expect(screen.queryByRole('gridcell', { name: /^21$/, selected: true })).not.toBeInTheDocument();
   });
 
   it('chevrons step the cursor (month header updates)', async () => {
@@ -155,6 +159,28 @@ describe('InlineDatePicker', () => {
     const wrapper = container.firstChild as HTMLDivElement;
     expect(wrapper.className).toMatch(/custom/);
     expect(wrapper.className).toMatch(/inline/);
+  });
+
+  it('cursor re-anchors on null→non-null transition but not on subsequent value changes', async () => {
+    const user = userEvent.setup();
+    function Driver() {
+      const [v, setV] = useState<Date | null>(null);
+      return (
+        <>
+          <InlineDatePicker value={v} onChange={setV} aria-label="Date" />
+          <button onClick={() => setV(new Date(2026, 4, 21))}>Set May 21</button>
+          <button onClick={() => setV(new Date(2026, 6, 10))}>Set July 10</button>
+        </>
+      );
+    }
+    render(<Driver />, { wrapper: wrap() });
+    // First non-null arrival → cursor anchors to May.
+    await user.click(screen.getByRole('button', { name: 'Set May 21' }));
+    expect(screen.getByText(/May 2026/)).toBeInTheDocument();
+    // Subsequent programmatic change → cursor stays on May (does NOT scroll to July).
+    await user.click(screen.getByRole('button', { name: 'Set July 10' }));
+    expect(screen.getByText(/May 2026/)).toBeInTheDocument();
+    expect(screen.queryByText(/July 2026/)).not.toBeInTheDocument();
   });
 
   it('ru-RU locale shows Cyrillic month + weekday labels', () => {
