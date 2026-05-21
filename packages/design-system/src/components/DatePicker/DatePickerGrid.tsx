@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMonth } from '../../calendar/useMonth';
 import { useLocale } from '../../i18n/useLocale';
-import { isSameDay, startOfDay, toDateKey } from '../../calendar/dateMath';
+import { isSameDay, isSameMonth, startOfDay, toDateKey } from '../../calendar/dateMath';
 import { isDateOutOfRange } from './utils';
 import styles from './DatePickerGrid.module.scss';
 
@@ -28,11 +28,11 @@ export interface DatePickerGridProps {
   labels: { previousMonth: string; nextMonth: string };
   /** Selection model. Defaults to 'single'. */
   selectionMode?: 'single' | 'range';
-  /** Range start (when mode='range'). The left boundary of the committed range. */
+  /** Range start (when selectionMode='range'). The left boundary of the committed range. */
   rangeStart?: Date | null;
-  /** Range end (when mode='range'). The right boundary. */
+  /** Range end (when selectionMode='range'). The right boundary. */
   rangeEnd?: Date | null;
-  /** In-flight hover preview (when mode='range' and only rangeStart is set). */
+  /** In-flight hover preview (when selectionMode='range' and only rangeStart is set). */
   hoverDate?: Date | null;
   /** Fires on cell mouseenter (the date) and on grid mouseleave (null). */
   onHoverDate?: (date: Date | null) => void;
@@ -116,17 +116,39 @@ export function DatePickerGrid({
     },
     [rangeAnchorStart, rangeAnchorEnd],
   );
-  const isRangeStartCell = (date: Date) =>
-    selectionMode === 'range' && rangeStart != null && isSameDay(date, rangeStart);
-  const isRangeEndCell = (date: Date) =>
-    selectionMode === 'range' &&
-    (rangeEnd != null
-      ? isSameDay(date, rangeEnd)
-      : rangeStart != null && hoverDate != null && isSameDay(date, hoverDate));
+  const isRangeStartCell = (date: Date) => {
+    if (selectionMode !== 'range' || rangeStart == null) return false;
+    const other = rangeEnd ?? hoverDate;
+    if (other == null) return isSameDay(date, rangeStart);
+    // Earlier of the two acts as start.
+    const earlier =
+      startOfDay(rangeStart).getTime() <= startOfDay(other).getTime() ? rangeStart : other;
+    return isSameDay(date, earlier);
+  };
+
+  const isRangeEndCell = (date: Date) => {
+    if (selectionMode !== 'range' || rangeStart == null) return false;
+    const other = rangeEnd ?? hoverDate;
+    if (other == null) return false;
+    const later =
+      startOfDay(rangeStart).getTime() >= startOfDay(other).getTime() ? rangeStart : other;
+    return isSameDay(date, later);
+  };
 
   const tabIndexFor = (date: Date, isTodayCell: boolean): number => {
     if (selectionMode === 'range') {
       if (rangeStart != null && isSameDay(date, rangeStart)) return 0;
+      // Fallback to rangeEnd when rangeStart isn't visible in this month
+      // (DateRangePicker renders two grids; the right grid often shows
+      // rangeEnd's month only). The same-month guard prevents two cells
+      // from getting tabIndex=0 when both boundaries are in the same grid.
+      if (
+        rangeStart != null &&
+        rangeEnd != null &&
+        !isSameMonth(rangeStart, cursor) &&
+        isSameDay(date, rangeEnd)
+      )
+        return 0;
       if (rangeStart == null && isTodayCell) return 0;
       return -1;
     }
