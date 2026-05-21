@@ -327,11 +327,11 @@ describe('DatePickerGrid', () => {
     await user.unhover(cell);
     // userEvent.unhover only triggers cell-level mouseleave; we need
     // the grid-container leave. Manually dispatch on the grid element.
+    // Assert presence explicitly so a structural break (e.g. role="grid"
+    // removed) fails the test loudly instead of silently skipping.
     const grid = document.querySelector<HTMLElement>('[role="grid"]');
-    if (grid) {
-      const evt = new MouseEvent('mouseleave', { bubbles: false });
-      grid.dispatchEvent(evt);
-    }
+    expect(grid).not.toBeNull();
+    grid!.dispatchEvent(new MouseEvent('mouseleave', { bubbles: false }));
     expect(onHoverDate).toHaveBeenLastCalledWith(null);
   });
 

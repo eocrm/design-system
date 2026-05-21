@@ -137,6 +137,13 @@
   border-radius: 0;
 }
 
+// Disabled cells inside the range band keep their muted color so they
+// still read as disabled — only the background tint is inherited from
+// .inRange to keep the band visually contiguous.
+.disabled.inRange {
+  color: var(--color-fg-muted);
+}
+
 // The two range boundaries get the same fill as a regular `.selected`
 // cell, but with rounded edges only on the OUTSIDE of the range so they
 // visually anchor the band.
