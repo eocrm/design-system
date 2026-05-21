@@ -91,10 +91,10 @@ export interface DatePickerProps {
 
   /** Localized strings. Each key has an English default. */
   labels?: {
-    previousMonth?: string;     // default: "Previous month"
-    nextMonth?: string;         // default: "Next month"
-    openCalendar?: string;      // default: "Open calendar"
-    clear?: string;             // default: "Clear date"
+    previousMonth?: string; // default: "Previous month"
+    nextMonth?: string; // default: "Next month"
+    openCalendar?: string; // default: "Open calendar"
+    clear?: string; // default: "Clear date"
   };
 
   /** Standard HTML attribute pass-throughs on the typed input. */
@@ -148,6 +148,7 @@ The forwarded `ref` points at the typed `<input>`. Consumers usually want this f
 - Wrong number of chunks (`5/21` or `5/21/2026/extra`) → `null`.
 
 Examples:
+
 - `"5/21/2026"` in en-US → May 21, 2026
 - `"21.5.2026"` in ru-RU → May 21, 2026
 - `"2026-05-21"` in ja-JP → May 21, 2026
@@ -188,15 +189,15 @@ Examples:
 
 ### Keyboard navigation (within grid)
 
-| Key | Action |
-|---|---|
-| `←` / `→` | Move focus 1 day, skipping disabled cells. Crosses month boundary. |
-| `↑` / `↓` | Move focus 1 week, skipping disabled cells. Crosses month boundary. |
-| `Home` / `End` | First / last day of current week. |
-| `PageUp` / `PageDown` | Previous / next month (focused day-of-month preserved when possible). |
-| `Enter` / `Space` | Select focused cell, close popover. |
-| `Escape` | Close popover, restore focus to typed input. |
-| `Tab` | Leave the grid; cycles through prev / next buttons → next focusable element outside the picker. |
+| Key                   | Action                                                                                          |
+| --------------------- | ----------------------------------------------------------------------------------------------- |
+| `←` / `→`             | Move focus 1 day, skipping disabled cells. Crosses month boundary.                              |
+| `↑` / `↓`             | Move focus 1 week, skipping disabled cells. Crosses month boundary.                             |
+| `Home` / `End`        | First / last day of current week.                                                               |
+| `PageUp` / `PageDown` | Previous / next month (focused day-of-month preserved when possible).                           |
+| `Enter` / `Space`     | Select focused cell, close popover.                                                             |
+| `Escape`              | Close popover, restore focus to typed input.                                                    |
+| `Tab`                 | Leave the grid; cycles through prev / next buttons → next focusable element outside the picker. |
 
 ### Cell visual states
 

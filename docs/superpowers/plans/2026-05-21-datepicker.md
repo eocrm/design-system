@@ -153,13 +153,7 @@ git commit -m "DatePicker: utils.ts skeleton (format/parse/range stubs)"
 Full file:
 
 ```ts
-import {
-  formatDate,
-  getLocaleDateOrder,
-  isDateOutOfRange,
-  parseDate,
-  toIsoDate,
-} from './utils';
+import { formatDate, getLocaleDateOrder, isDateOutOfRange, parseDate, toIsoDate } from './utils';
 
 describe('DatePicker utils', () => {
   describe('formatDate', () => {
@@ -272,7 +266,9 @@ describe('DatePicker utils', () => {
     });
 
     it('ignores time-of-day when comparing against min/max', () => {
-      expect(isDateOutOfRange(new Date(2026, 4, 21, 23, 59), new Date(2026, 4, 21, 0, 0))).toBe(false);
+      expect(isDateOutOfRange(new Date(2026, 4, 21, 23, 59), new Date(2026, 4, 21, 0, 0))).toBe(
+        false,
+      );
     });
   });
 });
@@ -402,11 +398,11 @@ git commit -m "DatePicker: utils — formatDate, parseDate, getLocaleDateOrder, 
 In `packages/design-system/src/styles/tokens.scss`, append a new size block under the existing `--size-calendar-*` entries:
 
 ```scss
-  // DatePicker — square size of a single day cell in the month grid.
-  // Wide enough to fit "30" + accent ring without crowding.
-  --size-datepicker-cell: 2.25rem;
-  // DatePicker — overall width of the floating popover.
-  --size-datepicker-popover-width: 17rem;
+// DatePicker — square size of a single day cell in the month grid.
+// Wide enough to fit "30" + accent ring without crowding.
+--size-datepicker-cell: 2.25rem;
+// DatePicker — overall width of the floating popover.
+--size-datepicker-popover-width: 17rem;
 ```
 
 - [ ] **Step 2: Write the failing test file**
@@ -1201,11 +1197,7 @@ describe('DatePicker', () => {
     const onChange = vi.fn<(d: Date | null) => void>();
     const user = userEvent.setup();
     render(
-      <DatePicker
-        defaultValue={new Date(2026, 4, 1)}
-        onChange={onChange}
-        aria-label="Date"
-      />,
+      <DatePicker defaultValue={new Date(2026, 4, 1)} onChange={onChange} aria-label="Date" />,
       { wrapper: wrap() },
     );
     await user.click(screen.getByRole('textbox'));
@@ -1238,10 +1230,9 @@ describe('DatePicker', () => {
   });
 
   it('`disabled` disables the input and the open-calendar button', () => {
-    render(
-      <DatePicker disabled defaultValue={new Date(2026, 4, 21)} aria-label="Date" />,
-      { wrapper: wrap() },
-    );
+    render(<DatePicker disabled defaultValue={new Date(2026, 4, 21)} aria-label="Date" />, {
+      wrapper: wrap(),
+    });
     expect(screen.getByRole('textbox')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
   });
@@ -1261,14 +1252,7 @@ describe('DatePicker', () => {
     const user = userEvent.setup();
     function Driver() {
       const [v, setV] = useState<Date | null>(new Date(2026, 4, 21));
-      return (
-        <DatePicker
-          value={v}
-          onChange={setV}
-          min={new Date(2026, 4, 15)}
-          aria-label="Date"
-        />
-      );
+      return <DatePicker value={v} onChange={setV} min={new Date(2026, 4, 15)} aria-label="Date" />;
     }
     render(<Driver />, { wrapper: wrap() });
     const input = screen.getByRole('textbox');
@@ -1279,10 +1263,9 @@ describe('DatePicker', () => {
   });
 
   it('ru-RU locale formats the input as DD.MM.YYYY', () => {
-    render(
-      <DatePicker defaultValue={new Date(2026, 4, 21)} locale="ru-RU" aria-label="Date" />,
-      { wrapper: wrap('ru-RU') },
-    );
+    render(<DatePicker defaultValue={new Date(2026, 4, 21)} locale="ru-RU" aria-label="Date" />, {
+      wrapper: wrap('ru-RU'),
+    });
     expect(screen.getByRole('textbox')).toHaveValue('21.05.2026');
   });
 });
@@ -1330,11 +1313,10 @@ export interface DatePickerLabels {
   clear?: string;
 }
 
-export interface DatePickerProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    'value' | 'defaultValue' | 'onChange' | 'type'
-  > {
+export interface DatePickerProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'defaultValue' | 'onChange' | 'type'
+> {
   /** Selected date. `null` = no value. Pair with `onChange` for controlled use. */
   value?: Date | null;
   /** Initial selected date for uncontrolled use. */
@@ -1562,13 +1544,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     [setValue],
   );
 
-  const handleToggle = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      setOpen((v) => !v);
-    },
-    [],
-  );
+  const handleToggle = useCallback((e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setOpen((v) => !v);
+  }, []);
 
   // Click outside closes (separate from blur to handle the case where
   // focus moved into the grid via mouse, then user clicks somewhere else).
@@ -1577,11 +1556,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     const handler = (e: globalThis.MouseEvent) => {
       const target = e.target as Node | null;
       const floating = refs.floating.current;
-      if (
-        target &&
-        !wrapperRef.current?.contains(target) &&
-        !floating?.contains(target)
-      ) {
+      if (target && !wrapperRef.current?.contains(target) && !floating?.contains(target)) {
         commit(draft);
         setOpen(false);
       }
@@ -1642,9 +1617,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       >
         <CalendarIcon size={14} />
       </button>
-      {name && (
-        <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />
-      )}
+      {name && <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />}
       {open &&
         createPortal(
           <div
@@ -1938,10 +1911,7 @@ export function DatePickerDemo() {
         />
       </Example>
 
-      <Example
-        title="Disabled"
-        code={`<DatePicker disabled defaultValue={new Date()} />`}
-      >
+      <Example title="Disabled" code={`<DatePicker disabled defaultValue={new Date()} />`}>
         <DatePicker disabled defaultValue={TODAY} aria-label="Disabled date" />
       </Example>
 
@@ -1989,7 +1959,7 @@ In `packages/playground/src/App.tsx`, add (in the components routes block, alpha
 ```tsx
 import { DatePickerDemo } from './pages/components/DatePickerDemo';
 // ...
-<Route path="/components/datepicker" element={<DatePickerDemo />} />
+<Route path="/components/datepicker" element={<DatePickerDemo />} />;
 ```
 
 - [ ] **Step 3: Add to AppShell sidebar (Forms group)**
@@ -2029,13 +1999,14 @@ git commit -m "playground: DatePicker demo page + nav + components index"
 
 Place this after the Calendar block:
 
-```markdown
+````markdown
 ### `<DatePicker>` — single-date input + popover
 
 ```tsx
 const [value, setValue] = useState<Date | null>(null);
 <DatePicker value={value} onChange={setValue} min={new Date()} />;
 ```
+````
 
 - Single-date selection. Range, datetime, year-picker — out of scope for v1.
 - Looks like an `<Input>`. Click the input or press ArrowDown to open the popover. The 📅 button toggles, the ✕ button clears.
@@ -2046,6 +2017,7 @@ const [value, setValue] = useState<Date | null>(null);
 - Locale-aware via `useLocale()`; override with `locale` prop. `labels` override the four hard-coded strings.
 - ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover is `role="dialog"`; the grid inside is `role="grid"` with `role="gridcell"` buttons that carry `aria-selected` / `aria-disabled` as appropriate.
 - Keyboard inside the grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space selects, Escape closes and returns focus to the input. Tab leaves the grid.
+
 ```
 
 - [ ] **Step 2: Remove from "components we don't have yet" in CLAUDE.md**
@@ -2053,8 +2025,10 @@ const [value, setValue] = useState<Date | null>(null);
 In `packages/design-system/CLAUDE.md`, find:
 
 ```
+
 - `DatePicker` (hand-roll; calendar grid is the bulk of the work)
-```
+
+````
 
 Delete that line.
 
@@ -2063,7 +2037,7 @@ Delete that line.
 ```bash
 git add packages/design-system/AGENTS.md packages/design-system/CLAUDE.md
 git commit -m "DatePicker: docs — AGENTS.md section + remove from wishlist"
-```
+````
 
 ---
 
@@ -2083,6 +2057,7 @@ npm pack --dry-run -w @eocrm/design-system 2>&1 | grep -E "\.test\.|node_modules
 ```
 
 Expected:
+
 - tests: all pass
 - typecheck: clean
 - lint:css: clean
