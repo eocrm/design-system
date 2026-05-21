@@ -301,6 +301,54 @@ export function TableDemo() {
       </Example>
 
       <Example
+        title="Footer with totals"
+        description="`<Table.Footer>` (renders `<tfoot>`) is the spot for totals, summary, or pagination chrome. Same `--color-bg-muted` background as the header; doesn't participate in hover/striped."
+        code={`<Table>
+  <Table.Header>...</Table.Header>
+  <Table.Body>...</Table.Body>
+  <Table.Footer>
+    <Table.Row>
+      <Table.Cell>Total</Table.Cell>
+      <Table.Cell />
+      <Table.Cell align="end">{total}</Table.Cell>
+    </Table.Row>
+  </Table.Footer>
+</Table>`}
+      >
+        <Table>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>Company</Table.HeaderCell>
+              <Table.HeaderCell>Status</Table.HeaderCell>
+              <Table.HeaderCell align="end">Amount</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {ROWS.map((row) => (
+              <Table.Row key={row.id}>
+                <Table.Cell>{row.name}</Table.Cell>
+                <Table.Cell>
+                  <Badge tone={STATUS_TONE[row.status]}>{row.status}</Badge>
+                </Table.Cell>
+                <Table.Cell align="end">${row.amount.toLocaleString()}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+          <Table.Footer>
+            <Table.Row>
+              <Table.Cell>
+                <strong>Total</strong>
+              </Table.Cell>
+              <Table.Cell />
+              <Table.Cell align="end">
+                <strong>${ROWS.reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</strong>
+              </Table.Cell>
+            </Table.Row>
+          </Table.Footer>
+        </Table>
+      </Example>
+
+      <Example
         title="Truncated cell"
         description="`<Table.Cell truncate>` ellipsizes overflow text. Requires a constrained cell width — set `style={{ maxWidth }}` on the cell or `<col>` width on the column."
         code={`<Table.Cell truncate style={{ maxWidth: 180 }}>{longString}</Table.Cell>`}
