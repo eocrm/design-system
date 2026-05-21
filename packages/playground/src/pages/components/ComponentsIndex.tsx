@@ -10,6 +10,7 @@ import { Input } from '@eocrm/design-system';
 import { PasswordInput } from '@eocrm/design-system';
 import { PasswordStrengthMeter } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
+import { Skeleton } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Table } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
@@ -106,6 +107,19 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           placeholder="Pick a status"
         />
       </div>
+    ),
+  },
+  {
+    to: '/components/skeleton',
+    name: 'Skeleton',
+    description:
+      'Placeholder rectangle for loading states. Three variants (text / circular / rectangular), pulse animation respects prefers-reduced-motion.',
+    preview: (
+      <Stack gap="xs" style={{ width: 200 }}>
+        <Skeleton width="80%" />
+        <Skeleton width="60%" />
+        <Skeleton width="40%" />
+      </Stack>
     ),
   },
   {
