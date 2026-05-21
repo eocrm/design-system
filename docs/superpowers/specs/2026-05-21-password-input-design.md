@@ -49,8 +49,10 @@ export interface PasswordInputLabels {
   wrongLayoutOn?: string;
 }
 
-export interface PasswordInputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'> {
+export interface PasswordInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'size' | 'type'
+> {
   /**
    * Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`.
    */
@@ -112,6 +114,7 @@ export interface PasswordInputProps
 ```
 
 `Omit<…, 'size' | 'type'>`:
+
 - `'size'` — same shadow pattern as `<Input>` (native `size` attribute is visible-character count and rarely useful).
 - `'type'` — the component locks `type` to `'password'` / `'text'`. A consumer passing `type='email'` would break the whole point.
 
@@ -119,24 +122,24 @@ export interface PasswordInputProps
 
 Reuses existing tokens — no new tokens. Matches `<Input>` sizes + DatePicker's wrapper-with-trailing-button shape:
 
-| Visual                          | Token                                       |
-| ------------------------------- | ------------------------------------------- |
-| Field height (sm/md/lg)         | `--size-sm` / `--size-md` / `--size-lg`     |
-| Font size                       | `--font-size-sm` / `--font-size-md` / `--font-size-lg` |
-| Border                          | `--color-border-strong`                     |
-| Focus border                    | `--color-accent`                            |
-| Focus ring                      | `--ring-accent`                             |
-| Invalid border + ring           | `--color-danger` + `--ring-danger`          |
-| Disabled bg                     | `--color-bg-subtle`                         |
-| Disabled border                 | `--color-border`                            |
-| Toggle button bg (default)      | `transparent`                               |
-| Toggle button bg (hover)        | `--color-bg-subtle`                         |
-| Toggle button color             | `--color-fg-muted` (resting), `--color-fg` (hover) |
-| Toggle button focus ring        | `--ring-accent` (via `focus-ring` mixin)    |
-| Toggle button size              | matches existing DatePicker pattern (`--space-5` button slot, 14/16px lucide icon) |
-| Padding                         | `0 var(--space-2)` on wrapper               |
-| Gap                             | `var(--space-1)` between input and toggle   |
-| Radius                          | `--radius-md`                               |
+| Visual                     | Token                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| Field height (sm/md/lg)    | `--size-sm` / `--size-md` / `--size-lg`                                            |
+| Font size                  | `--font-size-sm` / `--font-size-md` / `--font-size-lg`                             |
+| Border                     | `--color-border-strong`                                                            |
+| Focus border               | `--color-accent`                                                                   |
+| Focus ring                 | `--ring-accent`                                                                    |
+| Invalid border + ring      | `--color-danger` + `--ring-danger`                                                 |
+| Disabled bg                | `--color-bg-subtle`                                                                |
+| Disabled border            | `--color-border`                                                                   |
+| Toggle button bg (default) | `transparent`                                                                      |
+| Toggle button bg (hover)   | `--color-bg-subtle`                                                                |
+| Toggle button color        | `--color-fg-muted` (resting), `--color-fg` (hover)                                 |
+| Toggle button focus ring   | `--ring-accent` (via `focus-ring` mixin)                                           |
+| Toggle button size         | matches existing DatePicker pattern (`--space-5` button slot, 14/16px lucide icon) |
+| Padding                    | `0 var(--space-2)` on wrapper                                                      |
+| Gap                        | `var(--space-1)` between input and toggle                                          |
+| Radius                     | `--radius-md`                                                                      |
 
 Per-size icon size lookup (matches DatePicker convention): `{ sm: 14, md: 14, lg: 16 }`.
 
@@ -193,13 +196,13 @@ Top-level `src/index.ts` re-exports both:
 
 Rendered as 4 segments + an optional textual label. Each segment fills with a tone-appropriate color as the score climbs:
 
-| Score | Filled segments | Color                | Label (default) |
-| ----- | --------------- | -------------------- | --------------- |
-| 0     | 0               | `--color-bg-sunken`  | "" (or "Empty") |
-| 1     | 1               | `--color-danger`     | "Weak"          |
-| 2     | 2               | `--color-warning`    | "Fair"          |
-| 3     | 3               | `--color-warning`    | "Good"          |
-| 4     | 4               | `--color-success`    | "Strong"        |
+| Score | Filled segments | Color               | Label (default) |
+| ----- | --------------- | ------------------- | --------------- |
+| 0     | 0               | `--color-bg-sunken` | "" (or "Empty") |
+| 1     | 1               | `--color-danger`    | "Weak"          |
+| 2     | 2               | `--color-warning`   | "Fair"          |
+| 3     | 3               | `--color-warning`   | "Good"          |
+| 4     | 4               | `--color-success`   | "Strong"        |
 
 ### API
 
@@ -208,9 +211,9 @@ export type PasswordStrengthScore = 0 | 1 | 2 | 3 | 4;
 
 export interface PasswordStrengthLabels {
   empty?: string; // default: '' (no label)
-  weak?: string;  // default: 'Weak'
-  fair?: string;  // default: 'Fair'
-  good?: string;  // default: 'Good'
+  weak?: string; // default: 'Weak'
+  fair?: string; // default: 'Fair'
+  good?: string; // default: 'Good'
   strong?: string; // default: 'Strong'
 }
 

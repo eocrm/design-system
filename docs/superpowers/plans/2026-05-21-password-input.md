@@ -78,8 +78,10 @@ const ICON_SIZE_FOR: Record<PasswordInputSize, number> = {
   lg: 16,
 };
 
-export interface PasswordInputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'> {
+export interface PasswordInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'size' | 'type'
+> {
   /** Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. */
   size?: PasswordInputSize;
   /** Toggles the error visual + sets `aria-invalid="true"`. */
@@ -1005,11 +1007,7 @@ git commit -m "PasswordStrengthMeter: tests — scoring, score override, labels,
 
 ```ts
 export { PasswordInput } from './PasswordInput';
-export type {
-  PasswordInputProps,
-  PasswordInputSize,
-  PasswordInputLabels,
-} from './PasswordInput';
+export type { PasswordInputProps, PasswordInputSize, PasswordInputLabels } from './PasswordInput';
 ```
 
 - [ ] **Step 2: PasswordStrengthMeter barrel**

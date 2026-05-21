@@ -37,8 +37,10 @@ const ICON_SIZE_FOR: Record<PasswordInputSize, number> = {
   lg: 16,
 };
 
-export interface PasswordInputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'> {
+export interface PasswordInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'size' | 'type'
+> {
   /** Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. */
   size?: PasswordInputSize;
   /** Toggles the error visual + sets `aria-invalid="true"`. */

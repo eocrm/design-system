@@ -46,7 +46,10 @@ export default function App() {
           <Route path="/components/datepickers" element={<DatePickersDemo />} />
           <Route path="/components/input" element={<InputDemo />} />
           <Route path="/components/password-input" element={<PasswordInputDemo />} />
-          <Route path="/components/password-strength-meter" element={<PasswordStrengthMeterDemo />} />
+          <Route
+            path="/components/password-strength-meter"
+            element={<PasswordStrengthMeterDemo />}
+          />
           <Route path="/components/select" element={<SelectDemo />} />
           <Route path="/components/table" element={<TableDemo />} />
           <Route path="/components/card" element={<CardDemo />} />
