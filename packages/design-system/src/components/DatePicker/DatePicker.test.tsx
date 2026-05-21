@@ -164,4 +164,57 @@ describe('DatePicker', () => {
     });
     expect(screen.getByRole('textbox')).toHaveValue('21.05.2026');
   });
+
+  it('typed input that is after `max` reverts on blur', async () => {
+    const user = userEvent.setup();
+    function Driver() {
+      const [v, setV] = useState<Date | null>(new Date(2026, 4, 21));
+      return <DatePicker value={v} onChange={setV} max={new Date(2026, 4, 25)} aria-label="Date" />;
+    }
+    render(<Driver />, { wrapper: wrap() });
+    const input = screen.getByRole('textbox');
+    await user.clear(input);
+    await user.type(input, '5/30/2026');
+    input.blur();
+    await waitFor(() => expect(input).toHaveValue('05/21/2026'));
+  });
+
+  it('typed input that fails `isDateDisabled` reverts on blur', async () => {
+    const user = userEvent.setup();
+    function Driver() {
+      const [v, setV] = useState<Date | null>(new Date(2026, 4, 21));
+      return (
+        <DatePicker
+          value={v}
+          onChange={setV}
+          isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
+          aria-label="Date"
+        />
+      );
+    }
+    render(<Driver />, { wrapper: wrap() });
+    const input = screen.getByRole('textbox');
+    await user.clear(input);
+    // 2026-05-23 is a Saturday.
+    await user.type(input, '5/23/2026');
+    input.blur();
+    await waitFor(() => expect(input).toHaveValue('05/21/2026'));
+  });
+
+  it('click outside closes the popover and commits the typed draft', async () => {
+    const onChange = vi.fn<(d: Date | null) => void>();
+    const user = userEvent.setup();
+    render(<DatePicker onChange={onChange} aria-label="Date" />, { wrapper: wrap() });
+    const input = screen.getByRole('textbox');
+    await user.click(input);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await user.type(input, '5/21/2026');
+    // Click on the document body outside the wrapper.
+    await user.click(document.body);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const committed = onChange.mock.calls.at(-1)![0]!;
+    expect(committed.getMonth()).toBe(4);
+    expect(committed.getDate()).toBe(21);
+  });
 });

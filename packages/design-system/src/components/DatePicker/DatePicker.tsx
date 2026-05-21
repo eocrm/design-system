@@ -3,7 +3,6 @@ import {
   useCallback,
   useEffect,
   useId,
-  useImperativeHandle,
   useRef,
   useState,
   type FocusEvent,
@@ -16,6 +15,7 @@ import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
+import { mergeRefs } from '../_internal/refs';
 import { DatePickerGrid } from './DatePickerGrid';
 import { formatDate, parseDate, toIsoDate, isDateOutOfRange } from './utils';
 import styles from './DatePicker.module.scss';
@@ -166,7 +166,6 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  useImperativeHandle(ref, () => inputRef.current as HTMLInputElement, []);
 
   const { refs, floatingStyles } = useFloating({
     open,
@@ -194,9 +193,11 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 
   const handleInputBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
-      // Defer so clicks inside the popover (grid cell, chevron) finish first —
-      // the input blurs BEFORE the click registers; the 0ms timer lets the
-      // click resolve so `wrapperRef.contains(document.activeElement)` is true.
+      // Defer so focus transitions to a sibling inside the wrapper (clear
+      // button, open-calendar button, or anything else the user Tabs to)
+      // can complete before we check `document.activeElement`. The popover
+      // itself uses `onMouseDown={preventDefault}` to keep input focus on
+      // grid clicks — this defer is purely for in-wrapper focus moves.
       window.setTimeout(() => {
         if (!wrapperRef.current?.contains(document.activeElement)) {
           commit(draft);
@@ -224,9 +225,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setOpen(true);
-        // Defer focus until the popover renders.
+        // Defer focus until the popover renders. Scope the query to this
+        // picker's floating element so coexisting dialogs don't steal focus.
         window.setTimeout(() => {
-          const dialog = document.querySelector<HTMLDivElement>('[role="dialog"]');
+          const dialog = refs.floating.current;
           const focusable = dialog?.querySelector<HTMLButtonElement>(
             '[role="gridcell"][tabindex="0"]',
           );
@@ -245,7 +247,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         inputRef.current?.focus();
       }
     },
-    [commit, draft, open],
+    [commit, draft, open, refs.floating],
   );
 
   const handleSelect = useCallback(
@@ -269,14 +271,21 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 
   const handleToggle = useCallback((e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setOpen((v) => !v);
+    setOpen((v) => {
+      const next = !v;
+      // On open, transfer focus to the input so the popover's
+      // ArrowDown contract works and the input is ready for typing.
+      if (next) inputRef.current?.focus();
+      return next;
+    });
   }, []);
 
   // Click outside closes (separate from blur to handle the case where
   // focus moved into the grid via mouse, then user clicks somewhere else).
+  // Uses `pointerdown` + capture phase to match Popover/DropdownMenu/Tooltip.
   useEffect(() => {
     if (!open) return;
-    const handler = (e: globalThis.MouseEvent) => {
+    const handler = (e: PointerEvent) => {
       const target = e.target as Node | null;
       const floating = refs.floating.current;
       if (target && !wrapperRef.current?.contains(target) && !floating?.contains(target)) {
@@ -284,8 +293,8 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('pointerdown', handler, true);
+    return () => document.removeEventListener('pointerdown', handler, true);
   }, [open, refs.floating, commit, draft]);
 
   const showClear = clearable && value != null && !disabled;
@@ -310,7 +319,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     >
       <input
         {...rest}
-        ref={inputRef}
+        ref={mergeRefs(inputRef, ref)}
         id={inputId}
         type="text"
         className={styles.input}
@@ -326,7 +335,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         aria-describedby={ariaDescribedBy}
         aria-haspopup="dialog"
         aria-expanded={open}
-        placeholder={placeholder ?? formatDate(new Date(2000, 0, 2), locale).replace(/[^\d]/g, '-')}
+        placeholder={placeholder ?? formatDate(new Date(2000, 0, 2), locale)}
         autoComplete="off"
       />
       {showClear && (
