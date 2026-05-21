@@ -175,6 +175,17 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     whileElementsMounted: autoUpdate,
   });
 
+  // ArrowDown bumps `focusGridTick` to request a focus-into-grid after the
+  // popover renders. Using a counter (rather than a ref-flag) guarantees a
+  // re-render and a fresh effect run even when `open` was already true.
+  const [focusGridTick, setFocusGridTick] = useState(0);
+  useEffect(() => {
+    if (focusGridTick === 0) return;
+    const dialog = refs.floating.current;
+    const focusable = dialog?.querySelector<HTMLButtonElement>('[role="gridcell"][tabindex="0"]');
+    focusable?.focus();
+  }, [focusGridTick, refs.floating]);
+
   const commit = useCallback(
     (raw: string) => {
       if (raw.trim() === '') {
@@ -194,19 +205,23 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
   const handleInputBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
       // Defer so focus transitions to a sibling inside the wrapper (clear
-      // button, open-calendar button, or anything else the user Tabs to)
-      // can complete before we check `document.activeElement`. The popover
-      // itself uses `onMouseDown={preventDefault}` to keep input focus on
-      // grid clicks — this defer is purely for in-wrapper focus moves.
+      // button, open-calendar button) — or programmatic focus into the
+      // portaled popover (ArrowDown into the grid) — can complete before
+      // we check `document.activeElement`. The popover uses
+      // `onMouseDown={preventDefault}` to keep input focus on grid clicks;
+      // this defer handles keyboard-driven focus moves.
       window.setTimeout(() => {
-        if (!wrapperRef.current?.contains(document.activeElement)) {
+        const active = document.activeElement;
+        const insideWrapper = wrapperRef.current?.contains(active);
+        const insideFloating = refs.floating.current?.contains(active);
+        if (!insideWrapper && !insideFloating) {
           commit(draft);
           setOpen(false);
         }
       }, 0);
       onBlur?.(e);
     },
-    [commit, draft, onBlur],
+    [commit, draft, onBlur, refs.floating],
   );
 
   const handleInputFocus = useCallback(
@@ -225,15 +240,11 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setOpen(true);
-        // Defer focus until the popover renders. Scope the query to this
-        // picker's floating element so coexisting dialogs don't steal focus.
-        window.setTimeout(() => {
-          const dialog = refs.floating.current;
-          const focusable = dialog?.querySelector<HTMLButtonElement>(
-            '[role="gridcell"][tabindex="0"]',
-          );
-          focusable?.focus();
-        }, 0);
+        // Bump the tick to schedule a focus-into-grid on the next commit.
+        // Going through a state-driven effect (rather than `setTimeout(0)`)
+        // is deterministic for jsdom, which otherwise races `waitFor`
+        // against the macrotask queue and yields intermittent failures.
+        setFocusGridTick((t) => t + 1);
         return;
       }
       if (e.key === 'Enter') {
@@ -247,7 +258,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         inputRef.current?.focus();
       }
     },
-    [commit, draft, open, refs.floating],
+    [commit, draft, open],
   );
 
   const handleSelect = useCallback(
