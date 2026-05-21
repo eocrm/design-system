@@ -13,14 +13,12 @@
   border-radius: var(--radius-md);
 }
 
-// Disabled — mute the entire inline group. Chevrons inside already
-// carry their own `disabled` attribute (Task 2 wired it); cells inside
-// each grid get tabIndex=-1 via the grid's own disabled handling.
-.disabled {
-  opacity: var(--opacity-disabled);
-}
-
 // External chevron header — same shape as DateRangePicker.popoverHeader.
+// (No wrapper-level `.disabled` class: each child grid mutes itself via
+// `DatePickerGrid`'s `disabled` prop. Stacking opacity here on top of the
+// per-grid opacity made cells render at ~0.25 — visibly ghostlier than
+// the popover variants or `<InlineDatePicker>`. The chevrons in the
+// header are native `<button disabled>` and already render muted.)
 .header {
   display: flex;
   align-items: center;

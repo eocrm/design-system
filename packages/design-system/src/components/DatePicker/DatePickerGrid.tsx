@@ -198,6 +198,7 @@ export function DatePickerGrid({
   );
 
   const handleCellKeyDown = (e: KeyboardEvent<HTMLButtonElement>, date: Date) => {
+    if (disabled) return;
     switch (e.key) {
       case 'ArrowRight':
         e.preventDefault();
@@ -318,7 +319,7 @@ export function DatePickerGrid({
                     isRangeEndCell(day.date) ||
                     undefined
                   }
-                  aria-disabled={isDisabledCell || undefined}
+                  aria-disabled={isDisabledCell || disabled || undefined}
                   tabIndex={tabIndexFor(day.date, isTodayCell)}
                   onClick={() => {
                     if (disabled || isDisabledCell) return;

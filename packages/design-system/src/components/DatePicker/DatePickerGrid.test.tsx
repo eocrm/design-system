@@ -398,11 +398,16 @@ describe('DatePickerGrid', () => {
     // Click no-ops
     await user.click(cell15);
     expect(onSelect).not.toHaveBeenCalled();
-    // Keyboard no-ops (programmatic focus + Space/Enter)
+    // Keyboard no-ops (programmatic focus + Space/Enter/arrows/PageDown)
     cell15.focus();
     await user.keyboard(' ');
     expect(onSelect).not.toHaveBeenCalled();
     await user.keyboard('{Enter}');
     expect(onSelect).not.toHaveBeenCalled();
+    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{PageDown}');
+    expect(onCursorChange).not.toHaveBeenCalled();
+    // Cell carries aria-disabled so AT announces it as disabled.
+    expect(cell15).toHaveAttribute('aria-disabled', 'true');
   });
 });

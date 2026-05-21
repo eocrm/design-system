@@ -61,10 +61,10 @@ const DEFAULT_LABELS: Required<InlineDateRangePickerLabels> = {
  * click-1 / click-2 / restart selection machine.
  *
  * Cursor anchors to `value?.start ?? new Date()` on mount. It re-anchors
- * once if `value` transitions from `null` to a non-null range (e.g.,
- * loading an async initial value). After that first arrival, subsequent
- * programmatic `value` changes do not move the cursor — the consumer
- * owns navigation into the new month via `ref`.
+ * each time `value` transitions from `null` to a non-null range (e.g.,
+ * loading an async initial value, or a consumer clearing and re-setting).
+ * After a transition, subsequent non-null `value` changes do not move
+ * the cursor — the consumer owns navigation into the new month via `ref`.
  *
  * The external prev/next chevrons in the header shift both grids by
  * ±1 month at once. Keyboard cross-grid navigation works in both
@@ -177,11 +177,7 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
 
     return (
       // {...rest} last so consumer overrides win (Pattern A).
-      <div
-        ref={ref}
-        className={clsx(styles.inline, disabled && styles.disabled, className)}
-        {...rest}
-      >
+      <div ref={ref} className={clsx(styles.inline, className)} {...rest}>
         <header className={styles.header}>
           <button
             type="button"

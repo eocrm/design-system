@@ -53,11 +53,11 @@ const DEFAULT_LABELS: Required<InlineDatePickerLabels> = {
  * always rendered in flow (no input, no popover). Composes the shared
  * `<DatePickerGrid>` in single-mode.
  *
- * Cursor anchors to `value ?? new Date()` on mount. It re-anchors once
- * if `value` transitions from `null` to a non-null date (e.g., loading
- * an async initial value). After that first arrival, subsequent
- * programmatic `value` changes do not move the cursor — the consumer
- * owns navigation into the new month via `ref`.
+ * Cursor anchors to `value ?? new Date()` on mount. It re-anchors each
+ * time `value` transitions from `null` to a non-null date (e.g., loading
+ * an async initial value, or a consumer clearing and re-setting). After
+ * a transition, subsequent non-null `value` changes do not move the
+ * cursor — the consumer owns navigation into the new month via `ref`.
  *
  * @example
  * <InlineDatePicker value={date} onChange={setDate} />
