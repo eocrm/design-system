@@ -8,6 +8,7 @@ export type ComponentName =
   | 'InlineDateRangePicker'
   | 'Input'
   | 'Select'
+  | 'Table'
   | 'Card'
   | 'Stack'
   | 'Cluster'

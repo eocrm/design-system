@@ -11,6 +11,7 @@ import { ButtonDemo } from './pages/components/ButtonDemo';
 import { DatePickersDemo } from './pages/components/DatePickersDemo';
 import { InputDemo } from './pages/components/InputDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
+import { TableDemo } from './pages/components/TableDemo';
 import { CardDemo } from './pages/components/CardDemo';
 import { StackDemo } from './pages/components/StackDemo';
 import { ClusterDemo } from './pages/components/ClusterDemo';
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/components/datepickers" element={<DatePickersDemo />} />
           <Route path="/components/input" element={<InputDemo />} />
           <Route path="/components/select" element={<SelectDemo />} />
+          <Route path="/components/table" element={<TableDemo />} />
           <Route path="/components/card" element={<CardDemo />} />
           <Route path="/components/stack" element={<StackDemo />} />
           <Route path="/components/cluster" element={<ClusterDemo />} />

@@ -8,6 +8,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
+import { Table } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
 import { Tooltip } from '@eocrm/design-system';
@@ -66,6 +67,34 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           ]}
           placeholder="Pick a status"
         />
+      </div>
+    ),
+  },
+  {
+    to: '/components/table',
+    name: 'Table',
+    description:
+      'Tabular data primitive — compound subcomponents over native HTML semantics with density, hover, striped, and sortable-header visuals.',
+    preview: (
+      <div style={{ width: 220 }}>
+        <Table density="dense" scroll={false}>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>Name</Table.HeaderCell>
+              <Table.HeaderCell align="end">Total</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell>Acme</Table.Cell>
+              <Table.Cell align="end">12.5K</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.Cell>Beanstalk</Table.Cell>
+              <Table.Cell align="end">4.2K</Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table>
       </div>
     ),
   },
