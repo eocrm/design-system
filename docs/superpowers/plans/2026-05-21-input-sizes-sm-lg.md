@@ -126,12 +126,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       // wins.
       aria-invalid={invalid || undefined}
       {...props}
-      className={clsx(
-        styles.input,
-        styles[`size-${size}`],
-        invalid && styles.invalid,
-        className,
-      )}
+      className={clsx(styles.input, styles[`size-${size}`], invalid && styles.invalid, className)}
     />
   );
 });
@@ -581,9 +576,21 @@ Same shape as Task 5 Step 1, swapped for DateRangePicker. Use the test file's ex
 >
   <InputExample>
     <Stack gap="sm">
-      <DateRangePicker size="sm" defaultValue={{ start: TODAY, end: IN_14 }} aria-label="Small range" />
-      <DateRangePicker size="md" defaultValue={{ start: TODAY, end: IN_14 }} aria-label="Medium range" />
-      <DateRangePicker size="lg" defaultValue={{ start: TODAY, end: IN_14 }} aria-label="Large range" />
+      <DateRangePicker
+        size="sm"
+        defaultValue={{ start: TODAY, end: IN_14 }}
+        aria-label="Small range"
+      />
+      <DateRangePicker
+        size="md"
+        defaultValue={{ start: TODAY, end: IN_14 }}
+        aria-label="Medium range"
+      />
+      <DateRangePicker
+        size="lg"
+        defaultValue={{ start: TODAY, end: IN_14 }}
+        aria-label="Large range"
+      />
     </Stack>
   </InputExample>
 </Example>

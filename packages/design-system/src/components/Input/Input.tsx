@@ -84,12 +84,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       // wins.
       aria-invalid={invalid || undefined}
       {...props}
-      className={clsx(
-        styles.input,
-        styles[`size-${size}`],
-        invalid && styles.invalid,
-        className,
-      )}
+      className={clsx(styles.input, styles[`size-${size}`], invalid && styles.invalid, className)}
     />
   );
 });

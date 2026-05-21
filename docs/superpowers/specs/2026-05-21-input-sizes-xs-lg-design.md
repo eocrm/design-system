@@ -96,11 +96,10 @@ Component composes: `clsx(styles.input, styles[`size-${size}`], invalid && style
 ```ts
 export type DatePickerSize = 'sm' | 'md' | 'lg';
 
-export interface DatePickerProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max' | 'size'
-  > {
+export interface DatePickerProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max' | 'size'
+> {
   // … existing props …
   /** Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. */
   size?: DatePickerSize;

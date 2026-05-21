@@ -146,9 +146,21 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
       >
         <InputExample>
           <Stack gap="sm">
-            <DateRangePicker size="sm" defaultValue={{ start: TODAY, end: IN_14 }} aria-label="Small range" />
-            <DateRangePicker size="md" defaultValue={{ start: TODAY, end: IN_14 }} aria-label="Medium range" />
-            <DateRangePicker size="lg" defaultValue={{ start: TODAY, end: IN_14 }} aria-label="Large range" />
+            <DateRangePicker
+              size="sm"
+              defaultValue={{ start: TODAY, end: IN_14 }}
+              aria-label="Small range"
+            />
+            <DateRangePicker
+              size="md"
+              defaultValue={{ start: TODAY, end: IN_14 }}
+              aria-label="Medium range"
+            />
+            <DateRangePicker
+              size="lg"
+              defaultValue={{ start: TODAY, end: IN_14 }}
+              aria-label="Large range"
+            />
           </Stack>
         </InputExample>
       </Example>

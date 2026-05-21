@@ -328,7 +328,9 @@ describe('DateRangePicker', () => {
   });
 
   it('applies size class names for sm / md / lg', () => {
-    const { rerender, container } = render(<DateRangePicker size="sm" aria-label="Sized" />, { wrapper: wrap() });
+    const { rerender, container } = render(<DateRangePicker size="sm" aria-label="Sized" />, {
+      wrapper: wrap(),
+    });
     expect(container.querySelector('[class*="size-sm"]')).not.toBeNull();
     rerender(<DateRangePicker size="md" aria-label="Sized" />);
     expect(container.querySelector('[class*="size-md"]')).not.toBeNull();

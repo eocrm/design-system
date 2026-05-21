@@ -52,7 +52,12 @@ export function InputDemo() {
           <Stack gap="sm">
             <Input size="sm" placeholder="Filter…" aria-label="Small input" />
             <Input size="md" placeholder="Default" aria-label="Medium input" />
-            <Input size="lg" type="search" placeholder="Search the workspace" aria-label="Large input" />
+            <Input
+              size="lg"
+              type="search"
+              placeholder="Search the workspace"
+              aria-label="Large input"
+            />
           </Stack>
         </InputExample>
       </Example>
