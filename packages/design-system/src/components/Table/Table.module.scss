@@ -1,0 +1,158 @@
+// Scroll wrapper — horizontal overflow context for wide tables AND the
+// scroll container for sticky headers.
+.scrollWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: inherit;
+  color: var(--color-fg);
+}
+
+// ─── Density ───────────────────────────────────────────────────────────────
+
+.density-comfortable .td,
+.density-comfortable .th {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-md);
+}
+
+.density-dense .td,
+.density-dense .th {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+// ─── Sections ──────────────────────────────────────────────────────────────
+
+.caption {
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
+  text-align: start;
+}
+
+.thead .tr {
+  background: var(--color-bg-subtle);
+}
+
+.tbody .tr {
+  background: var(--color-bg);
+}
+
+.tfoot .tr {
+  background: var(--color-bg-subtle);
+}
+
+// ─── Rows ──────────────────────────────────────────────────────────────────
+
+.tr {
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.hover .tbody .tr:hover {
+  background: var(--color-bg-subtle);
+}
+
+.striped .tbody .tr:nth-of-type(even) {
+  background: var(--color-bg-subtle);
+}
+
+// Selected wins over hover + striped (later declaration, equal specificity).
+.tbody .tr.selected,
+.tbody .tr.selected:hover {
+  background: var(--color-accent-bg-subtle);
+  color: var(--color-fg);
+}
+
+// ─── Cells ─────────────────────────────────────────────────────────────────
+
+.th {
+  color: var(--color-fg-muted);
+  font-weight: var(--font-weight-semibold);
+  text-transform: none;
+  vertical-align: middle;
+}
+
+.td {
+  vertical-align: middle;
+}
+
+// Inner flex container for header cells so sort chevron sits beside text.
+.thInner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+// Alignment — applied via CSS logical properties (RTL-friendly).
+.align-start {
+  text-align: start;
+}
+
+.align-center {
+  text-align: center;
+}
+
+.align-end {
+  text-align: end;
+}
+
+// Right-aligned headers need the chevron on the start side of the label,
+// not the end — flip the inner flex direction.
+.align-end .thInner {
+  flex-direction: row-reverse;
+}
+
+// ─── Sortable header ───────────────────────────────────────────────────────
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background: var(--color-bg-muted);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 var(--ring-width) var(--ring-accent);
+  }
+}
+
+.sortIcon {
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+}
+
+.sortable:not(.sortableInactive) .sortIcon {
+  color: var(--color-fg);
+}
+
+// ─── Sticky header ─────────────────────────────────────────────────────────
+
+// stylelint-disable property-disallowed-list -- Rule 4 escape hatch: position:sticky here is internal layout (anchors the header to the .scrollWrap scroll context), not a public-component layout property. Same precedent as AvatarGroup .item z-index.
+.stickyHeader .thead .th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+
+  // Repeat the header bg here — `tr` bg paints below the th's sticky
+  // layer in some browsers, leaving body rows visible through it.
+  background: var(--color-bg-subtle);
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Cell modifiers ────────────────────────────────────────────────────────
+
+// stylelint-disable property-disallowed-list -- max-width: 0 is the standard flex/table-cell ellipsis trick (forces the cell to honour text-overflow). This is an internal-child modifier, not a public layout constraint on the component boundary.
+.truncate {
+  max-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+// stylelint-enable property-disallowed-list
