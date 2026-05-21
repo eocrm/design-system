@@ -35,30 +35,50 @@
   text-align: start;
 }
 
+// Three distinct background tones in a hierarchy:
+//   header / footer  → --color-bg-muted   (#f4f5f7)  — visibly chrome-y
+//   striped (even)   → --color-bg-subtle  (#fafbfc)  — faintest zebra
+//   hover            → --color-bg-sunken  (#ebecf0)  — strongest, signals
+//                                                       active interaction
+// Each visually distinguishable from the others and from the white body row.
 .thead .tr {
-  background: var(--color-bg-subtle);
+  background: var(--color-bg-muted);
 }
 
 .tbody .tr {
+  // Body row bg + bottom-border divider. The last body row's bottom
+  // border also serves as the divider between body and footer via
+  // `border-collapse: collapse`.
   background: var(--color-bg);
+  border-bottom: var(--border-width) solid var(--color-border);
 }
 
 .tfoot .tr {
-  background: var(--color-bg-subtle);
+  background: var(--color-bg-muted);
 }
 
 // ─── Rows ──────────────────────────────────────────────────────────────────
 
-.tr {
+// The header's bottom border lives on the .th itself (NOT on a generic
+// `.tr { border-bottom }`) so it stays pinned with sticky headers — a
+// border on `<tr>` scrolls away because only the inner `<th>`s are sticky.
+.thead .th {
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
-.hover .tbody .tr:hover {
+// Background cascade (all four rules same-ish specificity — source order
+// resolves ties):
+//   .striped .tbody .tr:nth-of-type(even)  (0,4,0)
+//   .hover   .tbody .tr:hover              (0,4,0)  — must be declared AFTER
+//                                                    striped so hover wins on
+//                                                    striped+even rows
+//   Selected variants below — declared even later AND higher specificity.
+.striped .tbody .tr:nth-of-type(even) {
   background: var(--color-bg-subtle);
 }
 
-.striped .tbody .tr:nth-of-type(even) {
-  background: var(--color-bg-subtle);
+.hover .tbody .tr:hover {
+  background: var(--color-bg-sunken);
 }
 
 // Bordered — full grid. With `border-collapse: collapse` already on the
@@ -71,16 +91,16 @@
   border: var(--border-width) solid var(--color-border);
 }
 
-// Selected wins over hover + striped. The `.striped .tbody .tr.selected`
-// arm matches the same specificity as `.striped .tbody .tr:nth-of-type(even)`
-// (both four-class selectors) — source order then wins because selected is
-// declared AFTER striped. Without this extra arm, striped would beat selected
-// on even rows due to the `:nth-of-type(even)` pseudo-class bumping
-// specificity above the plain `.tbody .tr.selected` selector.
+// Selected wins over striped + hover.
+//   .tbody .tr.selected               (0,3,0) — base, beats .tbody .tr (0,2,1)
+//   .striped .tbody .tr.selected      (0,4,0) — beats .striped+nth-of-type
+//                                                via source order
+//   .hover .tbody .tr.selected:hover  (0,5,0) — beats .hover .tr:hover (0,4,0)
+//                                                via specificity, covers both
+//                                                striped and non-striped tables
 .tbody .tr.selected,
-.tbody .tr.selected:hover,
 .striped .tbody .tr.selected,
-.striped .tbody .tr.selected:hover {
+.hover .tbody .tr.selected:hover {
   background: var(--color-accent-bg-subtle);
   color: var(--color-fg);
 }
@@ -158,8 +178,9 @@
   z-index: 1;
 
   // Repeat the header bg here — `tr` bg paints below the th's sticky
-  // layer in some browsers, leaving body rows visible through it.
-  background: var(--color-bg-subtle);
+  // layer in some browsers, leaving body rows visible through it. Must
+  // match the .thead .tr background above.
+  background: var(--color-bg-muted);
 }
 // stylelint-enable property-disallowed-list
 
