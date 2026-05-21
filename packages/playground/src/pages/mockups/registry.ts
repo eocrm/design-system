@@ -10,6 +10,7 @@ export type ComponentName =
   | 'Select'
   | 'Table'
   | 'Card'
+  | 'Checkbox'
   | 'Stack'
   | 'Cluster'
   | 'Avatar'

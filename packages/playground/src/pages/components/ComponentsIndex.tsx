@@ -4,6 +4,7 @@ import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
+import { Checkbox } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
@@ -110,6 +111,19 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           <div className={styles.skeleton} style={{ width: '80%' }} />
         </Stack>
       </Card>
+    ),
+  },
+  {
+    to: '/components/checkbox',
+    name: 'Checkbox',
+    description:
+      'Native-input-backed checkbox with custom paint — sizes, indeterminate, label, invalid, full form integration.',
+    preview: (
+      <Stack gap="xs">
+        <Checkbox defaultChecked label="Checked" />
+        <Checkbox indeterminate label="Indeterminate" />
+        <Checkbox label="Unchecked" />
+      </Stack>
     ),
   },
   {

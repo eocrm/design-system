@@ -120,6 +120,12 @@
   --size-badge-dot: 6px;
   --size-chip: 18px;
 
+  // Checkbox box diameter per size. Pairs with the Input scale so a
+  // checkbox labelled next to a `<Input size="sm">` lines up visually.
+  --size-checkbox-sm: 14px;
+  --size-checkbox-md: 16px;
+  --size-checkbox-lg: 20px;
+
   // Indeterminate loading spinner (Select listbox loading row). Small
   // enough to fit inline next to the "Loading…" label without dominating
   // the row.

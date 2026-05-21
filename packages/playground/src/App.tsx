@@ -13,6 +13,7 @@ import { InputDemo } from './pages/components/InputDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { CardDemo } from './pages/components/CardDemo';
+import { CheckboxDemo } from './pages/components/CheckboxDemo';
 import { StackDemo } from './pages/components/StackDemo';
 import { ClusterDemo } from './pages/components/ClusterDemo';
 import { AvatarDemo } from './pages/components/AvatarDemo';
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/components/select" element={<SelectDemo />} />
           <Route path="/components/table" element={<TableDemo />} />
           <Route path="/components/card" element={<CardDemo />} />
+          <Route path="/components/checkbox" element={<CheckboxDemo />} />
           <Route path="/components/stack" element={<StackDemo />} />
           <Route path="/components/cluster" element={<ClusterDemo />} />
           <Route path="/components/avatar" element={<AvatarDemo />} />

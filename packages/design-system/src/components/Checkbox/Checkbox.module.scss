@@ -1,0 +1,139 @@
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+
+  // Pin the label's baseline contribution to its middle so the surrounding
+  // line-box stays the same height whether the box is checked (SVG inside)
+  // or unchecked (empty). Without this, an inline-flex element's baseline
+  // shifts based on inner content and the parent line-box grows/shrinks ~2px.
+  vertical-align: middle;
+
+  &.disabled {
+    cursor: not-allowed;
+  }
+}
+
+// Visually-hidden native input — stays in tab order + AT tree.
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  /* stylelint-disable-next-line property-disallowed-list -- margin: -1px is the standard visually-hidden recipe; it offsets the 1px width/height so the element doesn't affect flow. Not a layout concern on the component boundary. */
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// The painted box.
+.box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+
+  // line-height: 1 keeps the box's intrinsic height constant whether it
+  // contains an SVG (checked / indeterminate) or nothing (unchecked).
+  // Without this the inline-box height jumps between states because the
+  // child SVG's baseline contributes to the line-box.
+  line-height: 1;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-accent-fg);
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+// Size modifiers — box diameter + label font.
+.size-sm .box {
+  width: var(--size-checkbox-sm);
+  height: var(--size-checkbox-sm);
+}
+
+.size-md .box {
+  width: var(--size-checkbox-md);
+  height: var(--size-checkbox-md);
+}
+
+.size-lg .box {
+  width: var(--size-checkbox-lg);
+  height: var(--size-checkbox-lg);
+}
+
+.size-sm .labelText {
+  font-size: var(--font-size-sm);
+}
+
+.size-md .labelText {
+  font-size: var(--font-size-md);
+}
+
+.size-lg .labelText {
+  font-size: var(--font-size-lg);
+}
+
+// Hover preview — border only, no fill (Atlassian-style restraint).
+// Excludes .invalid so the danger border stays visible on hover instead
+// of flipping to accent and hiding the error signal.
+.checkbox:not(.disabled, .invalid):hover .box {
+  border-color: var(--color-accent);
+}
+
+// Checked + indeterminate share the filled-accent visual.
+.input:checked + .box,
+.input:indeterminate + .box {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+// Focus ring on the box (sibling selector picks up native input focus).
+.input:focus-visible + .box {
+  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+}
+
+// Disabled — muted bg + border. The input still receives `disabled`
+// natively which gates pointer events on the label.
+.disabled .box {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border);
+  color: var(--color-fg-disabled);
+}
+
+.disabled .input:checked + .box,
+.disabled .input:indeterminate + .box {
+  background: var(--color-border);
+  border-color: var(--color-border);
+}
+
+.disabled .labelText {
+  color: var(--color-fg-disabled);
+}
+
+// Invalid — danger border + danger focus ring. Wins over the unchecked
+// hover preview.
+.invalid .box {
+  border-color: var(--color-danger);
+}
+
+.invalid .input:focus-visible + .box {
+  box-shadow: 0 0 0 var(--ring-width) var(--ring-danger);
+}
+
+.invalid .input:checked + .box,
+.invalid .input:indeterminate + .box {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.labelText {
+  line-height: var(--line-height-normal);
+}
