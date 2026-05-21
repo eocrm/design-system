@@ -8,12 +8,21 @@ describe('Skeleton', () => {
     expect(container.firstChild?.nodeName).toBe('SPAN');
   });
 
-  it('default variant is text — applies the text class + height defaults to 1em', () => {
+  it('default variant is text — applies the text class + height defaults to 1em + no inline width', () => {
     const { container } = render(<Skeleton />);
     const el = container.firstChild as HTMLElement;
     expect(el.className).toMatch(/variant-text/);
     expect(el.style.height).toBe('1em');
+    // No width prop → no inline width style emitted; the element flows
+    // inline within its parent text container.
+    expect(el.style.width).toBe('');
   });
+
+  // Note: `prefers-reduced-motion: reduce` animation suppression is
+  // verified at the CSS layer (Skeleton.module.scss line 45+). jsdom's
+  // matchMedia is unreliable for media-query reactivity, so we don't
+  // attempt to assert on it here — the cascade rule sits at equal
+  // specificity with the .pulse declaration and wins via source order.
 
   it('variant="circular" — when only width is set, height matches (square)', () => {
     const { container } = render(<Skeleton variant="circular" width={32} />);

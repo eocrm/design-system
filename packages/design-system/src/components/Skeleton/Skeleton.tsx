@@ -107,6 +107,12 @@ export const Skeleton = forwardRef<HTMLSpanElement, SkeletonProps>(function Skel
     ...style,
   };
 
+  // Spread order: ref + aria-hidden BEFORE {...props} so a consumer can
+  // override aria-hidden (e.g., for a Skeleton that IS the loading
+  // announcement on a page with no parent live region). className and
+  // style live AFTER {...props} so the component's class composition +
+  // dimension style win over any consumer-supplied raw className / style
+  // (consumer composes via the prop, not by replacing).
   return (
     <span
       ref={ref}

@@ -42,10 +42,10 @@
   }
 }
 
-// Respect reduced-motion. Wins over the .pulse class above because of
-// source order + the !important on the animation property (which is
-// the standard pattern for reduced-motion suppression — without it,
-// the more-specific .pulse rule would override).
+// Respect reduced-motion. Wins over the .pulse rule above purely via
+// source order — both selectors are class-specificity (0,1,0), so the
+// later declaration takes precedence in the cascade. No !important
+// needed.
 @media (prefers-reduced-motion: reduce) {
   .pulse {
     animation: none;
