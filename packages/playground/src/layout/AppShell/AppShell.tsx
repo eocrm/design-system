@@ -10,6 +10,7 @@ import {
   Plus,
   Component,
   MousePointer2,
+  CheckSquare,
   TextCursorInput,
   ChevronsUpDown,
   CalendarRange,
@@ -61,6 +62,7 @@ const componentGroups = [
     heading: 'Forms',
     items: [
       { to: '/components/button', label: 'Button', icon: MousePointer2, end: false },
+      { to: '/components/checkbox', label: 'Checkbox', icon: CheckSquare, end: false },
       { to: '/components/datepickers', label: 'Date pickers', icon: CalendarRange, end: false },
       { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
       { to: '/components/select', label: 'Select', icon: ChevronsUpDown, end: false },
