@@ -99,6 +99,9 @@ export type {
   SelectTriggerDisplay,
 } from './components/Select';
 
+export { Skeleton } from './components/Skeleton';
+export type { SkeletonProps, SkeletonVariant, SkeletonAnimation } from './components/Skeleton';
+
 export { Table } from './components/Table';
 export type {
   TableProps,
