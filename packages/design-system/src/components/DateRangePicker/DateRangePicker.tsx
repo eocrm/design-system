@@ -178,6 +178,15 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
     const inputRef = useRef<HTMLInputElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
+    // Mirror `open` into a ref so the deferred blur handler can read its
+    // current value (closure would otherwise capture the stale value at
+    // the time of blur dispatch). Used to skip the deferred commit if the
+    // pointerdown outside-click handler already closed + committed.
+    const openRef = useRef(open);
+    useEffect(() => {
+      openRef.current = open;
+    }, [open]);
+
     const { refs, floatingStyles } = useFloating({
       open,
       placement: 'bottom-start',
@@ -218,6 +227,10 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       (e: FocusEvent<HTMLInputElement>) => {
         // Defer so in-wrapper / in-popover focus moves can complete first.
         window.setTimeout(() => {
+          // If the outside-click pointerdown handler already closed us,
+          // skip — it already committed the draft in the same user action.
+          // Without this guard, onChange double-fires on outside click.
+          if (!openRef.current) return;
           const active = document.activeElement;
           const insideWrapper = wrapperRef.current?.contains(active);
           const insideFloating = refs.floating.current?.contains(active);
@@ -389,7 +402,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           aria-expanded={open}
           placeholder={
             placeholder ??
-            `${formatDate(new Date(2000, 0, 2), locale)} — ${formatDate(new Date(2000, 0, 2), locale)}`
+            `${formatDate(new Date(2000, 0, 2), locale)} — ${formatDate(new Date(2000, 0, 9), locale)}`
           }
           autoComplete="off"
         />
@@ -452,7 +465,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                 <DatePickerGrid
                   cursor={cursor}
                   value={null}
-                  onCursorChange={() => {}}
+                  onCursorChange={setCursor}
                   onSelect={handleGridSelect}
                   min={min}
                   max={max}
@@ -472,7 +485,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                 <DatePickerGrid
                   cursor={rightCursor}
                   value={null}
-                  onCursorChange={() => {}}
+                  onCursorChange={setCursor}
                   onSelect={handleGridSelect}
                   min={min}
                   max={max}

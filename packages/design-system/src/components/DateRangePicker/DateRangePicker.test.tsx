@@ -293,7 +293,7 @@ describe('DateRangePicker', () => {
     expect(screen.getByRole('textbox')).toHaveValue('21.05.2026 — 04.06.2026');
   });
 
-  it('click outside closes the popover and commits any pending draft', async () => {
+  it('click outside closes the popover and commits any pending draft exactly once', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn<(r: DateRange | null) => void>();
     render(<DateRangePicker onChange={onChange} aria-label="Range" />, {
@@ -305,6 +305,25 @@ describe('DateRangePicker', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     await user.click(document.body);
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(onChange).toHaveBeenCalled();
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('keyboard ArrowRight at left-grid end-of-month crosses into the next grid', async () => {
+    const user = userEvent.setup();
+    // Anchor cursor on May 2026 by providing a defaultValue in May.
+    render(
+      <DateRangePicker
+        defaultValue={{ start: new Date(2026, 4, 31), end: new Date(2026, 4, 31) }}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('textbox'));
+    await user.keyboard('{ArrowDown}'); // focus into grid on May 31 cell
+    // Confirm we're on May 31.
+    expect((document.activeElement as HTMLElement)?.textContent).toBe('31');
+    await user.keyboard('{ArrowRight}');
+    // June 1 cell — could be in either grid depending on cursor shift; assert text content.
+    expect((document.activeElement as HTMLElement)?.textContent).toBe('1');
   });
 });
