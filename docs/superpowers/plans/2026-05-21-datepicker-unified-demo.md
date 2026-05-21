@@ -395,6 +395,7 @@ git commit -m "DatePickersDemo: unified page with variant tabs (URL search-param
 - [ ] **Step 1: Remove 4 old imports, add 1 new import**
 
 Remove:
+
 ```tsx
 import { DatePickerDemo } from './pages/components/DatePickerDemo';
 import { DateRangePickerDemo } from './pages/components/DateRangePickerDemo';
@@ -403,6 +404,7 @@ import { InlineDateRangePickerDemo } from './pages/components/InlineDateRangePic
 ```
 
 Add:
+
 ```tsx
 import { DatePickersDemo } from './pages/components/DatePickersDemo';
 ```
@@ -605,12 +607,14 @@ make dev &  # or already running
 ```
 
 Visit:
+
 - `http://localhost:8080/components/datepickers` → DatePicker tab active
 - `http://localhost:8080/components/datepickers?variant=daterangepicker` → DateRangePicker tab active
 - `http://localhost:8080/components/datepickers?variant=inline-datepicker` → InlineDatePicker tab active
 - `http://localhost:8080/components/datepickers?variant=inline-daterangepicker` → InlineDateRangePicker tab active
 
 Verify on each:
+
 - Page header reads "Date pickers" (not the variant name)
 - The tab strip is visible with 4 tabs and the right one is active
 - The active panel shows source `<details>` + examples

@@ -25,7 +25,7 @@ Collapse the four current datepicker demo pages (`DatePicker`, `DateRangePicker`
 
 ### `DemoLayout` split
 
-`DemoLayout.tsx` today renders header + source-details + examples-grid + cross-link in one function. To reuse the bottom three pieces *under tabs*, extract `DemoBody.tsx`:
+`DemoLayout.tsx` today renders header + source-details + examples-grid + cross-link in one function. To reuse the bottom three pieces _under tabs_, extract `DemoBody.tsx`:
 
 - `DemoBody` props: `tsxSource`, `scssSource`, `tsxFilename`, `scssFilename`, `componentName?`, `children`. Renders source `<details>` + examples grid + `<CrossLinks>`.
 - `DemoLayout` becomes: page header (eyebrow + h1 + description) + `<DemoBody>`. Public API unchanged — all existing demos keep working.
@@ -54,9 +54,8 @@ export function DatePickersDemo() {
         <span className={styles.eyebrow}>Component</span>
         <h1 className={styles.title}>Date pickers</h1>
         <p className={styles.description}>
-          Single date or range × popover field or inline calendar. Four
-          variants of the same month-grid surface; pick the one that
-          matches the page's interaction need.
+          Single date or range × popover field or inline calendar. Four variants of the same
+          month-grid surface; pick the one that matches the page's interaction need.
         </p>
       </header>
 
@@ -129,6 +128,7 @@ Four routes → one route:
 ### Files touched
 
 Modified:
+
 - `packages/playground/src/pages/components/DemoLayout.tsx` (split header out)
 - `packages/playground/src/pages/components/DatePickerDemo.tsx` (export `DatePickerDemoPanel` instead of `DatePickerDemo`)
 - `packages/playground/src/pages/components/DateRangePickerDemo.tsx` (likewise)
@@ -140,6 +140,7 @@ Modified:
 - `packages/playground/src/App.tsx` (4 routes → 1)
 
 Created:
+
 - `packages/playground/src/pages/components/DatePickersDemo.tsx`
 - `packages/playground/src/pages/components/DemoBody.tsx`
 
