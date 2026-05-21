@@ -62,9 +62,9 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
 
 A new `useAvatarGroup()` hook reads `AvatarGroupContext`. When an `<Avatar>` is rendered inside an `<AvatarGroup>`:
 
-- The group's `size` overrides the Avatar's own `size` (so the group renders uniformly even if a consumer-pasted child specified its own size).
-- The group's `tooltip` flag becomes the default for `tooltip` (still overridable on each child).
-- A SCSS modifier `.inGroup` is added so the avatar picks up the white ring used to visually separate stacked siblings.
+- The group's `size` becomes the **default** for each child — explicit per-child `size` prop still wins (idiomatic React composition: explicit prop beats context). The common "uniform group" case works by simply not setting per-child sizes.
+- The group's `tooltip` flag also becomes the default; explicit per-child `tooltip` wins.
+- A SCSS modifier `.inGroup` is added so the avatar picks up the `--color-bg` ring used to visually separate stacked siblings.
 
 If `useAvatarGroup()` returns `null` (the common standalone case), Avatar behaves exactly as it does today.
 
@@ -76,8 +76,9 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 
   /**
-   * Uniform diameter for every avatar in the group. Defaults to `'md'`.
-   * Overrides any `size` set on individual children.
+   * Diameter default for child avatars (each child can override via its own
+   * `size` prop). Defaults to `'md'`. To get a strictly uniform group, simply
+   * don't set `size` on individual children.
    */
   size?: AvatarSize;
 

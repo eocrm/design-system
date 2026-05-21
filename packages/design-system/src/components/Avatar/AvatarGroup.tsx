@@ -17,8 +17,10 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 
   /**
-   * Uniform diameter for every avatar in the group. Defaults to `'md'`.
-   * Overrides any `size` set on individual children.
+   * Diameter default for child avatars. Defaults to `'md'`. Each child can
+   * still override via its own `size` prop (idiomatic React composition —
+   * explicit prop wins). For a strictly uniform group, don't set `size` on
+   * individual children.
    */
   size?: AvatarSize;
 
@@ -82,8 +84,9 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
  *   The `+N` is the click affordance; the visible avatars are deliberately not
  *   interactive in the library — wrap individual avatars in `<button>` / `<Link>`
  *   if needed.
- * - ❌ Mixing avatar sizes inside one group. The group's `size` overrides
- *   per-child sizes.
+ * - ❌ Mixing avatar sizes inside one group on purpose. The group's `size`
+ *   is the default; per-child explicit `size` wins, which is useful for
+ *   emphasising a specific member but visually noisy if used carelessly.
  */
 export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function AvatarGroup(
   { children, size = 'md', max = 4, tooltip = true, onOverflowClick, className, ...props },
