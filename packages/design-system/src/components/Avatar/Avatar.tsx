@@ -1,15 +1,21 @@
 import { forwardRef, useEffect, useState, type CSSProperties, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
+import { Tooltip } from '../Tooltip';
+import { useAvatarGroup } from './AvatarGroupContext';
 import styles from './Avatar.module.scss';
 
 /** Diameter. Matches the shared `--size-*` scale so a Button next to an Avatar lines up. */
 export type AvatarSize = 'sm' | 'md' | 'lg';
 
+/** Presence dot rendered in the bottom-right corner. Omit to render no dot. */
+export type AvatarStatus = 'online' | 'busy' | 'away' | 'offline';
+
 export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
   /**
    * The person's name. Required — used as the `alt`/`aria-label`, as the
    * source of the initials, and as the seed for the deterministic fallback
-   * color. The same name always renders the same color.
+   * color. The same name always renders the same color. When `tooltip` is
+   * true, also used as the tooltip body.
    */
   name: string;
   /**
@@ -23,8 +29,27 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
    * - `sm` (24px) — table rows, dense lists.
    * - `md` (32px, default) — most uses.
    * - `lg` (40px) — detail-page headers.
+   *
+   * Inside `<AvatarGroup>`, the group's `size` overrides this.
    */
   size?: AvatarSize;
+  /**
+   * Presence dot in the bottom-right.
+   * - `'online'`  — green.
+   * - `'busy'`    — red.
+   * - `'away'`    — amber.
+   * - `'offline'` — gray.
+   * Omit to render no dot at all.
+   */
+  status?: AvatarStatus;
+  /**
+   * Whether to wrap the avatar in a `<Tooltip>` showing `name`. Defaults to
+   * `false` (back-compat — existing renders don't gain a hover affordance).
+   * Inside `<AvatarGroup>`, the group's `tooltip` prop becomes the default
+   * (which itself defaults to `true` for grouped avatars); explicit
+   * per-child still wins.
+   */
+  tooltip?: boolean;
 }
 
 const sizeClass: Record<AvatarSize, string> = {
@@ -52,9 +77,6 @@ export function avatarColorIndex(name: string): number {
   return (Math.abs(hash) % 6) + 1;
 }
 
-// CSS custom properties (--foo) aren't part of CSSProperties' typed keys, so
-// we intersect with a template-literal-key map for `--*` entries. Avoids the
-// `as never` + `as React.CSSProperties` double-cast.
 type StyleWithVars = CSSProperties & { [key: `--${string}`]: string | number };
 
 function hasOwnProps(obj: object | undefined): obj is object {
@@ -68,11 +90,18 @@ function hasOwnProps(obj: object | undefined): obj is object {
  *
  * On image load failure, the component automatically falls back to initials.
  *
+ * Inside `<AvatarGroup>`, the group's `size` and `tooltip` defaults take over —
+ * individual `size` / `tooltip` props still win per-child.
+ *
  * @example
  * <Avatar name="Alex Rivera" />
  *
  * @example
- * <Avatar name="Alex Rivera" src="https://example.com/alex.jpg" size="lg" />
+ * <Avatar name="Alex Rivera" src="https://example.com/alex.jpg" size="lg" status="online" />
+ *
+ * @example
+ * // Hover-discoverable name (off by default; opt in).
+ * <Avatar name="Alex Rivera" tooltip />
  *
  * @example
  * // In a table row:
@@ -95,22 +124,19 @@ function hasOwnProps(obj: object | undefined): obj is object {
  *   without `src`, the wrapper has `role="img" aria-label={name}`.
  */
 export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
-  { name, src, size = 'md', className, style, ...props },
+  { name, src, size, status, tooltip, className, style, ...props },
   ref,
 ) {
-  // Reset the broken-image flag whenever `src` changes — a new URL deserves
-  // a fresh attempt to load.
+  const group = useAvatarGroup();
+  const resolvedSize: AvatarSize = size ?? group?.size ?? 'md';
+  const resolvedTooltip: boolean = tooltip ?? group?.tooltip ?? false;
+
   const [imageBroken, setImageBroken] = useState(false);
   useEffect(() => {
     setImageBroken(false);
   }, [src]);
 
-  // Treat empty/whitespace `src` as "no image" so we don't render <img src="">.
-  // Same effect when the image fails to load — fall back to initials.
   const hasImage = typeof src === 'string' && src.trim() !== '' && !imageBroken;
-
-  // Always derive a safe label/alt — even if the consumer passes a whitespace
-  // name with an image, we want a meaningful accessible name.
   const trimmedName = name.trim();
   const accessibleName = trimmedName === '' ? '?' : trimmedName;
 
@@ -118,40 +144,60 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
     ? undefined
     : { '--avatar-bg': `var(--color-avatar-${avatarColorIndex(accessibleName)})` };
 
-  // Only emit a style attribute when we actually have something to set —
-  // checking truthiness alone would let an empty `style={{}}` prop emit `style=""`.
   const mergedStyle: StyleWithVars | undefined =
     hasOwnProps(fallbackStyle) || hasOwnProps(style) ? { ...fallbackStyle, ...style } : undefined;
 
-  if (hasImage) {
-    // When showing a real image, the <img> itself carries the image role
-    // (with `name` as its alt). The wrapper is just a circular crop — no
-    // need to also be role="img".
-    //
-    // {...props} is spread FIRST so component-owned attributes (className/style)
-    // win against any consumer override.
-    return (
-      <span
-        {...props}
-        ref={ref}
-        className={clsx(styles.avatar, sizeClass[size], className)}
-        style={mergedStyle}
-      >
-        <img src={src} alt={accessibleName} onError={() => setImageBroken(true)} />
-      </span>
-    );
-  }
+  const wrapperClass = clsx(
+    styles.avatar,
+    sizeClass[resolvedSize],
+    group != null && styles.inGroup,
+    className,
+  );
 
-  return (
+  // .crop clips the image/initials into a circle without clipping the
+  // .presence dot, which lives as a sibling outside .crop.
+  const cropInner = hasImage ? (
+    <span className={styles.crop}>
+      <img src={src} alt={accessibleName} onError={() => setImageBroken(true)} />
+    </span>
+  ) : (
+    <span className={styles.crop}>
+      <span aria-hidden="true">{initials(name)}</span>
+    </span>
+  );
+
+  const presenceDot = status ? (
+    <span aria-hidden="true" className={styles.presence} data-status={status} />
+  ) : null;
+
+  // {...props} first so component-owned ARIA attributes (role, aria-label) win.
+  const inner = hasImage ? (
+    <span {...props} ref={ref} className={wrapperClass} style={mergedStyle}>
+      {cropInner}
+      {presenceDot}
+    </span>
+  ) : (
     <span
       {...props}
       ref={ref}
       role="img"
       aria-label={accessibleName}
-      className={clsx(styles.avatar, sizeClass[size], className)}
+      className={wrapperClass}
       style={mergedStyle}
     >
-      <span aria-hidden="true">{initials(name)}</span>
+      {cropInner}
+      {presenceDot}
     </span>
   );
+
+  // Suppress the tooltip when we don't have a real name to show — the
+  // `?` fallback is for unnamed avatars and saying "?" in a tooltip
+  // would be noise. (Comparing trimmedName, not accessibleName, so a
+  // person legitimately named `?` still gets a tooltip.)
+  const hasRealName = trimmedName !== '';
+  if (resolvedTooltip && hasRealName) {
+    return <Tooltip content={accessibleName}>{inner}</Tooltip>;
+  }
+
+  return inner;
 });

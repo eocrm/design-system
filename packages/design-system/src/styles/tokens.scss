@@ -171,6 +171,25 @@
   // Special line-heights
   --line-height-none: 1;
 
+  // Presence dots (Avatar status). Aliases over the existing semantic
+  // palette — theme changes propagate.
+  --color-presence-online: var(--color-success);
+  --color-presence-busy: var(--color-danger);
+  --color-presence-away: var(--color-warning);
+  --color-presence-offline: var(--color-fg-disabled);
+
+  // Presence-dot dimensions per avatar size.
+  --size-presence-sm: 8px;
+  --size-presence-md: 10px;
+  --size-presence-lg: 12px;
+
+  // Avatar overlap when stacked in a group. Each child after the first
+  // slides left by this amount (negative margin-left). 30% of diameter
+  // looks like Slack at every supported size.
+  --avatar-overlap-sm: calc(var(--size-sm) * -0.3);
+  --avatar-overlap-md: calc(var(--size-md) * -0.3);
+  --avatar-overlap-lg: calc(var(--size-lg) * -0.3);
+
   // States
   --opacity-disabled: 0.5;
   --opacity-muted: 0.75; // de-emphasised secondary text (e.g. event time prefix)

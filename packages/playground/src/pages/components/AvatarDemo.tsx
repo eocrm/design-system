@@ -1,10 +1,37 @@
-import { Avatar } from '@eocrm/design-system';
-import { Cluster } from '@eocrm/design-system';
-import { Stack } from '@eocrm/design-system';
+import { useState } from 'react';
+import { Avatar, AvatarGroup, Cluster, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/Avatar/Avatar.tsx?raw';
 import scssSource from '@lib-source/components/Avatar/Avatar.module.scss?raw';
+
+const TEAM = [
+  'Alex Rivera',
+  'Priya Patel',
+  'Tom Kim',
+  'Sara Chen',
+  'Jaden Lee',
+  'Mei Tanaka',
+  'Diego Ortiz',
+];
+
+function GroupDemo() {
+  const [clicked, setClicked] = useState<number | null>(null);
+  return (
+    <Stack gap="xs">
+      <AvatarGroup max={4} size="md" onOverflowClick={(_e, count) => setClicked(count)}>
+        {TEAM.map((n) => (
+          <Avatar key={n} name={n} />
+        ))}
+      </AvatarGroup>
+      {clicked !== null && (
+        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+          onOverflowClick fired with hiddenCount = {clicked}
+        </code>
+      )}
+    </Stack>
+  );
+}
 
 export function AvatarDemo() {
   return (
@@ -70,6 +97,66 @@ export function AvatarDemo() {
           <Avatar name="Maya Owens" src="https://i.pravatar.cc/96?u=maya" size="md" />
           <Avatar name="Sam Chen" src="https://i.pravatar.cc/120?u=sam" size="lg" />
         </Cluster>
+      </Example>
+
+      <Example
+        title="Status indicator"
+        description="Presence dot in the bottom-right. Four states: online / busy / away / offline."
+        code={`<Avatar name="Online Olivia" status="online" />
+<Avatar name="Busy Beatrice" status="busy" />
+<Avatar name="Away Adrien" status="away" />
+<Avatar name="Offline Otto" status="offline" />`}
+      >
+        <Cluster gap="md" align="center">
+          <Avatar name="Online Olivia" status="online" />
+          <Avatar name="Busy Beatrice" status="busy" />
+          <Avatar name="Away Adrien" status="away" />
+          <Avatar name="Offline Otto" status="offline" />
+        </Cluster>
+      </Example>
+
+      <Example
+        title="Name tooltip"
+        description="Opt in with `tooltip` to surface the name on hover / keyboard focus. Defaults to off standalone; inside an `<AvatarGroup>` it defaults to on."
+        code={`<Avatar name="Alex Rivera" tooltip />`}
+      >
+        <Avatar name="Alex Rivera" tooltip />
+      </Example>
+
+      <Example
+        title="Avatar group with overflow handler"
+        description="Up to `max` avatars render in flow; the rest collapse into a +N button. The library does not render a popover — the app's `onOverflowClick` decides what happens."
+        code={`<AvatarGroup max={4} onOverflowClick={(_e, count) => openMembersPopover(count)}>
+  {team.map((m) => <Avatar key={m.id} name={m.name} />)}
+</AvatarGroup>`}
+      >
+        <GroupDemo />
+      </Example>
+
+      <Example
+        title="Group sizes"
+        description="Three sizes — sm / md (default) / lg. The group's size is the default for child avatars; per-child override still wins."
+        code={`<AvatarGroup size="sm">{...}</AvatarGroup>
+<AvatarGroup size="md">{...}</AvatarGroup>
+<AvatarGroup size="lg">{...}</AvatarGroup>`}
+      >
+        <Stack gap="md">
+          <AvatarGroup size="sm" max={5}>
+            {TEAM.slice(0, 6).map((n) => (
+              <Avatar key={n} name={n} />
+            ))}
+          </AvatarGroup>
+          <AvatarGroup size="md" max={5}>
+            {TEAM.slice(0, 6).map((n) => (
+              <Avatar key={n} name={n} />
+            ))}
+          </AvatarGroup>
+          <AvatarGroup size="lg" max={5}>
+            {TEAM.slice(0, 6).map((n) => (
+              <Avatar key={n} name={n} />
+            ))}
+          </AvatarGroup>
+        </Stack>
       </Example>
     </DemoLayout>
   );

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Avatar, avatarColorIndex } from './Avatar';
 
@@ -141,5 +142,39 @@ describe('Avatar', () => {
   it('does not emit an empty style attribute when the consumer passes style={{}}', () => {
     const { container } = render(<Avatar name="Alex" src="https://example.com/a.jpg" style={{}} />);
     expect(container.firstChild).not.toHaveAttribute('style');
+  });
+
+  it('renders presence dot when status is set', () => {
+    const { container } = render(<Avatar name="Alex" status="online" />);
+    const dot = container.querySelector('[data-status="online"]');
+    expect(dot).not.toBeNull();
+    expect(dot).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('omits presence dot when status is undefined', () => {
+    const { container } = render(<Avatar name="Alex" />);
+    expect(container.querySelector('[data-status]')).toBeNull();
+  });
+
+  it('switches presence color when status changes', () => {
+    const { container, rerender } = render(<Avatar name="Alex" status="online" />);
+    expect(container.querySelector('[data-status="online"]')).not.toBeNull();
+    rerender(<Avatar name="Alex" status="busy" />);
+    expect(container.querySelector('[data-status="online"]')).toBeNull();
+    expect(container.querySelector('[data-status="busy"]')).not.toBeNull();
+  });
+
+  it('does NOT wrap in Tooltip by default (tooltip is opt-in)', () => {
+    render(<Avatar name="Alex" />);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('wraps in Tooltip when tooltip prop is true (visible on hover)', async () => {
+    const user = userEvent.setup();
+    render(<Avatar name="Alex" tooltip />);
+    const avatar = screen.getByRole('img', { name: 'Alex' });
+    await user.hover(avatar);
+    const tip = await screen.findByRole('tooltip', {}, { timeout: 2000 });
+    expect(tip).toHaveTextContent('Alex');
   });
 });
