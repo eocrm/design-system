@@ -1,0 +1,355 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { createRef, type ReactNode, useState } from 'react';
+import { LocaleProvider } from '../../i18n/LocaleProvider';
+import { DateRangePicker } from './DateRangePicker';
+import type { DateRange } from './utils';
+
+function wrap(locale = 'en-US') {
+  return ({ children }: { children: ReactNode }) => (
+    <LocaleProvider locale={locale}>{children}</LocaleProvider>
+  );
+}
+
+const MAY = (d: number) => new Date(2026, 4, d);
+const JUN = (d: number) => new Date(2026, 5, d);
+const SAMPLE_RANGE: DateRange = { start: MAY(21), end: JUN(4) };
+
+describe('DateRangePicker', () => {
+  it('renders the formatted defaultValue in the input (uncontrolled)', () => {
+    render(<DateRangePicker defaultValue={SAMPLE_RANGE} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
+    expect(screen.getByRole('textbox', { name: 'Range' })).toHaveValue(
+      '05/21/2026 — 06/04/2026',
+    );
+  });
+
+  it('controlled value updates input', () => {
+    const { rerender } = render(
+      <DateRangePicker value={SAMPLE_RANGE} aria-label="Range" />,
+      { wrapper: wrap() },
+    );
+    expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 — 06/04/2026');
+    rerender(
+      <DateRangePicker
+        value={{ start: MAY(1), end: MAY(7) }}
+        aria-label="Range"
+      />,
+    );
+    expect(screen.getByRole('textbox')).toHaveValue('05/01/2026 — 05/07/2026');
+  });
+
+  it('typing a valid range and blurring commits via onChange', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(<DateRangePicker onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
+    const input = screen.getByRole('textbox');
+    await user.type(input, '5/21/2026 — 6/4/2026');
+    input.blur();
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const committed = onChange.mock.calls.at(-1)![0]!;
+    expect(committed.start.getDate()).toBe(21);
+    expect(committed.end.getDate()).toBe(4);
+  });
+
+  it('typing an invalid range reverts to the previous value', async () => {
+    const user = userEvent.setup();
+    function Driver() {
+      const [v, setV] = useState<DateRange | null>(SAMPLE_RANGE);
+      return <DateRangePicker value={v} onChange={setV} aria-label="Range" />;
+    }
+    render(<Driver />, { wrapper: wrap() });
+    const input = screen.getByRole('textbox');
+    await user.clear(input);
+    await user.type(input, 'not a range');
+    input.blur();
+    await waitFor(() =>
+      expect(input).toHaveValue('05/21/2026 — 06/04/2026'),
+    );
+  });
+
+  it('typing out-of-order auto-swaps on commit', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(<DateRangePicker onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
+    const input = screen.getByRole('textbox');
+    await user.type(input, '6/4/2026 — 5/21/2026');
+    input.blur();
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const committed = onChange.mock.calls.at(-1)![0]!;
+    expect(committed.start.getDate()).toBe(21);
+    expect(committed.start.getMonth()).toBe(4); // May
+    expect(committed.end.getDate()).toBe(4);
+    expect(committed.end.getMonth()).toBe(5); // June
+  });
+
+  it('Enter in the input commits and closes the popover', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(<DateRangePicker onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
+    const input = screen.getByRole('textbox');
+    await user.click(input);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await user.type(input, '5/21/2026 — 6/4/2026{Enter}');
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('ArrowDown opens popover and focuses today/start cell', async () => {
+    const user = userEvent.setup();
+    render(<DateRangePicker aria-label="Range" />, { wrapper: wrap() });
+    await user.click(screen.getByRole('textbox'));
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => {
+      const active = document.activeElement;
+      expect(active?.getAttribute('role')).toBe('gridcell');
+    });
+  });
+
+  it('Escape closes the popover and restores focus to the input', async () => {
+    const user = userEvent.setup();
+    render(<DateRangePicker aria-label="Range" />, { wrapper: wrap() });
+    const input = screen.getByRole('textbox');
+    await user.click(input);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    );
+    expect(document.activeElement).toBe(input);
+  });
+
+  it('two grid clicks commit a range (start then end)', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(
+      <DateRangePicker
+        defaultValue={null}
+        onChange={onChange}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('textbox'));
+    // Anchor cursor at May 2026 by typing then clearing — simpler: just
+    // grab any visible "5" cell in the left grid. Two grids both have a 5;
+    // getAllByRole returns both. Click the first.
+    const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+    await user.click(fives[0]);
+    expect(onChange).not.toHaveBeenCalled(); // not yet committed
+    const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
+    await user.click(tens[0]);
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    const r = onChange.mock.calls[0][0]!;
+    expect(r.start.getDate()).toBe(5);
+    expect(r.end.getDate()).toBe(10);
+  });
+
+  it('clicking end before start auto-swaps', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(
+      <DateRangePicker
+        defaultValue={null}
+        onChange={onChange}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('textbox'));
+    const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
+    await user.click(tens[0]);
+    const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+    await user.click(fives[0]);
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const r = onChange.mock.calls[0][0]!;
+    expect(r.start.getDate()).toBe(5);
+    expect(r.end.getDate()).toBe(10);
+  });
+
+  it('same-cell double-click commits a single-day range', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(
+      <DateRangePicker
+        defaultValue={null}
+        onChange={onChange}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('textbox'));
+    const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+    await user.click(fives[0]);
+    await user.click(fives[0]);
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const r = onChange.mock.calls[0][0]!;
+    expect(r.start.getDate()).toBe(5);
+    expect(r.end.getDate()).toBe(5);
+  });
+
+  it('third click after a committed range restarts selection', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(
+      <DateRangePicker
+        defaultValue={null}
+        onChange={onChange}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('textbox'));
+    const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+    const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
+    await user.click(fives[0]);
+    await user.click(tens[0]);
+    // Popover closes; reopen.
+    await user.click(screen.getByRole('textbox'));
+    // Now click a third cell — should restart, not commit anything.
+    const fifteens = screen.getAllByRole('gridcell', { name: /^15$/ });
+    await user.click(fifteens[0]);
+    // Only the first range commit has happened so far.
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const twenties = screen.getAllByRole('gridcell', { name: /^20$/ });
+    await user.click(twenties[0]);
+    // Now the second commit lands.
+    expect(onChange).toHaveBeenCalledTimes(2);
+    const r2 = onChange.mock.calls[1][0]!;
+    expect(r2.start.getDate()).toBe(15);
+    expect(r2.end.getDate()).toBe(20);
+  });
+
+  it('clear button resets the value and keeps focus on the input', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(
+      <DateRangePicker
+        defaultValue={SAMPLE_RANGE}
+        onChange={onChange}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('button', { name: 'Clear range' }));
+    expect(onChange).toHaveBeenCalledWith(null);
+    expect(document.activeElement).toBe(screen.getByRole('textbox'));
+  });
+
+  it('renders both hidden form mirrors when nameStart and nameEnd are set', () => {
+    const { container } = render(
+      <DateRangePicker
+        nameStart="bookingStart"
+        nameEnd="bookingEnd"
+        defaultValue={SAMPLE_RANGE}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    const start = container.querySelector<HTMLInputElement>(
+      'input[type="hidden"][name="bookingStart"]',
+    );
+    const end = container.querySelector<HTMLInputElement>(
+      'input[type="hidden"][name="bookingEnd"]',
+    );
+    expect(start?.value).toBe('2026-05-21');
+    expect(end?.value).toBe('2026-06-04');
+  });
+
+  it('renders empty hidden mirrors when value is null', () => {
+    const { container } = render(
+      <DateRangePicker
+        nameStart="bookingStart"
+        nameEnd="bookingEnd"
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    const start = container.querySelector<HTMLInputElement>(
+      'input[type="hidden"][name="bookingStart"]',
+    );
+    expect(start?.value).toBe('');
+  });
+
+  it('`disabled` disables the input and the open-calendar button', () => {
+    render(
+      <DateRangePicker
+        disabled
+        defaultValue={SAMPLE_RANGE}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    expect(screen.getByRole('textbox')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+  });
+
+  it('`invalid` sets aria-invalid="true"', () => {
+    render(<DateRangePicker invalid aria-label="Range" />, { wrapper: wrap() });
+    expect(screen.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('forwards ref to the typed input', () => {
+    const ref = createRef<HTMLInputElement>();
+    render(<DateRangePicker ref={ref} aria-label="Range" />, { wrapper: wrap() });
+    expect(ref.current).toBeInstanceOf(HTMLInputElement);
+  });
+
+  it('typed range outside [min, max] reverts on blur', async () => {
+    const user = userEvent.setup();
+    function Driver() {
+      const [v, setV] = useState<DateRange | null>(SAMPLE_RANGE);
+      return (
+        <DateRangePicker
+          value={v}
+          onChange={setV}
+          min={MAY(15)}
+          max={JUN(15)}
+          aria-label="Range"
+        />
+      );
+    }
+    render(<Driver />, { wrapper: wrap() });
+    const input = screen.getByRole('textbox');
+    await user.clear(input);
+    await user.type(input, '5/10/2026 — 5/12/2026');
+    input.blur();
+    await waitFor(() => expect(input).toHaveValue('05/21/2026 — 06/04/2026'));
+  });
+
+  it('ru-RU formats DD.MM.YYYY — DD.MM.YYYY', () => {
+    render(
+      <DateRangePicker
+        defaultValue={SAMPLE_RANGE}
+        locale="ru-RU"
+        aria-label="Range"
+      />,
+      { wrapper: wrap('ru-RU') },
+    );
+    expect(screen.getByRole('textbox')).toHaveValue('21.05.2026 — 04.06.2026');
+  });
+
+  it('click outside closes the popover and commits any pending draft', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    render(<DateRangePicker onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
+    const input = screen.getByRole('textbox');
+    await user.click(input);
+    await user.type(input, '5/21/2026 — 6/4/2026');
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await user.click(document.body);
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    );
+    expect(onChange).toHaveBeenCalled();
+  });
+});
