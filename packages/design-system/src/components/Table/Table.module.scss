@@ -9,7 +9,8 @@
   width: 100%;
   border-collapse: collapse;
   font-family: inherit;
-  color: var(--color-fg);
+  color: var(--color-table-fg);
+  background: var(--color-table-bg);
 }
 
 // ─── Density ───────────────────────────────────────────────────────────────
@@ -30,31 +31,31 @@
 
 .caption {
   padding: var(--space-2) var(--space-3);
-  color: var(--color-fg-muted);
+  color: var(--color-table-caption-fg);
   font-size: var(--font-size-sm);
   text-align: start;
 }
 
-// Three distinct background tones in a hierarchy:
-//   header / footer  → --color-bg-muted   (#f4f5f7)  — visibly chrome-y
-//   striped (even)   → --color-bg-subtle  (#fafbfc)  — faintest zebra
-//   hover            → --color-bg-sunken  (#ebecf0)  — strongest, signals
-//                                                       active interaction
-// Each visually distinguishable from the others and from the white body row.
+// Four distinct row background tones, in increasing visual weight:
+//   body row      → --color-table-bg                  (white)
+//   striped even  → --color-table-row-bg-striped      (faintest gray)
+//   header/footer → --color-table-header-bg           (muted gray, chrome)
+//   hover         → --color-table-row-bg-hover        (light info blue)
+//   selected      → --color-table-row-bg-selected     (stronger info blue)
 .thead .tr {
-  background: var(--color-bg-muted);
+  background: var(--color-table-header-bg);
 }
 
 .tbody .tr {
   // Body row bg + bottom-border divider. The last body row's bottom
   // border also serves as the divider between body and footer via
   // `border-collapse: collapse`.
-  background: var(--color-bg);
-  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-table-bg);
+  border-bottom: var(--border-width) solid var(--color-table-border);
 }
 
 .tfoot .tr {
-  background: var(--color-bg-muted);
+  background: var(--color-table-header-bg);
 }
 
 // ─── Rows ──────────────────────────────────────────────────────────────────
@@ -63,7 +64,7 @@
 // `.tr { border-bottom }`) so it stays pinned with sticky headers — a
 // border on `<tr>` scrolls away because only the inner `<th>`s are sticky.
 .thead .th {
-  border-bottom: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-table-border);
 }
 
 // Background cascade (all four rules same-ish specificity — source order
@@ -74,11 +75,11 @@
 //                                                    striped+even rows
 //   Selected variants below — declared even later AND higher specificity.
 .striped .tbody .tr:nth-of-type(even) {
-  background: var(--color-bg-subtle);
+  background: var(--color-table-row-bg-striped);
 }
 
 .hover .tbody .tr:hover {
-  background: var(--color-bg-sunken);
+  background: var(--color-table-row-bg-hover);
 }
 
 // Bordered — full grid. With `border-collapse: collapse` already on the
@@ -88,7 +89,7 @@
 // fine — it collapses against the cell borders without doubling.
 .bordered .th,
 .bordered .td {
-  border: var(--border-width) solid var(--color-border);
+  border: var(--border-width) solid var(--color-table-border);
 }
 
 // Selected wins over striped + hover.
@@ -101,14 +102,14 @@
 .tbody .tr.selected,
 .striped .tbody .tr.selected,
 .hover .tbody .tr.selected:hover {
-  background: var(--color-accent-bg-subtle);
-  color: var(--color-fg);
+  background: var(--color-table-row-bg-selected);
+  color: var(--color-table-row-fg-selected);
 }
 
 // ─── Cells ─────────────────────────────────────────────────────────────────
 
 .th {
-  color: var(--color-fg-muted);
+  color: var(--color-table-header-fg);
   font-weight: var(--font-weight-semibold);
   text-transform: none;
   vertical-align: middle;
@@ -151,7 +152,7 @@
   user-select: none;
 
   &:hover {
-    background: var(--color-bg-muted);
+    background: var(--color-table-header-bg-hover);
   }
 
   &:focus-visible {
@@ -162,11 +163,11 @@
 
 .sortIcon {
   flex-shrink: 0;
-  color: var(--color-fg-muted);
+  color: var(--color-table-header-fg);
 }
 
 .sortable:not(.sortableInactive) .sortIcon {
-  color: var(--color-fg);
+  color: var(--color-table-fg);
 }
 
 // ─── Sticky header ─────────────────────────────────────────────────────────
@@ -180,7 +181,7 @@
   // Repeat the header bg here — `tr` bg paints below the th's sticky
   // layer in some browsers, leaving body rows visible through it. Must
   // match the .thead .tr background above.
-  background: var(--color-bg-muted);
+  background: var(--color-table-header-bg);
 }
 // stylelint-enable property-disallowed-list
 
