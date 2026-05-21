@@ -126,3 +126,33 @@
   opacity: var(--opacity-disabled);
   cursor: default;
 }
+
+// Range-mode cell markers — applied when `selectionMode='range'` and the
+// cell falls inside the [rangeStart, rangeEnd|hoverDate] window. Disabled
+// cells inside the range keep their muted color but still get .inRange so
+// the band reads as contiguous.
+.inRange {
+  background: var(--color-accent-bg-subtle);
+  color: var(--color-accent);
+  border-radius: 0;
+}
+
+// The two range boundaries get the same fill as a regular `.selected`
+// cell, but with rounded edges only on the OUTSIDE of the range so they
+// visually anchor the band.
+.rangeStart {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.rangeEnd {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+// Single-day range — both rangeStart AND rangeEnd are the same cell.
+.rangeStart.rangeEnd {
+  border-radius: var(--radius-sm);
+}

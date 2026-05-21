@@ -253,4 +253,124 @@ describe('DatePickerGrid', () => {
     );
     expect(document.body.textContent).toMatch(/[Ѐ-ӿ]/);
   });
+
+  it('range mode: rangeStart and rangeEnd cells carry aria-selected and class markers', () => {
+    render(
+      <DatePickerGrid
+        cursor={new Date(2026, 4, 1)}
+        value={null}
+        onSelect={() => {}}
+        onCursorChange={() => {}}
+        labels={LABELS}
+        selectionMode="range"
+        rangeStart={new Date(2026, 4, 5)}
+        rangeEnd={new Date(2026, 4, 10)}
+      />,
+      { wrapper: wrap() },
+    );
+    // Use selected:true to distinguish May 5 from the June 5 trailing cell.
+    const startCell = screen.getByRole('gridcell', { name: /^5$/, selected: true });
+    const endCell = screen.getByRole('gridcell', { name: /^10$/ });
+    expect(startCell).toHaveAttribute('aria-selected', 'true');
+    expect(endCell).toHaveAttribute('aria-selected', 'true');
+    expect(startCell.className).toMatch(/rangeStart/);
+    expect(endCell.className).toMatch(/rangeEnd/);
+    // Middle cells get .inRange
+    const middle = screen.getByRole('gridcell', { name: /^7$/ });
+    expect(middle.className).toMatch(/inRange/);
+  });
+
+  it('range mode: hoverDate previews end when only rangeStart is set', () => {
+    render(
+      <DatePickerGrid
+        cursor={new Date(2026, 4, 1)}
+        value={null}
+        onSelect={() => {}}
+        onCursorChange={() => {}}
+        labels={LABELS}
+        selectionMode="range"
+        rangeStart={new Date(2026, 4, 5)}
+        hoverDate={new Date(2026, 4, 12)}
+      />,
+      { wrapper: wrap() },
+    );
+    // Use selected:true to distinguish May 5 from the June 5 trailing cell.
+    const startCell = screen.getByRole('gridcell', { name: /^5$/, selected: true });
+    const hoverEndCell = screen.getByRole('gridcell', { name: /^12$/ });
+    expect(startCell.className).toMatch(/rangeStart/);
+    expect(hoverEndCell.className).toMatch(/rangeEnd/);
+    expect(screen.getByRole('gridcell', { name: /^8$/ }).className).toMatch(/inRange/);
+  });
+
+  it('range mode: fires onHoverDate on cell mouseenter and null on grid mouseleave', async () => {
+    const user = userEvent.setup();
+    const onHoverDate = vi.fn<(d: Date | null) => void>();
+    render(
+      <DatePickerGrid
+        cursor={new Date(2026, 4, 1)}
+        value={null}
+        onSelect={() => {}}
+        onCursorChange={() => {}}
+        labels={LABELS}
+        selectionMode="range"
+        rangeStart={new Date(2026, 4, 5)}
+        onHoverDate={onHoverDate}
+      />,
+      { wrapper: wrap() },
+    );
+    const cell = screen.getByRole('gridcell', { name: /^12$/ });
+    await user.hover(cell);
+    expect(onHoverDate).toHaveBeenCalledWith(expect.any(Date));
+    expect(onHoverDate.mock.calls.at(-1)?.[0]?.getDate()).toBe(12);
+
+    // Move the pointer off the entire grid (somewhere outside).
+    await user.unhover(cell);
+    // userEvent.unhover only triggers cell-level mouseleave; we need
+    // the grid-container leave. Manually dispatch on the grid element.
+    const grid = document.querySelector<HTMLElement>('[role="grid"]');
+    if (grid) {
+      const evt = new MouseEvent('mouseleave', { bubbles: false });
+      grid.dispatchEvent(evt);
+    }
+    expect(onHoverDate).toHaveBeenLastCalledWith(null);
+  });
+
+  it('range mode: disabled cell does not fire onHoverDate', async () => {
+    const user = userEvent.setup();
+    const onHoverDate = vi.fn();
+    render(
+      <DatePickerGrid
+        cursor={new Date(2026, 4, 1)}
+        value={null}
+        onSelect={() => {}}
+        onCursorChange={() => {}}
+        labels={LABELS}
+        selectionMode="range"
+        rangeStart={new Date(2026, 4, 5)}
+        isDateDisabled={(d) => d.getDate() === 12}
+        onHoverDate={onHoverDate}
+      />,
+      { wrapper: wrap() },
+    );
+    const disabled = screen.getByRole('gridcell', { name: /^12$/ });
+    await user.hover(disabled);
+    expect(onHoverDate).not.toHaveBeenCalled();
+  });
+
+  it('chevrons={false} hides nav buttons but keeps the month label', () => {
+    render(
+      <DatePickerGrid
+        cursor={new Date(2026, 4, 1)}
+        value={null}
+        onSelect={() => {}}
+        onCursorChange={() => {}}
+        labels={LABELS}
+        chevrons={false}
+      />,
+      { wrapper: wrap() },
+    );
+    expect(screen.queryByRole('button', { name: 'Previous month' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Next month' })).toBeNull();
+    expect(screen.getByText(/May 2026/)).toBeInTheDocument();
+  });
 });
