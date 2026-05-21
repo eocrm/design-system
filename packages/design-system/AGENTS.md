@@ -127,6 +127,39 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - Native HTML attrs flow through (`name`, `value`, `required`, `form`, `autoFocus`, etc.). `FormData.getAll(name)` returns the array of checked values for same-`name` checkboxes.
 - forwardRef points at the native `<input>` so consumers can `.focus()` or programmatically set `.indeterminate`.
 
+### `<Radio>` — single radio button
+
+```tsx
+<Radio name="plan" value="pro" checked={plan === 'pro'} onChange={setPlan} label="Pro" />
+```
+
+- Native `<input type='radio'>` is visually hidden but stays in tab order + AT tree — browser arrow-key navigation between same-`name` radios works for free.
+- `size`: `sm` (14px) / `md` (16px, default) / `lg` (20px). Same scale as `<Checkbox>` and `<Input>`.
+- `value` (required) — the value submitted when this radio is selected.
+- `checked` + `onChange(value, event)` for controlled standalone use; `defaultChecked` for uncontrolled standalone use.
+- `label` (ReactNode) — text rendered next to the ring; the whole `<label>` is the click target. Omit + pass `aria-label` for icon-only.
+- `invalid` — danger border + `aria-invalid='true'`. Hover preview is border-only and skips invalid (red stays red on hover).
+- **Prefer `<RadioGroup>`** for proper fieldset/legend a11y and centralized state. Standalone `<Radio>` is for embedding a single radio next to other controls.
+
+### `<RadioGroup>` — fieldset wrapper for related radios
+
+```tsx
+<RadioGroup name="size" defaultValue="md" label="T-shirt size">
+  <Radio value="sm" label="Small" />
+  <Radio value="md" label="Medium" />
+  <Radio value="lg" label="Large" />
+</RadioGroup>
+```
+
+- Renders `<fieldset>` + optional `<legend>` for AT grouping. Children should be `<Radio>`s.
+- `name` (required) — shared by all radio children via context.
+- `value` + `onChange(value, event)` for controlled; `defaultValue` for uncontrolled.
+- `size`, `disabled`, `invalid`, `required` propagate to children as defaults — per-child explicit prop still wins.
+- `orientation`: `'vertical'` (default) / `'horizontal'`. Vertical uses Stack-like gap; horizontal wraps with a wider gap.
+- `FormData.get(name)` returns the selected value on native `<form>` submit.
+- The group's `value` drives each child's `checked` — don't set `checked` per-child inside a group (the group already does it).
+- Per-child `onChange` fires BEFORE the group's `onChange` (both run on every selection — `preventDefault` does NOT gate the group's state update). Use per-child handlers for side-effects scoped to one option; the group's handler is the single source of truth for the selected value.
+
 ### `<Card>` — bordered container
 
 ```tsx

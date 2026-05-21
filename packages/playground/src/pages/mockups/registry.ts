@@ -22,6 +22,8 @@ export type ComponentName =
   | 'Tooltip'
   | 'Popover'
   | 'ConfirmationPopover'
+  | 'Radio'
+  | 'RadioGroup'
   | 'Calendar';
 
 export interface MockupEntry {

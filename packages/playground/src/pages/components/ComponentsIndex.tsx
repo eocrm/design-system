@@ -18,6 +18,7 @@ import { Tooltip } from '@eocrm/design-system';
 import { Calendar } from '@eocrm/design-system';
 import { DatePicker } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
+import { Radio, RadioGroup } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
 const items: { to: string; name: string; description: string; preview: React.ReactNode }[] = [
@@ -75,6 +76,18 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <div style={{ width: 200 }}>
         <PasswordStrengthMeter value="Hunter2!@#" />
       </div>
+    ),
+  },
+  {
+    to: '/components/radio',
+    name: 'Radio',
+    description:
+      'Native-input-backed radio with custom paint, plus a RadioGroup wrapper for fieldset/legend semantics and group state propagation.',
+    preview: (
+      <RadioGroup name="preview" defaultValue="b">
+        <Radio value="a" label="Option A" />
+        <Radio value="b" label="Option B" />
+      </RadioGroup>
     ),
   },
   {

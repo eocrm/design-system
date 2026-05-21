@@ -67,6 +67,14 @@ export type {
   ConfirmationVariant,
 } from './components/ConfirmationPopover';
 
+export { Radio, RadioGroup } from './components/Radio';
+export type {
+  RadioProps,
+  RadioSize,
+  RadioGroupProps,
+  RadioGroupOrientation,
+} from './components/Radio';
+
 export { PasswordInput } from './components/PasswordInput';
 export type {
   PasswordInputProps,
