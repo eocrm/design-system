@@ -51,27 +51,32 @@ function StaticTable() {
   );
 }
 
+type SortKey = 'name' | 'amount';
+type SortState = { key: SortKey; dir: 'asc' | 'desc' } | null;
+
 function SortableTable() {
-  const [sortKey, setSortKey] = useState<'name' | 'amount'>('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [sort, setSort] = useState<SortState>(null);
 
-  const sorted = [...ROWS].sort((a, b) => {
-    const dir = sortDir === 'asc' ? 1 : -1;
-    if (sortKey === 'amount') return (a.amount - b.amount) * dir;
-    return a.name.localeCompare(b.name) * dir;
-  });
+  const sorted = sort
+    ? [...ROWS].sort((a, b) => {
+        const factor = sort.dir === 'asc' ? 1 : -1;
+        if (sort.key === 'amount') return (a.amount - b.amount) * factor;
+        return a.name.localeCompare(b.name) * factor;
+      })
+    : ROWS;
 
-  function dirFor(key: 'name' | 'amount') {
-    if (sortKey !== key) return 'none' as const;
-    return sortDir;
+  function dirFor(key: SortKey) {
+    if (sort?.key !== key) return 'none' as const;
+    return sort.dir;
   }
 
-  function toggle(key: 'name' | 'amount') {
-    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortKey(key);
-      setSortDir('asc');
-    }
+  // 3-state toggle: unsorted → asc → desc → unsorted → …
+  function toggle(key: SortKey) {
+    setSort((prev) => {
+      if (prev?.key !== key) return { key, dir: 'asc' };
+      if (prev.dir === 'asc') return { key, dir: 'desc' };
+      return null;
+    });
   }
 
   return (
@@ -245,7 +250,7 @@ export function TableDemo() {
 
       <Example
         title="Sortable headers"
-        description="`<Table.HeaderCell sortDirection>` renders a chevron + sets `aria-sort`. The primitive only paints the indicator — wire `onClick` to your own sort state. (DataTable will compose this seam.)"
+        description="`<Table.HeaderCell sortDirection>` renders the right chevron + sets `aria-sort`. The primitive only paints — wire `onClick` to your own state. Demo uses the typical 3-state cycle (unsorted → asc → desc → unsorted), but consumers can use any cycle. DataTable will compose this seam."
         code={`<Table.HeaderCell
   sortDirection={sortKey === 'amount' ? sortDir : 'none'}
   onClick={() => toggleSort('amount')}
