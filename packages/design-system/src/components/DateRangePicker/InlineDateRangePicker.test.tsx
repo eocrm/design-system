@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef, type ReactNode, useState } from 'react';
+import { createRef, type ReactNode } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { InlineDateRangePicker } from './InlineDateRangePicker';
 import type { DateRange } from './utils';
@@ -26,6 +26,25 @@ describe('InlineDateRangePicker', () => {
     expect(screen.getByRole('button', { name: 'Next month' })).toBeInTheDocument();
     expect(screen.getByText(/May 2026/)).toBeInTheDocument();
     expect(screen.getByText(/June 2026/)).toBeInTheDocument();
+  });
+
+  it('controlled: value updates when consumer changes it', () => {
+    const { rerender } = render(
+      <InlineDateRangePicker value={SAMPLE} aria-label="Range" />,
+      { wrapper: wrap() },
+    );
+    // May 21 is rangeStart, June 4 is rangeEnd
+    expect(screen.getAllByRole('gridcell', { name: /^21$/, selected: true })[0]).toBeInTheDocument();
+    expect(screen.getAllByRole('gridcell', { name: /^4$/, selected: true })[0]).toBeInTheDocument();
+    // Change the value via re-render
+    rerender(
+      <InlineDateRangePicker
+        value={{ start: MAY(10), end: MAY(15) }}
+        aria-label="Range"
+      />,
+    );
+    expect(screen.getAllByRole('gridcell', { name: /^10$/, selected: true })[0]).toBeInTheDocument();
+    expect(screen.getAllByRole('gridcell', { name: /^15$/, selected: true })[0]).toBeInTheDocument();
   });
 
   it('two grid clicks commit a range (start then end)', async () => {
@@ -98,6 +117,26 @@ describe('InlineDateRangePicker', () => {
     const r2 = onChange.mock.calls[1][0]!;
     expect(r2.start.getDate()).toBe(15);
     expect(r2.end.getDate()).toBe(20);
+  });
+
+  it('same-cell double-click commits a single-day range', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(
+      <InlineDateRangePicker
+        defaultValue={null}
+        onChange={onChange}
+        aria-label="Range"
+      />,
+      { wrapper: wrap() },
+    );
+    const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+    await user.click(fives[0]);
+    await user.click(fives[0]);
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    const r = onChange.mock.calls[0][0]!;
+    expect(r.start.getDate()).toBe(5);
+    expect(r.end.getDate()).toBe(5);
   });
 
   it('external chevrons step the cursor (both grids advance/retreat)', async () => {
