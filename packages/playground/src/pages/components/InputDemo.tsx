@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Input } from '@eocrm/design-system';
-import { Stack } from '@eocrm/design-system';
+import { Input, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
+import { InputExample } from './InputExample';
 import tsxSource from '@lib-source/components/Input/Input.tsx?raw';
 import scssSource from '@lib-source/components/Input/Input.module.scss?raw';
 
@@ -32,13 +32,13 @@ export function InputDemo() {
   />
 </label>`}
       >
-        <div style={{ maxWidth: 320 }}>
+        <InputExample>
           <Input
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="you@example.com"
           />
-        </div>
+        </InputExample>
       </Example>
 
       <Example
@@ -50,9 +50,9 @@ export function InputDemo() {
   onChange={(e) => setValue(e.target.value)}
 />`}
       >
-        <div style={{ maxWidth: 320 }}>
+        <InputExample>
           <Input invalid value={invalidValue} onChange={(e) => setInvalidValue(e.target.value)} />
-        </div>
+        </InputExample>
       </Example>
 
       <Example
@@ -60,10 +60,12 @@ export function InputDemo() {
         code={`<Input value="Locked" disabled />
 <Input value="Cannot edit" readOnly />`}
       >
-        <Stack gap="sm" style={{ maxWidth: 320 }}>
-          <Input value="Locked" disabled readOnly />
-          <Input value="Cannot edit" readOnly />
-        </Stack>
+        <InputExample>
+          <Stack gap="sm">
+            <Input value="Locked" disabled readOnly />
+            <Input value="Cannot edit" readOnly />
+          </Stack>
+        </InputExample>
       </Example>
 
       <Example
@@ -73,11 +75,13 @@ export function InputDemo() {
 <Input type="search" placeholder="Search" />
 <Input type="password" placeholder="Password" />`}
       >
-        <Stack gap="sm" style={{ maxWidth: 320 }}>
-          <Input type="email" placeholder="Email" autoComplete="email" />
-          <Input type="search" placeholder="Search" />
-          <Input type="password" placeholder="Password" />
-        </Stack>
+        <InputExample>
+          <Stack gap="sm">
+            <Input type="email" placeholder="Email" autoComplete="email" />
+            <Input type="search" placeholder="Search" />
+            <Input type="password" placeholder="Password" />
+          </Stack>
+        </InputExample>
       </Example>
     </DemoLayout>
   );

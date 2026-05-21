@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Button, DateRangePicker, type DateRange } from '@eocrm/design-system';
+import { Button, DateRangePicker, Stack, toDateKey, type DateRange } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
+import { InputExample } from './InputExample';
 import tsxSource from '@lib-source/components/DateRangePicker/DateRangePicker.tsx?raw';
 import scssSource from '@lib-source/components/DateRangePicker/DateRangePicker.module.scss?raw';
 
@@ -15,14 +16,12 @@ function ControlledDemo() {
     end: IN_14,
   });
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+    <Stack gap="xs">
       <DateRangePicker value={value} onChange={setValue} aria-label="Controlled range" />
-      <code>
-        {value
-          ? `${value.start.toISOString().slice(0, 10)} → ${value.end.toISOString().slice(0, 10)}`
-          : 'null'}
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        {value ? `${toDateKey(value.start)} → ${toDateKey(value.end)}` : 'null'}
       </code>
-    </div>
+    </Stack>
   );
 }
 
@@ -38,22 +37,24 @@ function FormDemo() {
           end: String(fd.get('bookingEnd') ?? ''),
         });
       }}
-      style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
     >
-      <DateRangePicker
-        nameStart="bookingStart"
-        nameEnd="bookingEnd"
-        defaultValue={{ start: TODAY, end: IN_14 }}
-        aria-label="Booking dates"
-      />
-      <Button type="submit" size="sm">
-        Submit
-      </Button>
-      {submitted !== null && (
-        <code>
-          bookingStart = {submitted.start || '(empty)'} · bookingEnd = {submitted.end || '(empty)'}
-        </code>
-      )}
+      <Stack gap="xs">
+        <DateRangePicker
+          nameStart="bookingStart"
+          nameEnd="bookingEnd"
+          defaultValue={{ start: TODAY, end: IN_14 }}
+          aria-label="Booking dates"
+        />
+        <Button type="submit" size="sm">
+          Submit
+        </Button>
+        {submitted !== null && (
+          <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+            bookingStart = {submitted.start || '(empty)'} · bookingEnd ={' '}
+            {submitted.end || '(empty)'}
+          </code>
+        )}
+      </Stack>
     </form>
   );
 }
@@ -77,10 +78,12 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
 
 <DateRangePicker defaultValue={{ start: today, end: in14 }} />`}
       >
-        <DateRangePicker
-          defaultValue={{ start: TODAY, end: IN_14 }}
-          aria-label="Uncontrolled range"
-        />
+        <InputExample>
+          <DateRangePicker
+            defaultValue={{ start: TODAY, end: IN_14 }}
+            aria-label="Uncontrolled range"
+          />
+        </InputExample>
       </Example>
 
       <Example
@@ -92,7 +95,9 @@ const [value, setValue] = useState<DateRange | null>({ start: today, end: in14 }
 
 <DateRangePicker value={value} onChange={setValue} />`}
       >
-        <ControlledDemo />
+        <InputExample>
+          <ControlledDemo />
+        </InputExample>
       </Example>
 
       <Example
@@ -106,12 +111,14 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
   max={in90}
 />`}
       >
-        <DateRangePicker
-          defaultValue={{ start: TODAY, end: IN_14 }}
-          min={TODAY}
-          max={IN_90}
-          aria-label="Range within 90 days"
-        />
+        <InputExample>
+          <DateRangePicker
+            defaultValue={{ start: TODAY, end: IN_14 }}
+            min={TODAY}
+            max={IN_90}
+            aria-label="Range within 90 days"
+          />
+        </InputExample>
       </Example>
 
       <Example
@@ -121,10 +128,12 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
   isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
 />`}
       >
-        <DateRangePicker
-          aria-label="Weekday range only"
-          isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
-        />
+        <InputExample>
+          <DateRangePicker
+            aria-label="Weekday range only"
+            isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
+          />
+        </InputExample>
       </Example>
 
       <Example
@@ -138,11 +147,13 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
   defaultValue={{ start: today, end: in14 }}
 />`}
       >
-        <DateRangePicker
-          disabled
-          defaultValue={{ start: TODAY, end: IN_14 }}
-          aria-label="Disabled range"
-        />
+        <InputExample>
+          <DateRangePicker
+            disabled
+            defaultValue={{ start: TODAY, end: IN_14 }}
+            aria-label="Disabled range"
+          />
+        </InputExample>
       </Example>
 
       <Example
@@ -151,12 +162,17 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
         code={`<DateRangePicker invalid aria-describedby="range-error" />
 <p id="range-error">Range is required.</p>`}
       >
-        <div>
-          <DateRangePicker invalid aria-label="Booking dates" aria-describedby="range-error" />
-          <p id="range-error" style={{ color: 'var(--color-danger)', marginTop: 'var(--space-1)' }}>
-            Range is required.
-          </p>
-        </div>
+        <InputExample>
+          <Stack gap="xs">
+            <DateRangePicker invalid aria-label="Booking dates" aria-describedby="range-error" />
+            <p
+              id="range-error"
+              style={{ color: 'var(--color-danger)', fontSize: 'var(--font-size-xs)' }}
+            >
+              Range is required.
+            </p>
+          </Stack>
+        </InputExample>
       </Example>
 
       <Example
@@ -170,7 +186,9 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
   <button type="submit">Submit</button>
 </form>`}
       >
-        <FormDemo />
+        <InputExample>
+          <FormDemo />
+        </InputExample>
       </Example>
 
       <Example
@@ -191,18 +209,20 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
   }}
 />`}
       >
-        <DateRangePicker
-          defaultValue={{ start: TODAY, end: IN_14 }}
-          locale="ru-RU"
-          aria-label="Диапазон дат"
-          labels={{
-            previousMonth: 'Предыдущий месяц',
-            nextMonth: 'Следующий месяц',
-            openCalendar: 'Открыть календарь',
-            clear: 'Очистить диапазон',
-            dialogLabel: 'Выберите диапазон дат',
-          }}
-        />
+        <InputExample>
+          <DateRangePicker
+            defaultValue={{ start: TODAY, end: IN_14 }}
+            locale="ru-RU"
+            aria-label="Диапазон дат"
+            labels={{
+              previousMonth: 'Предыдущий месяц',
+              nextMonth: 'Следующий месяц',
+              openCalendar: 'Открыть календарь',
+              clear: 'Очистить диапазон',
+              dialogLabel: 'Выберите диапазон дат',
+            }}
+          />
+        </InputExample>
       </Example>
     </DemoLayout>
   );

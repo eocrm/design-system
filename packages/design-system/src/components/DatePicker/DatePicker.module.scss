@@ -1,8 +1,13 @@
 @use '../../styles/mixins' as *;
 
+// Field convention: `display: flex; width: 100%` so the wrapper fills its
+// parent's column the same way `<Input>` and `<Select>` do. Consumers wrap
+// in a sized container (Stack, fixed-width div, form field cell) to
+// control width.
 .wrapper {
   position: relative;
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
   gap: var(--space-1);
   padding: 0 var(--space-2);

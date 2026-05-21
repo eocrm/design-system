@@ -10,6 +10,7 @@ import {
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
+import { InputExample } from './InputExample';
 import tsxSource from '@lib-source/components/Select/Select.tsx?raw';
 import scssSource from '@lib-source/components/Select/Select.module.scss?raw';
 
@@ -107,9 +108,9 @@ const [status, setStatus] = useState('');
   placeholder="Pick a status"
 />`}
       >
-        <Cluster gap="md" justify="center">
+        <InputExample>
           <StatusExample />
-        </Cluster>
+        </InputExample>
       </Example>
 
       <Example
@@ -149,9 +150,9 @@ const [status, setStatus] = useState('');
   placeholder="Search countries…"
 />`}
       >
-        <Cluster gap="md" justify="center">
+        <InputExample>
           <CountryExample />
-        </Cluster>
+        </InputExample>
       </Example>
 
       <Example
@@ -184,9 +185,9 @@ const [status, setStatus] = useState('');
   )}
 />`}
       >
-        <Cluster gap="md" justify="center">
+        <InputExample>
           <AssigneeExample />
-        </Cluster>
+        </InputExample>
       </Example>
 
       <Example
@@ -207,11 +208,9 @@ const [status, setStatus] = useState('');
 
 <Select searchable loadOptions={flakyFetch} placeholder="Pick a user (may fail)" />`}
       >
-        <Cluster gap="md" justify="center">
-          <div style={{ width: 320 }}>
-            <Select searchable loadOptions={flakyFetch} placeholder="Pick a user (may fail)" />
-          </div>
-        </Cluster>
+        <InputExample>
+          <Select searchable loadOptions={flakyFetch} placeholder="Pick a user (may fail)" />
+        </InputExample>
       </Example>
 
       <Example
@@ -235,9 +234,9 @@ const [statusFilter, setStatusFilter] = useState<string[]>([]);
   placeholder="Filter by status"
 />`}
       >
-        <Cluster gap="md" justify="center">
+        <InputExample>
           <StatusFilterExample />
-        </Cluster>
+        </InputExample>
       </Example>
 
       <Example
@@ -258,9 +257,9 @@ const [statusFilter, setStatusFilter] = useState<string[]>([]);
   placeholder="Pick owners…"
 />`}
       >
-        <Cluster gap="md" justify="center">
+        <InputExample>
           <OwnersExample />
-        </Cluster>
+        </InputExample>
       </Example>
 
       <Example
@@ -286,9 +285,9 @@ const [tags, setTags] = useState<string[]>(['shipping']);
   placeholder="Add tags…"
 />`}
       >
-        <Cluster gap="md" justify="center">
+        <InputExample>
           <TagsExample />
-        </Cluster>
+        </InputExample>
       </Example>
 
       <Example

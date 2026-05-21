@@ -2,10 +2,14 @@
 
 // Wrapper mimics <Input> exactly — same as DatePicker.module.scss. The
 // wrapper IS the public component box; the popover is portaled so it
-// doesn't participate in flow layout.
+// doesn't participate in flow layout. Field convention:
+// `display: flex; width: 100%` so the wrapper fills its parent's column
+// the same way `<Input>`, `<Select>`, and `<DatePicker>` do. Consumers
+// wrap in a sized container to control width.
 .wrapper {
   position: relative;
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
   gap: var(--space-1);
   padding: 0 var(--space-2);
