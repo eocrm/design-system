@@ -9,6 +9,9 @@
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
+
+  // Floating popover: fixed width is intentional (escape hatch from Rule 4 —
+  // analogous to DropdownMenu/Popover).
   width: var(--size-datepicker-popover-width);
 }
 

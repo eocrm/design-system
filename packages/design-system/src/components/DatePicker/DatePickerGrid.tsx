@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMonth } from '../../calendar/useMonth';
 import { useLocale } from '../../i18n/useLocale';
-import { isSameDay, startOfDay } from '../../calendar/dateMath';
+import { isSameDay, startOfDay, toDateKey } from '../../calendar/dateMath';
 import { isDateOutOfRange } from './utils';
 import styles from './DatePickerGrid.module.scss';
 
@@ -62,23 +62,27 @@ export function DatePickerGrid({
   const grid = useMonth(cursor, { locale });
   const today = useMemo(() => startOfDay(new Date()), []);
 
+  const cellsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
+  // After the cursor changes from a keyboard event we want focus to land
+  // on the equivalent date in the new month. The effect runs after render.
+  const pendingFocusKey = useRef<string | null>(null);
+
   const goPrev = useCallback(() => {
+    // Invalidate any pending keyboard focus target — chevron clicks are
+    // pointer-driven and should not steal focus to a stale cell.
+    pendingFocusKey.current = null;
     onCursorChange(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
   }, [cursor, onCursorChange]);
   const goNext = useCallback(() => {
+    pendingFocusKey.current = null;
     onCursorChange(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
   }, [cursor, onCursorChange]);
-
-  const cellsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   const isDisabled = useCallback(
     (date: Date) => isDateOutOfRange(date, min, max, isDateDisabled),
     [min, max, isDateDisabled],
   );
 
-  // After the cursor changes from a keyboard event we want focus to land
-  // on the equivalent date in the new month. The effect runs after render.
-  const pendingFocusKey = useRef<string | null>(null);
   useEffect(() => {
     if (pendingFocusKey.current) {
       const el = cellsRef.current.get(pendingFocusKey.current);
@@ -95,11 +99,13 @@ export function DatePickerGrid({
       let steps = Math.abs(deltaDays);
       while (steps > 0) {
         target = new Date(target.getFullYear(), target.getMonth(), target.getDate() + dir);
+        // Stop walking once we'd leave the allowed range — never moves
+        // silently into a no-op. (Caller must not pass an all-disabled
+        // predicate with no bounds — that's an unwinnable input.)
+        if ((min && target < startOfDay(min)) || (max && target > startOfDay(max))) return;
         if (!isDisabled(target)) steps -= 1;
-        // Hard stop so an entirely-disabled future doesn't loop forever.
-        if (Math.abs(target.getTime() - from.getTime()) > 366 * 86_400_000) return;
       }
-      const key = isoKey(target);
+      const key = toDateKey(target);
       const inSameMonth =
         target.getMonth() === cursor.getMonth() && target.getFullYear() === cursor.getFullYear();
       if (!inSameMonth) {
@@ -109,7 +115,7 @@ export function DatePickerGrid({
       }
       cellsRef.current.get(key)?.focus();
     },
-    [cursor, isDisabled, onCursorChange],
+    [cursor, isDisabled, max, min, onCursorChange],
   );
 
   const handleCellKeyDown = (e: KeyboardEvent<HTMLButtonElement>, date: Date) => {
@@ -132,31 +138,26 @@ export function DatePickerGrid({
         break;
       case 'Home': {
         e.preventDefault();
-        const day = date.getDay();
-        const firstDow = grid.weekdayLabels.length > 0 ? 0 : 0; // grid is already locale-rotated
-        // Find the week's first day by walking back to the start of its row.
         const week = grid.weeks.find((w) => w.some((d) => isSameDay(d.date, date)));
-        if (week) cellsRef.current.get(isoKey(week[0].date))?.focus();
-        void day;
-        void firstDow;
+        if (week) cellsRef.current.get(toDateKey(week[0].date))?.focus();
         break;
       }
       case 'End': {
         e.preventDefault();
         const week = grid.weeks.find((w) => w.some((d) => isSameDay(d.date, date)));
-        if (week) cellsRef.current.get(isoKey(week[6].date))?.focus();
+        if (week) cellsRef.current.get(toDateKey(week[6].date))?.focus();
         break;
       }
       case 'PageDown':
         e.preventDefault();
-        pendingFocusKey.current = isoKey(
+        pendingFocusKey.current = toDateKey(
           new Date(date.getFullYear(), date.getMonth() + 1, date.getDate()),
         );
         onCursorChange(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
         break;
       case 'PageUp':
         e.preventDefault();
-        pendingFocusKey.current = isoKey(
+        pendingFocusKey.current = toDateKey(
           new Date(date.getFullYear(), date.getMonth() - 1, date.getDate()),
         );
         onCursorChange(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
@@ -170,7 +171,7 @@ export function DatePickerGrid({
   };
 
   return (
-    <div className={styles.grid} role="dialog" aria-label="Choose date">
+    <div className={styles.grid}>
       <header className={styles.header}>
         <button
           type="button"
@@ -206,7 +207,7 @@ export function DatePickerGrid({
               const disabled = isDisabled(day.date);
               const isSelected = value != null && isSameDay(day.date, value);
               const isTodayCell = isSameDay(day.date, today);
-              const key = isoKey(day.date);
+              const key = toDateKey(day.date);
               return (
                 <button
                   key={key}
@@ -242,9 +243,3 @@ export function DatePickerGrid({
   );
 }
 
-function isoKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = `${date.getMonth() + 1}`.padStart(2, '0');
-  const d = `${date.getDate()}`.padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
