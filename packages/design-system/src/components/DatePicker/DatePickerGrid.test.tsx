@@ -373,4 +373,30 @@ describe('DatePickerGrid', () => {
     expect(screen.queryByRole('button', { name: 'Next month' })).toBeNull();
     expect(screen.getByText(/May 2026/)).toBeInTheDocument();
   });
+
+  it('disabled grid: chevrons are disabled, cells get tabIndex=-1, clicks are no-ops', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const onCursorChange = vi.fn();
+    render(
+      <DatePickerGrid
+        cursor={new Date(2026, 4, 1)}
+        value={null}
+        onSelect={onSelect}
+        onCursorChange={onCursorChange}
+        labels={LABELS}
+        disabled
+      />,
+      { wrapper: wrap() },
+    );
+    // Chevrons disabled
+    expect(screen.getByRole('button', { name: 'Previous month' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next month' })).toBeDisabled();
+    // Cells non-focusable (tabIndex -1)
+    const cell15 = screen.getByRole('gridcell', { name: /^15$/ });
+    expect(cell15).toHaveAttribute('tabindex', '-1');
+    // Click no-ops
+    await user.click(cell15);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 });
