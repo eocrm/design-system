@@ -33,8 +33,19 @@ DataTable v1 (next PR) needs row-selection checkboxes. The library's `CLAUDE.md`
 ## Public API
 
 ```ts
+export type CheckboxSize = 'sm' | 'md' | 'lg';
+
 export interface CheckboxProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'type' | 'checked' | 'defaultChecked'> {
+  /**
+   * Box diameter + label type scale. Defaults to `'md'`. Same scale as
+   * `<Input>` so a checkbox paired with a labelled input lines up.
+   * - `'sm'` — 14px box, font-size-sm label. Dense tables, inline filters.
+   * - `'md'` — 16px box, font-size-md label. Default.
+   * - `'lg'` — 20px box, font-size-lg label. Hero forms, mobile-friendly.
+   */
+  size?: CheckboxSize;
+
   /**
    * Controlled checked state. Pair with `onChange`. Omit (with optional
    * `defaultChecked`) for uncontrolled use.
@@ -73,26 +84,32 @@ export interface CheckboxProps
 }
 ```
 
-Native `<input>` attributes pass through. `size` is shadowed (no component-level size in v1 — single 16px box; if a future screen wants sm/md/lg, extend the same way Input did). `type` is hardcoded `"checkbox"`. `checked` and `defaultChecked` are re-typed because our `onChange` signature differs from native.
+Native `<input>` attributes pass through except `size` (shadowed by the component-level `size` prop, same Omit pattern as Input/DatePicker/DRP), `type` (hardcoded `"checkbox"`), and `checked` / `defaultChecked` (re-typed because our `onChange` signature differs from native).
 
 ## Visual / tokens
 
-| Visual                         | Token                                       |
-| ------------------------------ | ------------------------------------------- |
-| Box size                       | `--size-checkbox` (NEW: `16px`)             |
-| Box border (unchecked)         | `--color-border-strong`                     |
-| Box border (hover)             | `--color-accent` (uses accent for hover preview) |
-| Box bg (checked / indeterminate)| `--color-accent`                            |
-| Box border (checked / indeterminate)| `--color-accent`                       |
-| Check / dash icon color        | `--color-accent-fg` (white)                 |
-| Box bg (disabled)              | `--color-bg-subtle`                         |
-| Box border (disabled)          | `--color-border`                            |
-| Box border (invalid)           | `--color-danger`                            |
-| Focus ring                     | `--ring-accent` (or `--ring-danger` when invalid) |
-| Label gap                      | `--space-2`                                 |
-| Box radius                     | `--radius-sm`                               |
+| Visual                              | Token                                            |
+| ----------------------------------- | ------------------------------------------------ |
+| Box size (sm)                       | `--size-checkbox-sm` (NEW: `14px`)               |
+| Box size (md)                       | `--size-checkbox-md` (NEW: `16px`)               |
+| Box size (lg)                       | `--size-checkbox-lg` (NEW: `20px`)               |
+| Check / dash icon size              | 10px (sm) / 12px (md) / 14px (lg), `<Icon size>` literals |
+| Label font (sm)                     | `--font-size-sm`                                 |
+| Label font (md)                     | `--font-size-md`                                 |
+| Label font (lg)                     | `--font-size-lg`                                 |
+| Box border (unchecked)              | `--color-border-strong`                          |
+| Box border (hover, unchecked)       | `--color-accent` — **border only**, no fill preview |
+| Box bg (checked / indeterminate)    | `--color-accent`                                 |
+| Box border (checked / indeterminate)| `--color-accent`                                 |
+| Check / dash icon color             | `--color-accent-fg` (white)                      |
+| Box bg (disabled)                   | `--color-bg-subtle`                              |
+| Box border (disabled)               | `--color-border`                                 |
+| Box border (invalid)                | `--color-danger`                                 |
+| Focus ring                          | `--ring-accent` (or `--ring-danger` when invalid)|
+| Label gap                           | `--space-2` (all sizes)                          |
+| Box radius                          | `--radius-sm`                                    |
 
-One new token: `--size-checkbox: 16px`. Slots near the other component-specific sizes (`--size-spinner`, `--size-chip`).
+Three new tokens: `--size-checkbox-sm: 14px`, `--size-checkbox-md: 16px`, `--size-checkbox-lg: 20px`. Slot near the other component-specific sizes (`--size-spinner`, `--size-chip`).
 
 ## States covered
 
@@ -196,19 +213,21 @@ The `onChange` callback signature is `(checked: boolean, event)` — first arg t
 - `name` + `value` flow through (FormData round-trip).
 - `ref` forwards to the native input element.
 - `className` is merged on the outer `<label>`, not replaced.
-- Box focus-visible adds the focus ring class (assert via class, not computed style).
+- `size` applies the right class name (sm / md / lg) and defaults to `'md'`.
+- Component-level `size` does NOT propagate to the DOM `size` attribute (Omit regression check, matches Input precedent).
 
 ## Playground demo
 
 `CheckboxDemo.tsx` with examples:
 
 1. **Default** — `<Checkbox label="I agree" />`
-2. **Controlled** — checked + onChange with a debug echo
-3. **Indeterminate** — boolean state that flips: 0 selected → unchecked, all selected → checked, partial → indeterminate
-4. **Disabled** — `<Checkbox disabled label="Locked" defaultChecked />` and `<Checkbox disabled label="Locked, unchecked" />`
-5. **Invalid** — paired with `aria-describedby` and a visible error message
-6. **No label** — `<Checkbox aria-label="Select row" />`
-7. **Form integration** — `<Checkbox name="agree" required>` inside a form, log FormData on submit
+2. **Sizes** — three checkboxes (sm / md / lg) side by side with labels.
+3. **Controlled** — checked + onChange with a debug echo.
+4. **Indeterminate** — boolean state that flips: 0 selected → unchecked, all selected → checked, partial → indeterminate. Models the "select all" header pattern DataTable will use.
+5. **Disabled** — `<Checkbox disabled label="Locked" defaultChecked />` and `<Checkbox disabled label="Locked, unchecked" />`.
+6. **Invalid** — paired with `aria-describedby` and a visible error message.
+7. **No label** — `<Checkbox aria-label="Select row" />`.
+8. **Form integration** — `<Checkbox name="agree" required>` inside a form, log FormData on submit.
 
 ## AGENTS.md
 
@@ -216,10 +235,10 @@ Add a `<Checkbox>` section right after `<Input>` (Forms group). Document the API
 
 ## Non-goals
 
-- **Sizes (sm/md/lg)**. One 16px size in v1. Extend if a CRM screen demands it.
 - **Checkbox groups / Fieldset wrapper**. Consumer wraps in `<fieldset>` themselves; we don't ship a `<Checkbox.Group>` yet.
 - **Switch / Toggle**. Different component (single binary state with motion). Wishlist entry separate from Checkbox.
 - **Tri-state value** — `indeterminate` here is a display flag, not a third boolean. If a use case for a real `'unchecked' | 'checked' | 'partial'` value union emerges, that's a separate prop.
+- **Hover fill preview**. Hover only shifts the box border to accent — no fill preview of the eventual checked state. (Less aggressive than some DSes; aligns with Atlassian.)
 
 ## Risks / open questions
 
