@@ -164,6 +164,10 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
         className,
       )}
     >
+      {/* Pattern B — props first so the component-owned attrs below
+          (type, checked, disabled, aria-invalid, onChange, className) win.
+          The semantic contract is that a Checkbox is always type=checkbox,
+          uses our checked/onChange machinery, and styles via styles.input. */}
       <input
         {...props}
         ref={mergedRef}

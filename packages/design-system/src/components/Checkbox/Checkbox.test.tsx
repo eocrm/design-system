@@ -54,13 +54,19 @@ describe('Checkbox', () => {
     expect(container.querySelector('svg')).toBeNull();
   });
 
-  it('disabled propagates and blocks click', async () => {
+  it('disabled propagates and blocks click on both input and label text', async () => {
     const user = userEvent.setup();
     const handle = vi.fn();
     render(<Checkbox label="Locked" disabled onChange={handle} />);
     const input = screen.getByRole('checkbox');
     expect(input).toBeDisabled();
+    // Click on the native input directly.
     await user.click(input);
+    expect(handle).not.toHaveBeenCalled();
+    // Click on the label text — native <input disabled> inside <label> blocks
+    // label-forwarded clicks too. Important: a consumer can't accidentally
+    // toggle a disabled checkbox by clicking the surrounding label area.
+    await user.click(screen.getByText('Locked'));
     expect(handle).not.toHaveBeenCalled();
   });
 

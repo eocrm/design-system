@@ -82,7 +82,9 @@
 }
 
 // Hover preview — border only, no fill (Atlassian-style restraint).
-.checkbox:not(.disabled):hover .box {
+// Excludes .invalid so the danger border stays visible on hover instead
+// of flipping to accent and hiding the error signal.
+.checkbox:not(.disabled, .invalid):hover .box {
   border-color: var(--color-accent);
 }
 
