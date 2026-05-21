@@ -1,4 +1,4 @@
-import { startOfDay } from '../../calendar/dateMath';
+import { startOfDay, toDateKey } from '../../calendar/dateMath';
 
 /** Format a `Date` for display in the input, locale-aware. */
 export function formatDate(date: Date, locale: string): string {
@@ -28,10 +28,7 @@ export function getLocaleDateOrder(_locale: string): readonly ('year' | 'month' 
 
 /** ISO `YYYY-MM-DD` representation in local time. */
 export function toIsoDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = `${date.getMonth() + 1}`.padStart(2, '0');
-  const d = `${date.getDate()}`.padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return toDateKey(date);
 }
 
 /**
