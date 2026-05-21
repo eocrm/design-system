@@ -28,6 +28,12 @@ export interface TableProps extends Omit<HTMLAttributes<HTMLTableElement>, 'chil
   density?: TableDensity;
   /** Zebra-striped body rows (even rows tinted). Defaults to `false`. */
   striped?: boolean;
+  /**
+   * Full-grid borders — outer border + vertical borders between every cell
+   * on top of the existing horizontal row dividers. Defaults to `false`
+   * (Atlassian-style minimal: header underline + row dividers only).
+   */
+  bordered?: boolean;
   /** Hover highlight on body rows. Defaults to `true`. */
   hover?: boolean;
   /**
@@ -170,6 +176,7 @@ const TableRoot = forwardRef<HTMLTableElement, TableProps>(function TableRoot(
   {
     density = 'comfortable',
     striped,
+    bordered,
     hover = true,
     stickyHeader,
     scroll = true,
@@ -186,6 +193,7 @@ const TableRoot = forwardRef<HTMLTableElement, TableProps>(function TableRoot(
         styles.table,
         styles[`density-${density}`],
         striped && styles.striped,
+        bordered && styles.bordered,
         hover && styles.hover,
         stickyHeader && styles.stickyHeader,
         className,

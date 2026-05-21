@@ -61,6 +61,16 @@
   background: var(--color-bg-subtle);
 }
 
+// Bordered — full grid. With `border-collapse: collapse` already on the
+// .table, putting a 1px border on every cell collapses adjacent cell
+// borders into a single line AND produces the outer table border
+// automatically. The existing row-divider `tr { border-bottom }` stays
+// fine — it collapses against the cell borders without doubling.
+.bordered .th,
+.bordered .td {
+  border: var(--border-width) solid var(--color-border);
+}
+
 // Selected wins over hover + striped. The `.striped .tbody .tr.selected`
 // arm matches the same specificity as `.striped .tbody .tr:nth-of-type(even)`
 // (both four-class selectors) — source order then wins because selected is

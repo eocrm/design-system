@@ -217,6 +217,33 @@ export function TableDemo() {
       </Example>
 
       <Example
+        title="Bordered"
+        description="Full-grid borders (outer + vertical between cells). Default is Atlassian-minimal (just row dividers + header underline); pass `bordered` for the heavier admin-screen look."
+        code={`<Table bordered>{...}</Table>`}
+      >
+        <Table bordered>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>Company</Table.HeaderCell>
+              <Table.HeaderCell>Status</Table.HeaderCell>
+              <Table.HeaderCell align="end">Amount</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {ROWS.map((row) => (
+              <Table.Row key={row.id}>
+                <Table.Cell>{row.name}</Table.Cell>
+                <Table.Cell>
+                  <Badge tone={STATUS_TONE[row.status]}>{row.status}</Badge>
+                </Table.Cell>
+                <Table.Cell align="end">${row.amount.toLocaleString()}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+      </Example>
+
+      <Example
         title="Sortable headers"
         description="`<Table.HeaderCell sortDirection>` renders a chevron + sets `aria-sort`. The primitive only paints the indicator — wire `onClick` to your own sort state. (DataTable will compose this seam.)"
         code={`<Table.HeaderCell
