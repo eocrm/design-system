@@ -45,6 +45,8 @@ export interface PasswordInputLabels {
   hide?: string;
   /** Live-region text announced when caps-lock is detected as on. Default: 'Caps Lock is on'. */
   capsLockOn?: string;
+  /** Live-region text announced when a non-ASCII keystroke is detected. Default: 'Possible wrong keyboard layout'. */
+  wrongLayoutOn?: string;
 }
 
 export interface PasswordInputProps
@@ -89,7 +91,22 @@ export interface PasswordInputProps
    */
   capsLockWarning?: boolean;
 
-  /** Localized aria-labels for the toggle + caps-lock live region. */
+  /**
+   * Opt-in wrong-keyboard-layout detection. When `true`, on every keypress
+   * the input checks whether `event.key` is a single non-ASCII printable
+   * character (e.g., Cyrillic `ф` from the `KeyA` physical key on a
+   * Russian layout). When detected, a `Languages` warning icon appears +
+   * a polite `aria-live` region announces the state.
+   *
+   * Heuristic (not deterministic): warns whenever ANY non-ASCII character
+   * is typed. Only enable when you expect Latin-only password input —
+   * a system that allows Cyrillic passwords would false-positive here.
+   *
+   * Defaults to `false`. Cleared on blur.
+   */
+  wrongLayoutWarning?: boolean;
+
+  /** Localized aria-labels for the toggle + warning live regions. */
   labels?: PasswordInputLabels;
 }
 ```
@@ -133,6 +150,7 @@ Per-size icon size lookup (matches DatePicker convention): `{ sm: 14, md: 14, lg
 - **Disabled** — `<input disabled>` + toggle disabled (greyed, no click). The toggle still renders (so the disabled-treatment is consistent) but the password stays hidden.
 - **Invalid** — danger border + danger focus ring.
 - **Caps-lock on (only when `capsLockWarning={true}`)** — a `--color-warning`-colored `ArrowBigUpDash` icon appears between the input and the eye toggle. A hidden `aria-live='polite'` span announces `labels.capsLockOn` to AT. Cleared on blur.
+- **Wrong-layout detected (only when `wrongLayoutWarning={true}`)** — a `--color-warning`-colored `Languages` icon appears in the same warning slot. A second hidden `aria-live='polite'` span announces `labels.wrongLayoutOn`. Both warnings can coexist (caps-lock + wrong-layout); icons stack horizontally in the warning slot, announced via separate live regions.
 
 ## A11y
 
@@ -142,6 +160,7 @@ Per-size icon size lookup (matches DatePicker convention): `{ sm: 14, md: 14, lg
 - `aria-invalid` set on the input when `invalid={true}`.
 - `aria-describedby` flows through to the input via the standard spread.
 - **Caps-lock indicator** (when `capsLockWarning={true}`) — visual warning icon + a polite live region (`role='status' aria-live='polite'`) that announces `labels.capsLockOn` exactly once when caps-lock turns on. The icon also carries `aria-hidden='true'` so AT doesn't double-announce.
+- **Wrong-layout indicator** (when `wrongLayoutWarning={true}`) — same pattern: icon `aria-hidden`, separate polite live region announces `labels.wrongLayoutOn` when a non-ASCII keystroke is detected. Detection runs only when the prop is set, so consumers who don't opt in pay no event-handler cost.
 
 ## File layout
 
@@ -282,6 +301,9 @@ This is intentionally crude. JSDoc warns consumers that real password security n
 - `name` + `value` flow through for FormData round-trip.
 - `capsLockWarning={true}` — when keydown event reports `getModifierState('CapsLock')` true, the warning icon renders + the live region contains the label. When false, neither does. On blur, both clear.
 - `capsLockWarning={false}` (default) — no keydown listeners attached; no warning even if caps-lock is on.
+- `wrongLayoutWarning={true}` — typing a non-ASCII single character (simulated via `fireEvent.keyDown` with `key: 'ф'`) sets the warning icon + live region. Typing an ASCII character clears it on the next keypress. Blur clears both.
+- `wrongLayoutWarning={false}` (default) — no warning regardless of what's typed.
+- Both warnings simultaneously: typing `'ф'` while caps-lock is on shows both icons + both live regions populated.
 
 ## Playground demos
 
@@ -292,11 +314,13 @@ This is intentionally crude. JSDoc warns consumers that real password security n
 3. **Controlled reveal** — `revealed` + `onRevealChange` echoed to a debug line.
 4. **No toggle** — `<PasswordInput revealable={false} placeholder="No toggle" />` for the compliance case.
 5. **Caps-lock warning** — `<PasswordInput capsLockWarning placeholder="Try with Caps Lock on" />` — manual smoke note that the user needs to toggle Caps Lock to see the icon.
-6. **Disabled** — `<PasswordInput disabled defaultValue="locked" />`.
-7. **Invalid** — paired with `aria-describedby` + visible error.
-8. **Localized labels (ru-RU)** — passes Russian `labels`.
-9. **Form integration** — `name="password" required` inside a `<form>`, log FormData on submit.
-10. **With strength meter (composition)** — `<PasswordInput capsLockWarning />` + `<PasswordStrengthMeter value={pw} />` below, demonstrating the canonical signup form pattern.
+6. **Wrong-layout warning** — `<PasswordInput wrongLayoutWarning placeholder="Try typing while on a non-Latin keyboard" />` — switch to Cyrillic / Greek / etc. and type to see the warning.
+7. **Both warnings (login-form pattern)** — `<PasswordInput capsLockWarning wrongLayoutWarning />` showing the two warning icons stacking when both fire.
+8. **Disabled** — `<PasswordInput disabled defaultValue="locked" />`.
+9. **Invalid** — paired with `aria-describedby` + visible error.
+10. **Localized labels (ru-RU)** — passes Russian `labels`.
+11. **Form integration** — `name="password" required` inside a `<form>`, log FormData on submit.
+12. **With strength meter (composition)** — `<PasswordInput capsLockWarning wrongLayoutWarning />` + `<PasswordStrengthMeter value={pw} />` below, demonstrating the canonical signup form pattern.
 
 `PasswordStrengthMeterDemo.tsx`:
 
@@ -328,4 +352,7 @@ Two new sections, both in the Forms group:
 - **Focus management on toggle click**: explicitly leave focus on the button.
 - **Caps-lock detection limits**: `getModifierState('CapsLock')` only resolves on KEY events. We can't know caps-lock state at focus time (only at the first keypress). 1Password, GitHub, Microsoft all have the same limitation. Acceptable.
 - **Caps-lock + non-Latin keyboards**: on some keyboard layouts, caps-lock either does nothing (CJK input methods) or behaves unusually. The `getModifierState` reading is browser-driven and consistent with the user's expectation for their keyboard.
+- **Wrong-layout detection is heuristic, not deterministic**: there's no cross-browser API to read the active keyboard layout. `navigator.keyboard.getLayoutMap()` is Chromium-only with no Firefox/Safari support. The implemented heuristic (any non-ASCII single-character `event.key` → warn) catches the common "Cyrillic-instead-of-Latin" case but would false-positive on legitimately non-ASCII passwords. JSDoc + AGENTS.md state this explicitly so consumers don't enable the prop on systems that accept non-Latin passwords.
+- **Wrong-layout + IME input**: CJK / Korean input methods compose characters via IME, dispatching `compositionstart` / `compositionupdate` / `compositionend` events rather than direct keydown→key. Our heuristic runs on keydown only, so IME composition won't trigger the warning. Acceptable — IME input is a deliberate choice, not an accidental wrong-layout case.
+- **Wrong-layout + dead keys / accents**: keys that produce diacritic combining characters (German `^`, French `´`) also yield single non-ASCII output. The warning would fire on a German user typing `ö`. Realistic mitigation: don't opt into `wrongLayoutWarning` on screens where non-ASCII passwords are valid. We don't try to distinguish "deliberate non-Latin" from "accidental wrong layout" in code — the prop's opt-in nature places that judgment with the consumer.
 - **PasswordStrengthMeter as a "trust me" UX**: a default-heuristic meter can give users a false sense of security ("My password is rated Strong"). JSDoc + AGENTS.md must call this out: default scoring is a UX hint, not a security control.
