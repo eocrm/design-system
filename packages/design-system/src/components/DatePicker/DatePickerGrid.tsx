@@ -159,11 +159,7 @@ export function DatePickerGrid({
       if (rangeStart == null && isTodayCell) return 0;
       return -1;
     }
-    return value != null && isSameDay(date, value)
-      ? 0
-      : value == null && isTodayCell
-        ? 0
-        : -1;
+    return value != null && isSameDay(date, value) ? 0 : value == null && isTodayCell ? 0 : -1;
   };
 
   useEffect(() => {

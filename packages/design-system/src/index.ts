@@ -148,10 +148,7 @@ export type {
 } from './components/DateRangePicker';
 
 export { InlineDatePicker } from './components/DatePicker';
-export type {
-  InlineDatePickerProps,
-  InlineDatePickerLabels,
-} from './components/DatePicker';
+export type { InlineDatePickerProps, InlineDatePickerLabels } from './components/DatePicker';
 
 export { InlineDateRangePicker } from './components/DateRangePicker';
 export type {

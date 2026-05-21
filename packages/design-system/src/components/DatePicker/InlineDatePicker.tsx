@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type HTMLAttributes,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { DatePickerGrid } from './DatePickerGrid';
@@ -17,8 +10,10 @@ export interface InlineDatePickerLabels {
   nextMonth?: string;
 }
 
-export interface InlineDatePickerProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface InlineDatePickerProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   /** Selected date. `null` = no value. Pair with `onChange` for controlled use. */
   value?: Date | null;
   /** Initial selected date for uncontrolled use. */
@@ -154,9 +149,7 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
           labels={resolvedLabels}
           disabled={disabled}
         />
-        {name && (
-          <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />
-        )}
+        {name && <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />}
       </div>
     );
   },

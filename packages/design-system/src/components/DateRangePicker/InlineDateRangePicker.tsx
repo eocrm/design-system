@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type HTMLAttributes,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
@@ -20,8 +13,10 @@ export interface InlineDateRangePickerLabels {
   nextMonth?: string;
 }
 
-export interface InlineDateRangePickerProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface InlineDateRangePickerProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   /** Selected range. `null` = no range. Pair with `onChange` for controlled use. */
   value?: DateRange | null;
   /** Initial range for uncontrolled use. */
@@ -98,170 +93,161 @@ const DEFAULT_LABELS: Required<InlineDateRangePickerLabels> = {
  *   side-by-side room; squashing them clips the right grid.
  * - ❌ Using `value` without `onChange`.
  */
-export const InlineDateRangePicker = forwardRef<
-  HTMLDivElement,
-  InlineDateRangePickerProps
->(function InlineDateRangePicker(
-  {
-    value: valueProp,
-    defaultValue = null,
-    onChange,
-    locale: localeOverride,
-    min,
-    max,
-    isDateDisabled,
-    nameStart,
-    nameEnd,
-    disabled = false,
-    labels,
-    className,
-    ...rest
-  },
-  ref,
-) {
-  const contextLocale = useLocale();
-  const locale = localeOverride ?? contextLocale;
-  const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
-
-  const [uncontrolled, setUncontrolled] = useState<DateRange | null>(defaultValue);
-  const value = valueProp !== undefined ? valueProp : uncontrolled;
-  const setValue = useCallback(
-    (next: DateRange | null) => {
-      if (valueProp === undefined) setUncontrolled(next);
-      onChange?.(next);
+export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangePickerProps>(
+  function InlineDateRangePicker(
+    {
+      value: valueProp,
+      defaultValue = null,
+      onChange,
+      locale: localeOverride,
+      min,
+      max,
+      isDateDisabled,
+      nameStart,
+      nameEnd,
+      disabled = false,
+      labels,
+      className,
+      ...rest
     },
-    [valueProp, onChange],
-  );
+    ref,
+  ) {
+    const contextLocale = useLocale();
+    const locale = localeOverride ?? contextLocale;
+    const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
 
-  const [cursor, setCursor] = useState<Date>(value?.start ?? new Date());
+    const [uncontrolled, setUncontrolled] = useState<DateRange | null>(defaultValue);
+    const value = valueProp !== undefined ? valueProp : uncontrolled;
+    const setValue = useCallback(
+      (next: DateRange | null) => {
+        if (valueProp === undefined) setUncontrolled(next);
+        onChange?.(next);
+      },
+      [valueProp, onChange],
+    );
 
-  // Re-anchor only on the FIRST controlled `value` set when it was previously null.
-  const valueRef = useRef(value);
-  useEffect(() => {
-    if (valueRef.current == null && value != null) setCursor(value.start);
-    valueRef.current = value;
-  }, [value]);
+    const [cursor, setCursor] = useState<Date>(value?.start ?? new Date());
 
-  const [selectionStart, setSelectionStart] = useState<Date | null>(null);
-  const [hoverDate, setHoverDate] = useState<Date | null>(null);
+    // Re-anchor only on the FIRST controlled `value` set when it was previously null.
+    const valueRef = useRef(value);
+    useEffect(() => {
+      if (valueRef.current == null && value != null) setCursor(value.start);
+      valueRef.current = value;
+    }, [value]);
 
-  const handleGridSelect = useCallback(
-    (date: Date) => {
-      if (selectionStart == null) {
-        setSelectionStart(date);
-        setHoverDate(null);
-      } else {
-        const range = autoSwapRange(selectionStart, date);
-        setSelectionStart(null);
-        setHoverDate(null);
-        setValue(range);
-      }
-    },
-    [selectionStart, setValue],
-  );
+    const [selectionStart, setSelectionStart] = useState<Date | null>(null);
+    const [hoverDate, setHoverDate] = useState<Date | null>(null);
 
-  // Per-grid cursor-change callbacks — same translation as the popover
-  // variant. Right grid's `onCursorChange(M)` means "show month M on the
-  // right," which requires DRP cursor = M − 1 (because right always
-  // renders cursor + 1).
-  const handleLeftGridCursorChange = useCallback((c: Date) => {
-    setCursor(c);
-  }, []);
-  const handleRightGridCursorChange = useCallback((c: Date) => {
-    setCursor(addMonths(c, -1));
-  }, []);
+    const handleGridSelect = useCallback(
+      (date: Date) => {
+        if (selectionStart == null) {
+          setSelectionStart(date);
+          setHoverDate(null);
+        } else {
+          const range = autoSwapRange(selectionStart, date);
+          setSelectionStart(null);
+          setHoverDate(null);
+          setValue(range);
+        }
+      },
+      [selectionStart, setValue],
+    );
 
-  const goPrev = useCallback(() => {
-    setCursor((c) => addMonths(c, -1));
-  }, []);
-  const goNext = useCallback(() => {
-    setCursor((c) => addMonths(c, 1));
-  }, []);
+    // Per-grid cursor-change callbacks — same translation as the popover
+    // variant. Right grid's `onCursorChange(M)` means "show month M on the
+    // right," which requires DRP cursor = M − 1 (because right always
+    // renders cursor + 1).
+    const handleLeftGridCursorChange = useCallback((c: Date) => {
+      setCursor(c);
+    }, []);
+    const handleRightGridCursorChange = useCallback((c: Date) => {
+      setCursor(addMonths(c, -1));
+    }, []);
 
-  const gridRangeStart = selectionStart ?? value?.start ?? null;
-  const gridRangeEnd = selectionStart != null ? null : (value?.end ?? null);
-  const rightCursor = addMonths(cursor, 1);
+    const goPrev = useCallback(() => {
+      setCursor((c) => addMonths(c, -1));
+    }, []);
+    const goNext = useCallback(() => {
+      setCursor((c) => addMonths(c, 1));
+    }, []);
 
-  return (
-    // {...rest} last so consumer overrides win (Pattern A).
-    <div
-      ref={ref}
-      className={clsx(styles.inline, disabled && styles.disabled, className)}
-      {...rest}
-    >
-      <header className={styles.header}>
-        <button
-          type="button"
-          className={styles.navButton}
-          aria-label={resolvedLabels.previousMonth}
-          onClick={goPrev}
-          disabled={disabled}
-        >
-          <ChevronLeft size={14} />
-        </button>
-        <div className={styles.headerSpacer} />
-        <button
-          type="button"
-          className={styles.navButton}
-          aria-label={resolvedLabels.nextMonth}
-          onClick={goNext}
-          disabled={disabled}
-        >
-          <ChevronRight size={14} />
-        </button>
-      </header>
-      <div className={styles.grids}>
-        <DatePickerGrid
-          cursor={cursor}
-          value={null}
-          onCursorChange={handleLeftGridCursorChange}
-          onSelect={handleGridSelect}
-          min={min}
-          max={max}
-          isDateDisabled={isDateDisabled}
-          locale={locale}
-          labels={resolvedLabels}
-          selectionMode="range"
-          rangeStart={gridRangeStart}
-          rangeEnd={gridRangeEnd}
-          hoverDate={hoverDate}
-          onHoverDate={setHoverDate}
-          chevrons={false}
-          disabled={disabled}
-        />
-        <DatePickerGrid
-          cursor={rightCursor}
-          value={null}
-          onCursorChange={handleRightGridCursorChange}
-          onSelect={handleGridSelect}
-          min={min}
-          max={max}
-          isDateDisabled={isDateDisabled}
-          locale={locale}
-          labels={resolvedLabels}
-          selectionMode="range"
-          rangeStart={gridRangeStart}
-          rangeEnd={gridRangeEnd}
-          hoverDate={hoverDate}
-          onHoverDate={setHoverDate}
-          chevrons={false}
-          disabled={disabled}
-        />
+    const gridRangeStart = selectionStart ?? value?.start ?? null;
+    const gridRangeEnd = selectionStart != null ? null : (value?.end ?? null);
+    const rightCursor = addMonths(cursor, 1);
+
+    return (
+      // {...rest} last so consumer overrides win (Pattern A).
+      <div
+        ref={ref}
+        className={clsx(styles.inline, disabled && styles.disabled, className)}
+        {...rest}
+      >
+        <header className={styles.header}>
+          <button
+            type="button"
+            className={styles.navButton}
+            aria-label={resolvedLabels.previousMonth}
+            onClick={goPrev}
+            disabled={disabled}
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <div className={styles.headerSpacer} />
+          <button
+            type="button"
+            className={styles.navButton}
+            aria-label={resolvedLabels.nextMonth}
+            onClick={goNext}
+            disabled={disabled}
+          >
+            <ChevronRight size={14} />
+          </button>
+        </header>
+        <div className={styles.grids}>
+          <DatePickerGrid
+            cursor={cursor}
+            value={null}
+            onCursorChange={handleLeftGridCursorChange}
+            onSelect={handleGridSelect}
+            min={min}
+            max={max}
+            isDateDisabled={isDateDisabled}
+            locale={locale}
+            labels={resolvedLabels}
+            selectionMode="range"
+            rangeStart={gridRangeStart}
+            rangeEnd={gridRangeEnd}
+            hoverDate={hoverDate}
+            onHoverDate={setHoverDate}
+            chevrons={false}
+            disabled={disabled}
+          />
+          <DatePickerGrid
+            cursor={rightCursor}
+            value={null}
+            onCursorChange={handleRightGridCursorChange}
+            onSelect={handleGridSelect}
+            min={min}
+            max={max}
+            isDateDisabled={isDateDisabled}
+            locale={locale}
+            labels={resolvedLabels}
+            selectionMode="range"
+            rangeStart={gridRangeStart}
+            rangeEnd={gridRangeEnd}
+            hoverDate={hoverDate}
+            onHoverDate={setHoverDate}
+            chevrons={false}
+            disabled={disabled}
+          />
+        </div>
+        {nameStart && (
+          <input type="hidden" name={nameStart} value={value ? toIsoDate(value.start) : ''} />
+        )}
+        {nameEnd && (
+          <input type="hidden" name={nameEnd} value={value ? toIsoDate(value.end) : ''} />
+        )}
       </div>
-      {nameStart && (
-        <input
-          type="hidden"
-          name={nameStart}
-          value={value ? toIsoDate(value.start) : ''}
-        />
-      )}
-      {nameEnd && (
-        <input
-          type="hidden"
-          name={nameEnd}
-          value={value ? toIsoDate(value.end) : ''}
-        />
-      )}
-    </div>
-  );
-});
+    );
+  },
+);

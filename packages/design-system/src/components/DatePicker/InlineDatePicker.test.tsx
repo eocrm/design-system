@@ -23,7 +23,11 @@ describe('InlineDatePicker', () => {
     const onChange = vi.fn<(d: Date | null) => void>();
     const user = userEvent.setup();
     render(
-      <InlineDatePicker defaultValue={new Date(2026, 4, 1)} onChange={onChange} aria-label="Date" />,
+      <InlineDatePicker
+        defaultValue={new Date(2026, 4, 1)}
+        onChange={onChange}
+        aria-label="Date"
+      />,
       { wrapper: wrap() },
     );
     await user.click(screen.getByRole('gridcell', { name: /^15$/ }));
@@ -46,7 +50,9 @@ describe('InlineDatePicker', () => {
     expect(screen.getByRole('gridcell', { name: /^21$/, selected: true })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Pick May 5' }));
     expect(screen.getByRole('gridcell', { name: /^5$/, selected: true })).toBeInTheDocument();
-    expect(screen.queryByRole('gridcell', { name: /^21$/, selected: true })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('gridcell', { name: /^21$/, selected: true }),
+    ).not.toBeInTheDocument();
   });
 
   it('chevrons step the cursor (month header updates)', async () => {
@@ -121,27 +127,18 @@ describe('InlineDatePicker', () => {
 
   it('name renders a hidden form mirror with the ISO date', () => {
     const { container } = render(
-      <InlineDatePicker
-        name="dob"
-        defaultValue={new Date(2026, 4, 21)}
-        aria-label="Date"
-      />,
+      <InlineDatePicker name="dob" defaultValue={new Date(2026, 4, 21)} aria-label="Date" />,
       { wrapper: wrap() },
     );
-    const hidden = container.querySelector<HTMLInputElement>(
-      'input[type="hidden"][name="dob"]',
-    );
+    const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="dob"]');
     expect(hidden?.value).toBe('2026-05-21');
   });
 
   it('name with null value emits an empty hidden mirror', () => {
-    const { container } = render(
-      <InlineDatePicker name="dob" aria-label="Date" />,
-      { wrapper: wrap() },
-    );
-    const hidden = container.querySelector<HTMLInputElement>(
-      'input[type="hidden"][name="dob"]',
-    );
+    const { container } = render(<InlineDatePicker name="dob" aria-label="Date" />, {
+      wrapper: wrap(),
+    });
+    const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="dob"]');
     expect(hidden?.value).toBe('');
   });
 
@@ -152,10 +149,9 @@ describe('InlineDatePicker', () => {
   });
 
   it('merges className from props with the internal wrapper class', () => {
-    const { container } = render(
-      <InlineDatePicker className="custom" aria-label="Date" />,
-      { wrapper: wrap() },
-    );
+    const { container } = render(<InlineDatePicker className="custom" aria-label="Date" />, {
+      wrapper: wrap(),
+    });
     const wrapper = container.firstChild as HTMLDivElement;
     expect(wrapper.className).toMatch(/custom/);
     expect(wrapper.className).toMatch(/inline/);
@@ -185,11 +181,7 @@ describe('InlineDatePicker', () => {
 
   it('ru-RU locale shows Cyrillic month + weekday labels', () => {
     render(
-      <InlineDatePicker
-        defaultValue={new Date(2026, 4, 21)}
-        locale="ru-RU"
-        aria-label="Дата"
-      />,
+      <InlineDatePicker defaultValue={new Date(2026, 4, 21)} locale="ru-RU" aria-label="Дата" />,
       { wrapper: wrap('ru-RU') },
     );
     expect(document.body.textContent).toMatch(/[Ѐ-ӿ]/);

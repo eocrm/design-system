@@ -94,8 +94,8 @@ The existing pickers manage substantial popover state (open/close, draft, click-
 
 ```ts
 export interface InlineDatePickerLabels {
-  previousMonth?: string;   // default: "Previous month"
-  nextMonth?: string;       // default: "Next month"
+  previousMonth?: string; // default: "Previous month"
+  nextMonth?: string; // default: "Next month"
 }
 
 export interface InlineDatePickerProps {
@@ -142,8 +142,8 @@ The forwarded `ref` points at the outer wrapper `<div>`. There is no input. Cons
 
 ```ts
 export interface InlineDateRangePickerLabels {
-  previousMonth?: string;   // default: "Previous month"
-  nextMonth?: string;       // default: "Next month"
+  previousMonth?: string; // default: "Previous month"
+  nextMonth?: string; // default: "Next month"
 }
 
 export interface InlineDateRangePickerProps {

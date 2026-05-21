@@ -17,10 +17,7 @@ const SAMPLE: DateRange = { start: MAY(21), end: JUN(4) };
 
 describe('InlineDateRangePicker', () => {
   it('renders two month grids with external prev/next chevrons', () => {
-    render(
-      <InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />, { wrapper: wrap() });
     expect(screen.getAllByRole('grid')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Next month' })).toBeInTheDocument();
@@ -29,35 +26,30 @@ describe('InlineDateRangePicker', () => {
   });
 
   it('controlled: value updates when consumer changes it', () => {
-    const { rerender } = render(
-      <InlineDateRangePicker value={SAMPLE} aria-label="Range" />,
-      { wrapper: wrap() },
-    );
+    const { rerender } = render(<InlineDateRangePicker value={SAMPLE} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     // May 21 is rangeStart, June 4 is rangeEnd
-    expect(screen.getAllByRole('gridcell', { name: /^21$/, selected: true })[0]).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('gridcell', { name: /^21$/, selected: true })[0],
+    ).toBeInTheDocument();
     expect(screen.getAllByRole('gridcell', { name: /^4$/, selected: true })[0]).toBeInTheDocument();
     // Change the value via re-render
-    rerender(
-      <InlineDateRangePicker
-        value={{ start: MAY(10), end: MAY(15) }}
-        aria-label="Range"
-      />,
-    );
-    expect(screen.getAllByRole('gridcell', { name: /^10$/, selected: true })[0]).toBeInTheDocument();
-    expect(screen.getAllByRole('gridcell', { name: /^15$/, selected: true })[0]).toBeInTheDocument();
+    rerender(<InlineDateRangePicker value={{ start: MAY(10), end: MAY(15) }} aria-label="Range" />);
+    expect(
+      screen.getAllByRole('gridcell', { name: /^10$/, selected: true })[0],
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('gridcell', { name: /^15$/, selected: true })[0],
+    ).toBeInTheDocument();
   });
 
   it('two grid clicks commit a range (start then end)', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <InlineDateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
     await user.click(fives[0]);
     expect(onChange).not.toHaveBeenCalled();
@@ -72,14 +64,9 @@ describe('InlineDateRangePicker', () => {
   it('clicking end-before-start auto-swaps', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <InlineDateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
     await user.click(tens[0]);
     const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
@@ -93,14 +80,9 @@ describe('InlineDateRangePicker', () => {
   it('third click after a committed range restarts selection', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <InlineDateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     // First range: 5 → 10
     const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
     const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
@@ -122,14 +104,9 @@ describe('InlineDateRangePicker', () => {
   it('same-cell double-click commits a single-day range', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <InlineDateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
     await user.click(fives[0]);
     await user.click(fives[0]);
@@ -141,10 +118,7 @@ describe('InlineDateRangePicker', () => {
 
   it('external chevrons step the cursor (both grids advance/retreat)', async () => {
     const user = userEvent.setup();
-    render(
-      <InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />, { wrapper: wrap() });
     await user.click(screen.getByRole('button', { name: 'Next month' }));
     expect(screen.getByText(/June 2026/)).toBeInTheDocument();
     expect(screen.getByText(/July 2026/)).toBeInTheDocument();
@@ -287,24 +261,18 @@ describe('InlineDateRangePicker', () => {
   });
 
   it('merges className with internal wrapper class', () => {
-    const { container } = render(
-      <InlineDateRangePicker className="custom" aria-label="Range" />,
-      { wrapper: wrap() },
-    );
+    const { container } = render(<InlineDateRangePicker className="custom" aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     const wrapper = container.firstChild as HTMLDivElement;
     expect(wrapper.className).toMatch(/custom/);
     expect(wrapper.className).toMatch(/inline/);
   });
 
   it('ru-RU locale shows Cyrillic month + weekday labels', () => {
-    render(
-      <InlineDateRangePicker
-        defaultValue={SAMPLE}
-        locale="ru-RU"
-        aria-label="Диапазон"
-      />,
-      { wrapper: wrap('ru-RU') },
-    );
+    render(<InlineDateRangePicker defaultValue={SAMPLE} locale="ru-RU" aria-label="Диапазон" />, {
+      wrapper: wrap('ru-RU'),
+    });
     expect(document.body.textContent).toMatch(/[Ѐ-ӿ]/);
   });
 });

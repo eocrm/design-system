@@ -74,6 +74,7 @@ Expected: `.husky/_` + `OK`. If either fails, `npm install` from repo root and r
 ## Task 2: DatePickerGrid — add optional `disabled` prop
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DatePicker/DatePickerGrid.tsx`
 - Modify: `packages/design-system/src/components/DatePicker/DatePickerGrid.module.scss`
 - Modify: `packages/design-system/src/components/DatePicker/DatePickerGrid.test.tsx`
@@ -83,31 +84,31 @@ Expected: `.husky/_` + `OK`. If either fails, `npm install` from repo root and r
 Append the following `it` block to the existing `describe('DatePickerGrid', ...)` block in `DatePickerGrid.test.tsx`, immediately above the closing `});`:
 
 ```tsx
-  it('disabled grid: chevrons are disabled, cells get tabIndex=-1, clicks are no-ops', async () => {
-    const user = userEvent.setup();
-    const onSelect = vi.fn();
-    const onCursorChange = vi.fn();
-    render(
-      <DatePickerGrid
-        cursor={new Date(2026, 4, 1)}
-        value={null}
-        onSelect={onSelect}
-        onCursorChange={onCursorChange}
-        labels={LABELS}
-        disabled
-      />,
-      { wrapper: wrap() },
-    );
-    // Chevrons disabled
-    expect(screen.getByRole('button', { name: 'Previous month' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Next month' })).toBeDisabled();
-    // Cells non-focusable (tabIndex -1)
-    const cell15 = screen.getByRole('gridcell', { name: /^15$/ });
-    expect(cell15).toHaveAttribute('tabindex', '-1');
-    // Click no-ops
-    await user.click(cell15);
-    expect(onSelect).not.toHaveBeenCalled();
-  });
+it('disabled grid: chevrons are disabled, cells get tabIndex=-1, clicks are no-ops', async () => {
+  const user = userEvent.setup();
+  const onSelect = vi.fn();
+  const onCursorChange = vi.fn();
+  render(
+    <DatePickerGrid
+      cursor={new Date(2026, 4, 1)}
+      value={null}
+      onSelect={onSelect}
+      onCursorChange={onCursorChange}
+      labels={LABELS}
+      disabled
+    />,
+    { wrapper: wrap() },
+  );
+  // Chevrons disabled
+  expect(screen.getByRole('button', { name: 'Previous month' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Next month' })).toBeDisabled();
+  // Cells non-focusable (tabIndex -1)
+  const cell15 = screen.getByRole('gridcell', { name: /^15$/ });
+  expect(cell15).toHaveAttribute('tabindex', '-1');
+  // Click no-ops
+  await user.click(cell15);
+  expect(onSelect).not.toHaveBeenCalled();
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -153,11 +154,7 @@ const tabIndexFor = (date: Date, isTodayCell: boolean): number => {
     if (rangeStart == null && isTodayCell) return 0;
     return -1;
   }
-  return value != null && isSameDay(date, value)
-    ? 0
-    : value == null && isTodayCell
-      ? 0
-      : -1;
+  return value != null && isSameDay(date, value) ? 0 : value == null && isTodayCell ? 0 : -1;
 };
 ```
 
@@ -253,6 +250,7 @@ git commit -m "DatePickerGrid: add optional `disabled` prop (no-op clicks, tabIn
 ## Task 3: InlineDatePicker — component + SCSS + index barrel
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DatePicker/InlineDatePicker.tsx`
 - Create: `packages/design-system/src/components/DatePicker/InlineDatePicker.module.scss`
 - Modify: `packages/design-system/src/components/DatePicker/index.ts`
@@ -276,13 +274,7 @@ git commit -m "DatePickerGrid: add optional `disabled` prop (no-op clicks, tabIn
 `packages/design-system/src/components/DatePicker/InlineDatePicker.tsx`:
 
 ```tsx
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useState,
-  type HTMLAttributes,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useState, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { DatePickerGrid } from './DatePickerGrid';
@@ -294,8 +286,10 @@ export interface InlineDatePickerLabels {
   nextMonth?: string;
 }
 
-export interface InlineDatePickerProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface InlineDatePickerProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   /** Selected date. `null` = no value. Pair with `onChange` for controlled use. */
   value?: Date | null;
   /** Initial selected date for uncontrolled use. */
@@ -427,9 +421,7 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
           labels={resolvedLabels}
           disabled={disabled}
         />
-        {name && (
-          <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />
-        )}
+        {name && <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />}
       </div>
     );
   },
@@ -439,14 +431,7 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
 Add the missing `useRef` import at the top — replace the import line so it reads:
 
 ```tsx
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type HTMLAttributes,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState, type HTMLAttributes } from 'react';
 ```
 
 - [ ] **Step 3: Update the barrel**
@@ -480,6 +465,7 @@ git commit -m "InlineDatePicker: public component + barrel export"
 ## Task 4: InlineDatePicker tests
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DatePicker/InlineDatePicker.test.tsx`
 
 - [ ] **Step 1: Write the test file**
@@ -510,7 +496,11 @@ describe('InlineDatePicker', () => {
     const onChange = vi.fn<(d: Date | null) => void>();
     const user = userEvent.setup();
     render(
-      <InlineDatePicker defaultValue={new Date(2026, 4, 1)} onChange={onChange} aria-label="Date" />,
+      <InlineDatePicker
+        defaultValue={new Date(2026, 4, 1)}
+        onChange={onChange}
+        aria-label="Date"
+      />,
       { wrapper: wrap() },
     );
     await user.click(screen.getByRole('gridcell', { name: /^15$/ }));
@@ -601,27 +591,18 @@ describe('InlineDatePicker', () => {
 
   it('name renders a hidden form mirror with the ISO date', () => {
     const { container } = render(
-      <InlineDatePicker
-        name="dob"
-        defaultValue={new Date(2026, 4, 21)}
-        aria-label="Date"
-      />,
+      <InlineDatePicker name="dob" defaultValue={new Date(2026, 4, 21)} aria-label="Date" />,
       { wrapper: wrap() },
     );
-    const hidden = container.querySelector<HTMLInputElement>(
-      'input[type="hidden"][name="dob"]',
-    );
+    const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="dob"]');
     expect(hidden?.value).toBe('2026-05-21');
   });
 
   it('name with null value emits an empty hidden mirror', () => {
-    const { container } = render(
-      <InlineDatePicker name="dob" aria-label="Date" />,
-      { wrapper: wrap() },
-    );
-    const hidden = container.querySelector<HTMLInputElement>(
-      'input[type="hidden"][name="dob"]',
-    );
+    const { container } = render(<InlineDatePicker name="dob" aria-label="Date" />, {
+      wrapper: wrap(),
+    });
+    const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="dob"]');
     expect(hidden?.value).toBe('');
   });
 
@@ -632,10 +613,9 @@ describe('InlineDatePicker', () => {
   });
 
   it('merges className from props with the internal wrapper class', () => {
-    const { container } = render(
-      <InlineDatePicker className="custom" aria-label="Date" />,
-      { wrapper: wrap() },
-    );
+    const { container } = render(<InlineDatePicker className="custom" aria-label="Date" />, {
+      wrapper: wrap(),
+    });
     const wrapper = container.firstChild as HTMLDivElement;
     expect(wrapper.className).toMatch(/custom/);
     expect(wrapper.className).toMatch(/inline/);
@@ -643,11 +623,7 @@ describe('InlineDatePicker', () => {
 
   it('ru-RU locale shows Cyrillic month + weekday labels', () => {
     render(
-      <InlineDatePicker
-        defaultValue={new Date(2026, 4, 21)}
-        locale="ru-RU"
-        aria-label="Дата"
-      />,
+      <InlineDatePicker defaultValue={new Date(2026, 4, 21)} locale="ru-RU" aria-label="Дата" />,
       { wrapper: wrap('ru-RU') },
     );
     expect(document.body.textContent).toMatch(/[Ѐ-ӿ]/);
@@ -675,6 +651,7 @@ git commit -m "InlineDatePicker: tests (renders, controlled/uncontrolled, click,
 ## Task 5: InlineDateRangePicker — component + SCSS + barrel
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.tsx`
 - Create: `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.module.scss`
 - Modify: `packages/design-system/src/components/DateRangePicker/index.ts`
@@ -757,14 +734,7 @@ git commit -m "InlineDatePicker: tests (renders, controlled/uncontrolled, click,
 `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.tsx`:
 
 ```tsx
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type HTMLAttributes,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
@@ -779,8 +749,10 @@ export interface InlineDateRangePickerLabels {
   nextMonth?: string;
 }
 
-export interface InlineDateRangePickerProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface InlineDateRangePickerProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   /** Selected range. `null` = no range. Pair with `onChange` for controlled use. */
   value?: DateRange | null;
   /** Initial range for uncontrolled use. */
@@ -848,172 +820,163 @@ const DEFAULT_LABELS: Required<InlineDateRangePickerLabels> = {
  *   side-by-side room; squashing them clips the right grid.
  * - ❌ Using `value` without `onChange`.
  */
-export const InlineDateRangePicker = forwardRef<
-  HTMLDivElement,
-  InlineDateRangePickerProps
->(function InlineDateRangePicker(
-  {
-    value: valueProp,
-    defaultValue = null,
-    onChange,
-    locale: localeOverride,
-    min,
-    max,
-    isDateDisabled,
-    nameStart,
-    nameEnd,
-    disabled = false,
-    labels,
-    className,
-    ...rest
-  },
-  ref,
-) {
-  const contextLocale = useLocale();
-  const locale = localeOverride ?? contextLocale;
-  const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
-
-  const [uncontrolled, setUncontrolled] = useState<DateRange | null>(defaultValue);
-  const value = valueProp !== undefined ? valueProp : uncontrolled;
-  const setValue = useCallback(
-    (next: DateRange | null) => {
-      if (valueProp === undefined) setUncontrolled(next);
-      onChange?.(next);
+export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangePickerProps>(
+  function InlineDateRangePicker(
+    {
+      value: valueProp,
+      defaultValue = null,
+      onChange,
+      locale: localeOverride,
+      min,
+      max,
+      isDateDisabled,
+      nameStart,
+      nameEnd,
+      disabled = false,
+      labels,
+      className,
+      ...rest
     },
-    [valueProp, onChange],
-  );
+    ref,
+  ) {
+    const contextLocale = useLocale();
+    const locale = localeOverride ?? contextLocale;
+    const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
 
-  const [cursor, setCursor] = useState<Date>(value?.start ?? new Date());
+    const [uncontrolled, setUncontrolled] = useState<DateRange | null>(defaultValue);
+    const value = valueProp !== undefined ? valueProp : uncontrolled;
+    const setValue = useCallback(
+      (next: DateRange | null) => {
+        if (valueProp === undefined) setUncontrolled(next);
+        onChange?.(next);
+      },
+      [valueProp, onChange],
+    );
 
-  // Re-anchor only on the FIRST controlled `value` set when it was previously null.
-  const valueRef = useRef(value);
-  useEffect(() => {
-    if (valueRef.current == null && value != null) setCursor(value.start);
-    valueRef.current = value;
-  }, [value]);
+    const [cursor, setCursor] = useState<Date>(value?.start ?? new Date());
 
-  const [selectionStart, setSelectionStart] = useState<Date | null>(null);
-  const [hoverDate, setHoverDate] = useState<Date | null>(null);
+    // Re-anchor only on the FIRST controlled `value` set when it was previously null.
+    const valueRef = useRef(value);
+    useEffect(() => {
+      if (valueRef.current == null && value != null) setCursor(value.start);
+      valueRef.current = value;
+    }, [value]);
 
-  const handleGridSelect = useCallback(
-    (date: Date) => {
-      if (selectionStart == null) {
-        setSelectionStart(date);
-        setHoverDate(null);
-      } else {
-        const range = autoSwapRange(selectionStart, date);
-        setSelectionStart(null);
-        setHoverDate(null);
-        setValue(range);
-      }
-    },
-    [selectionStart, setValue],
-  );
+    const [selectionStart, setSelectionStart] = useState<Date | null>(null);
+    const [hoverDate, setHoverDate] = useState<Date | null>(null);
 
-  // Per-grid cursor-change callbacks — same translation as the popover
-  // variant. Right grid's `onCursorChange(M)` means "show month M on the
-  // right," which requires DRP cursor = M − 1 (because right always
-  // renders cursor + 1).
-  const handleLeftGridCursorChange = useCallback((c: Date) => {
-    setCursor(c);
-  }, []);
-  const handleRightGridCursorChange = useCallback((c: Date) => {
-    setCursor(addMonths(c, -1));
-  }, []);
+    const handleGridSelect = useCallback(
+      (date: Date) => {
+        if (selectionStart == null) {
+          setSelectionStart(date);
+          setHoverDate(null);
+        } else {
+          const range = autoSwapRange(selectionStart, date);
+          setSelectionStart(null);
+          setHoverDate(null);
+          setValue(range);
+        }
+      },
+      [selectionStart, setValue],
+    );
 
-  const goPrev = useCallback(() => {
-    setCursor((c) => addMonths(c, -1));
-  }, []);
-  const goNext = useCallback(() => {
-    setCursor((c) => addMonths(c, 1));
-  }, []);
+    // Per-grid cursor-change callbacks — same translation as the popover
+    // variant. Right grid's `onCursorChange(M)` means "show month M on the
+    // right," which requires DRP cursor = M − 1 (because right always
+    // renders cursor + 1).
+    const handleLeftGridCursorChange = useCallback((c: Date) => {
+      setCursor(c);
+    }, []);
+    const handleRightGridCursorChange = useCallback((c: Date) => {
+      setCursor(addMonths(c, -1));
+    }, []);
 
-  const gridRangeStart = selectionStart ?? value?.start ?? null;
-  const gridRangeEnd = selectionStart != null ? null : (value?.end ?? null);
-  const rightCursor = addMonths(cursor, 1);
+    const goPrev = useCallback(() => {
+      setCursor((c) => addMonths(c, -1));
+    }, []);
+    const goNext = useCallback(() => {
+      setCursor((c) => addMonths(c, 1));
+    }, []);
 
-  return (
-    <div
-      ref={ref}
-      className={clsx(styles.inline, disabled && styles.disabled, className)}
-      {...rest}
-    >
-      <header className={styles.header}>
-        <button
-          type="button"
-          className={styles.navButton}
-          aria-label={resolvedLabels.previousMonth}
-          onClick={goPrev}
-          disabled={disabled}
-        >
-          <ChevronLeft size={14} />
-        </button>
-        <div className={styles.headerSpacer} />
-        <button
-          type="button"
-          className={styles.navButton}
-          aria-label={resolvedLabels.nextMonth}
-          onClick={goNext}
-          disabled={disabled}
-        >
-          <ChevronRight size={14} />
-        </button>
-      </header>
-      <div className={styles.grids}>
-        <DatePickerGrid
-          cursor={cursor}
-          value={null}
-          onCursorChange={handleLeftGridCursorChange}
-          onSelect={handleGridSelect}
-          min={min}
-          max={max}
-          isDateDisabled={isDateDisabled}
-          locale={locale}
-          labels={resolvedLabels}
-          selectionMode="range"
-          rangeStart={gridRangeStart}
-          rangeEnd={gridRangeEnd}
-          hoverDate={hoverDate}
-          onHoverDate={setHoverDate}
-          chevrons={false}
-          disabled={disabled}
-        />
-        <DatePickerGrid
-          cursor={rightCursor}
-          value={null}
-          onCursorChange={handleRightGridCursorChange}
-          onSelect={handleGridSelect}
-          min={min}
-          max={max}
-          isDateDisabled={isDateDisabled}
-          locale={locale}
-          labels={resolvedLabels}
-          selectionMode="range"
-          rangeStart={gridRangeStart}
-          rangeEnd={gridRangeEnd}
-          hoverDate={hoverDate}
-          onHoverDate={setHoverDate}
-          chevrons={false}
-          disabled={disabled}
-        />
+    const gridRangeStart = selectionStart ?? value?.start ?? null;
+    const gridRangeEnd = selectionStart != null ? null : (value?.end ?? null);
+    const rightCursor = addMonths(cursor, 1);
+
+    return (
+      <div
+        ref={ref}
+        className={clsx(styles.inline, disabled && styles.disabled, className)}
+        {...rest}
+      >
+        <header className={styles.header}>
+          <button
+            type="button"
+            className={styles.navButton}
+            aria-label={resolvedLabels.previousMonth}
+            onClick={goPrev}
+            disabled={disabled}
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <div className={styles.headerSpacer} />
+          <button
+            type="button"
+            className={styles.navButton}
+            aria-label={resolvedLabels.nextMonth}
+            onClick={goNext}
+            disabled={disabled}
+          >
+            <ChevronRight size={14} />
+          </button>
+        </header>
+        <div className={styles.grids}>
+          <DatePickerGrid
+            cursor={cursor}
+            value={null}
+            onCursorChange={handleLeftGridCursorChange}
+            onSelect={handleGridSelect}
+            min={min}
+            max={max}
+            isDateDisabled={isDateDisabled}
+            locale={locale}
+            labels={resolvedLabels}
+            selectionMode="range"
+            rangeStart={gridRangeStart}
+            rangeEnd={gridRangeEnd}
+            hoverDate={hoverDate}
+            onHoverDate={setHoverDate}
+            chevrons={false}
+            disabled={disabled}
+          />
+          <DatePickerGrid
+            cursor={rightCursor}
+            value={null}
+            onCursorChange={handleRightGridCursorChange}
+            onSelect={handleGridSelect}
+            min={min}
+            max={max}
+            isDateDisabled={isDateDisabled}
+            locale={locale}
+            labels={resolvedLabels}
+            selectionMode="range"
+            rangeStart={gridRangeStart}
+            rangeEnd={gridRangeEnd}
+            hoverDate={hoverDate}
+            onHoverDate={setHoverDate}
+            chevrons={false}
+            disabled={disabled}
+          />
+        </div>
+        {nameStart && (
+          <input type="hidden" name={nameStart} value={value ? toIsoDate(value.start) : ''} />
+        )}
+        {nameEnd && (
+          <input type="hidden" name={nameEnd} value={value ? toIsoDate(value.end) : ''} />
+        )}
       </div>
-      {nameStart && (
-        <input
-          type="hidden"
-          name={nameStart}
-          value={value ? toIsoDate(value.start) : ''}
-        />
-      )}
-      {nameEnd && (
-        <input
-          type="hidden"
-          name={nameEnd}
-          value={value ? toIsoDate(value.end) : ''}
-        />
-      )}
-    </div>
-  );
-});
+    );
+  },
+);
 ```
 
 - [ ] **Step 3: Update the barrel**
@@ -1051,6 +1014,7 @@ git commit -m "InlineDateRangePicker: public component + barrel export"
 ## Task 6: InlineDateRangePicker tests
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.test.tsx`
 
 - [ ] **Step 1: Write the test file**
@@ -1075,10 +1039,7 @@ const SAMPLE: DateRange = { start: MAY(21), end: JUN(4) };
 
 describe('InlineDateRangePicker', () => {
   it('renders two month grids with external prev/next chevrons', () => {
-    render(
-      <InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />, { wrapper: wrap() });
     expect(screen.getAllByRole('grid')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Next month' })).toBeInTheDocument();
@@ -1089,14 +1050,9 @@ describe('InlineDateRangePicker', () => {
   it('two grid clicks commit a range (start then end)', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <InlineDateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
     await user.click(fives[0]);
     expect(onChange).not.toHaveBeenCalled();
@@ -1111,14 +1067,9 @@ describe('InlineDateRangePicker', () => {
   it('clicking end-before-start auto-swaps', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <InlineDateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
     await user.click(tens[0]);
     const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
@@ -1132,14 +1083,9 @@ describe('InlineDateRangePicker', () => {
   it('third click after a committed range restarts selection', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();
-    render(
-      <InlineDateRangePicker
-        defaultValue={null}
-        onChange={onChange}
-        aria-label="Range"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={null} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     // First range: 5 → 10
     const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
     const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
@@ -1160,10 +1106,7 @@ describe('InlineDateRangePicker', () => {
 
   it('external chevrons step the cursor (both grids advance/retreat)', async () => {
     const user = userEvent.setup();
-    render(
-      <InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />,
-      { wrapper: wrap() },
-    );
+    render(<InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />, { wrapper: wrap() });
     await user.click(screen.getByRole('button', { name: 'Next month' }));
     expect(screen.getByText(/June 2026/)).toBeInTheDocument();
     expect(screen.getByText(/July 2026/)).toBeInTheDocument();
@@ -1306,24 +1249,18 @@ describe('InlineDateRangePicker', () => {
   });
 
   it('merges className with internal wrapper class', () => {
-    const { container } = render(
-      <InlineDateRangePicker className="custom" aria-label="Range" />,
-      { wrapper: wrap() },
-    );
+    const { container } = render(<InlineDateRangePicker className="custom" aria-label="Range" />, {
+      wrapper: wrap(),
+    });
     const wrapper = container.firstChild as HTMLDivElement;
     expect(wrapper.className).toMatch(/custom/);
     expect(wrapper.className).toMatch(/inline/);
   });
 
   it('ru-RU locale shows Cyrillic month + weekday labels', () => {
-    render(
-      <InlineDateRangePicker
-        defaultValue={SAMPLE}
-        locale="ru-RU"
-        aria-label="Диапазон"
-      />,
-      { wrapper: wrap('ru-RU') },
-    );
+    render(<InlineDateRangePicker defaultValue={SAMPLE} locale="ru-RU" aria-label="Диапазон" />, {
+      wrapper: wrap('ru-RU'),
+    });
     expect(document.body.textContent).toMatch(/[Ѐ-ӿ]/);
   });
 });
@@ -1357,6 +1294,7 @@ git commit -m "InlineDateRangePicker: tests (renders, selection flow, restart, c
 ## Task 7: Re-export from `src/index.ts`
 
 **Files:**
+
 - Modify: `packages/design-system/src/index.ts`
 
 - [ ] **Step 1: Add the re-exports**
@@ -1365,10 +1303,7 @@ After the existing `DateRangePicker` block in `src/index.ts`, append:
 
 ```ts
 export { InlineDatePicker } from './components/DatePicker';
-export type {
-  InlineDatePickerProps,
-  InlineDatePickerLabels,
-} from './components/DatePicker';
+export type { InlineDatePickerProps, InlineDatePickerLabels } from './components/DatePicker';
 
 export { InlineDateRangePicker } from './components/DateRangePicker';
 export type {
@@ -1398,6 +1333,7 @@ git commit -m "InlineDatePicker + InlineDateRangePicker: re-export from package 
 ## Task 8: Playground — `InputExample` `width='auto'` short-circuit + inline demos
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/InputExample.tsx`
 - Create: `packages/playground/src/pages/components/InlineDatePickerDemo.tsx`
 - Create: `packages/playground/src/pages/components/InlineDateRangePickerDemo.tsx`
@@ -1649,11 +1585,7 @@ function ControlledDemo() {
   const [value, setValue] = useState<DateRange | null>({ start: TODAY, end: IN_14 });
   return (
     <Stack gap="xs">
-      <InlineDateRangePicker
-        value={value}
-        onChange={setValue}
-        aria-label="Controlled range"
-      />
+      <InlineDateRangePicker value={value} onChange={setValue} aria-label="Controlled range" />
       <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
         {value ? `${toDateKey(value.start)} → ${toDateKey(value.end)}` : 'null'}
       </code>
@@ -1835,6 +1767,7 @@ In `packages/playground/src/App.tsx`:
   import { InlineDateRangePickerDemo } from './pages/components/InlineDateRangePickerDemo';
   ```
 - Add routes (alphabetical position; between DatePicker and Input):
+
   ```tsx
   <Route path="/components/inline-datepicker" element={<InlineDatePickerDemo />} />
   <Route path="/components/inline-daterangepicker" element={<InlineDateRangePickerDemo />} />
@@ -1914,19 +1847,21 @@ git commit -m "playground: InlineDatePicker + InlineDateRangePicker demos + nav 
 ## Task 9: AGENTS.md sections
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 
 - [ ] **Step 1: Insert two new sections**
 
 Place these in `packages/design-system/AGENTS.md` immediately AFTER the existing `### <DateRangePicker>` section and BEFORE `### Calendar primitives`.
 
-```markdown
+````markdown
 ### `<InlineDatePicker>` — single-date calendar in flow
 
 ```tsx
 const [date, setDate] = useState<Date | null>(null);
 <InlineDatePicker value={date} onChange={setDate} min={new Date()} />;
 ```
+````
 
 - Same month-grid surface as `<DatePicker>` but always rendered in flow — no input, no popover, no portal. Use when the calendar should be visible at all times (sidebar pickers, schedule editors, quick-filter panels).
 - Cursor anchors to `value ?? new Date()` on mount and stays sticky after user navigation. Programmatic `value` changes do NOT re-anchor — consumers own scroll-into-view via `ref` if they want it.
@@ -1935,7 +1870,8 @@ const [date, setDate] = useState<Date | null>(null);
 - `disabled` mutes the entire grid (chevrons disabled, cells get `tabIndex=-1`, clicks no-op).
 - `forwardRef` points at the outer wrapper `<div>` (no input to forward to).
 - ARIA: same `role="grid"` + `role="gridcell"` cells from `DatePickerGrid`. No dialog role — the picker is in flow.
-```
+
+````
 
 ```markdown
 ### `<InlineDateRangePicker>` — date-range calendar in flow
@@ -1943,7 +1879,7 @@ const [date, setDate] = useState<Date | null>(null);
 ```tsx
 const [range, setRange] = useState<DateRange | null>(null);
 <InlineDateRangePicker value={range} onChange={setRange} />;
-```
+````
 
 - Two-month calendar grid (side-by-side) embedded directly in the page. Same click-1/click-2/restart selection machine, hover preview, auto-swap on out-of-order picks, and keyboard cross-grid navigation as `<DateRangePicker>` — without the input + popover.
 - External prev/next chevrons in the header shift both grids by ±1 month at once.
@@ -1952,14 +1888,15 @@ const [range, setRange] = useState<DateRange | null>(null);
 - `nameStart` / `nameEnd` render independent hidden form mirrors (post both, only one, or neither — caller's choice).
 - `disabled` mutes everything; ref forwards to the outer wrapper.
 - Use when the consumer wants the calendar permanently visible. For a compact form field with the same selection model, use `<DateRangePicker>`. Don't render inside containers narrower than ~32rem — the two grids need side-by-side room.
-```
+
+````
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add packages/design-system/AGENTS.md
 git commit -m "InlineDatePicker + InlineDateRangePicker: AGENTS.md sections"
-```
+````
 
 ---
 
@@ -1979,6 +1916,7 @@ npm pack --dry-run -w @eocrm/design-system 2>&1 | grep -E "\.test\.|node_modules
 ```
 
 Expected:
+
 - tests: ~771 / ~771 passing (existing + 11 InlineDP + 15 InlineDRP + 1 DatePickerGrid disabled)
 - typecheck: clean
 - lint:css: clean
