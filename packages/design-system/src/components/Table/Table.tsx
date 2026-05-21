@@ -64,7 +64,10 @@ export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
 }
 
-export interface TableHeaderCellProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, 'align'> {
+export interface TableHeaderCellProps extends Omit<
+  ThHTMLAttributes<HTMLTableCellElement>,
+  'align'
+> {
   /** Text alignment. Defaults to `'start'`. */
   align?: TableCellAlign;
   /**
@@ -155,7 +158,16 @@ const sortAriaFor: Record<TableSortDirection, 'ascending' | 'descending' | 'none
  *   follow-up to add a `rowHeader` prop.
  */
 const TableRoot = forwardRef<HTMLTableElement, TableProps>(function TableRoot(
-  { density = 'comfortable', striped, hover = true, stickyHeader, scroll = true, className, children, ...props },
+  {
+    density = 'comfortable',
+    striped,
+    hover = true,
+    stickyHeader,
+    scroll = true,
+    className,
+    children,
+    ...props
+  },
   ref,
 ) {
   const table = (
@@ -240,35 +252,37 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(function TableRo
   );
 });
 
-const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(function TableHeaderCell(
-  { align = 'start', sortDirection, scope = 'col', className, children, ...props },
-  ref,
-) {
-  const sortable = sortDirection != null;
-  const SortIcon =
-    sortDirection === 'asc' ? ChevronUp : sortDirection === 'desc' ? ChevronDown : ChevronsUpDown;
+const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
+  function TableHeaderCell(
+    { align = 'start', sortDirection, scope = 'col', className, children, ...props },
+    ref,
+  ) {
+    const sortable = sortDirection != null;
+    const SortIcon =
+      sortDirection === 'asc' ? ChevronUp : sortDirection === 'desc' ? ChevronDown : ChevronsUpDown;
 
-  return (
-    <th
-      ref={ref}
-      scope={scope}
-      aria-sort={sortable ? sortAriaFor[sortDirection] : undefined}
-      className={clsx(
-        styles.th,
-        styles[`align-${align}`],
-        sortable && styles.sortable,
-        sortable && sortDirection === 'none' && styles.sortableInactive,
-        className,
-      )}
-      {...props}
-    >
-      <span className={styles.thInner}>
-        <span>{children}</span>
-        {sortable && <SortIcon size={12} aria-hidden="true" className={styles.sortIcon} />}
-      </span>
-    </th>
-  );
-});
+    return (
+      <th
+        ref={ref}
+        scope={scope}
+        aria-sort={sortable ? sortAriaFor[sortDirection] : undefined}
+        className={clsx(
+          styles.th,
+          styles[`align-${align}`],
+          sortable && styles.sortable,
+          sortable && sortDirection === 'none' && styles.sortableInactive,
+          className,
+        )}
+        {...props}
+      >
+        <span className={styles.thInner}>
+          <span>{children}</span>
+          {sortable && <SortIcon size={12} aria-hidden="true" className={styles.sortIcon} />}
+        </span>
+      </th>
+    );
+  },
+);
 
 const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(function TableCell(
   { align = 'start', truncate, className, children, ...props },
@@ -277,12 +291,7 @@ const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(function Tabl
   return (
     <td
       ref={ref}
-      className={clsx(
-        styles.td,
-        styles[`align-${align}`],
-        truncate && styles.truncate,
-        className,
-      )}
+      className={clsx(styles.td, styles[`align-${align}`], truncate && styles.truncate, className)}
       {...props}
     >
       {children}

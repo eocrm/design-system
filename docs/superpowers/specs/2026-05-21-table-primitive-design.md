@@ -44,16 +44,16 @@ Native HTML elements throughout (`<table>`, `<thead>`, `<tbody>`, `<tr>`, `<th>`
 
 ### Subcomponents
 
-| Subcomponent          | Renders          | Purpose                                                 |
-| --------------------- | ---------------- | ------------------------------------------------------- |
-| `<Table>`             | `<table>`        | Root. Owns density + visual variants.                   |
-| `<Table.Caption>`     | `<caption>`      | Accessible title for the table.                         |
-| `<Table.Header>`      | `<thead>`        | Header row(s).                                          |
-| `<Table.Body>`        | `<tbody>`        | Data rows.                                              |
-| `<Table.Footer>`      | `<tfoot>`        | Footer row(s) — totals, summary, etc.                   |
-| `<Table.Row>`         | `<tr>`           | A row. Carries hover/striped/selected visual.           |
-| `<Table.HeaderCell>`  | `<th>`           | Column header. `scope="col"` by default.                |
-| `<Table.Cell>`        | `<td>`           | Body / footer cell.                                     |
+| Subcomponent         | Renders     | Purpose                                       |
+| -------------------- | ----------- | --------------------------------------------- |
+| `<Table>`            | `<table>`   | Root. Owns density + visual variants.         |
+| `<Table.Caption>`    | `<caption>` | Accessible title for the table.               |
+| `<Table.Header>`     | `<thead>`   | Header row(s).                                |
+| `<Table.Body>`       | `<tbody>`   | Data rows.                                    |
+| `<Table.Footer>`     | `<tfoot>`   | Footer row(s) — totals, summary, etc.         |
+| `<Table.Row>`        | `<tr>`      | A row. Carries hover/striped/selected visual. |
+| `<Table.HeaderCell>` | `<th>`      | Column header. `scope="col"` by default.      |
+| `<Table.Cell>`       | `<td>`      | Body / footer cell.                           |
 
 ### Root `<Table>` props
 
@@ -147,23 +147,23 @@ export interface TableCellProps extends TdHTMLAttributes<HTMLTableCellElement> {
 
 All values come from existing tokens. No new tokens added.
 
-| Visual                        | Token                                  |
-| ----------------------------- | -------------------------------------- |
-| Header bg                     | `--color-bg-subtle`                    |
-| Header fg                     | `--color-fg-muted`                     |
-| Header underline              | `--color-border` (bottom 1px)          |
-| Row divider                   | `--color-border` (bottom 1px)          |
-| Row hover bg                  | `--color-bg-subtle`                    |
-| Row striped bg (even)         | `--color-bg-subtle`                    |
-| Row selected bg               | `--color-accent-bg-subtle`             |
-| Row selected fg               | `--color-fg`                           |
-| Cell padding (comfortable)    | `--space-3` (12px) horiz, `--space-2` vert |
-| Cell padding (dense)          | `--space-2` (8px) horiz, `--space-1` vert  |
-| Row height (comfortable)      | `--size-md` (32px) min-height          |
-| Row height (dense)            | `--size-sm` (24px) min-height          |
-| Font size (comfortable)       | `--font-size-md`                       |
-| Font size (dense)             | `--font-size-sm`                       |
-| Sort chevron icon size        | 12px (matches existing 14px / 12px lucide convention; tight to header text) |
+| Visual                     | Token                                                                       |
+| -------------------------- | --------------------------------------------------------------------------- |
+| Header bg                  | `--color-bg-subtle`                                                         |
+| Header fg                  | `--color-fg-muted`                                                          |
+| Header underline           | `--color-border` (bottom 1px)                                               |
+| Row divider                | `--color-border` (bottom 1px)                                               |
+| Row hover bg               | `--color-bg-subtle`                                                         |
+| Row striped bg (even)      | `--color-bg-subtle`                                                         |
+| Row selected bg            | `--color-accent-bg-subtle`                                                  |
+| Row selected fg            | `--color-fg`                                                                |
+| Cell padding (comfortable) | `--space-3` (12px) horiz, `--space-2` vert                                  |
+| Cell padding (dense)       | `--space-2` (8px) horiz, `--space-1` vert                                   |
+| Row height (comfortable)   | `--size-md` (32px) min-height                                               |
+| Row height (dense)         | `--size-sm` (24px) min-height                                               |
+| Font size (comfortable)    | `--font-size-md`                                                            |
+| Font size (dense)          | `--font-size-sm`                                                            |
+| Sort chevron icon size     | 12px (matches existing 14px / 12px lucide convention; tight to header text) |
 
 Sticky-header background must be opaque (`--color-bg-subtle`) so scrolling body rows don't show through.
 
@@ -251,6 +251,6 @@ Add a `<Table>` section right before `<DropdownMenu>` (or wherever Display alpha
 
 - **`Object.assign` attached subcomponents + TypeScript ref inference**: each subcomponent uses `forwardRef`, so `Table.Body` etc. should accept refs typed to their respective HTML element. Verify in tests.
 - **Sticky header z-index**: needs to sit above selected/hover row backgrounds. Use a small positive z-index (e.g., `z-index: 1`) on the `<th>` — not a global token because this is a table-internal stacking context.
-- **Scroll wrapper Rule 4 compliance**: the outer `<div>` introduces a layout-impacting box (`overflow-x: auto`). Rule 4 forbids layout properties on the *component* box; this is on the WRAPPER (a sibling helper) and is the documented scroll-container pattern (matches how Calendar, Select, DatePicker handle their own internal wrappers). Acceptable.
+- **Scroll wrapper Rule 4 compliance**: the outer `<div>` introduces a layout-impacting box (`overflow-x: auto`). Rule 4 forbids layout properties on the _component_ box; this is on the WRAPPER (a sibling helper) and is the documented scroll-container pattern (matches how Calendar, Select, DatePicker handle their own internal wrappers). Acceptable.
 - **`align` prop semantics**: `start | center | end` (CSS logical) vs `left | right | center` (physical). Going with logical — matches RTL future and the existing Cluster/Stack `justify`/`align` props.
 - **Caption position**: HTML default is `caption-side: top`. Atlassian uses caption-top. Keep default.

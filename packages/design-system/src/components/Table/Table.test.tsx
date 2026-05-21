@@ -51,7 +51,9 @@ describe('Table', () => {
   });
 
   it('applies density / hover / striped / stickyHeader class names', () => {
-    const { container, rerender } = render(<Table density="dense" striped hover={false} stickyHeader />);
+    const { container, rerender } = render(
+      <Table density="dense" striped hover={false} stickyHeader />,
+    );
     const table = container.querySelector('table')!;
     expect(table.className).toMatch(/density-dense/);
     expect(table.className).toMatch(/striped/);

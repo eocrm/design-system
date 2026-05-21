@@ -195,7 +195,16 @@ const sortAriaFor: Record<TableSortDirection, 'ascending' | 'descending' | 'none
  *   follow-up to add a `rowHeader` prop.
  */
 const TableRoot = forwardRef<HTMLTableElement, TableProps>(function TableRoot(
-  { density = 'comfortable', striped, hover = true, stickyHeader, scroll = true, className, children, ...props },
+  {
+    density = 'comfortable',
+    striped,
+    hover = true,
+    stickyHeader,
+    scroll = true,
+    className,
+    children,
+    ...props
+  },
   ref,
 ) {
   const table = (
@@ -280,35 +289,37 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(function TableRo
   );
 });
 
-const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(function TableHeaderCell(
-  { align = 'start', sortDirection, scope = 'col', className, children, ...props },
-  ref,
-) {
-  const sortable = sortDirection != null;
-  const SortIcon =
-    sortDirection === 'asc' ? ChevronUp : sortDirection === 'desc' ? ChevronDown : ChevronsUpDown;
+const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
+  function TableHeaderCell(
+    { align = 'start', sortDirection, scope = 'col', className, children, ...props },
+    ref,
+  ) {
+    const sortable = sortDirection != null;
+    const SortIcon =
+      sortDirection === 'asc' ? ChevronUp : sortDirection === 'desc' ? ChevronDown : ChevronsUpDown;
 
-  return (
-    <th
-      ref={ref}
-      scope={scope}
-      aria-sort={sortable ? sortAriaFor[sortDirection] : undefined}
-      className={clsx(
-        styles.th,
-        styles[`align-${align}`],
-        sortable && styles.sortable,
-        sortable && sortDirection === 'none' && styles.sortableInactive,
-        className,
-      )}
-      {...props}
-    >
-      <span className={styles.thInner}>
-        <span>{children}</span>
-        {sortable && <SortIcon size={12} aria-hidden="true" className={styles.sortIcon} />}
-      </span>
-    </th>
-  );
-});
+    return (
+      <th
+        ref={ref}
+        scope={scope}
+        aria-sort={sortable ? sortAriaFor[sortDirection] : undefined}
+        className={clsx(
+          styles.th,
+          styles[`align-${align}`],
+          sortable && styles.sortable,
+          sortable && sortDirection === 'none' && styles.sortableInactive,
+          className,
+        )}
+        {...props}
+      >
+        <span className={styles.thInner}>
+          <span>{children}</span>
+          {sortable && <SortIcon size={12} aria-hidden="true" className={styles.sortIcon} />}
+        </span>
+      </th>
+    );
+  },
+);
 
 const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(function TableCell(
   { align = 'start', truncate, className, children, ...props },
@@ -317,12 +328,7 @@ const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(function Tabl
   return (
     <td
       ref={ref}
-      className={clsx(
-        styles.td,
-        styles[`align-${align}`],
-        truncate && styles.truncate,
-        className,
-      )}
+      className={clsx(styles.td, styles[`align-${align}`], truncate && styles.truncate, className)}
       {...props}
     >
       {children}
@@ -600,7 +606,9 @@ describe('Table', () => {
   });
 
   it('applies density / hover / striped / stickyHeader class names', () => {
-    const { container, rerender } = render(<Table density="dense" striped hover={false} stickyHeader />);
+    const { container, rerender } = render(
+      <Table density="dense" striped hover={false} stickyHeader />,
+    );
     const table = container.querySelector('table')!;
     expect(table.className).toMatch(/density-dense/);
     expect(table.className).toMatch(/striped/);
@@ -1089,7 +1097,14 @@ export function TableDemo() {
   <Table stickyHeader scroll={false}>{...}</Table>
 </div>`}
       >
-        <div style={{ maxHeight: 200, overflow: 'auto', border: 'var(--border-width) solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
+        <div
+          style={{
+            maxHeight: 200,
+            overflow: 'auto',
+            border: 'var(--border-width) solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+          }}
+        >
           <Table stickyHeader scroll={false}>
             <Table.Header>
               <Table.Row>
@@ -1153,7 +1168,7 @@ Add the import + route in the alphabetical position (after `Select` and before `
 ```tsx
 import { TableDemo } from './pages/components/TableDemo';
 // …
-<Route path="/components/table" element={<TableDemo />} />
+<Route path="/components/table" element={<TableDemo />} />;
 ```
 
 - [ ] **Step 3: Wire `AppShell.tsx`**
@@ -1224,6 +1239,7 @@ make dev  # or assume already running on :8080
 ```
 
 Visit `http://localhost:8080/components/table`. Verify:
+
 - All 7 Examples render.
 - Sortable headers toggle on click and the chevron flips.
 - Selected row tints on click.
@@ -1255,7 +1271,7 @@ Table is a Display/Data component. Slot it between `<Select>` (last Forms entry)
 
 - [ ] **Step 2: Insert this section**
 
-```markdown
+````markdown
 ### `<Table>` — tabular data primitive
 
 ```tsx
@@ -1276,6 +1292,7 @@ Table is a Display/Data component. Slot it between `<Select>` (last Forms entry)
   </Table.Body>
 </Table>
 ```
+````
 
 - Compound subcomponents: `Table`, `Table.Caption`, `Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.HeaderCell`, `Table.Cell`. Renders native `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>`/`<tfoot>`/`<caption>` — no ARIA-on-divs.
 - Visual modifiers on root: `density` (`'comfortable'` (default, 32px row) / `'dense'` (24px)), `hover` (default `true`), `striped`, `stickyHeader`, `scroll` (default `true` — wraps in `overflow-x: auto`).
@@ -1284,14 +1301,15 @@ Table is a Display/Data component. Slot it between `<Select>` (last Forms entry)
 - `<Table.Cell align>` / `<Table.HeaderCell align>`: `'start' | 'center' | 'end'` (CSS logical, RTL-friendly). Right-aligned for numbers / amounts; the sort chevron auto-flips to the start side.
 - `<Table.Cell truncate>` ellipses overflow text on one line. Requires a constrained cell width.
 - **Use `<DataTable>` instead** when you need sorting / filtering / pagination state. Table is the paint primitive; DataTable will be the opinionated wrapper.
-```
+
+````
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add packages/design-system/AGENTS.md
 git commit -m "AGENTS.md: document new <Table> compound primitive"
-```
+````
 
 ---
 
