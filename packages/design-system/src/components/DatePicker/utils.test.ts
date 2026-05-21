@@ -1,10 +1,4 @@
-import {
-  formatDate,
-  getLocaleDateOrder,
-  isDateOutOfRange,
-  parseDate,
-  toIsoDate,
-} from './utils';
+import { formatDate, getLocaleDateOrder, isDateOutOfRange, parseDate, toIsoDate } from './utils';
 
 describe('DatePicker utils', () => {
   describe('formatDate', () => {
@@ -117,7 +111,9 @@ describe('DatePicker utils', () => {
     });
 
     it('ignores time-of-day when comparing against min/max', () => {
-      expect(isDateOutOfRange(new Date(2026, 4, 21, 23, 59), new Date(2026, 4, 21, 0, 0))).toBe(false);
+      expect(isDateOutOfRange(new Date(2026, 4, 21, 23, 59), new Date(2026, 4, 21, 0, 0))).toBe(
+        false,
+      );
     });
   });
 });
