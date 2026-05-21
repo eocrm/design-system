@@ -61,9 +61,16 @@
   background: var(--color-bg-subtle);
 }
 
-// Selected wins over hover + striped (later declaration, equal specificity).
+// Selected wins over hover + striped. The `.striped .tbody .tr.selected`
+// arm matches the same specificity as `.striped .tbody .tr:nth-of-type(even)`
+// (both four-class selectors) — source order then wins because selected is
+// declared AFTER striped. Without this extra arm, striped would beat selected
+// on even rows due to the `:nth-of-type(even)` pseudo-class bumping
+// specificity above the plain `.tbody .tr.selected` selector.
 .tbody .tr.selected,
-.tbody .tr.selected:hover {
+.tbody .tr.selected:hover,
+.striped .tbody .tr.selected,
+.striped .tbody .tr.selected:hover {
   background: var(--color-accent-bg-subtle);
   color: var(--color-fg);
 }

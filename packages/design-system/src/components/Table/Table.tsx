@@ -1,6 +1,7 @@
 import {
   forwardRef,
   type HTMLAttributes,
+  type KeyboardEvent,
   type ReactNode,
   type TdHTMLAttributes,
   type ThHTMLAttributes,
@@ -254,18 +255,42 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(function TableRo
 
 const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
   function TableHeaderCell(
-    { align = 'start', sortDirection, scope = 'col', className, children, ...props },
+    {
+      align = 'start',
+      sortDirection,
+      scope = 'col',
+      className,
+      children,
+      onKeyDown,
+      tabIndex,
+      ...props
+    },
     ref,
   ) {
     const sortable = sortDirection != null;
     const SortIcon =
       sortDirection === 'asc' ? ChevronUp : sortDirection === 'desc' ? ChevronDown : ChevronsUpDown;
 
+    // Sortable headers are keyboard-reachable: `<th>` is not natively
+    // focusable, so we add `tabIndex={0}` when sortable and forward
+    // Enter/Space to a synthetic click so the consumer's `onClick`
+    // handler fires. Consumer-supplied tabIndex/onKeyDown still win.
+    const handleKeyDown = (e: KeyboardEvent<HTMLTableCellElement>) => {
+      onKeyDown?.(e);
+      if (!sortable || e.defaultPrevented) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.currentTarget.click();
+      }
+    };
+
     return (
       <th
         ref={ref}
         scope={scope}
         aria-sort={sortable ? sortAriaFor[sortDirection] : undefined}
+        tabIndex={sortable ? (tabIndex ?? 0) : tabIndex}
+        onKeyDown={sortable ? handleKeyDown : onKeyDown}
         className={clsx(
           styles.th,
           styles[`align-${align}`],
@@ -276,7 +301,7 @@ const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
         {...props}
       >
         <span className={styles.thInner}>
-          <span>{children}</span>
+          {children != null && <span>{children}</span>}
           {sortable && <SortIcon size={12} aria-hidden="true" className={styles.sortIcon} />}
         </span>
       </th>
