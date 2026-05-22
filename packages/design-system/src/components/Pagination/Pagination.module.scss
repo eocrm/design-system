@@ -1,0 +1,114 @@
+.pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: inherit;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-muted);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--color-bg-sunken);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--color-fg-disabled);
+  }
+}
+
+.pageButton {
+  min-width: var(--size-md);
+  height: var(--size-md);
+  padding: 0;
+}
+
+.navButton {
+  height: var(--size-md);
+  padding: 0 var(--space-2);
+}
+
+// Current-page button — accent palette. Override the `.button` defaults
+// AND `:disabled` (since current is rendered as disabled, but should look
+// "selected," not "unavailable").
+.current {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-fg);
+
+  &:disabled {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-accent-fg);
+    cursor: default;
+  }
+}
+
+.ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--size-md);
+  height: var(--size-md);
+  color: var(--color-fg-muted);
+  user-select: none;
+}
+
+// Size modifiers — scale height + min-width + horizontal padding.
+.size-sm {
+  font-size: var(--font-size-sm);
+
+  .pageButton,
+  .ellipsis {
+    min-width: var(--size-sm);
+    height: var(--size-sm);
+  }
+
+  .navButton {
+    height: var(--size-sm);
+    padding: 0 var(--space-2);
+  }
+}
+
+.size-md {
+  font-size: var(--font-size-md);
+}
+
+.size-lg {
+  font-size: var(--font-size-md);
+
+  .pageButton,
+  .ellipsis {
+    min-width: var(--size-lg);
+    height: var(--size-lg);
+  }
+
+  .navButton {
+    height: var(--size-lg);
+    padding: 0 var(--space-3);
+  }
+}
