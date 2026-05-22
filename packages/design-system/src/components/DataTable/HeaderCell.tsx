@@ -88,6 +88,7 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
       sortDirection={sortDir}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(styles.headerCell, isDragging && styles.dragging)}
+      // HTMLTableCellElement extends HTMLElement; dnd-kit only reads DOM geometry from the ref.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ref={setNodeRef as any}
       style={dragStyle}
