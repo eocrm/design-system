@@ -145,3 +145,30 @@
 .dragging {
   opacity: var(--opacity-dragging);
 }
+
+// Pinned columns get sticky positioning via inline `left` / `right` styles;
+// these class additions handle the background (otherwise body cells would
+// scroll under transparent pinned headers) and the inside-edge shadow.
+
+.pinnedLeft,
+.pinnedRight {
+  // Solid background so unpinned content doesn't show through during scroll.
+  // Header cells use --color-table-header-bg (muted gray chrome) — match it
+  // here so the pinned corner cell blends with the rest of the header band.
+  background: var(--color-table-header-bg);
+
+  // Sticky header (existing Table behavior) gives z-index: 2; a pinned header
+  // is the "corner" cell — it needs to stack above both the header band and
+  // the body's pinned column cells (which get z-index: 1).
+  z-index: 3;
+}
+
+.pinnedLeft {
+  // Inside-edge shadow on the right of left-pinned columns.
+  box-shadow: var(--shadow-table-pinned-edge);
+}
+
+.pinnedRight {
+  // Mirror shadow on the left of right-pinned columns.
+  box-shadow: var(--shadow-table-pinned-edge-right);
+}

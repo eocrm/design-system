@@ -14,6 +14,7 @@ import { Table } from '../Table';
 import type { TableSortDirection } from '../Table';
 import { useResizeHandle } from './useResizeHandle';
 import type { ColumnDef, DataTableInstance } from './types';
+import { getPinStyle } from './pinStyle';
 import styles from './HeaderCell.module.scss';
 
 export interface HeaderCellProps<T> {
@@ -92,10 +93,15 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   const headerContent =
     typeof column.header === 'function' ? column.header({ column, instance }) : column.header;
 
-  const dragStyle = {
+  const pinStyle = getPinStyle(column.id, instance);
+  const stickyStyle = pinStyle.position
+    ? { position: pinStyle.position, left: pinStyle.left, right: pinStyle.right }
+    : undefined;
+  const cellStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
-  } as const;
+    ...stickyStyle,
+  };
 
   return (
     // sortDirection is intentionally NOT passed to Table.HeaderCell — we suppress
@@ -106,11 +112,16 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
       align={column.align ?? 'start'}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
-      className={clsx(styles.headerCell, isDragging && styles.dragging)}
+      className={clsx(
+        styles.headerCell,
+        isDragging && styles.dragging,
+        pinStyle.pinSide === 'left' && styles.pinnedLeft,
+        pinStyle.pinSide === 'right' && styles.pinnedRight,
+      )}
       // HTMLTableCellElement extends HTMLElement; dnd-kit only reads DOM geometry from the ref.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ref={setNodeRef as any}
-      style={dragStyle}
+      style={cellStyle}
     >
       {/* Grip pinned to absolute left — kept outside .inner so it doesn't
           shift the content area. Only rendered when column is reorderable. */}
