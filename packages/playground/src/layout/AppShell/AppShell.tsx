@@ -24,6 +24,7 @@ import {
   Layers,
   ArrowRight,
   MessageSquare,
+  AppWindow,
   MoreHorizontal,
   KeyRound,
   PanelLeft,
@@ -103,6 +104,7 @@ const componentGroups = [
     heading: 'Overlays',
     items: [
       { to: '/components/dropdown-menu', label: 'DropdownMenu', icon: MoreHorizontal, end: false },
+      { to: '/components/modal', label: 'Modal', icon: AppWindow, end: false },
       { to: '/components/tooltip', label: 'Tooltip', icon: MessageSquare, end: false },
       { to: '/components/popover', label: 'Popover', icon: PanelLeft, end: false },
       {
