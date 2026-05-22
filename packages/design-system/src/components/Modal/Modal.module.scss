@@ -86,9 +86,11 @@
 .size-sm {
   --modal-width: var(--size-modal-sm);
 }
+
 .size-md {
   --modal-width: var(--size-modal-md);
 }
+
 .size-lg {
   --modal-width: var(--size-modal-lg);
 }
@@ -181,9 +183,11 @@
 .footerAlign-start {
   justify-content: flex-start;
 }
+
 .footerAlign-end {
   justify-content: flex-end;
 }
+
 .footerAlign-space-between {
   justify-content: space-between;
 }
