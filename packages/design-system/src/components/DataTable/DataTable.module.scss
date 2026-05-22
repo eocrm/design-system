@@ -3,7 +3,33 @@
 // Visual / behavior modifiers ONLY. No layout (Rule 4).
 
 .root {
-  // composes the Table primitive's scroll wrapper — nothing to add here yet
+  // table-layout: fixed + width: max-content makes each <col>'s declared
+  // width AUTHORITATIVE for the cell. Default `table-layout: auto` plus the
+  // Table primitive's `min-width: 100%` would distribute columns
+  // proportionally within the parent's width, which causes pin offsets to
+  // misalign — the 44px auto-cell rendering at e.g. 40px because the table
+  // was capped at the wrap's width, then the left-pinned column at left:44
+  // leaves a 4px gap that exposes scroll content during horizontal scroll.
+  // `width: max-content` lets the table grow to its intrinsic column-sum
+  // width when that exceeds the wrap; Table primitive's scrollWrap then
+  // scrolls horizontally as designed.
+  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+}
+
+// Even with table-layout: fixed, body cells inflate to fit their content's
+// min-content width if there's no overflow constraint — defeating col widths
+// and breaking pinning offset math (sticky cells overlap or gap because the
+// hook's pin offsets use declared widths, but rendered widths are larger).
+// Force every cell inside a DataTable to clip + ellipsize. This is an
+// opinionated default: consumers wanting multi-line cells can opt out by
+// styling specific cell content with `white-space: normal` or by avoiding
+// DataTable (use the raw <Table> primitive instead).
+.root :where(th, td) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // Selection auto-column — fixed narrow width is set via inline <col width> in colgroup.

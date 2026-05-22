@@ -6,7 +6,13 @@
 }
 
 .table {
-  width: 100%;
+  // min-width instead of width: 100% so the table is at least the parent's
+  // width for narrow content (looks identical to width:100% in that case) but
+  // is free to grow to its intrinsic column-sum width when wider. Combined
+  // with .scrollWrap's overflow-x:auto, a wide table scrolls internally and
+  // each column's declared <col> width is honored — important for sticky
+  // pinning math (DataTable's pin offsets assume widths aren't squeezed).
+  min-width: 100%;
   border-collapse: collapse;
   font-family: inherit;
   color: var(--color-table-fg);

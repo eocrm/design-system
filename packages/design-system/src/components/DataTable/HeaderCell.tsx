@@ -41,7 +41,15 @@ const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none
 };
 
 export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
-  const sortable = column.sortable === true;
+  // Pinned columns suppress sorting — sticky-pinned headers double as the
+  // table's "anchored identity" surface, and the sort indicator/click target
+  // competes visually with the pinning affordance. Pin/unpin reorders are
+  // also constrained to within-pin-side, so cycling sort on a pinned column
+  // sends mixed signals about what "primary" means.
+  const isPinned =
+    instance.columnPinning.left.includes(column.id) ||
+    instance.columnPinning.right.includes(column.id);
+  const sortable = column.sortable === true && !isPinned;
   const sortDir: TableSortDirection | undefined =
     instance.sort?.columnId === column.id ? instance.sort.direction : sortable ? 'none' : undefined;
 

@@ -2,6 +2,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+
+  // Flex items default to min-width:auto — they grow to fit intrinsic content
+  // width, which lets a wide child (e.g. a DataTable wider than viewport)
+  // expand the example past its parent. Force the example to respect its
+  // parent's allocated width so a child's own overflow-x:auto wrapper
+  // (Table.scrollWrap) actually scrolls internally.
+  min-width: 0;
 }
 
 .header {
@@ -32,6 +39,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+
+  // Same min-width:0 rationale as .example — without this, a wide DataTable
+  // or other internally-scrollable child grows the preview past the column,
+  // breaking the demo layout.
+  min-width: 0;
 }
 
 .codeDetails {
