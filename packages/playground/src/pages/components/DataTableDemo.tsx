@@ -81,6 +81,7 @@ export function DataTableDemo() {
       <LoadingExample />
       <EmptyExample />
       <PinningExample />
+      <WidePinningExample />
       <PinnedRowsExample />
     </DemoLayout>
   );
@@ -289,6 +290,153 @@ function PinningExample() {
 <DataTable instance={instance} />`}
     >
       <DataTable instance={instance} aria-label="Deals (pinning)" />
+    </Example>
+  );
+}
+
+// --- Wide-table fixture for the pinning-in-action example ---------------
+
+type WideDeal = {
+  id: string;
+  name: string;
+  stage: Deal['stage'];
+  amount: number;
+  owner: string;
+  region: string;
+  source: string;
+  closeDate: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  lastActivity: string;
+  priority: 'Low' | 'Med' | 'High';
+  nextStep: string;
+  actions: string;
+};
+
+const wideDeals: WideDeal[] = [
+  {
+    id: 'w1',
+    name: 'Acme renewal',
+    stage: 'Negotiation',
+    amount: 12000,
+    owner: 'Sara',
+    region: 'EMEA',
+    source: 'Inbound',
+    closeDate: '2026-06-14',
+    contactName: 'Wile E. Coyote',
+    contactEmail: 'wile@acme.test',
+    contactPhone: '+1 555 0101',
+    lastActivity: '2d ago',
+    priority: 'High',
+    nextStep: 'Send contract',
+    actions: '⋯',
+  },
+  {
+    id: 'w2',
+    name: 'Globex expansion',
+    stage: 'Lead',
+    amount: 4500,
+    owner: 'Marcus',
+    region: 'NA',
+    source: 'Referral',
+    closeDate: '2026-07-02',
+    contactName: 'Hank Scorpio',
+    contactEmail: 'hank@globex.test',
+    contactPhone: '+1 555 0102',
+    lastActivity: '5h ago',
+    priority: 'Med',
+    nextStep: 'Discovery call',
+    actions: '⋯',
+  },
+  {
+    id: 'w3',
+    name: 'Initech onboarding',
+    stage: 'Won',
+    amount: 8800,
+    owner: 'Sara',
+    region: 'NA',
+    source: 'Event',
+    closeDate: '2026-05-30',
+    contactName: 'Bill Lumbergh',
+    contactEmail: 'bill@initech.test',
+    contactPhone: '+1 555 0103',
+    lastActivity: '1d ago',
+    priority: 'Med',
+    nextStep: 'Kickoff scheduling',
+    actions: '⋯',
+  },
+  {
+    id: 'w4',
+    name: 'Hooli pilot',
+    stage: 'Lost',
+    amount: 0,
+    owner: 'Jin',
+    region: 'APAC',
+    source: 'Outbound',
+    closeDate: '2026-05-10',
+    contactName: 'Gavin Belson',
+    contactEmail: 'gavin@hooli.test',
+    contactPhone: '+1 555 0104',
+    lastActivity: '3w ago',
+    priority: 'Low',
+    nextStep: 'Send post-mortem',
+    actions: '⋯',
+  },
+];
+
+const wideDealColumns: ColumnDef<WideDeal>[] = [
+  { id: 'name', header: 'Deal', cell: (r) => r.name, sortable: true, size: 220 },
+  {
+    id: 'stage',
+    header: 'Stage',
+    cell: (r) => <Badge tone={stageTone(r.stage)}>{r.stage}</Badge>,
+    size: 140,
+  },
+  { id: 'owner', header: 'Owner', cell: (r) => r.owner, size: 120 },
+  { id: 'region', header: 'Region', cell: (r) => r.region, size: 100 },
+  { id: 'source', header: 'Source', cell: (r) => r.source, size: 140 },
+  { id: 'closeDate', header: 'Close date', cell: (r) => r.closeDate, size: 130 },
+  { id: 'contactName', header: 'Contact', cell: (r) => r.contactName, size: 180 },
+  { id: 'contactEmail', header: 'Email', cell: (r) => r.contactEmail, size: 200 },
+  { id: 'contactPhone', header: 'Phone', cell: (r) => r.contactPhone, size: 150 },
+  { id: 'lastActivity', header: 'Last activity', cell: (r) => r.lastActivity, size: 140 },
+  { id: 'priority', header: 'Priority', cell: (r) => r.priority, size: 100 },
+  { id: 'nextStep', header: 'Next step', cell: (r) => r.nextStep, size: 200 },
+  {
+    id: 'amount',
+    header: 'Amount',
+    cell: (r) => `$${r.amount.toLocaleString()}`,
+    align: 'end',
+    sortable: true,
+    size: 130,
+  },
+  { id: 'actions', header: '', cell: (r) => r.actions, align: 'center', size: 56 },
+];
+
+function WidePinningExample() {
+  const instance = useDataTable<WideDeal>({
+    data: wideDeals,
+    columns: wideDealColumns,
+    getRowId: (r) => r.id,
+    enableRowSelection: true,
+    defaultColumnPinning: { left: ['name'], right: ['amount', 'actions'] },
+  });
+
+  return (
+    <Example
+      title="Column pinning — wide table (scroll horizontally)"
+      description="With ~14 columns totalling well past viewport width, the underlying <Table>'s scroll wrapper kicks in and you can drag the scrollbar horizontally. The left-pinned `Deal` column and the right-pinned `Amount` + `actions` columns stay locked while the middle scrolls. The selection auto-column is always sticky-left at offset 0 — left-pinned data columns stack to the right of it."
+      code={`const instance = useDataTable({
+  data, columns, getRowId,
+  enableRowSelection: true,
+  defaultColumnPinning: {
+    left: ['name'],
+    right: ['amount', 'actions'],
+  },
+});`}
+    >
+      <DataTable instance={instance} aria-label="Wide deals (pinning)" />
     </Example>
   );
 }
