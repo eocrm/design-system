@@ -74,7 +74,8 @@ Add to `packages/design-system/src/styles/tokens.scss`:
 --size-modal-lg: 800px;
 
 /* Dimming backdrop. rgb-modern notation matching existing shadow tokens. */
---color-bg-overlay: rgb(15 23 42 / 50%);
+--color-bg-overlay: rgb(15 23 42 / 50%);              /* solid variant */
+--color-bg-overlay-blur: rgb(255 255 255 / 30%);      /* blur variant: light frosted-glass tint paired with backdrop-filter: blur(8px) */
 ```
 
 ## Public API
@@ -92,6 +93,14 @@ export interface ModalProps {
 
   /** Size preset → maps to `--size-modal-sm/md/lg` width. Defaults to 'md'. */
   size?: ModalSize;
+
+  /**
+   * Overlay variant. 'solid' (default) paints a dark dimming layer. 'blur' uses a
+   * light tinted background plus `backdrop-filter: blur(8px)` for a frosted-glass
+   * effect. 'blur' costs an extra compositor layer — fine for normal use; avoid
+   * stacking three blurred modals on the same screen.
+   */
+  overlay?: 'solid' | 'blur';
 
   /**
    * Disable Escape-to-close. Default false. Combined with `dismissOnOverlayClick: false`
@@ -313,21 +322,19 @@ Overlay and content are sibling stacking layers within the portal. The content i
 
 ### Stacking math
 
-`useModalStack` is a module-level singleton (a `Set<string> + ordered array`). Each Modal calls `register(id)` and gets back its depth. Renders with:
+`useModalStack` is a module-level singleton (a `Set<string> + ordered array`). Each Modal calls `register(id)` and gets back its depth.
 
-- `overlay z-index = var(--z-modal) + depth * 2`
-- `content z-index = var(--z-modal) + depth * 2 + 1`
+**Display model — only the topmost modal is visible.** When two modals are open, the outer one is hidden via `display: none` while the inner is on top. React state of the hidden modal is preserved (controlled inputs keep their values, refs stay populated). When the inner closes, the outer's `isTop` flips back to `true` and it re-appears instantly. The user sees one overlay at a time, never stacked dimming layers.
 
-Why step of 2: leaves a slot between modals for future use (e.g. between-modal connector or shared decoration). Not strictly required.
+Implementation:
 
-Implementation note: the depth value is passed to CSS via a custom prop (`--modal-depth: <n>` on the overlay's `style`) so SCSS can compute both z-indexes in one place:
+- `<Overlay>` reads `ctx.isTop` and writes `data-stack-position={isTop ? 'top' : 'hidden'}` on the portal root.
+- SCSS: `.overlay[data-stack-position='hidden'] { display: none; }` hides both the overlay and its `<Content>` child (the content is rendered inside the overlay element).
+- Z-index stays simple because at most one overlay is `display: block` at a time. We still emit `--modal-depth` for any future decoration that wants to read it, but the `calc()` collapses to a no-op for a single visible layer.
 
-```scss
-.overlay  { z-index: calc(var(--z-modal) + var(--modal-depth) * 2); }
-.content  { z-index: calc(var(--z-modal) + var(--modal-depth) * 2 + 1); }
-```
+Re-show after popping is **instant** (no fade-in). `display: none → display: flex` is not transitionable; making it animatable would require `visibility + opacity` instead, which is fine but adds machinery we don't need yet.
 
-Escape listener on each modal checks `if (!stack.isTop(id)) return;` so only the topmost modal handles Esc. Outside-click is similarly guarded — but in practice the nested modal's overlay covers the parent's overlay entirely, so outside-click on the nested overlay can only resolve to that overlay anyway.
+Escape listener on each modal checks `if (!stack.isTop(id)) return;` so only the topmost modal handles Esc. Overlay-click dismissal: same guard via `data-stack-position='hidden'` making the lower overlays non-interactive (zero hit area).
 
 Scroll lock is acquired ONCE across the stack (refcount stays >= 1 while any modal is open).
 
@@ -361,6 +368,14 @@ Edge case: zero focusables in the modal (rare — a Modal.Header with `closeButt
   transition: opacity var(--transition-base);
 
   @starting-style { opacity: 0; }
+}
+
+/* Blur variant — opt-in via overlay="blur". Light tinted background +
+   backdrop-filter for a frosted-glass effect. -webkit prefix for Safari. */
+.overlay[data-variant='blur'] {
+  background: var(--color-bg-overlay-blur);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .content {

@@ -222,7 +222,8 @@
   ); /* subtle tint for always-visible pinned rows */
 
   // Modal overlay — dimming backdrop behind modal
-  --color-bg-overlay: rgb(15 23 42 / 50%);
+  --color-bg-overlay: rgb(15 23 42 / 50%); /* solid variant: opaque dim */
+  --color-bg-overlay-blur: rgb(255 255 255 / 30%); /* blur variant: frosted-glass tint, paired with backdrop-filter: blur(8px) */
 
   // Presence dots (Avatar status). Aliases over the existing semantic
   // palette — theme changes propagate.
