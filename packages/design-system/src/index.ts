@@ -144,6 +144,7 @@ export type {
   RowSelectionState,
   ExpandedRowsState,
   SortState,
+  Updater,
   HeaderContext,
   CellContext,
 } from './components/DataTable';
