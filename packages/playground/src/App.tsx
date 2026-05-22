@@ -28,6 +28,7 @@ import { PopoverDemo } from './pages/components/PopoverDemo';
 import { RadioDemo } from './pages/components/RadioDemo';
 import { CalendarDemo } from './pages/components/CalendarDemo';
 import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverDemo';
+import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
 
 export default function App() {
   return (
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="/components/radio" element={<RadioDemo />} />
           <Route path="/components/calendar" element={<CalendarDemo />} />
           <Route path="/components/confirmation-popover" element={<ConfirmationPopoverDemo />} />
+          <Route path="/components/empty-state" element={<EmptyStateDemo />} />
         </Routes>
       </AppShell>
     </BrowserRouter>

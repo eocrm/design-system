@@ -20,6 +20,7 @@ export type ComponentName =
   | 'Badge'
   | 'Tabs'
   | 'DropdownMenu'
+  | 'EmptyState'
   | 'Tooltip'
   | 'Popover'
   | 'ConfirmationPopover'
