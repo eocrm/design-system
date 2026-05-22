@@ -130,6 +130,14 @@ const sortAriaFor: Record<TableSortDirection, 'ascending' | 'descending' | 'none
  * modifiers on the root. Sortable header is a visual hook — the consumer
  * wires `onClick` on `Table.HeaderCell` to drive their own sort state.
  *
+ * **Sizing model.** The `<table>` is `min-width: 100%` (not `width: 100%`),
+ * so it fills the wrap for narrow content but can grow past the wrap when
+ * cell content or explicit `<col>` widths sum wider. The default `scroll`
+ * wrapper then provides horizontal scroll. Consumers wanting the table to
+ * stretch their columns over the available width can still do so by
+ * sizing columns to total exactly 100% of the parent; the table will fill
+ * the wrap regardless.
+ *
  * @example
  * <Table>
  *   <Table.Caption>Recent activity</Table.Caption>

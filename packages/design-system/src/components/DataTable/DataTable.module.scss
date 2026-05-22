@@ -2,6 +2,9 @@
 
 // Visual / behavior modifiers ONLY. No layout (Rule 4).
 
+// stylelint-disable property-disallowed-list -- Rule 4 escape hatch: these are
+// internal table-sizing properties (not consumer layout). Same precedent as the
+// Table primitive's `position: sticky` for the sticky-header band.
 .root {
   // table-layout: fixed + width: max-content makes each <col>'s declared
   // width AUTHORITATIVE for the cell. Default `table-layout: auto` plus the
@@ -17,6 +20,7 @@
   width: max-content;
   min-width: 100%;
 }
+// stylelint-enable property-disallowed-list
 
 // Even with table-layout: fixed, body cells inflate to fit their content's
 // min-content width if there's no overflow constraint — defeating col widths
@@ -123,17 +127,19 @@
 // hover and selected highlights from the Table primitive — pinned cells would
 // stay "white" while the rest of the row turns blue. Mirror the row states
 // here so the pinned cells visually participate in selection / hover.
-// Rows in the Table primitive get hover via `tr:hover` (when .hover is set on
-// the table) and selected via `tr[aria-selected="true"]`. Scope to `.root`
-// (the table) so we don't bleed into other tables on the page.
-.root tbody tr:hover .pinnedLeft,
-.root tbody tr:hover .pinnedRight,
-.root tbody tr:hover .autoCellStickyBody {
+// `:not(.pinnedRow)` excludes the always-tinted pinned-rows section — its
+// pinned-cell background is already overridden above to use the pinned-row
+// tint, and we don't want hover/selected to override that tint and create a
+// visual mismatch between pinned-cell and unpinned-cell backgrounds within
+// the same pinned row.
+.root tbody tr:not(.pinnedRow):hover .pinnedLeft,
+.root tbody tr:not(.pinnedRow):hover .pinnedRight,
+.root tbody tr:not(.pinnedRow):hover .autoCellStickyBody {
   background: var(--color-table-row-bg-hover);
 }
 
-.root tbody tr[aria-selected='true'] .pinnedLeft,
-.root tbody tr[aria-selected='true'] .pinnedRight,
-.root tbody tr[aria-selected='true'] .autoCellStickyBody {
+.root tbody tr:not(.pinnedRow)[aria-selected='true'] .pinnedLeft,
+.root tbody tr:not(.pinnedRow)[aria-selected='true'] .pinnedRight,
+.root tbody tr:not(.pinnedRow)[aria-selected='true'] .autoCellStickyBody {
   background: var(--color-table-row-bg-selected);
 }

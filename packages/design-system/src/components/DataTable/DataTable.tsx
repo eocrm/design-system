@@ -53,6 +53,19 @@ export interface DataTableProps<T> {
  * surface). Pass companion components like `<ColumnVisibilityTrigger>` the same
  * `instance`.
  *
+ * **Layout model.** The inner `<table>` uses `table-layout: fixed; width:
+ * max-content; min-width: 100%` — column widths come authoritatively from the
+ * `<colgroup>` (driven by `ColumnDef.size` + `columnSizing` state), and the
+ * table grows to its column-sum width when that exceeds the parent. The Table
+ * primitive's `.scrollWrap` then scrolls horizontally. This is required for
+ * sticky pinning offsets to land at the right pixel; consumers don't choose.
+ *
+ * **Cell content.** Every cell inside DataTable gets `overflow: hidden;
+ * text-overflow: ellipsis; white-space: nowrap` by default. Long content
+ * truncates with an ellipsis at the column boundary instead of expanding the
+ * column. If you need multi-line cells, render `<Table>` directly — DataTable
+ * is opinionated about row height to keep pin offsets consistent across rows.
+ *
  * @example
  * function Example() {
  *   const instance = useDataTable<Row>({
