@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Inbox } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
@@ -19,6 +19,7 @@ import { Tooltip } from '@eocrm/design-system';
 import { Calendar } from '@eocrm/design-system';
 import { DatePicker } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
+import { EmptyState } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
@@ -45,6 +46,20 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <div style={{ width: 200 }}>
         <DatePicker defaultValue={new Date(2026, 4, 21)} aria-label="Preview" />
       </div>
+    ),
+  },
+  {
+    to: '/components/empty-state',
+    name: 'EmptyState',
+    description:
+      'Opinionated "nothing here" container — icon, title, description, actions. Three sizes for inline / card / hero use.',
+    preview: (
+      <EmptyState
+        size="sm"
+        icon={<Inbox size={24} />}
+        title="No results"
+        description="Try clearing filters."
+      />
     ),
   },
   {

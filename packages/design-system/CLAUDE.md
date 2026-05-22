@@ -193,7 +193,6 @@ Wishlist for the CRM, in rough priority order. Until each exists, CRM pages shou
 - `Checkbox`, `Radio`, `Switch`
 - `Table` (TanStack Table headless is acceptable here — it's a behavioral hook, not a UI library, and the alternative is rebuilding sort/filter/pagination state. Revisit when we actually need it.)
 - `Skeleton` (loading state)
-- `EmptyState`
 - `Pagination`
 - `Breadcrumb`
 - `Link` (router-aware button-like link)
