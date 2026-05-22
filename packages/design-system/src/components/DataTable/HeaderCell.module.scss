@@ -52,10 +52,20 @@
 
   // Prevent content overflow from expanding the measured cell width.
   min-width: 0;
+}
 
-  // Reserve space for absolute-positioned grip (left, ~20px) and resize
-  // handle (right, ~24px — wider because it contains chevrons + bar).
-  padding: 0 24px 0 20px;
+// Reserve left space for the absolute-positioned grip (~20px). Omitted when
+// the column isn't reorderable (e.g. pinned column or enableReorder:false) so
+// the header label sits at the same x-offset as the body cell content.
+.innerWithGrip {
+  padding-left: 20px;
+}
+
+// Reserve right space for the absolute-positioned resize handle (~24px — it
+// contains chevrons + bar). Omitted when enableResize is false so the label
+// + sort icon can extend to the cell's right padding edge.
+.innerWithResize {
+  padding-right: 24px;
 }
 
 .label {
