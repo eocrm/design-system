@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { useModalStack, modalStack } from './useModalStack';
 
 describe('modalStack singleton', () => {
