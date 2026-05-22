@@ -60,6 +60,7 @@
   box-shadow: var(--shadow-lg);
   z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2 + 1);
   max-height: calc(100vh - 64px);
+  max-height: calc(100dvh - 64px);
   width: min(100% - 32px, var(--modal-width, var(--size-modal-md)));
   opacity: var(--opacity-visible);
   transform: translateY(0) scale(1);
@@ -179,11 +180,26 @@
 
 // stylelint-disable property-disallowed-list -- internal layout for narrow viewports
 @media (max-width: 640px) {
+  // Anchor content to the top of the overlay so iOS Safari's collapsing address
+  // bar can't push it off-screen. Centering is meaningless when content fills
+  // the full viewport anyway.
+  .overlay {
+    align-items: flex-start;
+  }
+
   .content {
+    // vw/vh fallbacks for browsers that don't support dvw/dvh (Safari < 15.4).
+    // dvw/dvh track the *actual* visible viewport; on iOS Safari, 100vh is the
+    // "large viewport" (address bar hidden) which is taller than what's visible
+    // when the address bar is shown — causing the modal to overflow.
     width: 100vw;
+    width: 100dvw;
     height: 100vh;
+    height: 100dvh;
     max-width: 100vw;
+    max-width: 100dvw;
     max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
   }
 }
