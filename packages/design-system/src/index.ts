@@ -75,6 +75,17 @@ export type {
   ConfirmationVariant,
 } from './components/ConfirmationPopover';
 
+export { Modal } from './components/Modal';
+export type {
+  ModalProps,
+  ModalSize,
+  ModalOverlayVariant,
+  ModalHeaderProps,
+  ModalBodyProps,
+  ModalFooterProps,
+  ModalCloseProps,
+} from './components/Modal';
+
 export { Radio, RadioGroup } from './components/Radio';
 export type {
   RadioProps,
