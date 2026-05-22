@@ -1,6 +1,6 @@
 import { type KeyboardEvent } from 'react';
 import clsx from 'clsx';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Table } from '../Table';
@@ -26,6 +26,12 @@ export interface HeaderCellProps<T> {
  *   `column.enableResize === false`. Also supports keyboard resize: arrow
  *   keys ±8px; Shift+arrow keys ±32px (when the label is focused).
  */
+const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none'> = {
+  asc: 'ascending',
+  desc: 'descending',
+  none: 'none',
+};
+
 export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   const sortable = column.sortable === true;
   const sortDir: TableSortDirection | undefined =
@@ -34,6 +40,14 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
       : sortable
         ? 'none'
         : undefined;
+
+  // Derive the visual sort icon to render in our own .inner layout (approach
+  // a): we do NOT pass sortDirection to Table.HeaderCell (to suppress its
+  // built-in inline icon). Instead we pass aria-sort directly and render the
+  // chevron ourselves at the end of the label area, just before the resize
+  // handle.
+  const SortIcon =
+    sortDir === 'asc' ? ChevronUp : sortDir === 'desc' ? ChevronDown : ChevronsUpDown;
 
   // dnd-kit sortable — column is its own sortable item.
   const reorderable = column.enableReorder !== false;
@@ -83,9 +97,13 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   } as const;
 
   return (
+    // sortDirection is intentionally NOT passed to Table.HeaderCell — we suppress
+    // its built-in inline chevron and render our own at the end of .inner (between
+    // label and resize handle). aria-sort is set directly so the ARIA contract is
+    // preserved without the visual side-effect.
     <Table.HeaderCell
       align={column.align ?? 'start'}
-      sortDirection={sortDir}
+      aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(styles.headerCell, isDragging && styles.dragging)}
       // HTMLTableCellElement extends HTMLElement; dnd-kit only reads DOM geometry from the ref.
@@ -115,6 +133,16 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
         >
           {headerContent}
         </span>
+        {/* Sort chevron sits between label and resize handle — at the end of
+            the content area. aria-hidden: purely decorative; aria-sort on the
+            <th> carries the semantic signal. */}
+        {sortDir != null && (
+          <SortIcon
+            size={12}
+            aria-hidden="true"
+            className={clsx(styles.sortIcon, sortDir !== 'none' && styles.sortIconActive)}
+          />
+        )}
         {column.enableResize !== false && (
           <span
             className={styles.resizeHandle}

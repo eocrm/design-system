@@ -2,6 +2,10 @@
 
 .headerCell {
   position: relative;
+
+  // overflow:hidden ensures dnd-kit's CSS transform doesn't cause the cell
+  // content to appear wider than the column's <col> width during drag.
+  overflow: hidden;
 }
 
 .inner {
@@ -10,6 +14,9 @@
   gap: var(--space-1);
   padding: 0 var(--space-2);
   height: 100%;
+
+  // Prevent content overflow from expanding the measured cell width.
+  min-width: 0;
 }
 
 .label {
@@ -18,6 +25,9 @@
   gap: var(--space-1);
   flex: 1 1 auto;
   min-width: 0;
+
+  // Clip overflowing text instead of stretching the cell.
+  overflow: hidden;
   font-weight: var(--font-weight-semibold);
   color: var(--color-fg);
   cursor: default;
@@ -38,10 +48,13 @@
 .grip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   color: var(--color-fg-muted);
   opacity: var(--opacity-hidden);
   cursor: grab;
-  padding: 0 var(--space-05);
+
+  // No horizontal padding — let flex centering handle alignment so the
+  // icon sits visually centred in its slot.
   transition: opacity var(--transition-fast);
 
   // Reveal on header hover OR when grip itself is focused.
@@ -78,10 +91,22 @@
   transition: background var(--transition-fast), width var(--transition-fast);
 }
 
-.resizeHandle:hover .resizeBar,
+// Show the resize bar whenever the user hovers anywhere on the header cell,
+// not just when they hover directly over the 6 px handle zone.
+.headerCell:hover .resizeHandle .resizeBar,
 .resizeBar.active {
   background: var(--color-accent);
   width: 2px;
+}
+
+// Sort chevron — sits at the end of .inner, between label and resize handle.
+.sortIcon {
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+}
+
+.sortIconActive {
+  color: var(--color-fg);
 }
 
 .dragging {

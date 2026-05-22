@@ -57,6 +57,8 @@ export function DataTableDemo() {
       scssFilename="DataTable.module.scss"
     >
       <BasicExample />
+      <BorderedExample />
+      <DenseExample />
       <SortableExample />
       <SelectableExample />
       <VisibilityExample />
@@ -86,6 +88,40 @@ function BasicTable() {
     getRowId: (r) => r.id,
   });
   return <DataTable instance={instance} aria-label="Deals (basic)" />;
+}
+
+function BorderedExample() {
+  const instance = useDataTable<Deal>({
+    data: deals,
+    columns: dealColumns,
+    getRowId: (r) => r.id,
+  });
+  return (
+    <Example
+      title="Bordered"
+      description="Pass bordered for a full grid of cell borders. Useful when the table contains many numeric columns or when rendered on a white background without zebra striping."
+      code={`<DataTable instance={instance} bordered aria-label="Deals (bordered)" />`}
+    >
+      <DataTable instance={instance} bordered aria-label="Deals (bordered)" />
+    </Example>
+  );
+}
+
+function DenseExample() {
+  const instance = useDataTable<Deal>({
+    data: deals,
+    columns: dealColumns,
+    getRowId: (r) => r.id,
+  });
+  return (
+    <Example
+      title="Dense"
+      description="density='dense' reduces row height and padding — useful for data-heavy screens where vertical space is at a premium."
+      code={`<DataTable instance={instance} density="dense" aria-label="Deals (dense)" />`}
+    >
+      <DataTable instance={instance} density="dense" aria-label="Deals (dense)" />
+    </Example>
+  );
 }
 
 function SortableExample() {

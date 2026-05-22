@@ -237,7 +237,7 @@ function SkeletonRows({
         <Table.Row key={`sk-${i}`}>
           {Array.from({ length: totalColCount }, (_, j) => (
             <Table.Cell key={j} className={styles.skeletonCell}>
-              <Skeleton variant="text" />
+              <Skeleton variant="text" width="80%" />
             </Table.Cell>
           ))}
         </Table.Row>
