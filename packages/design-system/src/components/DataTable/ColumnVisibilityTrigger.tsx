@@ -1,14 +1,114 @@
+import type { ReactNode } from 'react';
+import { Columns3 } from 'lucide-react';
+import { Button } from '../Button';
+import { DropdownMenu } from '../DropdownMenu';
+import type {
+  DropdownMenuAlign,
+  DropdownMenuSide,
+} from '../DropdownMenu';
 import type { DataTableInstance } from './types';
 
 export interface ColumnVisibilityTriggerProps<T = unknown> {
+  /** The `useDataTable` instance to read column state from and dispatch visibility changes to. */
   instance: DataTableInstance<T>;
+  /**
+   * Trigger button label. Defaults to `"Columns"`.
+   * Pass a node to use a custom label or icon+label combination.
+   */
+  label?: ReactNode;
+  /**
+   * Trigger icon rendered to the left of the label. Defaults to a `Columns3`
+   * lucide icon (14px). Pass `null` to suppress the icon.
+   */
+  icon?: ReactNode;
+  /** Preferred side of the trigger for the menu. Defaults to `'bottom'`. Auto-flips on collision. */
+  side?: DropdownMenuSide;
+  /** Edge alignment of the menu relative to the trigger. Defaults to `'start'`. */
+  align?: DropdownMenuAlign;
 }
 
 /**
- * Trigger button that opens a menu to toggle column visibility.
- * Stub — real implementation arrives in Task 12.
+ * Built-in companion for `<DataTable>`. Renders a ghost Button trigger + DropdownMenu
+ * of CheckboxItems — one per column where `enableHide !== false`.
+ *
+ * Guards against hiding the last visible hidable column: when only one
+ * hidable column is currently visible, its menu item renders as disabled so
+ * the table can never reach a zero-column state.
+ *
+ * Pair with `useDataTable` — pass the same `instance` to both `<DataTable>` and
+ * `<ColumnVisibilityTrigger>` so visibility state stays in sync.
+ *
+ * @example
+ * const instance = useDataTable<Row>({ columns, data, getRowId });
+ * // Render the trigger somewhere above or beside the table.
+ * <Cluster justify="end">
+ *   <ColumnVisibilityTrigger instance={instance} />
+ * </Cluster>
+ * <DataTable instance={instance} />
+ *
+ * @example
+ * // Custom label + right-aligned menu:
+ * <ColumnVisibilityTrigger
+ *   instance={instance}
+ *   label="Manage columns"
+ *   align="end"
+ * />
+ *
+ * @example
+ * // Icon-only trigger:
+ * <ColumnVisibilityTrigger instance={instance} label={null} />
+ *
+ * @remarks When NOT to use
+ * - When the consumer wants a different visibility UI (e.g. a settings drawer,
+ *   a multi-select combobox, or a Popover with column grouping). Build it
+ *   directly against `instance.columns`, `instance.columnVisibility`, and
+ *   `instance.toggleColumnVisibility` — `ColumnVisibilityTrigger` is a
+ *   convenience wrapper, not the only way to drive visibility state.
+ * - When all columns have `enableHide: false`. The menu will be empty; don't
+ *   render this component at all in that case.
  */
-export function ColumnVisibilityTrigger<T>(_props: ColumnVisibilityTriggerProps<T>) {
-  // Real implementation comes in Task 12.
-  return null;
+export function ColumnVisibilityTrigger<T>({
+  instance,
+  label = 'Columns',
+  icon = <Columns3 size={14} aria-hidden="true" />,
+  side,
+  align,
+}: ColumnVisibilityTriggerProps<T>) {
+  const hidableCols = instance.columns.filter((c) => c.enableHide !== false);
+
+  // Count visible hidable columns so we can disable the last one.
+  const visibleHidableCount = hidableCols.reduce(
+    (n, c) => n + (instance.columnVisibility[c.id] === false ? 0 : 1),
+    0,
+  );
+
+  return (
+    <DropdownMenu>
+      {/* DropdownMenu.Trigger clones its child — no asChild prop needed. */}
+      <DropdownMenu.Trigger>
+        <Button variant="ghost" size="sm">
+          {icon}
+          {label}
+        </Button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side={side} align={align}>
+        {hidableCols.map((col) => {
+          const visible = instance.columnVisibility[col.id] !== false;
+          const isLastVisible = visible && visibleHidableCount === 1;
+          const itemLabel =
+            col.visibilityLabel ?? (typeof col.header === 'string' ? col.header : col.id);
+          return (
+            <DropdownMenu.CheckboxItem
+              key={col.id}
+              checked={visible}
+              disabled={isLastVisible}
+              onCheckedChange={() => instance.toggleColumnVisibility(col.id)}
+            >
+              {itemLabel}
+            </DropdownMenu.CheckboxItem>
+          );
+        })}
+      </DropdownMenu.Content>
+    </DropdownMenu>
+  );
 }
