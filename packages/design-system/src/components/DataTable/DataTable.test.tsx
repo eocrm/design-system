@@ -208,9 +208,7 @@ describe('<DataTable>', () => {
   // ─── Phase 2: pinning rendering ───────────────────────────────────────
 
   it('renders pinned-left columns with sticky CSS and computed left offset', () => {
-    const { container } = render(
-      <Harness defaultColumnPinning={{ left: ['name'], right: [] }} />,
-    );
+    const { container } = render(<Harness defaultColumnPinning={{ left: ['name'], right: [] }} />);
     const nameHeader = screen.getByRole('columnheader', { name: /name/i });
     expect(nameHeader).toHaveStyle({ position: 'sticky', left: '0px' });
     // Body cell for 'name' in first row should also be sticky.
@@ -220,28 +218,19 @@ describe('<DataTable>', () => {
   });
 
   it('shifts left pin offset by 44px when enableRowSelection is true', () => {
-    render(
-      <Harness
-        enableRowSelection
-        defaultColumnPinning={{ left: ['name'], right: [] }}
-      />,
-    );
+    render(<Harness enableRowSelection defaultColumnPinning={{ left: ['name'], right: [] }} />);
     const nameHeader = screen.getByRole('columnheader', { name: /name/i });
     expect(nameHeader).toHaveStyle({ left: '44px' });
   });
 
   it('renders pinned-right columns with sticky right CSS', () => {
-    render(
-      <Harness defaultColumnPinning={{ left: [], right: ['amount'] }} />,
-    );
+    render(<Harness defaultColumnPinning={{ left: [], right: ['amount'] }} />);
     const amountHeader = screen.getByRole('columnheader', { name: /amount/i });
     expect(amountHeader).toHaveStyle({ position: 'sticky', right: '0px' });
   });
 
   it('renders columns in pin order: [left-pinned, unpinned, right-pinned]', () => {
-    render(
-      <Harness defaultColumnPinning={{ left: ['amount'], right: [] }} />,
-    );
+    render(<Harness defaultColumnPinning={{ left: ['amount'], right: [] }} />);
     const headers = screen.getAllByRole('columnheader');
     // 'amount' pinned-left → first; 'name' unpinned → second
     expect(headers[0]!.textContent).toMatch(/amount/i);

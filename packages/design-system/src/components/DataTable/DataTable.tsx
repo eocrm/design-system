@@ -200,12 +200,7 @@ function DataTableInner<T>(
           {instance.pinnedRows.length > 0 && (
             <Table.Body className={styles.pinnedRowsTbody} aria-label="Pinned rows">
               {instance.pinnedRows.map((row) => (
-                <BodyRow
-                  key={instance.getRowId(row)}
-                  row={row}
-                  instance={instance}
-                  isPinnedRow
-                />
+                <BodyRow key={instance.getRowId(row)} row={row} instance={instance} isPinnedRow />
               ))}
             </Table.Body>
           )}

@@ -281,7 +281,7 @@ function PinningExample() {
   return (
     <Example
       title="Column pinning (left + right)"
-      description='Pin a column to the left or right with `columnPinning`. Left-pinned columns stick to the left edge during horizontal scroll; right-pinned to the right. The selection auto-column is always sticky-left at offset 0. Scroll the demo horizontally (resize columns to make it overflow) to see the effect. No built-in pin/unpin UI — wire your own via `instance.pinColumn(id, side)`.'
+      description="Pin a column to the left or right with `columnPinning`. Left-pinned columns stick to the left edge during horizontal scroll; right-pinned to the right. The selection auto-column is always sticky-left at offset 0. Scroll the demo horizontally (resize columns to make it overflow) to see the effect. No built-in pin/unpin UI — wire your own via `instance.pinColumn(id, side)`."
       code={`const instance = useDataTable({
   data, columns, getRowId,
   defaultColumnPinning: { left: ['name'], right: ['amount'] },

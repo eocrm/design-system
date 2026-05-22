@@ -7,8 +7,16 @@ import type { ColumnOrderState, ColumnPinningState } from './types';
  * (in both lists), the function treats it as left-pinned (left checked first).
  */
 export function sameSide(a: string, b: string, pinning: ColumnPinningState): boolean {
-  const aSide = pinning.left.includes(a) ? 'left' : pinning.right.includes(a) ? 'right' : 'unpinned';
-  const bSide = pinning.left.includes(b) ? 'left' : pinning.right.includes(b) ? 'right' : 'unpinned';
+  const aSide = pinning.left.includes(a)
+    ? 'left'
+    : pinning.right.includes(a)
+      ? 'right'
+      : 'unpinned';
+  const bSide = pinning.left.includes(b)
+    ? 'left'
+    : pinning.right.includes(b)
+      ? 'right'
+      : 'unpinned';
   return aSide === bSide;
 }
 

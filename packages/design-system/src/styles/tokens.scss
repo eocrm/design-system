@@ -212,7 +212,9 @@
   ); // light blue — distinct from striped (gray) and selected (stronger blue)
   --color-table-row-bg-selected: var(--color-accent-bg-subtle);
   --color-table-row-fg-selected: var(--color-fg);
-  --color-bg-row-pinned: var(--color-accent-bg-subtle); /* subtle tint for always-visible pinned rows */
+  --color-bg-row-pinned: var(
+    --color-accent-bg-subtle
+  ); /* subtle tint for always-visible pinned rows */
 
   // Presence dots (Avatar status). Aliases over the existing semantic
   // palette — theme changes propagate.

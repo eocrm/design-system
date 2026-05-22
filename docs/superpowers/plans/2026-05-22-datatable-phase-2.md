@@ -45,6 +45,7 @@ packages/playground/src/pages/components/DataTableDemo.tsx ← MODIFY: add pinni
 ## Task 1 — Verify branch state + add new tokens
 
 **Files:**
+
 - Modify: `packages/design-system/src/styles/tokens.scss`
 
 - [ ] **Step 1: Verify branch + clean tree**
@@ -57,6 +58,7 @@ git log --oneline -3
 ```
 
 Expected:
+
 - Branch: `feat/datatable-pinning`
 - Working tree clean
 - Last commit on main: `247698e DataTable Phase 1: hook + component + column visibility companion (#37)`
@@ -66,7 +68,9 @@ Expected:
 Open `packages/design-system/src/styles/tokens.scss`. Find the section where colors and shadows are defined. Add (near existing `--color-bg-*` tokens):
 
 ```scss
---color-bg-row-pinned: var(--color-bg-accent-subtle); /* subtle tint for always-visible pinned rows */
+--color-bg-row-pinned: var(
+  --color-bg-accent-subtle
+); /* subtle tint for always-visible pinned rows */
 ```
 
 (If `--color-bg-accent-subtle` doesn't exist, find the closest existing background-tint token — pick whichever is used for "selected row" or similar gentle highlight. Whatever you pick, use a real existing token, not a raw color.)
@@ -102,6 +106,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 2 — `pinStyle.ts` pure helper
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/pinStyle.ts`
 - Test: `packages/design-system/src/components/DataTable/pinStyle.test.ts`
 
@@ -114,7 +119,9 @@ import { getPinStyle, AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
 
 // Helper: build a minimal instance shape for the helper's needs.
-function makeInstance(overrides: Partial<DataTableInstance<unknown>> = {}): DataTableInstance<unknown> {
+function makeInstance(
+  overrides: Partial<DataTableInstance<unknown>> = {},
+): DataTableInstance<unknown> {
   return {
     columnPinning: { left: [], right: [] },
     leftPinOffsets: {},
@@ -132,10 +139,13 @@ describe('getPinStyle', () => {
   });
 
   it('returns sticky-left style with offset for left-pinned column', () => {
-    const result = getPinStyle('name', makeInstance({
-      columnPinning: { left: ['name'], right: [] },
-      leftPinOffsets: { name: 0 },
-    }));
+    const result = getPinStyle(
+      'name',
+      makeInstance({
+        columnPinning: { left: ['name'], right: [] },
+        leftPinOffsets: { name: 0 },
+      }),
+    );
     expect(result).toEqual({
       position: 'sticky',
       left: 0,
@@ -144,10 +154,13 @@ describe('getPinStyle', () => {
   });
 
   it('returns sticky-right style with offset for right-pinned column', () => {
-    const result = getPinStyle('actions', makeInstance({
-      columnPinning: { left: [], right: ['actions'] },
-      rightPinOffsets: { actions: 0 },
-    }));
+    const result = getPinStyle(
+      'actions',
+      makeInstance({
+        columnPinning: { left: [], right: ['actions'] },
+        rightPinOffsets: { actions: 0 },
+      }),
+    );
     expect(result).toEqual({
       position: 'sticky',
       right: 0,
@@ -156,28 +169,37 @@ describe('getPinStyle', () => {
   });
 
   it('shifts left offset by AUTO_CELL_WIDTH when enableRowSelection is true', () => {
-    const result = getPinStyle('name', makeInstance({
-      enableRowSelection: true,
-      columnPinning: { left: ['name'], right: [] },
-      leftPinOffsets: { name: 0 },
-    }));
+    const result = getPinStyle(
+      'name',
+      makeInstance({
+        enableRowSelection: true,
+        columnPinning: { left: ['name'], right: [] },
+        leftPinOffsets: { name: 0 },
+      }),
+    );
     expect(result.left).toBe(AUTO_CELL_WIDTH);
   });
 
   it('does NOT shift right offset when enableRowSelection is true', () => {
-    const result = getPinStyle('actions', makeInstance({
-      enableRowSelection: true,
-      columnPinning: { left: [], right: ['actions'] },
-      rightPinOffsets: { actions: 0 },
-    }));
+    const result = getPinStyle(
+      'actions',
+      makeInstance({
+        enableRowSelection: true,
+        columnPinning: { left: [], right: ['actions'] },
+        rightPinOffsets: { actions: 0 },
+      }),
+    );
     expect(result.right).toBe(0);
   });
 
   it('stacks left offsets: first left col = 0, second = first width, etc.', () => {
-    const result = getPinStyle('status', makeInstance({
-      columnPinning: { left: ['name', 'status'], right: [] },
-      leftPinOffsets: { name: 0, status: 200 }, // name is 200px wide
-    }));
+    const result = getPinStyle(
+      'status',
+      makeInstance({
+        columnPinning: { left: ['name', 'status'], right: [] },
+        leftPinOffsets: { name: 0, status: 200 }, // name is 200px wide
+      }),
+    );
     expect(result.left).toBe(200);
   });
 
@@ -265,6 +287,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 3 — `reorderColumns.ts` pure helper (with cross-pin-boundary rejection)
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/reorderColumns.ts`
 - Test: `packages/design-system/src/components/DataTable/reorderColumns.test.ts`
 
@@ -401,8 +424,16 @@ import type { ColumnOrderState, ColumnPinningState } from './types';
  * (in both lists), the function treats it as left-pinned (left checked first).
  */
 export function sameSide(a: string, b: string, pinning: ColumnPinningState): boolean {
-  const aSide = pinning.left.includes(a) ? 'left' : pinning.right.includes(a) ? 'right' : 'unpinned';
-  const bSide = pinning.left.includes(b) ? 'left' : pinning.right.includes(b) ? 'right' : 'unpinned';
+  const aSide = pinning.left.includes(a)
+    ? 'left'
+    : pinning.right.includes(a)
+      ? 'right'
+      : 'unpinned';
+  const bSide = pinning.left.includes(b)
+    ? 'left'
+    : pinning.right.includes(b)
+      ? 'right'
+      : 'unpinned';
   return aSide === bSide;
 }
 
@@ -475,6 +506,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 4 — Wire `reorderRespectingPins` into `DataTable.tsx`
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/DataTable.tsx`
 
 - [ ] **Step 1: Update `handleDragEnd` to use the new helper**
@@ -490,23 +522,23 @@ import { reorderRespectingPins } from './reorderColumns';
 Replace the body of `handleDragEnd` (currently inline reorder logic) with:
 
 ```tsx
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const activeId = String(active.id);
-    const overId = String(over.id);
+const handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+  if (!over || active.id === over.id) return;
+  const activeId = String(active.id);
+  const overId = String(over.id);
 
-    instance.setColumnOrder((prev) => {
-      const next = reorderRespectingPins({
-        prev,
-        activeId,
-        overId,
-        visibleIds,
-        pinning: instance.columnPinning,
-      });
-      return next ?? prev; // null = rejected, keep prev unchanged
+  instance.setColumnOrder((prev) => {
+    const next = reorderRespectingPins({
+      prev,
+      activeId,
+      overId,
+      visibleIds,
+      pinning: instance.columnPinning,
     });
-  };
+    return next ?? prev; // null = rejected, keep prev unchanged
+  });
+};
 ```
 
 - [ ] **Step 2: Verify tests still pass**
@@ -531,6 +563,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 5 — Apply sticky CSS in `HeaderCell.tsx`
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/HeaderCell.tsx`
 - Modify: `packages/design-system/src/components/DataTable/HeaderCell.module.scss`
 
@@ -650,6 +683,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 6 — Render columns in pin order in `DataTable.tsx`
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/DataTable.tsx`
 - Modify: `packages/design-system/src/components/DataTable/DataTable.module.scss`
 
@@ -679,16 +713,16 @@ All existing usages of `AUTO_CELL_WIDTH` in DataTable.tsx continue to work.
 In `DataTable.tsx`, find the section just before the JSX `return`. Add a memoized ordered list:
 
 ```tsx
-  // Pin-ordered render list: [left-pinned, unpinned, right-pinned].
-  // Drives <colgroup>, header row, and body rows so all three stay aligned.
-  const renderColumns = useMemo(
-    () => [
-      ...instance.leftPinnedColumns,
-      ...instance.unpinnedColumns,
-      ...instance.rightPinnedColumns,
-    ],
-    [instance.leftPinnedColumns, instance.unpinnedColumns, instance.rightPinnedColumns],
-  );
+// Pin-ordered render list: [left-pinned, unpinned, right-pinned].
+// Drives <colgroup>, header row, and body rows so all three stay aligned.
+const renderColumns = useMemo(
+  () => [
+    ...instance.leftPinnedColumns,
+    ...instance.unpinnedColumns,
+    ...instance.rightPinnedColumns,
+  ],
+  [instance.leftPinnedColumns, instance.unpinnedColumns, instance.rightPinnedColumns],
+);
 ```
 
 - [ ] **Step 3: Use `renderColumns` in `<colgroup>`**
@@ -696,12 +730,12 @@ In `DataTable.tsx`, find the section just before the JSX `return`. Add a memoize
 Replace the `<colgroup>` block:
 
 ```tsx
-          <colgroup>
-            {instance.enableRowSelection && <col style={{ width: AUTO_CELL_WIDTH }} />}
-            {renderColumns.map((col) => (
-              <col key={col.id} style={{ width: instance.columnSizesPx[col.id] ?? 120 }} />
-            ))}
-          </colgroup>
+<colgroup>
+  {instance.enableRowSelection && <col style={{ width: AUTO_CELL_WIDTH }} />}
+  {renderColumns.map((col) => (
+    <col key={col.id} style={{ width: instance.columnSizesPx[col.id] ?? 120 }} />
+  ))}
+</colgroup>
 ```
 
 - [ ] **Step 4: Use `renderColumns` in the header row + make auto-cell sticky-left**
@@ -709,28 +743,28 @@ Replace the `<colgroup>` block:
 Replace the header row block:
 
 ```tsx
-          <Table.Header>
-            <Table.Row>
-              {instance.enableRowSelection && (
-                <Table.HeaderCell
-                  align="center"
-                  scope="col"
-                  className={clsx(styles.autoCell, styles.autoCellSticky)}
-                  style={{ position: 'sticky', left: 0 }}
-                >
-                  <Checkbox
-                    checked={instance.isAllOnPageSelected()}
-                    indeterminate={instance.isSomeOnPageSelected()}
-                    onChange={() => instance.toggleAllOnPage()}
-                    aria-label="Select all rows on page"
-                  />
-                </Table.HeaderCell>
-              )}
-              {renderColumns.map((col) => (
-                <HeaderCell key={col.id} column={col} instance={instance} />
-              ))}
-            </Table.Row>
-          </Table.Header>
+<Table.Header>
+  <Table.Row>
+    {instance.enableRowSelection && (
+      <Table.HeaderCell
+        align="center"
+        scope="col"
+        className={clsx(styles.autoCell, styles.autoCellSticky)}
+        style={{ position: 'sticky', left: 0 }}
+      >
+        <Checkbox
+          checked={instance.isAllOnPageSelected()}
+          indeterminate={instance.isSomeOnPageSelected()}
+          onChange={() => instance.toggleAllOnPage()}
+          aria-label="Select all rows on page"
+        />
+      </Table.HeaderCell>
+    )}
+    {renderColumns.map((col) => (
+      <HeaderCell key={col.id} column={col} instance={instance} />
+    ))}
+  </Table.Row>
+</Table.Header>
 ```
 
 - [ ] **Step 5: Add `.autoCellSticky` class to SCSS**
@@ -796,6 +830,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 7 — Render body cells in pin order with sticky styles
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/BodyRow.tsx`
 - Modify: `packages/design-system/src/components/DataTable/DataTable.module.scss`
 
@@ -869,10 +904,7 @@ export function BodyRow<T>({ row, instance, isPinnedRow }: BodyRowProps<T>) {
       onClick={instance.onRowClick ? onRowClick : undefined}
       onKeyDown={instance.onRowClick ? onRowKeyDown : undefined}
       tabIndex={instance.onRowClick ? 0 : undefined}
-      className={clsx(
-        instance.onRowClick && styles.clickableRow,
-        isPinnedRow && styles.pinnedRow,
-      )}
+      className={clsx(instance.onRowClick && styles.clickableRow, isPinnedRow && styles.pinnedRow)}
     >
       {instance.enableRowSelection && (
         <Table.Cell
@@ -982,6 +1014,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 8 — Pinned rows section in `DataTable.tsx`
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/DataTable.tsx`
 
 - [ ] **Step 1: Render a second `<Table.Body>` for pinned rows**
@@ -989,18 +1022,15 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 In `DataTable.tsx`, find the section that opens with `<Table.Body>` for the main rows. Right BEFORE it (and after the `<Table.Header>` closing tag), insert the pinned-rows section:
 
 ```tsx
-          {instance.pinnedRows.length > 0 && (
-            <Table.Body className={styles.pinnedRowsTbody} aria-label="Pinned rows">
-              {instance.pinnedRows.map((row) => (
-                <BodyRow
-                  key={instance.getRowId(row)}
-                  row={row}
-                  instance={instance}
-                  isPinnedRow
-                />
-              ))}
-            </Table.Body>
-          )}
+{
+  instance.pinnedRows.length > 0 && (
+    <Table.Body className={styles.pinnedRowsTbody} aria-label="Pinned rows">
+      {instance.pinnedRows.map((row) => (
+        <BodyRow key={instance.getRowId(row)} row={row} instance={instance} isPinnedRow />
+      ))}
+    </Table.Body>
+  );
+}
 ```
 
 The main `<Table.Body>` below it stays unchanged.
@@ -1028,6 +1058,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 9 — Phase 2 rendering tests
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/DataTable.test.tsx`
 
 - [ ] **Step 1: Append Phase 2 rendering tests**
@@ -1035,95 +1066,84 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 Open `packages/design-system/src/components/DataTable/DataTable.test.tsx`. Find the end of the `describe('<DataTable>', () => {` block (the closing `})` at the bottom). Add these tests inside, just before the closing `})`:
 
 ```tsx
-  // ─── Phase 2: pinning rendering ───────────────────────────────────────
+// ─── Phase 2: pinning rendering ───────────────────────────────────────
 
-  it('renders pinned-left columns with sticky CSS and computed left offset', () => {
-    const { container } = render(
-      <Harness defaultColumnPinning={{ left: ['name'], right: [] }} />,
-    );
-    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
-    expect(nameHeader).toHaveStyle({ position: 'sticky', left: '0px' });
-    // Body cell for 'name' in first row should also be sticky.
-    const firstBodyRow = container.querySelectorAll('tbody tr')[0]!;
-    const nameCell = firstBodyRow.querySelectorAll('td')[0]!; // 'name' is first because left-pinned
-    expect(nameCell).toHaveStyle({ position: 'sticky', left: '0px' });
-  });
+it('renders pinned-left columns with sticky CSS and computed left offset', () => {
+  const { container } = render(<Harness defaultColumnPinning={{ left: ['name'], right: [] }} />);
+  const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+  expect(nameHeader).toHaveStyle({ position: 'sticky', left: '0px' });
+  // Body cell for 'name' in first row should also be sticky.
+  const firstBodyRow = container.querySelectorAll('tbody tr')[0]!;
+  const nameCell = firstBodyRow.querySelectorAll('td')[0]!; // 'name' is first because left-pinned
+  expect(nameCell).toHaveStyle({ position: 'sticky', left: '0px' });
+});
 
-  it('shifts left pin offset by 44px when enableRowSelection is true', () => {
-    render(
-      <Harness
-        enableRowSelection
-        defaultColumnPinning={{ left: ['name'], right: [] }}
-      />,
-    );
-    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
-    expect(nameHeader).toHaveStyle({ left: '44px' });
-  });
+it('shifts left pin offset by 44px when enableRowSelection is true', () => {
+  render(<Harness enableRowSelection defaultColumnPinning={{ left: ['name'], right: [] }} />);
+  const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+  expect(nameHeader).toHaveStyle({ left: '44px' });
+});
 
-  it('renders pinned-right columns with sticky right CSS', () => {
-    render(
-      <Harness defaultColumnPinning={{ left: [], right: ['amount'] }} />,
-    );
-    const amountHeader = screen.getByRole('columnheader', { name: /amount/i });
-    expect(amountHeader).toHaveStyle({ position: 'sticky', right: '0px' });
-  });
+it('renders pinned-right columns with sticky right CSS', () => {
+  render(<Harness defaultColumnPinning={{ left: [], right: ['amount'] }} />);
+  const amountHeader = screen.getByRole('columnheader', { name: /amount/i });
+  expect(amountHeader).toHaveStyle({ position: 'sticky', right: '0px' });
+});
 
-  it('renders columns in pin order: [left-pinned, unpinned, right-pinned]', () => {
-    render(
-      <Harness defaultColumnPinning={{ left: ['amount'], right: [] }} />,
-    );
-    const headers = screen.getAllByRole('columnheader');
-    // 'amount' pinned-left → first; 'name' unpinned → second
-    expect(headers[0]!.textContent).toMatch(/amount/i);
-    expect(headers[1]!.textContent).toMatch(/name/i);
-  });
+it('renders columns in pin order: [left-pinned, unpinned, right-pinned]', () => {
+  render(<Harness defaultColumnPinning={{ left: ['amount'], right: [] }} />);
+  const headers = screen.getAllByRole('columnheader');
+  // 'amount' pinned-left → first; 'name' unpinned → second
+  expect(headers[0]!.textContent).toMatch(/amount/i);
+  expect(headers[1]!.textContent).toMatch(/name/i);
+});
 
-  it('auto-select cell is sticky-left at offset 0 when enableRowSelection is true', () => {
-    render(<Harness enableRowSelection />);
-    // The select-all <th> is the first columnheader.
-    const headers = screen.getAllByRole('columnheader');
-    const selectHeader = headers[0]!;
-    expect(selectHeader).toHaveStyle({ position: 'sticky', left: '0px' });
-  });
+it('auto-select cell is sticky-left at offset 0 when enableRowSelection is true', () => {
+  render(<Harness enableRowSelection />);
+  // The select-all <th> is the first columnheader.
+  const headers = screen.getAllByRole('columnheader');
+  const selectHeader = headers[0]!;
+  expect(selectHeader).toHaveStyle({ position: 'sticky', left: '0px' });
+});
 
-  it('renders pinnedRows in a separate <tbody> above main body', () => {
-    const pinned = [{ id: 'p1', name: 'PINNED', amount: 99 }];
-    function PinnedHarness() {
-      const instance = useDataTable<Row>({
-        data: rows,
-        pinnedRows: pinned,
-        columns: cols,
-        getRowId,
-      });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    const { container } = render(<PinnedHarness />);
-    const tbodies = container.querySelectorAll('tbody');
-    expect(tbodies.length).toBe(2);
-    const pinnedTbody = tbodies[0]!;
-    expect(within(pinnedTbody as HTMLElement).getByText('PINNED')).toBeInTheDocument();
-  });
+it('renders pinnedRows in a separate <tbody> above main body', () => {
+  const pinned = [{ id: 'p1', name: 'PINNED', amount: 99 }];
+  function PinnedHarness() {
+    const instance = useDataTable<Row>({
+      data: rows,
+      pinnedRows: pinned,
+      columns: cols,
+      getRowId,
+    });
+    return <DataTable instance={instance} aria-label="t" />;
+  }
+  const { container } = render(<PinnedHarness />);
+  const tbodies = container.querySelectorAll('tbody');
+  expect(tbodies.length).toBe(2);
+  const pinnedTbody = tbodies[0]!;
+  expect(within(pinnedTbody as HTMLElement).getByText('PINNED')).toBeInTheDocument();
+});
 
-  it('pinnedRows tbody is labelled "Pinned rows" for screen readers', () => {
-    const pinned = [{ id: 'p1', name: 'PINNED', amount: 99 }];
-    function PinnedHarness() {
-      const instance = useDataTable<Row>({
-        data: rows,
-        pinnedRows: pinned,
-        columns: cols,
-        getRowId,
-      });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    const { container } = render(<PinnedHarness />);
-    const pinnedTbody = container.querySelector('tbody[aria-label="Pinned rows"]');
-    expect(pinnedTbody).not.toBeNull();
-  });
+it('pinnedRows tbody is labelled "Pinned rows" for screen readers', () => {
+  const pinned = [{ id: 'p1', name: 'PINNED', amount: 99 }];
+  function PinnedHarness() {
+    const instance = useDataTable<Row>({
+      data: rows,
+      pinnedRows: pinned,
+      columns: cols,
+      getRowId,
+    });
+    return <DataTable instance={instance} aria-label="t" />;
+  }
+  const { container } = render(<PinnedHarness />);
+  const pinnedTbody = container.querySelector('tbody[aria-label="Pinned rows"]');
+  expect(pinnedTbody).not.toBeNull();
+});
 
-  it('does NOT render pinned-rows tbody when pinnedRows is empty/absent', () => {
-    const { container } = render(<Harness />);
-    expect(container.querySelectorAll('tbody').length).toBe(1);
-  });
+it('does NOT render pinned-rows tbody when pinnedRows is empty/absent', () => {
+  const { container } = render(<Harness />);
+  expect(container.querySelectorAll('tbody').length).toBe(1);
+});
 ```
 
 - [ ] **Step 2: Run — expect pass**
@@ -1148,6 +1168,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 10 — Update playground demo with pinning examples
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/DataTableDemo.tsx`
 
 - [ ] **Step 1: Add two new examples**
@@ -1176,7 +1197,7 @@ function PinningExample() {
   return (
     <Example
       title="Column pinning (left + right)"
-      description='Pin a column to the left or right with `columnPinning`. Left-pinned columns stick to the left edge during horizontal scroll; right-pinned to the right. The selection auto-column is always sticky-left at offset 0. Scroll the demo horizontally (resize columns to make it overflow) to see the effect. No built-in pin/unpin UI — wire your own via `instance.pinColumn(id, side)`.'
+      description="Pin a column to the left or right with `columnPinning`. Left-pinned columns stick to the left edge during horizontal scroll; right-pinned to the right. The selection auto-column is always sticky-left at offset 0. Scroll the demo horizontally (resize columns to make it overflow) to see the effect. No built-in pin/unpin UI — wire your own via `instance.pinColumn(id, side)`."
       code={`const instance = useDataTable({
   data, columns, getRowId,
   defaultColumnPinning: { left: ['name'], right: ['amount'] },
@@ -1252,6 +1273,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 11 — Update AGENTS.md and JSDoc to reflect Phase 2 ship
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 - Modify: `packages/design-system/src/components/DataTable/DataTable.tsx` (JSDoc only)
 

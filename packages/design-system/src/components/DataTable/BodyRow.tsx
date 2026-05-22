@@ -63,10 +63,7 @@ export function BodyRow<T>({ row, instance, isPinnedRow }: BodyRowProps<T>) {
       onClick={instance.onRowClick ? onRowClick : undefined}
       onKeyDown={instance.onRowClick ? onRowKeyDown : undefined}
       tabIndex={instance.onRowClick ? 0 : undefined}
-      className={clsx(
-        instance.onRowClick && styles.clickableRow,
-        isPinnedRow && styles.pinnedRow,
-      )}
+      className={clsx(instance.onRowClick && styles.clickableRow, isPinnedRow && styles.pinnedRow)}
     >
       {instance.enableRowSelection && (
         <Table.Cell
