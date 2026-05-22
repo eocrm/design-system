@@ -378,6 +378,32 @@ describe('<DataTable>', () => {
     expect(onChange).toHaveBeenLastCalledWith({ r1: true });
   });
 
+  it('toggling the expand chevron mounts and unmounts the detail row in the DOM', async () => {
+    function ExpandableHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        renderExpandedRow: (r) => <div data-testid="detail-content">Detail of {r.name}</div>,
+        defaultExpandedRows: {},
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const user = userEvent.setup();
+    render(<ExpandableHarness />);
+    // No detail row at rest.
+    expect(screen.queryByTestId('detail-content')).toBeNull();
+
+    const firstChevron = screen.getAllByRole('button', { name: /expand row/i })[0]!;
+    await user.click(firstChevron);
+    // Detail row mounts.
+    expect(screen.getByTestId('detail-content')).toHaveTextContent('Detail of Alpha');
+
+    await user.click(firstChevron);
+    // Detail row unmounts.
+    expect(screen.queryByTestId('detail-content')).toBeNull();
+  });
+
   it('renders the detail row beneath an expanded row with correct colSpan + aria', () => {
     function ExpandableHarness() {
       const instance = useDataTable<Row>({

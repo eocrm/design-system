@@ -182,6 +182,15 @@
 // the consumer interacts with their rendered detail content.
 .expandedDetailRow {
   background: var(--color-table-row-bg-striped);
+
+  &:hover {
+    // The Table primitive's `.hover .tbody .tr:hover` rule (specificity 0,3,0)
+    // would otherwise overwrite this background with the row-hover color. The
+    // detail row isn't clickable — hover flashing carries no signal — so we
+    // re-assert the tint at both rest and hover with a compound selector that
+    // tops the Table-level specificity.
+    background: var(--color-table-row-bg-striped);
+  }
 }
 
 // The single colSpan cell that holds the consumer's renderExpandedRow output.
