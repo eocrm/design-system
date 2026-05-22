@@ -53,3 +53,38 @@
   background: var(--color-table-bg);
   z-index: 1;
 }
+
+// Body pinned-cell sticky styles. Mirrors HeaderCell.module.scss's
+// .pinnedLeft / .pinnedRight but at body z-index (1 instead of 3).
+
+.pinnedLeft,
+.pinnedRight {
+  background: var(--color-table-bg);
+  z-index: 1;
+}
+
+.pinnedLeft {
+  box-shadow: var(--shadow-table-pinned-edge);
+}
+
+.pinnedRight {
+  box-shadow: var(--shadow-table-pinned-edge-right);
+}
+
+// Pinned rows (separate <tbody> above the main body) get a subtle tint.
+.pinnedRow {
+  background: var(--color-bg-row-pinned);
+}
+
+.pinnedRow .pinnedLeft,
+.pinnedRow .pinnedRight {
+  // Pinned cells inside a pinned row keep their stickyness but inherit the
+  // tint by way of a transparent background.
+  background: var(--color-bg-row-pinned);
+}
+
+// Dedicated tbody class for the pinned-rows section (used in Task 8).
+.pinnedRowsTbody {
+  // No layout-affecting styles — Rule 4. Background and visual modifiers only.
+  background: var(--color-bg-row-pinned);
+}
