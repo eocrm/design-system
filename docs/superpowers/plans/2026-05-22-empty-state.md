@@ -348,9 +348,7 @@ describe('EmptyState', () => {
   });
 
   it('renders the icon when provided', () => {
-    const { container } = render(
-      <EmptyState title="X" icon={<svg data-testid="icon" />} />,
-    );
+    const { container } = render(<EmptyState title="X" icon={<svg data-testid="icon" />} />);
     expect(container.querySelector('[data-testid="icon"]')).toBeInTheDocument();
   });
 
@@ -370,12 +368,7 @@ describe('EmptyState', () => {
   });
 
   it('renders the actions slot when provided', () => {
-    render(
-      <EmptyState
-        title="X"
-        actions={<button type="button">Add thing</button>}
-      />,
-    );
+    render(<EmptyState title="X" actions={<button type="button">Add thing</button>} />);
     expect(screen.getByRole('button', { name: 'Add thing' })).toBeInTheDocument();
   });
 
@@ -423,7 +416,15 @@ describe('EmptyState', () => {
   });
 
   it('title accepts ReactNode (inline formatting)', () => {
-    render(<EmptyState title={<>Found <strong>0</strong> results</>} />);
+    render(
+      <EmptyState
+        title={
+          <>
+            Found <strong>0</strong> results
+          </>
+        }
+      />,
+    );
     const heading = screen.getByRole('heading');
     expect(heading.textContent).toBe('Found 0 results');
     expect(heading.querySelector('strong')).toHaveTextContent('0');
@@ -513,6 +514,7 @@ git commit -m "EmptyState: re-export from barrel + src/index.ts (Rule 5)"
 8 examples per the spec. Match existing demo conventions (`DemoLayout` + `Example`, `?raw` source imports). Use lucide icons (`Inbox`, `Search`, `SearchX`, `Users`, `KanbanSquare`).
 
 Source imports:
+
 - `tsxSource from '@lib-source/components/EmptyState/EmptyState.tsx?raw'`
 - `scssSource from '@lib-source/components/EmptyState/EmptyState.module.scss?raw'`
 
@@ -534,7 +536,7 @@ Add import + route alphabetically.
 ```tsx
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
 // …
-<Route path="/components/empty-state" element={<EmptyStateDemo />} />
+<Route path="/components/empty-state" element={<EmptyStateDemo />} />;
 ```
 
 - [ ] **Step 3: Wire `AppShell.tsx`**
@@ -604,7 +606,7 @@ git commit -m "EmptyStateDemo: examples + sidebar + index + registry wiring"
 
 Place between `Calendar` and `Skeleton` (or wherever fits the existing groupings).
 
-```markdown
+````markdown
 ### `<EmptyState>` — "nothing here" container
 
 ```tsx
@@ -615,6 +617,7 @@ Place between `Calendar` and `Skeleton` (or wherever fits the existing groupings
   actions={<Button>Add contact</Button>}
 />
 ```
+````
 
 - Four slots: `icon` (optional ReactNode), `title` (required ReactNode), `description` (optional), `actions` (optional). Stacked vertically.
 - `title` renders as a semantic heading — default `<h3>`. Override via `headingLevel: 1–6` (clamped) when the empty state lives at a different heading depth.
@@ -622,14 +625,15 @@ Place between `Calendar` and `Skeleton` (or wherever fits the existing groupings
 - `align`: `'center'` (default) / `'start'` for tight-column use.
 - Use `<Skeleton>` for **loading** states — EmptyState implies "nothing here," not "data on its way."
 - No `variant="error"` — error treatments need different a11y (live regions, retry actions). Use a future `<Alert>` or render a danger-tinted EmptyState with your own error message.
-```
+
+````
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add packages/design-system/AGENTS.md
 git commit -m "AGENTS.md: document new <EmptyState>"
-```
+````
 
 ---
 

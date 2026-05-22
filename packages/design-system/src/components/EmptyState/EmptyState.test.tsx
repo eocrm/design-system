@@ -21,9 +21,7 @@ describe('EmptyState', () => {
   });
 
   it('renders the icon when provided', () => {
-    const { container } = render(
-      <EmptyState title="X" icon={<svg data-testid="icon" />} />,
-    );
+    const { container } = render(<EmptyState title="X" icon={<svg data-testid="icon" />} />);
     expect(container.querySelector('[data-testid="icon"]')).toBeInTheDocument();
   });
 
@@ -43,12 +41,7 @@ describe('EmptyState', () => {
   });
 
   it('renders the actions slot when provided', () => {
-    render(
-      <EmptyState
-        title="X"
-        actions={<button type="button">Add thing</button>}
-      />,
-    );
+    render(<EmptyState title="X" actions={<button type="button">Add thing</button>} />);
     expect(screen.getByRole('button', { name: 'Add thing' })).toBeInTheDocument();
   });
 
@@ -96,7 +89,15 @@ describe('EmptyState', () => {
   });
 
   it('title accepts ReactNode (inline formatting)', () => {
-    render(<EmptyState title={<>Found <strong>0</strong> results</>} />);
+    render(
+      <EmptyState
+        title={
+          <>
+            Found <strong>0</strong> results
+          </>
+        }
+      />,
+    );
     const heading = screen.getByRole('heading');
     expect(heading.textContent).toBe('Found 0 results');
     expect(heading.querySelector('strong')).toHaveTextContent('0');

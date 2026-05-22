@@ -101,21 +101,21 @@ export interface EmptyStateProps extends Omit<HTMLAttributes<HTMLElement>, 'titl
 
 Reuses existing tokens — no new tokens.
 
-| Visual                     | Token / value                                |
-| -------------------------- | -------------------------------------------- |
-| Icon color                 | `--color-fg-muted`                           |
-| Title color                | `--color-fg`                                 |
-| Title font (sm)            | `--font-size-sm` semibold                    |
-| Title font (md)            | `--font-size-md` semibold                    |
-| Title font (lg)            | `--font-size-xl` semibold                    |
-| Description color          | `--color-fg-subtle`                          |
-| Description font           | `--font-size-sm` (sm) / `--font-size-md` (md, lg) |
-| Gap between elements (sm)  | `--space-2`                                  |
-| Gap between elements (md)  | `--space-3`                                  |
-| Gap between elements (lg)  | `--space-4`                                  |
-| Padding (sm)               | `--space-3`                                  |
-| Padding (md)               | `--space-6`                                  |
-| Padding (lg)               | `--space-10`                                 |
+| Visual                    | Token / value                                     |
+| ------------------------- | ------------------------------------------------- |
+| Icon color                | `--color-fg-muted`                                |
+| Title color               | `--color-fg`                                      |
+| Title font (sm)           | `--font-size-sm` semibold                         |
+| Title font (md)           | `--font-size-md` semibold                         |
+| Title font (lg)           | `--font-size-xl` semibold                         |
+| Description color         | `--color-fg-subtle`                               |
+| Description font          | `--font-size-sm` (sm) / `--font-size-md` (md, lg) |
+| Gap between elements (sm) | `--space-2`                                       |
+| Gap between elements (md) | `--space-3`                                       |
+| Gap between elements (lg) | `--space-4`                                       |
+| Padding (sm)              | `--space-3`                                       |
+| Padding (md)              | `--space-6`                                       |
+| Padding (lg)              | `--space-10`                                      |
 
 No new tokens. No new keyframes. No new colors.
 
