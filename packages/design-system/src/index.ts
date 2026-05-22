@@ -123,6 +123,12 @@ export type {
   TableSortDirection,
 } from './components/Table';
 
+export { Pagination, paginationRange } from './components/Pagination';
+export type { PaginationProps, PaginationSize, PaginationItem } from './components/Pagination';
+
+export { CursorPagination } from './components/CursorPagination';
+export type { CursorPaginationProps } from './components/CursorPagination';
+
 // i18n
 export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';
