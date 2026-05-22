@@ -131,16 +131,12 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
       ref={setNodeRef as any}
       style={cellStyle}
     >
-      {/* Grip absolute-positioned on the side OPPOSITE the content. For
-          start/center-aligned columns the grip sits at the left edge so it's
-          adjacent to the label's reading start; for end-aligned columns the
-          grip mirrors to the right edge (just inside the resize handle) so
-          it's adjacent to the label that's anchored to the right. Without
-          this mirror, end-aligned columns showed a grip far from the label
-          in otherwise-empty cell space, looking detached. */}
+      {/* Grip pinned to absolute left of the cell regardless of column.align.
+          Kept outside .inner so it doesn't shift the content area. Only
+          rendered when reorderable. */}
       {reorderable && (
         <span
-          className={clsx(styles.grip, column.align === 'end' && styles.gripEnd)}
+          className={styles.grip}
           // Spread BOTH attributes (aria/role) and listeners (pointerdown etc.)
           {...attributes}
           {...listeners}
@@ -164,10 +160,7 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
       <div
         className={clsx(
           styles.inner,
-          // For end-aligned columns the grip lives on the right, so reserve
-          // grip space via padding-RIGHT (with resize) instead of padding-LEFT.
-          reorderable && column.align !== 'end' && styles.innerWithGrip,
-          reorderable && column.align === 'end' && styles.innerWithGripEnd,
+          reorderable && styles.innerWithGrip,
           column.enableResize !== false && styles.innerWithResize,
           column.align === 'end' && styles.innerAlignEnd,
           column.align === 'center' && styles.innerAlignCenter,

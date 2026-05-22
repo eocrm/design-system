@@ -14,10 +14,8 @@
   user-select: none;
 }
 
-// Drag grip — absolutely positioned. Default (start/center-aligned columns):
-// left edge of the cell so it sits adjacent to the label's reading start.
-// End-aligned columns use the .gripEnd modifier to mirror to the right edge
-// (just inside the resize handle's hit zone).
+// Drag grip — absolutely positioned at the left edge of the cell so it never
+// shifts the content area regardless of label length OR column alignment.
 .grip {
   position: absolute;
   top: 0;
@@ -46,15 +44,6 @@
   }
 }
 
-// End-aligned variant: grip sits on the right, just inside the 24px resize
-// handle. Label and sort indicator are at the right edge of content via
-// justify-end; the grip lives adjacent to them instead of marooned at the
-// far-left of an otherwise-empty cell.
-.gripEnd {
-  left: auto;
-  right: 24px;
-}
-
 .inner {
   display: flex;
   align-items: center;
@@ -69,21 +58,15 @@
   transition: padding var(--transition-fast);
 }
 
-// .innerWithGrip = the column is reorderable and start/center-aligned. At
-// rest the label is aligned with the body cell content (no padding-left).
-// When the user hovers the header (revealing the grip), the label slides
-// 20px right to make room for the grip — animated via .inner's
-// `transition: padding`.
+// .innerWithGrip = the column is reorderable. At rest the label is aligned
+// with the body cell content (no padding-left). When the user hovers the
+// header (revealing the grip), the label slides 20px right to make room
+// for the grip — animated via .inner's `transition: padding`. For end-
+// aligned columns the label is anchored to the right (justify-end), so the
+// padding-left change opens up space on the left without moving the label;
+// the grip just becomes visible in that newly-revealed left area.
 .headerCell:hover .innerWithGrip {
   padding-left: 20px;
-}
-
-// End-aligned variant: the grip lives on the right (just inside the resize
-// handle). At rest, padding-right reserves 24px for the resize handle only.
-// On hover, padding-right grows to 24 + 20 = 44px so the label slides 20px
-// LEFT to make room for the grip — same animated transition, mirrored.
-.headerCell:hover .innerWithGripEnd {
-  padding-right: 44px;
 }
 
 // Reserve right space for the absolute-positioned resize handle (~24px — it
