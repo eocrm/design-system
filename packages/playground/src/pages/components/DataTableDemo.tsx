@@ -80,6 +80,8 @@ export function DataTableDemo() {
       <VisibilityExample />
       <LoadingExample />
       <EmptyExample />
+      <PinningExample />
+      <PinnedRowsExample />
     </DemoLayout>
   );
 }
@@ -263,6 +265,56 @@ function EmptyExample() {
       code={`<DataTable instance={instance} aria-label="Deals" />`}
     >
       <DataTable instance={instance} aria-label="Deals (empty)" />
+    </Example>
+  );
+}
+
+function PinningExample() {
+  const instance = useDataTable<Deal>({
+    data: deals,
+    columns: dealColumns,
+    getRowId: (r) => r.id,
+    enableRowSelection: true,
+    defaultColumnPinning: { left: ['name'], right: ['amount'] },
+  });
+
+  return (
+    <Example
+      title="Column pinning (left + right)"
+      description='Pin a column to the left or right with `columnPinning`. Left-pinned columns stick to the left edge during horizontal scroll; right-pinned to the right. The selection auto-column is always sticky-left at offset 0. Scroll the demo horizontally (resize columns to make it overflow) to see the effect. No built-in pin/unpin UI — wire your own via `instance.pinColumn(id, side)`.'
+      code={`const instance = useDataTable({
+  data, columns, getRowId,
+  defaultColumnPinning: { left: ['name'], right: ['amount'] },
+});
+<DataTable instance={instance} />`}
+    >
+      <DataTable instance={instance} aria-label="Deals (pinning)" />
+    </Example>
+  );
+}
+
+function PinnedRowsExample() {
+  const starred: Deal[] = [
+    { id: 's1', name: '⭐ Starred deal', stage: 'Won', amount: 50000, owner: 'Sara' },
+  ];
+  const instance = useDataTable<Deal>({
+    data: deals,
+    pinnedRows: starred,
+    columns: dealColumns,
+    getRowId: (r) => r.id,
+  });
+
+  return (
+    <Example
+      title="Row pinning (starred-row pattern)"
+      description="Pinned rows render in a separate <tbody> above the main body and ignore pagination. Consumer supplies `pinnedRows` as a separate array — typically from a separate server query. Selection inside the pinned section is per-row; the header select-all only touches `data` (the current page)."
+      code={`const instance = useDataTable({
+  data,                       // current page from server
+  pinnedRows: starredDeals,   // separate query
+  columns, getRowId,
+});`}
+    >
+      <DataTable instance={instance} aria-label="Deals (pinned rows)" />
     </Example>
   );
 }
