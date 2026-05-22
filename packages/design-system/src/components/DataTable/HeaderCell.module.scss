@@ -6,6 +6,12 @@
   // overflow:hidden ensures dnd-kit's CSS transform doesn't cause the cell
   // content to appear wider than the column's <col> width during drag.
   overflow: hidden;
+
+  // Header is interactive (sort click + drag + resize); rapid clicks
+  // shouldn't initiate a text selection range that bleeds into the body
+  // (commonly visible as the pinned-row cell below the column getting
+  // highlighted after a double-click on the sort header).
+  user-select: none;
 }
 
 // Drag grip — absolutely positioned at the left edge of the cell so it never
