@@ -189,6 +189,19 @@ function DataTableInner<T>(
             </Table.Row>
           </Table.Header>
 
+          {instance.pinnedRows.length > 0 && (
+            <Table.Body className={styles.pinnedRowsTbody} aria-label="Pinned rows">
+              {instance.pinnedRows.map((row) => (
+                <BodyRow
+                  key={instance.getRowId(row)}
+                  row={row}
+                  instance={instance}
+                  isPinnedRow
+                />
+              ))}
+            </Table.Body>
+          )}
+
           <Table.Body>
             {loading ? (
               <SkeletonRows count={loadingRowCount} totalColCount={totalColCount} />
