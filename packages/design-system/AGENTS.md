@@ -575,6 +575,40 @@ const [tab, setTab] = useState('overview');
 - The native HTML `align` attribute on `<th>` / `<td>` is shadowed by the component-level `align` prop (logical) — `Omit<…, 'align'>` on both `*Props`.
 - **Use `<DataTable>` instead** when you need sorting / filtering / pagination state. Table is the paint primitive; DataTable will be the opinionated wrapper.
 
+### `<Pagination>` — numbered nav with windowing
+
+```tsx
+const [page, setPage] = useState(1);
+<Pagination currentPage={page} pageCount={20} onPageChange={setPage} />
+```
+
+- Controlled-only — consumer owns `currentPage`. No internal state.
+- Sibling windowing — `siblingCount` (default `1`) controls how many pages on each side of current. Boundary fixed at 1 (first + last always shown). Slot count stays constant once ellipses kick in (`siblingCount * 2 + 5`) — the row's width doesn't jump as the user clicks.
+- Current page is rendered as a disabled `<button>` with `aria-current="page"` (the W3C ARIA APG pattern for "current item, not actionable").
+- Sizes: `'sm'` (24px) / `'md'` (32px, default) / `'lg'` (40px) — tracks the Button / Input scale so Pagination sits cleanly next to a `<Button>` in a Cluster.
+- Out-of-range `currentPage` / `pageCount` clamp at render time (defensive — same precedent as `<EmptyState>`'s `clampHeading`).
+- **Not bundled**: page-size selector, count caption ("Showing 11–20 of 240"). Compose those with `<Select>` and text — keeps Pagination focused on navigation. `<DataTable>` (coming) owns its own footer.
+- For streams without a total → use `<CursorPagination>`.
+- For "load more" → use `<Button>` directly (`<Button onClick={loadMore} loading={isLoading}>Load more</Button>`).
+- `paginationRange(currentPage, pageCount, siblingCount)` is exported as a pure utility for advanced consumers that want to compute the same item list themselves (e.g., to render a custom layout with the same windowing).
+
+### `<CursorPagination>` — prev / next for streams without total
+
+```tsx
+<CursorPagination
+  hasPrevious={hasPrev}
+  hasNext={hasNext}
+  onPrevious={loadPrev}
+  onNext={loadNext}
+/>
+```
+
+- Two-button prev / next nav for keyset-paginated streams (activity feeds, infinite scroll, cursor-based APIs). Controlled — consumer owns the cursor + `has-prev` / `has-next` flags.
+- Buttons render as native `<button disabled>` when `hasPrevious` / `hasNext` is false — no layout shift; consumer doesn't have to conditionally hide them.
+- `previousLabel` / `nextLabel` accept `ReactNode` — override for reverse-chronological feeds (`'Newer'` / `'Older'`).
+- Shares the `<Pagination>` size scale (`sm` / `md` / `lg`).
+- Use `<Pagination>` (numbered) when you have a known total page count. CursorPagination is for streams.
+
 ### `<LocaleProvider>` + `useLocale` — locale Context
 
 ```tsx
