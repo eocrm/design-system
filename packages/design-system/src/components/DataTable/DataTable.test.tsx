@@ -204,4 +204,94 @@ describe('<DataTable>', () => {
     const { container } = render(<ClassHarness />);
     expect(container.querySelector('table.my-class')).not.toBeNull();
   });
+
+  // ─── Phase 2: pinning rendering ───────────────────────────────────────
+
+  it('renders pinned-left columns with sticky CSS and computed left offset', () => {
+    const { container } = render(
+      <Harness defaultColumnPinning={{ left: ['name'], right: [] }} />,
+    );
+    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+    expect(nameHeader).toHaveStyle({ position: 'sticky', left: '0px' });
+    // Body cell for 'name' in first row should also be sticky.
+    const firstBodyRow = container.querySelectorAll('tbody tr')[0]!;
+    const nameCell = firstBodyRow.querySelectorAll('td')[0]!; // 'name' is first because left-pinned
+    expect(nameCell).toHaveStyle({ position: 'sticky', left: '0px' });
+  });
+
+  it('shifts left pin offset by 44px when enableRowSelection is true', () => {
+    render(
+      <Harness
+        enableRowSelection
+        defaultColumnPinning={{ left: ['name'], right: [] }}
+      />,
+    );
+    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+    expect(nameHeader).toHaveStyle({ left: '44px' });
+  });
+
+  it('renders pinned-right columns with sticky right CSS', () => {
+    render(
+      <Harness defaultColumnPinning={{ left: [], right: ['amount'] }} />,
+    );
+    const amountHeader = screen.getByRole('columnheader', { name: /amount/i });
+    expect(amountHeader).toHaveStyle({ position: 'sticky', right: '0px' });
+  });
+
+  it('renders columns in pin order: [left-pinned, unpinned, right-pinned]', () => {
+    render(
+      <Harness defaultColumnPinning={{ left: ['amount'], right: [] }} />,
+    );
+    const headers = screen.getAllByRole('columnheader');
+    // 'amount' pinned-left → first; 'name' unpinned → second
+    expect(headers[0]!.textContent).toMatch(/amount/i);
+    expect(headers[1]!.textContent).toMatch(/name/i);
+  });
+
+  it('auto-select cell is sticky-left at offset 0 when enableRowSelection is true', () => {
+    render(<Harness enableRowSelection />);
+    // The select-all <th> is the first columnheader.
+    const headers = screen.getAllByRole('columnheader');
+    const selectHeader = headers[0]!;
+    expect(selectHeader).toHaveStyle({ position: 'sticky', left: '0px' });
+  });
+
+  it('renders pinnedRows in a separate <tbody> above main body', () => {
+    const pinned = [{ id: 'p1', name: 'PINNED', amount: 99 }];
+    function PinnedHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        pinnedRows: pinned,
+        columns: cols,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const { container } = render(<PinnedHarness />);
+    const tbodies = container.querySelectorAll('tbody');
+    expect(tbodies.length).toBe(2);
+    const pinnedTbody = tbodies[0]!;
+    expect(within(pinnedTbody as HTMLElement).getByText('PINNED')).toBeInTheDocument();
+  });
+
+  it('pinnedRows tbody is labelled "Pinned rows" for screen readers', () => {
+    const pinned = [{ id: 'p1', name: 'PINNED', amount: 99 }];
+    function PinnedHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        pinnedRows: pinned,
+        columns: cols,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const { container } = render(<PinnedHarness />);
+    const pinnedTbody = container.querySelector('tbody[aria-label="Pinned rows"]');
+    expect(pinnedTbody).not.toBeNull();
+  });
+
+  it('does NOT render pinned-rows tbody when pinnedRows is empty/absent', () => {
+    const { container } = render(<Harness />);
+    expect(container.querySelectorAll('tbody').length).toBe(1);
+  });
 });
