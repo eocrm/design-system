@@ -579,7 +579,7 @@ const [tab, setTab] = useState('overview');
 
 ```tsx
 const [page, setPage] = useState(1);
-<Pagination currentPage={page} pageCount={20} onPageChange={setPage} />
+<Pagination currentPage={page} pageCount={20} onPageChange={setPage} />;
 ```
 
 - Controlled-only — consumer owns `currentPage`. No internal state.
@@ -595,12 +595,7 @@ const [page, setPage] = useState(1);
 ### `<CursorPagination>` — prev / next for streams without total
 
 ```tsx
-<CursorPagination
-  hasPrevious={hasPrev}
-  hasNext={hasNext}
-  onPrevious={loadPrev}
-  onNext={loadNext}
-/>
+<CursorPagination hasPrevious={hasPrev} hasNext={hasNext} onPrevious={loadPrev} onNext={loadNext} />
 ```
 
 - Two-button prev / next nav for keyset-paginated streams (activity feeds, infinite scroll, cursor-based APIs). Controlled — consumer owns the cursor + `has-prev` / `has-next` flags.

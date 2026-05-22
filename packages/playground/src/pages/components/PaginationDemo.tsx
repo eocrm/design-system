@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  CursorPagination,
-  Cluster,
-  Pagination,
-  Select,
-  Stack,
-  Tabs,
-} from '@eocrm/design-system';
+import { CursorPagination, Cluster, Pagination, Select, Stack, Tabs } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import styles from './DemoLayout.module.scss';
@@ -236,12 +229,7 @@ function CursorPaginationDemoPanel() {
   onNext={loadNext}
 />`}
       >
-        <CursorPagination
-          hasPrevious={false}
-          hasNext
-          onPrevious={() => {}}
-          onNext={() => {}}
-        />
+        <CursorPagination hasPrevious={false} hasNext onPrevious={() => {}} onNext={() => {}} />
       </Example>
 
       <Example
@@ -254,12 +242,7 @@ function CursorPaginationDemoPanel() {
   onNext={loadNext}
 />`}
       >
-        <CursorPagination
-          hasPrevious
-          hasNext={false}
-          onPrevious={() => {}}
-          onNext={() => {}}
-        />
+        <CursorPagination hasPrevious hasNext={false} onPrevious={() => {}} onNext={() => {}} />
       </Example>
 
       <Example

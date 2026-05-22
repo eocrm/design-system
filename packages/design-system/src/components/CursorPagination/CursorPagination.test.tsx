@@ -73,9 +73,7 @@ describe('CursorPagination', () => {
   it('does not fire onPrevious when the button is disabled', async () => {
     const user = userEvent.setup();
     const onPrevious = vi.fn();
-    render(
-      <CursorPagination hasPrevious={false} hasNext onPrevious={onPrevious} onNext={noop} />,
-    );
+    render(<CursorPagination hasPrevious={false} hasNext onPrevious={onPrevious} onNext={noop} />);
     await user.click(screen.getByRole('button', { name: /Previous/ }));
     expect(onPrevious).not.toHaveBeenCalled();
   });
@@ -85,29 +83,19 @@ describe('CursorPagination', () => {
       <CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} size="sm" />,
     );
     expect((container.querySelector('nav') as HTMLElement).className).toMatch(/size-sm/);
-    rerender(
-      <CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} size="lg" />,
-    );
+    rerender(<CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} size="lg" />);
     expect((container.querySelector('nav') as HTMLElement).className).toMatch(/size-lg/);
   });
 
   it('forwards ref to the outer <nav>', () => {
     const ref = createRef<HTMLElement>();
-    render(
-      <CursorPagination ref={ref} hasPrevious hasNext onPrevious={noop} onNext={noop} />,
-    );
+    render(<CursorPagination ref={ref} hasPrevious hasNext onPrevious={noop} onNext={noop} />);
     expect(ref.current?.tagName).toBe('NAV');
   });
 
   it('merges className', () => {
     const { container } = render(
-      <CursorPagination
-        hasPrevious
-        hasNext
-        onPrevious={noop}
-        onNext={noop}
-        className="my-cls"
-      />,
+      <CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} className="my-cls" />,
     );
     const nav = container.querySelector('nav') as HTMLElement;
     expect(nav.className).toMatch(/my-cls/);

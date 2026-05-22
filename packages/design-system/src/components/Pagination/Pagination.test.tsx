@@ -156,12 +156,7 @@ describe('Pagination', () => {
 
   it('merges className without replacing', () => {
     const { container } = render(
-      <Pagination
-        currentPage={1}
-        pageCount={3}
-        onPageChange={() => {}}
-        className="my-cls"
-      />,
+      <Pagination currentPage={1} pageCount={3} onPageChange={() => {}} className="my-cls" />,
     );
     const nav = container.querySelector('nav') as HTMLElement;
     expect(nav.className).toMatch(/my-cls/);

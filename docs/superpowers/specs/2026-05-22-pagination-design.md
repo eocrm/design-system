@@ -220,23 +220,23 @@ The implementation plan will encode MUI's exact formulas; the spec stays at the 
 
 All entries below are verified against MUI's `usePagination`. The test suite for `paginationRange` must match exactly.
 
-| Input                                | Expected output                                          | Items |
-| ------------------------------------ | -------------------------------------------------------- | ----- |
-| current=1, count=1, siblings=1       | `[1]`                                                    | 1     |
-| current=1, count=5, siblings=1       | `[1, 2, 3, 4, 5]`                                        | 5     |
-| current=1, count=7, siblings=1       | `[1, 2, 3, 4, 5, 6, 7]` (= totalSlots, fits exactly)     | 7     |
-| current=1, count=10, siblings=1      | `[1, 2, 3, 4, 5, 'ellipsis-end', 10]`                    | 7     |
-| current=2, count=10, siblings=1      | `[1, 2, 3, 4, 5, 'ellipsis-end', 10]`                    | 7     |
-| current=5, count=10, siblings=1      | `[1, 'ellipsis-start', 4, 5, 6, 'ellipsis-end', 10]`     | 7     |
-| current=9, count=10, siblings=1      | `[1, 'ellipsis-start', 6, 7, 8, 9, 10]`                  | 7     |
-| current=10, count=10, siblings=1     | `[1, 'ellipsis-start', 6, 7, 8, 9, 10]`                  | 7     |
-| current=0, count=10, siblings=1      | Clamps to current=1 → same as `current=1`                | 7     |
-| current=99, count=10, siblings=1     | Clamps to current=10 → same as `current=10`              | 7     |
-| current=5, count=10, siblings=0      | `[1, 'ellipsis-start', 5, 'ellipsis-end', 10]`           | 5     |
-| current=1, count=5, siblings=0       | `[1, 2, 3, 4, 5]` (= totalSlots=5)                       | 5     |
-| current=5, count=10, siblings=2      | `[1, 2, 3, 4, 5, 6, 7, 'ellipsis-end', 10]` (gap-of-1 on left collapses to "2") | 9 |
-| current=6, count=12, siblings=2      | `[1, 'ellipsis-start', 4, 5, 6, 7, 8, 'ellipsis-end', 12]` (both ellipses) | 9 |
-| current=5, count=9, siblings=2       | `[1, 2, 3, 4, 5, 6, 7, 8, 9]` (= totalSlots=9)           | 9     |
+| Input                            | Expected output                                                                 | Items |
+| -------------------------------- | ------------------------------------------------------------------------------- | ----- |
+| current=1, count=1, siblings=1   | `[1]`                                                                           | 1     |
+| current=1, count=5, siblings=1   | `[1, 2, 3, 4, 5]`                                                               | 5     |
+| current=1, count=7, siblings=1   | `[1, 2, 3, 4, 5, 6, 7]` (= totalSlots, fits exactly)                            | 7     |
+| current=1, count=10, siblings=1  | `[1, 2, 3, 4, 5, 'ellipsis-end', 10]`                                           | 7     |
+| current=2, count=10, siblings=1  | `[1, 2, 3, 4, 5, 'ellipsis-end', 10]`                                           | 7     |
+| current=5, count=10, siblings=1  | `[1, 'ellipsis-start', 4, 5, 6, 'ellipsis-end', 10]`                            | 7     |
+| current=9, count=10, siblings=1  | `[1, 'ellipsis-start', 6, 7, 8, 9, 10]`                                         | 7     |
+| current=10, count=10, siblings=1 | `[1, 'ellipsis-start', 6, 7, 8, 9, 10]`                                         | 7     |
+| current=0, count=10, siblings=1  | Clamps to current=1 → same as `current=1`                                       | 7     |
+| current=99, count=10, siblings=1 | Clamps to current=10 → same as `current=10`                                     | 7     |
+| current=5, count=10, siblings=0  | `[1, 'ellipsis-start', 5, 'ellipsis-end', 10]`                                  | 5     |
+| current=1, count=5, siblings=0   | `[1, 2, 3, 4, 5]` (= totalSlots=5)                                              | 5     |
+| current=5, count=10, siblings=2  | `[1, 2, 3, 4, 5, 6, 7, 'ellipsis-end', 10]` (gap-of-1 on left collapses to "2") | 9     |
+| current=6, count=12, siblings=2  | `[1, 'ellipsis-start', 4, 5, 6, 7, 8, 'ellipsis-end', 12]` (both ellipses)      | 9     |
+| current=5, count=9, siblings=2   | `[1, 2, 3, 4, 5, 6, 7, 8, 9]` (= totalSlots=9)                                  | 9     |
 
 Clamping (current and pageCount) happens **before** the algorithm runs, inside `<Pagination>`'s component code. The pure function can assume valid input.
 

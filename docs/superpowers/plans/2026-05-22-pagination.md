@@ -819,12 +819,7 @@ describe('Pagination', () => {
 
   it('merges className without replacing', () => {
     const { container } = render(
-      <Pagination
-        currentPage={1}
-        pageCount={3}
-        onPageChange={() => {}}
-        className="my-cls"
-      />,
+      <Pagination currentPage={1} pageCount={3} onPageChange={() => {}} className="my-cls" />,
     );
     const nav = container.querySelector('nav') as HTMLElement;
     expect(nav.className).toMatch(/my-cls/);
@@ -1119,12 +1114,7 @@ describe('CursorPagination', () => {
 
   it('renders a <nav> with the default aria-label', () => {
     const { container } = render(
-      <CursorPagination
-        hasPrevious
-        hasNext
-        onPrevious={noop}
-        onNext={noop}
-      />,
+      <CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} />,
     );
     const nav = container.querySelector('nav');
     expect(nav).toBeInTheDocument();
@@ -1189,9 +1179,7 @@ describe('CursorPagination', () => {
   it('does not fire onPrevious when the button is disabled', async () => {
     const user = userEvent.setup();
     const onPrevious = vi.fn();
-    render(
-      <CursorPagination hasPrevious={false} hasNext onPrevious={onPrevious} onNext={noop} />,
-    );
+    render(<CursorPagination hasPrevious={false} hasNext onPrevious={onPrevious} onNext={noop} />);
     await user.click(screen.getByRole('button', { name: /Previous/ }));
     expect(onPrevious).not.toHaveBeenCalled();
   });
@@ -1201,35 +1189,19 @@ describe('CursorPagination', () => {
       <CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} size="sm" />,
     );
     expect((container.querySelector('nav') as HTMLElement).className).toMatch(/size-sm/);
-    rerender(
-      <CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} size="lg" />,
-    );
+    rerender(<CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} size="lg" />);
     expect((container.querySelector('nav') as HTMLElement).className).toMatch(/size-lg/);
   });
 
   it('forwards ref to the outer <nav>', () => {
     const ref = createRef<HTMLElement>();
-    render(
-      <CursorPagination
-        ref={ref}
-        hasPrevious
-        hasNext
-        onPrevious={noop}
-        onNext={noop}
-      />,
-    );
+    render(<CursorPagination ref={ref} hasPrevious hasNext onPrevious={noop} onNext={noop} />);
     expect(ref.current?.tagName).toBe('NAV');
   });
 
   it('merges className', () => {
     const { container } = render(
-      <CursorPagination
-        hasPrevious
-        hasNext
-        onPrevious={noop}
-        onNext={noop}
-        className="my-cls"
-      />,
+      <CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} className="my-cls" />,
     );
     const nav = container.querySelector('nav') as HTMLElement;
     expect(nav.className).toMatch(/my-cls/);
@@ -1313,11 +1285,7 @@ For Pagination:
 
 ```ts
 export { Pagination, paginationRange } from './components/Pagination';
-export type {
-  PaginationProps,
-  PaginationSize,
-  PaginationItem,
-} from './components/Pagination';
+export type { PaginationProps, PaginationSize, PaginationItem } from './components/Pagination';
 ```
 
 Verify by reading the file and placing entries in the right alphabetical order with the existing exports.
@@ -1359,14 +1327,7 @@ Mirrors `DatePickersDemo.tsx` — one umbrella component does the header + Tabs 
 ```tsx
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  CursorPagination,
-  Cluster,
-  Pagination,
-  Select,
-  Stack,
-  Tabs,
-} from '@eocrm/design-system';
+import { CursorPagination, Cluster, Pagination, Select, Stack, Tabs } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import styles from './DemoLayout.module.scss';
@@ -1595,12 +1556,7 @@ function CursorPaginationDemoPanel() {
   onNext={loadNext}
 />`}
       >
-        <CursorPagination
-          hasPrevious={false}
-          hasNext
-          onPrevious={() => {}}
-          onNext={() => {}}
-        />
+        <CursorPagination hasPrevious={false} hasNext onPrevious={() => {}} onNext={() => {}} />
       </Example>
 
       <Example
@@ -1613,12 +1569,7 @@ function CursorPaginationDemoPanel() {
   onNext={loadNext}
 />`}
       >
-        <CursorPagination
-          hasPrevious
-          hasNext={false}
-          onPrevious={() => {}}
-          onNext={() => {}}
-        />
+        <CursorPagination hasPrevious hasNext={false} onPrevious={() => {}} onNext={() => {}} />
       </Example>
 
       <Example
@@ -1657,8 +1608,8 @@ export function PaginationDemo() {
         <span className={styles.eyebrow}>Component</span>
         <h1 className={styles.title}>Pagination</h1>
         <p className={styles.description}>
-          Numbered nav with windowing for lists with a known total, plus a
-          cursor variant for streams without one. Both controlled.
+          Numbered nav with windowing for lists with a known total, plus a cursor variant for
+          streams without one. Both controlled.
         </p>
       </header>
 
