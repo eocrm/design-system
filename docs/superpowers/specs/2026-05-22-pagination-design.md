@@ -234,7 +234,8 @@ All entries below are verified against MUI's `usePagination`. The test suite for
 | current=99, count=10, siblings=1     | Clamps to current=10 → same as `current=10`              | 7     |
 | current=5, count=10, siblings=0      | `[1, 'ellipsis-start', 5, 'ellipsis-end', 10]`           | 5     |
 | current=1, count=5, siblings=0       | `[1, 2, 3, 4, 5]` (= totalSlots=5)                       | 5     |
-| current=5, count=10, siblings=2      | `[1, 'ellipsis-start', 3, 4, 5, 6, 7, 'ellipsis-end', 10]` | 9   |
+| current=5, count=10, siblings=2      | `[1, 2, 3, 4, 5, 6, 7, 'ellipsis-end', 10]` (gap-of-1 on left collapses to "2") | 9 |
+| current=6, count=12, siblings=2      | `[1, 'ellipsis-start', 4, 5, 6, 7, 8, 'ellipsis-end', 12]` (both ellipses) | 9 |
 | current=5, count=9, siblings=2       | `[1, 2, 3, 4, 5, 6, 7, 8, 9]` (= totalSlots=9)           | 9     |
 
 Clamping (current and pageCount) happens **before** the algorithm runs, inside `<Pagination>`'s component code. The pure function can assume valid input.
@@ -362,19 +363,26 @@ No custom keyboard handling — Tab + Enter is the entire interaction model. Nat
 
 ## Playground demo
 
-`PaginationDemo.tsx` — covers both components in one demo page (related primitives, shared file). Sections:
+Tabs-based umbrella demo, matching the DatePickers precedent (single route, single sidebar entry, `<Tabs>` for variant switching synced to `?variant=` query param).
 
-1. **Numbered — basic** (currentPage=1, pageCount=10)
-2. **Numbered — middle** (currentPage=5, pageCount=20)
-3. **Numbered — single page** (pageCount=1) — shows the "always render" edge case
-4. **Numbered — siblingCount=0** (tight display)
-5. **Numbered — siblingCount=2** (wide display)
-6. **Numbered — sizes** (sm / md / lg side by side)
-7. **Numbered — disabled** (loading lock pattern)
-8. **Cursor — basic** (hasPrev=true, hasNext=true)
-9. **Cursor — at-edge states** (start and end)
-10. **Cursor — custom labels** ("Newer" / "Older")
-11. **Composed with `<Select>` for page size** — the canonical DataTable footer shape, ahead of DataTable v1
+`PaginationDemo.tsx` is the umbrella — header + Tabs + variant switching. Two panels rendered inline as local functions (file is small enough — ~10 examples total — to not need separate panel files):
+
+- **`Pagination` tab** — examples for the numbered component:
+  1. Basic (currentPage=1, pageCount=10)
+  2. Middle (currentPage=5, pageCount=20)
+  3. Single page (pageCount=1) — "always render" edge case
+  4. siblingCount=0 (tight display)
+  5. siblingCount=2 (wide display)
+  6. Sizes (sm / md / lg side by side)
+  7. Disabled (loading lock pattern)
+  8. Composed with `<Select>` for page size — the canonical DataTable footer shape, ahead of DataTable v1
+
+- **`CursorPagination` tab** — examples for the cursor component:
+  1. Basic (hasPrevious=true, hasNext=true)
+  2. At-edge states (start: hasPrevious=false; end: hasNext=false)
+  3. Custom labels ("Newer" / "Older")
+
+Tab values: `'pagination'` and `'cursor-pagination'`. Active tab synced to `?variant=` query param via `useSearchParams` so refresh / back-button preserve the active variant — same pattern as `DatePickersDemo.tsx`.
 
 ## AGENTS.md
 
