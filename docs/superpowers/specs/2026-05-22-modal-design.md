@@ -75,7 +75,7 @@ Add to `packages/design-system/src/styles/tokens.scss`:
 
 /* Dimming backdrop. rgb-modern notation matching existing shadow tokens. */
 --color-bg-overlay: rgb(15 23 42 / 50%);              /* solid variant */
---color-bg-overlay-blur: rgb(255 255 255 / 30%);      /* blur variant: light frosted-glass tint paired with backdrop-filter: blur(8px) */
+--color-bg-overlay-blur: rgb(255 255 255 / 30%);      /* blur variant: light frosted-glass tint paired with backdrop-filter: blur(4px) */
 ```
 
 ## Public API
@@ -96,7 +96,7 @@ export interface ModalProps {
 
   /**
    * Overlay variant. 'solid' (default) paints a dark dimming layer. 'blur' uses a
-   * light tinted background plus `backdrop-filter: blur(8px)` for a frosted-glass
+   * light tinted background plus `backdrop-filter: blur(4px)` for a frosted-glass
    * effect. 'blur' costs an extra compositor layer — fine for normal use; avoid
    * stacking three blurred modals on the same screen.
    */
@@ -374,8 +374,8 @@ Edge case: zero focusables in the modal (rare — a Modal.Header with `closeButt
    backdrop-filter for a frosted-glass effect. -webkit prefix for Safari. */
 .overlay[data-variant='blur'] {
   background: var(--color-bg-overlay-blur);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .content {

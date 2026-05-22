@@ -109,7 +109,7 @@ function OverlayVariantsExample() {
   return (
     <Example
       title="Overlay variants"
-      description='`overlay="solid"` (default) paints the standard dark dim. `overlay="blur"` paints a light frosted-glass effect (`backdrop-filter: blur(8px)`). Open both with rich content visible behind to compare.'
+      description='`overlay="solid"` (default) paints the standard dark dim. `overlay="blur"` paints a light frosted-glass effect (`backdrop-filter: blur(4px)`). Open both with rich content visible behind to compare.'
       code={`<Modal open={open} onOpenChange={setOpen} overlay="blur">
   <Modal.Header>Subtle overlay</Modal.Header>
   <Modal.Body>The page behind is blurred instead of dimmed.</Modal.Body>

@@ -31,7 +31,7 @@ export interface ModalProps {
 
   /**
    * Overlay variant. 'solid' (default) paints a dark dimming layer.
-   * 'blur' uses a light tinted background plus `backdrop-filter: blur(8px)`
+   * 'blur' uses a light tinted background plus `backdrop-filter: blur(4px)`
    * for a frosted-glass effect. 'blur' costs an extra compositor layer —
    * fine for normal use; avoid stacking three blurred modals at once.
    */
