@@ -399,15 +399,36 @@ return <DataTable instance={instance} aria-label="Deals" />;`}
   );
 }
 
+// Pinned variant of dealColumns — declares pinning directly on the column
+// definitions via the `pin` field instead of via the hook's defaultColumnPinning.
+const pinnedDealColumns: ColumnDef<Deal>[] = [
+  { id: 'name', header: 'Deal', cell: (r) => r.name, sortable: true, size: 200, pin: 'left' },
+  {
+    id: 'stage',
+    header: 'Stage',
+    cell: (r) => <Badge tone={stageTone(r.stage)}>{r.stage}</Badge>,
+    size: 140,
+  },
+  {
+    id: 'amount',
+    header: 'Amount',
+    cell: (r) => `$${r.amount.toLocaleString()}`,
+    align: 'end',
+    sortable: true,
+    size: 120,
+    pin: 'right',
+  },
+  { id: 'owner', header: 'Owner', cell: (r) => r.owner, size: 120 },
+];
+
 function PinningExample() {
   const [sort, setSort] = useState<SortState | null>(null);
   const sortedDeals = useClientSort(deals, sort);
   const instance = useDataTable<Deal>({
     data: sortedDeals,
-    columns: dealColumns,
+    columns: pinnedDealColumns,
     getRowId: (r) => r.id,
     enableRowSelection: true,
-    defaultColumnPinning: { left: ['name'], right: ['amount'] },
     sort,
     onSortChange: setSort,
   });
@@ -415,18 +436,22 @@ function PinningExample() {
   return (
     <Example
       title="Column pinning (left + right)"
-      description="Pin a column to the left or right with `columnPinning`. Left-pinned columns stick to the left edge during horizontal scroll; right-pinned to the right. The selection auto-column is always sticky-left at offset 0. Pinned columns are locked in position (no drag grip) but `Amount` sort still works. No built-in pin/unpin UI — wire your own via `instance.pinColumn(id, side)`."
-      code={`${COLUMNS_SNIPPET}
+      description="Pin a column declaratively with `pin: 'left'` or `pin: 'right'` on the `ColumnDef`. Pinned columns stick to their respective edges during horizontal scroll. The selection auto-column is always sticky-left at offset 0. Pinned columns are locked in position (no drag grip) but their sort still works. Equivalent: `defaultColumnPinning: { left: [...], right: [...] }` on the hook — explicit hook prop wins over `ColumnDef.pin`."
+      code={`const pinnedDealColumns: ColumnDef<Deal>[] = [
+  { id: 'name',   header: 'Deal',   cell: (r) => r.name, sortable: true, size: 200, pin: 'left' },
+  { id: 'stage',  header: 'Stage',  cell: (r) => <Badge tone={stageTone(r.stage)}>{r.stage}</Badge>, size: 140 },
+  { id: 'amount', header: 'Amount', cell: (r) => \`$\${r.amount.toLocaleString()}\`, align: 'end', sortable: true, size: 120, pin: 'right' },
+  { id: 'owner',  header: 'Owner',  cell: (r) => r.owner, size: 120 },
+];
 
 const [sort, setSort] = useState<SortState | null>(null);
 const sortedDeals = useClientSort(deals, sort);
 
 const instance = useDataTable<Deal>({
   data: sortedDeals,
-  columns: dealColumns,
+  columns: pinnedDealColumns,
   getRowId: (r) => r.id,
   enableRowSelection: true,
-  defaultColumnPinning: { left: ['name'], right: ['amount'] },
   sort, onSortChange: setSort,
 });
 
@@ -529,7 +554,7 @@ const wideDeals: WideDeal[] = [
 ];
 
 const wideDealColumns: ColumnDef<WideDeal>[] = [
-  { id: 'name', header: 'Deal', cell: (r) => r.name, sortable: true, size: 220 },
+  { id: 'name', header: 'Deal', cell: (r) => r.name, sortable: true, size: 220, pin: 'left' },
   {
     id: 'stage',
     header: 'Stage',
@@ -553,8 +578,9 @@ const wideDealColumns: ColumnDef<WideDeal>[] = [
     align: 'end',
     sortable: true,
     size: 130,
+    pin: 'right',
   },
-  { id: 'actions', header: '', cell: (r) => r.actions, align: 'center', size: 56 },
+  { id: 'actions', header: '', cell: (r) => r.actions, align: 'center', size: 56, pin: 'right' },
 ];
 
 function WidePinningExample() {
@@ -565,7 +591,8 @@ function WidePinningExample() {
     columns: wideDealColumns,
     getRowId: (r) => r.id,
     enableRowSelection: true,
-    defaultColumnPinning: { left: ['name'], right: ['amount', 'actions'] },
+    // Pinning declared on the ColumnDef.pin field — `name` → left,
+    // `amount` + `actions` → right. No defaultColumnPinning needed.
     sort,
     onSortChange: setSort,
   });
