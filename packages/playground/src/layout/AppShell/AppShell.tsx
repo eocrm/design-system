@@ -32,6 +32,7 @@ import {
   Inbox,
   Square,
   Table as TableIcon,
+  ListOrdered,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
@@ -87,6 +88,7 @@ const componentGroups = [
       { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
       { to: '/components/calendar', label: 'Calendar', icon: CalendarDays, end: false },
       { to: '/components/empty-state', label: 'EmptyState', icon: Inbox, end: false },
+      { to: '/components/pagination', label: 'Pagination', icon: ListOrdered, end: false },
       { to: '/components/skeleton', label: 'Skeleton', icon: Square, end: false },
       { to: '/components/table', label: 'Table', icon: TableIcon, end: false },
     ],
