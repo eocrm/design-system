@@ -89,4 +89,41 @@ describe('getPinStyle', () => {
   it('AUTO_CELL_WIDTH is 44', () => {
     expect(AUTO_CELL_WIDTH).toBe(44);
   });
+
+  it('shifts left offset by AUTO_CELL_WIDTH when hasExpansion is true and enableRowSelection is false', () => {
+    const result = getPinStyle(
+      'name',
+      makeInstance({
+        hasExpansion: true,
+        columnPinning: { left: ['name'], right: [] },
+        leftPinOffsets: { name: 0 },
+      }),
+    );
+    expect(result.left).toBe(AUTO_CELL_WIDTH);
+  });
+
+  it('shifts left offset by 2 × AUTO_CELL_WIDTH when both selection and expansion are enabled', () => {
+    const result = getPinStyle(
+      'name',
+      makeInstance({
+        enableRowSelection: true,
+        hasExpansion: true,
+        columnPinning: { left: ['name'], right: [] },
+        leftPinOffsets: { name: 0 },
+      }),
+    );
+    expect(result.left).toBe(AUTO_CELL_WIDTH * 2);
+  });
+
+  it('does NOT shift right offset for expansion either', () => {
+    const result = getPinStyle(
+      'actions',
+      makeInstance({
+        hasExpansion: true,
+        columnPinning: { left: [], right: ['actions'] },
+        rightPinOffsets: { actions: 0 },
+      }),
+    );
+    expect(result.right).toBe(0);
+  });
 });

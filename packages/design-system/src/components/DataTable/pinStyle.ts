@@ -19,11 +19,11 @@ export interface PinStyle {
  * - Unpinned columns return an empty object (no sticky styles).
  * - Left-pinned columns return `{ position: 'sticky', left: <px>, pinSide: 'left' }`.
  *   The `left` value is the column's cumulative offset from the hook
- *   (`instance.leftPinOffsets[columnId]`), shifted by `AUTO_CELL_WIDTH` when
- *   `enableRowSelection` is true (the auto-select cell consumes the leftmost
- *   `AUTO_CELL_WIDTH` of sticky space).
+ *   (`instance.leftPinOffsets[columnId]`), shifted by one `AUTO_CELL_WIDTH`
+ *   per active auto-cell on the left: `enableRowSelection` and
+ *   `hasExpansion` each contribute when true.
  * - Right-pinned columns return `{ position: 'sticky', right: <px>, pinSide: 'right' }`.
- *   No auto-cell shift on the right (the selection cell is on the left).
+ *   No auto-cell shift on the right (selection + expand cells both live on the left).
  */
 export function getPinStyle<T>(columnId: string, instance: DataTableInstance<T>): PinStyle {
   const leftPinned = instance.columnPinning.left.includes(columnId);
@@ -31,7 +31,12 @@ export function getPinStyle<T>(columnId: string, instance: DataTableInstance<T>)
 
   if (leftPinned) {
     const offset = instance.leftPinOffsets[columnId] ?? 0;
-    const shift = instance.enableRowSelection ? AUTO_CELL_WIDTH : 0;
+    // Each auto-cell on the left contributes AUTO_CELL_WIDTH to the
+    // sticky-left offset of the first data column. In sliding order:
+    //   [ select? ][ expand? ][ left-pinned data... ]
+    const shift =
+      (instance.enableRowSelection ? AUTO_CELL_WIDTH : 0) +
+      (instance.hasExpansion ? AUTO_CELL_WIDTH : 0);
     return { position: 'sticky', left: offset + shift, pinSide: 'left' };
   }
   if (rightPinned) {
