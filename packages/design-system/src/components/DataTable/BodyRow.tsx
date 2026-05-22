@@ -65,9 +65,7 @@ export function BodyRow<T>({ row, instance, isPinnedRow }: BodyRowProps<T>) {
 
   // colSpan for the detail row: data columns + auto-cells (select, expand).
   const detailColSpan =
-    renderColumns.length +
-    (instance.enableRowSelection ? 1 : 0) +
-    (instance.hasExpansion ? 1 : 0);
+    renderColumns.length + (instance.enableRowSelection ? 1 : 0) + (instance.hasExpansion ? 1 : 0);
 
   return (
     <Fragment>
@@ -76,7 +74,10 @@ export function BodyRow<T>({ row, instance, isPinnedRow }: BodyRowProps<T>) {
         onClick={instance.onRowClick ? onRowClick : undefined}
         onKeyDown={instance.onRowClick ? onRowKeyDown : undefined}
         tabIndex={instance.onRowClick ? 0 : undefined}
-        className={clsx(instance.onRowClick && styles.clickableRow, isPinnedRow && styles.pinnedRow)}
+        className={clsx(
+          instance.onRowClick && styles.clickableRow,
+          isPinnedRow && styles.pinnedRow,
+        )}
       >
         {instance.enableRowSelection && (
           <Table.Cell

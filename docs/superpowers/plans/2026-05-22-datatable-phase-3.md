@@ -55,6 +55,7 @@ No new files. Phase 3 is small — everything fits in existing surfaces.
 Currently `getPinStyle` shifts left-pinned column offsets by `AUTO_CELL_WIDTH` when `enableRowSelection`. With Phase 3, the expand auto-cell also occupies leftmost sticky space. Update to add both shifts.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/pinStyle.ts`
 - Modify: `packages/design-system/src/components/DataTable/pinStyle.test.ts`
 
@@ -68,6 +69,7 @@ git log --oneline -3
 ```
 
 Expected:
+
 - Branch: `feat/datatable-expansion`
 - Working tree clean
 - Most recent commit: the Phase 3 plan commit (this file), preceded by `4e1b19e DataTable Phase 2: column + row pinning rendering (#38)`
@@ -77,42 +79,42 @@ Expected:
 Find the closing `})` of the `describe('getPinStyle', () => { ... })` block. Insert these tests right before it:
 
 ```ts
-  it('shifts left offset by AUTO_CELL_WIDTH when hasExpansion is true and enableRowSelection is false', () => {
-    const result = getPinStyle(
-      'name',
-      makeInstance({
-        hasExpansion: true,
-        columnPinning: { left: ['name'], right: [] },
-        leftPinOffsets: { name: 0 },
-      }),
-    );
-    expect(result.left).toBe(AUTO_CELL_WIDTH);
-  });
+it('shifts left offset by AUTO_CELL_WIDTH when hasExpansion is true and enableRowSelection is false', () => {
+  const result = getPinStyle(
+    'name',
+    makeInstance({
+      hasExpansion: true,
+      columnPinning: { left: ['name'], right: [] },
+      leftPinOffsets: { name: 0 },
+    }),
+  );
+  expect(result.left).toBe(AUTO_CELL_WIDTH);
+});
 
-  it('shifts left offset by 2 × AUTO_CELL_WIDTH when both selection and expansion are enabled', () => {
-    const result = getPinStyle(
-      'name',
-      makeInstance({
-        enableRowSelection: true,
-        hasExpansion: true,
-        columnPinning: { left: ['name'], right: [] },
-        leftPinOffsets: { name: 0 },
-      }),
-    );
-    expect(result.left).toBe(AUTO_CELL_WIDTH * 2);
-  });
+it('shifts left offset by 2 × AUTO_CELL_WIDTH when both selection and expansion are enabled', () => {
+  const result = getPinStyle(
+    'name',
+    makeInstance({
+      enableRowSelection: true,
+      hasExpansion: true,
+      columnPinning: { left: ['name'], right: [] },
+      leftPinOffsets: { name: 0 },
+    }),
+  );
+  expect(result.left).toBe(AUTO_CELL_WIDTH * 2);
+});
 
-  it('does NOT shift right offset for expansion either', () => {
-    const result = getPinStyle(
-      'actions',
-      makeInstance({
-        hasExpansion: true,
-        columnPinning: { left: [], right: ['actions'] },
-        rightPinOffsets: { actions: 0 },
-      }),
-    );
-    expect(result.right).toBe(0);
-  });
+it('does NOT shift right offset for expansion either', () => {
+  const result = getPinStyle(
+    'actions',
+    makeInstance({
+      hasExpansion: true,
+      columnPinning: { left: [], right: ['actions'] },
+      rightPinOffsets: { actions: 0 },
+    }),
+  );
+  expect(result.right).toBe(0);
+});
 ```
 
 The `makeInstance` helper at the top of the test file already accepts a `Partial<DataTableInstance<unknown>>`; `hasExpansion` and `enableRowSelection` are both fields on the resolved instance, so the spread works without changes.
@@ -130,26 +132,26 @@ Expected: the 2 new shift tests fail (the implementation still ignores `hasExpan
 In `packages/design-system/src/components/DataTable/pinStyle.ts`, find the function body. Replace this block:
 
 ```ts
-  if (leftPinned) {
-    const offset = instance.leftPinOffsets[columnId] ?? 0;
-    const shift = instance.enableRowSelection ? AUTO_CELL_WIDTH : 0;
-    return { position: 'sticky', left: offset + shift, pinSide: 'left' };
-  }
+if (leftPinned) {
+  const offset = instance.leftPinOffsets[columnId] ?? 0;
+  const shift = instance.enableRowSelection ? AUTO_CELL_WIDTH : 0;
+  return { position: 'sticky', left: offset + shift, pinSide: 'left' };
+}
 ```
 
 With:
 
 ```ts
-  if (leftPinned) {
-    const offset = instance.leftPinOffsets[columnId] ?? 0;
-    // Each auto-cell on the left contributes AUTO_CELL_WIDTH to the
-    // sticky-left offset of the first data column. In sliding order:
-    //   [ select? ][ expand? ][ left-pinned data... ]
-    const shift =
-      (instance.enableRowSelection ? AUTO_CELL_WIDTH : 0) +
-      (instance.hasExpansion ? AUTO_CELL_WIDTH : 0);
-    return { position: 'sticky', left: offset + shift, pinSide: 'left' };
-  }
+if (leftPinned) {
+  const offset = instance.leftPinOffsets[columnId] ?? 0;
+  // Each auto-cell on the left contributes AUTO_CELL_WIDTH to the
+  // sticky-left offset of the first data column. In sliding order:
+  //   [ select? ][ expand? ][ left-pinned data... ]
+  const shift =
+    (instance.enableRowSelection ? AUTO_CELL_WIDTH : 0) +
+    (instance.hasExpansion ? AUTO_CELL_WIDTH : 0);
+  return { position: 'sticky', left: offset + shift, pinSide: 'left' };
+}
 ```
 
 Update the JSDoc comment immediately above the function — the existing comment mentions only `enableRowSelection`. Replace:
@@ -209,6 +211,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 2 — SCSS classes for expand button + detail row
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/DataTable.module.scss`
 
 - [ ] **Step 1: Append the new rules at the end of `DataTable.module.scss`**
@@ -266,6 +269,7 @@ Open `packages/design-system/src/components/DataTable/DataTable.module.scss`. Af
 ```
 
 **Notes:**
+
 - `--color-fg-muted`, `--color-bg-muted`, `--color-fg`, `--radius-sm`, `--transition-fast` all exist from Phase 1/2.
 - `--color-table-row-bg-striped` exists in `tokens.scss` (used by Table primitive's striped variant).
 - `--space-3` / `--space-4` exist (used elsewhere in DataTable.module.scss).
@@ -296,6 +300,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 Write the integration tests up front so they drive the implementation. They live in `DataTable.test.tsx`.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/DataTable.test.tsx`
 
 - [ ] **Step 1: Append Phase 3 tests inside the `describe('<DataTable>', () => { ... })` block**
@@ -303,140 +308,140 @@ Write the integration tests up front so they drive the implementation. They live
 Find the existing Phase 2 section (a comment line like `// ─── Phase 2: pinning rendering ──────`). After the last `it()` in that section, add:
 
 ```tsx
-  // ─── Phase 3: expandable rows ──────────────────────────────────────────
+// ─── Phase 3: expandable rows ──────────────────────────────────────────
 
-  it('renders expand auto-column when renderExpandedRow is provided', () => {
-    function ExpandableHarness() {
-      const instance = useDataTable<Row>({
-        data: rows,
-        columns: cols,
-        getRowId,
-        renderExpandedRow: (r) => <div>Detail of {r.name}</div>,
-      });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    const { container } = render(<ExpandableHarness />);
-    // Each body row should have an expand button (per-row aria-expanded toggle).
-    const expandButtons = container.querySelectorAll('button[aria-expanded]');
-    expect(expandButtons.length).toBe(rows.length);
-  });
+it('renders expand auto-column when renderExpandedRow is provided', () => {
+  function ExpandableHarness() {
+    const instance = useDataTable<Row>({
+      data: rows,
+      columns: cols,
+      getRowId,
+      renderExpandedRow: (r) => <div>Detail of {r.name}</div>,
+    });
+    return <DataTable instance={instance} aria-label="t" />;
+  }
+  const { container } = render(<ExpandableHarness />);
+  // Each body row should have an expand button (per-row aria-expanded toggle).
+  const expandButtons = container.querySelectorAll('button[aria-expanded]');
+  expect(expandButtons.length).toBe(rows.length);
+});
 
-  it('does NOT render expand auto-column when renderExpandedRow is omitted', () => {
-    const { container } = render(<Harness />);
-    expect(container.querySelectorAll('button[aria-expanded]').length).toBe(0);
-  });
+it('does NOT render expand auto-column when renderExpandedRow is omitted', () => {
+  const { container } = render(<Harness />);
+  expect(container.querySelectorAll('button[aria-expanded]').length).toBe(0);
+});
 
-  it('clicking the expand chevron toggles expandedRows', async () => {
-    const onChange = vi.fn();
-    function ExpandableHarness() {
-      const instance = useDataTable<Row>({
-        data: rows,
-        columns: cols,
-        getRowId,
-        renderExpandedRow: (r) => <div>Detail of {r.name}</div>,
-        defaultExpandedRows: {},
-        onExpandedRowsChange: onChange,
-      });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    const user = userEvent.setup();
-    render(<ExpandableHarness />);
-    const firstChevron = screen.getAllByRole('button', { name: /expand row/i })[0]!;
-    await user.click(firstChevron);
-    expect(onChange).toHaveBeenLastCalledWith({ r1: true });
-  });
+it('clicking the expand chevron toggles expandedRows', async () => {
+  const onChange = vi.fn();
+  function ExpandableHarness() {
+    const instance = useDataTable<Row>({
+      data: rows,
+      columns: cols,
+      getRowId,
+      renderExpandedRow: (r) => <div>Detail of {r.name}</div>,
+      defaultExpandedRows: {},
+      onExpandedRowsChange: onChange,
+    });
+    return <DataTable instance={instance} aria-label="t" />;
+  }
+  const user = userEvent.setup();
+  render(<ExpandableHarness />);
+  const firstChevron = screen.getAllByRole('button', { name: /expand row/i })[0]!;
+  await user.click(firstChevron);
+  expect(onChange).toHaveBeenLastCalledWith({ r1: true });
+});
 
-  it('renders the detail row beneath an expanded row with correct colSpan + aria', () => {
-    function ExpandableHarness() {
-      const instance = useDataTable<Row>({
-        data: rows,
-        columns: cols,
-        getRowId,
-        renderExpandedRow: (r) => <div data-testid="detail-content">Detail of {r.name}</div>,
-        defaultExpandedRows: { r1: true },
-      });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    render(<ExpandableHarness />);
-    // Detail content present
-    expect(screen.getByTestId('detail-content')).toHaveTextContent('Detail of Alpha');
-    // The detail cell spans all columns: 2 data columns + 1 expand auto-cell = 3
-    const detailCell = screen.getByTestId('detail-content').closest('td');
-    expect(detailCell).not.toBeNull();
-    expect(Number(detailCell!.getAttribute('colspan'))).toBe(3);
-  });
+it('renders the detail row beneath an expanded row with correct colSpan + aria', () => {
+  function ExpandableHarness() {
+    const instance = useDataTable<Row>({
+      data: rows,
+      columns: cols,
+      getRowId,
+      renderExpandedRow: (r) => <div data-testid="detail-content">Detail of {r.name}</div>,
+      defaultExpandedRows: { r1: true },
+    });
+    return <DataTable instance={instance} aria-label="t" />;
+  }
+  render(<ExpandableHarness />);
+  // Detail content present
+  expect(screen.getByTestId('detail-content')).toHaveTextContent('Detail of Alpha');
+  // The detail cell spans all columns: 2 data columns + 1 expand auto-cell = 3
+  const detailCell = screen.getByTestId('detail-content').closest('td');
+  expect(detailCell).not.toBeNull();
+  expect(Number(detailCell!.getAttribute('colspan'))).toBe(3);
+});
 
-  it('expand button has aria-expanded reflecting the row state', () => {
-    function ExpandableHarness() {
-      const instance = useDataTable<Row>({
-        data: rows,
-        columns: cols,
-        getRowId,
-        renderExpandedRow: () => null,
-        defaultExpandedRows: { r1: true },
-      });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    render(<ExpandableHarness />);
-    const buttons = screen.getAllByRole('button', { name: /expand row/i });
-    expect(buttons[0]).toHaveAttribute('aria-expanded', 'true');
-    expect(buttons[1]).toHaveAttribute('aria-expanded', 'false');
-  });
+it('expand button has aria-expanded reflecting the row state', () => {
+  function ExpandableHarness() {
+    const instance = useDataTable<Row>({
+      data: rows,
+      columns: cols,
+      getRowId,
+      renderExpandedRow: () => null,
+      defaultExpandedRows: { r1: true },
+    });
+    return <DataTable instance={instance} aria-label="t" />;
+  }
+  render(<ExpandableHarness />);
+  const buttons = screen.getAllByRole('button', { name: /expand row/i });
+  expect(buttons[0]).toHaveAttribute('aria-expanded', 'true');
+  expect(buttons[1]).toHaveAttribute('aria-expanded', 'false');
+});
 
-  it('expand button aria-controls points to the detail row id', () => {
-    function ExpandableHarness() {
-      const instance = useDataTable<Row>({
-        data: rows,
-        columns: cols,
-        getRowId,
-        renderExpandedRow: () => <div>x</div>,
-        defaultExpandedRows: { r1: true },
-      });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    const { container } = render(<ExpandableHarness />);
-    const firstButton = screen.getAllByRole('button', { name: /expand row/i })[0]!;
-    const controlsId = firstButton.getAttribute('aria-controls');
-    expect(controlsId).toBeTruthy();
-    expect(container.querySelector(`#${controlsId}`)).not.toBeNull();
-  });
+it('expand button aria-controls points to the detail row id', () => {
+  function ExpandableHarness() {
+    const instance = useDataTable<Row>({
+      data: rows,
+      columns: cols,
+      getRowId,
+      renderExpandedRow: () => <div>x</div>,
+      defaultExpandedRows: { r1: true },
+    });
+    return <DataTable instance={instance} aria-label="t" />;
+  }
+  const { container } = render(<ExpandableHarness />);
+  const firstButton = screen.getAllByRole('button', { name: /expand row/i })[0]!;
+  const controlsId = firstButton.getAttribute('aria-controls');
+  expect(controlsId).toBeTruthy();
+  expect(container.querySelector(`#${controlsId}`)).not.toBeNull();
+});
 
-  it('clicking the expand button does NOT fire onRowClick', async () => {
-    const onRowClick = vi.fn();
-    function ExpandableHarness() {
-      const instance = useDataTable<Row>({
-        data: rows,
-        columns: cols,
-        getRowId,
-        renderExpandedRow: () => <div>x</div>,
-        onRowClick,
-      });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    const user = userEvent.setup();
-    render(<ExpandableHarness />);
-    const firstChevron = screen.getAllByRole('button', { name: /expand row/i })[0]!;
-    await user.click(firstChevron);
-    expect(onRowClick).not.toHaveBeenCalled();
-  });
+it('clicking the expand button does NOT fire onRowClick', async () => {
+  const onRowClick = vi.fn();
+  function ExpandableHarness() {
+    const instance = useDataTable<Row>({
+      data: rows,
+      columns: cols,
+      getRowId,
+      renderExpandedRow: () => <div>x</div>,
+      onRowClick,
+    });
+    return <DataTable instance={instance} aria-label="t" />;
+  }
+  const user = userEvent.setup();
+  render(<ExpandableHarness />);
+  const firstChevron = screen.getAllByRole('button', { name: /expand row/i })[0]!;
+  await user.click(firstChevron);
+  expect(onRowClick).not.toHaveBeenCalled();
+});
 
-  it('shifts left-pin offsets by 2 × AUTO_CELL_WIDTH when both selection and expansion are active', () => {
-    function BothHarness() {
-      const instance = useDataTable<Row>({
-        data: rows,
-        columns: cols,
-        getRowId,
-        enableRowSelection: true,
-        renderExpandedRow: () => null,
-        defaultColumnPinning: { left: ['name'], right: [] },
-      });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    render(<BothHarness />);
-    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
-    // 44px (select) + 44px (expand) = 88px
-    expect(nameHeader).toHaveStyle({ left: '88px' });
-  });
+it('shifts left-pin offsets by 2 × AUTO_CELL_WIDTH when both selection and expansion are active', () => {
+  function BothHarness() {
+    const instance = useDataTable<Row>({
+      data: rows,
+      columns: cols,
+      getRowId,
+      enableRowSelection: true,
+      renderExpandedRow: () => null,
+      defaultColumnPinning: { left: ['name'], right: [] },
+    });
+    return <DataTable instance={instance} aria-label="t" />;
+  }
+  render(<BothHarness />);
+  const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+  // 44px (select) + 44px (expand) = 88px
+  expect(nameHeader).toHaveStyle({ left: '88px' });
+});
 ```
 
 - [ ] **Step 2: Run — expect failures**
@@ -456,6 +461,7 @@ Expected: the 8 new tests fail. The implementation will land in Task 4.
 This task bundles the changes to `BodyRow.tsx` and `DataTable.tsx` that make the Task 3 tests pass.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/BodyRow.tsx`
 - Modify: `packages/design-system/src/components/DataTable/DataTable.tsx`
 
@@ -531,9 +537,7 @@ export function BodyRow<T>({ row, instance, isPinnedRow }: BodyRowProps<T>) {
 
   // colSpan for the detail row: data columns + auto-cells (select, expand).
   const detailColSpan =
-    renderColumns.length +
-    (instance.enableRowSelection ? 1 : 0) +
-    (instance.hasExpansion ? 1 : 0);
+    renderColumns.length + (instance.enableRowSelection ? 1 : 0) + (instance.hasExpansion ? 1 : 0);
 
   return (
     <Fragment>
@@ -542,7 +546,10 @@ export function BodyRow<T>({ row, instance, isPinnedRow }: BodyRowProps<T>) {
         onClick={instance.onRowClick ? onRowClick : undefined}
         onKeyDown={instance.onRowClick ? onRowKeyDown : undefined}
         tabIndex={instance.onRowClick ? 0 : undefined}
-        className={clsx(instance.onRowClick && styles.clickableRow, isPinnedRow && styles.pinnedRow)}
+        className={clsx(
+          instance.onRowClick && styles.clickableRow,
+          isPinnedRow && styles.pinnedRow,
+        )}
       >
         {instance.enableRowSelection && (
           <Table.Cell
@@ -617,6 +624,7 @@ export function BodyRow<T>({ row, instance, isPinnedRow }: BodyRowProps<T>) {
 ```
 
 **Key changes from Phase 2:**
+
 - Imports `Fragment`, `ChevronDown`, `ChevronRight`.
 - Reads `expanded = instance.expandedRows[rowId] === true`.
 - Computes `detailRowId = \`${rowId}-detail\``.
@@ -777,6 +785,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 5 — Playground demo: ExpansionExample
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/DataTableDemo.tsx`
 
 - [ ] **Step 1: Add an `ExpansionExample` component**
@@ -784,7 +793,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 Open `packages/playground/src/pages/components/DataTableDemo.tsx`. Find the `DataTableDemo` function's JSX (the list of `<Example />` calls inside `<DemoLayout>`). After `<EmptyExample />`, add:
 
 ```tsx
-      <ExpansionExample />
+<ExpansionExample />
 ```
 
 Then add the function near the bottom of the file (alongside the other example functions):
@@ -806,8 +815,8 @@ function ExpansionExample() {
         </p>
         <p style={{ margin: 0 }}>
           Full deal value: ${row.amount.toLocaleString()}. The detail panel is your
-          consumer-rendered JSX — drop in whatever you need: forms, tabs, charts,
-          notes, related-records lists.
+          consumer-rendered JSX — drop in whatever you need: forms, tabs, charts, notes,
+          related-records lists.
         </p>
       </Stack>
     ),
@@ -882,6 +891,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 6 — AGENTS.md update
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 
 - [ ] **Step 1: Flip the "Phase 3 lands later" note**
@@ -1072,6 +1082,7 @@ gh pr view --json url --jq .url
 ## Plan complete
 
 After Task 8, DataTable Phase 3 ships and the feature is complete end-to-end:
+
 - Column ordering / sizing / visibility / pinning
 - Row selection, row pinning, row click, row expansion
 - Sticky header, sticky-left auto-columns, sticky-pinned columns

@@ -237,7 +237,10 @@ function DataTableInner<T>(
                   align="center"
                   scope="col"
                   className={clsx(styles.autoCell, styles.autoCellStickyHeader)}
-                  style={{ position: 'sticky', left: instance.enableRowSelection ? AUTO_CELL_WIDTH : 0 }}
+                  style={{
+                    position: 'sticky',
+                    left: instance.enableRowSelection ? AUTO_CELL_WIDTH : 0,
+                  }}
                   // Empty header — the expand column has no per-column action.
                   aria-label="Row expansion"
                 />

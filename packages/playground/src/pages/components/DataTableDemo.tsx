@@ -416,8 +416,8 @@ function ExpansionExample() {
         </p>
         <p style={{ margin: 0 }}>
           Full deal value: ${row.amount.toLocaleString()}. The detail panel is your
-          consumer-rendered JSX — drop in whatever you need: forms, tabs, charts,
-          notes, related-records lists.
+          consumer-rendered JSX — drop in whatever you need: forms, tabs, charts, notes,
+          related-records lists.
         </p>
       </Stack>
     ),
