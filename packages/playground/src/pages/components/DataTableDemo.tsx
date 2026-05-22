@@ -23,25 +23,41 @@ type Deal = {
 };
 
 const deals: Deal[] = [
-  { id: 'd1', name: 'Acme renewal',       stage: 'Negotiation', amount: 12000, owner: 'Sara' },
-  { id: 'd2', name: 'Globex expansion',   stage: 'Lead',        amount: 4500,  owner: 'Marcus' },
-  { id: 'd3', name: 'Initech onboarding', stage: 'Won',         amount: 8800,  owner: 'Sara' },
-  { id: 'd4', name: 'Hooli pilot',        stage: 'Lost',        amount: 0,     owner: 'Jin' },
+  { id: 'd1', name: 'Acme renewal', stage: 'Negotiation', amount: 12000, owner: 'Sara' },
+  { id: 'd2', name: 'Globex expansion', stage: 'Lead', amount: 4500, owner: 'Marcus' },
+  { id: 'd3', name: 'Initech onboarding', stage: 'Won', amount: 8800, owner: 'Sara' },
+  { id: 'd4', name: 'Hooli pilot', stage: 'Lost', amount: 0, owner: 'Jin' },
 ];
 
 const dealColumns: ColumnDef<Deal>[] = [
-  { id: 'name',   header: 'Deal',   cell: (r) => r.name,                                                         sortable: true, size: 200 },
-  { id: 'stage',  header: 'Stage',  cell: (r) => <Badge tone={stageTone(r.stage)}>{r.stage}</Badge>,              size: 140 },
-  { id: 'amount', header: 'Amount', cell: (r) => `$${r.amount.toLocaleString()}`, align: 'end', sortable: true,   size: 120 },
-  { id: 'owner',  header: 'Owner',  cell: (r) => r.owner,                                                         size: 120 },
+  { id: 'name', header: 'Deal', cell: (r) => r.name, sortable: true, size: 200 },
+  {
+    id: 'stage',
+    header: 'Stage',
+    cell: (r) => <Badge tone={stageTone(r.stage)}>{r.stage}</Badge>,
+    size: 140,
+  },
+  {
+    id: 'amount',
+    header: 'Amount',
+    cell: (r) => `$${r.amount.toLocaleString()}`,
+    align: 'end',
+    sortable: true,
+    size: 120,
+  },
+  { id: 'owner', header: 'Owner', cell: (r) => r.owner, size: 120 },
 ];
 
 function stageTone(stage: Deal['stage']) {
   switch (stage) {
-    case 'Won':         return 'success' as const;
-    case 'Lost':        return 'danger' as const;
-    case 'Negotiation': return 'warning' as const;
-    default:            return 'info' as const;
+    case 'Won':
+      return 'success' as const;
+    case 'Lost':
+      return 'danger' as const;
+    case 'Negotiation':
+      return 'warning' as const;
+    default:
+      return 'info' as const;
   }
 }
 

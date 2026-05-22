@@ -1,6 +1,13 @@
 import { type KeyboardEvent } from 'react';
 import clsx from 'clsx';
-import { GripVertical, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Table } from '../Table';
@@ -35,11 +42,7 @@ const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none
 export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   const sortable = column.sortable === true;
   const sortDir: TableSortDirection | undefined =
-    instance.sort?.columnId === column.id
-      ? instance.sort.direction
-      : sortable
-        ? 'none'
-        : undefined;
+    instance.sort?.columnId === column.id ? instance.sort.direction : sortable ? 'none' : undefined;
 
   // Derive the visual sort icon to render in our own .inner layout (approach
   // a): we do NOT pass sortDirection to Table.HeaderCell (to suppress its
@@ -87,9 +90,7 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   };
 
   const headerContent =
-    typeof column.header === 'function'
-      ? column.header({ column, instance })
-      : column.header;
+    typeof column.header === 'function' ? column.header({ column, instance }) : column.header;
 
   const dragStyle = {
     transform: CSS.Transform.toString(transform),

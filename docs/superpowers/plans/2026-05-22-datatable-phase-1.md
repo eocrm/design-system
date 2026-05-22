@@ -60,6 +60,7 @@ packages/playground/src/pages/components/ComponentsIndex.tsx ← MODIFIED: grid 
 ## Task 1 — Install dnd-kit dependencies
 
 **Files:**
+
 - Modify: `packages/design-system/package.json`
 
 - [ ] **Step 1: Verify clean working tree on `feat/datatable`**
@@ -108,6 +109,7 @@ EOF
 ## Task 2 — Create folder + types.ts
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/types.ts`
 - Create: `packages/design-system/src/components/DataTable/index.ts` (placeholder, will be populated)
 
@@ -343,6 +345,7 @@ EOF
 A tiny local utility that resolves the Radix `value`/`defaultValue`/`onChange` pattern. Used by `useDataTable` for every state piece.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/useControllableState.ts`
 - Test: `packages/design-system/src/components/DataTable/useControllableState.test.ts`
 
@@ -361,17 +364,13 @@ describe('useControllableState', () => {
   });
 
   it('uses value when controlled (ignores default)', () => {
-    const { result } = renderHook(() =>
-      useControllableState({ value: 10, defaultValue: 5 }),
-    );
+    const { result } = renderHook(() => useControllableState({ value: 10, defaultValue: 5 }));
     expect(result.current[0]).toBe(10);
   });
 
   it('updates internal state when uncontrolled', () => {
     const onChange = vi.fn();
-    const { result } = renderHook(() =>
-      useControllableState({ defaultValue: 0, onChange }),
-    );
+    const { result } = renderHook(() => useControllableState({ defaultValue: 0, onChange }));
     act(() => result.current[1](42));
     expect(result.current[0]).toBe(42);
     expect(onChange).toHaveBeenCalledWith(42);
@@ -400,9 +399,7 @@ describe('useControllableState', () => {
 
   it('updater function receives current value when controlled', () => {
     const onChange = vi.fn();
-    const { result } = renderHook(() =>
-      useControllableState({ value: 10, onChange }),
-    );
+    const { result } = renderHook(() => useControllableState({ value: 10, onChange }));
     act(() => result.current[1]((prev) => prev + 5));
     expect(onChange).toHaveBeenCalledWith(15);
   });
@@ -461,8 +458,7 @@ export function useControllableState<T>(options: {
   const setValue = useCallback(
     (updater: Updater<T>) => {
       const prev = resolvedRef.current;
-      const next =
-        typeof updater === 'function' ? (updater as (p: T) => T)(prev) : updater;
+      const next = typeof updater === 'function' ? (updater as (p: T) => T)(prev) : updater;
       if (!isControlled) setInternal(next);
       onChangeRef.current?.(next);
     },
@@ -501,6 +497,7 @@ EOF
 Build the hook in slices. This first slice: state plumbing for every piece, no derived view-models yet, no helper methods yet.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/useDataTable.ts`
 - Test: `packages/design-system/src/components/DataTable/useDataTable.test.ts`
 
@@ -529,9 +526,7 @@ const getRowId = (r: Row) => r.id;
 
 describe('useDataTable — state resolution', () => {
   it('echoes data, columns, getRowId', () => {
-    const { result } = renderHook(() =>
-      useDataTable({ data: rows, columns: cols, getRowId }),
-    );
+    const { result } = renderHook(() => useDataTable({ data: rows, columns: cols, getRowId }));
     expect(result.current.data).toBe(rows);
     expect(result.current.columns).toBe(cols);
     expect(result.current.getRowId).toBe(getRowId);
@@ -539,9 +534,7 @@ describe('useDataTable — state resolution', () => {
   });
 
   it('defaults enableRowSelection to false and hasExpansion to false', () => {
-    const { result } = renderHook(() =>
-      useDataTable({ data: rows, columns: cols, getRowId }),
-    );
+    const { result } = renderHook(() => useDataTable({ data: rows, columns: cols, getRowId }));
     expect(result.current.enableRowSelection).toBe(false);
     expect(result.current.hasExpansion).toBe(false);
   });
@@ -571,9 +564,7 @@ describe('useDataTable — state resolution', () => {
   });
 
   it('falls back to columns order when no default given', () => {
-    const { result } = renderHook(() =>
-      useDataTable({ data: rows, columns: cols, getRowId }),
-    );
+    const { result } = renderHook(() => useDataTable({ data: rows, columns: cols, getRowId }));
     expect(result.current.columnOrder).toEqual(['name', 'amount']);
   });
 
@@ -594,9 +585,7 @@ describe('useDataTable — state resolution', () => {
   });
 
   it('initialises all other state pieces with sensible defaults', () => {
-    const { result } = renderHook(() =>
-      useDataTable({ data: rows, columns: cols, getRowId }),
-    );
+    const { result } = renderHook(() => useDataTable({ data: rows, columns: cols, getRowId }));
     expect(result.current.columnSizing).toEqual({});
     expect(result.current.columnVisibility).toEqual({});
     expect(result.current.columnPinning).toEqual({ left: [], right: [] });
@@ -795,6 +784,7 @@ EOF
 Replace the stubs in `useDataTable` with memoized derivations.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/useDataTable.ts`
 - Modify: `packages/design-system/src/components/DataTable/useDataTable.test.ts`
 
@@ -913,82 +903,82 @@ Expected: the 6 new tests fail (stubs return empty).
 In `packages/design-system/src/components/DataTable/useDataTable.ts`, replace the section starting with `// Derived view-models and helper methods land in subsequent tasks.` through the end of the stubs (just before `const noop = () => {};`) with:
 
 ```ts
-  const DEFAULT_COL_WIDTH = 120;
+const DEFAULT_COL_WIDTH = 120;
 
-  const columnsById = useMemo(() => {
-    const m = new Map<string, (typeof columns)[number]>();
-    for (const c of columns) m.set(c.id, c);
-    return m;
-  }, [columns]);
+const columnsById = useMemo(() => {
+  const m = new Map<string, (typeof columns)[number]>();
+  for (const c of columns) m.set(c.id, c);
+  return m;
+}, [columns]);
 
-  // columnSizesPx: id → resolved width (sizing state > ColumnDef.size > default)
-  const columnSizesPx = useMemo<Record<string, number>>(() => {
-    const out: Record<string, number> = {};
-    for (const c of columns) {
-      out[c.id] = columnSizing[c.id] ?? c.size ?? DEFAULT_COL_WIDTH;
-    }
-    return out;
-  }, [columns, columnSizing]);
+// columnSizesPx: id → resolved width (sizing state > ColumnDef.size > default)
+const columnSizesPx = useMemo<Record<string, number>>(() => {
+  const out: Record<string, number> = {};
+  for (const c of columns) {
+    out[c.id] = columnSizing[c.id] ?? c.size ?? DEFAULT_COL_WIDTH;
+  }
+  return out;
+}, [columns, columnSizing]);
 
-  // visibleColumns: ordered (per columnOrder) and filtered (visibility !== false)
-  const visibleColumns = useMemo(() => {
-    const isVisible = (id: string) => columnVisibility[id] !== false;
-    const ordered: typeof columns = [];
-    for (const id of columnOrder) {
-      const col = columnsById.get(id);
-      if (col && isVisible(id)) ordered.push(col);
-    }
-    // Any column not in columnOrder (e.g. added after init) goes to the end.
-    for (const c of columns) {
-      if (!columnOrder.includes(c.id) && isVisible(c.id)) ordered.push(c);
-    }
-    return ordered;
-  }, [columns, columnsById, columnOrder, columnVisibility]);
+// visibleColumns: ordered (per columnOrder) and filtered (visibility !== false)
+const visibleColumns = useMemo(() => {
+  const isVisible = (id: string) => columnVisibility[id] !== false;
+  const ordered: typeof columns = [];
+  for (const id of columnOrder) {
+    const col = columnsById.get(id);
+    if (col && isVisible(id)) ordered.push(col);
+  }
+  // Any column not in columnOrder (e.g. added after init) goes to the end.
+  for (const c of columns) {
+    if (!columnOrder.includes(c.id) && isVisible(c.id)) ordered.push(c);
+  }
+  return ordered;
+}, [columns, columnsById, columnOrder, columnVisibility]);
 
-  // Pin grouping. Pinning order within a side is given by columnPinning.left/right.
-  const leftPinnedColumns = useMemo(
-    () =>
-      columnPinning.left
-        .map((id) => columnsById.get(id))
-        .filter((c): c is (typeof columns)[number] => !!c && columnVisibility[c.id] !== false),
-    [columnPinning.left, columnsById, columnVisibility],
-  );
+// Pin grouping. Pinning order within a side is given by columnPinning.left/right.
+const leftPinnedColumns = useMemo(
+  () =>
+    columnPinning.left
+      .map((id) => columnsById.get(id))
+      .filter((c): c is (typeof columns)[number] => !!c && columnVisibility[c.id] !== false),
+  [columnPinning.left, columnsById, columnVisibility],
+);
 
-  const rightPinnedColumns = useMemo(
-    () =>
-      columnPinning.right
-        .map((id) => columnsById.get(id))
-        .filter((c): c is (typeof columns)[number] => !!c && columnVisibility[c.id] !== false),
-    [columnPinning.right, columnsById, columnVisibility],
-  );
+const rightPinnedColumns = useMemo(
+  () =>
+    columnPinning.right
+      .map((id) => columnsById.get(id))
+      .filter((c): c is (typeof columns)[number] => !!c && columnVisibility[c.id] !== false),
+  [columnPinning.right, columnsById, columnVisibility],
+);
 
-  const unpinnedColumns = useMemo(() => {
-    const pinned = new Set([...columnPinning.left, ...columnPinning.right]);
-    return visibleColumns.filter((c) => !pinned.has(c.id));
-  }, [visibleColumns, columnPinning.left, columnPinning.right]);
+const unpinnedColumns = useMemo(() => {
+  const pinned = new Set([...columnPinning.left, ...columnPinning.right]);
+  return visibleColumns.filter((c) => !pinned.has(c.id));
+}, [visibleColumns, columnPinning.left, columnPinning.right]);
 
-  // Pin offsets — cumulative widths from the pinned edge inward.
-  const leftPinOffsets = useMemo<Record<string, number>>(() => {
-    const out: Record<string, number> = {};
-    let acc = 0;
-    for (const col of leftPinnedColumns) {
-      out[col.id] = acc;
-      acc += columnSizesPx[col.id] ?? DEFAULT_COL_WIDTH;
-    }
-    return out;
-  }, [leftPinnedColumns, columnSizesPx]);
+// Pin offsets — cumulative widths from the pinned edge inward.
+const leftPinOffsets = useMemo<Record<string, number>>(() => {
+  const out: Record<string, number> = {};
+  let acc = 0;
+  for (const col of leftPinnedColumns) {
+    out[col.id] = acc;
+    acc += columnSizesPx[col.id] ?? DEFAULT_COL_WIDTH;
+  }
+  return out;
+}, [leftPinnedColumns, columnSizesPx]);
 
-  const rightPinOffsets = useMemo<Record<string, number>>(() => {
-    const out: Record<string, number> = {};
-    let acc = 0;
-    // Rightmost pinned column has offset 0; walk right-to-left accumulating.
-    for (let i = rightPinnedColumns.length - 1; i >= 0; i--) {
-      const col = rightPinnedColumns[i]!;
-      out[col.id] = acc;
-      acc += columnSizesPx[col.id] ?? DEFAULT_COL_WIDTH;
-    }
-    return out;
-  }, [rightPinnedColumns, columnSizesPx]);
+const rightPinOffsets = useMemo<Record<string, number>>(() => {
+  const out: Record<string, number> = {};
+  let acc = 0;
+  // Rightmost pinned column has offset 0; walk right-to-left accumulating.
+  for (let i = rightPinnedColumns.length - 1; i >= 0; i--) {
+    const col = rightPinnedColumns[i]!;
+    out[col.id] = acc;
+    acc += columnSizesPx[col.id] ?? DEFAULT_COL_WIDTH;
+  }
+  return out;
+}, [rightPinnedColumns, columnSizesPx]);
 ```
 
 Then replace the corresponding stub fields in the returned object:
@@ -1033,6 +1023,7 @@ EOF
 Replace the helper-method stubs.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/useDataTable.ts`
 - Modify: `packages/design-system/src/components/DataTable/useDataTable.test.ts`
 
@@ -1229,96 +1220,96 @@ In `useDataTable.ts`, replace the helper stubs (the lines from `const noop = () 
 Add these `useCallback` definitions above the `return` statement (after the derived view-models):
 
 ```ts
-  const toggleRowSelection = useCallback(
-    (rowId: string) => {
-      setRowSelection((prev) => {
-        const next = { ...prev };
-        if (next[rowId]) delete next[rowId];
-        else next[rowId] = true;
-        return next;
-      });
-    },
-    [setRowSelection],
-  );
-
-  const toggleAllOnPage = useCallback(() => {
+const toggleRowSelection = useCallback(
+  (rowId: string) => {
     setRowSelection((prev) => {
-      const pageIds = data.map(getRowId);
-      const allSelected = pageIds.every((id) => prev[id]);
-      if (allSelected) {
-        const next = { ...prev };
-        for (const id of pageIds) delete next[id];
-        return next;
-      }
       const next = { ...prev };
-      for (const id of pageIds) next[id] = true;
+      if (next[rowId]) delete next[rowId];
+      else next[rowId] = true;
       return next;
     });
-  }, [data, getRowId, setRowSelection]);
+  },
+  [setRowSelection],
+);
 
-  const isAllOnPageSelected = useCallback(() => {
-    if (data.length === 0) return false;
-    return data.every((row) => rowSelection[getRowId(row)] === true);
-  }, [data, getRowId, rowSelection]);
-
-  const isSomeOnPageSelected = useCallback(() => {
-    if (data.length === 0) return false;
-    let some = false;
-    let all = true;
-    for (const row of data) {
-      if (rowSelection[getRowId(row)]) some = true;
-      else all = false;
+const toggleAllOnPage = useCallback(() => {
+  setRowSelection((prev) => {
+    const pageIds = data.map(getRowId);
+    const allSelected = pageIds.every((id) => prev[id]);
+    if (allSelected) {
+      const next = { ...prev };
+      for (const id of pageIds) delete next[id];
+      return next;
     }
-    return some && !all;
-  }, [data, getRowId, rowSelection]);
+    const next = { ...prev };
+    for (const id of pageIds) next[id] = true;
+    return next;
+  });
+}, [data, getRowId, setRowSelection]);
 
-  const toggleRowExpanded = useCallback(
-    (rowId: string) => {
-      setExpandedRows((prev) => {
-        const next = { ...prev };
-        if (next[rowId]) delete next[rowId];
-        else next[rowId] = true;
-        return next;
-      });
-    },
-    [setExpandedRows],
-  );
+const isAllOnPageSelected = useCallback(() => {
+  if (data.length === 0) return false;
+  return data.every((row) => rowSelection[getRowId(row)] === true);
+}, [data, getRowId, rowSelection]);
 
-  const toggleColumnVisibility = useCallback(
-    (columnId: string) => {
-      setColumnVisibility((prev) => ({
-        ...prev,
-        [columnId]: prev[columnId] === false ? true : false,
-      }));
-    },
-    [setColumnVisibility],
-  );
+const isSomeOnPageSelected = useCallback(() => {
+  if (data.length === 0) return false;
+  let some = false;
+  let all = true;
+  for (const row of data) {
+    if (rowSelection[getRowId(row)]) some = true;
+    else all = false;
+  }
+  return some && !all;
+}, [data, getRowId, rowSelection]);
 
-  const pinColumn = useCallback(
-    (columnId: string, side: 'left' | 'right' | false) => {
-      setColumnPinning((prev) => {
-        const left = prev.left.filter((id) => id !== columnId);
-        const right = prev.right.filter((id) => id !== columnId);
-        if (side === 'left') left.push(columnId);
-        else if (side === 'right') right.push(columnId);
-        return { left, right };
-      });
-    },
-    [setColumnPinning],
-  );
+const toggleRowExpanded = useCallback(
+  (rowId: string) => {
+    setExpandedRows((prev) => {
+      const next = { ...prev };
+      if (next[rowId]) delete next[rowId];
+      else next[rowId] = true;
+      return next;
+    });
+  },
+  [setExpandedRows],
+);
 
-  const toggleSort = useCallback(
-    (columnId: string) => {
-      setSort((prev) => {
-        if (!prev || prev.columnId !== columnId) {
-          return { columnId, direction: 'asc' };
-        }
-        if (prev.direction === 'asc') return { columnId, direction: 'desc' };
-        return null;
-      });
-    },
-    [setSort],
-  );
+const toggleColumnVisibility = useCallback(
+  (columnId: string) => {
+    setColumnVisibility((prev) => ({
+      ...prev,
+      [columnId]: prev[columnId] === false ? true : false,
+    }));
+  },
+  [setColumnVisibility],
+);
+
+const pinColumn = useCallback(
+  (columnId: string, side: 'left' | 'right' | false) => {
+    setColumnPinning((prev) => {
+      const left = prev.left.filter((id) => id !== columnId);
+      const right = prev.right.filter((id) => id !== columnId);
+      if (side === 'left') left.push(columnId);
+      else if (side === 'right') right.push(columnId);
+      return { left, right };
+    });
+  },
+  [setColumnPinning],
+);
+
+const toggleSort = useCallback(
+  (columnId: string) => {
+    setSort((prev) => {
+      if (!prev || prev.columnId !== columnId) {
+        return { columnId, direction: 'asc' };
+      }
+      if (prev.direction === 'asc') return { columnId, direction: 'desc' };
+      return null;
+    });
+  },
+  [setSort],
+);
 ```
 
 Also add `useCallback` to the imports at the top of the file:
@@ -1370,6 +1361,7 @@ EOF
 Pointer-based resize handle. Pure hook returning event handlers + drag state.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/useResizeHandle.ts`
 - Test: `packages/design-system/src/components/DataTable/useResizeHandle.test.ts`
 
@@ -1628,6 +1620,7 @@ EOF
 The sortable header cell. Renders the label, sort indicator, hover-revealed drag grip (with `useSortable` from dnd-kit), and resize handle.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/HeaderCell.tsx`
 - Create: `packages/design-system/src/components/DataTable/HeaderCell.module.scss`
 
@@ -1713,7 +1706,9 @@ Create `packages/design-system/src/components/DataTable/HeaderCell.module.scss`:
   width: 1px;
   height: 60%;
   background: transparent;
-  transition: background 0.1s ease, width 0.1s ease;
+  transition:
+    background 0.1s ease,
+    width 0.1s ease;
 }
 
 .resizeHandle:hover .resizeBar,
@@ -1764,11 +1759,7 @@ export interface HeaderCellProps<T> {
 export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   const sortable = column.sortable === true;
   const sortDir: TableSortDirection | undefined =
-    instance.sort?.columnId === column.id
-      ? instance.sort.direction
-      : sortable
-      ? 'none'
-      : undefined;
+    instance.sort?.columnId === column.id ? instance.sort.direction : sortable ? 'none' : undefined;
 
   // dnd-kit sortable — column is its own sortable item.
   const reorderable = column.enableReorder !== false;
@@ -1808,9 +1799,7 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   };
 
   const headerContent =
-    typeof column.header === 'function'
-      ? column.header({ column, instance })
-      : column.header;
+    typeof column.header === 'function' ? column.header({ column, instance }) : column.header;
 
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
@@ -1896,6 +1885,7 @@ EOF
 Row renderer with the optional selection auto-cell, data cells, and row-click handler.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/BodyRow.tsx`
 
 `BodyRow.tsx` uses styles from `DataTable.module.scss` (created in Task 11). For now it imports from a module that will exist.
@@ -1945,7 +1935,10 @@ export function BodyRow<T>({ row, instance }: BodyRowProps<T>) {
     if (e.key !== 'Enter') return;
     const target = e.target as HTMLElement;
     // Ignore Enter coming from an interactive child (it should drive that child).
-    if (target !== e.currentTarget && target.closest('button, input, a, [role="button"], [role="checkbox"]')) {
+    if (
+      target !== e.currentTarget &&
+      target.closest('button, input, a, [role="button"], [role="checkbox"]')
+    ) {
       return;
     }
     e.preventDefault();
@@ -1994,6 +1987,7 @@ Do not commit until `DataTable.module.scss` is in place. Stage this file but com
 Write the integration test file first (TDD), focusing on the rendering paths that exist in Phase 1.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/DataTable.test.tsx`
 
 - [ ] **Step 1: Write the failing test file**
@@ -2099,9 +2093,7 @@ describe('<DataTable>', () => {
   it('toggleRowSelection toggles a row via per-row checkbox', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Harness enableRowSelection onRowSelectionChange={onChange} defaultRowSelection={{}} />,
-    );
+    render(<Harness enableRowSelection onRowSelectionChange={onChange} defaultRowSelection={{}} />);
     const rowCheckboxes = screen.getAllByRole('checkbox', { name: /select row/i });
     expect(rowCheckboxes).toHaveLength(2);
     await user.click(rowCheckboxes[0]!);
@@ -2111,9 +2103,7 @@ describe('<DataTable>', () => {
   it('header select-all checkbox toggles all rows on page', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Harness enableRowSelection onRowSelectionChange={onChange} defaultRowSelection={{}} />,
-    );
+    render(<Harness enableRowSelection onRowSelectionChange={onChange} defaultRowSelection={{}} />);
     const headerCheckbox = screen.getAllByRole('checkbox')[0]!;
     await user.click(headerCheckbox);
     expect(onChange).toHaveBeenCalledWith({ r1: true, r2: true });
@@ -2212,6 +2202,7 @@ Expected: fails — DataTable not implemented yet.
 Implement the orchestrator component and its styles. This is the largest single task in the plan.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/DataTable.tsx`
 - Create: `packages/design-system/src/components/DataTable/DataTable.module.scss`
 
@@ -2253,12 +2244,7 @@ Create `packages/design-system/src/components/DataTable/DataTable.module.scss`:
 Create `packages/design-system/src/components/DataTable/DataTable.tsx`:
 
 ```tsx
-import {
-  forwardRef,
-  useMemo,
-  type ReactNode,
-  type Ref,
-} from 'react';
+import { forwardRef, useMemo, type ReactNode, type Ref } from 'react';
 import clsx from 'clsx';
 import {
   DndContext,
@@ -2509,6 +2495,7 @@ make test -- DataTable.test.tsx
 ```
 
 Expected: all tests in `DataTable.test.tsx` pass (~15 tests). Some specific tests may need tweaks:
+
 - If `aria-rowcount` doesn't appear when `rowCount` is undefined, that's fine (the spec uses `?` on the prop).
 - If `<Skeleton variant="text">` doesn't render with a `role`, the tbody-row-count check is the right shape.
 
@@ -2534,6 +2521,7 @@ EOF
 ## Task 12 — `ColumnVisibilityTrigger` companion
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DataTable/ColumnVisibilityTrigger.tsx`
 - Create: `packages/design-system/src/components/DataTable/ColumnVisibilityTrigger.module.scss`
 - Test: `packages/design-system/src/components/DataTable/ColumnVisibilityTrigger.test.tsx`
@@ -2628,10 +2616,7 @@ import type { ReactNode } from 'react';
 import { Columns3 } from 'lucide-react';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
-import type {
-  DropdownMenuAlign,
-  DropdownMenuSide,
-} from '../DropdownMenu';
+import type { DropdownMenuAlign, DropdownMenuSide } from '../DropdownMenu';
 import type { DataTableInstance } from './types';
 
 export interface ColumnVisibilityTriggerProps<T = unknown> {
@@ -2736,6 +2721,7 @@ EOF
 ## Task 13 — Public exports + library `index.ts`
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/index.ts`
 - Modify: `packages/design-system/src/index.ts`
 
@@ -2820,6 +2806,7 @@ EOF
 ## Task 14 — Playground demo
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/DataTableDemo.tsx`
 
 - [ ] **Step 1: Write the demo**
@@ -2851,25 +2838,41 @@ type Deal = {
 };
 
 const deals: Deal[] = [
-  { id: 'd1', name: 'Acme renewal',     stage: 'Negotiation', amount: 12000, owner: 'Sara' },
-  { id: 'd2', name: 'Globex expansion', stage: 'Lead',         amount: 4500,  owner: 'Marcus' },
-  { id: 'd3', name: 'Initech onboarding', stage: 'Won',        amount: 8800,  owner: 'Sara' },
-  { id: 'd4', name: 'Hooli pilot',      stage: 'Lost',         amount: 0,     owner: 'Jin' },
+  { id: 'd1', name: 'Acme renewal', stage: 'Negotiation', amount: 12000, owner: 'Sara' },
+  { id: 'd2', name: 'Globex expansion', stage: 'Lead', amount: 4500, owner: 'Marcus' },
+  { id: 'd3', name: 'Initech onboarding', stage: 'Won', amount: 8800, owner: 'Sara' },
+  { id: 'd4', name: 'Hooli pilot', stage: 'Lost', amount: 0, owner: 'Jin' },
 ];
 
 const dealColumns: ColumnDef<Deal>[] = [
-  { id: 'name',   header: 'Deal',   cell: (r) => r.name, sortable: true, size: 200 },
-  { id: 'stage',  header: 'Stage',  cell: (r) => <Badge tone={stageTone(r.stage)}>{r.stage}</Badge>, size: 140 },
-  { id: 'amount', header: 'Amount', cell: (r) => `$${r.amount.toLocaleString()}`, align: 'end', sortable: true, size: 120 },
-  { id: 'owner',  header: 'Owner',  cell: (r) => r.owner, size: 120 },
+  { id: 'name', header: 'Deal', cell: (r) => r.name, sortable: true, size: 200 },
+  {
+    id: 'stage',
+    header: 'Stage',
+    cell: (r) => <Badge tone={stageTone(r.stage)}>{r.stage}</Badge>,
+    size: 140,
+  },
+  {
+    id: 'amount',
+    header: 'Amount',
+    cell: (r) => `$${r.amount.toLocaleString()}`,
+    align: 'end',
+    sortable: true,
+    size: 120,
+  },
+  { id: 'owner', header: 'Owner', cell: (r) => r.owner, size: 120 },
 ];
 
 function stageTone(stage: Deal['stage']) {
   switch (stage) {
-    case 'Won': return 'success' as const;
-    case 'Lost': return 'danger' as const;
-    case 'Negotiation': return 'warning' as const;
-    default: return 'info' as const;
+    case 'Won':
+      return 'success' as const;
+    case 'Lost':
+      return 'danger' as const;
+    case 'Negotiation':
+      return 'warning' as const;
+    default:
+      return 'info' as const;
   }
 }
 
@@ -3073,6 +3076,7 @@ EOF
 Per playground `CLAUDE.md` Hard Rule 4.
 
 **Files:**
+
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
 - Modify: `packages/playground/src/pages/components/ComponentsIndex.tsx`
@@ -3083,10 +3087,13 @@ Per playground `CLAUDE.md` Hard Rule 4.
 In `packages/playground/src/App.tsx`:
 
 1. Add the import alongside the others:
+
 ```ts
 import { DataTableDemo } from './pages/components/DataTableDemo';
 ```
+
 2. Add the route inside `<Routes>` (alphabetical with siblings is fine):
+
 ```tsx
 <Route path="/components/datatable" element={<DataTableDemo />} />
 ```
@@ -3118,6 +3125,7 @@ make dev
 ```
 
 Open http://localhost:8080/components/datatable in a browser. Verify:
+
 - Header renders with the four columns (Deal, Stage, Amount, Owner)
 - Body shows the four deals
 - Hovering a header reveals the drag grip
@@ -3148,6 +3156,7 @@ EOF
 ## Task 16 — `AGENTS.md` TL;DR + final JSDoc audit
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 - Verify (no edit unless missing): JSDoc on `<DataTable>`, `useDataTable`, `<ColumnVisibilityTrigger>` includes `@example`, `@remarks When NOT to use`, `@remarks Anti-patterns`.
 

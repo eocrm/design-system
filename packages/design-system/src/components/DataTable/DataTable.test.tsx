@@ -96,9 +96,7 @@ describe('<DataTable>', () => {
   it('toggleRowSelection toggles a row via per-row checkbox', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Harness enableRowSelection onRowSelectionChange={onChange} defaultRowSelection={{}} />,
-    );
+    render(<Harness enableRowSelection onRowSelectionChange={onChange} defaultRowSelection={{}} />);
     const rowCheckboxes = screen.getAllByRole('checkbox', { name: /select row/i });
     expect(rowCheckboxes).toHaveLength(2);
     await user.click(rowCheckboxes[0]!);
@@ -108,9 +106,7 @@ describe('<DataTable>', () => {
   it('header select-all checkbox toggles all rows on page', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Harness enableRowSelection onRowSelectionChange={onChange} defaultRowSelection={{}} />,
-    );
+    render(<Harness enableRowSelection onRowSelectionChange={onChange} defaultRowSelection={{}} />);
     const headerCheckbox = screen.getAllByRole('checkbox')[0]!;
     await user.click(headerCheckbox);
     expect(onChange).toHaveBeenCalledWith({ r1: true, r2: true });

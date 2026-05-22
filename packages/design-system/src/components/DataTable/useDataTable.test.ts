@@ -18,9 +18,7 @@ const getRowId = (r: Row) => r.id;
 
 describe('useDataTable — state resolution', () => {
   it('echoes data, columns, getRowId', () => {
-    const { result } = renderHook(() =>
-      useDataTable({ data: rows, columns: cols, getRowId }),
-    );
+    const { result } = renderHook(() => useDataTable({ data: rows, columns: cols, getRowId }));
     expect(result.current.data).toBe(rows);
     expect(result.current.columns).toBe(cols);
     expect(result.current.getRowId).toBe(getRowId);
@@ -28,9 +26,7 @@ describe('useDataTable — state resolution', () => {
   });
 
   it('defaults enableRowSelection to false and hasExpansion to false', () => {
-    const { result } = renderHook(() =>
-      useDataTable({ data: rows, columns: cols, getRowId }),
-    );
+    const { result } = renderHook(() => useDataTable({ data: rows, columns: cols, getRowId }));
     expect(result.current.enableRowSelection).toBe(false);
     expect(result.current.hasExpansion).toBe(false);
   });
@@ -60,9 +56,7 @@ describe('useDataTable — state resolution', () => {
   });
 
   it('falls back to columns order when no default given', () => {
-    const { result } = renderHook(() =>
-      useDataTable({ data: rows, columns: cols, getRowId }),
-    );
+    const { result } = renderHook(() => useDataTable({ data: rows, columns: cols, getRowId }));
     expect(result.current.columnOrder).toEqual(['name', 'amount']);
   });
 
@@ -83,9 +77,7 @@ describe('useDataTable — state resolution', () => {
   });
 
   it('initialises all other state pieces with sensible defaults', () => {
-    const { result } = renderHook(() =>
-      useDataTable({ data: rows, columns: cols, getRowId }),
-    );
+    const { result } = renderHook(() => useDataTable({ data: rows, columns: cols, getRowId }));
     expect(result.current.columnSizing).toEqual({});
     expect(result.current.columnVisibility).toEqual({});
     expect(result.current.columnPinning).toEqual({ left: [], right: [] });

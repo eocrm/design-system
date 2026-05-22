@@ -172,8 +172,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/datatable',
     name: 'DataTable',
-    description:
-      'Tabular data with sortable / resizable / reorderable columns and row selection.',
+    description: 'Tabular data with sortable / resizable / reorderable columns and row selection.',
     preview: <DataTablePreview />,
   },
   {

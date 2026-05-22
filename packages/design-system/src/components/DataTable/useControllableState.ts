@@ -37,8 +37,7 @@ export function useControllableState<T>(options: {
   const setValue = useCallback(
     (updater: Updater<T>) => {
       const prev = resolvedRef.current;
-      const next =
-        typeof updater === 'function' ? (updater as (p: T) => T)(prev) : updater;
+      const next = typeof updater === 'function' ? (updater as (p: T) => T)(prev) : updater;
       if (!isControlled) setInternal(next);
       onChangeRef.current?.(next);
     },

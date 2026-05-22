@@ -39,7 +39,10 @@ export function BodyRow<T>({ row, instance }: BodyRowProps<T>) {
     if (e.key !== 'Enter') return;
     const target = e.target as HTMLElement;
     // Ignore Enter coming from an interactive child (it should drive that child).
-    if (target !== e.currentTarget && target.closest('button, input, a, [role="button"], [role="checkbox"]')) {
+    if (
+      target !== e.currentTarget &&
+      target.closest('button, input, a, [role="button"], [role="checkbox"]')
+    ) {
       return;
     }
     e.preventDefault();

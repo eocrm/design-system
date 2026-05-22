@@ -161,13 +161,13 @@ No `accessor` shortcut — `cell: (row) => row.foo` is one extra character and a
 ### State types
 
 ```ts
-export type ColumnOrderState = string[];                    // ordered ids (includes hidden)
-export type ColumnSizingState = Record<string, number>;     // id → width px
-export type ColumnVisibilityState = Record<string, boolean>;// id → visible (missing = visible)
+export type ColumnOrderState = string[]; // ordered ids (includes hidden)
+export type ColumnSizingState = Record<string, number>; // id → width px
+export type ColumnVisibilityState = Record<string, boolean>; // id → visible (missing = visible)
 export type ColumnPinningState = { left: string[]; right: string[] }; // ordered per side
 
-export type RowSelectionState = Record<string, boolean>;    // rowId → selected (missing = false)
-export type ExpandedRowsState = Record<string, boolean>;    // rowId → expanded
+export type RowSelectionState = Record<string, boolean>; // rowId → selected (missing = false)
+export type ExpandedRowsState = Record<string, boolean>; // rowId → expanded
 
 export interface SortState {
   columnId: string;
@@ -187,11 +187,11 @@ export interface UseDataTableOptions<T> {
   data: T[];
   pinnedRows?: T[];
   columns: ColumnDef<T>[];
-  getRowId: (row: T) => string;   // required
-  rowCount?: number;              // total server-side count (a11y metadata)
+  getRowId: (row: T) => string; // required
+  rowCount?: number; // total server-side count (a11y metadata)
 
   // Feature toggles
-  enableRowSelection?: boolean;   // default false — must opt in
+  enableRowSelection?: boolean; // default false — must opt in
   // expansion is implicitly enabled when renderExpandedRow is passed
 
   // Controlled / uncontrolled state (one trio per piece)
@@ -235,7 +235,7 @@ export interface DataTableInstance<T> {
   columns: ColumnDef<T>[];
   getRowId: (row: T) => string;
   enableRowSelection: boolean;
-  hasExpansion: boolean;          // true when renderExpandedRow was provided
+  hasExpansion: boolean; // true when renderExpandedRow was provided
   onRowClick?: UseDataTableOptions<T>['onRowClick'];
   renderExpandedRow?: UseDataTableOptions<T>['renderExpandedRow'];
 
@@ -249,12 +249,12 @@ export interface DataTableInstance<T> {
   sort: SortState | null;
 
   // Derived view-models (memoized)
-  visibleColumns: ColumnDef<T>[];        // filtered by visibility, sorted by order
+  visibleColumns: ColumnDef<T>[]; // filtered by visibility, sorted by order
   leftPinnedColumns: ColumnDef<T>[];
   rightPinnedColumns: ColumnDef<T>[];
   unpinnedColumns: ColumnDef<T>[];
   columnSizesPx: Record<string, number>; // id → resolved px width
-  leftPinOffsets: Record<string, number>;  // id → cumulative left px
+  leftPinOffsets: Record<string, number>; // id → cumulative left px
   rightPinOffsets: Record<string, number>; // id → cumulative right px
 
   // setState-style mutators (always route through onChange or internal setState)
@@ -268,9 +268,9 @@ export interface DataTableInstance<T> {
 
   // Higher-level helpers
   toggleRowSelection(rowId: string): void;
-  toggleAllOnPage(): void;            // toggles select-state of all rows in `data` (ignores pinnedRows)
+  toggleAllOnPage(): void; // toggles select-state of all rows in `data` (ignores pinnedRows)
   isAllOnPageSelected(): boolean;
-  isSomeOnPageSelected(): boolean;    // → indeterminate for header checkbox
+  isSomeOnPageSelected(): boolean; // → indeterminate for header checkbox
   toggleRowExpanded(rowId: string): void;
   toggleColumnVisibility(columnId: string): void;
   pinColumn(columnId: string, side: 'left' | 'right' | false): void;
@@ -285,19 +285,19 @@ export interface DataTableProps<T> {
   instance: DataTableInstance<T>;
 
   // Passthrough to underlying <Table>
-  density?: TableDensity;             // default 'comfortable'
+  density?: TableDensity; // default 'comfortable'
   striped?: boolean;
-  hover?: boolean;                    // default TRUE (DataTable rows are usually interactive)
+  hover?: boolean; // default TRUE (DataTable rows are usually interactive)
   bordered?: boolean;
 
   // State decorations
   loading?: boolean;
-  loadingRowCount?: number;           // default 10
-  emptyState?: ReactNode;             // default: a sensible <EmptyState>
+  loadingRowCount?: number; // default 10
+  emptyState?: ReactNode; // default: a sensible <EmptyState>
 
   // a11y
-  'aria-label'?: string;              // required when no <caption>
-  caption?: ReactNode;                // alternative — renders as <Table.Caption>
+  'aria-label'?: string; // required when no <caption>
+  caption?: ReactNode; // alternative — renders as <Table.Caption>
 
   // Passthrough
   className?: string;
@@ -309,8 +309,8 @@ export interface DataTableProps<T> {
 ```ts
 export interface ColumnVisibilityTriggerProps {
   instance: DataTableInstance<any>;
-  label?: ReactNode;                  // default "Columns"
-  icon?: ReactNode;                   // default Columns icon from lucide
+  label?: ReactNode; // default "Columns"
+  icon?: ReactNode; // default Columns icon from lucide
   side?: DropdownMenuSide;
   align?: DropdownMenuAlign;
 }
@@ -423,20 +423,20 @@ Expand chevron button lives in the auto-expand cell. Fires `instance.toggleRowEx
 
 ### Keyboard a11y matrix
 
-| Element | Key | Action |
-|---|---|---|
-| Header label (sortable) | Enter / Space | Toggle sort (cycles null → asc → desc) |
-| Header label | ← / → | Resize column −/+ 8px |
-| Header label | Shift+← / Shift+→ | Resize column −/+ 32px |
-| Drag grip | Tab to focus | Reveals grip (focus = hover equivalent) |
-| Drag grip | Space | Pick up column (dnd-kit `KeyboardSensor`) |
-| Drag grip (active) | ← / → | Move column |
-| Drag grip (active) | Space / Enter | Drop |
-| Drag grip (active) | Escape | Cancel reorder |
-| Selection checkbox (per-row) | Space | Toggle row selection |
-| Selection checkbox (header) | Space | Toggle all on page |
-| Expand chevron | Enter / Space | Toggle expansion |
-| Row (when `onRowClick` set) | Enter | Fire onRowClick |
+| Element                      | Key               | Action                                    |
+| ---------------------------- | ----------------- | ----------------------------------------- |
+| Header label (sortable)      | Enter / Space     | Toggle sort (cycles null → asc → desc)    |
+| Header label                 | ← / →             | Resize column −/+ 8px                     |
+| Header label                 | Shift+← / Shift+→ | Resize column −/+ 32px                    |
+| Drag grip                    | Tab to focus      | Reveals grip (focus = hover equivalent)   |
+| Drag grip                    | Space             | Pick up column (dnd-kit `KeyboardSensor`) |
+| Drag grip (active)           | ← / →             | Move column                               |
+| Drag grip (active)           | Space / Enter     | Drop                                      |
+| Drag grip (active)           | Escape            | Cancel reorder                            |
+| Selection checkbox (per-row) | Space             | Toggle row selection                      |
+| Selection checkbox (header)  | Space             | Toggle all on page                        |
+| Expand chevron               | Enter / Space     | Toggle expansion                          |
+| Row (when `onRowClick` set)  | Enter             | Fire onRowClick                           |
 
 dnd-kit's `KeyboardSensor` provides screen-reader announcements (`"Status column picked up at position 3 of 7"`) via a live region appended by `<DndContext>`.
 
@@ -457,9 +457,15 @@ No built-in UI in v1. Consumer wires using `instance.pinColumn(id, side)`. Recom
 <DropdownMenu>
   <DropdownMenu.Trigger>⋯</DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    <DropdownMenu.Item onSelect={() => instance.pinColumn(column.id, 'left')}>Pin left</DropdownMenu.Item>
-    <DropdownMenu.Item onSelect={() => instance.pinColumn(column.id, 'right')}>Pin right</DropdownMenu.Item>
-    <DropdownMenu.Item onSelect={() => instance.pinColumn(column.id, false)}>Unpin</DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => instance.pinColumn(column.id, 'left')}>
+      Pin left
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => instance.pinColumn(column.id, 'right')}>
+      Pin right
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => instance.pinColumn(column.id, false)}>
+      Unpin
+    </DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu>
 ```
@@ -484,6 +490,7 @@ SCSS structure inside the DataTable folder follows Rule 4 (no layout properties)
 Three phases, each its own PR shipping independently:
 
 **Phase 1 — Core + columns + selection** (largest):
+
 - `useDataTable` hook with state plumbing for column order / sizing / visibility / selection / sort. `columnPinning` and `expandedRows` state plumbing is included but their rendering effects (sticky CSS, chevron, detail row) are deferred to phases 2 and 3 respectively.
 - `<DataTable>` component (all rendering except column pinning, pinned rows, and expansion)
 - Column ordering via `@dnd-kit/sortable`, sizing via hand-rolled handle, visibility
@@ -495,6 +502,7 @@ Three phases, each its own PR shipping independently:
 - Sort interaction
 
 **Phase 2 — Column & row pinning:**
+
 - `columnPinning` state rendering: sticky CSS, offset math (`useColumnPinningOffsets`), edge shadow, z-index stacking
 - Cross-pin-boundary drag rejection at the drop-target level
 - Selection auto-column becomes sticky-left at this point (contributes to the offset stack)
@@ -503,6 +511,7 @@ Three phases, each its own PR shipping independently:
 - Tests + demo + AGENTS.md update
 
 **Phase 3 — Expandable rows:**
+
 - `renderExpandedRow` prop becomes operational
 - Expand auto-column (chevron button, 44px, fixed left position, sticky-left from this phase forward)
 - Detail row rendering (`colSpan` across all visible + auto columns)

@@ -2,14 +2,13 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode, type Ref } from 
 import { Columns3 } from 'lucide-react';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
-import type {
-  DropdownMenuAlign,
-  DropdownMenuSide,
-} from '../DropdownMenu';
+import type { DropdownMenuAlign, DropdownMenuSide } from '../DropdownMenu';
 import type { DataTableInstance } from './types';
 
-export interface ColumnVisibilityTriggerProps<T = unknown>
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'onChange'> {
+export interface ColumnVisibilityTriggerProps<T = unknown> extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'children' | 'onChange'
+> {
   /** The `useDataTable` instance to read column state from and dispatch visibility changes to. */
   instance: DataTableInstance<T>;
   /**

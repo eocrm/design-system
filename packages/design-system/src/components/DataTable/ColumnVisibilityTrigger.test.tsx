@@ -12,7 +12,10 @@ const cols: ColumnDef<Row>[] = [
   { id: 'c', header: 'C', cell: (r) => r.id, enableHide: false }, // always visible — not in menu
 ];
 
-function Harness(props: { onChange?: (v: Record<string, boolean>) => void; visibility?: Record<string, boolean> }) {
+function Harness(props: {
+  onChange?: (v: Record<string, boolean>) => void;
+  visibility?: Record<string, boolean>;
+}) {
   const instance = useDataTable<Row>({
     data: [],
     columns: cols,

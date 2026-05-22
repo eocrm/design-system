@@ -125,7 +125,9 @@
   height: 60%;
   background: var(--color-fg-muted);
   flex-shrink: 0;
-  transition: background var(--transition-fast), width var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    width var(--transition-fast);
 }
 
 // Accent-colour the bar and chevrons when hovered or actively resizing.

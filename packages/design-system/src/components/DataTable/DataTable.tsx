@@ -1,9 +1,4 @@
-import {
-  forwardRef,
-  useMemo,
-  type ReactNode,
-  type Ref,
-} from 'react';
+import { forwardRef, useMemo, type ReactNode, type Ref } from 'react';
 import clsx from 'clsx';
 import {
   DndContext,
@@ -143,10 +138,8 @@ function DataTableInner<T>(
     });
   };
 
-  const totalColCount =
-    instance.visibleColumns.length + (instance.enableRowSelection ? 1 : 0);
-  const dataIsEmpty =
-    !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
+  const totalColCount = instance.visibleColumns.length + (instance.enableRowSelection ? 1 : 0);
+  const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -166,25 +159,16 @@ function DataTableInner<T>(
           {caption && <Table.Caption>{caption}</Table.Caption>}
 
           <colgroup>
-            {instance.enableRowSelection && (
-              <col style={{ width: AUTO_CELL_WIDTH }} />
-            )}
+            {instance.enableRowSelection && <col style={{ width: AUTO_CELL_WIDTH }} />}
             {instance.visibleColumns.map((col) => (
-              <col
-                key={col.id}
-                style={{ width: instance.columnSizesPx[col.id] ?? 120 }}
-              />
+              <col key={col.id} style={{ width: instance.columnSizesPx[col.id] ?? 120 }} />
             ))}
           </colgroup>
 
           <Table.Header>
             <Table.Row>
               {instance.enableRowSelection && (
-                <Table.HeaderCell
-                  align="center"
-                  scope="col"
-                  className={styles.autoCell}
-                >
+                <Table.HeaderCell align="center" scope="col" className={styles.autoCell}>
                   <Checkbox
                     checked={instance.isAllOnPageSelected()}
                     indeterminate={instance.isSomeOnPageSelected()}
@@ -201,19 +185,12 @@ function DataTableInner<T>(
 
           <Table.Body>
             {loading ? (
-              <SkeletonRows
-                count={loadingRowCount}
-                totalColCount={totalColCount}
-              />
+              <SkeletonRows count={loadingRowCount} totalColCount={totalColCount} />
             ) : dataIsEmpty ? (
               <EmptyRow totalColCount={totalColCount} content={emptyState} />
             ) : (
               instance.data.map((row) => (
-                <BodyRow
-                  key={instance.getRowId(row)}
-                  row={row}
-                  instance={instance}
-                />
+                <BodyRow key={instance.getRowId(row)} row={row} instance={instance} />
               ))
             )}
           </Table.Body>
@@ -223,13 +200,7 @@ function DataTableInner<T>(
   );
 }
 
-function SkeletonRows({
-  count,
-  totalColCount,
-}: {
-  count: number;
-  totalColCount: number;
-}) {
+function SkeletonRows({ count, totalColCount }: { count: number; totalColCount: number }) {
   return (
     <>
       {Array.from({ length: count }, (_, i) => (
@@ -245,13 +216,7 @@ function SkeletonRows({
   );
 }
 
-function EmptyRow({
-  totalColCount,
-  content,
-}: {
-  totalColCount: number;
-  content?: ReactNode;
-}) {
+function EmptyRow({ totalColCount, content }: { totalColCount: number; content?: ReactNode }) {
   return (
     <Table.Row>
       <Table.Cell colSpan={totalColCount} className={styles.emptyCell}>
@@ -269,4 +234,3 @@ function EmptyRow({
 export const DataTable = forwardRef(DataTableInner) as <T>(
   props: DataTableProps<T> & { ref?: Ref<HTMLTableElement> },
 ) => ReturnType<typeof DataTableInner>;
-

@@ -8,17 +8,13 @@ describe('useControllableState', () => {
   });
 
   it('uses value when controlled (ignores default)', () => {
-    const { result } = renderHook(() =>
-      useControllableState({ value: 10, defaultValue: 5 }),
-    );
+    const { result } = renderHook(() => useControllableState({ value: 10, defaultValue: 5 }));
     expect(result.current[0]).toBe(10);
   });
 
   it('updates internal state when uncontrolled', () => {
     const onChange = vi.fn();
-    const { result } = renderHook(() =>
-      useControllableState({ defaultValue: 0, onChange }),
-    );
+    const { result } = renderHook(() => useControllableState({ defaultValue: 0, onChange }));
     act(() => result.current[1](42));
     expect(result.current[0]).toBe(42);
     expect(onChange).toHaveBeenCalledWith(42);
@@ -47,9 +43,7 @@ describe('useControllableState', () => {
 
   it('updater function receives current value when controlled', () => {
     const onChange = vi.fn();
-    const { result } = renderHook(() =>
-      useControllableState({ value: 10, onChange }),
-    );
+    const { result } = renderHook(() => useControllableState({ value: 10, onChange }));
     act(() => result.current[1]((prev) => prev + 5));
     expect(onChange).toHaveBeenCalledWith(15);
   });
