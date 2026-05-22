@@ -118,6 +118,17 @@ function DataTableInner<T>(
     [instance.visibleColumns],
   );
 
+  // SortableContext items: only columns that are actually reorderable (unpinned
+  // AND enableReorder !== false). Pinned columns are excluded so dnd-kit doesn't
+  // animate them out of position when a draggable column crosses over them —
+  // their per-column `useSortable({ disabled })` blocks drag activation, but
+  // their presence in the items list still makes horizontalListSortingStrategy
+  // shift them during another column's drag.
+  const sortableIds = useMemo(
+    () => instance.unpinnedColumns.filter((c) => c.enableReorder !== false).map((c) => c.id),
+    [instance.unpinnedColumns],
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -152,7 +163,7 @@ function DataTableInner<T>(
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <SortableContext items={visibleIds} strategy={horizontalListSortingStrategy}>
+      <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
         {/* {...rest} last so consumer overrides win (Pattern A). */}
         <Table
           ref={ref}
