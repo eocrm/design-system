@@ -93,6 +93,28 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): DataTableInsta
     [],
   );
 
+  // Initial pinning derived from `ColumnDef.pin` when the consumer didn't
+  // pass `defaultColumnPinning`. Like `defaultColumnOrder`, this is a one-time
+  // initial value — after mount, runtime calls to `instance.pinColumn(...)`
+  // update the controllable state and take over. Columns with
+  // `enablePin: false` are skipped — a column that opted out of pinning
+  // shouldn't be pinned by its own `pin` field either.
+  const derivedColumnPinning = useMemo<ColumnPinningState>(
+    () => {
+      const left: string[] = [];
+      const right: string[] = [];
+      for (const c of columns) {
+        if (c.enablePin === false) continue;
+        if (c.pin === 'left') left.push(c.id);
+        else if (c.pin === 'right') right.push(c.id);
+      }
+      return left.length === 0 && right.length === 0 ? EMPTY_PINNING : { left, right };
+    },
+    // Same one-time-init rationale as defaultColumnOrder.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   const [columnOrder, setColumnOrder] = useControllableState<ColumnOrderState>({
     value: options.columnOrder,
     defaultValue: defaultColumnOrder,
@@ -113,7 +135,7 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): DataTableInsta
 
   const [columnPinning, setColumnPinning] = useControllableState<ColumnPinningState>({
     value: options.columnPinning,
-    defaultValue: options.defaultColumnPinning ?? EMPTY_PINNING,
+    defaultValue: options.defaultColumnPinning ?? derivedColumnPinning,
     onChange: options.onColumnPinningChange,
   });
 

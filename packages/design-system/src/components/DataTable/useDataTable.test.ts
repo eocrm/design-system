@@ -85,6 +85,44 @@ describe('useDataTable — state resolution', () => {
     expect(result.current.expandedRows).toEqual({});
     expect(result.current.sort).toBeNull();
   });
+
+  it('derives initial columnPinning from ColumnDef.pin when no defaultColumnPinning given', () => {
+    const colsWithPin: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', cell: (r) => r.name, pin: 'left' },
+      { id: 'amount', header: 'Amount', cell: (r) => r.amount, pin: 'right' },
+    ];
+    const { result } = renderHook(() =>
+      useDataTable({ data: rows, columns: colsWithPin, getRowId }),
+    );
+    expect(result.current.columnPinning).toEqual({ left: ['name'], right: ['amount'] });
+  });
+
+  it('derived pinning skips columns where enablePin === false', () => {
+    const colsWithPin: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', cell: (r) => r.name, pin: 'left' },
+      { id: 'amount', header: 'Amount', cell: (r) => r.amount, pin: 'right', enablePin: false },
+    ];
+    const { result } = renderHook(() =>
+      useDataTable({ data: rows, columns: colsWithPin, getRowId }),
+    );
+    expect(result.current.columnPinning).toEqual({ left: ['name'], right: [] });
+  });
+
+  it('defaultColumnPinning overrides ColumnDef.pin', () => {
+    const colsWithPin: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', cell: (r) => r.name, pin: 'left' },
+      { id: 'amount', header: 'Amount', cell: (r) => r.amount },
+    ];
+    const { result } = renderHook(() =>
+      useDataTable({
+        data: rows,
+        columns: colsWithPin,
+        getRowId,
+        defaultColumnPinning: { left: [], right: ['amount'] },
+      }),
+    );
+    expect(result.current.columnPinning).toEqual({ left: [], right: ['amount'] });
+  });
 });
 
 describe('useDataTable — derived view-models', () => {

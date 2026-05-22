@@ -6,16 +6,24 @@
   // overflow:hidden ensures dnd-kit's CSS transform doesn't cause the cell
   // content to appear wider than the column's <col> width during drag.
   overflow: hidden;
+
+  // Header is interactive (sort click + drag + resize); rapid clicks
+  // shouldn't initiate a text selection range that bleeds into the body
+  // (commonly visible as the pinned-row cell below the column getting
+  // highlighted after a double-click on the sort header).
+  user-select: none;
 }
 
-// Drag grip — absolutely positioned at the left edge of the cell so it never
-// shifts the content area regardless of label length.
+// Drag grip — absolutely positioned at the left edge of the cell, sized to
+// fit inside the cell's left padding area (var(--space-3) = 12px) so it
+// never overlaps the label and nothing has to shift on hover. Only the
+// grip's opacity toggles — no padding/layout animation.
 .grip {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  width: 20px;
+  width: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,10 +54,30 @@
 
   // Prevent content overflow from expanding the measured cell width.
   min-width: 0;
+}
 
-  // Reserve space for absolute-positioned grip (left, ~20px) and resize
-  // handle (right, ~24px — wider because it contains chevrons + bar).
-  padding: 0 24px 0 20px;
+// Reserve right space for the absolute-positioned resize handle (~24px — it
+// contains chevrons + bar). Omitted when enableResize is false so the label
+// + sort icon can extend to the cell's right padding edge.
+.innerWithResize {
+  padding-right: 24px;
+}
+
+// Flex justification mirrors `column.align` so end- / center-aligned columns
+// position their label + sort indicator the same way the body cells render.
+// Label.flex is overridden from `1 1 auto` to `0 1 auto` so it doesn't fill
+// the row — otherwise `justify-content` has no effect.
+.innerAlignEnd {
+  justify-content: flex-end;
+}
+
+.innerAlignCenter {
+  justify-content: center;
+}
+
+.innerAlignEnd .label,
+.innerAlignCenter .label {
+  flex: 0 1 auto;
 }
 
 .label {
@@ -80,10 +108,13 @@
   }
 }
 
-// Sort chevron — sits at the end of .inner, after the label.
+// Sort chevron — sits at the end of .inner, after the label. Rendered only
+// when the column is sortable, so it can always carry the pointer cursor
+// (matches the .label.sortable cursor: pointer treatment).
 .sortIcon {
   flex-shrink: 0;
   color: var(--color-fg-muted);
+  cursor: pointer;
 }
 
 .sortIconActive {
@@ -144,4 +175,34 @@
 
 .dragging {
   opacity: var(--opacity-dragging);
+}
+
+// Pinned columns get sticky positioning via inline `left` / `right` styles;
+// these class additions handle the background (otherwise body cells would
+// scroll under transparent pinned headers) and the inside-edge shadow.
+
+.pinnedLeft,
+.pinnedRight {
+  // Solid background so unpinned content doesn't show through during scroll.
+  // Header cells use --color-table-header-bg (muted gray chrome) — match it
+  // here so the pinned corner cell blends with the rest of the header band.
+  background: var(--color-table-header-bg);
+
+  // Sticky pinned column header — the "corner" that stacks above:
+  //   - Table's sticky-header band (z-index 1 per Table.module.scss)
+  //   - Pinned body cells (z-index 1 per DataTable.module.scss)
+  // The :where() in Table.module.scss drops the header band's specificity to
+  // 0,1,0, so this z-index can override it via cascade order (DataTable's CSS
+  // module is imported later and wins on equal specificity).
+  z-index: 3;
+}
+
+.pinnedLeft {
+  // Inside-edge shadow on the right of left-pinned columns.
+  box-shadow: var(--shadow-table-pinned-edge);
+}
+
+.pinnedRight {
+  // Mirror shadow on the left of right-pinned columns.
+  box-shadow: var(--shadow-table-pinned-edge-right);
 }

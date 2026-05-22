@@ -20,6 +20,8 @@ import { Skeleton } from '../Skeleton';
 import { EmptyState } from '../EmptyState';
 import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
+import { reorderRespectingPins } from './reorderColumns';
+import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
 import styles from './DataTable.module.scss';
 
@@ -41,8 +43,6 @@ export interface DataTableProps<T> {
   className?: string;
 }
 
-const AUTO_CELL_WIDTH = 44;
-
 /**
  * Tabular data component built on the `<Table>` primitive. Owns the column-axis
  * state machine (order / sizing / visibility / pinning) and row-axis state
@@ -52,6 +52,19 @@ const AUTO_CELL_WIDTH = 44;
  * Accepts a `DataTableInstance<T>` from `useDataTable` (the only state-owning
  * surface). Pass companion components like `<ColumnVisibilityTrigger>` the same
  * `instance`.
+ *
+ * **Layout model.** The inner `<table>` uses `table-layout: fixed; width:
+ * max-content; min-width: 100%` — column widths come authoritatively from the
+ * `<colgroup>` (driven by `ColumnDef.size` + `columnSizing` state), and the
+ * table grows to its column-sum width when that exceeds the parent. The Table
+ * primitive's `.scrollWrap` then scrolls horizontally. This is required for
+ * sticky pinning offsets to land at the right pixel; consumers don't choose.
+ *
+ * **Cell content.** Every cell inside DataTable gets `overflow: hidden;
+ * text-overflow: ellipsis; white-space: nowrap` by default. Long content
+ * truncates with an ellipsis at the column boundary instead of expanding the
+ * column. If you need multi-line cells, render `<Table>` directly — DataTable
+ * is opinionated about row height to keep pin offsets consistent across rows.
  *
  * @example
  * function Example() {
@@ -68,6 +81,14 @@ const AUTO_CELL_WIDTH = 44;
  *     </>
  *   );
  * }
+ *
+ * @example
+ * // Column pinning + pinned rows
+ * const instance = useDataTable({
+ *   data, pinnedRows: starredDeals, columns, getRowId,
+ *   defaultColumnPinning: { left: ['name'], right: ['actions'] },
+ * });
+ * <DataTable instance={instance} aria-label="Deals" />;
  *
  * @remarks When NOT to use
  * - For a static read-only table without column features — use `<Table>` directly.
@@ -110,6 +131,17 @@ function DataTableInner<T>(
     [instance.visibleColumns],
   );
 
+  // SortableContext items: only columns that are actually reorderable (unpinned
+  // AND enableReorder !== false). Pinned columns are excluded so dnd-kit doesn't
+  // animate them out of position when a draggable column crosses over them —
+  // their per-column `useSortable({ disabled })` blocks drag activation, but
+  // their presence in the items list still makes horizontalListSortingStrategy
+  // shift them during another column's drag.
+  const sortableIds = useMemo(
+    () => instance.unpinnedColumns.filter((c) => c.enableReorder !== false).map((c) => c.id),
+    [instance.unpinnedColumns],
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -117,33 +149,34 @@ function DataTableInner<T>(
     const overId = String(over.id);
 
     instance.setColumnOrder((prev) => {
-      // Map dnd-kit's visible-list-result back into the full columnOrder array
-      // by replacing visible-column slots one-by-one in their absolute positions.
-      const visible = prev.filter((id) => visibleIds.includes(id));
-      const fromIdx = visible.indexOf(activeId);
-      const toIdx = visible.indexOf(overId);
-      if (fromIdx === -1 || toIdx === -1) return prev;
-      const reorderedVisible = [...visible];
-      const [moved] = reorderedVisible.splice(fromIdx, 1);
-      reorderedVisible.splice(toIdx, 0, moved!);
-
-      // Splice reorderedVisible back into prev at the same absolute positions.
-      let cursor = 0;
-      return prev.map((id) => {
-        if (visibleIds.includes(id)) {
-          return reorderedVisible[cursor++]!;
-        }
-        return id;
+      const next = reorderRespectingPins({
+        prev,
+        activeId,
+        overId,
+        visibleIds,
+        pinning: instance.columnPinning,
       });
+      return next ?? prev; // null = rejected, keep prev unchanged
     });
   };
+
+  // Pin-ordered render list: [left-pinned, unpinned, right-pinned].
+  // Drives <colgroup>, header row, and body rows so all three stay aligned.
+  const renderColumns = useMemo(
+    () => [
+      ...instance.leftPinnedColumns,
+      ...instance.unpinnedColumns,
+      ...instance.rightPinnedColumns,
+    ],
+    [instance.leftPinnedColumns, instance.unpinnedColumns, instance.rightPinnedColumns],
+  );
 
   const totalColCount = instance.visibleColumns.length + (instance.enableRowSelection ? 1 : 0);
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <SortableContext items={visibleIds} strategy={horizontalListSortingStrategy}>
+      <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
         {/* {...rest} last so consumer overrides win (Pattern A). */}
         <Table
           ref={ref}
@@ -160,7 +193,7 @@ function DataTableInner<T>(
 
           <colgroup>
             {instance.enableRowSelection && <col style={{ width: AUTO_CELL_WIDTH }} />}
-            {instance.visibleColumns.map((col) => (
+            {renderColumns.map((col) => (
               <col key={col.id} style={{ width: instance.columnSizesPx[col.id] ?? 120 }} />
             ))}
           </colgroup>
@@ -168,7 +201,12 @@ function DataTableInner<T>(
           <Table.Header>
             <Table.Row>
               {instance.enableRowSelection && (
-                <Table.HeaderCell align="center" scope="col" className={styles.autoCell}>
+                <Table.HeaderCell
+                  align="center"
+                  scope="col"
+                  className={clsx(styles.autoCell, styles.autoCellStickyHeader)}
+                  style={{ position: 'sticky', left: 0 }}
+                >
                   <Checkbox
                     checked={instance.isAllOnPageSelected()}
                     indeterminate={instance.isSomeOnPageSelected()}
@@ -177,11 +215,19 @@ function DataTableInner<T>(
                   />
                 </Table.HeaderCell>
               )}
-              {instance.visibleColumns.map((col) => (
+              {renderColumns.map((col) => (
                 <HeaderCell key={col.id} column={col} instance={instance} />
               ))}
             </Table.Row>
           </Table.Header>
+
+          {instance.pinnedRows.length > 0 && (
+            <Table.Body className={styles.pinnedRowsTbody} aria-label="Pinned rows">
+              {instance.pinnedRows.map((row) => (
+                <BodyRow key={instance.getRowId(row)} row={row} instance={instance} isPinnedRow />
+              ))}
+            </Table.Body>
+          )}
 
           <Table.Body>
             {loading ? (

@@ -600,7 +600,8 @@ const instance = useDataTable<Deal>({
 - Drag-to-reorder is keyboard-accessible (Tab to grip → Space to pick up → ←/→ to move → Space/Enter to drop → Esc to cancel). The grip is hover-revealed on desktop.
 - Resize via the right-edge handle. Keyboard: focused header label, `←`/`→` for −/+8px; Shift+`←`/`→` for ±32px.
 - `ColumnVisibilityTrigger` is the only built-in companion. For column pinning UI (Phase 2 ships state, no built-in UI), wire your own using `instance.pinColumn(id, side)`.
-- **Phase 1 only**: column pinning is plumbed (`columnPinning` state + `pinColumn` helper) but the sticky CSS does NOT render yet — it lands in Phase 2 along with `pinnedRows` rendering. Expandable rows (`renderExpandedRow`) lands in Phase 3. The state plumbing is forward-compatible — code you write now keeps working when those phases ship.
+- **Phase 2 ships pinning rendering.** `columnPinning` now applies sticky CSS with cumulative offsets and an inside-edge shadow; `pinnedRows` renders in a separate `<tbody>` above the main body. The selection auto-column is auto-left-pinned at offset 0. Pinned columns are LOCKED in place — no drag grip, can't be reordered. Their sort still works. Declare initial pinning either on the hook (`defaultColumnPinning: { left: ['name'], right: ['actions'] }`) or directly on each column (`pin: 'left' | 'right'`); the hook prop wins when both are set. Expandable rows (`renderExpandedRow`) still lands in Phase 3.
+- **Cell content is single-line + ellipsized by default.** DataTable's internal table uses `table-layout: fixed` so column widths from `ColumnDef.size` (or runtime `columnSizing`) are authoritative, and every cell gets `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`. Wide content truncates with `…` at the column boundary; the column does NOT expand to fit. If you need multi-line cells, render `<Table>` directly — DataTable is opinionated here so pinning offsets stay pixel-correct.
 
 **Anti-patterns:**
 

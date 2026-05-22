@@ -204,4 +204,134 @@ describe('<DataTable>', () => {
     const { container } = render(<ClassHarness />);
     expect(container.querySelector('table.my-class')).not.toBeNull();
   });
+
+  // ─── Phase 2: pinning rendering ───────────────────────────────────────
+
+  it('renders pinned-left columns with sticky CSS and computed left offset', () => {
+    const { container } = render(<Harness defaultColumnPinning={{ left: ['name'], right: [] }} />);
+    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+    expect(nameHeader).toHaveStyle({ position: 'sticky', left: '0px' });
+    // Body cell for 'name' in first row should also be sticky.
+    const firstBodyRow = container.querySelectorAll('tbody tr')[0]!;
+    const nameCell = firstBodyRow.querySelectorAll('td')[0]!; // 'name' is first because left-pinned
+    expect(nameCell).toHaveStyle({ position: 'sticky', left: '0px' });
+  });
+
+  it('shifts left pin offset by 44px when enableRowSelection is true', () => {
+    render(<Harness enableRowSelection defaultColumnPinning={{ left: ['name'], right: [] }} />);
+    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+    expect(nameHeader).toHaveStyle({ left: '44px' });
+  });
+
+  it('renders pinned-right columns with sticky right CSS', () => {
+    render(<Harness defaultColumnPinning={{ left: [], right: ['amount'] }} />);
+    const amountHeader = screen.getByRole('columnheader', { name: /amount/i });
+    expect(amountHeader).toHaveStyle({ position: 'sticky', right: '0px' });
+  });
+
+  it('renders columns in pin order: [left-pinned, unpinned, right-pinned]', () => {
+    render(<Harness defaultColumnPinning={{ left: ['amount'], right: [] }} />);
+    const headers = screen.getAllByRole('columnheader');
+    // 'amount' pinned-left → first; 'name' unpinned → second
+    expect(headers[0]!.textContent).toMatch(/amount/i);
+    expect(headers[1]!.textContent).toMatch(/name/i);
+  });
+
+  it('auto-select cell is sticky-left at offset 0 when enableRowSelection is true', () => {
+    render(<Harness enableRowSelection />);
+    // The select-all <th> is the first columnheader.
+    const headers = screen.getAllByRole('columnheader');
+    const selectHeader = headers[0]!;
+    expect(selectHeader).toHaveStyle({ position: 'sticky', left: '0px' });
+  });
+
+  it('renders pinnedRows in a separate <tbody> above main body', () => {
+    const pinned = [{ id: 'p1', name: 'PINNED', amount: 99 }];
+    function PinnedHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        pinnedRows: pinned,
+        columns: cols,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const { container } = render(<PinnedHarness />);
+    const tbodies = container.querySelectorAll('tbody');
+    expect(tbodies.length).toBe(2);
+    const pinnedTbody = tbodies[0]!;
+    expect(within(pinnedTbody as HTMLElement).getByText('PINNED')).toBeInTheDocument();
+  });
+
+  it('pinnedRows tbody is labelled "Pinned rows" for screen readers', () => {
+    const pinned = [{ id: 'p1', name: 'PINNED', amount: 99 }];
+    function PinnedHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        pinnedRows: pinned,
+        columns: cols,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const { container } = render(<PinnedHarness />);
+    const pinnedTbody = container.querySelector('tbody[aria-label="Pinned rows"]');
+    expect(pinnedTbody).not.toBeNull();
+  });
+
+  it('does NOT render pinned-rows tbody when pinnedRows is empty/absent', () => {
+    const { container } = render(<Harness />);
+    expect(container.querySelectorAll('tbody').length).toBe(1);
+  });
+
+  // NOTE: hover and selected cascade on pinned cells is NOT unit-tested here.
+  // The CSS rule (`.root tbody tr:not(.pinnedRow):hover .pinnedLeft { ... }`)
+  // is verified in the playground and via manual cascade reasoning; testing
+  // the cascade in jsdom requires mocking computed styles which is fragile.
+
+  it('pinned columns have no drag grip (locked in position)', () => {
+    render(<Harness defaultColumnPinning={{ left: ['name'], right: ['amount'] }} />);
+    // The grip is a span with aria-label="Drag to reorder <header>". It's
+    // only rendered when reorderable; pinned columns set reorderable=false.
+    expect(screen.queryByLabelText(/drag to reorder name/i)).toBeNull();
+    expect(screen.queryByLabelText(/drag to reorder amount/i)).toBeNull();
+    // Sanity: the SortableContext still includes the columns logically (their
+    // headers render), but they're excluded from drag interaction.
+    expect(screen.getByRole('columnheader', { name: /name/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /amount/i })).toBeInTheDocument();
+  });
+
+  it('unpinned columns still get the drag grip when reorderable', () => {
+    render(<Harness />);
+    // No pinning configured → both columns are reorderable → grips render.
+    expect(screen.getByLabelText(/drag to reorder name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/drag to reorder amount/i)).toBeInTheDocument();
+  });
+
+  it('column.align="end" applies end-alignment class to the header inner', () => {
+    // The "amount" column in `cols` is unpinned; if we change its align to
+    // 'end', the header's .inner div should pick up the alignment class so
+    // the label + sort indicator sit at the right end of the column.
+    const alignedCols: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', cell: (r) => r.name, sortable: true },
+      { id: 'amount', header: 'Amount', cell: (r) => r.amount, sortable: true, align: 'end' },
+    ];
+    function AlignedHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: alignedCols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const { container } = render(<AlignedHarness />);
+    // The .inner div is the first child div inside the <th>. CSS Modules
+    // hashes its class; verify by querying for a class that *contains*
+    // 'innerAlignEnd' so we don't have to import the styles module.
+    const amountHeader = screen.getByRole('columnheader', { name: /amount/i });
+    const inner = amountHeader.querySelector('div');
+    expect(inner?.className).toMatch(/innerAlignEnd/);
+    // And the default column shouldn't get the alignment class.
+    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+    const nameInner = nameHeader.querySelector('div');
+    expect(nameInner?.className).not.toMatch(/innerAlignEnd/);
+    // Suppress unused-var warning if container is unread.
+    void container;
+  });
 });

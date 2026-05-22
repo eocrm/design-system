@@ -6,7 +6,13 @@
 }
 
 .table {
-  width: 100%;
+  // min-width instead of width: 100% so the table is at least the parent's
+  // width for narrow content (looks identical to width:100% in that case) but
+  // is free to grow to its intrinsic column-sum width when wider. Combined
+  // with .scrollWrap's overflow-x:auto, a wide table scrolls internally and
+  // each column's declared <col> width is honored — important for sticky
+  // pinning math (DataTable's pin offsets assume widths aren't squeezed).
+  min-width: 100%;
   border-collapse: collapse;
   font-family: inherit;
   color: var(--color-table-fg);
@@ -173,7 +179,12 @@
 // ─── Sticky header ─────────────────────────────────────────────────────────
 
 // stylelint-disable property-disallowed-list -- Rule 4 escape hatch: position:sticky here is internal layout (anchors the header to the .scrollWrap scroll context), not a public-component layout property. Same precedent as AvatarGroup .item z-index.
-.stickyHeader .thead .th {
+// :where() on the ancestor chain drops specificity to 0,1,0 (only .th contributes).
+// This allows DataTable's pinning rules (.pinnedLeft/.pinnedRight, z-index:3) to
+// override this z-index:1 via cascade order — DataTable's CSS module is imported
+// later and wins on equal specificity. Without :where() this selector is 0,3,0 and
+// would beat DataTable's 0,1,0 pinning rules regardless of import order.
+:where(.stickyHeader .thead) .th {
   position: sticky;
   top: 0;
   z-index: 1;

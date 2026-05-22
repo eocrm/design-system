@@ -14,6 +14,7 @@ import { Table } from '../Table';
 import type { TableSortDirection } from '../Table';
 import { useResizeHandle } from './useResizeHandle';
 import type { ColumnDef, DataTableInstance } from './types';
+import { getPinStyle } from './pinStyle';
 import styles from './HeaderCell.module.scss';
 
 export interface HeaderCellProps<T> {
@@ -40,6 +41,13 @@ const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none
 };
 
 export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
+  // Pinned columns are LOCKED in position — no drag-to-reorder grip, can't
+  // be moved within or across pin groups. Sort and resize remain available
+  // since they don't change column position. Within-pin-group drag is also a
+  // low-value interaction (consumers typically pin once and leave it).
+  const isPinned =
+    instance.columnPinning.left.includes(column.id) ||
+    instance.columnPinning.right.includes(column.id);
   const sortable = column.sortable === true;
   const sortDir: TableSortDirection | undefined =
     instance.sort?.columnId === column.id ? instance.sort.direction : sortable ? 'none' : undefined;
@@ -52,8 +60,9 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   const SortIcon =
     sortDir === 'asc' ? ChevronUp : sortDir === 'desc' ? ChevronDown : ChevronsUpDown;
 
-  // dnd-kit sortable — column is its own sortable item.
-  const reorderable = column.enableReorder !== false;
+  // dnd-kit sortable — column is its own sortable item. Pinned columns are
+  // locked in place (see the isPinned comment above).
+  const reorderable = column.enableReorder !== false && !isPinned;
   const sortableResult = useSortable({ id: column.id, disabled: !reorderable });
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortableResult;
 
@@ -92,10 +101,15 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   const headerContent =
     typeof column.header === 'function' ? column.header({ column, instance }) : column.header;
 
-  const dragStyle = {
+  const pinStyle = getPinStyle(column.id, instance);
+  const stickyStyle = pinStyle.position
+    ? { position: pinStyle.position, left: pinStyle.left, right: pinStyle.right }
+    : undefined;
+  const cellStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
-  } as const;
+    ...stickyStyle,
+  };
 
   return (
     // sortDirection is intentionally NOT passed to Table.HeaderCell — we suppress
@@ -106,14 +120,20 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
       align={column.align ?? 'start'}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
-      className={clsx(styles.headerCell, isDragging && styles.dragging)}
+      className={clsx(
+        styles.headerCell,
+        isDragging && styles.dragging,
+        pinStyle.pinSide === 'left' && styles.pinnedLeft,
+        pinStyle.pinSide === 'right' && styles.pinnedRight,
+      )}
       // HTMLTableCellElement extends HTMLElement; dnd-kit only reads DOM geometry from the ref.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ref={setNodeRef as any}
-      style={dragStyle}
+      style={cellStyle}
     >
-      {/* Grip pinned to absolute left — kept outside .inner so it doesn't
-          shift the content area. Only rendered when column is reorderable. */}
+      {/* Grip pinned to absolute left of the cell regardless of column.align.
+          Kept outside .inner so it doesn't shift the content area. Only
+          rendered when reorderable. */}
       {reorderable && (
         <span
           className={styles.grip}
@@ -131,8 +151,20 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
       )}
 
       {/* Content area: label (flex:1) + sort icon pinned to end of content.
-          Left/right padding reserves space for the absolute grip and resize handle. */}
-      <div className={styles.inner}>
+          Padding is conditional: only reserve grip space (left) when reorderable
+          and only reserve resize space (right) when resizable, so the header
+          label aligns with the body cell content when the surrounding chrome
+          isn't there. Flex justification mirrors `column.align` so end-aligned
+          and center-aligned columns position their label + sort indicator the
+          same way the body cells render. */}
+      <div
+        className={clsx(
+          styles.inner,
+          column.enableResize !== false && styles.innerWithResize,
+          column.align === 'end' && styles.innerAlignEnd,
+          column.align === 'center' && styles.innerAlignCenter,
+        )}
+      >
         <span
           className={clsx(styles.label, sortable && styles.sortable)}
           tabIndex={sortable ? 0 : undefined}

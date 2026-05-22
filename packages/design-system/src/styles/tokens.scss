@@ -212,6 +212,9 @@
   ); // light blue — distinct from striped (gray) and selected (stronger blue)
   --color-table-row-bg-selected: var(--color-accent-bg-subtle);
   --color-table-row-fg-selected: var(--color-fg);
+  --color-bg-row-pinned: var(
+    --color-accent-bg-subtle
+  ); /* subtle tint for always-visible pinned rows */
 
   // Presence dots (Avatar status). Aliases over the existing semantic
   // palette — theme changes propagate.
@@ -244,6 +247,8 @@
   --shadow-sm: 0 1px 2px rgb(9 30 66 / 8%);
   --shadow-md: 0 2px 4px rgb(9 30 66 / 8%), 0 0 1px rgb(9 30 66 / 31%);
   --shadow-lg: 0 4px 8px -2px rgb(9 30 66 / 25%), 0 0 1px rgb(9 30 66 / 31%);
+  --shadow-table-pinned-edge: 4px 0 8px -4px rgb(0 0 0 / 8%); /* inside-edge shadow for sticky LEFT-pinned column */
+  --shadow-table-pinned-edge-right: -4px 0 8px -4px rgb(0 0 0 / 8%); /* mirror — for sticky RIGHT-pinned column */
 
   // Motion
   --transition-fast: 100ms ease-out;

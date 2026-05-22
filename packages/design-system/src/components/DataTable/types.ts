@@ -82,6 +82,16 @@ export interface ColumnDef<T> {
   sortable?: boolean;
   /** Label shown in the column visibility menu. Falls back to `header` if string. */
   visibilityLabel?: string;
+  /**
+   * Initial pin side for this column. Used as the derived default for
+   * `columnPinning` when the consumer doesn't pass `columnPinning` or
+   * `defaultColumnPinning`. Lower-precedence than either — explicit
+   * `defaultColumnPinning` on the hook always wins.
+   *
+   * Runtime pinning (e.g. `instance.pinColumn(id, 'right')`) updates the
+   * `columnPinning` state and takes over from this initial value.
+   */
+  pin?: 'left' | 'right';
 }
 
 /** Public options to `useDataTable<T>(...)`. */
