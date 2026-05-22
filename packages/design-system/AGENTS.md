@@ -575,6 +575,40 @@ const [tab, setTab] = useState('overview');
 - The native HTML `align` attribute on `<th>` / `<td>` is shadowed by the component-level `align` prop (logical) — `Omit<…, 'align'>` on both `*Props`.
 - **Use `<DataTable>` instead** when you need sorting / filtering / pagination state. Table is the paint primitive; DataTable will be the opinionated wrapper.
 
+### `<DataTable>` — server-driven data table with column features
+
+```tsx
+const instance = useDataTable<Deal>({
+  data,
+  columns,
+  getRowId: (r) => r.id,
+  enableRowSelection: true,
+  sort,
+  onSortChange: setSort,
+});
+
+<Cluster>
+  <ColumnVisibilityTrigger instance={instance} />
+</Cluster>
+<DataTable instance={instance} aria-label="Deals" />
+```
+
+- Config-driven via `columns: ColumnDef<T>[]`. Each column has a stable `id` used as the key for all per-column state.
+- All state pieces (column order/sizing/visibility/pinning, row selection/expansion, sort) follow the Radix controlled/uncontrolled pattern: `value` + `onValueChange`, OR `defaultValue` only, OR neither.
+- Server-driven sort/search/pagination. DataTable does NOT transform data — `data` must be the server's pre-sorted, pre-paginated slice. `onSortChange` is your trigger to refetch.
+- `enableRowSelection: true` adds a leading checkbox column with select-all (indeterminate when partial). `toggleAllOnPage` ignores `pinnedRows`.
+- Drag-to-reorder is keyboard-accessible (Tab to grip → Space to pick up → ←/→ to move → Space/Enter to drop → Esc to cancel). The grip is hover-revealed on desktop.
+- Resize via the right-edge handle. Keyboard: focused header label, `←`/`→` for −/+8px; Shift+`←`/`→` for ±32px.
+- `ColumnVisibilityTrigger` is the only built-in companion. For column pinning UI (Phase 2 ships state, no built-in UI), wire your own using `instance.pinColumn(id, side)`.
+- **Phase 1 only**: column pinning is plumbed (`columnPinning` state + `pinColumn` helper) but the sticky CSS does NOT render yet — it lands in Phase 2 along with `pinnedRows` rendering. Expandable rows (`renderExpandedRow`) lands in Phase 3. The state plumbing is forward-compatible — code you write now keeps working when those phases ship.
+
+**Anti-patterns:**
+
+- ❌ Mutating `columns` array identity on every render. `useDataTable` captures `defaultColumnOrder` from `columns` once at mount — later identity changes don't trigger a re-derive of the default order. Use a stable reference (`useMemo` or module-level).
+- ❌ Client-sorting `data` AND passing `sort` controlled. Pick one — server is the canonical source. Spinning both means rows reorder twice and ghost-rows appear during fetches.
+- ❌ Rolling your own column visibility UI when `ColumnVisibilityTrigger` does the job. The built-in handles the "last column" guard for you.
+- ❌ Using `<Table>` directly when you want any of: ordering, sizing, visibility, selection, sort indicator wiring. Compose `<DataTable>` instead — the primitive `<Table>` is for static read-only views.
+
 ### `<Pagination>` — numbered nav with windowing
 
 ```tsx

@@ -22,6 +22,55 @@ const EMPTY_PINNING: ColumnPinningState = { left: [], right: [] };
  *
  * Pure logic — no DOM, no refs to elements, no side effects beyond firing
  * the consumer's onChange callbacks.
+ *
+ * @example
+ * const instance = useDataTable<Deal>({
+ *   data,
+ *   columns,
+ *   getRowId: (r) => r.id,
+ *   sort,
+ *   onSortChange: setSort,
+ * });
+ * <DataTable instance={instance} aria-label="Deals" />
+ *
+ * @example
+ * // With row selection and column visibility:
+ * const instance = useDataTable<Deal>({
+ *   data,
+ *   columns,
+ *   getRowId: (r) => r.id,
+ *   enableRowSelection: true,
+ *   onRowSelectionChange: setRowSelection,
+ * });
+ * <Cluster justify="end">
+ *   <ColumnVisibilityTrigger instance={instance} />
+ * </Cluster>
+ * <DataTable instance={instance} aria-label="Deals" />
+ *
+ * @example
+ * // Fully controlled column order + sizing (e.g. persisted to localStorage):
+ * const instance = useDataTable<Deal>({
+ *   data,
+ *   columns,
+ *   getRowId: (r) => r.id,
+ *   columnOrder: savedOrder,
+ *   onColumnOrderChange: setSavedOrder,
+ *   columnSizing: savedSizing,
+ *   onColumnSizingChange: setSavedSizing,
+ * });
+ *
+ * @remarks When NOT to use
+ * - For a read-only static table — use `<Table>` directly. `useDataTable`
+ *   adds overhead you don't need when there's no column or row interactivity.
+ *
+ * @remarks Anti-patterns
+ * - ❌ Passing both `value` and `defaultValue` for the same state piece — `value`
+ *   wins and `defaultValue` is silently ignored. Pick one.
+ * - ❌ Mutating `columns` identity across renders. The hook captures
+ *   `defaultColumnOrder` from `columns` once at mount; later identity changes
+ *   don't trigger a re-derive. Pass a stable reference (`useMemo` or module-level).
+ * - ❌ Client-sorting `data` AND passing controlled `sort`. DataTable is
+ *   server-driven — `data` must be the pre-sorted slice the server returned.
  */
 export function useDataTable<T>(options: UseDataTableOptions<T>): DataTableInstance<T> {
   const {

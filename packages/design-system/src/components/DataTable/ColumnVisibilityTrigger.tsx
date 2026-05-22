@@ -66,6 +66,15 @@ export interface ColumnVisibilityTriggerProps<T = unknown> {
  *   convenience wrapper, not the only way to drive visibility state.
  * - When all columns have `enableHide: false`. The menu will be empty; don't
  *   render this component at all in that case.
+ *
+ * @remarks Anti-patterns
+ * - ❌ Passing a different `instance` to `<ColumnVisibilityTrigger>` than to
+ *   `<DataTable>`. Both must receive the same instance reference; split instances
+ *   means visibility changes in the trigger won't reflect in the table (and
+ *   vice versa).
+ * - ❌ Rendering `<ColumnVisibilityTrigger>` when every column has
+ *   `enableHide: false`. The dropdown will be empty — check `instance.columns`
+ *   first and conditionally suppress the trigger.
  */
 export function ColumnVisibilityTrigger<T>({
   instance,
