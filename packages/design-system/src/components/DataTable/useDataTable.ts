@@ -86,15 +86,82 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): DataTableInsta
     onChange: options.onSortChange,
   });
 
-  // Derived view-models and helper methods land in subsequent tasks (5 & 6).
-  // For now, stubs that satisfy the interface.
-  const visibleColumns = columns;
-  const leftPinnedColumns: typeof columns = [];
-  const rightPinnedColumns: typeof columns = [];
-  const unpinnedColumns = columns;
-  const columnSizesPx: Record<string, number> = {};
-  const leftPinOffsets: Record<string, number> = {};
-  const rightPinOffsets: Record<string, number> = {};
+  const DEFAULT_COL_WIDTH = 120;
+
+  const columnsById = useMemo(() => {
+    const m = new Map<string, (typeof columns)[number]>();
+    for (const c of columns) m.set(c.id, c);
+    return m;
+  }, [columns]);
+
+  // columnSizesPx: id → resolved width (sizing state > ColumnDef.size > default)
+  const columnSizesPx = useMemo<Record<string, number>>(() => {
+    const out: Record<string, number> = {};
+    for (const c of columns) {
+      out[c.id] = columnSizing[c.id] ?? c.size ?? DEFAULT_COL_WIDTH;
+    }
+    return out;
+  }, [columns, columnSizing]);
+
+  // visibleColumns: ordered (per columnOrder) and filtered (visibility !== false)
+  const visibleColumns = useMemo(() => {
+    const isVisible = (id: string) => columnVisibility[id] !== false;
+    const ordered: typeof columns = [];
+    for (const id of columnOrder) {
+      const col = columnsById.get(id);
+      if (col && isVisible(id)) ordered.push(col);
+    }
+    // Any column not in columnOrder (e.g. added after init) goes to the end.
+    for (const c of columns) {
+      if (!columnOrder.includes(c.id) && isVisible(c.id)) ordered.push(c);
+    }
+    return ordered;
+  }, [columns, columnsById, columnOrder, columnVisibility]);
+
+  // Pin grouping. Pinning order within a side is given by columnPinning.left/right.
+  const leftPinnedColumns = useMemo(
+    () =>
+      columnPinning.left
+        .map((id) => columnsById.get(id))
+        .filter((c): c is (typeof columns)[number] => !!c && columnVisibility[c.id] !== false),
+    [columnPinning.left, columnsById, columnVisibility],
+  );
+
+  const rightPinnedColumns = useMemo(
+    () =>
+      columnPinning.right
+        .map((id) => columnsById.get(id))
+        .filter((c): c is (typeof columns)[number] => !!c && columnVisibility[c.id] !== false),
+    [columnPinning.right, columnsById, columnVisibility],
+  );
+
+  const unpinnedColumns = useMemo(() => {
+    const pinned = new Set([...columnPinning.left, ...columnPinning.right]);
+    return visibleColumns.filter((c) => !pinned.has(c.id));
+  }, [visibleColumns, columnPinning.left, columnPinning.right]);
+
+  // Pin offsets — cumulative widths from the pinned edge inward.
+  const leftPinOffsets = useMemo<Record<string, number>>(() => {
+    const out: Record<string, number> = {};
+    let acc = 0;
+    for (const col of leftPinnedColumns) {
+      out[col.id] = acc;
+      acc += columnSizesPx[col.id] ?? DEFAULT_COL_WIDTH;
+    }
+    return out;
+  }, [leftPinnedColumns, columnSizesPx]);
+
+  const rightPinOffsets = useMemo<Record<string, number>>(() => {
+    const out: Record<string, number> = {};
+    let acc = 0;
+    // Rightmost pinned column has offset 0; walk right-to-left accumulating.
+    for (let i = rightPinnedColumns.length - 1; i >= 0; i--) {
+      const col = rightPinnedColumns[i]!;
+      out[col.id] = acc;
+      acc += columnSizesPx[col.id] ?? DEFAULT_COL_WIDTH;
+    }
+    return out;
+  }, [rightPinnedColumns, columnSizesPx]);
 
   const noop = () => {};
 

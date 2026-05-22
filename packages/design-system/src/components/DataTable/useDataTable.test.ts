@@ -94,3 +94,99 @@ describe('useDataTable — state resolution', () => {
     expect(result.current.sort).toBeNull();
   });
 });
+
+describe('useDataTable — derived view-models', () => {
+  it('visibleColumns excludes columns where columnVisibility[id] === false', () => {
+    const { result } = renderHook(() =>
+      useDataTable({
+        data: rows,
+        columns: cols,
+        getRowId,
+        defaultColumnVisibility: { amount: false },
+      }),
+    );
+    expect(result.current.visibleColumns.map((c) => c.id)).toEqual(['name']);
+  });
+
+  it('visibleColumns honours columnOrder', () => {
+    const { result } = renderHook(() =>
+      useDataTable({
+        data: rows,
+        columns: cols,
+        getRowId,
+        defaultColumnOrder: ['amount', 'name'],
+      }),
+    );
+    expect(result.current.visibleColumns.map((c) => c.id)).toEqual(['amount', 'name']);
+  });
+
+  it('columnSizesPx resolves: sizing state > ColumnDef.size > default 120', () => {
+    const colsWithSize: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', cell: (r) => r.name },
+      { id: 'amount', header: 'Amount', cell: (r) => r.amount, size: 80 },
+    ];
+    const { result } = renderHook(() =>
+      useDataTable({
+        data: rows,
+        columns: colsWithSize,
+        getRowId,
+        defaultColumnSizing: { name: 200 },
+      }),
+    );
+    expect(result.current.columnSizesPx).toEqual({ name: 200, amount: 80 });
+  });
+
+  it('groups columns by pinning side', () => {
+    const threeCols: ColumnDef<Row>[] = [
+      { id: 'a', header: 'A', cell: (r) => r.id },
+      { id: 'b', header: 'B', cell: (r) => r.id },
+      { id: 'c', header: 'C', cell: (r) => r.id },
+    ];
+    const { result } = renderHook(() =>
+      useDataTable({
+        data: rows,
+        columns: threeCols,
+        getRowId,
+        defaultColumnPinning: { left: ['a'], right: ['c'] },
+      }),
+    );
+    expect(result.current.leftPinnedColumns.map((c) => c.id)).toEqual(['a']);
+    expect(result.current.rightPinnedColumns.map((c) => c.id)).toEqual(['c']);
+    expect(result.current.unpinnedColumns.map((c) => c.id)).toEqual(['b']);
+  });
+
+  it('leftPinOffsets accumulates widths in pin order', () => {
+    const threeCols: ColumnDef<Row>[] = [
+      { id: 'a', header: 'A', cell: (r) => r.id, size: 50 },
+      { id: 'b', header: 'B', cell: (r) => r.id, size: 80 },
+      { id: 'c', header: 'C', cell: (r) => r.id },
+    ];
+    const { result } = renderHook(() =>
+      useDataTable({
+        data: rows,
+        columns: threeCols,
+        getRowId,
+        defaultColumnPinning: { left: ['a', 'b'], right: [] },
+      }),
+    );
+    expect(result.current.leftPinOffsets).toEqual({ a: 0, b: 50 });
+  });
+
+  it('rightPinOffsets accumulates widths from the right side inward', () => {
+    const threeCols: ColumnDef<Row>[] = [
+      { id: 'a', header: 'A', cell: (r) => r.id, size: 50 },
+      { id: 'b', header: 'B', cell: (r) => r.id, size: 80 },
+      { id: 'c', header: 'C', cell: (r) => r.id, size: 60 },
+    ];
+    const { result } = renderHook(() =>
+      useDataTable({
+        data: rows,
+        columns: threeCols,
+        getRowId,
+        defaultColumnPinning: { left: [], right: ['b', 'c'] },
+      }),
+    );
+    // right pinning: rightmost column gets right: 0, next inward stacks past it
+    expect(result.current.rightPinOffsets).toEqual({ c: 0, b: 60 });
+  });
+});
