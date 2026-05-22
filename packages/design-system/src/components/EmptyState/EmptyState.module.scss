@@ -1,0 +1,94 @@
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.align-center {
+  align-items: center;
+  text-align: center;
+}
+
+.align-start {
+  align-items: flex-start;
+  text-align: start;
+}
+
+// Size modifiers — gap between stacked children + outer padding.
+.size-sm {
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.size-md {
+  gap: var(--space-3);
+  padding: var(--space-6);
+}
+
+.size-lg {
+  gap: var(--space-4);
+  padding: var(--space-10);
+}
+
+// Icon — uses --color-fg-muted so it sits visually "behind" the title.
+// Consumer-supplied SVG inherits via currentColor when its `color` prop
+// is omitted (lucide convention).
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-fg-muted);
+  line-height: var(--line-height-none);
+}
+
+// Title — semantic heading. Reset user-agent margins (h1-h6 default to
+// nonzero margin in most browsers) so the gap above is controlled by
+// .emptyState's flex `gap`.
+// stylelint-disable property-disallowed-list -- defensive reset of user-agent <h*> margins; not a layout property on the component box.
+.title {
+  margin: 0;
+  color: var(--color-fg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+// stylelint-enable property-disallowed-list
+
+.size-sm .title {
+  font-size: var(--font-size-sm);
+}
+
+.size-md .title {
+  font-size: var(--font-size-md);
+}
+
+.size-lg .title {
+  font-size: var(--font-size-xl);
+}
+
+// stylelint-disable property-disallowed-list -- internal max-width caps readable line length on lg sizes; not a layout property on the component box.
+.description {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  line-height: var(--line-height-normal);
+
+  // Constrain readable width on lg sizes so the description doesn't
+  // stretch edge-to-edge in a wide container.
+  max-width: 48ch;
+}
+// stylelint-enable property-disallowed-list
+
+.size-sm .description {
+  font-size: var(--font-size-sm);
+}
+
+.size-md .description,
+.size-lg .description {
+  font-size: var(--font-size-md);
+}
+
+.actions {
+  // Slight extra breathing room before the action(s).
+  display: inline-flex;
+  align-items: center;
+  justify-content: inherit;
+}
