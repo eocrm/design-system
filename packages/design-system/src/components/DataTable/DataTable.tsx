@@ -90,6 +90,19 @@ export interface DataTableProps<T> {
  * });
  * <DataTable instance={instance} aria-label="Deals" />;
  *
+ * @example
+ * // Expandable rows — chevron auto-column at left, detail row below on expand:
+ * const instance = useDataTable({
+ *   data, columns, getRowId,
+ *   renderExpandedRow: (row) => (
+ *     <Stack gap="sm">
+ *       <p>Full description: {row.description}</p>
+ *       <Button onClick={() => archive(row.id)}>Archive</Button>
+ *     </Stack>
+ *   ),
+ * });
+ * <DataTable instance={instance} aria-label="Deals" />;
+ *
  * @remarks When NOT to use
  * - For a static read-only table without column features — use `<Table>` directly.
  * - For huge datasets (10k+ rows on screen at once) — Phase 1 doesn't virtualize;
@@ -171,7 +184,10 @@ function DataTableInner<T>(
     [instance.leftPinnedColumns, instance.unpinnedColumns, instance.rightPinnedColumns],
   );
 
-  const totalColCount = instance.visibleColumns.length + (instance.enableRowSelection ? 1 : 0);
+  const totalColCount =
+    instance.visibleColumns.length +
+    (instance.enableRowSelection ? 1 : 0) +
+    (instance.hasExpansion ? 1 : 0);
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
 
   return (
@@ -193,6 +209,7 @@ function DataTableInner<T>(
 
           <colgroup>
             {instance.enableRowSelection && <col style={{ width: AUTO_CELL_WIDTH }} />}
+            {instance.hasExpansion && <col style={{ width: AUTO_CELL_WIDTH }} />}
             {renderColumns.map((col) => (
               <col key={col.id} style={{ width: instance.columnSizesPx[col.id] ?? 120 }} />
             ))}
@@ -214,6 +231,16 @@ function DataTableInner<T>(
                     aria-label="Select all rows on page"
                   />
                 </Table.HeaderCell>
+              )}
+              {instance.hasExpansion && (
+                <Table.HeaderCell
+                  align="center"
+                  scope="col"
+                  className={clsx(styles.autoCell, styles.autoCellStickyHeader)}
+                  style={{ position: 'sticky', left: instance.enableRowSelection ? AUTO_CELL_WIDTH : 0 }}
+                  // Empty header — the expand column has no per-column action.
+                  aria-label="Row expansion"
+                />
               )}
               {renderColumns.map((col) => (
                 <HeaderCell key={col.id} column={col} instance={instance} />
