@@ -20,6 +20,7 @@ import { Skeleton } from '../Skeleton';
 import { EmptyState } from '../EmptyState';
 import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
+import { reorderRespectingPins } from './reorderColumns';
 import type { DataTableInstance } from './types';
 import styles from './DataTable.module.scss';
 
@@ -117,24 +118,14 @@ function DataTableInner<T>(
     const overId = String(over.id);
 
     instance.setColumnOrder((prev) => {
-      // Map dnd-kit's visible-list-result back into the full columnOrder array
-      // by replacing visible-column slots one-by-one in their absolute positions.
-      const visible = prev.filter((id) => visibleIds.includes(id));
-      const fromIdx = visible.indexOf(activeId);
-      const toIdx = visible.indexOf(overId);
-      if (fromIdx === -1 || toIdx === -1) return prev;
-      const reorderedVisible = [...visible];
-      const [moved] = reorderedVisible.splice(fromIdx, 1);
-      reorderedVisible.splice(toIdx, 0, moved!);
-
-      // Splice reorderedVisible back into prev at the same absolute positions.
-      let cursor = 0;
-      return prev.map((id) => {
-        if (visibleIds.includes(id)) {
-          return reorderedVisible[cursor++]!;
-        }
-        return id;
+      const next = reorderRespectingPins({
+        prev,
+        activeId,
+        overId,
+        visibleIds,
+        pinning: instance.columnPinning,
       });
+      return next ?? prev; // null = rejected, keep prev unchanged
     });
   };
 
