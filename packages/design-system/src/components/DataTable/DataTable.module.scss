@@ -117,3 +117,23 @@
   // No layout-affecting styles — Rule 4. Background and visual modifiers only.
   background: var(--color-bg-row-pinned);
 }
+
+// Pinned cells have an opaque background (so unpinned scrolling content can't
+// show through them). That background would otherwise defeat the row-level
+// hover and selected highlights from the Table primitive — pinned cells would
+// stay "white" while the rest of the row turns blue. Mirror the row states
+// here so the pinned cells visually participate in selection / hover.
+// Rows in the Table primitive get hover via `tr:hover` (when .hover is set on
+// the table) and selected via `tr[aria-selected="true"]`. Scope to `.root`
+// (the table) so we don't bleed into other tables on the page.
+.root tbody tr:hover .pinnedLeft,
+.root tbody tr:hover .pinnedRight,
+.root tbody tr:hover .autoCellStickyBody {
+  background: var(--color-table-row-bg-hover);
+}
+
+.root tbody tr[aria-selected='true'] .pinnedLeft,
+.root tbody tr[aria-selected='true'] .pinnedRight,
+.root tbody tr[aria-selected='true'] .autoCellStickyBody {
+  background: var(--color-table-row-bg-selected);
+}

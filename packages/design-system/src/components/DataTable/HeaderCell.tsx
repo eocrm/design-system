@@ -153,12 +153,16 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
           Padding is conditional: only reserve grip space (left) when reorderable
           and only reserve resize space (right) when resizable, so the header
           label aligns with the body cell content when the surrounding chrome
-          isn't there. */}
+          isn't there. Flex justification mirrors `column.align` so end-aligned
+          and center-aligned columns position their label + sort indicator the
+          same way the body cells render. */}
       <div
         className={clsx(
           styles.inner,
           reorderable && styles.innerWithGrip,
           column.enableResize !== false && styles.innerWithResize,
+          column.align === 'end' && styles.innerAlignEnd,
+          column.align === 'center' && styles.innerAlignCenter,
         )}
       >
         <span

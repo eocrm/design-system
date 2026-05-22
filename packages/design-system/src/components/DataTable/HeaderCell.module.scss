@@ -73,6 +73,23 @@
   padding-right: 24px;
 }
 
+// Flex justification mirrors `column.align` so end- / center-aligned columns
+// position their label + sort indicator the same way the body cells render.
+// Label.flex is overridden from `1 1 auto` to `0 1 auto` so it doesn't fill
+// the row — otherwise `justify-content` has no effect.
+.innerAlignEnd {
+  justify-content: flex-end;
+}
+
+.innerAlignCenter {
+  justify-content: center;
+}
+
+.innerAlignEnd .label,
+.innerAlignCenter .label {
+  flex: 0 1 auto;
+}
+
 .label {
   display: inline-flex;
   align-items: center;
@@ -101,10 +118,13 @@
   }
 }
 
-// Sort chevron — sits at the end of .inner, after the label.
+// Sort chevron — sits at the end of .inner, after the label. Rendered only
+// when the column is sortable, so it can always carry the pointer cursor
+// (matches the .label.sortable cursor: pointer treatment).
 .sortIcon {
   flex-shrink: 0;
   color: var(--color-fg-muted);
+  cursor: pointer;
 }
 
 .sortIconActive {
