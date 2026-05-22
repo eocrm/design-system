@@ -1,0 +1,131 @@
+import { type KeyboardEvent } from 'react';
+import clsx from 'clsx';
+import { GripVertical } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Table } from '../Table';
+import type { TableSortDirection } from '../Table';
+import { useResizeHandle } from './useResizeHandle';
+import type { ColumnDef, DataTableInstance } from './types';
+import styles from './HeaderCell.module.scss';
+
+export interface HeaderCellProps<T> {
+  column: ColumnDef<T>;
+  instance: DataTableInstance<T>;
+}
+
+/**
+ * Sortable header cell with a hover-revealed drag grip and a resize handle.
+ *
+ * - **Label area** is the sort click-target when `column.sortable === true`.
+ * - **Grip** appears on hover or keyboard focus; it's the drag handle wired
+ *   to `@dnd-kit/sortable`'s `useSortable`. The grip is the ONLY draggable
+ *   target — listeners are not attached to the cell or label, so clicking
+ *   the label never starts a drag.
+ * - **Resize handle** is a 6px hit-zone on the right edge. Disabled when
+ *   `column.enableResize === false`. Also supports keyboard resize: arrow
+ *   keys ±8px; Shift+arrow keys ±32px (when the label is focused).
+ */
+export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
+  const sortable = column.sortable === true;
+  const sortDir: TableSortDirection | undefined =
+    instance.sort?.columnId === column.id
+      ? instance.sort.direction
+      : sortable
+        ? 'none'
+        : undefined;
+
+  // dnd-kit sortable — column is its own sortable item.
+  const reorderable = column.enableReorder !== false;
+  const sortableResult = useSortable({ id: column.id, disabled: !reorderable });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortableResult;
+
+  const width = instance.columnSizesPx[column.id] ?? 120;
+  const resize = useResizeHandle({
+    initialWidth: width,
+    minWidth: column.minSize ?? 40,
+    maxWidth: column.maxSize,
+    onResize: (next) => {
+      instance.setColumnSizing((prev) => ({ ...prev, [column.id]: next }));
+    },
+  });
+
+  const onLabelKeyDown = (e: KeyboardEvent<HTMLSpanElement>) => {
+    // Sort cycle on Enter / Space (when sortable)
+    if (sortable && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      instance.toggleSort(column.id);
+      return;
+    }
+    // Keyboard resize: ← / → for ±8px; Shift+← / Shift+→ for ±32px.
+    if (column.enableResize === false) return;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const step = (e.shiftKey ? 32 : 8) * (e.key === 'ArrowRight' ? 1 : -1);
+      const current = instance.columnSizesPx[column.id] ?? 120;
+      const minW = column.minSize ?? 40;
+      const maxW = column.maxSize;
+      let next = current + step;
+      if (next < minW) next = minW;
+      if (maxW != null && next > maxW) next = maxW;
+      instance.setColumnSizing((prev) => ({ ...prev, [column.id]: next }));
+    }
+  };
+
+  const headerContent =
+    typeof column.header === 'function'
+      ? column.header({ column, instance })
+      : column.header;
+
+  const dragStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  } as const;
+
+  return (
+    <Table.HeaderCell
+      align={column.align ?? 'start'}
+      sortDirection={sortDir}
+      onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
+      className={clsx(styles.headerCell, isDragging && styles.dragging)}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ref={setNodeRef as any}
+      style={dragStyle}
+    >
+      <div className={styles.inner}>
+        {reorderable && (
+          <span
+            className={styles.grip}
+            // Spread BOTH attributes (aria/role) and listeners (pointerdown etc.)
+            {...attributes}
+            {...listeners}
+            aria-label={`Drag to reorder ${typeof column.header === 'string' ? column.header : column.id}`}
+            // tabIndex so keyboard users can focus to reveal grip + activate drag
+            tabIndex={0}
+          >
+            <GripVertical size={14} aria-hidden="true" />
+          </span>
+        )}
+        <span
+          className={clsx(styles.label, sortable && styles.sortable)}
+          tabIndex={sortable ? 0 : undefined}
+          role={sortable ? 'button' : undefined}
+          onKeyDown={onLabelKeyDown}
+        >
+          {headerContent}
+        </span>
+        {column.enableResize !== false && (
+          <span
+            className={styles.resizeHandle}
+            onPointerDown={resize.onPointerDown}
+            // Stop sort click when interacting with resize.
+            onClick={(e) => e.stopPropagation()}
+            aria-hidden="true"
+          >
+            <span className={clsx(styles.resizeBar, resize.isResizing && styles.active)} />
+          </span>
+        )}
+      </div>
+    </Table.HeaderCell>
+  );
+}

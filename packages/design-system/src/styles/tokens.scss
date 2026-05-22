@@ -71,8 +71,9 @@
   --ring-success: rgb(0 135 90 / 40%);
   --ring-width: 2px;
 
-  // Spacing — 4px scale
+  // Spacing — 4px scale (--space-05 is a half-step at 2px for tight internal padding)
   --space-0: 0;
+  --space-05: 2px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;

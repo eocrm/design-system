@@ -1,0 +1,89 @@
+@use '../../styles/mixins' as *;
+
+.headerCell {
+  position: relative;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  height: 100%;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+  cursor: default;
+  user-select: none;
+
+  &.sortable {
+    cursor: pointer;
+  }
+
+  &.sortable:focus-visible {
+    @include focus-ring;
+
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.grip {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-fg-muted);
+  opacity: var(--opacity-hidden);
+  cursor: grab;
+  padding: 0 var(--space-05);
+  transition: opacity var(--transition-fast);
+
+  // Reveal on header hover OR when grip itself is focused.
+  .headerCell:hover &,
+  &:focus-visible {
+    opacity: var(--opacity-visible);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 6px;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  user-select: none;
+}
+
+.resizeBar {
+  width: 1px;
+  height: 60%;
+  background: transparent;
+  transition: background var(--transition-fast), width var(--transition-fast);
+}
+
+.resizeHandle:hover .resizeBar,
+.resizeBar.active {
+  background: var(--color-accent);
+  width: 2px;
+}
+
+.dragging {
+  opacity: var(--opacity-muted);
+}
