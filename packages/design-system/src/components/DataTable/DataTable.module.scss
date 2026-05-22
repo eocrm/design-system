@@ -143,3 +143,60 @@
 .root tbody tr:not(.pinnedRow)[aria-selected='true'] .autoCellStickyBody {
   background: var(--color-table-row-bg-selected);
 }
+
+// Expand chevron button — small clickable target inside the auto-expand
+// cell. Mirrors the visual weight of the auto-select Checkbox: 14px icon
+// inside ~24px hit area, transparent background, focus-visible ring.
+.expandButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline: none;
+  }
+}
+
+// Expanded detail row — the extra <Table.Row> rendered below a data row
+// when its expansion state is true. Spans all columns via colSpan and gets
+// a subtle tint to differentiate it from neighboring data rows. Crucially
+// NOT clickable (no .clickableRow class) so onRowClick doesn't fire when
+// the consumer interacts with their rendered detail content.
+.expandedDetailRow {
+  background: var(--color-table-row-bg-striped);
+
+  &:hover {
+    // The Table primitive's `.hover .tbody .tr:hover` rule (specificity 0,3,0)
+    // would otherwise overwrite this background with the row-hover color. The
+    // detail row isn't clickable — hover flashing carries no signal — so we
+    // re-assert the tint at both rest and hover with a compound selector that
+    // tops the Table-level specificity.
+    background: var(--color-table-row-bg-striped);
+  }
+}
+
+// The single colSpan cell that holds the consumer's renderExpandedRow output.
+// More vertical breathing room than a data cell — typically the detail
+// content is a panel of multiple lines, not a single value.
+.expandedDetailCell {
+  padding: var(--space-3) var(--space-4);
+  white-space: normal;
+}

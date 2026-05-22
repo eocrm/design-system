@@ -334,4 +334,165 @@ describe('<DataTable>', () => {
     // Suppress unused-var warning if container is unread.
     void container;
   });
+
+  // ─── Phase 3: expandable rows ──────────────────────────────────────────
+
+  it('renders expand auto-column when renderExpandedRow is provided', () => {
+    function ExpandableHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        renderExpandedRow: (r) => <div>Detail of {r.name}</div>,
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const { container } = render(<ExpandableHarness />);
+    // Each body row should have an expand button (per-row aria-expanded toggle).
+    const expandButtons = container.querySelectorAll('button[aria-expanded]');
+    expect(expandButtons.length).toBe(rows.length);
+  });
+
+  it('does NOT render expand auto-column when renderExpandedRow is omitted', () => {
+    const { container } = render(<Harness />);
+    expect(container.querySelectorAll('button[aria-expanded]').length).toBe(0);
+  });
+
+  it('clicking the expand chevron toggles expandedRows', async () => {
+    const onChange = vi.fn();
+    function ExpandableHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        renderExpandedRow: (r) => <div>Detail of {r.name}</div>,
+        defaultExpandedRows: {},
+        onExpandedRowsChange: onChange,
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const user = userEvent.setup();
+    render(<ExpandableHarness />);
+    const firstChevron = screen.getAllByRole('button', { name: /expand row/i })[0]!;
+    await user.click(firstChevron);
+    expect(onChange).toHaveBeenLastCalledWith({ r1: true });
+  });
+
+  it('toggling the expand chevron mounts and unmounts the detail row in the DOM', async () => {
+    function ExpandableHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        renderExpandedRow: (r) => <div data-testid="detail-content">Detail of {r.name}</div>,
+        defaultExpandedRows: {},
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const user = userEvent.setup();
+    render(<ExpandableHarness />);
+    // No detail row at rest.
+    expect(screen.queryByTestId('detail-content')).toBeNull();
+
+    const firstChevron = screen.getAllByRole('button', { name: /expand row/i })[0]!;
+    await user.click(firstChevron);
+    // Detail row mounts.
+    expect(screen.getByTestId('detail-content')).toHaveTextContent('Detail of Alpha');
+
+    await user.click(firstChevron);
+    // Detail row unmounts.
+    expect(screen.queryByTestId('detail-content')).toBeNull();
+  });
+
+  it('renders the detail row beneath an expanded row with correct colSpan + aria', () => {
+    function ExpandableHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        renderExpandedRow: (r) => <div data-testid="detail-content">Detail of {r.name}</div>,
+        defaultExpandedRows: { r1: true },
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<ExpandableHarness />);
+    // Detail content present
+    expect(screen.getByTestId('detail-content')).toHaveTextContent('Detail of Alpha');
+    // The detail cell spans all columns: 2 data columns + 1 expand auto-cell = 3
+    const detailCell = screen.getByTestId('detail-content').closest('td');
+    expect(detailCell).not.toBeNull();
+    expect(Number(detailCell!.getAttribute('colspan'))).toBe(3);
+  });
+
+  it('expand button has aria-expanded reflecting the row state', () => {
+    function ExpandableHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        renderExpandedRow: () => null,
+        defaultExpandedRows: { r1: true },
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<ExpandableHarness />);
+    const buttons = screen.getAllByRole('button', { name: /expand row/i });
+    expect(buttons[0]).toHaveAttribute('aria-expanded', 'true');
+    expect(buttons[1]).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('expand button aria-controls points to the detail row id', () => {
+    function ExpandableHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        renderExpandedRow: () => <div>x</div>,
+        defaultExpandedRows: { r1: true },
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const { container } = render(<ExpandableHarness />);
+    const firstButton = screen.getAllByRole('button', { name: /expand row/i })[0]!;
+    const controlsId = firstButton.getAttribute('aria-controls');
+    expect(controlsId).toBeTruthy();
+    expect(container.querySelector(`#${controlsId}`)).not.toBeNull();
+  });
+
+  it('clicking the expand button does NOT fire onRowClick', async () => {
+    const onRowClick = vi.fn();
+    function ExpandableHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        renderExpandedRow: () => <div>x</div>,
+        onRowClick,
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    const user = userEvent.setup();
+    render(<ExpandableHarness />);
+    const firstChevron = screen.getAllByRole('button', { name: /expand row/i })[0]!;
+    await user.click(firstChevron);
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it('shifts left-pin offsets by 2 × AUTO_CELL_WIDTH when both selection and expansion are active', () => {
+    function BothHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        enableRowSelection: true,
+        renderExpandedRow: () => null,
+        defaultColumnPinning: { left: ['name'], right: [] },
+      });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<BothHarness />);
+    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+    // 44px (select) + 44px (expand) = 88px
+    expect(nameHeader).toHaveStyle({ left: '88px' });
+  });
 });
