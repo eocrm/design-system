@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useControllableState } from './useControllableState';
 import type {
   ColumnOrderState,
@@ -163,7 +163,96 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): DataTableInsta
     return out;
   }, [rightPinnedColumns, columnSizesPx]);
 
-  const noop = () => {};
+  const toggleRowSelection = useCallback(
+    (rowId: string) => {
+      setRowSelection((prev) => {
+        const next = { ...prev };
+        if (next[rowId]) delete next[rowId];
+        else next[rowId] = true;
+        return next;
+      });
+    },
+    [setRowSelection],
+  );
+
+  const toggleAllOnPage = useCallback(() => {
+    setRowSelection((prev) => {
+      const pageIds = data.map(getRowId);
+      const allSelected = pageIds.every((id) => prev[id]);
+      if (allSelected) {
+        const next = { ...prev };
+        for (const id of pageIds) delete next[id];
+        return next;
+      }
+      const next = { ...prev };
+      for (const id of pageIds) next[id] = true;
+      return next;
+    });
+  }, [data, getRowId, setRowSelection]);
+
+  const isAllOnPageSelected = useCallback(() => {
+    if (data.length === 0) return false;
+    return data.every((row) => rowSelection[getRowId(row)] === true);
+  }, [data, getRowId, rowSelection]);
+
+  const isSomeOnPageSelected = useCallback(() => {
+    if (data.length === 0) return false;
+    let some = false;
+    let all = true;
+    for (const row of data) {
+      if (rowSelection[getRowId(row)]) some = true;
+      else all = false;
+    }
+    return some && !all;
+  }, [data, getRowId, rowSelection]);
+
+  const toggleRowExpanded = useCallback(
+    (rowId: string) => {
+      setExpandedRows((prev) => {
+        const next = { ...prev };
+        if (next[rowId]) delete next[rowId];
+        else next[rowId] = true;
+        return next;
+      });
+    },
+    [setExpandedRows],
+  );
+
+  const toggleColumnVisibility = useCallback(
+    (columnId: string) => {
+      setColumnVisibility((prev) => ({
+        ...prev,
+        [columnId]: prev[columnId] === false ? true : false,
+      }));
+    },
+    [setColumnVisibility],
+  );
+
+  const pinColumn = useCallback(
+    (columnId: string, side: 'left' | 'right' | false) => {
+      setColumnPinning((prev) => {
+        const left = prev.left.filter((id) => id !== columnId);
+        const right = prev.right.filter((id) => id !== columnId);
+        if (side === 'left') left.push(columnId);
+        else if (side === 'right') right.push(columnId);
+        return { left, right };
+      });
+    },
+    [setColumnPinning],
+  );
+
+  const toggleSort = useCallback(
+    (columnId: string) => {
+      setSort((prev) => {
+        if (!prev || prev.columnId !== columnId) {
+          return { columnId, direction: 'asc' };
+        }
+        if (prev.direction === 'asc') return { columnId, direction: 'desc' };
+        return null;
+      });
+    },
+    [setSort],
+  );
 
   return {
     data,
@@ -200,13 +289,13 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): DataTableInsta
     setExpandedRows,
     setSort,
 
-    toggleRowSelection: noop,
-    toggleAllOnPage: noop,
-    isAllOnPageSelected: () => false,
-    isSomeOnPageSelected: () => false,
-    toggleRowExpanded: noop,
-    toggleColumnVisibility: noop,
-    pinColumn: noop,
-    toggleSort: noop,
+    toggleRowSelection,
+    toggleAllOnPage,
+    isAllOnPageSelected,
+    isSomeOnPageSelected,
+    toggleRowExpanded,
+    toggleColumnVisibility,
+    pinColumn,
+    toggleSort,
   };
 }
