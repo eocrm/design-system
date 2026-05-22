@@ -19,10 +19,34 @@ import { Tooltip } from '@eocrm/design-system';
 import { Calendar } from '@eocrm/design-system';
 import { DatePicker } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
+import { DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
+
+type _PreviewRow = { id: string; name: string; stage: string; amount: string };
+const _previewCols: ColumnDef<_PreviewRow>[] = [
+  { id: 'name', header: 'Deal', cell: (r) => r.name, size: 120 },
+  { id: 'stage', header: 'Stage', cell: (r) => r.stage, size: 90 },
+  { id: 'amount', header: 'Amount', cell: (r) => r.amount, align: 'end', size: 80 },
+];
+const _previewData: _PreviewRow[] = [
+  { id: '1', name: 'Acme', stage: 'Won', amount: '$12k' },
+  { id: '2', name: 'Globex', stage: 'Lead', amount: '$4.5k' },
+];
+function DataTablePreview() {
+  const instance = useDataTable<_PreviewRow>({
+    data: _previewData,
+    columns: _previewCols,
+    getRowId: (r) => r.id,
+  });
+  return (
+    <div style={{ width: 220, pointerEvents: 'none' }}>
+      <DataTable instance={instance} aria-label="Preview" />
+    </div>
+  );
+}
 
 const items: { to: string; name: string; description: string; preview: React.ReactNode }[] = [
   {
@@ -144,6 +168,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Skeleton width="40%" />
       </Stack>
     ),
+  },
+  {
+    to: '/components/datatable',
+    name: 'DataTable',
+    description:
+      'Tabular data with sortable / resizable / reorderable columns and row selection.',
+    preview: <DataTablePreview />,
   },
   {
     to: '/components/table',

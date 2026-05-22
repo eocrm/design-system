@@ -32,6 +32,7 @@ import {
   Inbox,
   Square,
   Table as TableIcon,
+  TableProperties,
   ListOrdered,
   type LucideIcon,
 } from 'lucide-react';
@@ -91,6 +92,7 @@ const componentGroups = [
       { to: '/components/pagination', label: 'Pagination', icon: ListOrdered, end: false },
       { to: '/components/skeleton', label: 'Skeleton', icon: Square, end: false },
       { to: '/components/table', label: 'Table', icon: TableIcon, end: false },
+      { to: '/components/datatable', label: 'DataTable', icon: TableProperties, end: false },
     ],
   },
   {
