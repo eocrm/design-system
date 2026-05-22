@@ -20,6 +20,7 @@ import { Calendar } from '@eocrm/design-system';
 import { DatePicker } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
+import { Pagination } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
@@ -71,6 +72,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Input placeholder="Type here…" />
       </div>
     ),
+  },
+  {
+    to: '/components/pagination',
+    name: 'Pagination',
+    description:
+      'Numbered nav with windowing, plus a cursor variant for streams without total. Both controlled, no built-in page size.',
+    preview: <Pagination currentPage={3} pageCount={10} onPageChange={() => {}} size="sm" />,
   },
   {
     to: '/components/password-input',

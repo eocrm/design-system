@@ -12,6 +12,7 @@ import { DatePickersDemo } from './pages/components/DatePickersDemo';
 import { InputDemo } from './pages/components/InputDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
 import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
+import { PaginationDemo } from './pages/components/PaginationDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
 import { SkeletonDemo } from './pages/components/SkeletonDemo';
 import { TableDemo } from './pages/components/TableDemo';
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/components/button" element={<ButtonDemo />} />
           <Route path="/components/datepickers" element={<DatePickersDemo />} />
           <Route path="/components/input" element={<InputDemo />} />
+          <Route path="/components/pagination" element={<PaginationDemo />} />
           <Route path="/components/password-input" element={<PasswordInputDemo />} />
           <Route
             path="/components/password-strength-meter"
