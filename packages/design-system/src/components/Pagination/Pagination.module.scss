@@ -1,3 +1,5 @@
+@use '../../styles/mixins' as *;
+
 .pagination {
   display: inline-flex;
   align-items: center;
@@ -17,10 +19,12 @@
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   user-select: none;
-  transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease;
+
+  // No background / color transitions. Windowing shifts move DOM elements
+  // (page-number-keyed buttons reposition) and a fade on the .current
+  // class-swap during that move reads as "blinky" — the eye tracks the
+  // fade-in/out across the slide. Snapping keeps clicks feeling decisive.
+  // Same precedent as Stripe / Linear / GitHub pagination.
 
   &:hover:not(:disabled) {
     background: var(--color-bg-muted);
@@ -31,8 +35,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
+    @include focus-ring;
   }
 
   &:disabled {
@@ -90,7 +93,6 @@
 
   .navButton {
     height: var(--size-sm);
-    padding: 0 var(--space-2);
   }
 }
 
