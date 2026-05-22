@@ -88,6 +88,14 @@ describe('EmptyState', () => {
     expect((container.firstChild as HTMLElement).className).toMatch(/my-cls/);
   });
 
+  it('flows aria-label through to the <section> wrapper', () => {
+    // Pattern A spread order ({...props} last) means consumer-supplied
+    // aria-label reaches the wrapper, so screen readers treat the section
+    // as a named landmark. Documented contract — see component JSDoc.
+    const { container } = render(<EmptyState title="X" aria-label="Empty contacts" />);
+    expect(container.firstChild).toHaveAttribute('aria-label', 'Empty contacts');
+  });
+
   it('title accepts ReactNode (inline formatting)', () => {
     render(
       <EmptyState

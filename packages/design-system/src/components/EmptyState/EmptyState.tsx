@@ -149,20 +149,19 @@ export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(function Empt
 ) {
   const headingTag = `h${clampHeading(headingLevel)}` as const;
 
-  // Spread order (Pattern A): {...props} before className so the component's
-  // class composition (clsx) wins; consumer-supplied className still merges
-  // via the prop. Any other HTML attr (aria-label, aria-labelledby, id, role,
-  // etc.) flows through and can be overridden by the consumer.
+  // {...props} last so consumer overrides win (Pattern A). className is
+  // destructured above and re-injected into clsx() so consumer-supplied
+  // class names compose with the component's, rather than replacing them.
   return (
     <section
       ref={ref}
-      {...props}
       className={clsx(
         styles.emptyState,
         styles[`size-${size}`],
         styles[`align-${align}`],
         className,
       )}
+      {...props}
     >
       {icon != null && <span className={styles.icon}>{icon}</span>}
       {createElement(headingTag, { className: styles.title }, title)}
