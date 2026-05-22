@@ -1,0 +1,37 @@
+@use '../../styles/mixins' as *;
+
+// Visual / behavior modifiers ONLY. No layout (Rule 4).
+
+.root {
+  // composes the Table primitive's scroll wrapper — nothing to add here yet
+}
+
+// Selection auto-column — fixed narrow width is set via inline <col width> in colgroup.
+.autoCell {
+  // text-align center is set by <Table.Cell align="center" />
+  vertical-align: middle;
+}
+
+.clickableRow {
+  cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline: none;
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+// Empty state row — single colspan cell with centered content.
+.emptyCell {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-fg-muted);
+}
+
+// Skeleton row cells — give some visual breathing room.
+.skeletonCell {
+  vertical-align: middle;
+}

@@ -129,6 +129,25 @@ export type { PaginationProps, PaginationSize, PaginationItem } from './componen
 export { CursorPagination } from './components/CursorPagination';
 export type { CursorPaginationProps } from './components/CursorPagination';
 
+export { DataTable, useDataTable, ColumnVisibilityTrigger } from './components/DataTable';
+export type {
+  DataTableProps,
+  ColumnVisibilityTriggerProps,
+  DataTableInstance,
+  UseDataTableOptions,
+  ColumnDef,
+  ColumnAlign,
+  ColumnOrderState,
+  ColumnSizingState,
+  ColumnVisibilityState,
+  ColumnPinningState,
+  RowSelectionState,
+  ExpandedRowsState,
+  SortState,
+  HeaderContext,
+  CellContext,
+} from './components/DataTable';
+
 // i18n
 export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';

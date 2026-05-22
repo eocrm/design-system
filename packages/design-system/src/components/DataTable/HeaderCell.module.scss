@@ -1,0 +1,147 @@
+@use '../../styles/mixins' as *;
+
+.headerCell {
+  position: relative;
+
+  // overflow:hidden ensures dnd-kit's CSS transform doesn't cause the cell
+  // content to appear wider than the column's <col> width during drag.
+  overflow: hidden;
+}
+
+// Drag grip — absolutely positioned at the left edge of the cell so it never
+// shifts the content area regardless of label length.
+.grip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-fg-muted);
+  opacity: var(--opacity-hidden);
+  cursor: grab;
+  transition: opacity var(--transition-fast);
+
+  // Reveal on header hover OR when grip itself is focused.
+  .headerCell:hover &,
+  &:focus-visible {
+    opacity: var(--opacity-visible);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 100%;
+
+  // Prevent content overflow from expanding the measured cell width.
+  min-width: 0;
+
+  // Reserve space for absolute-positioned grip (left, ~20px) and resize
+  // handle (right, ~24px — wider because it contains chevrons + bar).
+  padding: 0 24px 0 20px;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1 1 auto;
+  min-width: 0;
+
+  // Clip overflowing text instead of stretching the cell.
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+  cursor: default;
+  user-select: none;
+
+  &.sortable {
+    cursor: pointer;
+  }
+
+  &.sortable:focus-visible {
+    @include focus-ring;
+
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+// Sort chevron — sits at the end of .inner, after the label.
+.sortIcon {
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+}
+
+.sortIconActive {
+  color: var(--color-fg);
+}
+
+// Resize handle — absolutely positioned at the right edge of the cell so it
+// never occupies flex space and is always at the exact cell boundary.
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  opacity: var(--opacity-hidden);
+  transition: opacity var(--transition-fast);
+
+  // Reveal when hovering anywhere on the header cell.
+  .headerCell:hover & {
+    opacity: var(--opacity-visible);
+  }
+}
+
+.resizeChevron {
+  width: 8px;
+  height: 8px;
+  color: var(--color-fg-muted);
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.resizeBar {
+  width: 1px;
+  height: 60%;
+  background: var(--color-fg-muted);
+  flex-shrink: 0;
+  transition:
+    background var(--transition-fast),
+    width var(--transition-fast);
+}
+
+// Accent-colour the bar and chevrons when hovered or actively resizing.
+.resizeHandle:hover .resizeBar,
+.resizeBar.active {
+  background: var(--color-accent);
+  width: 2px;
+}
+
+.resizeHandle:hover .resizeChevron,
+.resizeHandle:has(.resizeBar.active) .resizeChevron {
+  color: var(--color-accent);
+}
+
+.dragging {
+  opacity: var(--opacity-dragging);
+}

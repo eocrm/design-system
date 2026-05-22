@@ -10,6 +10,7 @@ export type ComponentName =
   | 'Cluster'
   | 'ConfirmationPopover'
   | 'CursorPagination'
+  | 'DataTable'
   | 'DatePicker'
   | 'DateRangePicker'
   | 'DropdownMenu'

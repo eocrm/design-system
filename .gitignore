@@ -15,3 +15,6 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Superpowers brainstorm session artefacts (visual companion mockups, server state)
+.superpowers/
