@@ -297,21 +297,35 @@ function PinnedRowsExample() {
   const starred: Deal[] = [
     { id: 's1', name: '⭐ Starred deal', stage: 'Won', amount: 50000, owner: 'Sara' },
   ];
+  const [sort, setSort] = useState<SortState | null>(null);
+  const sortedDeals = sort
+    ? [...deals].sort((a, b) => {
+        const va = (a as Record<string, unknown>)[sort.columnId] as string | number;
+        const vb = (b as Record<string, unknown>)[sort.columnId] as string | number;
+        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        return sort.direction === 'asc' ? cmp : -cmp;
+      })
+    : deals;
+
   const instance = useDataTable<Deal>({
-    data: deals,
+    data: sortedDeals,
     pinnedRows: starred,
     columns: dealColumns,
     getRowId: (r) => r.id,
+    sort,
+    onSortChange: setSort,
   });
 
   return (
     <Example
       title="Row pinning (starred-row pattern)"
-      description="Pinned rows render in a separate <tbody> above the main body and ignore pagination. Consumer supplies `pinnedRows` as a separate array — typically from a separate server query. Selection inside the pinned section is per-row; the header select-all only touches `data` (the current page)."
-      code={`const instance = useDataTable({
-  data,                       // current page from server
-  pinnedRows: starredDeals,   // separate query
+      description="Pinned rows render in a separate <tbody> above the main body and stay anchored across sort and pagination. Sort the Deal or Amount column — the starred row stays put while the main body reshuffles. Consumer supplies `pinnedRows` as a separate array, typically from a separate server query. Selection inside the pinned section is per-row; the header select-all only touches `data` (the current page)."
+      code={`const [sort, setSort] = useState<SortState | null>(null);
+const instance = useDataTable({
+  data: sortedDeals,          // current page from server (sorted)
+  pinnedRows: starredDeals,   // separate query — stays put across sort
   columns, getRowId,
+  sort, onSortChange: setSort,
 });`}
     >
       <DataTable instance={instance} aria-label="Deals (pinned rows)" />
