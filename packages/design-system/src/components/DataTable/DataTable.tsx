@@ -21,6 +21,7 @@ import { EmptyState } from '../EmptyState';
 import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
 import { reorderRespectingPins } from './reorderColumns';
+import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
 import styles from './DataTable.module.scss';
 
@@ -41,8 +42,6 @@ export interface DataTableProps<T> {
   caption?: ReactNode;
   className?: string;
 }
-
-const AUTO_CELL_WIDTH = 44;
 
 /**
  * Tabular data component built on the `<Table>` primitive. Owns the column-axis
@@ -129,6 +128,17 @@ function DataTableInner<T>(
     });
   };
 
+  // Pin-ordered render list: [left-pinned, unpinned, right-pinned].
+  // Drives <colgroup>, header row, and body rows so all three stay aligned.
+  const renderColumns = useMemo(
+    () => [
+      ...instance.leftPinnedColumns,
+      ...instance.unpinnedColumns,
+      ...instance.rightPinnedColumns,
+    ],
+    [instance.leftPinnedColumns, instance.unpinnedColumns, instance.rightPinnedColumns],
+  );
+
   const totalColCount = instance.visibleColumns.length + (instance.enableRowSelection ? 1 : 0);
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
 
@@ -151,7 +161,7 @@ function DataTableInner<T>(
 
           <colgroup>
             {instance.enableRowSelection && <col style={{ width: AUTO_CELL_WIDTH }} />}
-            {instance.visibleColumns.map((col) => (
+            {renderColumns.map((col) => (
               <col key={col.id} style={{ width: instance.columnSizesPx[col.id] ?? 120 }} />
             ))}
           </colgroup>
@@ -159,7 +169,12 @@ function DataTableInner<T>(
           <Table.Header>
             <Table.Row>
               {instance.enableRowSelection && (
-                <Table.HeaderCell align="center" scope="col" className={styles.autoCell}>
+                <Table.HeaderCell
+                  align="center"
+                  scope="col"
+                  className={clsx(styles.autoCell, styles.autoCellStickyHeader)}
+                  style={{ position: 'sticky', left: 0 }}
+                >
                   <Checkbox
                     checked={instance.isAllOnPageSelected()}
                     indeterminate={instance.isSomeOnPageSelected()}
@@ -168,7 +183,7 @@ function DataTableInner<T>(
                   />
                 </Table.HeaderCell>
               )}
-              {instance.visibleColumns.map((col) => (
+              {renderColumns.map((col) => (
                 <HeaderCell key={col.id} column={col} instance={instance} />
               ))}
             </Table.Row>
