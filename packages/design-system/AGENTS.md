@@ -508,6 +508,25 @@ const [tab, setTab] = useState('overview');
 - Don't reach for `triggerDisplay='summary'` for tag input — chips communicate the active filter set at a glance.
 - `creatable` requires `searchable` (throws in dev). Passing both `options` and `loadOptions` is also flagged (loadOptions wins).
 
+### `<EmptyState>` — "nothing here" container
+
+```tsx
+<EmptyState
+  icon={<Inbox size={32} />}
+  title="No contacts yet"
+  description="Add your first contact to get started."
+  actions={<Button>Add contact</Button>}
+/>
+```
+
+- Four slots: `icon` (optional ReactNode), `title` (required ReactNode), `description` (optional), `actions` (optional). Stacked vertically.
+- `title` renders as a semantic heading — default `<h3>`. Override via `headingLevel: 1–6` (clamped) when the empty state lives at a different heading depth.
+- Three sizes — `sm` (inline / popover empties), `md` (card / section default), `lg` (hero / full-page).
+- `align`: `'center'` (default) / `'start'` for tight-column use.
+- Use `<Skeleton>` for **loading** states — EmptyState implies "nothing here," not "data on its way."
+- No `variant="error"` — error treatments need different a11y (live regions, retry actions). Use a future `<Alert>` or render a danger-tinted EmptyState with your own error message.
+- No automatic `aria-hidden` on the icon — consumer's icon may be semantic (e.g., a country-flag icon in a "No results for this region" state). If the icon is purely decorative, the consumer should pass `aria-hidden`.
+
 ### `<Skeleton>` — loading placeholder
 
 ```tsx
@@ -522,7 +541,7 @@ const [tab, setTab] = useState('overview');
 - Pulse is **automatically suppressed** when the user has `prefers-reduced-motion: reduce`.
 - `aria-hidden='true'` by default — Skeleton is decorative. Communicate "loading" from a parent live region (e.g., `aria-busy='true'` on the section being filled).
 - Composes — for a list-row placeholder, render `<Skeleton variant='circular' />` + 2–3 text skeletons + a button-shaped rectangular in a Cluster.
-- Use `<EmptyState>` (not yet shipped) for "nothing here yet" — Skeleton implies "loading," not "empty."
+- Use `<EmptyState>` for "nothing here yet" — Skeleton implies "loading," not "empty."
 
 ### `<Table>` — tabular data primitive
 
