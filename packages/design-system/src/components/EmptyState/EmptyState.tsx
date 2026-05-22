@@ -122,8 +122,16 @@ function clampHeading(level: EmptyStateHeadingLevel | undefined): EmptyStateHead
  *   strings hurt heading-navigation UX.
  * - Multiple primary action buttons. Empty states should have ONE
  *   clear next action; secondaries are ghost variant.
- * - Skipping the `description` to save space. The two-line treatment
- *   (title + description) is what makes empty states scannable.
+ *
+ * @remarks A11y
+ * - The wrapper `<section>` only becomes a screen-reader landmark when it
+ *   has an accessible name. Pass `aria-label` (or `aria-labelledby`) when
+ *   the empty state should be navigable as a region — typically when it
+ *   IS the page's primary content (with `headingLevel={1 | 2}`).
+ * - The icon does NOT receive `aria-hidden` automatically — consumer's
+ *   icon may be semantic (e.g., a country-flag icon in a "No results for
+ *   this region" state). Pass `aria-hidden="true"` on the icon when it
+ *   is purely decorative.
  */
 export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(function EmptyState(
   {
@@ -141,6 +149,10 @@ export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(function Empt
 ) {
   const headingTag = `h${clampHeading(headingLevel)}` as const;
 
+  // Spread order (Pattern A): {...props} before className so the component's
+  // class composition (clsx) wins; consumer-supplied className still merges
+  // via the prop. Any other HTML attr (aria-label, aria-labelledby, id, role,
+  // etc.) flows through and can be overridden by the consumer.
   return (
     <section
       ref={ref}

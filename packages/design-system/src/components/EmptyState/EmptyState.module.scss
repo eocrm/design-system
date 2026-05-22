@@ -65,14 +65,17 @@
   font-size: var(--font-size-xl);
 }
 
-// stylelint-disable property-disallowed-list -- internal max-width caps readable line length on lg sizes; not a layout property on the component box.
+// stylelint-disable property-disallowed-list -- `margin: 0` is a defensive
+// reset of the user-agent <p> margin; `max-width: 48ch` is an internal
+// readable-width cap. Neither is a layout property on the component box.
 .description {
   margin: 0;
   color: var(--color-fg-subtle);
   line-height: var(--line-height-normal);
 
-  // Constrain readable width on lg sizes so the description doesn't
-  // stretch edge-to-edge in a wide container.
+  // Cap the readable line length. Most visible on `size-lg` (the only
+  // size that lives inside wide containers), but applied unconditionally
+  // so two-paragraph descriptions stay scannable at any size.
   max-width: 48ch;
 }
 // stylelint-enable property-disallowed-list
@@ -86,9 +89,12 @@
   font-size: var(--font-size-md);
 }
 
+// Shrink-to-fit wrapper around the consumer's actions slot. `inline-flex`
+// keeps a lone `<Button>` from stretching to fill the column when
+// `align="start"` is set; vertical-align ensures consistent baseline
+// against any sibling text. The spacing above comes from `.emptyState`'s
+// `gap`, not from any padding here.
 .actions {
-  // Slight extra breathing room before the action(s).
   display: inline-flex;
   align-items: center;
-  justify-content: inherit;
 }

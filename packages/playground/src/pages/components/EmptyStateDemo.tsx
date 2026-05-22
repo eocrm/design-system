@@ -1,4 +1,4 @@
-import { Button, Card, Cluster, EmptyState, Stack } from '@eocrm/design-system';
+import { Button, Card, Cluster, EmptyState, Stack, Table } from '@eocrm/design-system';
 import { Inbox, PackageOpen, Search, SearchX, Users } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -186,6 +186,56 @@ export function EmptyStateDemo() {
             size="lg"
           />
         </Card>
+      </Example>
+
+      <Example
+        title="Inside a Table (no rows)"
+        description="DataTable's 'no rows' shape: a single body row with a cell that spans every column. Use size='sm' so the empty state sits inside the row without exploding its height."
+        code={`<Table>
+  <Table.Header>
+    <Table.Row>
+      <Table.HeaderCell>Name</Table.HeaderCell>
+      <Table.HeaderCell>Email</Table.HeaderCell>
+      <Table.HeaderCell align="end">Amount</Table.HeaderCell>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
+    <Table.Row>
+      <Table.Cell colSpan={3}>
+        <EmptyState
+          size="sm"
+          icon={<SearchX size={24} />}
+          title="No matching contacts"
+          description="Try clearing the filter or searching for a different name."
+          actions={<Button size="sm">Clear filters</Button>}
+        />
+      </Table.Cell>
+    </Table.Row>
+  </Table.Body>
+</Table>`}
+      >
+        <Table>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>Name</Table.HeaderCell>
+              <Table.HeaderCell>Email</Table.HeaderCell>
+              <Table.HeaderCell align="end">Amount</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell colSpan={3}>
+                <EmptyState
+                  size="sm"
+                  icon={<SearchX size={24} />}
+                  title="No matching contacts"
+                  description="Try clearing the filter or searching for a different name."
+                  actions={<Button size="sm">Clear filters</Button>}
+                />
+              </Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table>
       </Example>
     </DemoLayout>
   );
