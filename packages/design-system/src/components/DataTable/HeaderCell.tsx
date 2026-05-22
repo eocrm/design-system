@@ -160,7 +160,6 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
       <div
         className={clsx(
           styles.inner,
-          reorderable && styles.innerWithGrip,
           column.enableResize !== false && styles.innerWithResize,
           column.align === 'end' && styles.innerAlignEnd,
           column.align === 'center' && styles.innerAlignCenter,

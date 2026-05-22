@@ -14,14 +14,16 @@
   user-select: none;
 }
 
-// Drag grip — absolutely positioned at the left edge of the cell so it never
-// shifts the content area regardless of label length OR column alignment.
+// Drag grip — absolutely positioned at the left edge of the cell, sized to
+// fit inside the cell's left padding area (var(--space-3) = 12px) so it
+// never overlaps the label and nothing has to shift on hover. Only the
+// grip's opacity toggles — no padding/layout animation.
 .grip {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  width: 20px;
+  width: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,21 +54,6 @@
 
   // Prevent content overflow from expanding the measured cell width.
   min-width: 0;
-
-  // Animate padding so the label slides right when the grip fades in on
-  // hover (matches the grip's opacity transition for a coordinated feel).
-  transition: padding var(--transition-fast);
-}
-
-// .innerWithGrip = the column is reorderable. At rest the label is aligned
-// with the body cell content (no padding-left). When the user hovers the
-// header (revealing the grip), the label slides 20px right to make room
-// for the grip — animated via .inner's `transition: padding`. For end-
-// aligned columns the label is anchored to the right (justify-end), so the
-// padding-left change opens up space on the left without moving the label;
-// the grip just becomes visible in that newly-revealed left area.
-.headerCell:hover .innerWithGrip {
-  padding-left: 20px;
 }
 
 // Reserve right space for the absolute-positioned resize handle (~24px — it
