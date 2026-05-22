@@ -52,12 +52,17 @@
 
   // Prevent content overflow from expanding the measured cell width.
   min-width: 0;
+
+  // Animate padding so the label slides right when the grip fades in on
+  // hover (matches the grip's opacity transition for a coordinated feel).
+  transition: padding var(--transition-fast);
 }
 
-// Reserve left space for the absolute-positioned grip (~20px). Omitted when
-// the column isn't reorderable (e.g. pinned column or enableReorder:false) so
-// the header label sits at the same x-offset as the body cell content.
-.innerWithGrip {
+// .innerWithGrip = the column is reorderable. At rest the label is aligned
+// with the body cell content (no padding-left). When the user hovers the
+// header (revealing the grip), the label slides 20px right to make room
+// for the grip — animated via .inner's `transition: padding`.
+.headerCell:hover .innerWithGrip {
   padding-left: 20px;
 }
 
