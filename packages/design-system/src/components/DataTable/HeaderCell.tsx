@@ -1,6 +1,6 @@
 import { type KeyboardEvent } from 'react';
 import clsx from 'clsx';
-import { GripVertical, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { GripVertical, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Table } from '../Table';
@@ -111,22 +111,27 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
       ref={setNodeRef as any}
       style={dragStyle}
     >
+      {/* Grip pinned to absolute left — kept outside .inner so it doesn't
+          shift the content area. Only rendered when column is reorderable. */}
+      {reorderable && (
+        <span
+          className={styles.grip}
+          // Spread BOTH attributes (aria/role) and listeners (pointerdown etc.)
+          {...attributes}
+          {...listeners}
+          aria-label={`Drag to reorder ${typeof column.header === 'string' ? column.header : column.id}`}
+          // tabIndex so keyboard users can focus to reveal grip + activate drag
+          tabIndex={0}
+          // Stop sort click from misfiring when the user clicks the grip without moving.
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical size={14} aria-hidden="true" />
+        </span>
+      )}
+
+      {/* Content area: label (flex:1) + sort icon pinned to end of content.
+          Left/right padding reserves space for the absolute grip and resize handle. */}
       <div className={styles.inner}>
-        {reorderable && (
-          <span
-            className={styles.grip}
-            // Spread BOTH attributes (aria/role) and listeners (pointerdown etc.)
-            {...attributes}
-            {...listeners}
-            aria-label={`Drag to reorder ${typeof column.header === 'string' ? column.header : column.id}`}
-            // tabIndex so keyboard users can focus to reveal grip + activate drag
-            tabIndex={0}
-            // Stop sort click from misfiring when the user clicks the grip without moving.
-            onClick={(e) => e.stopPropagation()}
-          >
-            <GripVertical size={14} aria-hidden="true" />
-          </span>
-        )}
         <span
           className={clsx(styles.label, sortable && styles.sortable)}
           tabIndex={sortable ? 0 : undefined}
@@ -135,9 +140,8 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
         >
           {headerContent}
         </span>
-        {/* Sort chevron sits between label and resize handle — at the end of
-            the content area. aria-hidden: purely decorative; aria-sort on the
-            <th> carries the semantic signal. */}
+        {/* Sort chevron always at end of content area — aria-hidden because
+            aria-sort on the <th> carries the semantic signal. */}
         {sortDir != null && (
           <SortIcon
             size={12}
@@ -145,18 +149,23 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
             className={clsx(styles.sortIcon, sortDir !== 'none' && styles.sortIconActive)}
           />
         )}
-        {column.enableResize !== false && (
-          <span
-            className={styles.resizeHandle}
-            onPointerDown={resize.onPointerDown}
-            // Stop sort click when interacting with resize.
-            onClick={(e) => e.stopPropagation()}
-            aria-hidden="true"
-          >
-            <span className={clsx(styles.resizeBar, resize.isResizing && styles.active)} />
-          </span>
-        )}
       </div>
+
+      {/* Resize handle pinned to absolute right — outside .inner so it
+          doesn't consume flex space and stays at the exact cell edge. */}
+      {column.enableResize !== false && (
+        <span
+          className={styles.resizeHandle}
+          onPointerDown={resize.onPointerDown}
+          // Stop sort click when interacting with resize.
+          onClick={(e) => e.stopPropagation()}
+          aria-hidden="true"
+        >
+          <ChevronLeft className={styles.resizeChevron} aria-hidden="true" />
+          <span className={clsx(styles.resizeBar, resize.isResizing && styles.active)} />
+          <ChevronRight className={styles.resizeChevron} aria-hidden="true" />
+        </span>
+      )}
     </Table.HeaderCell>
   );
 }
