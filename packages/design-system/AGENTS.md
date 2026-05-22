@@ -600,7 +600,7 @@ const instance = useDataTable<Deal>({
 - Drag-to-reorder is keyboard-accessible (Tab to grip → Space to pick up → ←/→ to move → Space/Enter to drop → Esc to cancel). The grip is hover-revealed on desktop.
 - Resize via the right-edge handle. Keyboard: focused header label, `←`/`→` for −/+8px; Shift+`←`/`→` for ±32px.
 - `ColumnVisibilityTrigger` is the only built-in companion. For column pinning UI (Phase 2 ships state, no built-in UI), wire your own using `instance.pinColumn(id, side)`.
-- **Phase 1 only**: column pinning is plumbed (`columnPinning` state + `pinColumn` helper) but the sticky CSS does NOT render yet — it lands in Phase 2 along with `pinnedRows` rendering. Expandable rows (`renderExpandedRow`) lands in Phase 3. The state plumbing is forward-compatible — code you write now keeps working when those phases ship.
+- **Phase 2 ships pinning rendering.** `columnPinning` now applies sticky CSS with cumulative offsets and an inside-edge shadow; `pinnedRows` renders in a separate `<tbody>` above the main body. The selection auto-column is auto-left-pinned at offset 0. Cross-pin-boundary drag drops are rejected — pinned columns can only be reordered within their pin group. Expandable rows (`renderExpandedRow`) still lands in Phase 3.
 
 **Anti-patterns:**
 

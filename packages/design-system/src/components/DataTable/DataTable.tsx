@@ -69,6 +69,14 @@ export interface DataTableProps<T> {
  *   );
  * }
  *
+ * @example
+ * // Column pinning + pinned rows
+ * const instance = useDataTable({
+ *   data, pinnedRows: starredDeals, columns, getRowId,
+ *   defaultColumnPinning: { left: ['name'], right: ['actions'] },
+ * });
+ * <DataTable instance={instance} aria-label="Deals" />;
+ *
  * @remarks When NOT to use
  * - For a static read-only table without column features — use `<Table>` directly.
  * - For huge datasets (10k+ rows on screen at once) — Phase 1 doesn't virtualize;
