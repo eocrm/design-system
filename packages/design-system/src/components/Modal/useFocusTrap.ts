@@ -38,10 +38,7 @@ function getFocusables(container: HTMLElement): HTMLElement[] {
  * const contentRef = useRef<HTMLDivElement | null>(null);
  * useFocusTrap(contentRef, open);
  */
-export function useFocusTrap(
-  containerRef: RefObject<HTMLElement | null>,
-  active: boolean,
-): void {
+export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, active: boolean): void {
   useEffect(() => {
     if (!active) return;
     const container = containerRef.current;

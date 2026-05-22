@@ -1,12 +1,5 @@
 import { useRef, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Cluster,
-  Input,
-  Modal,
-  Stack,
-} from '@eocrm/design-system';
+import { Badge, Button, Cluster, Input, Modal, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/Modal/ModalRoot.tsx?raw';

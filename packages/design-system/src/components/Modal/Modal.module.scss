@@ -83,9 +83,15 @@
 // Size presets — each one sets --modal-width which `.content` consumes via
 // the `min(100% - 32px, var(--modal-width, ...))` clamp above. Using a custom
 // prop keeps the size logic in one place.
-.size-sm { --modal-width: var(--size-modal-sm); }
-.size-md { --modal-width: var(--size-modal-md); }
-.size-lg { --modal-width: var(--size-modal-lg); }
+.size-sm {
+  --modal-width: var(--size-modal-sm);
+}
+.size-md {
+  --modal-width: var(--size-modal-md);
+}
+.size-lg {
+  --modal-width: var(--size-modal-lg);
+}
 
 // ─── Compact sizing for size="sm" ───────────────────────────────────────
 .content.size-sm .header,
@@ -172,9 +178,15 @@
   border-top: var(--border-width) solid var(--color-border);
 }
 
-.footerAlign-start { justify-content: flex-start; }
-.footerAlign-end { justify-content: flex-end; }
-.footerAlign-space-between { justify-content: space-between; }
+.footerAlign-start {
+  justify-content: flex-start;
+}
+.footerAlign-end {
+  justify-content: flex-end;
+}
+.footerAlign-space-between {
+  justify-content: space-between;
+}
 
 // ─── Mobile fullscreen breakpoint ───────────────────────────────────────
 

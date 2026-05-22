@@ -74,8 +74,10 @@ Add to `packages/design-system/src/styles/tokens.scss`:
 --size-modal-lg: 800px;
 
 /* Dimming backdrop. rgb-modern notation matching existing shadow tokens. */
---color-bg-overlay: rgb(15 23 42 / 50%);              /* solid variant */
---color-bg-overlay-blur: rgb(255 255 255 / 30%);      /* blur variant: light frosted-glass tint paired with backdrop-filter: blur(4px) */
+--color-bg-overlay: rgb(15 23 42 / 50%); /* solid variant */
+--color-bg-overlay-blur: rgb(
+  255 255 255 / 30%
+); /* blur variant: light frosted-glass tint paired with backdrop-filter: blur(4px) */
 ```
 
 ## Public API
@@ -367,7 +369,9 @@ Edge case: zero focusables in the modal (rare — a Modal.Header with `closeButt
   opacity: 1;
   transition: opacity var(--transition-base);
 
-  @starting-style { opacity: 0; }
+  @starting-style {
+    opacity: 0;
+  }
 }
 
 /* Blur variant — opt-in via overlay="blur". Light tinted background +
@@ -391,7 +395,9 @@ Edge case: zero focusables in the modal (rare — a Modal.Header with `closeButt
   }
 }
 
-.overlay[data-state='closed'] { opacity: 0; }
+.overlay[data-state='closed'] {
+  opacity: 0;
+}
 .content[data-state='closed'] {
   opacity: 0;
   transform: translateY(8px) scale(0.96);
@@ -418,28 +424,29 @@ Header + Body + Footer remain a flex column inside; Body fills the gap and scrol
 
 ### ARIA contract
 
-| Element | Attributes |
-|---|---|
-| Overlay | (no role — clickable backdrop only) |
-| Content | `role="dialog"`, `aria-modal="true"`, `tabIndex={-1}`, plus EITHER `aria-labelledby={headingId}` (Header rendered) OR `aria-label={prop}` (no Header), plus optional `aria-describedby` |
-| Header inner `<h2>` | Auto-assigned id via `useId()` + `sanitizeId`; stored in context, consumed by Content for `aria-labelledby` |
-| Header × button | `aria-label="Close dialog"` |
-| Body | Plain `<div>`; if `aria-describedby` matches a child id, consumer wires it themselves |
-| Footer | `<div role="group">` so AT announces the action set as a group |
-| Modal.Close wrapper | No ARIA — cloned child's native semantics carry the contract |
+| Element             | Attributes                                                                                                                                                                              |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Overlay             | (no role — clickable backdrop only)                                                                                                                                                     |
+| Content             | `role="dialog"`, `aria-modal="true"`, `tabIndex={-1}`, plus EITHER `aria-labelledby={headingId}` (Header rendered) OR `aria-label={prop}` (no Header), plus optional `aria-describedby` |
+| Header inner `<h2>` | Auto-assigned id via `useId()` + `sanitizeId`; stored in context, consumed by Content for `aria-labelledby`                                                                             |
+| Header × button     | `aria-label="Close dialog"`                                                                                                                                                             |
+| Body                | Plain `<div>`; if `aria-describedby` matches a child id, consumer wires it themselves                                                                                                   |
+| Footer              | `<div role="group">` so AT announces the action set as a group                                                                                                                          |
+| Modal.Close wrapper | No ARIA — cloned child's native semantics carry the contract                                                                                                                            |
 
 **Dev warning:** if neither `aria-labelledby` (Header rendered) nor `aria-label` is set, console.warn in development only. Same precedent as Popover.
 
 ### Keyboard
 
-| Key | Action |
-|---|---|
-| Tab | Cycle focus forward within modal; from last focusable wraps to first |
-| Shift+Tab | Cycle focus backward; from first wraps to last |
-| Escape | Close the **topmost** modal only; ignored when `disableEscapeClose: true` |
-| Enter / Space | Native — activates focused control |
+| Key           | Action                                                                    |
+| ------------- | ------------------------------------------------------------------------- |
+| Tab           | Cycle focus forward within modal; from last focusable wraps to first      |
+| Shift+Tab     | Cycle focus backward; from first wraps to last                            |
+| Escape        | Close the **topmost** modal only; ignored when `disableEscapeClose: true` |
+| Enter / Space | Native — activates focused control                                        |
 
 Auto-focus on open:
+
 1. `initialFocusRef.current` if provided and focusable
 2. Else the dialog container (`tabIndex=-1`)
 
@@ -452,7 +459,10 @@ Focus restore on close: `previouslyFocused.focus({ preventScroll: true })` if st
   .overlay,
   .content {
     transition: none;
-    @starting-style { opacity: 1; transform: none; }
+    @starting-style {
+      opacity: 1;
+      transform: none;
+    }
   }
 }
 ```

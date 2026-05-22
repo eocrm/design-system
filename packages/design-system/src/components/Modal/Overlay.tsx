@@ -1,4 +1,9 @@
-import { useEffect, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useModalContext } from './context';
 import styles from './Modal.module.scss';
