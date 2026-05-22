@@ -1,3 +1,5 @@
+@use '../../styles/mixins' as *;
+
 // Visual / behavior modifiers ONLY. No layout (Rule 4).
 
 .root {
@@ -12,6 +14,14 @@
 
 .clickableRow {
   cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline: none;
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
 }
 
 // Empty state row — single colspan cell with centered content.

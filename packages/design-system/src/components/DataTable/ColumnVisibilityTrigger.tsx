@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
 import { Columns3 } from 'lucide-react';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
@@ -8,7 +8,8 @@ import type {
 } from '../DropdownMenu';
 import type { DataTableInstance } from './types';
 
-export interface ColumnVisibilityTriggerProps<T = unknown> {
+export interface ColumnVisibilityTriggerProps<T = unknown>
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'onChange'> {
   /** The `useDataTable` instance to read column state from and dispatch visibility changes to. */
   instance: DataTableInstance<T>;
   /**
@@ -76,13 +77,17 @@ export interface ColumnVisibilityTriggerProps<T = unknown> {
  *   `enableHide: false`. The dropdown will be empty — check `instance.columns`
  *   first and conditionally suppress the trigger.
  */
-export function ColumnVisibilityTrigger<T>({
-  instance,
-  label = 'Columns',
-  icon = <Columns3 size={14} aria-hidden="true" />,
-  side,
-  align,
-}: ColumnVisibilityTriggerProps<T>) {
+function ColumnVisibilityTriggerInner<T>(
+  {
+    instance,
+    label = 'Columns',
+    icon = <Columns3 size={14} aria-hidden="true" />,
+    side,
+    align,
+    ...rest
+  }: ColumnVisibilityTriggerProps<T>,
+  ref: Ref<HTMLButtonElement>,
+) {
   const hidableCols = instance.columns.filter((c) => c.enableHide !== false);
 
   // Count visible hidable columns so we can disable the last one.
@@ -93,9 +98,11 @@ export function ColumnVisibilityTrigger<T>({
 
   return (
     <DropdownMenu>
-      {/* DropdownMenu.Trigger clones its child — no asChild prop needed. */}
+      {/* DropdownMenu.Trigger clones its child and merges refs — the forwarded ref
+          will be preserved alongside the trigger's internal positioning ref. */}
       <DropdownMenu.Trigger>
-        <Button variant="ghost" size="sm">
+        {/* {...rest} last so consumer overrides win (Pattern A). */}
+        <Button ref={ref} variant="ghost" size="sm" {...rest}>
           {icon}
           {label}
         </Button>
@@ -121,3 +128,7 @@ export function ColumnVisibilityTrigger<T>({
     </DropdownMenu>
   );
 }
+
+export const ColumnVisibilityTrigger = forwardRef(ColumnVisibilityTriggerInner) as <T>(
+  props: ColumnVisibilityTriggerProps<T> & { ref?: Ref<HTMLButtonElement> },
+) => ReturnType<typeof ColumnVisibilityTriggerInner>;

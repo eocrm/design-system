@@ -25,7 +25,6 @@ import { Skeleton } from '../Skeleton';
 import { EmptyState } from '../EmptyState';
 import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
-import { ColumnVisibilityTrigger } from './ColumnVisibilityTrigger';
 import type { DataTableInstance } from './types';
 import styles from './DataTable.module.scss';
 
@@ -56,8 +55,8 @@ const AUTO_CELL_WIDTH = 44;
  * fires `onSortChange` and exposes selection state for the consumer to act on.
  *
  * Accepts a `DataTableInstance<T>` from `useDataTable` (the only state-owning
- * surface). Pass companion components like `<DataTable.ColumnVisibilityTrigger>`
- * the same `instance`.
+ * surface). Pass companion components like `<ColumnVisibilityTrigger>` the same
+ * `instance`.
  *
  * @example
  * function Example() {
@@ -69,7 +68,7 @@ const AUTO_CELL_WIDTH = 44;
  *   });
  *   return (
  *     <>
- *       <DataTable.ColumnVisibilityTrigger instance={instance} />
+ *       <ColumnVisibilityTrigger instance={instance} />
  *       <DataTable instance={instance} aria-label="Deals" />
  *     </>
  *   );
@@ -271,6 +270,3 @@ export const DataTable = forwardRef(DataTableInner) as <T>(
   props: DataTableProps<T> & { ref?: Ref<HTMLTableElement> },
 ) => ReturnType<typeof DataTableInner>;
 
-// Attach companion components as a Radix-style compound API.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(DataTable as any).ColumnVisibilityTrigger = ColumnVisibilityTrigger;

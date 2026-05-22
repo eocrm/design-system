@@ -121,6 +121,8 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
             aria-label={`Drag to reorder ${typeof column.header === 'string' ? column.header : column.id}`}
             // tabIndex so keyboard users can focus to reveal grip + activate drag
             tabIndex={0}
+            // Stop sort click from misfiring when the user clicks the grip without moving.
+            onClick={(e) => e.stopPropagation()}
           >
             <GripVertical size={14} aria-hidden="true" />
           </span>

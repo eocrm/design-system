@@ -55,7 +55,14 @@ export function BodyRow<T>({ row, instance }: BodyRowProps<T>) {
       className={clsx(instance.onRowClick && styles.clickableRow)}
     >
       {instance.enableRowSelection && (
-        <Table.Cell className={styles.autoCell} align="center">
+        <Table.Cell
+          className={styles.autoCell}
+          align="center"
+          // Stop clicks anywhere in the selection cell from bubbling to the row's
+          // onRowClick handler. The closest('input,...') filter in onRowClick catches
+          // the input element itself but misses the styled visual-checkbox span sibling.
+          onClick={(e) => e.stopPropagation()}
+        >
           <Checkbox
             checked={selected}
             onChange={() => instance.toggleRowSelection(rowId)}

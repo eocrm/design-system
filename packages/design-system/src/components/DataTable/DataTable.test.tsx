@@ -157,6 +157,25 @@ describe('<DataTable>', () => {
     expect(onRowClick).not.toHaveBeenCalled();
   });
 
+  it('row click does NOT fire onRowClick when origin is in the selection cell (any descendant)', async () => {
+    const onRowClick = vi.fn();
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Harness
+        enableRowSelection
+        onRowClick={onRowClick}
+        defaultRowSelection={{}}
+        onRowSelectionChange={onChange}
+      />,
+    );
+    // Click the auto-cell <td> itself — the selection cell is the first cell of each body row.
+    const firstRow = screen.getAllByRole('row')[1]!;
+    const cells = within(firstRow).getAllByRole('cell');
+    await user.click(cells[0]!); // selection cell is the first <td>
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
   it('hidden columns do not render cells', () => {
     render(<Harness defaultColumnVisibility={{ amount: false }} />);
     expect(screen.queryByText('10')).toBeNull();

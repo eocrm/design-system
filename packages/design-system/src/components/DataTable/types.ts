@@ -98,32 +98,66 @@ export interface UseDataTableOptions<T> {
   enableRowSelection?: boolean;
 
   // each state piece: controlled / default / onChange (Radix pattern)
+
+  /** Controlled column order. Pass with `onColumnOrderChange` to manage state externally. */
   columnOrder?: ColumnOrderState;
+  /** Initial column order when uncontrolled. Defaults to `columns.map(c => c.id)`. */
   defaultColumnOrder?: ColumnOrderState;
+  /** Fires when the order changes (drag-reorder or programmatic set). */
   onColumnOrderChange?: (next: ColumnOrderState) => void;
 
+  /** Controlled column sizing map (column id → width in px). Pass with `onColumnSizingChange`. */
   columnSizing?: ColumnSizingState;
+  /** Initial column sizing when uncontrolled. Missing entries fall back to `ColumnDef.size` or 120px. */
   defaultColumnSizing?: ColumnSizingState;
+  /** Fires when any column is resized. */
   onColumnSizingChange?: (next: ColumnSizingState) => void;
 
+  /** Controlled column visibility map (column id → visible flag). Pass with `onColumnVisibilityChange`. */
   columnVisibility?: ColumnVisibilityState;
+  /** Initial column visibility when uncontrolled. Missing entries are treated as visible. */
   defaultColumnVisibility?: ColumnVisibilityState;
+  /** Fires when column visibility toggles (e.g. via `<ColumnVisibilityTrigger>`). */
   onColumnVisibilityChange?: (next: ColumnVisibilityState) => void;
 
+  /**
+   * Controlled column pinning state. Pass with `onColumnPinningChange`.
+   * Note: Phase 1 plumbs this state — sticky rendering ships in Phase 2.
+   */
   columnPinning?: ColumnPinningState;
+  /**
+   * Initial column pinning when uncontrolled. Defaults to `{ left: [], right: [] }`.
+   * Note: Phase 1 plumbs this state — sticky rendering ships in Phase 2.
+   */
   defaultColumnPinning?: ColumnPinningState;
+  /** Fires when a column is pinned or unpinned. */
   onColumnPinningChange?: (next: ColumnPinningState) => void;
 
+  /** Controlled row selection map (row id → selected flag). Pass with `onRowSelectionChange`. */
   rowSelection?: RowSelectionState;
+  /** Initial row selection when uncontrolled. Defaults to `{}` (nothing selected). */
   defaultRowSelection?: RowSelectionState;
+  /** Fires when any row selection changes (per-row toggle or select-all). */
   onRowSelectionChange?: (next: RowSelectionState) => void;
 
+  /**
+   * Controlled expanded-rows map (row id → expanded flag). Pass with `onExpandedRowsChange`.
+   * Note: Phase 1 plumbs this state — expansion rendering ships in Phase 3.
+   */
   expandedRows?: ExpandedRowsState;
+  /**
+   * Initial expanded rows when uncontrolled. Defaults to `{}` (all collapsed).
+   * Note: Phase 1 plumbs this state — expansion rendering ships in Phase 3.
+   */
   defaultExpandedRows?: ExpandedRowsState;
+  /** Fires when a row is expanded or collapsed. */
   onExpandedRowsChange?: (next: ExpandedRowsState) => void;
 
+  /** Controlled single-column sort state. Pass with `onSortChange` for server-driven sorting. */
   sort?: SortState | null;
+  /** Initial sort when uncontrolled. Defaults to `null` (unsorted). */
   defaultSort?: SortState | null;
+  /** Fires when the sort state changes (column header click cycles null → asc → desc → null). */
   onSortChange?: (next: SortState | null) => void;
 
   // interactivity
@@ -173,12 +207,20 @@ export interface DataTableInstance<T> {
   setSort: (updater: Updater<SortState | null>) => void;
 
   // higher-level helpers
+  /** Toggle selection of a single row by id. */
   toggleRowSelection: (rowId: string) => void;
+  /** Toggle selection of all rows in `data` (does not affect `pinnedRows`). */
   toggleAllOnPage: () => void;
+  /** All rows in `data` are selected (excludes `pinnedRows`). */
   isAllOnPageSelected: () => boolean;
+  /** Some but not all rows in `data` are selected — drives the header checkbox indeterminate state. */
   isSomeOnPageSelected: () => boolean;
+  /** Toggle expansion of a single row by id. */
   toggleRowExpanded: (rowId: string) => void;
+  /** Toggle visibility of a column by id. Guarded against hiding the last visible hidable column when called via `<ColumnVisibilityTrigger>`. */
   toggleColumnVisibility: (columnId: string) => void;
+  /** Pin a column to `left`, `right`, or `false` to unpin. Pinning order within a side is append-on-pin. */
   pinColumn: (columnId: string, side: 'left' | 'right' | false) => void;
+  /** Cycle sort state for a column: null → asc → desc → null. */
   toggleSort: (columnId: string) => void;
 }
