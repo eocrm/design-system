@@ -1,0 +1,188 @@
+@use '../../styles/mixins' as *;
+
+// ─── Overlay ────────────────────────────────────────────────────────────
+// Dimming / blurred backdrop. Portaled directly inside <body>. Fills the
+// viewport, centers the content via flex. The --modal-depth custom prop
+// (set by Overlay.tsx) is available for any per-depth styling — but with
+// the display-toggle stacking model, at most one overlay is visible at a
+// time, so depth-aware z-index ordering is largely a no-op.
+
+// stylelint-disable property-disallowed-list -- internal positioning, not consumer layout
+.overlay {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- overlay must be fixed to fill viewport
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-overlay);
+  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2);
+  opacity: var(--opacity-visible);
+  transition: opacity var(--transition-base);
+
+  @starting-style {
+    opacity: var(--opacity-hidden);
+  }
+}
+
+.overlay[data-state='closed'] {
+  opacity: var(--opacity-hidden);
+}
+
+// Stacked-modal display model: lower overlays are hidden via display:none
+// while a deeper modal is open. React state stays intact; pop is instant.
+.overlay[data-stack-position='hidden'] {
+  display: none;
+}
+
+// Frosted-glass variant. Light tinted background + backdrop-filter for the
+// glass effect. -webkit prefix for Safari < 18.
+.overlay[data-variant='blur'] {
+  background: var(--color-bg-overlay-blur);
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
+  backdrop-filter: blur(8px);
+  // stylelint-disable-next-line property-no-vendor-prefix, scale-unlimited/declaration-strict-value -- Safari < 18 requires the prefix
+  -webkit-backdrop-filter: blur(8px);
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Content (dialog) ───────────────────────────────────────────────────
+// The dialog box itself. Flex column so Header/Body/Footer stack with the
+// Body taking remaining height (scrollable when overflowing).
+
+// stylelint-disable property-disallowed-list -- internal positioning, not consumer layout
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2 + 1);
+  max-height: calc(100vh - 64px);
+  width: min(100% - 32px, var(--modal-width, var(--size-modal-md)));
+  opacity: var(--opacity-visible);
+  transform: translateY(0) scale(1);
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+
+  @starting-style {
+    opacity: var(--opacity-hidden);
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+.content[data-state='closed'] {
+  opacity: var(--opacity-hidden);
+  transform: translateY(8px) scale(0.96);
+}
+// stylelint-enable property-disallowed-list
+
+// Size presets — each one sets --modal-width which `.content` consumes via
+// the `min(100% - 32px, var(--modal-width, ...))` clamp above. Using a custom
+// prop keeps the size logic in one place.
+.size-sm { --modal-width: var(--size-modal-sm); }
+.size-md { --modal-width: var(--size-modal-md); }
+.size-lg { --modal-width: var(--size-modal-lg); }
+
+// ─── Header ─────────────────────────────────────────────────────────────
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.headerTitle {
+  // stylelint-disable-next-line property-disallowed-list -- reset browser default h2 margin; internal to component
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+}
+
+.headerCloseButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline: none;
+  }
+}
+
+// ─── Body ───────────────────────────────────────────────────────────────
+
+.body {
+  padding: var(--space-4);
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.bodyPaddingNone {
+  padding: 0;
+}
+
+// ─── Footer ─────────────────────────────────────────────────────────────
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.footerAlign-start { justify-content: flex-start; }
+.footerAlign-end { justify-content: flex-end; }
+.footerAlign-space-between { justify-content: space-between; }
+
+// ─── Mobile fullscreen breakpoint ───────────────────────────────────────
+
+// stylelint-disable property-disallowed-list -- internal layout for narrow viewports
+@media (max-width: 640px) {
+  .content {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Reduced motion ─────────────────────────────────────────────────────
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .content {
+    transition: none;
+
+    @starting-style {
+      opacity: var(--opacity-visible);
+      transform: none;
+    }
+  }
+}
