@@ -66,7 +66,7 @@ export function DataTableDemo() {
     <DemoLayout
       name="DataTable"
       componentName="DataTable"
-      description="Composition over the Table primitive with column ordering / sizing / visibility, row selection, row click, sortable headers, and loading/empty states. Phase 1 — column pinning and expandable rows ship in later phases."
+      description="Composition over the Table primitive with column ordering / sizing / visibility, row selection, row click, sortable headers, loading/empty states, plus left/right column pinning and pinned rows (Phase 2). Expandable rows ship in Phase 3."
       tsxSource={tsxSource}
       scssSource={scssSource}
       tsxFilename="DataTable.tsx"

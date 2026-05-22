@@ -157,9 +157,12 @@
   // here so the pinned corner cell blends with the rest of the header band.
   background: var(--color-table-header-bg);
 
-  // Sticky header (existing Table behavior) gives z-index: 2; a pinned header
-  // is the "corner" cell — it needs to stack above both the header band and
-  // the body's pinned column cells (which get z-index: 1).
+  // Sticky pinned column header — the "corner" that stacks above:
+  //   - Table's sticky-header band (z-index 1 per Table.module.scss)
+  //   - Pinned body cells (z-index 1 per DataTable.module.scss)
+  // The :where() in Table.module.scss drops the header band's specificity to
+  // 0,1,0, so this z-index can override it via cascade order (DataTable's CSS
+  // module is imported later and wins on equal specificity).
   z-index: 3;
 }
 

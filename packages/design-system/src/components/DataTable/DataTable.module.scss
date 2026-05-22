@@ -40,8 +40,10 @@
 // Separate header/body variants avoid needing :global(thead/tbody) selectors
 // (no :global precedent exists in this codebase).
 
-// Header version: sticky corner at z-index 3 (above sticky column cells at 2,
-// and above the sticky header band at 1 — corner must win both).
+// Header version: auto-select header is the sticky "corner" — stacks above:
+//   - Table's sticky-header band (z-index 1 per Table.module.scss)
+//   - Pinned body cells (z-index 1 per DataTable.module.scss)
+// :where() in Table.module.scss drops the header band's specificity so this wins.
 .autoCellStickyHeader {
   background: var(--color-table-header-bg);
   z-index: 3;
@@ -78,8 +80,9 @@
 
 .pinnedRow .pinnedLeft,
 .pinnedRow .pinnedRight {
-  // Pinned cells inside a pinned row keep their stickyness but inherit the
-  // tint by way of a transparent background.
+  // Explicitly re-apply the pinned-row tint so it overrides the per-cell
+  // --color-table-bg background that would otherwise win via higher specificity
+  // from the body .pinnedLeft / .pinnedRight rule above.
   background: var(--color-bg-row-pinned);
 }
 
