@@ -96,6 +96,7 @@ export function DataTableDemo() {
       <VisibilityExample />
       <LoadingExample />
       <EmptyExample />
+      <ExpansionExample />
       <PinningExample />
       <WidePinningExample />
       <PinnedRowsExample />
@@ -395,6 +396,58 @@ const instance = useDataTable<Deal>({
 return <DataTable instance={instance} aria-label="Deals" />;`}
     >
       <DataTable instance={instance} aria-label="Deals (empty)" />
+    </Example>
+  );
+}
+
+function ExpansionExample() {
+  const [sort, setSort] = useState<SortState | null>(null);
+  const sortedDeals = useClientSort(deals, sort);
+  const instance = useDataTable<Deal>({
+    data: sortedDeals,
+    columns: dealColumns,
+    getRowId: (r) => r.id,
+    sort,
+    onSortChange: setSort,
+    renderExpandedRow: (row) => (
+      <Stack gap="sm">
+        <p style={{ margin: 0 }}>
+          <strong>{row.name}</strong> — {row.stage} stage, owned by {row.owner}.
+        </p>
+        <p style={{ margin: 0 }}>
+          Full deal value: ${row.amount.toLocaleString()}. The detail panel is your
+          consumer-rendered JSX — drop in whatever you need: forms, tabs, charts,
+          notes, related-records lists.
+        </p>
+      </Stack>
+    ),
+  });
+
+  return (
+    <Example
+      title="Expandable rows"
+      description="Pass `renderExpandedRow` to enable a per-row chevron auto-column at the left edge. Clicking the chevron toggles a detail row beneath the main row, spanning all columns. The detail content is whatever JSX the consumer returns — DataTable just provides the container and the toggle state."
+      code={`${COLUMNS_SNIPPET}
+
+const [sort, setSort] = useState<SortState | null>(null);
+const sortedDeals = useClientSort(deals, sort);
+
+const instance = useDataTable<Deal>({
+  data: sortedDeals,
+  columns: dealColumns,
+  getRowId: (r) => r.id,
+  sort, onSortChange: setSort,
+  renderExpandedRow: (row) => (
+    <Stack gap="sm">
+      <p><strong>{row.name}</strong> — {row.stage}, {row.owner}.</p>
+      <p>Drop in whatever detail JSX you need.</p>
+    </Stack>
+  ),
+});
+
+return <DataTable instance={instance} aria-label="Deals" />;`}
+    >
+      <DataTable instance={instance} aria-label="Deals (expandable)" />
     </Example>
   );
 }
