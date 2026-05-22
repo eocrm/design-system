@@ -106,6 +106,38 @@ describe('useFocusTrap', () => {
     expect(document.activeElement).toBe(outside);
   });
 
+  it('does NOT recapture focus when target is inside a popover portal', () => {
+    const container = makeContainer(`<button id="a">A</button>`);
+    container.tabIndex = -1;
+    // Simulate Popover content portaled to body.
+    const popover = document.createElement('div');
+    popover.setAttribute('data-popover-content', '');
+    const popoverInput = document.createElement('input');
+    popover.appendChild(popoverInput);
+    document.body.appendChild(popover);
+    trapHook(container);
+
+    popoverInput.focus();
+    popoverInput.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    expect(document.activeElement).toBe(popoverInput);
+  });
+
+  it('does NOT recapture focus when target is inside a dropdown menu portal', () => {
+    const container = makeContainer(`<button id="a">A</button>`);
+    container.tabIndex = -1;
+    const menu = document.createElement('div');
+    menu.setAttribute('data-dropdown-menu-content', '');
+    menu.setAttribute('role', 'menu');
+    const item = document.createElement('button');
+    menu.appendChild(item);
+    document.body.appendChild(menu);
+    trapHook(container);
+
+    item.focus();
+    item.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    expect(document.activeElement).toBe(item);
+  });
+
   it('zero focusables: focus stays on container, Tab is preventDefault-ed without movement', () => {
     const container = makeContainer(`<p>read-only</p>`);
     container.tabIndex = -1;

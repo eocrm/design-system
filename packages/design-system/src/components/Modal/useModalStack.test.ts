@@ -74,6 +74,14 @@ describe('useModalStack', () => {
     expect(result.current.isTop).toBe(true);
   });
 
+  it('first modal isTop flips to false when a second modal registers', () => {
+    const a = renderHook(() => useModalStack('a', true));
+    expect(a.result.current.isTop).toBe(true);
+    renderHook(() => useModalStack('b', true));
+    // a must now reflect that b is on top.
+    expect(a.result.current.isTop).toBe(false);
+  });
+
   it('unregisters on unmount', () => {
     const { unmount } = renderHook(() => useModalStack('a', true));
     expect(modalStack.depthOf('a')).toBe(0);

@@ -254,14 +254,38 @@ describe('<Modal>', () => {
     expect(screen.getByRole('dialog')).toHaveAttribute('data-size', 'lg');
   });
 
-  it('warns in dev when neither Header nor aria-label is provided', () => {
+  it('warns in dev when neither Header nor aria-label is provided', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     render(
       <Modal open onOpenChange={() => {}}>
         <Modal.Body>x</Modal.Body>
       </Modal>,
     );
+    await new Promise((r) => setTimeout(r, 0)); // flush microtasks
     expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('does NOT warn when <Modal.Header> is provided', async () => {
+    const user = userEvent.setup();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(<Harness />);
+    await user.click(screen.getByText('Open'));
+    // Flush microtasks so the deferred warning check has a chance to fire.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('does NOT warn when aria-label is provided without <Modal.Header>', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <Modal open onOpenChange={() => {}} aria-label="Confirm">
+        <Modal.Body>x</Modal.Body>
+      </Modal>,
+    );
+    await new Promise((r) => setTimeout(r, 0)); // flush microtasks
+    expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
   });
 
@@ -389,5 +413,33 @@ describe('<Modal>', () => {
     expect(positions).toContain('hidden');
     // Exactly one top.
     expect(positions.filter((p) => p === 'top')).toHaveLength(1);
+  });
+
+  it('restores focus to the previously-focused element on close', async () => {
+    const user = userEvent.setup();
+    function FocusRestoreHarness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button onClick={() => setOpen(true)} data-testid="trigger">
+            Open
+          </button>
+          <Modal open={open} onOpenChange={setOpen} aria-label="x">
+            <Modal.Body>x</Modal.Body>
+          </Modal>
+        </>
+      );
+    }
+    render(<FocusRestoreHarness />);
+    const trigger = screen.getByTestId('trigger');
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+    await user.click(trigger);
+    // Modal opens; focus moves to dialog.
+    expect(document.activeElement).not.toBe(trigger);
+    await user.keyboard('{Escape}');
+    // Modal closes; focus restored to the trigger.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(trigger);
   });
 });

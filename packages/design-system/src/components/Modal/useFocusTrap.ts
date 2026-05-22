@@ -9,6 +9,18 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
+// Floating UI surfaces whose portals are direct body-siblings of our modal
+// portal. Focus moving into these should not be redirected back to the modal —
+// the popover / dropdown / tooltip is handling its own focus session.
+const FLOATING_BYPASS_SELECTOR = [
+  '[data-popover-content]',
+  '[data-dropdown-menu-content]',
+  '[role="tooltip"]',
+  '[role="menu"]',
+  '[role="listbox"]',
+  '[role="dialog"]',
+].join(',');
+
 function getFocusables(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
 }
@@ -57,9 +69,14 @@ export function useFocusTrap(
     }
 
     function onFocusIn(e: FocusEvent) {
-      const target = e.target as Node | null;
+      const target = e.target as HTMLElement | null;
       if (!target || !container) return;
       if (container.contains(target)) return;
+      // Allow focus to live inside floating UI surfaces that were opened
+      // from within this modal (Popover, DropdownMenu, Tooltip, nested Modal).
+      // Their portals are body-direct siblings of our portal — checking by
+      // selector instead of containment.
+      if (target.closest(FLOATING_BYPASS_SELECTOR)) return;
       // Focus escaped — redirect to the container.
       container.focus();
     }

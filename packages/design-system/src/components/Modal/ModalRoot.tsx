@@ -189,16 +189,23 @@ export function ModalRoot({
   );
 
   // Dev warning: must have either a Header (sets headingId in context) OR aria-label.
+  // Deferred via microtask so <Modal.Header>'s registration effect has a chance to run.
   useEffect(() => {
     if (!open) return;
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV === 'production') return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
       if (!headingId && !ariaLabel) {
         // eslint-disable-next-line no-console
         console.warn(
           '<Modal> must be labelled. Either render <Modal.Header> or pass an `aria-label` prop. Screen-reader users get no announcement otherwise.',
         );
       }
-    }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [open, headingId, ariaLabel]);
 
   const value: ModalContextValue = {

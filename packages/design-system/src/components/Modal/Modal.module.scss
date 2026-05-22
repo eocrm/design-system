@@ -40,9 +40,9 @@
 .overlay[data-variant='blur'] {
   background: var(--color-bg-overlay-blur);
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
   // stylelint-disable-next-line property-no-vendor-prefix, scale-unlimited/declaration-strict-value -- Safari < 18 requires the prefix
-  -webkit-backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(4px);
 }
 // stylelint-enable property-disallowed-list
 
@@ -85,6 +85,22 @@
 .size-sm { --modal-width: var(--size-modal-sm); }
 .size-md { --modal-width: var(--size-modal-md); }
 .size-lg { --modal-width: var(--size-modal-lg); }
+
+// ─── Compact sizing for size="sm" ───────────────────────────────────────
+.content.size-sm .header,
+.content.size-sm .body,
+.content.size-sm .footer {
+  padding: var(--space-3);
+}
+
+.content.size-sm .headerTitle {
+  font-size: var(--font-size-md);
+}
+
+.content.size-sm .headerCloseButton {
+  width: 24px;
+  height: 24px;
+}
 
 // ─── Header ─────────────────────────────────────────────────────────────
 
