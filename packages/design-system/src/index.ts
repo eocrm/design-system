@@ -129,6 +129,9 @@ export type { PaginationProps, PaginationSize, PaginationItem } from './componen
 export { CursorPagination } from './components/CursorPagination';
 export type { CursorPaginationProps } from './components/CursorPagination';
 
+export { DataTable, useDataTable } from './components/DataTable';
+export type { DataTableProps } from './components/DataTable';
+
 // i18n
 export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';

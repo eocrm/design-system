@@ -88,8 +88,8 @@ describe('<DataTable>', () => {
   it('renders selection auto-column when enableRowSelection is true', () => {
     render(<Harness enableRowSelection />);
     const headerRow = screen.getAllByRole('row')[0]!;
-    // Select-all + 2 data column headers = 3 cells
-    expect(within(headerRow).getAllByRole('columnheader').length).toBe(2);
+    // Select-all <th> + 2 data column headers = 3 columnheaders
+    expect(within(headerRow).getAllByRole('columnheader').length).toBe(3);
     expect(within(headerRow).getAllByRole('checkbox').length).toBe(1);
   });
 

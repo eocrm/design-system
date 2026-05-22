@@ -181,8 +181,9 @@ function DataTableInner<T>(
           <Table.Header>
             <Table.Row>
               {instance.enableRowSelection && (
-                <Table.Cell
+                <Table.HeaderCell
                   align="center"
+                  scope="col"
                   className={styles.autoCell}
                 >
                   <Checkbox
@@ -191,7 +192,7 @@ function DataTableInner<T>(
                     onChange={() => instance.toggleAllOnPage()}
                     aria-label="Select all rows on page"
                   />
-                </Table.Cell>
+                </Table.HeaderCell>
               )}
               {instance.visibleColumns.map((col) => (
                 <HeaderCell key={col.id} column={col} instance={instance} />
