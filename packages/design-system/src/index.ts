@@ -47,6 +47,14 @@ export type {
   DropdownMenuSubContentProps,
 } from './components/DropdownMenu';
 
+export { EmptyState } from './components/EmptyState';
+export type {
+  EmptyStateProps,
+  EmptyStateSize,
+  EmptyStateAlign,
+  EmptyStateHeadingLevel,
+} from './components/EmptyState';
+
 export { Tooltip } from './components/Tooltip';
 export type { TooltipProps, TooltipSide, TooltipAlign } from './components/Tooltip';
 
