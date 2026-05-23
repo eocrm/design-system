@@ -9,6 +9,7 @@ let originalPosition: string | null = null;
 let originalTop: string | null = null;
 let originalLeft: string | null = null;
 let originalWidth: string | null = null;
+let originalPaddingRight: string | null = null;
 
 function lock() {
   if (count === 0) {
@@ -20,6 +21,17 @@ function lock() {
     originalTop = document.body.style.top;
     originalLeft = document.body.style.left;
     originalWidth = document.body.style.width;
+    originalPaddingRight = document.body.style.paddingRight;
+
+    // Compensate for the disappearing scrollbar BEFORE we make body fixed.
+    // When body becomes position:fixed it leaves the flow → html element
+    // has no overflow → scrollbar disappears → content reflows into the
+    // freed space → page visibly shifts. Pad body by the scrollbar width
+    // so the content area stays exactly where it was.
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
 
     // position: fixed is the iOS-safe scroll lock. It prevents momentum
     // scrolling rubber-banding past the overlay on Safari, which
@@ -45,12 +57,14 @@ function unlock() {
     document.body.style.top = originalTop ?? '';
     document.body.style.left = originalLeft ?? '';
     document.body.style.width = originalWidth ?? '';
+    document.body.style.paddingRight = originalPaddingRight ?? '';
 
     originalOverflow = null;
     originalPosition = null;
     originalTop = null;
     originalLeft = null;
     originalWidth = null;
+    originalPaddingRight = null;
 
     // Restore the scroll position that was active when the lock was acquired.
     window.scrollTo(savedScrollX, savedScrollY);

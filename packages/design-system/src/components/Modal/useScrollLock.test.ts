@@ -9,6 +9,7 @@ describe('useScrollLock', () => {
     document.body.style.top = '';
     document.body.style.left = '';
     document.body.style.width = '';
+    document.body.style.paddingRight = '';
     // Reset scroll position (jsdom supports this).
     window.scrollTo(0, 0);
   });
@@ -60,6 +61,40 @@ describe('useScrollLock', () => {
     renderHook(() => useScrollLock(false));
     expect(document.body.style.position).toBe('');
     expect(document.body.style.overflow).toBe('');
+  });
+
+  it('pads body-right by the disappearing scrollbar width to prevent layout shift', () => {
+    // Simulate a vertical scrollbar of 17px by making window.innerWidth
+    // 17 wider than documentElement.clientWidth.
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 });
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 1183,
+    });
+
+    const { unmount } = renderHook(() => useScrollLock(true));
+    expect(document.body.style.paddingRight).toBe('17px');
+    unmount();
+    expect(document.body.style.paddingRight).toBe('');
+
+    // Restore.
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 1024,
+    });
+  });
+
+  it('does not pad when no scrollbar is present (innerWidth === clientWidth)', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 390,
+    });
+
+    const { unmount } = renderHook(() => useScrollLock(true));
+    expect(document.body.style.paddingRight).toBe('');
+    unmount();
   });
 
   it('saves scroll position on lock and restores it on unlock', () => {
