@@ -483,6 +483,45 @@ const [open, setOpen] = useState(false);
 - ❌ Mutating an `initialFocusRef.current` value after open — Modal reads the ref when the modal opens AND whenever it becomes the top of the stack again (e.g., after a nested modal closes). Don't rely on a specific number of reads; instead, ensure the ref points at a stable element while the modal is open.
 - ❌ Using `<Modal>` for popovers or non-blocking notifications. Use `<Popover>`, `<DropdownMenu>`, or wait for `<Toast>`.
 
+**See also:** `<Drawer>` for edge-anchored variant.
+
+### `<Drawer>` — edge-anchored slide-in panel
+
+```tsx
+const [open, setOpen] = useState(false);
+
+<Button onClick={() => setOpen(true)}>Show filters</Button>
+
+<Drawer open={open} onOpenChange={setOpen} side="right" size="md">
+  <Drawer.Header>Filters</Drawer.Header>
+  <Drawer.Body>
+    <Stack gap="md">
+      <Input label="Name" value={...} onChange={...} />
+    </Stack>
+  </Drawer.Body>
+  <Drawer.Footer>
+    <Drawer.Close><Button variant="secondary">Cancel</Button></Drawer.Close>
+    <Button onClick={apply}>Apply</Button>
+  </Drawer.Footer>
+</Drawer>
+```
+
+- **Controlled-only.** `open` + `onOpenChange` always.
+- **Four sides:** `left`, `right` (default), `top`, `bottom`. Each slides in from its edge.
+- **Three sizes:** `sm` (320px), `md` (440px, default), `lg` (640px). Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen.
+- **Drag-to-close** on mobile: swipe the Header in the dismiss direction (right drawer → swipe right, bottom → swipe down, etc.). Threshold: 40% of drawer size or 0.5 px/ms velocity. Opt out with `dragToClose={false}`.
+- **Overlay variants:** `overlay="solid"` (default) or `overlay="blur"` (frosted-glass with `backdrop-filter: blur(4px)`).
+- **Stacks with Modal.** Both share one overlay registry — a Drawer can open from inside a Modal (and vice versa). Escape closes the topmost regardless of type; body scroll lock is shared.
+- **Forced step:** combine `disableEscapeClose + dismissOnOverlayClick={false} + dragToClose={false}` + `<Drawer.Header closeButton={false}>` + omit `<Drawer.Close>`.
+
+**Anti-patterns:**
+
+- ❌ Same-side stacked drawers as a navigation pattern. They visually overlap — use route changes instead.
+- ❌ Drag from inside `<Drawer.Body>` does not close the drawer. Only Header is draggable (so Body scroll works correctly).
+- ❌ For center-anchored dialogs, use `<Modal>` not Drawer.
+
+**See also:** `<Modal>` for center-anchored variant.
+
 ### `<Select>` — value picker (single, multi, searchable, async, creatable)
 
 ```tsx
