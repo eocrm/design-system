@@ -101,12 +101,7 @@ const handleToggle = async (next: boolean) => {
   Two-factor auth
 </Switch>`}
       >
-        <Switch
-          checked={asyncEnabled}
-          loading={saving}
-          onChange={handleAsyncToggle}
-          tone="success"
-        >
+        <Switch checked={asyncEnabled} loading={saving} onChange={handleAsyncToggle} tone="success">
           Two-factor auth ({saving ? 'saving…' : asyncEnabled ? 'ON' : 'OFF'})
         </Switch>
       </Example>

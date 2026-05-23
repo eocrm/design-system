@@ -64,9 +64,7 @@ describe('<Switch>', () => {
   });
 
   it('className is merged onto the wrapper, not replaced', () => {
-    const { container } = render(
-      <Switch aria-label="x" className="custom-wrap" />,
-    );
+    const { container } = render(<Switch aria-label="x" className="custom-wrap" />);
     const wrapper = container.querySelector('label')!;
     expect(wrapper.className).toMatch(/custom-wrap/);
     expect(wrapper.className).toMatch(/wrapper/);
@@ -87,9 +85,7 @@ describe('<Switch>', () => {
   // ─── State ─────────────────────────────────────────────────────────────
 
   it('controlled: checked={true} reflects in the input AND data-checked on track', () => {
-    const { container } = render(
-      <Switch aria-label="x" checked onChange={() => {}} />,
-    );
+    const { container } = render(<Switch aria-label="x" checked onChange={() => {}} />);
     const input = screen.getByRole('switch') as HTMLInputElement;
     const track = container.querySelector('[data-tone]')!;
     expect(input.checked).toBe(true);
@@ -115,9 +111,15 @@ describe('<Switch>', () => {
     render(<Controlled />);
     const input = screen.getByRole('switch');
     await user.click(input);
-    expect(handleChange).toHaveBeenLastCalledWith(true, expect.objectContaining({ target: expect.anything() }));
+    expect(handleChange).toHaveBeenLastCalledWith(
+      true,
+      expect.objectContaining({ target: expect.anything() }),
+    );
     await user.click(input);
-    expect(handleChange).toHaveBeenLastCalledWith(false, expect.objectContaining({ target: expect.anything() }));
+    expect(handleChange).toHaveBeenLastCalledWith(
+      false,
+      expect.objectContaining({ target: expect.anything() }),
+    );
   });
 
   it('uncontrolled: defaultChecked={true} starts checked', () => {

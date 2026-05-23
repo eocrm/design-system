@@ -20,11 +20,10 @@ export type SwitchSize = 'sm' | 'md' | 'lg';
  */
 export type SwitchTone = 'accent' | 'success' | 'danger';
 
-export interface SwitchProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    'size' | 'type' | 'checked' | 'defaultChecked' | 'onChange'
-  > {
+export interface SwitchProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'size' | 'type' | 'checked' | 'defaultChecked' | 'onChange'
+> {
   /**
    * Visual scale. Defaults to `'md'`.
    * - `'sm'` — 28×16 track, 12px thumb, `--font-size-sm` label.
@@ -185,9 +184,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
   },
   ref,
 ) {
-  const [internalChecked, setInternalChecked] = useState<boolean>(
-    defaultChecked ?? false,
-  );
+  const [internalChecked, setInternalChecked] = useState<boolean>(defaultChecked ?? false);
   const isControlled = checked !== undefined;
   const currentChecked = isControlled ? checked : internalChecked;
 
@@ -225,18 +222,10 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
         aria-hidden="true"
       >
         <span className={styles.thumb}>
-          {loading && (
-            <Loader2
-              size={SPIN_SIZE[size]}
-              className={styles.spin}
-              aria-hidden="true"
-            />
-          )}
+          {loading && <Loader2 size={SPIN_SIZE[size]} className={styles.spin} aria-hidden="true" />}
         </span>
       </span>
-      {children && (
-        <span className={clsx(styles.label, LABEL_CLASS[size])}>{children}</span>
-      )}
+      {children && <span className={clsx(styles.label, LABEL_CLASS[size])}>{children}</span>}
     </label>
   );
 });

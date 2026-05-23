@@ -83,7 +83,7 @@ Plus standard integration points:
 
 ## Public API
 
-```ts
+````ts
 import type { ChangeEvent, InputHTMLAttributes, ReactNode } from 'react';
 
 /** Track + thumb scale + label font. Pairs with Checkbox/Radio sizes. */
@@ -179,7 +179,7 @@ export interface SwitchProps extends Omit<
    */
   children?: ReactNode;
 }
-```
+````
 
 **Native attrs spread to the `<input>`**: all of `InputHTMLAttributes<HTMLInputElement>` minus `size`, `type`, `checked`, `defaultChecked`, `onChange`. Includes `disabled`, `required`, `name`, `id`, `value` (form submission value), `aria-*`, `data-*`, `onFocus`, `onBlur`, etc.
 
@@ -222,6 +222,7 @@ Same pattern as Textarea's value mirror + Checkbox's checked mirror. The `data-c
 ### Loading + disabled coupling
 
 `disabled={disabled || loading}` on the input — `loading` implies disabled. This:
+
 - Blocks click-to-toggle via the label (the input doesn't fire change events)
 - Blocks Space-key toggle (focused-but-disabled input doesn't accept input)
 - Sets the native `:disabled` pseudoclass that the SCSS can style against
@@ -231,7 +232,9 @@ If a consumer wants `disabled={false}` while `loading={true}`... they can't. Loa
 ### Spinner mount
 
 ```tsx
-{loading && <Loader2 className={styles.spin} size={SPIN_SIZE[size]} aria-hidden="true" />}
+{
+  loading && <Loader2 className={styles.spin} size={SPIN_SIZE[size]} aria-hidden="true" />;
+}
 ```
 
 The spinner sits inside `<span class="thumb">`. The thumb itself doesn't change size — the spinner is positioned absolutely inside, slightly smaller than the thumb.
@@ -244,8 +247,8 @@ The thumb is positioned with `transform: translateX(...)` and the SCSS uses CSS 
 
 ```scss
 .track {
-  --thumb-travel: 0;  // overridden per size
-  
+  --thumb-travel: 0; // overridden per size
+
   .thumb {
     transform: translateX(0);
     transition: transform var(--transition-base);
@@ -256,9 +259,15 @@ The thumb is positioned with `transform: translateX(...)` and the SCSS uses CSS 
   transform: translateX(var(--thumb-travel));
 }
 
-.sm { --thumb-travel: 12px; }  // 28 - 12 - 4
-.md { --thumb-travel: 14px; }  // 36 - 16 - 6 (2px inset on each side)
-.lg { --thumb-travel: 18px; }  // 44 - 20 - 6
+.sm {
+  --thumb-travel: 12px;
+} // 28 - 12 - 4
+.md {
+  --thumb-travel: 14px;
+} // 36 - 16 - 6 (2px inset on each side)
+.lg {
+  --thumb-travel: 18px;
+} // 44 - 20 - 6
 ```
 
 (Exact pixel math will be verified in implementation — point is the travel distance is a per-size value.)
@@ -308,13 +317,25 @@ The thumb is positioned with `transform: translateX(...)` and the SCSS uses CSS 
   }
 }
 
-.track[data-checked='true'][data-tone='accent']  { background: var(--color-accent); }
-.track[data-checked='true'][data-tone='success'] { background: var(--color-success); }
-.track[data-checked='true'][data-tone='danger']  { background: var(--color-danger); }
+.track[data-checked='true'][data-tone='accent'] {
+  background: var(--color-accent);
+}
+.track[data-checked='true'][data-tone='success'] {
+  background: var(--color-success);
+}
+.track[data-checked='true'][data-tone='danger'] {
+  background: var(--color-danger);
+}
 
-.track[data-checked='true'][data-tone='accent']:hover  { background: var(--color-accent-hover); }
-.track[data-checked='true'][data-tone='success']:hover { background: var(--color-success-hover); }
-.track[data-checked='true'][data-tone='danger']:hover  { background: var(--color-danger-hover); }
+.track[data-checked='true'][data-tone='accent']:hover {
+  background: var(--color-accent-hover);
+}
+.track[data-checked='true'][data-tone='success']:hover {
+  background: var(--color-success-hover);
+}
+.track[data-checked='true'][data-tone='danger']:hover {
+  background: var(--color-danger-hover);
+}
 
 .thumb {
   position: absolute;
@@ -337,30 +358,45 @@ The thumb is positioned with `transform: translateX(...)` and the SCSS uses CSS 
   height: 16px;
   --thumb-travel: 12px;
 }
-.sm .thumb { width: 12px; height: 12px; }
+.sm .thumb {
+  width: 12px;
+  height: 12px;
+}
 
 .md {
   width: 36px;
   height: 20px;
   --thumb-travel: 14px;
 }
-.md .thumb { width: 16px; height: 16px; }
+.md .thumb {
+  width: 16px;
+  height: 16px;
+}
 
 .lg {
   width: 44px;
   height: 24px;
   --thumb-travel: 18px;
 }
-.lg .thumb { width: 20px; height: 20px; }
+.lg .thumb {
+  width: 20px;
+  height: 20px;
+}
 
 .label {
   font-family: inherit;
   color: var(--color-fg);
 }
 
-.labelSm { font-size: var(--font-size-sm); }
-.labelMd { font-size: var(--font-size-md); }
-.labelLg { font-size: var(--font-size-lg); }
+.labelSm {
+  font-size: var(--font-size-sm);
+}
+.labelMd {
+  font-size: var(--font-size-md);
+}
+.labelLg {
+  font-size: var(--font-size-lg);
+}
 
 // Focus ring on the wrapper when the (hidden) input is focused.
 .input:focus-visible + .track {
@@ -397,6 +433,7 @@ The thumb is positioned with `transform: translateX(...)` and the SCSS uses CSS 
 ```
 
 **Rule 4 check:**
+
 - `.wrapper` has `display: inline-flex` — that's intrinsic display, not layout. `gap: var(--space-2)` is internal spacing between children.
 - `.input` uses the visually-hidden pattern (`position: absolute`, etc.) — this is internal-only, not a flow component. Same disable-line treatment as Checkbox/Radio.
 - `.track` and `.thumb` use `position: relative`/`absolute` — internal child positioning, not at the component boundary. Same pattern as Checkbox's painted box.
@@ -406,18 +443,18 @@ If stylelint flags the `position: absolute` on the input or thumb, add inline-di
 
 ## ARIA + behavior reference
 
-| Concern | Behavior |
-|---|---|
-| Element | `<input type="checkbox" role="switch">` — native checkbox semantics for form submission, switch role for AT announcement |
-| Checked state | `aria-checked` reflected automatically from the native `checked` attribute (no manual ARIA needed) |
-| Invalid state | `aria-invalid="true"` only when `invalid={true}` |
-| Loading state | `aria-busy="true"` only when `loading={true}` |
-| Disabled state | Native `disabled` attribute |
-| Focus | Focus lands on the input (natural Tab). Wrapper has `:focus-within` styling via the `.input:focus-visible + .track` selector |
-| Keyboard | Space toggles (native checkbox behavior — works because the underlying element IS a checkbox) |
-| Label association | The whole `<label>` is the click target — no `htmlFor` plumbing needed |
-| Spread order | Component owns `type`, `role`, `checked`, `disabled`, `aria-invalid`, `aria-busy`, `onChange`. Other native attrs follow Pattern A (consumer wins). |
-| Ref target | The `<input>` element. Consumers can `.focus()`, read `.checked`, etc. |
+| Concern           | Behavior                                                                                                                                            |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Element           | `<input type="checkbox" role="switch">` — native checkbox semantics for form submission, switch role for AT announcement                            |
+| Checked state     | `aria-checked` reflected automatically from the native `checked` attribute (no manual ARIA needed)                                                  |
+| Invalid state     | `aria-invalid="true"` only when `invalid={true}`                                                                                                    |
+| Loading state     | `aria-busy="true"` only when `loading={true}`                                                                                                       |
+| Disabled state    | Native `disabled` attribute                                                                                                                         |
+| Focus             | Focus lands on the input (natural Tab). Wrapper has `:focus-within` styling via the `.input:focus-visible + .track` selector                        |
+| Keyboard          | Space toggles (native checkbox behavior — works because the underlying element IS a checkbox)                                                       |
+| Label association | The whole `<label>` is the click target — no `htmlFor` plumbing needed                                                                              |
+| Spread order      | Component owns `type`, `role`, `checked`, `disabled`, `aria-invalid`, `aria-busy`, `onChange`. Other native attrs follow Pattern A (consumer wins). |
+| Ref target        | The `<input>` element. Consumers can `.focus()`, read `.checked`, etc.                                                                              |
 
 ## Testing
 
@@ -460,7 +497,8 @@ If stylelint flags the `position: absolute` on the input or thumb, add inline-di
 
 22. Each tone (`accent`/`success`/`danger`) sets a unique `data-tone` attribute on the track
 
-**Vitest gotchas**: 
+**Vitest gotchas**:
+
 - `screen.getByRole('switch')` works because `role="switch"` overrides the implicit `role="checkbox"`.
 - Space-key test needs the input to be focused first: `await user.tab(); await user.keyboard(' ');`.
 
