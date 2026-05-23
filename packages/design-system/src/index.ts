@@ -219,6 +219,16 @@ export type {
 export { Link } from './components/Link';
 export type { LinkProps, LinkVariant } from './components/Link';
 
+export { Accordion } from './components/Accordion';
+export type {
+  AccordionProps,
+  AccordionItemProps,
+  AccordionTriggerProps,
+  AccordionContentProps,
+  AccordionMode,
+  AccordionHeaderLevel,
+} from './components/Accordion';
+
 export { Breadcrumb } from './components/Breadcrumb';
 export type { BreadcrumbProps, BreadcrumbItemProps } from './components/Breadcrumb';
 
