@@ -316,6 +316,12 @@
     animation: none;
     transition: none;
   }
+
+  // The loading spinner rotates continuously — exactly the kind of persistent
+  // motion that causes issues for vestibular-sensitivity and migraine sufferers.
+  .spin {
+    animation: none;
+  }
 }
 
 // ─── Loading spinner ─────────────────────────────────────────────────────

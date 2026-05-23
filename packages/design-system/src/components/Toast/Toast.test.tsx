@@ -90,6 +90,22 @@ describe('<ToastViewport>', () => {
     expect(screen.getByText('Saved')).toBeInTheDocument();
   });
 
+  it('pauses the timer while a child has focus', async () => {
+    renderViewport({ duration: 1000 });
+    act(() => {
+      toast.success('Saved', { action: { label: 'Undo', onClick: vi.fn() } });
+    });
+    // Focus the action button directly — more reliable than tab() when the
+    // document's initial focus position isn't deterministic in jsdom.
+    act(() => {
+      (screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement).focus();
+    });
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(screen.getByText('Saved')).toBeInTheDocument();
+  });
+
   it('action button fires onClick AND dismisses the toast', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const onUndo = vi.fn();
