@@ -251,17 +251,22 @@ describe('<ButtonGroup> (segmented mode)', () => {
     expect(screen.getByRole('radiogroup')).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('requires aria-label or aria-labelledby in segmented mode (enforced at type-check time)', () => {
-    // TypeScript's discriminated union type ButtonGroupSegmentedProps requires
-    // aria-label or aria-labelledby to be present when value + onValueChange are
-    // provided. This test verifies the union is set up correctly by checking that
-    // a properly typed ButtonGroup with aria-label renders without errors.
-    const { getByRole } = render(
-      <ButtonGroup value="a" onValueChange={() => {}} aria-label="Test">
+  it('warns in dev when segmented mode is used without aria-label or aria-labelledby', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // TypeScript enforces aria-label in segmented mode via the discriminated
+    // union, but the component also has a defensive runtime warning that fires
+    // when both labels are missing — protecting JavaScript consumers and code
+    // paths that bypass types. @ts-expect-error deliberately violates the type
+    // so we can verify the runtime guard.
+    render(
+      // @ts-expect-error — intentionally omit required aria-label to trigger the runtime warning.
+      <ButtonGroup value="a" onValueChange={() => {}}>
         <ButtonGroup.Item value="a">A</ButtonGroup.Item>
       </ButtonGroup>,
     );
-    expect(getByRole('radiogroup')).toHaveAttribute('aria-label', 'Test');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 
