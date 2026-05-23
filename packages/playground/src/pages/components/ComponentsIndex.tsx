@@ -16,6 +16,7 @@ import { Skeleton } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Table } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
+import { Textarea } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
 import { Tooltip } from '@eocrm/design-system';
 import { Calendar } from '@eocrm/design-system';
@@ -352,6 +353,14 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           </DropdownMenu.Content>
         </DropdownMenu>
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/textarea',
+    name: 'Textarea',
+    description: 'Multi-line text with auto-grow + character counter.',
+    preview: (
+      <Textarea minRows={2} autoGrow={false} defaultValue="Multi-line text…" aria-label="Preview" />
     ),
   },
   {

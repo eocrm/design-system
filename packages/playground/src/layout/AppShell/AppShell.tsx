@@ -25,6 +25,7 @@ import {
   Layers,
   ArrowRight,
   MessageSquare,
+  MessageSquareText,
   AppWindow,
   MoreHorizontal,
   KeyRound,
@@ -86,6 +87,7 @@ const componentGroups = [
       },
       { to: '/components/radio', label: 'Radio', icon: CircleDot, end: false },
       { to: '/components/select', label: 'Select', icon: ChevronsUpDown, end: false },
+      { to: '/components/textarea', label: 'Textarea', icon: MessageSquareText, end: false },
     ],
   },
   {
