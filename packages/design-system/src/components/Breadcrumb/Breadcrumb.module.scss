@@ -1,0 +1,30 @@
+.nav {
+  font-size: var(--font-size-sm);
+}
+
+.list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  /* stylelint-disable-next-line property-disallowed-list -- native <ol> margin reset */
+  margin: 0;
+  /* stylelint-disable-next-line property-disallowed-list -- native <ol> padding reset */
+  padding: 0;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.separator {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-fg-muted);
+}
+
+.current {
+  color: var(--color-fg);
+}
