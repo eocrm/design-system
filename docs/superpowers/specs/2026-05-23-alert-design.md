@@ -155,6 +155,7 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLElement>, 'role' | '
 ```
 
 Component-owned attrs that consumer cannot override:
+
 - `role` — derived from tone for ARIA correctness
 - `data-tone` — used by SCSS for tone-variant styling
 - `className` (spread AFTER props but merges via clsx so consumer's className appends)
@@ -170,16 +171,10 @@ A near-pure render component. Three branches:
 No internal state. No effects. No timers.
 
 ```tsx
-function Alert({
-  tone = 'info',
-  title,
-  children,
-  icon,
-  actions,
-  onDismiss,
-  className,
-  ...props
-}, ref) {
+function Alert(
+  { tone = 'info', title, children, icon, actions, onDismiss, className, ...props },
+  ref,
+) {
   const role = tone === 'error' ? 'alert' : 'status';
   const renderedIcon = icon === null ? null : (icon ?? DEFAULT_ICONS[tone]);
 
@@ -198,12 +193,7 @@ function Alert({
         {actions && <div className={styles.actions}>{actions}</div>}
       </div>
       {onDismiss && (
-        <button
-          type="button"
-          aria-label="Dismiss"
-          className={styles.close}
-          onClick={onDismiss}
-        >
+        <button type="button" aria-label="Dismiss" className={styles.close} onClick={onDismiss}>
           <X size={14} aria-hidden="true" />
         </button>
       )}
@@ -227,9 +217,9 @@ function Alert({
   gap: var(--space-3);
   align-items: start;
   padding: var(--space-3) var(--space-4);
-  background: var(--color-bg);     // overridden per tone
+  background: var(--color-bg); // overridden per tone
   border-radius: var(--radius-md);
-  border-left: var(--border-width-strong) solid var(--color-fg-muted);  // overridden per tone
+  border-left: var(--border-width-strong) solid var(--color-fg-muted); // overridden per tone
   color: var(--color-fg);
 }
 
@@ -262,13 +252,21 @@ function Alert({
   color: var(--color-fg-muted);
 }
 
-.alert[data-tone='info'] .icon { color: var(--color-info); }
-.alert[data-tone='success'] .icon { color: var(--color-success); }
-.alert[data-tone='warning'] .icon { color: var(--color-warning); }
-.alert[data-tone='error'] .icon { color: var(--color-danger); }
+.alert[data-tone='info'] .icon {
+  color: var(--color-info);
+}
+.alert[data-tone='success'] .icon {
+  color: var(--color-success);
+}
+.alert[data-tone='warning'] .icon {
+  color: var(--color-warning);
+}
+.alert[data-tone='error'] .icon {
+  color: var(--color-danger);
+}
 
 .body {
-  min-width: 0;     // allow long words/URLs to wrap inside the grid
+  min-width: 0; // allow long words/URLs to wrap inside the grid
 }
 
 .title {
@@ -317,6 +315,7 @@ function Alert({
 ```
 
 **Rule 4 check**:
+
 - `.alert` has `display: grid` + `grid-template-columns` — that's internal layout of the Alert's own children, NOT layout-at-component-boundary. Allowed.
 - `padding`, `border-radius`, `border-left` — internal styling, not layout.
 - `min-width: 0` on `.body` — needed for grid text wrapping, not layout.
@@ -324,16 +323,16 @@ function Alert({
 
 ## ARIA + behavior reference
 
-| Concern | Behavior |
-|---|---|
-| **Element** | Plain `<div>` (in-flow). |
-| **Role** | `role="alert"` for `tone='error'` (assertive); `role="status"` for info/success/warning (polite). |
-| **Title** | `<strong>` — semantic emphasis, not a heading. Doesn't disrupt page heading outline. |
-| **Description** | `<div>` containing arbitrary ReactNode. |
-| **Close button** | Native `<button type="button">` with `aria-label="Dismiss"`. |
-| **Focus** | The close button is the only focusable element by default. Action buttons (inside `actions`) are reachable via Tab. |
-| **Live announcement** | Implicit from `role="alert"` / `role="status"`. No explicit `aria-live`. |
-| **Dismissal model** | Controlled — consumer hides via conditional render. Alert doesn't manage internal hidden state. |
+| Concern               | Behavior                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Element**           | Plain `<div>` (in-flow).                                                                                            |
+| **Role**              | `role="alert"` for `tone='error'` (assertive); `role="status"` for info/success/warning (polite).                   |
+| **Title**             | `<strong>` — semantic emphasis, not a heading. Doesn't disrupt page heading outline.                                |
+| **Description**       | `<div>` containing arbitrary ReactNode.                                                                             |
+| **Close button**      | Native `<button type="button">` with `aria-label="Dismiss"`.                                                        |
+| **Focus**             | The close button is the only focusable element by default. Action buttons (inside `actions`) are reachable via Tab. |
+| **Live announcement** | Implicit from `role="alert"` / `role="status"`. No explicit `aria-live`.                                            |
+| **Dismissal model**   | Controlled — consumer hides via conditional render. Alert doesn't manage internal hidden state.                     |
 
 ## Testing
 
@@ -367,6 +366,7 @@ function Alert({
 18. Close button does NOT manage hidden state internally (verifying it's still in the DOM after click; consumer would conditionally unmount)
 
 **Vitest gotchas**:
+
 - The default icon test queries by SVG (lucide-react icons render `<svg>`). Use `container.querySelectorAll('svg').length > 0`.
 - The `tone="error"` role test: `expect(screen.getByRole('alert'))...` works because role="alert" is set on the root div.
 - The close button click test uses `userEvent.click(screen.getByRole('button', { name: 'Dismiss' }))`.
@@ -388,7 +388,7 @@ The viewport mount is irrelevant — Alert is a flow element.
 
 After `### <ToastViewport> + toast` (Toast section, around line ~578), before `### <ConfirmationPopover>`. Same "feedback" cluster.
 
-```markdown
+````markdown
 ### `<Alert>` — persistent in-flow notification
 
 Tone-driven banner for messages that need to stay visible (subscription warnings, save failures, "update available" notices). Complements `<Toast>` (transient).
@@ -413,6 +413,7 @@ const [show, setShow] = useState(true);
   </Alert>
 )}
 ```
+````
 
 - **Four tones** (`info` / `success` / `warning` / `error`). Default icon + accent stripe per tone.
 - **`role="alert"`** only for `error` (interrupts SR). Others use `role="status"` (polite).
@@ -431,6 +432,7 @@ const [show, setShow] = useState(true);
 - ❌ Auto-dismissing the Alert with a setTimeout — that's what Toast is for.
 - ❌ Using `tone="error"` for non-critical warnings. Reserve `error` for genuine failures; `role="alert"` interrupts screen readers.
 - ❌ Multiple stacked Alerts above a page — use one Alert with the most urgent tone, or compose into the page layout with explicit hierarchy.
+
 ```
 
 ## Hard Rule 8
@@ -440,3 +442,4 @@ The pre-push review-fix cycle on library changes is mandatory. Gates green (`mak
 ## Open questions
 
 None. All clarifications baked in above.
+```

@@ -59,9 +59,7 @@ describe('<Alert>', () => {
   });
 
   it('title and children both render together', () => {
-    render(
-      <Alert title="Heading">Body content</Alert>,
-    );
+    render(<Alert title="Heading">Body content</Alert>);
     expect(screen.getByText('Heading')).toBeInTheDocument();
     expect(screen.getByText('Body content')).toBeInTheDocument();
   });
@@ -94,9 +92,7 @@ describe('<Alert>', () => {
   });
 
   it('icon prop replaces the default', () => {
-    render(
-      <Alert icon={<Bell size={16} data-testid="custom-icon" />}>x</Alert>,
-    );
+    render(<Alert icon={<Bell size={16} data-testid="custom-icon" />}>x</Alert>);
     expect(screen.getByTestId('custom-icon')).toBeInTheDocument();
   });
 

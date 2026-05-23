@@ -14,8 +14,7 @@ import styles from './Alert.module.scss';
  */
 export type AlertTone = 'info' | 'success' | 'warning' | 'error';
 
-export interface AlertProps
-  extends Omit<HTMLAttributes<HTMLElement>, 'role' | 'title'> {
+export interface AlertProps extends Omit<HTMLAttributes<HTMLElement>, 'role' | 'title'> {
   /** Tone. Defaults to `'info'`. See `AlertTone` for full descriptions. */
   tone?: AlertTone;
 
@@ -139,12 +138,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
         {actions && <div className={styles.actions}>{actions}</div>}
       </div>
       {onDismiss && (
-        <button
-          type="button"
-          aria-label="Dismiss"
-          className={styles.close}
-          onClick={onDismiss}
-        >
+        <button type="button" aria-label="Dismiss" className={styles.close} onClick={onDismiss}>
           <X size={14} aria-hidden="true" />
         </button>
       )}
