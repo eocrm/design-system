@@ -33,7 +33,7 @@
   /* stylelint-disable-next-line property-disallowed-list -- internal child positioning for the thumb */
   position: relative;
   display: inline-block;
-  background: var(--color-bg-muted);
+  background: var(--color-border-strong);
   border-radius: var(--radius-full);
   border: var(--border-width) solid transparent;
   transition:
@@ -42,7 +42,7 @@
   flex-shrink: 0;
 
   &:hover {
-    background: var(--color-bg-sunken);
+    background: var(--color-fg-disabled);
   }
 }
 
@@ -77,18 +77,23 @@
 .thumb {
   /* stylelint-disable property-disallowed-list -- internal absolute positioning of the thumb inside the track */
   position: absolute;
-  top: 2px;
+  top: 50%;
   left: 2px;
   /* stylelint-enable property-disallowed-list */
   background: var(--color-bg);
   border-radius: 50%;
+
+  // translateY(-50%) keeps the thumb vertically centered regardless of the
+  // track's border or padding box quirks. translateX composes on top when
+  // the checked-state rule fires.
+  transform: translateY(-50%);
   transition: transform var(--transition-base);
   display: grid;
   place-items: center;
 }
 
 .track[data-checked='true'] .thumb {
-  transform: translateX(var(--thumb-travel, 14px));
+  transform: translateY(-50%) translateX(var(--thumb-travel, 14px));
 }
 
 // Sizes — set track dimensions, thumb diameter, and travel distance.
