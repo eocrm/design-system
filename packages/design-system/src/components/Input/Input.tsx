@@ -81,10 +81,10 @@ const AUTOFILL_DISABLED_PROPS = {
  * <p id="email-error">Enter a valid email.</p>
  *
  * @remarks When NOT to use
- * - Multi-line → use `Textarea` (not yet shipped).
+ * - Multi-line → use `Textarea`.
  * - Choosing from a fixed list → use `Select`.
  * - Date/time → use `DatePicker` / `DateRangePicker`.
- * - Password reveal/toggle → use `PasswordInput` (not yet shipped).
+ * - Password reveal/toggle → use `PasswordInput`.
  *
  * @remarks Anti-patterns
  * - ❌ Putting validation logic *inside* the component. The Input is dumb on

@@ -192,6 +192,17 @@ describe('<Textarea>', () => {
       expect(textarea.style.overflowY).toBe('auto');
     });
 
+    it('toggling autoGrow off clears the prior inline height/overflowY', () => {
+      stubbedScrollHeight = 200;
+      const { container, rerender } = render(<Textarea aria-label="Notes" autoGrow />);
+      const textarea = container.querySelector('textarea')!;
+      expect(textarea.style.height).toMatch(/px$/);
+
+      rerender(<Textarea aria-label="Notes" autoGrow={false} />);
+      expect(textarea.style.height).toBe('');
+      expect(textarea.style.overflowY).toBe('');
+    });
+
     it('typing updates the inline height (re-measures on value change)', async () => {
       stubbedScrollHeight = 50;
       function Controlled() {
@@ -290,5 +301,17 @@ describe('<Textarea>', () => {
     const counter = container.querySelector('span[aria-live]')!;
     expect(counter).toHaveAttribute('aria-live', 'polite');
     expect(counter).toHaveAttribute('aria-atomic', 'true');
+  });
+
+  it('numeric defaultValue is reflected in the counter', () => {
+    render(<Textarea aria-label="Notes" defaultValue={123} showCount />);
+    expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  it('disableAutofill={false} force-allows autofill even without an autoComplete hint', () => {
+    render(<Textarea aria-label="Notes" disableAutofill={false} />);
+    const textarea = screen.getByRole('textbox');
+    expect(textarea).not.toHaveAttribute('autocomplete');
+    expect(textarea).not.toHaveAttribute('data-1p-ignore');
   });
 });

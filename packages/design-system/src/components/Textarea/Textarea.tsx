@@ -193,9 +193,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
     // Internal value mirror — keeps the counter in sync for uncontrolled
     // inputs. For controlled inputs, currentValue tracks `value` directly.
-    const [internalValue, setInternalValue] = useState<string>(() =>
-      typeof defaultValue === 'string' ? defaultValue : '',
-    );
+    const [internalValue, setInternalValue] = useState<string>(() => {
+      if (defaultValue == null) return '';
+      return String(defaultValue);
+    });
     const isControlled = value !== undefined;
     const currentValue = isControlled ? String(value) : internalValue;
 
@@ -207,10 +208,18 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     // Auto-grow: synchronously after render, reset height to auto, then
     // set to scrollHeight clamped between minRows and maxRows.
     useLayoutEffect(() => {
-      if (!autoGrow) return;
       const el = textareaRef.current;
       if (!el) return;
 
+      if (!autoGrow) {
+        // Clear any prior auto-grow inline styles so toggling autoGrow OFF
+        // returns control to the native textarea (rows attribute + user drag).
+        el.style.height = '';
+        el.style.overflowY = '';
+        return;
+      }
+
+      // Reset to 'auto' first so scrollHeight reflects content, not the prior height.
       el.style.height = 'auto';
 
       const computed = window.getComputedStyle(el);
@@ -234,6 +243,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       const target = Math.min(Math.max(desired, minHeight), maxHeight);
       el.style.height = `${target}px`;
       el.style.overflowY = desired > maxHeight ? 'auto' : 'hidden';
+      // NOTE: `size` is in the deps array because it changes padding, which
+      // changes paddingY in the math above. Don't remove it.
     }, [currentValue, autoGrow, minRows, maxRows, size]);
 
     // Smart autofill default — same heuristic as Input.
