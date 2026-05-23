@@ -15,6 +15,16 @@
 
     outline: none;
   }
+
+  // When the Link contains an icon (SVG), switch to inline-flex so the icon
+  // aligns vertically with the text and a default gap separates them. Pure
+  // text Links stay as native inline anchors so multi-word link text wraps
+  // naturally inside body copy.
+  &:has(svg) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
 }
 
 .default {
