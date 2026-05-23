@@ -98,7 +98,7 @@
   background: var(--color-bg);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  border-left: var(--border-width) solid var(--color-fg-muted); // overridden per tone
+  border-left: var(--border-width-strong) solid var(--color-fg-muted); // overridden per tone
   color: var(--color-fg);
   transition: transform 200ms ease-out;
 }
