@@ -179,6 +179,9 @@ export type { PaginationProps, PaginationSize, PaginationItem } from './componen
 export { CursorPagination } from './components/CursorPagination';
 export type { CursorPaginationProps } from './components/CursorPagination';
 
+export { Textarea } from './components/Textarea';
+export type { TextareaProps, TextareaSize, TextareaResize } from './components/Textarea';
+
 export { DataTable, useDataTable, ColumnVisibilityTrigger } from './components/DataTable';
 export type {
   DataTableProps,

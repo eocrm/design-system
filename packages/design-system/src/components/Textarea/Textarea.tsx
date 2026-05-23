@@ -214,12 +214,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       el.style.height = 'auto';
 
       const computed = window.getComputedStyle(el);
-      const lineHeight = parseFloat(computed.lineHeight);
+      // jsdom may return 'normal' for lineHeight — fall back to 0 so the
+      // math degrades gracefully (minHeight becomes 0, target = scrollHeight).
+      const lineHeight = parseFloat(computed.lineHeight) || 0;
       const paddingY =
-        parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom);
+        (parseFloat(computed.paddingTop) || 0) +
+        (parseFloat(computed.paddingBottom) || 0);
       const borderY =
-        parseFloat(computed.borderTopWidth) +
-        parseFloat(computed.borderBottomWidth);
+        (parseFloat(computed.borderTopWidth) || 0) +
+        (parseFloat(computed.borderBottomWidth) || 0);
 
       const minHeight = lineHeight * minRows + paddingY + borderY;
       const maxHeight =
@@ -250,6 +253,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={setRefs}
           rows={minRows}
           aria-invalid={invalid || undefined}
+          // Autofill blocking goes before {...props} — matches Input's spread
+          // order. Consumer's autoComplete wins; data-* opt-outs still apply.
           {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
           value={value}
           defaultValue={defaultValue}
