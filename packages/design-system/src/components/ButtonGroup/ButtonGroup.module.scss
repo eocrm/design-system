@@ -1,0 +1,106 @@
+@use '../../styles/mixins' as *;
+
+// ─── Visual mode ────────────────────────────────────────────────────────
+// Joined Button children: flatten inner borders, round outer corners.
+// Targets the native `> button` element so we don't have to know Button's
+// CSS Module hash.
+
+.group[data-mode='visual'] {
+  display: inline-flex;
+}
+
+.group[data-mode='visual'] > button {
+  border-radius: 0;
+  transform: translateX(calc(var(--border-width) * -1));
+}
+
+.group[data-mode='visual'] > button:first-child {
+  transform: none;
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.group[data-mode='visual'] > button:last-child {
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+// Lift on hover/focus so the focus ring isn't clipped by neighbors.
+.group[data-mode='visual'] > button:hover,
+.group[data-mode='visual'] > button:focus-visible {
+  position: relative;
+  z-index: 1;
+}
+
+// ─── Segmented mode ─────────────────────────────────────────────────────
+// Pill-inset look matching iOS / Material precedent. Owns its own styling
+// — items are NOT Buttons, they're internal radio-role <button>s.
+
+.group[data-mode='segmented'] {
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
+  padding: 2px;
+  display: inline-flex;
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
+  gap: 2px;
+}
+
+.item {
+  border: none;
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  font: inherit;
+  white-space: nowrap;
+  border-radius: calc(var(--radius-md) - 2px);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.item[data-selected] {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  box-shadow: var(--shadow-xs);
+}
+
+.item:hover:not([data-selected], [aria-disabled]) {
+  color: var(--color-fg);
+}
+
+.item[aria-disabled] {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.item:focus-visible {
+  @include focus-ring;
+
+  outline: none;
+}
+
+// Size variants — match Button's --size-* scale for visual consistency.
+.sizeXs {
+  height: var(--size-xs);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xs);
+}
+
+.sizeSm {
+  height: var(--size-sm);
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.sizeMd {
+  height: var(--size-md);
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-md);
+}
+
+.sizeLg {
+  height: var(--size-lg);
+  padding: 0 var(--space-4);
+  font-size: var(--font-size-md);
+}
