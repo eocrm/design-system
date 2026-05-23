@@ -5,7 +5,7 @@ import styles from './Card.module.scss';
 /** Heading level wrapping the title. Defaults to 'h3'. Same vocab as Accordion. */
 export type CardHeaderLevel = 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
-export interface CardHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
+export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Heading level for the title text. Defaults to `'h3'` (assumes the page
    * has an h1/h2 above). Override when this section sits beneath an h1
@@ -61,7 +61,9 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function C
   { headerLevel = 'h3', action, children, className, ...rest },
   ref,
 ) {
-  const Heading = headerLevel as 'h3';
+  // headerLevel is a string union of valid HTML heading tag names; cast to
+  // the union (not a single literal) so the JSX dispatch type is honest.
+  const Heading = headerLevel as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   // {...rest} last so consumer overrides win (Pattern A).
   return (
     <div ref={ref} className={clsx(styles.header, className)} {...rest}>

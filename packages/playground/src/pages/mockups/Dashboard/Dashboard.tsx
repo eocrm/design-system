@@ -141,7 +141,7 @@ export function Dashboard() {
       </div>
 
       <Card padding="md">
-        <h2 style={{ margin: 0, fontSize: 'var(--font-size-md)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-fg)' }}>Recent contacts</h2>
+        <h2 className={styles.cardTitle}>Recent contacts</h2>
         <div className={styles.contactGrid}>
           {contacts.slice(0, 4).map((c) => (
             <Cluster key={c.id} gap="sm" wrap={false} align="center">

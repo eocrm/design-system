@@ -19,6 +19,14 @@ export interface CardListProps extends HTMLAttributes<HTMLUListElement> {
  *     <Card.ListRow>Row content</Card.ListRow>
  *   </Card.List>
  * </Card>
+ *
+ * @remarks
+ * Row dividers use a `:last-child` CSS selector to suppress the bottom border
+ * on the final row. Fragments are transparent (work fine — `<Fragment>` doesn't
+ * render a DOM node), but wrapping rows in an extra `<div>` or other element
+ * breaks the last-child match and leaves a stray divider on the visual last
+ * row. Render rows as direct children (or via `.map`) for the divider to
+ * resolve correctly.
  */
 export const CardList = forwardRef<HTMLUListElement, CardListProps>(function CardList(
   { children, className, ...rest },

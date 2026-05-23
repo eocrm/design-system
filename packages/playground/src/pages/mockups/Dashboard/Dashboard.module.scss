@@ -5,6 +5,15 @@
   color: var(--color-fg);
 }
 
+// Section heading for non-list cards (e.g. Recent contacts) where the
+// Card.Header subcomponent's border-bottom + padding don't fit.
+.cardTitle {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+}
+
 .subtitle {
   margin: var(--space-1) 0 0;
   color: var(--color-fg-muted);
