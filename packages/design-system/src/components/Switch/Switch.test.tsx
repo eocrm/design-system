@@ -1,4 +1,4 @@
-import { createRef } from 'react';
+import { createRef, useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Switch } from './Switch';
@@ -96,17 +96,28 @@ describe('<Switch>', () => {
     expect(track).toHaveAttribute('data-checked', 'true');
   });
 
-  it('controlled: clicking the label fires onChange with the next boolean', async () => {
+  it('controlled: clicking fires onChange with the next boolean (both directions)', async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(
-      <Switch aria-label="x" checked={false} onChange={handleChange} />,
-    );
-    await user.click(screen.getByRole('switch'));
-    expect(handleChange).toHaveBeenCalledTimes(1);
-    expect(handleChange.mock.calls[0][0]).toBe(true);
-    // Second arg is the change event.
-    expect(handleChange.mock.calls[0][1]).toHaveProperty('target');
+    function Controlled() {
+      const [v, setV] = useState(false);
+      return (
+        <Switch
+          aria-label="x"
+          checked={v}
+          onChange={(next, e) => {
+            handleChange(next, e);
+            setV(next);
+          }}
+        />
+      );
+    }
+    render(<Controlled />);
+    const input = screen.getByRole('switch');
+    await user.click(input);
+    expect(handleChange).toHaveBeenLastCalledWith(true, expect.objectContaining({ target: expect.anything() }));
+    await user.click(input);
+    expect(handleChange).toHaveBeenLastCalledWith(false, expect.objectContaining({ target: expect.anything() }));
   });
 
   it('uncontrolled: defaultChecked={true} starts checked', () => {
@@ -154,6 +165,17 @@ describe('<Switch>', () => {
     expect(input.checked).toBe(true);
     const track = container.querySelector('[data-tone]')!;
     expect(track).toHaveAttribute('data-checked', 'true');
+  });
+
+  it('Space-key does NOT toggle when loading (input is disabled)', async () => {
+    const user = userEvent.setup();
+    const handleChange = vi.fn();
+    render(<Switch aria-label="x" loading onChange={handleChange} />);
+    const input = screen.getByRole('switch') as HTMLInputElement;
+    input.focus();
+    await user.keyboard(' ');
+    expect(input.checked).toBe(false);
+    expect(handleChange).not.toHaveBeenCalled();
   });
 
   // ─── Loading ───────────────────────────────────────────────────────────

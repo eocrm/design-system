@@ -204,6 +204,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
       className={clsx(styles.wrapper, className)}
       data-disabled={isInteractionDisabled || undefined}
     >
+      {/* Pattern B — {...props} first so component-owned attrs (type, role, checked, disabled, aria-*, onChange, className) win. */}
       <input
         {...props}
         ref={ref}
