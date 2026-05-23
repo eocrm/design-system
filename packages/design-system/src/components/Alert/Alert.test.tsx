@@ -33,6 +33,19 @@ describe('<Alert>', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
+  it('component-owned data-tone survives consumer-passed data-tone (spread order)', () => {
+    // Consumer attempts to override data-tone via a passthrough prop.
+    // The component's data-tone (driven by `tone`) MUST win.
+    const { container } = render(
+      // data-* attrs are loosely typed — TS accepts this; the runtime assertion below is the guard
+      <Alert tone="success" data-tone="bogus">
+        x
+      </Alert>,
+    );
+    expect(container.querySelector('[data-tone="success"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-tone="bogus"]')).toBeNull();
+  });
+
   it('title renders inside <strong>', () => {
     const { container } = render(<Alert title="Heading">desc</Alert>);
     const strong = container.querySelector('strong');

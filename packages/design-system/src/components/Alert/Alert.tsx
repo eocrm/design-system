@@ -127,9 +127,9 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
   return (
     <div
       ref={ref}
+      {...props}
       role={role}
       data-tone={tone}
-      {...props}
       className={clsx(styles.alert, className)}
     >
       {renderedIcon && <div className={styles.icon}>{renderedIcon}</div>}
