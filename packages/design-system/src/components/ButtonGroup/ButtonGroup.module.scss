@@ -7,15 +7,30 @@
 
 .group[data-mode='visual'] {
   display: inline-flex;
+
+  // Don't stretch to fill cross-axis when placed inside a flex/grid parent
+  // (e.g. Stack with default align="stretch"). A joined button group is an
+  // intrinsically compact UI control — like Button itself, like Tabs — and
+  // should not expand to container width. Rule 4 disallows align-self in
+  // general; this is the documented exception for inline-shaped UI controls.
+  // stylelint-disable-next-line property-disallowed-list -- inline control intrinsic shrink
+  align-self: flex-start;
 }
 
 .group[data-mode='visual'] > button {
   border-radius: 0;
-  transform: translateX(calc(var(--border-width) * -1));
+
+  // -1px margin pulls each adjacent border into a single line. Rule 4 normally
+  // disallows margin on components, but this is the canonical border-collapse
+  // technique for joined buttons — transform: translateX doesn't work because
+  // it leaves the cumulative seam-to-seam gap uncollapsed past the first pair.
+  // stylelint-disable-next-line property-disallowed-list -- border-collapse for joined siblings
+  margin-left: calc(var(--border-width) * -1);
 }
 
 .group[data-mode='visual'] > button:first-child {
-  transform: none;
+  // stylelint-disable-next-line property-disallowed-list -- counterpart to the join above
+  margin-left: 0;
   border-top-left-radius: var(--radius-md);
   border-bottom-left-radius: var(--radius-md);
 }
@@ -44,6 +59,11 @@
   display: inline-flex;
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value
   gap: 2px;
+
+  // Shrink-to-content inside flex/grid parents (e.g. Stack with align=stretch).
+  // Documented Rule-4 exception for intrinsically compact inline controls.
+  // stylelint-disable-next-line property-disallowed-list -- inline control intrinsic shrink
+  align-self: flex-start;
 }
 
 .item {
