@@ -1,0 +1,44 @@
+@use '../../styles/mixins' as *;
+
+.link {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition:
+    color var(--transition-fast),
+    text-decoration-color var(--transition-fast);
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline: none;
+  }
+}
+
+.default {
+  color: var(--color-accent);
+
+  &:hover {
+    color: var(--color-accent-hover);
+    text-decoration: underline;
+  }
+}
+
+.muted {
+  color: var(--color-fg-muted);
+
+  &:hover {
+    color: var(--color-accent);
+  }
+}
+
+.subtle {
+  color: var(--color-fg);
+
+  &:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+}
