@@ -3,18 +3,41 @@
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-
-  // Reserve 3px transparent border-left on every card so toggling `tone`
-  // doesn't shift layout (same pattern as Alert's left-stripe).
-  border-left: var(--border-width-strong) solid transparent;
 }
 
-// Tone-coded left-stripe selectors — override only border-left-color.
-.card[data-tone='accent']  { border-left-color: var(--color-accent); }
-.card[data-tone='info']    { border-left-color: var(--color-info); }
-.card[data-tone='success'] { border-left-color: var(--color-success); }
-.card[data-tone='warning'] { border-left-color: var(--color-warning); }
-.card[data-tone='danger']  { border-left-color: var(--color-danger); }
+// Tone-coded left-stripe via inset box-shadow. Drawn inside the card on top
+// of the existing border, so untoned cards stay pixel-identical to before
+// (no layout shift, no width change). The existing --shadow-sm stays on
+// every card; the inset stripe layers on top when `data-tone` is set.
+.card[data-tone='accent'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-accent),
+    var(--shadow-sm);
+}
+
+.card[data-tone='info'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-info),
+    var(--shadow-sm);
+}
+
+.card[data-tone='success'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-success),
+    var(--shadow-sm);
+}
+
+.card[data-tone='warning'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-warning),
+    var(--shadow-sm);
+}
+
+.card[data-tone='danger'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-danger),
+    var(--shadow-sm);
+}
 
 .paddingNone {
   padding: 0;
