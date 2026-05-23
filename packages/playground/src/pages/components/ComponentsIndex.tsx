@@ -14,6 +14,7 @@ import { PasswordStrengthMeter } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
 import { Skeleton } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
+import { Switch } from '@eocrm/design-system';
 import { Table } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { Textarea } from '@eocrm/design-system';
@@ -180,6 +181,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         />
       </div>
     ),
+  },
+  {
+    to: '/components/switch',
+    name: 'Switch',
+    description: 'Binary on/off toggle. Three tones + async loading state.',
+    preview: <Switch defaultChecked tone="success" aria-label="Preview" />,
   },
   {
     to: '/components/skeleton',

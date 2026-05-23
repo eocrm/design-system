@@ -1,0 +1,177 @@
+@use '../../styles/mixins' as *;
+
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+
+  &[data-disabled='true'] {
+    cursor: not-allowed;
+    opacity: var(--opacity-disabled);
+  }
+}
+
+// Visually-hidden but interactive native input. Same recipe as
+// Checkbox/Radio's hidden inputs.
+.input {
+  /* stylelint-disable property-disallowed-list -- visually-hidden recipe */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  /* stylelint-enable property-disallowed-list */
+}
+
+.track {
+  /* stylelint-disable-next-line property-disallowed-list -- internal child positioning for the thumb */
+  position: relative;
+  display: inline-block;
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid transparent;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--color-fg-disabled);
+  }
+}
+
+.track[data-checked='true'][data-tone='accent'] {
+  background: var(--color-accent);
+}
+
+.track[data-checked='true'][data-tone='success'] {
+  background: var(--color-success);
+}
+
+.track[data-checked='true'][data-tone='danger'] {
+  background: var(--color-danger);
+}
+
+.track[data-checked='true'][data-tone='accent']:hover {
+  background: var(--color-accent-hover);
+}
+
+.track[data-checked='true'][data-tone='success']:hover {
+  background: var(--color-success-hover);
+}
+
+.track[data-checked='true'][data-tone='danger']:hover {
+  background: var(--color-danger-hover);
+}
+
+.track[data-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.thumb {
+  /* stylelint-disable property-disallowed-list -- internal absolute positioning of the thumb inside the track */
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  /* stylelint-enable property-disallowed-list */
+  background: var(--color-bg);
+  border-radius: 50%;
+
+  // translateY(-50%) keeps the thumb vertically centered regardless of the
+  // track's border or padding box quirks. translateX composes on top when
+  // the checked-state rule fires.
+  transform: translateY(-50%);
+  transition: transform var(--transition-base);
+  display: grid;
+  place-items: center;
+}
+
+.track[data-checked='true'] .thumb {
+  transform: translateY(-50%) translateX(var(--thumb-travel, 14px));
+}
+
+// Sizes — set track dimensions, thumb diameter, and travel distance.
+.sizeSm {
+  width: 28px;
+  height: 16px;
+  --thumb-travel: 12px;
+}
+
+.sizeSm .thumb {
+  width: 12px;
+  height: 12px;
+}
+
+.sizeMd {
+  width: 36px;
+  height: 20px;
+  --thumb-travel: 14px;
+}
+
+.sizeMd .thumb {
+  width: 16px;
+  height: 16px;
+}
+
+.sizeLg {
+  width: 44px;
+  height: 24px;
+  --thumb-travel: 18px;
+}
+
+.sizeLg .thumb {
+  width: 20px;
+  height: 20px;
+}
+
+.label {
+  font-family: inherit;
+  color: var(--color-fg);
+}
+
+.labelSm {
+  font-size: var(--font-size-sm);
+}
+
+.labelMd {
+  font-size: var(--font-size-md);
+}
+
+.labelLg {
+  font-size: var(--font-size-lg);
+}
+
+// Focus ring on the track when the (visually-hidden) input is focus-visible.
+.input:focus-visible + .track {
+  @include focus-ring;
+}
+
+.input:focus-visible + .track[data-invalid='true'] {
+  @include focus-ring(var(--ring-danger));
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+  color: var(--color-fg-muted);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb,
+  .track,
+  .spin {
+    transition: none;
+    animation: none;
+  }
+}
