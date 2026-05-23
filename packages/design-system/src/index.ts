@@ -2,6 +2,13 @@
 export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
+export { ButtonGroup } from './components/ButtonGroup';
+export type {
+  ButtonGroupProps,
+  ButtonGroupSize,
+  ButtonGroupItemProps,
+} from './components/ButtonGroup';
+
 export { Input } from './components/Input';
 export type { InputProps, InputSize } from './components/Input';
 

@@ -8,6 +8,7 @@ import { ContactDetail } from './pages/mockups/ContactDetail/ContactDetail';
 import { Members } from './pages/mockups/Members/Members';
 import { ComponentsIndex } from './pages/components/ComponentsIndex';
 import { ButtonDemo } from './pages/components/ButtonDemo';
+import { ButtonGroupDemo } from './pages/components/ButtonGroupDemo';
 import { DatePickersDemo } from './pages/components/DatePickersDemo';
 import { InputDemo } from './pages/components/InputDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
@@ -51,6 +52,7 @@ export default function App() {
 
           <Route path="/components" element={<ComponentsIndex />} />
           <Route path="/components/button" element={<ButtonDemo />} />
+          <Route path="/components/button-group" element={<ButtonGroupDemo />} />
           <Route path="/components/datepickers" element={<DatePickersDemo />} />
           <Route path="/components/input" element={<InputDemo />} />
           <Route path="/components/pagination" element={<PaginationDemo />} />
