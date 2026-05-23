@@ -90,6 +90,7 @@ export const MOCKUPS = [
       'Cluster',
       'Avatar',
       'Badge',
+      'Breadcrumb',
       'Button',
       'Tabs',
       'DropdownMenu',
