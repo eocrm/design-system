@@ -17,6 +17,15 @@
   transition: opacity var(--transition-base);
   overscroll-behavior: contain;
 
+  // Hint to the browser to promote this element to its own compositor
+  // layer BEFORE the animation starts, so opacity transitions are smooth
+  // from frame 1 instead of after the first paint upgrade.
+  will-change: opacity;
+
+  // Isolate paint + layout from the rest of the page so opening the
+  // overlay doesn't invalidate sibling layout/paint trees.
+  contain: layout paint;
+
   @starting-style {
     opacity: var(--opacity-hidden);
   }
@@ -58,6 +67,15 @@
   z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2 + 1);
   transition: transform var(--transition-base);
   overscroll-behavior: contain;
+
+  // Promote to its own compositor layer for smooth slide animation.
+  // transform is GPU-friendly already; will-change makes the browser
+  // upgrade the layer BEFORE the animation starts rather than during it.
+  will-change: transform;
+
+  // Isolate from the rest of the page — the drawer is fixed and doesn't
+  // affect parent layout/paint, so contain prevents reverse-invalidation.
+  contain: layout paint;
 }
 
 // Per-side positioning + slide animation. The drawer animates in from off-screen
