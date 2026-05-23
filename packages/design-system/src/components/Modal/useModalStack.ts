@@ -132,6 +132,14 @@ export function useModalStack(id: string, active: boolean, mode: ModalStackMode)
       unsubscribe();
       modalStack.unregister(id);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mode handled by separate effect below to avoid tear-down on mode change
+  }, [id, active]);
+
+  // Update mode in place without tearing down the entry. modalStack.register
+  // handles existing entries by updating their mode and re-notifying.
+  useLayoutEffect(() => {
+    if (!active) return;
+    modalStack.register(id, mode);
   }, [id, active, mode]);
 
   return state;

@@ -512,4 +512,41 @@ describe('<Modal>', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(document.activeElement).toBe(trigger);
   });
+
+  it('does not throw when the previously-focused trigger is removed while modal is open', async () => {
+    const user = userEvent.setup();
+    function TriggerRemovalHarness() {
+      const [open, setOpen] = useState(false);
+      const [triggerVisible, setTriggerVisible] = useState(true);
+      return (
+        <>
+          {triggerVisible && (
+            <button
+              onClick={() => {
+                setOpen(true);
+                // Remove the trigger from the DOM while the modal is open
+                setTriggerVisible(false);
+              }}
+              data-testid="trigger"
+            >
+              Open
+            </button>
+          )}
+          <Modal open={open} onOpenChange={setOpen} aria-label="x">
+            <Modal.Body>x</Modal.Body>
+          </Modal>
+        </>
+      );
+    }
+    render(<TriggerRemovalHarness />);
+    const trigger = screen.getByTestId('trigger');
+    trigger.focus();
+    await user.click(trigger);
+    expect(screen.queryByTestId('trigger')).toBeNull();
+    // Should close without throwing — the document.contains() guard skips the
+    // focus() call when the saved element is no longer in the DOM.
+    await user.keyboard('{Escape}');
+    // Focus should land somewhere sensible; document.body is fine for jsdom.
+    expect(document.activeElement).toBeDefined();
+  });
 });

@@ -7,8 +7,16 @@ let originalTop: string | null = null;
 let originalLeft: string | null = null;
 let originalWidth: string | null = null;
 let originalPaddingRight: string | null = null;
+let rAFHandle: number | null = null;
 
 function lock() {
+  // Cancel any pending unlock rAF — if a new modal opens before the
+  // previous unlock's rAF fired, we don't want the deferred scrollTo
+  // to fire after the new lock has set body.style.top.
+  if (rAFHandle !== null) {
+    cancelAnimationFrame(rAFHandle);
+    rAFHandle = null;
+  }
   if (count === 0) {
     const scrollY = window.scrollY;
     const scrollX = window.scrollX;
@@ -74,8 +82,10 @@ function unlock() {
 
     // Belt-and-braces: re-issue on the next frame in case the synchronous
     // call was clamped because the layout pipeline hadn't yet committed.
-    // No-op when the first call already succeeded.
-    requestAnimationFrame(() => {
+    // No-op when the first call already succeeded. The handle is tracked so
+    // lock() can cancel this if a new modal opens before the frame fires.
+    rAFHandle = requestAnimationFrame(() => {
+      rAFHandle = null;
       window.scrollTo({ left: savedX, top: savedY, behavior: 'instant' });
     });
   }
