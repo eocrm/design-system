@@ -91,13 +91,13 @@ const alignClass: Record<ClusterAlign, string> = {
  * </Cluster>
  *
  * @remarks When NOT to use
- * - For aligned columns of equal width — use CSS Grid. Cluster wraps
+ * - For aligned columns of equal width — use `<Grid>`. Cluster wraps
  *   unpredictably at narrow widths and isn't a column system.
  * - For content that must never wrap — set `wrap={false}` if you must, but
  *   reconsider whether that's truly required on narrow viewports.
  *
  * @remarks Anti-patterns
- * - ❌ Cluster as a 2-column layout. Use CSS Grid for "two columns, always".
+ * - ❌ Cluster as a 2-column layout. Use `<Grid columns={2}>` for "two columns, always".
  * - ❌ Inline `style={{ marginLeft: 'auto' }}` on a child to push it right.
  *   Use `justify="between"` (with a sibling on the left) or split into two
  *   Clusters in the parent.

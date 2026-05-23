@@ -17,6 +17,15 @@ export type { StackProps, StackGap, StackAlign } from './components/Stack';
 export { Cluster } from './components/Cluster';
 export type { ClusterProps, ClusterGap, ClusterJustify, ClusterAlign } from './components/Cluster';
 
+export { Grid } from './components/Grid';
+export type {
+  GridProps,
+  GridGap,
+  GridAlignItems,
+  GridJustifyItems,
+  GridAs,
+} from './components/Grid';
+
 export { Avatar, AvatarGroup, avatarColorIndex } from './components/Avatar';
 export type { AvatarProps, AvatarSize, AvatarStatus, AvatarGroupProps } from './components/Avatar';
 
