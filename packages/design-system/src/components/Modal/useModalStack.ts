@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 
 export type ModalStackMode = 'replace' | 'overlay';
 
@@ -96,13 +96,24 @@ export interface ModalStackState {
  * accurate when sibling modals open/close.
  */
 export function useModalStack(id: string, active: boolean, mode: ModalStackMode): ModalStackState {
-  const [state, setState] = useState<ModalStackState>({
-    depth: null,
-    isTop: false,
-    topMode: null,
+  // Lazy initializer pre-computes the post-registration state so the FIRST
+  // render of an opened modal already has correct `topMode` / `isTop` /
+  // `depth`. Without this, paint and stack-position attributes would be
+  // wrong on the first paint (transparent overlay flash, etc.). The actual
+  // register() still happens in useLayoutEffect; this is read-only.
+  const [state, setState] = useState<ModalStackState>(() => {
+    if (!active) return { depth: null, isTop: false, topMode: null };
+    return {
+      depth: modalStack.topDepth(),
+      isTop: true,
+      topMode: mode,
+    };
   });
 
-  useEffect(() => {
+  // useLayoutEffect (not useEffect) so registration + state sync happen
+  // synchronously after commit, before the browser paints. Prevents a
+  // one-frame flash of the wrong overlay attributes.
+  useLayoutEffect(() => {
     if (!active) {
       setState({ depth: null, isTop: false, topMode: null });
       return;
