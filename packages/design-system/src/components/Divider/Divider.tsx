@@ -16,8 +16,7 @@ export type DividerVariant = 'solid' | 'dashed';
  */
 export type DividerSize = 'sm' | 'md' | 'lg';
 
-export interface DividerProps
-  extends Omit<HTMLAttributes<HTMLElement>, 'role' | 'children'> {
+export interface DividerProps extends Omit<HTMLAttributes<HTMLElement>, 'role' | 'children'> {
   /** Layout direction. Defaults to `'horizontal'`. */
   orientation?: DividerOrientation;
 
@@ -100,14 +99,7 @@ const SIZE_CLASS: Record<DividerSize, string> = {
  * - ❌ `<Divider style={{ marginY: 16 }} />` — parent owns spacing.
  */
 export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
-  {
-    orientation = 'horizontal',
-    variant = 'solid',
-    size = 'sm',
-    children,
-    className,
-    ...props
-  },
+  { orientation = 'horizontal', variant = 'solid', size = 'sm', children, className, ...props },
   ref,
 ) {
   const classes = clsx(

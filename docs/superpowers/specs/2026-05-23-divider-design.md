@@ -116,7 +116,7 @@ export interface DividerProps extends Omit<HTMLAttributes<HTMLElement>, 'role' |
 }
 ```
 
-**Spread order — Pattern A** (consumer wins) for ARIA + data-*, with component-owned attrs after:
+**Spread order — Pattern A** (consumer wins) for ARIA + data-\*, with component-owned attrs after:
 
 ```tsx
 <hr
@@ -124,7 +124,13 @@ export interface DividerProps extends Omit<HTMLAttributes<HTMLElement>, 'role' |
   {...props}
   role="separator"
   aria-orientation={orientation}
-  className={clsx(styles.divider, ORIENTATION_CLASS[orientation], VARIANT_CLASS[variant], SIZE_CLASS[size], className)}
+  className={clsx(
+    styles.divider,
+    ORIENTATION_CLASS[orientation],
+    VARIANT_CLASS[variant],
+    SIZE_CLASS[size],
+    className,
+  )}
 />
 ```
 
@@ -137,7 +143,14 @@ For the labeled case:
   role="separator"
   aria-orientation={orientation}
   data-labeled="true"
-  className={clsx(styles.divider, styles.labeled, ORIENTATION_CLASS[orientation], VARIANT_CLASS[variant], SIZE_CLASS[size], className)}
+  className={clsx(
+    styles.divider,
+    styles.labeled,
+    ORIENTATION_CLASS[orientation],
+    VARIANT_CLASS[variant],
+    SIZE_CLASS[size],
+    className,
+  )}
 >
   <span className={styles.line} aria-hidden="true" />
   <span className={styles.label}>{children}</span>
@@ -145,7 +158,7 @@ For the labeled case:
 </div>
 ```
 
-Component-owned attrs (after spread) — `role`, `aria-orientation`, `data-labeled`, `className`. Consumer can override aria-* attrs via override, but not these specifically; ref forwards to the root.
+Component-owned attrs (after spread) — `role`, `aria-orientation`, `data-labeled`, `className`. Consumer can override aria-\* attrs via override, but not these specifically; ref forwards to the root.
 
 ## Architecture flow
 
@@ -153,7 +166,7 @@ Two render paths:
 
 1. **`children == null`**: render `<hr>` with the right classes. Simple, native HTML semantics. `<hr>` already implies `role="separator"`, but we set it explicitly for parity with the labeled path.
 
-2. **`children != null`**: render `<div role="separator">` with three children: two `.line` spans (flanking) and a `.label` span (center). Flex layout — `.line` gets `flex: 1` (allowed: internal layout of children, not at component boundary). 
+2. **`children != null`**: render `<div role="separator">` with three children: two `.line` spans (flanking) and a `.label` span (center). Flex layout — `.line` gets `flex: 1` (allowed: internal layout of children, not at component boundary).
 
 ```tsx
 export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
@@ -236,11 +249,19 @@ export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
 
 // ─── Size tiers — bump the border width ─────────────────────────────────
 
-.sizeMd.horizontal { border-top-width: var(--border-width-emphasis); }
-.sizeMd.vertical   { border-left-width: var(--border-width-emphasis); }
+.sizeMd.horizontal {
+  border-top-width: var(--border-width-emphasis);
+}
+.sizeMd.vertical {
+  border-left-width: var(--border-width-emphasis);
+}
 
-.sizeLg.horizontal { border-top-width: var(--border-width-strong); }
-.sizeLg.vertical   { border-left-width: var(--border-width-strong); }
+.sizeLg.horizontal {
+  border-top-width: var(--border-width-strong);
+}
+.sizeLg.vertical {
+  border-left-width: var(--border-width-strong);
+}
 
 // ─── Labeled — flex layout with two line spans flanking the label ───────
 
@@ -287,17 +308,39 @@ export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
   border-left: var(--border-width) dashed var(--color-border);
 }
 
-.sizeMd .line { height: var(--border-width-emphasis); }
-.sizeLg .line { height: var(--border-width-strong); }
+.sizeMd .line {
+  height: var(--border-width-emphasis);
+}
+.sizeLg .line {
+  height: var(--border-width-strong);
+}
 
-.sizeMd.vertical .line { width: var(--border-width-emphasis); height: auto; }
-.sizeLg.vertical .line { width: var(--border-width-strong); height: auto; }
+.sizeMd.vertical .line {
+  width: var(--border-width-emphasis);
+  height: auto;
+}
+.sizeLg.vertical .line {
+  width: var(--border-width-strong);
+  height: auto;
+}
 
-.sizeMd.dashed .line { border-top-width: var(--border-width-emphasis); height: 0; }
-.sizeLg.dashed .line { border-top-width: var(--border-width-strong); height: 0; }
+.sizeMd.dashed .line {
+  border-top-width: var(--border-width-emphasis);
+  height: 0;
+}
+.sizeLg.dashed .line {
+  border-top-width: var(--border-width-strong);
+  height: 0;
+}
 
-.sizeMd.dashed.vertical .line { border-left-width: var(--border-width-emphasis); width: 0; }
-.sizeLg.dashed.vertical .line { border-left-width: var(--border-width-strong); width: 0; }
+.sizeMd.dashed.vertical .line {
+  border-left-width: var(--border-width-emphasis);
+  width: 0;
+}
+.sizeLg.dashed.vertical .line {
+  border-left-width: var(--border-width-strong);
+  width: 0;
+}
 
 .label {
   flex: 0 0 auto;
@@ -309,6 +352,7 @@ export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
 ```
 
 **Rule 4 check**:
+
 - `.horizontal` has `width: 100%` — intrinsic-of-parent width, NOT layout claim. Allowed (matches Input/Textarea precedent).
 - `.vertical` has `align-self: stretch` — needed because the parent (typically a Cluster) doesn't know to stretch this child; without it, the vertical line collapses to 0 height. This IS layout-at-component-boundary and would normally violate Rule 4, but the documented exception for "intrinsically vertical primitives that need parent height" applies (same as how ButtonGroup uses `align-self: flex-start`). Add inline `stylelint-disable-next-line property-disallowed-list -- vertical separator needs parent height; same Rule 4 exception as ButtonGroup` comment.
 - `min-height: var(--space-3)` on `.vertical` — a fallback so the vertical divider has SOME visible height even outside flex/grid parents. Pragmatic.
@@ -316,15 +360,15 @@ export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
 
 ## ARIA + behavior reference
 
-| Concern | Behavior |
-|---|---|
-| **Default element (no label)** | `<hr role="separator" aria-orientation="...">`. Native HTML semantics. |
-| **Labeled element** | `<div role="separator" aria-orientation="...">` with two `<span class="line" aria-hidden>` siblings and a `<span class="label">`. |
-| **role** | Always `"separator"`. WAI-ARIA recommended for visual separators. |
-| **aria-orientation** | Always set (`"horizontal"` or `"vertical"`). Default for `role="separator"` is "horizontal" but explicit is clearer. |
-| **Line spans** | `aria-hidden="true"` — purely decorative; the role on the root carries the semantic. |
-| **Focus** | Not focusable. Divider is informational, not interactive. |
-| **Ref target** | The root (`<hr>` or `<div>` depending on `children`). Consumers needing a specific element type can cast the ref. |
+| Concern                        | Behavior                                                                                                                          |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Default element (no label)** | `<hr role="separator" aria-orientation="...">`. Native HTML semantics.                                                            |
+| **Labeled element**            | `<div role="separator" aria-orientation="...">` with two `<span class="line" aria-hidden>` siblings and a `<span class="label">`. |
+| **role**                       | Always `"separator"`. WAI-ARIA recommended for visual separators.                                                                 |
+| **aria-orientation**           | Always set (`"horizontal"` or `"vertical"`). Default for `role="separator"` is "horizontal" but explicit is clearer.              |
+| **Line spans**                 | `aria-hidden="true"` — purely decorative; the role on the root carries the semantic.                                              |
+| **Focus**                      | Not focusable. Divider is informational, not interactive.                                                                         |
+| **Ref target**                 | The root (`<hr>` or `<div>` depending on `children`). Consumers needing a specific element type can cast the ref.                 |
 
 ## Testing
 
@@ -357,6 +401,7 @@ export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
 14. `ref` forwards to the root element (assert `tagName` matches HR or DIV based on children)
 
 **Vitest gotchas**:
+
 - The `aria-hidden` test on `.line` spans: `container.querySelectorAll('span[aria-hidden="true"]')` should return 2 elements.
 - The ref test conditionally asserts tagName: when children passed, `expect(ref.current?.tagName).toBe('DIV')`; otherwise `'HR'`.
 
@@ -375,7 +420,7 @@ export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
 
 Insert after `### <Grid>` (around line 382), in the layout cluster.
 
-```markdown
+````markdown
 ### `<Divider>` — separator primitive
 
 Thin rule between content sections. Horizontal (default) or vertical. Optional centered label slot. Three size tiers + solid/dashed variants.
@@ -400,6 +445,7 @@ import { Divider } from '@eocrm/design-system';
 <Divider variant="dashed" />
 <Divider size="lg" />
 ```
+````
 
 - **Default**: solid, size `'sm'` (1px), horizontal.
 - **Labeled** dividers use `<div role="separator">` instead of `<hr>` because HTML `<hr>` can't have children.
@@ -417,6 +463,7 @@ import { Divider } from '@eocrm/design-system';
 - ❌ `<Divider>OR</Divider>` inside `orientation="vertical"` — text wraps awkwardly across two short line segments. Use horizontal.
 - ❌ `<Divider size="lg" />` for casual section breaks. Reserve `lg` (3px) for strong visual hierarchy.
 - ❌ Adding `margin` via `style={{ marginY: 16 }}`. The parent should own spacing.
+
 ```
 
 ## Hard Rule 8
@@ -426,3 +473,4 @@ The pre-push review-fix cycle on library changes is mandatory. Gates green, fres
 ## Open questions
 
 None. All clarifications baked in.
+```

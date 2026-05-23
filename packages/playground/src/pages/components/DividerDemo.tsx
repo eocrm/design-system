@@ -73,11 +73,17 @@ export function DividerDemo() {
 </Cluster>`}
       >
         <Cluster gap="sm" align="center">
-          <Button variant="ghost" size="sm">Edit</Button>
+          <Button variant="ghost" size="sm">
+            Edit
+          </Button>
           <Divider orientation="vertical" />
-          <Button variant="ghost" size="sm">Duplicate</Button>
+          <Button variant="ghost" size="sm">
+            Duplicate
+          </Button>
           <Divider orientation="vertical" />
-          <Button variant="ghost" size="sm">Archive</Button>
+          <Button variant="ghost" size="sm">
+            Archive
+          </Button>
         </Cluster>
       </Example>
 
