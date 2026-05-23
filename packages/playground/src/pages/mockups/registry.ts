@@ -18,6 +18,7 @@ export type ComponentName =
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'
   | 'Input'
+  | 'Modal'
   | 'Pagination'
   | 'PasswordInput'
   | 'PasswordStrengthMeter'

@@ -1,0 +1,267 @@
+@use '../../styles/mixins' as *;
+
+// ─── Overlay ────────────────────────────────────────────────────────────
+// Dimming / blurred backdrop. Portaled directly inside <body>. Fills the
+// viewport, centers the content via flex. The --modal-depth custom prop
+// (set by Overlay.tsx) is available for any per-depth styling — but with
+// the display-toggle stacking model, at most one overlay is visible at a
+// time, so depth-aware z-index ordering is largely a no-op.
+
+// stylelint-disable property-disallowed-list -- internal positioning, not consumer layout
+.overlay {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- overlay must be fixed to fill viewport
+  position: fixed;
+
+  // Explicit top/left/width/height instead of `inset: 0` so that the dvw/dvh
+  // fallback pair can be written for width and height independently. On iOS
+  // Safari, `inset: 0` anchors to the layout viewport; using dvw/dvh tracks
+  // the *dynamic* viewport (accounts for collapsing address bar) and prevents
+  // the overlay from being smaller than the visible area.
+  top: 0;
+  left: 0;
+
+  // vw/vh first as a fallback for browsers without dvw/dvh support (Safari < 15.4).
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-overlay);
+  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2);
+  opacity: var(--opacity-visible);
+  transition: opacity var(--transition-base);
+
+  // Prevent touch-scroll chaining from modal body scrolling to the document.
+  overscroll-behavior: contain;
+
+  @starting-style {
+    opacity: var(--opacity-hidden);
+  }
+}
+
+.overlay[data-state='closed'] {
+  opacity: var(--opacity-hidden);
+}
+
+// Stacked-modal display model: lower overlays are hidden via display:none
+// while a deeper modal is open in replace mode. React state stays intact.
+.overlay[data-stack-position='hidden'] {
+  display: none;
+}
+
+// Frosted-glass variant. Light tinted background + backdrop-filter for the
+// glass effect. -webkit prefix for Safari < 18.
+.overlay[data-variant='blur'] {
+  background: var(--color-bg-overlay-blur);
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
+  backdrop-filter: blur(4px);
+  // stylelint-disable-next-line property-no-vendor-prefix, scale-unlimited/declaration-strict-value -- Safari < 18 requires the prefix
+  -webkit-backdrop-filter: blur(4px);
+}
+
+// In overlay-stack mode, only the bottom of the stack paints the dim/blur.
+// Upper modals' overlays are transparent so the parent's dim shows through.
+// This rule intentionally appears AFTER the blur variant so source order
+// makes it win on background and backdrop-filter.
+.overlay[data-overlay-paint='no'] {
+  background: transparent;
+  backdrop-filter: none;
+  // stylelint-disable-next-line property-no-vendor-prefix -- Safari < 18 mirror
+  -webkit-backdrop-filter: none;
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Content (dialog) ───────────────────────────────────────────────────
+// The dialog box itself. Flex column so Header/Body/Footer stack with the
+// Body taking remaining height (scrollable when overflowing).
+
+// stylelint-disable property-disallowed-list -- internal positioning, not consumer layout
+.content {
+  // position: relative establishes a containing block for any
+  // absolutely-positioned descendants consumers render inside the modal
+  // (e.g., a floating tag inside Modal.Body). Without this, those
+  // descendants would position relative to the overlay (position:fixed).
+  position: relative;
+
+  // Size-variant tokens consumed by sub-component rules below. .size-sm
+  // overrides these to tighter values. Routing through custom props keeps
+  // each sub-component rule at single-class specificity (0,1,0), so a
+  // consumer-supplied className on e.g. <Modal.Header> can always win.
+  --modal-pad: var(--space-4);
+  --modal-title-size: var(--font-size-lg);
+  --modal-close-size: 28px;
+
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2 + 1);
+  max-height: calc(100vh - 64px);
+  max-height: calc(100dvh - 64px);
+  width: min(100% - 32px, var(--modal-width, var(--size-modal-md)));
+  opacity: var(--opacity-visible);
+  transform: translateY(0) scale(1);
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+
+  @starting-style {
+    opacity: var(--opacity-hidden);
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+.content[data-state='closed'] {
+  opacity: var(--opacity-hidden);
+  transform: translateY(8px) scale(0.96);
+}
+// stylelint-enable property-disallowed-list
+
+// Size presets — each one sets --modal-width which `.content` consumes via
+// the `min(100% - 32px, var(--modal-width, ...))` clamp above. Using a custom
+// prop keeps the size logic in one place.
+.size-sm {
+  --modal-width: var(--size-modal-sm);
+  --modal-pad: var(--space-3);
+  --modal-title-size: var(--font-size-md);
+  --modal-close-size: 24px;
+}
+
+.size-md {
+  --modal-width: var(--size-modal-md);
+}
+
+.size-lg {
+  --modal-width: var(--size-modal-lg);
+}
+
+// ─── Header ─────────────────────────────────────────────────────────────
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--modal-pad);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.headerTitle {
+  // stylelint-disable-next-line property-disallowed-list -- reset browser default h2 margin; internal to component
+  margin: 0;
+  font-size: var(--modal-title-size);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+}
+
+.headerCloseButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--modal-close-size);
+  height: var(--modal-close-size);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline: none;
+  }
+}
+
+// ─── Body ───────────────────────────────────────────────────────────────
+
+.body {
+  padding: var(--modal-pad);
+  overflow-y: auto;
+  flex: 1 1 auto;
+
+  // Stop scroll chaining: when modal body content reaches its scroll bounds,
+  // do not propagate the scroll gesture to the overlay or the document.
+  overscroll-behavior: contain;
+}
+
+.bodyPaddingNone {
+  padding: 0;
+}
+
+// ─── Footer ─────────────────────────────────────────────────────────────
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--modal-pad);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.footerAlign-start {
+  justify-content: flex-start;
+}
+
+.footerAlign-end {
+  justify-content: flex-end;
+}
+
+.footerAlign-space-between {
+  justify-content: space-between;
+}
+
+// ─── Mobile fullscreen breakpoint ───────────────────────────────────────
+
+// stylelint-disable property-disallowed-list -- internal layout for narrow viewports
+@media (max-width: 640px) {
+  // Anchor content to the top of the overlay so iOS Safari's collapsing address
+  // bar can't push it off-screen. Centering is meaningless when content fills
+  // the full viewport anyway.
+  .overlay {
+    align-items: flex-start;
+  }
+
+  .content {
+    // vw/vh fallbacks for browsers that don't support dvw/dvh (Safari < 15.4).
+    // dvw/dvh track the *actual* visible viewport; on iOS Safari, 100vh is the
+    // "large viewport" (address bar hidden) which is taller than what's visible
+    // when the address bar is shown — causing the modal to overflow.
+    width: 100vw;
+    width: 100dvw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 100vw;
+    max-width: 100dvw;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Reduced motion ─────────────────────────────────────────────────────
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .content {
+    transition: none;
+
+    @starting-style {
+      opacity: var(--opacity-visible);
+      transform: none;
+    }
+  }
+}

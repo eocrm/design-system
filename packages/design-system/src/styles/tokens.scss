@@ -181,6 +181,11 @@
   // 15rem grids side-by-side + var(--space-3) gutter + popover padding.
   --size-daterange-popover-width: 32rem;
 
+  // Modal — width per size variant
+  --size-modal-sm: 400px;
+  --size-modal-md: 560px;
+  --size-modal-lg: 800px;
+
   // Border weights — emphasis = tab underline/focus rings; strong = accent
   // stripes on cards or other "this stands out" visuals.
   --border-width: 1px;
@@ -215,6 +220,12 @@
   --color-bg-row-pinned: var(
     --color-accent-bg-subtle
   ); /* subtle tint for always-visible pinned rows */
+
+  // Modal overlay — dimming backdrop behind modal
+  --color-bg-overlay: rgb(15 23 42 / 35%); /* solid variant: opaque dim */
+  --color-bg-overlay-blur: rgb(
+    255 255 255 / 30%
+  ); /* blur variant: frosted-glass tint, paired with backdrop-filter: blur(4px) */
 
   // Presence dots (Avatar status). Aliases over the existing semantic
   // palette — theme changes propagate.

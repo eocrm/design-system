@@ -418,7 +418,7 @@ const [tab, setTab] = useState('overview');
 - Opens with a short scale-fade from the trigger side (140ms). Closes instantly. Respects `prefers-reduced-motion: reduce`.
 - **From a DropdownMenu item.** Wrap a `<DropdownMenu.Item closeOnSelect={false}>` as the `<Popover.Trigger>` child — the Item itself becomes the trigger, so the full highlighted row opens the popover. `closeOnSelect={false}` keeps the menu open while the popover is shown.
 - Z-layer `--z-popover: 1050` — above dropdown, below modal/toast/tooltip.
-- For passive hover/focus hints → `<Tooltip>`. For lists of actions → `<DropdownMenu>`. For focus-locked dialogs → `<Modal>` (not yet shipped).
+- For passive hover/focus hints → `<Tooltip>`. For lists of actions → `<DropdownMenu>`. For focus-locked dialogs → `<Modal>`.
 
 ### `<ConfirmationPopover>` — opinionated "Are you sure?" preset
 
@@ -443,6 +443,45 @@ const [tab, setTab] = useState('overview');
 - **Failure mode**: on reject, popover stays open and buttons re-enable. Consumer surfaces the error externally — ConfirmationPopover does NOT render inline errors.
 - Anchors above the trigger by default (`side="top"`).
 - **From a DropdownMenu item (kebab Delete pattern).** Wrap a `<DropdownMenu.Item closeOnSelect={false}>` as the trigger — clicking anywhere on the row opens the confirmation. The menu stays open until the user dismisses it (Escape or click outside). To close the menu after the action resolves, drive `DropdownMenu`'s `open` state externally and call `setMenuOpen(false)` inside `onConfirm`.
+
+### `<Modal>` — focus-locked dialog
+
+```tsx
+const [open, setOpen] = useState(false);
+
+<Button onClick={() => setOpen(true)}>Edit contact</Button>
+
+<Modal open={open} onOpenChange={setOpen} size="md">
+  <Modal.Header>Edit contact</Modal.Header>
+  <Modal.Body>
+    <Stack gap="md">
+      <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
+    </Stack>
+  </Modal.Body>
+  <Modal.Footer>
+    <Modal.Close><Button variant="secondary">Cancel</Button></Modal.Close>
+    <Button onClick={save}>Save</Button>
+  </Modal.Footer>
+</Modal>
+```
+
+- **Controlled-only.** Pass `open` + `onOpenChange` always. There is no `<Modal.Trigger>` — wire your own button(s).
+- **Three sizes:** `sm` (400px), `md` (560px, default), `lg` (800px). Below 640px the modal goes fullscreen.
+- **Overlay variant:** `overlay="solid"` (default, dark dim) or `overlay="blur"` (frosted-glass effect — light tint + `backdrop-filter: blur(4px)`). Avoid stacking three blurred modals — extra compositor cost per layer.
+- **`<Modal.Header>` auto-wires `aria-labelledby`.** Pass `closeButton={false}` to hide the built-in × button (e.g. forced-step modals). The Header's children become the dialog title.
+- **`<Modal.Body>` scrolls** when content overflows. `padding="none"` for edge-to-edge children (e.g. a tabs strip).
+- **`<Modal.Footer>` defaults to right-aligned actions.** Use `align="space-between"` to split a danger action away from save/cancel.
+- **`<Modal.Close>`** wraps a clickable child and fires `onOpenChange(false)` on click. Chains with the child's existing `onClick`.
+- **Forced step:** combine `disableEscapeClose`, `dismissOnOverlayClick={false}`, omit `<Modal.Close>`, and pass `<Modal.Header closeButton={false}>` to lock the user into the modal until they resolve it programmatically.
+- **Stacked modals.** Default `stackMode="overlay"`: the parent stays visible underneath and the inner overlay paints transparent so the parent's dim shows through (one effective dim layer for the stack). Use `stackMode="replace"` to hide the parent via `display: none` (React state preserved) — best for forced steps where the parent context is irrelevant. Escape still closes only the topmost; body scroll stays locked across the whole stack.
+- **Initial focus:** pass `initialFocusRef` to focus a specific element (e.g. the first input). Otherwise the dialog container receives focus and the focus trap takes over.
+
+**Anti-patterns:**
+
+- ❌ Rendering a Modal as a child of another component that itself uses `position: fixed` — the portal escapes that container anyway, so the fixed positioning is dead code. Just render `<Modal>` at any level; it portals to `document.body`.
+- ❌ Calling `onOpenChange={() => {}}` AND providing `<Modal.Close>` — the Close button calls `onOpenChange(false)` which then no-ops. Use `disableEscapeClose + dismissOnOverlayClick={false}` + omit Close for forced steps.
+- ❌ Mutating an `initialFocusRef.current` value after open — Modal reads the ref when the modal opens AND whenever it becomes the top of the stack again (e.g., after a nested modal closes). Don't rely on a specific number of reads; instead, ensure the ref points at a stable element while the modal is open.
+- ❌ Using `<Modal>` for popovers or non-blocking notifications. Use `<Popover>`, `<DropdownMenu>`, or wait for `<Toast>`.
 
 ### `<Select>` — value picker (single, multi, searchable, async, creatable)
 

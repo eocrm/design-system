@@ -331,6 +331,61 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
+    to: '/components/modal',
+    name: 'Modal',
+    description: 'Focus-locked dialog with header / body / footer slots and overlay variants.',
+    preview: (
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}
+      >
+        <div
+          style={{
+            width: 180,
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--color-bg)',
+            boxShadow: 'var(--shadow-lg)',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '8px 12px',
+              borderBottom: '1px solid var(--color-border)',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+            }}
+          >
+            Dialog title
+          </div>
+          <div style={{ padding: '8px 12px', fontSize: '0.7rem', color: 'var(--color-fg-muted)' }}>
+            Dialog content goes here.
+          </div>
+          <div
+            style={{
+              padding: '8px 12px',
+              borderTop: '1px solid var(--color-border)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: 6,
+            }}
+          >
+            <Button size="sm" variant="secondary">
+              Cancel
+            </Button>
+            <Button size="sm">OK</Button>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
     to: '/components/popover',
     name: 'Popover',
     description: 'Non-modal floating panel for arbitrary small surfaces.',
