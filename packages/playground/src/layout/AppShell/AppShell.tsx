@@ -42,6 +42,7 @@ import {
   TableProperties,
   ListOrdered,
   LayoutPanelLeft,
+  ListCollapse,
   MoveRight,
   ToggleRight,
   type LucideIcon,
@@ -120,6 +121,7 @@ const componentGroups = [
   {
     heading: 'Navigation',
     items: [
+      { to: '/components/accordion', label: 'Accordion', icon: ListCollapse, end: false },
       { to: '/components/breadcrumb', label: 'Breadcrumb', icon: MoveRight, end: false },
       { to: '/components/link', label: 'Link', icon: ExternalLink, end: false },
       { to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false },

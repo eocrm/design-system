@@ -1,6 +1,7 @@
 // packages/playground/src/pages/mockups/registry.ts
 
 export type ComponentName =
+  | 'Accordion'
   | 'Alert'
   | 'Avatar'
   | 'Badge'
