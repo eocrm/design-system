@@ -492,17 +492,17 @@ Combined with the `createdAt`-sorted store array, this puts the newest toast nea
   border-left: 3px solid var(--color-fg-muted);   // overridden per tone
 }
 
-.tone-info     { border-left-color: var(--color-fg-info); }
-.tone-success  { border-left-color: var(--color-fg-success); }
-.tone-warning  { border-left-color: var(--color-fg-warning); }
-.tone-error    { border-left-color: var(--color-fg-danger); }
+.tone-info     { border-left-color: var(--color-info); }
+.tone-success  { border-left-color: var(--color-success); }
+.tone-warning  { border-left-color: var(--color-warning); }
+.tone-error    { border-left-color: var(--color-danger); }
 .tone-loading  { border-left-color: var(--color-fg-muted); }
 
 .icon { color: var(--color-fg-muted); }
-.tone-info .icon    { color: var(--color-fg-info); }
-.tone-success .icon { color: var(--color-fg-success); }
-.tone-warning .icon { color: var(--color-fg-warning); }
-.tone-error .icon   { color: var(--color-fg-danger); }
+.tone-info .icon    { color: var(--color-info); }
+.tone-success .icon { color: var(--color-success); }
+.tone-warning .icon { color: var(--color-warning); }
+.tone-error .icon   { color: var(--color-danger); }
 // loading icon spins via animation
 
 .message {
