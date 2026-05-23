@@ -29,6 +29,7 @@ import {
   MessageSquare,
   MessageSquareText,
   AppWindow,
+  Minus,
   MoreHorizontal,
   KeyRound,
   PanelLeft,
@@ -70,6 +71,7 @@ const componentGroups = [
     items: [
       { to: '/components/stack', label: 'Stack', icon: Rows3, end: false },
       { to: '/components/cluster', label: 'Cluster', icon: Columns3, end: false },
+      { to: '/components/divider', label: 'Divider', icon: Minus, end: false },
       { to: '/components/grid', label: 'Grid', icon: LayoutGrid, end: false },
       { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
     ],

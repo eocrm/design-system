@@ -10,6 +10,7 @@ import { ButtonGroup } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
 import { Checkbox } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
+import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { PasswordInput } from '@eocrm/design-system';
@@ -294,6 +295,16 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <div className={styles.tile} />
         <div className={styles.tile} />
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/divider',
+    name: 'Divider',
+    description: 'Thin separator. Horizontal/vertical, solid/dashed, optional label.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: '200px' }}>
+        <Divider>OR</Divider>
+      </div>
     ),
   },
   {
