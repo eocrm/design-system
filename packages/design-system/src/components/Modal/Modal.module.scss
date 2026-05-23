@@ -11,7 +11,20 @@
 .overlay {
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- overlay must be fixed to fill viewport
   position: fixed;
-  inset: 0;
+
+  // Explicit top/left/width/height instead of `inset: 0` so that the dvw/dvh
+  // fallback pair can be written for width and height independently. On iOS
+  // Safari, `inset: 0` anchors to the layout viewport; using dvw/dvh tracks
+  // the *dynamic* viewport (accounts for collapsing address bar) and prevents
+  // the overlay from being smaller than the visible area.
+  top: 0;
+  left: 0;
+
+  // vw/vh first as a fallback for browsers without dvw/dvh support (Safari < 15.4).
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,6 +32,9 @@
   z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2);
   opacity: var(--opacity-visible);
   transition: opacity var(--transition-base);
+
+  // Prevent touch-scroll chaining from modal body scrolling to the document.
+  overscroll-behavior: contain;
 
   @starting-style {
     opacity: var(--opacity-hidden);
@@ -175,6 +191,10 @@
   padding: var(--space-4);
   overflow-y: auto;
   flex: 1 1 auto;
+
+  // Stop scroll chaining: when modal body content reaches its scroll bounds,
+  // do not propagate the scroll gesture to the overlay or the document.
+  overscroll-behavior: contain;
 }
 
 .bodyPaddingNone {
