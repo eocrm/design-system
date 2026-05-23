@@ -341,11 +341,9 @@ import { Switch } from '@eocrm/design-system';
 ```tsx
 // Compound API — section card with header + list (Dashboard's "Deals needing attention" pattern):
 <Card padding="none">
-  <Card.Header action={<Link variant="muted">View all</Link>}>
-    Deals needing attention
-  </Card.Header>
+  <Card.Header action={<Link variant="muted">View all</Link>}>Deals needing attention</Card.Header>
   <Card.List>
-    {deals.map(d => (
+    {deals.map((d) => (
       <Card.ListRow key={d.id}>
         <Stack gap="xs">
           <span>{d.title}</span>

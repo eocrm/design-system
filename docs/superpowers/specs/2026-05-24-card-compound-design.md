@@ -28,6 +28,7 @@ Replace the inline `.cardHeader` / `.cardTitle` / `.list` / `.listRow` SCSS reci
 ### Dependencies
 
 No new packages. Reuses:
+
 - React (peer)
 - `clsx` (existing dep)
 - Existing tokens: `--space-2`/`--space-3`/`--space-4`, `--border-width`, `--color-border`, `--font-size-md`, `--font-weight-semibold`, `--color-fg`
@@ -106,6 +107,7 @@ export interface CardHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, 't
 ```
 
 Renders:
+
 ```tsx
 <div className={styles.header} {...rest}>
   <Heading className={styles.title}>{children}</Heading>
@@ -185,6 +187,7 @@ Existing `<Card>` API is unchanged. `tone`, `padding`, all native attrs work the
 ```
 
 **Rule 4 check**:
+
 - `.header` and `.listRow` use `display: flex` for internal layout — internal child arrangement, not at the component boundary.
 - `.title` has `margin: 0` for native heading reset — documented inline disable, same pattern as Accordion's `.header`.
 - `.list` has `margin: 0` and `padding: 0` for native `<ul>` reset — both documented inline disables, same pattern as Breadcrumb's `.list`.
@@ -192,14 +195,14 @@ Existing `<Card>` API is unchanged. `tone`, `padding`, all native attrs work the
 
 ## ARIA + behavior reference
 
-| Concern | Behavior |
-|---|---|
-| **Card.Header element** | `<div>` wrapping a heading element (h2-h6 configurable via `headerLevel`) + optional action span |
-| **Card.List element** | `<ul>` — semantic list, AT announces "list with N items" |
-| **Card.ListRow element** | `<li>` — semantic list item, no role override |
-| **Heading level** | Default `h3`. Override via `headerLevel`. Same vocab as Accordion. |
-| **Action region** | A plain `<span>` wrapper around `action` — no role / no aria. Consumer's action is whatever they pass (typically a Link or Button which carry their own semantics). |
-| **Focus** | None of the new subcomponents are focusable themselves. Interactive children (Link in action, clickable content in rows) carry their own focus. |
+| Concern                  | Behavior                                                                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Card.Header element**  | `<div>` wrapping a heading element (h2-h6 configurable via `headerLevel`) + optional action span                                                                    |
+| **Card.List element**    | `<ul>` — semantic list, AT announces "list with N items"                                                                                                            |
+| **Card.ListRow element** | `<li>` — semantic list item, no role override                                                                                                                       |
+| **Heading level**        | Default `h3`. Override via `headerLevel`. Same vocab as Accordion.                                                                                                  |
+| **Action region**        | A plain `<span>` wrapper around `action` — no role / no aria. Consumer's action is whatever they pass (typically a Link or Button which carry their own semantics). |
+| **Focus**                | None of the new subcomponents are focusable themselves. Interactive children (Link in action, clickable content in rows) carry their own focus.                     |
 
 ## Testing
 
@@ -220,6 +223,7 @@ Existing `<Card>` API is unchanged. `tone`, `padding`, all native attrs work the
 Add 2 new examples:
 
 1. **"Card with header + action + list body"** — the canonical dashboard pattern:
+
    ```tsx
    <Card padding="none">
      <Card.Header action={<Link variant="muted">View all</Link>}>
@@ -245,12 +249,14 @@ Add 2 new examples:
 ## Mockup cleanup (in scope)
 
 `Dashboard.tsx`:
+
 - Replace `<div className={styles.cardHeader}>` with `<Card.Header>` (both sections)
 - Replace `<ul className={styles.list}>` with `<Card.List>`
 - Replace `<li className={styles.listRow}>` with `<Card.ListRow>`
 - The "View all" link becomes the `action` prop on the first header
 
 `Dashboard.module.scss`:
+
 - Delete `.cardHeader`, `.cardTitle`, `.list`, `.listRow` blocks (~30 lines removed)
 - Keep `.cardLink`, `.listRowTitle`, `.listRowMeta`, `.activityLine`, `.activityTarget` — these style the content INSIDE the rows, not the row containers themselves
 

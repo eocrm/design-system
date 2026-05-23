@@ -79,9 +79,7 @@ describe('compound API', () => {
   });
 
   it('action prop renders inside the header', () => {
-    render(
-      <Card.Header action={<button data-testid="act">View all</button>}>T</Card.Header>,
-    );
+    render(<Card.Header action={<button data-testid="act">View all</button>}>T</Card.Header>);
     expect(screen.getByTestId('act')).toBeInTheDocument();
   });
 

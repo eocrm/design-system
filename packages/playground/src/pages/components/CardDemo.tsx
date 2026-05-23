@@ -229,9 +229,7 @@ export function CardDemo() {
             </Card.ListRow>
             <Card.ListRow>
               <Stack gap="xs">
-                <span style={{ fontWeight: 'var(--font-weight-medium)' }}>
-                  Pilot conversion
-                </span>
+                <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Pilot conversion</span>
                 <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
                   Initech · $6,200
                 </span>
@@ -299,7 +297,9 @@ export function CardDemo() {
                     <span style={{ fontSize: 'var(--font-size-sm)' }}>
                       <strong>{a.who}</strong> {a.what}
                     </span>
-                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+                    <span
+                      style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}
+                    >
                       {a.when}
                     </span>
                   </Stack>
