@@ -166,6 +166,8 @@ export const Grid = forwardRef<HTMLElement, GridProps>(function Grid(
   // for the limited union. At runtime React just uses the element name.
   const Tag = as as unknown as 'div';
 
+  // Tag is constrained at the type level via GridAs; the ref + rest casts
+  // satisfy React's intrinsic-element signature without per-tag branching.
   return (
     <Tag
       ref={ref as React.Ref<HTMLDivElement>}

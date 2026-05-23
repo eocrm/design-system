@@ -157,7 +157,7 @@ function Grid({
         justifyItems && justifyItemsClass[justifyItems],
         className,
       )}
-      style={{ ['--grid-columns' as string]: template, ...style }}
+      style={{ ...style, ['--grid-columns' as string]: template }}
       {...rest}
     />
   );
@@ -167,7 +167,7 @@ function Grid({
 Notes:
 - The `--grid-columns` inline custom property drives `grid-template-columns` from SCSS. Keeping the template string off the inline style attribute (and behind a custom prop) makes it easy to override later via CSS without specificity wars.
 - `minmax(0, 1fr)` is the standard fix for "long content blows the column out". Without the `0` floor, a long unbreakable word can force the track wider than `1fr`.
-- Consumer `style` spreads AFTER `--grid-columns`, so a consumer can override the template entirely if they want; but `style={{ '--grid-columns': '...' }}` from the consumer would also work.
+- Internal `--grid-columns` wins on conflict (the value spreads AFTER any consumer `style`). Consumers who genuinely need to override the template should use raw CSS Grid via `className` rather than fighting the prop. This keeps the prop API authoritative.
 
 ### SCSS
 

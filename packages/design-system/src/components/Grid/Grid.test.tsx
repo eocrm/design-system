@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { createRef } from 'react';
+import { createRef, type CSSProperties } from 'react';
 import { Grid, type GridAlignItems, type GridGap, type GridJustifyItems } from './Grid';
 
 const capitalize = (s: string) => s[0]!.toUpperCase() + s.slice(1);
@@ -99,6 +99,20 @@ describe('<Grid>', () => {
     const el = container.firstChild as HTMLElement;
     expect(el.style.backgroundColor).toBe('red');
     expect(el.style.getPropertyValue('--grid-columns')).toBeTruthy();
+  });
+
+  it('internal --grid-columns wins when consumer style sets the same custom prop', () => {
+    const { container } = render(
+      <Grid
+        columns={3}
+        style={{ ['--grid-columns' as string]: 'repeat(99, 1fr)' } as CSSProperties}
+      >
+        x
+      </Grid>,
+    );
+    expect((container.firstChild as HTMLElement).style.getPropertyValue('--grid-columns')).toBe(
+      'repeat(3, minmax(0, 1fr))',
+    );
   });
 
   it('forwards ref to the underlying element', () => {
