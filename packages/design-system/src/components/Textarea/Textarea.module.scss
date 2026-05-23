@@ -1,0 +1,90 @@
+.wrapper {
+  width: 100%;
+  display: block;
+}
+
+.textarea {
+  display: block;
+  width: 100%;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: inherit;
+  line-height: var(--line-height-normal);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+
+  &::placeholder {
+    color: var(--color-fg-subtle);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+  }
+
+  &:disabled {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-border);
+    color: var(--color-fg-subtle);
+    cursor: not-allowed;
+  }
+
+  &[readonly] {
+    background: var(--color-bg-subtle);
+  }
+}
+
+// Size — typography + padding. NO height (textarea height comes from rows + autoGrow).
+.sizeSm {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.sizeMd {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-md);
+}
+
+.sizeLg {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-lg);
+}
+
+// Resize direction
+.resizeNone {
+  resize: none;
+}
+
+.resizeVertical {
+  resize: vertical;
+}
+
+.resizeBoth {
+  resize: both;
+}
+
+.invalid {
+  border-color: var(--color-danger);
+
+  &:focus-visible {
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 var(--ring-width) var(--ring-danger);
+  }
+}
+
+// Counter — internal spacing between textarea and child counter. The counter
+// is a child element inside the wrapper, not a layout property at the
+// component boundary, so this is allowed.
+.counter {
+  display: block;
+  text-align: right;
+  // stylelint-disable-next-line property-disallowed-list -- internal spacing between textarea and its counter child
+  margin-top: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  line-height: 1;
+}
