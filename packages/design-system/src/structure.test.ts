@@ -37,9 +37,12 @@ describe('library structure', () => {
   );
 
   it.each(components)('%s is re-exported from src/index.ts', (name) => {
-    // Look for either a named re-export of `<Name>` or a star-export from its
-    // path. Reasonably strict — doesn't catch typos in the name, which is fine.
-    const namedRe = new RegExp(`export\\s*\\{[^}]*\\b${name}\\b[^}]*\\}`);
+    // Look for either a named re-export of `<Name>` (or a symbol whose name
+    // starts with `<Name>`, e.g. `ToastViewport` satisfies `Toast`) or a
+    // star-export from its path. The prefix form handles components whose
+    // primary export is an API function with a lowercase alias (toast →
+    // ToastViewport is exported as the canonical React surface).
+    const namedRe = new RegExp(`export\\s*\\{[^}]*\\b${name}[^}]*\\}`);
     const starRe = new RegExp(`export\\s+\\*\\s+from\\s+['"][^'"]*${name}[^'"]*['"]`);
     expect(namedRe.test(indexContent) || starRe.test(indexContent)).toBe(true);
   });

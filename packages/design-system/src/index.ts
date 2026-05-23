@@ -71,6 +71,15 @@ export type {
   EmptyStateHeadingLevel,
 } from './components/EmptyState';
 
+export { toast, ToastViewport } from './components/Toast';
+export type {
+  ToastOptions,
+  ToastUpdateOptions,
+  ToastViewportProps,
+  ToastTone,
+  ToastPosition,
+} from './components/Toast';
+
 export { Tooltip } from './components/Tooltip';
 export type { TooltipProps, TooltipSide, TooltipAlign } from './components/Tooltip';
 
