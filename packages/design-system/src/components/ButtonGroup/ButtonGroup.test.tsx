@@ -89,6 +89,19 @@ describe('<ButtonGroup> (visual mode)', () => {
     );
     expect((container.firstChild as HTMLElement).className).toMatch(/custom-class/);
   });
+
+  it('throws when ButtonGroup.Item is used in visual mode (no context)', () => {
+    // Suppress the error log noise React adds for render errors.
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => {
+      render(
+        <ButtonGroup>
+          <ButtonGroup.Item value="x">X</ButtonGroup.Item>
+        </ButtonGroup>,
+      );
+    }).toThrow(/must be used inside/i);
+    errorSpy.mockRestore();
+  });
 });
 
 describe('<ButtonGroup> (segmented mode)', () => {
@@ -267,6 +280,26 @@ describe('<ButtonGroup> (segmented mode)', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  it('Arrow nav still works when the currently-selected item is per-item disabled', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const [v, setV] = useState('a');
+      return (
+        <ButtonGroup value={v} onValueChange={setV} aria-label="x">
+          <ButtonGroup.Item value="a" disabled>A</ButtonGroup.Item>
+          <ButtonGroup.Item value="b">B</ButtonGroup.Item>
+          <ButtonGroup.Item value="c">C</ButtonGroup.Item>
+        </ButtonGroup>
+      );
+    }
+    render(<H />);
+    // Focus B (first enabled item) and navigate forward.
+    const itemB = screen.getByRole('radio', { name: 'B' });
+    itemB.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('radio', { name: 'C' })).toHaveAttribute('aria-checked', 'true');
   });
 });
 

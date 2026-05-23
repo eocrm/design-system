@@ -9,7 +9,6 @@ import {
   type CSSProperties,
   type HTMLAttributes,
   type KeyboardEvent,
-  type MutableRefObject,
   type ReactElement,
 } from 'react';
 import clsx from 'clsx';
@@ -53,13 +52,18 @@ interface ButtonGroupVisualProps
   'aria-label'?: string;
 }
 
-interface ButtonGroupSegmentedProps<V extends string = string>
+interface ButtonGroupSegmentedProps
   extends ButtonGroupBase,
     Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** Currently-selected item value. Triggers segmented mode. */
-  value: V;
-  /** Fired when a different Item is selected. */
-  onValueChange: (next: V) => void;
+  value: string;
+  /**
+   * Fired when a different Item is selected.
+   *
+   * Consumers wanting literal-union narrowing can cast the setter:
+   * `onValueChange={(v) => setView(v as 'grid' | 'list')}`.
+   */
+  onValueChange: (next: string) => void;
   /** Required in segmented mode (radiogroup needs a label). */
   'aria-label': string;
   /** Alternative to aria-label: id of an external labelling element. */
@@ -67,12 +71,6 @@ interface ButtonGroupSegmentedProps<V extends string = string>
 }
 
 export type ButtonGroupProps = ButtonGroupVisualProps | ButtonGroupSegmentedProps;
-
-interface RegisteredItem {
-  value: string;
-  disabled: boolean;
-  ref: MutableRefObject<HTMLButtonElement | null>;
-}
 
 /**
  * Compound. Two modes:
@@ -157,12 +155,14 @@ function Visual({
 
   return (
     <div
+      {...rest}
+      // {...rest} first so the ARIA contract (role, aria-label, data-mode)
+      // can't be silently broken by a stray consumer prop.
       role="group"
       aria-label={ariaLabel}
       data-mode="visual"
       className={clsx(styles.group, className)}
       style={style}
-      {...rest}
     >
       {processed}
     </div>
@@ -181,24 +181,9 @@ function Segmented({
   'aria-labelledby': ariaLabelledBy,
   ...rest
 }: ButtonGroupSegmentedProps) {
-  const itemsRef = useRef<RegisteredItem[]>([]);
-
-  const registerItem = useCallback(
-    (itemValue: string, itemDisabled: boolean, ref: MutableRefObject<HTMLButtonElement | null>) => {
-      const existing = itemsRef.current.findIndex((it) => it.value === itemValue);
-      const entry: RegisteredItem = { value: itemValue, disabled: itemDisabled, ref };
-      if (existing >= 0) {
-        itemsRef.current[existing] = entry;
-      } else {
-        itemsRef.current.push(entry);
-      }
-    },
-    [],
-  );
-
-  const unregisterItem = useCallback((itemValue: string) => {
-    itemsRef.current = itemsRef.current.filter((it) => it.value !== itemValue);
-  }, []);
+  // groupRef enables DOM-order querying for keyboard nav so that consumer-
+  // reordered children are always walked in their actual visual order.
+  const groupRef = useRef<HTMLDivElement | null>(null);
 
   // Dev warning: aria-label or aria-labelledby required in segmented mode.
   useEffect(() => {
@@ -220,35 +205,51 @@ function Segmented({
 
   const handleItemKeyDown = useCallback(
     (e: KeyboardEvent<HTMLButtonElement>, currentValue: string) => {
-      const enabled = itemsRef.current.filter((it) => !it.disabled);
-      if (enabled.length === 0) return;
-      const idx = enabled.findIndex((it) => it.value === currentValue);
+      const root = groupRef.current;
+      if (!root) return;
+      // Query DOM order so reordered children are walked correctly.
+      const allButtons = Array.from(
+        root.querySelectorAll<HTMLButtonElement>('button[role="radio"]'),
+      );
+      const enabledButtons = allButtons.filter(
+        (btn) => btn.getAttribute('aria-disabled') !== 'true',
+      );
+      if (enabledButtons.length === 0) return;
+
+      // Find the focused button in the enabled list. If the currently-selected
+      // item is itself disabled (per-item disabled), fall back to the active
+      // element so Arrow nav still works from wherever focus is.
+      let idx = enabledButtons.findIndex((btn) => btn.dataset.value === currentValue);
+      if (idx === -1) {
+        // Selected item is disabled — use whichever enabled button is focused.
+        idx = enabledButtons.findIndex((btn) => btn === document.activeElement);
+      }
       if (idx === -1) return;
 
       let nextIdx: number | null = null;
       switch (e.key) {
         case 'ArrowRight':
         case 'ArrowDown':
-          nextIdx = (idx + 1) % enabled.length;
+          nextIdx = (idx + 1) % enabledButtons.length;
           break;
         case 'ArrowLeft':
         case 'ArrowUp':
-          nextIdx = (idx - 1 + enabled.length) % enabled.length;
+          nextIdx = (idx - 1 + enabledButtons.length) % enabledButtons.length;
           break;
         case 'Home':
           nextIdx = 0;
           break;
         case 'End':
-          nextIdx = enabled.length - 1;
+          nextIdx = enabledButtons.length - 1;
           break;
         default:
           return;
       }
 
       e.preventDefault();
-      const next = enabled[nextIdx]!;
-      if (!disabled) onValueChange(next.value);
-      next.ref.current?.focus();
+      const next = enabledButtons[nextIdx]!;
+      if (!disabled) onValueChange(next.dataset.value!);
+      next.focus();
     },
     [disabled, onValueChange],
   );
@@ -256,19 +257,21 @@ function Segmented({
   const contextValue = useMemo<ButtonGroupContextValue>(
     () => ({
       value,
-      onValueChange: onValueChange as (next: string) => void,
+      onValueChange,
       size,
       disabled,
-      registerItem,
-      unregisterItem,
       handleItemKeyDown,
     }),
-    [value, onValueChange, size, disabled, registerItem, unregisterItem, handleItemKeyDown],
+    [value, onValueChange, size, disabled, handleItemKeyDown],
   );
 
   return (
     <ButtonGroupContext.Provider value={contextValue}>
       <div
+        ref={groupRef}
+        {...rest}
+        // {...rest} first so the ARIA contract (role, aria-label, data-mode)
+        // can't be silently broken by a stray consumer prop.
         role="radiogroup"
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
@@ -276,7 +279,6 @@ function Segmented({
         data-mode="segmented"
         className={clsx(styles.group, className)}
         style={style}
-        {...rest}
       >
         {children}
       </div>

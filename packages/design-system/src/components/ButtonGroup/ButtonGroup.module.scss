@@ -54,11 +54,9 @@
 .group[data-mode='segmented'] {
   background: var(--color-bg-muted);
   border-radius: var(--radius-md);
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
-  padding: 2px;
+  padding: var(--space-05);
   display: inline-flex;
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
-  gap: 2px;
+  gap: var(--space-05);
 
   // Shrink-to-content inside flex/grid parents (e.g. Stack with align=stretch).
   // Documented Rule-4 exception for intrinsically compact inline controls.
@@ -73,7 +71,7 @@
   cursor: pointer;
   font: inherit;
   white-space: nowrap;
-  border-radius: calc(var(--radius-md) - 2px);
+  border-radius: calc(var(--radius-md) - var(--space-05));
   transition:
     background var(--transition-fast),
     color var(--transition-fast);

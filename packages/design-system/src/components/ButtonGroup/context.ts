@@ -1,4 +1,4 @@
-import { createContext, useContext, type KeyboardEvent, type MutableRefObject } from 'react';
+import { createContext, useContext, type KeyboardEvent } from 'react';
 import type { ButtonSize } from '../Button';
 
 /** Matches Button's size scale. */
@@ -13,14 +13,6 @@ export interface ButtonGroupContextValue {
   size: ButtonGroupSize;
   /** Group-level disabled. Individual Items can also be disabled. */
   disabled: boolean;
-  /** Item registers itself on mount with its value, disabled flag, and a ref to its DOM node. */
-  registerItem: (
-    value: string,
-    disabled: boolean,
-    ref: MutableRefObject<HTMLButtonElement | null>,
-  ) => void;
-  /** Item unregisters on unmount. */
-  unregisterItem: (value: string) => void;
   /** Item delegates its keydown to the parent for Arrow/Home/End handling. */
   handleItemKeyDown: (e: KeyboardEvent<HTMLButtonElement>, value: string) => void;
 }
