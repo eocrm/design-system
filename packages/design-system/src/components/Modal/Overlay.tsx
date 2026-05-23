@@ -27,16 +27,16 @@ export interface OverlayProps {
 export function Overlay({ children }: OverlayProps) {
   const ctx = useModalContext('Overlay');
 
-  // Inert background — applied to all body children EXCEPT the portal root.
-  // Only the topmost modal sets it; nested modals' lower overlays are
-  // display:none anyway so they're inherently exempt.
+  // Inert background — applied to all body children EXCEPT any modal portal
+  // root. Skipping ALL modal portals (not just the first) is critical for
+  // stacked modals: the inner modal's portal is also a body child, and it
+  // must remain interactive even though it was added after the outer's.
   useEffect(() => {
     if (!ctx.isTop) return;
-    const portalRoot = document.querySelector('[data-modal-portal-root]') as HTMLElement | null;
     const bodyChildren = Array.from(document.body.children) as HTMLElement[];
     const toRestore: Array<{ el: HTMLElement; had: boolean }> = [];
     for (const el of bodyChildren) {
-      if (el === portalRoot) continue;
+      if (el.hasAttribute('data-modal-portal-root')) continue;
       const had = el.hasAttribute('inert');
       if (!had) el.setAttribute('inert', '');
       toRestore.push({ el, had });

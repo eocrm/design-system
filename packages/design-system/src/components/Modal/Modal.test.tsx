@@ -415,6 +415,29 @@ describe('<Modal>', () => {
     expect(positions.filter((p) => p === 'top')).toHaveLength(1);
   });
 
+  it('stacked modals: inner modal portal is NOT inert (delete-confirmation regression)', () => {
+    render(
+      <>
+        <Modal open onOpenChange={() => {}} aria-label="Outer">
+          <Modal.Body>outer</Modal.Body>
+        </Modal>
+        <Modal open onOpenChange={() => {}} aria-label="Inner">
+          <Modal.Body>
+            <button>Confirm delete</button>
+          </Modal.Body>
+        </Modal>
+      </>,
+    );
+    const overlays = Array.from(
+      document.querySelectorAll('[data-modal-portal-root]'),
+    ) as HTMLElement[];
+    // Neither modal portal should be inert — both must remain interactive
+    // (the lower one is display:none anyway; the top one must be clickable).
+    for (const el of overlays) {
+      expect(el.hasAttribute('inert')).toBe(false);
+    }
+  });
+
   it('restores focus to the previously-focused element on close', async () => {
     const user = userEvent.setup();
     function FocusRestoreHarness() {
