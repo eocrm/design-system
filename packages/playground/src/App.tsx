@@ -33,6 +33,7 @@ import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverD
 import { DataTableDemo } from './pages/components/DataTableDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
 import { DrawerDemo } from './pages/components/DrawerDemo';
+import { GridDemo } from './pages/components/GridDemo';
 
 export default function App() {
   return (
@@ -78,6 +79,7 @@ export default function App() {
           <Route path="/components/datatable" element={<DataTableDemo />} />
           <Route path="/components/empty-state" element={<EmptyStateDemo />} />
           <Route path="/components/drawer" element={<DrawerDemo />} />
+          <Route path="/components/grid" element={<GridDemo />} />
         </Routes>
       </AppShell>
     </BrowserRouter>

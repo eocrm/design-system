@@ -6,6 +6,7 @@ import { Button } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
 import { Checkbox } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
+import { Grid } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { PasswordInput } from '@eocrm/design-system';
 import { PasswordStrengthMeter } from '@eocrm/design-system';
@@ -253,6 +254,19 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <div className={styles.tile} />
         <div className={styles.tile} />
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/grid',
+    name: 'Grid',
+    description: '2D layout primitive with token-driven gap, auto-fit responsive columns, and equal-width fixed columns.',
+    preview: (
+      <Grid gap="xs">
+        <div className={styles.tile} />
+        <div className={styles.tile} />
+        <div className={styles.tile} />
+        <div className={styles.tile} />
+      </Grid>
     ),
   },
   {
