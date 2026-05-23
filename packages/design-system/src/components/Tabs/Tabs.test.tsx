@@ -344,6 +344,14 @@ describe('Tabs', () => {
       expect(iconWrapper).toBeNull();
     });
 
+    it('icon={null} does NOT render the wrapper (prevents phantom gap before label)', () => {
+      const itemsNullIcon: TabItem[] = [{ id: 'a', label: 'A', icon: null }];
+      const { container } = render(<Tabs items={itemsNullIcon} activeId="a" onChange={noop} />);
+      const tab = container.querySelector('button[role="tab"]')!;
+      const iconWrapper = tab.querySelector('span[aria-hidden="true"]');
+      expect(iconWrapper).toBeNull();
+    });
+
     it('icon + count both render together (icon before label, count after)', () => {
       const itemsBoth: TabItem[] = [
         {

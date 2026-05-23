@@ -283,7 +283,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
                 if (item.id !== activeId) onChange(item.id);
               }}
             >
-              {item.icon !== undefined && (
+              {item.icon != null && (
                 <span className={styles.icon} aria-hidden="true">
                   {item.icon}
                 </span>
