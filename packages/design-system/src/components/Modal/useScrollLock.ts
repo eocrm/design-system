@@ -2,48 +2,28 @@ import { useLayoutEffect } from 'react';
 
 // Module-level state shared across all useScrollLock callers.
 let count = 0;
-let savedScrollX = 0;
-let savedScrollY = 0;
-let originalOverflow: string | null = null;
-let originalPosition: string | null = null;
-let originalTop: string | null = null;
-let originalLeft: string | null = null;
-let originalWidth: string | null = null;
+let originalHtmlOverflow: string | null = null;
+let originalBodyOverflow: string | null = null;
 let originalPaddingRight: string | null = null;
 
 function lock() {
   if (count === 0) {
-    savedScrollY = window.scrollY;
-    savedScrollX = window.scrollX;
-
-    originalOverflow = document.body.style.overflow;
-    originalPosition = document.body.style.position;
-    originalTop = document.body.style.top;
-    originalLeft = document.body.style.left;
-    originalWidth = document.body.style.width;
+    originalHtmlOverflow = document.documentElement.style.overflow;
+    originalBodyOverflow = document.body.style.overflow;
     originalPaddingRight = document.body.style.paddingRight;
 
-    // Compensate for the disappearing scrollbar BEFORE we make body fixed.
-    // When body becomes position:fixed it leaves the flow → html element
-    // has no overflow → scrollbar disappears → content reflows into the
-    // freed space → page visibly shifts. Pad body by the scrollbar width
-    // so the content area stays exactly where it was.
+    // Compensate for the disappearing scrollbar so the page doesn't shift
+    // horizontally when its scrollbar is removed by overflow:hidden.
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
 
-    // position: fixed is the iOS-safe scroll lock. It prevents momentum
-    // scrolling rubber-banding past the overlay on Safari, which
-    // `overflow: hidden` alone does not. Negative top/left offsets keep the
-    // visual position unchanged while the body is locked in place.
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${savedScrollY}px`;
-    document.body.style.left = `-${savedScrollX}px`;
-    document.body.style.width = '100%';
-    // overflow: hidden is no longer strictly needed with position: fixed, but
-    // we set it defensively for non-iOS browsers where fixed alone may not
-    // suppress all scroll paths (e.g. keyboard scrolling on desktop).
+    // Suppress scroll without moving the body. The page stays exactly where
+    // it was — no scroll position to save, no scrollTo dance on unlock, no
+    // smooth-scroll animation to fight. Setting both html and body covers
+    // browsers that route scroll to either element.
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
   }
   count += 1;
@@ -52,56 +32,13 @@ function lock() {
 function unlock() {
   count = Math.max(0, count - 1);
   if (count === 0) {
-    document.body.style.overflow = originalOverflow ?? '';
-    document.body.style.position = originalPosition ?? '';
-    document.body.style.top = originalTop ?? '';
-    document.body.style.left = originalLeft ?? '';
-    document.body.style.width = originalWidth ?? '';
+    document.documentElement.style.overflow = originalHtmlOverflow ?? '';
+    document.body.style.overflow = originalBodyOverflow ?? '';
     document.body.style.paddingRight = originalPaddingRight ?? '';
 
-    originalOverflow = null;
-    originalPosition = null;
-    originalTop = null;
-    originalLeft = null;
-    originalWidth = null;
+    originalHtmlOverflow = null;
+    originalBodyOverflow = null;
     originalPaddingRight = null;
-
-    // Force a synchronous reflow so the document's scrollable height is
-    // recalculated from the now-restored body BEFORE we scrollTo. Without
-    // this, the browser may clamp scrollTo to maxScrollY = 0 — the height
-    // while body was still fixed — and the page jumps to the top instead
-    // of returning to where the user left it.
-    // Reading offsetHeight is the standard reflow trigger; the void cast
-    // tells ESLint/Prettier the read is intentional.
-    void document.body.offsetHeight;
-
-    const targetX = savedScrollX;
-    const targetY = savedScrollY;
-
-    // Restore the scroll position that was active when the lock was acquired.
-    //
-    // `behavior: 'instant'` is critical: it overrides any OS-level or
-    // browser smooth-scroll setting (Chrome's "Smooth Scrolling" flag,
-    // macOS/Windows scroll animations). Without it, `window.scrollTo(x, y)`
-    // starts an async animation — `window.scrollY` reports intermediate
-    // values, and if the page reflows during the animation (e.g., from the
-    // focus restoration that immediately follows), the animation is interrupted
-    // and the page lands at an unpredictable position. `behavior: 'instant'`
-    // forces a synchronous, single-frame jump regardless of user preferences.
-    window.scrollTo({ left: targetX, top: targetY, behavior: 'instant' });
-
-    // iOS Safari / desktop Chrome fallback: the layout pipeline sometimes
-    // hasn't fully committed after removing `position: fixed` from body, so
-    // the synchronous scrollTo above may be clamped to maxScrollY = 0 (the
-    // height while body was still fixed). A second scrollTo deferred by one
-    // animation frame fires after the next layout commit when document height
-    // is correct and the scroll lands where it should. The unconditional call
-    // is safe: if the first already succeeded, this is a no-op at the same
-    // coordinates. The rAF is short enough that intentional user scroll in
-    // this window is not a concern.
-    requestAnimationFrame(() => {
-      window.scrollTo({ left: targetX, top: targetY, behavior: 'instant' });
-    });
   }
 }
 
@@ -110,13 +47,12 @@ function unlock() {
  * the same lock — the first acquire suppresses scrolling, the last release
  * restores it.
  *
- * Uses the `position: fixed` body technique rather than `overflow: hidden`
- * alone. On iOS Safari, `overflow: hidden` does not fully suppress momentum
- * scrolling — the user can still rubber-band the body past a `position:fixed`
- * overlay. Pinning `body` to `position: fixed` with `top: -<scrollY>px` and
- * `left: -<scrollX>px` prevents this. Scroll position is saved on lock and
- * restored via `window.scrollTo` on unlock so the page returns exactly where
- * the user left it.
+ * Uses `overflow: hidden` on both html and body. The page stays exactly
+ * where the user left it (no position change, no scroll-position
+ * save/restore). Scrollbar-width compensation on body keeps the content
+ * area horizontally stable when the disappearing scrollbar would otherwise
+ * cause a layout shift. Pairs with `overscroll-behavior: contain` on the
+ * overlay (in Modal.module.scss) to prevent touch-scroll chaining on iOS.
  */
 export function useScrollLock(active: boolean): void {
   useLayoutEffect(() => {
