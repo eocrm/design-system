@@ -61,8 +61,16 @@ export type GridGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 export type GridAlignItems = 'start' | 'center' | 'end' | 'stretch';
 export type GridJustifyItems = 'start' | 'center' | 'end' | 'stretch';
 export type GridAs =
-  | 'div' | 'section' | 'ul' | 'ol' | 'nav'
-  | 'main' | 'aside' | 'article' | 'header' | 'footer';
+  | 'div'
+  | 'section'
+  | 'ul'
+  | 'ol'
+  | 'nav'
+  | 'main'
+  | 'aside'
+  | 'article'
+  | 'header'
+  | 'footer';
 
 interface GridBaseProps {
   /**
@@ -131,20 +139,24 @@ const justifyItemsClass: Record<GridJustifyItems, string> = {
   stretch: styles.justifyItemsStretch,
 };
 
-function Grid({
-  gap = 'md',
-  alignItems,
-  justifyItems,
-  as = 'div',
-  columns,
-  minColumnWidth,
-  className,
-  style,
-  ...rest
-}, ref) {
-  const template = columns !== undefined
-    ? `repeat(${columns}, minmax(0, 1fr))`
-    : `repeat(auto-fit, minmax(${minColumnWidth ?? '240px'}, 1fr))`;
+function Grid(
+  {
+    gap = 'md',
+    alignItems,
+    justifyItems,
+    as = 'div',
+    columns,
+    minColumnWidth,
+    className,
+    style,
+    ...rest
+  },
+  ref,
+) {
+  const template =
+    columns !== undefined
+      ? `repeat(${columns}, minmax(0, 1fr))`
+      : `repeat(auto-fit, minmax(${minColumnWidth ?? '240px'}, 1fr))`;
 
   const Tag = as;
   return (
@@ -165,6 +177,7 @@ function Grid({
 ```
 
 Notes:
+
 - The `--grid-columns` inline custom property drives `grid-template-columns` from SCSS. Keeping the template string off the inline style attribute (and behind a custom prop) makes it easy to override later via CSS without specificity wars.
 - `minmax(0, 1fr)` is the standard fix for "long content blows the column out". Without the `0` floor, a long unbreakable word can force the track wider than `1fr`.
 - Internal `--grid-columns` wins on conflict (the value spreads AFTER any consumer `style`). Consumers who genuinely need to override the template should use raw CSS Grid via `className` rather than fighting the prop. This keeps the prop API authoritative.
@@ -178,24 +191,52 @@ Notes:
 }
 
 // Gap presets — mirror Stack/Cluster scale + camelCase naming
-.gapXs  { gap: var(--space-1); }
-.gapSm  { gap: var(--space-2); }
-.gapMd  { gap: var(--space-3); }
-.gapLg  { gap: var(--space-4); }
-.gapXl  { gap: var(--space-6); }
-.gap2xl { gap: var(--space-8); }
+.gapXs {
+  gap: var(--space-1);
+}
+.gapSm {
+  gap: var(--space-2);
+}
+.gapMd {
+  gap: var(--space-3);
+}
+.gapLg {
+  gap: var(--space-4);
+}
+.gapXl {
+  gap: var(--space-6);
+}
+.gap2xl {
+  gap: var(--space-8);
+}
 
 // Item alignment (cross-axis)
-.alignItemsStart   { align-items: start; }
-.alignItemsCenter  { align-items: center; }
-.alignItemsEnd     { align-items: end; }
-.alignItemsStretch { align-items: stretch; }
+.alignItemsStart {
+  align-items: start;
+}
+.alignItemsCenter {
+  align-items: center;
+}
+.alignItemsEnd {
+  align-items: end;
+}
+.alignItemsStretch {
+  align-items: stretch;
+}
 
 // Item alignment (main-axis)
-.justifyItemsStart   { justify-items: start; }
-.justifyItemsCenter  { justify-items: center; }
-.justifyItemsEnd     { justify-items: end; }
-.justifyItemsStretch { justify-items: stretch; }
+.justifyItemsStart {
+  justify-items: start;
+}
+.justifyItemsCenter {
+  justify-items: center;
+}
+.justifyItemsEnd {
+  justify-items: end;
+}
+.justifyItemsStretch {
+  justify-items: stretch;
+}
 ```
 
 The base `.grid` rule's `grid-template-columns` has a fallback to `repeat(auto-fit, minmax(240px, 1fr))` so that even if the `--grid-columns` custom prop fails to apply for some reason (consumer-style override stripping it), the component still renders a sane default.
@@ -245,6 +286,7 @@ Standard playground integration: route in `App.tsx`, sidebar entry in `AppShell.
 Append a `<Grid>` TL;DR to AGENTS.md near the Stack/Cluster sections.
 
 Cross-link from Stack and Cluster's existing "use CSS Grid" references in BOTH places they appear:
+
 - **JSDoc in `Stack.tsx`**: change `For tabular data — use a real <table> or CSS Grid.` → `For tabular data — use a real <table> or <Grid>.`
 - **JSDoc in `Cluster.tsx`**: change `For aligned columns of equal width — use CSS Grid.` → `For aligned columns of equal width — use <Grid>.`
 - **AGENTS.md** Stack/Cluster TL;DRs if they have matching language.
@@ -259,6 +301,7 @@ Anti-patterns specific to Grid:
 ## Hard Rule 8 cycle
 
 Same as Modal / Drawer:
+
 1. Run all gates (test, build-lib, lint, build, npm pack --dry-run).
 2. Spawn a fresh-context reviewer with the 10 review categories.
 3. Fix Critical + Important findings; re-run gates; re-review.

@@ -259,7 +259,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/grid',
     name: 'Grid',
-    description: '2D layout primitive with token-driven gap, auto-fit responsive columns, and equal-width fixed columns.',
+    description:
+      '2D layout primitive with token-driven gap, auto-fit responsive columns, and equal-width fixed columns.',
     preview: (
       <Grid gap="xs">
         <div className={styles.tile} />
