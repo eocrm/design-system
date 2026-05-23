@@ -5,6 +5,12 @@ import styles from './Card.module.scss';
 /** Inner padding. See CardProps#padding for guidance on each. */
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 
+/**
+ * Optional left-edge tone stripe color. When set on a Card, draws a 3px
+ * accent-colored bar on the left edge. Uses the same token vocabulary as Alert.
+ */
+export type CardTone = 'accent' | 'info' | 'success' | 'warning' | 'danger';
+
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Inner padding.
@@ -15,6 +21,15 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
    * - `lg` (24px) — emphasis cards, marketing-style panels.
    */
   padding?: CardPadding;
+  /**
+   * Optional left-edge tone stripe (3px). Useful for "stat card" / "status card"
+   * patterns where one card in a row needs visual emphasis. Default: no stripe
+   * (the card keeps its standard bordered look).
+   *
+   * Uses the same tone vocabulary as `Alert`: `accent` / `info` / `success` /
+   * `warning` / `danger`.
+   */
+  tone?: CardTone;
 }
 
 const paddingClass: Record<CardPadding, string> = {
@@ -25,9 +40,11 @@ const paddingClass: Record<CardPadding, string> = {
 };
 
 /**
- * Bordered container for grouped content. **Don't nest Card in Card** — if
- * you need to subdivide, use spacing or a horizontal rule instead. If everything
- * on your page is a card, none of them are.
+ * Bordered container for grouped content. Supports an optional `tone` prop
+ * that draws a 3px left-edge stripe in the tone color — useful for stat cards
+ * or status panels where one card in a row needs visual emphasis. **Don't
+ * nest Card in Card** — if you need to subdivide, use spacing or a horizontal
+ * rule instead. If everything on your page is a card, none of them are.
  *
  * @example
  * <Card padding="md">
@@ -48,6 +65,14 @@ const paddingClass: Record<CardPadding, string> = {
  *   <ul>...</ul>
  * </Card>
  *
+ * @example
+ * // Tone-coded stat cards — row of cards, each with a left-edge stripe:
+ * <Cluster gap="md" wrap>
+ *   <Card padding="md" tone="accent">Open deals</Card>
+ *   <Card padding="md" tone="success">Won this month</Card>
+ *   <Card padding="md" tone="danger">Churned</Card>
+ * </Cluster>
+ *
  * @remarks When NOT to use
  * - As the only child of another Card. **Never nest cards.** If you need to
  *   subdivide, use spacing or a horizontal rule inside one card.
@@ -63,12 +88,20 @@ const paddingClass: Record<CardPadding, string> = {
  *   is clickable, that's a different component (`LinkCard`, not yet shipped).
  * - ❌ Cards nested in Cards. Almost always means your information
  *   architecture is wrong.
+ * - ❌ Hand-rolling a left-stripe via `className` / `style`. Use the `tone`
+ *   prop — it reserves the border-left space so layout never shifts.
  */
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
-  { padding = 'md', className, ...props },
+  { padding = 'md', tone, className, ...props },
   ref,
 ) {
+  // {...props} last so consumer overrides win (Pattern A).
   return (
-    <div ref={ref} className={clsx(styles.card, paddingClass[padding], className)} {...props} />
+    <div
+      ref={ref}
+      className={clsx(styles.card, paddingClass[padding], className)}
+      data-tone={tone}
+      {...props}
+    />
   );
 });

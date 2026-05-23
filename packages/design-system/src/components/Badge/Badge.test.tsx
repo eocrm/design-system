@@ -72,4 +72,50 @@ describe('Badge', () => {
     expect(dot.getAttribute('aria-hidden')).toBe('true');
     expect(screen.getByText('Active')).toBeInTheDocument();
   });
+
+  it('default variant is "filled" (no stripe class)', () => {
+    const { container } = render(<Badge tone="success">x</Badge>);
+    expect(container.firstElementChild!.className).not.toMatch(/stripe/);
+  });
+
+  it('variant="filled" explicit: no stripe class', () => {
+    const { container } = render(
+      <Badge variant="filled" tone="success">
+        x
+      </Badge>,
+    );
+    expect(container.firstElementChild!.className).not.toMatch(/stripe/);
+  });
+
+  it('variant="stripe" adds the stripe class', () => {
+    const { container } = render(
+      <Badge variant="stripe" tone="success">
+        x
+      </Badge>,
+    );
+    expect(container.firstElementChild!.className).toMatch(/stripe/);
+  });
+
+  it('variant="stripe" composes with tone (both classes present)', () => {
+    const { container } = render(
+      <Badge variant="stripe" tone="warning">
+        x
+      </Badge>,
+    );
+    const root = container.firstElementChild!;
+    expect(root.className).toMatch(/stripe/);
+    expect(root.className).toMatch(/warning/);
+  });
+
+  it.each(['sm', 'md'] as const)(
+    'variant="stripe" + size="%s": size class still applies',
+    (size: BadgeSize) => {
+      const { container } = render(
+        <Badge variant="stripe" size={size} tone="info">
+          x
+        </Badge>,
+      );
+      expect(container.firstElementChild!.className).toMatch(new RegExp(size));
+    },
+  );
 });

@@ -5,6 +5,40 @@
   box-shadow: var(--shadow-sm);
 }
 
+// Tone-coded left-stripe via inset box-shadow. Drawn inside the card on top
+// of the existing border, so untoned cards stay pixel-identical to before
+// (no layout shift, no width change). The existing --shadow-sm stays on
+// every card; the inset stripe layers on top when `data-tone` is set.
+.card[data-tone='accent'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-accent),
+    var(--shadow-sm);
+}
+
+.card[data-tone='info'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-info),
+    var(--shadow-sm);
+}
+
+.card[data-tone='success'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-success),
+    var(--shadow-sm);
+}
+
+.card[data-tone='warning'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-warning),
+    var(--shadow-sm);
+}
+
+.card[data-tone='danger'] {
+  box-shadow:
+    inset var(--border-width-strong) 0 0 var(--color-danger),
+    var(--shadow-sm);
+}
+
 .paddingNone {
   padding: 0;
 }

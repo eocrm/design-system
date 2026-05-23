@@ -6,6 +6,14 @@ import styles from './Badge.module.scss';
 export type BadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'purple';
 
 /**
+ * Visual variant.
+ * - `'filled'` (default) — solid tone-tinted pill. The standard "loud status" look.
+ * - `'stripe'` — rectangular block with a tone-colored left stripe + soft tinted body.
+ *   Use for category markers or sidebar labels where pill emphasis is too loud.
+ */
+export type BadgeVariant = 'filled' | 'stripe';
+
+/**
  * Pill height. See BadgeProps#size for when to use each. Intentionally only
  * two heights — a 40px badge would be Button-shaped. If you need something
  * larger, use `<Button>` or rethink the layout.
@@ -48,6 +56,13 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
    * text remains the accessible label.
    */
   dot?: BadgeDot;
+  /**
+   * Visual variant.
+   * - `'filled'` (default) — solid tone-tinted pill. The standard "loud status" look.
+   * - `'stripe'` — rectangular block with a tone-colored left stripe + soft tinted body.
+   *   Use for category markers or sidebar labels where pill emphasis is too loud.
+   */
+  variant?: BadgeVariant;
 }
 
 const toneClass: Record<BadgeTone, string> = {
@@ -65,8 +80,11 @@ const sizeClass: Record<BadgeSize, string> = {
 };
 
 /**
- * Small inline pill for status, category, or count. Non-interactive — wrap
- * in a `<Button>` if you need it clickable.
+ * Small inline pill for status, category, or count. Supports two variants:
+ * the default `'filled'` pill and a `'stripe'` rectangular block with a
+ * tone-colored left stripe and a softly tinted body — useful for category
+ * markers or sidebar labels where the uppercase pill is too loud. Non-interactive
+ * — wrap in a `<Button>` if you need it clickable.
  *
  * Badge does NOT auto-add `role="status"`. Tone is a visual signal only.
  * If a state change should be announced to screen readers, wrap the badge
@@ -88,6 +106,14 @@ const sizeClass: Record<BadgeSize, string> = {
  *   <Badge tone="info">Pipeline 2026</Badge>
  * </Cluster>
  *
+ * @example
+ * // Stripe variant — rectangular category markers:
+ * <Cluster gap="sm">
+ *   <Badge variant="stripe" tone="info">Lead</Badge>
+ *   <Badge variant="stripe" tone="warning">Renewal due</Badge>
+ *   <Badge variant="stripe" tone="success">Active</Badge>
+ * </Cluster>
+ *
  * @remarks When NOT to use
  * - As a button. Badges are non-interactive labels. If it's clickable, use
  *   a `Button` or `Link`.
@@ -103,14 +129,20 @@ const sizeClass: Record<BadgeSize, string> = {
  *   with an appropriate variant instead.
  */
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
-  { tone = 'neutral', size = 'md', dot, className, children, ...props },
+  { tone = 'neutral', size = 'md', dot, variant = 'filled', className, children, ...props },
   ref,
 ) {
   // {...props} last so consumer overrides win (Pattern A).
   return (
     <span
       ref={ref}
-      className={clsx(styles.badge, toneClass[tone], sizeClass[size], className)}
+      className={clsx(
+        styles.badge,
+        toneClass[tone],
+        sizeClass[size],
+        variant === 'stripe' && styles.stripe,
+        className,
+      )}
       {...props}
     >
       {dot === 'start' && <span aria-hidden="true" className={styles.dot} />}
