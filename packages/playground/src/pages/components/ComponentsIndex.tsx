@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Inbox } from 'lucide-react';
+import { Alert } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Breadcrumb } from '@eocrm/design-system';
@@ -56,6 +57,12 @@ function DataTablePreview() {
 }
 
 const items: { to: string; name: string; description: string; preview: React.ReactNode }[] = [
+  {
+    to: '/components/alert',
+    name: 'Alert',
+    description: 'Persistent in-flow notification with four tones.',
+    preview: <Alert tone="info" title="Synced 5 minutes ago" />,
+  },
   {
     to: '/components/button',
     name: 'Button',

@@ -36,6 +36,9 @@ export type {
   GridAs,
 } from './components/Grid';
 
+export { Alert } from './components/Alert';
+export type { AlertProps, AlertTone } from './components/Alert';
+
 export { Avatar, AvatarGroup, avatarColorIndex } from './components/Avatar';
 export type { AvatarProps, AvatarSize, AvatarStatus, AvatarGroupProps } from './components/Avatar';
 

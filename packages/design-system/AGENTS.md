@@ -696,6 +696,50 @@ toast.success('Saved', { id });
 - ❌ For long-form messages. Toasts are 1–2 lines. If you need more, link to a page from the description.
 - ❌ As a substitute for in-page progress UI. A toast can announce "Upload started" but the persistent progress bar belongs in the page.
 
+### `<Alert>` — persistent in-flow notification
+
+Tone-driven banner for messages that need to stay visible while the user reads the page (subscription warnings, save failures, "update available" notices). Complements `<Toast>` (transient).
+
+```tsx
+import { Alert } from '@eocrm/design-system';
+
+// Basic
+<Alert tone="info" title="Synced 5 minutes ago" />
+<Alert tone="warning">Your storage is at 85% capacity.</Alert>
+
+// With actions
+<Alert tone="warning" title="Update available" actions={<Button size="sm">Reload</Button>}>
+  A new version is ready. Reload to apply.
+</Alert>
+
+// Dismissible (controlled by consumer)
+const [show, setShow] = useState(true);
+{show && (
+  <Alert tone="success" onDismiss={() => setShow(false)}>
+    Changes saved.
+  </Alert>
+)}
+```
+
+- **Four tones** (`info` / `success` / `warning` / `error`). Default icon + accent stripe per tone.
+- **`role="alert"`** only for `error` (assertive, interrupts SR). Others use `role="status"` (polite).
+- **Persistent** — no auto-dismiss. Use Toast for transient messages.
+- **Controlled dismiss** — `onDismiss` callback fires on × click; consumer hides via conditional render.
+- **`icon={null}`** suppresses the icon entirely; any ReactNode overrides the default.
+
+#### When NOT to use
+
+- ❌ Transient confirmations → `<Toast>` / `toast.success(...)`.
+- ❌ Empty-state placeholders ("No deals yet") → `<EmptyState>`.
+- ❌ Form-field validation messages → inline error text + `aria-describedby`.
+- ❌ Destructive confirmations needing yes/no → `<ConfirmationPopover>` or `<Modal>`.
+
+#### Anti-patterns
+
+- ❌ Auto-dismissing the Alert with a `setTimeout` — that's what Toast is for.
+- ❌ Using `tone="error"` for non-critical warnings. Reserve `error` for genuine failures.
+- ❌ Multiple stacked Alerts above a page — pick one (most urgent tone) or compose into the page layout with explicit hierarchy.
+
 ### `<ConfirmationPopover>` — opinionated "Are you sure?" preset
 
 ```tsx
