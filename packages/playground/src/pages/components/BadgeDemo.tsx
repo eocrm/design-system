@@ -162,6 +162,26 @@ export function BadgeDemo() {
       </Example>
 
       <Example
+        title="Stripe variant (rectangular with left stripe)"
+        description={`variant="stripe" renders a rectangular block with a tone-colored 3px left stripe and a softly tinted body. No uppercase, no letter-spacing — reads as a category label rather than a loud status pill. Composes with all six existing tones.`}
+        code={`<Badge variant="stripe" tone="info">Lead</Badge>
+<Badge variant="stripe" tone="success">Active</Badge>
+<Badge variant="stripe" tone="warning">Renewal due</Badge>
+<Badge variant="stripe" tone="danger">Churned</Badge>
+<Badge variant="stripe" tone="neutral">Archived</Badge>
+<Badge variant="stripe" tone="purple">Enterprise</Badge>`}
+      >
+        <Cluster gap="sm" wrap>
+          <Badge variant="stripe" tone="info">Lead</Badge>
+          <Badge variant="stripe" tone="success">Active</Badge>
+          <Badge variant="stripe" tone="warning">Renewal due</Badge>
+          <Badge variant="stripe" tone="danger">Churned</Badge>
+          <Badge variant="stripe" tone="neutral">Archived</Badge>
+          <Badge variant="stripe" tone="purple">Enterprise</Badge>
+        </Cluster>
+      </Example>
+
+      <Example
         title="Status patterns"
         description="The most common CRM usage: status pill on a contact, deal, or invitation."
         code={`// Contact statuses

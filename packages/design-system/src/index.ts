@@ -13,7 +13,7 @@ export { Input } from './components/Input';
 export type { InputProps, InputSize } from './components/Input';
 
 export { Card } from './components/Card';
-export type { CardProps, CardPadding } from './components/Card';
+export type { CardProps, CardPadding, CardTone } from './components/Card';
 
 export { Checkbox } from './components/Checkbox';
 export type { CheckboxProps, CheckboxSize } from './components/Checkbox';
@@ -51,7 +51,7 @@ export { Avatar, AvatarGroup, avatarColorIndex } from './components/Avatar';
 export type { AvatarProps, AvatarSize, AvatarStatus, AvatarGroupProps } from './components/Avatar';
 
 export { Badge } from './components/Badge';
-export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot } from './components/Badge';
+export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot, BadgeVariant } from './components/Badge';
 
 export { Tabs } from './components/Tabs';
 export type { TabsProps, TabItem, TabsActivationMode, TabsOrientation } from './components/Tabs';

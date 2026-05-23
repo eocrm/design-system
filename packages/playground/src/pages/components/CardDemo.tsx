@@ -79,6 +79,24 @@ export function CardDemo() {
       </Example>
 
       <Example
+        title="Tone-coded cards (left stripe)"
+        description="Five tones: accent / info / success / warning / danger. Each draws a 3px left-edge stripe in the tone color. The border-left is always reserved (transparent) so toggling tone never shifts layout."
+        code={`<Card padding="md" tone="accent">Accent</Card>
+<Card padding="md" tone="info">Info</Card>
+<Card padding="md" tone="success">Success</Card>
+<Card padding="md" tone="warning">Warning</Card>
+<Card padding="md" tone="danger">Danger</Card>`}
+      >
+        <Cluster gap="sm" align="start" wrap>
+          <Card padding="md" style={{ minWidth: 120 }} tone="accent">Accent</Card>
+          <Card padding="md" style={{ minWidth: 120 }} tone="info">Info</Card>
+          <Card padding="md" style={{ minWidth: 120 }} tone="success">Success</Card>
+          <Card padding="md" style={{ minWidth: 120 }} tone="warning">Warning</Card>
+          <Card padding="md" style={{ minWidth: 120 }} tone="danger">Danger</Card>
+        </Cluster>
+      </Example>
+
+      <Example
         title="Padding=none with header + list"
         description="When the card contains a list or table, use padding='none' and let the inner sections control their own padding."
         code={`<Card padding="none">

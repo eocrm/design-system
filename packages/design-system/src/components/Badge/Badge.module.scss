@@ -61,3 +61,53 @@
   background: currentColor;
   flex-shrink: 0;
 }
+
+// Stripe variant — rectangular block with a tone-colored left stripe + tinted body.
+// Rules come AFTER the filled tone rules so .stripe.* overrides .filled tone backgrounds.
+.stripe {
+  border-radius: var(--radius-sm);
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: var(--font-weight-medium);
+
+  // Reserve transparent border-left so toggling tone doesn't shift layout.
+  border-left: var(--border-width-strong) solid transparent;
+  padding-left: var(--space-2);
+}
+
+// Stripe + tone overrides — specificity 0,2,0 beats the plain tone rules (0,1,0).
+.stripe.neutral {
+  background: var(--color-bg-muted);
+  color: var(--color-fg);
+  border-left-color: var(--color-fg-muted);
+}
+
+.stripe.info {
+  background: var(--color-info-bg-subtle);
+  color: var(--color-info);
+  border-left-color: var(--color-info);
+}
+
+.stripe.success {
+  background: var(--color-success-bg-subtle);
+  color: var(--color-success);
+  border-left-color: var(--color-success);
+}
+
+.stripe.warning {
+  background: var(--color-warning-bg-subtle);
+  color: var(--color-warning);
+  border-left-color: var(--color-warning);
+}
+
+.stripe.danger {
+  background: var(--color-danger-bg-subtle);
+  color: var(--color-danger);
+  border-left-color: var(--color-danger);
+}
+
+.stripe.purple {
+  background: var(--color-badge-purple-bg);
+  color: var(--color-badge-purple-fg);
+  border-left-color: var(--color-badge-purple-fg);
+}

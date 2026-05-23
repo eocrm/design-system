@@ -333,9 +333,13 @@ import { Switch } from '@eocrm/design-system';
 <Card padding="md">
   <Stack gap="md">...</Stack>
 </Card>
+
+// Tone-coded stat card — 3px left-edge stripe in the tone color:
+<Card padding="md" tone="accent">Open deals</Card>
 ```
 
 - `padding`: `none` / `sm` / `md` (default) / `lg`
+- `tone`: `accent` / `info` / `success` / `warning` / `danger` — draws a 3px left-edge stripe in the tone color. Default: no stripe (standard bordered look). A transparent border-left is always reserved so toggling `tone` never shifts layout.
 - **Never nest Card in Card.**
 - Use `padding="none"` when the card contains a table or list that should bleed edge-to-edge.
 
@@ -486,10 +490,15 @@ import { Divider } from '@eocrm/design-system';
 ```tsx
 <Badge tone="success">Active</Badge>
 <Badge tone="danger">Churned</Badge>
+
+// Stripe variant — rectangular category marker with left stripe:
+<Badge variant="stripe" tone="info">Lead</Badge>
+<Badge variant="stripe" tone="warning">Renewal due</Badge>
 ```
 
 - `tone`: `neutral` (default) / `info` / `success` / `warning` / `danger` / `purple`
 - `size`: `md` (20, default) / `sm` (16). `md` is the uppercase tracked "loud label" pill. `sm` drops the uppercase + tracking and renders case as-typed — use it for dense table cells, compact toolbars, or anywhere the uppercase treatment shouts next to body copy.
+- `variant`: `filled` (default) / `stripe`. `filled` is the standard pill. `stripe` renders a rectangular block with a tone-colored 3px left stripe and a softly tinted body — no uppercase or letter-spacing. Use for category markers or sidebar labels where pill emphasis is too loud. Composes with all six existing tones.
 - `dot`: `start` / `end` — adds a small filled circle in the badge's text color before or after the content. Use for Slack/GitHub-style status indicators (`<Badge tone="success" dot="start">Online</Badge>`). Decorative only (`aria-hidden`); the text is still the accessible label.
 - **Non-interactive.** If it's clickable, use `<Button>` instead.
 - Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced.

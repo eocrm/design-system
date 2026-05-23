@@ -68,7 +68,7 @@ export function Dashboard() {
 
       <div className={styles.statsGrid}>
         {stats.map(({ label, value, delta, deltaTone, icon: Icon }) => (
-          <Card key={label} padding="md" className={styles.statCard}>
+          <Card key={label} padding="md" tone="accent">
             <Cluster justify="between" align="start" gap="md" wrap={false}>
               <Stack gap="xs">
                 <span className={styles.statLabel}>{label}</span>
