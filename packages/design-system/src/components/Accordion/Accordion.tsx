@@ -19,10 +19,29 @@ export type AccordionMode = 'single' | 'multiple';
 /** Heading level wrapping the trigger button. Defaults to 'h3'. */
 export type AccordionHeaderLevel = 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
+/**
+ * Visual variant. Defaults to `'bordered'`.
+ * - `'bordered'` — outer border + radius + dividing lines between items. Standard standalone look.
+ * - `'borderless'` — no outer border, no item borders, transparent background. Use when the accordion sits inside another bordered container (e.g., a Card) or as a section divider.
+ */
+export type AccordionVariant = 'bordered' | 'borderless';
+
+/**
+ * Trigger size — controls font-size + padding. Defaults to `'md'`.
+ * - `'sm'` — `--font-size-sm`, tighter padding. Dense settings panels.
+ * - `'md'` — `--font-size-md`, default padding. Most use cases.
+ * - `'lg'` — `--font-size-lg`, larger padding. Hero FAQ sections.
+ */
+export type AccordionSize = 'sm' | 'md' | 'lg';
+
 interface AccordionBaseProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'defaultValue' | 'onChange'
 > {
+  /** Visual variant. Defaults to `'bordered'`. */
+  variant?: AccordionVariant;
+  /** Trigger size (font + padding). Defaults to `'md'`. */
+  size?: AccordionSize;
   children: ReactNode;
 }
 
@@ -127,6 +146,8 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
       defaultValue,
       onValueChange,
       collapsible = false,
+      variant = 'bordered',
+      size = 'md',
       children,
       className,
       ...rest
@@ -161,10 +182,18 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
 
     return (
       <AccordionContext.Provider value={ctx}>
-        {/* Pattern A — consumer props reach the div, but data-accordion and
-            className are set AFTER the spread so the keyboard-scope marker
-            and the component class can't be removed by a consumer. */}
-        <div ref={ref} {...rest} data-accordion="" className={clsx(styles.accordion, className)}>
+        {/* Pattern A — consumer props reach the div, but data-accordion /
+            data-variant / data-size / className are set AFTER the spread so
+            the keyboard-scope marker, variant, size, and component class
+            can't be overridden by a consumer. */}
+        <div
+          ref={ref}
+          {...rest}
+          data-accordion=""
+          data-variant={variant}
+          data-size={size}
+          className={clsx(styles.accordion, className)}
+        >
           {children}
         </div>
       </AccordionContext.Provider>
@@ -176,7 +205,17 @@ interface MultipleImplProps extends AccordionBaseProps, AccordionMultipleProps {
 
 const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
   function AccordionMultipleImpl(
-    { type: _type, value, defaultValue, onValueChange, children, className, ...rest },
+    {
+      type: _type,
+      value,
+      defaultValue,
+      onValueChange,
+      variant = 'bordered',
+      size = 'md',
+      children,
+      className,
+      ...rest
+    },
     ref,
   ) {
     const [internalValue, setInternalValue] = useState<string[]>(defaultValue ?? []);
@@ -206,10 +245,18 @@ const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
 
     return (
       <AccordionContext.Provider value={ctx}>
-        {/* Pattern A — consumer props reach the div, but data-accordion and
-            className are set AFTER the spread so the keyboard-scope marker
-            and the component class can't be removed by a consumer. */}
-        <div ref={ref} {...rest} data-accordion="" className={clsx(styles.accordion, className)}>
+        {/* Pattern A — consumer props reach the div, but data-accordion /
+            data-variant / data-size / className are set AFTER the spread so
+            the keyboard-scope marker, variant, size, and component class
+            can't be overridden by a consumer. */}
+        <div
+          ref={ref}
+          {...rest}
+          data-accordion=""
+          data-variant={variant}
+          data-size={size}
+          className={clsx(styles.accordion, className)}
+        >
           {children}
         </div>
       </AccordionContext.Provider>

@@ -227,6 +227,8 @@ export type {
   AccordionContentProps,
   AccordionMode,
   AccordionHeaderLevel,
+  AccordionVariant,
+  AccordionSize,
 } from './components/Accordion';
 
 export { Breadcrumb } from './components/Breadcrumb';

@@ -9,11 +9,24 @@
   overflow: hidden;
 }
 
+// Borderless variant: strip the outer chrome. Item dividing lines also
+// disappear so the accordion blends into the surrounding container.
+.accordion[data-variant='borderless'] {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
 .item {
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
 .item:last-child {
+  border-bottom: 0;
+}
+
+.accordion[data-variant='borderless'] .item {
   border-bottom: 0;
 }
 
@@ -29,6 +42,8 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+
+  // Default padding belongs to size='md'; the per-size rules below override.
   padding: var(--space-3) var(--space-4);
   background: transparent;
   border: 0;
@@ -98,7 +113,55 @@
 }
 
 .content[data-state='open'] .inner {
+  // Default content padding belongs to size='md'; the per-size rules below
+  // override.
   padding: var(--space-3) var(--space-4);
+}
+
+// ─── Size variants ─────────────────────────────────────────────────────
+// Drive both the trigger padding+font-size and the content padding from a
+// single data-size on the root. .header also inherits font-size for the
+// heading element.
+
+.accordion[data-size='sm'] .header {
+  font-size: var(--font-size-sm);
+}
+
+.accordion[data-size='sm'] .trigger {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.accordion[data-size='sm'] .content[data-state='open'] .inner {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.accordion[data-size='md'] .header {
+  font-size: var(--font-size-md);
+}
+
+.accordion[data-size='md'] .trigger {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-md);
+}
+
+.accordion[data-size='md'] .content[data-state='open'] .inner {
+  padding: var(--space-3) var(--space-4);
+}
+
+.accordion[data-size='lg'] .header {
+  font-size: var(--font-size-lg);
+}
+
+.accordion[data-size='lg'] .trigger {
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-lg);
+}
+
+.accordion[data-size='lg'] .content[data-state='open'] .inner {
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-md);
 }
 
 @media (prefers-reduced-motion: reduce) {

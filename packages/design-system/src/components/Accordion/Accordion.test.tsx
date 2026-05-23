@@ -478,6 +478,72 @@ describe('<Accordion>', () => {
 
   // ─── Nested accordion keyboard scope ──────────────────────────────────
 
+  // ─── Variant + size ─────────────────────────────────────────────────────
+
+  it('default variant is "bordered" (data-variant attr)', () => {
+    const { container } = render(<BasicSingle />);
+    const root = container.querySelector('[data-accordion]')!;
+    expect(root).toHaveAttribute('data-variant', 'bordered');
+  });
+
+  it('variant="borderless" sets data-variant on the root', () => {
+    const { container } = render(
+      <Accordion type="single" variant="borderless">
+        <Accordion.Item value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    const root = container.querySelector('[data-accordion]')!;
+    expect(root).toHaveAttribute('data-variant', 'borderless');
+  });
+
+  it('default size is "md" (data-size attr)', () => {
+    const { container } = render(<BasicSingle />);
+    const root = container.querySelector('[data-accordion]')!;
+    expect(root).toHaveAttribute('data-size', 'md');
+  });
+
+  it.each(['sm', 'md', 'lg'] as const)('size="%s" sets data-size="%s" on the root', (size) => {
+    const { container } = render(
+      <Accordion type="single" size={size}>
+        <Accordion.Item value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    const root = container.querySelector('[data-accordion]')!;
+    expect(root).toHaveAttribute('data-size', size);
+  });
+
+  it('variant + size apply on both single and multiple modes', () => {
+    const { container: c1 } = render(
+      <Accordion type="single" variant="borderless" size="lg">
+        <Accordion.Item value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    const r1 = c1.querySelector('[data-accordion]')!;
+    expect(r1).toHaveAttribute('data-variant', 'borderless');
+    expect(r1).toHaveAttribute('data-size', 'lg');
+
+    const { container: c2 } = render(
+      <Accordion type="multiple" variant="borderless" size="sm">
+        <Accordion.Item value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    const r2 = c2.querySelector('[data-accordion]')!;
+    expect(r2).toHaveAttribute('data-variant', 'borderless');
+    expect(r2).toHaveAttribute('data-size', 'sm');
+  });
+
   it('ArrowDown on outer trigger does NOT escape into a nested Accordion', async () => {
     const user = userEvent.setup();
     render(

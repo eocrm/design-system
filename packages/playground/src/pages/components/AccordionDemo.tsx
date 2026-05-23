@@ -203,6 +203,72 @@ export function AccordionDemo() {
           </Accordion.Item>
         </Accordion>
       </Example>
+
+      <Example
+        title="Three sizes"
+        description="size controls trigger font + padding (and content padding). Default is md."
+        code={`<Accordion type="single" collapsible size="sm">...</Accordion>
+<Accordion type="single" collapsible size="md">...</Accordion>
+<Accordion type="single" collapsible size="lg">...</Accordion>`}
+      >
+        <Stack gap="md">
+          <Accordion type="single" collapsible size="sm" defaultValue="a">
+            <Accordion.Item value="a">
+              <Accordion.Trigger>Small (sm)</Accordion.Trigger>
+              <Accordion.Content>Tighter padding and smaller font.</Accordion.Content>
+            </Accordion.Item>
+            <Accordion.Item value="b">
+              <Accordion.Trigger>Second item</Accordion.Trigger>
+              <Accordion.Content>...</Accordion.Content>
+            </Accordion.Item>
+          </Accordion>
+          <Accordion type="single" collapsible size="md" defaultValue="a">
+            <Accordion.Item value="a">
+              <Accordion.Trigger>Medium (md, default)</Accordion.Trigger>
+              <Accordion.Content>Default padding and font.</Accordion.Content>
+            </Accordion.Item>
+            <Accordion.Item value="b">
+              <Accordion.Trigger>Second item</Accordion.Trigger>
+              <Accordion.Content>...</Accordion.Content>
+            </Accordion.Item>
+          </Accordion>
+          <Accordion type="single" collapsible size="lg" defaultValue="a">
+            <Accordion.Item value="a">
+              <Accordion.Trigger>Large (lg)</Accordion.Trigger>
+              <Accordion.Content>Larger padding and font.</Accordion.Content>
+            </Accordion.Item>
+            <Accordion.Item value="b">
+              <Accordion.Trigger>Second item</Accordion.Trigger>
+              <Accordion.Content>...</Accordion.Content>
+            </Accordion.Item>
+          </Accordion>
+        </Stack>
+      </Example>
+
+      <Example
+        title="Borderless variant"
+        description="variant='borderless' strips the outer border + item dividing lines. Use when the accordion lives inside another bordered container, or as a quiet section divider."
+        code={`<Accordion type="multiple" variant="borderless" defaultValue={['account']}>
+  <Accordion.Item value="account">...</Accordion.Item>
+  <Accordion.Item value="notifications">...</Accordion.Item>
+  <Accordion.Item value="security">...</Accordion.Item>
+</Accordion>`}
+      >
+        <Accordion type="multiple" variant="borderless" defaultValue={['account']}>
+          <Accordion.Item value="account">
+            <Accordion.Trigger>Account</Accordion.Trigger>
+            <Accordion.Content>Email, name, profile picture.</Accordion.Content>
+          </Accordion.Item>
+          <Accordion.Item value="notifications">
+            <Accordion.Trigger>Notifications</Accordion.Trigger>
+            <Accordion.Content>Email digest, in-app alerts.</Accordion.Content>
+          </Accordion.Item>
+          <Accordion.Item value="security">
+            <Accordion.Trigger>Security</Accordion.Trigger>
+            <Accordion.Content>2FA, active sessions, API keys.</Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      </Example>
     </DemoLayout>
   );
 }
