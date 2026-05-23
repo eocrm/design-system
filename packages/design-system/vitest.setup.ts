@@ -9,7 +9,8 @@ if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
     void args;
   }) as typeof window.scrollTo;
   // Preserve original for restoration if a test needs it.
-  (window as unknown as { __originalScrollTo?: typeof window.scrollTo }).__originalScrollTo = original;
+  (window as unknown as { __originalScrollTo?: typeof window.scrollTo }).__originalScrollTo =
+    original;
 }
 
 // Extends Vitest's `expect` with the @testing-library/jest-dom matchers
