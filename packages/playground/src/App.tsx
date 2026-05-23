@@ -7,6 +7,7 @@ import { Contacts } from './pages/mockups/Contacts/Contacts';
 import { ContactDetail } from './pages/mockups/ContactDetail/ContactDetail';
 import { Members } from './pages/mockups/Members/Members';
 import { ComponentsIndex } from './pages/components/ComponentsIndex';
+import { AccordionDemo } from './pages/components/AccordionDemo';
 import { AlertDemo } from './pages/components/AlertDemo';
 import { BreadcrumbDemo } from './pages/components/BreadcrumbDemo';
 import { ButtonDemo } from './pages/components/ButtonDemo';
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/mockups/members" element={<Members />} />
 
           <Route path="/components" element={<ComponentsIndex />} />
+          <Route path="/components/accordion" element={<AccordionDemo />} />
           <Route path="/components/alert" element={<AlertDemo />} />
           <Route path="/components/breadcrumb" element={<BreadcrumbDemo />} />
           <Route path="/components/button" element={<ButtonDemo />} />

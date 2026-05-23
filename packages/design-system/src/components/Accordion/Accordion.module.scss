@@ -1,0 +1,172 @@
+@use '../../styles/mixins' as *;
+
+.accordion {
+  display: flex;
+  flex-direction: column;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+// Borderless variant: strip the outer chrome. Item dividing lines also
+// disappear so the accordion blends into the surrounding container.
+.accordion[data-variant='borderless'] {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.item {
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.item:last-child {
+  border-bottom: 0;
+}
+
+.accordion[data-variant='borderless'] .item {
+  border-bottom: 0;
+}
+
+.header {
+  // stylelint-disable-next-line property-disallowed-list -- native heading margin reset
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-md);
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+
+  // Default padding belongs to size='md'; the per-size rules below override.
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: var(--color-fg);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-muted);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 var(--ring-width) var(--ring-accent);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: var(--opacity-disabled);
+  }
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+}
+
+.indicator {
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+  color: var(--color-fg-muted);
+}
+
+.item[data-state='open'] .indicator {
+  transform: rotate(180deg);
+}
+
+.content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--transition-base);
+
+  // Hint to the browser that grid-template-rows will animate, AND that this
+  // subtree's layout can be isolated from siblings (it can — only the
+  // accordion item itself reads .content's height). Same spirit as Drawer's
+  // will-change: transform hint — give the browser advance notice so it
+  // doesn't recompute layout from scratch on every frame.
+  will-change: grid-template-rows;
+  contain: layout style;
+}
+
+.content[data-state='open'] {
+  grid-template-rows: 1fr;
+}
+
+.inner {
+  overflow: hidden;
+
+  // Promote to its own compositor layer. Combined with the parent's
+  // will-change + contain hints, this keeps the row-resize animation off
+  // the main-layout path and on the compositor.
+  transform: translateZ(0);
+}
+
+.content[data-state='open'] .inner {
+  // Default content padding belongs to size='md'; the per-size rules below
+  // override.
+  padding: var(--space-3) var(--space-4);
+}
+
+// ─── Size variants ─────────────────────────────────────────────────────
+// Drive both the trigger padding+font-size and the content padding from a
+// single data-size on the root. .header also inherits font-size for the
+// heading element.
+
+.accordion[data-size='sm'] .header {
+  font-size: var(--font-size-sm);
+}
+
+.accordion[data-size='sm'] .trigger {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.accordion[data-size='sm'] .content[data-state='open'] .inner {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.accordion[data-size='md'] .header {
+  font-size: var(--font-size-md);
+}
+
+.accordion[data-size='md'] .trigger {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-md);
+}
+
+.accordion[data-size='md'] .content[data-state='open'] .inner {
+  padding: var(--space-3) var(--space-4);
+}
+
+.accordion[data-size='lg'] .header {
+  font-size: var(--font-size-lg);
+}
+
+.accordion[data-size='lg'] .trigger {
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-lg);
+}
+
+.accordion[data-size='lg'] .content[data-state='open'] .inner {
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content,
+  .indicator {
+    transition: none;
+  }
+}

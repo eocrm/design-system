@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Inbox } from 'lucide-react';
+import { Accordion } from '@eocrm/design-system';
 import { Alert } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
@@ -58,6 +59,21 @@ function DataTablePreview() {
 }
 
 const items: { to: string; name: string; description: string; preview: React.ReactNode }[] = [
+  {
+    to: '/components/accordion',
+    name: 'Accordion',
+    description: 'Stacked collapsible panels. Single-open or multi-open mode.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: '260px' }}>
+        <Accordion type="single" collapsible defaultValue="a">
+          <Accordion.Item value="a">
+            <Accordion.Trigger>Section</Accordion.Trigger>
+            <Accordion.Content>Body</Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      </div>
+    ),
+  },
   {
     to: '/components/alert',
     name: 'Alert',
