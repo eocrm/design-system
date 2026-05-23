@@ -66,6 +66,15 @@ function unlock() {
     originalWidth = null;
     originalPaddingRight = null;
 
+    // Force a synchronous reflow so the document's scrollable height is
+    // recalculated from the now-restored body BEFORE we scrollTo. Without
+    // this, the browser may clamp scrollTo to maxScrollY = 0 — the height
+    // while body was still fixed — and the page jumps to the top instead
+    // of returning to where the user left it.
+    // Reading offsetHeight is the standard reflow trigger; the void cast
+    // tells ESLint/Prettier the read is intentional.
+    void document.body.offsetHeight;
+
     // Restore the scroll position that was active when the lock was acquired.
     window.scrollTo(savedScrollX, savedScrollY);
   }
