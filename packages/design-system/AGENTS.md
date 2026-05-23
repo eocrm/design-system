@@ -510,8 +510,8 @@ const [tab, setTab] = useState('overview');
 
 <Tabs
   items={[
-    { id: 'overview', label: 'Overview' },
-    { id: 'activity', label: 'Activity', count: 12 },
+    { id: 'overview', label: 'Overview', icon: <Eye size={14} /> },
+    { id: 'activity', label: 'Activity', icon: <Activity size={14} />, count: 12 },
   ]}
   activeId={tab}
   onChange={setTab}
@@ -521,7 +521,7 @@ const [tab, setTab] = useState('overview');
 }
 ```
 
-- `items: { id, label, count? }[]` — `id` must be unique.
+- `items: { id, label, icon?, count? }[]` — `id` must be unique. `icon` is optional (typically a lucide-react glyph); renders before the label and inherits the tab's color. `count` renders after the label as a chip.
 - `activationMode`: `auto` (default — Arrow keys fire onChange) or `manual` (Arrow only focuses; Enter/Space activates). Use `manual` when panels lazy-load expensive content.
 - `orientation`: `horizontal` (default) or `vertical`.
 - `panelIdPrefix`: optional. When set, each tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link.
