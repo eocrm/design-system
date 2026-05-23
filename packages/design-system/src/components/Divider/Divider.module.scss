@@ -1,0 +1,142 @@
+.divider {
+  border: 0;
+  color: var(--color-border);
+}
+
+// ─── No-label cases: <hr> with a single border edge ─────────────────────
+
+.horizontal {
+  width: 100%;
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+// Rule 4 exception: vertical separators need parent height. Without
+// align-self the line collapses to 0 in flex/grid parents. Same documented
+// exception as ButtonGroup uses for `align-self: flex-start`.
+.vertical {
+  // stylelint-disable-next-line property-disallowed-list -- vertical separator needs parent height
+  align-self: stretch;
+  border-left: var(--border-width) solid var(--color-border);
+  min-height: var(--space-3);
+}
+
+// ─── Variants ──────────────────────────────────────────────────────────
+
+.dashed.horizontal {
+  border-top-style: dashed;
+}
+
+.dashed.vertical {
+  border-left-style: dashed;
+}
+
+// ─── Sizes (no-label cases) ─────────────────────────────────────────────
+
+.sizeMd.horizontal {
+  border-top-width: var(--border-width-emphasis);
+}
+
+.sizeMd.vertical {
+  border-left-width: var(--border-width-emphasis);
+}
+
+.sizeLg.horizontal {
+  border-top-width: var(--border-width-strong);
+}
+
+.sizeLg.vertical {
+  border-left-width: var(--border-width-strong);
+}
+
+// ─── Labeled — flex layout with two line spans flanking the label ───────
+
+.labeled {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-top: 0;
+  border-left: 0;
+}
+
+// Same Rule 4 exception as the no-label .vertical case.
+.labeled.vertical {
+  flex-direction: column;
+  // stylelint-disable-next-line property-disallowed-list -- vertical separator needs parent height; same exception as the no-label case
+  align-self: stretch;
+  min-height: var(--space-3);
+}
+
+.line {
+  flex: 1;
+  border: 0;
+  background: var(--color-border);
+  height: var(--border-width);
+  border-radius: 0;
+}
+
+.labeled.vertical .line {
+  width: var(--border-width);
+  height: auto;
+  // stylelint-disable-next-line property-disallowed-list -- internal child layout; line span must stretch to fill the vertical container
+  align-self: stretch;
+}
+
+// Dashed lines collapse the height to 0 and rely on the border for the dash
+// pattern. Without this, the height + dashed border would visually stack.
+.dashed .line {
+  background: transparent;
+  height: 0;
+  border-top: var(--border-width) dashed var(--color-border);
+}
+
+.dashed.vertical .line {
+  width: 0;
+  border-top: 0;
+  border-left: var(--border-width) dashed var(--color-border);
+}
+
+.sizeMd .line {
+  height: var(--border-width-emphasis);
+}
+
+.sizeLg .line {
+  height: var(--border-width-strong);
+}
+
+.sizeMd.vertical .line {
+  width: var(--border-width-emphasis);
+  height: auto;
+}
+
+.sizeLg.vertical .line {
+  width: var(--border-width-strong);
+  height: auto;
+}
+
+.sizeMd.dashed .line {
+  border-top-width: var(--border-width-emphasis);
+  height: 0;
+}
+
+.sizeLg.dashed .line {
+  border-top-width: var(--border-width-strong);
+  height: 0;
+}
+
+.sizeMd.dashed.vertical .line {
+  border-left-width: var(--border-width-emphasis);
+  width: 0;
+}
+
+.sizeLg.dashed.vertical .line {
+  border-left-width: var(--border-width-strong);
+  width: 0;
+}
+
+.label {
+  flex: 0 0 auto;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg-muted);
+  white-space: nowrap;
+}
