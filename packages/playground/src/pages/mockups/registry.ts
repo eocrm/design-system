@@ -16,6 +16,7 @@ export type ComponentName =
   | 'DataTable'
   | 'DatePicker'
   | 'DateRangePicker'
+  | 'Divider'
   | 'Drawer'
   | 'DropdownMenu'
   | 'EmptyState'
