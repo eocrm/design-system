@@ -14,6 +14,9 @@ export type { InputProps, InputSize } from './components/Input';
 
 export { Card } from './components/Card';
 export type { CardProps, CardPadding, CardTone } from './components/Card';
+export type { CardHeaderProps, CardHeaderLevel } from './components/Card';
+export type { CardListProps } from './components/Card';
+export type { CardListRowProps } from './components/Card';
 
 export { Checkbox } from './components/Checkbox';
 export type { CheckboxProps, CheckboxSize } from './components/Checkbox';

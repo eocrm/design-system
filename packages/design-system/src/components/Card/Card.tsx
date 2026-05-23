@@ -1,6 +1,9 @@
 import { forwardRef, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import styles from './Card.module.scss';
+import { CardHeader } from './CardHeader';
+import { CardList } from './CardList';
+import { CardListRow } from './CardListRow';
 
 /** Inner padding. See CardProps#padding for guidance on each. */
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
@@ -46,6 +49,10 @@ const paddingClass: Record<CardPadding, string> = {
  * nest Card in Card** — if you need to subdivide, use spacing or a horizontal
  * rule instead. If everything on your page is a card, none of them are.
  *
+ * Compound API — `Card.Header` / `Card.List` / `Card.ListRow` for the
+ * "section card with a list of rows" pattern. Use `padding="none"` when
+ * composing with these subcomponents so the header and rows bleed edge-to-edge.
+ *
  * @example
  * <Card padding="md">
  *   <Stack gap="md">
@@ -59,10 +66,22 @@ const paddingClass: Record<CardPadding, string> = {
  * </Card>
  *
  * @example
- * // Card with a bleeding table inside — sections control their own padding:
+ * // Compound API — section card with header + action + list rows:
  * <Card padding="none">
- *   <header style={{ padding: 16 }}>Header</header>
- *   <ul>...</ul>
+ *   <Card.Header action={<Link variant="muted">View all</Link>}>
+ *     Deals needing attention
+ *   </Card.Header>
+ *   <Card.List>
+ *     {deals.map(d => (
+ *       <Card.ListRow key={d.id}>
+ *         <Stack gap="xs">
+ *           <span>{d.title}</span>
+ *           <span>{d.company}</span>
+ *         </Stack>
+ *         <Avatar name={d.owner} size="sm" />
+ *       </Card.ListRow>
+ *     ))}
+ *   </Card.List>
  * </Card>
  *
  * @example
@@ -90,8 +109,10 @@ const paddingClass: Record<CardPadding, string> = {
  *   architecture is wrong.
  * - ❌ Hand-rolling a left-stripe via `className` / `style`. Use the `tone`
  *   prop — it reserves the border-left space so layout never shifts.
+ * - ❌ Hand-rolling `.cardHeader` / `.list` / `.listRow` SCSS. Use the
+ *   compound API (`Card.Header` / `Card.List` / `Card.ListRow`) instead.
  */
-export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
+const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
   { padding = 'md', tone, className, ...props },
   ref,
 ) {
@@ -104,4 +125,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
       {...props}
     />
   );
+});
+
+export const Card = Object.assign(CardRoot, {
+  Header: CardHeader,
+  List: CardList,
+  ListRow: CardListRow,
 });

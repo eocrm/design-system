@@ -66,3 +66,81 @@ describe('Card', () => {
     expect(root.className).toMatch(/custom/);
   });
 });
+
+describe('compound API', () => {
+  it('Card.Header renders <div> with default <h3> title', () => {
+    const { container } = render(<Card.Header>Title</Card.Header>);
+    expect(container.querySelector('h3')).toHaveTextContent('Title');
+  });
+
+  it('headerLevel="h2" wraps the title in <h2>', () => {
+    const { container } = render(<Card.Header headerLevel="h2">T</Card.Header>);
+    expect(container.querySelector('h2')).toBeInTheDocument();
+  });
+
+  it('action prop renders inside the header', () => {
+    render(
+      <Card.Header action={<button data-testid="act">View all</button>}>T</Card.Header>,
+    );
+    expect(screen.getByTestId('act')).toBeInTheDocument();
+  });
+
+  it('no action prop → no action span', () => {
+    const { container } = render(<Card.Header>T</Card.Header>);
+    expect(container.querySelectorAll('span').length).toBe(0);
+  });
+
+  it('Card.List renders a <ul>', () => {
+    const { container } = render(
+      <Card.List>
+        <Card.ListRow>x</Card.ListRow>
+      </Card.List>,
+    );
+    expect(container.querySelector('ul')).toBeInTheDocument();
+  });
+
+  it('Card.ListRow renders an <li> with content', () => {
+    const { container } = render(
+      <Card.List>
+        <Card.ListRow>row content</Card.ListRow>
+      </Card.List>,
+    );
+    const li = container.querySelector('li');
+    expect(li).toHaveTextContent('row content');
+  });
+
+  it('last ListRow is the expected element (last-child smoke test)', () => {
+    // Smoke test only — we can't query computed styles for the SCSS rule in
+    // jsdom, but we can verify the last-child is the expected element.
+    const { container } = render(
+      <Card.List>
+        <Card.ListRow>a</Card.ListRow>
+        <Card.ListRow>b</Card.ListRow>
+        <Card.ListRow data-testid="last">c</Card.ListRow>
+      </Card.List>,
+    );
+    const lis = container.querySelectorAll('li');
+    expect(lis[lis.length - 1]).toHaveAttribute('data-testid', 'last');
+  });
+
+  it('compound composes: Card > Header + List > ListRow', () => {
+    const { container } = render(
+      <Card padding="none">
+        <Card.Header>Title</Card.Header>
+        <Card.List>
+          <Card.ListRow>Row 1</Card.ListRow>
+          <Card.ListRow>Row 2</Card.ListRow>
+        </Card.List>
+      </Card>,
+    );
+    expect(container.querySelector('h3')).toHaveTextContent('Title');
+    expect(container.querySelectorAll('li').length).toBe(2);
+  });
+
+  it('Card.Header className merges (does not replace) with base header class', () => {
+    const { container } = render(<Card.Header className="custom">T</Card.Header>);
+    const header = container.firstElementChild!;
+    expect(header.className).toMatch(/header/);
+    expect(header.className).toMatch(/custom/);
+  });
+});

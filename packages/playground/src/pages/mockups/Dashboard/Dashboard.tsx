@@ -87,15 +87,19 @@ export function Dashboard() {
 
       <div className={styles.twoCol}>
         <Card padding="none">
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Deals needing attention</h2>
-            <a href="#" className={styles.cardLink} onClick={(e) => e.preventDefault()}>
-              View all
-            </a>
-          </div>
-          <ul className={styles.list}>
+          <Card.Header
+            headerLevel="h2"
+            action={
+              <a href="#" className={styles.cardLink} onClick={(e) => e.preventDefault()}>
+                View all
+              </a>
+            }
+          >
+            Deals needing attention
+          </Card.Header>
+          <Card.List>
             {upcoming.map((d) => (
-              <li key={d.id} className={styles.listRow}>
+              <Card.ListRow key={d.id}>
                 <Stack gap="xs">
                   <Cluster gap="sm">
                     <span className={styles.listRowTitle}>{d.title}</span>
@@ -110,18 +114,16 @@ export function Dashboard() {
                   </span>
                 </Stack>
                 <Avatar name={d.owner} size="sm" />
-              </li>
+              </Card.ListRow>
             ))}
-          </ul>
+          </Card.List>
         </Card>
 
         <Card padding="none">
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Recent activity</h2>
-          </div>
-          <ul className={styles.list}>
+          <Card.Header headerLevel="h2">Recent activity</Card.Header>
+          <Card.List>
             {activity.map((a, i) => (
-              <li key={i} className={styles.listRow}>
+              <Card.ListRow key={i}>
                 <Cluster gap="sm" wrap={false} align="start">
                   <Avatar name={a.who} size="sm" />
                   <Stack gap="xs">
@@ -132,14 +134,14 @@ export function Dashboard() {
                     <span className={styles.listRowMeta}>{a.when}</span>
                   </Stack>
                 </Cluster>
-              </li>
+              </Card.ListRow>
             ))}
-          </ul>
+          </Card.List>
         </Card>
       </div>
 
       <Card padding="md">
-        <h2 className={styles.cardTitle}>Recent contacts</h2>
+        <h2 style={{ margin: 0, fontSize: 'var(--font-size-md)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-fg)' }}>Recent contacts</h2>
         <div className={styles.contactGrid}>
           {contacts.slice(0, 4).map((c) => (
             <Cluster key={c.id} gap="sm" wrap={false} align="center">
