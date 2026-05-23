@@ -16,6 +16,7 @@ export type ComponentName =
   | 'Drawer'
   | 'DropdownMenu'
   | 'EmptyState'
+  | 'Grid'
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'
   | 'Input'

@@ -212,6 +212,34 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - `align`: `start` / `center` (default) / `end` / `baseline`
 - `wrap`: `true` (default). Set `false` only for narrow table cells where overflow is preferable to wrapping.
 
+### `<Grid>` — 2D layout primitive
+
+```tsx
+// Auto-fit responsive (default) — columns reflow by container width.
+<Grid gap="md">
+  {cards.map(c => <Card key={c.id}>...</Card>)}
+</Grid>
+
+// Fixed N equal columns.
+<Grid columns={2} gap="lg">
+  <Input label="First name" />
+  <Input label="Last name" />
+</Grid>
+```
+
+- **One of `columns` or `minColumnWidth`, not both.** TypeScript enforces it.
+- **Default** when neither is set: `minColumnWidth="240px"`. Naturally responsive without breakpoints.
+- **Gap scale:** `xs` (4px) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32) — same as Stack and Cluster.
+- **alignItems / justifyItems** — pass `start` / `center` / `end` / `stretch` to override the default browser stretch on either axis. Useful for cards of varying intrinsic height.
+- **`as` prop** — 10 common semantic elements (`div` default, `section`, `ul`, `ol`, `nav`, `main`, `aside`, `article`, `header`, `footer`). Limited rather than fully polymorphic to keep types simple.
+
+**Anti-patterns:**
+
+- ❌ Grid for a single column of vertical flow — use Stack.
+- ❌ Grid for unaligned wrapping rows (toolbars, tag lists) — use Cluster.
+- ❌ `<Grid columns="auto 1fr">` strings — not supported in v1. For asymmetric / named tracks, use raw CSS Grid via className.
+- ❌ `<Grid as="ul">` with non-`<li>` children. The component doesn't enforce list semantics; consumers must.
+
 ### `<Avatar>` — profile circle
 
 ```tsx

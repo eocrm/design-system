@@ -64,7 +64,7 @@ const alignClass: Record<StackAlign, string> = {
  * </Stack>
  *
  * @remarks When NOT to use
- * - For tabular data — use a real `<table>` or CSS Grid.
+ * - For tabular data — use a real `<table>` or `<Grid>`.
  * - For a list of clickable items — semantics matter. Use `<ul><li>` with
  *   appropriate styling.
  *
