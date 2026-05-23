@@ -88,11 +88,21 @@ export function CardDemo() {
 <Card padding="md" tone="danger">Danger</Card>`}
       >
         <Cluster gap="sm" align="start" wrap>
-          <Card padding="md" style={{ minWidth: 120 }} tone="accent">Accent</Card>
-          <Card padding="md" style={{ minWidth: 120 }} tone="info">Info</Card>
-          <Card padding="md" style={{ minWidth: 120 }} tone="success">Success</Card>
-          <Card padding="md" style={{ minWidth: 120 }} tone="warning">Warning</Card>
-          <Card padding="md" style={{ minWidth: 120 }} tone="danger">Danger</Card>
+          <Card padding="md" style={{ minWidth: 120 }} tone="accent">
+            Accent
+          </Card>
+          <Card padding="md" style={{ minWidth: 120 }} tone="info">
+            Info
+          </Card>
+          <Card padding="md" style={{ minWidth: 120 }} tone="success">
+            Success
+          </Card>
+          <Card padding="md" style={{ minWidth: 120 }} tone="warning">
+            Warning
+          </Card>
+          <Card padding="md" style={{ minWidth: 120 }} tone="danger">
+            Danger
+          </Card>
         </Cluster>
       </Example>
 

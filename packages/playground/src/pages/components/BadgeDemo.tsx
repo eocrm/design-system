@@ -172,12 +172,24 @@ export function BadgeDemo() {
 <Badge variant="stripe" tone="purple">Enterprise</Badge>`}
       >
         <Cluster gap="sm" wrap>
-          <Badge variant="stripe" tone="info">Lead</Badge>
-          <Badge variant="stripe" tone="success">Active</Badge>
-          <Badge variant="stripe" tone="warning">Renewal due</Badge>
-          <Badge variant="stripe" tone="danger">Churned</Badge>
-          <Badge variant="stripe" tone="neutral">Archived</Badge>
-          <Badge variant="stripe" tone="purple">Enterprise</Badge>
+          <Badge variant="stripe" tone="info">
+            Lead
+          </Badge>
+          <Badge variant="stripe" tone="success">
+            Active
+          </Badge>
+          <Badge variant="stripe" tone="warning">
+            Renewal due
+          </Badge>
+          <Badge variant="stripe" tone="danger">
+            Churned
+          </Badge>
+          <Badge variant="stripe" tone="neutral">
+            Archived
+          </Badge>
+          <Badge variant="stripe" tone="purple">
+            Enterprise
+          </Badge>
         </Cluster>
       </Example>
 

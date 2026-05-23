@@ -39,7 +39,7 @@ import type { HTMLAttributes } from 'react';
 export type CardTone = 'accent' | 'info' | 'success' | 'warning' | 'danger';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  padding?: CardPadding;  // existing
+  padding?: CardPadding; // existing
   /**
    * Optional left-edge tone stripe (3px). Useful for "stat card" / "status card"
    * patterns where one card in a row needs visual emphasis. Default: no stripe
@@ -61,11 +61,21 @@ The component renders the same `<div>` as today, with an additional `data-tone={
   border-left: var(--border-width-strong) solid transparent;
 }
 
-.card[data-tone='accent']  { border-left-color: var(--color-accent); }
-.card[data-tone='info']    { border-left-color: var(--color-info); }
-.card[data-tone='success'] { border-left-color: var(--color-success); }
-.card[data-tone='warning'] { border-left-color: var(--color-warning); }
-.card[data-tone='danger']  { border-left-color: var(--color-danger); }
+.card[data-tone='accent'] {
+  border-left-color: var(--color-accent);
+}
+.card[data-tone='info'] {
+  border-left-color: var(--color-info);
+}
+.card[data-tone='success'] {
+  border-left-color: var(--color-success);
+}
+.card[data-tone='warning'] {
+  border-left-color: var(--color-warning);
+}
+.card[data-tone='danger'] {
+  border-left-color: var(--color-danger);
+}
 ```
 
 The reserved-transparent-border trick avoids layout reflow when toggling the prop (vs. only setting `border-left` when tone is present, which would shift content 3px). Same approach as Alert.
@@ -77,9 +87,9 @@ The reserved-transparent-border trick avoids layout reflow when toggling the pro
 export type BadgeVariant = 'filled' | 'stripe';
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  tone?: BadgeTone;     // existing
-  size?: BadgeSize;     // existing
-  dot?: boolean;        // existing
+  tone?: BadgeTone; // existing
+  size?: BadgeSize; // existing
+  dot?: boolean; // existing
   dotPosition?: BadgeDot; // existing
   /**
    * Visual variant.
@@ -92,6 +102,7 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 ```
 
 When `variant="stripe"`:
+
 - Shape: rectangular (no `border-radius` — or a small `--radius-sm` for a soft edge)
 - Body bg: tone's `*-bg-subtle` token (e.g., `--color-success-bg-subtle`)
 - Body text: tone's regular fg color (e.g., `--color-success`)
@@ -115,13 +126,41 @@ When `variant="stripe"`:
 }
 
 // Tone overrides for stripe variant — body bg + fg + border-left color.
-.stripe.accent  { background: var(--color-accent-bg-subtle); color: var(--color-accent);  border-left-color: var(--color-accent); }
-.stripe.info    { background: var(--color-info-bg-subtle);    color: var(--color-info);    border-left-color: var(--color-info); }
-.stripe.success { background: var(--color-success-bg-subtle); color: var(--color-success); border-left-color: var(--color-success); }
-.stripe.warning { background: var(--color-warning-bg-subtle); color: var(--color-warning); border-left-color: var(--color-warning); }
-.stripe.danger  { background: var(--color-danger-bg-subtle);  color: var(--color-danger);  border-left-color: var(--color-danger); }
-.stripe.neutral { background: var(--color-bg-muted);           color: var(--color-fg);      border-left-color: var(--color-fg-muted); }
-.stripe.purple  { background: var(--color-badge-purple-bg);    color: var(--color-badge-purple-fg); border-left-color: var(--color-badge-purple-fg); }
+.stripe.accent {
+  background: var(--color-accent-bg-subtle);
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+}
+.stripe.info {
+  background: var(--color-info-bg-subtle);
+  color: var(--color-info);
+  border-left-color: var(--color-info);
+}
+.stripe.success {
+  background: var(--color-success-bg-subtle);
+  color: var(--color-success);
+  border-left-color: var(--color-success);
+}
+.stripe.warning {
+  background: var(--color-warning-bg-subtle);
+  color: var(--color-warning);
+  border-left-color: var(--color-warning);
+}
+.stripe.danger {
+  background: var(--color-danger-bg-subtle);
+  color: var(--color-danger);
+  border-left-color: var(--color-danger);
+}
+.stripe.neutral {
+  background: var(--color-bg-muted);
+  color: var(--color-fg);
+  border-left-color: var(--color-fg-muted);
+}
+.stripe.purple {
+  background: var(--color-badge-purple-bg);
+  color: var(--color-badge-purple-fg);
+  border-left-color: var(--color-badge-purple-fg);
+}
 ```
 
 (Note: `accent` isn't a current Badge tone — adding it for parity with Card. If we don't want to expand BadgeTone, we'll skip `accent` on Badge and keep current 6 tones.)
@@ -131,6 +170,7 @@ When `variant="stripe"`:
 ### File touches
 
 **Library**:
+
 - `packages/design-system/src/components/Card/Card.tsx` — add `tone` prop, `data-tone` attr, JSDoc
 - `packages/design-system/src/components/Card/Card.module.scss` — add reserved-transparent border-left + 5 tone selectors
 - `packages/design-system/src/components/Card/Card.test.tsx` — add ~5 cases
@@ -140,11 +180,13 @@ When `variant="stripe"`:
 - `packages/design-system/src/index.ts` — re-export `CardTone`, `BadgeVariant`
 
 **Playground**:
+
 - `packages/playground/src/pages/components/CardDemo.tsx` — add tone gallery example
 - `packages/playground/src/pages/components/BadgeDemo.tsx` — add stripe-variant gallery example
 - (Mockup refactor — optional, see below)
 
 **Mockup cleanup** (within this PR):
+
 - `Dashboard.module.scss` — delete `.statCard { border-left: ... }` and switch to `<Card tone="accent">` in `Dashboard.tsx`. Demonstrates the new prop in a real mockup.
 
 ### AGENTS.md updates
@@ -187,28 +229,52 @@ When `variant="stripe"`:
 ## Demo additions
 
 **`CardDemo.tsx`**:
+
 ```tsx
 <Example title="Tone-coded cards (left stripe)">
   <Cluster gap="md" wrap>
-    <Card padding="md" tone="accent">Accent</Card>
-    <Card padding="md" tone="info">Info</Card>
-    <Card padding="md" tone="success">Success</Card>
-    <Card padding="md" tone="warning">Warning</Card>
-    <Card padding="md" tone="danger">Danger</Card>
+    <Card padding="md" tone="accent">
+      Accent
+    </Card>
+    <Card padding="md" tone="info">
+      Info
+    </Card>
+    <Card padding="md" tone="success">
+      Success
+    </Card>
+    <Card padding="md" tone="warning">
+      Warning
+    </Card>
+    <Card padding="md" tone="danger">
+      Danger
+    </Card>
   </Cluster>
 </Example>
 ```
 
 **`BadgeDemo.tsx`**:
+
 ```tsx
-<Example title='Stripe variant (rectangular with left stripe)'>
+<Example title="Stripe variant (rectangular with left stripe)">
   <Cluster gap="sm" wrap>
-    <Badge variant="stripe" tone="info">Lead</Badge>
-    <Badge variant="stripe" tone="success">Active</Badge>
-    <Badge variant="stripe" tone="warning">Renewal due</Badge>
-    <Badge variant="stripe" tone="danger">Churned</Badge>
-    <Badge variant="stripe" tone="neutral">Archived</Badge>
-    <Badge variant="stripe" tone="purple">Enterprise</Badge>
+    <Badge variant="stripe" tone="info">
+      Lead
+    </Badge>
+    <Badge variant="stripe" tone="success">
+      Active
+    </Badge>
+    <Badge variant="stripe" tone="warning">
+      Renewal due
+    </Badge>
+    <Badge variant="stripe" tone="danger">
+      Churned
+    </Badge>
+    <Badge variant="stripe" tone="neutral">
+      Archived
+    </Badge>
+    <Badge variant="stripe" tone="purple">
+      Enterprise
+    </Badge>
   </Cluster>
 </Example>
 ```
@@ -216,6 +282,7 @@ When `variant="stripe"`:
 ## Mockup cleanup (in-scope)
 
 `Dashboard.tsx`:
+
 ```tsx
 // Before
 <Card padding="md" className={styles.statCard}>...</Card>

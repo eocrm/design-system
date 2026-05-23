@@ -45,14 +45,22 @@ describe('Card', () => {
   );
 
   it('tone composes with padding without affecting either', () => {
-    const { container } = render(<Card padding="lg" tone="success">x</Card>);
+    const { container } = render(
+      <Card padding="lg" tone="success">
+        x
+      </Card>,
+    );
     const root = container.firstElementChild!;
     expect(root).toHaveAttribute('data-tone', 'success');
     expect(root.className).toMatch(/padding/);
   });
 
   it('tone="accent" with custom className merges (does not replace)', () => {
-    const { container } = render(<Card tone="accent" className="custom">x</Card>);
+    const { container } = render(
+      <Card tone="accent" className="custom">
+        x
+      </Card>,
+    );
     const root = container.firstElementChild!;
     expect(root).toHaveAttribute('data-tone', 'accent');
     expect(root.className).toMatch(/custom/);
