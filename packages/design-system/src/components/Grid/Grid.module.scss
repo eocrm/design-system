@@ -1,0 +1,63 @@
+.grid {
+  display: grid;
+  grid-template-columns: var(--grid-columns, repeat(auto-fit, minmax(240px, 1fr)));
+}
+
+// Gap presets — mirror Stack/Cluster scale + camelCase naming
+.gapXs {
+  gap: var(--space-1);
+}
+
+.gapSm {
+  gap: var(--space-2);
+}
+
+.gapMd {
+  gap: var(--space-3);
+}
+
+.gapLg {
+  gap: var(--space-4);
+}
+
+.gapXl {
+  gap: var(--space-6);
+}
+
+.gap2xl {
+  gap: var(--space-8);
+}
+
+// Item alignment — cross-axis
+.alignItemsStart {
+  align-items: start;
+}
+
+.alignItemsCenter {
+  align-items: center;
+}
+
+.alignItemsEnd {
+  align-items: end;
+}
+
+.alignItemsStretch {
+  align-items: stretch;
+}
+
+// Item alignment — main-axis
+.justifyItemsStart {
+  justify-items: start;
+}
+
+.justifyItemsCenter {
+  justify-items: center;
+}
+
+.justifyItemsEnd {
+  justify-items: end;
+}
+
+.justifyItemsStretch {
+  justify-items: stretch;
+}
