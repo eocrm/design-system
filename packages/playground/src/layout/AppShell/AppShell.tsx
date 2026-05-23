@@ -28,6 +28,7 @@ import {
   MoreHorizontal,
   KeyRound,
   PanelLeft,
+  PanelRight,
   ShieldCheck,
   CalendarDays,
   Inbox,
@@ -103,6 +104,7 @@ const componentGroups = [
   {
     heading: 'Overlays',
     items: [
+      { to: '/components/drawer', label: 'Drawer', icon: PanelRight, end: false },
       { to: '/components/dropdown-menu', label: 'DropdownMenu', icon: MoreHorizontal, end: false },
       { to: '/components/modal', label: 'Modal', icon: AppWindow, end: false },
       { to: '/components/tooltip', label: 'Tooltip', icon: MessageSquare, end: false },
