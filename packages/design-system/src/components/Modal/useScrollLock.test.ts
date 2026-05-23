@@ -113,7 +113,7 @@ describe('useScrollLock', () => {
     const spy = vi.spyOn(window, 'scrollTo');
 
     unmount();
-    expect(spy).toHaveBeenCalledWith(50, 300);
+    expect(spy).toHaveBeenCalledWith({ left: 50, top: 300, behavior: 'instant' });
     spy.mockRestore();
 
     // Restore patched values.

@@ -79,23 +79,28 @@ function unlock() {
     const targetY = savedScrollY;
 
     // Restore the scroll position that was active when the lock was acquired.
-    // Synchronous call works on desktop and most modern browsers.
-    window.scrollTo(targetX, targetY);
+    //
+    // `behavior: 'instant'` is critical: it overrides any OS-level or
+    // browser smooth-scroll setting (Chrome's "Smooth Scrolling" flag,
+    // macOS/Windows scroll animations). Without it, `window.scrollTo(x, y)`
+    // starts an async animation — `window.scrollY` reports intermediate
+    // values, and if the page reflows during the animation (e.g., from the
+    // focus restoration that immediately follows), the animation is interrupted
+    // and the page lands at an unpredictable position. `behavior: 'instant'`
+    // forces a synchronous, single-frame jump regardless of user preferences.
+    window.scrollTo({ left: targetX, top: targetY, behavior: 'instant' });
 
-    // iOS Safari fallback: the layout pipeline sometimes hasn't fully
-    // committed after removing `position: fixed` from body, so the
-    // synchronous scrollTo above lands at scrollY = 0 (clamped, because
-    // scrollable height is still 0 from the browser's perspective). A
-    // second scrollTo deferred by one animation frame fires after the next
-    // layout commit, at which point the document height is correct and the
-    // scroll lands where it should. If the synchronous call already
-    // succeeded this is a no-op at the same coordinates. If the user has
-    // intentionally scrolled during this frame (extremely unlikely on
-    // close), we respect their position and skip the correction.
+    // iOS Safari / desktop Chrome fallback: the layout pipeline sometimes
+    // hasn't fully committed after removing `position: fixed` from body, so
+    // the synchronous scrollTo above may be clamped to maxScrollY = 0 (the
+    // height while body was still fixed). A second scrollTo deferred by one
+    // animation frame fires after the next layout commit when document height
+    // is correct and the scroll lands where it should. The unconditional call
+    // is safe: if the first already succeeded, this is a no-op at the same
+    // coordinates. The rAF is short enough that intentional user scroll in
+    // this window is not a concern.
     requestAnimationFrame(() => {
-      if (window.scrollY !== targetY || window.scrollX !== targetX) {
-        window.scrollTo(targetX, targetY);
-      }
+      window.scrollTo({ left: targetX, top: targetY, behavior: 'instant' });
     });
   }
 }
