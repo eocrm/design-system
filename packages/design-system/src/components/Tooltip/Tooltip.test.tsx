@@ -212,10 +212,12 @@ describe('Tooltip — focus open / close', () => {
   // below stubs to false instead to exercise the mouse-focus suppression path.
   let originalMatches: typeof Element.prototype.matches;
   function stubFocusVisible(value: boolean) {
+    // TS 6 tightened Element.matches to require a type-predicate overload; the
+    // mock can't satisfy that, so cast through the runtime-equivalent shape.
     Element.prototype.matches = function (this: Element, selector: string) {
       if (selector === ':focus-visible') return value;
       return originalMatches.call(this, selector);
-    };
+    } as typeof Element.prototype.matches;
   }
   beforeEach(() => {
     originalMatches = Element.prototype.matches;
