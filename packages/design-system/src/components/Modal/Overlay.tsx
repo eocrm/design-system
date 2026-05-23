@@ -75,8 +75,7 @@ export function Overlay({ children }: OverlayProps) {
   // level". In replace mode the top modal paints; in overlay mode only the
   // bottom of the stack (depth 0) paints so upper overlays are transparent.
   const paint =
-    (ctx.topMode === 'replace' && ctx.isTop) ||
-    (ctx.topMode === 'overlay' && ctx.depth === 0);
+    (ctx.topMode === 'replace' && ctx.isTop) || (ctx.topMode === 'overlay' && ctx.depth === 0);
 
   // Custom prop carries depth to SCSS for any per-depth styling.
   const style = { ['--modal-depth' as string]: String(ctx.depth) } as CSSProperties;

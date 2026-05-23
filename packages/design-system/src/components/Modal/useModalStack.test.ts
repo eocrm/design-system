@@ -70,12 +70,9 @@ describe('useModalStack', () => {
   });
 
   it('registers when active goes true and returns depth', () => {
-    const { result, rerender } = renderHook(
-      ({ active }) => useModalStack('a', active, 'replace'),
-      {
-        initialProps: { active: false },
-      },
-    );
+    const { result, rerender } = renderHook(({ active }) => useModalStack('a', active, 'replace'), {
+      initialProps: { active: false },
+    });
     expect(result.current.depth).toBeNull();
     rerender({ active: true });
     expect(result.current.depth).toBe(0);

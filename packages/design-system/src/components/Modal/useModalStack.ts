@@ -95,11 +95,7 @@ export interface ModalStackState {
  * top modal's stackMode. Subscribes to stack mutations so state stays
  * accurate when sibling modals open/close.
  */
-export function useModalStack(
-  id: string,
-  active: boolean,
-  mode: ModalStackMode,
-): ModalStackState {
+export function useModalStack(id: string, active: boolean, mode: ModalStackMode): ModalStackState {
   const [state, setState] = useState<ModalStackState>({
     depth: null,
     isTop: false,
