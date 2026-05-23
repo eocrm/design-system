@@ -1,0 +1,203 @@
+@use '../../styles/mixins' as *;
+
+// ─── Overlay ────────────────────────────────────────────────────────────
+// stylelint-disable property-disallowed-list -- internal positioning, not consumer layout
+.overlay {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- overlay must be fixed
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--color-bg-overlay);
+  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2);
+  opacity: var(--drag-opacity, var(--opacity-visible));
+  transition: opacity var(--transition-base);
+  overscroll-behavior: contain;
+
+  @starting-style {
+    opacity: var(--opacity-hidden);
+  }
+}
+
+.overlay[data-state='closed'] { opacity: var(--opacity-hidden); }
+
+.overlay[data-stack-position='hidden'] { display: none; }
+
+.overlay[data-variant='blur'] {
+  background: var(--color-bg-overlay-blur);
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
+  backdrop-filter: blur(4px);
+  // stylelint-disable-next-line property-no-vendor-prefix, scale-unlimited/declaration-strict-value
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.overlay[data-overlay-paint='no'] {
+  background: transparent;
+  backdrop-filter: none;
+  // stylelint-disable-next-line property-no-vendor-prefix
+  -webkit-backdrop-filter: none;
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Content (dialog) ───────────────────────────────────────────────────
+// stylelint-disable property-disallowed-list
+.content {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- drawer is fixed to a viewport edge
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2 + 1);
+  transition: transform var(--transition-base);
+  overscroll-behavior: contain;
+}
+
+// Per-side positioning + slide animation. The drawer animates in from off-screen
+// (@starting-style) and animates out via [data-state='closed']. During drag,
+// --drag-translate-{x|y} on .content overrides via the base transform expression.
+.content.side-right {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(var(--drawer-size, var(--size-drawer-md)), 100vw - 32px);
+  width: min(var(--drawer-size, var(--size-drawer-md)), 100dvw - 32px);
+  transform: translateX(var(--drag-translate-x, 0));
+
+  @starting-style { transform: translateX(100%); }
+}
+
+.content.side-right[data-state='closed'] { transform: translateX(100%); }
+
+.content.side-left {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(var(--drawer-size, var(--size-drawer-md)), 100vw - 32px);
+  width: min(var(--drawer-size, var(--size-drawer-md)), 100dvw - 32px);
+  transform: translateX(var(--drag-translate-x, 0));
+
+  @starting-style { transform: translateX(-100%); }
+}
+
+.content.side-left[data-state='closed'] { transform: translateX(-100%); }
+
+.content.side-top {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: min(var(--drawer-size, var(--size-drawer-md)), 100vh - 32px);
+  height: min(var(--drawer-size, var(--size-drawer-md)), 100dvh - 32px);
+  transform: translateY(var(--drag-translate-y, 0));
+
+  @starting-style { transform: translateY(-100%); }
+}
+
+.content.side-top[data-state='closed'] { transform: translateY(-100%); }
+
+.content.side-bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: min(var(--drawer-size, var(--size-drawer-md)), 100vh - 32px);
+  height: min(var(--drawer-size, var(--size-drawer-md)), 100dvh - 32px);
+  transform: translateY(var(--drag-translate-y, 0));
+
+  @starting-style { transform: translateY(100%); }
+}
+
+.content.side-bottom[data-state='closed'] { transform: translateY(100%); }
+// stylelint-enable property-disallowed-list
+
+// Size presets drive --drawer-size which the side rules consume via min().
+.size-sm { --drawer-size: var(--size-drawer-sm); }
+.size-md { --drawer-size: var(--size-drawer-md); }
+.size-lg { --drawer-size: var(--size-drawer-lg); }
+
+// ─── Header ─────────────────────────────────────────────────────────────
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+  touch-action: none;
+  cursor: grab;
+}
+
+.headerTitle {
+  // stylelint-disable-next-line property-disallowed-list -- reset h2 default margin; internal
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+}
+
+.headerCloseButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
+  width: 28px;
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline: none;
+  }
+}
+
+// ─── Body ───────────────────────────────────────────────────────────────
+.body {
+  padding: var(--space-4);
+  overflow-y: auto;
+  flex: 1 1 auto;
+  overscroll-behavior: contain;
+}
+
+.bodyPaddingNone {
+  padding: 0;
+}
+
+// ─── Footer ─────────────────────────────────────────────────────────────
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.footerAlign-start { justify-content: flex-start; }
+.footerAlign-end { justify-content: flex-end; }
+.footerAlign-space-between { justify-content: space-between; }
+
+// ─── Reduced motion ─────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .content {
+    transition: none;
+
+    @starting-style { opacity: var(--opacity-visible); transform: none; }
+  }
+}
