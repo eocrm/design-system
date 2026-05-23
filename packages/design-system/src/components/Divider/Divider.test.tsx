@@ -32,6 +32,13 @@ describe('<Divider>', () => {
     expect(screen.getByRole('separator')).toHaveAttribute('aria-orientation', 'vertical');
   });
 
+  it('aria-orientation propagates to the labeled <div> branch too', () => {
+    render(<Divider orientation="vertical">SECTION</Divider>);
+    const sep = screen.getByRole('separator');
+    expect(sep.tagName).toBe('DIV');
+    expect(sep).toHaveAttribute('aria-orientation', 'vertical');
+  });
+
   // ─── Variants + sizes (classes) ────────────────────────────────────────
 
   it('default: applies horizontal class, no dashed/sizeMd/sizeLg', () => {

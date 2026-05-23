@@ -120,6 +120,7 @@ export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
   );
 
   if (children == null) {
+    // Pattern B — {...props} first so role/aria-orientation/className can't be overridden.
     return (
       <hr
         ref={ref as Ref<HTMLHRElement>}
@@ -131,6 +132,7 @@ export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
     );
   }
 
+  // Pattern B — {...props} first so role/aria-orientation/className can't be overridden.
   return (
     <div
       ref={ref as Ref<HTMLDivElement>}
