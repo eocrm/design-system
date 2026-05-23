@@ -24,6 +24,7 @@ import {
   PanelTop,
   Layers,
   ArrowRight,
+  ExternalLink,
   MessageSquare,
   MessageSquareText,
   AppWindow,
@@ -39,6 +40,7 @@ import {
   TableProperties,
   ListOrdered,
   LayoutPanelLeft,
+  MoveRight,
   ToggleRight,
   type LucideIcon,
 } from 'lucide-react';
@@ -111,7 +113,11 @@ const componentGroups = [
   },
   {
     heading: 'Navigation',
-    items: [{ to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false }],
+    items: [
+      { to: '/components/breadcrumb', label: 'Breadcrumb', icon: MoveRight, end: false },
+      { to: '/components/link', label: 'Link', icon: ExternalLink, end: false },
+      { to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false },
+    ],
   },
   {
     heading: 'Overlays',

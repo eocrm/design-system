@@ -1,0 +1,54 @@
+@use '../../styles/mixins' as *;
+
+.link {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition:
+    color var(--transition-fast),
+    text-decoration-color var(--transition-fast);
+
+  &:focus-visible {
+    @include focus-ring;
+
+    outline: none;
+  }
+
+  // When the Link contains an icon (SVG), switch to inline-flex so the icon
+  // aligns vertically with the text and a default gap separates them. Pure
+  // text Links stay as native inline anchors so multi-word link text wraps
+  // naturally inside body copy.
+  &:has(svg) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+}
+
+.default {
+  color: var(--color-accent);
+
+  &:hover {
+    color: var(--color-accent-hover);
+    text-decoration: underline;
+  }
+}
+
+.muted {
+  color: var(--color-fg-muted);
+
+  &:hover {
+    color: var(--color-accent);
+  }
+}
+
+.subtle {
+  color: var(--color-fg);
+
+  &:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+}

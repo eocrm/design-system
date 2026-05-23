@@ -205,6 +205,12 @@ export type {
   CellContext,
 } from './components/DataTable';
 
+export { Link } from './components/Link';
+export type { LinkProps, LinkVariant } from './components/Link';
+
+export { Breadcrumb } from './components/Breadcrumb';
+export type { BreadcrumbProps, BreadcrumbItemProps } from './components/Breadcrumb';
+
 // i18n
 export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';

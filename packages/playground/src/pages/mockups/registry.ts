@@ -3,6 +3,7 @@
 export type ComponentName =
   | 'Avatar'
   | 'Badge'
+  | 'Breadcrumb'
   | 'Button'
   | 'ButtonGroup'
   | 'Calendar'
@@ -21,6 +22,7 @@ export type ComponentName =
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'
   | 'Input'
+  | 'Link'
   | 'Modal'
   | 'Pagination'
   | 'PasswordInput'
@@ -88,6 +90,7 @@ export const MOCKUPS = [
       'Cluster',
       'Avatar',
       'Badge',
+      'Breadcrumb',
       'Button',
       'Tabs',
       'DropdownMenu',

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
-import { ChevronRight, Mail, Phone, MoreHorizontal, Building, MapPin } from 'lucide-react';
+import { Mail, Phone, MoreHorizontal, Building, MapPin } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { Breadcrumb } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
@@ -29,11 +30,12 @@ export function ContactDetail() {
 
   return (
     <Stack gap="lg">
-      <nav className={styles.breadcrumb}>
-        <Link to="/mockups/contacts">Contacts</Link>
-        <ChevronRight size={14} aria-hidden />
-        <span>{contact.name}</span>
-      </nav>
+      <Breadcrumb>
+        <Breadcrumb.Item as={Link} to="/mockups/contacts">
+          Contacts
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>{contact.name}</Breadcrumb.Item>
+      </Breadcrumb>
 
       <div className={styles.header}>
         <Cluster gap="md" align="center" wrap={false}>
