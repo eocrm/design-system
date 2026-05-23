@@ -473,7 +473,7 @@ const [open, setOpen] = useState(false);
 - **`<Modal.Footer>` defaults to right-aligned actions.** Use `align="space-between"` to split a danger action away from save/cancel.
 - **`<Modal.Close>`** wraps a clickable child and fires `onOpenChange(false)` on click. Chains with the child's existing `onClick`.
 - **Forced step:** combine `disableEscapeClose`, `dismissOnOverlayClick={false}`, omit `<Modal.Close>`, and pass `<Modal.Header closeButton={false}>` to lock the user into the modal until they resolve it programmatically.
-- **Stacked modals — only the topmost is visible.** Opening a modal from inside an open modal hides the outer via `display: none` (React state preserved); when the inner closes, the outer reappears instantly. Escape only closes the topmost, body scroll stays locked across the whole stack.
+- **Stacked modals.** Default `stackMode="overlay"`: the parent stays visible underneath and the inner overlay paints transparent so the parent's dim shows through (one effective dim layer for the stack). Use `stackMode="replace"` to hide the parent via `display: none` (React state preserved) — best for forced steps where the parent context is irrelevant. Escape still closes only the topmost; body scroll stays locked across the whole stack.
 - **Initial focus:** pass `initialFocusRef` to focus a specific element (e.g. the first input). Otherwise the dialog container receives focus and the focus trap takes over.
 
 **Anti-patterns:**

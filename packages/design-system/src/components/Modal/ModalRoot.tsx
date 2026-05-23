@@ -14,7 +14,7 @@ import {
   type ModalOverlayVariant,
   type ModalSize,
 } from './context';
-import { useModalStack } from './useModalStack';
+import { useModalStack, type ModalStackMode } from './useModalStack';
 import { useScrollLock } from './useScrollLock';
 import { Overlay } from './Overlay';
 import { Content } from './Content';
@@ -36,6 +36,22 @@ export interface ModalProps {
    * fine for normal use; avoid stacking three blurred modals at once.
    */
   overlay?: ModalOverlayVariant;
+
+  /**
+   * How this modal relates to existing modals in the stack when it opens.
+   *
+   * - `'overlay'` (default): if there's a modal below this one, it stays
+   *   visible underneath. This modal's own overlay paints transparent so
+   *   the parent's dim shows through. Only the bottom modal (depth 0)
+   *   paints the actual dim/blur. The user sees the parent's context behind
+   *   the active modal.
+   * - `'replace'`: any modals below this one are hidden via `display: none`
+   *   (React state preserved). This modal paints its own overlay normally.
+   *   Best for forced-step modals where the parent context is irrelevant.
+   *
+   * Has no effect when this is the only open modal.
+   */
+  stackMode?: ModalStackMode;
 
   /**
    * Disable Escape-to-close. Default false. Combined with `dismissOnOverlayClick: false`
@@ -82,9 +98,10 @@ export interface ModalProps {
  * Controlled-only — Modal has no uncontrolled mode. Consumer holds `open`
  * state and passes `open` + `onOpenChange`.
  *
- * Stacked modals: only the topmost is visible. Lower modals stay mounted
- * (React state preserved) but hide via `display: none`. Re-show on pop is
- * instant.
+ * Stacked modals: default `stackMode="overlay"` keeps parent modals visible
+ * underneath with a transparent inner overlay so the user sees parent context.
+ * Use `stackMode="replace"` to hide lower modals via `display: none` (React
+ * state preserved) — best for forced steps where parent context is irrelevant.
  *
  * @example
  * const [open, setOpen] = useState(false);
@@ -145,6 +162,7 @@ export function ModalRoot({
   onOpenChange,
   size = 'md',
   overlay = 'solid',
+  stackMode = 'overlay',
   disableEscapeClose = false,
   dismissOnOverlayClick = true,
   initialFocusRef,
@@ -178,7 +196,7 @@ export function ModalRoot({
   }, [open]);
 
   // Stack registration + scroll lock are driven by `open`.
-  const { depth, isTop } = useModalStack(modalId, open);
+  const { depth, isTop, topMode } = useModalStack(modalId, open, stackMode);
   useScrollLock(open);
 
   const setOpen = useCallback(
@@ -224,6 +242,8 @@ export function ModalRoot({
     ariaDescribedBy,
     depth: depth ?? 0,
     isTop,
+    stackMode,
+    topMode,
   };
 
   return (

@@ -392,13 +392,13 @@ describe('<Modal>', () => {
 
   // ─── Amendment B: stack display model ───────────────────────────────
 
-  it('stacked modals: outer is data-stack-position="hidden", inner is "top"', () => {
+  it('stacked modals (replace mode): outer is data-stack-position="hidden", inner is "top"', () => {
     const { container } = render(
       <>
-        <Modal open onOpenChange={() => {}} aria-label="Outer">
+        <Modal open onOpenChange={() => {}} aria-label="Outer" stackMode="replace">
           <Modal.Body>outer</Modal.Body>
         </Modal>
-        <Modal open onOpenChange={() => {}} aria-label="Inner">
+        <Modal open onOpenChange={() => {}} aria-label="Inner" stackMode="replace">
           <Modal.Body>inner</Modal.Body>
         </Modal>
       </>,
@@ -413,6 +413,53 @@ describe('<Modal>', () => {
     expect(positions).toContain('hidden');
     // Exactly one top.
     expect(positions.filter((p) => p === 'top')).toHaveLength(1);
+  });
+
+  it('stackMode="replace": top paints overlay, hidden does not', () => {
+    render(
+      <>
+        <Modal open onOpenChange={() => {}} aria-label="Outer" stackMode="replace">
+          <Modal.Body>outer</Modal.Body>
+        </Modal>
+        <Modal open onOpenChange={() => {}} aria-label="Inner" stackMode="replace">
+          <Modal.Body>inner</Modal.Body>
+        </Modal>
+      </>,
+    );
+    const overlays = Array.from(
+      document.querySelectorAll('[data-modal-portal-root]'),
+    ) as HTMLElement[];
+    expect(overlays).toHaveLength(2);
+    const top = overlays.find((el) => el.getAttribute('data-stack-position') === 'top')!;
+    const hidden = overlays.find((el) => el.getAttribute('data-stack-position') === 'hidden')!;
+    expect(top.getAttribute('data-overlay-paint')).toBe('yes');
+    expect(hidden.getAttribute('data-overlay-paint')).toBe('no');
+  });
+
+  it('stackMode="overlay" (default): outer is underneath, inner is top transparent (paint=no)', () => {
+    render(
+      <>
+        <Modal open onOpenChange={() => {}} aria-label="Outer">
+          <Modal.Body>outer</Modal.Body>
+        </Modal>
+        <Modal open onOpenChange={() => {}} aria-label="Inner">
+          <Modal.Body>inner</Modal.Body>
+        </Modal>
+      </>,
+    );
+    const overlays = Array.from(
+      document.querySelectorAll('[data-modal-portal-root]'),
+    ) as HTMLElement[];
+    expect(overlays).toHaveLength(2);
+    const positions = overlays.map((el) => el.getAttribute('data-stack-position')).sort();
+    expect(positions).toEqual(['top', 'underneath']);
+    // Bottom (depth 0) paints; top is transparent (paint=no).
+    const top = overlays.find((el) => el.getAttribute('data-stack-position') === 'top')!;
+    const underneath = overlays.find(
+      (el) => el.getAttribute('data-stack-position') === 'underneath',
+    )!;
+    expect(top.getAttribute('data-overlay-paint')).toBe('no');
+    expect(underneath.getAttribute('data-overlay-paint')).toBe('yes');
   });
 
   it('stacked modals: inner modal portal is NOT inert (delete-confirmation regression)', () => {

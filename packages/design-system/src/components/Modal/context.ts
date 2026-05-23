@@ -1,4 +1,7 @@
 import { createContext, useContext, type RefObject } from 'react';
+import { type ModalStackMode } from './useModalStack';
+
+export type { ModalStackMode };
 
 export type ModalSize = 'sm' | 'md' | 'lg';
 export type ModalOverlayVariant = 'solid' | 'blur';
@@ -31,6 +34,10 @@ export interface ModalContextValue {
   depth: number;
   /** Whether this modal is currently the topmost open modal. Drives Escape/focus-trap activity. */
   isTop: boolean;
+  /** This modal's own stackMode prop. */
+  stackMode: ModalStackMode;
+  /** Mode of the current top modal (null if stack is empty). */
+  topMode: ModalStackMode | null;
 }
 
 export const ModalContext = createContext<ModalContextValue | null>(null);

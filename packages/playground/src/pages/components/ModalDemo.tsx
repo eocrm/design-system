@@ -10,7 +10,7 @@ export function ModalDemo() {
     <DemoLayout
       name="Modal"
       componentName="Modal"
-      description="Focus-locked, scroll-locked dialog with a compound API (Header / Body / Footer / Close). Three size presets, solid + blur overlay variants, fullscreen on mobile, display-toggle stacked-modal support."
+      description="Focus-locked, scroll-locked dialog with a compound API (Header / Body / Footer / Close). Three size presets, solid + blur overlay variants, fullscreen on mobile. Stacked-modal support: overlay mode (default) keeps the parent visible; replace mode hides it."
       tsxSource={tsxSource}
       scssSource={scssSource}
       tsxFilename="ModalRoot.tsx"
@@ -242,15 +242,15 @@ function StackedExample() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   return (
     <Example
-      title="Stacked modals (display-toggle model)"
-      description="Opening a modal from inside another stacks. Only the topmost is visible — the outer is hidden via `display: none` while the inner is open (React state preserved), then reappears instantly when the inner closes. Escape closes only the topmost; body scroll stays locked across the whole stack."
-      code={`<Modal open={editOpen} ...>
+      title="Stacked modals (overlay mode — default)"
+      description='Opening a modal from inside another stacks visually. With the default `stackMode="overlay"`, the parent stays visible underneath and the inner overlay is transparent — one effective dim layer for the whole stack, parent context stays in view. Use `stackMode="replace"` to hide the parent via `display: none` (React state preserved) — best for forced steps where parent context is irrelevant. Escape closes only the topmost; body scroll stays locked across the whole stack.'
+      code={`<Modal open={editOpen} stackMode="overlay" ...>
   <Modal.Footer align="space-between">
     <Button variant="danger" onClick={() => setConfirmOpen(true)}>Delete</Button>
     ...
   </Modal.Footer>
 </Modal>
-<Modal open={confirmOpen} ...>
+<Modal open={confirmOpen} stackMode="overlay" ...>
   <Modal.Header>Delete contact?</Modal.Header>
   <Modal.Footer>
     <Modal.Close><Button variant="secondary">Cancel</Button></Modal.Close>

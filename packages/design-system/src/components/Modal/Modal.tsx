@@ -16,7 +16,7 @@ export const Modal = Object.assign(ModalRoot, {
 });
 
 export type { ModalProps } from './ModalRoot';
-export type { ModalSize, ModalOverlayVariant } from './context';
+export type { ModalSize, ModalOverlayVariant, ModalStackMode } from './context';
 export type { ModalHeaderProps } from './Header';
 export type { ModalBodyProps } from './Body';
 export type { ModalFooterProps } from './Footer';

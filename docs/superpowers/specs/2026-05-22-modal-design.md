@@ -326,13 +326,19 @@ Overlay and content are sibling stacking layers within the portal. The content i
 
 `useModalStack` is a module-level singleton (a `Set<string> + ordered array`). Each Modal calls `register(id)` and gets back its depth.
 
-**Display model — only the topmost modal is visible.** When two modals are open, the outer one is hidden via `display: none` while the inner is on top. React state of the hidden modal is preserved (controlled inputs keep their values, refs stay populated). When the inner closes, the outer's `isTop` flips back to `true` and it re-appears instantly. The user sees one overlay at a time, never stacked dimming layers.
+**Display model — controlled by the new `stackMode` prop (`'overlay'` default, `'replace'` opt-in).** When two modals are open, the behavior depends on the top modal's `stackMode`:
 
-Implementation:
+- **`stackMode="overlay"` (default):** the parent modal stays visible underneath. The inner modal's overlay paints transparent (no dim, no blur) so the parent's dim shows through. Only the bottom modal (depth 0) paints the actual overlay background. The user sees one consistent dim layer with the parent context visible behind the active modal.
+- **`stackMode="replace"`:** the prior default. The outer modal hides via `display: none` (React state preserved); the inner modal paints its own overlay normally. Re-show on pop is instant.
 
-- `<Overlay>` reads `ctx.isTop` and writes `data-stack-position={isTop ? 'top' : 'hidden'}` on the portal root.
-- SCSS: `.overlay[data-stack-position='hidden'] { display: none; }` hides both the overlay and its `<Content>` child (the content is rendered inside the overlay element).
-- Z-index stays simple because at most one overlay is `display: block` at a time. We still emit `--modal-depth` for any future decoration that wants to read it, but the `calc()` collapses to a no-op for a single visible layer.
+Two data-attributes on each portal root drive the SCSS:
+
+- `data-stack-position`: `'top'` | `'underneath'` (overlay mode, lower modal) | `'hidden'` (replace mode, lower modal)
+- `data-overlay-paint`: `'yes'` | `'no'` — only the ground-level modal paints (`depth === 0` in overlay mode; the top modal in replace mode)
+
+`useModalStack` was extended to track per-modal `mode` and expose `topMode()`. `ModalRoot` reads `topMode` from the hook and threads it through context. `Overlay` computes both attributes from `ctx.isTop`, `ctx.topMode`, and `ctx.depth`.
+
+Z-index stays simple — the `--modal-depth` custom prop is still emitted for any future per-depth decoration, but with the stacking model the overlay paint logic is attribute-driven rather than z-index-driven.
 
 Re-show after popping is **instant** (no fade-in). `display: none → display: flex` is not transitionable; making it animatable would require `visibility + opacity` instead, which is fine but adds machinery we don't need yet.
 

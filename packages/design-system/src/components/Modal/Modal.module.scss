@@ -30,7 +30,7 @@
 }
 
 // Stacked-modal display model: lower overlays are hidden via display:none
-// while a deeper modal is open. React state stays intact; pop is instant.
+// while a deeper modal is open in replace mode. React state stays intact.
 .overlay[data-stack-position='hidden'] {
   display: none;
 }
@@ -43,6 +43,17 @@
   backdrop-filter: blur(4px);
   // stylelint-disable-next-line property-no-vendor-prefix, scale-unlimited/declaration-strict-value -- Safari < 18 requires the prefix
   -webkit-backdrop-filter: blur(4px);
+}
+
+// In overlay-stack mode, only the bottom of the stack paints the dim/blur.
+// Upper modals' overlays are transparent so the parent's dim shows through.
+// This rule intentionally appears AFTER the blur variant so source order
+// makes it win on background and backdrop-filter.
+.overlay[data-overlay-paint='no'] {
+  background: transparent;
+  backdrop-filter: none;
+  // stylelint-disable-next-line property-no-vendor-prefix -- Safari < 18 mirror
+  -webkit-backdrop-filter: none;
 }
 // stylelint-enable property-disallowed-list
 
