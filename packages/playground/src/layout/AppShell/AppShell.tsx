@@ -103,9 +103,7 @@ const componentGroups = [
   },
   {
     heading: 'Feedback',
-    items: [
-      { to: '/components/toast', label: 'Toast', icon: Bell, end: false },
-    ],
+    items: [{ to: '/components/toast', label: 'Toast', icon: Bell, end: false }],
   },
   {
     heading: 'Navigation',

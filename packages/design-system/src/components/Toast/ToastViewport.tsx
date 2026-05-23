@@ -71,7 +71,7 @@ export function ToastViewport({
   useEffect(() => {
     if (!isFirstViewport && process.env.NODE_ENV !== 'production') {
       console.error(
-        '[ToastViewport] Multiple <ToastViewport> instances detected. Only the first one renders. Mount exactly one at your app root.'
+        '[ToastViewport] Multiple <ToastViewport> instances detected. Only the first one renders. Mount exactly one at your app root.',
       );
     }
     return () => {
@@ -83,11 +83,7 @@ export function ToastViewport({
     _setViewportConfig({ position, duration });
   }, [position, duration]);
 
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   const [hovered, setHovered] = useState<Set<ToastPosition>>(() => new Set());
   // useRef instead of state so we don't trigger an extra render
@@ -114,7 +110,7 @@ export function ToastViewport({
             className={clsx(
               styles.stack,
               POSITION_CLASS[pos],
-              gap === 'sm' ? styles.gapSm : styles.gapMd
+              gap === 'sm' ? styles.gapSm : styles.gapMd,
             )}
             aria-label="Notifications"
             data-position={pos}
@@ -137,11 +133,7 @@ export function ToastViewport({
             }}
           >
             {list.map((entry, idx) => (
-              <Toast
-                key={entry.id}
-                entry={entry}
-                isPeek={!isExpanded && idx >= maxVisible}
-              />
+              <Toast key={entry.id} entry={entry} isPeek={!isExpanded && idx >= maxVisible} />
             ))}
           </ol>
         );
@@ -153,7 +145,7 @@ export function ToastViewport({
 }
 
 function groupByPosition(
-  toasts: readonly ToastEntry[]
+  toasts: readonly ToastEntry[],
 ): Partial<Record<ToastPosition, ToastEntry[]>> {
   const out: Partial<Record<ToastPosition, ToastEntry[]>> = {};
   for (const t of toasts) {

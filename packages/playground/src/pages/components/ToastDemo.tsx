@@ -117,18 +117,15 @@ setTimeout(() => {
             toast.promise(
               new Promise((resolve, reject) =>
                 setTimeout(
-                  () =>
-                    Math.random() > 0.5
-                      ? resolve('done')
-                      : reject(new Error('500')),
-                  1500
-                )
+                  () => (Math.random() > 0.5 ? resolve('done') : reject(new Error('500'))),
+                  1500,
+                ),
               ),
               {
                 loading: 'Working…',
                 success: 'Worked',
                 error: (e) => `Failed: ${(e as Error).message}`,
-              }
+              },
             )
           }
         >
@@ -141,11 +138,7 @@ setTimeout(() => {
         description="duration: 'persistent' disables auto-dismiss. The close (×) button is force-enabled even if you pass dismissible: false."
         code={`toast.error('Connection lost', { duration: 'persistent' });`}
       >
-        <Button
-          onClick={() =>
-            toast.error('Connection lost', { duration: 'persistent' })
-          }
-        >
+        <Button onClick={() => toast.error('Connection lost', { duration: 'persistent' })}>
           Fire persistent error
         </Button>
       </Example>

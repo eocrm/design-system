@@ -18,7 +18,7 @@ describe('useToastTimer', () => {
         paused: false,
         onExpire,
         getVisible: () => true,
-      })
+      }),
     );
     expect(onExpire).not.toHaveBeenCalled();
     act(() => {
@@ -36,7 +36,7 @@ describe('useToastTimer', () => {
         paused: false,
         onExpire,
         getVisible: () => true,
-      })
+      }),
     );
     act(() => {
       vi.advanceTimersByTime(100_000);
@@ -55,7 +55,7 @@ describe('useToastTimer', () => {
           onExpire,
           getVisible: () => true,
         }),
-      { initialProps: { paused: false } }
+      { initialProps: { paused: false } },
     );
 
     act(() => vi.advanceTimersByTime(400));
@@ -84,7 +84,7 @@ describe('useToastTimer', () => {
           onExpire,
           getVisible: () => true,
         }),
-      { initialProps: { paused: true } }
+      { initialProps: { paused: true } },
     );
     act(() => vi.advanceTimersByTime(10_000));
     expect(onExpire).not.toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe('useToastTimer', () => {
         paused: false,
         onExpire,
         getVisible: () => visible,
-      })
+      }),
     );
     act(() => vi.advanceTimersByTime(10_000));
     expect(onExpire).not.toHaveBeenCalled();
@@ -126,7 +126,7 @@ describe('useToastTimer', () => {
         paused: false,
         onExpire,
         getVisible: () => true,
-      })
+      }),
     );
     unmount();
     act(() => vi.advanceTimersByTime(10_000));
@@ -144,7 +144,7 @@ describe('useToastTimer', () => {
           onExpire,
           getVisible: () => true,
         }),
-      { initialProps: { duration: 1000 } }
+      { initialProps: { duration: 1000 } },
     );
     act(() => vi.advanceTimersByTime(500));
     rerender({ duration: 2000 });

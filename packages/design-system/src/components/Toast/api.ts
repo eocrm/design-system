@@ -1,11 +1,5 @@
 import type { ReactNode } from 'react';
-import {
-  store,
-  generateId,
-  type ToastTone,
-  type ToastPosition,
-  type ToastInput,
-} from './store';
+import { store, generateId, type ToastTone, type ToastPosition, type ToastInput } from './store';
 
 export interface ToastOptions {
   /** Optional second-line content. ReactNode so consumers can embed links/icons. */
@@ -49,14 +43,9 @@ export function _setViewportConfig(cfg: ViewportConfig): void {
   viewportConfig = cfg;
 }
 
-function buildInput(
-  tone: ToastTone,
-  message: ReactNode,
-  options: ToastOptions = {}
-): ToastInput {
+function buildInput(tone: ToastTone, message: ReactNode, options: ToastOptions = {}): ToastInput {
   const isLoading = tone === 'loading';
-  const duration =
-    options.duration ?? (isLoading ? 'persistent' : viewportConfig.duration);
+  const duration = options.duration ?? (isLoading ? 'persistent' : viewportConfig.duration);
   const isPersistent = duration === 'persistent';
   return {
     id: options.id ?? generateId(),
@@ -72,11 +61,7 @@ function buildInput(
   };
 }
 
-function fire(
-  tone: ToastTone,
-  message: ReactNode,
-  options?: ToastOptions
-): string {
+function fire(tone: ToastTone, message: ReactNode, options?: ToastOptions): string {
   return store.add(buildInput(tone, message, options));
 }
 
@@ -176,8 +161,7 @@ export const toast = Object.assign(
           return value;
         },
         (err) => {
-          const errorMsg =
-            typeof msgs.error === 'function' ? msgs.error(err) : msgs.error;
+          const errorMsg = typeof msgs.error === 'function' ? msgs.error(err) : msgs.error;
           store.update(id, {
             tone: 'error',
             message: errorMsg,
@@ -185,8 +169,8 @@ export const toast = Object.assign(
             status: 'visible',
           });
           throw err;
-        }
+        },
       );
     },
-  }
+  },
 );

@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Info,
-  Loader2,
-  X,
-  XCircle,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, Loader2, X, XCircle } from 'lucide-react';
 import clsx from 'clsx';
 import { store, type ToastEntry } from './store';
 import { useToastTimer } from './useToastTimer';
@@ -53,13 +46,13 @@ export function Toast({ entry, isPeek }: ToastProps) {
   const renderedIcon =
     entry.icon === null
       ? null
-      : entry.icon ?? (
+      : (entry.icon ?? (
           <IconComponent
             size={16}
             aria-hidden="true"
             className={entry.tone === 'loading' ? styles.spin : undefined}
           />
-        );
+        ));
 
   const toneClass = {
     info: styles.toneInfo,
@@ -93,9 +86,7 @@ export function Toast({ entry, isPeek }: ToastProps) {
 
       <div className={styles.body}>
         <div className={styles.message}>{entry.message}</div>
-        {entry.description && (
-          <div className={styles.description}>{entry.description}</div>
-        )}
+        {entry.description && <div className={styles.description}>{entry.description}</div>}
       </div>
 
       <div className={styles.tail}>
@@ -125,4 +116,3 @@ export function Toast({ entry, isPeek }: ToastProps) {
     </li>
   );
 }
-

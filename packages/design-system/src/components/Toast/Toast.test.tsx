@@ -273,15 +273,13 @@ describe('<ToastViewport>', () => {
       <>
         <ToastViewport />
         <ToastViewport />
-      </>
+      </>,
     );
     act(() => {
       toast.success('once');
     });
     expect(screen.getAllByText('once')).toHaveLength(1);
-    expect(errSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Multiple <ToastViewport>')
-    );
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('Multiple <ToastViewport>'));
     errSpy.mockRestore();
   });
 });

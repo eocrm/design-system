@@ -32,6 +32,7 @@ Provide a single global notification primitive that any consumer code can fire f
 ### Dependencies
 
 No new packages. Reuses:
+
 - React + ReactDOM (peer)
 - `lucide-react` (already a peer dep) for default tone icons: `Info`, `CheckCircle2`, `AlertTriangle`, `XCircle`, `Loader2`
 - Existing tokens: `--z-toast`, `--shadow-md`, `--shadow-lg`, `--radius-md`, `--space-*`, `--color-fg-*` (info/success/warning/danger/muted), `--color-bg`, `--color-fg`, `--font-size-md`, `--font-size-sm`, `--font-weight-medium`, `--transition-base`
@@ -123,12 +124,17 @@ toast.dismiss(): void             // dismiss ALL toasts
 ```
 
 **Types:**
+
 ```ts
 type ToastTone = 'info' | 'success' | 'warning' | 'error' | 'loading';
 
 type ToastPosition =
-  | 'top-left'    | 'top-center'    | 'top-right'
-  | 'bottom-left' | 'bottom-center' | 'bottom-right';
+  | 'top-left'
+  | 'top-center'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'bottom-right';
 
 interface ToastOptions {
   /** Optional second-line content. Accepts `ReactNode` so you can embed links/icons. */
@@ -185,7 +191,7 @@ interface ToastEntry {
   dismissible: boolean;
   icon?: ReactNode | null;
   createdAt: number;
-  status: 'visible' | 'exiting';   // 'entering' is a CSS-only state on the DOM
+  status: 'visible' | 'exiting'; // 'entering' is a CSS-only state on the DOM
 }
 
 interface StoreState {
@@ -254,6 +260,7 @@ export function generateId(): string {
 ```
 
 **Key choices:**
+
 - `add` with an existing id delegates to `update` — this is what makes the `toast.success('done', { id: existingId })` pattern work.
 - `dismiss` does a two-step (mark exiting → remove after 250ms) so the viewport can play the exit animation before the DOM unmounts.
 - IDs are timestamp-based; no nanoid dependency.
@@ -267,7 +274,7 @@ function buildEntry(
   tone: ToastTone,
   message: ReactNode,
   options: ToastOptions = {},
-  defaults: { duration: number; position: ToastPosition }
+  defaults: { duration: number; position: ToastPosition },
 ): Omit<ToastEntry, 'createdAt' | 'status'> {
   const isLoading = tone === 'loading';
   const duration = options.duration ?? (isLoading ? 'persistent' : defaults.duration);
@@ -291,9 +298,14 @@ function buildEntry(
 // that ToastViewport writes to on mount/update. This is how we let viewport
 // props (position, duration) influence the API without a React context.
 
-interface ViewportConfig { position: ToastPosition; duration: number; }
+interface ViewportConfig {
+  position: ToastPosition;
+  duration: number;
+}
 let viewportConfig: ViewportConfig = { position: 'bottom-right', duration: 4000 };
-export function _setViewportConfig(cfg: ViewportConfig) { viewportConfig = cfg; }
+export function _setViewportConfig(cfg: ViewportConfig) {
+  viewportConfig = cfg;
+}
 
 function fire(tone: ToastTone, message: ReactNode, options?: ToastOptions): string {
   return store.add(buildEntry(tone, message, options, viewportConfig));
@@ -309,27 +321,40 @@ export const toast = Object.assign(
     loading: (m: string, o?: ToastOptions) => fire('loading', m, o),
     update: (id: string, partial: Partial<ToastEntry>) => store.update(id, partial),
     dismiss: (id?: string) => store.dismiss(id),
-    promise: <T>(p: Promise<T>, msgs: {
-      loading: string;
-      success: string | ((v: T) => string);
-      error: string | ((e: unknown) => string);
-      options?: Omit<ToastOptions, 'duration'>;
-    }): Promise<T> => {
+    promise: <T>(
+      p: Promise<T>,
+      msgs: {
+        loading: string;
+        success: string | ((v: T) => string);
+        error: string | ((e: unknown) => string);
+        options?: Omit<ToastOptions, 'duration'>;
+      },
+    ): Promise<T> => {
       const id = fire('loading', msgs.loading, msgs.options);
       return p.then(
         (v) => {
           const successMsg = typeof msgs.success === 'function' ? msgs.success(v) : msgs.success;
-          store.update(id, { tone: 'success', message: successMsg, duration: viewportConfig.duration, status: 'visible' });
+          store.update(id, {
+            tone: 'success',
+            message: successMsg,
+            duration: viewportConfig.duration,
+            status: 'visible',
+          });
           return v;
         },
         (err) => {
           const errorMsg = typeof msgs.error === 'function' ? msgs.error(err) : msgs.error;
-          store.update(id, { tone: 'error', message: errorMsg, duration: viewportConfig.duration, status: 'visible' });
+          store.update(id, {
+            tone: 'error',
+            message: errorMsg,
+            duration: viewportConfig.duration,
+            status: 'visible',
+          });
           throw err;
-        }
+        },
       );
     },
-  }
+  },
 );
 ```
 
@@ -367,6 +392,7 @@ function useToastTimer(args: {
 Internal one-toast component. Receives an entry + viewport-level config (max-visible position, expand state).
 
 Owns:
+
 - The card markup
 - `role="alert"` for `tone: 'error'`, `role="status"` for everything else
 - `aria-live="assertive"` paired with role="alert" (technically redundant since `role="alert"` implies assertive, but explicit is fine and matches Radix); `aria-live="polite"` for status
@@ -381,6 +407,7 @@ Owns:
 Exported. The single React entry point.
 
 Owns:
+
 - Subscribing to `store` via `useSyncExternalStore`
 - Pushing its `position`/`duration` defaults to `_setViewportConfig` on mount + on prop change
 - Dev-warning if a second viewport mounts (uses a module-level counter)
@@ -402,40 +429,46 @@ function ToastViewport({
   useDevWarnSecondViewport();
 
   // Push config to API
-  useEffect(() => { _setViewportConfig({ position, duration }); }, [position, duration]);
+  useEffect(() => {
+    _setViewportConfig({ position, duration });
+  }, [position, duration]);
 
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
-  const buckets = groupByPosition(state.toasts);   // { 'top-left': [...], ... }
+  const buckets = groupByPosition(state.toasts); // { 'top-left': [...], ... }
 
   return createPortal(
     <>
-      {POSITIONS.map((pos) => buckets[pos]?.length ? (
-        <ol
-          key={pos}
-          className={clsx(styles.stack, styles[`pos-${pos}`], styles[`gap-${gap}`])}
-          aria-label="Notifications"
-          data-position={pos}
-          data-expanded={expand || hovered.has(pos) ? 'true' : 'false'}
-          onMouseEnter={() => setHovered(prev => new Set(prev).add(pos))}
-          onMouseLeave={() => setHovered(prev => { const next = new Set(prev); next.delete(pos); return next; })}
-        >
-          {buckets[pos].map((t, idx) => (
-            <Toast
-              key={t.id}
-              entry={t}
-              indexFromEdge={idx}
-              maxVisible={maxVisible}
-            />
-          ))}
-        </ol>
-      ) : null)}
+      {POSITIONS.map((pos) =>
+        buckets[pos]?.length ? (
+          <ol
+            key={pos}
+            className={clsx(styles.stack, styles[`pos-${pos}`], styles[`gap-${gap}`])}
+            aria-label="Notifications"
+            data-position={pos}
+            data-expanded={expand || hovered.has(pos) ? 'true' : 'false'}
+            onMouseEnter={() => setHovered((prev) => new Set(prev).add(pos))}
+            onMouseLeave={() =>
+              setHovered((prev) => {
+                const next = new Set(prev);
+                next.delete(pos);
+                return next;
+              })
+            }
+          >
+            {buckets[pos].map((t, idx) => (
+              <Toast key={t.id} entry={t} indexFromEdge={idx} maxVisible={maxVisible} />
+            ))}
+          </ol>
+        ) : null,
+      )}
     </>,
-    document.body
+    document.body,
   );
 }
 ```
 
 **Stack direction is encoded in SCSS** via `flex-direction`:
+
 - Top positions: `flex-direction: column` — first child is closest to top edge, last child further from edge
 - Bottom positions: `flex-direction: column-reverse` — last child is closest to bottom edge
 
@@ -455,28 +488,60 @@ Combined with the `createdAt`-sorted store array, this puts the newest toast nea
   list-style: none;
   margin: 0;
   padding: 0;
-  pointer-events: none;       // stack itself doesn't intercept clicks
+  pointer-events: none; // stack itself doesn't intercept clicks
   max-width: calc(100vw - 2 * var(--space-3));
   width: 360px;
 }
 
-.stack > li { pointer-events: auto; }   // individual toasts do
+.stack > li {
+  pointer-events: auto;
+} // individual toasts do
 
 // 6 position variants
-.pos-top-left    { top: var(--space-3); left: var(--space-3); }
-.pos-top-center  { top: var(--space-3); left: 50%; transform: translateX(-50%); }
-.pos-top-right   { top: var(--space-3); right: var(--space-3); }
-.pos-bottom-left { bottom: var(--space-3); left: var(--space-3); flex-direction: column-reverse; }
-.pos-bottom-center { bottom: var(--space-3); left: 50%; transform: translateX(-50%); flex-direction: column-reverse; }
-.pos-bottom-right { bottom: var(--space-3); right: var(--space-3); flex-direction: column-reverse; }
+.pos-top-left {
+  top: var(--space-3);
+  left: var(--space-3);
+}
+.pos-top-center {
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.pos-top-right {
+  top: var(--space-3);
+  right: var(--space-3);
+}
+.pos-bottom-left {
+  bottom: var(--space-3);
+  left: var(--space-3);
+  flex-direction: column-reverse;
+}
+.pos-bottom-center {
+  bottom: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: column-reverse;
+}
+.pos-bottom-right {
+  bottom: var(--space-3);
+  right: var(--space-3);
+  flex-direction: column-reverse;
+}
 
-.gap-sm > li + li { margin-top: var(--space-2); }
-.gap-md > li + li { margin-top: var(--space-3); }
+.gap-sm > li + li {
+  margin-top: var(--space-2);
+}
+.gap-md > li + li {
+  margin-top: var(--space-3);
+}
 
 // Bottom-anchored stacks: gap goes the other way
 .pos-bottom-left.gap-sm > li + li,
 .pos-bottom-center.gap-sm > li + li,
-.pos-bottom-right.gap-sm > li + li { margin-top: 0; margin-bottom: var(--space-2); }
+.pos-bottom-right.gap-sm > li + li {
+  margin-top: 0;
+  margin-bottom: var(--space-2);
+}
 // (and md variant)
 
 // ─── Toast card ─────────────────────────────────────────────────────────
@@ -489,20 +554,40 @@ Combined with the `createdAt`-sorted store array, this puts the newest toast nea
   background: var(--color-bg);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  border-left: 3px solid var(--color-fg-muted);   // overridden per tone
+  border-left: 3px solid var(--color-fg-muted); // overridden per tone
 }
 
-.tone-info     { border-left-color: var(--color-info); }
-.tone-success  { border-left-color: var(--color-success); }
-.tone-warning  { border-left-color: var(--color-warning); }
-.tone-error    { border-left-color: var(--color-danger); }
-.tone-loading  { border-left-color: var(--color-fg-muted); }
+.tone-info {
+  border-left-color: var(--color-info);
+}
+.tone-success {
+  border-left-color: var(--color-success);
+}
+.tone-warning {
+  border-left-color: var(--color-warning);
+}
+.tone-error {
+  border-left-color: var(--color-danger);
+}
+.tone-loading {
+  border-left-color: var(--color-fg-muted);
+}
 
-.icon { color: var(--color-fg-muted); }
-.tone-info .icon    { color: var(--color-info); }
-.tone-success .icon { color: var(--color-success); }
-.tone-warning .icon { color: var(--color-warning); }
-.tone-error .icon   { color: var(--color-danger); }
+.icon {
+  color: var(--color-fg-muted);
+}
+.tone-info .icon {
+  color: var(--color-info);
+}
+.tone-success .icon {
+  color: var(--color-success);
+}
+.tone-warning .icon {
+  color: var(--color-warning);
+}
+.tone-error .icon {
+  color: var(--color-danger);
+}
 // loading icon spins via animation
 
 .message {
@@ -533,7 +618,10 @@ Combined with the `createdAt`-sorted store array, this puts the newest toast nea
   color: var(--color-fg);
   cursor: pointer;
 }
-.action:focus-visible { @include focus-ring; outline: none; }
+.action:focus-visible {
+  @include focus-ring;
+  outline: none;
+}
 
 .close {
   background: transparent;
@@ -544,19 +632,35 @@ Combined with the `createdAt`-sorted store array, this puts the newest toast nea
   display: grid;
   place-items: center;
 }
-.close:hover { color: var(--color-fg); }
-.close:focus-visible { @include focus-ring; outline: none; }
+.close:hover {
+  color: var(--color-fg);
+}
+.close:focus-visible {
+  @include focus-ring;
+  outline: none;
+}
 
 // ─── Animations ─────────────────────────────────────────────────────────
-.toast[data-status='visible']  { animation: enter 300ms cubic-bezier(0.22, 1, 0.36, 1); }
-.toast[data-status='exiting']  { animation: exit 250ms ease-in forwards; }
+.toast[data-status='visible'] {
+  animation: enter 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.toast[data-status='exiting'] {
+  animation: exit 250ms ease-in forwards;
+}
 
 // Slide direction varies by position — defined as 6 keyframes
-@keyframes enter-from-right { from { transform: translateX(30px); opacity: 0; } }
+@keyframes enter-from-right {
+  from {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+}
 // ...etc per direction
 
 // Reflow animation when stack shifts after a dismissal
-.toast { transition: transform 200ms ease-out; }
+.toast {
+  transition: transform 200ms ease-out;
+}
 
 // Peek-collapsed: toasts beyond maxVisible
 .toast[data-peek='true'] {
@@ -581,31 +685,38 @@ Combined with the `createdAt`-sorted store array, this puts the newest toast nea
 }
 
 // Loading spin
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 ```
 
 **Rule 4 check:** Every component-internal `position`, `margin`, `transform` here is either on the viewport (which is layout-by-design — it's a fixed-position container, not a flow component) or on the toast for animation purposes. The toast card itself doesn't claim layout space in any parent grid. Documented as "viewport owns its own positioning" exception.
 
 ## ARIA + behavior reference
 
-| Concern | Behavior |
-|---|---|
-| Live region announcement | Each toast renders with `role="status"` (polite) or `role="alert"` (assertive, error only). SR announces on insertion. |
-| Focus management | Never auto-focus. Toasts reachable via natural Tab order. |
-| Pause-on-hover | Pointer entering the viewport stack pauses ALL timers in that bucket. Leaving resumes. |
-| Pause-on-focus | Focusing any element inside a toast (action / close) pauses that toast's timer. Blurring resumes. |
-| Pause when hidden | `document.visibilityState === 'hidden'` pauses all timers. Becoming visible resumes. |
-| Reduced motion | `prefers-reduced-motion: reduce` disables enter/exit/reflow animations; toasts appear/disappear instantly. |
-| Multiple viewports | First viewport renders; subsequent ones render `null` and log a dev warning. |
-| Mount-before-viewport | Toasts fired before viewport mounts sit in the store, render on mount. |
-| Close button visibility | Shown when `dismissible: true` (default) OR `duration: 'persistent'`. Hidden when consumer passes `dismissible: false` and a finite duration. |
+| Concern                  | Behavior                                                                                                                                      |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live region announcement | Each toast renders with `role="status"` (polite) or `role="alert"` (assertive, error only). SR announces on insertion.                        |
+| Focus management         | Never auto-focus. Toasts reachable via natural Tab order.                                                                                     |
+| Pause-on-hover           | Pointer entering the viewport stack pauses ALL timers in that bucket. Leaving resumes.                                                        |
+| Pause-on-focus           | Focusing any element inside a toast (action / close) pauses that toast's timer. Blurring resumes.                                             |
+| Pause when hidden        | `document.visibilityState === 'hidden'` pauses all timers. Becoming visible resumes.                                                          |
+| Reduced motion           | `prefers-reduced-motion: reduce` disables enter/exit/reflow animations; toasts appear/disappear instantly.                                    |
+| Multiple viewports       | First viewport renders; subsequent ones render `null` and log a dev warning.                                                                  |
+| Mount-before-viewport    | Toasts fired before viewport mounts sit in the store, render on mount.                                                                        |
+| Close button visibility  | Shown when `dismissible: true` (default) OR `duration: 'persistent'`. Hidden when consumer passes `dismissible: false` and a finite duration. |
 
 ## Testing
 
 **Coverage by file:**
 
 `store.test.ts` (~15 cases, no DOM):
+
 - `add()` returns id and appends; auto-generates id if not provided
 - `add()` with existing id is treated as `update`
 - `update(id, partial)` mutates entry; unknown id is no-op
@@ -615,6 +726,7 @@ Combined with the `createdAt`-sorted store array, this puts the newest toast nea
 - IDs are unique across 1000 rapid `add()` calls
 
 `api.test.ts` (~10 cases):
+
 - Each tone shorthand writes the right `tone` field
 - `loading` defaults to `duration: 'persistent'`
 - `update(id, partial)` calls store.update
@@ -624,6 +736,7 @@ Combined with the `createdAt`-sorted store array, this puts the newest toast nea
 - `_setViewportConfig` controls the defaults used by subsequent fires
 
 `Toast.test.tsx` (~20 cases, RTL + userEvent + fake timers):
+
 - Renders nothing when store is empty
 - Adding a toast renders one card with the message
 - All 5 tones render with the right class + icon
@@ -647,6 +760,7 @@ Combined with the `createdAt`-sorted store array, this puts the newest toast nea
 - Two `<ToastViewport>` mounted: only first renders, console.error called
 
 **Vitest fake-timer specifics:**
+
 - `vi.useFakeTimers()` in `beforeEach`, `vi.useRealTimers()` in `afterEach`
 - Use `await act(() => vi.advanceTimersByTime(ms))` to flush both timer + React effects
 - Reset store between tests via a `store._reset()` test helper (export-only, no public API)
@@ -672,7 +786,7 @@ After EmptyState. Section title `### Toast`. One ~30-line block showing:
 
 ```tsx
 // Mount once at app root
-<ToastViewport position="bottom-right" />
+<ToastViewport position="bottom-right" />;
 
 // Fire from anywhere
 toast.success('Saved');
@@ -695,6 +809,7 @@ toast.success('Saved', { id });
 ## Open questions (none)
 
 All clarifications made during brainstorming are baked in above. Locked decisions:
+
 - All 6 positions supported; default `bottom-right`; per-call override available but documented as an escape hatch.
 - 5 tones; `role="alert"` only for `error`; warning stays polite.
 - Action slot + close button + persistent + promise + update — all in scope.
