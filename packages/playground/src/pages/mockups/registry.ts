@@ -33,6 +33,7 @@ export type ComponentName =
   | 'Stack'
   | 'Table'
   | 'Tabs'
+  | 'Textarea'
   | 'Toast'
   | 'Tooltip';
 

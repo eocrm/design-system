@@ -17,6 +17,7 @@ import { PaginationDemo } from './pages/components/PaginationDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
 import { SkeletonDemo } from './pages/components/SkeletonDemo';
 import { TableDemo } from './pages/components/TableDemo';
+import { TextareaDemo } from './pages/components/TextareaDemo';
 import { CardDemo } from './pages/components/CardDemo';
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
 import { StackDemo } from './pages/components/StackDemo';
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="/components/empty-state" element={<EmptyStateDemo />} />
           <Route path="/components/drawer" element={<DrawerDemo />} />
           <Route path="/components/grid" element={<GridDemo />} />
+          <Route path="/components/textarea" element={<TextareaDemo />} />
           <Route path="/components/toast" element={<ToastDemo />} />
         </Routes>
       </AppShell>
