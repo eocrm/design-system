@@ -19,7 +19,10 @@ export type AccordionMode = 'single' | 'multiple';
 /** Heading level wrapping the trigger button. Defaults to 'h3'. */
 export type AccordionHeaderLevel = 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
-interface AccordionBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'defaultValue' | 'onChange'> {
+interface AccordionBaseProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'defaultValue' | 'onChange'
+> {
   children: ReactNode;
 }
 
@@ -105,15 +108,14 @@ export type AccordionProps = AccordionBaseProps & (AccordionSingleProps | Accord
  * - ❌ Manually setting `aria-expanded` on the Trigger via `{...props}`. The component owns the ARIA contract.
  * - ❌ Using `headerLevel="h1"`. There should only be one `<h1>` per page; Accordion lives below it.
  */
-const AccordionRoot = forwardRef<HTMLDivElement, AccordionProps>(function AccordionRoot(
-  props,
-  ref,
-) {
-  if (props.type === 'single') {
-    return <AccordionSingleImpl {...props} ref={ref} />;
-  }
-  return <AccordionMultipleImpl {...props} ref={ref} />;
-});
+const AccordionRoot = forwardRef<HTMLDivElement, AccordionProps>(
+  function AccordionRoot(props, ref) {
+    if (props.type === 'single') {
+      return <AccordionSingleImpl {...props} ref={ref} />;
+    }
+    return <AccordionMultipleImpl {...props} ref={ref} />;
+  },
+);
 
 interface SingleImplProps extends AccordionBaseProps, AccordionSingleProps {}
 
@@ -135,10 +137,7 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
     const isControlled = value !== undefined;
     const currentValue = isControlled ? value : internalValue;
 
-    const isOpen = useCallback(
-      (itemValue: string) => currentValue === itemValue,
-      [currentValue],
-    );
+    const isOpen = useCallback((itemValue: string) => currentValue === itemValue, [currentValue]);
 
     const toggle = useCallback(
       (itemValue: string) => {
@@ -165,12 +164,7 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
         {/* Pattern A — consumer props reach the div, but data-accordion and
             className are set AFTER the spread so the keyboard-scope marker
             and the component class can't be removed by a consumer. */}
-        <div
-          ref={ref}
-          {...rest}
-          data-accordion=""
-          className={clsx(styles.accordion, className)}
-        >
+        <div ref={ref} {...rest} data-accordion="" className={clsx(styles.accordion, className)}>
           {children}
         </div>
       </AccordionContext.Provider>
@@ -215,12 +209,7 @@ const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
         {/* Pattern A — consumer props reach the div, but data-accordion and
             className are set AFTER the spread so the keyboard-scope marker
             and the component class can't be removed by a consumer. */}
-        <div
-          ref={ref}
-          {...rest}
-          data-accordion=""
-          className={clsx(styles.accordion, className)}
-        >
+        <div ref={ref} {...rest} data-accordion="" className={clsx(styles.accordion, className)}>
           {children}
         </div>
       </AccordionContext.Provider>

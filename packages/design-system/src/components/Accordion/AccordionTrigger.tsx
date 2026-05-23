@@ -1,9 +1,4 @@
-import {
-  forwardRef,
-  type ButtonHTMLAttributes,
-  type KeyboardEvent,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type ButtonHTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import {
@@ -14,8 +9,10 @@ import {
 import type { AccordionHeaderLevel } from './Accordion';
 import styles from './Accordion.module.scss';
 
-export interface AccordionTriggerProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+export interface AccordionTriggerProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'children'
+> {
   /**
    * Override the default trigger indicator icon (rotates 180° when open).
    * Pass `null` to suppress the icon entirely. Default: `<ChevronDown />`.
@@ -54,9 +51,7 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
       // IS this root. Without this, ArrowDown from an outer trigger jumps into
       // the inner accordion.
       const triggers = Array.from(
-        root.querySelectorAll<HTMLButtonElement>(
-          'button[aria-expanded]:not(:disabled)',
-        ),
+        root.querySelectorAll<HTMLButtonElement>('button[aria-expanded]:not(:disabled)'),
       ).filter((btn) => btn.closest('[data-accordion]') === root);
       if (triggers.length === 0) return;
 
@@ -64,8 +59,7 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
       let next = current;
 
       if (e.key === 'ArrowDown') next = (current + 1) % triggers.length;
-      else if (e.key === 'ArrowUp')
-        next = (current - 1 + triggers.length) % triggers.length;
+      else if (e.key === 'ArrowUp') next = (current - 1 + triggers.length) % triggers.length;
       else if (e.key === 'Home') next = 0;
       else if (e.key === 'End') next = triggers.length - 1;
 
@@ -75,13 +69,7 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
     const renderedIcon =
       icon === null
         ? null
-        : (icon ?? (
-            <ChevronDown
-              size={16}
-              aria-hidden="true"
-              className={styles.indicator}
-            />
-          ));
+        : (icon ?? <ChevronDown size={16} aria-hidden="true" className={styles.indicator} />);
 
     // headerLevel is a string union of valid HTML heading tag names; cast to
     // ElementType for JSX use.

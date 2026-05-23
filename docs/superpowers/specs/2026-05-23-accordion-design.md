@@ -149,7 +149,10 @@ interface AccordionMultipleProps {
   collapsible?: never; // not applicable in multi-mode
 }
 
-interface AccordionBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'defaultValue' | 'onChange'> {
+interface AccordionBaseProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'defaultValue' | 'onChange'
+> {
   children: ReactNode;
 }
 
@@ -221,6 +224,7 @@ function AccordionRoot(props: AccordionProps) {
 ```
 
 Each impl wraps in `AccordionContext.Provider` with:
+
 - `mode: 'single' | 'multiple'`
 - `isOpen(value: string): boolean`
 - `toggle(value: string): void`
@@ -236,6 +240,7 @@ Actually — registration via context is overkill if we use DOM order. Simpler a
 ### Item-level open detection
 
 Each `<Accordion.Item>` reads from `AccordionContext.isOpen(value)`. The Item provides an `AccordionItemContext`:
+
 - `value: string`
 - `disabled: boolean`
 - `isOpen: boolean`
@@ -307,13 +312,12 @@ Wrapping the content in an `.inner` div with `overflow: hidden` ensures the clos
   hidden={!isOpen && /* let CSS animation finish first */ false}
   className={clsx(styles.content, className)}
 >
-  <div className={styles.inner}>
-    {children}
-  </div>
+  <div className={styles.inner}>{children}</div>
 </div>
 ```
 
 Note on `hidden`: ideally, when fully closed (post-animation), the panel should have `hidden` set so screen readers skip it AND it's removed from the tab order. But applying `hidden` immediately on close would skip the animation. Two options:
+
 1. Use a transitionend listener to set hidden after animation
 2. Skip the hidden attribute — rely on `aria-expanded="false"` on the trigger to convey "this panel is closed"
 
@@ -322,6 +326,7 @@ Going with option 2 (skip `hidden`). The grid-template-rows: 0fr already makes t
 ### Keyboard handling
 
 Per WAI-ARIA APG:
+
 - **Space / Enter** on trigger → toggle (handled by native button)
 - **ArrowDown** → focus next non-disabled trigger (DOM order, wraps to first)
 - **ArrowUp** → focus previous non-disabled trigger (wraps to last)
@@ -339,7 +344,7 @@ const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
   if (!root) return;
 
   const triggers = Array.from(
-    root.querySelectorAll<HTMLButtonElement>('button[aria-expanded]:not(:disabled)')
+    root.querySelectorAll<HTMLButtonElement>('button[aria-expanded]:not(:disabled)'),
   );
   if (triggers.length === 0) return;
 
@@ -492,6 +497,7 @@ Internal-controlled mirror handles the uncontrolled case (same pattern as Textar
 ```
 
 **Rule 4 check**:
+
 - `.accordion` has `display: flex` — internal layout of its own children (Items), not at the component boundary. Allowed.
 - `.header` has `margin: 0` (native heading reset) — inline-disabled with rationale.
 - `.trigger` has `padding` — internal styling, not layout. Allowed.
@@ -502,17 +508,17 @@ The `box-shadow: inset` on the trigger's focus ring is a deliberate choice — t
 
 ## ARIA + behavior reference
 
-| Concern | Behavior |
-|---|---|
-| **Root element** | `<div data-accordion>` — no `role` (the heading+button+region triple carries semantics). |
-| **Item element** | `<div data-state="open"|"closed">` — drives the chevron rotation + content state. |
-| **Heading wrapper** | `<h2>`/`<h3>`/`<h4>` (consumer-configurable). Defaults to `<h3>`. |
-| **Trigger** | `<button type="button" aria-expanded={open} aria-controls={contentId} id={triggerId}>`. |
-| **Content panel** | `<div role="region" aria-labelledby={triggerId} id={contentId} data-state="open"|"closed">`. |
-| **Disabled item** | `disabled` attr on the trigger; keyboard nav skips via `:not(:disabled)` selector. |
-| **Keyboard** | Space/Enter toggle (native); ArrowDown/Up/Home/End for trigger-to-trigger nav. Tab moves out (native). |
-| **Reduced motion** | `prefers-reduced-motion: reduce` disables grid + indicator transitions. |
-| **Focus ring** | Inset box-shadow (the trigger is full-width inside the accordion's border). |
+| Concern             | Behavior                                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| **Root element**    | `<div data-accordion>` — no `role` (the heading+button+region triple carries semantics).               |
+| **Item element**    | `<div data-state="open"                                                                                | "closed">` — drives the chevron rotation + content state. |
+| **Heading wrapper** | `<h2>`/`<h3>`/`<h4>` (consumer-configurable). Defaults to `<h3>`.                                      |
+| **Trigger**         | `<button type="button" aria-expanded={open} aria-controls={contentId} id={triggerId}>`.                |
+| **Content panel**   | `<div role="region" aria-labelledby={triggerId} id={contentId} data-state="open"                       | "closed">`.                                               |
+| **Disabled item**   | `disabled` attr on the trigger; keyboard nav skips via `:not(:disabled)` selector.                     |
+| **Keyboard**        | Space/Enter toggle (native); ArrowDown/Up/Home/End for trigger-to-trigger nav. Tab moves out (native). |
+| **Reduced motion**  | `prefers-reduced-motion: reduce` disables grid + indicator transitions.                                |
+| **Focus ring**      | Inset box-shadow (the trigger is full-width inside the accordion's border).                            |
 
 ## Testing
 
@@ -563,6 +569,7 @@ The `box-shadow: inset` on the trigger's focus ring is a deliberate choice — t
 26. `icon={null}` hides the indicator entirely
 
 **Vitest gotchas**:
+
 - The keyboard test queries triggers via `button[aria-expanded]:not(:disabled)`. Verify the selector matches what the component renders.
 - `userEvent.tab()` won't trigger the ArrowDown handler — use `await user.keyboard('{ArrowDown}')` while a trigger is focused.
 
@@ -581,7 +588,7 @@ The `box-shadow: inset` on the trigger's focus ring is a deliberate choice — t
 
 After `### <Tabs>` (around line 455), before `### <Breadcrumb>` (around line 479). Navigation cluster.
 
-```markdown
+````markdown
 ### `<Accordion>` — vertically-stacked collapsible panels
 
 Compound component for FAQ-style content, settings sections, and any case where you have a list of headings with optional drill-down detail. Two modes: `single` (one open at a time) or `multiple` (any combination).
@@ -613,6 +620,7 @@ import { Accordion } from '@eocrm/design-system';
 // Controlled
 <Accordion type="single" value={open} onValueChange={setOpen}>...</Accordion>
 ```
+````
 
 - **`type="single"`** + `collapsible={true}` — one item open at a time, click to close.
 - **`type="multiple"`** — any combination.
@@ -631,6 +639,7 @@ import { Accordion } from '@eocrm/design-system';
 - ❌ Nesting `<Accordion.Trigger>` inside a heading the consumer also renders manually. Trigger ALREADY wraps itself in a heading.
 - ❌ Setting `aria-expanded` manually on the Trigger via `{...props}`. The component owns the ARIA contract.
 - ❌ Using `headerLevel="h1"`. There should only be one `<h1>` per page; Accordion lives below it.
+
 ```
 
 ## Hard Rule 8
@@ -640,3 +649,4 @@ The pre-push review-fix cycle on library changes is mandatory. Gates green, fres
 ## Open questions
 
 None. All clarifications baked in.
+```

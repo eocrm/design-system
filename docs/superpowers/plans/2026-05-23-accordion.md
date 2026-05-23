@@ -257,7 +257,10 @@ export type AccordionMode = 'single' | 'multiple';
 /** Heading level wrapping the trigger button. Defaults to 'h3'. */
 export type AccordionHeaderLevel = 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
-interface AccordionBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'defaultValue' | 'onChange'> {
+interface AccordionBaseProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'defaultValue' | 'onChange'
+> {
   children: ReactNode;
 }
 
@@ -343,15 +346,14 @@ export type AccordionProps = AccordionBaseProps & (AccordionSingleProps | Accord
  * - ❌ Manually setting `aria-expanded` on the Trigger via `{...props}`. The component owns the ARIA contract.
  * - ❌ Using `headerLevel="h1"`. There should only be one `<h1>` per page; Accordion lives below it.
  */
-const AccordionRoot = forwardRef<HTMLDivElement, AccordionProps>(function AccordionRoot(
-  props,
-  ref,
-) {
-  if (props.type === 'single') {
-    return <AccordionSingleImpl {...props} ref={ref} />;
-  }
-  return <AccordionMultipleImpl {...props} ref={ref} />;
-});
+const AccordionRoot = forwardRef<HTMLDivElement, AccordionProps>(
+  function AccordionRoot(props, ref) {
+    if (props.type === 'single') {
+      return <AccordionSingleImpl {...props} ref={ref} />;
+    }
+    return <AccordionMultipleImpl {...props} ref={ref} />;
+  },
+);
 
 interface SingleImplProps extends AccordionBaseProps, AccordionSingleProps {}
 
@@ -373,10 +375,7 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
     const isControlled = value !== undefined;
     const currentValue = isControlled ? value : internalValue;
 
-    const isOpen = useCallback(
-      (itemValue: string) => currentValue === itemValue,
-      [currentValue],
-    );
+    const isOpen = useCallback((itemValue: string) => currentValue === itemValue, [currentValue]);
 
     const toggle = useCallback(
       (itemValue: string) => {
@@ -400,12 +399,7 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
 
     return (
       <AccordionContext.Provider value={ctx}>
-        <div
-          ref={ref}
-          {...rest}
-          data-accordion=""
-          className={clsx(styles.accordion, className)}
-        >
+        <div ref={ref} {...rest} data-accordion="" className={clsx(styles.accordion, className)}>
           {children}
         </div>
       </AccordionContext.Provider>
@@ -447,12 +441,7 @@ const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
 
     return (
       <AccordionContext.Provider value={ctx}>
-        <div
-          ref={ref}
-          {...rest}
-          data-accordion=""
-          className={clsx(styles.accordion, className)}
-        >
+        <div ref={ref} {...rest} data-accordion="" className={clsx(styles.accordion, className)}>
           {children}
         </div>
       </AccordionContext.Provider>
@@ -500,44 +489,42 @@ export interface AccordionItemProps extends Omit<HTMLAttributes<HTMLDivElement>,
  * Item wrapper. Provides `AccordionItemContext` so Trigger and Content can
  * read this item's value, disabled state, open state, and stable ids.
  */
-export const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
-  function AccordionItem(
-    { value, disabled = false, headerLevel = 'h3', children, className, ...props },
-    ref,
-  ) {
-    const { isOpen } = useAccordionContext('Item');
-    const open = isOpen(value);
-    const reactId = useId();
-    const triggerId = `accordion-trigger-${reactId}`;
-    const contentId = `accordion-content-${reactId}`;
+export const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(function AccordionItem(
+  { value, disabled = false, headerLevel = 'h3', children, className, ...props },
+  ref,
+) {
+  const { isOpen } = useAccordionContext('Item');
+  const open = isOpen(value);
+  const reactId = useId();
+  const triggerId = `accordion-trigger-${reactId}`;
+  const contentId = `accordion-content-${reactId}`;
 
-    const ctx = useMemo<AccordionItemContextValue & { headerLevel: AccordionHeaderLevel }>(
-      () => ({
-        value,
-        disabled,
-        isOpen: open,
-        triggerId,
-        contentId,
-        headerLevel,
-      }),
-      [value, disabled, open, triggerId, contentId, headerLevel],
-    );
+  const ctx = useMemo<AccordionItemContextValue & { headerLevel: AccordionHeaderLevel }>(
+    () => ({
+      value,
+      disabled,
+      isOpen: open,
+      triggerId,
+      contentId,
+      headerLevel,
+    }),
+    [value, disabled, open, triggerId, contentId, headerLevel],
+  );
 
-    return (
-      <AccordionItemContext.Provider value={ctx}>
-        <div
-          ref={ref}
-          {...props}
-          data-state={open ? 'open' : 'closed'}
-          data-disabled={disabled ? 'true' : undefined}
-          className={clsx(styles.item, className)}
-        >
-          {children}
-        </div>
-      </AccordionItemContext.Provider>
-    );
-  },
-);
+  return (
+    <AccordionItemContext.Provider value={ctx}>
+      <div
+        ref={ref}
+        {...props}
+        data-state={open ? 'open' : 'closed'}
+        data-disabled={disabled ? 'true' : undefined}
+        className={clsx(styles.item, className)}
+      >
+        {children}
+      </div>
+    </AccordionItemContext.Provider>
+  );
+});
 ```
 
 - [ ] **Step 6: Write `AccordionTrigger.tsx`**
@@ -545,12 +532,7 @@ export const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
 Create `packages/design-system/src/components/Accordion/AccordionTrigger.tsx`:
 
 ```tsx
-import {
-  forwardRef,
-  type ButtonHTMLAttributes,
-  type KeyboardEvent,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type ButtonHTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import {
@@ -561,8 +543,10 @@ import {
 import type { AccordionHeaderLevel } from './Accordion';
 import styles from './Accordion.module.scss';
 
-export interface AccordionTriggerProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+export interface AccordionTriggerProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'children'
+> {
   /**
    * Override the default trigger indicator icon (rotates 180° when open).
    * Pass `null` to suppress the icon entirely. Default: `<ChevronDown />`.
@@ -596,9 +580,7 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
       if (!root) return;
 
       const triggers = Array.from(
-        root.querySelectorAll<HTMLButtonElement>(
-          'button[aria-expanded]:not(:disabled)',
-        ),
+        root.querySelectorAll<HTMLButtonElement>('button[aria-expanded]:not(:disabled)'),
       );
       if (triggers.length === 0) return;
 
@@ -606,8 +588,7 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
       let next = current;
 
       if (e.key === 'ArrowDown') next = (current + 1) % triggers.length;
-      else if (e.key === 'ArrowUp')
-        next = (current - 1 + triggers.length) % triggers.length;
+      else if (e.key === 'ArrowUp') next = (current - 1 + triggers.length) % triggers.length;
       else if (e.key === 'Home') next = 0;
       else if (e.key === 'End') next = triggers.length - 1;
 
@@ -617,13 +598,7 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
     const renderedIcon =
       icon === null
         ? null
-        : (icon ?? (
-            <ChevronDown
-              size={16}
-              aria-hidden="true"
-              className={styles.indicator}
-            />
-          ));
+        : (icon ?? <ChevronDown size={16} aria-hidden="true" className={styles.indicator} />);
 
     // headerLevel is a string union of valid HTML heading tag names; cast to
     // ElementType for JSX use.
@@ -697,11 +672,7 @@ Create `packages/design-system/src/components/Accordion/index.ts`:
 
 ```ts
 export { Accordion } from './Accordion';
-export type {
-  AccordionProps,
-  AccordionMode,
-  AccordionHeaderLevel,
-} from './Accordion';
+export type { AccordionProps, AccordionMode, AccordionHeaderLevel } from './Accordion';
 export type { AccordionItemProps } from './AccordionItem';
 export type { AccordionTriggerProps } from './AccordionTrigger';
 export type { AccordionContentProps } from './AccordionContent';
@@ -869,9 +840,7 @@ describe('<Accordion>', () => {
     // Content panel: find via aria-labelledby. Note: closed panels still
     // exist in the DOM (only height is 0).
     const panels = document.querySelectorAll('[role="region"]');
-    const panel = Array.from(panels).find(
-      (p) => p.getAttribute('aria-labelledby') === triggerId,
-    );
+    const panel = Array.from(panels).find((p) => p.getAttribute('aria-labelledby') === triggerId);
     expect(panel).toBeDefined();
   });
 
@@ -1173,6 +1142,7 @@ npm test -w @eocrm/design-system -- --run src/components/Accordion/Accordion.tes
 Expected: 26 tests passing.
 
 If a test fails:
+
 - **`useId` SSR-warning** in jsdom: the warning is benign for our tests but if it surfaces, wrap the render in `act()`.
 - **`role="region"` query failing**: the spec uses role="region" on the content. Verify the AccordionContent JSX sets `role="region"`.
 - **Keyboard nav test failing**: the handler queries `button[aria-expanded]:not(:disabled)` — confirm Trigger sets `aria-expanded` (yes, it does via `aria-expanded={isOpen}`).
@@ -1243,7 +1213,7 @@ grep -n "Accordion\|Alert\|Avatar" packages/design-system/src/index.ts | head
 
 - [ ] **Step 2: Add TL;DR to AGENTS.md**
 
-Open `packages/design-system/AGENTS.md`. Find `### \`<Tabs>\`` (around line 497). The new Accordion section goes AFTER Tabs and BEFORE `### \`<Breadcrumb>\`` (around line 521).
+Open `packages/design-system/AGENTS.md`. Find `### \`<Tabs>\``(around line 497). The new Accordion section goes AFTER Tabs and BEFORE`### \`<Breadcrumb>\`` (around line 521).
 
 Use grep to confirm line numbers:
 
@@ -1469,12 +1439,7 @@ export function AccordionDemo() {
 <p>Currently open: {open || '(none)'}</p>`}
       >
         <Stack gap="sm">
-          <Accordion
-            type="single"
-            collapsible
-            value={controlled}
-            onValueChange={setControlled}
-          >
+          <Accordion type="single" collapsible value={controlled} onValueChange={setControlled}>
             <Accordion.Item value="a">
               <Accordion.Trigger>Section A</Accordion.Trigger>
               <Accordion.Content>Content A</Accordion.Content>
@@ -1637,11 +1602,8 @@ Add a card alphabetically (first, before Alert):
 Open `packages/playground/src/pages/mockups/registry.ts`. Find `export type ComponentName =` and add `'Accordion'` FIRST in the union (alphabetical before `'Alert'`):
 
 ```ts
-export type ComponentName =
-  | 'Accordion'
-  | 'Alert'
-  | 'Avatar'
-  // …rest unchanged…;
+export type ComponentName = 'Accordion' | 'Alert' | 'Avatar';
+// …rest unchanged…;
 ```
 
 No existing mockup uses Accordion yet, so no `usesComponents` arrays need updating.
@@ -1708,6 +1670,7 @@ npm pack --dry-run -w @eocrm/design-system 2>&1 | grep -E "Accordion|test\."
 ```
 
 Expected:
+
 - Accordion source files (`Accordion.tsx`, `AccordionItem.tsx`, `AccordionTrigger.tsx`, `AccordionContent.tsx`, `Accordion.module.scss`, `context.ts`, `index.ts`) in the tarball
 - NO `*.test.*` files
 
@@ -1718,6 +1681,7 @@ Use a `general-purpose` subagent with model `opus`. Prompt template:
 > Fresh-context Hard-Rule-8 review of the Accordion PR. Branch `feat/accordion` at HEAD `<sha>`. Per `packages/design-system/CLAUDE.md` Rule 8 — review the full diff against `main`.
 >
 > Files in scope:
+>
 > - `packages/design-system/src/components/Accordion/` (8 source files)
 > - `packages/design-system/src/index.ts`, `AGENTS.md`
 > - `packages/playground/src/pages/components/AccordionDemo.tsx`
@@ -1726,6 +1690,7 @@ Use a `general-purpose` subagent with model `opus`. Prompt template:
 > Read first: `packages/design-system/CLAUDE.md` (Rules 1–7), `AGENTS.md` (Accordion section + surrounding Tabs/Breadcrumb), `docs/superpowers/specs/2026-05-23-accordion-design.md`. Compare against ButtonGroup (compound API precedent) and DropdownMenu (context + keyboard nav precedent).
 >
 > Verify:
+>
 > - **Rule 1**: tests exist (~26 cases).
 > - **Rule 3**: NO raw values in `Accordion.module.scss`. All `var(--…)`. The `margin: 0` on `.header` has the documented inline disable for native heading reset.
 > - **Rule 4**: NO `position`/`align-self`/`flex: 1`/`width` at the component boundary. The `display: flex` on `.accordion` is internal layout of its own children (items), not at the boundary. The `display: grid` on `.content` is internal animation. The `flex: 1` on `.label` is inside `.trigger` — internal child of the button, not at the component boundary.

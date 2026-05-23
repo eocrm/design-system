@@ -98,9 +98,7 @@ describe('<Accordion>', () => {
     // Content panel: find via aria-labelledby. Note: closed panels still
     // exist in the DOM (only height is 0).
     const panels = document.querySelectorAll('[role="region"]');
-    const panel = Array.from(panels).find(
-      (p) => p.getAttribute('aria-labelledby') === triggerId,
-    );
+    const panel = Array.from(panels).find((p) => p.getAttribute('aria-labelledby') === triggerId);
     expect(panel).toBeDefined();
   });
 

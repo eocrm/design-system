@@ -114,12 +114,7 @@ export function AccordionDemo() {
 <p>Currently open: {open || '(none)'}</p>`}
       >
         <Stack gap="sm">
-          <Accordion
-            type="single"
-            collapsible
-            value={controlled}
-            onValueChange={setControlled}
-          >
+          <Accordion type="single" collapsible value={controlled} onValueChange={setControlled}>
             <Accordion.Item value="a">
               <Accordion.Trigger>Section A</Accordion.Trigger>
               <Accordion.Content>Content A</Accordion.Content>

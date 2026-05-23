@@ -25,44 +25,42 @@ export interface AccordionItemProps extends Omit<HTMLAttributes<HTMLDivElement>,
  * Item wrapper. Provides `AccordionItemContext` so Trigger and Content can
  * read this item's value, disabled state, open state, and stable ids.
  */
-export const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
-  function AccordionItem(
-    { value, disabled = false, headerLevel = 'h3', children, className, ...props },
-    ref,
-  ) {
-    const { isOpen } = useAccordionContext('Item');
-    const open = isOpen(value);
-    const reactId = useId();
-    const triggerId = `accordion-trigger-${reactId}`;
-    const contentId = `accordion-content-${reactId}`;
+export const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(function AccordionItem(
+  { value, disabled = false, headerLevel = 'h3', children, className, ...props },
+  ref,
+) {
+  const { isOpen } = useAccordionContext('Item');
+  const open = isOpen(value);
+  const reactId = useId();
+  const triggerId = `accordion-trigger-${reactId}`;
+  const contentId = `accordion-content-${reactId}`;
 
-    const ctx = useMemo<AccordionItemContextValue & { headerLevel: AccordionHeaderLevel }>(
-      () => ({
-        value,
-        disabled,
-        isOpen: open,
-        triggerId,
-        contentId,
-        headerLevel,
-      }),
-      [value, disabled, open, triggerId, contentId, headerLevel],
-    );
+  const ctx = useMemo<AccordionItemContextValue & { headerLevel: AccordionHeaderLevel }>(
+    () => ({
+      value,
+      disabled,
+      isOpen: open,
+      triggerId,
+      contentId,
+      headerLevel,
+    }),
+    [value, disabled, open, triggerId, contentId, headerLevel],
+  );
 
-    return (
-      <AccordionItemContext.Provider value={ctx}>
-        {/* Pattern A — {...props} after ref so consumer attrs reach the div,
+  return (
+    <AccordionItemContext.Provider value={ctx}>
+      {/* Pattern A — {...props} after ref so consumer attrs reach the div,
             but data-state/data-disabled/className are set AFTER the spread
             so the component wins on those three. */}
-        <div
-          ref={ref}
-          {...props}
-          data-state={open ? 'open' : 'closed'}
-          data-disabled={disabled ? 'true' : undefined}
-          className={clsx(styles.item, className)}
-        >
-          {children}
-        </div>
-      </AccordionItemContext.Provider>
-    );
-  },
-);
+      <div
+        ref={ref}
+        {...props}
+        data-state={open ? 'open' : 'closed'}
+        data-disabled={disabled ? 'true' : undefined}
+        className={clsx(styles.item, className)}
+      >
+        {children}
+      </div>
+    </AccordionItemContext.Provider>
+  );
+});
