@@ -64,7 +64,7 @@ Plus standard integration points:
 import type { ButtonSize } from '../Button';
 
 /** Matches Button's size scale. */
-export type ButtonGroupSize = ButtonSize;  // 'xs' | 'sm' | 'md' | 'lg'
+export type ButtonGroupSize = ButtonSize; // 'xs' | 'sm' | 'md' | 'lg'
 
 interface ButtonGroupBase {
   /**
@@ -86,7 +86,8 @@ interface ButtonGroupBase {
   style?: CSSProperties;
 }
 
-interface ButtonGroupVisual extends ButtonGroupBase, Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+interface ButtonGroupVisual
+  extends ButtonGroupBase, Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** Visual mode marker — never set. TypeScript enforces this branch when value is absent. */
   value?: never;
   onValueChange?: never;
@@ -95,8 +96,7 @@ interface ButtonGroupVisual extends ButtonGroupBase, Omit<HTMLAttributes<HTMLDiv
 }
 
 interface ButtonGroupSegmented<V extends string = string>
-  extends ButtonGroupBase,
-    Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  extends ButtonGroupBase, Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /**
    * Currently-selected value. Setting this flips the component into
    * segmented mode — children must be `<ButtonGroup.Item>` instead of
@@ -124,6 +124,7 @@ export interface ButtonGroupItemProps {
 ```
 
 The discriminated union enforces:
+
 - Visual mode: `<ButtonGroup>` or `<ButtonGroup size="sm">` — no `value`, no `onValueChange`.
 - Segmented mode: `<ButtonGroup value={x} onValueChange={fn} aria-label="...">`. Both `value` AND `onValueChange` required together. `aria-label` required.
 - Mixed: type error.
@@ -138,11 +139,7 @@ export const ButtonGroup = Object.assign(ButtonGroupRoot, { Item: ButtonGroupIte
 
 ```ts
 export { ButtonGroup } from './ButtonGroup';
-export type {
-  ButtonGroupProps,
-  ButtonGroupSize,
-  ButtonGroupItemProps,
-} from './ButtonGroup';
+export type { ButtonGroupProps, ButtonGroupSize, ButtonGroupItemProps } from './ButtonGroup';
 ```
 
 ## Architecture flow
@@ -247,7 +244,7 @@ function ButtonGroupItem({ value, disabled, children, className }: ButtonGroupIt
       data-selected={isSelected ? '' : undefined}
       onClick={() => {
         if (effectiveDisabled) return;
-        if (isSelected) return;  // no-op on re-select
+        if (isSelected) return; // no-op on re-select
         ctx.onValueChange(value);
       }}
       onKeyDown={(e) => ctx.handleItemKeyDown(e, value)}
@@ -347,10 +344,26 @@ function handleItemKeyDown(e: KeyboardEvent, currentValue: string) {
 
 // Size variants — match Button's height scale for visual consistency.
 // camelCase naming matches Stack/Cluster/Grid precedent.
-.item.sizeXs { height: var(--size-xs); padding: 0 var(--space-2); font-size: var(--font-size-xs); }
-.item.sizeSm { height: var(--size-sm); padding: 0 var(--space-3); font-size: var(--font-size-sm); }
-.item.sizeMd { height: var(--size-md); padding: 0 var(--space-3); font-size: var(--font-size-md); }
-.item.sizeLg { height: var(--size-lg); padding: 0 var(--space-4); font-size: var(--font-size-md); }
+.item.sizeXs {
+  height: var(--size-xs);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xs);
+}
+.item.sizeSm {
+  height: var(--size-sm);
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-sm);
+}
+.item.sizeMd {
+  height: var(--size-md);
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-md);
+}
+.item.sizeLg {
+  height: var(--size-lg);
+  padding: 0 var(--space-4);
+  font-size: var(--font-size-md);
+}
 
 // Consumed via a lookup table in ButtonGroupItem.tsx:
 //   const sizeClass: Record<ButtonGroupSize, string> = {
@@ -360,12 +373,12 @@ function handleItemKeyDown(e: KeyboardEvent, currentValue: string) {
 
 ### ARIA contract
 
-| Mode | Element | Role | Attributes |
-|---|---|---|---|
-| Visual | `<div>` root | `role="group"` | `aria-label` (optional but recommended) |
-| Visual | child `<button>` (Button) | (button defaults) | unchanged from Button |
-| Segmented | `<div>` root | `role="radiogroup"` | `aria-label` **required** OR `aria-labelledby`; `aria-disabled` if group-level disabled |
-| Segmented | `<button>` (Item) | `role="radio"` | `aria-checked`, `aria-disabled`, `tabIndex={selected ? 0 : -1}` |
+| Mode      | Element                   | Role                | Attributes                                                                              |
+| --------- | ------------------------- | ------------------- | --------------------------------------------------------------------------------------- |
+| Visual    | `<div>` root              | `role="group"`      | `aria-label` (optional but recommended)                                                 |
+| Visual    | child `<button>` (Button) | (button defaults)   | unchanged from Button                                                                   |
+| Segmented | `<div>` root              | `role="radiogroup"` | `aria-label` **required** OR `aria-labelledby`; `aria-disabled` if group-level disabled |
+| Segmented | `<button>` (Item)         | `role="radio"`      | `aria-checked`, `aria-disabled`, `tabIndex={selected ? 0 : -1}`                         |
 
 **Dev warning**: if segmented mode is rendered without `aria-label` or `aria-labelledby`, log a `console.warn` (deferred via `queueMicrotask`).
 
@@ -460,6 +473,7 @@ Slot near Button (it's a Button-shaped composite). Section content:
 ## Hard Rule 8 cycle
 
 Same shape as Modal / Drawer / Grid:
+
 1. Run all gates (`make test`, `make build-lib`, `make lint`, `make build`, `npm pack --dry-run`).
 2. Spawn fresh-context reviewer (opus) with the 10 review categories.
 3. Fix Critical + Important findings; re-run gates; re-review.

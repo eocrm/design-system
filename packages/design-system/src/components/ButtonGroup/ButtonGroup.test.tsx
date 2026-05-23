@@ -124,9 +124,15 @@ describe('<ButtonGroup> (segmented mode)', () => {
 
   it('selected item has aria-checked=true; others have aria-checked=false', () => {
     render(<Controlled initial="b" />);
-    expect(screen.getByRole('radio', { name: 'Option A' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('radio', { name: 'Option A' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
     expect(screen.getByRole('radio', { name: 'Option B' })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('radio', { name: 'Option C' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('radio', { name: 'Option C' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
   });
 
   it('roving tabindex: selected item is 0, others are -1', () => {
@@ -227,7 +233,9 @@ describe('<ButtonGroup> (segmented mode)', () => {
       return (
         <ButtonGroup value={v} onValueChange={setV} aria-label="x">
           <ButtonGroup.Item value="a">A</ButtonGroup.Item>
-          <ButtonGroup.Item value="b" disabled>B</ButtonGroup.Item>
+          <ButtonGroup.Item value="b" disabled>
+            B
+          </ButtonGroup.Item>
           <ButtonGroup.Item value="c">C</ButtonGroup.Item>
         </ButtonGroup>
       );
@@ -288,7 +296,9 @@ describe('<ButtonGroup> (segmented mode)', () => {
       const [v, setV] = useState('a');
       return (
         <ButtonGroup value={v} onValueChange={setV} aria-label="x">
-          <ButtonGroup.Item value="a" disabled>A</ButtonGroup.Item>
+          <ButtonGroup.Item value="a" disabled>
+            A
+          </ButtonGroup.Item>
           <ButtonGroup.Item value="b">B</ButtonGroup.Item>
           <ButtonGroup.Item value="c">C</ButtonGroup.Item>
         </ButtonGroup>

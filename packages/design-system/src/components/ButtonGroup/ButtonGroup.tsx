@@ -13,11 +13,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { Button, type ButtonProps } from '../Button';
-import {
-  ButtonGroupContext,
-  type ButtonGroupContextValue,
-  type ButtonGroupSize,
-} from './context';
+import { ButtonGroupContext, type ButtonGroupContextValue, type ButtonGroupSize } from './context';
 import { ButtonGroupItem } from './ButtonGroupItem';
 import styles from './ButtonGroup.module.scss';
 
@@ -43,8 +39,7 @@ interface ButtonGroupBase {
 }
 
 interface ButtonGroupVisualProps
-  extends ButtonGroupBase,
-    Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  extends ButtonGroupBase, Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** Visual mode marker. Never set; absence flips to visual. */
   value?: never;
   onValueChange?: never;
@@ -53,8 +48,7 @@ interface ButtonGroupVisualProps
 }
 
 interface ButtonGroupSegmentedProps
-  extends ButtonGroupBase,
-    Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  extends ButtonGroupBase, Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** Currently-selected item value. Triggers segmented mode. */
   value: string;
   /**

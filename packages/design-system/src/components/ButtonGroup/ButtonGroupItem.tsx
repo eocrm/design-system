@@ -30,7 +30,12 @@ const sizeClass: Record<ButtonGroupSize, string> = {
  * (no `value` on the parent) throws at render time because there's no
  * `ButtonGroupContext` to register against — that's the intended guardrail.
  */
-export function ButtonGroupItem({ value, disabled = false, className, children }: ButtonGroupItemProps) {
+export function ButtonGroupItem({
+  value,
+  disabled = false,
+  className,
+  children,
+}: ButtonGroupItemProps) {
   const ctx = useButtonGroupContext('Item');
 
   const isSelected = ctx.value === value;

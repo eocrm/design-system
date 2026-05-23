@@ -50,6 +50,7 @@ packages/playground/src/pages/mockups/registry.ts              ← MODIFY: 'Butt
 Single commit for all library source. The four files cross-reference, so they land together.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/ButtonGroup/context.ts`
 - Create: `packages/design-system/src/components/ButtonGroup/ButtonGroupItem.tsx`
 - Create: `packages/design-system/src/components/ButtonGroup/ButtonGroup.tsx`
@@ -66,6 +67,7 @@ git log --oneline -3
 ```
 
 Expected:
+
 - Branch: `feat/button-group`
 - Working tree clean
 - Most recent commit: `7ae45b4 ButtonGroup: design spec ...`
@@ -263,7 +265,12 @@ const sizeClass: Record<ButtonGroupSize, string> = {
  * (no `value` on the parent) throws at render time because there's no
  * `ButtonGroupContext` to register against — that's the intended guardrail.
  */
-export function ButtonGroupItem({ value, disabled = false, className, children }: ButtonGroupItemProps) {
+export function ButtonGroupItem({
+  value,
+  disabled = false,
+  className,
+  children,
+}: ButtonGroupItemProps) {
   const ctx = useButtonGroupContext('Item');
   const ref = useRef<HTMLButtonElement | null>(null);
 
@@ -598,11 +605,7 @@ export const ButtonGroup = Object.assign(ButtonGroupRoot, { Item: ButtonGroupIte
 
 ```ts
 export { ButtonGroup } from './ButtonGroup';
-export type {
-  ButtonGroupProps,
-  ButtonGroupSize,
-  ButtonGroupItemProps,
-} from './ButtonGroup';
+export type { ButtonGroupProps, ButtonGroupSize, ButtonGroupItemProps } from './ButtonGroup';
 ```
 
 - [ ] **Step 7: Verify build + lint**
@@ -648,6 +651,7 @@ EOF
 ~22 cases covering both modes plus the TS-level `@ts-expect-error` for the discriminated union.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/ButtonGroup/ButtonGroup.test.tsx`
 
 - [ ] **Step 1: Write the tests**
@@ -750,13 +754,7 @@ describe('<ButtonGroup> (visual mode)', () => {
 });
 
 describe('<ButtonGroup> (segmented mode)', () => {
-  function Controlled({
-    initial = 'a',
-    disabled,
-  }: {
-    initial?: string;
-    disabled?: boolean;
-  }) {
+  function Controlled({ initial = 'a', disabled }: { initial?: string; disabled?: boolean }) {
     const [v, setV] = useState(initial);
     return (
       <ButtonGroup value={v} onValueChange={setV} aria-label="Choices" disabled={disabled}>
@@ -775,9 +773,15 @@ describe('<ButtonGroup> (segmented mode)', () => {
 
   it('selected item has aria-checked=true; others have aria-checked=false', () => {
     render(<Controlled initial="b" />);
-    expect(screen.getByRole('radio', { name: 'Option A' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('radio', { name: 'Option A' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
     expect(screen.getByRole('radio', { name: 'Option B' })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('radio', { name: 'Option C' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('radio', { name: 'Option C' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
   });
 
   it('roving tabindex: selected item is 0, others are -1', () => {
@@ -878,7 +882,9 @@ describe('<ButtonGroup> (segmented mode)', () => {
       return (
         <ButtonGroup value={v} onValueChange={setV} aria-label="x">
           <ButtonGroup.Item value="a">A</ButtonGroup.Item>
-          <ButtonGroup.Item value="b" disabled>B</ButtonGroup.Item>
+          <ButtonGroup.Item value="b" disabled>
+            B
+          </ButtonGroup.Item>
           <ButtonGroup.Item value="c">C</ButtonGroup.Item>
         </ButtonGroup>
       );
@@ -976,6 +982,7 @@ EOF
 ## Task 3 — Public exports + AGENTS.md TL;DR
 
 **Files:**
+
 - Modify: `packages/design-system/src/index.ts`
 - Modify: `packages/design-system/AGENTS.md`
 
@@ -1063,6 +1070,7 @@ EOF
 ## Task 4 — Playground demo + nav wiring (4 places)
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/ButtonGroupDemo.tsx`
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
@@ -1248,10 +1256,11 @@ Match precedent: read `packages/playground/src/pages/components/ButtonDemo.tsx` 
 - [ ] **Step 2: Wire into the four playground integration points**
 
 **App.tsx**:
+
 ```tsx
 import { ButtonGroupDemo } from './pages/components/ButtonGroupDemo';
 // Inside <Routes>:
-<Route path="/components/button-group" element={<ButtonGroupDemo />} />
+<Route path="/components/button-group" element={<ButtonGroupDemo />} />;
 ```
 
 **AppShell.tsx**: Add to the **Forms** group (alongside Button, Checkbox, Radio). Match the existing entry shape (icon + label). Use a `lucide-react` icon like `LayoutPanelLeft` or `Rows3` — whichever feels closer to "joined buttons".
@@ -1413,22 +1422,22 @@ Return the PR URL.
 
 **Spec coverage:**
 
-| Spec section | Task implementing it |
-|---|---|
-| Source bundle (context, item, root, SCSS, barrel) | 1 |
-| Discriminated-union props with `never` | 1 (types) + 2 (TS test) |
-| Visual-mode `cloneElement` size propagation | 1 (component) + 2 (test) |
-| Segmented-mode context + Item registration | 1 |
-| Roving tabindex + Arrow/Home/End keyboard nav | 1 + 2 |
-| Skip-disabled arrow navigation | 1 + 2 |
-| Group-level disabled | 1 + 2 |
-| Dev warning for missing aria-label | 1 + 2 |
-| SCSS visual joined-borders + segmented pill-inset | 1 |
-| Unit tests | 2 |
-| Public exports + AGENTS.md | 3 |
-| Playground demo (6 examples) | 4 |
-| 4-place nav wiring | 4 |
-| Hard Rule 8 | 5 |
+| Spec section                                      | Task implementing it     |
+| ------------------------------------------------- | ------------------------ |
+| Source bundle (context, item, root, SCSS, barrel) | 1                        |
+| Discriminated-union props with `never`            | 1 (types) + 2 (TS test)  |
+| Visual-mode `cloneElement` size propagation       | 1 (component) + 2 (test) |
+| Segmented-mode context + Item registration        | 1                        |
+| Roving tabindex + Arrow/Home/End keyboard nav     | 1 + 2                    |
+| Skip-disabled arrow navigation                    | 1 + 2                    |
+| Group-level disabled                              | 1 + 2                    |
+| Dev warning for missing aria-label                | 1 + 2                    |
+| SCSS visual joined-borders + segmented pill-inset | 1                        |
+| Unit tests                                        | 2                        |
+| Public exports + AGENTS.md                        | 3                        |
+| Playground demo (6 examples)                      | 4                        |
+| 4-place nav wiring                                | 4                        |
+| Hard Rule 8                                       | 5                        |
 
 **Placeholder scan:** None. Every step has the actual code or command.
 
