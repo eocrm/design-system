@@ -37,9 +37,15 @@ describe('library structure', () => {
   );
 
   it.each(components)('%s is re-exported from src/index.ts', (name) => {
-    // Look for either a named re-export of `<Name>` or a star-export from its
-    // path. Reasonably strict — doesn't catch typos in the name, which is fine.
-    const namedRe = new RegExp(`export\\s*\\{[^}]*\\b${name}\\b[^}]*\\}`);
+    // Match `<Name>` followed by a word boundary OR an uppercase letter.
+    // The word-boundary branch catches the exact name (e.g. `Toast` as a
+    // standalone export). The uppercase branch allows compound exports whose
+    // name starts with `<Name>` (e.g. `ToastViewport` satisfies `Toast`).
+    // Crucially, a purely lowercase continuation is NOT matched, so `Button`
+    // does NOT accidentally satisfy itself via a hypothetical `Buttons` export,
+    // and `Toast` does NOT satisfy `Toasty`. This tightens the earlier
+    // `\b${name}[^}]*` form which was over-permissive.
+    const namedRe = new RegExp(`export\\s*\\{[^}]*\\b${name}(\\b|[A-Z])[^}]*\\}`);
     const starRe = new RegExp(`export\\s+\\*\\s+from\\s+['"][^'"]*${name}[^'"]*['"]`);
     expect(namedRe.test(indexContent) || starRe.test(indexContent)).toBe(true);
   });

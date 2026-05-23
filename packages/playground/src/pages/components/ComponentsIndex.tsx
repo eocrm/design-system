@@ -25,6 +25,7 @@ import { DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
+import { toast } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
 type _PreviewRow = { id: string; name: string; stage: string; amount: string };
@@ -351,6 +352,16 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           </DropdownMenu.Content>
         </DropdownMenu>
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/toast',
+    name: 'Toast',
+    description: 'Imperative transient notifications.',
+    preview: (
+      <Button size="sm" onClick={() => toast.success('Saved')}>
+        Fire toast
+      </Button>
     ),
   },
   {

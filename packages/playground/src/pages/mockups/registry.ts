@@ -33,6 +33,7 @@ export type ComponentName =
   | 'Stack'
   | 'Table'
   | 'Tabs'
+  | 'Toast'
   | 'Tooltip';
 
 export interface MockupEntry {

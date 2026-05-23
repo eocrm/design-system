@@ -35,6 +35,8 @@ import { DataTableDemo } from './pages/components/DataTableDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
 import { DrawerDemo } from './pages/components/DrawerDemo';
 import { GridDemo } from './pages/components/GridDemo';
+import { ToastDemo } from './pages/components/ToastDemo';
+import { ToastViewport } from '@eocrm/design-system';
 
 export default function App() {
   return (
@@ -82,8 +84,10 @@ export default function App() {
           <Route path="/components/empty-state" element={<EmptyStateDemo />} />
           <Route path="/components/drawer" element={<DrawerDemo />} />
           <Route path="/components/grid" element={<GridDemo />} />
+          <Route path="/components/toast" element={<ToastDemo />} />
         </Routes>
       </AppShell>
+      <ToastViewport position="bottom-right" />
     </BrowserRouter>
   );
 }
