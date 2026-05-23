@@ -94,9 +94,9 @@ Add to `packages/design-system/src/styles/tokens.scss`:
 
 ```scss
 /* Drawer width (left/right) or height (top/bottom) per size variant. */
---size-drawer-sm: 320px;   /* nav drawer, compact filter */
---size-drawer-md: 440px;   /* detail panel, standard filter */
---size-drawer-lg: 640px;   /* wide detail, composer */
+--size-drawer-sm: 320px; /* nav drawer, compact filter */
+--size-drawer-md: 440px; /* detail panel, standard filter */
+--size-drawer-lg: 640px; /* wide detail, composer */
 ```
 
 The existing `--z-modal: 1100`, `--color-bg-overlay`, `--color-bg-overlay-blur`, `--transition-base`, `--space-*`, `--radius-*`, `--shadow-lg` all get reused. Drawer is on the same z-ladder as Modal (`var(--z-modal)`).
@@ -109,7 +109,7 @@ The existing `--z-modal: 1100`, `--color-bg-overlay`, `--color-bg-overlay-blur`,
 export type DrawerSide = 'left' | 'right' | 'top' | 'bottom';
 export type DrawerSize = 'sm' | 'md' | 'lg';
 export type DrawerOverlayVariant = 'solid' | 'blur';
-export type DrawerStackMode = OverlayStackMode;  // re-export alias
+export type DrawerStackMode = OverlayStackMode; // re-export alias
 
 export interface DrawerProps {
   /** Controlled open state. Required — Drawer has no uncontrolled mode. */
@@ -228,7 +228,7 @@ From the library root `src/index.ts`:
 
 ```ts
 export { Drawer } from './components/Drawer';
-export type { /* all of the above */ } from './components/Drawer';
+export type {} from /* all of the above */ './components/Drawer';
 ```
 
 ## Architecture flow
@@ -261,12 +261,12 @@ The shared `overlayStack` singleton stores per-overlay entries `{id, mode}`. Eac
 
 **Cross-component stacking matrix** (all four combinations supported):
 
-| Outer | Inner | Outer's `data-stack-position` | Inner's | Behavior |
-|---|---|---|---|---|
-| Modal | Drawer | `underneath` (overlay mode) | `top` | Modal stays visible, drawer slides in over it |
-| Drawer | Modal | `underneath` | `top` | Drawer stays visible, modal mounts on top |
-| Drawer-right | Drawer-right | `underneath` | `top` | Both right drawers visible; inner overlaps outer (paint=no on inner means parent's dim shows through) |
-| Drawer-left | Drawer-right | `underneath` | `top` | Both visible at opposite edges; no overlap |
+| Outer        | Inner        | Outer's `data-stack-position` | Inner's | Behavior                                                                                              |
+| ------------ | ------------ | ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| Modal        | Drawer       | `underneath` (overlay mode)   | `top`   | Modal stays visible, drawer slides in over it                                                         |
+| Drawer       | Modal        | `underneath`                  | `top`   | Drawer stays visible, modal mounts on top                                                             |
+| Drawer-right | Drawer-right | `underneath`                  | `top`   | Both right drawers visible; inner overlaps outer (paint=no on inner means parent's dim shows through) |
+| Drawer-left  | Drawer-right | `underneath`                  | `top`   | Both visible at opposite edges; no overlap                                                            |
 
 Same paint rule as Modal: `paint = (topMode === 'replace' && isTop) || (topMode === 'overlay' && depth === 0)`. Same `data-stack-position='hidden' { display: none }` for replace mode.
 
@@ -286,30 +286,52 @@ The Content element gets `data-side` attribute. SCSS handles per-side positionin
   width: min(var(--drawer-size), 100vw - 32px);
   transform: translateX(0);
   transition: transform var(--transition-base);
-  @starting-style { transform: translateX(100%); }
+  @starting-style {
+    transform: translateX(100%);
+  }
 }
-.content[data-side='right'][data-state='closed'] { transform: translateX(100%); }
+.content[data-side='right'][data-state='closed'] {
+  transform: translateX(100%);
+}
 
 .content[data-side='left'] {
-  left: 0; top: 0; bottom: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   width: min(var(--drawer-size), 100vw - 32px);
-  @starting-style { transform: translateX(-100%); }
+  @starting-style {
+    transform: translateX(-100%);
+  }
 }
-.content[data-side='left'][data-state='closed'] { transform: translateX(-100%); }
+.content[data-side='left'][data-state='closed'] {
+  transform: translateX(-100%);
+}
 
 .content[data-side='top'] {
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: min(var(--drawer-size), 100vh - 32px);
-  @starting-style { transform: translateY(-100%); }
+  @starting-style {
+    transform: translateY(-100%);
+  }
 }
-.content[data-side='top'][data-state='closed'] { transform: translateY(-100%); }
+.content[data-side='top'][data-state='closed'] {
+  transform: translateY(-100%);
+}
 
 .content[data-side='bottom'] {
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: min(var(--drawer-size), 100vh - 32px);
-  @starting-style { transform: translateY(100%); }
+  @starting-style {
+    transform: translateY(100%);
+  }
 }
-.content[data-side='bottom'][data-state='closed'] { transform: translateY(100%); }
+.content[data-side='bottom'][data-state='closed'] {
+  transform: translateY(100%);
+}
 ```
 
 The size class (`.size-sm/md/lg`) sets `--drawer-size: var(--size-drawer-sm/md/lg)` which the side rule consumes via `min()`.
@@ -331,11 +353,14 @@ New hook `useDragToClose` in `components/Drawer/`. Touch-only (filtered by `poin
 ```ts
 interface UseDragToCloseOptions {
   side: DrawerSide;
-  active: boolean;       // false when dragToClose prop is false OR drawer is not top of stack
+  active: boolean; // false when dragToClose prop is false OR drawer is not top of stack
   onDismiss: () => void;
   contentRef: RefObject<HTMLElement | null>;
 }
-function useDragToClose(headerRef: RefObject<HTMLElement | null>, options: UseDragToCloseOptions): void;
+function useDragToClose(
+  headerRef: RefObject<HTMLElement | null>,
+  options: UseDragToCloseOptions,
+): void;
 ```
 
 The hook attaches touchstart listener to `headerRef.current` only. Body and Footer are not touched.
@@ -349,12 +374,14 @@ The hook attaches touchstart listener to `headerRef.current` only. Body and Foot
    - Otherwise → snap-back: re-enable `style.transition`, reset `style.transform = ''`. Overlay opacity returns to 1 via CSS transition.
 
 **Per-side direction:** dismiss direction is the direction the drawer slides away.
+
 - right: positive X (drag right)
 - left: negative X (drag left)
 - top: negative Y (drag up)
 - bottom: positive Y (drag down)
 
 **Conflict guards:**
+
 - Header gets `touch-action: none` in CSS — gesture isn't hijacked by browser pull-to-refresh or body scroll.
 - Body / Footer don't have any touchstart listener, so their native scroll / tap behavior is unchanged.
 - If `active === false` (forced-step or not-top-of-stack), the hook attaches no listeners.
@@ -378,7 +405,9 @@ useEffect(() => {
     if (!had) el.setAttribute('inert', '');
     toRestore.push({ el, had });
   }
-  return () => { for (const { el, had } of toRestore) if (!had) el.removeAttribute('inert'); };
+  return () => {
+    for (const { el, had } of toRestore) if (!had) el.removeAttribute('inert');
+  };
 }, [ctx.isTop]);
 ```
 
@@ -386,20 +415,20 @@ Modal's `Overlay.tsx` gets the same selector update so a Modal opened on top of 
 
 ## ARIA contract
 
-| Element | Role / attr | Notes |
-|---|---|---|
-| `.content` | `role="dialog"` | Standard dialog role for focus-locking overlay. |
-|  | `aria-modal="true"` | Same as Modal — captures focus. |
-|  | `tabIndex={-1}` | So the focus trap can take the container. |
-|  | `aria-labelledby={headingId}` | Auto-wired when `<Drawer.Header>` is rendered. |
-|  | `aria-label` | Fallback when no Header. Dev warning otherwise. |
-|  | `aria-describedby` | Passed through if provided. |
-|  | `data-side` | `'left' \| 'right' \| 'top' \| 'bottom'`. Useful for testing / SR identification. |
-|  | `data-size` | `'sm' \| 'md' \| 'lg'`. |
-|  | `data-state` | `'open' \| 'closed'`. Drives animations. |
-| `.overlay` | (no role) | Clickable backdrop. Carries `data-modal-portal-root`-style attr but uses `data-drawer-portal-root=""` to differentiate. |
-| `<Drawer.Header>` | (no role) | The `<h2>` heading inside it gets a generated id that wires to `aria-labelledby`. |
-| `<Drawer.Footer>` | `role="group"` | Same as Modal. |
+| Element           | Role / attr                   | Notes                                                                                                                   |
+| ----------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `.content`        | `role="dialog"`               | Standard dialog role for focus-locking overlay.                                                                         |
+|                   | `aria-modal="true"`           | Same as Modal — captures focus.                                                                                         |
+|                   | `tabIndex={-1}`               | So the focus trap can take the container.                                                                               |
+|                   | `aria-labelledby={headingId}` | Auto-wired when `<Drawer.Header>` is rendered.                                                                          |
+|                   | `aria-label`                  | Fallback when no Header. Dev warning otherwise.                                                                         |
+|                   | `aria-describedby`            | Passed through if provided.                                                                                             |
+|                   | `data-side`                   | `'left' \| 'right' \| 'top' \| 'bottom'`. Useful for testing / SR identification.                                       |
+|                   | `data-size`                   | `'sm' \| 'md' \| 'lg'`.                                                                                                 |
+|                   | `data-state`                  | `'open' \| 'closed'`. Drives animations.                                                                                |
+| `.overlay`        | (no role)                     | Clickable backdrop. Carries `data-modal-portal-root`-style attr but uses `data-drawer-portal-root=""` to differentiate. |
+| `<Drawer.Header>` | (no role)                     | The `<h2>` heading inside it gets a generated id that wires to `aria-labelledby`.                                       |
+| `<Drawer.Footer>` | `role="group"`                | Same as Modal.                                                                                                          |
 
 **Dev warning:** if neither Header nor `aria-label` is provided when `open=true`, emit a `console.warn` (deferred via `queueMicrotask` so Header's registration effect has a chance — same pattern Modal uses).
 
@@ -416,10 +445,16 @@ Modal's `Overlay.tsx` gets the same selector update so a Modal opened on top of 
   opacity: var(--opacity-visible);
   transition: opacity var(--transition-base);
   overscroll-behavior: contain;
-  @starting-style { opacity: var(--opacity-hidden); }
+  @starting-style {
+    opacity: var(--opacity-hidden);
+  }
 }
-.overlay[data-state='closed'] { opacity: var(--opacity-hidden); }
-.overlay[data-stack-position='hidden'] { display: none; }
+.overlay[data-state='closed'] {
+  opacity: var(--opacity-hidden);
+}
+.overlay[data-stack-position='hidden'] {
+  display: none;
+}
 .overlay[data-variant='blur'] {
   background: var(--color-bg-overlay-blur);
   backdrop-filter: blur(4px);
@@ -444,9 +479,15 @@ Modal's `Overlay.tsx` gets the same selector update so a Modal opened on top of 
 // Per-side positioning + animation entries documented above.
 
 // Size presets drive --drawer-size which the side rules consume via min().
-.size-sm { --drawer-size: var(--size-drawer-sm); }
-.size-md { --drawer-size: var(--size-drawer-md); }
-.size-lg { --drawer-size: var(--size-drawer-lg); }
+.size-sm {
+  --drawer-size: var(--size-drawer-sm);
+}
+.size-md {
+  --drawer-size: var(--size-drawer-md);
+}
+.size-lg {
+  --drawer-size: var(--size-drawer-lg);
+}
 
 .header {
   display: flex;
@@ -454,7 +495,7 @@ Modal's `Overlay.tsx` gets the same selector update so a Modal opened on top of 
   justify-content: space-between;
   padding: var(--space-4);
   border-bottom: var(--border-width) solid var(--color-border);
-  touch-action: none;   // prevent browser gestures hijacking drag-to-close
+  touch-action: none; // prevent browser gestures hijacking drag-to-close
 }
 
 .body {
@@ -474,9 +515,13 @@ Modal's `Overlay.tsx` gets the same selector update so a Modal opened on top of 
 
 // Reduced motion
 @media (prefers-reduced-motion: reduce) {
-  .overlay, .content {
+  .overlay,
+  .content {
     transition: none;
-    @starting-style { opacity: var(--opacity-visible); transform: none; }
+    @starting-style {
+      opacity: var(--opacity-visible);
+      transform: none;
+    }
   }
 }
 ```
@@ -551,6 +596,7 @@ Plus standard nav wiring (App.tsx route, AppShell sidebar, ComponentsIndex card,
 ## Hard Rule 8 cycle
 
 Same as Modal:
+
 1. Run all gates (test, build-lib, lint, build, npm pack --dry-run).
 2. Spawn fresh-context reviewer with the 10 review categories.
 3. Fix Critical + Important findings; re-run gates; re-review.

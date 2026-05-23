@@ -435,7 +435,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             Filters
           </div>
           <div
-            style={{ padding: '8px 12px', fontSize: '0.7rem', color: 'var(--color-fg-muted)', flex: 1 }}
+            style={{
+              padding: '8px 12px',
+              fontSize: '0.7rem',
+              color: 'var(--color-fg-muted)',
+              flex: 1,
+            }}
           >
             Filter content here.
           </div>

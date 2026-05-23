@@ -59,8 +59,7 @@ export function Overlay({ children }: OverlayProps) {
   }
 
   const paint =
-    (ctx.topMode === 'replace' && ctx.isTop) ||
-    (ctx.topMode === 'overlay' && ctx.depth === 0);
+    (ctx.topMode === 'replace' && ctx.isTop) || (ctx.topMode === 'overlay' && ctx.depth === 0);
 
   const style = { ['--modal-depth' as string]: String(ctx.depth) } as CSSProperties;
 

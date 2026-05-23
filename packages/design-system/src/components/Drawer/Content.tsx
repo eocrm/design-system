@@ -53,7 +53,12 @@ export function Content({ children, className, style }: ContentProps) {
       data-state={ctx.open ? 'open' : 'closed'}
       data-side={ctx.side}
       data-size={ctx.size}
-      className={clsx(styles.content, styles[`side-${ctx.side}`], styles[`size-${ctx.size}`], className)}
+      className={clsx(
+        styles.content,
+        styles[`side-${ctx.side}`],
+        styles[`size-${ctx.size}`],
+        className,
+      )}
       style={style}
     >
       {children}

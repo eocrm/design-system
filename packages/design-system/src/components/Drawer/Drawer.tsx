@@ -16,12 +16,7 @@ export const Drawer = Object.assign(DrawerRoot, {
 });
 
 export type { DrawerProps } from './DrawerRoot';
-export type {
-  DrawerSide,
-  DrawerSize,
-  DrawerOverlayVariant,
-  DrawerStackMode,
-} from './context';
+export type { DrawerSide, DrawerSize, DrawerOverlayVariant, DrawerStackMode } from './context';
 export type { DrawerHeaderProps } from './Header';
 export type { DrawerBodyProps } from './Body';
 export type { DrawerFooterProps } from './Footer';

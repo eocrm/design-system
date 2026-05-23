@@ -9,11 +9,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import {
-  useOverlayStack,
-  useScrollLock,
-  type OverlayStackMode,
-} from '../_internal/overlay';
+import { useOverlayStack, useScrollLock, type OverlayStackMode } from '../_internal/overlay';
 import { sanitizeId } from '../_internal/refs';
 import {
   DrawerContext,
@@ -139,11 +135,7 @@ export function DrawerRoot({
     prevOpenRef.current = open;
   }, [open]);
 
-  const { depth, isTop, topMode } = useOverlayStack(
-    drawerId,
-    open,
-    stackMode as OverlayStackMode,
-  );
+  const { depth, isTop, topMode } = useOverlayStack(drawerId, open, stackMode as OverlayStackMode);
   useScrollLock(open);
 
   const setOpen = useCallback((next: boolean) => onOpenChange(next), [onOpenChange]);

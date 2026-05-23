@@ -54,10 +54,14 @@ export function useDragToClose(
 
     function dismissDelta(deltaX: number, deltaY: number): number {
       switch (side) {
-        case 'right':  return Math.max(0, deltaX);
-        case 'left':   return Math.max(0, -deltaX);
-        case 'top':    return Math.max(0, -deltaY);
-        case 'bottom': return Math.max(0, deltaY);
+        case 'right':
+          return Math.max(0, deltaX);
+        case 'left':
+          return Math.max(0, -deltaX);
+        case 'top':
+          return Math.max(0, -deltaY);
+        case 'bottom':
+          return Math.max(0, deltaY);
       }
     }
 
@@ -115,7 +119,9 @@ export function useDragToClose(
 
       const content = contentRef.current;
       const drawerSize = content
-        ? (side === 'left' || side === 'right' ? content.offsetWidth : content.offsetHeight)
+        ? side === 'left' || side === 'right'
+          ? content.offsetWidth
+          : content.offsetHeight
         : 0;
       const delta = dismissDelta(deltaX, deltaY);
       const velocity = delta / elapsed;

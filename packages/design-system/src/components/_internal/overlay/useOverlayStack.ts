@@ -95,7 +95,11 @@ export interface OverlayStackState {
  * top overlay's stackMode. Subscribes to stack mutations so state stays
  * accurate when sibling overlays open/close.
  */
-export function useOverlayStack(id: string, active: boolean, mode: OverlayStackMode): OverlayStackState {
+export function useOverlayStack(
+  id: string,
+  active: boolean,
+  mode: OverlayStackMode,
+): OverlayStackState {
   // Lazy initializer pre-computes the post-registration state so the FIRST
   // render of an opened overlay already has correct `topMode` / `isTop` /
   // `depth`. Without this, paint and stack-position attributes would be

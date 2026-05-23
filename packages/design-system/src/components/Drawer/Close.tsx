@@ -30,10 +30,7 @@ export function Close({ children }: DrawerCloseProps) {
   const childProps = children.props as {
     onClick?: (e: ReactMouseEvent<HTMLElement>) => void;
   };
-  const handleClick = useCallback(
-    (_e: ReactMouseEvent<HTMLElement>) => ctx.setOpen(false),
-    [ctx],
-  );
+  const handleClick = useCallback((_e: ReactMouseEvent<HTMLElement>) => ctx.setOpen(false), [ctx]);
   return cloneElement(children, {
     onClick: chain(childProps.onClick, handleClick),
   } as object);

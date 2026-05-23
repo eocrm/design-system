@@ -53,12 +53,15 @@ describe('<Drawer>', () => {
     expect(screen.getByRole('dialog')).toHaveAttribute('data-side', 'right');
   });
 
-  it.each(['left', 'right', 'top', 'bottom'] as const)('side="%s" sets data-side="%s"', async (side) => {
-    const user = userEvent.setup();
-    render(<Harness side={side} />);
-    await user.click(screen.getByText('Open'));
-    expect(screen.getByRole('dialog')).toHaveAttribute('data-side', side);
-  });
+  it.each(['left', 'right', 'top', 'bottom'] as const)(
+    'side="%s" sets data-side="%s"',
+    async (side) => {
+      const user = userEvent.setup();
+      render(<Harness side={side} />);
+      await user.click(screen.getByText('Open'));
+      expect(screen.getByRole('dialog')).toHaveAttribute('data-side', side);
+    },
+  );
 
   it.each(['sm', 'md', 'lg'] as const)('size="%s" sets data-size="%s"', async (size) => {
     const user = userEvent.setup();
@@ -141,7 +144,9 @@ describe('<Drawer>', () => {
     const onOpenChange = vi.fn();
     render(
       <Drawer open onOpenChange={onOpenChange} aria-label="x">
-        <Drawer.Body><p>click me</p></Drawer.Body>
+        <Drawer.Body>
+          <p>click me</p>
+        </Drawer.Body>
       </Drawer>,
     );
     await user.click(screen.getByText('click me'));
@@ -229,7 +234,10 @@ describe('<Drawer>', () => {
         <Drawer.Body>x</Drawer.Body>
       </Drawer>,
     );
-    expect(document.querySelector('[data-drawer-portal-root]')).toHaveAttribute('data-variant', 'solid');
+    expect(document.querySelector('[data-drawer-portal-root]')).toHaveAttribute(
+      'data-variant',
+      'solid',
+    );
   });
 
   it('overlay="blur" sets data-variant="blur"', () => {
@@ -238,7 +246,10 @@ describe('<Drawer>', () => {
         <Drawer.Body>x</Drawer.Body>
       </Drawer>,
     );
-    expect(document.querySelector('[data-drawer-portal-root]')).toHaveAttribute('data-variant', 'blur');
+    expect(document.querySelector('[data-drawer-portal-root]')).toHaveAttribute(
+      'data-variant',
+      'blur',
+    );
   });
 
   it('stacked drawers: outer is underneath (overlay mode default)', () => {
@@ -252,7 +263,9 @@ describe('<Drawer>', () => {
         </Drawer>
       </>,
     );
-    const overlays = Array.from(document.querySelectorAll('[data-drawer-portal-root]')) as HTMLElement[];
+    const overlays = Array.from(
+      document.querySelectorAll('[data-drawer-portal-root]'),
+    ) as HTMLElement[];
     expect(overlays).toHaveLength(2);
     const positions = overlays.map((el) => el.getAttribute('data-stack-position')).sort();
     expect(positions).toEqual(['top', 'underneath']);
@@ -269,7 +282,9 @@ describe('<Drawer>', () => {
         </Drawer>
       </>,
     );
-    const overlays = Array.from(document.querySelectorAll('[data-drawer-portal-root]')) as HTMLElement[];
+    const overlays = Array.from(
+      document.querySelectorAll('[data-drawer-portal-root]'),
+    ) as HTMLElement[];
     const positions = overlays.map((el) => el.getAttribute('data-stack-position'));
     expect(positions).toContain('top');
     expect(positions).toContain('hidden');
@@ -321,7 +336,9 @@ describe('<Drawer>', () => {
       const [open, setOpen] = useState(false);
       return (
         <>
-          <button onClick={() => setOpen(true)} data-testid="trigger">Open</button>
+          <button onClick={() => setOpen(true)} data-testid="trigger">
+            Open
+          </button>
           <Drawer open={open} onOpenChange={setOpen} aria-label="x">
             <Drawer.Body>x</Drawer.Body>
           </Drawer>

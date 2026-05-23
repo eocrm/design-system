@@ -46,9 +46,7 @@ function BasicExample() {
       </Cluster>
       <Drawer open={open} onOpenChange={setOpen}>
         <Drawer.Header>Filters</Drawer.Header>
-        <Drawer.Body>
-          Filter content here. Swipe the header to close on touch devices.
-        </Drawer.Body>
+        <Drawer.Body>Filter content here. Swipe the header to close on touch devices.</Drawer.Body>
         <Drawer.Footer>
           <Drawer.Close>
             <Button variant="secondary">Cancel</Button>
@@ -82,11 +80,7 @@ function SidesExample() {
           Bottom
         </Button>
       </Cluster>
-      <Drawer
-        open={side !== null}
-        onOpenChange={(n) => !n && setSide(null)}
-        side={side ?? 'right'}
-      >
+      <Drawer open={side !== null} onOpenChange={(n) => !n && setSide(null)} side={side ?? 'right'}>
         <Drawer.Header>Side: {side ?? 'right'}</Drawer.Header>
         <Drawer.Body>This drawer slid in from the {side} edge.</Drawer.Body>
         <Drawer.Footer>
@@ -179,9 +173,7 @@ function ForcedStepExample() {
         aria-label="Confirm action"
       >
         <Drawer.Header closeButton={false}>Confirm action</Drawer.Header>
-        <Drawer.Body>
-          This drawer cannot be dismissed by Esc, overlay click, or swipe.
-        </Drawer.Body>
+        <Drawer.Body>This drawer cannot be dismissed by Esc, overlay click, or swipe.</Drawer.Body>
         <Drawer.Footer>
           <Button onClick={() => setOpen(false)}>Confirm</Button>
         </Drawer.Footer>
