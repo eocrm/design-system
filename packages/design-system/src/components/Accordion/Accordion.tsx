@@ -117,6 +117,12 @@ export type AccordionProps = AccordionBaseProps & (AccordionSingleProps | Accord
  *   ...
  * </Accordion>
  *
+ * @example
+ * // Borderless + large for hero FAQ sections
+ * <Accordion type="single" collapsible variant="borderless" size="lg">
+ *   ...
+ * </Accordion>
+ *
  * @remarks When NOT to use
  * - Mutually-exclusive view switchers → `<Tabs>`.
  * - Single show/hide toggle → `<Button>` + conditional render.

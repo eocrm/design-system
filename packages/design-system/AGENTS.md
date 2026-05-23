@@ -552,6 +552,8 @@ import { Accordion } from '@eocrm/design-system';
 
 - **`type="single"`** + `collapsible={true}` — one item open at a time, click to close.
 - **`type="multiple"`** — any combination.
+- **`variant`** — `"bordered"` (default; outer border + radius + item dividers) or `"borderless"` (no chrome; for nesting inside Cards or as a quiet section divider).
+- **`size`** — `"sm"` / `"md"` (default) / `"lg"` controls trigger font-size + padding (and content padding).
 - **Smooth animation** via CSS `grid-template-rows: 0fr → 1fr`. No JS measurement.
 - **Heading wrapping** — Trigger is wrapped in `<h3>` by default per WAI-ARIA APG. Override via `headerLevel` on Item.
 - **Keyboard**: ArrowDown/Up cycles between triggers, Home/End jumps to ends, Space/Enter toggles. Disabled items are skipped.
