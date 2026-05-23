@@ -1,13 +1,13 @@
 import { useLayoutEffect, useState } from 'react';
 
-export type ModalStackMode = 'replace' | 'overlay';
+export type OverlayStackMode = 'replace' | 'overlay';
 
 interface Entry {
   id: string;
-  mode: ModalStackMode;
+  mode: OverlayStackMode;
 }
 
-// Internal ordered list of open modal entries, most-recently-registered last.
+// Internal ordered list of open overlay entries, most-recently-registered last.
 const stack: Entry[] = [];
 const listeners = new Set<() => void>();
 
@@ -28,18 +28,18 @@ function topEntry(): Entry | null {
 }
 
 /**
- * Module-level singleton tracking open modal ids in registration order.
- * Each modal calls `register` on open and `unregister` on close. Depth is
- * the modal's index in the open-stack (0 = bottom, length-1 = top).
+ * Module-level singleton tracking open overlay ids in registration order.
+ * Each overlay (Modal, Drawer) calls `register` on open and `unregister` on close. Depth is
+ * the overlay's index in the open-stack (0 = bottom, length-1 = top).
  * Subscribers are notified after every register/unregister so consumers
  * can re-derive `isTop` / `depth` / `topMode`.
  */
-export const modalStack = {
+export const overlayStack = {
   /**
-   * Register this modal. If already present, update its mode in place
+   * Register this overlay. If already present, update its mode in place
    * (handles a parent re-render where stackMode prop changed).
    */
-  register(id: string, mode: ModalStackMode): number {
+  register(id: string, mode: OverlayStackMode): number {
     const idx = indexOf(id);
     if (idx === -1) {
       stack.push({ id, mode });
@@ -62,7 +62,7 @@ export const modalStack = {
   topDepth(): number {
     return stack.length;
   },
-  topMode(): ModalStackMode | null {
+  topMode(): OverlayStackMode | null {
     return topEntry()?.mode ?? null;
   },
   depthOf,
@@ -80,31 +80,31 @@ export const modalStack = {
   },
 };
 
-export interface ModalStackState {
+export interface OverlayStackState {
   /** Current depth in the stack, or null if not registered. */
   depth: number | null;
-  /** True iff this modal is the topmost open modal. */
+  /** True iff this overlay is the topmost open overlay. */
   isTop: boolean;
-  /** Mode of the current top modal (null if stack is empty). */
-  topMode: ModalStackMode | null;
+  /** Mode of the current top overlay (null if stack is empty). */
+  topMode: OverlayStackMode | null;
 }
 
 /**
- * Register/unregister this modal in the singleton stack while `active` is
- * true. Returns the current depth, whether this modal is on top, and the
- * top modal's stackMode. Subscribes to stack mutations so state stays
- * accurate when sibling modals open/close.
+ * Register/unregister this overlay in the singleton stack while `active` is
+ * true. Returns the current depth, whether this overlay is on top, and the
+ * top overlay's stackMode. Subscribes to stack mutations so state stays
+ * accurate when sibling overlays open/close.
  */
-export function useModalStack(id: string, active: boolean, mode: ModalStackMode): ModalStackState {
+export function useOverlayStack(id: string, active: boolean, mode: OverlayStackMode): OverlayStackState {
   // Lazy initializer pre-computes the post-registration state so the FIRST
-  // render of an opened modal already has correct `topMode` / `isTop` /
+  // render of an opened overlay already has correct `topMode` / `isTop` /
   // `depth`. Without this, paint and stack-position attributes would be
   // wrong on the first paint (transparent overlay flash, etc.). The actual
   // register() still happens in useLayoutEffect; this is read-only.
-  const [state, setState] = useState<ModalStackState>(() => {
+  const [state, setState] = useState<OverlayStackState>(() => {
     if (!active) return { depth: null, isTop: false, topMode: null };
     return {
-      depth: modalStack.topDepth(),
+      depth: overlayStack.topDepth(),
       isTop: true,
       topMode: mode,
     };
@@ -118,28 +118,28 @@ export function useModalStack(id: string, active: boolean, mode: ModalStackMode)
       setState({ depth: null, isTop: false, topMode: null });
       return;
     }
-    modalStack.register(id, mode);
+    overlayStack.register(id, mode);
     const sync = () => {
       setState({
-        depth: modalStack.depthOf(id),
-        isTop: modalStack.isTop(id),
-        topMode: modalStack.topMode(),
+        depth: overlayStack.depthOf(id),
+        isTop: overlayStack.isTop(id),
+        topMode: overlayStack.topMode(),
       });
     };
     sync();
-    const unsubscribe = modalStack._subscribe(sync);
+    const unsubscribe = overlayStack._subscribe(sync);
     return () => {
       unsubscribe();
-      modalStack.unregister(id);
+      overlayStack.unregister(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mode handled by separate effect below to avoid tear-down on mode change
   }, [id, active]);
 
-  // Update mode in place without tearing down the entry. modalStack.register
+  // Update mode in place without tearing down the entry. overlayStack.register
   // handles existing entries by updating their mode and re-notifying.
   useLayoutEffect(() => {
     if (!active) return;
-    modalStack.register(id, mode);
+    overlayStack.register(id, mode);
   }, [id, active, mode]);
 
   return state;

@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, type CSSProperties, type ReactNode } from '
 import clsx from 'clsx';
 import { useModalContext } from './context';
 import { useFocusTrap } from '../_internal/overlay/useFocusTrap';
-import { modalStack } from './useModalStack';
+import { overlayStack as modalStack } from '../_internal/overlay';
 import styles from './Modal.module.scss';
 
 export interface ContentProps {
