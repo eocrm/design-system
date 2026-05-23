@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -178,14 +179,40 @@ export function ModalRoot({
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [headingId, setHeadingId] = useState<string | null>(null);
 
-  // previouslyFocused: capture when transitioning false → true; restore on close.
+  // previouslyFocused: capture the trigger element when transitioning false → true,
+  // then restore focus to it on close.
+  //
+  // useLayoutEffect is required here (not useEffect) for two reasons:
+  //
+  // 1. Capture timing: Content.tsx uses queueMicrotask inside its useLayoutEffect
+  //    to steal focus to the dialog. Microtasks flush after the current task but
+  //    BEFORE the next macrotask — and useEffect runs as a macrotask-scheduled
+  //    callback (after paint). This means a useEffect would see document.activeElement
+  //    as the dialog div, not the trigger button, and would save the wrong element.
+  //    useLayoutEffect runs synchronously after the DOM commit but BEFORE microtasks
+  //    are processed, so it captures the trigger while it still has focus.
+  //
+  // 2. Close ordering: useScrollLock (below) is also a useLayoutEffect. React runs
+  //    layout-effect cleanups in reverse mount order, so useScrollLock's cleanup
+  //    (unlock → scrollTo) fires FIRST, restoring the scroll position. This
+  //    useLayoutEffect then fires and calls target.focus({ preventScroll: true }),
+  //    which does not disturb the just-restored scroll position. If focus restore
+  //    ran before unlock, a browser scrollIntoView triggered by focus could
+  //    override the scrollTo.
+  //
+  // Source order matters: this hook MUST stay above useScrollLock(open).
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const prevOpenRef = useRef<boolean>(open);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (open && !prevOpenRef.current) {
+      // Modal is opening: snapshot the currently focused element before the
+      // dialog's queueMicrotask fires and steals focus.
       previouslyFocusedRef.current = (document.activeElement as HTMLElement | null) ?? null;
     }
     if (!open && prevOpenRef.current) {
+      // Modal is closing: restore focus to the element that triggered it.
+      // preventScroll keeps the browser from scrollIntoView-ing the trigger,
+      // which would fight the scroll restoration in useScrollLock's cleanup.
       const target = previouslyFocusedRef.current;
       if (target && document.contains(target)) {
         target.focus({ preventScroll: true });
@@ -196,6 +223,8 @@ export function ModalRoot({
   }, [open]);
 
   // Stack registration + scroll lock are driven by `open`.
+  // useScrollLock MUST stay below the focus-restore useLayoutEffect above so
+  // that its cleanup (unlock → scrollTo) fires before focus is restored.
   const { depth, isTop, topMode } = useModalStack(modalId, open, stackMode);
   useScrollLock(open);
 
