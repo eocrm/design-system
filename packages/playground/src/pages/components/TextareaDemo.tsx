@@ -78,11 +78,7 @@ export function TextareaDemo() {
   onChange={(e) => setTweet(e.target.value)}
 />`}
       >
-        <Textarea
-          maxLength={140}
-          value={tweet}
-          onChange={(e) => setTweet(e.target.value)}
-        />
+        <Textarea maxLength={140} value={tweet} onChange={(e) => setTweet(e.target.value)} />
       </Example>
 
       <Example

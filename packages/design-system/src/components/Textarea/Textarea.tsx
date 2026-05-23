@@ -21,8 +21,10 @@ export type TextareaSize = 'sm' | 'md' | 'lg';
 /** User-drag resize handle direction. Maps to CSS `resize`. */
 export type TextareaResize = 'none' | 'vertical' | 'both';
 
-export interface TextareaProps
-  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'size' | 'rows'> {
+export interface TextareaProps extends Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  'size' | 'rows'
+> {
   /**
    * Toggles the error visual (red border + danger focus ring) and sets
    * `aria-invalid="true"`. Pair with a visible error message and an
@@ -160,137 +162,126 @@ const RESIZE_CLASS: Record<TextareaResize, string> = {
  * - ❌ Building a separate character counter outside the component when
  *   `maxLength` / `showCount` would do it.
  */
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  function Textarea(
-    {
-      invalid,
-      size = 'md',
-      disableAutofill,
-      minRows = 3,
-      maxRows,
-      autoGrow = true,
-      resize = 'vertical',
-      showCount,
-      className,
-      value,
-      defaultValue,
-      onChange,
-      maxLength,
-      ...props
-    },
-    ref,
-  ) {
-    // Merge external ref with internal ref so we don't lose either.
-    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-    const setRefs = useCallback(
-      (node: HTMLTextAreaElement | null) => {
-        textareaRef.current = node;
-        if (typeof ref === 'function') ref(node);
-        else if (ref) ref.current = node;
-      },
-      [ref],
-    );
-
-    // Internal value mirror — keeps the counter in sync for uncontrolled
-    // inputs. For controlled inputs, currentValue tracks `value` directly.
-    const [internalValue, setInternalValue] = useState<string>(() => {
-      if (defaultValue == null) return '';
-      return String(defaultValue);
-    });
-    const isControlled = value !== undefined;
-    const currentValue = isControlled ? String(value) : internalValue;
-
-    const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-      if (!isControlled) setInternalValue(e.target.value);
-      onChange?.(e);
-    };
-
-    // Auto-grow: synchronously after render, reset height to auto, then
-    // set to scrollHeight clamped between minRows and maxRows.
-    useLayoutEffect(() => {
-      const el = textareaRef.current;
-      if (!el) return;
-
-      if (!autoGrow) {
-        // Clear any prior auto-grow inline styles so toggling autoGrow OFF
-        // returns control to the native textarea (rows attribute + user drag).
-        el.style.height = '';
-        el.style.overflowY = '';
-        return;
-      }
-
-      // Reset to 'auto' first so scrollHeight reflects content, not the prior height.
-      el.style.height = 'auto';
-
-      const computed = window.getComputedStyle(el);
-      // jsdom may return 'normal' for lineHeight — fall back to 0 so the
-      // math degrades gracefully (minHeight becomes 0, target = scrollHeight).
-      const lineHeight = parseFloat(computed.lineHeight) || 0;
-      const paddingY =
-        (parseFloat(computed.paddingTop) || 0) +
-        (parseFloat(computed.paddingBottom) || 0);
-      const borderY =
-        (parseFloat(computed.borderTopWidth) || 0) +
-        (parseFloat(computed.borderBottomWidth) || 0);
-
-      const minHeight = lineHeight * minRows + paddingY + borderY;
-      const maxHeight =
-        maxRows !== undefined
-          ? lineHeight * maxRows + paddingY + borderY
-          : Infinity;
-
-      const desired = el.scrollHeight + borderY;
-      const target = Math.min(Math.max(desired, minHeight), maxHeight);
-      el.style.height = `${target}px`;
-      el.style.overflowY = desired > maxHeight ? 'auto' : 'hidden';
-      // NOTE: `size` is in the deps array because it changes padding, which
-      // changes paddingY in the math above. Don't remove it.
-    }, [currentValue, autoGrow, minRows, maxRows, size]);
-
-    // Smart autofill default — same heuristic as Input.
-    const hasAutocompleteHint =
-      typeof props.autoComplete === 'string' && props.autoComplete !== 'off';
-    const blockAutofill = disableAutofill ?? !hasAutocompleteHint;
-
-    // Effective resize: auto-grow forces 'none' because user-drag and
-    // measured-height fight each other.
-    const effectiveResize: TextareaResize = autoGrow ? 'none' : resize;
-
-    const shouldShowCount = showCount ?? maxLength !== undefined;
-
-    return (
-      <div className={styles.wrapper}>
-        <textarea
-          ref={setRefs}
-          rows={minRows}
-          aria-invalid={invalid || undefined}
-          // Autofill blocking goes before {...props} — matches Input's spread
-          // order. Consumer's autoComplete wins; data-* opt-outs still apply.
-          {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
-          value={value}
-          defaultValue={defaultValue}
-          maxLength={maxLength}
-          {...props}
-          onChange={handleChange}
-          className={clsx(
-            styles.textarea,
-            SIZE_CLASS[size],
-            RESIZE_CLASS[effectiveResize],
-            invalid && styles.invalid,
-            className,
-          )}
-        />
-        {shouldShowCount && (
-          <span
-            className={styles.counter}
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {currentValue.length}
-            {maxLength !== undefined && ` / ${maxLength}`}
-          </span>
-        )}
-      </div>
-    );
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
+  {
+    invalid,
+    size = 'md',
+    disableAutofill,
+    minRows = 3,
+    maxRows,
+    autoGrow = true,
+    resize = 'vertical',
+    showCount,
+    className,
+    value,
+    defaultValue,
+    onChange,
+    maxLength,
+    ...props
   },
-);
+  ref,
+) {
+  // Merge external ref with internal ref so we don't lose either.
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const setRefs = useCallback(
+    (node: HTMLTextAreaElement | null) => {
+      textareaRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
+
+  // Internal value mirror — keeps the counter in sync for uncontrolled
+  // inputs. For controlled inputs, currentValue tracks `value` directly.
+  const [internalValue, setInternalValue] = useState<string>(() => {
+    if (defaultValue == null) return '';
+    return String(defaultValue);
+  });
+  const isControlled = value !== undefined;
+  const currentValue = isControlled ? String(value) : internalValue;
+
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    if (!isControlled) setInternalValue(e.target.value);
+    onChange?.(e);
+  };
+
+  // Auto-grow: synchronously after render, reset height to auto, then
+  // set to scrollHeight clamped between minRows and maxRows.
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    if (!autoGrow) {
+      // Clear any prior auto-grow inline styles so toggling autoGrow OFF
+      // returns control to the native textarea (rows attribute + user drag).
+      el.style.height = '';
+      el.style.overflowY = '';
+      return;
+    }
+
+    // Reset to 'auto' first so scrollHeight reflects content, not the prior height.
+    el.style.height = 'auto';
+
+    const computed = window.getComputedStyle(el);
+    // jsdom may return 'normal' for lineHeight — fall back to 0 so the
+    // math degrades gracefully (minHeight becomes 0, target = scrollHeight).
+    const lineHeight = parseFloat(computed.lineHeight) || 0;
+    const paddingY =
+      (parseFloat(computed.paddingTop) || 0) + (parseFloat(computed.paddingBottom) || 0);
+    const borderY =
+      (parseFloat(computed.borderTopWidth) || 0) + (parseFloat(computed.borderBottomWidth) || 0);
+
+    const minHeight = lineHeight * minRows + paddingY + borderY;
+    const maxHeight = maxRows !== undefined ? lineHeight * maxRows + paddingY + borderY : Infinity;
+
+    const desired = el.scrollHeight + borderY;
+    const target = Math.min(Math.max(desired, minHeight), maxHeight);
+    el.style.height = `${target}px`;
+    el.style.overflowY = desired > maxHeight ? 'auto' : 'hidden';
+    // NOTE: `size` is in the deps array because it changes padding, which
+    // changes paddingY in the math above. Don't remove it.
+  }, [currentValue, autoGrow, minRows, maxRows, size]);
+
+  // Smart autofill default — same heuristic as Input.
+  const hasAutocompleteHint =
+    typeof props.autoComplete === 'string' && props.autoComplete !== 'off';
+  const blockAutofill = disableAutofill ?? !hasAutocompleteHint;
+
+  // Effective resize: auto-grow forces 'none' because user-drag and
+  // measured-height fight each other.
+  const effectiveResize: TextareaResize = autoGrow ? 'none' : resize;
+
+  const shouldShowCount = showCount ?? maxLength !== undefined;
+
+  return (
+    <div className={styles.wrapper}>
+      <textarea
+        ref={setRefs}
+        rows={minRows}
+        aria-invalid={invalid || undefined}
+        // Autofill blocking goes before {...props} — matches Input's spread
+        // order. Consumer's autoComplete wins; data-* opt-outs still apply.
+        {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
+        value={value}
+        defaultValue={defaultValue}
+        maxLength={maxLength}
+        {...props}
+        onChange={handleChange}
+        className={clsx(
+          styles.textarea,
+          SIZE_CLASS[size],
+          RESIZE_CLASS[effectiveResize],
+          invalid && styles.invalid,
+          className,
+        )}
+      />
+      {shouldShowCount && (
+        <span className={styles.counter} aria-live="polite" aria-atomic="true">
+          {currentValue.length}
+          {maxLength !== undefined && ` / ${maxLength}`}
+        </span>
+      )}
+    </div>
+  );
+});

@@ -89,8 +89,10 @@ export type TextareaSize = 'sm' | 'md' | 'lg';
 /** User-drag resize handle direction. Maps to CSS `resize` property. */
 export type TextareaResize = 'none' | 'vertical' | 'both';
 
-export interface TextareaProps
-  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'size' | 'rows'> {
+export interface TextareaProps extends Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  'size' | 'rows'
+> {
   /**
    * Toggles the error visual (red border + danger focus ring) and sets
    * `aria-invalid="true"`. Pair with a visible error message and an
@@ -188,12 +190,13 @@ export interface TextareaProps
   aria-invalid={invalid || undefined}
   {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
   {...props}
-  onChange={handleChange}  // wraps consumer's onChange to keep counter in sync
+  onChange={handleChange} // wraps consumer's onChange to keep counter in sync
   className={clsx(styles.textarea, sizeClass, resizeClass, invalid && styles.invalid, className)}
 />
 ```
 
 Notes on the spread:
+
 - `ref={setRefs}` — ref is not a regular prop in React, so spread order doesn't affect it. The internal handler updates the local ref (for measurement) and forwards to the consumer's ref via the merger.
 - `rows={minRows}` before `{...props}` — consumer's literal `rows` is `Omit`-stripped from the props type, so nothing in `props` overrides this anyway. The attribute is here for SSR / no-JS rendering.
 - `aria-invalid` before `{...props}` — consumer could pass `aria-invalid={false}` to override. That's Pattern A (consumer wins), matching Input.
@@ -214,7 +217,7 @@ const setRefs = useCallback(
     if (typeof ref === 'function') ref(node);
     else if (ref) ref.current = node;
   },
-  [ref]
+  [ref],
 );
 
 useLayoutEffect(() => {
@@ -227,16 +230,11 @@ useLayoutEffect(() => {
 
   const computed = window.getComputedStyle(el);
   const lineHeight = parseFloat(computed.lineHeight);
-  const paddingY =
-    parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom);
-  const borderY =
-    parseFloat(computed.borderTopWidth) + parseFloat(computed.borderBottomWidth);
+  const paddingY = parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom);
+  const borderY = parseFloat(computed.borderTopWidth) + parseFloat(computed.borderBottomWidth);
 
   const minHeight = lineHeight * minRows + paddingY + borderY;
-  const maxHeight =
-    maxRows !== undefined
-      ? lineHeight * maxRows + paddingY + borderY
-      : Infinity;
+  const maxHeight = maxRows !== undefined ? lineHeight * maxRows + paddingY + borderY : Infinity;
 
   // `scrollHeight` already includes padding (box-sizing matters here:
   // border-box totals include border but typically scrollHeight does not
@@ -260,7 +258,7 @@ useLayoutEffect(() => {
 
 ```tsx
 const [internalValue, setInternalValue] = useState<string>(() =>
-  typeof defaultValue === 'string' ? defaultValue : ''
+  typeof defaultValue === 'string' ? defaultValue : '',
 );
 const isControlled = value !== undefined;
 const currentValue = isControlled ? String(value) : internalValue;
@@ -280,12 +278,14 @@ const shouldShowCount = showCount ?? maxLength !== undefined;
 **Counter rendering:**
 
 ```tsx
-{shouldShowCount && (
-  <span className={styles.counter} aria-live="polite" aria-atomic="true">
-    {currentValue.length}
-    {maxLength !== undefined && ` / ${maxLength}`}
-  </span>
-)}
+{
+  shouldShowCount && (
+    <span className={styles.counter} aria-live="polite" aria-atomic="true">
+      {currentValue.length}
+      {maxLength !== undefined && ` / ${maxLength}`}
+    </span>
+  );
+}
 ```
 
 **aria-atomic="true"** — the whole count is re-announced as a unit, not just the changed digit (otherwise SRs might say "1" instead of "121").
@@ -358,9 +358,15 @@ This is invisible to the consumer's API — they pass `resize="vertical"` and `a
 }
 
 // Resize direction
-.resizeNone     { resize: none; }
-.resizeVertical { resize: vertical; }
-.resizeBoth     { resize: both; }
+.resizeNone {
+  resize: none;
+}
+.resizeVertical {
+  resize: vertical;
+}
+.resizeBoth {
+  resize: both;
+}
 
 .invalid {
   border-color: var(--color-danger);
@@ -383,6 +389,7 @@ This is invisible to the consumer's API — they pass `resize="vertical"` and `a
 ```
 
 **Rule 4 check:**
+
 - `.wrapper` and `.textarea` get only intrinsic dimensions (`width: 100%` / `display: block`), no layout.
 - `.counter` has `margin-top: var(--space-1)` — that's INTERNAL spacing between a wrapper-child and the textarea above it, not a layout property at the component boundary. Stylelint's `property-disallowed-list` may flag it. If so, the line gets an inline `/* stylelint-disable-next-line property-disallowed-list -- internal spacing between textarea and its counter child */` comment.
 
@@ -390,17 +397,17 @@ This is invisible to the consumer's API — they pass `resize="vertical"` and `a
 
 ## ARIA + behavior reference
 
-| Concern | Behavior |
-|---|---|
-| Invalid state | `aria-invalid="true"` on the textarea, red border + danger focus ring via SCSS |
-| Label association | Consumer wraps in `<label>` or uses `htmlFor` + `id` — Textarea forwards `id`. No built-in label |
+| Concern              | Behavior                                                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Invalid state        | `aria-invalid="true"` on the textarea, red border + danger focus ring via SCSS                                      |
+| Label association    | Consumer wraps in `<label>` or uses `htmlFor` + `id` — Textarea forwards `id`. No built-in label                    |
 | Counter announcement | `<span aria-live="polite" aria-atomic="true">` — polite (not interruptive); atomic so the whole string re-announces |
-| Disabled | Native `disabled` attribute; CSS `:disabled` selectors handle visual |
-| Read-only | Native `readOnly`; CSS `[readonly]` selector handles visual (subtle bg, still focusable) |
-| Focus management | None — native focus on the textarea is enough. The wrapper div has no role |
-| Autofill | Smart default identical to Input: block iff no autoComplete hint; explicit `disableAutofill` overrides |
-| Spread order | Pattern A (consumer wins) — matches Input |
-| Ref target | The `<textarea>` element, NOT the wrapper. Consumers can call `.focus()`, set `.value` directly, scroll, etc. |
+| Disabled             | Native `disabled` attribute; CSS `:disabled` selectors handle visual                                                |
+| Read-only            | Native `readOnly`; CSS `[readonly]` selector handles visual (subtle bg, still focusable)                            |
+| Focus management     | None — native focus on the textarea is enough. The wrapper div has no role                                          |
+| Autofill             | Smart default identical to Input: block iff no autoComplete hint; explicit `disableAutofill` overrides              |
+| Spread order         | Pattern A (consumer wins) — matches Input                                                                           |
+| Ref target           | The `<textarea>` element, NOT the wrapper. Consumers can call `.focus()`, set `.value` directly, scroll, etc.       |
 
 ## Testing
 

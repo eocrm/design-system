@@ -360,12 +360,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'Textarea',
     description: 'Multi-line text with auto-grow + character counter.',
     preview: (
-      <Textarea
-        minRows={2}
-        autoGrow={false}
-        defaultValue="Multi-line text…"
-        aria-label="Preview"
-      />
+      <Textarea minRows={2} autoGrow={false} defaultValue="Multi-line text…" aria-label="Preview" />
     ),
   },
   {

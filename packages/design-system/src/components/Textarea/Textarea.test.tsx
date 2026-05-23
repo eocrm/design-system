@@ -50,21 +50,12 @@ describe('<Textarea>', () => {
 
   it('disableAutofill smart default allows when autoComplete is set', () => {
     render(<Textarea aria-label="Notes" autoComplete="street-address" />);
-    expect(screen.getByRole('textbox')).toHaveAttribute(
-      'autoComplete',
-      'street-address',
-    );
+    expect(screen.getByRole('textbox')).toHaveAttribute('autoComplete', 'street-address');
     expect(screen.getByRole('textbox')).not.toHaveAttribute('data-1p-ignore');
   });
 
   it('disableAutofill={true} force-blocks even with autoComplete set', () => {
-    render(
-      <Textarea
-        aria-label="Notes"
-        autoComplete="street-address"
-        disableAutofill
-      />,
-    );
+    render(<Textarea aria-label="Notes" autoComplete="street-address" disableAutofill />);
     const textarea = screen.getByRole('textbox');
     // Consumer's autoComplete still wins (spread order matches Input)…
     expect(textarea).toHaveAttribute('autocomplete', 'street-address');
@@ -98,13 +89,7 @@ describe('<Textarea>', () => {
     const user = userEvent.setup();
     function Controlled() {
       const [v, setV] = useState('');
-      return (
-        <Textarea
-          aria-label="Notes"
-          value={v}
-          onChange={(e) => setV(e.target.value)}
-        />
-      );
+      return <Textarea aria-label="Notes" value={v} onChange={(e) => setV(e.target.value)} />;
     }
     render(<Controlled />);
     const textarea = screen.getByRole('textbox');
@@ -139,10 +124,7 @@ describe('<Textarea>', () => {
     let stubbedScrollHeight = 0;
 
     beforeAll(() => {
-      originalDescriptor = Object.getOwnPropertyDescriptor(
-        HTMLElement.prototype,
-        'scrollHeight',
-      );
+      originalDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollHeight');
       Object.defineProperty(HTMLTextAreaElement.prototype, 'scrollHeight', {
         configurable: true,
         get() {
@@ -153,11 +135,7 @@ describe('<Textarea>', () => {
 
     afterAll(() => {
       if (originalDescriptor) {
-        Object.defineProperty(
-          HTMLElement.prototype,
-          'scrollHeight',
-          originalDescriptor,
-        );
+        Object.defineProperty(HTMLElement.prototype, 'scrollHeight', originalDescriptor);
       } else {
         // @ts-expect-error — restoring to no descriptor
         delete HTMLTextAreaElement.prototype.scrollHeight;
@@ -174,9 +152,7 @@ describe('<Textarea>', () => {
 
     it('autoGrow=false leaves inline height unset', () => {
       stubbedScrollHeight = 200;
-      const { container } = render(
-        <Textarea aria-label="Notes" autoGrow={false} />,
-      );
+      const { container } = render(<Textarea aria-label="Notes" autoGrow={false} />);
       const textarea = container.querySelector('textarea')!;
       expect(textarea.style.height).toBe('');
     });
@@ -184,9 +160,7 @@ describe('<Textarea>', () => {
     it('maxRows clamps the inline height + sets overflowY to auto past the ceiling', () => {
       // Big scrollHeight so we'd exceed the cap.
       stubbedScrollHeight = 10000;
-      const { container } = render(
-        <Textarea aria-label="Notes" minRows={2} maxRows={4} />,
-      );
+      const { container } = render(<Textarea aria-label="Notes" minRows={2} maxRows={4} />);
       const textarea = container.querySelector('textarea')!;
       // overflowY should be 'auto' (we're past the cap).
       expect(textarea.style.overflowY).toBe('auto');
@@ -207,13 +181,7 @@ describe('<Textarea>', () => {
       stubbedScrollHeight = 50;
       function Controlled() {
         const [v, setV] = useState('');
-        return (
-          <Textarea
-            aria-label="Notes"
-            value={v}
-            onChange={(e) => setV(e.target.value)}
-          />
-        );
+        return <Textarea aria-label="Notes" value={v} onChange={(e) => setV(e.target.value)} />;
       }
       const { container } = render(<Controlled />);
       const textarea = container.querySelector('textarea')!;
@@ -230,36 +198,26 @@ describe('<Textarea>', () => {
   // ─── Resize handle ─────────────────────────────────────────────────────
 
   it('resize defaults to "vertical" when autoGrow is false', () => {
-    const { container } = render(
-      <Textarea aria-label="Notes" autoGrow={false} />,
-    );
-    expect(container.querySelector('textarea')!.className).toMatch(
-      /resizeVertical/,
-    );
+    const { container } = render(<Textarea aria-label="Notes" autoGrow={false} />);
+    expect(container.querySelector('textarea')!.className).toMatch(/resizeVertical/);
   });
 
   it('resize is forced to "none" when autoGrow is true (even if vertical passed)', () => {
-    const { container } = render(
-      <Textarea aria-label="Notes" autoGrow={true} resize="vertical" />,
-    );
+    const { container } = render(<Textarea aria-label="Notes" autoGrow={true} resize="vertical" />);
     const textarea = container.querySelector('textarea')!;
     expect(textarea.className).toMatch(/resizeNone/);
     expect(textarea.className).not.toMatch(/resizeVertical/);
   });
 
   it('resize="both" applies the right class when autoGrow=false', () => {
-    const { container } = render(
-      <Textarea aria-label="Notes" autoGrow={false} resize="both" />,
-    );
+    const { container } = render(<Textarea aria-label="Notes" autoGrow={false} resize="both" />);
     expect(container.querySelector('textarea')!.className).toMatch(/resizeBoth/);
   });
 
   // ─── Counter ───────────────────────────────────────────────────────────
 
   it('counter shows automatically when maxLength is set', () => {
-    render(
-      <Textarea aria-label="Notes" maxLength={140} defaultValue="hi" />,
-    );
+    render(<Textarea aria-label="Notes" maxLength={140} defaultValue="hi" />);
     expect(screen.getByText('2 / 140')).toBeInTheDocument();
   });
 
@@ -269,14 +227,7 @@ describe('<Textarea>', () => {
   });
 
   it('counter is hidden when showCount=false even if maxLength is set', () => {
-    render(
-      <Textarea
-        aria-label="Notes"
-        maxLength={140}
-        showCount={false}
-        defaultValue="hi"
-      />,
-    );
+    render(<Textarea aria-label="Notes" maxLength={140} showCount={false} defaultValue="hi" />);
     expect(screen.queryByText(/\/\s*140/)).not.toBeInTheDocument();
   });
 
@@ -295,9 +246,7 @@ describe('<Textarea>', () => {
   });
 
   it('counter has aria-live="polite" and aria-atomic="true"', () => {
-    const { container } = render(
-      <Textarea aria-label="Notes" maxLength={140} />,
-    );
+    const { container } = render(<Textarea aria-label="Notes" maxLength={140} />);
     const counter = container.querySelector('span[aria-live]')!;
     expect(counter).toHaveAttribute('aria-live', 'polite');
     expect(counter).toHaveAttribute('aria-atomic', 'true');
