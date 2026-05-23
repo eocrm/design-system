@@ -98,6 +98,46 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 
 **See also:** `<Tabs>` for routing-style content switching, `<Radio>` for vertical radio lists.
 
+### `<Link>` — polymorphic styled anchor
+
+Inline navigation link. Polymorphic via `as` — defaults to `<a>`, consumers pass a router's `<Link>` for SPA navigation. Three visual variants cover the inline use cases.
+
+```tsx
+import { Link } from '@eocrm/design-system';
+
+// External — defaults to <a>
+<Link href="https://docs.example.com">Documentation</Link>
+
+// SPA route — pass router's Link
+import { Link as RouterLink } from 'react-router-dom';
+<Link as={RouterLink} to="/contacts">Contacts</Link>
+
+// Variants
+<Link href="/x">View all</Link>                                  {/* default — accent, hover-underline */}
+<Link href="/x" variant="muted">Subdued nav</Link>               {/* breadcrumb-style */}
+<Link href="/x" variant="subtle">Contact name</Link>             {/* fg color, hover-accent */}
+```
+
+- **Polymorphic**: `as={Component}` forwards all of Component's props with full TypeScript inference.
+- **Library has no router dependency** — the `as` mechanism is consumer-driven.
+- **Three variants**:
+  - `default`: accent color, hover-underline. Inline CTA ("View all →").
+  - `muted`: muted color, hover-accent. Low-emphasis nav (breadcrumb-style).
+  - `subtle`: foreground color, hover-accent + underline. Dense-surface name links.
+- **No `disabled` state** — render `<span>` directly for non-clickable labels.
+
+#### When NOT to use
+
+- ❌ Action triggers (submit, open modal) → use `<Button>`.
+- ❌ Mutually-exclusive switchers → use `<Tabs>` or `<ButtonGroup>`.
+- ❌ "Link styled as button" → use `<Button variant="ghost">`.
+
+#### Anti-patterns
+
+- ❌ `<Link href="#" onClick={...}>` — fake hrefs break right-click "open in new tab".
+- ❌ Forgetting `rel="noopener noreferrer"` on `target="_blank"` links.
+- ❌ Using `variant="default"` for low-emphasis nav like breadcrumbs.
+
 ### `<Input>` — single-line text
 
 ```tsx
@@ -435,6 +475,45 @@ const [tab, setTab] = useState('overview');
 - `orientation`: `horizontal` (default) or `vertical`.
 - `panelIdPrefix`: optional. When set, each tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link.
 - The active-tab underline slides between tabs when `activeId` changes. Respects `prefers-reduced-motion: reduce`.
+
+### `<Breadcrumb>` — navigation trail
+
+Compound (Breadcrumb.Item) navigation breadcrumb. Last child is auto-marked as the current page (`<span aria-current="page">`); non-last items are muted Links. Default separator is a ChevronRight icon.
+
+```tsx
+import { Breadcrumb, Link } from '@eocrm/design-system';
+import { Link as RouterLink } from 'react-router-dom';
+
+<Breadcrumb>
+  <Breadcrumb.Item as={RouterLink} to="/mockups">Mockups</Breadcrumb.Item>
+  <Breadcrumb.Item as={RouterLink} to="/mockups/contacts">Contacts</Breadcrumb.Item>
+  <Breadcrumb.Item>Acme Corp</Breadcrumb.Item>      {/* auto-current */}
+</Breadcrumb>
+
+// Custom separator
+<Breadcrumb separator={<Slash size={12} />}>
+  <Breadcrumb.Item as={RouterLink} to="/a">A</Breadcrumb.Item>
+  <Breadcrumb.Item>B</Breadcrumb.Item>
+</Breadcrumb>
+```
+
+- **Compound API** — wrap each crumb in `<Breadcrumb.Item>`.
+- **Auto-current** — last child gets `aria-current="page"` and renders as `<span>`. Override with explicit `current` prop.
+- **Item is polymorphic** — same `as` pattern as Link.
+- **Default separator** is `<ChevronRight size={14} />`. Override via the `separator` prop.
+- **`<nav aria-label="Breadcrumb">` wrapper** — semantic landmark, AT-friendly.
+
+#### When NOT to use
+
+- ❌ Horizontal nav of equal-importance siblings → `<Tabs>`.
+- ❌ Step-by-step progress → a dedicated Stepper (not shipped).
+- ❌ Single-page apps with no parent hierarchy — omit Breadcrumb entirely.
+
+#### Anti-patterns
+
+- ❌ Making the current page clickable. Current items are non-link by design.
+- ❌ Long trails (5+ levels) — wrap and become illegible.
+- ❌ Building your own `<nav>` + chevron pattern. Use Breadcrumb.
 
 ### `<DropdownMenu>` — action menus from a trigger
 
