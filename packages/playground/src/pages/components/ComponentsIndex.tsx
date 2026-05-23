@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Inbox } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { Breadcrumb } from '@eocrm/design-system';
+import { Link as DSLink } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { ButtonGroup } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
@@ -323,6 +325,32 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Badge tone="success">Active</Badge>
         <Badge tone="warning">Pending</Badge>
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/breadcrumb',
+    name: 'Breadcrumb',
+    description: 'Navigation trail with auto-current on the last item.',
+    preview: (
+      <Breadcrumb>
+        <Breadcrumb.Item href="#a" onClick={(e) => e.preventDefault()}>
+          Workspace
+        </Breadcrumb.Item>
+        <Breadcrumb.Item href="#b" onClick={(e) => e.preventDefault()}>
+          Contacts
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>Acme</Breadcrumb.Item>
+      </Breadcrumb>
+    ),
+  },
+  {
+    to: '/components/link',
+    name: 'Link',
+    description: 'Polymorphic styled anchor with three visual variants.',
+    preview: (
+      <DSLink href="#" onClick={(e) => e.preventDefault()}>
+        View details →
+      </DSLink>
     ),
   },
   {

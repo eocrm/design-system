@@ -7,6 +7,7 @@ import { Contacts } from './pages/mockups/Contacts/Contacts';
 import { ContactDetail } from './pages/mockups/ContactDetail/ContactDetail';
 import { Members } from './pages/mockups/Members/Members';
 import { ComponentsIndex } from './pages/components/ComponentsIndex';
+import { BreadcrumbDemo } from './pages/components/BreadcrumbDemo';
 import { ButtonDemo } from './pages/components/ButtonDemo';
 import { ButtonGroupDemo } from './pages/components/ButtonGroupDemo';
 import { DatePickersDemo } from './pages/components/DatePickersDemo';
@@ -37,6 +38,7 @@ import { DataTableDemo } from './pages/components/DataTableDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
 import { DrawerDemo } from './pages/components/DrawerDemo';
 import { GridDemo } from './pages/components/GridDemo';
+import { LinkDemo } from './pages/components/LinkDemo';
 import { ToastDemo } from './pages/components/ToastDemo';
 import { ToastViewport } from '@eocrm/design-system';
 
@@ -55,6 +57,7 @@ export default function App() {
           <Route path="/mockups/members" element={<Members />} />
 
           <Route path="/components" element={<ComponentsIndex />} />
+          <Route path="/components/breadcrumb" element={<BreadcrumbDemo />} />
           <Route path="/components/button" element={<ButtonDemo />} />
           <Route path="/components/button-group" element={<ButtonGroupDemo />} />
           <Route path="/components/datepickers" element={<DatePickersDemo />} />
@@ -87,6 +90,7 @@ export default function App() {
           <Route path="/components/empty-state" element={<EmptyStateDemo />} />
           <Route path="/components/drawer" element={<DrawerDemo />} />
           <Route path="/components/grid" element={<GridDemo />} />
+          <Route path="/components/link" element={<LinkDemo />} />
           <Route path="/components/textarea" element={<TextareaDemo />} />
           <Route path="/components/toast" element={<ToastDemo />} />
         </Routes>

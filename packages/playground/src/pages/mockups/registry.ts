@@ -3,6 +3,7 @@
 export type ComponentName =
   | 'Avatar'
   | 'Badge'
+  | 'Breadcrumb'
   | 'Button'
   | 'ButtonGroup'
   | 'Calendar'
@@ -21,6 +22,7 @@ export type ComponentName =
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'
   | 'Input'
+  | 'Link'
   | 'Modal'
   | 'Pagination'
   | 'PasswordInput'
