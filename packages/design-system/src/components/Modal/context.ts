@@ -1,7 +1,8 @@
 import { createContext, useContext, type RefObject } from 'react';
-import { type ModalStackMode } from './useModalStack';
+import type { OverlayStackMode } from '../_internal/overlay';
 
-export type { ModalStackMode };
+/** @deprecated alias of {@link OverlayStackMode}. Kept for backward compatibility. */
+export type ModalStackMode = OverlayStackMode;
 
 export type ModalSize = 'sm' | 'md' | 'lg';
 export type ModalOverlayVariant = 'solid' | 'blur';

@@ -36,6 +36,13 @@
   // Prevent touch-scroll chaining from modal body scrolling to the document.
   overscroll-behavior: contain;
 
+  // Hint the browser to put this on its own compositor layer before the
+  // animation starts — opacity fades become smooth from frame 1.
+  will-change: opacity;
+
+  // Isolate paint + layout so opening doesn't invalidate sibling trees.
+  contain: layout paint;
+
   @starting-style {
     opacity: var(--opacity-hidden);
   }
@@ -107,6 +114,13 @@
   transition:
     opacity var(--transition-base),
     transform var(--transition-base);
+
+  // Promote to its own compositor layer so opacity + transform animate
+  // on the GPU from the first frame, not after a paint upgrade.
+  will-change: opacity, transform;
+
+  // Isolate paint + layout — the modal doesn't affect parent layout.
+  contain: layout paint;
 
   @starting-style {
     opacity: var(--opacity-hidden);

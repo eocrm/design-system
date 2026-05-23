@@ -15,8 +15,11 @@ import {
   type ModalOverlayVariant,
   type ModalSize,
 } from './context';
-import { useModalStack, type ModalStackMode } from './useModalStack';
-import { useScrollLock } from './useScrollLock';
+import {
+  useOverlayStack as useModalStack,
+  type OverlayStackMode as ModalStackMode,
+} from '../_internal/overlay';
+import { useScrollLock } from '../_internal/overlay/useScrollLock';
 import { Overlay } from './Overlay';
 import { Content } from './Content';
 import { sanitizeId } from '../_internal/refs';

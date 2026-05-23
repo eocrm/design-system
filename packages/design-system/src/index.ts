@@ -87,6 +87,19 @@ export type {
   ModalCloseProps,
 } from './components/Modal';
 
+export { Drawer } from './components/Drawer';
+export type {
+  DrawerProps,
+  DrawerSide,
+  DrawerSize,
+  DrawerOverlayVariant,
+  DrawerStackMode,
+  DrawerHeaderProps,
+  DrawerBodyProps,
+  DrawerFooterProps,
+  DrawerCloseProps,
+} from './components/Drawer';
+
 export { Radio, RadioGroup } from './components/Radio';
 export type {
   RadioProps,

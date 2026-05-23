@@ -8,6 +8,8 @@ import { createPortal } from 'react-dom';
 import { useModalContext } from './context';
 import styles from './Modal.module.scss';
 
+const PORTAL_EXEMPT_SELECTOR = '[data-modal-portal-root], [data-drawer-portal-root]';
+
 export interface OverlayProps {
   children: ReactNode;
 }
@@ -40,7 +42,7 @@ export function Overlay({ children }: OverlayProps) {
     const bodyChildren = Array.from(document.body.children) as HTMLElement[];
     const toRestore: Array<{ el: HTMLElement; had: boolean }> = [];
     for (const el of bodyChildren) {
-      if (el.hasAttribute('data-modal-portal-root')) continue;
+      if (el.matches(PORTAL_EXEMPT_SELECTOR)) continue;
       const had = el.hasAttribute('inert');
       if (!had) el.setAttribute('inert', '');
       toRestore.push({ el, had });

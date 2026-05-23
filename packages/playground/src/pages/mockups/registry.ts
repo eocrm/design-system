@@ -13,6 +13,7 @@ export type ComponentName =
   | 'DataTable'
   | 'DatePicker'
   | 'DateRangePicker'
+  | 'Drawer'
   | 'DropdownMenu'
   | 'EmptyState'
   | 'InlineDatePicker'

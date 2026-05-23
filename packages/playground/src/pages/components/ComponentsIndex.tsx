@@ -386,6 +386,83 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
+    to: '/components/drawer',
+    name: 'Drawer',
+    description: 'Edge-anchored slide-in panel with drag-to-close on mobile.',
+    preview: (
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'stretch',
+          justifyContent: 'flex-end',
+          height: 110,
+          pointerEvents: 'none',
+          overflow: 'hidden',
+          position: 'relative',
+        }}
+      >
+        {/* Overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'var(--color-bg-overlay)',
+            opacity: 0.4,
+          }}
+        />
+        {/* Drawer panel */}
+        <div
+          style={{
+            width: 130,
+            borderLeft: '1px solid var(--color-border)',
+            background: 'var(--color-bg)',
+            boxShadow: 'var(--shadow-lg)',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          <div
+            style={{
+              padding: '8px 12px',
+              borderBottom: '1px solid var(--color-border)',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+            }}
+          >
+            Filters
+          </div>
+          <div
+            style={{
+              padding: '8px 12px',
+              fontSize: '0.7rem',
+              color: 'var(--color-fg-muted)',
+              flex: 1,
+            }}
+          >
+            Filter content here.
+          </div>
+          <div
+            style={{
+              padding: '8px 12px',
+              borderTop: '1px solid var(--color-border)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: 6,
+            }}
+          >
+            <Button size="sm" variant="secondary">
+              Cancel
+            </Button>
+            <Button size="sm">Apply</Button>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
     to: '/components/popover',
     name: 'Popover',
     description: 'Non-modal floating panel for arbitrary small surfaces.',

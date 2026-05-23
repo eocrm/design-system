@@ -1,13 +1,13 @@
 /**
  * Integration tests for <Modal>. The three hooks (useFocusTrap, useScrollLock,
- * useModalStack) have their own unit tests; these tests exercise the
+ * useOverlayStack) have their own unit tests; these tests exercise the
  * assembled component behavior.
  */
 import { useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Modal } from './Modal';
-import { modalStack } from './useModalStack';
+import { overlayStack } from '../_internal/overlay';
 
 function Harness(props: Partial<ComponentProps<typeof Modal>>) {
   const [open, setOpen] = useState(false);
@@ -35,7 +35,7 @@ function Harness(props: Partial<ComponentProps<typeof Modal>>) {
 
 describe('<Modal>', () => {
   afterEach(() => {
-    modalStack._reset();
+    overlayStack._reset();
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
   });

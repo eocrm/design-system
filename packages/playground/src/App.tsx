@@ -32,6 +32,7 @@ import { CalendarDemo } from './pages/components/CalendarDemo';
 import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverDemo';
 import { DataTableDemo } from './pages/components/DataTableDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
+import { DrawerDemo } from './pages/components/DrawerDemo';
 
 export default function App() {
   return (
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="/components/confirmation-popover" element={<ConfirmationPopoverDemo />} />
           <Route path="/components/datatable" element={<DataTableDemo />} />
           <Route path="/components/empty-state" element={<EmptyStateDemo />} />
+          <Route path="/components/drawer" element={<DrawerDemo />} />
         </Routes>
       </AppShell>
     </BrowserRouter>
