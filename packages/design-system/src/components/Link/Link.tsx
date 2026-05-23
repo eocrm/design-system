@@ -32,9 +32,9 @@ interface LinkOwnProps {
  * underlying element's props (minus what we own), plus the `as` selector.
  */
 type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
-  ComponentPropsWithoutRef<C>,
-  keyof P | 'as'
->;
+    ComponentPropsWithoutRef<C>,
+    keyof P | 'as'
+  >;
 
 /**
  * Public Link prop type. Generic `C` defaults to `'a'`. When the consumer
@@ -42,10 +42,7 @@ type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
  * with full TypeScript inference (including `to`, `replace`, `state`, etc. for
  * `react-router-dom`'s `<Link>`).
  */
-export type LinkProps<C extends ElementType = 'a'> = PolymorphicProps<
-  C,
-  LinkOwnProps
->;
+export type LinkProps<C extends ElementType = 'a'> = PolymorphicProps<C, LinkOwnProps>;
 
 /**
  * Internal ref type for the polymorphic generic. React's `forwardRef` strips

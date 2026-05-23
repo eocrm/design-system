@@ -111,11 +111,7 @@ export function BreadcrumbDemo() {
 </Breadcrumb>`}
       >
         <Breadcrumb>
-          <Breadcrumb.Item
-            href="https://example.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <Breadcrumb.Item href="https://example.com" target="_blank" rel="noopener noreferrer">
             Docs
           </Breadcrumb.Item>
           <Breadcrumb.Item as={RouterLink} to="/mockups">

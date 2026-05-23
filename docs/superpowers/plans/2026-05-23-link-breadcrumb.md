@@ -72,6 +72,7 @@ git log --oneline -3
 ```
 
 Expected:
+
 - Branch: `feat/link-breadcrumb`
 - Working tree clean
 - Most recent: `cd9ef66 Link + Breadcrumb: design spec`
@@ -170,9 +171,9 @@ interface LinkOwnProps {
  * underlying element's props (minus what we own), plus the `as` selector.
  */
 type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
-  ComponentPropsWithoutRef<C>,
-  keyof P | 'as'
->;
+    ComponentPropsWithoutRef<C>,
+    keyof P | 'as'
+  >;
 
 /**
  * Public Link prop type. Generic `C` defaults to `'a'`. When the consumer
@@ -180,10 +181,7 @@ type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
  * with full TypeScript inference (including `to`, `replace`, `state`, etc. for
  * `react-router-dom`'s `<Link>`).
  */
-export type LinkProps<C extends ElementType = 'a'> = PolymorphicProps<
-  C,
-  LinkOwnProps
->;
+export type LinkProps<C extends ElementType = 'a'> = PolymorphicProps<C, LinkOwnProps>;
 
 /**
  * Internal ref type for the polymorphic generic. React's `forwardRef` strips
@@ -476,6 +474,7 @@ npm test -w @eocrm/design-system -- --run src/components/Link/Link.test.tsx
 Expected: 15 tests pass (12 top-level + 3 from `it.each` expansion).
 
 If a test fails on the polymorphic-ref case (`ref` forwarding via `as={StubRouterLink}`), check:
+
 - `StubRouterLink` MUST spread `{...rest}` onto its `<a>` so the ref reaches it.
 - The plan's `StubRouterLink` already does this. If you simplified it, restore the spread.
 
@@ -588,9 +587,9 @@ import styles from './Breadcrumb.module.scss';
  * Breadcrumb module doesn't reach into Link's internals.
  */
 type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
-  ComponentPropsWithoutRef<C>,
-  keyof P | 'as'
->;
+    ComponentPropsWithoutRef<C>,
+    keyof P | 'as'
+  >;
 
 interface BreadcrumbItemOwnProps {
   /**
@@ -1059,7 +1058,7 @@ grep -n "Link\|Breadcrumb" packages/design-system/src/index.ts | head
 
 - [ ] **Step 2: Add the Link TL;DR to AGENTS.md**
 
-Find the `### \`<ButtonGroup>\`` section header (around line 68). Insert the Link section AFTER ButtonGroup and BEFORE `### \`<Input>\`` (around line 101). The new section ends just before `### \`<Input>\``.
+Find the `### \`<ButtonGroup>\``section header (around line 68). Insert the Link section AFTER ButtonGroup and BEFORE`### \`<Input>\``(around line 101). The new section ends just before`### \`<Input>\``.
 
 Add this content verbatim:
 
@@ -1107,7 +1106,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 - [ ] **Step 3: Add the Breadcrumb TL;DR to AGENTS.md**
 
-Find `### \`<Tabs>\`` (around line 415). Insert the Breadcrumb section AFTER Tabs and BEFORE the next section (around `### \`<DropdownMenu>\`` near line 439).
+Find `### \`<Tabs>\``(around line 415). Insert the Breadcrumb section AFTER Tabs and BEFORE the next section (around`### \`<DropdownMenu>\`` near line 439).
 
 Add this content verbatim:
 
@@ -1437,11 +1436,7 @@ export function BreadcrumbDemo() {
       >
         <Stack gap="md">
           <Breadcrumb>
-            <Breadcrumb.Item
-              href="https://example.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Breadcrumb.Item href="https://example.com" target="_blank" rel="noopener noreferrer">
               Docs
             </Breadcrumb.Item>
             <Breadcrumb.Item as={RouterLink} to="/mockups">
@@ -1564,8 +1559,8 @@ export type ComponentName =
   // …existing through 'Input'…
   | 'Input'
   | 'Link'
-  | 'Modal'
-  // …rest unchanged…;
+  | 'Modal';
+// …rest unchanged…;
 ```
 
 Existing mockups DO use breadcrumb (ContactDetail) and Link (across multiple mockups). Update `usesComponents` for those:
@@ -1765,6 +1760,7 @@ npm pack --dry-run -w @eocrm/design-system 2>&1 | grep -E "Link|Breadcrumb|test\
 ```
 
 Expected:
+
 - Link + Breadcrumb source files (`Link.tsx`, `Link.module.scss`, `Breadcrumb.tsx`, `Breadcrumb.module.scss`, `index.ts`) in the tarball
 - NO `*.test.*` files
 
@@ -1775,6 +1771,7 @@ Use a `general-purpose` subagent with model `opus`. Prompt template (substitute 
 > Fresh-context Hard-Rule-8 review of the Link + Breadcrumb PR. Branch `feat/link-breadcrumb` at HEAD `<sha>`. Per `packages/design-system/CLAUDE.md` Rule 8 — review the full diff against `main` and report findings as Critical / Important / Nice-to-have / Regression-watch.
 >
 > Files in scope:
+>
 > - `packages/design-system/src/components/Link/` (all 4 files)
 > - `packages/design-system/src/components/Breadcrumb/` (all 4 files)
 > - `packages/design-system/src/index.ts`
@@ -1786,6 +1783,7 @@ Use a `general-purpose` subagent with model `opus`. Prompt template (substitute 
 > Read first: `packages/design-system/CLAUDE.md` (Rules 1–7), `packages/design-system/AGENTS.md` (Link + Breadcrumb sections), `docs/superpowers/specs/2026-05-23-link-breadcrumb-design.md`. Compare against ButtonGroup.Item (`packages/design-system/src/components/ButtonGroup/ButtonGroupItem.tsx`) for the no-forwardRef-on-Item precedent.
 >
 > Verify:
+>
 > - **Rule 1**: tests exist for both Link and Breadcrumb (~15 + ~12 cases). Spot-check coverage matches what the spec enumerates.
 > - **Rule 3**: NO raw values in either SCSS module. All colors/spacing/radii via `var(--…)`. The `<ol>` margin/padding reset has inline disables with rationale.
 > - **Rule 4**: NO `position`, `align-self`, `flex: 1`, or width on either component's `.tsx` element. The SCSS modules use only `display: flex` + `gap` + `text-decoration`/`color`. Layout-at-component-boundary clean.

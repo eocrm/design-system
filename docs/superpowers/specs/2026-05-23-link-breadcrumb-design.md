@@ -68,7 +68,12 @@ Plus integration points:
 ## Public API — Link
 
 ```ts
-import type { ComponentPropsWithoutRef, ComponentPropsWithRef, ElementType, ReactNode } from 'react';
+import type {
+  ComponentPropsWithoutRef,
+  ComponentPropsWithRef,
+  ElementType,
+  ReactNode,
+} from 'react';
 
 /** Visual variant. Defaults to 'default'. */
 export type LinkVariant = 'default' | 'muted' | 'subtle';
@@ -92,18 +97,19 @@ interface LinkOwnProps {
  * router-aware link primitive (e.g. `react-router-dom`'s `<Link>`); all props
  * the underlying component accepts pass through with full type inference.
  */
-type PolymorphicProps<C extends ElementType, P> =
-  P & { as?: C } & Omit<ComponentPropsWithoutRef<C>, keyof P | 'as'>;
+type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
+    ComponentPropsWithoutRef<C>,
+    keyof P | 'as'
+  >;
 
-export type LinkProps<C extends ElementType = 'a'> =
-  PolymorphicProps<C, LinkOwnProps>;
+export type LinkProps<C extends ElementType = 'a'> = PolymorphicProps<C, LinkOwnProps>;
 ```
 
 The `forwardRef` type for a polymorphic component:
 
 ```ts
 type LinkComponent = <C extends ElementType = 'a'>(
-  props: LinkProps<C> & { ref?: ComponentPropsWithRef<C>['ref'] }
+  props: LinkProps<C> & { ref?: ComponentPropsWithRef<C>['ref'] },
 ) => ReactElement | null;
 ```
 
@@ -201,8 +207,10 @@ interface BreadcrumbItemOwnProps {
  * `as`/`to`/etc. to an internal `<Link variant="muted">`. When current, the
  * Item ignores polymorphic props and renders `<span aria-current="page">`.
  */
-export type BreadcrumbItemProps<C extends ElementType = 'a'> =
-  PolymorphicProps<C, BreadcrumbItemOwnProps>;
+export type BreadcrumbItemProps<C extends ElementType = 'a'> = PolymorphicProps<
+  C,
+  BreadcrumbItemOwnProps
+>;
 ```
 
 Compound assembly:
@@ -321,6 +329,7 @@ function BreadcrumbItem<C extends ElementType = 'a'>({
 ```
 
 `BreadcrumbItem` isn't `forwardRef`-wrapped because the meaningful ref target depends on `current`:
+
 - When `current`: a `<span>` (not focusable, refs rarely useful).
 - When not `current`: forwards to whatever `as` renders (Link handles its own ref forwarding).
 
@@ -423,17 +432,17 @@ Pragmatic call: skip `forwardRef` on `BreadcrumbItem`. Document in JSDoc.
 
 ## ARIA + behavior reference
 
-| Concern | Behavior |
-|---|---|
-| **Link element** | `<a>` by default. Polymorphic via `as` for router integration. |
-| **Link variant** | Pure visual. No semantic difference between variants. |
-| **Focus** | `:focus-visible` ring on Link (any variant). |
-| **External link safety** | NOT auto-added. Consumer manages `rel="noopener noreferrer"` when using `target="_blank"`. |
-| **Breadcrumb wrapper** | `<nav aria-label="Breadcrumb">` (customizable). |
-| **Breadcrumb list** | `<ol>` — ordered list, semantic. |
-| **Breadcrumb current** | Last item (auto-detected) → `<span aria-current="page">`. |
-| **Separator** | `<span aria-hidden="true">` wrapping the consumer-supplied separator (default ChevronRight). |
-| **Item ref** | Not forwarded (different return shapes for current vs not-current). Use Link directly if you need a ref. |
+| Concern                  | Behavior                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| **Link element**         | `<a>` by default. Polymorphic via `as` for router integration.                                           |
+| **Link variant**         | Pure visual. No semantic difference between variants.                                                    |
+| **Focus**                | `:focus-visible` ring on Link (any variant).                                                             |
+| **External link safety** | NOT auto-added. Consumer manages `rel="noopener noreferrer"` when using `target="_blank"`.               |
+| **Breadcrumb wrapper**   | `<nav aria-label="Breadcrumb">` (customizable).                                                          |
+| **Breadcrumb list**      | `<ol>` — ordered list, semantic.                                                                         |
+| **Breadcrumb current**   | Last item (auto-detected) → `<span aria-current="page">`.                                                |
+| **Separator**            | `<span aria-hidden="true">` wrapping the consumer-supplied separator (default ChevronRight).             |
+| **Item ref**             | Not forwarded (different return shapes for current vs not-current). Use Link directly if you need a ref. |
 
 ## Testing
 
@@ -470,6 +479,7 @@ Pragmatic call: skip `forwardRef` on `BreadcrumbItem`. Document in JSDoc.
 12. Single-child Breadcrumb: that child auto-becomes current (renders as `<span>`)
 
 **Vitest gotchas**:
+
 - For the polymorphic test (passing a stub component as `as`), use a small inline component: `const StubLink = ({ to, children, ...rest }: any) => <span data-to={to} {...rest}>{children}</span>`.
 - The `aria-current="page"` assertion: `expect(screen.getByText('Acme Corp')).toHaveAttribute('aria-current', 'page')`.
 
@@ -497,9 +507,11 @@ Pragmatic call: skip `forwardRef` on `BreadcrumbItem`. Document in JSDoc.
 Two sections to add:
 
 ### `<Link>` — placement
+
 After `<ButtonGroup>`, before `<Input>` (alphabetically `L` comes between `B` and `I` — but the file isn't strictly alphabetical; match the surrounding pattern. Likely append near the existing inline-text primitives or in a new "Navigation" cluster).
 
 ### `<Breadcrumb>` — placement
+
 With other navigation primitives (`<Tabs>`, `<DropdownMenu>` cluster). Goes near `<Tabs>` since both are navigation patterns.
 
 (Detailed TL;DR content in the plan, not duplicated here.)

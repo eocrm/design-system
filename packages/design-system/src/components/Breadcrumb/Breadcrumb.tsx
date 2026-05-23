@@ -17,9 +17,9 @@ import styles from './Breadcrumb.module.scss';
  * Breadcrumb module doesn't reach into Link's internals.
  */
 type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
-  ComponentPropsWithoutRef<C>,
-  keyof P | 'as'
->;
+    ComponentPropsWithoutRef<C>,
+    keyof P | 'as'
+  >;
 
 interface BreadcrumbItemOwnProps {
   /**
