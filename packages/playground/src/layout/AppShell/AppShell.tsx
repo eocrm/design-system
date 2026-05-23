@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
+  AlertCircle,
   LayoutDashboard,
   KanbanSquare,
   Users,
@@ -109,7 +110,10 @@ const componentGroups = [
   },
   {
     heading: 'Feedback',
-    items: [{ to: '/components/toast', label: 'Toast', icon: Bell, end: false }],
+    items: [
+      { to: '/components/alert', label: 'Alert', icon: AlertCircle, end: false },
+      { to: '/components/toast', label: 'Toast', icon: Bell, end: false },
+    ],
   },
   {
     heading: 'Navigation',

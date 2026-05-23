@@ -1,0 +1,125 @@
+import { useState } from 'react';
+import { Bell } from 'lucide-react';
+import { Alert, Button, Cluster, Stack } from '@eocrm/design-system';
+import { DemoLayout } from './DemoLayout';
+import { Example } from './Example';
+import tsxSource from '@lib-source/components/Alert/Alert.tsx?raw';
+import scssSource from '@lib-source/components/Alert/Alert.module.scss?raw';
+
+export function AlertDemo() {
+  const [showSaved, setShowSaved] = useState(true);
+
+  return (
+    <DemoLayout
+      name="Alert"
+      componentName="Alert"
+      description="Persistent in-flow notification. Four tones with tinted background + accent stripe. Optional title / description / icon / actions / dismiss. Use Toast for transient messages instead."
+      tsxSource={tsxSource}
+      scssSource={scssSource}
+      tsxFilename="Alert.tsx"
+      scssFilename="Alert.module.scss"
+    >
+      <Example
+        title="Four tones"
+        description="info / success / warning / error. Default icon + accent stripe per tone. Error gets role='alert' (assertive); others use role='status' (polite)."
+        code={`<Alert tone="info" title="Synced 5 minutes ago" />
+<Alert tone="success" title="Changes saved" />
+<Alert tone="warning" title="Storage at 85%" />
+<Alert tone="error" title="Request failed" />`}
+      >
+        <Stack gap="sm">
+          <Alert tone="info" title="Synced 5 minutes ago" />
+          <Alert tone="success" title="Changes saved" />
+          <Alert tone="warning" title="Storage at 85%" />
+          <Alert tone="error" title="Request failed" />
+        </Stack>
+      </Example>
+
+      <Example
+        title="Title only"
+        description="The simplest form. Useful for short status messages."
+        code={`<Alert tone="info" title="Synced 5 minutes ago" />`}
+      >
+        <Alert tone="info" title="Synced 5 minutes ago" />
+      </Example>
+
+      <Example
+        title="Description only (no title)"
+        description="Short text body without a heading. Reads as a sentence."
+        code={`<Alert tone="warning">Your storage is at 85% capacity.</Alert>`}
+      >
+        <Alert tone="warning">Your storage is at 85% capacity.</Alert>
+      </Example>
+
+      <Example
+        title="With actions"
+        description="Pass a pre-laid-out node as `actions`. Renders below the description."
+        code={`<Alert
+  tone="warning"
+  title="Update available"
+  actions={
+    <Cluster gap="sm">
+      <Button size="sm">Reload</Button>
+      <Button size="sm" variant="ghost">Later</Button>
+    </Cluster>
+  }
+>
+  A new version is ready. Reload to apply the latest improvements.
+</Alert>`}
+      >
+        <Alert
+          tone="warning"
+          title="Update available"
+          actions={
+            <Cluster gap="sm">
+              <Button size="sm">Reload</Button>
+              <Button size="sm" variant="ghost">
+                Later
+              </Button>
+            </Cluster>
+          }
+        >
+          A new version is ready. Reload to apply the latest improvements.
+        </Alert>
+      </Example>
+
+      <Example
+        title="Dismissible"
+        description="onDismiss callback fires when the × is clicked. The component does NOT manage hidden state — the consumer conditionally renders."
+        code={`const [show, setShow] = useState(true);
+
+{show && (
+  <Alert tone="success" onDismiss={() => setShow(false)}>
+    Changes saved.
+  </Alert>
+)}`}
+      >
+        <Stack gap="sm">
+          {showSaved ? (
+            <Alert tone="success" onDismiss={() => setShowSaved(false)}>
+              Changes saved.
+            </Alert>
+          ) : (
+            <Button size="sm" variant="ghost" onClick={() => setShowSaved(true)}>
+              Show again
+            </Button>
+          )}
+        </Stack>
+      </Example>
+
+      <Example
+        title="Custom icon + suppressed icon"
+        description="Pass any ReactNode to icon for an override. icon={null} hides the icon entirely."
+        code={`<Alert tone="info" icon={<Bell size={16} />} title="New mention" />
+<Alert tone="info" icon={null}>Quietly informative.</Alert>`}
+      >
+        <Stack gap="sm">
+          <Alert tone="info" icon={<Bell size={16} aria-hidden />} title="New mention" />
+          <Alert tone="info" icon={null}>
+            Quietly informative.
+          </Alert>
+        </Stack>
+      </Example>
+    </DemoLayout>
+  );
+}
