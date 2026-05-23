@@ -3,54 +3,54 @@ import { useScrollLock } from './useScrollLock';
 
 describe('useScrollLock', () => {
   beforeEach(() => {
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.width = '';
     document.body.style.paddingRight = '';
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
+    Object.defineProperty(window, 'scrollX', { configurable: true, value: 0 });
   });
 
-  it('locks scroll on first acquire (overflow: hidden on html and body)', () => {
+  it('pins body to position:fixed on first acquire', () => {
     const { unmount } = renderHook(() => useScrollLock(true));
-    expect(document.documentElement.style.overflow).toBe('hidden');
-    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body.style.position).toBe('fixed');
+    expect(document.body.style.width).toBe('100%');
     unmount();
   });
 
-  it('restores scroll when refcount drops to zero', () => {
+  it('restores body styles when refcount drops to zero', () => {
     const { unmount } = renderHook(() => useScrollLock(true));
-    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(document.body.style.position).toBe('fixed');
     unmount();
-    expect(document.documentElement.style.overflow).toBe('');
-    expect(document.body.style.overflow).toBe('');
+    expect(document.body.style.position).toBe('');
+    expect(document.body.style.top).toBe('');
+    expect(document.body.style.left).toBe('');
+    expect(document.body.style.width).toBe('');
   });
 
   it('second acquire while locked is a no-op (refcount only)', () => {
     const a = renderHook(() => useScrollLock(true));
-    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body.style.position).toBe('fixed');
     const b = renderHook(() => useScrollLock(true));
-    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body.style.position).toBe('fixed');
     b.unmount();
-    // First lock still active.
-    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body.style.position).toBe('fixed');
     a.unmount();
-    // Now released.
-    expect(document.body.style.overflow).toBe('');
+    expect(document.body.style.position).toBe('');
   });
 
-  it('restores ORIGINAL overflow values, not blank', () => {
-    document.documentElement.style.overflow = 'auto';
-    document.body.style.overflow = 'scroll';
+  it('restores ORIGINAL body position value, not blank', () => {
+    document.body.style.position = 'relative';
     const { unmount } = renderHook(() => useScrollLock(true));
-    expect(document.documentElement.style.overflow).toBe('hidden');
-    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body.style.position).toBe('fixed');
     unmount();
-    expect(document.documentElement.style.overflow).toBe('auto');
-    expect(document.body.style.overflow).toBe('scroll');
+    expect(document.body.style.position).toBe('relative');
   });
 
   it('active=false is a no-op', () => {
     renderHook(() => useScrollLock(false));
-    expect(document.documentElement.style.overflow).toBe('');
-    expect(document.body.style.overflow).toBe('');
+    expect(document.body.style.position).toBe('');
   });
 
   it('pads body-right by the disappearing scrollbar width to prevent layout shift', () => {
@@ -82,5 +82,19 @@ describe('useScrollLock', () => {
     const { unmount } = renderHook(() => useScrollLock(true));
     expect(document.body.style.paddingRight).toBe('');
     unmount();
+  });
+
+  it('captures scroll position into body offsets and restores on unlock via scrollTo', () => {
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 300 });
+    Object.defineProperty(window, 'scrollX', { configurable: true, value: 50 });
+
+    const { unmount } = renderHook(() => useScrollLock(true));
+    expect(document.body.style.top).toBe('-300px');
+    expect(document.body.style.left).toBe('-50px');
+
+    const spy = vi.spyOn(window, 'scrollTo');
+    unmount();
+    expect(spy).toHaveBeenCalledWith({ left: 50, top: 300, behavior: 'instant' });
+    spy.mockRestore();
   });
 });

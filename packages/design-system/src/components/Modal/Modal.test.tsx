@@ -233,18 +233,18 @@ describe('<Modal>', () => {
   it('locks body scroll while open', async () => {
     const user = userEvent.setup();
     render(<Harness />);
-    expect(document.body.style.overflow).toBe('');
+    expect(document.body.style.position).toBe('');
     await user.click(screen.getByText('Open'));
-    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body.style.position).toBe('fixed');
   });
 
   it('releases body scroll after close', async () => {
     const user = userEvent.setup();
     render(<Harness />);
     await user.click(screen.getByText('Open'));
-    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body.style.position).toBe('fixed');
     await user.keyboard('{Escape}');
-    expect(document.body.style.overflow).toBe('');
+    expect(document.body.style.position).toBe('');
   });
 
   it('data-size reflects size prop', async () => {
