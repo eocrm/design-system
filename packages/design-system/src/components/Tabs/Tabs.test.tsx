@@ -303,4 +303,70 @@ describe('Tabs', () => {
       expect(indicator.style.opacity).toBe('0');
     });
   });
+
+  describe('icon', () => {
+    it('renders the icon inside the tab button when provided', () => {
+      const itemsWithIcon: TabItem[] = [
+        {
+          id: 'a',
+          label: 'A',
+          icon: <svg data-testid="tab-icon" />,
+        },
+        { id: 'b', label: 'B' },
+      ];
+      render(<Tabs items={itemsWithIcon} activeId="a" onChange={noop} />);
+      const icon = screen.getByTestId('tab-icon');
+      expect(icon).toBeInTheDocument();
+      // Inside the tab button labelled 'A'
+      expect(screen.getByRole('tab', { name: 'A' })).toContainElement(icon);
+    });
+
+    it('does NOT include the icon in the tab’s accessible name', () => {
+      const itemsWithIcon: TabItem[] = [
+        {
+          id: 'a',
+          label: 'Activity',
+          icon: <svg data-testid="tab-icon" aria-label="should-be-ignored" />,
+        },
+      ];
+      render(<Tabs items={itemsWithIcon} activeId="a" onChange={noop} />);
+      // The accessible name is the label, not the icon's aria-label, because
+      // the icon's wrapper has aria-hidden="true".
+      expect(screen.getByRole('tab', { name: 'Activity' })).toBeInTheDocument();
+    });
+
+    it('does not render the icon wrapper when icon is omitted', () => {
+      // No icon on either item → no aria-hidden span inside the tab button.
+      const itemsNoIcon: TabItem[] = [{ id: 'a', label: 'A' }];
+      const { container } = render(<Tabs items={itemsNoIcon} activeId="a" onChange={noop} />);
+      const tab = container.querySelector('button[role="tab"]')!;
+      const iconWrapper = tab.querySelector('span[aria-hidden="true"]');
+      expect(iconWrapper).toBeNull();
+    });
+
+    it('icon={null} does NOT render the wrapper (prevents phantom gap before label)', () => {
+      const itemsNullIcon: TabItem[] = [{ id: 'a', label: 'A', icon: null }];
+      const { container } = render(<Tabs items={itemsNullIcon} activeId="a" onChange={noop} />);
+      const tab = container.querySelector('button[role="tab"]')!;
+      const iconWrapper = tab.querySelector('span[aria-hidden="true"]');
+      expect(iconWrapper).toBeNull();
+    });
+
+    it('icon + count both render together (icon before label, count after)', () => {
+      const itemsBoth: TabItem[] = [
+        {
+          id: 'a',
+          label: 'Activity',
+          icon: <svg data-testid="tab-icon" />,
+          count: 12,
+        },
+      ];
+      const { container } = render(<Tabs items={itemsBoth} activeId="a" onChange={noop} />);
+      const tab = container.querySelector('button[role="tab"]')!;
+      // Order check: first child = icon wrapper, last visible chunk = count.
+      const children = Array.from(tab.children);
+      expect(children[0]?.getAttribute('aria-hidden')).toBe('true');
+      expect(children[children.length - 1]?.textContent).toBe('12');
+    });
+  });
 });

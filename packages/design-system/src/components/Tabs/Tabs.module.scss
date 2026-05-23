@@ -51,6 +51,15 @@
   color: var(--color-accent);
 }
 
+.icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  // Inherit the tab's color so the icon picks up muted vs active automatically.
+  color: inherit;
+}
+
 .count {
   display: inline-flex;
   align-items: center;

@@ -7,6 +7,7 @@ import {
   useState,
   type HTMLAttributes,
   type KeyboardEvent,
+  type ReactNode,
 } from 'react';
 import clsx from 'clsx';
 import styles from './Tabs.module.scss';
@@ -19,6 +20,12 @@ export interface TabItem {
   label: string;
   /** Optional count chip shown next to the label (e.g. "Activity · 12"). */
   count?: number;
+  /**
+   * Optional leading icon rendered before the label. Typically a `lucide-react`
+   * icon. Sized via CSS to match the label's line height. Rendered with
+   * `aria-hidden="true"` (decorative — the label carries the accessible name).
+   */
+  icon?: ReactNode;
 }
 
 /**
@@ -276,6 +283,11 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
                 if (item.id !== activeId) onChange(item.id);
               }}
             >
+              {item.icon != null && (
+                <span className={styles.icon} aria-hidden="true">
+                  {item.icon}
+                </span>
+              )}
               <span>{item.label}</span>
               {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
             </button>
