@@ -3,6 +3,7 @@ import { ArrowRight, Inbox } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
+import { ButtonGroup } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
 import { Checkbox } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
@@ -60,6 +61,27 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Button size="sm" variant="secondary">
           Secondary
         </Button>
+      </Cluster>
+    ),
+  },
+  {
+    to: '/components/button-group',
+    name: 'ButtonGroup',
+    description:
+      'Joined Buttons (toolbar action group) or single-select segmented control with arrow-key navigation.',
+    preview: (
+      <Cluster gap="sm" justify="center">
+        <ButtonGroup aria-label="Preview">
+          <Button size="sm" variant="secondary">
+            Cut
+          </Button>
+          <Button size="sm" variant="secondary">
+            Copy
+          </Button>
+          <Button size="sm" variant="secondary">
+            Paste
+          </Button>
+        </ButtonGroup>
       </Cluster>
     ),
   },

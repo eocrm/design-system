@@ -4,6 +4,7 @@ export type ComponentName =
   | 'Avatar'
   | 'Badge'
   | 'Button'
+  | 'ButtonGroup'
   | 'Calendar'
   | 'Card'
   | 'Checkbox'
