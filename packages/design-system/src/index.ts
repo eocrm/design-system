@@ -36,6 +36,14 @@ export type {
   GridAs,
 } from './components/Grid';
 
+export { Divider } from './components/Divider';
+export type {
+  DividerProps,
+  DividerOrientation,
+  DividerVariant,
+  DividerSize,
+} from './components/Divider';
+
 export { Alert } from './components/Alert';
 export type { AlertProps, AlertTone } from './components/Alert';
 
