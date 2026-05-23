@@ -21,6 +21,9 @@ export type { CheckboxProps, CheckboxSize } from './components/Checkbox';
 export { Stack } from './components/Stack';
 export type { StackProps, StackGap, StackAlign } from './components/Stack';
 
+export { Switch } from './components/Switch';
+export type { SwitchProps, SwitchSize, SwitchTone } from './components/Switch';
+
 export { Cluster } from './components/Cluster';
 export type { ClusterProps, ClusterGap, ClusterJustify, ClusterAlign } from './components/Cluster';
 
