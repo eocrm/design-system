@@ -162,6 +162,9 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
 
     return (
       <AccordionContext.Provider value={ctx}>
+        {/* Pattern A — consumer props reach the div, but data-accordion and
+            className are set AFTER the spread so the keyboard-scope marker
+            and the component class can't be removed by a consumer. */}
         <div
           ref={ref}
           {...rest}
@@ -209,6 +212,9 @@ const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
 
     return (
       <AccordionContext.Provider value={ctx}>
+        {/* Pattern A — consumer props reach the div, but data-accordion and
+            className are set AFTER the spread so the keyboard-scope marker
+            and the component class can't be removed by a consumer. */}
         <div
           ref={ref}
           {...rest}

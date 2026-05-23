@@ -48,11 +48,16 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
       const root = e.currentTarget.closest<HTMLElement>('[data-accordion]');
       if (!root) return;
 
+      // querySelectorAll matches all descendants — including triggers in a
+      // NESTED Accordion inside an open Content. Scope keyboard nav to the
+      // current root by filtering to triggers whose nearest accordion ancestor
+      // IS this root. Without this, ArrowDown from an outer trigger jumps into
+      // the inner accordion.
       const triggers = Array.from(
         root.querySelectorAll<HTMLButtonElement>(
           'button[aria-expanded]:not(:disabled)',
         ),
-      );
+      ).filter((btn) => btn.closest('[data-accordion]') === root);
       if (triggers.length === 0) return;
 
       const current = triggers.indexOf(e.currentTarget);
@@ -84,6 +89,9 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
 
     return (
       <Heading className={styles.header}>
+        {/* Pattern B — {...props} first so component-owned id/aria-expanded/
+            aria-controls/disabled/onClick/onKeyDown/className win and the ARIA
+            contract can't be overridden by a consumer. */}
         <button
           {...props}
           ref={ref}

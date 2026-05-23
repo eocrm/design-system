@@ -50,6 +50,9 @@ export const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
 
     return (
       <AccordionItemContext.Provider value={ctx}>
+        {/* Pattern A — {...props} after ref so consumer attrs reach the div,
+            but data-state/data-disabled/className are set AFTER the spread
+            so the component wins on those three. */}
         <div
           ref={ref}
           {...props}

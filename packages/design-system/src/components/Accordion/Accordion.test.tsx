@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Plus } from 'lucide-react';
@@ -388,5 +388,126 @@ describe('<Accordion>', () => {
     const trigger = screen.getByRole('button', { name: 'A' });
     expect(within(trigger).queryByRole('img')).toBeNull();
     expect(trigger.querySelector('svg')).toBeNull();
+  });
+
+  // ─── Rule 1 minimum coverage: ref + className ──────────────────────────
+
+  it('Accordion root: ref forwards to the root <div>', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Accordion type="single" ref={ref}>
+        <Accordion.Item value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    expect(ref.current).not.toBeNull();
+    expect(ref.current?.tagName).toBe('DIV');
+    expect(ref.current?.getAttribute('data-accordion')).toBe('');
+  });
+
+  it('Item: ref forwards to the item <div>', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Accordion type="single">
+        <Accordion.Item ref={ref} value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    expect(ref.current).not.toBeNull();
+    expect(ref.current?.tagName).toBe('DIV');
+    expect(ref.current?.getAttribute('data-state')).toBe('closed');
+  });
+
+  it('Trigger: ref forwards to the <button>', () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <Accordion type="single">
+        <Accordion.Item value="a">
+          <Accordion.Trigger ref={ref}>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    expect(ref.current).not.toBeNull();
+    expect(ref.current?.tagName).toBe('BUTTON');
+    expect(ref.current?.type).toBe('button');
+  });
+
+  it('Content: ref forwards to the content <div>', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Accordion type="single">
+        <Accordion.Item value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content ref={ref}>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    expect(ref.current).not.toBeNull();
+    expect(ref.current?.tagName).toBe('DIV');
+    expect(ref.current?.getAttribute('role')).toBe('region');
+  });
+
+  it('className merges (not replaces) on all four parts', () => {
+    const { container } = render(
+      <Accordion type="single" className="custom-root">
+        <Accordion.Item value="a" className="custom-item">
+          <Accordion.Trigger className="custom-trigger">A</Accordion.Trigger>
+          <Accordion.Content className="custom-content">x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    const root = container.querySelector('[data-accordion]')!;
+    expect(root.className).toMatch(/custom-root/);
+    expect(root.className).toMatch(/accordion/);
+
+    const item = container.querySelector('[data-state]')!;
+    expect(item.className).toMatch(/custom-item/);
+    expect(item.className).toMatch(/item/);
+
+    const trigger = screen.getByRole('button', { name: 'A' });
+    expect(trigger.className).toMatch(/custom-trigger/);
+    expect(trigger.className).toMatch(/trigger/);
+
+    const content = container.querySelector('[role="region"]')!;
+    expect(content.className).toMatch(/custom-content/);
+    expect(content.className).toMatch(/content/);
+  });
+
+  // ─── Nested accordion keyboard scope ──────────────────────────────────
+
+  it('ArrowDown on outer trigger does NOT escape into a nested Accordion', async () => {
+    const user = userEvent.setup();
+    render(
+      <Accordion type="multiple" defaultValue={['outer-1']}>
+        <Accordion.Item value="outer-1">
+          <Accordion.Trigger>Outer A</Accordion.Trigger>
+          <Accordion.Content>
+            <Accordion type="single">
+              <Accordion.Item value="inner-1">
+                <Accordion.Trigger>Inner A</Accordion.Trigger>
+                <Accordion.Content>inner content A</Accordion.Content>
+              </Accordion.Item>
+              <Accordion.Item value="inner-2">
+                <Accordion.Trigger>Inner B</Accordion.Trigger>
+                <Accordion.Content>inner content B</Accordion.Content>
+              </Accordion.Item>
+            </Accordion>
+          </Accordion.Content>
+        </Accordion.Item>
+        <Accordion.Item value="outer-2">
+          <Accordion.Trigger>Outer B</Accordion.Trigger>
+          <Accordion.Content>outer content B</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    const outerA = screen.getByRole('button', { name: 'Outer A' });
+    outerA.focus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('button', { name: 'Outer B' })).toHaveFocus();
   });
 });

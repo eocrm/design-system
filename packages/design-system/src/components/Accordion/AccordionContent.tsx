@@ -16,6 +16,8 @@ export const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps
     const { isOpen, triggerId, contentId } = useAccordionItemContext('Content');
 
     return (
+      // Pattern B — {...props} first so component-owned id/role/
+      // aria-labelledby/data-state/className win.
       <div
         {...props}
         ref={ref}
