@@ -135,6 +135,20 @@ describe('<Breadcrumb>', () => {
     expect(c).toHaveAttribute('aria-current', 'page');
   });
 
+  it('explicit current={false} on the LAST child keeps it as a link', () => {
+    render(
+      <Breadcrumb>
+        <Breadcrumb.Item href="/a">A</Breadcrumb.Item>
+        <Breadcrumb.Item href="/b" current={false}>
+          B
+        </Breadcrumb.Item>
+      </Breadcrumb>,
+    );
+    const b = screen.getByText('B');
+    expect(b.tagName).toBe('A');
+    expect(b).not.toHaveAttribute('aria-current');
+  });
+
   it('Item `as` prop forwards to a custom component', () => {
     render(
       <Breadcrumb>

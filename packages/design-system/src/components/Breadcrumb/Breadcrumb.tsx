@@ -94,7 +94,7 @@ function BreadcrumbItem<C extends ElementType = 'a'>({
   );
 }
 
-const DEFAULT_SEPARATOR = <ChevronRight size={14} aria-hidden="true" />;
+const DEFAULT_SEPARATOR = <ChevronRight size={14} />;
 
 /**
  * Navigation breadcrumb trail. Renders a `<nav>` with an `<ol>` of items,

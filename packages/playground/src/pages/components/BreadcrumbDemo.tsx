@@ -1,6 +1,6 @@
 import { Link as RouterLink } from 'react-router-dom';
 import { Slash } from 'lucide-react';
-import { Breadcrumb, Stack } from '@eocrm/design-system';
+import { Breadcrumb } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/Breadcrumb/Breadcrumb.tsx?raw';
@@ -110,21 +110,19 @@ export function BreadcrumbDemo() {
   <Breadcrumb.Item>This page</Breadcrumb.Item>
 </Breadcrumb>`}
       >
-        <Stack gap="md">
-          <Breadcrumb>
-            <Breadcrumb.Item
-              href="https://example.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Docs
-            </Breadcrumb.Item>
-            <Breadcrumb.Item as={RouterLink} to="/mockups">
-              Getting Started
-            </Breadcrumb.Item>
-            <Breadcrumb.Item>This page</Breadcrumb.Item>
-          </Breadcrumb>
-        </Stack>
+        <Breadcrumb>
+          <Breadcrumb.Item
+            href="https://example.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Docs
+          </Breadcrumb.Item>
+          <Breadcrumb.Item as={RouterLink} to="/mockups">
+            Getting Started
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>This page</Breadcrumb.Item>
+        </Breadcrumb>
       </Example>
     </DemoLayout>
   );
