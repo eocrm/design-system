@@ -16,6 +16,7 @@ import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMe
 import { PaginationDemo } from './pages/components/PaginationDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
 import { SkeletonDemo } from './pages/components/SkeletonDemo';
+import { SwitchDemo } from './pages/components/SwitchDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { TextareaDemo } from './pages/components/TextareaDemo';
 import { CardDemo } from './pages/components/CardDemo';
@@ -66,6 +67,7 @@ export default function App() {
           />
           <Route path="/components/select" element={<SelectDemo />} />
           <Route path="/components/skeleton" element={<SkeletonDemo />} />
+          <Route path="/components/switch" element={<SwitchDemo />} />
           <Route path="/components/table" element={<TableDemo />} />
           <Route path="/components/card" element={<CardDemo />} />
           <Route path="/components/checkbox" element={<CheckboxDemo />} />

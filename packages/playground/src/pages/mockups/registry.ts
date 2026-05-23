@@ -31,6 +31,7 @@ export type ComponentName =
   | 'Select'
   | 'Skeleton'
   | 'Stack'
+  | 'Switch'
   | 'Table'
   | 'Tabs'
   | 'Textarea'
