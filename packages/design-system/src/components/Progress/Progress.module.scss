@@ -51,10 +51,9 @@
 }
 
 .indeterminate {
-  // !important overrides the inline `style={{ width: ... }}` that determinate
-  // mode would set. When transitioning to indeterminate, the inline style is
-  // dropped (we pass `style={undefined}` when indeterminate), but the !important
-  // is belt-and-suspenders against any consumer-passed style that snuck in.
+  // !important ensures the 30% fill width wins against any specificity
+  // collision with the size-* rules that set `.fill { height: ... }` for
+  // each track height (the `.fill` selector specificity matches `.indeterminate`).
   width: 30% !important;
   animation: progress-slide 1.2s linear infinite;
 }
@@ -75,6 +74,14 @@
   font-weight: var(--font-weight-medium);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
+
+  // Cap the label so a long string can't collapse the track. The bar should
+  // win the layout argument; long labels should ellipsis or the consumer
+  // should pre-truncate.
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: reduce) {

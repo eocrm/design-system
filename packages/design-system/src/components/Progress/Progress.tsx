@@ -13,12 +13,20 @@ export type ProgressLabel = boolean | ReactNode;
 
 export interface ProgressProps extends Omit<HTMLAttributes<HTMLDivElement>, 'role'> {
   /**
-   * Current progress value in the inclusive range [0, max]. Omit (or pass
-   * `undefined`) to render the indeterminate animation. The component does
-   * NOT clamp the raw value — values outside [0, max] render the FILL
-   * visually clipped (clamped to 0..100 percent), but ARIA still reports
-   * the raw number via `aria-valuenow`. This is the right SR behavior for
-   * detecting consumer bugs where the value drifts out of range.
+   * Current progress value. Omit (or pass `undefined`) to render the
+   * indeterminate animation.
+   *
+   * Two-channel behavior for out-of-range and degenerate values:
+   * - **Visual fill** is clamped to [0%, 100%]. Values outside [0, max]
+   *   render at the nearest valid bound.
+   * - **ARIA `aria-valuenow`** reports the raw number — this is the right
+   *   screen-reader behavior so consumer bugs (a value drifting past max)
+   *   surface in audits and SR announcements.
+   *
+   * Degenerate inputs fall back to the indeterminate animation: `NaN`,
+   * `Infinity`, `-Infinity`, and the case where `max <= 0`. This is the
+   * common file-upload race condition (`bytes_uploaded / total_bytes`
+   * before `total_bytes` is known produces NaN).
    */
   value?: number;
   /**
@@ -140,7 +148,12 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progr
   },
   ref,
 ) {
-  const determinate = typeof value === 'number';
+  // Determinate requires a finite numeric value AND a positive max. NaN /
+  // Infinity / max<=0 are silent consumer-bug paths (esp. file-upload divides
+  // bytes_uploaded / total_bytes before total_bytes is known → NaN). Fall
+  // back to the indeterminate animation rather than rendering a vanished bar
+  // or announcing "NaN percent" to screen readers.
+  const determinate = typeof value === 'number' && Number.isFinite(value) && max > 0;
   const indeterminate = !determinate;
   // VISUAL clamp only — ARIA reports the raw `value` via aria-valuenow below.
   const percent = determinate ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
