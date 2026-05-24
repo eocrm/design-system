@@ -90,28 +90,39 @@ function computeCropBox(
 }
 
 /**
- * Default centered crop region given image natural size + viewport box
- * dimensions. The default fits the box's aspect inside the image, centered.
+ * Default centered crop region given image natural size + viewport box +
+ * viewport dimensions. The default is the source region under the centered
+ * crop box when the image is rendered in "cover" mode (largest scale that
+ * still covers the viewport on both axes — pinned to the SMALLER of the
+ * viewport's two cover scales so we never need to scale the image larger
+ * than necessary, just enough to keep both viewport axes full).
+ *
+ * Result: at zoom=1 the image visually fills the viewport (no gray bands),
+ * and the crop box overlays a centered sub-region of it. For viewports that
+ * already match the crop's aspect, this collapses to "the crop box fills
+ * the viewport exactly" — the same behavior we'd get from a square-shaped
+ * viewport with a square crop.
  */
 function defaultCropArea(
   imageWidth: number,
   imageHeight: number,
   boxW: number,
   boxH: number,
+  viewportWidth: number,
+  viewportHeight: number,
 ): CropArea {
-  const boxAspect = boxW / boxH;
-  const imageAspect = imageWidth / imageHeight;
-  let cropW: number;
-  let cropH: number;
-  if (imageAspect > boxAspect) {
-    // Image is wider than the box. Match heights; trim sides.
-    cropH = imageHeight;
-    cropW = cropH * boxAspect;
-  } else {
-    // Image is taller. Match widths; trim top/bottom.
-    cropW = imageWidth;
-    cropH = cropW / boxAspect;
-  }
+  // coverScale is the rendered-pixel scale at which the image just covers
+  // the viewport on both axes. We clamp it from below by what's needed to
+  // make the image at least as wide as boxW and as tall as boxH — otherwise
+  // a viewport smaller than the crop box would produce a too-small image.
+  const coverScale = Math.max(
+    viewportWidth / imageWidth,
+    viewportHeight / imageHeight,
+    boxW / imageWidth,
+    boxH / imageHeight,
+  );
+  const cropW = boxW / coverScale;
+  const cropH = boxH / coverScale;
   return {
     x: (imageWidth - cropW) / 2,
     y: (imageHeight - cropH) / 2,
@@ -274,13 +285,20 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   useEffect(() => {
     if (loadState !== 'loaded' || !imageNatural || initializedRef.current) return;
     if (value === null && boxW > 0 && boxH > 0) {
-      const defaultArea = defaultCropArea(imageNatural.width, imageNatural.height, boxW, boxH);
+      const defaultArea = defaultCropArea(
+        imageNatural.width,
+        imageNatural.height,
+        boxW,
+        boxH,
+        viewport.width,
+        viewport.height,
+      );
       initializedRef.current = true;
       onChange(defaultArea);
     } else if (value !== null) {
       initializedRef.current = true;
     }
-  }, [loadState, imageNatural, value, boxW, boxH, onChange]);
+  }, [loadState, imageNatural, value, boxW, boxH, viewport.width, viewport.height, onChange]);
 
   // Reset initialization flag on src change so the new image gets its
   // default crop applied.
@@ -426,6 +444,8 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
         imageNatural.height,
         boxW,
         boxH,
+        viewport.width,
+        viewport.height,
       );
       const newWidth = defaultArea.width / newZoom;
       const newHeight = defaultArea.height / newZoom;
@@ -439,7 +459,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
       };
       applyValue(next);
     },
-    [applyValue, boxW, boxH, disabled, imageNatural, value],
+    [applyValue, boxW, boxH, disabled, imageNatural, value, viewport.width, viewport.height],
   );
 
   const handleZoomChangeEnd = useCallback(() => {
