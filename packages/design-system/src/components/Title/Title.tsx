@@ -43,7 +43,9 @@ export interface TitleProps extends HTMLAttributes<HTMLHeadingElement> {
   weight?: TitleWeight;
   /**
    * Truncate the title to a single line with ellipsis. Useful inside narrow
-   * cards or grid cells. Defaults to `false`.
+   * cards or grid cells. Defaults to `false`. The full text remains in the
+   * accessibility tree — screen readers read the entire string. Don't
+   * additionally add `aria-label` to "compensate" for the visual clip.
    */
   truncate?: boolean;
   /** Title text content. */
@@ -115,6 +117,13 @@ const WEIGHT_CLASS: Record<TitleWeight, string> = {
  * // De-emphasize via tone:
  * <Title order={3} tone="muted">Filter group label</Title>
  *
+ * @example
+ * // Page heading + supporting paragraph composed in a Stack:
+ * <Stack gap="xs">
+ *   <Title order={1}>Dashboard</Title>
+ *   <Text size="md" tone="muted">Pipeline summary for this week.</Text>
+ * </Stack>
+ *
  * @remarks When NOT to use
  * - For body text. Use `<Text>` instead.
  * - For inline emphasis. Use `<strong>` / `<em>` / `<Text weight="semibold">`.
@@ -147,7 +156,8 @@ export const Title = forwardRef<HTMLHeadingElement, TitleProps>(function Title(
 ) {
   const Heading = `h${order}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   const effectiveSize = size ?? SIZE_BY_ORDER[order];
-  // {...rest} last so consumer overrides win (Pattern A).
+  // className merged above via clsx so consumer extensions stack with our classes;
+  // {...rest} last so any other consumer-passed attr can override ours (Pattern A).
   return (
     <Heading
       ref={ref}

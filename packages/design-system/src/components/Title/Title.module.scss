@@ -75,5 +75,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  // Allow shrinkage below intrinsic size inside flex/grid parents — without
+  // this, the truncate has no effect when the heading is a flex/grid child.
   min-width: 0;
 }
