@@ -186,7 +186,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/progress',
     name: 'Progress',
-    description: 'Linear progress bar — determinate via value/max, indeterminate when value is omitted. Sizes / tones / optional label.',
+    description:
+      'Linear progress bar — determinate via value/max, indeterminate when value is omitted. Sizes / tones / optional label.',
     preview: (
       <Stack gap="xs">
         <Progress value={45} />
@@ -695,7 +696,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/circular-progress',
     name: 'CircularProgress',
-    description: 'Circular progress / loading spinner — donut shape for tracked progress, or spinning arc when value is omitted.',
+    description:
+      'Circular progress / loading spinner — donut shape for tracked progress, or spinning arc when value is omitted.',
     preview: (
       <Cluster gap="sm" justify="center">
         <CircularProgress size="sm" />

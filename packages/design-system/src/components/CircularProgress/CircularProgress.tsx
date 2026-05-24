@@ -173,9 +173,7 @@ export const CircularProgress = forwardRef<HTMLDivElement, CircularProgressProps
           />
         </svg>
         {label !== false && size !== 'sm' && !(label === true && indeterminate) && (
-          <span className={styles.label}>
-            {label === true ? `${Math.round(percent)}%` : label}
-          </span>
+          <span className={styles.label}>{label === true ? `${Math.round(percent)}%` : label}</span>
         )}
       </div>
     );

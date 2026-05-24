@@ -159,21 +159,23 @@ export interface ProgressProps extends Omit<HTMLAttributes<HTMLDivElement>, 'rol
 The component renders:
 
 ```tsx
-<div className={clsx(styles.progress, styles[`size-${size}`], styles[`tone-${tone}`], className)}
-     role="progressbar"
-     aria-valuenow={determinate ? value : undefined}
-     aria-valuemin={0}
-     aria-valuemax={max}
-     aria-valuetext={determinate ? undefined : ariaLabel ?? 'Loading…'}
-     {...rest}>
+<div
+  className={clsx(styles.progress, styles[`size-${size}`], styles[`tone-${tone}`], className)}
+  role="progressbar"
+  aria-valuenow={determinate ? value : undefined}
+  aria-valuemin={0}
+  aria-valuemax={max}
+  aria-valuetext={determinate ? undefined : (ariaLabel ?? 'Loading…')}
+  {...rest}
+>
   <div className={styles.track}>
-    <div className={clsx(styles.fill, indeterminate && styles.indeterminate)}
-         style={determinate ? { width: `${percent}%` } : undefined} />
+    <div
+      className={clsx(styles.fill, indeterminate && styles.indeterminate)}
+      style={determinate ? { width: `${percent}%` } : undefined}
+    />
   </div>
   {label !== false && !(label === true && indeterminate) && (
-    <span className={styles.label}>
-      {label === true ? `${Math.round(percent)}%` : label}
-    </span>
+    <span className={styles.label}>{label === true ? `${Math.round(percent)}%` : label}</span>
   )}
 </div>
 ```
@@ -219,24 +221,28 @@ export interface CircularProgressProps extends Omit<HTMLAttributes<HTMLDivElemen
 The component renders:
 
 ```tsx
-<div className={clsx(styles.circular, styles[`size-${size}`], styles[`tone-${tone}`], className)}
-     role="progressbar"
-     aria-valuenow={determinate ? value : undefined}
-     aria-valuemin={0}
-     aria-valuemax={max}
-     aria-valuetext={determinate ? undefined : ariaLabel ?? 'Loading…'}
-     {...rest}>
+<div
+  className={clsx(styles.circular, styles[`size-${size}`], styles[`tone-${tone}`], className)}
+  role="progressbar"
+  aria-valuenow={determinate ? value : undefined}
+  aria-valuemin={0}
+  aria-valuemax={max}
+  aria-valuetext={determinate ? undefined : (ariaLabel ?? 'Loading…')}
+  {...rest}
+>
   <svg viewBox="0 0 36 36" className={styles.svg}>
     <circle className={styles.track} cx="18" cy="18" r={radius} />
-    <circle className={clsx(styles.fill, indeterminate && styles.indeterminate)}
-            cx="18" cy="18" r={radius}
-            strokeDasharray={circumference}
-            strokeDashoffset={determinate ? offset : undefined} />
+    <circle
+      className={clsx(styles.fill, indeterminate && styles.indeterminate)}
+      cx="18"
+      cy="18"
+      r={radius}
+      strokeDasharray={circumference}
+      strokeDashoffset={determinate ? offset : undefined}
+    />
   </svg>
   {label !== false && size !== 'sm' && !(label === true && indeterminate) && (
-    <span className={styles.label}>
-      {label === true ? `${Math.round(percent)}%` : label}
-    </span>
+    <span className={styles.label}>{label === true ? `${Math.round(percent)}%` : label}</span>
   )}
 </div>
 ```
@@ -284,10 +290,18 @@ The `viewBox="0 0 36 36"` + `r={16}` give a circle with circumference ≈ 100.53
   height: 12px;
 }
 
-.tone-default .fill { background: var(--color-accent); }
-.tone-success .fill { background: var(--color-success); }
-.tone-warning .fill { background: var(--color-warning); }
-.tone-danger  .fill { background: var(--color-danger); }
+.tone-default .fill {
+  background: var(--color-accent);
+}
+.tone-success .fill {
+  background: var(--color-success);
+}
+.tone-warning .fill {
+  background: var(--color-warning);
+}
+.tone-danger .fill {
+  background: var(--color-danger);
+}
 
 .indeterminate {
   width: 30% !important;
@@ -295,8 +309,12 @@ The `viewBox="0 0 36 36"` + `r={16}` give a circle with circumference ≈ 100.53
 }
 
 @keyframes progressSlide {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(400%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
 }
 
 .label {
@@ -331,18 +349,33 @@ The `viewBox="0 0 36 36"` + `r={16}` give a circle with circumference ≈ 100.53
   overflow: visible;
 }
 
-.size-sm { width: 16px; height: 16px; }
-.size-md { width: 32px; height: 32px; }
-.size-lg { width: 56px; height: 56px; }
+.size-sm {
+  width: 16px;
+  height: 16px;
+}
+.size-md {
+  width: 32px;
+  height: 32px;
+}
+.size-lg {
+  width: 56px;
+  height: 56px;
+}
 
 .size-sm .svg .track,
-.size-sm .svg .fill { stroke-width: 2; }
+.size-sm .svg .fill {
+  stroke-width: 2;
+}
 
 .size-md .svg .track,
-.size-md .svg .fill { stroke-width: 3; }
+.size-md .svg .fill {
+  stroke-width: 3;
+}
 
 .size-lg .svg .track,
-.size-lg .svg .fill { stroke-width: 4; }
+.size-lg .svg .fill {
+  stroke-width: 4;
+}
 
 .track {
   fill: none;
@@ -356,10 +389,18 @@ The `viewBox="0 0 36 36"` + `r={16}` give a circle with circumference ≈ 100.53
   transition: stroke-dashoffset var(--transition-base);
 }
 
-.tone-default .fill { stroke: var(--color-accent); }
-.tone-success .fill { stroke: var(--color-success); }
-.tone-warning .fill { stroke: var(--color-warning); }
-.tone-danger  .fill { stroke: var(--color-danger); }
+.tone-default .fill {
+  stroke: var(--color-accent);
+}
+.tone-success .fill {
+  stroke: var(--color-success);
+}
+.tone-warning .fill {
+  stroke: var(--color-warning);
+}
+.tone-danger .fill {
+  stroke: var(--color-danger);
+}
 
 .indeterminate {
   animation: circularSpin 1.2s linear infinite;
@@ -367,7 +408,9 @@ The `viewBox="0 0 36 36"` + `r={16}` give a circle with circumference ≈ 100.53
 }
 
 @keyframes circularSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .label {
@@ -385,15 +428,15 @@ The `.indeterminate` `transform: rotate(...)` animation applies to the SVG, not 
 
 ## ARIA + behavior reference
 
-| Concern                  | Behavior                                                                                                                                                                       |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Root role**            | `role="progressbar"` on the outermost `<div>` for both linear and circular.                                                                                                    |
-| **Determinate ARIA**     | `aria-valuenow={value}`, `aria-valuemin={0}`, `aria-valuemax={max}`. `aria-valuetext` left undefined so SR uses the default "{n} percent" announcement.                          |
-| **Indeterminate ARIA**   | `aria-valuenow` omitted (`undefined`). `aria-valuemin`/`max` still present. `aria-valuetext="Loading…"` by default; consumer can override via `aria-label`.                       |
-| **Tone semantics**       | Visual only. SRs do NOT announce "warning" tone. Consumers needing semantic urgency wrap with `role="alert"`.                                                                  |
-| **Label slot**           | When `label` is true or a ReactNode, the text is rendered in the DOM and reachable by screen readers. When `label` is true on indeterminate mode, no label renders.            |
-| **Focus**                | Neither component is focusable. Interactive children (cancel button next to a progress bar) carry their own focus.                                                             |
-| **Reduced motion**       | `@media (prefers-reduced-motion: reduce)` disables both animations (`progressSlide`, `circularSpin`) and replaces the indeterminate fill with a static 100% accent bar / circle. Documented in the SCSS. |
+| Concern                | Behavior                                                                                                                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Root role**          | `role="progressbar"` on the outermost `<div>` for both linear and circular.                                                                                                                              |
+| **Determinate ARIA**   | `aria-valuenow={value}`, `aria-valuemin={0}`, `aria-valuemax={max}`. `aria-valuetext` left undefined so SR uses the default "{n} percent" announcement.                                                  |
+| **Indeterminate ARIA** | `aria-valuenow` omitted (`undefined`). `aria-valuemin`/`max` still present. `aria-valuetext="Loading…"` by default; consumer can override via `aria-label`.                                              |
+| **Tone semantics**     | Visual only. SRs do NOT announce "warning" tone. Consumers needing semantic urgency wrap with `role="alert"`.                                                                                            |
+| **Label slot**         | When `label` is true or a ReactNode, the text is rendered in the DOM and reachable by screen readers. When `label` is true on indeterminate mode, no label renders.                                      |
+| **Focus**              | Neither component is focusable. Interactive children (cancel button next to a progress bar) carry their own focus.                                                                                       |
+| **Reduced motion**     | `@media (prefers-reduced-motion: reduce)` disables both animations (`progressSlide`, `circularSpin`) and replaces the indeterminate fill with a static 100% accent bar / circle. Documented in the SCSS. |
 
 ## Testing
 

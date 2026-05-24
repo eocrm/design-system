@@ -137,15 +137,7 @@ const TONE_CLASS: Record<ProgressTone, string> = {
  *   spacing, font-size, and tabular-nums for stable digit widths.
  */
 export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progress(
-  {
-    value,
-    max = 100,
-    size = 'md',
-    tone = 'default',
-    label = false,
-    className,
-    ...rest
-  },
+  { value, max = 100, size = 'md', tone = 'default', label = false, className, ...rest },
   ref,
 ) {
   // Determinate requires a finite numeric value AND a positive max. NaN /
@@ -181,9 +173,7 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progr
         />
       </div>
       {label !== false && !(label === true && indeterminate) && (
-        <span className={styles.label}>
-          {label === true ? `${Math.round(percent)}%` : label}
-        </span>
+        <span className={styles.label}>{label === true ? `${Math.round(percent)}%` : label}</span>
       )}
     </div>
   );

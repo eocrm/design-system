@@ -175,7 +175,12 @@ export type {
 } from './components/Select';
 
 export { Progress } from './components/Progress';
-export type { ProgressProps, ProgressSize, ProgressTone, ProgressLabel } from './components/Progress';
+export type {
+  ProgressProps,
+  ProgressSize,
+  ProgressTone,
+  ProgressLabel,
+} from './components/Progress';
 
 export { CircularProgress } from './components/CircularProgress';
 export type {
