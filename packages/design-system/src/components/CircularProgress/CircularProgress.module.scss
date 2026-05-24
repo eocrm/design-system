@@ -76,14 +76,24 @@
 }
 
 .indeterminate {
-  // Partial arc (30% of circumference) that spins continuously — the
-  // canonical loading-spinner shape.
+  // Partial arc (~30% of circumference) that spins continuously — the
+  // canonical loading-spinner shape. (Exact: 30/100.53 ≈ 29.84%; the visual
+  // difference at any rendered diameter is imperceptible.)
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- SVG attribute, not a tokenizable design value
   stroke-dasharray: 30 100 !important;
   animation: circular-spin 1.2s linear infinite;
 
   // Anchor the spin to the SVG center.
   transform-origin: center;
+
+  // Indeterminate always uses the accent color — tone semantics don't apply
+  // to an unknown total. Override any .tone-* rule that would otherwise
+  // win via specificity.
+  stroke: var(--color-accent) !important;
+
+  // Disable the stroke-dashoffset transition so determinate→indeterminate
+  // switches don't animate the arc before the spin fires.
+  transition: none;
 }
 
 @keyframes circular-spin {

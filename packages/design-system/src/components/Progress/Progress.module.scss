@@ -56,6 +56,15 @@
   // each track height (the `.fill` selector specificity matches `.indeterminate`).
   width: 30% !important;
   animation: progress-slide 1.2s linear infinite;
+
+  // Indeterminate always uses the accent color — tone semantics don't apply
+  // to an unknown total. Override any .tone-* rule that would otherwise
+  // win via specificity.
+  background: var(--color-accent) !important;
+
+  // Disable the width transition so determinate→indeterminate switches don't
+  // animate from the determinate width down to 30% before the loop fires.
+  transition: none;
 }
 
 @keyframes progress-slide {
