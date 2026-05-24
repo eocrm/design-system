@@ -298,6 +298,17 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   const handleImageLoad = useCallback(() => {
     const img = imageRef.current;
     if (!img) return;
+    // Re-measure the viewport on image load so the initialization cascade
+    // (default crop, transform) uses the correct dimensions even if the
+    // layout effect fired before the viewport was sized (e.g. in tests or
+    // when the component mounts inside a not-yet-laid-out container).
+    const el = viewportRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 0 || rect.height > 0) {
+        setViewport({ width: rect.width, height: rect.height });
+      }
+    }
     setImageNatural({ width: img.naturalWidth, height: img.naturalHeight });
     setLoadState('loaded');
   }, []);
