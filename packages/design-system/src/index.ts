@@ -174,6 +174,9 @@ export type {
   SelectTriggerDisplay,
 } from './components/Select';
 
+export { Progress } from './components/Progress';
+export type { ProgressProps, ProgressSize, ProgressTone, ProgressLabel } from './components/Progress';
+
 export { Skeleton } from './components/Skeleton';
 export type { SkeletonProps, SkeletonVariant, SkeletonAnimation } from './components/Skeleton';
 
