@@ -6,6 +6,8 @@ import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Link } from '@eocrm/design-system';
+import { Title } from '@eocrm/design-system';
+import { Text } from '@eocrm/design-system';
 import { contacts, deals } from '../../../data/mock';
 import styles from './Dashboard.module.scss';
 import { CrossLinks } from '../../shared/CrossLinks';
@@ -59,8 +61,10 @@ export function Dashboard() {
     <Stack gap="lg">
       <Cluster justify="between" align="end" gap="md">
         <div>
-          <h1 className={styles.title}>Dashboard</h1>
-          <p className={styles.subtitle}>Good morning, Alex. Here's where your pipeline stands.</p>
+          <Title order={1}>Dashboard</Title>
+          <Text size="lg" tone="muted">
+            Good morning, Alex. Here's where your pipeline stands.
+          </Text>
         </div>
         <Button>
           <UserPlus size={14} /> Add contact
@@ -72,8 +76,12 @@ export function Dashboard() {
           <Card key={label} padding="md" tone="accent">
             <Cluster justify="between" align="start" gap="md" wrap={false}>
               <Stack gap="xs">
-                <span className={styles.statLabel}>{label}</span>
-                <span className={styles.statValue}>{value}</span>
+                <Text as="span" size="sm" tone="muted" weight="medium">
+                  {label}
+                </Text>
+                <Text as="span" size="lg" weight="semibold">
+                  {value}
+                </Text>
                 <Badge tone={deltaTone}>
                   <ArrowUpRight size={10} /> {delta}
                 </Badge>
@@ -103,16 +111,18 @@ export function Dashboard() {
               <Card.ListRow key={d.id}>
                 <Stack gap="xs">
                   <Cluster gap="sm">
-                    <span className={styles.listRowTitle}>{d.title}</span>
+                    <Text as="span" weight="medium">
+                      {d.title}
+                    </Text>
                     {d.tags.map((t) => (
                       <Badge key={t.label} tone={t.tone}>
                         {t.label}
                       </Badge>
                     ))}
                   </Cluster>
-                  <span className={styles.listRowMeta}>
+                  <Text as="span" size="sm" tone="subtle">
                     {d.company} · ${d.amount.toLocaleString()}
-                  </span>
+                  </Text>
                 </Stack>
                 <Avatar name={d.owner} size="sm" />
               </Card.ListRow>
@@ -128,11 +138,16 @@ export function Dashboard() {
                 <Cluster gap="sm" wrap={false} align="start">
                   <Avatar name={a.who} size="sm" />
                   <Stack gap="xs">
-                    <span className={styles.activityLine}>
+                    {/* Inner Text on `a.target` is intentional — re-tone an inline run inside a sentence without raw style. Inner needs explicit size="sm" so it doesn't pop to its default md. */}
+                    <Text as="span" size="sm" tone="muted">
                       <strong>{a.who}</strong> {a.what}{' '}
-                      <span className={styles.activityTarget}>{a.target}</span>
-                    </span>
-                    <span className={styles.listRowMeta}>{a.when}</span>
+                      <Text as="span" size="sm" tone="accent">
+                        {a.target}
+                      </Text>
+                    </Text>
+                    <Text as="span" size="sm" tone="subtle">
+                      {a.when}
+                    </Text>
                   </Stack>
                 </Cluster>
               </Card.ListRow>
@@ -142,18 +157,26 @@ export function Dashboard() {
       </div>
 
       <Card padding="md">
-        <h2 className={styles.cardTitle}>Recent contacts</h2>
-        <div className={styles.contactGrid}>
-          {contacts.slice(0, 4).map((c) => (
-            <Cluster key={c.id} gap="sm" wrap={false} align="center">
-              <Avatar name={c.name} size="md" />
-              <Stack gap="xs">
-                <span className={styles.contactName}>{c.name}</span>
-                <span className={styles.listRowMeta}>{c.title}</span>
-              </Stack>
-            </Cluster>
-          ))}
-        </div>
+        <Stack gap="md">
+          <Title order={2} size="md">
+            Recent contacts
+          </Title>
+          <div className={styles.contactGrid}>
+            {contacts.slice(0, 4).map((c) => (
+              <Cluster key={c.id} gap="sm" wrap={false} align="center">
+                <Avatar name={c.name} size="md" />
+                <Stack gap="xs">
+                  <Text as="span" weight="medium">
+                    {c.name}
+                  </Text>
+                  <Text as="span" size="sm" tone="subtle">
+                    {c.title}
+                  </Text>
+                </Stack>
+              </Cluster>
+            ))}
+          </div>
+        </Stack>
       </Card>
 
       <CrossLinks kind="mockup" slug="dashboard" />

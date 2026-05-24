@@ -12,6 +12,7 @@ export type ComponentName =
   | 'Card'
   | 'Checkbox'
   | 'Cluster'
+  | 'Code'
   | 'ConfirmationPopover'
   | 'CursorPagination'
   | 'DataTable'
@@ -39,7 +40,9 @@ export type ComponentName =
   | 'Switch'
   | 'Table'
   | 'Tabs'
+  | 'Text'
   | 'Textarea'
+  | 'Title'
   | 'Toast'
   | 'Tooltip';
 
@@ -57,7 +60,17 @@ export const MOCKUPS = [
     title: 'Dashboard',
     path: '/mockups/dashboard',
     blurb: 'CRM home — KPI cards, pipeline summary, recent activity.',
-    usesComponents: ['Card', 'Stack', 'Cluster', 'Avatar', 'Badge', 'Button'],
+    usesComponents: [
+      'Card',
+      'Stack',
+      'Cluster',
+      'Avatar',
+      'Badge',
+      'Button',
+      'Link',
+      'Title',
+      'Text',
+    ],
   },
   {
     slug: 'deals',

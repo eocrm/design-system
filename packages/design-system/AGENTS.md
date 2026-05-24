@@ -31,6 +31,58 @@ That import wires up tokens, the modern reset, and base typography. Everything e
 
 Each component is fully JSDoc'd. Hover any usage in your editor for inline docs including `@example` blocks, `@remarks` "When NOT to use" and "Anti-patterns" sections. The summaries below are for orientation only — the **JSDoc is the contract**.
 
+### `<Title>` — semantic heading
+
+```tsx
+<Title order={1}>Dashboard</Title>
+<Title order={2}>Recent activity</Title>
+<Title order={3} tone="muted">Filter group</Title>
+<Title order={2} size="lg">Visually compact h2</Title>
+```
+
+- `order: 1 | 2 | 3 | 4 | 5 | 6` — required. Renders `<h1>` … `<h6>` AND drives the default visual size.
+- Default size map: `1→3xl`, `2→2xl`, `3→xl`, `4→lg`, `5→md`, `6→sm`. Override with `size` (same vocab: `xs | sm | md | lg | xl | 2xl | 3xl`).
+- `tone`: `default | muted | subtle | accent | danger`.
+- `weight`: `regular | medium | semibold | bold` (default `semibold`).
+- `truncate`: single-line ellipsis.
+- **Use `<Title>` for every heading in your UI.** Raw `<h1>` / `<h2>` is forbidden.
+
+### `<Text>` — body / inline text
+
+```tsx
+<Text>Default body — block <p>, md, regular.</Text>
+<Text as="span" size="sm" tone="muted">12m ago</Text>
+<Text as="label" htmlFor="email" weight="medium">Email</Text>
+<Text lineClamp={2}>A long description that wraps and ellipses after two lines.</Text>
+<Text size="sm" tone="danger">Email is required.</Text>
+```
+
+- `as: 'p' | 'span' | 'div' | 'label'` (default `'p'`). Constrained string union — no polymorphic generic.
+- `size: 'xs' | 'sm' | 'md' | 'lg' | 'xl'` (default `'md'`).
+- `tone`: `default | muted | subtle | accent | danger | success | warning`.
+- `weight`: `regular | medium | semibold | bold` (default `regular`).
+- `align`: `left | center | right` (default `left`).
+- `truncate`: single-line ellipsis. `lineClamp: number`: multi-line ellipsis. `lineClamp` overrides `truncate`.
+- **Use `<Text>` for every non-heading run.** No more `<span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-muted)' }}>`.
+
+### `<Code>` — inline `<code>` chip
+
+```tsx
+<Text>Use <Code>npm install</Code> to add deps.</Text>
+<Code tone="danger">--no-verify</Code>
+```
+
+- `tone`: `default | muted | accent | danger` (only the text color changes; chip background stays the same).
+- **Inline only.** Block code with syntax highlighting belongs in the playground's `CodeBlock` (Prism), not the library.
+
+### Typography hard rule
+
+- ❌ `style={{ fontSize: 'var(--font-size-sm)' }}` / `style={{ color: 'var(--color-fg-muted)' }}` — use `<Text size="sm" tone="muted">`.
+- ❌ Raw `<h1>` / `<h2>` / `<h3>` — use `<Title order={N}>`.
+- ❌ `<Text style={{ color: '#someHex' }}>` — pick a tone from the whitelist.
+- For semantic emphasis (the bold _is_ the meaning — e.g. a user's name in a notification, an error keyword), use `<strong>` or `<em>` inside `<Text>`. For visual-only weight changes (a medium-weight name in a list because hierarchy says so, not because the name is emphatic), use `<Text weight="medium">`. Pick the one that matches _why_ the text is heavy.
+- If the size / tone / weight you need isn't on `<Title>` or `<Text>`, **that's a token-vocabulary conversation, not a component-skipping conversation.**
+
 ### `<Button>` — action triggers
 
 ```tsx

@@ -45,6 +45,9 @@ import {
   ListCollapse,
   MoveRight,
   ToggleRight,
+  Heading,
+  Type,
+  Code as CodeIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
@@ -104,11 +107,14 @@ const componentGroups = [
       { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
       { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
       { to: '/components/calendar', label: 'Calendar', icon: CalendarDays, end: false },
+      { to: '/components/code', label: 'Code', icon: CodeIcon, end: false },
       { to: '/components/empty-state', label: 'EmptyState', icon: Inbox, end: false },
       { to: '/components/pagination', label: 'Pagination', icon: ListOrdered, end: false },
       { to: '/components/skeleton', label: 'Skeleton', icon: Square, end: false },
       { to: '/components/table', label: 'Table', icon: TableIcon, end: false },
       { to: '/components/datatable', label: 'DataTable', icon: TableProperties, end: false },
+      { to: '/components/text', label: 'Text', icon: Type, end: false },
+      { to: '/components/title', label: 'Title', icon: Heading, end: false },
     ],
   },
   {
