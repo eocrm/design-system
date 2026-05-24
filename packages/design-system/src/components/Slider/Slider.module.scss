@@ -243,6 +243,18 @@
   pointer-events: none;
 }
 
+.disabled .thumb {
+  // pointer-events:none on the root doesn't propagate to children with the
+  // default `pointer-events: auto`. The thumb is the actual hit target, so it
+  // needs its own pointer-events:none + cursor override.
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: not-allowed;
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .thumb {
     transition: none;

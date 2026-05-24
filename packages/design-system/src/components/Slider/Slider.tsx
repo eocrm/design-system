@@ -47,10 +47,12 @@ export interface SliderProps
    */
   onChange: (value: SliderValue) => void;
   /**
-   * Called once when the user releases the thumb (pointerup / blur after
-   * keyboard nav). Use for committing the value to a server or running an
-   * expensive recalculation. Receives the final value with the same shape
-   * as `value`.
+   * Called once when the user "commits" a value change — at pointerup
+   * after a drag, or at blur after keyboard-nav that actually changed
+   * the value. Does NOT fire on Tab-in / Tab-out without any value
+   * change. Use for committing the value to a server or running an
+   * expensive recalculation. Receives the final value with the same
+   * shape as `value`.
    */
   onChangeEnd?: (value: SliderValue) => void;
   /** Minimum allowed value (inclusive). Default `0`. */
@@ -98,7 +100,8 @@ export interface SliderProps
    * Native form-input name. When set, a hidden `<input>` (or two for range,
    * with `-min`/`-max` suffixes) is rendered with the current value(s) so
    * the slider works inside uncontrolled HTML forms without consumer JS
-   * serialization.
+   * serialization. When the slider is `disabled`, the hidden input(s) are
+   * NOT rendered so the form does not submit a stale disabled value.
    */
   name?: string;
 }
@@ -227,15 +230,49 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
   const marksArr = useMemo(() => normalizeMarks(marks), [marks]);
   const range = max - min;
 
+  // Latest value ref — updated on every render. Read synchronously inside
+  // event handlers (e.g. onChangeEnd at pointerup) so they see the post-drag
+  // value, not the render-time closure capture. Critical for fast drags where
+  // pointermove fires multiple updates between renders.
+  const latestValueRef = useRef(value);
+  latestValueRef.current = value;
+
+  // isDraggingRef: read synchronously inside event handlers (no state batching
+  // race between pointerdown setting and pointermove reading).
+  // isDragging (state): drives the .thumbDragging className re-render. Both are
+  // updated together in setDragging().
+  const isDraggingRef = useRef<boolean[]>(new Array(thumbCount).fill(false));
   const [isDragging, setIsDragging] = useState<boolean[]>(() => new Array(thumbCount).fill(false));
   const [isFocused, setIsFocused] = useState<boolean[]>(() => new Array(thumbCount).fill(false));
   const [isHovered, setIsHovered] = useState<boolean[]>(() => new Array(thumbCount).fill(false));
 
+  // Whether the value changed during the current focus session (for any
+  // reason: drag OR keyboard nav). Reset to false on focus. Set true on every
+  // applyThumbValue call. Read by handleThumbBlur to decide whether to fire
+  // onChangeEnd — prevents the "Tab in / Tab out without nav" no-op fire AND
+  // the "drag + Tab" double fire.
+  const valueChangedThisFocusRef = useRef(false);
+
   const setFlag = useCallback(
-    (setter: typeof setIsDragging, index: number, next: boolean) => {
+    (setter: typeof setIsFocused, index: number, next: boolean) => {
       setter((prev) => {
         const out = [...prev];
         // Ensure the array length matches thumbCount in case value shape changed.
+        while (out.length < thumbCount) out.push(false);
+        out[index] = next;
+        return out;
+      });
+    },
+    [thumbCount],
+  );
+
+  const setDragging = useCallback(
+    (index: number, next: boolean) => {
+      // Pad the ref array if the value shape changed (range → single transitions).
+      while (isDraggingRef.current.length < thumbCount) isDraggingRef.current.push(false);
+      isDraggingRef.current[index] = next;
+      setIsDragging((prev) => {
+        const out = [...prev];
         while (out.length < thumbCount) out.push(false);
         out[index] = next;
         return out;
@@ -285,6 +322,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
       } else {
         onChange(newValue);
       }
+      valueChangedThisFocusRef.current = true;
     },
     [isRange, onChange, value],
   );
@@ -302,36 +340,41 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
       } catch {
         // jsdom or pre-PointerEvents browsers — drag still works via pointermove.
       }
-      setFlag(setIsDragging, thumbIndex, true);
+      setDragging(thumbIndex, true);
     },
-    [disabled, setFlag],
+    [disabled, setDragging],
   );
 
   const handleThumbPointerMove = useCallback(
     (e: PointerEvent<HTMLDivElement>, thumbIndex: number) => {
-      if (disabled || !isDragging[thumbIndex]) return;
+      if (disabled || !isDraggingRef.current[thumbIndex]) return;
       const next = pointerToValue(e.clientX, e.clientY, thumbIndex);
       if (next === null) return;
-      // Only fire onChange when the value actually changes (avoids identity-thrash
-      // when the pointer moves within the same step bucket).
-      const current = thumbValues[thumbIndex];
+      // Read the LATEST value from the ref (not the closure-captured one) so
+      // the duplicate-fire guard works correctly across batched renders.
+      const latest = latestValueRef.current;
+      const current = Array.isArray(latest) ? latest[thumbIndex] : latest;
       if (next !== current) applyThumbValue(thumbIndex, next);
     },
-    [applyThumbValue, disabled, isDragging, pointerToValue, thumbValues],
+    [applyThumbValue, disabled, pointerToValue],
   );
 
   const handleThumbPointerUp = useCallback(
     (e: PointerEvent<HTMLDivElement>, thumbIndex: number) => {
-      if (disabled || !isDragging[thumbIndex]) return;
+      if (disabled || !isDraggingRef.current[thumbIndex]) return;
       try {
         e.currentTarget.releasePointerCapture(e.pointerId);
       } catch {
         // ignore — same rationale as pointerdown.
       }
-      setFlag(setIsDragging, thumbIndex, false);
-      onChangeEnd?.(value);
+      setDragging(thumbIndex, false);
+      // Fire with the latest value (post-drag), not the closure capture.
+      onChangeEnd?.(latestValueRef.current);
+      // Reset the focus-session flag — pointerup already fired onChangeEnd, so
+      // subsequent blur (e.g. Tab out) shouldn't fire it again.
+      valueChangedThisFocusRef.current = false;
     },
-    [disabled, isDragging, onChangeEnd, setFlag, value],
+    [disabled, onChangeEnd, setDragging],
   );
 
   const handleThumbKeyDown = useCallback(
@@ -380,12 +423,16 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
   const handleThumbBlur = useCallback(
     (thumbIndex: number) => {
       setFlag(setIsFocused, thumbIndex, false);
-      // onChangeEnd on blur covers the keyboard-nav case where there's no
-      // pointerup to fire it. Always fires on blur regardless of whether the
-      // value actually changed — consumers debounce themselves if needed.
-      onChangeEnd?.(value);
+      // Only fire onChangeEnd if the value actually changed during this focus
+      // session. Pointerup already fires onChangeEnd directly; blur covers the
+      // keyboard-nav case (Tab out after Arrow nav). Tab-in / Tab-out without
+      // any nav does NOT fire (no change, no fire).
+      if (valueChangedThisFocusRef.current) {
+        onChangeEnd?.(latestValueRef.current);
+        valueChangedThisFocusRef.current = false;
+      }
     },
-    [onChangeEnd, setFlag, value],
+    [onChangeEnd, setFlag],
   );
 
   // Track click: pick the nearest thumb (by current value distance to the
@@ -534,7 +581,10 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           onPointerUp={(e) => handleThumbPointerUp(e, index)}
           onPointerEnter={() => setFlag(setIsHovered, index, true)}
           onPointerLeave={() => setFlag(setIsHovered, index, false)}
-          onFocus={() => setFlag(setIsFocused, index, true)}
+          onFocus={() => {
+            setFlag(setIsFocused, index, true);
+            valueChangedThisFocusRef.current = false;
+          }}
           onBlur={() => handleThumbBlur(index)}
           onKeyDown={(e) => handleThumbKeyDown(e, index)}
         >
@@ -544,28 +594,22 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
         </div>
       ))}
       {name &&
+        !disabled &&
         (isRange ? (
           <>
             <input
               type="hidden"
               name={`${name}-min`}
               value={(value as [number, number])[0]}
-              disabled={disabled || undefined}
             />
             <input
               type="hidden"
               name={`${name}-max`}
               value={(value as [number, number])[1]}
-              disabled={disabled || undefined}
             />
           </>
         ) : (
-          <input
-            type="hidden"
-            name={name}
-            value={value as number}
-            disabled={disabled || undefined}
-          />
+          <input type="hidden" name={name} value={value as number} />
         ))}
     </div>
   );
