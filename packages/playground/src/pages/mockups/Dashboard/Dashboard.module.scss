@@ -1,42 +1,7 @@
-.title {
-  margin: 0;
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-fg);
-}
-
-// Section heading for non-list cards (e.g. Recent contacts) where the
-// Card.Header subcomponent's border-bottom + padding don't fit.
-.cardTitle {
-  margin: 0;
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-fg);
-}
-
-.subtitle {
-  margin: var(--space-1) 0 0;
-  color: var(--color-fg-muted);
-  font-size: var(--font-size-md);
-}
-
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-4);
-}
-
-.statLabel {
-  font-size: var(--font-size-sm);
-  color: var(--color-fg-muted);
-  font-weight: var(--font-weight-medium);
-}
-
-.statValue {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-fg);
-  line-height: var(--line-height-tight);
 }
 
 .statIcon {
@@ -55,36 +20,10 @@
   gap: var(--space-4);
 }
 
-.listRowTitle {
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg);
-}
-
-.listRowMeta {
-  font-size: var(--font-size-sm);
-  color: var(--color-fg-subtle);
-}
-
-.activityLine {
-  font-size: var(--font-size-sm);
-  color: var(--color-fg-muted);
-  line-height: var(--line-height-normal);
-}
-
-.activityTarget {
-  color: var(--color-accent);
-}
-
 .contactGrid {
-  margin-top: var(--space-3);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--space-3);
-}
-
-.contactName {
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg);
 }
 
 @media (max-width: 1024px) {
