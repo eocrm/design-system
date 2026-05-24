@@ -1,0 +1,105 @@
+.text {
+  // stylelint-disable-next-line property-disallowed-list -- native <p> margin reset (component-internal, not at the boundary)
+  margin: 0;
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-fg);
+}
+
+.sizeXs {
+  font-size: var(--font-size-xs);
+}
+
+.sizeSm {
+  font-size: var(--font-size-sm);
+}
+
+.sizeMd {
+  font-size: var(--font-size-md);
+}
+
+.sizeLg {
+  font-size: var(--font-size-lg);
+}
+
+.sizeXl {
+  font-size: var(--font-size-xl);
+}
+
+.weightRegular {
+  font-weight: var(--font-weight-regular);
+}
+
+.weightMedium {
+  font-weight: var(--font-weight-medium);
+}
+
+.weightSemibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.weightBold {
+  font-weight: var(--font-weight-bold);
+}
+
+.toneDefault {
+  color: var(--color-fg);
+}
+
+.toneMuted {
+  color: var(--color-fg-muted);
+}
+
+.toneSubtle {
+  color: var(--color-fg-subtle);
+}
+
+.toneAccent {
+  color: var(--color-accent);
+}
+
+.toneDanger {
+  color: var(--color-danger);
+}
+
+.toneSuccess {
+  color: var(--color-success);
+}
+
+.toneWarning {
+  color: var(--color-warning);
+}
+
+.alignLeft {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- text-align keywords don't have tokens
+  text-align: left;
+}
+
+.alignCenter {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- text-align keywords don't have tokens
+  text-align: center;
+}
+
+.alignRight {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- text-align keywords don't have tokens
+  text-align: right;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  // Allow shrinkage below intrinsic size inside flex/grid parents — without
+  // this, the truncate has no effect when the heading is a flex/grid child.
+  min-width: 0;
+}
+
+.lineClamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  // -webkit-line-clamp value is set inline via style (dynamic), not a class.
+}
