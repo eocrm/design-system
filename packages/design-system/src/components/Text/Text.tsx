@@ -14,14 +14,7 @@ export type TextAs = 'p' | 'span' | 'div' | 'label';
 export type TextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** Color tone. */
-export type TextTone =
-  | 'default'
-  | 'muted'
-  | 'subtle'
-  | 'accent'
-  | 'danger'
-  | 'success'
-  | 'warning';
+export type TextTone = 'default' | 'muted' | 'subtle' | 'accent' | 'danger' | 'success' | 'warning';
 
 /** Font weight. */
 export type TextWeight = 'regular' | 'medium' | 'semibold' | 'bold';

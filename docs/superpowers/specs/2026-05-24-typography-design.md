@@ -79,7 +79,9 @@ packages/playground/src/pages/mockups/Dashboard/Dashboard.module.scss ← MODIFY
 ```tsx
 <Stack gap="md">
   <Title order={1}>Dashboard</Title>
-  <Text size="lg" tone="muted">Good morning, Alex.</Text>
+  <Text size="lg" tone="muted">
+    Good morning, Alex.
+  </Text>
 
   <Card>
     <Card.Header headerLevel="h2">Recent activity</Card.Header>
@@ -87,13 +89,17 @@ packages/playground/src/pages/mockups/Dashboard/Dashboard.module.scss ← MODIFY
       <Card.ListRow>
         <Stack gap="xs">
           <Text weight="medium">Priya Shah replied</Text>
-          <Text size="sm" tone="subtle">12m ago</Text>
+          <Text size="sm" tone="subtle">
+            12m ago
+          </Text>
         </Stack>
       </Card.ListRow>
     </Card.List>
   </Card>
 
-  <Text size="sm">Use <Code>npm install</Code> to add packages.</Text>
+  <Text size="sm">
+    Use <Code>npm install</Code> to add packages.
+  </Text>
 </Stack>
 ```
 
@@ -167,14 +173,7 @@ export type TextAs = 'p' | 'span' | 'div' | 'label';
 export type TextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** Color tone. */
-export type TextTone =
-  | 'default'
-  | 'muted'
-  | 'subtle'
-  | 'accent'
-  | 'danger'
-  | 'success'
-  | 'warning';
+export type TextTone = 'default' | 'muted' | 'subtle' | 'accent' | 'danger' | 'success' | 'warning';
 
 /** Font weight. */
 export type TextWeight = 'regular' | 'medium' | 'semibold' | 'bold';
@@ -254,26 +253,58 @@ Each component has its own `.module.scss`. All values use tokens.
 }
 
 // Size modifiers (one per token):
-.sizeXs { font-size: var(--font-size-xs); }
-.sizeSm { font-size: var(--font-size-sm); }
-.sizeMd { font-size: var(--font-size-md); }
-.sizeLg { font-size: var(--font-size-lg); }
-.sizeXl { font-size: var(--font-size-xl); }
-.size2xl { font-size: var(--font-size-2xl); }
-.size3xl { font-size: var(--font-size-3xl); }
+.sizeXs {
+  font-size: var(--font-size-xs);
+}
+.sizeSm {
+  font-size: var(--font-size-sm);
+}
+.sizeMd {
+  font-size: var(--font-size-md);
+}
+.sizeLg {
+  font-size: var(--font-size-lg);
+}
+.sizeXl {
+  font-size: var(--font-size-xl);
+}
+.size2xl {
+  font-size: var(--font-size-2xl);
+}
+.size3xl {
+  font-size: var(--font-size-3xl);
+}
 
 // Weight modifiers:
-.weightRegular  { font-weight: var(--font-weight-regular); }
-.weightMedium   { font-weight: var(--font-weight-medium); }
-.weightSemibold { font-weight: var(--font-weight-semibold); }
-.weightBold     { font-weight: var(--font-weight-bold); }
+.weightRegular {
+  font-weight: var(--font-weight-regular);
+}
+.weightMedium {
+  font-weight: var(--font-weight-medium);
+}
+.weightSemibold {
+  font-weight: var(--font-weight-semibold);
+}
+.weightBold {
+  font-weight: var(--font-weight-bold);
+}
 
 // Tone modifiers:
-.toneDefault { color: var(--color-fg); }
-.toneMuted   { color: var(--color-fg-muted); }
-.toneSubtle  { color: var(--color-fg-subtle); }
-.toneAccent  { color: var(--color-accent); }
-.toneDanger  { color: var(--color-danger); }
+.toneDefault {
+  color: var(--color-fg);
+}
+.toneMuted {
+  color: var(--color-fg-muted);
+}
+.toneSubtle {
+  color: var(--color-fg-subtle);
+}
+.toneAccent {
+  color: var(--color-accent);
+}
+.toneDanger {
+  color: var(--color-danger);
+}
 
 // Truncate:
 .truncate {
@@ -297,31 +328,69 @@ Each component has its own `.module.scss`. All values use tokens.
 }
 
 // Size modifiers (xs through xl only — Text doesn't go heading-sized):
-.sizeXs { font-size: var(--font-size-xs); }
-.sizeSm { font-size: var(--font-size-sm); }
-.sizeMd { font-size: var(--font-size-md); }
-.sizeLg { font-size: var(--font-size-lg); }
-.sizeXl { font-size: var(--font-size-xl); }
+.sizeXs {
+  font-size: var(--font-size-xs);
+}
+.sizeSm {
+  font-size: var(--font-size-sm);
+}
+.sizeMd {
+  font-size: var(--font-size-md);
+}
+.sizeLg {
+  font-size: var(--font-size-lg);
+}
+.sizeXl {
+  font-size: var(--font-size-xl);
+}
 
 // Weight modifiers (same as Title):
-.weightRegular  { font-weight: var(--font-weight-regular); }
-.weightMedium   { font-weight: var(--font-weight-medium); }
-.weightSemibold { font-weight: var(--font-weight-semibold); }
-.weightBold     { font-weight: var(--font-weight-bold); }
+.weightRegular {
+  font-weight: var(--font-weight-regular);
+}
+.weightMedium {
+  font-weight: var(--font-weight-medium);
+}
+.weightSemibold {
+  font-weight: var(--font-weight-semibold);
+}
+.weightBold {
+  font-weight: var(--font-weight-bold);
+}
 
 // Tone modifiers (adds success/warning to Title's set):
-.toneDefault { color: var(--color-fg); }
-.toneMuted   { color: var(--color-fg-muted); }
-.toneSubtle  { color: var(--color-fg-subtle); }
-.toneAccent  { color: var(--color-accent); }
-.toneDanger  { color: var(--color-danger); }
-.toneSuccess { color: var(--color-success); }
-.toneWarning { color: var(--color-warning); }
+.toneDefault {
+  color: var(--color-fg);
+}
+.toneMuted {
+  color: var(--color-fg-muted);
+}
+.toneSubtle {
+  color: var(--color-fg-subtle);
+}
+.toneAccent {
+  color: var(--color-accent);
+}
+.toneDanger {
+  color: var(--color-danger);
+}
+.toneSuccess {
+  color: var(--color-success);
+}
+.toneWarning {
+  color: var(--color-warning);
+}
 
 // Align modifiers:
-.alignLeft   { text-align: left; }
-.alignCenter { text-align: center; }
-.alignRight  { text-align: right; }
+.alignLeft {
+  text-align: left;
+}
+.alignCenter {
+  text-align: center;
+}
+.alignRight {
+  text-align: right;
+}
 
 // Truncate + line-clamp:
 .truncate {
@@ -354,10 +423,18 @@ For `lineClamp={N}`, the component sets `style={{ WebkitLineClamp: N }}` inline 
   color: var(--color-fg);
 }
 
-.toneDefault { color: var(--color-fg); }
-.toneMuted   { color: var(--color-fg-muted); }
-.toneAccent  { color: var(--color-accent); }
-.toneDanger  { color: var(--color-danger); }
+.toneDefault {
+  color: var(--color-fg);
+}
+.toneMuted {
+  color: var(--color-fg-muted);
+}
+.toneAccent {
+  color: var(--color-accent);
+}
+.toneDanger {
+  color: var(--color-danger);
+}
 ```
 
 **Rule 4 check (cross-component):**
@@ -369,13 +446,13 @@ For `lineClamp={N}`, the component sets `style={{ WebkitLineClamp: N }}` inline 
 
 ## ARIA + semantics reference
 
-| Concern         | Behavior                                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `<Title>` tag   | `<h1>` … `<h6>` per `order`. Always a real heading element — screen readers announce heading level + text correctly.            |
-| `<Text>` tag    | `<p>` (default), `<span>`, `<div>`, or `<label>` per `as`. No `role` overrides.                                                |
-| `<Code>` tag    | `<code>`. Native screen-reader announcement ("code"). No `role` override.                                                      |
-| Focus           | None of the three are focusable. Interactive children (e.g. a `<Link>` inside `<Text>`) carry their own focus.                 |
-| Truncate / clamp | Visually clipped; full text remains in the accessibility tree. Screen readers read the entire string.                          |
+| Concern          | Behavior                                                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `<Title>` tag    | `<h1>` … `<h6>` per `order`. Always a real heading element — screen readers announce heading level + text correctly.             |
+| `<Text>` tag     | `<p>` (default), `<span>`, `<div>`, or `<label>` per `as`. No `role` overrides.                                                  |
+| `<Code>` tag     | `<code>`. Native screen-reader announcement ("code"). No `role` override.                                                        |
+| Focus            | None of the three are focusable. Interactive children (e.g. a `<Link>` inside `<Text>`) carry their own focus.                   |
+| Truncate / clamp | Visually clipped; full text remains in the accessibility tree. Screen readers read the entire string.                            |
 | `tone` semantics | `tone` is visual only — no `aria-` attribute. Consumers needing semantic intent (e.g. error text) use `role="alert"` themselves. |
 
 ## Testing

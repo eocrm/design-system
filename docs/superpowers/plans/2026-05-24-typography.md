@@ -371,13 +371,7 @@ EOF
 ```tsx
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import {
-  Title,
-  type TitleOrder,
-  type TitleSize,
-  type TitleTone,
-  type TitleWeight,
-} from './Title';
+import { Title, type TitleOrder, type TitleSize, type TitleTone, type TitleWeight } from './Title';
 
 describe('Title', () => {
   it('renders its children', () => {
@@ -560,14 +554,7 @@ export type TextAs = 'p' | 'span' | 'div' | 'label';
 export type TextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** Color tone. */
-export type TextTone =
-  | 'default'
-  | 'muted'
-  | 'subtle'
-  | 'accent'
-  | 'danger'
-  | 'success'
-  | 'warning';
+export type TextTone = 'default' | 'muted' | 'subtle' | 'accent' | 'danger' | 'success' | 'warning';
 
 /** Font weight. */
 export type TextWeight = 'regular' | 'medium' | 'semibold' | 'bold';
@@ -1338,13 +1325,7 @@ export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button
 
 // Typography primitives — use these instead of raw <h*> / <p> / <span> + inline styles.
 export { Title } from './components/Title';
-export type {
-  TitleProps,
-  TitleOrder,
-  TitleSize,
-  TitleTone,
-  TitleWeight,
-} from './components/Title';
+export type { TitleProps, TitleOrder, TitleSize, TitleTone, TitleWeight } from './components/Title';
 
 export { Text } from './components/Text';
 export type {
@@ -1879,7 +1860,7 @@ import { TitleDemo } from './pages/components/TitleDemo';
 **old_string:**
 
 ```tsx
-          <Route path="/components/card" element={<CardDemo />} />
+<Route path="/components/card" element={<CardDemo />} />
 ```
 
 **new_string:**
@@ -1998,7 +1979,7 @@ import { Title } from '@eocrm/design-system';
   },
 ```
 
-  Find the Tabs entry (search `name: 'Tabs',`). Insert the Text card AFTER it (Text is alphabetically just after Tabs):
+Find the Tabs entry (search `name: 'Tabs',`). Insert the Text card AFTER it (Text is alphabetically just after Tabs):
 
 ```tsx
   {
@@ -2014,7 +1995,7 @@ import { Title } from '@eocrm/design-system';
   },
 ```
 
-  Insert the Title card AFTER Text (Title is alphabetically right after Text):
+Insert the Title card AFTER Text (Title is alphabetically right after Text):
 
 ```tsx
   {
@@ -2030,7 +2011,7 @@ import { Title } from '@eocrm/design-system';
   },
 ```
 
-  Because the exact alphabetical position depends on what other entries are around Tabs / Cluster in the current file, the implementer must read the file first and apply the Edit with enough surrounding context (the preceding and following card entries) to make `old_string` unique. **Pattern to follow:** for each new card, the `old_string` is the entire `{ ... },` block of the entry immediately before the insertion point, and the `new_string` is that same block plus the new card's `{ ... },` block.
+Because the exact alphabetical position depends on what other entries are around Tabs / Cluster in the current file, the implementer must read the file first and apply the Edit with enough surrounding context (the preceding and following card entries) to make `old_string` unique. **Pattern to follow:** for each new card, the `old_string` is the entire `{ ... },` block of the entry immediately before the insertion point, and the `new_string` is that same block plus the new card's `{ ... },` block.
 
 ### Step 8.7: Modify `registry.ts` — extend ComponentName union + Dashboard
 
@@ -2159,21 +2140,21 @@ import { Text } from '@eocrm/design-system';
 **old_string:**
 
 ```tsx
-        <div>
-          <h1 className={styles.title}>Dashboard</h1>
-          <p className={styles.subtitle}>Good morning, Alex. Here's where your pipeline stands.</p>
-        </div>
+<div>
+  <h1 className={styles.title}>Dashboard</h1>
+  <p className={styles.subtitle}>Good morning, Alex. Here's where your pipeline stands.</p>
+</div>
 ```
 
 **new_string:**
 
 ```tsx
-        <div>
-          <Title order={1}>Dashboard</Title>
-          <Text size="md" tone="muted">
-            Good morning, Alex. Here's where your pipeline stands.
-          </Text>
-        </div>
+<div>
+  <Title order={1}>Dashboard</Title>
+  <Text size="md" tone="muted">
+    Good morning, Alex. Here's where your pipeline stands.
+  </Text>
+</div>
 ```
 
 - [ ] Edit 3 — replace the stat card labels and values (inside the `stats.map` block).
@@ -2181,53 +2162,53 @@ import { Text } from '@eocrm/design-system';
 **old_string:**
 
 ```tsx
-              <Stack gap="xs">
-                <span className={styles.statLabel}>{label}</span>
-                <span className={styles.statValue}>{value}</span>
-                <Badge tone={deltaTone}>
-                  <ArrowUpRight size={10} /> {delta}
-                </Badge>
-              </Stack>
+<Stack gap="xs">
+  <span className={styles.statLabel}>{label}</span>
+  <span className={styles.statValue}>{value}</span>
+  <Badge tone={deltaTone}>
+    <ArrowUpRight size={10} /> {delta}
+  </Badge>
+</Stack>
 ```
 
 **new_string:**
 
 ```tsx
-              <Stack gap="xs">
-                <Text as="span" size="sm" tone="muted" weight="medium">
-                  {label}
-                </Text>
-                <Text as="span" size="2xl" weight="semibold">
-                  {value}
-                </Text>
-                <Badge tone={deltaTone}>
-                  <ArrowUpRight size={10} /> {delta}
-                </Badge>
-              </Stack>
+<Stack gap="xs">
+  <Text as="span" size="sm" tone="muted" weight="medium">
+    {label}
+  </Text>
+  <Text as="span" size="2xl" weight="semibold">
+    {value}
+  </Text>
+  <Badge tone={deltaTone}>
+    <ArrowUpRight size={10} /> {delta}
+  </Badge>
+</Stack>
 ```
 
-  **Note:** `<Text size="2xl">` is intentionally outside the spec's Text size range (xs..xl). This is a deliberate exception flagged here: the statValue currently uses `font-size-2xl` (24px), which is heading-territory. The right primitive is `<Title order={2}>` (h2, 2xl). But a stat value is NOT semantically a heading — it's a piece of data. After looking at the options, the implementer should choose:
+**Note:** `<Text size="2xl">` is intentionally outside the spec's Text size range (xs..xl). This is a deliberate exception flagged here: the statValue currently uses `font-size-2xl` (24px), which is heading-territory. The right primitive is `<Title order={2}>` (h2, 2xl). But a stat value is NOT semantically a heading — it's a piece of data. After looking at the options, the implementer should choose:
 
-  **Option A (recommended, cleanest):** use `<Text as="span" size="lg" weight="semibold">` — the statValue downsizes from 24px to 16px. Slightly smaller than today but semantically correct (lg is the upper bound of body text). The stat cards have always been visually loud; this brings them into the body-text scale.
+**Option A (recommended, cleanest):** use `<Text as="span" size="lg" weight="semibold">` — the statValue downsizes from 24px to 16px. Slightly smaller than today but semantically correct (lg is the upper bound of body text). The stat cards have always been visually loud; this brings them into the body-text scale.
 
-  **Option B:** add `'2xl' | '3xl'` to `TextSize` to support stat-value-style emphasis. Adds spec-divergence but matches the prior visual exactly.
+**Option B:** add `'2xl' | '3xl'` to `TextSize` to support stat-value-style emphasis. Adds spec-divergence but matches the prior visual exactly.
 
-  **Decision for this plan:** go with Option A. Use `size="lg"`. If the user objects after seeing the live mockup, we revisit and bump TextSize. Update the edit accordingly:
+**Decision for this plan:** go with Option A. Use `size="lg"`. If the user objects after seeing the live mockup, we revisit and bump TextSize. Update the edit accordingly:
 
 **Corrected new_string for Edit 3:**
 
 ```tsx
-              <Stack gap="xs">
-                <Text as="span" size="sm" tone="muted" weight="medium">
-                  {label}
-                </Text>
-                <Text as="span" size="lg" weight="semibold">
-                  {value}
-                </Text>
-                <Badge tone={deltaTone}>
-                  <ArrowUpRight size={10} /> {delta}
-                </Badge>
-              </Stack>
+<Stack gap="xs">
+  <Text as="span" size="sm" tone="muted" weight="medium">
+    {label}
+  </Text>
+  <Text as="span" size="lg" weight="semibold">
+    {value}
+  </Text>
+  <Badge tone={deltaTone}>
+    <ArrowUpRight size={10} /> {delta}
+  </Badge>
+</Stack>
 ```
 
 - [ ] Edit 4 — replace `listRowTitle` and `listRowMeta` spans in the Deals card.
@@ -2235,39 +2216,39 @@ import { Text } from '@eocrm/design-system';
 **old_string:**
 
 ```tsx
-                <Stack gap="xs">
-                  <Cluster gap="sm">
-                    <span className={styles.listRowTitle}>{d.title}</span>
-                    {d.tags.map((t) => (
-                      <Badge key={t.label} tone={t.tone}>
-                        {t.label}
-                      </Badge>
-                    ))}
-                  </Cluster>
-                  <span className={styles.listRowMeta}>
-                    {d.company} · ${d.amount.toLocaleString()}
-                  </span>
-                </Stack>
+<Stack gap="xs">
+  <Cluster gap="sm">
+    <span className={styles.listRowTitle}>{d.title}</span>
+    {d.tags.map((t) => (
+      <Badge key={t.label} tone={t.tone}>
+        {t.label}
+      </Badge>
+    ))}
+  </Cluster>
+  <span className={styles.listRowMeta}>
+    {d.company} · ${d.amount.toLocaleString()}
+  </span>
+</Stack>
 ```
 
 **new_string:**
 
 ```tsx
-                <Stack gap="xs">
-                  <Cluster gap="sm">
-                    <Text as="span" weight="medium">
-                      {d.title}
-                    </Text>
-                    {d.tags.map((t) => (
-                      <Badge key={t.label} tone={t.tone}>
-                        {t.label}
-                      </Badge>
-                    ))}
-                  </Cluster>
-                  <Text as="span" size="sm" tone="subtle">
-                    {d.company} · ${d.amount.toLocaleString()}
-                  </Text>
-                </Stack>
+<Stack gap="xs">
+  <Cluster gap="sm">
+    <Text as="span" weight="medium">
+      {d.title}
+    </Text>
+    {d.tags.map((t) => (
+      <Badge key={t.label} tone={t.tone}>
+        {t.label}
+      </Badge>
+    ))}
+  </Cluster>
+  <Text as="span" size="sm" tone="subtle">
+    {d.company} · ${d.amount.toLocaleString()}
+  </Text>
+</Stack>
 ```
 
 - [ ] Edit 5 — replace the activity line spans.
@@ -2275,90 +2256,89 @@ import { Text } from '@eocrm/design-system';
 **old_string:**
 
 ```tsx
-                <Cluster gap="sm" wrap={false} align="start">
-                  <Avatar name={a.who} size="sm" />
-                  <Stack gap="xs">
-                    <span className={styles.activityLine}>
-                      <strong>{a.who}</strong> {a.what}{' '}
-                      <span className={styles.activityTarget}>{a.target}</span>
-                    </span>
-                    <span className={styles.listRowMeta}>{a.when}</span>
-                  </Stack>
-                </Cluster>
+<Cluster gap="sm" wrap={false} align="start">
+  <Avatar name={a.who} size="sm" />
+  <Stack gap="xs">
+    <span className={styles.activityLine}>
+      <strong>{a.who}</strong> {a.what} <span className={styles.activityTarget}>{a.target}</span>
+    </span>
+    <span className={styles.listRowMeta}>{a.when}</span>
+  </Stack>
+</Cluster>
 ```
 
 **new_string:**
 
 ```tsx
-                <Cluster gap="sm" wrap={false} align="start">
-                  <Avatar name={a.who} size="sm" />
-                  <Stack gap="xs">
-                    <Text as="span" size="sm" tone="muted">
-                      <strong>{a.who}</strong> {a.what}{' '}
-                      <Text as="span" tone="accent">
-                        {a.target}
-                      </Text>
-                    </Text>
-                    <Text as="span" size="sm" tone="subtle">
-                      {a.when}
-                    </Text>
-                  </Stack>
-                </Cluster>
+<Cluster gap="sm" wrap={false} align="start">
+  <Avatar name={a.who} size="sm" />
+  <Stack gap="xs">
+    <Text as="span" size="sm" tone="muted">
+      <strong>{a.who}</strong> {a.what}{' '}
+      <Text as="span" tone="accent">
+        {a.target}
+      </Text>
+    </Text>
+    <Text as="span" size="sm" tone="subtle">
+      {a.when}
+    </Text>
+  </Stack>
+</Cluster>
 ```
 
-  **Note on nested `<Text>`:** the activity line has an inner `<Text as="span" tone="accent">` nested inside an outer `<Text as="span" size="sm" tone="muted">`. The nested Text inherits the outer size (no explicit `size`) — the nested only overrides tone. This composition is valid: nesting `<span>` inside `<span>` is legal HTML and the inner element's class wins for tone color. Confirm the rendered output looks right in the playground before pushing.
+**Note on nested `<Text>`:** the activity line has an inner `<Text as="span" tone="accent">` nested inside an outer `<Text as="span" size="sm" tone="muted">`. The nested Text inherits the outer size (no explicit `size`) — the nested only overrides tone. This composition is valid: nesting `<span>` inside `<span>` is legal HTML and the inner element's class wins for tone color. Confirm the rendered output looks right in the playground before pushing.
 
 - [ ] Edit 6 — replace the "Recent contacts" h2 + contact name/title spans.
 
 **old_string:**
 
 ```tsx
-      <Card padding="md">
-        <h2 className={styles.cardTitle}>Recent contacts</h2>
-        <div className={styles.contactGrid}>
-          {contacts.slice(0, 4).map((c) => (
-            <Cluster key={c.id} gap="sm" wrap={false} align="center">
-              <Avatar name={c.name} size="md" />
-              <Stack gap="xs">
-                <span className={styles.contactName}>{c.name}</span>
-                <span className={styles.listRowMeta}>{c.title}</span>
-              </Stack>
-            </Cluster>
-          ))}
-        </div>
-      </Card>
+<Card padding="md">
+  <h2 className={styles.cardTitle}>Recent contacts</h2>
+  <div className={styles.contactGrid}>
+    {contacts.slice(0, 4).map((c) => (
+      <Cluster key={c.id} gap="sm" wrap={false} align="center">
+        <Avatar name={c.name} size="md" />
+        <Stack gap="xs">
+          <span className={styles.contactName}>{c.name}</span>
+          <span className={styles.listRowMeta}>{c.title}</span>
+        </Stack>
+      </Cluster>
+    ))}
+  </div>
+</Card>
 ```
 
 **new_string:**
 
 ```tsx
-      <Card padding="md">
-        <Stack gap="md">
-          <Title order={2} size="md">
-            Recent contacts
-          </Title>
-          <div className={styles.contactGrid}>
-            {contacts.slice(0, 4).map((c) => (
-              <Cluster key={c.id} gap="sm" wrap={false} align="center">
-                <Avatar name={c.name} size="md" />
-                <Stack gap="xs">
-                  <Text as="span" weight="medium">
-                    {c.name}
-                  </Text>
-                  <Text as="span" size="sm" tone="subtle">
-                    {c.title}
-                  </Text>
-                </Stack>
-              </Cluster>
-            ))}
-          </div>
-        </Stack>
-      </Card>
+<Card padding="md">
+  <Stack gap="md">
+    <Title order={2} size="md">
+      Recent contacts
+    </Title>
+    <div className={styles.contactGrid}>
+      {contacts.slice(0, 4).map((c) => (
+        <Cluster key={c.id} gap="sm" wrap={false} align="center">
+          <Avatar name={c.name} size="md" />
+          <Stack gap="xs">
+            <Text as="span" weight="medium">
+              {c.name}
+            </Text>
+            <Text as="span" size="sm" tone="subtle">
+              {c.title}
+            </Text>
+          </Stack>
+        </Cluster>
+      ))}
+    </div>
+  </Stack>
+</Card>
 ```
 
-  **Note on h2 size override:** the previous `<h2 className={styles.cardTitle}>` SCSS sized this heading at `var(--font-size-md)` (14px) — much smaller than h2's default of `2xl` (24px). Preserving that visual requires the `size="md"` override on `<Title order={2}>`. This is exactly the case the `size` override exists for.
+**Note on h2 size override:** the previous `<h2 className={styles.cardTitle}>` SCSS sized this heading at `var(--font-size-md)` (14px) — much smaller than h2's default of `2xl` (24px). Preserving that visual requires the `size="md"` override on `<Title order={2}>`. This is exactly the case the `size` override exists for.
 
-  Also wraps the content in `<Stack gap="md">` so the title + grid have spacing (the previous CSS gave `.contactGrid` a `margin-top: var(--space-3)` which is forbidden by Rule 4 anyway and will be deleted in step 9.2).
+Also wraps the content in `<Stack gap="md">` so the title + grid have spacing (the previous CSS gave `.contactGrid` a `margin-top: var(--space-3)` which is forbidden by Rule 4 anyway and will be deleted in step 9.2).
 
 ### Step 9.2: Modify `Dashboard.module.scss`
 
@@ -2395,6 +2375,7 @@ Delete typography-only rules. Keep layout-only rules. Read the current file firs
 **new_string:** (empty — these classes are all replaced by Title/Text)
 
 ```scss
+
 ```
 
 - [ ] Edit 2 — delete `.statLabel`, `.statValue`.
@@ -2419,6 +2400,7 @@ Delete typography-only rules. Keep layout-only rules. Read the current file firs
 **new_string:** (empty)
 
 ```scss
+
 ```
 
 - [ ] Edit 3 — delete `.listRowTitle`, `.listRowMeta`, `.activityLine`, `.activityTarget`.
@@ -2450,6 +2432,7 @@ Delete typography-only rules. Keep layout-only rules. Read the current file firs
 **new_string:** (empty)
 
 ```scss
+
 ```
 
 - [ ] Edit 4 — delete `.contactName` and drop `margin-top` from `.contactGrid` (margin is forbidden by Rule 4; the wrapping `<Stack>` now provides the gap).
@@ -2480,7 +2463,7 @@ Delete typography-only rules. Keep layout-only rules. Read the current file firs
 }
 ```
 
-  **What remains in Dashboard.module.scss after these edits:** `.statsGrid`, `.statIcon`, `.twoCol`, `.contactGrid`, plus the `@media` block at the bottom. All pure layout. No typography classes. Verify by re-reading the file after the edits.
+**What remains in Dashboard.module.scss after these edits:** `.statsGrid`, `.statIcon`, `.twoCol`, `.contactGrid`, plus the `@media` block at the bottom. All pure layout. No typography classes. Verify by re-reading the file after the edits.
 
 ### Step 9.3: Verify gates
 

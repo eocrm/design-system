@@ -319,7 +319,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/code',
     name: 'Code',
-    description: 'Inline <code> chip — monospace text with subtle bg. Use for inline identifiers / snippets.',
+    description:
+      'Inline <code> chip — monospace text with subtle bg. Use for inline identifiers / snippets.',
     preview: (
       <Cluster gap="sm" justify="center">
         <Code>userId</Code>
@@ -421,10 +422,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/text',
     name: 'Text',
-    description: 'Body / inline text primitive with size/tone/weight/align/truncate/lineClamp props.',
+    description:
+      'Body / inline text primitive with size/tone/weight/align/truncate/lineClamp props.',
     preview: (
       <Stack gap="xs" align="center">
-        <Text size="sm" tone="muted">12 minutes ago</Text>
+        <Text size="sm" tone="muted">
+          12 minutes ago
+        </Text>
         <Text weight="medium">Acme Inc</Text>
       </Stack>
     ),
@@ -436,7 +440,9 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: (
       <Stack gap="xs" align="center">
         <Title order={3}>Dashboard</Title>
-        <Title order={5} tone="muted">Subtitle</Title>
+        <Title order={5} tone="muted">
+          Subtitle
+        </Title>
       </Stack>
     ),
   },

@@ -60,7 +60,17 @@ export const MOCKUPS = [
     title: 'Dashboard',
     path: '/mockups/dashboard',
     blurb: 'CRM home — KPI cards, pipeline summary, recent activity.',
-    usesComponents: ['Card', 'Stack', 'Cluster', 'Avatar', 'Badge', 'Button', 'Link', 'Title', 'Text'],
+    usesComponents: [
+      'Card',
+      'Stack',
+      'Cluster',
+      'Avatar',
+      'Badge',
+      'Button',
+      'Link',
+      'Title',
+      'Text',
+    ],
   },
   {
     slug: 'deals',

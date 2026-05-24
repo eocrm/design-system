@@ -80,7 +80,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - ❌ `style={{ fontSize: 'var(--font-size-sm)' }}` / `style={{ color: 'var(--color-fg-muted)' }}` — use `<Text size="sm" tone="muted">`.
 - ❌ Raw `<h1>` / `<h2>` / `<h3>` — use `<Title order={N}>`.
 - ❌ `<Text style={{ color: '#someHex' }}>` — pick a tone from the whitelist.
-- For semantic emphasis (the bold *is* the meaning — e.g. a user's name in a notification, an error keyword), use `<strong>` or `<em>` inside `<Text>`. For visual-only weight changes (a medium-weight name in a list because hierarchy says so, not because the name is emphatic), use `<Text weight="medium">`. Pick the one that matches *why* the text is heavy.
+- For semantic emphasis (the bold _is_ the meaning — e.g. a user's name in a notification, an error keyword), use `<strong>` or `<em>` inside `<Text>`. For visual-only weight changes (a medium-weight name in a list because hierarchy says so, not because the name is emphatic), use `<Text weight="medium">`. Pick the one that matches _why_ the text is heavy.
 - If the size / tone / weight you need isn't on `<Title>` or `<Text>`, **that's a token-vocabulary conversation, not a component-skipping conversation.**
 
 ### `<Button>` — action triggers

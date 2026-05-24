@@ -1,12 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import {
-  Title,
-  type TitleOrder,
-  type TitleSize,
-  type TitleTone,
-  type TitleWeight,
-} from './Title';
+import { Title, type TitleOrder, type TitleSize, type TitleTone, type TitleWeight } from './Title';
 
 describe('Title', () => {
   it('renders its children', () => {

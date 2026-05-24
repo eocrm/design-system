@@ -241,7 +241,14 @@ export { Code } from './components/Code';
 export type { CodeProps, CodeTone } from './components/Code';
 
 export { Text } from './components/Text';
-export type { TextProps, TextAs, TextSize, TextTone, TextWeight, TextAlign } from './components/Text';
+export type {
+  TextProps,
+  TextAs,
+  TextSize,
+  TextTone,
+  TextWeight,
+  TextAlign,
+} from './components/Text';
 
 export { Title } from './components/Title';
 export type { TitleProps, TitleOrder, TitleSize, TitleTone, TitleWeight } from './components/Title';
