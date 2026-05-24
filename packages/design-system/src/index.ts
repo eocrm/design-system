@@ -177,6 +177,14 @@ export type {
 export { Progress } from './components/Progress';
 export type { ProgressProps, ProgressSize, ProgressTone, ProgressLabel } from './components/Progress';
 
+export { CircularProgress } from './components/CircularProgress';
+export type {
+  CircularProgressProps,
+  CircularProgressSize,
+  CircularProgressTone,
+  CircularProgressLabel,
+} from './components/CircularProgress';
+
 export { Skeleton } from './components/Skeleton';
 export type { SkeletonProps, SkeletonVariant, SkeletonAnimation } from './components/Skeleton';
 
