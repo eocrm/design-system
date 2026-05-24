@@ -1,0 +1,183 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: var(--border-width-emphasis) dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-base),
+    background var(--transition-base);
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--color-accent);
+    color: var(--color-fg);
+    outline: none;
+  }
+}
+
+.dragOver {
+  border-color: var(--color-accent);
+  border-style: solid;
+  background: var(--color-accent-bg-subtle);
+  color: var(--color-fg);
+}
+
+.dropzoneIcon {
+  color: var(--color-fg-subtle);
+}
+
+.dropzoneLabel {
+  font-size: var(--font-size-md);
+  text-align: center;
+}
+
+.browseLink {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+}
+
+.dropzoneHint {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-subtle);
+  text-align: center;
+}
+
+.hiddenInput {
+  // Visually-hidden pattern — kept in the DOM so the dropzone click can
+  // trigger the picker. Standard 1x1 absolute + clip-rect technique.
+
+  // stylelint-disable-next-line property-disallowed-list -- visually-hidden pattern (component-internal)
+  position: absolute;
+  width: 1px;
+  height: 1px;
+
+  // stylelint-disable-next-line property-disallowed-list -- visually-hidden pattern (component-internal)
+  padding: 0;
+
+  // stylelint-disable-next-line property-disallowed-list -- visually-hidden pattern (component-internal)
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  // stylelint-disable-next-line property-disallowed-list -- native <ul> margin reset (component-internal)
+  margin: 0;
+
+  // stylelint-disable-next-line property-disallowed-list -- native <ul> padding reset (component-internal)
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+// stylelint-disable-next-line block-no-empty -- intentional no-op placeholder for status row variants
+.rowPending,
+.rowUploading,
+.rowDone {
+  // No additional border styling — base .row's border-color is correct.
+}
+
+.rowError {
+  border-color: var(--color-danger);
+}
+
+.rowIcon {
+  display: flex;
+  color: var(--color-fg-subtle);
+}
+
+.rowName {
+  font-size: var(--font-size-md);
+  color: var(--color-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.rowMeta {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.rowStatus {
+  // Status slot — always rendered (empty for pending). Holds <Progress> when
+  // uploading, the error message when error, or the Check icon when done.
+  // Sized via the parent grid's 4th column (auto width).
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.rowErrorMsg {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+}
+
+.rowDoneIcon {
+  color: var(--color-success);
+}
+
+.removeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--color-fg-subtle);
+  cursor: pointer;
+  transition: background var(--transition-base);
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: var(--color-bg-muted);
+    color: var(--color-fg);
+    outline: none;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: var(--opacity-disabled);
+  }
+}
+
+.disabled .dropzone {
+  cursor: not-allowed;
+  opacity: var(--opacity-subtle);
+  pointer-events: none;
+}

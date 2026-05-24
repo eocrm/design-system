@@ -35,6 +35,7 @@ import { DatePicker } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import { DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
+import { FileUpload } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
 import { toast } from '@eocrm/design-system';
@@ -142,6 +143,22 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         title="No results"
         description="Try clearing filters."
       />
+    ),
+  },
+  {
+    to: '/components/file-upload',
+    name: 'FileUpload',
+    description:
+      'Controlled dropzone-style file picker with built-in validation, drag/click both supported, per-row Progress for uploading status.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 220 }}>
+        <FileUpload
+          files={[]}
+          onFilesAdded={() => {}}
+          onFileRemove={() => {}}
+          dropzoneLabel="Drop or click"
+        />
+      </div>
     ),
   },
   {

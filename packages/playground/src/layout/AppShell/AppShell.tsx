@@ -50,6 +50,7 @@ import {
   Code as CodeIcon,
   Activity,
   LoaderCircle,
+  UploadCloud,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
@@ -89,6 +90,7 @@ const componentGroups = [
       { to: '/components/button-group', label: 'ButtonGroup', icon: LayoutPanelLeft, end: false },
       { to: '/components/checkbox', label: 'Checkbox', icon: CheckSquare, end: false },
       { to: '/components/datepickers', label: 'Date pickers', icon: CalendarRange, end: false },
+      { to: '/components/file-upload', label: 'FileUpload', icon: UploadCloud, end: false },
       { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
       { to: '/components/password-input', label: 'PasswordInput', icon: KeyRound, end: false },
       {

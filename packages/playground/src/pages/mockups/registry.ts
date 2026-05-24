@@ -23,6 +23,7 @@ export type ComponentName =
   | 'Drawer'
   | 'DropdownMenu'
   | 'EmptyState'
+  | 'FileUpload'
   | 'Grid'
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'
