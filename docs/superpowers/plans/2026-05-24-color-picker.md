@@ -275,12 +275,9 @@ describe('hexToHsv', () => {
     expect(result.v).toBe(100);
   });
 
-  it.each([['orange'], [''], ['#GGG'], ['12345']])(
-    'returns null for invalid input %s',
-    (input) => {
-      expect(hexToHsv(input)).toBeNull();
-    },
-  );
+  it.each([['orange'], [''], ['#GGG'], ['12345']])('returns null for invalid input %s', (input) => {
+    expect(hexToHsv(input)).toBeNull();
+  });
 });
 
 describe('hsvToHex', () => {
@@ -448,10 +445,7 @@ export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSqu
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
       const nextS = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-      const nextV = Math.max(
-        0,
-        Math.min(100, (1 - (clientY - rect.top) / rect.height) * 100),
-      );
+      const nextV = Math.max(0, Math.min(100, (1 - (clientY - rect.top) / rect.height) * 100));
       onChange(nextS, nextV);
     },
     [onChange],
@@ -566,10 +560,7 @@ export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSqu
       onKeyDown={handleKeyDown}
       {...rest}
     >
-      <div
-        className={styles.svIndicator}
-        style={{ left: `${s}%`, top: `${100 - v}%` }}
-      />
+      <div className={styles.svIndicator} style={{ left: `${s}%`, top: `${100 - v}%` }} />
     </div>
   );
 });
@@ -877,10 +868,7 @@ export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps
                 <button
                   key={`${normalized}-${idx}`}
                   type="button"
-                  className={clsx(
-                    styles.presetSwatch,
-                    selected && styles.presetSwatchSelected,
-                  )}
+                  className={clsx(styles.presetSwatch, selected && styles.presetSwatchSelected)}
                   style={{ backgroundColor: normalized }}
                   aria-label={normalized}
                   aria-pressed={selected}
@@ -1096,7 +1084,9 @@ export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps
   // CSS keyword — clickable trigger.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: pointer;
-  transition: border-color var(--transition-base), background var(--transition-base);
+  transition:
+    border-color var(--transition-base),
+    background var(--transition-base);
 }
 
 .trigger:hover:not(:disabled) {
@@ -1212,13 +1202,7 @@ import styles from './ColorPicker.module.scss';
 
 const FALLBACK_HEX = '#000000';
 
-type PopoverPlacement =
-  | 'top'
-  | 'top-start'
-  | 'top-end'
-  | 'bottom'
-  | 'bottom-start'
-  | 'bottom-end';
+type PopoverPlacement = 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end';
 
 type PopoverSide = 'top' | 'right' | 'bottom' | 'left';
 type PopoverAlign = 'start' | 'center' | 'end';
@@ -1421,10 +1405,7 @@ function ColorPickerRoot({
   );
 
   return (
-    <div
-      className={clsx(disabled && styles.disabled, className)}
-      {...rest}
-    >
+    <div className={clsx(disabled && styles.disabled, className)} {...rest}>
       <Popover open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger>{triggerElement}</Popover.Trigger>
         <Popover.Content side={side} align={align}>
@@ -1513,8 +1494,9 @@ function ensurePointerCaptureShim() {
     typeof (HTMLElement.prototype as unknown as { setPointerCapture?: unknown })
       .setPointerCapture !== 'function'
   ) {
-    (HTMLElement.prototype as unknown as { setPointerCapture: (id: number) => void }).setPointerCapture =
-      () => {};
+    (
+      HTMLElement.prototype as unknown as { setPointerCapture: (id: number) => void }
+    ).setPointerCapture = () => {};
   }
   if (
     typeof (HTMLElement.prototype as unknown as { releasePointerCapture?: unknown })
@@ -1557,9 +1539,7 @@ function mockSVRect(container: HTMLElement, w = 200, h = 200) {
 
 describe('ColorPicker.Panel — rendering', () => {
   it('renders panel with all sub-components', () => {
-    const { container } = render(
-      <ColorPicker.Panel value="#FF0000" onChange={() => {}} />,
-    );
+    const { container } = render(<ColorPicker.Panel value="#FF0000" onChange={() => {}} />);
     expect(container.querySelector('[role="application"]')).toBeInTheDocument();
     expect(container.querySelector('[role="slider"]')).toBeInTheDocument();
     expect(container.querySelector('input[aria-label="Hex color value"]')).toBeInTheDocument();
@@ -1567,9 +1547,7 @@ describe('ColorPicker.Panel — rendering', () => {
 
   it('positions the SV indicator at the correct (s, v) coordinates', () => {
     // value=#FF0000 → HSV (0, 100, 100) → indicator at left=100%, top=0%
-    const { container } = render(
-      <ColorPicker.Panel value="#FF0000" onChange={() => {}} />,
-    );
+    const { container } = render(<ColorPicker.Panel value="#FF0000" onChange={() => {}} />);
     const indicator = container.querySelector('[class*="svIndicator"]') as HTMLElement;
     expect(indicator.style.left).toBe('100%');
     expect(indicator.style.top).toBe('0%');
@@ -1579,10 +1557,7 @@ describe('ColorPicker.Panel — rendering', () => {
     const presets = ['#FF0000', '#00FF00', '#0000FF'];
     render(<ColorPicker.Panel value="#FF0000" onChange={() => {}} presets={presets} />);
     expect(screen.getByRole('group', { name: 'Preset colors' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '#FF0000' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    expect(screen.getByRole('button', { name: '#FF0000' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: '#00FF00' })).toHaveAttribute(
       'aria-pressed',
       'false',
@@ -1611,9 +1586,7 @@ describe('ColorPicker.Panel — controlled value', () => {
     const { container, rerender } = render(
       <ColorPicker.Panel value="#FF0000" onChange={() => {}} />,
     );
-    const input = container.querySelector<HTMLInputElement>(
-      'input[aria-label="Hex color value"]',
-    )!;
+    const input = container.querySelector<HTMLInputElement>('input[aria-label="Hex color value"]')!;
     expect(input.value).toBe('#FF0000');
 
     rerender(<ColorPicker.Panel value="#00FF00" onChange={() => {}} />);
@@ -1625,14 +1598,10 @@ describe('ColorPicker.Panel — controlled value', () => {
 
   it('falls back to #000000 and warns once in dev for invalid initial value', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { container } = render(
-      <ColorPicker.Panel value="not-a-color" onChange={() => {}} />,
-    );
+    const { container } = render(<ColorPicker.Panel value="not-a-color" onChange={() => {}} />);
     expect(warnSpy).toHaveBeenCalled();
     // The draft input shows the canonical fallback.
-    const input = container.querySelector<HTMLInputElement>(
-      'input[aria-label="Hex color value"]',
-    )!;
+    const input = container.querySelector<HTMLInputElement>('input[aria-label="Hex color value"]')!;
     expect(input.value).toBe('#000000');
     warnSpy.mockRestore();
   });
@@ -1641,9 +1610,7 @@ describe('ColorPicker.Panel — controlled value', () => {
 describe('ColorPicker.Panel — SV pad interaction', () => {
   it('pointerdown+move fires onChange with the expected HEX', () => {
     const onChange = vi.fn();
-    const { container } = render(
-      <ColorPicker.Panel value="#FF0000" onChange={onChange} />,
-    );
+    const { container } = render(<ColorPicker.Panel value="#FF0000" onChange={onChange} />);
     const pad = mockSVRect(container);
     // Click at the center of the 200x200 pad → S=50, V=50.
     fireEvent.pointerDown(pad, { clientX: 100, clientY: 100, pointerId: 1 });
@@ -1656,9 +1623,7 @@ describe('ColorPicker.Panel — SV pad interaction', () => {
 
   it('ArrowRight adjusts S by +1', () => {
     const onChange = vi.fn();
-    const { container } = render(
-      <ColorPicker.Panel value="#FF0000" onChange={onChange} />,
-    );
+    const { container } = render(<ColorPicker.Panel value="#FF0000" onChange={onChange} />);
     const pad = container.querySelector<HTMLElement>('[role="application"]')!;
     pad.focus();
     fireEvent.keyDown(pad, { key: 'ArrowLeft' });
@@ -1671,9 +1636,7 @@ describe('ColorPicker.Panel — SV pad interaction', () => {
 
   it('Shift+ArrowDown adjusts V by -10', () => {
     const onChange = vi.fn();
-    const { container } = render(
-      <ColorPicker.Panel value="#FF0000" onChange={onChange} />,
-    );
+    const { container } = render(<ColorPicker.Panel value="#FF0000" onChange={onChange} />);
     const pad = container.querySelector<HTMLElement>('[role="application"]')!;
     pad.focus();
     fireEvent.keyDown(pad, { key: 'ArrowDown', shiftKey: true });
@@ -1684,9 +1647,7 @@ describe('ColorPicker.Panel — SV pad interaction', () => {
 
   it('End jumps S to 100; Home jumps S to 0', () => {
     const onChange = vi.fn();
-    const { container } = render(
-      <ColorPicker.Panel value="#808080" onChange={onChange} />,
-    );
+    const { container } = render(<ColorPicker.Panel value="#808080" onChange={onChange} />);
     const pad = container.querySelector<HTMLElement>('[role="application"]')!;
     pad.focus();
     fireEvent.keyDown(pad, { key: 'End' });
@@ -1764,9 +1725,7 @@ describe('ColorPicker.Panel — HEX input', () => {
     expect(input).toHaveAttribute('aria-invalid', 'true');
     // onChange might have fired for partial valid parses (`'N'`, `'NO'`, etc.
     // are all invalid), so check that the final call wasn't with the bad value.
-    expect(
-      onChange.mock.calls.every(([hex]) => hex !== 'NOTHEX' && hex !== '#NOTHEX'),
-    ).toBe(true);
+    expect(onChange.mock.calls.every(([hex]) => hex !== 'NOTHEX' && hex !== '#NOTHEX')).toBe(true);
   });
 
   it('blur with invalid input reverts to canonical HEX of current value', async () => {
@@ -1819,27 +1778,13 @@ describe('ColorPicker.Panel — presets', () => {
 
   it('selected preset matches current value', () => {
     const { rerender } = render(
-      <ColorPicker.Panel
-        value="#FF0000"
-        onChange={() => {}}
-        presets={['#FF0000', '#00FF00']}
-      />,
+      <ColorPicker.Panel value="#FF0000" onChange={() => {}} presets={['#FF0000', '#00FF00']} />,
     );
-    expect(screen.getByRole('button', { name: '#FF0000' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    expect(screen.getByRole('button', { name: '#FF0000' })).toHaveAttribute('aria-pressed', 'true');
     rerender(
-      <ColorPicker.Panel
-        value="#00FF00"
-        onChange={() => {}}
-        presets={['#FF0000', '#00FF00']}
-      />,
+      <ColorPicker.Panel value="#00FF00" onChange={() => {}} presets={['#FF0000', '#00FF00']} />,
     );
-    expect(screen.getByRole('button', { name: '#00FF00' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    expect(screen.getByRole('button', { name: '#00FF00' })).toHaveAttribute('aria-pressed', 'true');
   });
 });
 
@@ -1907,9 +1852,7 @@ describe('ColorPicker — disabled state', () => {
     const sliderThumb = container.querySelector('[role="slider"]');
     expect(sliderThumb).toHaveAttribute('aria-disabled', 'true');
 
-    const input = container.querySelector<HTMLInputElement>(
-      'input[aria-label="Hex color value"]',
-    )!;
+    const input = container.querySelector<HTMLInputElement>('input[aria-label="Hex color value"]')!;
     expect(input).toBeDisabled();
   });
 });
@@ -1931,12 +1874,8 @@ describe('ColorPicker — misc', () => {
   });
 
   it('Panel re-snaps draft to canonical (uppercase, with #) on blur', () => {
-    const { container } = render(
-      <ColorPicker.Panel value="#FF0000" onChange={() => {}} />,
-    );
-    const input = container.querySelector<HTMLInputElement>(
-      'input[aria-label="Hex color value"]',
-    )!;
+    const { container } = render(<ColorPicker.Panel value="#FF0000" onChange={() => {}} />);
+    const input = container.querySelector<HTMLInputElement>('input[aria-label="Hex color value"]')!;
     fireEvent.change(input, { target: { value: 'aabbcc' } });
     expect(input.value).toBe('aabbcc');
     act(() => {
@@ -1996,7 +1935,14 @@ export type { CheckboxProps } from './components/Checkbox';
 export { Checkbox } from './components/Checkbox';
 export type { CheckboxProps } from './components/Checkbox';
 
-export { ColorPicker, ColorPickerPanel, ColorPickerTrigger, hexToHsv, hsvToHex, normalizeHex } from './components/ColorPicker';
+export {
+  ColorPicker,
+  ColorPickerPanel,
+  ColorPickerTrigger,
+  hexToHsv,
+  hsvToHex,
+  normalizeHex,
+} from './components/ColorPicker';
 export type {
   ColorPickerProps,
   ColorPickerPanelProps,
@@ -2113,13 +2059,13 @@ const [hex, setHex] = useState('#4F46E5');
 ```ts
 import { hexToHsv, hsvToHex, normalizeHex } from '@eocrm/design-system';
 
-normalizeHex('#fff');     // '#FFFFFF'
-normalizeHex('orange');   // null
+normalizeHex('#fff'); // '#FFFFFF'
+normalizeHex('orange'); // null
 
-hexToHsv('#FF0000');      // { h: 0, s: 100, v: 100 }
-hexToHsv('not a color');  // null
+hexToHsv('#FF0000'); // { h: 0, s: 100, v: 100 }
+hexToHsv('not a color'); // null
 
-hsvToHex({ h: 240, s: 100, v: 100 });  // '#0000FF'
+hsvToHex({ h: 240, s: 100, v: 100 }); // '#0000FF'
 ```
 
 #### Hard rule
@@ -2229,9 +2175,7 @@ function PopoverCustomTrigger() {
     <Stack gap="sm" align="start">
       <ColorPicker value={hex} onChange={setHex}>
         <ColorPicker.Trigger asChild>
-          <Button variant="secondary">
-            Pick a color ({hex})
-          </Button>
+          <Button variant="secondary">Pick a color ({hex})</Button>
         </ColorPicker.Trigger>
       </ColorPicker>
       <Text size="sm" tone="muted">
@@ -2337,11 +2281,13 @@ Read `packages/playground/src/App.tsx`. The Forms cluster's component demos are 
 **Edit 7a — add import** (alphabetical position):
 
 old_string:
+
 ```tsx
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
 ```
 
 new_string:
+
 ```tsx
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
 import { ColorPickerDemo } from './pages/components/ColorPickerDemo';
@@ -2350,11 +2296,13 @@ import { ColorPickerDemo } from './pages/components/ColorPickerDemo';
 **Edit 7b — add route** (alphabetical):
 
 old_string:
+
 ```tsx
-          <Route path="/components/checkbox" element={<CheckboxDemo />} />
+<Route path="/components/checkbox" element={<CheckboxDemo />} />
 ```
 
 new_string:
+
 ```tsx
           <Route path="/components/checkbox" element={<CheckboxDemo />} />
           <Route path="/components/color-picker" element={<ColorPickerDemo />} />
@@ -2367,12 +2315,14 @@ Read `packages/playground/src/layout/AppShell/AppShell.tsx`. Forms cluster is al
 **Edit 7c — add `Palette` from lucide-react** (anchor the closing `type LucideIcon` line):
 
 old_string:
+
 ```tsx
   type LucideIcon,
 } from 'lucide-react';
 ```
 
 new_string:
+
 ```tsx
   Palette,
   type LucideIcon,
@@ -2384,12 +2334,14 @@ If a previous PR added an icon immediately above `type LucideIcon`, expand the a
 **Edit 7d — add Forms-group nav item** (between Checkbox and Date pickers):
 
 old_string (read the file first to find the exact pair — Forms cluster typically has a Checkbox entry followed by a Date pickers entry):
+
 ```tsx
       { to: '/components/checkbox', label: 'Checkbox', icon: <Check icon import>, end: false },
       { to: '/components/datepickers', label: 'Date pickers', icon: <Calendar icon import>, end: false },
 ```
 
 new_string (preserve the existing Checkbox and Date pickers icons unchanged; just insert ColorPicker in between):
+
 ```tsx
       { to: '/components/checkbox', label: 'Checkbox', icon: <Check icon import>, end: false },
       { to: '/components/color-picker', label: 'ColorPicker', icon: Palette, end: false },
@@ -2405,11 +2357,13 @@ Read the file to find the existing Checkbox card block.
 **Edit 7e — add import** (alphabetical):
 
 old_string:
+
 ```tsx
 import { Checkbox } from '@eocrm/design-system';
 ```
 
 new_string:
+
 ```tsx
 import { Checkbox } from '@eocrm/design-system';
 import { ColorPicker } from '@eocrm/design-system';
@@ -2449,11 +2403,13 @@ If the existing pattern in `ComponentsIndex.tsx` uses different property names t
 ### Step 7.5: Modify `registry.ts` — extend ComponentName union
 
 old_string:
+
 ```ts
   | 'Checkbox'
 ```
 
 new_string:
+
 ```ts
   | 'Checkbox'
   | 'ColorPicker'
@@ -2469,6 +2425,7 @@ From `/home/dpws/projects/design-system`:
 - [ ] Run `make lint`. Expected: clean.
 
 If the build fails on the demo file:
+
 - Type errors importing from `@eocrm/design-system` — confirm `Stack`, `Cluster`, `Button`, `Text`, `Code`, `ColorPicker` (with `.Panel` and `.Trigger` attached) are all exported from the barrel.
 - `DemoLayout`, `Example`, `@lib-source/*` imports — these are pre-existing playground patterns. Look at another recent demo (e.g. `ImageCropDemo.tsx` or `SliderDemo.tsx`) to mirror exactly.
 
@@ -2589,7 +2546,7 @@ gh pr create --title "ColorPicker + extractCropBlob-style color math utilities" 
 
 PR body content:
 
-```markdown
+````markdown
 ## Summary
 
 `<ColorPicker>` — controlled HEX color picker with two distribution shapes. Hand-rolled SV square + hue strip + HEX input. Compound API (`<ColorPicker>`, `<ColorPicker.Panel>`, `<ColorPicker.Trigger>`) matching Card / Popover idiom. Exports color-math utilities (`hexToHsv`, `hsvToHex`, `normalizeHex`) as public API for downstream theme builders.
@@ -2601,6 +2558,7 @@ PR body content:
 ```tsx
 <ColorPicker value={hex} onChange={setHex} triggerLabel="Brand color" />
 ```
+````
 
 Input-field-shaped trigger button with a 16×16 swatch + uppercase HEX. Click opens a `<Popover>` containing the picker panel. Override the trigger with `<ColorPicker.Trigger asChild>{customNode}</ColorPicker.Trigger>` — `<Popover.Trigger>` clones the child to inject click + aria + ref.
 
@@ -2654,6 +2612,7 @@ Standard cycle ran to `clean enough to stop`.
 - [ ] Color math: `hexToHsv('#FF0000')` → `{h:0, s:100, v:100}`; `normalizeHex('#fff')` → `'#FFFFFF'`.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
 ```
 
 - [ ] Print the PR URL when done.
@@ -2720,3 +2679,4 @@ Use **superpowers:subagent-driven-development** to execute.
 - Tasks 1, 2, 3, 4, 5, 7: sonnet implementer
 - Task 6: haiku implementer (mechanical AGENTS.md insertion)
 - Task 8 reviewers: opus
+```

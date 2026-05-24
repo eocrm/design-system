@@ -52,12 +52,9 @@ describe('hexToHsv', () => {
     expect(result.v).toBe(100);
   });
 
-  it.each([['orange'], [''], ['#GGG'], ['12345']])(
-    'returns null for invalid input %s',
-    (input) => {
-      expect(hexToHsv(input)).toBeNull();
-    },
-  );
+  it.each([['orange'], [''], ['#GGG'], ['12345']])('returns null for invalid input %s', (input) => {
+    expect(hexToHsv(input)).toBeNull();
+  });
 });
 
 describe('hsvToHex', () => {

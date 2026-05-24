@@ -255,10 +255,7 @@ export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps
                 <button
                   key={`${normalized}-${idx}`}
                   type="button"
-                  className={clsx(
-                    styles.presetSwatch,
-                    selected && styles.presetSwatchSelected,
-                  )}
+                  className={clsx(styles.presetSwatch, selected && styles.presetSwatchSelected)}
                   style={{ backgroundColor: normalized }}
                   aria-label={normalized}
                   aria-pressed={selected}

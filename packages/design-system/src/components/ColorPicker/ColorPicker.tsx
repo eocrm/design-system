@@ -16,13 +16,7 @@ import styles from './ColorPicker.module.scss';
 
 const FALLBACK_HEX = '#000000';
 
-type PopoverPlacement =
-  | 'top'
-  | 'top-start'
-  | 'top-end'
-  | 'bottom'
-  | 'bottom-start'
-  | 'bottom-end';
+type PopoverPlacement = 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end';
 
 type PopoverSide = 'top' | 'right' | 'bottom' | 'left';
 type PopoverAlign = 'start' | 'center' | 'end';
@@ -210,7 +204,7 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
   const triggerElement = customTrigger ? (
     // The consumer's child is rendered as-is; <Popover.Trigger> clones it
     // to inject onClick + aria-* + ref.
-    customTrigger.props.children as ReactElement
+    (customTrigger.props.children as ReactElement)
   ) : (
     <DefaultTrigger
       hex={value}
@@ -232,11 +226,7 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
   );
 
   return (
-    <div
-      ref={ref}
-      className={clsx(disabled && styles.disabled, className)}
-      {...rest}
-    >
+    <div ref={ref} className={clsx(disabled && styles.disabled, className)} {...rest}>
       <Popover open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger>{triggerElement}</Popover.Trigger>
         <Popover.Content side={side} align={align}>

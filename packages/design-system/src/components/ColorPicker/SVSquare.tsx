@@ -64,10 +64,7 @@ export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSqu
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
       const nextS = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-      const nextV = Math.max(
-        0,
-        Math.min(100, (1 - (clientY - rect.top) / rect.height) * 100),
-      );
+      const nextV = Math.max(0, Math.min(100, (1 - (clientY - rect.top) / rect.height) * 100));
       onChange(nextS, nextV);
     },
     [onChange],
@@ -182,10 +179,7 @@ export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSqu
       onKeyDown={handleKeyDown}
       {...rest}
     >
-      <div
-        className={styles.svIndicator}
-        style={{ left: `${s}%`, top: `${100 - v}%` }}
-      />
+      <div className={styles.svIndicator} style={{ left: `${s}%`, top: `${100 - v}%` }} />
     </div>
   );
 });

@@ -98,7 +98,6 @@
 
   // stylelint-disable-next-line selector-pseudo-class-no-unknown -- CSS Modules :global() escape hatch
   & :global([class*='track']) {
-
     // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- rainbow gradient overrides Slider's default track background; !important needed to defeat Slider's tone variants
     background: linear-gradient(
       to right,
@@ -195,7 +194,9 @@
   // CSS keyword — clickable trigger.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: pointer;
-  transition: border-color var(--transition-base), background var(--transition-base);
+  transition:
+    border-color var(--transition-base),
+    background var(--transition-base);
 }
 
 .trigger:hover:not(:disabled) {

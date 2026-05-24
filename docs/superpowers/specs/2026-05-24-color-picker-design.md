@@ -56,9 +56,7 @@ The user controls value as **HEX**, but the UI thinks in **HSV** (SV square need
 **Solution: local HSV state-of-truth while user interacts.** The panel maintains `localHsv` as the live source of truth. It syncs FROM the `value` prop on mount and when the prop changes from an external source. The "external source" detection compares the prop's normalized HEX against `hsvToHex(localHsv)` — if they match, the panel did this (skip), otherwise the consumer set a new value externally (update local).
 
 ```tsx
-const [localHsv, setLocalHsv] = useState(
-  () => hexToHsv(value) ?? { h: 0, s: 0, v: 0 },
-);
+const [localHsv, setLocalHsv] = useState(() => hexToHsv(value) ?? { h: 0, s: 0, v: 0 });
 
 useEffect(() => {
   const ourHex = hsvToHex(localHsv);
@@ -87,8 +85,9 @@ The library's `<Slider>` with `value={h}`, `min={0}`, `max={360}`, `step={1}`. T
 ### HEX input — `<Input size="sm">` with input-state buffering
 
 Three input states:
+
 1. **Synced** — input text equals normalized HEX of current value. Default.
-2. **Editing** — user is typing, text doesn't yet equal a normalized HEX. Show input with normal styling. If text parses to valid HEX *during* typing, commit (so `#4f4` becomes `#44FF44` live).
+2. **Editing** — user is typing, text doesn't yet equal a normalized HEX. Show input with normal styling. If text parses to valid HEX _during_ typing, commit (so `#4f4` becomes `#44FF44` live).
 3. **Invalid** — typed text doesn't parse. Show `invalid` styling. On blur OR Enter with invalid, snap input back to canonical HEX of the current value.
 
 Lowercase input accepted; output always uppercase `#RRGGBB`. Hash optional on input; output always includes `#`.
@@ -100,6 +99,7 @@ A `<button>` shaped like an Input field (matching height, border-radius, --color
 ### Custom trigger semantics (`<ColorPicker.Trigger asChild>`)
 
 When a consumer overrides the trigger:
+
 - `triggerLabel` is **ignored** — the consumer's child element owns its accessible label.
 - `popoverPlacement` is **still honored** — placement is the popover's concern, not the trigger's.
 - `disabled` propagates onto the child via `aria-disabled` and prevents the popover from opening.
@@ -182,6 +182,7 @@ Inherits Slider's built-in keyboard. Slider's `onChange` per-tick is piped into 
 ### HEX input
 
 Commit triggers:
+
 - Valid parse during typing → live commit (panel updates immediately).
 - Blur with valid text → commit normalized form.
 - Blur with invalid text → revert to canonical HEX.
@@ -190,6 +191,7 @@ Commit triggers:
 ### Presets
 
 Grid of `<button>` swatches (CSS `grid-template-columns: repeat(auto-fill, minmax(24px, 1fr))`). Each button:
+
 - `aria-label="<HEX>"`.
 - Click → `updateHsv(hexToHsv(preset))` AND `onChangeEnd(preset)` (preset click is a "committed" change, not a drag-in-progress).
 - Selected state when the swatch's HEX matches current value: focus ring + small check icon overlay.
@@ -210,22 +212,26 @@ Grid of `<button>` swatches (CSS `grid-template-columns: repeat(auto-fill, minma
 
 ## Edge cases
 
-| Case | Behavior |
-| --- | --- |
-| Invalid initial `value` (e.g., `""`, `"orange"`) | `hexToHsv` returns `null`, fall back to `#000000`, emit dev-only `console.warn` once like Slider does. |
-| 3-char hex (`#F00`) | `normalizeHex` expands to `#FF0000`. Accepted on input, output always 6-char. |
-| Lowercase hex | Accepted on input, output always uppercase. |
-| Missing hash (`FF00FF`) | Accepted on input, output always with `#`. |
-| Saturation=0 hue preservation | Handled by local HSV state model (above). |
-| Value=0 hue preservation | Same. Drag hue while at black: HEX stays `#000000`, local `h` updates; raising V recovers the hue. |
-| HSV ↔ HEX rounding drift | Math uses floats; HEX uses `Math.round` per channel. Indicator dot reads from `localHsv` (not round-tripped HEX), so single-pixel rounding never flickers the dot. |
+| Case                                             | Behavior                                                                                                                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Invalid initial `value` (e.g., `""`, `"orange"`) | `hexToHsv` returns `null`, fall back to `#000000`, emit dev-only `console.warn` once like Slider does.                                                             |
+| 3-char hex (`#F00`)                              | `normalizeHex` expands to `#FF0000`. Accepted on input, output always 6-char.                                                                                      |
+| Lowercase hex                                    | Accepted on input, output always uppercase.                                                                                                                        |
+| Missing hash (`FF00FF`)                          | Accepted on input, output always with `#`.                                                                                                                         |
+| Saturation=0 hue preservation                    | Handled by local HSV state model (above).                                                                                                                          |
+| Value=0 hue preservation                         | Same. Drag hue while at black: HEX stays `#000000`, local `h` updates; raising V recovers the hue.                                                                 |
+| HSV ↔ HEX rounding drift                         | Math uses floats; HEX uses `Math.round` per channel. Indicator dot reads from `localHsv` (not round-tripped HEX), so single-pixel rounding never flickers the dot. |
 
 ## Color math implementation
 
 ```ts
 // colorMath.ts — pure functions, no React
 
-export interface HSV { h: number; s: number; v: number; }
+export interface HSV {
+  h: number;
+  s: number;
+  v: number;
+}
 
 const HEX_PATTERN = /^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 
@@ -234,7 +240,10 @@ export function normalizeHex(input: string): string | null {
   if (!match) return null;
   let hex = match[1];
   if (hex.length === 3) {
-    hex = hex.split('').map(c => c + c).join('');
+    hex = hex
+      .split('')
+      .map((c) => c + c)
+      .join('');
   }
   return `#${hex.toUpperCase()}`;
 }
@@ -267,15 +276,33 @@ export function hsvToHex({ h, s, v }: HSV): string {
   const c = vf * sf;
   const hp = h / 60;
   const x = c * (1 - Math.abs((hp % 2) - 1));
-  let r1 = 0, g1 = 0, b1 = 0;
-  if (hp >= 0 && hp < 1) { r1 = c; g1 = x; }
-  else if (hp < 2) { r1 = x; g1 = c; }
-  else if (hp < 3) { g1 = c; b1 = x; }
-  else if (hp < 4) { g1 = x; b1 = c; }
-  else if (hp < 5) { r1 = x; b1 = c; }
-  else { r1 = c; b1 = x; }
+  let r1 = 0,
+    g1 = 0,
+    b1 = 0;
+  if (hp >= 0 && hp < 1) {
+    r1 = c;
+    g1 = x;
+  } else if (hp < 2) {
+    r1 = x;
+    g1 = c;
+  } else if (hp < 3) {
+    g1 = c;
+    b1 = x;
+  } else if (hp < 4) {
+    g1 = x;
+    b1 = c;
+  } else if (hp < 5) {
+    r1 = x;
+    b1 = c;
+  } else {
+    r1 = c;
+    b1 = x;
+  }
   const m = vf - c;
-  const toHex = (n: number) => Math.round((n + m) * 255).toString(16).padStart(2, '0');
+  const toHex = (n: number) =>
+    Math.round((n + m) * 255)
+      .toString(16)
+      .padStart(2, '0');
   return `#${toHex(r1)}${toHex(g1)}${toHex(b1)}`.toUpperCase();
 }
 ```
@@ -347,6 +374,7 @@ export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSqu
 `packages/design-system/src/components/ColorPicker/ColorPicker.module.scss` — token-only colors / spacing / radii.
 
 Key classes:
+
 - `.panel` — root panel container, `display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); width: 240px;`. The fixed 240px width is intentional for the popover so layout doesn't jump.
 - `.svSquare` — `position: relative; aspect-ratio: 1; border-radius: var(--radius-md); overflow: hidden; cursor: crosshair;`. Background: stacked linear-gradients applied via `::before` / `::after` pseudos to keep the inline `style` simple (`backgroundColor` only).
 - `.svIndicator` — `position: absolute; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px rgb(0 0 0 / 50%); transform: translate(-50%, -50%); pointer-events: none;`. The white ring + dark outer shadow keeps the indicator visible on any color background.
@@ -358,6 +386,7 @@ Key classes:
 - `.disabled` — applied to root, sets `opacity: var(--opacity-disabled)` and `pointer-events: none` on interactive children.
 
 Standard stylelint considerations:
+
 - `cursor: crosshair` / `cursor: pointer` / `pointer-events: none` need inline `// stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword` comments.
 - The white indicator dot and the 0.5-alpha shadow are raw colors; needs an inline disable explaining "indicator must be visible against any color, can't use token".
 - The rainbow gradient inline style is inline `style={{ background: ... }}` (not in SCSS) — bypasses stylelint.
@@ -443,6 +472,7 @@ Total: ~24 component tests + ~10 math tests = **~34 tests**.
 ## AGENTS.md addition
 
 New section in Forms cluster, after Checkbox, before DatePicker. Covers:
+
 - Compound API (`<ColorPicker>`, `<ColorPicker.Panel>`, `<ColorPicker.Trigger>`).
 - Controlled `value: string` (`#RRGGBB`).
 - onChange (per-tick) vs onChangeEnd (commit).
@@ -458,6 +488,7 @@ New section in Forms cluster, after Checkbox, before DatePicker. Covers:
 ## Hard Rule 8 — review cycle
 
 Standard cycle. Particular things to flag for the reviewer:
+
 - HSV state-of-truth model and the `useEffect` external-write detection (subtle; easy to break).
 - `role="application"` on SV square — verify the ARIA story holds.
 - Hue=0 / saturation=0 / value=0 edge cases (the local-state pattern handles them; verify with the test that drags hue at black).

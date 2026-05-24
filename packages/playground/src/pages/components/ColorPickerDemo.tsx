@@ -51,9 +51,7 @@ function PopoverCustomTrigger() {
     <Stack gap="sm" align="start">
       <ColorPicker value={hex} onChange={setHex}>
         <ColorPicker.Trigger asChild>
-          <Button variant="secondary">
-            Pick a color ({hex})
-          </Button>
+          <Button variant="secondary">Pick a color ({hex})</Button>
         </ColorPicker.Trigger>
       </ColorPicker>
       <Text size="sm" tone="muted">

@@ -329,13 +329,13 @@ const [hex, setHex] = useState('#4F46E5');
 ```ts
 import { hexToHsv, hsvToHex, normalizeHex } from '@eocrm/design-system';
 
-normalizeHex('#fff');     // '#FFFFFF'
-normalizeHex('orange');   // null
+normalizeHex('#fff'); // '#FFFFFF'
+normalizeHex('orange'); // null
 
-hexToHsv('#FF0000');      // { h: 0, s: 100, v: 100 }
-hexToHsv('not a color');  // null
+hexToHsv('#FF0000'); // { h: 0, s: 100, v: 100 }
+hexToHsv('not a color'); // null
 
-hsvToHex({ h: 240, s: 100, v: 100 });  // '#0000FF'
+hsvToHex({ h: 240, s: 100, v: 100 }); // '#0000FF'
 ```
 
 #### Hard rule

@@ -22,7 +22,14 @@ export type { CardListRowProps } from './components/Card';
 export { Checkbox } from './components/Checkbox';
 export type { CheckboxProps, CheckboxSize } from './components/Checkbox';
 
-export { ColorPicker, ColorPickerPanel, ColorPickerTrigger, hexToHsv, hsvToHex, normalizeHex } from './components/ColorPicker';
+export {
+  ColorPicker,
+  ColorPickerPanel,
+  ColorPickerTrigger,
+  hexToHsv,
+  hsvToHex,
+  normalizeHex,
+} from './components/ColorPicker';
 export type {
   ColorPickerProps,
   ColorPickerPanelProps,
