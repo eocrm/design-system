@@ -54,11 +54,7 @@ function mockViewportRect(container: HTMLElement, opts: { width?: number; height
 }
 
 // Helper — fire load on the image with given natural dimensions.
-function fireImageLoad(
-  container: HTMLElement,
-  naturalWidth = 1000,
-  naturalHeight = 800,
-) {
+function fireImageLoad(container: HTMLElement, naturalWidth = 1000, naturalHeight = 800) {
   const img = container.querySelector<HTMLImageElement>('img')!;
   // jsdom doesn't decode the image so naturalWidth is 0 — mock it.
   Object.defineProperty(img, 'naturalWidth', { configurable: true, value: naturalWidth });
@@ -175,12 +171,7 @@ describe('ImageCrop', () => {
     it('controlled value: image rendered with transform reflecting value position', () => {
       const value: CropArea = { x: 100, y: 50, width: 400, height: 400 };
       const { container } = render(
-        <ImageCrop
-          src="data:,placeholder"
-          value={value}
-          onChange={() => {}}
-          aspectRatio={1}
-        />,
+        <ImageCrop src="data:,placeholder" value={value} onChange={() => {}} aspectRatio={1} />,
       );
       mockViewportRect(container, { width: 400, height: 400 });
       fireImageLoad(container, 1000, 800);
@@ -238,12 +229,7 @@ describe('ImageCrop', () => {
       const onChange = vi.fn();
       const value: CropArea = { x: 100, y: 50, width: 400, height: 400 };
       const { container } = render(
-        <ImageCrop
-          src="data:,placeholder"
-          value={value}
-          onChange={onChange}
-          aspectRatio={1}
-        />,
+        <ImageCrop src="data:,placeholder" value={value} onChange={onChange} aspectRatio={1} />,
       );
       mockViewportRect(container, { width: 400, height: 400 });
       fireImageLoad(container, 1000, 800);
@@ -324,27 +310,29 @@ describe('ImageCrop', () => {
   describe('zoom', () => {
     it('Slider onChange updates crop area dimensions (smaller at higher zoom)', () => {
       const onChange = vi.fn();
-      const value: CropArea = { x: 100, y: 50, width: 400, height: 400 };
+      // Image is 1000x800; viewport 400x400 with aspectRatio=1 → boxW=boxH=400.
+      // Default fitted crop is imageHeight × imageHeight = 800×800. Tests asserts
+      // that zoom>1 yields width < the default-fitted 800 (NOT < boxW; see the
+      // handleZoomChange comment in ImageCrop.tsx about zoom=1 being the fitted
+      // default, not boxW).
+      const value: CropArea = { x: 100, y: 0, width: 800, height: 800 };
       const { container } = render(
-        <ImageCrop
-          src="data:,placeholder"
-          value={value}
-          onChange={onChange}
-          aspectRatio={1}
-        />,
+        <ImageCrop src="data:,placeholder" value={value} onChange={onChange} aspectRatio={1} />,
       );
       mockViewportRect(container, { width: 400, height: 400 });
       fireImageLoad(container, 1000, 800);
       onChange.mockClear();
-      // Find the embedded zoom slider thumb and fire ArrowRight twice (the Slider's
-      // own keyboard handler will move zoom up by 0.01 × 2 = 0.02).
+      // Find the embedded zoom slider thumb and fire ArrowRight (Slider step
+      // is 0.01, so zoom goes 1 → 1.01).
       const sliderThumb = container.querySelector<HTMLElement>('[role="slider"]')!;
       sliderThumb.focus();
       fireEvent.keyDown(sliderThumb, { key: 'ArrowRight' });
       const fired = onChange.mock.calls.at(-1)?.[0] as CropArea;
-      // At zoom > 1, width should be less than 400.
-      expect(fired.width).toBeLessThan(400);
-      expect(fired.height).toBeLessThan(400);
+      // At zoom > 1, width should be less than the default-fitted 800.
+      expect(fired.width).toBeLessThan(800);
+      expect(fired.height).toBeLessThan(800);
+      // And specifically: approximately 800 / 1.01 ≈ 792 (we relax to <795).
+      expect(fired.width).toBeLessThan(795);
     });
 
     it('showZoomControl=false: no slider rendered', () => {
@@ -466,12 +454,7 @@ describe('ImageCrop', () => {
   describe('misc', () => {
     it('className merges with the base class', () => {
       const { container } = render(
-        <ImageCrop
-          src="data:,placeholder"
-          value={null}
-          onChange={() => {}}
-          className="custom"
-        />,
+        <ImageCrop src="data:,placeholder" value={null} onChange={() => {}} className="custom" />,
       );
       const root = container.firstElementChild as HTMLElement;
       expect(root.className).toMatch(/custom/);

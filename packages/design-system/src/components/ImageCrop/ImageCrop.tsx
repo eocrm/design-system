@@ -232,9 +232,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
 
   // Image load state + natural dimensions. Reset whenever src changes.
   const [loadState, setLoadState] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const [imageNatural, setImageNatural] = useState<{ width: number; height: number } | null>(
-    null,
-  );
+  const [imageNatural, setImageNatural] = useState<{ width: number; height: number } | null>(null);
   useEffect(() => {
     setLoadState('loading');
     setImageNatural(null);
@@ -413,13 +411,24 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   );
 
   // Zoom handler — recompute value dimensions, keep center, clamp.
+  // zoom=1 corresponds to the DEFAULT fitted crop (the largest crop that fits
+  // the image inside the box), NOT boxW pixels. Otherwise, switching from the
+  // default to zoom=1.01 would snap value.width from defaultArea.width (often
+  // hundreds of px) down to boxW (often much smaller) and the image would
+  // appear to jump scale by a large factor.
   const handleZoomChange = useCallback(
     (sliderValue: number | [number, number]) => {
       if (disabled || !imageNatural || !value || boxW === 0) return;
       const newZoom = typeof sliderValue === 'number' ? sliderValue : sliderValue[0];
       setZoom(newZoom);
-      const newWidth = boxW / newZoom;
-      const newHeight = boxH / newZoom;
+      const defaultArea = defaultCropArea(
+        imageNatural.width,
+        imageNatural.height,
+        boxW,
+        boxH,
+      );
+      const newWidth = defaultArea.width / newZoom;
+      const newHeight = defaultArea.height / newZoom;
       const centerX = value.x + value.width / 2;
       const centerY = value.y + value.height / 2;
       const next: CropArea = {
@@ -486,23 +495,15 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
 
   return (
     // {...rest} last so a consumer-provided onClick / aria-* / data-* overrides nothing the component owns.
-    <div
-      ref={ref}
-      className={clsx(styles.root, disabled && styles.disabled, className)}
-      {...rest}
-    >
+    <div ref={ref} className={clsx(styles.root, disabled && styles.disabled, className)} {...rest}>
       <div
         ref={viewportRef}
         className={styles.viewport}
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown}
       >
-        {loadState === 'loading' && (
-          <Skeleton variant="rectangular" className={styles.skeleton} />
-        )}
-        {loadState === 'error' && (
-          <div className={styles.errorState}>Couldn't load image</div>
-        )}
+        {loadState === 'loading' && <Skeleton variant="rectangular" className={styles.skeleton} />}
+        {loadState === 'error' && <div className={styles.errorState}>Couldn't load image</div>}
         {resolvedSrc && (
           /* eslint-disable-next-line jsx-a11y/alt-text -- alt is intentionally empty; the cropping interaction IS the meaning, consumer overrides via rest if needed. */
           <img
