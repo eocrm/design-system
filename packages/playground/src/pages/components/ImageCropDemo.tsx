@@ -33,7 +33,12 @@ function BasicSquare() {
     <Stack gap="sm">
       <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={1} />
       <Text size="sm" tone="muted">
-        Crop: <Code>{crop ? `${Math.round(crop.x)}, ${Math.round(crop.y)} — ${Math.round(crop.width)}×${Math.round(crop.height)}` : 'computing...'}</Code>
+        Crop:{' '}
+        <Code>
+          {crop
+            ? `${Math.round(crop.x)}, ${Math.round(crop.y)} — ${Math.round(crop.width)}×${Math.round(crop.height)}`
+            : 'computing...'}
+        </Code>
       </Text>
     </Stack>
   );

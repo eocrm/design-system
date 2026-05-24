@@ -166,9 +166,18 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/image-crop',
     name: 'ImageCrop',
-    description: 'Controlled image-crop primitive on <canvas>. Pattern-A drag (centered box, draggable image, slider-controlled zoom). Top-level extractCropBlob utility for the Save handler.',
+    description:
+      'Controlled image-crop primitive on <canvas>. Pattern-A drag (centered box, draggable image, slider-controlled zoom). Top-level extractCropBlob utility for the Save handler.',
     preview: (
-      <div style={{ width: '100%', maxWidth: 220, height: 120, overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 220,
+          height: 120,
+          overflow: 'hidden',
+          borderRadius: 'var(--radius-md)',
+        }}
+      >
         <ImageCrop
           src="https://picsum.photos/seed/eocrm-card/400/300"
           value={{ x: 50, y: 25, width: 200, height: 200 }}

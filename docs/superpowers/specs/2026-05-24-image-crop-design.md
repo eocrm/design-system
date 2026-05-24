@@ -92,14 +92,21 @@ function ProfilePhotoCrop({ file, onComplete }: { file: File; onComplete: (blob:
   };
 
   return (
-    <Modal isOpen onClose={() => { /* consumer-owned */ }}>
+    <Modal
+      isOpen
+      onClose={() => {
+        /* consumer-owned */
+      }}
+    >
       <Modal.Header>Crop your photo</Modal.Header>
       <Modal.Body>
         <ImageCrop src={file} value={crop} onChange={setCrop} aspectRatio={1} />
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary">Cancel</Button>
-        <Button onClick={handleSave} disabled={!crop}>Save</Button>
+        <Button onClick={handleSave} disabled={!crop}>
+          Save
+        </Button>
       </Modal.Footer>
     </Modal>
   );
@@ -370,18 +377,18 @@ The `box-shadow: 0 0 0 9999px rgb(0 0 0 / 50%)` on `.cropBox` is the canonical "
 
 ## ARIA + behavior reference
 
-| Concern                | Behavior                                                                                                                                                                |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Root element**       | Plain `<div>` with `tabIndex={0}` (for keyboard focus + drag). No locked role — image cropping has no WAI-ARIA contract role.                                          |
+| Concern                | Behavior                                                                                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Root element**       | Plain `<div>` with `tabIndex={0}` (for keyboard focus + drag). No locked role — image cropping has no WAI-ARIA contract role.                                             |
 | **Image element**      | Native `<img>` with `alt=""` (decorative; the cropping interaction IS the meaning). Consumer can override `alt` via root spread if they want a screen-reader description. |
-| **Crop box**           | Pure visual marker (`pointer-events: none`). Not announced to SR.                                                                                                       |
-| **Zoom slider**        | Embedded `<Slider>` carries its own ARIA (role=slider, aria-valuemin/max/now). `aria-label="Zoom"` set by ImageCrop.                                                    |
-| **Drag**               | Pointer events on the image. `setPointerCapture` wrapped in try/catch (jsdom safety).                                                                                  |
-| **Keyboard**           | Arrow keys pan image by 5px in source coords. Home/End jump to top-left / bottom-right. PageUp/Down zoom by 0.25. preventDefault to suppress page scroll.               |
-| **Loading state**      | `<Skeleton variant="rectangular" />` fills the viewport until image's `onload` fires.                                                                                  |
-| **Error state**        | Image error event sets `loadState='error'`; viewport shows danger-toned message ("Couldn't load image") in `.errorState`. No retry button in v1 — consumer remounts.   |
-| **Disabled**           | Drag handlers no-op. Zoom slider receives `disabled`. Viewport opacity dimmed. Image cursor: not-allowed.                                                                |
-| **Object URL cleanup** | When `src` is File/Blob, `URL.createObjectURL(src)` is created in useEffect, revoked in cleanup AND on `src` change. Prevents memory leak.                              |
+| **Crop box**           | Pure visual marker (`pointer-events: none`). Not announced to SR.                                                                                                         |
+| **Zoom slider**        | Embedded `<Slider>` carries its own ARIA (role=slider, aria-valuemin/max/now). `aria-label="Zoom"` set by ImageCrop.                                                      |
+| **Drag**               | Pointer events on the image. `setPointerCapture` wrapped in try/catch (jsdom safety).                                                                                     |
+| **Keyboard**           | Arrow keys pan image by 5px in source coords. Home/End jump to top-left / bottom-right. PageUp/Down zoom by 0.25. preventDefault to suppress page scroll.                 |
+| **Loading state**      | `<Skeleton variant="rectangular" />` fills the viewport until image's `onload` fires.                                                                                     |
+| **Error state**        | Image error event sets `loadState='error'`; viewport shows danger-toned message ("Couldn't load image") in `.errorState`. No retry button in v1 — consumer remounts.      |
+| **Disabled**           | Drag handlers no-op. Zoom slider receives `disabled`. Viewport opacity dimmed. Image cursor: not-allowed.                                                                 |
+| **Object URL cleanup** | When `src` is File/Blob, `URL.createObjectURL(src)` is created in useEffect, revoked in cleanup AND on `src` change. Prevents memory leak.                                |
 
 ## Testing
 
@@ -429,7 +436,6 @@ The `box-shadow: 0 0 0 9999px rgb(0 0 0 / 50%)` on `.cropBox` is the canonical "
 23. `extractCropBlob(stringSrc, area)` returns a Blob with the correct dimensions (mocked canvas in tests; verify via `canvas.getContext('2d').drawImage` call args)
 24. `extractCropBlob` with `outputWidth=200` returns a Blob proportionally resized
 25. `extractCropBlob` with `type='image/jpeg', quality=0.5` passes those args to `canvas.toBlob`
-
 
 ## Demo additions
 

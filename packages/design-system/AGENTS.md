@@ -474,7 +474,7 @@ import { Switch } from '@eocrm/design-system';
 ```tsx
 const [crop, setCrop] = useState<CropArea | null>(null);
 
-<ImageCrop src={file} value={crop} onChange={setCrop} aspectRatio={1} />
+<ImageCrop src={file} value={crop} onChange={setCrop} aspectRatio={1} />;
 
 // In the Save handler:
 const handleSave = async () => {
@@ -502,10 +502,10 @@ const handleSave = async () => {
 
 ```ts
 interface CropArea {
-  x: number;       // top-left X in source-image pixels
-  y: number;       // top-left Y in source-image pixels
-  width: number;   // crop width in source-image pixels
-  height: number;  // crop height in source-image pixels
+  x: number; // top-left X in source-image pixels
+  y: number; // top-left Y in source-image pixels
+  width: number; // crop width in source-image pixels
+  height: number; // crop height in source-image pixels
 }
 ```
 
@@ -513,9 +513,9 @@ interface CropArea {
 
 ```ts
 interface ExtractCropOptions {
-  type?: 'image/png' | 'image/jpeg' | 'image/webp';  // default 'image/png'
-  quality?: number;                                   // 0..1, default 0.92 (ignored for PNG)
-  outputWidth?: number;                               // resize output width; height proportional
+  type?: 'image/png' | 'image/jpeg' | 'image/webp'; // default 'image/png'
+  quality?: number; // 0..1, default 0.92 (ignored for PNG)
+  outputWidth?: number; // resize output width; height proportional
 }
 ```
 

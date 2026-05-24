@@ -49,7 +49,8 @@ export interface CropArea {
 function loadImage(src: string | File | Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     let createdObjectUrl = false;
-    const url = typeof src === 'string' ? src : (createdObjectUrl = true, URL.createObjectURL(src));
+    const url =
+      typeof src === 'string' ? src : ((createdObjectUrl = true), URL.createObjectURL(src));
     const img = new Image();
     // crossOrigin: 'anonymous' lets us read pixels from cross-origin images
     // IF the server returns the right CORS headers. Same-origin / data: /
