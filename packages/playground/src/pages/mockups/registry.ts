@@ -11,6 +11,7 @@ export type ComponentName =
   | 'Calendar'
   | 'Card'
   | 'Checkbox'
+  | 'ColorPicker'
   | 'CircularProgress'
   | 'Cluster'
   | 'Code'
