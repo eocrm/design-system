@@ -249,23 +249,32 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     setImageNatural(null);
   }, [resolvedSrc]);
 
-  // Viewport size — measured after layout via getBoundingClientRect. We
-  // re-measure on mount AND on window resize.
+  // Viewport size — measured after layout via getBoundingClientRect. We use a
+  // ResizeObserver instead of a window-resize listener so we catch:
+  //  1. The initial measurement (synchronously after mount).
+  //  2. Layout shifts when the component mounts inside a conditional render
+  //     (parent height/width settles a frame or two after the new DOM commits).
+  //  3. Parent container size changes (responsive layouts, sidebars opening).
+  //  4. Window resizes (ResizeObserver covers this too).
+  // The previous window-resize-only strategy missed cases 2 + 3, leaving the
+  // viewport at 0×0 when the ImageCrop mounted inside a just-shown container —
+  // boxW=0 → imageTransform returned display:none and the image was invisible.
   const [viewport, setViewport] = useState<{ width: number; height: number }>({
     width: 0,
     height: 0,
   });
   useLayoutEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
     const measure = () => {
-      const el = viewportRef.current;
-      if (!el) return;
       const rect = el.getBoundingClientRect();
       setViewport({ width: rect.width, height: rect.height });
     };
     measure();
-    window.addEventListener('resize', measure);
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
     return () => {
-      window.removeEventListener('resize', measure);
+      observer.disconnect();
     };
   }, []);
 

@@ -24,6 +24,16 @@ function ensurePointerCaptureShim() {
 
 ensurePointerCaptureShim();
 
+// jsdom doesn't implement ResizeObserver; shim it (same pattern as Tooltip /
+// DropdownMenu / Popover tests).
+if (typeof window.ResizeObserver === 'undefined') {
+  window.ResizeObserver = class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}
+
 // Mock URL.createObjectURL / revokeObjectURL globally for File/Blob src tests.
 const objectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:mock-url-1');
 const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
