@@ -215,6 +215,14 @@ export type { CursorPaginationProps } from './components/CursorPagination';
 export { Textarea } from './components/Textarea';
 export type { TextareaProps, TextareaSize, TextareaResize } from './components/Textarea';
 
+export { FileUpload } from './components/FileUpload';
+export type {
+  FileUploadProps,
+  FileEntry,
+  FileUploadStatus,
+  FileRejectReason,
+} from './components/FileUpload';
+
 export { DataTable, useDataTable, ColumnVisibilityTrigger } from './components/DataTable';
 export type {
   DataTableProps,
