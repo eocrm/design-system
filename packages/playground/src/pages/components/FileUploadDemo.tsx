@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileUpload, type FileEntry } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
@@ -59,22 +59,43 @@ function MultiWithLimits() {
 function StatusWalkthrough() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [progress, setProgress] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Cleanup any in-flight interval when the component unmounts so leftover
+  // ticks don't try to setState on an unmounted demo (the StrictMode +
+  // hot-reload combo otherwise produces noisy console warnings).
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   const startUpload = () => {
     if (files.length === 0) return;
+    // Defensive: clear any prior interval before starting a new one.
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     const id = files[0].id;
     setFiles((prev) =>
       prev.map((e) => (e.id === id ? { ...e, status: 'uploading' as const, progress: 0 } : e)),
     );
     setProgress(0);
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setProgress((p) => {
         const next = Math.min(100, p + 10);
         setFiles((prev) =>
           prev.map((e) => (e.id === id ? { ...e, progress: next } : e)),
         );
         if (next === 100) {
-          clearInterval(interval);
+          if (intervalRef.current !== null) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
           setTimeout(() => {
             setFiles((prev) =>
               prev.map((e) => (e.id === id ? { ...e, status: 'done' as const } : e)),

@@ -486,7 +486,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
                     <span className={styles.rowErrorMsg}>{entry.error}</span>
                   )}
                   {entry.status === 'done' && (
-                    <Check className={styles.rowDoneIcon} size={16} aria-label="Done" />
+                    <Check className={styles.rowDoneIcon} size={16} role="img" aria-label="Done" />
                   )}
                 </span>
                 <button
