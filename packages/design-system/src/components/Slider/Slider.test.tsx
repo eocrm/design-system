@@ -189,6 +189,35 @@ describe('Slider', () => {
       expect(thumb).toHaveAttribute('aria-orientation', 'vertical');
     });
 
+    it('forwards root aria-label to the thumb (WAI-ARIA APG: role=slider must be labeled)', () => {
+      const { container } = render(
+        <Slider value={50} aria-label="Volume" onChange={() => {}} />,
+      );
+      const thumb = container.querySelector('[role="slider"]');
+      expect(thumb).toHaveAttribute('aria-label', 'Volume');
+    });
+
+    it('forwards root aria-labelledby to the thumb', () => {
+      const { container } = render(
+        <>
+          <span id="vol-label">Volume</span>
+          <Slider value={50} aria-labelledby="vol-label" onChange={() => {}} />
+        </>,
+      );
+      const thumb = container.querySelector('[role="slider"]');
+      expect(thumb).toHaveAttribute('aria-labelledby', 'vol-label');
+    });
+
+    it('range mode: both thumbs get the forwarded aria-label', () => {
+      const { container } = render(
+        <Slider value={[20, 80]} aria-label="Price range" onChange={() => {}} />,
+      );
+      const thumbs = container.querySelectorAll('[role="slider"]');
+      expect(thumbs).toHaveLength(2);
+      expect(thumbs[0]).toHaveAttribute('aria-label', 'Price range');
+      expect(thumbs[1]).toHaveAttribute('aria-label', 'Price range');
+    });
+
     it('label as function sets aria-valuetext to the formatted output', () => {
       const { container } = render(
         <Slider value={42} label={(v) => `${v}%`} onChange={() => {}} />,
@@ -336,6 +365,21 @@ describe('Slider', () => {
       expect(onChange).toHaveBeenCalledWith([50, 50]);
     });
 
+    it('click-without-drag (pointerdown immediately followed by pointerup, no move) does NOT fire onChangeEnd', () => {
+      const onChange = vi.fn();
+      const onChangeEnd = vi.fn();
+      const { container } = render(
+        <Slider value={50} onChange={onChange} onChangeEnd={onChangeEnd} />,
+      );
+      mockTrackRect(container, { width: 100, left: 0 });
+      const thumb = getThumbs(container)[0];
+      fireEvent.pointerDown(thumb, { clientX: 50, clientY: 3, pointerId: 1 });
+      fireEvent.pointerUp(thumb, { clientX: 50, clientY: 3, pointerId: 1 });
+      // No value change → no commit fire.
+      expect(onChange).not.toHaveBeenCalled();
+      expect(onChangeEnd).not.toHaveBeenCalled();
+    });
+
     it('disabled: pointerdown does nothing', () => {
       const onChange = vi.fn();
       const { container } = render(<Slider value={50} disabled onChange={onChange} />);
@@ -357,6 +401,25 @@ describe('Slider', () => {
       // Filter to spans where className contains `mark` but NOT `markLabel`.
       const markSpans = Array.from(allMarks).filter((el) => !/markLabel/.test(el.className));
       expect(markSpans.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('marks={[0, 50, 100]} (number[]) auto-labels each tick with its value', () => {
+      const { container } = render(<Slider value={50} marks={[0, 50, 100]} onChange={() => {}} />);
+      // Mark labels render as descendant spans with the .markLabel class.
+      const markLabels = container.querySelectorAll('[class*="markLabel"]');
+      expect(markLabels).toHaveLength(3);
+      const labelTexts = Array.from(markLabels).map((el) => el.textContent);
+      expect(labelTexts).toContain('0');
+      expect(labelTexts).toContain('50');
+      expect(labelTexts).toContain('100');
+    });
+
+    it('marks as SliderMark[] without label renders the tick but NO label span', () => {
+      const { container } = render(
+        <Slider value={50} marks={[{ value: 25 }, { value: 75 }]} onChange={() => {}} />,
+      );
+      const markLabels = container.querySelectorAll('[class*="markLabel"]');
+      expect(markLabels).toHaveLength(0);
     });
 
     it('marks within the fill range get markFilled class', () => {

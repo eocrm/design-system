@@ -27,7 +27,14 @@ export type SliderValue = number | [number, number];
 
 /** Tick-mark configuration. */
 export interface SliderMark {
+  /** Numeric position of the tick along the track (in min..max units). */
   value: number;
+  /**
+   * Optional label rendered below (horizontal) or to the right (vertical)
+   * of the tick. When omitted, only the tick line renders — no text.
+   * When `marks` is passed as `number[]`, the label is auto-set to the
+   * value so consumers don't have to wrap each tick in an object.
+   */
   label?: ReactNode;
 }
 
@@ -116,7 +123,9 @@ export interface SliderProps
 
 function normalizeMarks(marks: number[] | SliderMark[] | undefined): SliderMark[] {
   if (!marks || marks.length === 0) return [];
-  return marks.map((m) => (typeof m === 'number' ? { value: m } : m));
+  // For number[] input, auto-label with the value itself. For SliderMark[]
+  // input, keep `label` as-passed (may be undefined → no label rendered).
+  return marks.map((m) => (typeof m === 'number' ? { value: m, label: m } : m));
 }
 
 function clamp(n: number, lo: number, hi: number): number {
@@ -368,11 +377,13 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
         // ignore — same rationale as pointerdown.
       }
       setDragging(thumbIndex, false);
-      // Fire with the latest value (post-drag), not the closure capture.
-      onChangeEnd?.(latestValueRef.current);
-      // Reset the focus-session flag — pointerup already fired onChangeEnd, so
-      // subsequent blur (e.g. Tab out) shouldn't fire it again.
-      valueChangedThisFocusRef.current = false;
+      // Fire onChangeEnd only if the value actually changed during the drag —
+      // a click-without-movement (pointerdown → pointerup, no pointermove)
+      // shouldn't be a "commit" event.
+      if (valueChangedThisFocusRef.current) {
+        onChangeEnd?.(latestValueRef.current);
+        valueChangedThisFocusRef.current = false;
+      }
     },
     [disabled, onChangeEnd, setDragging],
   );
@@ -556,7 +567,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
             style={markStyle(mark)}
           >
             {mark.label !== undefined && (
-              <span className={styles.markLabel}>{mark.label ?? mark.value}</span>
+              <span className={styles.markLabel}>{mark.label}</span>
             )}
           </span>
         ))}
@@ -574,6 +585,14 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           }
           aria-orientation={orientation}
           aria-disabled={disabled || undefined}
+          aria-label={
+            // Forward the root's aria-label to each thumb so screen readers
+            // announce the slider's name when a thumb is focused (WAI-ARIA APG
+            // requires each role=slider to be labeled). Per-thumb labels for
+            // range mode (e.g. "Minimum"/"Maximum") are deferred to v2.
+            (rest as { 'aria-label'?: string })['aria-label']
+          }
+          aria-labelledby={(rest as { 'aria-labelledby'?: string })['aria-labelledby']}
           className={clsx(styles.thumb, isDragging[index] && styles.thumbDragging)}
           style={thumbStyle(thumbValue)}
           onPointerDown={(e) => handleThumbPointerDown(e, index)}
