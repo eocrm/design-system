@@ -1,0 +1,26 @@
+.code {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-code);
+
+  // stylelint-disable-next-line property-disallowed-list -- inline chip padding (component-internal, not at the boundary)
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-muted);
+  color: var(--color-fg);
+}
+
+.toneDefault {
+  color: var(--color-fg);
+}
+
+.toneMuted {
+  color: var(--color-fg-muted);
+}
+
+.toneAccent {
+  color: var(--color-accent);
+}
+
+.toneDanger {
+  color: var(--color-danger);
+}
