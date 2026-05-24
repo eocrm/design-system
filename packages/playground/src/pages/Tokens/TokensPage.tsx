@@ -42,8 +42,8 @@ export function TokensPage() {
           <Title order={1}>Design tokens</Title>
           <Text tone="muted">
             All {allTokens.length} CSS custom properties defined in{' '}
-            <Code>packages/design-system/src/styles/tokens.scss</Code>. Click a name to copy
-            its <Code>var(--…)</Code> reference.
+            <Code>packages/design-system/src/styles/tokens.scss</Code>. Click a name to copy its{' '}
+            <Code>var(--…)</Code> reference.
           </Text>
         </Stack>
       </header>
@@ -100,9 +100,7 @@ export function TokensPage() {
                           <button
                             type="button"
                             className={styles.copyButton}
-                            onClick={() =>
-                              navigator.clipboard?.writeText(`var(--${token.name})`)
-                            }
+                            onClick={() => navigator.clipboard?.writeText(`var(--${token.name})`)}
                             aria-label={`Copy var(--${token.name})`}
                             title="Click to copy var(--…)"
                           >

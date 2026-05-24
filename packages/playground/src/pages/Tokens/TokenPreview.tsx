@@ -96,9 +96,7 @@ export function TokenPreview({ category, name }: TokenPreviewProps) {
       );
 
     case 'border':
-      return (
-        <div className={styles.borderSwatch} style={{ borderWidth: cssVar }} aria-hidden />
-      );
+      return <div className={styles.borderSwatch} style={{ borderWidth: cssVar }} aria-hidden />;
 
     case 'line':
       return (

@@ -167,16 +167,17 @@
   width: 48px;
   height: 32px;
   border-radius: var(--radius-sm);
-  background-image: linear-gradient(
-      45deg,
-      var(--color-bg-muted) 25%,
-      transparent 25%
-    ),
+  background-image:
+    linear-gradient(45deg, var(--color-bg-muted) 25%, transparent 25%),
     linear-gradient(-45deg, var(--color-bg-muted) 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, var(--color-bg-muted) 75%),
     linear-gradient(-45deg, transparent 75%, var(--color-bg-muted) 75%);
   background-size: 8px 8px;
-  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0;
 }
 
 .opacitySwatch {

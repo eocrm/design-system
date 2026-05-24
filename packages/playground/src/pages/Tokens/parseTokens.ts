@@ -16,8 +16,7 @@ export interface ParsedToken {
   category: string;
 }
 
-const TOKEN_LINE_RE =
-  /^--([a-z0-9-]+):\s*([^;]+?);(?:\s*(?:\/\/\s*|\/\*\s*)(.+?)(?:\s*\*\/)?)?$/;
+const TOKEN_LINE_RE = /^--([a-z0-9-]+):\s*([^;]+?);(?:\s*(?:\/\/\s*|\/\*\s*)(.+?)(?:\s*\*\/)?)?$/;
 const COMMENT_LINE_RE = /^\/\/\s?(.*)$/;
 
 /**
@@ -120,8 +119,7 @@ export const CATEGORY_META: Record<string, { label: string; description: string 
   },
   opacity: {
     label: 'Opacity',
-    description:
-      'Reusable opacity values for hover, disabled, overlay, and tinted-surface states.',
+    description: 'Reusable opacity values for hover, disabled, overlay, and tinted-surface states.',
   },
   z: {
     label: 'Z-index',
