@@ -39,6 +39,7 @@ export type ComponentName =
   | 'RadioGroup'
   | 'Select'
   | 'Skeleton'
+  | 'Slider'
   | 'Stack'
   | 'Switch'
   | 'Table'
