@@ -55,16 +55,6 @@
   gap: var(--space-4);
 }
 
-.cardLink {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-accent);
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
 .listRowTitle {
   font-weight: var(--font-weight-medium);
   color: var(--color-fg);

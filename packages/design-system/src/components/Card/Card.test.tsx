@@ -8,9 +8,83 @@ describe('Card', () => {
     expect(screen.getByText('Body content')).toBeInTheDocument();
   });
 
-  it('defaults to padding="md"', () => {
+  it('defaults to padding="md" for plain content', () => {
     const { container } = render(<Card>x</Card>);
     expect((container.firstChild as HTMLElement).className).toMatch(/paddingMd/);
+  });
+
+  it('auto-defaults to padding="none" when a Card.Header child is present', () => {
+    const { container } = render(
+      <Card>
+        <Card.Header>Title</Card.Header>
+      </Card>,
+    );
+    expect((container.firstChild as HTMLElement).className).toMatch(/paddingNone/);
+    expect((container.firstChild as HTMLElement).className).not.toMatch(/paddingMd/);
+  });
+
+  it('auto-defaults to padding="none" when a Card.List child is present', () => {
+    const { container } = render(
+      <Card>
+        <Card.List>
+          <Card.ListRow>row</Card.ListRow>
+        </Card.List>
+      </Card>,
+    );
+    expect((container.firstChild as HTMLElement).className).toMatch(/paddingNone/);
+  });
+
+  it('explicit padding overrides the compound auto-detect', () => {
+    const { container } = render(
+      <Card padding="lg">
+        <Card.Header>Title</Card.Header>
+      </Card>,
+    );
+    expect((container.firstChild as HTMLElement).className).toMatch(/paddingLg/);
+    expect((container.firstChild as HTMLElement).className).not.toMatch(/paddingNone/);
+  });
+
+  it('auto-defaults to padding="none" when a Card.ListRow is a direct child', () => {
+    const { container } = render(
+      <Card>
+        <Card.ListRow>row</Card.ListRow>
+      </Card>,
+    );
+    expect((container.firstChild as HTMLElement).className).toMatch(/paddingNone/);
+  });
+
+  it('auto-detect still triggers when compound + plain children are mixed', () => {
+    const { container } = render(
+      <Card>
+        <Card.Header>Title</Card.Header>
+        <div>extra footer content</div>
+      </Card>,
+    );
+    expect((container.firstChild as HTMLElement).className).toMatch(/paddingNone/);
+  });
+
+  it('auto-detect recurses through a Fragment wrapper', () => {
+    const { container } = render(
+      <Card>
+        <>
+          <Card.Header>Title</Card.Header>
+        </>
+      </Card>,
+    );
+    expect((container.firstChild as HTMLElement).className).toMatch(/paddingNone/);
+  });
+
+  it('auto-detect recurses through nested Fragments', () => {
+    const { container } = render(
+      <Card>
+        <>
+          <>
+            <Card.Header>Title</Card.Header>
+          </>
+        </>
+      </Card>,
+    );
+    expect((container.firstChild as HTMLElement).className).toMatch(/paddingNone/);
   });
 
   it.each<CardPadding>(['none', 'sm', 'md', 'lg'])('applies the %s padding class', (padding) => {
@@ -121,9 +195,9 @@ describe('compound API', () => {
     expect(lis[lis.length - 1]).toHaveAttribute('data-testid', 'last');
   });
 
-  it('compound composes: Card > Header + List > ListRow', () => {
+  it('compound composes: Card > Header + List > ListRow (no padding prop needed)', () => {
     const { container } = render(
-      <Card padding="none">
+      <Card>
         <Card.Header>Title</Card.Header>
         <Card.List>
           <Card.ListRow>Row 1</Card.ListRow>
@@ -133,6 +207,7 @@ describe('compound API', () => {
     );
     expect(container.querySelector('h3')).toHaveTextContent('Title');
     expect(container.querySelectorAll('li').length).toBe(2);
+    expect((container.firstChild as HTMLElement).className).toMatch(/paddingNone/);
   });
 
   it('Card.Header className merges (does not replace) with base header class', () => {

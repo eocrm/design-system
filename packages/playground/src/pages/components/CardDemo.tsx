@@ -152,9 +152,9 @@ export function CardDemo() {
 
       <Example
         title="Section card: header + list body"
-        description="The canonical Dashboard pattern — padding='none' so header and rows bleed to the card edge. Card.Header provides the title row with a right-aligned action; Card.List and Card.ListRow handle semantics and dividers."
-        code={`<Card padding="none">
-  <Card.Header action={<Link variant="muted">View all</Link>}>
+        description="The canonical Dashboard pattern. No padding prop needed — when Card.Header / Card.List / Card.ListRow appear as direct children, padding auto-defaults to 'none' so the header and rows bleed to the card edge."
+        code={`<Card>
+  <Card.Header action={<Link as={RouterLink} to="/deals">View all</Link>}>
     Deals needing attention
   </Card.Header>
   <Card.List>
@@ -194,8 +194,14 @@ export function CardDemo() {
   </Card.List>
 </Card>`}
       >
-        <Card padding="none" style={{ maxWidth: 480 }}>
-          <Card.Header action={<Link variant="muted">View all</Link>}>
+        <Card style={{ maxWidth: 480 }}>
+          <Card.Header
+            action={
+              <Link href="#" onClick={(e) => e.preventDefault()}>
+                View all
+              </Link>
+            }
+          >
             Deals needing attention
           </Card.Header>
           <Card.List>
@@ -243,7 +249,7 @@ export function CardDemo() {
       <Example
         title="Header without action"
         description="When there's no navigation link, omit the action prop. The title still gets the bottom-border separator and proper heading semantics."
-        code={`<Card padding="none">
+        code={`<Card>
   <Card.Header>Recent activity</Card.Header>
   <Card.List>
     <Card.ListRow>
@@ -282,7 +288,7 @@ export function CardDemo() {
   </Card.List>
 </Card>`}
       >
-        <Card padding="none" style={{ maxWidth: 480 }}>
+        <Card style={{ maxWidth: 480 }}>
           <Card.Header>Recent activity</Card.Header>
           <Card.List>
             {[

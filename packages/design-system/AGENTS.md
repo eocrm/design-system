@@ -339,9 +339,10 @@ import { Switch } from '@eocrm/design-system';
 ```
 
 ```tsx
-// Compound API — section card with header + list (Dashboard's "Deals needing attention" pattern):
-<Card padding="none">
-  <Card.Header action={<Link variant="muted">View all</Link>}>Deals needing attention</Card.Header>
+// Compound API — section card with header + list (Dashboard's "Deals needing attention" pattern).
+// No `padding` prop needed — Card auto-detects compound children and defaults to padding="none".
+<Card>
+  <Card.Header action={<Link as={RouterLink} to="/deals">View all</Link>}>Deals needing attention</Card.Header>
   <Card.List>
     {deals.map((d) => (
       <Card.ListRow key={d.id}>
@@ -356,14 +357,13 @@ import { Switch } from '@eocrm/design-system';
 </Card>
 ```
 
-- `padding`: `none` / `sm` / `md` (default) / `lg`
+- `padding`: `none` / `sm` / `md` / `lg`. Defaults to `md` for plain content, `none` when `Card.Header` / `Card.List` / `Card.ListRow` is a direct child. Pass explicitly to override.
 - `tone`: `accent` / `info` / `success` / `warning` / `danger` — draws a 3px left-edge stripe in the tone color. Default: no stripe (standard bordered look). A transparent border-left is always reserved so toggling `tone` never shifts layout.
-- **Compound API** — `Card.Header` / `Card.List` / `Card.ListRow` for the section-with-list pattern (Dashboard's "Deals needing attention"). Use `padding="none"` on the root card so the header and rows bleed edge-to-edge.
+- **Compound API** — `Card.Header` / `Card.List` / `Card.ListRow` for the section-with-list pattern (Dashboard's "Deals needing attention"). Drop `padding="none"` — the parent Card auto-detects compound children.
 - `Card.Header`: title row (`h3` by default, override via `headerLevel`) with optional right-aligned `action` slot and bottom-border separator.
 - `Card.List`: semantic `<ul>` with list-reset styling — screen readers announce "list with N items".
 - `Card.ListRow`: `<li>` with padded content and bottom dividing border; last-child border suppressed automatically.
 - **Never nest Card in Card.**
-- Use `padding="none"` when the card contains a table or list that should bleed edge-to-edge.
 
 ### `<Stack>` — vertical layout
 

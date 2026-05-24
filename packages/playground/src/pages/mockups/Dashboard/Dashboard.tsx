@@ -5,6 +5,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
+import { Link } from '@eocrm/design-system';
 import { contacts, deals } from '../../../data/mock';
 import styles from './Dashboard.module.scss';
 import { CrossLinks } from '../../shared/CrossLinks';
@@ -86,13 +87,13 @@ export function Dashboard() {
       </div>
 
       <div className={styles.twoCol}>
-        <Card padding="none">
+        <Card>
           <Card.Header
             headerLevel="h2"
             action={
-              <a href="#" className={styles.cardLink} onClick={(e) => e.preventDefault()}>
+              <Link href="#" onClick={(e) => e.preventDefault()}>
                 View all
-              </a>
+              </Link>
             }
           >
             Deals needing attention
@@ -119,7 +120,7 @@ export function Dashboard() {
           </Card.List>
         </Card>
 
-        <Card padding="none">
+        <Card>
           <Card.Header headerLevel="h2">Recent activity</Card.Header>
           <Card.List>
             {activity.map((a, i) => (
