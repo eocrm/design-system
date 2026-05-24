@@ -9,6 +9,9 @@ import { Link as DSLink } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { ButtonGroup } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
+import { Code } from '@eocrm/design-system';
+import { Text } from '@eocrm/design-system';
+import { Title } from '@eocrm/design-system';
 import { Checkbox } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Divider } from '@eocrm/design-system';
@@ -314,6 +317,17 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
+    to: '/components/code',
+    name: 'Code',
+    description: 'Inline <code> chip — monospace text with subtle bg. Use for inline identifiers / snippets.',
+    preview: (
+      <Cluster gap="sm" justify="center">
+        <Code>userId</Code>
+        <Code tone="danger">--no-verify</Code>
+      </Cluster>
+    ),
+  },
+  {
     to: '/components/divider',
     name: 'Divider',
     description: 'Thin separator. Horizontal/vertical, solid/dashed, optional label.',
@@ -402,6 +416,28 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           onChange={() => undefined}
         />
       </div>
+    ),
+  },
+  {
+    to: '/components/text',
+    name: 'Text',
+    description: 'Body / inline text primitive with size/tone/weight/align/truncate/lineClamp props.',
+    preview: (
+      <Stack gap="xs" align="center">
+        <Text size="sm" tone="muted">12 minutes ago</Text>
+        <Text weight="medium">Acme Inc</Text>
+      </Stack>
+    ),
+  },
+  {
+    to: '/components/title',
+    name: 'Title',
+    description: 'Semantic heading primitive — renders h1-h6 from the required `order` prop.',
+    preview: (
+      <Stack gap="xs" align="center">
+        <Title order={3}>Dashboard</Title>
+        <Title order={5} tone="muted">Subtitle</Title>
+      </Stack>
     ),
   },
   {

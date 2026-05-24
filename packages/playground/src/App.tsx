@@ -23,6 +23,9 @@ import { SwitchDemo } from './pages/components/SwitchDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { TextareaDemo } from './pages/components/TextareaDemo';
 import { CardDemo } from './pages/components/CardDemo';
+import { CodeDemo } from './pages/components/CodeDemo';
+import { TextDemo } from './pages/components/TextDemo';
+import { TitleDemo } from './pages/components/TitleDemo';
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
 import { StackDemo } from './pages/components/StackDemo';
 import { ClusterDemo } from './pages/components/ClusterDemo';
@@ -78,6 +81,9 @@ export default function App() {
           <Route path="/components/switch" element={<SwitchDemo />} />
           <Route path="/components/table" element={<TableDemo />} />
           <Route path="/components/card" element={<CardDemo />} />
+          <Route path="/components/code" element={<CodeDemo />} />
+          <Route path="/components/text" element={<TextDemo />} />
+          <Route path="/components/title" element={<TitleDemo />} />
           <Route path="/components/checkbox" element={<CheckboxDemo />} />
           <Route path="/components/stack" element={<StackDemo />} />
           <Route path="/components/cluster" element={<ClusterDemo />} />
