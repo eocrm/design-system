@@ -54,11 +54,22 @@ function FreeAspect() {
   return <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} />;
 }
 
+type OutputFormat = 'image/png' | 'image/jpeg' | 'image/webp';
+
+const FORMAT_EXT: Record<OutputFormat, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+};
+
 function FileUploadIntegration() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [crop, setCrop] = useState<CropArea | null>(null);
+  const [format, setFormat] = useState<OutputFormat>('image/jpeg');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewSize, setPreviewSize] = useState<number | null>(null);
   const previewUrlRef = useRef<string | null>(null);
+  const previewGenRef = useRef(0);
 
   // Reset crop when the file changes.
   const pickedFile = files[0]?.file ?? null;
@@ -66,8 +77,11 @@ function FileUploadIntegration() {
     setCrop(null);
   }, [pickedFile]);
 
-  // Live-update the preview whenever the crop changes. Debounced so we don't
-  // re-encode on every pointer-move tick during a drag.
+  // Live-update the preview whenever the crop or format changes. Debounced
+  // so we don't re-encode on every pointer-move tick during a drag. Uses a
+  // generation counter so an in-flight encode from a prior crop can't
+  // overwrite the preview from a newer crop (extractCropBlob is async and
+  // clearTimeout doesn't cancel an already-fired callback's awaited work).
   useEffect(() => {
     if (!pickedFile || !crop) {
       if (previewUrlRef.current) {
@@ -75,21 +89,25 @@ function FileUploadIntegration() {
         previewUrlRef.current = null;
       }
       setPreviewUrl(null);
+      setPreviewSize(null);
       return;
     }
+    const gen = ++previewGenRef.current;
     const handle = setTimeout(async () => {
       const blob = await extractCropBlob(pickedFile, crop, {
-        type: 'image/jpeg',
+        type: format,
         quality: 0.9,
         outputWidth: 256,
       });
+      if (gen !== previewGenRef.current) return; // newer encode in flight
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
       const url = URL.createObjectURL(blob);
       previewUrlRef.current = url;
       setPreviewUrl(url);
+      setPreviewSize(blob.size);
     }, 120);
     return () => clearTimeout(handle);
-  }, [pickedFile, crop]);
+  }, [pickedFile, crop, format]);
 
   // Cleanup the last preview URL on unmount.
   useEffect(
@@ -102,7 +120,7 @@ function FileUploadIntegration() {
   const handleSave = async () => {
     if (!pickedFile || !crop) return;
     const blob = await extractCropBlob(pickedFile, crop, {
-      type: 'image/jpeg',
+      type: format,
       quality: 0.9,
       outputWidth: 256,
     });
@@ -111,7 +129,7 @@ function FileUploadIntegration() {
     const downloadUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = downloadUrl;
-    a.download = 'cropped.jpg';
+    a.download = `cropped.${FORMAT_EXT[format]}`;
     a.click();
     URL.revokeObjectURL(downloadUrl);
   };
@@ -132,6 +150,21 @@ function FileUploadIntegration() {
           <ImageCrop src={pickedFile} value={crop} onChange={setCrop} aspectRatio={1} />
           <Cluster gap="sm" align="center">
             <Text size="sm" tone="muted">
+              Format:
+            </Text>
+            {(['image/jpeg', 'image/png', 'image/webp'] as const).map((f) => (
+              <Button
+                key={f}
+                onClick={() => setFormat(f)}
+                variant={format === f ? 'primary' : 'secondary'}
+                size="sm"
+              >
+                {f.replace('image/', '').toUpperCase()}
+              </Button>
+            ))}
+          </Cluster>
+          <Cluster gap="sm" align="center">
+            <Text size="sm" tone="muted">
               Live 256×256 preview:
             </Text>
             {previewUrl ? (
@@ -145,8 +178,13 @@ function FileUploadIntegration() {
                 (cropping…)
               </Text>
             )}
+            {previewSize !== null && (
+              <Text size="sm" tone="muted">
+                <Code>{(previewSize / 1024).toFixed(1)} KB</Code>
+              </Text>
+            )}
             <Button onClick={handleSave} disabled={!crop} variant="secondary">
-              Download JPEG
+              Download
             </Button>
           </Cluster>
         </>
