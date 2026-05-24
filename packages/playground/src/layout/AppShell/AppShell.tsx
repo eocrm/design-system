@@ -51,6 +51,7 @@ import {
   Activity,
   LoaderCircle,
   UploadCloud,
+  SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
@@ -101,6 +102,7 @@ const componentGroups = [
       },
       { to: '/components/radio', label: 'Radio', icon: CircleDot, end: false },
       { to: '/components/select', label: 'Select', icon: ChevronsUpDown, end: false },
+      { to: '/components/slider', label: 'Slider', icon: SlidersHorizontal, end: false },
       { to: '/components/switch', label: 'Switch', icon: ToggleRight, end: false },
       { to: '/components/textarea', label: 'Textarea', icon: MessageSquareText, end: false },
     ],

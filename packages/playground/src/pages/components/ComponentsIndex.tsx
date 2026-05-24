@@ -23,6 +23,7 @@ import { PasswordInput } from '@eocrm/design-system';
 import { PasswordStrengthMeter } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
 import { Skeleton } from '@eocrm/design-system';
+import { Slider } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Switch } from '@eocrm/design-system';
 import { Table } from '@eocrm/design-system';
@@ -259,6 +260,16 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Skeleton width="60%" />
         <Skeleton width="40%" />
       </Stack>
+    ),
+  },
+  {
+    to: '/components/slider',
+    name: 'Slider',
+    description: 'Controlled slider: single-thumb or range (two-thumb), horizontal or vertical. Custom-painted with marks + value bubble.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 220 }}>
+        <Slider value={42} onChange={() => {}} aria-label="preview" />
+      </div>
     ),
   },
   {
