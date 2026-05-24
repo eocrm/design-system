@@ -45,6 +45,7 @@ import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverD
 import { DataTableDemo } from './pages/components/DataTableDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
 import { FileUploadDemo } from './pages/components/FileUploadDemo';
+import { ImageCropDemo } from './pages/components/ImageCropDemo';
 import { DividerDemo } from './pages/components/DividerDemo';
 import { DrawerDemo } from './pages/components/DrawerDemo';
 import { GridDemo } from './pages/components/GridDemo';
@@ -107,6 +108,7 @@ export default function App() {
           <Route path="/components/datatable" element={<DataTableDemo />} />
           <Route path="/components/empty-state" element={<EmptyStateDemo />} />
           <Route path="/components/file-upload" element={<FileUploadDemo />} />
+          <Route path="/components/image-crop" element={<ImageCropDemo />} />
           <Route path="/components/divider" element={<DividerDemo />} />
           <Route path="/components/drawer" element={<DrawerDemo />} />
           <Route path="/components/grid" element={<GridDemo />} />

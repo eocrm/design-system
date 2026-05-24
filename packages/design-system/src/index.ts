@@ -233,6 +233,15 @@ export type {
   FileRejectReason,
 } from './components/FileUpload';
 
+export { ImageCrop, extractCropBlob, useCropPreview } from './components/ImageCrop';
+export type {
+  ImageCropProps,
+  CropArea,
+  ExtractCropOptions,
+  UseCropPreviewOptions,
+  UseCropPreviewResult,
+} from './components/ImageCrop';
+
 export { DataTable, useDataTable, ColumnVisibilityTrigger } from './components/DataTable';
 export type {
   DataTableProps,

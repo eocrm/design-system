@@ -24,6 +24,7 @@ export type ComponentName =
   | 'DropdownMenu'
   | 'EmptyState'
   | 'FileUpload'
+  | 'ImageCrop'
   | 'Grid'
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'

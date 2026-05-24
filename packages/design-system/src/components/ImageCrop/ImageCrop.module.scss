@@ -1,0 +1,118 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.viewport {
+  position: relative;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+
+  // Reserve canvas space before image loads so the layout doesn't shift.
+  // Consumer can override via className.
+  min-height: 320px;
+
+  // CSS keyword; prevents browser text selection during drag.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  user-select: none;
+}
+
+.viewport:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-accent);
+
+  // CSS keyword; offset the outline to keep it visible.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
+  outline-offset: 2px;
+}
+
+.image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+
+  // The library's reset (src/styles/reset.scss) applies `max-width: 100%`
+  // to all <img> for general layout safety. We override here because the
+  // image inside ImageCrop must render at its natural pixel size — the
+  // crop math depends on `scale = boxW / value.width` driving the CSS
+  // transform, and that breaks if the image is also being width-capped by
+  // CSS to the parent viewport. Without this override, large source images
+  // (e.g. 4080×3072 phone photos) render visibly tiny in the cropper.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword override of the global img reset
+  max-width: none;
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  max-height: none;
+
+  // CSS keyword for the grab cursor affordance.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: grab;
+}
+
+.imageDragging {
+  // CSS keyword.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: grabbing;
+}
+
+.cropBox {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: var(--border-width) solid var(--color-accent);
+
+  // The box-shadow trick paints a dim overlay everywhere OUTSIDE the box
+  // without an extra DOM element. The 9999px spread covers the viewport.
+  // We use 50% black rather than --color-bg-overlay (35%) intentionally —
+  // the cropper scrim needs higher contrast than Modal's overlay.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- crop scrim needs higher contrast than --color-bg-overlay
+  box-shadow: 0 0 0 9999px rgb(0 0 0 / 50%);
+
+  // CSS keyword — dim layer doesn't intercept drag events on the image below.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  pointer-events: none;
+}
+
+.skeleton {
+  position: absolute;
+  inset: 0;
+}
+
+.errorState {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+
+  // CSS keyword — text alignment.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  text-align: center;
+}
+
+.zoomControl {
+  width: 100%;
+}
+
+.disabled .viewport {
+  opacity: var(--opacity-disabled);
+}
+
+.disabled .image {
+  // CSS keyword.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: not-allowed;
+
+  // CSS keyword.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  pointer-events: none;
+}
