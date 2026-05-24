@@ -89,6 +89,16 @@ describe('Title', () => {
     expect((container.firstChild as HTMLElement).className).not.toMatch(/truncate/);
   });
 
+  it('defaults to tone="default" when no tone prop is supplied', () => {
+    const { container } = render(<Title order={3}>x</Title>);
+    expect((container.firstChild as HTMLElement).className).toMatch(/toneDefault/);
+  });
+
+  it('defaults to weight="semibold" when no weight prop is supplied', () => {
+    const { container } = render(<Title order={3}>x</Title>);
+    expect((container.firstChild as HTMLElement).className).toMatch(/weightSemibold/);
+  });
+
   it('className from props merges with the base class (not replace)', () => {
     const { container } = render(
       <Title order={3} className="custom">
@@ -97,7 +107,7 @@ describe('Title', () => {
     );
     const cls = (container.firstChild as HTMLElement).className;
     expect(cls).toMatch(/custom/);
-    expect(cls).toMatch(/title/);
+    expect(cls).toMatch(/title_/);
   });
 
   it('forwards ref to the underlying heading element', () => {
@@ -122,16 +132,20 @@ describe('Title', () => {
     expect(el).toHaveAttribute('aria-label', 'ariaLabel');
   });
 
-  it<{ size: TitleSize }>('every size token maps to a class (smoke test)', () => {
-    const sizes: TitleSize[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'];
-    sizes.forEach((size) => {
-      const { container } = render(
-        <Title order={3} size={size}>
-          x
-        </Title>,
-      );
-      const cap = size === '2xl' || size === '3xl' ? size : size[0].toUpperCase() + size.slice(1);
-      expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`size${cap}`));
-    });
+  it.each<[TitleSize, string]>([
+    ['xs', 'sizeXs'],
+    ['sm', 'sizeSm'],
+    ['md', 'sizeMd'],
+    ['lg', 'sizeLg'],
+    ['xl', 'sizeXl'],
+    ['2xl', 'size2xl'],
+    ['3xl', 'size3xl'],
+  ])('size="%s" applies class %s', (size, expectedClass) => {
+    const { container } = render(
+      <Title order={3} size={size}>
+        x
+      </Title>,
+    );
+    expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(expectedClass));
   });
 });
