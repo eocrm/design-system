@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ImageCrop,
   extractCropBlob,
@@ -52,14 +52,47 @@ function FreeAspect() {
 function FileUploadIntegration() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [crop, setCrop] = useState<CropArea | null>(null);
-  const [savedUrl, setSavedUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
 
   // Reset crop when the file changes.
   const pickedFile = files[0]?.file ?? null;
   useEffect(() => {
     setCrop(null);
-    setSavedUrl(null);
   }, [pickedFile]);
+
+  // Live-update the preview whenever the crop changes. Debounced so we don't
+  // re-encode on every pointer-move tick during a drag.
+  useEffect(() => {
+    if (!pickedFile || !crop) {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = null;
+      }
+      setPreviewUrl(null);
+      return;
+    }
+    const handle = setTimeout(async () => {
+      const blob = await extractCropBlob(pickedFile, crop, {
+        type: 'image/jpeg',
+        quality: 0.9,
+        outputWidth: 256,
+      });
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      const url = URL.createObjectURL(blob);
+      previewUrlRef.current = url;
+      setPreviewUrl(url);
+    }, 120);
+    return () => clearTimeout(handle);
+  }, [pickedFile, crop]);
+
+  // Cleanup the last preview URL on unmount.
+  useEffect(
+    () => () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    },
+    [],
+  );
 
   const handleSave = async () => {
     if (!pickedFile || !crop) return;
@@ -68,8 +101,14 @@ function FileUploadIntegration() {
       quality: 0.9,
       outputWidth: 256,
     });
-    if (savedUrl) URL.revokeObjectURL(savedUrl);
-    setSavedUrl(URL.createObjectURL(blob));
+    // Real CRMs would POST this Blob to their upload endpoint. The demo
+    // downloads it so you can verify the encode result locally.
+    const downloadUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = 'cropped.jpg';
+    a.click();
+    URL.revokeObjectURL(downloadUrl);
   };
 
   return (
@@ -85,23 +124,25 @@ function FileUploadIntegration() {
       />
       {pickedFile && (
         <>
-          <ImageCrop
-            src={pickedFile}
-            value={crop}
-            onChange={setCrop}
-            aspectRatio={1}
-          />
+          <ImageCrop src={pickedFile} value={crop} onChange={setCrop} aspectRatio={1} />
           <Cluster gap="sm" align="center">
-            <Button onClick={handleSave} disabled={!crop}>
-              Save crop (256×256 JPEG)
-            </Button>
-            {savedUrl && (
+            <Text size="sm" tone="muted">
+              Live 256×256 preview:
+            </Text>
+            {previewUrl ? (
               <img
-                src={savedUrl}
+                src={previewUrl}
                 alt="Cropped preview"
                 style={{ width: 64, height: 64, borderRadius: 'var(--radius-md)' }}
               />
+            ) : (
+              <Text size="sm" tone="muted">
+                (cropping…)
+              </Text>
             )}
+            <Button onClick={handleSave} disabled={!crop} variant="secondary">
+              Download JPEG
+            </Button>
           </Cluster>
         </>
       )}
@@ -154,21 +195,28 @@ export function ImageCropDemo() {
 
       <Example
         title="FileUpload integration"
-        description="The canonical 'pick → crop → save' flow. <FileUpload> picks an image; <ImageCrop> opens for cropping; the Save button calls extractCropBlob and shows the 256×256 cropped preview."
+        description="The canonical pick → crop → save flow with a LIVE 256×256 preview that re-encodes on every drag/zoom (debounced ~120ms). The Download button calls extractCropBlob and saves the result locally — your real Save handler would POST it to your upload endpoint instead."
         code={`function FileUploadIntegration() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [crop, setCrop] = useState<CropArea | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
   const pickedFile = files[0]?.file ?? null;
 
-  const handleSave = async () => {
-    if (!pickedFile || !crop) return;
-    const blob = await extractCropBlob(pickedFile, crop, {
-      type: 'image/jpeg',
-      quality: 0.9,
-      outputWidth: 256,
-    });
-    // upload blob...
-  };
+  // Live preview: re-encode on every crop change, debounced.
+  useEffect(() => {
+    if (!pickedFile || !crop) { setPreviewUrl(null); return; }
+    const handle = setTimeout(async () => {
+      const blob = await extractCropBlob(pickedFile, crop, {
+        type: 'image/jpeg', quality: 0.9, outputWidth: 256,
+      });
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      const url = URL.createObjectURL(blob);
+      previewUrlRef.current = url;
+      setPreviewUrl(url);
+    }, 120);
+    return () => clearTimeout(handle);
+  }, [pickedFile, crop]);
 
   return (
     <Stack gap="md">
@@ -176,7 +224,7 @@ export function ImageCropDemo() {
       {pickedFile && (
         <>
           <ImageCrop src={pickedFile} value={crop} onChange={setCrop} aspectRatio={1} />
-          <Button onClick={handleSave}>Save crop</Button>
+          {previewUrl && <img src={previewUrl} alt="" width={64} height={64} />}
         </>
       )}
     </Stack>

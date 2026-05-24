@@ -503,20 +503,22 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
         {loadState === 'error' && (
           <div className={styles.errorState}>Couldn't load image</div>
         )}
-        {/* eslint-disable-next-line jsx-a11y/alt-text -- alt is intentionally empty; the cropping interaction IS the meaning, consumer overrides via rest if needed. */}
-        <img
-          ref={imageRef}
-          src={resolvedSrc}
-          alt=""
-          className={clsx(styles.image, isDragging && styles.imageDragging)}
-          style={imageTransform}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          draggable={false}
-        />
+        {resolvedSrc && (
+          /* eslint-disable-next-line jsx-a11y/alt-text -- alt is intentionally empty; the cropping interaction IS the meaning, consumer overrides via rest if needed. */
+          <img
+            ref={imageRef}
+            src={resolvedSrc}
+            alt=""
+            className={clsx(styles.image, isDragging && styles.imageDragging)}
+            style={imageTransform}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            draggable={false}
+          />
+        )}
         {loadState === 'loaded' && (
           <div
             className={styles.cropBox}
