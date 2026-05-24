@@ -237,6 +237,9 @@ export type {
 export { Breadcrumb } from './components/Breadcrumb';
 export type { BreadcrumbProps, BreadcrumbItemProps } from './components/Breadcrumb';
 
+export { Title } from './components/Title';
+export type { TitleProps, TitleOrder, TitleSize, TitleTone, TitleWeight } from './components/Title';
+
 // i18n
 export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';
