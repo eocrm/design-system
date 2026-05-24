@@ -31,6 +31,11 @@ export type TextAlign = 'left' | 'center' | 'right';
 
 export interface TextProps extends HTMLAttributes<HTMLElement> {
   /**
+   * Associates a `<label>` with its form control. Only meaningful when
+   * `as="label"` — passes through as the native `for` attribute.
+   */
+  htmlFor?: string;
+  /**
    * Rendered element. Defaults to `'p'` (block, default body text). Use
    * `'span'` for inline runs, `'div'` for block containers that can't be a
    * `<p>` (e.g. when the body needs nested block-level elements that React

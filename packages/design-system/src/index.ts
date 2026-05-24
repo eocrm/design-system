@@ -237,6 +237,9 @@ export type {
 export { Breadcrumb } from './components/Breadcrumb';
 export type { BreadcrumbProps, BreadcrumbItemProps } from './components/Breadcrumb';
 
+export { Text } from './components/Text';
+export type { TextProps, TextAs, TextSize, TextTone, TextWeight, TextAlign } from './components/Text';
+
 export { Title } from './components/Title';
 export type { TitleProps, TitleOrder, TitleSize, TitleTone, TitleWeight } from './components/Title';
 
