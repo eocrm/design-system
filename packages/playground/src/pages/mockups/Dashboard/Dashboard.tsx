@@ -5,6 +5,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
+import { Link } from '@eocrm/design-system';
 import { contacts, deals } from '../../../data/mock';
 import styles from './Dashboard.module.scss';
 import { CrossLinks } from '../../shared/CrossLinks';
@@ -86,16 +87,20 @@ export function Dashboard() {
       </div>
 
       <div className={styles.twoCol}>
-        <Card padding="none">
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Deals needing attention</h2>
-            <a href="#" className={styles.cardLink} onClick={(e) => e.preventDefault()}>
-              View all
-            </a>
-          </div>
-          <ul className={styles.list}>
+        <Card>
+          <Card.Header
+            headerLevel="h2"
+            action={
+              <Link href="#" onClick={(e) => e.preventDefault()}>
+                View all
+              </Link>
+            }
+          >
+            Deals needing attention
+          </Card.Header>
+          <Card.List>
             {upcoming.map((d) => (
-              <li key={d.id} className={styles.listRow}>
+              <Card.ListRow key={d.id}>
                 <Stack gap="xs">
                   <Cluster gap="sm">
                     <span className={styles.listRowTitle}>{d.title}</span>
@@ -110,18 +115,16 @@ export function Dashboard() {
                   </span>
                 </Stack>
                 <Avatar name={d.owner} size="sm" />
-              </li>
+              </Card.ListRow>
             ))}
-          </ul>
+          </Card.List>
         </Card>
 
-        <Card padding="none">
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Recent activity</h2>
-          </div>
-          <ul className={styles.list}>
+        <Card>
+          <Card.Header headerLevel="h2">Recent activity</Card.Header>
+          <Card.List>
             {activity.map((a, i) => (
-              <li key={i} className={styles.listRow}>
+              <Card.ListRow key={i}>
                 <Cluster gap="sm" wrap={false} align="start">
                   <Avatar name={a.who} size="sm" />
                   <Stack gap="xs">
@@ -132,9 +135,9 @@ export function Dashboard() {
                     <span className={styles.listRowMeta}>{a.when}</span>
                   </Stack>
                 </Cluster>
-              </li>
+              </Card.ListRow>
             ))}
-          </ul>
+          </Card.List>
         </Card>
       </div>
 

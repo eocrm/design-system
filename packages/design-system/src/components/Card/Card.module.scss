@@ -54,3 +54,46 @@
 .paddingLg {
   padding: var(--space-6);
 }
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.title {
+  // stylelint-disable-next-line property-disallowed-list -- native heading margin reset
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+  min-width: 0;
+}
+
+.action {
+  flex-shrink: 0;
+}
+
+.list {
+  list-style: none;
+  // stylelint-disable-next-line property-disallowed-list -- native <ul> margin reset
+  margin: 0;
+  // stylelint-disable-next-line property-disallowed-list -- native <ul> padding reset
+  padding: 0;
+}
+
+.listRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.listRow:last-child {
+  border-bottom: 0;
+}

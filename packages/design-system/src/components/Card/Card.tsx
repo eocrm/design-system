@@ -1,6 +1,16 @@
-import { forwardRef, type HTMLAttributes } from 'react';
+import {
+  Children,
+  Fragment,
+  forwardRef,
+  isValidElement,
+  type HTMLAttributes,
+  type ReactNode,
+} from 'react';
 import clsx from 'clsx';
 import styles from './Card.module.scss';
+import { CardHeader } from './CardHeader';
+import { CardList } from './CardList';
+import { CardListRow } from './CardListRow';
 
 /** Inner padding. See CardProps#padding for guidance on each. */
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
@@ -17,8 +27,20 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
    * - `none` — use when the card contains a table or list that should bleed
    *   edge-to-edge; inner sections manage their own padding.
    * - `sm` (12px) — dense info cards.
-   * - `md` (16px, default) — most cases.
+   * - `md` (16px) — default for plain-content cards.
    * - `lg` (24px) — emphasis cards, marketing-style panels.
+   *
+   * When omitted, defaults to `'md'` for plain content, or `'none'` when the
+   * card contains compound subcomponents (`Card.Header` / `Card.List` /
+   * `Card.ListRow`) so the header and rows bleed to the card edge automatically.
+   * Pass an explicit value to override the auto-detect.
+   *
+   * **Detection is shallow:** only direct children are inspected. Fragments
+   * (`<>...</>`) are transparent — the detection recurses into them, so
+   * conditional renders that wrap compound children in a Fragment still
+   * trigger the auto-detect. But wrapping a `Card.Header` in any other
+   * element (`<div>`, `<Stack>`, etc.) defeats the heuristic — pass
+   * `padding="none"` explicitly in that case.
    */
   padding?: CardPadding;
   /**
@@ -39,12 +61,32 @@ const paddingClass: Record<CardPadding, string> = {
   lg: styles.paddingLg,
 };
 
+function hasCompoundChildren(children: ReactNode): boolean {
+  return Children.toArray(children).some((child) => {
+    if (!isValidElement(child)) return false;
+    const type = child.type;
+    if (type === CardHeader || type === CardList || type === CardListRow) return true;
+    // Fragments are transparent — Children.toArray preserves them as nodes,
+    // but a consumer who wraps compound children in a `<>` (e.g. for a
+    // conditional render) clearly still wants the auto-detect to fire.
+    if (type === Fragment) {
+      return hasCompoundChildren((child.props as { children?: ReactNode }).children);
+    }
+    return false;
+  });
+}
+
 /**
  * Bordered container for grouped content. Supports an optional `tone` prop
  * that draws a 3px left-edge stripe in the tone color — useful for stat cards
  * or status panels where one card in a row needs visual emphasis. **Don't
  * nest Card in Card** — if you need to subdivide, use spacing or a horizontal
  * rule instead. If everything on your page is a card, none of them are.
+ *
+ * Compound API — `Card.Header` / `Card.List` / `Card.ListRow` for the
+ * "section card with a list of rows" pattern. When any of these subcomponents
+ * appear as a direct child, `padding` auto-defaults to `'none'` so the header
+ * and rows bleed to the card edge. Pass `padding` explicitly to override.
  *
  * @example
  * <Card padding="md">
@@ -59,10 +101,24 @@ const paddingClass: Record<CardPadding, string> = {
  * </Card>
  *
  * @example
- * // Card with a bleeding table inside — sections control their own padding:
- * <Card padding="none">
- *   <header style={{ padding: 16 }}>Header</header>
- *   <ul>...</ul>
+ * // Compound API — section card with header + action + list rows.
+ * // No `padding` prop needed: the presence of Card.Header / Card.List makes
+ * // the card auto-default to padding="none".
+ * <Card>
+ *   <Card.Header action={<Link>View all</Link>}>
+ *     Deals needing attention
+ *   </Card.Header>
+ *   <Card.List>
+ *     {deals.map(d => (
+ *       <Card.ListRow key={d.id}>
+ *         <Stack gap="xs">
+ *           <span>{d.title}</span>
+ *           <span>{d.company}</span>
+ *         </Stack>
+ *         <Avatar name={d.owner} size="sm" />
+ *       </Card.ListRow>
+ *     ))}
+ *   </Card.List>
  * </Card>
  *
  * @example
@@ -90,18 +146,33 @@ const paddingClass: Record<CardPadding, string> = {
  *   architecture is wrong.
  * - ❌ Hand-rolling a left-stripe via `className` / `style`. Use the `tone`
  *   prop — it reserves the border-left space so layout never shifts.
+ * - ❌ Hand-rolling `.cardHeader` / `.list` / `.listRow` SCSS. Use the
+ *   compound API (`Card.Header` / `Card.List` / `Card.ListRow`) instead.
  */
-export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
-  { padding = 'md', tone, className, ...props },
+const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
+  { padding, tone, className, children, ...props },
   ref,
 ) {
+  // Compound subcomponents (Card.Header / Card.List / Card.ListRow) manage
+  // their own internal padding and want to bleed to the card edge. When any
+  // are present and `padding` wasn't passed explicitly, default to 'none' so
+  // the consumer doesn't have to repeat themselves. Explicit `padding` wins.
+  const effectivePadding: CardPadding = padding ?? (hasCompoundChildren(children) ? 'none' : 'md');
   // {...props} last so consumer overrides win (Pattern A).
   return (
     <div
       ref={ref}
-      className={clsx(styles.card, paddingClass[padding], className)}
+      className={clsx(styles.card, paddingClass[effectivePadding], className)}
       data-tone={tone}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
+});
+
+export const Card = Object.assign(CardRoot, {
+  Header: CardHeader,
+  List: CardList,
+  ListRow: CardListRow,
 });

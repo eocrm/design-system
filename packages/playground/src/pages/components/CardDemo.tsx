@@ -4,6 +4,7 @@ import { Stack } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
+import { Link } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/Card/Card.tsx?raw';
@@ -146,6 +147,172 @@ export function CardDemo() {
               </li>
             ))}
           </ul>
+        </Card>
+      </Example>
+
+      <Example
+        title="Section card: header + list body"
+        description="The canonical Dashboard pattern. No padding prop needed — when Card.Header / Card.List / Card.ListRow appear as direct children, padding auto-defaults to 'none' so the header and rows bleed to the card edge."
+        code={`<Card>
+  <Card.Header action={<Link as={RouterLink} to="/deals">View all</Link>}>
+    Deals needing attention
+  </Card.Header>
+  <Card.List>
+    <Card.ListRow>
+      <Stack gap="xs">
+        <Cluster gap="sm">
+          <span>Acme team plan upgrade</span>
+          <Badge tone="warning">At risk</Badge>
+        </Cluster>
+        <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+          Acme Inc · $12,000
+        </span>
+      </Stack>
+      <Avatar name="Alex Rivera" size="sm" />
+    </Card.ListRow>
+    <Card.ListRow>
+      <Stack gap="xs">
+        <Cluster gap="sm">
+          <span>Multi-region rollout</span>
+          <Badge tone="info">In progress</Badge>
+        </Cluster>
+        <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+          Globex · $28,500
+        </span>
+      </Stack>
+      <Avatar name="Jordan Park" size="sm" />
+    </Card.ListRow>
+    <Card.ListRow>
+      <Stack gap="xs">
+        <span>Pilot conversion</span>
+        <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+          Initech · $6,200
+        </span>
+      </Stack>
+      <Avatar name="Sam Chen" size="sm" />
+    </Card.ListRow>
+  </Card.List>
+</Card>`}
+      >
+        <Card style={{ maxWidth: 480 }}>
+          <Card.Header
+            action={
+              <Link href="#" onClick={(e) => e.preventDefault()}>
+                View all
+              </Link>
+            }
+          >
+            Deals needing attention
+          </Card.Header>
+          <Card.List>
+            <Card.ListRow>
+              <Stack gap="xs">
+                <Cluster gap="sm">
+                  <span style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                    Acme team plan upgrade
+                  </span>
+                  <Badge tone="warning">At risk</Badge>
+                </Cluster>
+                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+                  Acme Inc · $12,000
+                </span>
+              </Stack>
+              <Avatar name="Alex Rivera" size="sm" />
+            </Card.ListRow>
+            <Card.ListRow>
+              <Stack gap="xs">
+                <Cluster gap="sm">
+                  <span style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                    Multi-region rollout
+                  </span>
+                  <Badge tone="info">In progress</Badge>
+                </Cluster>
+                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+                  Globex · $28,500
+                </span>
+              </Stack>
+              <Avatar name="Jordan Park" size="sm" />
+            </Card.ListRow>
+            <Card.ListRow>
+              <Stack gap="xs">
+                <span style={{ fontWeight: 'var(--font-weight-medium)' }}>Pilot conversion</span>
+                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+                  Initech · $6,200
+                </span>
+              </Stack>
+              <Avatar name="Sam Chen" size="sm" />
+            </Card.ListRow>
+          </Card.List>
+        </Card>
+      </Example>
+
+      <Example
+        title="Header without action"
+        description="When there's no navigation link, omit the action prop. The title still gets the bottom-border separator and proper heading semantics."
+        code={`<Card>
+  <Card.Header>Recent activity</Card.Header>
+  <Card.List>
+    <Card.ListRow>
+      <Cluster gap="sm" wrap={false} align="start">
+        <Avatar name="Priya Shah" size="sm" />
+        <Stack gap="xs">
+          <span><strong>Priya Shah</strong> replied to your email</span>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+            12m ago
+          </span>
+        </Stack>
+      </Cluster>
+    </Card.ListRow>
+    <Card.ListRow>
+      <Cluster gap="sm" wrap={false} align="start">
+        <Avatar name="Jordan Park" size="sm" />
+        <Stack gap="xs">
+          <span><strong>Jordan Park</strong> moved a deal to Proposal</span>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+            1h ago
+          </span>
+        </Stack>
+      </Cluster>
+    </Card.ListRow>
+    <Card.ListRow>
+      <Cluster gap="sm" wrap={false} align="start">
+        <Avatar name="Diana Okafor" size="sm" />
+        <Stack gap="xs">
+          <span><strong>Diana Okafor</strong> booked a demo</span>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}>
+            3h ago
+          </span>
+        </Stack>
+      </Cluster>
+    </Card.ListRow>
+  </Card.List>
+</Card>`}
+      >
+        <Card style={{ maxWidth: 480 }}>
+          <Card.Header>Recent activity</Card.Header>
+          <Card.List>
+            {[
+              { who: 'Priya Shah', what: 'replied to your email', when: '12m ago' },
+              { who: 'Jordan Park', what: 'moved a deal to Proposal', when: '1h ago' },
+              { who: 'Diana Okafor', what: 'booked a demo', when: '3h ago' },
+            ].map((a) => (
+              <Card.ListRow key={a.who}>
+                <Cluster gap="sm" wrap={false} align="start">
+                  <Avatar name={a.who} size="sm" />
+                  <Stack gap="xs">
+                    <span style={{ fontSize: 'var(--font-size-sm)' }}>
+                      <strong>{a.who}</strong> {a.what}
+                    </span>
+                    <span
+                      style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-subtle)' }}
+                    >
+                      {a.when}
+                    </span>
+                  </Stack>
+                </Cluster>
+              </Card.ListRow>
+            ))}
+          </Card.List>
         </Card>
       </Example>
     </DemoLayout>
