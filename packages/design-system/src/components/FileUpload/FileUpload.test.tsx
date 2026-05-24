@@ -11,7 +11,12 @@ function makeFile(name: string, sizeBytes: number, type: string): File {
 }
 
 // Helper — build a FileEntry from a File for the `files` prop.
-function entry(id: string, file: File, status: FileEntry['status'] = 'pending', extra?: Partial<FileEntry>): FileEntry {
+function entry(
+  id: string,
+  file: File,
+  status: FileEntry['status'] = 'pending',
+  extra?: Partial<FileEntry>,
+): FileEntry {
   return { id, file, status, ...extra };
 }
 
@@ -36,11 +41,7 @@ describe('FileUpload', () => {
   it('hides the dropzone in single mode once files.length === 1', () => {
     const file = makeFile('a.txt', 100, 'text/plain');
     render(
-      <FileUpload
-        files={[entry('1', file)]}
-        onFilesAdded={() => {}}
-        onFileRemove={() => {}}
-      />,
+      <FileUpload files={[entry('1', file)]} onFilesAdded={() => {}} onFileRemove={() => {}} />,
     );
     expect(screen.queryByRole('button', { name: 'Upload files' })).not.toBeInTheDocument();
   });
@@ -304,14 +305,7 @@ describe('FileUpload', () => {
   it('disabled makes the dropzone non-interactive (drop and click both no-op)', async () => {
     const user = userEvent.setup();
     const onFilesAdded = vi.fn();
-    render(
-      <FileUpload
-        disabled
-        files={[]}
-        onFilesAdded={onFilesAdded}
-        onFileRemove={() => {}}
-      />,
-    );
+    render(<FileUpload disabled files={[]} onFilesAdded={onFilesAdded} onFileRemove={() => {}} />);
     const dropzone = screen.getByRole('button', { name: 'Upload files' });
     expect(dropzone).toHaveAttribute('aria-disabled', 'true');
     expect(dropzone).toHaveAttribute('tabIndex', '-1');
@@ -362,13 +356,7 @@ describe('FileUpload', () => {
 
   it('ARIA: each row\'s remove button has aria-label="Remove {filename}"', () => {
     const f1 = makeFile('contacts.csv', 100, 'text/csv');
-    render(
-      <FileUpload
-        files={[entry('1', f1)]}
-        onFilesAdded={() => {}}
-        onFileRemove={() => {}}
-      />,
-    );
+    render(<FileUpload files={[entry('1', f1)]} onFilesAdded={() => {}} onFileRemove={() => {}} />);
     expect(screen.getByRole('button', { name: 'Remove contacts.csv' })).toBeInTheDocument();
   });
 
@@ -410,12 +398,7 @@ describe('FileUpload', () => {
 
   it('className from props merges with the base class (not replace)', () => {
     const { container } = render(
-      <FileUpload
-        files={[]}
-        className="custom"
-        onFilesAdded={() => {}}
-        onFileRemove={() => {}}
-      />,
+      <FileUpload files={[]} className="custom" onFilesAdded={() => {}} onFileRemove={() => {}} />,
     );
     const cls = (container.firstChild as HTMLElement).className;
     expect(cls).toMatch(/custom/);
@@ -424,16 +407,12 @@ describe('FileUpload', () => {
 
   it('forwards ref to the outermost <div>', () => {
     const ref = createRef<HTMLDivElement>();
-    render(
-      <FileUpload ref={ref} files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />,
-    );
+    render(<FileUpload ref={ref} files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />);
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
   });
 
   it('drag-over class is added on dragenter and removed on dragleave (counter-based)', () => {
-    render(
-      <FileUpload files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />,
-    );
+    render(<FileUpload files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />);
     const dropzone = screen.getByRole('button', { name: 'Upload files' });
     fireEvent.dragEnter(dropzone);
     expect(dropzone.className).toMatch(/dragOver/);

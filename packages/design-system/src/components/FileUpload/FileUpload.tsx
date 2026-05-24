@@ -20,12 +20,7 @@ import styles from './FileUpload.module.scss';
 export type FileUploadStatus = 'pending' | 'uploading' | 'done' | 'error';
 
 /** Reason a file was rejected by built-in or custom validation. */
-export type FileRejectReason =
-  | 'invalid-type'
-  | 'too-large'
-  | 'too-many'
-  | 'duplicate'
-  | 'custom';
+export type FileRejectReason = 'invalid-type' | 'too-large' | 'too-many' | 'duplicate' | 'custom';
 
 /** One entry in the controlled file list. */
 export interface FileEntry {
@@ -150,7 +145,10 @@ const STATUS_CLASS: Record<FileUploadStatus, string> = {
  * sprout an ad-hoc regex.
  */
 function matchesAccept(file: File, accept: string): boolean {
-  const tokens = accept.split(',').map((t) => t.trim()).filter(Boolean);
+  const tokens = accept
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
   if (tokens.length === 0) return true;
   const mime = file.type;
   const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();

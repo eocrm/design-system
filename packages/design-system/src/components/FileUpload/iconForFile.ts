@@ -25,7 +25,14 @@ export function iconForFile(file: File): LucideIcon {
   // (rare but happens — empty MIME on .csv from some OSes).
   const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
   if (ext === '.csv' || ext === '.txt' || ext === '.md' || ext === '.json') return FileText;
-  if (ext === '.png' || ext === '.jpg' || ext === '.jpeg' || ext === '.gif' || ext === '.webp' || ext === '.svg') {
+  if (
+    ext === '.png' ||
+    ext === '.jpg' ||
+    ext === '.jpeg' ||
+    ext === '.gif' ||
+    ext === '.webp' ||
+    ext === '.svg'
+  ) {
     return FileImage;
   }
 

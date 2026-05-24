@@ -88,9 +88,7 @@ function StatusWalkthrough() {
     intervalRef.current = setInterval(() => {
       setProgress((p) => {
         const next = Math.min(100, p + 10);
-        setFiles((prev) =>
-          prev.map((e) => (e.id === id ? { ...e, progress: next } : e)),
-        );
+        setFiles((prev) => prev.map((e) => (e.id === id ? { ...e, progress: next } : e)));
         if (next === 100) {
           if (intervalRef.current !== null) {
             clearInterval(intervalRef.current);
@@ -117,11 +115,16 @@ function StatusWalkthrough() {
         onFileRemove={(entry) => setFiles((prev) => prev.filter((e) => e.id !== entry.id))}
       />
       <Cluster gap="sm">
-        <Button size="sm" onClick={startUpload} disabled={files.length === 0 || files[0]?.status !== 'pending'}>
+        <Button
+          size="sm"
+          onClick={startUpload}
+          disabled={files.length === 0 || files[0]?.status !== 'pending'}
+        >
           Start upload
         </Button>
         <Text size="sm" tone="muted">
-          Drop a file then click "Start upload" to walk through pending → uploading ({progress}%) → done.
+          Drop a file then click "Start upload" to walk through pending → uploading ({progress}%) →
+          done.
         </Text>
       </Cluster>
     </Stack>
@@ -135,9 +138,7 @@ function ErrorState() {
     status: 'error',
     error: 'Server returned 500 — please retry',
   };
-  return (
-    <FileUpload files={[file]} onFilesAdded={() => {}} onFileRemove={() => {}} />
-  );
+  return <FileUpload files={[file]} onFilesAdded={() => {}} onFileRemove={() => {}} />;
 }
 
 function DisabledDemo() {
@@ -146,9 +147,7 @@ function DisabledDemo() {
     file: new File([new Uint8Array(1024 * 100)], 'locked.pdf', { type: 'application/pdf' }),
     status: 'done',
   };
-  return (
-    <FileUpload disabled files={[file]} onFilesAdded={() => {}} onFileRemove={() => {}} />
-  );
+  return <FileUpload disabled files={[file]} onFilesAdded={() => {}} onFileRemove={() => {}} />;
 }
 
 function CustomValidator() {
@@ -159,7 +158,9 @@ function CustomValidator() {
       <FileUpload
         multiple
         files={files}
-        validator={(f) => (f.name.toLowerCase().includes('test') ? 'Filenames cannot contain "test"' : null)}
+        validator={(f) =>
+          f.name.toLowerCase().includes('test') ? 'Filenames cannot contain "test"' : null
+        }
         dropzoneHint={
           <Text as="span" size="sm" tone="muted">
             Try dropping a file named <Code>test.csv</Code> to see the custom rejection.

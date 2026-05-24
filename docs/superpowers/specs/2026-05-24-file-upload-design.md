@@ -95,12 +95,16 @@ function ContactImport() {
 
 // Consumer's upload function progresses the entry through statuses:
 async function uploadAndTrack(entry, setFiles) {
-  setFiles((prev) => prev.map((e) => (e.id === entry.id ? { ...e, status: 'uploading', progress: 0 } : e)));
+  setFiles((prev) =>
+    prev.map((e) => (e.id === entry.id ? { ...e, status: 'uploading', progress: 0 } : e)),
+  );
   try {
     await uploadToS3(entry.file, (pct) => {
       setFiles((prev) => prev.map((e) => (e.id === entry.id ? { ...e, progress: pct } : e)));
     });
-    setFiles((prev) => prev.map((e) => (e.id === entry.id ? { ...e, status: 'done', progress: 100 } : e)));
+    setFiles((prev) =>
+      prev.map((e) => (e.id === entry.id ? { ...e, status: 'done', progress: 100 } : e)),
+    );
   } catch (err) {
     setFiles((prev) =>
       prev.map((e) => (e.id === entry.id ? { ...e, status: 'error', error: err.message } : e)),
@@ -500,19 +504,19 @@ In **single mode** (`multiple=false`): the count check uses an implicit cap of 1
 
 ## ARIA + behavior reference
 
-| Concern                  | Behavior                                                                                                                                                                 |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Dropzone role**        | `role="button"` on the outer dropzone div. `tabIndex=0` when not disabled, `-1` when disabled.                                                                           |
-| **Hidden input**         | `<input type="file" tabIndex={-1} aria-hidden>` — focus management goes through the dropzone, not the input.                                                             |
-| **Keyboard activation**  | Enter and Space on the focused dropzone call `inputRef.current?.click()`.                                                                                                |
-| **Drag-over feedback**   | `.dragOver` class adds solid accent border + accent-tinted bg. Internal state only — no consumer props for drag-over.                                                    |
+| Concern                   | Behavior                                                                                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Dropzone role**         | `role="button"` on the outer dropzone div. `tabIndex=0` when not disabled, `-1` when disabled.                                                                           |
+| **Hidden input**          | `<input type="file" tabIndex={-1} aria-hidden>` — focus management goes through the dropzone, not the input.                                                             |
+| **Keyboard activation**   | Enter and Space on the focused dropzone call `inputRef.current?.click()`.                                                                                                |
+| **Drag-over feedback**    | `.dragOver` class adds solid accent border + accent-tinted bg. Internal state only — no consumer props for drag-over.                                                    |
 | **Drag dispatch counter** | Use a ref-tracked depth counter to handle nested drag events (dragenter/dragleave fire on children too). Increment on enter, decrement on leave, dragOver=true while >0. |
-| **File-row semantic**    | `<ul>` of `<li>`. Screen readers announce "list with N items".                                                                                                          |
-| **Remove button**        | `aria-label="Remove {filename}"`. Native `<button type="button">`. Disabled when `disabled=true` (whole component).                                                       |
-| **Validation feedback**  | NO inline error rendering at the dropzone level. Consumer hears about rejections via `onFileReject` and decides where to render (toast, inline, etc.).                  |
-| **Per-row error**        | When `entry.status === 'error'`, the row's `error` text renders in the row in danger color, AND the row's border is danger color.                                       |
-| **Progress integration** | When `entry.status === 'uploading'`, `<Progress size="sm" value={entry.progress}>` renders. Omitting `progress` shows indeterminate.                                    |
-| **Single mode**          | `multiple=false` → dropzone hides when `files.length > 0`. New picks/drops still validate against the existing entry (duplicate check fires).                            |
+| **File-row semantic**     | `<ul>` of `<li>`. Screen readers announce "list with N items".                                                                                                           |
+| **Remove button**         | `aria-label="Remove {filename}"`. Native `<button type="button">`. Disabled when `disabled=true` (whole component).                                                      |
+| **Validation feedback**   | NO inline error rendering at the dropzone level. Consumer hears about rejections via `onFileReject` and decides where to render (toast, inline, etc.).                   |
+| **Per-row error**         | When `entry.status === 'error'`, the row's `error` text renders in the row in danger color, AND the row's border is danger color.                                        |
+| **Progress integration**  | When `entry.status === 'uploading'`, `<Progress size="sm" value={entry.progress}>` renders. Omitting `progress` shows indeterminate.                                     |
+| **Single mode**           | `multiple=false` → dropzone hides when `files.length > 0`. New picks/drops still validate against the existing entry (duplicate check fires).                            |
 
 ## Testing
 

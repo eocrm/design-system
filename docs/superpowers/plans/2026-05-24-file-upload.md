@@ -141,7 +141,14 @@ export function iconForFile(file: File): LucideIcon {
   // (rare but happens — empty MIME on .csv from some OSes).
   const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
   if (ext === '.csv' || ext === '.txt' || ext === '.md' || ext === '.json') return FileText;
-  if (ext === '.png' || ext === '.jpg' || ext === '.jpeg' || ext === '.gif' || ext === '.webp' || ext === '.svg') {
+  if (
+    ext === '.png' ||
+    ext === '.jpg' ||
+    ext === '.jpeg' ||
+    ext === '.gif' ||
+    ext === '.webp' ||
+    ext === '.svg'
+  ) {
     return FileImage;
   }
 
@@ -215,12 +222,7 @@ import styles from './FileUpload.module.scss';
 export type FileUploadStatus = 'pending' | 'uploading' | 'done' | 'error';
 
 /** Reason a file was rejected by built-in or custom validation. */
-export type FileRejectReason =
-  | 'invalid-type'
-  | 'too-large'
-  | 'too-many'
-  | 'duplicate'
-  | 'custom';
+export type FileRejectReason = 'invalid-type' | 'too-large' | 'too-many' | 'duplicate' | 'custom';
 
 /** One entry in the controlled file list. */
 export interface FileEntry {
@@ -338,7 +340,10 @@ const STATUS_CLASS: Record<FileUploadStatus, string> = {
  * sprout an ad-hoc regex.
  */
 function matchesAccept(file: File, accept: string): boolean {
-  const tokens = accept.split(',').map((t) => t.trim()).filter(Boolean);
+  const tokens = accept
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
   if (tokens.length === 0) return true;
   const mime = file.type;
   const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
@@ -886,12 +891,7 @@ If stylelint flags `text-decoration: underline` or `border-style: solid`, apply 
 
 ```ts
 export { FileUpload } from './FileUpload';
-export type {
-  FileUploadProps,
-  FileEntry,
-  FileUploadStatus,
-  FileRejectReason,
-} from './FileUpload';
+export type { FileUploadProps, FileEntry, FileUploadStatus, FileRejectReason } from './FileUpload';
 ```
 
 ### Step 2.4: Verify gates
@@ -950,7 +950,12 @@ function makeFile(name: string, sizeBytes: number, type: string): File {
 }
 
 // Helper — build a FileEntry from a File for the `files` prop.
-function entry(id: string, file: File, status: FileEntry['status'] = 'pending', extra?: Partial<FileEntry>): FileEntry {
+function entry(
+  id: string,
+  file: File,
+  status: FileEntry['status'] = 'pending',
+  extra?: Partial<FileEntry>,
+): FileEntry {
   return { id, file, status, ...extra };
 }
 
@@ -975,11 +980,7 @@ describe('FileUpload', () => {
   it('hides the dropzone in single mode once files.length === 1', () => {
     const file = makeFile('a.txt', 100, 'text/plain');
     render(
-      <FileUpload
-        files={[entry('1', file)]}
-        onFilesAdded={() => {}}
-        onFileRemove={() => {}}
-      />,
+      <FileUpload files={[entry('1', file)]} onFilesAdded={() => {}} onFileRemove={() => {}} />,
     );
     expect(screen.queryByRole('button', { name: 'Upload files' })).not.toBeInTheDocument();
   });
@@ -1243,14 +1244,7 @@ describe('FileUpload', () => {
   it('disabled makes the dropzone non-interactive (drop and click both no-op)', async () => {
     const user = userEvent.setup();
     const onFilesAdded = vi.fn();
-    render(
-      <FileUpload
-        disabled
-        files={[]}
-        onFilesAdded={onFilesAdded}
-        onFileRemove={() => {}}
-      />,
-    );
+    render(<FileUpload disabled files={[]} onFilesAdded={onFilesAdded} onFileRemove={() => {}} />);
     const dropzone = screen.getByRole('button', { name: 'Upload files' });
     expect(dropzone).toHaveAttribute('aria-disabled', 'true');
     expect(dropzone).toHaveAttribute('tabIndex', '-1');
@@ -1301,13 +1295,7 @@ describe('FileUpload', () => {
 
   it('ARIA: each row\'s remove button has aria-label="Remove {filename}"', () => {
     const f1 = makeFile('contacts.csv', 100, 'text/csv');
-    render(
-      <FileUpload
-        files={[entry('1', f1)]}
-        onFilesAdded={() => {}}
-        onFileRemove={() => {}}
-      />,
-    );
+    render(<FileUpload files={[entry('1', f1)]} onFilesAdded={() => {}} onFileRemove={() => {}} />);
     expect(screen.getByRole('button', { name: 'Remove contacts.csv' })).toBeInTheDocument();
   });
 
@@ -1349,12 +1337,7 @@ describe('FileUpload', () => {
 
   it('className from props merges with the base class (not replace)', () => {
     const { container } = render(
-      <FileUpload
-        files={[]}
-        className="custom"
-        onFilesAdded={() => {}}
-        onFileRemove={() => {}}
-      />,
+      <FileUpload files={[]} className="custom" onFilesAdded={() => {}} onFileRemove={() => {}} />,
     );
     const cls = (container.firstChild as HTMLElement).className;
     expect(cls).toMatch(/custom/);
@@ -1363,9 +1346,7 @@ describe('FileUpload', () => {
 
   it('forwards ref to the outermost <div>', () => {
     const ref = createRef<HTMLDivElement>();
-    render(
-      <FileUpload ref={ref} files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />,
-    );
+    render(<FileUpload ref={ref} files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />);
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
   });
 
@@ -1420,6 +1401,7 @@ If the Textarea block isn't in that exact form (e.g. additional types have been 
 - [ ] Run `make lint`. Expected: clean.
 
 If a test fails:
+
 - For drop-event tests: jsdom doesn't implement DataTransfer; the `fireDrop` helper provides a minimal stub. If a test still fails complaining about `files` not iterable, the stub is being treated as `undefined` — check the `fireEvent.drop` call signature (the `dataTransfer` field name is case-sensitive).
 - For role-based queries: the dropzone uses `role="button"` AND `aria-label`. If `getByRole('button', { name: ... })` returns multiple matches (the remove buttons also use role="button"), narrow with a more specific selector.
 
@@ -1463,7 +1445,7 @@ EOF
 
 ### Step 4.2: Insert the FileUpload section between `<RadioGroup>` and `<Card>`
 
-Read `packages/design-system/AGENTS.md` and find the boundary between the `<RadioGroup>` section's last content and the `<Card>` section heading. The current file has `### \`<RadioGroup>\` — fieldset wrapper for related radios` at line 363 and `### \`<Card>\` — bordered container` at line 382.
+Read `packages/design-system/AGENTS.md` and find the boundary between the `<RadioGroup>` section's last content and the `<Card>` section heading. The current file has `### \`<RadioGroup>\` — fieldset wrapper for related radios`at line 363 and`### \`<Card>\` — bordered container` at line 382.
 
 The `old_string` anchor must be unique. Use the line IMMEDIATELY BEFORE the Card heading combined with the Card heading itself. Without reading the file the exact preceding line isn't known; the implementer should read the file first to capture the exact RadioGroup-section closing line, then apply the Edit.
 
@@ -1517,7 +1499,6 @@ Content to insert (between the RadioGroup-closing line and the Card heading):
 - ❌ Storing the file list in the component (it has no internal state). Always pass `files` + the two callbacks.
 - ❌ Setting `multiple=true` and showing only one file slot via custom CSS. The component decides dropzone visibility from `multiple` + `files.length`; don't fight it.
 - ❌ Calling `onFilesAdded` from inside `onFileReject` (or vice versa) in an attempt to "auto-retry." Reject is terminal for that file; the user has to re-drop.
-
 ````
 
 ### Step 4.3: Verify gates
@@ -1630,9 +1611,7 @@ function StatusWalkthrough() {
     const interval = setInterval(() => {
       setProgress((p) => {
         const next = Math.min(100, p + 10);
-        setFiles((prev) =>
-          prev.map((e) => (e.id === id ? { ...e, progress: next } : e)),
-        );
+        setFiles((prev) => prev.map((e) => (e.id === id ? { ...e, progress: next } : e)));
         if (next === 100) {
           clearInterval(interval);
           setTimeout(() => {
@@ -1656,11 +1635,16 @@ function StatusWalkthrough() {
         onFileRemove={(entry) => setFiles((prev) => prev.filter((e) => e.id !== entry.id))}
       />
       <Cluster gap="sm">
-        <Button size="sm" onClick={startUpload} disabled={files.length === 0 || files[0]?.status !== 'pending'}>
+        <Button
+          size="sm"
+          onClick={startUpload}
+          disabled={files.length === 0 || files[0]?.status !== 'pending'}
+        >
           Start upload
         </Button>
         <Text size="sm" tone="muted">
-          Drop a file then click "Start upload" to walk through pending → uploading ({progress}%) → done.
+          Drop a file then click "Start upload" to walk through pending → uploading ({progress}%) →
+          done.
         </Text>
       </Cluster>
     </Stack>
@@ -1674,9 +1658,7 @@ function ErrorState() {
     status: 'error',
     error: 'Server returned 500 — please retry',
   };
-  return (
-    <FileUpload files={[file]} onFilesAdded={() => {}} onFileRemove={() => {}} />
-  );
+  return <FileUpload files={[file]} onFilesAdded={() => {}} onFileRemove={() => {}} />;
 }
 
 function DisabledDemo() {
@@ -1685,9 +1667,7 @@ function DisabledDemo() {
     file: new File([new Uint8Array(1024 * 100)], 'locked.pdf', { type: 'application/pdf' }),
     status: 'done',
   };
-  return (
-    <FileUpload disabled files={[file]} onFilesAdded={() => {}} onFileRemove={() => {}} />
-  );
+  return <FileUpload disabled files={[file]} onFilesAdded={() => {}} onFileRemove={() => {}} />;
 }
 
 function CustomValidator() {
@@ -1698,7 +1678,9 @@ function CustomValidator() {
       <FileUpload
         multiple
         files={files}
-        validator={(f) => (f.name.toLowerCase().includes('test') ? 'Filenames cannot contain "test"' : null)}
+        validator={(f) =>
+          f.name.toLowerCase().includes('test') ? 'Filenames cannot contain "test"' : null
+        }
         dropzoneHint={
           <Text as="span" size="sm" tone="muted">
             Try dropping a file named <Code>test.csv</Code> to see the custom rejection.
@@ -1841,7 +1823,7 @@ import { FileUploadDemo } from './pages/components/FileUploadDemo';
 **old_string:**
 
 ```tsx
-          <Route path="/components/empty-state" element={<EmptyStateDemo />} />
+<Route path="/components/empty-state" element={<EmptyStateDemo />} />
 ```
 
 **new_string:**

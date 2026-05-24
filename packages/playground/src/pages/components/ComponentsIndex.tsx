@@ -152,7 +152,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       'Controlled dropzone-style file picker with built-in validation, drag/click both supported, per-row Progress for uploading status.',
     preview: (
       <div style={{ width: '100%', maxWidth: 220 }}>
-        <FileUpload files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} dropzoneLabel="Drop or click" />
+        <FileUpload
+          files={[]}
+          onFilesAdded={() => {}}
+          onFileRemove={() => {}}
+          dropzoneLabel="Drop or click"
+        />
       </div>
     ),
   },
