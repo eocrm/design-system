@@ -98,6 +98,11 @@ describe('Text', () => {
     expect((container.firstChild as HTMLElement).className).toMatch(/truncate/);
   });
 
+  it('omitting truncate does NOT add the truncate class', () => {
+    const { container } = render(<Text>x</Text>);
+    expect((container.firstChild as HTMLElement).className).not.toMatch(/truncate/);
+  });
+
   it('lineClamp={N} adds the lineClamp class AND sets style.WebkitLineClamp', () => {
     const { container } = render(<Text lineClamp={3}>x</Text>);
     const el = container.firstChild as HTMLElement;
@@ -141,6 +146,16 @@ describe('Text', () => {
     expect(el.style.getPropertyValue('-webkit-line-clamp')).toBe('2');
   });
 
+  it('lineClamp prop takes precedence over consumer-passed style.WebkitLineClamp', () => {
+    const { container } = render(
+      <Text lineClamp={2} style={{ WebkitLineClamp: 5 }}>
+        x
+      </Text>,
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.getPropertyValue('-webkit-line-clamp')).toBe('2');
+  });
+
   it('forwards ref to the underlying element (default <p>)', () => {
     const ref = createRef<HTMLElement>();
     render(<Text ref={ref}>x</Text>);
@@ -155,6 +170,7 @@ describe('Text', () => {
       </Text>,
     );
     expect(ref.current).toBeInstanceOf(HTMLLabelElement);
+    expect(ref.current?.tagName).toBe('LABEL');
   });
 
   it('spreads native HTML attributes (htmlFor on <label>)', () => {
