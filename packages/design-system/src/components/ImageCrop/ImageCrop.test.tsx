@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
-import { ImageCrop, extractCropBlob, type CropArea } from './index';
+import { ImageCrop, extractCropBlob, useCropPreview, type CropArea } from './index';
 
 // jsdom doesn't implement setPointerCapture; stub it.
 function ensurePointerCaptureShim() {
@@ -475,6 +475,118 @@ describe('ImageCrop', () => {
       const ref = createRef<HTMLDivElement>();
       render(<ImageCrop ref={ref} src="data:,placeholder" value={null} onChange={() => {}} />);
       expect(ref.current).toBeInstanceOf(HTMLDivElement);
+    });
+  });
+
+  describe('useCropPreview hook', () => {
+    function HookHarness({
+      src,
+      crop,
+      debounceMs = 0,
+    }: {
+      src: string | File | Blob | null;
+      crop: CropArea | null;
+      debounceMs?: number;
+    }) {
+      const { previewUrl, previewSize, encoding } = useCropPreview(src, crop, {
+        type: 'image/jpeg',
+        quality: 0.9,
+        outputWidth: 256,
+        debounceMs,
+      });
+      return (
+        <div
+          data-testid="hook-output"
+          data-preview-url={previewUrl ?? ''}
+          data-preview-size={previewSize ?? ''}
+          data-encoding={String(encoding)}
+        />
+      );
+    }
+
+    // Stub canvas + Image so extractCropBlob resolves synchronously in tests.
+    function stubExtractDeps() {
+      const RealImage = window.Image;
+      class StubImage {
+        crossOrigin = '';
+        naturalWidth = 1000;
+        naturalHeight = 800;
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        set src(_v: string) {
+          queueMicrotask(() => this.onload?.());
+        }
+      }
+      (window as unknown as { Image: typeof Image }).Image = StubImage as unknown as typeof Image;
+      const originalCreate = document.createElement.bind(document);
+      const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(((
+        tag: string,
+      ) => {
+        if (tag === 'canvas') {
+          return {
+            getContext: () =>
+              ({
+                drawImage: () => {},
+              }) as unknown as CanvasRenderingContext2D,
+            toBlob: (cb: (blob: Blob | null) => void) =>
+              cb(new Blob([new Uint8Array(50)], { type: 'image/jpeg' })),
+            set width(_v: number) {},
+            set height(_v: number) {},
+          } as unknown as HTMLCanvasElement;
+        }
+        return originalCreate(tag);
+      }) as typeof document.createElement);
+      return () => {
+        (window as unknown as { Image: typeof Image }).Image = RealImage;
+        createElementSpy.mockRestore();
+      };
+    }
+
+    it('returns null preview when src or crop is null', () => {
+      const { getByTestId } = render(<HookHarness src={null} crop={null} />);
+      const el = getByTestId('hook-output');
+      expect(el.dataset.previewUrl).toBe('');
+      expect(el.dataset.encoding).toBe('false');
+    });
+
+    it('sets encoding=true when crop is provided, then produces a preview url', async () => {
+      const restore = stubExtractDeps();
+      const { getByTestId } = render(
+        <HookHarness
+          src="data:,placeholder"
+          crop={{ x: 0, y: 0, width: 100, height: 100 }}
+          debounceMs={0}
+        />,
+      );
+      const el = getByTestId('hook-output');
+      // Synchronously after render, encoding flag flips on.
+      expect(el.dataset.encoding).toBe('true');
+      // After debounce + microtask + setState, previewUrl is populated.
+      await waitFor(() => {
+        expect(el.dataset.previewUrl).toMatch(/^blob:/);
+        expect(el.dataset.encoding).toBe('false');
+        expect(Number(el.dataset.previewSize)).toBe(50);
+      });
+      restore();
+    });
+
+    it('clears preview when crop transitions back to null', async () => {
+      const restore = stubExtractDeps();
+      const { getByTestId, rerender } = render(
+        <HookHarness
+          src="data:,placeholder"
+          crop={{ x: 0, y: 0, width: 100, height: 100 }}
+          debounceMs={0}
+        />,
+      );
+      const el = getByTestId('hook-output');
+      await waitFor(() => {
+        expect(el.dataset.previewUrl).toMatch(/^blob:/);
+      });
+      rerender(<HookHarness src="data:,placeholder" crop={null} debounceMs={0} />);
+      expect(el.dataset.previewUrl).toBe('');
+      expect(el.dataset.encoding).toBe('false');
+      restore();
     });
   });
 });

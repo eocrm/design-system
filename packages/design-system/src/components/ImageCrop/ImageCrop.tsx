@@ -90,39 +90,37 @@ function computeCropBox(
 }
 
 /**
- * Default centered crop region given image natural size + viewport box +
- * viewport dimensions. The default is the source region under the centered
- * crop box when the image is rendered in "cover" mode (largest scale that
- * still covers the viewport on both axes — pinned to the SMALLER of the
- * viewport's two cover scales so we never need to scale the image larger
- * than necessary, just enough to keep both viewport axes full).
+ * Default centered crop region: the largest centered rectangle with the
+ * box's aspect that fits inside the image. At zoom=1 the image renders at
+ * `scale = boxW / cropW`, which is exactly the contain-fit scale — the
+ * image is fully visible inside the viewport (with bands on whichever axis
+ * has slack). Higher zoom shrinks the crop region (zooms in).
  *
- * Result: at zoom=1 the image visually fills the viewport (no gray bands),
- * and the crop box overlays a centered sub-region of it. For viewports that
- * already match the crop's aspect, this collapses to "the crop box fills
- * the viewport exactly" — the same behavior we'd get from a square-shaped
- * viewport with a square crop.
+ * This is the standard "image-fits-on-screen first, then pick a crop"
+ * model. The previous cover-mode default (image fills viewport on both
+ * axes at zoom=1) was changed at user request — for photo-cropping flows,
+ * seeing the whole image at the lowest zoom is more important than
+ * never having gray bands.
  */
 function defaultCropArea(
   imageWidth: number,
   imageHeight: number,
   boxW: number,
   boxH: number,
-  viewportWidth: number,
-  viewportHeight: number,
 ): CropArea {
-  // coverScale is the rendered-pixel scale at which the image just covers
-  // the viewport on both axes. We clamp it from below by what's needed to
-  // make the image at least as wide as boxW and as tall as boxH — otherwise
-  // a viewport smaller than the crop box would produce a too-small image.
-  const coverScale = Math.max(
-    viewportWidth / imageWidth,
-    viewportHeight / imageHeight,
-    boxW / imageWidth,
-    boxH / imageHeight,
-  );
-  const cropW = boxW / coverScale;
-  const cropH = boxH / coverScale;
+  const boxAspect = boxW / boxH;
+  const imageAspect = imageWidth / imageHeight;
+  let cropW: number;
+  let cropH: number;
+  if (imageAspect > boxAspect) {
+    // Image is wider than the box. Match heights; trim sides.
+    cropH = imageHeight;
+    cropW = cropH * boxAspect;
+  } else {
+    // Image is taller. Match widths; trim top/bottom.
+    cropW = imageWidth;
+    cropH = cropW / boxAspect;
+  }
   return {
     x: (imageWidth - cropW) / 2,
     y: (imageHeight - cropH) / 2,
@@ -294,20 +292,13 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   useEffect(() => {
     if (loadState !== 'loaded' || !imageNatural || initializedRef.current) return;
     if (value === null && boxW > 0 && boxH > 0) {
-      const defaultArea = defaultCropArea(
-        imageNatural.width,
-        imageNatural.height,
-        boxW,
-        boxH,
-        viewport.width,
-        viewport.height,
-      );
+      const defaultArea = defaultCropArea(imageNatural.width, imageNatural.height, boxW, boxH);
       initializedRef.current = true;
       onChange(defaultArea);
     } else if (value !== null) {
       initializedRef.current = true;
     }
-  }, [loadState, imageNatural, value, boxW, boxH, viewport.width, viewport.height, onChange]);
+  }, [loadState, imageNatural, value, boxW, boxH, onChange]);
 
   // Reset initialization flag on src change so the new image gets its
   // default crop applied.
@@ -453,8 +444,6 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
         imageNatural.height,
         boxW,
         boxH,
-        viewport.width,
-        viewport.height,
       );
       const newWidth = defaultArea.width / newZoom;
       const newHeight = defaultArea.height / newZoom;
@@ -468,7 +457,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
       };
       applyValue(next);
     },
-    [applyValue, boxW, boxH, disabled, imageNatural, value, viewport.width, viewport.height],
+    [applyValue, boxW, boxH, disabled, imageNatural, value],
   );
 
   const handleZoomChangeEnd = useCallback(() => {
