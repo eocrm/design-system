@@ -193,6 +193,16 @@ export type {
 export { Skeleton } from './components/Skeleton';
 export type { SkeletonProps, SkeletonVariant, SkeletonAnimation } from './components/Skeleton';
 
+export { Slider } from './components/Slider';
+export type {
+  SliderProps,
+  SliderValue,
+  SliderSize,
+  SliderTone,
+  SliderOrientation,
+  SliderMark,
+} from './components/Slider';
+
 export { Table } from './components/Table';
 export type {
   TableProps,
