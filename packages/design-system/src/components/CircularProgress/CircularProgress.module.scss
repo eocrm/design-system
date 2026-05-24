@@ -1,0 +1,121 @@
+.circular {
+  // position: relative anchors the absolutely-positioned .label below.
+  // This is internal-child layout (centered text inside a donut), NOT layout
+  // at the component boundary. Same precedent as Avatar's .presence dot.
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg {
+  // Rotate -90deg so the 0% mark sits at 12 o'clock instead of 3 o'clock.
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.sizeSm {
+  width: 16px;
+  height: 16px;
+}
+
+.sizeMd {
+  width: 32px;
+  height: 32px;
+}
+
+.sizeLg {
+  width: 56px;
+  height: 56px;
+}
+
+.sizeSm .track,
+.sizeSm .fill {
+  stroke-width: 2;
+}
+
+.sizeMd .track,
+.sizeMd .fill {
+  stroke-width: 3;
+}
+
+.sizeLg .track,
+.sizeLg .fill {
+  stroke-width: 4;
+}
+
+.track {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- SVG attribute, not a tokenizable design value
+  fill: none;
+  stroke: var(--color-bg-muted);
+}
+
+.fill {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- SVG attribute, not a tokenizable design value
+  fill: none;
+  stroke: var(--color-accent);
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- SVG attribute, not a tokenizable design value
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--transition-base);
+}
+
+.toneDefault .fill {
+  stroke: var(--color-accent);
+}
+
+.toneSuccess .fill {
+  stroke: var(--color-success);
+}
+
+.toneWarning .fill {
+  stroke: var(--color-warning);
+}
+
+.toneDanger .fill {
+  stroke: var(--color-danger);
+}
+
+.indeterminate {
+  // Partial arc (30% of circumference) that spins continuously — the
+  // canonical loading-spinner shape.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- SVG attribute, not a tokenizable design value
+  stroke-dasharray: 30 100 !important;
+  animation: circular-spin 1.2s linear infinite;
+
+  // Anchor the spin to the SVG center.
+  transform-origin: center;
+}
+
+@keyframes circular-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.label {
+  // Centered text inside the donut. position: absolute is internal-child
+  // layout for the centered-text-in-circle pattern (Avatar's .presence dot
+  // uses the same exception).
+  position: absolute;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indeterminate {
+    animation: none;
+
+    // Replace the spinning arc with a full static circle so the user still
+    // sees an "in progress" cue without motion.
+    // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- SVG attribute, not a tokenizable design value
+    stroke-dasharray: none !important;
+    // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- SVG attribute, not a tokenizable design value
+    stroke-dashoffset: 0 !important;
+  }
+
+  .fill {
+    transition: none;
+  }
+}
