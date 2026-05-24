@@ -111,6 +111,13 @@ export interface FileUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
    * Override the dropzone's main label. Default: "Drag files here, or click
    * to browse". Pass a ReactNode for richer content (e.g. with a `<Code>`
    * for accepted extensions).
+   *
+   * **A11y note:** when `dropzoneLabel` is a plain string, the component
+   * uses it as `aria-label` on the dropzone. When it's a ReactNode, the
+   * component falls back to the generic `aria-label="Upload files"` and
+   * the rich content is visible-only. To give screen readers the
+   * equivalent text, pass `aria-label` via the spread (e.g.
+   * `aria-label="Upload CSV or Excel files"`).
    */
   dropzoneLabel?: ReactNode;
   /**
@@ -467,19 +474,21 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
                   {entry.file.name}
                 </span>
                 <span className={styles.rowMeta}>{formatBytes(entry.file.size)}</span>
-                {entry.status === 'uploading' && (
-                  <Progress
-                    size="sm"
-                    value={entry.progress}
-                    aria-label={`Uploading ${entry.file.name}`}
-                  />
-                )}
-                {entry.status === 'error' && entry.error && (
-                  <span className={styles.rowErrorMsg}>{entry.error}</span>
-                )}
-                {entry.status === 'done' && (
-                  <Check className={styles.rowDoneIcon} size={16} aria-label="Done" />
-                )}
+                <span className={styles.rowStatus}>
+                  {entry.status === 'uploading' && (
+                    <Progress
+                      size="sm"
+                      value={entry.progress}
+                      aria-label={`Uploading ${entry.file.name}`}
+                    />
+                  )}
+                  {entry.status === 'error' && entry.error && (
+                    <span className={styles.rowErrorMsg}>{entry.error}</span>
+                  )}
+                  {entry.status === 'done' && (
+                    <Check className={styles.rowDoneIcon} size={16} aria-label="Done" />
+                  )}
+                </span>
                 <button
                   type="button"
                   className={styles.removeButton}

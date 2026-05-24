@@ -31,8 +31,6 @@
 
 .dragOver {
   border-color: var(--color-accent);
-
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- keyword value on border-style for drag-active state
   border-style: solid;
   background: var(--color-accent-bg-subtle);
   color: var(--color-fg);
@@ -44,24 +42,18 @@
 
 .dropzoneLabel {
   font-size: var(--font-size-md);
-
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- keyword value on text-align for dropzone label centering
   text-align: center;
 }
 
 .browseLink {
   color: var(--color-accent);
   font-weight: var(--font-weight-medium);
-
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- keyword value on text-decoration for browse affordance
   text-decoration: underline;
 }
 
 .dropzoneHint {
   font-size: var(--font-size-sm);
   color: var(--color-fg-subtle);
-
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- keyword value on text-align for hint centering
   text-align: center;
 }
 
@@ -100,7 +92,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
@@ -138,6 +130,15 @@
   font-size: var(--font-size-sm);
   color: var(--color-fg-subtle);
   font-variant-numeric: tabular-nums;
+}
+
+.rowStatus {
+  // Status slot — always rendered (empty for pending). Holds <Progress> when
+  // uploading, the error message when error, or the Check icon when done.
+  // Sized via the parent grid's 4th column (auto width).
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .rowErrorMsg {

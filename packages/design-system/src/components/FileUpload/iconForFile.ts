@@ -1,4 +1,4 @@
-import { File, FileImage, FileText, type LucideIcon } from 'lucide-react';
+import { File as FileIcon, FileImage, FileText, type LucideIcon } from 'lucide-react';
 
 /**
  * Choose a lucide file-type icon component based on a File's MIME type and
@@ -29,5 +29,5 @@ export function iconForFile(file: File): LucideIcon {
     return FileImage;
   }
 
-  return File;
+  return FileIcon;
 }
