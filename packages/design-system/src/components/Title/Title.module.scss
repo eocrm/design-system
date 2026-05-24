@@ -1,0 +1,79 @@
+.title {
+  // stylelint-disable-next-line property-disallowed-list -- native heading margin reset
+  margin: 0;
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-fg);
+}
+
+.sizeXs {
+  font-size: var(--font-size-xs);
+}
+
+.sizeSm {
+  font-size: var(--font-size-sm);
+}
+
+.sizeMd {
+  font-size: var(--font-size-md);
+}
+
+.sizeLg {
+  font-size: var(--font-size-lg);
+}
+
+.sizeXl {
+  font-size: var(--font-size-xl);
+}
+
+.size2xl {
+  font-size: var(--font-size-2xl);
+}
+
+.size3xl {
+  font-size: var(--font-size-3xl);
+}
+
+.weightRegular {
+  font-weight: var(--font-weight-regular);
+}
+
+.weightMedium {
+  font-weight: var(--font-weight-medium);
+}
+
+.weightSemibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.weightBold {
+  font-weight: var(--font-weight-bold);
+}
+
+.toneDefault {
+  color: var(--color-fg);
+}
+
+.toneMuted {
+  color: var(--color-fg-muted);
+}
+
+.toneSubtle {
+  color: var(--color-fg-subtle);
+}
+
+.toneAccent {
+  color: var(--color-accent);
+}
+
+.toneDanger {
+  color: var(--color-danger);
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
