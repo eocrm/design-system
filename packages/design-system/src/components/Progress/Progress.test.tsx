@@ -98,6 +98,24 @@ describe('Progress', () => {
     expect(fill.style.width).toBe('100%');
   });
 
+  it.each<[string, number | undefined, number]>([
+    ['NaN', NaN, 100],
+    ['Infinity', Infinity, 100],
+    ['-Infinity', -Infinity, 100],
+    ['max=0', 50, 0],
+    ['max=-1', 50, -1],
+  ])('falls back to indeterminate when value=%s (degenerate input)', (_label, value, max) => {
+    const { container } = render(<Progress value={value} max={max} />);
+    const el = container.firstElementChild!;
+    // Degenerate inputs fall back to the indeterminate path: no aria-valuenow,
+    // aria-valuetext set to "Loading…" (or consumer aria-label).
+    expect(el).not.toHaveAttribute('aria-valuenow');
+    expect(el).toHaveAttribute('aria-valuetext', 'Loading…');
+    // The .indeterminate class is applied to the fill child.
+    const fill = container.querySelector('[class*="fill"]');
+    expect(fill?.className).toMatch(/indeterminate/);
+  });
+
   it('className merges with the base class (not replace)', () => {
     const { container } = render(<Progress className="custom" />);
     const cls = (container.firstChild as HTMLElement).className;
