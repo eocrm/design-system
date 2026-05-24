@@ -93,6 +93,14 @@ export function hexToHsv(input: string): HSV | null {
  * hsvToHex({ h: 0,   s: 0,   v: 0   })  // '#000000'
  */
 export function hsvToHex({ h, s, v }: HSV): string {
+  // NOTE: ColorPickerPanel's local-HSV-state-of-truth model depends on
+  // (localHsv → hex → localHsv) being a fixed point. If you change the
+  // rounding strategy (e.g., switch Math.round to Math.floor below), the
+  // useEffect([value]) external-write detection in ColorPickerPanel.tsx
+  // can flip from "no-op" to "infinite re-sync" because the round-trip
+  // hex no longer matches what we just emitted. Test the round-trip on
+  // colorMath.test.tsx's palette before merging changes here.
+
   // Clamp / wrap inputs so consumers passing slightly out-of-range values
   // (e.g. from a slider that overshoots by floating-point) get sane output.
   const hue = ((h % 360) + 360) % 360;

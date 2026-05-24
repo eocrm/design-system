@@ -346,6 +346,7 @@ hsvToHex({ h: 240, s: 100, v: 100 });  // '#0000FF'
 - ❌ Bundling a default palette inside the consumer. Pass via `presets`.
 - ❌ Calling expensive work in `onChange`. Use `onChangeEnd` (one fire per gesture).
 - ❌ Wrapping a non-`forwardRef` component in `<ColorPicker.Trigger asChild>`. `<Popover.Trigger>` clones the child to inject the ref; non-forwardRef silently drops it.
+- ❌ Forgetting to wire `disabled` into the consumer's custom trigger element. The picker dims its wrapper and blocks pointer events, but the trigger button's own disabled visuals are the consumer's responsibility.
 
 ### `<Switch>` — binary toggle
 

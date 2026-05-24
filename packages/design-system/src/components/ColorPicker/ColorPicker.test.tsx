@@ -373,6 +373,32 @@ describe('ColorPicker — popover', () => {
     expect(screen.queryByRole('application')).not.toBeInTheDocument();
   });
 
+  it('disabled with custom trigger: wrapper blocks pointer-events; consumer owns trigger disabled visuals', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <ColorPicker value="#FF0000" onChange={() => {}} disabled>
+        <ColorPicker.Trigger asChild>
+          <button type="button">Custom</button>
+        </ColorPicker.Trigger>
+      </ColorPicker>,
+    );
+    // The wrapping <div> has the .disabled class (opacity + pointer-events: none).
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.className).toMatch(/disabled/);
+    // Note: jsdom doesn't compute styles from CSS, so we can't assert
+    // pointer-events from getComputedStyle. Instead assert the class name.
+    // The actual pointer-events: none behavior is enforced at runtime by
+    // CSS Modules + the SCSS rule.
+
+    // The custom button is NOT inherently disabled — consumer's responsibility.
+    const trigger = screen.getByRole('button', { name: 'Custom' });
+    expect(trigger).not.toBeDisabled();
+
+    // But the open guard in handleOpenChange still works — clicking doesn't open.
+    await user.click(trigger);
+    expect(screen.queryByRole('application')).not.toBeInTheDocument();
+  });
+
   it('custom trigger via <ColorPicker.Trigger asChild> overrides the default', async () => {
     const user = userEvent.setup();
     render(
@@ -425,6 +451,12 @@ describe('ColorPicker — misc', () => {
   it('Panel: ref forwards to the outermost div', () => {
     const ref = createRef<HTMLDivElement>();
     render(<ColorPicker.Panel ref={ref} value="#FF0000" onChange={() => {}} />);
+    expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('ColorPicker (root) forwards ref to the outermost div', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(<ColorPicker ref={ref} value="#FF0000" onChange={() => {}} />);
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
   });
 

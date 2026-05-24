@@ -231,3 +231,12 @@
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   text-transform: uppercase;
 }
+
+.disabled {
+  opacity: var(--opacity-disabled);
+
+  // CSS keyword — wrapper intercepts clicks for the custom-trigger case
+  // where the consumer's button doesn't visually communicate disabled.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  pointer-events: none;
+}

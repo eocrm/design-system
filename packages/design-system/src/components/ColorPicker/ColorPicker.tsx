@@ -67,6 +67,10 @@ export interface ColorPickerTriggerProps {
  * - ❌ Wrapping a non-forwardRef component. `<Popover.Trigger>` calls
  *   cloneElement to inject the ref; non-forwardRef components silently
  *   drop it and the popover never positions correctly.
+ * - ❌ Forgetting to wire `disabled` into the custom trigger element when
+ *   `<ColorPicker disabled>` is passed. The wrapper dims with
+ *   `pointer-events: none` for click-blocking, but the consumer's button
+ *   itself doesn't know it's disabled unless YOU pass the prop through.
  */
 export function ColorPickerTrigger(_props: ColorPickerTriggerProps): null {
   return null;
@@ -177,18 +181,21 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
  * - ❌ Calling expensive work in `onChange`. Use `onChangeEnd` (fires once
  *   per gesture).
  */
-function ColorPickerRoot({
-  value,
-  onChange,
-  onChangeEnd,
-  presets,
-  disabled = false,
-  triggerLabel = 'Pick a color',
-  popoverPlacement = 'bottom-start',
-  children,
-  className,
-  ...rest
-}: ColorPickerProps): ReactElement {
+const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function ColorPickerRoot(
+  {
+    value,
+    onChange,
+    onChangeEnd,
+    presets,
+    disabled = false,
+    triggerLabel = 'Pick a color',
+    popoverPlacement = 'bottom-start',
+    children,
+    className,
+    ...rest
+  },
+  ref,
+) {
   const [open, setOpen] = useState(false);
   const { side, align } = PLACEMENT_MAP[popoverPlacement];
 
@@ -226,6 +233,7 @@ function ColorPickerRoot({
 
   return (
     <div
+      ref={ref}
       className={clsx(disabled && styles.disabled, className)}
       {...rest}
     >
@@ -243,7 +251,7 @@ function ColorPickerRoot({
       </Popover>
     </div>
   );
-}
+});
 ColorPickerRoot.displayName = 'ColorPicker';
 
 /** Compound API: `<ColorPicker>` + `<ColorPicker.Trigger>` + `<ColorPicker.Panel>`. */
