@@ -138,6 +138,7 @@ export function Dashboard() {
                 <Cluster gap="sm" wrap={false} align="start">
                   <Avatar name={a.who} size="sm" />
                   <Stack gap="xs">
+                    {/* Inner Text on `a.target` is intentional — re-tone an inline run inside a sentence without raw style. Inner needs explicit size="sm" so it doesn't pop to its default md. */}
                     <Text as="span" size="sm" tone="muted">
                       <strong>{a.who}</strong> {a.what}{' '}
                       <Text as="span" size="sm" tone="accent">

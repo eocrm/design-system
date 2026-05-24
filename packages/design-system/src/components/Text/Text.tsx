@@ -170,6 +170,11 @@ const ALIGN_CLASS: Record<TextAlign, string> = {
  * - ❌ `<Text as="h2">` — Text doesn't accept heading tags. Use `<Title order={2}>`.
  * - ❌ Wrapping a `<Title>` in `<Text>` for tone/weight tweaks. Pass tone/weight
  *   directly to the `<Title>` instead.
+ * - ❌ Nesting `<Text>` inside another `<Text>` with the default `as="p"`. The
+ *   inner `<p>` renders inside the outer `<p>`, which the React DOM nesting
+ *   validator warns about (and is invalid HTML). When you need a tone or
+ *   weight override on an inline run inside a paragraph, use
+ *   `<Text as="span" tone="...">` for the inner.
  */
 export const Text = forwardRef<HTMLElement, TextProps>(function Text(
   {
