@@ -1,0 +1,250 @@
+.root {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  // CSS keyword; not a tokenizable design value.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  user-select: none;
+}
+
+.orientation-horizontal {
+  width: 100%;
+
+  // Reserve vertical space for the marks (below the track) + the label bubble
+  // (above). Component-internal sizing for an unfixed-height row.
+  min-height: 32px;
+}
+
+.orientation-vertical {
+  flex-direction: column;
+
+  // 200px is a reasonable default vertical track length; consumer can override
+  // via style or className.
+  height: 200px;
+  min-width: 32px;
+}
+
+.track {
+  position: relative;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-full);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  overflow: visible;
+}
+
+.orientation-horizontal .track {
+  width: 100%;
+  height: 6px;
+}
+
+.orientation-vertical .track {
+  height: 100%;
+  width: 6px;
+}
+
+.size-sm.orientation-horizontal .track {
+  height: 4px;
+}
+
+.size-lg.orientation-horizontal .track {
+  height: 8px;
+}
+
+.size-sm.orientation-vertical .track {
+  width: 4px;
+}
+
+.size-lg.orientation-vertical .track {
+  width: 8px;
+}
+
+.fill {
+  position: absolute;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+}
+
+.orientation-horizontal .fill {
+  top: 0;
+  bottom: 0;
+}
+
+.orientation-vertical .fill {
+  left: 0;
+  right: 0;
+}
+
+.tone-default .fill {
+  background: var(--color-accent);
+}
+
+.tone-success .fill {
+  background: var(--color-success);
+}
+
+.tone-warning .fill {
+  background: var(--color-warning);
+}
+
+.tone-danger .fill {
+  background: var(--color-danger);
+}
+
+.thumb {
+  position: absolute;
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: grab;
+  transition: box-shadow var(--transition-base);
+}
+
+.orientation-horizontal .thumb {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.orientation-vertical .thumb {
+  left: 50%;
+  transform: translate(-50%, 50%);
+}
+
+.size-sm .thumb {
+  width: 14px;
+  height: 14px;
+}
+
+.size-md .thumb {
+  width: 18px;
+  height: 18px;
+}
+
+.size-lg .thumb {
+  width: 22px;
+  height: 22px;
+}
+
+.thumb:hover,
+.thumb:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  outline: none;
+}
+
+.thumbDragging {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: grabbing;
+  box-shadow: var(--shadow-md);
+}
+
+.label {
+  position: absolute;
+  background: var(--color-fg);
+  color: var(--color-bg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  white-space: nowrap;
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  pointer-events: none;
+}
+
+.orientation-horizontal .label {
+  bottom: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.orientation-vertical .label {
+  left: calc(100% + var(--space-2));
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.mark {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.markFilled {
+  background: var(--color-accent);
+}
+
+.tone-success .markFilled {
+  background: var(--color-success);
+}
+
+.tone-warning .markFilled {
+  background: var(--color-warning);
+}
+
+.tone-danger .markFilled {
+  background: var(--color-danger);
+}
+
+.orientation-horizontal .mark {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.orientation-vertical .mark {
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: 8px;
+  height: 2px;
+}
+
+.markLabel {
+  position: absolute;
+  font-size: var(--font-size-xs);
+  color: var(--color-fg-muted);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  white-space: nowrap;
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  pointer-events: none;
+}
+
+.orientation-horizontal .markLabel {
+  top: calc(100% + var(--space-1));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.orientation-vertical .markLabel {
+  left: calc(100% + var(--space-1));
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.disabled {
+  opacity: var(--opacity-disabled);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: not-allowed;
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb {
+    transition: none;
+  }
+}
