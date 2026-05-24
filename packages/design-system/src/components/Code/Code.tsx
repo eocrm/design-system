@@ -51,6 +51,18 @@ const TONE_CLASS: Record<CodeTone, string> = {
  * - For block-level code with multiple lines or syntax highlighting.
  * - For action triggers that LOOK like code (`<Button variant="ghost">`).
  * - As a substitute for `<kbd>` (keyboard input rendering — not yet shipped).
+ *
+ * @remarks Anti-patterns
+ * - ❌ `<Code>multi-line\nblock</Code>` — Code is inline only; the chip
+ *   background doesn't extend across newlines. Use the playground's
+ *   `CodeBlock` for block code, or a `<pre><Code>...</Code></pre>` if you
+ *   really need a static block inside the library.
+ * - ❌ `<Code style={{ background: '#xxx' }}>` — the chip background is
+ *   intentionally `--color-bg-muted` so it visually subordinates to body
+ *   text. If you need a different background, that's a token-vocabulary
+ *   conversation.
+ * - ❌ Wrapping a `<Button>` or `<Link>` in `<Code>` to style it as code-
+ *   like. Code is for content semantics (it IS code), not visual styling.
  */
 export const Code = forwardRef<HTMLElement, CodeProps>(function Code(
   { tone = 'default', className, children, ...rest },
