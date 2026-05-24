@@ -168,9 +168,9 @@ const sortAriaFor: Record<TableSortDirection, 'ascending' | 'descending' | 'none
  * </Table.HeaderCell>
  *
  * @remarks When NOT to use
- * - For data that needs sorting / filtering / pagination state — wait for
- *   `<DataTable>` (not yet shipped). DataTable composes this primitive +
- *   TanStack Table headless.
+ * - For data that needs sorting / filtering / pagination state — use
+ *   `<DataTable>` (composes this primitive with a hand-rolled state machine
+ *   covering sort, filter, pagination, selection, column visibility).
  * - For non-tabular content (cards, lists). Use `<Stack>` / `<Cluster>` /
  *   `<Card>` instead.
  * - For dashboards with editable cells. The primitive doesn't ship inline
