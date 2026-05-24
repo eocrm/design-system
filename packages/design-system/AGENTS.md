@@ -1111,6 +1111,48 @@ const [open, setOpen] = useState(false);
 - No automatic `aria-hidden` on the icon — consumer's icon may be semantic (e.g., a country-flag icon in a "No results for this region" state). If the icon is purely decorative, the consumer should pass `aria-hidden`.
 - The wrapper `<section>` only becomes a screen-reader landmark when it has an accessible name — pass `aria-label` (or `aria-labelledby`) when the empty state should be navigable as a region (typically when it IS the page's primary content with `headingLevel={1 | 2}`).
 
+### `<Progress>` — linear progress bar
+
+```tsx
+<Progress value={45} />                            // 45% determinate
+<Progress value={67} label />                      // shows "67%" on the right
+<Progress value={85} tone="warning" label />       // amber fill (state coding)
+<Progress />                                       // value omitted = indeterminate slide
+<Progress value={3} max={10} label={`3 of 10`} />  // custom label slot
+```
+
+- `value?: number` — omit for indeterminate. NaN, Infinity, and `max <= 0` also fall back to indeterminate (defensive guard for file-upload race conditions where `bytes_uploaded / total_bytes` produces NaN before the total is known). Visual fill is clamped to [0%, 100%]; ARIA reports the raw value for SR debug visibility.
+- `max?: number` — default `100`. Use `max={1}` for fraction values, `max={10}` for count-style "3 of 10" semantics.
+- `size`: `sm` (4px) / `md` (8px, default) / `lg` (12px) — track height.
+- `tone`: `default | success | warning | danger`. Applies to determinate only; indeterminate is always accent (state-color semantics don't apply to an unknown total).
+- `label`: `false | true | ReactNode`. `true` shows `{n}%` (auto-suppressed when indeterminate); ReactNode renders in both modes (`label="Loading…"` is the canonical "indeterminate + text" pattern).
+- `role="progressbar"` is locked — `Omit<HTMLAttributes, 'role'>` prevents the consumer from overriding it.
+- Indeterminate `aria-valuetext` falls back to consumer-passed `aria-label`, then to `"Loading…"`.
+
+### `<CircularProgress>` — circular progress / spinner
+
+```tsx
+<CircularProgress value={45} />                    // donut, 32px default
+<CircularProgress value={75} label />              // centered "75%"
+<CircularProgress />                               // indeterminate spinner (the "Loader" use case)
+<CircularProgress size="sm" />                     // 16px inline spinner next to a button
+<CircularProgress tone="success" value={100} />    // green full circle
+```
+
+- Same prop vocabulary as `<Progress>` — `value?`, `max?`, `size`, `tone`, `label`.
+- Same NaN/Infinity/max<=0 indeterminate fallback as `<Progress>`.
+- `size`: `sm` (16px / 2px stroke) / `md` (32px / 3px stroke, default) / `lg` (56px / 4px stroke).
+- Built as inline `<svg viewBox="0 0 36 36">` with two `<circle>` elements (track + fill). Determinate arc is driven by `stroke-dashoffset`; indeterminate is a CSS `rotate` animation on a partial arc.
+- Centered `label` auto-suppressed at `size="sm"` (no room for text) AND when `label=true` on indeterminate. ReactNode labels still suppress at `size="sm"` regardless.
+- `prefers-reduced-motion` disables the spin animation and shows a static accent ring.
+
+### Progress hard rule
+
+- ❌ Hand-rolled `<div style={{ width: '${n}%', background: '#xxx' }}>` progress bars — use `<Progress value={n}>`.
+- ❌ Hand-rolled spinning `<svg>` per page (every Saving-state, every loader). Use `<CircularProgress />` indeterminate.
+- ❌ `<Progress tone="success" value={100}>` or `<Progress tone="success" />` to "celebrate" completion. Tones communicate STATE during progress (warning at 85%, danger at 95%), not success-on-done. A finished bar is just a finished bar — leave the default tone.
+- ❌ `<CircularProgress value={0}>` to render an empty circle for "not started yet." `value={0}` is determinate (0% done). The intent is usually indeterminate — omit `value` entirely.
+
 ### `<Skeleton>` — loading placeholder
 
 ```tsx

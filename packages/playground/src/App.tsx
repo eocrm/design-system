@@ -17,6 +17,8 @@ import { InputDemo } from './pages/components/InputDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
 import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
 import { PaginationDemo } from './pages/components/PaginationDemo';
+import { ProgressDemo } from './pages/components/ProgressDemo';
+import { CircularProgressDemo } from './pages/components/CircularProgressDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
 import { SkeletonDemo } from './pages/components/SkeletonDemo';
 import { SwitchDemo } from './pages/components/SwitchDemo';
@@ -71,6 +73,8 @@ export default function App() {
           <Route path="/components/datepickers" element={<DatePickersDemo />} />
           <Route path="/components/input" element={<InputDemo />} />
           <Route path="/components/pagination" element={<PaginationDemo />} />
+          <Route path="/components/progress" element={<ProgressDemo />} />
+          <Route path="/components/circular-progress" element={<CircularProgressDemo />} />
           <Route path="/components/password-input" element={<PasswordInputDemo />} />
           <Route
             path="/components/password-strength-meter"

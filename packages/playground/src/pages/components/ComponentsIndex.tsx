@@ -9,6 +9,8 @@ import { Link as DSLink } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { ButtonGroup } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
+import { CircularProgress } from '@eocrm/design-system';
+import { Progress } from '@eocrm/design-system';
 import { Code } from '@eocrm/design-system';
 import { Text } from '@eocrm/design-system';
 import { Title } from '@eocrm/design-system';
@@ -179,6 +181,18 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <div style={{ width: 200 }}>
         <PasswordStrengthMeter value="Hunter2!@#" />
       </div>
+    ),
+  },
+  {
+    to: '/components/progress',
+    name: 'Progress',
+    description:
+      'Linear progress bar — determinate via value/max, indeterminate when value is omitted. Sizes / tones / optional label.',
+    preview: (
+      <Stack gap="xs">
+        <Progress value={45} />
+        <Progress value={85} tone="warning" />
+      </Stack>
     ),
   },
   {
@@ -677,6 +691,18 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           <Calendar defaultValue={new Date(2026, 4, 15)} />
         </div>
       </div>
+    ),
+  },
+  {
+    to: '/components/circular-progress',
+    name: 'CircularProgress',
+    description:
+      'Circular progress / loading spinner — donut shape for tracked progress, or spinning arc when value is omitted.',
+    preview: (
+      <Cluster gap="sm" justify="center">
+        <CircularProgress size="sm" />
+        <CircularProgress size="md" value={65} label />
+      </Cluster>
     ),
   },
   {

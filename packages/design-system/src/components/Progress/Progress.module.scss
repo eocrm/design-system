@@ -1,0 +1,108 @@
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.track {
+  flex: 1;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-base);
+}
+
+.sizeSm .track,
+.sizeSm .fill {
+  height: 4px;
+}
+
+.sizeMd .track,
+.sizeMd .fill {
+  height: 8px;
+}
+
+.sizeLg .track,
+.sizeLg .fill {
+  height: 12px;
+}
+
+.toneDefault .fill {
+  background: var(--color-accent);
+}
+
+.toneSuccess .fill {
+  background: var(--color-success);
+}
+
+.toneWarning .fill {
+  background: var(--color-warning);
+}
+
+.toneDanger .fill {
+  background: var(--color-danger);
+}
+
+.indeterminate {
+  // !important ensures the 30% fill width wins against any specificity
+  // collision with the size-* rules that set `.fill { height: ... }` for
+  // each track height (the `.fill` selector specificity matches `.indeterminate`).
+  width: 30% !important;
+  animation: progress-slide 1.2s linear infinite;
+
+  // Indeterminate always uses the accent color — tone semantics don't apply
+  // to an unknown total. Override any .tone-* rule that would otherwise
+  // win via specificity.
+  background: var(--color-accent) !important;
+
+  // Disable the width transition so determinate→indeterminate switches don't
+  // animate from the determinate width down to 30% before the loop fires.
+  transition: none;
+}
+
+@keyframes progress-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+
+  // Cap the label so a long string can't collapse the track. The bar should
+  // win the layout argument; long labels should ellipsis or the consumer
+  // should pre-truncate.
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indeterminate {
+    animation: none;
+
+    // Replace the sliding animation with a static accent fill so the user
+    // still gets a visible "in progress" cue.
+    width: 100% !important;
+  }
+
+  .fill {
+    transition: none;
+  }
+}
