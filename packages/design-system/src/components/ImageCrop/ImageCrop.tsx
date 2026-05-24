@@ -43,6 +43,11 @@ export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
    * landscape, `4/3` for traditional photo). Omit for free aspect — the crop
    * box fills the entire viewport and the user controls the cropped region
    * via zoom only.
+   *
+   * Typically a stable prop from the consumer (set once per page). Toggling
+   * `aspectRatio` at runtime updates the crop box dimensions but does NOT
+   * automatically re-fit `value` to the new ratio — pass a fresh `value`
+   * (or `null` for the new default) when you change ratios.
    */
   aspectRatio?: number;
   /** Minimum zoom level. Default `1` (image fits viewport at zoom=1). */
@@ -285,6 +290,15 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     initializedRef.current = false;
   }, [resolvedSrc]);
 
+  // Clean up any in-flight drag if disabled flips to true mid-gesture —
+  // otherwise the .imageDragging cursor stays stuck until the next pointerdown.
+  useEffect(() => {
+    if (disabled) {
+      dragStateRef.current = null;
+      setIsDragging(false);
+    }
+  }, [disabled]);
+
   // Drag state: pointer-down captures the starting position and the value
   // snapshot. Drag is in a ref (not state) so handlers read it synchronously.
   const dragStateRef = useRef<{
@@ -471,6 +485,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   );
 
   return (
+    // {...rest} last so a consumer-provided onClick / aria-* / data-* overrides nothing the component owns.
     <div
       ref={ref}
       className={clsx(styles.root, disabled && styles.disabled, className)}

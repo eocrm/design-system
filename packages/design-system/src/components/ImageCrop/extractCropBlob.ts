@@ -90,8 +90,14 @@ function loadImage(src: string | File | Blob): Promise<HTMLImageElement> {
  *   await uploadToS3(blob);
  * };
  *
+ * @remarks Cross-origin sources require the server to send
+ *   `Access-Control-Allow-Origin` headers. Without them, the browser taints
+ *   the canvas and `toBlob` rejects with a SecurityError. Same-origin URLs,
+ *   `data:` URLs, `blob:` URLs (from File/Blob), and properly CORS-enabled
+ *   third-party images are all safe.
+ *
  * @throws Error if the image fails to load OR the canvas's `toBlob` returns
- *   `null` (very rare; typically means the source tainted the canvas).
+ *   `null` (typically a CORS tainting failure — see `@remarks`).
  */
 export async function extractCropBlob(
   src: string | File | Blob,

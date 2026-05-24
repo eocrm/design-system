@@ -39,10 +39,6 @@
   cursor: grab;
 }
 
-.image:hover {
-  // Inherit the grab cursor from .image; no override needed.
-}
-
 .imageDragging {
   // CSS keyword.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
@@ -58,7 +54,9 @@
 
   // The box-shadow trick paints a dim overlay everywhere OUTSIDE the box
   // without an extra DOM element. The 9999px spread covers the viewport.
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- one-off overlay paint with no token equivalent
+  // We use 50% black rather than --color-bg-overlay (35%) intentionally —
+  // the cropper scrim needs higher contrast than Modal's overlay.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- crop scrim needs higher contrast than --color-bg-overlay
   box-shadow: 0 0 0 9999px rgb(0 0 0 / 50%);
 
   // CSS keyword — dim layer doesn't intercept drag events on the image below.
