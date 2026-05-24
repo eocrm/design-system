@@ -439,12 +439,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
       if (disabled || !imageNatural || !value || boxW === 0) return;
       const newZoom = typeof sliderValue === 'number' ? sliderValue : sliderValue[0];
       setZoom(newZoom);
-      const defaultArea = defaultCropArea(
-        imageNatural.width,
-        imageNatural.height,
-        boxW,
-        boxH,
-      );
+      const defaultArea = defaultCropArea(imageNatural.width, imageNatural.height, boxW, boxH);
       const newWidth = defaultArea.width / newZoom;
       const newHeight = defaultArea.height / newZoom;
       const centerX = value.x + value.width / 2;
