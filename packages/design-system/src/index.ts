@@ -1,4 +1,8 @@
 // Public API of the design system. The CRM consumes from here.
+
+// Placeholder — full ColorPicker export lands in T5.
+export { ColorPicker } from './components/ColorPicker';
+
 export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
