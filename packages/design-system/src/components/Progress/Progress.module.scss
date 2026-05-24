@@ -1,0 +1,92 @@
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.track {
+  flex: 1;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-base);
+}
+
+.sizeSm .track,
+.sizeSm .fill {
+  height: 4px;
+}
+
+.sizeMd .track,
+.sizeMd .fill {
+  height: 8px;
+}
+
+.sizeLg .track,
+.sizeLg .fill {
+  height: 12px;
+}
+
+.toneDefault .fill {
+  background: var(--color-accent);
+}
+
+.toneSuccess .fill {
+  background: var(--color-success);
+}
+
+.toneWarning .fill {
+  background: var(--color-warning);
+}
+
+.toneDanger .fill {
+  background: var(--color-danger);
+}
+
+.indeterminate {
+  // !important overrides the inline `style={{ width: ... }}` that determinate
+  // mode would set. When transitioning to indeterminate, the inline style is
+  // dropped (we pass `style={undefined}` when indeterminate), but the !important
+  // is belt-and-suspenders against any consumer-passed style that snuck in.
+  width: 30% !important;
+  animation: progress-slide 1.2s linear infinite;
+}
+
+@keyframes progress-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indeterminate {
+    animation: none;
+
+    // Replace the sliding animation with a static accent fill so the user
+    // still gets a visible "in progress" cue.
+    width: 100% !important;
+  }
+
+  .fill {
+    transition: none;
+  }
+}
