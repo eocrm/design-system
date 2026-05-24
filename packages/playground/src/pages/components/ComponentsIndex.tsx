@@ -37,6 +37,7 @@ import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import { DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
 import { FileUpload } from '@eocrm/design-system';
+import { ImageCrop } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
 import { toast } from '@eocrm/design-system';
@@ -158,6 +159,23 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           onFilesAdded={() => {}}
           onFileRemove={() => {}}
           dropzoneLabel="Drop or click"
+        />
+      </div>
+    ),
+  },
+  {
+    to: '/components/image-crop',
+    name: 'ImageCrop',
+    description: 'Controlled image-crop primitive on <canvas>. Pattern-A drag (centered box, draggable image, slider-controlled zoom). Top-level extractCropBlob utility for the Save handler.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 220, height: 120, overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
+        <ImageCrop
+          src="https://picsum.photos/seed/eocrm-card/400/300"
+          value={{ x: 50, y: 25, width: 200, height: 200 }}
+          onChange={() => {}}
+          aspectRatio={1}
+          showZoomControl={false}
+          style={{ pointerEvents: 'none' }}
         />
       </div>
     ),
