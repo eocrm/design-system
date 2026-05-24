@@ -519,12 +519,59 @@ interface ExtractCropOptions {
 }
 ```
 
+#### `useCropPreview(src, crop, options?)` — live-preview hook
+
+Reusable hook for the canonical "avatar / cover photo picker" flow. Debounces an `extractCropBlob` encode on every crop change, guards against stale in-flight encodes, and owns the object URL lifecycle. Returns `{ previewUrl, previewBlob, previewSize, encoding }`.
+
+```tsx
+const [file, setFile] = useState<File | null>(null);
+const [crop, setCrop] = useState<CropArea | null>(null);
+
+const { previewUrl, previewBlob, encoding } = useCropPreview(file, crop, {
+  type: 'image/jpeg',
+  quality: 0.9,
+  outputWidth: 256,
+});
+
+const handleSave = async () => {
+  if (!previewBlob) return;
+  const fd = new FormData();
+  fd.append('file', previewBlob, 'avatar.jpg');
+  await fetch('/api/upload-avatar', { method: 'POST', body: fd });
+};
+
+return (
+  <Stack gap="md">
+    <FileUpload onFilesAdded={([f]) => setFile(f)} ... />
+    {file && (
+      <>
+        <ImageCrop src={file} value={crop} onChange={setCrop} aspectRatio={1} />
+        {previewUrl && <img src={previewUrl} style={{ opacity: encoding ? 0.5 : 1 }} />}
+        <Button onClick={handleSave} disabled={!previewBlob || encoding}>Save</Button>
+      </>
+    )}
+  </Stack>
+);
+```
+
+`previewBlob` is the same content backing `previewUrl` — reuse it in the Save handler instead of calling `extractCropBlob` again (the hook already encoded it).
+
+`UseCropPreviewOptions` extends `ExtractCropOptions` with one extra field:
+
+```ts
+interface UseCropPreviewOptions extends ExtractCropOptions {
+  debounceMs?: number; // default 120; set to 0 in tests, 250+ for 4K photos
+}
+```
+
 #### Hard rule
 
 - ❌ Hand-rolling a `<canvas>` + drag math per page. Use this.
-- ❌ Calling `extractCropBlob` on every `onChange` tick. The encode is expensive — call ONCE in the consumer's Save handler.
-- ❌ Wrapping `<img>` in CSS clip-path for a "crop preview" — that doesn't produce a cropped Blob. Use `extractCropBlob`.
+- ❌ Calling `extractCropBlob` on every `onChange` tick. Use `useCropPreview` if you need a live preview — it debounces and race-guards correctly. For one-shot extraction (Save click only), call `extractCropBlob` once in the handler.
+- ❌ Calling `extractCropBlob` AGAIN in the Save handler when you already have `useCropPreview` mounted. Reuse `previewBlob` — it's the same encoded result.
+- ❌ Wrapping `<img>` in CSS clip-path for a "crop preview" — that doesn't produce a cropped Blob. Use `extractCropBlob` or `useCropPreview`.
 - ❌ `<ImageCrop ref={ref}>` expecting `.getBlob()`. There's no imperative API. The extraction utility is a top-level export.
+- ❌ Calling `URL.revokeObjectURL(previewUrl)` from `useCropPreview` manually. The hook owns the URL lifecycle.
 - ❌ Cropping a circular avatar at the canvas level. Crop rectangular, then CSS-mask in the consumer.
 
 ### `<Card>` — bordered container

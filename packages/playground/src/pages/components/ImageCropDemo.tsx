@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ImageCrop,
-  extractCropBlob,
+  useCropPreview,
   FileUpload,
   type CropArea,
   type FileEntry,
@@ -11,6 +11,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Text } from '@eocrm/design-system';
 import { Code } from '@eocrm/design-system';
+import { CircularProgress } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/ImageCrop/ImageCrop.tsx?raw';
@@ -66,10 +67,6 @@ function FileUploadIntegration() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [crop, setCrop] = useState<CropArea | null>(null);
   const [format, setFormat] = useState<OutputFormat>('image/jpeg');
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewSize, setPreviewSize] = useState<number | null>(null);
-  const previewUrlRef = useRef<string | null>(null);
-  const previewGenRef = useRef(0);
 
   // Reset crop when the file changes.
   const pickedFile = files[0]?.file ?? null;
@@ -77,56 +74,24 @@ function FileUploadIntegration() {
     setCrop(null);
   }, [pickedFile]);
 
-  // Live-update the preview whenever the crop or format changes. Debounced
-  // so we don't re-encode on every pointer-move tick during a drag. Uses a
-  // generation counter so an in-flight encode from a prior crop can't
-  // overwrite the preview from a newer crop (extractCropBlob is async and
-  // clearTimeout doesn't cancel an already-fired callback's awaited work).
-  useEffect(() => {
-    if (!pickedFile || !crop) {
-      if (previewUrlRef.current) {
-        URL.revokeObjectURL(previewUrlRef.current);
-        previewUrlRef.current = null;
-      }
-      setPreviewUrl(null);
-      setPreviewSize(null);
-      return;
-    }
-    const gen = ++previewGenRef.current;
-    const handle = setTimeout(async () => {
-      const blob = await extractCropBlob(pickedFile, crop, {
-        type: format,
-        quality: 0.9,
-        outputWidth: 256,
-      });
-      if (gen !== previewGenRef.current) return; // newer encode in flight
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      const url = URL.createObjectURL(blob);
-      previewUrlRef.current = url;
-      setPreviewUrl(url);
-      setPreviewSize(blob.size);
-    }, 120);
-    return () => clearTimeout(handle);
-  }, [pickedFile, crop, format]);
+  // Live preview via the hook — debounced re-encode with race-guarded
+  // generation counter and auto-cleanup of object URLs. previewBlob is the
+  // same Blob backing previewUrl; reuse it in the Download handler so we
+  // don't re-encode just to save.
+  const { previewUrl, previewBlob, previewSize, encoding } = useCropPreview(pickedFile, crop, {
+    type: format,
+    quality: 0.9,
+    outputWidth: 256,
+  });
 
-  // Cleanup the last preview URL on unmount.
-  useEffect(
-    () => () => {
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    },
-    [],
-  );
-
-  const handleSave = async () => {
-    if (!pickedFile || !crop) return;
-    const blob = await extractCropBlob(pickedFile, crop, {
-      type: format,
-      quality: 0.9,
-      outputWidth: 256,
-    });
-    // Real CRMs would POST this Blob to their upload endpoint. The demo
-    // downloads it so you can verify the encode result locally.
-    const downloadUrl = URL.createObjectURL(blob);
+  const handleSave = () => {
+    if (!previewBlob) return;
+    // Real CRMs would POST this Blob:
+    //   const fd = new FormData();
+    //   fd.append('file', previewBlob, `cropped.${FORMAT_EXT[format]}`);
+    //   await fetch('/upload', { method: 'POST', body: fd });
+    // The demo downloads it locally to verify the encode result.
+    const downloadUrl = URL.createObjectURL(previewBlob);
     const a = document.createElement('a');
     a.href = downloadUrl;
     a.download = `cropped.${FORMAT_EXT[format]}`;
@@ -139,7 +104,7 @@ function FileUploadIntegration() {
       <FileUpload
         files={files}
         accept="image/*"
-        maxSize={5 * 1024 * 1024}
+        maxSize={25 * 1024 * 1024}
         onFilesAdded={(added) =>
           setFiles(added.map((f) => ({ id: makeId(), file: f, status: 'done' as const })))
         }
@@ -167,23 +132,48 @@ function FileUploadIntegration() {
             <Text size="sm" tone="muted">
               Live 256×256 preview:
             </Text>
-            {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Cropped preview"
-                style={{ width: 64, height: 64, borderRadius: 'var(--radius-md)' }}
-              />
-            ) : (
-              <Text size="sm" tone="muted">
-                (cropping…)
-              </Text>
-            )}
-            {previewSize !== null && (
+            <div
+              style={{
+                position: 'relative',
+                width: 64,
+                height: 64,
+                borderRadius: 'var(--radius-md)',
+                overflow: 'hidden',
+                background: 'var(--color-bg-muted)',
+              }}
+            >
+              {previewUrl && (
+                <img
+                  src={previewUrl}
+                  alt="Cropped preview"
+                  style={{
+                    width: 64,
+                    height: 64,
+                    opacity: encoding ? 0.5 : 1,
+                    transition: 'opacity var(--transition-base)',
+                  }}
+                />
+              )}
+              {encoding && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <CircularProgress size="sm" aria-label="Re-encoding preview" />
+                </div>
+              )}
+            </div>
+            {previewSize !== null && !encoding && (
               <Text size="sm" tone="muted">
                 <Code>{(previewSize / 1024).toFixed(1)} KB</Code>
               </Text>
             )}
-            <Button onClick={handleSave} disabled={!crop} variant="secondary">
+            <Button onClick={handleSave} disabled={!previewBlob || encoding} variant="secondary">
               Download
             </Button>
           </Cluster>
@@ -238,28 +228,26 @@ export function ImageCropDemo() {
 
       <Example
         title="FileUpload integration"
-        description="The canonical pick → crop → save flow with a LIVE 256×256 preview that re-encodes on every drag/zoom (debounced ~120ms). The Download button calls extractCropBlob and saves the result locally — your real Save handler would POST it to your upload endpoint instead."
+        description="The canonical pick → crop → save flow using the useCropPreview hook. Live 256×256 preview re-encodes on every drag/zoom (debounced 120ms). Toggle the format buttons (JPEG/PNG/WebP) and the encoder swaps live with a CircularProgress spinner during the re-encode. The Download button reuses the hook's previewBlob — no second encode — and saves locally; your real Save handler would POST previewBlob to your upload endpoint."
         code={`function FileUploadIntegration() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [crop, setCrop] = useState<CropArea | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const previewUrlRef = useRef<string | null>(null);
   const pickedFile = files[0]?.file ?? null;
 
-  // Live preview: re-encode on every crop change, debounced.
-  useEffect(() => {
-    if (!pickedFile || !crop) { setPreviewUrl(null); return; }
-    const handle = setTimeout(async () => {
-      const blob = await extractCropBlob(pickedFile, crop, {
-        type: 'image/jpeg', quality: 0.9, outputWidth: 256,
-      });
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      const url = URL.createObjectURL(blob);
-      previewUrlRef.current = url;
-      setPreviewUrl(url);
-    }, 120);
-    return () => clearTimeout(handle);
-  }, [pickedFile, crop]);
+  // Live preview + Save Blob via the hook — debounced encode, race-guarded
+  // generation counter, auto-revoked object URLs.
+  const { previewUrl, previewBlob, encoding } = useCropPreview(pickedFile, crop, {
+    type: 'image/jpeg',
+    quality: 0.9,
+    outputWidth: 256,
+  });
+
+  const handleSave = async () => {
+    if (!previewBlob) return;
+    const fd = new FormData();
+    fd.append('file', previewBlob, 'avatar.jpg');
+    await fetch('/api/upload-avatar', { method: 'POST', body: fd });
+  };
 
   return (
     <Stack gap="md">
@@ -267,7 +255,8 @@ export function ImageCropDemo() {
       {pickedFile && (
         <>
           <ImageCrop src={pickedFile} value={crop} onChange={setCrop} aspectRatio={1} />
-          {previewUrl && <img src={previewUrl} alt="" width={64} height={64} />}
+          {previewUrl && <img src={previewUrl} style={{ opacity: encoding ? 0.5 : 1 }} />}
+          <Button onClick={handleSave} disabled={!previewBlob || encoding}>Save</Button>
         </>
       )}
     </Stack>
