@@ -294,6 +294,59 @@ import { Textarea } from '@eocrm/design-system';
 - Native HTML attrs flow through (`name`, `value`, `required`, `form`, `autoFocus`, etc.). `FormData.getAll(name)` returns the array of checked values for same-`name` checkboxes.
 - forwardRef points at the native `<input>` so consumers can `.focus()` or programmatically set `.indeterminate`.
 
+### `<ColorPicker>` — controlled HEX color picker (popover + inline)
+
+```tsx
+const [hex, setHex] = useState('#4F46E5');
+
+// Default popover with the built-in trigger swatch:
+<ColorPicker value={hex} onChange={setHex} triggerLabel="Brand color" />
+
+// Custom trigger:
+<ColorPicker value={hex} onChange={setHex}>
+  <ColorPicker.Trigger asChild>
+    <Button variant="secondary">Pick a color</Button>
+  </ColorPicker.Trigger>
+</ColorPicker>
+
+// Inline (always-visible panel — for theme builders, settings rows):
+<ColorPicker.Panel value={hex} onChange={setHex} />
+```
+
+- **Controlled-only.** `value: string` in `#RRGGBB` form. Loose input accepted on the HEX text field (`#FFF`, `FFF`, `#ffffff`); the component always emits the canonical `#RRGGBB` (uppercase, with `#`).
+- **Two distribution shapes via the compound API.** `<ColorPicker>` is the popover-wrapped form-field-ready widget. `<ColorPicker.Panel>` is the same picker without the popover wrapping — drop it directly into a settings page or theme builder.
+- **Default trigger** is an input-field-shaped button with a 16×16 swatch + uppercase HEX text. Override via `<ColorPicker.Trigger asChild>{customNode}</ColorPicker.Trigger>` (the child must `forwardRef` because `<Popover.Trigger>` clones it).
+- **`onChange` fires per drag/zoom tick (high frequency).** Use `onChangeEnd` for commit-style logic (network calls, history snapshots) — it fires on pointer release, slider release, HEX input blur, and preset click.
+- **Presets via `presets?: string[]`.** Invalid entries are dropped silently. The library doesn't ship a default palette — pass your own brand colors. Selected swatch gets an inset ring + check overlay.
+- **Color math is exported.** `hexToHsv(hex)`, `hsvToHex({h,s,v})`, `normalizeHex(loose)` are usable directly for downstream theme builders, contrast calculators, etc.
+- **Keyboard (SV pad)**: arrows ±1% S/V, Shift+arrow ±10%, Home/End for S=0/100, PageUp/Down for V=100/0.
+- **Keyboard (hue slider)**: inherits Slider's keyboard — arrows ±1°, PgUp/Dn ±10°, Home/End for 0°/360°.
+- **Popover placement** via `popoverPlacement?: 'bottom-start' | 'bottom' | 'top-start' | ...`. Default `'bottom-start'`.
+- **Disabled** dims the panel, sets `aria-disabled` on the SV pad, disables the slider + input, makes presets non-interactive. Trigger doesn't open.
+
+#### Color math API
+
+```ts
+import { hexToHsv, hsvToHex, normalizeHex } from '@eocrm/design-system';
+
+normalizeHex('#fff');     // '#FFFFFF'
+normalizeHex('orange');   // null
+
+hexToHsv('#FF0000');      // { h: 0, s: 100, v: 100 }
+hexToHsv('not a color');  // null
+
+hsvToHex({ h: 240, s: 100, v: 100 });  // '#0000FF'
+```
+
+#### Hard rule
+
+- ❌ Passing non-HEX `value` — named colors, `rgb()`, `hsl()`, alpha hex (`#RRGGBBAA`). Convert in the consumer or use the exported `normalizeHex` first. Invalid input falls back to `#000000` with a dev-only warning.
+- ❌ Reaching into the picker's internal HSV state. Consumer contract is HEX-only.
+- ❌ Hand-rolling a color picker per page. Use this.
+- ❌ Bundling a default palette inside the consumer. Pass via `presets`.
+- ❌ Calling expensive work in `onChange`. Use `onChangeEnd` (one fire per gesture).
+- ❌ Wrapping a non-`forwardRef` component in `<ColorPicker.Trigger asChild>`. `<Popover.Trigger>` clones the child to inject the ref; non-forwardRef silently drops it.
+
 ### `<Switch>` — binary toggle
 
 Hand-rolled track + thumb on a native `<input type="checkbox" role="switch">`. The dumb on/off toggle for settings, feature flags, and async persisted state.
