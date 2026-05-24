@@ -62,7 +62,7 @@ export function Dashboard() {
       <Cluster justify="between" align="end" gap="md">
         <div>
           <Title order={1}>Dashboard</Title>
-          <Text size="md" tone="muted">
+          <Text size="lg" tone="muted">
             Good morning, Alex. Here's where your pipeline stands.
           </Text>
         </div>
@@ -140,7 +140,7 @@ export function Dashboard() {
                   <Stack gap="xs">
                     <Text as="span" size="sm" tone="muted">
                       <strong>{a.who}</strong> {a.what}{' '}
-                      <Text as="span" tone="accent">
+                      <Text as="span" size="sm" tone="accent">
                         {a.target}
                       </Text>
                     </Text>
