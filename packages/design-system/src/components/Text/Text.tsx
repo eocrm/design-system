@@ -70,6 +70,10 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
    * Clamp to N lines with ellipsis (uses `-webkit-line-clamp`). Defaults to
    * `undefined`. Overrides `truncate` when set. Example: `lineClamp={2}` for
    * a 2-line description that ellipses on the third.
+   *
+   * If you also pass `style.WebkitLineClamp`, the `lineClamp` prop takes
+   * precedence — the component merges the dynamic line-clamp value into
+   * `style` AFTER spreading your `style`, so the prop wins.
    */
   lineClamp?: number;
   /** Text content. */
@@ -141,6 +145,13 @@ const ALIGN_CLASS: Record<TextAlign, string> = {
  * // State-coded inline text (e.g. validation message):
  * <Text size="sm" tone="danger">Email is required.</Text>
  *
+ * @example
+ * // Body copy under a heading, spaced with Stack — the canonical CRM-page shape:
+ * <Stack gap="xs">
+ *   <Title order={2}>Pipeline</Title>
+ *   <Text tone="muted">Active deals for Q3.</Text>
+ * </Stack>
+ *
  * @remarks When NOT to use
  * - For heading text. Use `<Title order={N}>`.
  * - For inline `<code>`-style content. Use `<Code>`.
@@ -171,7 +182,7 @@ export const Text = forwardRef<HTMLElement, TextProps>(function Text(
   },
   ref,
 ) {
-  const Component = as as 'p' | 'span' | 'div' | 'label';
+  const Component = as;
   // lineClamp overrides truncate when both are set — lineClamp is strictly
   // more expressive.
   const useLineClamp = typeof lineClamp === 'number' && lineClamp > 0;
@@ -188,7 +199,7 @@ export const Text = forwardRef<HTMLElement, TextProps>(function Text(
   // unknown to satisfy it — the runtime type is always correct because
   // Component is exactly `as`.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const domRef = ref as unknown as React.RefCallback<any>;
+  const domRef = ref as unknown as React.Ref<any>;
 
   // className merged above via clsx so consumer extensions stack with our classes;
   // {...rest} last so any other consumer-passed attr can override ours (Pattern A).
