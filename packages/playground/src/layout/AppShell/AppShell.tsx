@@ -53,6 +53,7 @@ import {
   UploadCloud,
   SlidersHorizontal,
   Crop,
+  Palette,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
@@ -91,6 +92,7 @@ const componentGroups = [
       { to: '/components/button', label: 'Button', icon: MousePointer2, end: false },
       { to: '/components/button-group', label: 'ButtonGroup', icon: LayoutPanelLeft, end: false },
       { to: '/components/checkbox', label: 'Checkbox', icon: CheckSquare, end: false },
+      { to: '/components/color-picker', label: 'ColorPicker', icon: Palette, end: false },
       { to: '/components/datepickers', label: 'Date pickers', icon: CalendarRange, end: false },
       { to: '/components/file-upload', label: 'FileUpload', icon: UploadCloud, end: false },
       { to: '/components/image-crop', label: 'ImageCrop', icon: Crop, end: false },

@@ -1,4 +1,5 @@
 // Public API of the design system. The CRM consumes from here.
+
 export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
@@ -20,6 +21,21 @@ export type { CardListRowProps } from './components/Card';
 
 export { Checkbox } from './components/Checkbox';
 export type { CheckboxProps, CheckboxSize } from './components/Checkbox';
+
+export {
+  ColorPicker,
+  ColorPickerPanel,
+  ColorPickerTrigger,
+  hexToHsv,
+  hsvToHex,
+  normalizeHex,
+} from './components/ColorPicker';
+export type {
+  ColorPickerProps,
+  ColorPickerPanelProps,
+  ColorPickerTriggerProps,
+  HSV,
+} from './components/ColorPicker';
 
 export { Stack } from './components/Stack';
 export type { StackProps, StackGap, StackAlign } from './components/Stack';

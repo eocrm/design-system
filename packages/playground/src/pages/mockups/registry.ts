@@ -14,6 +14,7 @@ export type ComponentName =
   | 'CircularProgress'
   | 'Cluster'
   | 'Code'
+  | 'ColorPicker'
   | 'ConfirmationPopover'
   | 'CursorPagination'
   | 'DataTable'

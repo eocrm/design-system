@@ -15,6 +15,7 @@ import { Code } from '@eocrm/design-system';
 import { Text } from '@eocrm/design-system';
 import { Title } from '@eocrm/design-system';
 import { Checkbox } from '@eocrm/design-system';
+import { ColorPicker } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
@@ -359,6 +360,29 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Checkbox indeterminate label="Indeterminate" />
         <Checkbox label="Unchecked" />
       </Stack>
+    ),
+  },
+  {
+    to: '/components/color-picker',
+    name: 'ColorPicker',
+    description:
+      'Controlled HEX color picker with two shapes — popover trigger for form fields and an inline <ColorPicker.Panel> for theme builders. SV square + hue slider + HEX input + optional presets.',
+    preview: (
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 220,
+          display: 'flex',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}
+      >
+        <ColorPicker.Panel
+          value="#4F46E5"
+          onChange={() => {}}
+          presets={['#4F46E5', '#10B981', '#F59E0B', '#EF4444']}
+        />
+      </div>
     ),
   },
   {
