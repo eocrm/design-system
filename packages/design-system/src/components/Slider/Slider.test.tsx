@@ -1,21 +1,26 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { createRef } from 'react';
-import {
-  Slider,
-  type SliderOrientation,
-  type SliderSize,
-  type SliderTone,
-} from './Slider';
+import { Slider, type SliderOrientation, type SliderSize, type SliderTone } from './Slider';
 
 // jsdom doesn't implement setPointerCapture; stub it on HTMLElement so the
 // component's try/catch fast-path is exercised (and we still get pointer
 // events).
 function ensurePointerCaptureShim() {
-  if (typeof (HTMLElement.prototype as unknown as { setPointerCapture?: unknown }).setPointerCapture !== 'function') {
-    (HTMLElement.prototype as unknown as { setPointerCapture: (id: number) => void }).setPointerCapture = () => {};
+  if (
+    typeof (HTMLElement.prototype as unknown as { setPointerCapture?: unknown })
+      .setPointerCapture !== 'function'
+  ) {
+    (
+      HTMLElement.prototype as unknown as { setPointerCapture: (id: number) => void }
+    ).setPointerCapture = () => {};
   }
-  if (typeof (HTMLElement.prototype as unknown as { releasePointerCapture?: unknown }).releasePointerCapture !== 'function') {
-    (HTMLElement.prototype as unknown as { releasePointerCapture: (id: number) => void }).releasePointerCapture = () => {};
+  if (
+    typeof (HTMLElement.prototype as unknown as { releasePointerCapture?: unknown })
+      .releasePointerCapture !== 'function'
+  ) {
+    (
+      HTMLElement.prototype as unknown as { releasePointerCapture: (id: number) => void }
+    ).releasePointerCapture = () => {};
   }
 }
 
@@ -28,7 +33,10 @@ function getThumbs(container: HTMLElement): HTMLElement[] {
 
 // Helper — mock the track's getBoundingClientRect so pointer-math has a known
 // canvas. Default: 100px-wide / 6px-tall horizontal track at (0, 0).
-function mockTrackRect(container: HTMLElement, opts: { width?: number; height?: number; left?: number; top?: number } = {}) {
+function mockTrackRect(
+  container: HTMLElement,
+  opts: { width?: number; height?: number; left?: number; top?: number } = {},
+) {
   const { width = 100, height = 6, left = 0, top = 0 } = opts;
   const track = container.querySelector<HTMLElement>('[class*="track"]')!;
   track.getBoundingClientRect = () =>
@@ -104,9 +112,7 @@ describe('Slider', () => {
     );
 
     it('className from props merges with the base class', () => {
-      const { container } = render(
-        <Slider value={50} className="custom" onChange={() => {}} />,
-      );
+      const { container } = render(<Slider value={50} className="custom" onChange={() => {}} />);
       const cls = (container.firstChild as HTMLElement).className;
       expect(cls).toMatch(/custom/);
       expect(cls).toMatch(/root_/);
@@ -190,9 +196,7 @@ describe('Slider', () => {
     });
 
     it('forwards root aria-label to the thumb (WAI-ARIA APG: role=slider must be labeled)', () => {
-      const { container } = render(
-        <Slider value={50} aria-label="Volume" onChange={() => {}} />,
-      );
+      const { container } = render(<Slider value={50} aria-label="Volume" onChange={() => {}} />);
       const thumb = container.querySelector('[role="slider"]');
       expect(thumb).toHaveAttribute('aria-label', 'Volume');
     });
@@ -261,18 +265,14 @@ describe('Slider', () => {
 
     it('Home sets value to min', () => {
       const onChange = vi.fn();
-      const { container } = render(
-        <Slider value={50} min={0} max={100} onChange={onChange} />,
-      );
+      const { container } = render(<Slider value={50} min={0} max={100} onChange={onChange} />);
       fireEvent.keyDown(getThumbs(container)[0], { key: 'Home' });
       expect(onChange).toHaveBeenCalledWith(0);
     });
 
     it('End sets value to max', () => {
       const onChange = vi.fn();
-      const { container } = render(
-        <Slider value={50} min={0} max={100} onChange={onChange} />,
-      );
+      const { container } = render(<Slider value={50} min={0} max={100} onChange={onChange} />);
       fireEvent.keyDown(getThumbs(container)[0], { key: 'End' });
       expect(onChange).toHaveBeenCalledWith(100);
     });
@@ -293,9 +293,7 @@ describe('Slider', () => {
 
     it('range mode: left thumb cannot cross right thumb (keyboard clamp)', () => {
       const onChange = vi.fn();
-      const { container } = render(
-        <Slider value={[40, 50]} step={20} onChange={onChange} />,
-      );
+      const { container } = render(<Slider value={[40, 50]} step={20} onChange={onChange} />);
       // ArrowRight on left thumb tries to go to 60, but it clamps to 50 (right thumb).
       fireEvent.keyDown(getThumbs(container)[0], { key: 'ArrowRight' });
       expect(onChange).toHaveBeenCalledWith([50, 50]);
@@ -354,9 +352,7 @@ describe('Slider', () => {
 
     it('range mode: pointer-dragging thumb 0 past thumb 1 clamps to thumb 1 value', () => {
       const onChange = vi.fn();
-      const { container } = render(
-        <Slider value={[20, 50]} onChange={onChange} />,
-      );
+      const { container } = render(<Slider value={[20, 50]} onChange={onChange} />);
       mockTrackRect(container, { width: 100, left: 0 });
       const thumbs = getThumbs(container);
       fireEvent.pointerDown(thumbs[0], { clientX: 20, clientY: 3, pointerId: 1 });
@@ -423,9 +419,7 @@ describe('Slider', () => {
     });
 
     it('marks within the fill range get markFilled class', () => {
-      const { container } = render(
-        <Slider value={75} marks={[25, 75]} onChange={() => {}} />,
-      );
+      const { container } = render(<Slider value={75} marks={[25, 75]} onChange={() => {}} />);
       // Both 25 and 75 are <= 75, so both should have markFilled.
       const filled = container.querySelectorAll('[class*="markFilled"]');
       expect(filled.length).toBe(2);
@@ -436,7 +430,9 @@ describe('Slider', () => {
       const thumb = getThumbs(container)[0];
       // Direct .focus() triggers a React state update (setIsFocused); wrap in
       // act so the render flushes before asserting.
-      act(() => { thumb.focus(); });
+      act(() => {
+        thumb.focus();
+      });
       const labelEl = container.querySelector('[class*="label"]:not([class*="markLabel"])');
       expect(labelEl).not.toBeNull();
       expect(labelEl).toHaveTextContent('42');
@@ -448,7 +444,9 @@ describe('Slider', () => {
       );
       const thumb = getThumbs(container)[0];
       // Same act-flush as above.
-      act(() => { thumb.focus(); });
+      act(() => {
+        thumb.focus();
+      });
       const labelEl = container.querySelector('[class*="label"]:not([class*="markLabel"])');
       expect(labelEl).toHaveTextContent('42 GB');
     });
@@ -475,9 +473,7 @@ describe('Slider', () => {
     });
 
     it('range mode + name="price": renders TWO hidden inputs (price-min and price-max)', () => {
-      const { container } = render(
-        <Slider value={[10, 90]} name="price" onChange={() => {}} />,
-      );
+      const { container } = render(<Slider value={[10, 90]} name="price" onChange={() => {}} />);
       const inputs = container.querySelectorAll<HTMLInputElement>('input[type="hidden"]');
       expect(inputs).toHaveLength(2);
       expect(inputs[0]).toHaveAttribute('name', 'price-min');
@@ -487,9 +483,7 @@ describe('Slider', () => {
     });
 
     it('disabled: hidden inputs are NOT rendered (form does not submit a stale value)', () => {
-      const { container } = render(
-        <Slider value={50} name="vol" disabled onChange={() => {}} />,
-      );
+      const { container } = render(<Slider value={50} name="vol" disabled onChange={() => {}} />);
       const inputs = container.querySelectorAll('input[type="hidden"]');
       expect(inputs).toHaveLength(0);
     });

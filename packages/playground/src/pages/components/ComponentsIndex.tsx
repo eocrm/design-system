@@ -265,7 +265,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/slider',
     name: 'Slider',
-    description: 'Controlled slider: single-thumb or range (two-thumb), horizontal or vertical. Custom-painted with marks + value bubble.',
+    description:
+      'Controlled slider: single-thumb or range (two-thumb), horizontal or vertical. Custom-painted with marks + value bubble.',
     preview: (
       <div style={{ width: '100%', maxWidth: 220 }}>
         <Slider value={42} onChange={() => {}} aria-label="preview" />

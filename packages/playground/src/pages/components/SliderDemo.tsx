@@ -56,10 +56,30 @@ function Tones() {
   const [value, setValue] = useState(75);
   return (
     <Stack gap="md">
-      <Slider value={value} tone="default" onChange={(v) => setValue(v as number)} aria-label="default" />
-      <Slider value={value} tone="success" onChange={(v) => setValue(v as number)} aria-label="success" />
-      <Slider value={value} tone="warning" onChange={(v) => setValue(v as number)} aria-label="warning" />
-      <Slider value={value} tone="danger" onChange={(v) => setValue(v as number)} aria-label="danger" />
+      <Slider
+        value={value}
+        tone="default"
+        onChange={(v) => setValue(v as number)}
+        aria-label="default"
+      />
+      <Slider
+        value={value}
+        tone="success"
+        onChange={(v) => setValue(v as number)}
+        aria-label="success"
+      />
+      <Slider
+        value={value}
+        tone="warning"
+        onChange={(v) => setValue(v as number)}
+        aria-label="warning"
+      />
+      <Slider
+        value={value}
+        tone="danger"
+        onChange={(v) => setValue(v as number)}
+        aria-label="danger"
+      />
     </Stack>
   );
 }

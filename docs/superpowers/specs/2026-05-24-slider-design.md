@@ -104,8 +104,10 @@ export interface SliderMark {
   label?: ReactNode;
 }
 
-export interface SliderProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue' | 'role'> {
+export interface SliderProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue' | 'role'
+> {
   /**
    * Current value. A single `number` for one-thumb mode; a `[min, max]` tuple
    * for two-thumb (range) mode. The component type-discriminates internally.
@@ -243,13 +245,15 @@ The following sketches the JSX shape and the locally-derived variables the compo
       )}
     </div>
   ))}
-  {name && (isRange
-    ? <>
+  {name &&
+    (isRange ? (
+      <>
         <input type="hidden" name={`${name}-min`} value={(value as [number, number])[0]} />
         <input type="hidden" name={`${name}-max`} value={(value as [number, number])[1]} />
       </>
-    : <input type="hidden" name={name} value={value as number} />
-  )}
+    ) : (
+      <input type="hidden" name={name} value={value as number} />
+    ))}
 </div>
 ```
 
@@ -524,17 +528,17 @@ Clicking on the track (NOT on a thumb) snaps the nearest thumb to the click posi
 
 ## ARIA + behavior reference
 
-| Concern               | Behavior                                                                                                                                                                                                                                                       |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Thumb role**        | `role="slider"` on each thumb. `tabIndex=0` (or `-1` when disabled). `aria-valuemin/max/now` per thumb. `aria-orientation` from prop. `aria-disabled` when disabled.                                                                                              |
-| **Range mode ARIA**   | TWO `<div role="slider">` elements, one per thumb. Each has its own `aria-valuenow`. Consumers wanting accessible labels per thumb can pass `aria-label` to the root via spread, which we use as a base — but ideally the consumer also passes `aria-label`s through prop slots (deferred). For v1, the root's `aria-label` covers both thumbs (the SR will announce the slider name plus the current values). |
-| **Value text**        | `aria-valuetext` set when `label` is a function (formatted output). When `label` is `true`, the raw number is used (no `aria-valuetext` override). When `label` is `false`, `aria-valuetext` is unset (SR announces the raw `aria-valuenow`).                              |
-| **Track click**       | Click on the track (not a thumb) snaps the nearest thumb to the click position and focuses it. Range mode: distance to thumb determines which thumb moves.                                                                                                  |
-| **Disabled**          | `aria-disabled` on each thumb; `tabIndex=-1`; pointer-events: none on the root via `.disabled`; hidden inputs receive `disabled`.                                                                                                                                |
-| **Reduced motion**    | `@media (prefers-reduced-motion: reduce)` disables the `transition` on `.thumb` box-shadow. Drag movement itself is direct (no transition during drag); only the focus/hover transitions are affected.                                                          |
-| **Pointer capture**   | `setPointerCapture` on pointerdown ensures pointermove/up still fire on the thumb even when the pointer leaves the element. Released on pointerup.                                                                                                              |
-| **Keyboard nudge**    | ArrowLeft/Down: -step. ArrowRight/Up: +step. Home: min. End: max. PageDown: -10×step. PageUp: +10×step. `onChange` per key, `onChangeEnd` on blur.                                                                                                              |
-| **Range thumb swap**  | Thumbs clamp so `value[0] ≤ value[1]` always. A drag that would cross gets clamped to the other thumb's value. Keyboard nav same.                                                                                                                               |
+| Concern              | Behavior                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Thumb role**       | `role="slider"` on each thumb. `tabIndex=0` (or `-1` when disabled). `aria-valuemin/max/now` per thumb. `aria-orientation` from prop. `aria-disabled` when disabled.                                                                                                                                                                                                                                           |
+| **Range mode ARIA**  | TWO `<div role="slider">` elements, one per thumb. Each has its own `aria-valuenow`. Consumers wanting accessible labels per thumb can pass `aria-label` to the root via spread, which we use as a base — but ideally the consumer also passes `aria-label`s through prop slots (deferred). For v1, the root's `aria-label` covers both thumbs (the SR will announce the slider name plus the current values). |
+| **Value text**       | `aria-valuetext` set when `label` is a function (formatted output). When `label` is `true`, the raw number is used (no `aria-valuetext` override). When `label` is `false`, `aria-valuetext` is unset (SR announces the raw `aria-valuenow`).                                                                                                                                                                  |
+| **Track click**      | Click on the track (not a thumb) snaps the nearest thumb to the click position and focuses it. Range mode: distance to thumb determines which thumb moves.                                                                                                                                                                                                                                                     |
+| **Disabled**         | `aria-disabled` on each thumb; `tabIndex=-1`; pointer-events: none on the root via `.disabled`; hidden inputs receive `disabled`.                                                                                                                                                                                                                                                                              |
+| **Reduced motion**   | `@media (prefers-reduced-motion: reduce)` disables the `transition` on `.thumb` box-shadow. Drag movement itself is direct (no transition during drag); only the focus/hover transitions are affected.                                                                                                                                                                                                         |
+| **Pointer capture**  | `setPointerCapture` on pointerdown ensures pointermove/up still fire on the thumb even when the pointer leaves the element. Released on pointerup.                                                                                                                                                                                                                                                             |
+| **Keyboard nudge**   | ArrowLeft/Down: -step. ArrowRight/Up: +step. Home: min. End: max. PageDown: -10×step. PageUp: +10×step. `onChange` per key, `onChangeEnd` on blur.                                                                                                                                                                                                                                                             |
+| **Range thumb swap** | Thumbs clamp so `value[0] ≤ value[1]` always. A drag that would cross gets clamped to the other thumb's value. Keyboard nav same.                                                                                                                                                                                                                                                                              |
 
 ## Testing
 
@@ -597,7 +601,6 @@ Clicking on the track (NOT on a thumb) snaps the nearest thumb to the click posi
 
 36. `name="zoom"` single mode renders `<input type="hidden" name="zoom" value={50}>`
 37. `name="price"` range mode renders TWO hidden inputs (`price-min` and `price-max`)
-
 
 ## Demo additions
 

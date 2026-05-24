@@ -38,8 +38,10 @@ export interface SliderMark {
   label?: ReactNode;
 }
 
-export interface SliderProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue' | 'role'> {
+export interface SliderProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue' | 'role'
+> {
   /**
    * Current value. A single `number` for one-thumb mode; a `[min, max]` tuple
    * for two-thumb (range) mode. The component type-discriminates internally.
@@ -305,8 +307,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
       const rect = trackEl.getBoundingClientRect();
       const lengthPx = orientation === 'horizontal' ? rect.width : rect.height;
       if (lengthPx === 0) return null;
-      const pointerPos =
-        orientation === 'horizontal' ? clientX - rect.left : rect.bottom - clientY;
+      const pointerPos = orientation === 'horizontal' ? clientX - rect.left : rect.bottom - clientY;
       const pct = clamp(pointerPos / lengthPx, 0, 1);
       const raw = min + pct * range;
       const snapped = clamp(snapToStep(raw, min, step), min, max);
@@ -554,11 +555,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
       )}
       {...rest}
     >
-      <div
-        ref={trackRef}
-        className={styles.track}
-        onPointerDown={handleTrackPointerDown}
-      >
+      <div ref={trackRef} className={styles.track} onPointerDown={handleTrackPointerDown}>
         <div className={styles.fill} style={fillStyle} />
         {marksArr.map((mark) => (
           <span
@@ -566,9 +563,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
             className={clsx(styles.mark, isMarkInFill(mark) && styles.markFilled)}
             style={markStyle(mark)}
           >
-            {mark.label !== undefined && (
-              <span className={styles.markLabel}>{mark.label}</span>
-            )}
+            {mark.label !== undefined && <span className={styles.markLabel}>{mark.label}</span>}
           </span>
         ))}
       </div>
@@ -580,9 +575,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           aria-valuemin={min}
           aria-valuemax={max}
           aria-valuenow={thumbValue}
-          aria-valuetext={
-            typeof label === 'function' ? String(label(thumbValue)) : undefined
-          }
+          aria-valuetext={typeof label === 'function' ? String(label(thumbValue)) : undefined}
           aria-orientation={orientation}
           aria-disabled={disabled || undefined}
           aria-label={
@@ -607,25 +600,15 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           onBlur={() => handleThumbBlur(index)}
           onKeyDown={(e) => handleThumbKeyDown(e, index)}
         >
-          {showLabelFor(index) && (
-            <span className={styles.label}>{formatLabel(thumbValue)}</span>
-          )}
+          {showLabelFor(index) && <span className={styles.label}>{formatLabel(thumbValue)}</span>}
         </div>
       ))}
       {name &&
         !disabled &&
         (isRange ? (
           <>
-            <input
-              type="hidden"
-              name={`${name}-min`}
-              value={(value as [number, number])[0]}
-            />
-            <input
-              type="hidden"
-              name={`${name}-max`}
-              value={(value as [number, number])[1]}
-            />
+            <input type="hidden" name={`${name}-min`} value={(value as [number, number])[0]} />
+            <input type="hidden" name={`${name}-max`} value={(value as [number, number])[1]} />
           </>
         ) : (
           <input type="hidden" name={name} value={value as number} />
