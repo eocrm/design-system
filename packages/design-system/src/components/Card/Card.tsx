@@ -157,8 +157,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
   // their own internal padding and want to bleed to the card edge. When any
   // are present and `padding` wasn't passed explicitly, default to 'none' so
   // the consumer doesn't have to repeat themselves. Explicit `padding` wins.
-  const effectivePadding: CardPadding =
-    padding ?? (hasCompoundChildren(children) ? 'none' : 'md');
+  const effectivePadding: CardPadding = padding ?? (hasCompoundChildren(children) ? 'none' : 'md');
   // {...props} last so consumer overrides win (Pattern A).
   return (
     <div

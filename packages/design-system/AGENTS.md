@@ -342,7 +342,15 @@ import { Switch } from '@eocrm/design-system';
 // Compound API — section card with header + list (Dashboard's "Deals needing attention" pattern).
 // No `padding` prop needed — Card auto-detects compound children and defaults to padding="none".
 <Card>
-  <Card.Header action={<Link as={RouterLink} to="/deals">View all</Link>}>Deals needing attention</Card.Header>
+  <Card.Header
+    action={
+      <Link as={RouterLink} to="/deals">
+        View all
+      </Link>
+    }
+  >
+    Deals needing attention
+  </Card.Header>
   <Card.List>
     {deals.map((d) => (
       <Card.ListRow key={d.id}>
