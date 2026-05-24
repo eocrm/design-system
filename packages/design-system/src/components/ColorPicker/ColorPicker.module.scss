@@ -1,1 +1,233 @@
-// Placeholder — full styles land in T3.
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  width: 240px;
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.panelDisabled {
+  opacity: var(--opacity-disabled);
+
+  // CSS keyword — disabled panel is non-interactive at the wrapper level too.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  pointer-events: none;
+}
+
+.svSquare {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+
+  // CSS keyword — crosshair cursor signals 2D pick affordance.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: crosshair;
+
+  // CSS keyword — prevents text selection during drag.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  user-select: none;
+}
+
+.svSquare::before,
+.svSquare::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.svSquare::before {
+  // Saturation gradient: white at the left fades to transparent at the right.
+  // Raw colors here are part of the HSV-rendering math (NOT brand colors) —
+  // pure white/black gradients are the canonical way to render an SV pad.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- SV-pad math gradient, white/black are mathematical primitives here, not brand colors
+  background: linear-gradient(to right, #ffffff, transparent);
+}
+
+.svSquare::after {
+  // Value gradient: black at the bottom fades to transparent at the top.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- SV-pad math gradient, white/black are mathematical primitives here, not brand colors
+  background: linear-gradient(to top, #000000, transparent);
+}
+
+.svSquare:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-accent);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
+  outline-offset: 2px;
+}
+
+.svSquareDisabled {
+  // CSS keyword.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: not-allowed;
+}
+
+.svIndicator {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+
+  // The indicator must be visible against ANY color the pad can show.
+  // A white border with a thin dark outer shadow gives strong contrast on
+  // both light and dark backgrounds. No token equivalent because no
+  // single tone works against pure black or pure white.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value, declaration-property-value-disallowed-list -- indicator must remain visible against any background color, no token equivalent
+  border: 2px solid #ffffff;
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- indicator must remain visible against any background color, no token equivalent
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 50%);
+
+  // CSS keyword — indicator is a visual marker only, not a click target.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  pointer-events: none;
+}
+
+.hueSlider {
+  // Wrapper that owns the rainbow track override. We target Slider's
+  // internal track class from outside via :global, layered atop the Slider's
+  // own tone-variant track background. Specificity beats Slider's own .track
+  // rule, but tone variants (.track.tone-success etc.) can match, so the
+  // !important is required to defeat any tone the consumer might pass.
+
+  // stylelint-disable-next-line selector-pseudo-class-no-unknown -- CSS Modules :global() escape hatch
+  & :global([class*='track']) {
+
+    // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- rainbow gradient overrides Slider's default track background; !important needed to defeat Slider's tone variants
+    background: linear-gradient(
+      to right,
+      #ff0000,
+      #ffff00,
+      #00ff00,
+      #00ffff,
+      #0000ff,
+      #ff00ff,
+      #ff0000
+    ) !important;
+  }
+}
+
+.hexInput {
+  // Forces uppercase rendering for the HEX text (input value is normalized
+  // separately; this is purely visual until commit).
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  text-transform: uppercase;
+}
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(24px, 1fr));
+  gap: var(--space-2);
+}
+
+.presetSwatch {
+  // Reset button defaults.
+
+  // CSS keyword — button needs explicit padding reset.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  padding: 0;
+  aspect-ratio: 1;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+
+  // CSS keyword — swatches are clickable.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: pointer;
+  position: relative;
+}
+
+.presetSwatch:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-accent);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
+  outline-offset: 2px;
+}
+
+.presetSwatch:disabled {
+  // CSS keyword.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.presetSwatchSelected {
+  // Inset ring + check-mark via ::after.
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.presetSwatchSelected::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  // Indicator check must contrast against any swatch color. Same rationale
+  // as svIndicator above — pure white with thin dark shadow.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- check must remain visible against any swatch background color
+  color: #ffffff;
+  font-size: 12px;
+
+  // CSS keyword.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  text-shadow: 0 0 2px rgb(0 0 0 / 70%);
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  line-height: 1;
+
+  // CSS keyword — clickable trigger.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: pointer;
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.trigger:hover:not(:disabled) {
+  border-color: var(--color-border-emphasis);
+}
+
+.trigger:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-accent);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
+  outline-offset: 2px;
+}
+
+.trigger:disabled {
+  // CSS keyword.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.triggerSwatch {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.triggerHex {
+  font-family: var(--font-mono);
+
+  // CSS keyword — uppercase HEX for visual consistency.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  text-transform: uppercase;
+}
