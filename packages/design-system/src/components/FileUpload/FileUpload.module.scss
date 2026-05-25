@@ -150,32 +150,6 @@
   color: var(--color-success);
 }
 
-.removeButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-md);
-  border: none;
-  background: transparent;
-  color: var(--color-fg-subtle);
-  cursor: pointer;
-  transition: background var(--transition-base);
-
-  &:hover:not(:disabled),
-  &:focus-visible {
-    background: var(--color-bg-muted);
-    color: var(--color-fg);
-    outline: none;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: var(--opacity-disabled);
-  }
-}
-
 .disabled .dropzone {
   cursor: not-allowed;
   opacity: var(--opacity-subtle);

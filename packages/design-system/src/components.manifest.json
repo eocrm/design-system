@@ -6,9 +6,11 @@
     "composedBy": []
   },
   "Alert": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Feedback",
-    "composes": [],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "Avatar": {
@@ -38,10 +40,16 @@
     "cluster": "Forms",
     "composes": [],
     "composedBy": [
+      "Alert",
       "ButtonGroup",
       "Calendar",
       "ConfirmationPopover",
-      "DataTable"
+      "DataTable",
+      "Drawer",
+      "FileUpload",
+      "Modal",
+      "PasswordInput",
+      "Toast"
     ]
   },
   "ButtonGroup": {
@@ -163,9 +171,11 @@
     "composedBy": []
   },
   "Drawer": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Overlays",
-    "composes": [],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "DropdownMenu": {
@@ -188,6 +198,7 @@
     "tier": "composition",
     "cluster": "Forms",
     "composes": [
+      "Button",
       "Progress"
     ],
     "composedBy": []
@@ -224,9 +235,11 @@
     ]
   },
   "Modal": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Overlays",
-    "composes": [],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "PageHeader": {
@@ -249,6 +262,7 @@
     "tier": "composition",
     "cluster": "Forms",
     "composes": [
+      "Button",
       "Tooltip"
     ],
     "composedBy": []
@@ -357,9 +371,11 @@
     ]
   },
   "Toast": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Feedback",
-    "composes": [],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "Tooltip": {

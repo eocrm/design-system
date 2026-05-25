@@ -183,36 +183,6 @@
   color: var(--color-fg);
 }
 
-.headerCloseButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
-  width: 28px;
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value
-  height: 28px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
-
-  &:hover {
-    background: var(--color-bg-muted);
-    color: var(--color-fg);
-  }
-
-  &:focus-visible {
-    @include focus-ring;
-
-    outline: none;
-  }
-}
-
 // ─── Body ───────────────────────────────────────────────────────────────
 .body {
   padding: var(--space-4);

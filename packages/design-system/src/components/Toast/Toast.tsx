@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, Info, Loader2, X, XCircle } from 'lucide-react';
 import clsx from 'clsx';
+import { Button } from '../Button';
 import { store, type ToastEntry } from './store';
 import { useToastTimer } from './useToastTimer';
 import styles from './Toast.module.scss';
@@ -91,26 +92,27 @@ export function Toast({ entry, isPeek }: ToastProps) {
 
       <div className={styles.tail}>
         {entry.action && (
-          <button
-            type="button"
-            className={styles.action}
+          <Button
+            variant="secondary"
+            size="xs"
             onClick={() => {
               entry.action!.onClick();
               store.dismiss(entry.id);
             }}
           >
             {entry.action.label}
-          </button>
+          </Button>
         )}
         {entry.dismissible && (
-          <button
-            type="button"
-            className={styles.close}
+          <Button
+            variant="ghost"
+            size="xs"
+            iconOnly
             aria-label="Dismiss"
             onClick={() => store.dismiss(entry.id)}
           >
             <X size={14} aria-hidden="true" />
-          </button>
+          </Button>
         )}
       </div>
     </li>

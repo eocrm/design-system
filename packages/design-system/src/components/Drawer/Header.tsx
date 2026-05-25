@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useId, useRef, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
+import { Button } from '../Button';
 import { useDrawerContext } from './context';
 import { sanitizeId, mergeRefs } from '../_internal/refs';
 import { useDragToClose } from './useDragToClose';
@@ -48,14 +49,15 @@ export const Header = forwardRef<HTMLDivElement, DrawerHeaderProps>(function Hea
         {children}
       </h2>
       {closeButton && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="xs"
+          iconOnly
           aria-label="Close dialog"
-          className={styles.headerCloseButton}
           onClick={() => ctx.setOpen(false)}
         >
           <X size={16} aria-hidden="true" />
-        </button>
+        </Button>
       )}
     </div>
   );

@@ -98,7 +98,6 @@
   // consumer-supplied className on e.g. <Modal.Header> can always win.
   --modal-pad: var(--space-4);
   --modal-title-size: var(--font-size-lg);
-  --modal-close-size: 28px;
 
   display: flex;
   flex-direction: column;
@@ -141,7 +140,6 @@
   --modal-width: var(--size-modal-sm);
   --modal-pad: var(--space-3);
   --modal-title-size: var(--font-size-md);
-  --modal-close-size: 24px;
 }
 
 .size-md {
@@ -169,34 +167,6 @@
   font-size: var(--modal-title-size);
   font-weight: var(--font-weight-semibold);
   color: var(--color-fg);
-}
-
-.headerCloseButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--modal-close-size);
-  height: var(--modal-close-size);
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
-
-  &:hover {
-    background: var(--color-bg-muted);
-    color: var(--color-fg);
-  }
-
-  &:focus-visible {
-    @include focus-ring;
-
-    outline: none;
-  }
 }
 
 // ─── Body ───────────────────────────────────────────────────────────────

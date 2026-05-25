@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { CloudUpload, Check, X } from 'lucide-react';
 import clsx from 'clsx';
+import { Button } from '../Button';
 import { Progress } from '../Progress';
 import { formatBytes } from './formatBytes';
 import { iconForFile } from './iconForFile';
@@ -487,15 +488,16 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
                     <Check className={styles.rowDoneIcon} size={16} role="img" aria-label="Done" />
                   )}
                 </span>
-                <button
-                  type="button"
-                  className={styles.removeButton}
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  iconOnly
                   onClick={() => onFileRemove(entry)}
                   disabled={disabled}
                   aria-label={`Remove ${entry.file.name}`}
                 >
                   <X size={16} aria-hidden />
-                </button>
+                </Button>
               </li>
             );
           })}
