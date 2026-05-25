@@ -62,6 +62,23 @@ Distinct from `<Button>` (text + icon, not a layout container) and plain `<Card>
 
 **When this ships:** refactor the MockupsIndex mock in the file above (and any other mockup-index pages that follow the same grid-of-clickable-cards pattern), then tick this checkbox.
 
+### [ ] `<MutedBox>` — non-Card subdued-background container
+
+**Filed:** 2026-05-25
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/Deals/Deals.tsx` — each kanban column needs a `--color-bg-muted` background so the columns read as distinct lanes against the white page background.
+
+**What's needed:**
+A simple container with `padding` and a tinted background — the Kanban-column / sidebar-region / chat-bubble pattern. `<Card>` is the wrong primitive: Card is a bordered, white-background surface for "elevated content," and its `tone` prop only paints a left-edge stripe. What's needed here is the inverse: a "subdued region" that recedes against the page. Props: `padding?: 'none' | 'sm' | 'md' | 'lg'`, `tone?: 'muted' | 'sunken' | 'subtle'` (controlling which bg token applies), `radius?: 'sm' | 'md' | 'lg' | 'none'`, plus `children`. No border (or optional `bordered`).
+
+The name `<MutedBox>` is a placeholder — could also land as `<Surface>` / `<Region>` / `<Lane>` depending on which metaphor wins.
+
+**Current workaround:**
+Inline `style={{ background: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)' }}` on a `<div>` (or wrapping `<Stack>` if a child needs vertical rhythm). Marked with the standard TODO comment.
+
+**When this ships:** refactor the Deals mockup column-wrapper sites, then tick this checkbox.
+
 ## Closed
 
 _(filled as entries are resolved.)_
