@@ -41,6 +41,7 @@ import { FileUpload } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
+import { PageHeader } from '@eocrm/design-system';
 import { toast } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
 
@@ -644,6 +645,23 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             <Button size="sm">OK</Button>
           </div>
         </div>
+      </div>
+    ),
+  },
+  {
+    to: '/components/page-header',
+    name: 'PageHeader',
+    description:
+      'Compound layout primitive for top-of-page headers. Breadcrumb + BackButton + Aside (Avatar) + Title + Subtitle + Meta + Actions.',
+    preview: (
+      <div style={{ width: '100%', pointerEvents: 'none' }}>
+        <PageHeader borderBottom={false}>
+          <PageHeader.Title order={2}>Acme Corp</PageHeader.Title>
+          <PageHeader.Subtitle>230 employees</PageHeader.Subtitle>
+          <PageHeader.Actions>
+            <Button size="sm" variant="secondary">Edit</Button>
+          </PageHeader.Actions>
+        </PageHeader>
       </div>
     ),
   },

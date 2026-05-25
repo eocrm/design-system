@@ -32,6 +32,7 @@ export type ComponentName =
   | 'Input'
   | 'Link'
   | 'Modal'
+  | 'PageHeader'
   | 'Pagination'
   | 'PasswordInput'
   | 'PasswordStrengthMeter'
