@@ -659,7 +659,9 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           <PageHeader.Title order={2}>Acme Corp</PageHeader.Title>
           <PageHeader.Subtitle>230 employees</PageHeader.Subtitle>
           <PageHeader.Actions>
-            <Button size="sm" variant="secondary">Edit</Button>
+            <Button size="sm" variant="secondary">
+              Edit
+            </Button>
           </PageHeader.Actions>
         </PageHeader>
       </div>

@@ -47,7 +47,11 @@ Unlike `<ColorPicker.Trigger>` which is a `null` marker, **PageHeader's sub-comp
 ```tsx
 // e.g.
 function PageHeaderTitle({ order = 1, size, children }: PageHeaderTitleProps) {
-  return <Title order={order} size={size} className={styles.title}>{children}</Title>;
+  return (
+    <Title order={order} size={size} className={styles.title}>
+      {children}
+    </Title>
+  );
 }
 PageHeaderTitle.displayName = 'PageHeaderTitle';
 ```
@@ -64,10 +68,10 @@ React's `Children.toArray` flattens one level of fragments, but **does NOT recur
 .root {
   display: grid;
   grid-template-areas:
-    "breadcrumb breadcrumb breadcrumb"
-    "aside title actions"
-    "aside subtitle actions"
-    "aside meta actions";
+    'breadcrumb breadcrumb breadcrumb'
+    'aside title actions'
+    'aside subtitle actions'
+    'aside meta actions';
   grid-template-columns: auto 1fr auto;
   gap: var(--space-2) var(--space-3);
   padding-block: var(--space-4) var(--space-3);
@@ -154,15 +158,15 @@ export const PageHeader = Object.assign(PageHeaderRoot, {
 
 ## Slot inventory
 
-| Slot | Element | Purpose | Grid area |
-| --- | --- | --- | --- |
-| `<PageHeader.Breadcrumb>` | `<div>` wrapping `<Breadcrumb>` | Page-level navigation trail | `breadcrumb` (row 1, full width) |
-| `<PageHeader.BackButton>` | `<a>` or `<button>` | Back navigation (renders inside the Breadcrumb row, leading) | — (rendered inside `.breadcrumb`) |
-| `<PageHeader.Aside>` | `<div>` | Avatar / icon / image | `aside` (rows 2-4, left column) |
-| `<PageHeader.Title>` | `<Title order={order}>` | Main heading (h1 default) | `title` (row 2, center column) |
-| `<PageHeader.Subtitle>` | `<p>` | One-line description | `subtitle` (row 3, center column) |
-| `<PageHeader.Meta>` | `<div>` (flex row, wraps) | Badges / timestamps / chips | `meta` (row 4, center column) |
-| `<PageHeader.Actions>` | `<div>` (flex row) | Right-aligned button cluster | `actions` (rows 2-4, right column) |
+| Slot                      | Element                         | Purpose                                                      | Grid area                          |
+| ------------------------- | ------------------------------- | ------------------------------------------------------------ | ---------------------------------- |
+| `<PageHeader.Breadcrumb>` | `<div>` wrapping `<Breadcrumb>` | Page-level navigation trail                                  | `breadcrumb` (row 1, full width)   |
+| `<PageHeader.BackButton>` | `<a>` or `<button>`             | Back navigation (renders inside the Breadcrumb row, leading) | — (rendered inside `.breadcrumb`)  |
+| `<PageHeader.Aside>`      | `<div>`                         | Avatar / icon / image                                        | `aside` (rows 2-4, left column)    |
+| `<PageHeader.Title>`      | `<Title order={order}>`         | Main heading (h1 default)                                    | `title` (row 2, center column)     |
+| `<PageHeader.Subtitle>`   | `<p>`                           | One-line description                                         | `subtitle` (row 3, center column)  |
+| `<PageHeader.Meta>`       | `<div>` (flex row, wraps)       | Badges / timestamps / chips                                  | `meta` (row 4, center column)      |
+| `<PageHeader.Actions>`    | `<div>` (flex row)              | Right-aligned button cluster                                 | `actions` (rows 2-4, right column) |
 
 ## Interactions / behavior
 
@@ -187,11 +191,11 @@ Grid template re-orders so Actions wraps to a new row below the title block:
 @media (max-width: 640px) {
   .root {
     grid-template-areas:
-      "breadcrumb breadcrumb"
-      "aside title"
-      "aside subtitle"
-      "aside meta"
-      "actions actions";
+      'breadcrumb breadcrumb'
+      'aside title'
+      'aside subtitle'
+      'aside meta'
+      'actions actions';
     grid-template-columns: auto 1fr;
   }
   .actions {
@@ -207,17 +211,17 @@ None — PageHeader is a pure layout primitive with no behavioral state.
 
 ## Edge cases
 
-| Case | Behavior |
-| --- | --- |
-| `<PageHeader>` with no children at all | Renders an empty styled `<div>`. No error. |
-| `<PageHeader>` with only `<PageHeader.Title>` | Renders title; all other grid rows collapse to 0 height. |
-| Non-PageHeader child (e.g., `<div>` directly in `<PageHeader>`) | Silently dropped. |
-| `<PageHeader.Title>` wrapped in `<>...</>` Fragment | Supported (one level of Fragment unwrapping). |
-| `<PageHeader.Title>` deeply nested under custom HOC | Silently dropped. Documented anti-pattern. |
-| `<PageHeader.BackButton>` with both `href` AND `onClick` | Renders as `<button>`, warns in dev. |
-| `<PageHeader.BackButton>` with neither `href` nor `onClick` | Renders as a non-interactive `<button disabled>`, warns in dev. |
-| Multiple `<PageHeader.Title>` children | First one wins, subsequent ones silently dropped. |
-| Empty `<PageHeader.Actions>` | Renders an empty `<div>` in the actions column (no negative impact). |
+| Case                                                            | Behavior                                                             |
+| --------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `<PageHeader>` with no children at all                          | Renders an empty styled `<div>`. No error.                           |
+| `<PageHeader>` with only `<PageHeader.Title>`                   | Renders title; all other grid rows collapse to 0 height.             |
+| Non-PageHeader child (e.g., `<div>` directly in `<PageHeader>`) | Silently dropped.                                                    |
+| `<PageHeader.Title>` wrapped in `<>...</>` Fragment             | Supported (one level of Fragment unwrapping).                        |
+| `<PageHeader.Title>` deeply nested under custom HOC             | Silently dropped. Documented anti-pattern.                           |
+| `<PageHeader.BackButton>` with both `href` AND `onClick`        | Renders as `<button>`, warns in dev.                                 |
+| `<PageHeader.BackButton>` with neither `href` nor `onClick`     | Renders as a non-interactive `<button disabled>`, warns in dev.      |
+| Multiple `<PageHeader.Title>` children                          | First one wins, subsequent ones silently dropped.                    |
+| Empty `<PageHeader.Actions>`                                    | Renders an empty `<div>` in the actions column (no negative impact). |
 
 ## SCSS sketch (verbatim)
 
@@ -225,10 +229,10 @@ None — PageHeader is a pure layout primitive with no behavioral state.
 .root {
   display: grid;
   grid-template-areas:
-    "breadcrumb breadcrumb breadcrumb"
-    "aside title actions"
-    "aside subtitle actions"
-    "aside meta actions";
+    'breadcrumb breadcrumb breadcrumb'
+    'aside title actions'
+    'aside subtitle actions'
+    'aside meta actions';
   grid-template-columns: auto 1fr auto;
   gap: var(--space-2) var(--space-3);
   padding-block: var(--space-4) var(--space-3);
@@ -307,11 +311,11 @@ None — PageHeader is a pure layout primitive with no behavioral state.
 @media (max-width: 640px) {
   .root {
     grid-template-areas:
-      "breadcrumb breadcrumb"
-      "aside title"
-      "aside subtitle"
-      "aside meta"
-      "actions actions";
+      'breadcrumb breadcrumb'
+      'aside title'
+      'aside subtitle'
+      'aside meta'
+      'actions actions';
     grid-template-columns: auto 1fr;
   }
 

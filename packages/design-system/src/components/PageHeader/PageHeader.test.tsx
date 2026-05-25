@@ -217,9 +217,7 @@ describe('PageHeader.BackButton', () => {
         <PageHeader.BackButton aria-label="Back" />
       </PageHeader>,
     );
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('without `href` or `onClick`'),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('without `href` or `onClick`'));
     const btn = screen.getByRole('button', { name: 'Back' });
     expect(btn.tagName).toBe('BUTTON');
     expect(btn).toBeDisabled();

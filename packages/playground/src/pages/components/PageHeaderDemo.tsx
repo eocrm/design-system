@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  PageHeader,
-  Avatar,
-  Badge,
-  Button,
-  Breadcrumb,
-  Tabs,
-  Text,
-} from '@eocrm/design-system';
+import { PageHeader, Avatar, Badge, Button, Breadcrumb, Tabs, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/PageHeader/PageHeader.tsx?raw';
@@ -50,7 +42,9 @@ function FullDemo() {
       <PageHeader.Subtitle>Founded 2014 · 230 employees</PageHeader.Subtitle>
       <PageHeader.Meta>
         <Badge tone="success">Active</Badge>
-        <Text size="sm" tone="muted">Last contacted 2 days ago</Text>
+        <Text size="sm" tone="muted">
+          Last contacted 2 days ago
+        </Text>
       </PageHeader.Meta>
       <PageHeader.Actions>
         <Button variant="secondary">Email</Button>

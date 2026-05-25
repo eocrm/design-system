@@ -103,10 +103,7 @@ function flattenChildren(children: ReactNode): ReactNode[] {
 }
 
 /** Find the first child whose `type` equals the given component. */
-function findSlot<P>(
-  children: ReactNode,
-  type: ComponentType<P>,
-): ReactElement<P> | undefined {
+function findSlot<P>(children: ReactNode, type: ComponentType<P>): ReactElement<P> | undefined {
   return flattenChildren(children).find(
     (c): c is ReactElement<P> => isValidElement(c) && c.type === type,
   );
@@ -124,11 +121,7 @@ function findSlot<P>(
  *   <Breadcrumb items={[...]} />
  * </PageHeader.Breadcrumb>
  */
-export function PageHeaderBreadcrumb({
-  children,
-  className,
-  ...rest
-}: PageHeaderBreadcrumbProps) {
+export function PageHeaderBreadcrumb({ children, className, ...rest }: PageHeaderBreadcrumbProps) {
   return (
     <div className={clsx(styles.breadcrumbInner, className)} {...rest}>
       {children}
@@ -195,12 +188,7 @@ export function PageHeaderBackButton({
     return <a {...anchorProps}>{icon}</a>;
   }
   return (
-    <button
-      type="button"
-      disabled
-      aria-label={ariaLabel}
-      className={styles.backButton}
-    >
+    <button type="button" disabled aria-label={ariaLabel} className={styles.backButton}>
       {icon}
     </button>
   );
@@ -260,11 +248,7 @@ PageHeaderTitle.displayName = 'PageHeaderTitle';
  * @example
  * <PageHeader.Subtitle>Founded 2014 · 230 employees</PageHeader.Subtitle>
  */
-export function PageHeaderSubtitle({
-  children,
-  className,
-  ...rest
-}: PageHeaderSubtitleProps) {
+export function PageHeaderSubtitle({ children, className, ...rest }: PageHeaderSubtitleProps) {
   return (
     <p className={clsx(styles.subtitle, className)} {...rest}>
       {children}
@@ -392,40 +376,38 @@ PageHeaderActions.displayName = 'PageHeaderActions';
  *   children. Only the FIRST match is rendered into the slot; subsequent
  *   duplicates are silently dropped.
  */
-const PageHeaderRoot = forwardRef<HTMLDivElement, PageHeaderProps>(
-  function PageHeaderRoot(
-    { borderBottom = true, className, children, ...rest },
-    ref,
-  ) {
-    const breadcrumb = findSlot(children, PageHeaderBreadcrumb);
-    const backButton = findSlot(children, PageHeaderBackButton);
-    const aside = findSlot(children, PageHeaderAside);
-    const title = findSlot(children, PageHeaderTitle);
-    const subtitle = findSlot(children, PageHeaderSubtitle);
-    const meta = findSlot(children, PageHeaderMeta);
-    const actions = findSlot(children, PageHeaderActions);
+const PageHeaderRoot = forwardRef<HTMLDivElement, PageHeaderProps>(function PageHeaderRoot(
+  { borderBottom = true, className, children, ...rest },
+  ref,
+) {
+  const breadcrumb = findSlot(children, PageHeaderBreadcrumb);
+  const backButton = findSlot(children, PageHeaderBackButton);
+  const aside = findSlot(children, PageHeaderAside);
+  const title = findSlot(children, PageHeaderTitle);
+  const subtitle = findSlot(children, PageHeaderSubtitle);
+  const meta = findSlot(children, PageHeaderMeta);
+  const actions = findSlot(children, PageHeaderActions);
 
-    return (
-      <div
-        ref={ref}
-        className={clsx(styles.root, borderBottom && styles.rootWithBorder, className)}
-        {...rest}
-      >
-        {(breadcrumb || backButton) && (
-          <div className={styles.breadcrumb}>
-            {backButton}
-            {breadcrumb}
-          </div>
-        )}
-        {aside}
-        {title}
-        {subtitle}
-        {meta}
-        {actions}
-      </div>
-    );
-  },
-);
+  return (
+    <div
+      ref={ref}
+      className={clsx(styles.root, borderBottom && styles.rootWithBorder, className)}
+      {...rest}
+    >
+      {(breadcrumb || backButton) && (
+        <div className={styles.breadcrumb}>
+          {backButton}
+          {breadcrumb}
+        </div>
+      )}
+      {aside}
+      {title}
+      {subtitle}
+      {meta}
+      {actions}
+    </div>
+  );
+});
 PageHeaderRoot.displayName = 'PageHeader';
 
 /** Compound API: `<PageHeader>` + 7 sub-components. */
