@@ -44,6 +44,23 @@ Inline `style={...}` on a `<div>` with `display: grid; place-items: center; widt
 
 **When this ships:** refactor the Dashboard mock in the file above, then tick this checkbox.
 
+### [ ] `<NavCard>` — clickable Card with router/href navigation, hover affordance, full-area click target
+
+**Filed:** 2026-05-25
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/MockupsIndex.tsx` — grid of cards linking to each mockup page.
+
+**What's needed:**
+A Card variant whose entire surface is a single click target (anchor or button), with hover affordance (border-color shift + shadow elevation) and proper `:focus-visible` keyboard ring. Should accept either `href` (renders `<a>`) or `to` for router integration (consumer-supplied LinkComponent prop — same pattern Mantine / Chakra use to stay router-agnostic). Props: `href?: string`, `onClick?`, `LinkComponent?`, plus all standard Card props (`padding`, `tone`). Children render inside the card body as usual.
+
+Distinct from `<Button>` (text + icon, not a layout container) and plain `<Card>` (no click semantics). The router-aware variant matters because the library can't depend on `react-router-dom` (it's a playground-only dep per Rule 5), but consumers need a way to plug their own Link in.
+
+**Current workaround:**
+`<Link>` from `react-router-dom` wraps a `<Card>` with inline `style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}` to suppress default anchor styling. No hover affordance — the underlying Card doesn't change on hover the way the previous hand-rolled link-card did.
+
+**When this ships:** refactor the MockupsIndex mock in the file above (and any other mockup-index pages that follow the same grid-of-clickable-cards pattern), then tick this checkbox.
+
 ## Closed
 
 _(filled as entries are resolved.)_

@@ -1,7 +1,15 @@
 import { Link } from 'react-router-dom';
-import { Badge, Cluster, Stack } from '@eocrm/design-system';
+import {
+  Badge,
+  Card,
+  Cluster,
+  Code,
+  Grid,
+  Stack,
+  Text,
+  Title,
+} from '@eocrm/design-system';
 import { MOCKUPS } from './registry';
-import styles from './MockupsIndex.module.scss';
 
 export function MockupsIndex() {
   // Skip the parameterised contact-detail entry from the index — it isn't a top-level page.
@@ -9,32 +17,44 @@ export function MockupsIndex() {
 
   return (
     <Stack gap="lg">
-      <header>
-        <span className={styles.eyebrow}>Mockups</span>
-        <h1 className={styles.title}>CRM mockups</h1>
-        <p className={styles.description}>
-          Full-page mockups built only from <code>@eocrm/design-system</code> primitives. Each page
+      <Stack gap="xs">
+        <Title order={1}>CRM mockups</Title>
+        <Text size="lg" tone="muted">
+          Full-page mockups built only from <Code>@eocrm/design-system</Code> primitives. Each page
           links the components it uses, and each component links back to the mockups it appears in.
-        </p>
-      </header>
+        </Text>
+      </Stack>
 
-      <div className={styles.grid}>
+      <Grid minColumnWidth="280px" gap="md">
         {indexMockups.map((m) => (
-          <Link key={m.slug} to={m.path} className={styles.card}>
-            <div className={styles.cardName}>{m.title}</div>
-            <p className={styles.cardBlurb}>{m.blurb}</p>
-            <div className={styles.chips}>
-              <Cluster gap="xs">
-                {m.usesComponents.map((name) => (
-                  <Badge key={name} tone="info">
-                    {name}
-                  </Badge>
-                ))}
-              </Cluster>
-            </div>
+          /* TODO: replace when <NavCard> ships — see components/TODO.md.
+             Wrapping Card in a router Link to get nav; the inline style is the
+             escape hatch to suppress default <a> underline + color. */
+          <Link
+            key={m.slug}
+            to={m.path}
+            style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+          >
+            <Card padding="md">
+              <Stack gap="sm">
+                <Text size="lg" weight="semibold">
+                  {m.title}
+                </Text>
+                <Text size="sm" tone="muted">
+                  {m.blurb}
+                </Text>
+                <Cluster gap="xs">
+                  {m.usesComponents.map((name) => (
+                    <Badge key={name} tone="info">
+                      {name}
+                    </Badge>
+                  ))}
+                </Cluster>
+              </Stack>
+            </Card>
           </Link>
         ))}
-      </div>
+      </Grid>
     </Stack>
   );
 }
