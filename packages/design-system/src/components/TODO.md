@@ -27,22 +27,23 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
-### [ ] `<StatTile>` (or `<IconTile>`) — accent-tinted square containing a centered icon
+### [ ] `<StatTile>` (or `<IconTile>`) — tinted square (or circle) containing a centered icon
 
 **Filed:** 2026-05-25
 **Mocked in:**
 
-- `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx` — used as the trailing element inside each stat Card (label / value / Badge column on the left, tile on the right).
+- `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx` — used as the trailing element inside each stat Card (label / value / Badge column on the left, tile on the right). Rounded-square shape.
+- `packages/playground/src/pages/mockups/Members/Members.tsx` — leading icon on each pending-invitation row in the Invitations table. Circular shape, warning tone.
 
 **What's needed:**
-A 32×32 (or size-prop-driven) rounded-square container that centers an icon child. Tinted background matching a `tone` prop (`accent` / `success` / `warning` / `danger` / `info` / `neutral`), with the icon color picking up the tone's accent. Props: `icon: ReactNode` (or just `children`), `tone?: Tone`, `size?: 'sm' | 'md' | 'lg'`. No interactive state — purely decorative.
+A size-prop-driven container (default 32×32) that centers an icon child. Tinted background matching a `tone` prop (`accent` / `success` / `warning` / `danger` / `info` / `neutral`), with the icon color picking up the tone's accent. Props: `icon: ReactNode` (or just `children`), `tone?: Tone`, `size?: 'sm' | 'md' | 'lg'`, `shape?: 'square' | 'circle'` (default `'square'`). No interactive state — purely decorative.
 
-Distinct from `<Avatar>` (initials / image) and `<Badge>` (text-bearing chip). The closest current primitive is a Cluster around a lucide icon, but that doesn't give the tinted-bg square shape.
+Distinct from `<Avatar>` (initials / image) and `<Badge>` (text-bearing chip). The closest current primitive is a Cluster around a lucide icon, but that doesn't give the tinted-bg square / circle shape.
 
 **Current workaround:**
-Inline `style={...}` on a `<div>` with `display: grid; place-items: center; width/height: var(--size-md); border-radius: var(--radius-md); background: var(--color-accent-subtle-bg); color: var(--color-accent)`. Marked with the standard TODO comment.
+Inline `style={...}` on a `<div>` (or `<span>`) with `display: grid; place-items: center; width/height: var(--size-md); border-radius: var(--radius-md | --radius-full); background: var(--color-*-bg); color: var(--color-*)`. Marked with the standard TODO comment.
 
-**When this ships:** refactor the Dashboard mock in the file above, then tick this checkbox.
+**When this ships:** refactor the Dashboard and Members mocks in the files above, then tick this checkbox.
 
 ### [ ] `<NavCard>` — clickable Card with router/href navigation, hover affordance, full-area click target
 
