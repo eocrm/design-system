@@ -66,9 +66,7 @@ export function SortableDemo() {
   ))}
 </Sortable>`}
       >
-        <Sortable
-          onReorder={({ from, to }) => setTodos((curr) => arrayMove(curr, from, to))}
-        >
+        <Sortable onReorder={({ from, to }) => setTodos((curr) => arrayMove(curr, from, to))}>
           {todos.map((t) => (
             <Sortable.Item key={t.id} id={t.id}>
               <Card padding="sm">{t.label}</Card>
@@ -111,9 +109,7 @@ export function SortableDemo() {
   ))}
 </Sortable>`}
       >
-        <Sortable
-          onReorder={({ from, to }) => setTasks((curr) => arrayMove(curr, from, to))}
-        >
+        <Sortable onReorder={({ from, to }) => setTasks((curr) => arrayMove(curr, from, to))}>
           {tasks.map((task) => (
             <Sortable.Item key={task.id} id={task.id}>
               <Card padding="sm">
@@ -161,9 +157,7 @@ export function SortableDemo() {
   ))}
 </Sortable>`}
       >
-        <Sortable
-          onReorder={({ from, to }) => setImages((curr) => arrayMove(curr, from, to))}
-        >
+        <Sortable onReorder={({ from, to }) => setImages((curr) => arrayMove(curr, from, to))}>
           {images.map((img) => (
             <Sortable.Item key={img.id} id={img.id}>
               <Card padding="sm">
@@ -226,9 +220,7 @@ export function SortableDemo() {
             padding: 'var(--space-2)',
           }}
         >
-          <Sortable
-            onReorder={({ from, to }) => setQueue((curr) => arrayMove(curr, from, to))}
-          >
+          <Sortable onReorder={({ from, to }) => setQueue((curr) => arrayMove(curr, from, to))}>
             {queue.map((q) => (
               <Sortable.Item key={q.id} id={q.id}>
                 <Card padding="sm">{q.label}</Card>
@@ -243,10 +235,10 @@ export function SortableDemo() {
           Implementation notes
         </Title>
         <Text size="sm" tone="muted">
-          Thin wrapper over @dnd-kit/sortable. PointerSensor with 5px activation
-          distance; KeyboardSensor with sortableKeyboardCoordinates; vertical
-          list strategy. Hybrid drag origin via containsHandle children walk.
-          dnd-kit ships built-in aria-live announcements and autoscroll.
+          Thin wrapper over @dnd-kit/sortable. PointerSensor with 5px activation distance;
+          KeyboardSensor with sortableKeyboardCoordinates; vertical list strategy. Hybrid drag
+          origin via containsHandle children walk. dnd-kit ships built-in aria-live announcements
+          and autoscroll.
         </Text>
       </Stack>
     </DemoLayout>

@@ -536,9 +536,7 @@ const [items, setItems] = useState([
   { id: 3, title: 'Quarterly report' },
 ]);
 
-<Sortable
-  onReorder={({ from, to }) => setItems((curr) => arrayMove(curr, from, to))}
->
+<Sortable onReorder={({ from, to }) => setItems((curr) => arrayMove(curr, from, to))}>
   {items.map((item) => (
     <Sortable.Item key={item.id} id={item.id}>
       <Card>
@@ -551,7 +549,7 @@ const [items, setItems] = useState([
       </Card>
     </Sortable.Item>
   ))}
-</Sortable>
+</Sortable>;
 ```
 
 Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when the drop position differs from the source. Consumer owns the items array and re-renders with the new order. `arrayMove` is shipped by `@dnd-kit/sortable` (the library is already a dep) — import it from there. Items must have a stable `id` prop (`string | number`).

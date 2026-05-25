@@ -225,8 +225,15 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
   { id, className, children, ...rest },
   ref,
 ) {
-  const { setNodeRef, setActivatorNodeRef, listeners, attributes, transform, transition, isDragging } =
-    useSortable({ id });
+  const {
+    setNodeRef,
+    setActivatorNodeRef,
+    listeners,
+    attributes,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
 
   const hasHandle = useMemo(() => containsHandle(children), [children]);
 
