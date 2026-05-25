@@ -84,11 +84,7 @@ export function Members() {
                 <Table.Row key={m.id}>
                   <Table.Cell>
                     <Cluster gap="sm" align="center" wrap={false}>
-                      <Avatar
-                        name={m.name}
-                        size="md"
-                        status={m.online ? 'online' : undefined}
-                      />
+                      <Avatar name={m.name} size="md" status={m.online ? 'online' : undefined} />
                       <Stack gap="xs">
                         <Text as="span" weight="medium">
                           {m.name}
@@ -126,9 +122,7 @@ export function Members() {
                           <DropdownMenu.SubContent>
                             <DropdownMenu.RadioGroup value={m.role} onValueChange={() => {}}>
                               <DropdownMenu.RadioItem value="admin">Admin</DropdownMenu.RadioItem>
-                              <DropdownMenu.RadioItem value="member">
-                                Member
-                              </DropdownMenu.RadioItem>
+                              <DropdownMenu.RadioItem value="member">Member</DropdownMenu.RadioItem>
                               <DropdownMenu.RadioItem value="guest">Guest</DropdownMenu.RadioItem>
                             </DropdownMenu.RadioGroup>
                           </DropdownMenu.SubContent>

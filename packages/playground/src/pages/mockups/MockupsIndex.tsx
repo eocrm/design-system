@@ -1,14 +1,5 @@
 import { Link } from 'react-router-dom';
-import {
-  Badge,
-  Card,
-  Cluster,
-  Code,
-  Grid,
-  Stack,
-  Text,
-  Title,
-} from '@eocrm/design-system';
+import { Badge, Card, Cluster, Code, Grid, Stack, Text, Title } from '@eocrm/design-system';
 import { MOCKUPS } from './registry';
 
 export function MockupsIndex() {

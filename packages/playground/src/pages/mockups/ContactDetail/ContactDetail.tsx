@@ -229,15 +229,7 @@ function Field({ label, value, icon }: { label: string; value: string; icon?: Re
   );
 }
 
-function TimelineItem({
-  who,
-  when,
-  children,
-}: {
-  who: string;
-  when: string;
-  children: ReactNode;
-}) {
+function TimelineItem({ who, when, children }: { who: string; when: string; children: ReactNode }) {
   return (
     <Card.ListRow>
       <Cluster gap="sm" align="start" wrap={false}>
