@@ -44,6 +44,15 @@
   color: var(--color-fg);
 }
 
+// Horizontal padding matches Card.ListRow's `var(--space-3) var(--space-4)`
+// rhythm so DefinitionList aligns with Card.Header when both sit inside a
+// <Card> (which auto-applies padding="none" once it detects compound children).
+// Outside a Card, this acts as sensible default internal inset.
+.term,
+.description {
+  padding-inline: var(--space-4);
+}
+
 .icon {
   display: inline-flex;
   align-items: center;
