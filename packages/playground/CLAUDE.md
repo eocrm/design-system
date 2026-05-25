@@ -88,6 +88,31 @@ Skipping 1–3 → users can navigate to the URL but the page is unreachable thr
 
 `react-router-dom`, `prismjs`, `prism-react-renderer`, `@types/prismjs`, `@types/node` — these are in the playground's `package.json`. They MUST NOT appear in `@eocrm/design-system`'s `dependencies`. If you find yourself wanting to use one of these in a library component, you're solving the problem in the wrong layer.
 
+### 6. Mockups build EXCLUSIVELY from `@eocrm/design-system` components
+
+This rule applies **only to files under `src/pages/mockups/`** — NOT to demo pages, AppShell, or other playground tooling. Mockups exist to dogfood the library, so they must use the same surface a CRM consumer does.
+
+**Forbidden in mockup `.tsx`:**
+
+- ❌ Inline `style={{...}}` attributes. The library's components own their styling; if you need a visual variant the component doesn't expose, that's a library gap (see below), not an excuse to inline CSS.
+- ❌ Raw HTML elements: `<div>`, `<span>`, `<button>`, `<a>`, `<input>`, `<p>`, `<h1>`–`<h6>`, `<img>`, `<ul>`, `<li>`, `<table>`, `<form>`, etc. Use the library's equivalent — `<Stack>` / `<Cluster>` / `<Button>` / `<Link>` / `<Input>` / `<Text>` / `<Title>` / `<Avatar>` / `<Table>` and so on.
+- ❌ CSS Modules `*.module.scss` files co-located with a mockup `.tsx`. The library is your only styling layer; mockups don't ship custom CSS.
+
+**Allowed in mockup `.tsx`:**
+
+- ✅ Library components from `@eocrm/design-system`.
+- ✅ React Fragments (`<>...</>`).
+- ✅ Native HTML that the library re-exports under a typed component (e.g., the `<Table>` primitive renders a `<table>` element internally; you write `<Table>` in the mockup).
+
+**When the library doesn't cover what the mockup needs:**
+
+1. Open `packages/design-system/src/components/TODO.md` and add a new entry describing the missing functionality (primitive name, what it should do, where in which mockup you needed it, how you're currently mocking it).
+2. Inline-mock the gap in the mockup with a one-line comment pointing to the TODO entry: `{/* TODO: replace when <PrimitiveName> ships — see components/TODO.md */}`.
+3. The inline mock MAY use raw HTML / inline styles **only at the exact mock site**, contained to the smallest possible block. Mark it visually with the TODO comment so the next reviewer notices.
+4. When the library primitive ships, the TODO entry's "Mocked in" path tells the implementer exactly which files to refactor. Tick the TODO and delete the inline mock.
+
+**Why this rule:** mockups are the canary for missing primitives. Every hand-rolled `<div className="...">` inside a mockup is a signal that either (a) we're missing a primitive the CRM will also need, or (b) the existing primitive needs a new prop. Filing the TODO captures that signal so it doesn't get lost. Letting mockups drift into bespoke HTML defeats the dogfooding purpose — the CRM consumer can't reach for "inline a div with styling" the way a mockup author can, so a mockup that does so isn't realistic.
+
 ## What goes here vs in the library
 
 |                                                           | Playground | Library |
