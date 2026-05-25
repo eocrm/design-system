@@ -139,13 +139,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
         {actions && <div className={styles.actions}>{actions}</div>}
       </div>
       {onDismiss && (
-        <Button
-          variant="ghost"
-          size="xs"
-          iconOnly
-          aria-label="Dismiss"
-          onClick={onDismiss}
-        >
+        <Button variant="ghost" size="xs" iconOnly aria-label="Dismiss" onClick={onDismiss}>
           <X size={14} aria-hidden="true" />
         </Button>
       )}
