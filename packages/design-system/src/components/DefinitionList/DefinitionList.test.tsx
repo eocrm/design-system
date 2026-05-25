@@ -156,9 +156,9 @@ describe('DefinitionList', () => {
     expect(container.querySelector('dl')?.getAttribute('data-dividers')).toBe('true');
   });
 
-  it('omits data-dividers attribute when dividers is false (default)', () => {
+  it('omits data-dividers attribute when dividers={false} is passed explicitly', () => {
     const { container } = render(
-      <DefinitionList>
+      <DefinitionList dividers={false}>
         <DefinitionList.Item>
           <DefinitionList.Term>x</DefinitionList.Term>
           <DefinitionList.Description>y</DefinitionList.Description>
@@ -175,7 +175,7 @@ describe('DefinitionList', () => {
         <div>not an item</div>
       </DefinitionList>,
     );
-    expect(warn).toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0]?.[0]).toContain('<DefinitionList>');
     warn.mockRestore();
   });
@@ -200,5 +200,27 @@ describe('DefinitionList', () => {
     );
     const terms = Array.from(container.querySelectorAll('dt')).map((dt) => dt.textContent);
     expect(terms).toEqual(['First', 'Second']);
+  });
+
+  it('treats Fragment-wrapped Items as valid children (no dev warning, renders correctly)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { container } = render(
+      <DefinitionList>
+        <>
+          <DefinitionList.Item>
+            <DefinitionList.Term>First</DefinitionList.Term>
+            <DefinitionList.Description>1</DefinitionList.Description>
+          </DefinitionList.Item>
+          <DefinitionList.Item>
+            <DefinitionList.Term>Second</DefinitionList.Term>
+            <DefinitionList.Description>2</DefinitionList.Description>
+          </DefinitionList.Item>
+        </>
+      </DefinitionList>,
+    );
+    expect(warn).not.toHaveBeenCalled();
+    const terms = Array.from(container.querySelectorAll('dt')).map((dt) => dt.textContent);
+    expect(terms).toEqual(['First', 'Second']);
+    warn.mockRestore();
   });
 });
