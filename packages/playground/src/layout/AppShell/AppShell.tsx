@@ -42,6 +42,7 @@ import {
   TableProperties,
   ListOrdered,
   LayoutPanelLeft,
+  LayoutPanelTop,
   ListCollapse,
   MoveRight,
   ToggleRight,
@@ -91,6 +92,7 @@ const componentGroups = [
       { to: '/components/divider', label: 'Divider', icon: Minus, end: false },
       { to: '/components/grid', label: 'Grid', icon: LayoutGrid, end: false },
       { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
+      { to: '/components/page-header', label: 'PageHeader', icon: LayoutPanelTop, end: false },
     ],
   },
   {

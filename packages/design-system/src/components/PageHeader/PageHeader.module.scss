@@ -1,0 +1,124 @@
+@use '../../styles/mixins' as *;
+
+.root {
+  display: grid;
+  grid-template-areas:
+    'breadcrumb breadcrumb breadcrumb'
+    'aside title actions'
+    'aside subtitle actions'
+    'aside meta actions';
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-2) var(--space-3);
+  padding-block: var(--space-4) var(--space-3);
+}
+
+.rootWithBorder {
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.breadcrumb {
+  grid-area: breadcrumb;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.breadcrumbInner {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-muted);
+
+  // CSS keyword — interactive trigger.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: pointer;
+
+  // CSS keyword — kill the default underline when rendered as <a>.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  text-decoration: none;
+}
+
+.backButton:hover:not(:disabled) {
+  background: var(--color-bg-muted);
+  color: var(--color-fg);
+}
+
+.backButton:focus-visible {
+  @include focus-ring;
+
+  outline: none;
+}
+
+.backButton:disabled {
+  // CSS keyword — disabled affordance.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.aside {
+  grid-area: aside;
+
+  // stylelint-disable-next-line property-disallowed-list -- grid slot needs vertical centering within its cell
+  align-self: center;
+}
+
+.title {
+  grid-area: title;
+}
+
+.subtitle {
+  grid-area: subtitle;
+  font-size: var(--font-size-md);
+  color: var(--color-fg-muted);
+  line-height: var(--line-height-tight);
+}
+
+.meta {
+  grid-area: meta;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  // stylelint-disable-next-line property-disallowed-list -- grid slot needs vertical centering within its cell
+  align-self: center;
+}
+
+// ─── Responsive: actions wrap below the title on narrow viewports ────────
+@media (max-width: 640px) {
+  .root {
+    grid-template-areas:
+      'breadcrumb breadcrumb'
+      'aside title'
+      'aside subtitle'
+      'aside meta'
+      'actions actions';
+    grid-template-columns: auto 1fr;
+  }
+
+  .actions {
+    justify-content: flex-start;
+
+    // stylelint-disable-next-line property-disallowed-list -- internal responsive spacing in this layout primitive
+    margin-top: var(--space-3);
+  }
+}

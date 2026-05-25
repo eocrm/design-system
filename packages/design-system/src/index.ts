@@ -145,6 +145,18 @@ export type {
   ModalCloseProps,
 } from './components/Modal';
 
+export { PageHeader } from './components/PageHeader';
+export type {
+  PageHeaderProps,
+  PageHeaderBreadcrumbProps,
+  PageHeaderBackButtonProps,
+  PageHeaderAsideProps,
+  PageHeaderTitleProps,
+  PageHeaderSubtitleProps,
+  PageHeaderMetaProps,
+  PageHeaderActionsProps,
+} from './components/PageHeader';
+
 export { Drawer } from './components/Drawer';
 export type {
   DrawerProps,
