@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import clsx from 'clsx';
+import { Button } from '../Button';
 import styles from './Alert.module.scss';
 
 /**
@@ -138,9 +139,9 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
         {actions && <div className={styles.actions}>{actions}</div>}
       </div>
       {onDismiss && (
-        <button type="button" aria-label="Dismiss" className={styles.close} onClick={onDismiss}>
+        <Button variant="ghost" size="xs" iconOnly aria-label="Dismiss" onClick={onDismiss}>
           <X size={14} aria-hidden="true" />
-        </button>
+        </Button>
       )}
     </div>
   );

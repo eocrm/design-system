@@ -8,6 +8,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { ArrowBigUpDash, Eye, EyeOff, Languages } from 'lucide-react';
+import { Button } from '../Button';
 import { Tooltip } from '../Tooltip';
 import styles from './PasswordInput.module.scss';
 
@@ -228,16 +229,17 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         )}
 
         {revealable && (
-          <button
-            type="button"
-            className={styles.toggleButton}
+          <Button
+            variant="ghost"
+            size="xs"
+            iconOnly
             aria-pressed={currentRevealed}
             aria-label={currentRevealed ? resolvedLabels.hide : resolvedLabels.show}
             onClick={handleToggle}
             disabled={disabled}
           >
             <ToggleIcon size={iconSize} aria-hidden="true" />
-          </button>
+          </Button>
         )}
 
         {/* Polite live regions for AT. Render unconditionally so the

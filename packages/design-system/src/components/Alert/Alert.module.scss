@@ -81,25 +81,3 @@
   // stylelint-disable-next-line property-disallowed-list -- internal spacing between alert body content and its action row
   margin-top: var(--space-2);
 }
-
-.close {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-fg-muted);
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-sm);
-  transition: color var(--transition-fast);
-
-  &:hover {
-    color: var(--color-fg);
-  }
-
-  &:focus-visible {
-    @include focus-ring;
-
-    outline: none;
-  }
-}

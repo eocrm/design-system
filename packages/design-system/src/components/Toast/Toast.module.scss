@@ -178,50 +178,6 @@
   gap: var(--space-2);
 }
 
-.action {
-  background: transparent;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.action:hover {
-  background: var(--color-bg-muted);
-}
-
-.action:focus-visible {
-  @include focus-ring;
-
-  outline: none;
-}
-
-.close {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-fg-muted);
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-sm);
-}
-
-.close:hover {
-  color: var(--color-fg);
-  background: var(--color-bg-muted);
-}
-
-.close:focus-visible {
-  @include focus-ring;
-
-  outline: none;
-}
-
 // ─── Enter / exit animations ─────────────────────────────────────────────
 // Slide direction depends on the position. We expose six keyframes and pick
 // via [data-position] on the parent stack.

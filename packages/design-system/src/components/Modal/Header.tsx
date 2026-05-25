@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useId, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
+import { Button } from '../Button';
 import { useModalContext } from './context';
 import { sanitizeId } from '../_internal/refs';
 import styles from './Modal.module.scss';
@@ -35,14 +36,15 @@ export const Header = forwardRef<HTMLDivElement, ModalHeaderProps>(function Head
         {children}
       </h2>
       {closeButton && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="xs"
+          iconOnly
           aria-label="Close dialog"
-          className={styles.headerCloseButton}
           onClick={() => ctx.setOpen(false)}
         >
           <X size={16} aria-hidden="true" />
-        </button>
+        </Button>
       )}
     </div>
   );
