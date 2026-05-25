@@ -145,6 +145,9 @@ export type {
   ModalCloseProps,
 } from './components/Modal';
 
+// Placeholder — full PageHeader export block lands in T2.
+export { PageHeader } from './components/PageHeader';
+
 export { Drawer } from './components/Drawer';
 export type {
   DrawerProps,
