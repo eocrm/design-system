@@ -8,6 +8,7 @@ import {
   Button,
   Card,
   Cluster,
+  DefinitionList,
   DropdownMenu,
   Grid,
   Link,
@@ -91,12 +92,32 @@ export function ContactDetail() {
           <Stack gap="lg">
             <Card>
               <Card.Header headerLevel="h2">About</Card.Header>
-              <Card.List>
-                <Field label="Email" value={contact.email} icon={<Mail size={14} />} />
-                <Field label="Phone" value="+1 (415) 555-0142" icon={<Phone size={14} />} />
-                <Field label="Company" value={contact.company} icon={<Building size={14} />} />
-                <Field label="Location" value="San Francisco, CA" icon={<MapPin size={14} />} />
-              </Card.List>
+              <DefinitionList dividers>
+                <DefinitionList.Item>
+                  <DefinitionList.Term>Email</DefinitionList.Term>
+                  <DefinitionList.Description icon={<Mail size={14} />}>
+                    {contact.email}
+                  </DefinitionList.Description>
+                </DefinitionList.Item>
+                <DefinitionList.Item>
+                  <DefinitionList.Term>Phone</DefinitionList.Term>
+                  <DefinitionList.Description icon={<Phone size={14} />}>
+                    +1 (415) 555-0142
+                  </DefinitionList.Description>
+                </DefinitionList.Item>
+                <DefinitionList.Item>
+                  <DefinitionList.Term>Company</DefinitionList.Term>
+                  <DefinitionList.Description icon={<Building size={14} />}>
+                    {contact.company}
+                  </DefinitionList.Description>
+                </DefinitionList.Item>
+                <DefinitionList.Item>
+                  <DefinitionList.Term>Location</DefinitionList.Term>
+                  <DefinitionList.Description icon={<MapPin size={14} />}>
+                    San Francisco, CA
+                  </DefinitionList.Description>
+                </DefinitionList.Item>
+              </DefinitionList>
             </Card>
 
             <Card>
@@ -206,26 +227,6 @@ export function ContactDetail() {
 
       <CrossLinks kind="mockup" slug="contact-detail" />
     </Stack>
-  );
-}
-
-function Field({ label, value, icon }: { label: string; value: string; icon?: ReactNode }) {
-  return (
-    <Card.ListRow>
-      <Text as="span" size="sm" tone="muted" weight="medium">
-        {label}
-      </Text>
-      <Cluster gap="sm" align="center" wrap={false}>
-        {icon && (
-          <Text as="span" tone="subtle">
-            {icon}
-          </Text>
-        )}
-        <Text as="span" size="sm" tone="muted">
-          {value}
-        </Text>
-      </Cluster>
-    </Card.ListRow>
   );
 }
 

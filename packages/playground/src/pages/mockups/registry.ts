@@ -133,6 +133,7 @@ export const MOCKUPS = [
       'Button',
       'Card',
       'Cluster',
+      'DefinitionList',
       'DropdownMenu',
       'Grid',
       'Link',
