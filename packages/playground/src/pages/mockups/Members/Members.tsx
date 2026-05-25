@@ -1,22 +1,26 @@
 import { useState } from 'react';
 import { UserPlus, MoreHorizontal, MailPlus, Trash2 } from 'lucide-react';
-import { Avatar } from '@eocrm/design-system';
-import { Badge } from '@eocrm/design-system';
-import { Button } from '@eocrm/design-system';
-import { Card } from '@eocrm/design-system';
-import { Cluster } from '@eocrm/design-system';
-import { Stack } from '@eocrm/design-system';
-import { Tabs } from '@eocrm/design-system';
-import { Input } from '@eocrm/design-system';
-import { DropdownMenu } from '@eocrm/design-system';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Cluster,
+  DropdownMenu,
+  Input,
+  Progress,
+  Stack,
+  Table,
+  Tabs,
+  Text,
+  Title,
+} from '@eocrm/design-system';
 import { members, pendingInvites, roleTone, roleLabel, seatLimit } from '../../../data/mock';
-import styles from './Members.module.scss';
 import { CrossLinks } from '../../shared/CrossLinks';
 
 export function Members() {
   const [activeTab, setActiveTab] = useState('active');
   const seatsUsed = members.length;
-  const seatsPercent = Math.min(100, (seatsUsed / seatLimit) * 100);
 
   const tabs = [
     { id: 'active', label: 'Active', count: members.length },
@@ -26,10 +30,10 @@ export function Members() {
   return (
     <Stack gap="lg">
       <Cluster justify="between" align="end" gap="md">
-        <div>
-          <h1 className={styles.title}>Members</h1>
-          <p className={styles.subtitle}>People with access to your Orbit CRM workspace.</p>
-        </div>
+        <Stack gap="xs">
+          <Title order={1}>Members</Title>
+          <Text tone="muted">People with access to your Orbit CRM workspace.</Text>
+        </Stack>
         <Button>
           <UserPlus size={14} /> Invite members
         </Button>
@@ -38,24 +42,32 @@ export function Members() {
       <Card padding="md">
         <Cluster justify="between" align="center" gap="md" wrap={false}>
           <Stack gap="xs">
-            <span className={styles.seatsLabel}>Seats used</span>
-            <span className={styles.seatsValue}>
-              {seatsUsed} <span className={styles.seatsLimit}>of {seatLimit}</span>
-            </span>
-            <span className={styles.seatsHint}>
+            <Text as="span" size="sm" tone="muted" weight="medium">
+              Seats used
+            </Text>
+            <Text as="span" size="xl" weight="semibold">
+              {seatsUsed}{' '}
+              <Text as="span" size="xl" tone="subtle" weight="regular">
+                of {seatLimit}
+              </Text>
+            </Text>
+            <Text as="span" size="sm" tone="subtle">
               {seatLimit - seatsUsed} seats remaining on your current plan.
-            </span>
+            </Text>
           </Stack>
-          <div className={styles.seatsBarWrap}>
-            <div
-              className={styles.seatsBar}
-              role="progressbar"
-              aria-valuenow={seatsUsed}
-              aria-valuemin={0}
-              aria-valuemax={seatLimit}
-            >
-              <div className={styles.seatsBarFill} style={{ width: `${seatsPercent}%` }} />
-            </div>
+          {/* TODO: replace when <Box width> ships — see components/TODO.md.
+              Progress is width:100% of parent; inside a Cluster (no defined
+              width) it collapses to 0, so the bar wrapper needs explicit
+              min-width to render at the original 320px target. */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-3)',
+              minWidth: '320px',
+            }}
+          >
+            <Progress value={seatsUsed} max={seatLimit} size="sm" />
             <Button variant="secondary" size="sm">
               Upgrade plan
             </Button>
@@ -67,132 +79,145 @@ export function Members() {
 
       {activeTab === 'active' && (
         <Stack gap="md">
-          <div className={styles.searchRow}>
-            <div className={styles.searchWrap}>
-              <Input placeholder="Search members by name or email…" />
-            </div>
-          </div>
-
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Job title</th>
-                  <th>Role</th>
-                  <th>Last active</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((m) => (
-                  <tr key={m.id}>
-                    <td>
-                      <Cluster gap="sm" align="center" wrap={false}>
-                        <div className={styles.avatarWrap}>
-                          <Avatar name={m.name} size="md" />
-                          {m.online && <span className={styles.onlineDot} aria-label="Online" />}
-                        </div>
-                        <Stack gap="xs">
-                          <span className={styles.name}>{m.name}</span>
-                          <span className={styles.meta}>{m.email}</span>
-                        </Stack>
-                      </Cluster>
-                    </td>
-                    <td className={styles.meta}>{m.jobTitle}</td>
-                    <td>
-                      <Badge tone={roleTone[m.role]}>{roleLabel[m.role]}</Badge>
-                    </td>
-                    <td className={styles.meta}>{m.lastActive}</td>
-                    <td className={styles.rowActions}>
-                      <DropdownMenu>
-                        <DropdownMenu.Trigger>
-                          <button type="button" className={styles.rowActionBtn} aria-label="More">
-                            <MoreHorizontal size={16} />
-                          </button>
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Content align="end">
-                          <DropdownMenu.Item onSelect={() => {}}>View profile</DropdownMenu.Item>
-                          <DropdownMenu.Sub>
-                            <DropdownMenu.SubTrigger>Change role</DropdownMenu.SubTrigger>
-                            <DropdownMenu.SubContent>
-                              <DropdownMenu.RadioGroup value={m.role} onValueChange={() => {}}>
-                                <DropdownMenu.RadioItem value="admin">Admin</DropdownMenu.RadioItem>
-                                <DropdownMenu.RadioItem value="member">
-                                  Member
-                                </DropdownMenu.RadioItem>
-                                <DropdownMenu.RadioItem value="guest">Guest</DropdownMenu.RadioItem>
-                              </DropdownMenu.RadioGroup>
-                            </DropdownMenu.SubContent>
-                          </DropdownMenu.Sub>
-                          <DropdownMenu.Separator />
-                          <DropdownMenu.Item onSelect={() => {}} tone="danger">
-                            Remove member
-                          </DropdownMenu.Item>
-                        </DropdownMenu.Content>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Input placeholder="Search members by name or email…" />
+          <Table hover>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Name</Table.HeaderCell>
+                <Table.HeaderCell>Job title</Table.HeaderCell>
+                <Table.HeaderCell>Role</Table.HeaderCell>
+                <Table.HeaderCell>Last active</Table.HeaderCell>
+                <Table.HeaderCell />
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {members.map((m) => (
+                <Table.Row key={m.id}>
+                  <Table.Cell>
+                    <Cluster gap="sm" align="center" wrap={false}>
+                      <Avatar name={m.name} size="md" status={m.online ? 'online' : undefined} />
+                      <Stack gap="xs">
+                        <Text as="span" weight="medium">
+                          {m.name}
+                        </Text>
+                        <Text as="span" size="sm" tone="subtle">
+                          {m.email}
+                        </Text>
+                      </Stack>
+                    </Cluster>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text as="span" size="sm" tone="subtle">
+                      {m.jobTitle}
+                    </Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Badge tone={roleTone[m.role]}>{roleLabel[m.role]}</Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text as="span" size="sm" tone="subtle">
+                      {m.lastActive}
+                    </Text>
+                  </Table.Cell>
+                  <Table.Cell align="end">
+                    <DropdownMenu>
+                      <DropdownMenu.Trigger>
+                        <Button variant="ghost" size="sm" iconOnly aria-label="More">
+                          <MoreHorizontal size={16} />
+                        </Button>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Content align="end">
+                        <DropdownMenu.Item onSelect={() => {}}>View profile</DropdownMenu.Item>
+                        <DropdownMenu.Sub>
+                          <DropdownMenu.SubTrigger>Change role</DropdownMenu.SubTrigger>
+                          <DropdownMenu.SubContent>
+                            <DropdownMenu.RadioGroup value={m.role} onValueChange={() => {}}>
+                              <DropdownMenu.RadioItem value="admin">Admin</DropdownMenu.RadioItem>
+                              <DropdownMenu.RadioItem value="member">Member</DropdownMenu.RadioItem>
+                              <DropdownMenu.RadioItem value="guest">Guest</DropdownMenu.RadioItem>
+                            </DropdownMenu.RadioGroup>
+                          </DropdownMenu.SubContent>
+                        </DropdownMenu.Sub>
+                        <DropdownMenu.Separator />
+                        <DropdownMenu.Item onSelect={() => {}} tone="danger">
+                          Remove member
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
         </Stack>
       )}
 
       {activeTab === 'invites' && (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Invited by</th>
-                <th>Sent</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {pendingInvites.map((inv) => (
-                <tr key={inv.id}>
-                  <td>
-                    <Cluster gap="sm" align="center" wrap={false}>
-                      <span className={styles.inviteAvatar} aria-hidden>
-                        <MailPlus size={14} />
-                      </span>
-                      <span className={styles.name}>{inv.email}</span>
-                      <Badge tone="warning">Pending</Badge>
-                    </Cluster>
-                  </td>
-                  <td>
-                    <Badge tone={roleTone[inv.role]}>{roleLabel[inv.role]}</Badge>
-                  </td>
-                  <td>
-                    <Cluster gap="sm" align="center" wrap={false}>
-                      <Avatar name={inv.invitedBy} size="sm" />
-                      <span>{inv.invitedBy}</span>
-                    </Cluster>
-                  </td>
-                  <td className={styles.meta}>{inv.invitedAt}</td>
-                  <td className={styles.rowActions}>
-                    <Cluster gap="xs" justify="end" wrap={false}>
-                      <Button variant="ghost" size="sm">
-                        Resend
-                      </Button>
-                      <button
-                        type="button"
-                        className={styles.rowActionBtn}
-                        aria-label="Revoke invitation"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </Cluster>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table hover>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>Email</Table.HeaderCell>
+              <Table.HeaderCell>Role</Table.HeaderCell>
+              <Table.HeaderCell>Invited by</Table.HeaderCell>
+              <Table.HeaderCell>Sent</Table.HeaderCell>
+              <Table.HeaderCell />
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {pendingInvites.map((inv) => (
+              <Table.Row key={inv.id}>
+                <Table.Cell>
+                  <Cluster gap="sm" align="center" wrap={false}>
+                    {/* TODO: replace when <StatTile> ships (circular variant) — see components/TODO.md */}
+                    <span
+                      aria-hidden
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 'var(--size-md)',
+                        height: 'var(--size-md)',
+                        borderRadius: 'var(--radius-full)',
+                        background: 'var(--color-badge-warning-bg)',
+                        color: 'var(--color-badge-warning-fg)',
+                      }}
+                    >
+                      <MailPlus size={14} />
+                    </span>
+                    <Text as="span" weight="medium">
+                      {inv.email}
+                    </Text>
+                    <Badge tone="warning">Pending</Badge>
+                  </Cluster>
+                </Table.Cell>
+                <Table.Cell>
+                  <Badge tone={roleTone[inv.role]}>{roleLabel[inv.role]}</Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <Cluster gap="sm" align="center" wrap={false}>
+                    <Avatar name={inv.invitedBy} size="sm" />
+                    <Text as="span">{inv.invitedBy}</Text>
+                  </Cluster>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text as="span" size="sm" tone="subtle">
+                    {inv.invitedAt}
+                  </Text>
+                </Table.Cell>
+                <Table.Cell align="end">
+                  <Cluster gap="xs" justify="end" wrap={false}>
+                    <Button variant="ghost" size="sm">
+                      Resend
+                    </Button>
+                    <Button variant="ghost" size="sm" iconOnly aria-label="Revoke invitation">
+                      <Trash2 size={14} />
+                    </Button>
+                  </Cluster>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
       )}
 
       <CrossLinks kind="mockup" slug="members" />

@@ -1,15 +1,22 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import { Plus, Filter, ChevronDown } from 'lucide-react';
-import { Avatar } from '@eocrm/design-system';
-import { Badge } from '@eocrm/design-system';
-import { Button } from '@eocrm/design-system';
-import { Cluster } from '@eocrm/design-system';
-import { Stack } from '@eocrm/design-system';
-import { Input } from '@eocrm/design-system';
-import { DropdownMenu } from '@eocrm/design-system';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  Cluster,
+  DropdownMenu,
+  Input,
+  Link,
+  Stack,
+  Table,
+  Text,
+  Title,
+} from '@eocrm/design-system';
 import { contacts, statusTone, statusLabel } from '../../../data/mock';
-import styles from './Contacts.module.scss';
 import { CrossLinks } from '../../shared/CrossLinks';
 
 const statusFilterLabel: Record<string, string> = {
@@ -28,10 +35,10 @@ export function Contacts() {
   return (
     <Stack gap="lg">
       <Cluster justify="between" align="end" gap="md">
-        <div>
-          <h1 className={styles.title}>Contacts</h1>
-          <p className={styles.subtitle}>{contacts.length} contacts</p>
-        </div>
+        <Stack gap="xs">
+          <Title order={1}>Contacts</Title>
+          <Text tone="muted">{contacts.length} contacts</Text>
+        </Stack>
         <Cluster gap="sm">
           <Button variant="secondary">
             <Filter size={14} /> Filter
@@ -42,103 +49,111 @@ export function Contacts() {
         </Cluster>
       </Cluster>
 
-      <div className={styles.toolbar}>
-        <div className={styles.searchInTable}>
+      <Card padding="sm">
+        <Cluster justify="between" align="center" gap="md" wrap={false}>
           <Input placeholder="Search by name, email, or company…" />
-        </div>
-        <Cluster gap="sm">
-          <DropdownMenu>
-            <DropdownMenu.Trigger>
-              <button className={styles.toolbarBtn} type="button">
-                Status: {statusFilterLabel[statusFilter]} <ChevronDown size={12} />
-              </button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content>
-              <DropdownMenu.RadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                <DropdownMenu.RadioItem value="all">All</DropdownMenu.RadioItem>
-                <DropdownMenu.RadioItem value="active">Active</DropdownMenu.RadioItem>
-                <DropdownMenu.RadioItem value="lead">Lead</DropdownMenu.RadioItem>
-                <DropdownMenu.RadioItem value="churned">Churned</DropdownMenu.RadioItem>
-              </DropdownMenu.RadioGroup>
-            </DropdownMenu.Content>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenu.Trigger>
-              <button className={styles.toolbarBtn} type="button">
-                Owner: {ownerFilter === 'all' ? 'All' : ownerFilter} <ChevronDown size={12} />
-              </button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content>
-              <DropdownMenu.RadioGroup value={ownerFilter} onValueChange={setOwnerFilter}>
-                {owners.map((o) => (
-                  <DropdownMenu.RadioItem key={o} value={o}>
-                    {o === 'all' ? 'All' : o}
-                  </DropdownMenu.RadioItem>
-                ))}
-              </DropdownMenu.RadioGroup>
-            </DropdownMenu.Content>
-          </DropdownMenu>
+          <Cluster gap="sm" wrap={false}>
+            <DropdownMenu>
+              <DropdownMenu.Trigger>
+                <Button variant="secondary" size="sm">
+                  Status: {statusFilterLabel[statusFilter]} <ChevronDown size={12} />
+                </Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content>
+                <DropdownMenu.RadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                  <DropdownMenu.RadioItem value="all">All</DropdownMenu.RadioItem>
+                  <DropdownMenu.RadioItem value="active">Active</DropdownMenu.RadioItem>
+                  <DropdownMenu.RadioItem value="lead">Lead</DropdownMenu.RadioItem>
+                  <DropdownMenu.RadioItem value="churned">Churned</DropdownMenu.RadioItem>
+                </DropdownMenu.RadioGroup>
+              </DropdownMenu.Content>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenu.Trigger>
+                <Button variant="secondary" size="sm">
+                  Owner: {ownerFilter === 'all' ? 'All' : ownerFilter} <ChevronDown size={12} />
+                </Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content>
+                <DropdownMenu.RadioGroup value={ownerFilter} onValueChange={setOwnerFilter}>
+                  {owners.map((o) => (
+                    <DropdownMenu.RadioItem key={o} value={o}>
+                      {o === 'all' ? 'All' : o}
+                    </DropdownMenu.RadioItem>
+                  ))}
+                </DropdownMenu.RadioGroup>
+              </DropdownMenu.Content>
+            </DropdownMenu>
+          </Cluster>
         </Cluster>
-      </div>
+      </Card>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th className={styles.checkboxCell}>
-                <input type="checkbox" aria-label="Select all" />
-              </th>
-              <th>Name</th>
-              <th>Company</th>
-              <th>Status</th>
-              <th>Owner</th>
-              <th>Last activity</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {contacts.map((c) => (
-              <tr key={c.id}>
-                <td className={styles.checkboxCell}>
-                  <input type="checkbox" aria-label={`Select ${c.name}`} />
-                </td>
-                <td>
-                  <Cluster gap="sm" align="center" wrap={false}>
-                    <Avatar name={c.name} size="sm" />
-                    <Stack gap="xs">
-                      <Link to={`/mockups/contacts/${c.id}`} className={styles.nameLink}>
-                        {c.name}
-                      </Link>
-                      <span className={styles.meta}>{c.title}</span>
-                    </Stack>
-                  </Cluster>
-                </td>
-                <td>
+      <Table hover>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell>
+              <Checkbox aria-label="Select all" />
+            </Table.HeaderCell>
+            <Table.HeaderCell>Name</Table.HeaderCell>
+            <Table.HeaderCell>Company</Table.HeaderCell>
+            <Table.HeaderCell>Status</Table.HeaderCell>
+            <Table.HeaderCell>Owner</Table.HeaderCell>
+            <Table.HeaderCell>Last activity</Table.HeaderCell>
+            <Table.HeaderCell />
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {contacts.map((c) => (
+            <Table.Row key={c.id}>
+              <Table.Cell>
+                <Checkbox aria-label={`Select ${c.name}`} />
+              </Table.Cell>
+              <Table.Cell>
+                <Cluster gap="sm" align="center" wrap={false}>
+                  <Avatar name={c.name} size="sm" />
                   <Stack gap="xs">
-                    <span className={styles.companyName}>{c.company}</span>
-                    <span className={styles.meta}>{c.email}</span>
+                    <Link as={RouterLink} to={`/mockups/contacts/${c.id}`} variant="subtle">
+                      {c.name}
+                    </Link>
+                    <Text as="span" size="sm" tone="subtle">
+                      {c.title}
+                    </Text>
                   </Stack>
-                </td>
-                <td>
-                  <Badge tone={statusTone[c.status]}>{statusLabel[c.status]}</Badge>
-                </td>
-                <td>
-                  <Cluster gap="sm" align="center" wrap={false}>
-                    <Avatar name={c.owner} size="sm" />
-                    <span>{c.owner}</span>
-                  </Cluster>
-                </td>
-                <td className={styles.meta}>{c.lastActivity}</td>
-                <td className={styles.rowActions}>
-                  <Link to={`/mockups/contacts/${c.id}`} className={styles.viewLink}>
-                    View
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </Cluster>
+              </Table.Cell>
+              <Table.Cell>
+                <Stack gap="xs">
+                  <Text as="span" weight="medium">
+                    {c.company}
+                  </Text>
+                  <Text as="span" size="sm" tone="subtle">
+                    {c.email}
+                  </Text>
+                </Stack>
+              </Table.Cell>
+              <Table.Cell>
+                <Badge tone={statusTone[c.status]}>{statusLabel[c.status]}</Badge>
+              </Table.Cell>
+              <Table.Cell>
+                <Cluster gap="sm" align="center" wrap={false}>
+                  <Avatar name={c.owner} size="sm" />
+                  <Text as="span">{c.owner}</Text>
+                </Cluster>
+              </Table.Cell>
+              <Table.Cell>
+                <Text as="span" size="sm" tone="subtle">
+                  {c.lastActivity}
+                </Text>
+              </Table.Cell>
+              <Table.Cell align="end">
+                <Link as={RouterLink} to={`/mockups/contacts/${c.id}`}>
+                  View
+                </Link>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
 
       <CrossLinks kind="mockup" slug="contacts" />
     </Stack>

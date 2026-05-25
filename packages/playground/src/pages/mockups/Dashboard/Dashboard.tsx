@@ -1,15 +1,18 @@
 import { ArrowUpRight, DollarSign, UserPlus, Briefcase } from 'lucide-react';
-import { Card } from '@eocrm/design-system';
-import { Stack } from '@eocrm/design-system';
-import { Cluster } from '@eocrm/design-system';
-import { Avatar } from '@eocrm/design-system';
-import { Badge } from '@eocrm/design-system';
-import { Button } from '@eocrm/design-system';
-import { Link } from '@eocrm/design-system';
-import { Title } from '@eocrm/design-system';
-import { Text } from '@eocrm/design-system';
+import { Link as RouterLink } from 'react-router-dom';
+import {
+  Card,
+  Stack,
+  Cluster,
+  Grid,
+  Avatar,
+  Badge,
+  Button,
+  Link,
+  Title,
+  Text,
+} from '@eocrm/design-system';
 import { contacts, deals } from '../../../data/mock';
-import styles from './Dashboard.module.scss';
 import { CrossLinks } from '../../shared/CrossLinks';
 
 const stats = [
@@ -60,18 +63,18 @@ export function Dashboard() {
   return (
     <Stack gap="lg">
       <Cluster justify="between" align="end" gap="md">
-        <div>
+        <Stack gap="xs">
           <Title order={1}>Dashboard</Title>
           <Text size="lg" tone="muted">
             Good morning, Alex. Here's where your pipeline stands.
           </Text>
-        </div>
+        </Stack>
         <Button>
           <UserPlus size={14} /> Add contact
         </Button>
       </Cluster>
 
-      <div className={styles.statsGrid}>
+      <Grid columns={3} gap="md">
         {stats.map(({ label, value, delta, deltaTone, icon: Icon }) => (
           <Card key={label} padding="md" tone="accent">
             <Cluster justify="between" align="start" gap="md" wrap={false}>
@@ -86,20 +89,31 @@ export function Dashboard() {
                   <ArrowUpRight size={10} /> {delta}
                 </Badge>
               </Stack>
-              <div className={styles.statIcon}>
+              {/* TODO: replace when <StatTile> ships — see components/TODO.md */}
+              <div
+                style={{
+                  display: 'grid',
+                  placeItems: 'center',
+                  width: 'var(--size-md)',
+                  height: 'var(--size-md)',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--color-accent-subtle-bg)',
+                  color: 'var(--color-accent)',
+                }}
+              >
                 <Icon size={16} />
               </div>
             </Cluster>
           </Card>
         ))}
-      </div>
+      </Grid>
 
-      <div className={styles.twoCol}>
+      <Grid columns={2} gap="md">
         <Card>
           <Card.Header
             headerLevel="h2"
             action={
-              <Link href="#" onClick={(e) => e.preventDefault()}>
+              <Link as={RouterLink} to="/mockups/deals">
                 View all
               </Link>
             }
@@ -154,14 +168,14 @@ export function Dashboard() {
             ))}
           </Card.List>
         </Card>
-      </div>
+      </Grid>
 
       <Card padding="md">
         <Stack gap="md">
           <Title order={2} size="md">
             Recent contacts
           </Title>
-          <div className={styles.contactGrid}>
+          <Grid minColumnWidth="220px" gap="sm">
             {contacts.slice(0, 4).map((c) => (
               <Cluster key={c.id} gap="sm" wrap={false} align="center">
                 <Avatar name={c.name} size="md" />
@@ -175,7 +189,7 @@ export function Dashboard() {
                 </Stack>
               </Cluster>
             ))}
-          </div>
+          </Grid>
         </Stack>
       </Card>
 
