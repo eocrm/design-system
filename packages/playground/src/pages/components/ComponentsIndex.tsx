@@ -36,6 +36,7 @@ import { Calendar } from '@eocrm/design-system';
 import { DatePicker } from '@eocrm/design-system';
 import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import { DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
+import { DefinitionList } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
 import { FileUpload } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
@@ -307,6 +308,23 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'DataTable',
     description: 'Tabular data with sortable / resizable / reorderable columns and row selection.',
     preview: <DataTablePreview />,
+  },
+  {
+    to: '/components/definition-list',
+    name: 'DefinitionList',
+    description: 'Semantic key/value pairs with optional icon on the value.',
+    preview: (
+      <DefinitionList>
+        <DefinitionList.Item>
+          <DefinitionList.Term>Email</DefinitionList.Term>
+          <DefinitionList.Description>ada@example.com</DefinitionList.Description>
+        </DefinitionList.Item>
+        <DefinitionList.Item>
+          <DefinitionList.Term>Phone</DefinitionList.Term>
+          <DefinitionList.Description>+1 (415) 555-0142</DefinitionList.Description>
+        </DefinitionList.Item>
+      </DefinitionList>
+    ),
   },
   {
     to: '/components/table',

@@ -1,0 +1,92 @@
+@use '../../styles/mixins' as *;
+
+.list {
+  // UA reset — <dl> ships with default browser margin we don't want.
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <dl> default margin
+  margin: 0;
+}
+
+.list[data-layout='horizontal'] {
+  display: grid;
+  grid-template-columns: var(--dl-term-width, max-content) 1fr;
+  column-gap: var(--space-4);
+}
+
+.list[data-layout='stacked'] {
+  display: flex;
+  flex-direction: column;
+}
+
+// In horizontal mode the wrapping <div> is a no-op so dt/dd participate
+// in the parent grid directly. In stacked mode it's a normal flex child.
+.list[data-layout='horizontal'] .item {
+  display: contents;
+}
+
+.term,
+.description {
+  // UA reset for <dt>/<dd> default browser styles.
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <dt>/<dd> defaults
+  margin: 0;
+}
+
+.term {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg-muted);
+}
+
+.description {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+}
+
+// Horizontal padding matches Card.ListRow's `var(--space-3) var(--space-4)`
+// rhythm so DefinitionList aligns with Card.Header when both sit inside a
+// <Card> (which auto-applies padding="none" once it detects compound children).
+// Outside a Card, this acts as sensible default internal inset.
+.term,
+.description {
+  padding-inline: var(--space-4);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-fg-subtle);
+}
+
+// Spacing — padding-block on dt and dd directly. In horizontal mode the
+// .item is display:contents and has no box, so we can't pad it; in stacked
+// mode the same rules still produce the right vertical rhythm.
+.list[data-spacing='sm'] .term,
+.list[data-spacing='sm'] .description {
+  padding-block: var(--space-2);
+}
+
+.list[data-spacing='md'] .term,
+.list[data-spacing='md'] .description {
+  padding-block: var(--space-3);
+}
+
+.list[data-spacing='lg'] .term,
+.list[data-spacing='lg'] .description {
+  padding-block: var(--space-4);
+}
+
+// Dividers — in horizontal mode .item is display:contents (no box), so the
+// border goes on every dt/dd after the first row. Using :not(:first-of-type)
+// works because dt and dd are typed elements within the parent dl grid.
+.list[data-dividers='true'][data-layout='horizontal'] .term:not(:first-of-type),
+.list[data-dividers='true'][data-layout='horizontal'] .description:not(:first-of-type) {
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+// In stacked mode the .item HAS a box, so the border goes on each item
+// after the first.
+.list[data-dividers='true'][data-layout='stacked'] .item + .item {
+  border-top: var(--border-width) solid var(--color-border);
+}

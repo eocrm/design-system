@@ -20,6 +20,7 @@ export type ComponentName =
   | 'DataTable'
   | 'DatePicker'
   | 'DateRangePicker'
+  | 'DefinitionList'
   | 'Divider'
   | 'Drawer'
   | 'DropdownMenu'
@@ -132,6 +133,7 @@ export const MOCKUPS = [
       'Button',
       'Card',
       'Cluster',
+      'DefinitionList',
       'DropdownMenu',
       'Grid',
       'Link',
