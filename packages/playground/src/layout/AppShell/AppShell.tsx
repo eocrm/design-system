@@ -75,6 +75,13 @@ const componentOverview = {
   end: true,
 };
 
+const tokensReference = {
+  to: '/components/tokens',
+  label: 'Design tokens',
+  icon: Palette,
+  end: false,
+};
+
 const componentGroups = [
   {
     heading: 'Layout',
@@ -214,6 +221,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {inComponents ? (
             <>
               {renderItem(componentOverview)}
+              {renderItem(tokensReference)}
               {componentGroups.map(({ heading, items }) => (
                 <div key={heading} className={styles.navGroup}>
                   <div className={styles.navSection}>{heading}</div>

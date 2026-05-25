@@ -1,0 +1,236 @@
+.page {
+  max-width: 1100px;
+}
+
+.eyebrow {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.tableWrap {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.colPreview {
+  width: 80px;
+}
+
+.colName {
+  width: 30%;
+}
+
+.colValue {
+  width: 22%;
+}
+
+.colExplanation {
+  width: auto;
+}
+
+.table thead th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-muted);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg-muted);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.table tbody td {
+  padding: var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: var(--color-bg-subtle);
+}
+
+.copyButton {
+  display: inline-block;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: pointer;
+  text-align: left;
+}
+
+.copyButton:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-accent);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- focus-ring offset, no token equivalent
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.value {
+  color: var(--color-fg);
+}
+
+// ─── Preview swatch variants ────────────────────────────────────────────
+
+.colorSwatch {
+  width: 48px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--color-border);
+  background-clip: padding-box;
+}
+
+.spaceTrack {
+  width: 64px;
+  height: 12px;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.spaceFill {
+  height: 100%;
+  background: var(--color-accent);
+}
+
+.radiusSwatch {
+  width: 48px;
+  height: 32px;
+  background: var(--color-fg-muted);
+}
+
+.shadowSwatch {
+  width: 48px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+}
+
+.fontSizeSample,
+.fontWeightSample,
+.fontFamilySample {
+  display: inline-block;
+  color: var(--color-fg);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- intentional baseline override for the preview cell
+  line-height: 1;
+}
+
+.fontWeightSample {
+  font-size: var(--font-size-md);
+}
+
+.fontFamilySample {
+  font-size: var(--font-size-md);
+}
+
+.sizeTrack {
+  width: 80px;
+  height: 12px;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.sizeFill {
+  height: 100%;
+  background: var(--color-fg-muted);
+}
+
+.opacityRow {
+  display: inline-flex;
+  align-items: center;
+  width: 48px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background-image:
+    linear-gradient(45deg, var(--color-bg-muted) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-bg-muted) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-bg-muted) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-bg-muted) 75%);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0;
+}
+
+.opacitySwatch {
+  width: 100%;
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: var(--radius-sm);
+}
+
+.ringSwatch {
+  width: 32px;
+  height: 32px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- inner margin so the focus ring shadow is visible inside the cell
+  margin: 4px;
+}
+
+.ringWidthSample {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ringWidthBox {
+  width: 32px;
+  height: 32px;
+  border-style: solid;
+  border-color: var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+
+.borderSwatch {
+  width: 48px;
+  height: 32px;
+  border-style: solid;
+  border-color: var(--color-fg-muted);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+
+.lineHeightSample {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+}
+
+.letterSample {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+}
+
+.dash {
+  color: var(--color-fg-muted);
+}
