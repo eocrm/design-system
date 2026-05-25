@@ -47,15 +47,13 @@ export function ContactDetail() {
         <PageHeader.Aside>
           <Avatar name={contact.name} size="lg" />
         </PageHeader.Aside>
-        <PageHeader.Title>
-          <Cluster gap="sm" align="center">
-            <span>{contact.name}</span>
-            <Badge tone={statusTone[contact.status]}>{statusLabel[contact.status]}</Badge>
-          </Cluster>
-        </PageHeader.Title>
+        <PageHeader.Title>{contact.name}</PageHeader.Title>
         <PageHeader.Subtitle>
           {contact.title} · {contact.company}
         </PageHeader.Subtitle>
+        <PageHeader.Meta>
+          <Badge tone={statusTone[contact.status]}>{statusLabel[contact.status]}</Badge>
+        </PageHeader.Meta>
         <PageHeader.Actions>
           <Button variant="secondary">
             <Mail size={14} /> Email
@@ -105,7 +103,7 @@ export function ContactDetail() {
               <Card.Header
                 headerLevel="h2"
                 action={
-                  <Link href="#" onClick={(e) => e.preventDefault()}>
+                  <Link as={RouterLink} to="/mockups/contacts">
                     View all
                   </Link>
                 }

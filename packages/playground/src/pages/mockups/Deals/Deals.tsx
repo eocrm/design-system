@@ -54,7 +54,6 @@ export function Deals() {
                 background: 'var(--color-bg-muted)',
                 borderRadius: 'var(--radius-md)',
                 padding: 'var(--space-3)',
-                minHeight: '400px',
               }}
             >
               <Stack gap="md">

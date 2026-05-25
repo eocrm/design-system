@@ -1,4 +1,5 @@
 import { ArrowUpRight, DollarSign, UserPlus, Briefcase } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Card,
   Stack,
@@ -112,7 +113,7 @@ export function Dashboard() {
           <Card.Header
             headerLevel="h2"
             action={
-              <Link href="#" onClick={(e) => e.preventDefault()}>
+              <Link as={RouterLink} to="/mockups/deals">
                 View all
               </Link>
             }
