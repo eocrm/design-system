@@ -88,6 +88,70 @@ Skipping 1–3 → users can navigate to the URL but the page is unreachable thr
 
 `react-router-dom`, `prismjs`, `prism-react-renderer`, `@types/prismjs`, `@types/node` — these are in the playground's `package.json`. They MUST NOT appear in `@eocrm/design-system`'s `dependencies`. If you find yourself wanting to use one of these in a library component, you're solving the problem in the wrong layer.
 
+### 6. Mockups build EXCLUSIVELY from `@eocrm/design-system` components
+
+This rule applies **only to files under `src/pages/mockups/`** — NOT to demo pages, AppShell, or other playground tooling. Mockups exist to dogfood the library, so they must use the same surface a CRM consumer does.
+
+**Forbidden in mockup `.tsx`:**
+
+- ❌ Inline `style={{...}}` attributes. The library's components own their styling; if you need a visual variant the component doesn't expose, that's a library gap (see below), not an excuse to inline CSS.
+- ❌ Raw HTML elements: `<div>`, `<span>`, `<button>`, `<a>`, `<input>`, `<p>`, `<h1>`–`<h6>`, `<img>`, `<ul>`, `<li>`, `<table>`, `<form>`, etc. Use the library's equivalent — `<Stack>` / `<Cluster>` / `<Button>` / `<Link>` / `<Input>` / `<Text>` / `<Title>` / `<Avatar>` / `<Table>` and so on.
+- ❌ CSS Modules `*.module.scss` files co-located with a mockup `.tsx`. The library is your only styling layer; mockups don't ship custom CSS.
+
+**Allowed in mockup `.tsx`:**
+
+- ✅ Library components from `@eocrm/design-system`.
+- ✅ React Fragments (`<>...</>`).
+- ✅ Native HTML that the library re-exports under a typed component (e.g., the `<Table>` primitive renders a `<table>` element internally; you write `<Table>` in the mockup).
+
+**When the library doesn't cover what the mockup needs:**
+
+1. Open `packages/design-system/src/components/TODO.md` and add a new entry describing the missing functionality (primitive name, what it should do, where in which mockup you needed it, how you're currently mocking it).
+2. Inline-mock the gap in the mockup with a one-line comment pointing to the TODO entry: `{/* TODO: replace when <PrimitiveName> ships — see components/TODO.md */}`.
+3. The inline mock MAY use raw HTML / inline styles **only at the exact mock site**, contained to the smallest possible block. Mark it visually with the TODO comment so the next reviewer notices.
+4. When the library primitive ships, the TODO entry's "Mocked in" path tells the implementer exactly which files to refactor. Tick the TODO and delete the inline mock.
+
+**Why this rule:** mockups are the canary for missing primitives. Every hand-rolled `<div className="...">` inside a mockup is a signal that either (a) we're missing a primitive the CRM will also need, or (b) the existing primitive needs a new prop. Filing the TODO captures that signal so it doesn't get lost. Letting mockups drift into bespoke HTML defeats the dogfooding purpose — the CRM consumer can't reach for "inline a div with styling" the way a mockup author can, so a mockup that does so isn't realistic.
+
+### 7. Pre-push review-fix cycle (mockup changes only)
+
+Mirrors the library's Hard rule 8 (`packages/design-system/CLAUDE.md`). Mockups are the most visible artifact of the library — they're what a new engineer or stakeholder loads first, and what AI agents pattern-match against when building real CRM screens. A drift here propagates straight into consumer code. The review cycle catches it before push.
+
+**When this rule applies**: any change that touches files under `packages/playground/src/pages/mockups/**`, the mockup registry (`packages/playground/src/pages/mockups/registry.ts`), or mock-data shared by mockups (`packages/playground/src/data/**`).
+
+**When this rule does NOT apply**: changes scoped to demo pages, AppShell, root `App.tsx`, layout files, or other playground tooling. Push those normally. Pure docs changes (this file, root README, etc.) also push directly per the root-CLAUDE.md's "standalone docs may be direct-pushed" carve-out.
+
+**The loop**:
+
+1. **Run gates first** — `make test`, `make build` (typecheck + bundle), `make lint`. They must all pass before review.
+2. **Spawn a fresh-context review agent** (`general-purpose`) targeted at the changed mockup file(s). Brief it on these 10 review categories:
+   1. **Hard rule 6 compliance** — no inline `style={...}`, no raw HTML tags, no co-located `.module.scss`. Any escape-hatch mock has a matching entry in `packages/design-system/src/components/TODO.md` AND an inline `{/* TODO: replace when … */}` comment.
+   2. **Registry sync** — every library component used in the mockup is listed in that mockup's `usesComponents` array in `registry.ts`. No stale entries (a name listed that's no longer imported).
+   3. **Imports** — only from `@eocrm/design-system`, never relative paths into the library (Rule 2). Demo-only deps from Rule 5 stay out.
+   4. **Realism** — does the mockup look like a real CRM screen, or a contrived demo? Mock data plausible (names, dates, currency formatting). No "lorem ipsum" or `"Click me"` placeholder text.
+   5. **Accessibility** — landmarks (`<main>` / nav present via library components), heading hierarchy (one h1 per page), images have alt text via `<Avatar name>` or equivalent, interactive elements have accessible labels.
+   6. **Keyboard / focus** — tab order matches visual order, no focus traps, Escape closes modals/popovers.
+   7. **Layout discipline** — spacing comes from `<Stack gap>` / `<Cluster gap>` props, not from inline margins or custom CSS. Vertical rhythm consistent across the page.
+   8. **Component coverage** — if a primitive exists for what the mockup does, the mockup uses it (no `<Button>` ignored in favor of a hand-rolled trigger). Cross-reference against the manifest at `packages/design-system/src/components.manifest.json`.
+   9. **State realism** — interactive state (open/closed, selected, loading, empty) reflects how the CRM would use it. If the mockup has only a single state, flag whether the empty / loading / error variants are worth adding.
+   10. **No stale TODOs** — any `{/* TODO: replace when … */}` comment has a matching open entry in `TODO.md`; any TODO entry whose listed primitive HAS shipped should be ticked + the inline mock refactored away.
+
+   Ask for output as `Critical` / `Important` / `Nice-to-have` / `Regression-watch` + a final verdict line (`clean enough to stop` or `keep iterating`).
+
+3. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
+4. **For every finding deliberately skipped**, leave a one-line explanation so the next reviewer doesn't re-flag it.
+5. **Re-run gates** after fixes.
+6. **Spawn another reviewer** with the same prompt.
+7. **Repeat** until the verdict is `clean enough to stop`.
+
+**Hard exit criteria**:
+
+- 0 Critical, 0 Important findings (or each remaining one has an explicit documented skip).
+- All three gates (test, build, lint) green.
+- All open TODOs in `packages/design-system/src/components/TODO.md` that the changed mockup touches are either still open with a matching inline comment, OR ticked + the refactor done in this PR.
+
+**Trivial-change escape hatch**: a one-character text fix or a typo in mock data doesn't need a full review loop. Use judgment — if the change couldn't plausibly affect Rule 6 compliance, layout, or component coverage, push without the cycle.
+
 ## What goes here vs in the library
 
 |                                                           | Playground | Library |
