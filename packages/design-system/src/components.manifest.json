@@ -1,0 +1,375 @@
+{
+  "Accordion": {
+    "tier": "primitive",
+    "cluster": "Navigation",
+    "composes": [],
+    "composedBy": []
+  },
+  "Alert": {
+    "tier": "primitive",
+    "cluster": "Feedback",
+    "composes": [],
+    "composedBy": []
+  },
+  "Avatar": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Tooltip"
+    ],
+    "composedBy": []
+  },
+  "Badge": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
+  "Breadcrumb": {
+    "tier": "composition",
+    "cluster": "Navigation",
+    "composes": [
+      "Link"
+    ],
+    "composedBy": []
+  },
+  "Button": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": [
+      "ButtonGroup",
+      "Calendar",
+      "ConfirmationPopover",
+      "DataTable"
+    ]
+  },
+  "ButtonGroup": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Button"
+    ],
+    "composedBy": []
+  },
+  "Calendar": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Button",
+      "Cluster",
+      "Tabs",
+      "Tooltip"
+    ],
+    "composedBy": []
+  },
+  "Card": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": []
+  },
+  "Checkbox": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": [
+      "DataTable"
+    ]
+  },
+  "CircularProgress": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
+  "Cluster": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": [
+      "Calendar",
+      "ConfirmationPopover"
+    ]
+  },
+  "Code": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
+  "ColorPicker": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Input",
+      "Popover",
+      "Slider"
+    ],
+    "composedBy": []
+  },
+  "ConfirmationPopover": {
+    "tier": "composition",
+    "cluster": "Overlays",
+    "composes": [
+      "Button",
+      "Cluster",
+      "Popover",
+      "Stack"
+    ],
+    "composedBy": []
+  },
+  "CursorPagination": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Pagination"
+    ],
+    "composedBy": []
+  },
+  "DataTable": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Button",
+      "Checkbox",
+      "DropdownMenu",
+      "EmptyState",
+      "Skeleton",
+      "Table"
+    ],
+    "composedBy": []
+  },
+  "DatePicker": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": [
+      "DateRangePicker"
+    ]
+  },
+  "DateRangePicker": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "DatePicker"
+    ],
+    "composedBy": []
+  },
+  "Divider": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": []
+  },
+  "Drawer": {
+    "tier": "primitive",
+    "cluster": "Overlays",
+    "composes": [],
+    "composedBy": []
+  },
+  "DropdownMenu": {
+    "tier": "primitive",
+    "cluster": "Overlays",
+    "composes": [],
+    "composedBy": [
+      "DataTable"
+    ]
+  },
+  "EmptyState": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": [
+      "DataTable"
+    ]
+  },
+  "FileUpload": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Progress"
+    ],
+    "composedBy": []
+  },
+  "Grid": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": []
+  },
+  "ImageCrop": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Skeleton",
+      "Slider"
+    ],
+    "composedBy": []
+  },
+  "Input": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": [
+      "ColorPicker"
+    ]
+  },
+  "Link": {
+    "tier": "primitive",
+    "cluster": "Navigation",
+    "composes": [],
+    "composedBy": [
+      "Breadcrumb"
+    ]
+  },
+  "Modal": {
+    "tier": "primitive",
+    "cluster": "Overlays",
+    "composes": [],
+    "composedBy": []
+  },
+  "PageHeader": {
+    "tier": "composition",
+    "cluster": "Layout",
+    "composes": [
+      "Title"
+    ],
+    "composedBy": []
+  },
+  "Pagination": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": [
+      "CursorPagination"
+    ]
+  },
+  "PasswordInput": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Tooltip"
+    ],
+    "composedBy": []
+  },
+  "PasswordStrengthMeter": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": []
+  },
+  "Popover": {
+    "tier": "primitive",
+    "cluster": "Overlays",
+    "composes": [],
+    "composedBy": [
+      "ColorPicker",
+      "ConfirmationPopover"
+    ]
+  },
+  "Progress": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": [
+      "FileUpload"
+    ]
+  },
+  "Radio": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": []
+  },
+  "Select": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": []
+  },
+  "Skeleton": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": [
+      "DataTable",
+      "ImageCrop"
+    ]
+  },
+  "Slider": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": [
+      "ColorPicker",
+      "ImageCrop"
+    ]
+  },
+  "Stack": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": [
+      "ConfirmationPopover"
+    ]
+  },
+  "Switch": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": []
+  },
+  "Table": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": [
+      "DataTable"
+    ]
+  },
+  "Tabs": {
+    "tier": "primitive",
+    "cluster": "Navigation",
+    "composes": [],
+    "composedBy": [
+      "Calendar"
+    ]
+  },
+  "Text": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
+  "Textarea": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": []
+  },
+  "Title": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": [
+      "PageHeader"
+    ]
+  },
+  "Toast": {
+    "tier": "primitive",
+    "cluster": "Feedback",
+    "composes": [],
+    "composedBy": []
+  },
+  "Tooltip": {
+    "tier": "primitive",
+    "cluster": "Overlays",
+    "composes": [],
+    "composedBy": [
+      "Avatar",
+      "Calendar",
+      "PasswordInput"
+    ]
+  }
+}

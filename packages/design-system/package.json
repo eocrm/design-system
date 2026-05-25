@@ -65,6 +65,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:manifest": "node scripts/generate-manifest.mjs"
   }
 }

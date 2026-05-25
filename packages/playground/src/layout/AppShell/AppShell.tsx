@@ -43,6 +43,7 @@ import {
   ListOrdered,
   LayoutPanelLeft,
   LayoutPanelTop,
+  Network,
   ListCollapse,
   MoveRight,
   ToggleRight,
@@ -80,6 +81,13 @@ const tokensReference = {
   to: '/components/tokens',
   label: 'Design tokens',
   icon: Palette,
+  end: false,
+};
+
+const architectureReference = {
+  to: '/components/architecture',
+  label: 'Architecture',
+  icon: Network,
   end: false,
 };
 
@@ -224,6 +232,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <>
               {renderItem(componentOverview)}
               {renderItem(tokensReference)}
+              {renderItem(architectureReference)}
               {componentGroups.map(({ heading, items }) => (
                 <div key={heading} className={styles.navGroup}>
                   <div className={styles.navSection}>{heading}</div>
