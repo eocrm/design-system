@@ -784,6 +784,50 @@ import { Divider } from '@eocrm/design-system';
 - ❌ `<Divider size="lg" />` for casual section breaks. Reserve `lg` (3px) for strong visual hierarchy.
 - ❌ Adding `margin` via inline `style`. The parent should own spacing.
 
+### `<PageHeader>` — top-of-page heading area
+
+```tsx
+<PageHeader>
+  <PageHeader.Breadcrumb>
+    <Breadcrumb items={[...]} />
+  </PageHeader.Breadcrumb>
+  <PageHeader.BackButton href="/contacts" aria-label="Back to contacts" />
+  <PageHeader.Aside>
+    <Avatar size="lg" name="Acme Corp" />
+  </PageHeader.Aside>
+  <PageHeader.Title>Acme Corporation</PageHeader.Title>
+  <PageHeader.Subtitle>Founded 2014 · 230 employees</PageHeader.Subtitle>
+  <PageHeader.Meta>
+    <Badge tone="success">Active</Badge>
+    <Text size="sm" tone="muted">Last contacted 2 days ago</Text>
+  </PageHeader.Meta>
+  <PageHeader.Actions>
+    <Button variant="secondary">Email</Button>
+    <Button>Edit</Button>
+  </PageHeader.Actions>
+</PageHeader>
+```
+
+- **Compound API.** Seven slots: `Breadcrumb`, `BackButton`, `Aside`, `Title`, `Subtitle`, `Meta`, `Actions`. Detected via `c.type === SubComponent` after one level of Fragment unwrap. Unrecognized children are silently dropped.
+- **All slots optional.** Missing slots collapse to zero-height rows; minimal usage is `<PageHeader><PageHeader.Title>…</PageHeader.Title></PageHeader>`.
+- **`borderBottom: boolean = true`** — toggles the 1px bottom border. Set `false` when placing `<Tabs>` immediately below (Tabs has its own bottom border; you don't want two lines).
+- **`<PageHeader.BackButton>`** renders as `<a href>` when `href` is provided, or `<button onClick>` when `onClick` is provided. Mutually exclusive — both → button wins with a dev warn; neither → disabled button with a dev warn. Default `aria-label="Go back"`; default icon `<ChevronLeft size={16}>`. Lives in the breadcrumb row, left of the breadcrumb itself.
+- **`<PageHeader.Aside>`** is a position-based slot (not named "Icon" / "Avatar") so it accepts whatever leading element you need. Vertically centered with the title block.
+- **`<PageHeader.Title>`** passes through to `<Title order={order} size={size}>`. Default `order={1}` (renders `<h1>`); set `order={2}` for sub-page section headers.
+- **`<PageHeader.Subtitle>`** is a `<p>` with muted color.
+- **`<PageHeader.Meta>`** is a flex row that wraps — good for badges + timestamps.
+- **`<PageHeader.Actions>`** is a flex row, right-aligned by default. On viewports < 640px, Actions wraps below the title block.
+- **NOT a `<header>` landmark.** PageHeader renders a `<div>` to avoid conflicting with the AppShell's app-level `<header role="banner">`.
+
+#### Hard rule
+
+- ❌ Nesting `<PageHeader>` inside another `<PageHeader>` — undefined behavior. Use one PageHeader per page.
+- ❌ Putting non-PageHeader children (a `<div>`, a `<Stack>`) inside `<PageHeader>` — they're silently dropped. Use one of the seven slots.
+- ❌ Wrapping a sub-component in an HOC or deep nesting. The `c.type ===` detection handles ONE level of Fragment unwrap only.
+- ❌ Putting an Avatar inside `<PageHeader.Title>` — muddles the `<h1>`'s text content for screen readers. Use `<PageHeader.Aside>` instead.
+- ❌ `position: sticky` directly on `<PageHeader>` — out of scope for v1. Wrap in your own sticky container if you need sticky behavior.
+- ❌ Passing both `href` and `onClick` to `<PageHeader.BackButton>` — onClick wins with a dev warn. Pick one.
+
 ### `<Avatar>` — profile circle
 
 ```tsx
