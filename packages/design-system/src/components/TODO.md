@@ -27,7 +27,22 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
-_(no open entries yet — add the first one when a mockup hits a gap.)_
+### [ ] `<StatTile>` (or `<IconTile>`) — accent-tinted square containing a centered icon
+
+**Filed:** 2026-05-25
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx` — used as the trailing element inside each stat Card (label / value / Badge column on the left, tile on the right).
+
+**What's needed:**
+A 32×32 (or size-prop-driven) rounded-square container that centers an icon child. Tinted background matching a `tone` prop (`accent` / `success` / `warning` / `danger` / `info` / `neutral`), with the icon color picking up the tone's accent. Props: `icon: ReactNode` (or just `children`), `tone?: Tone`, `size?: 'sm' | 'md' | 'lg'`. No interactive state — purely decorative.
+
+Distinct from `<Avatar>` (initials / image) and `<Badge>` (text-bearing chip). The closest current primitive is a Cluster around a lucide icon, but that doesn't give the tinted-bg square shape.
+
+**Current workaround:**
+Inline `style={...}` on a `<div>` with `display: grid; place-items: center; width/height: var(--size-md); border-radius: var(--radius-md); background: var(--color-accent-subtle-bg); color: var(--color-accent)`. Marked with the standard TODO comment.
+
+**When this ships:** refactor the Dashboard mock in the file above, then tick this checkbox.
 
 ## Closed
 
