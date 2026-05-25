@@ -6,11 +6,12 @@ When a primitive listed here ships, follow the "Mocked in" link, refactor the mo
 
 ## Entry format
 
-````markdown
+```markdown
 ## [ ] `<PrimitiveName>` — one-line description
 
 **Filed:** YYYY-MM-DD
 **Mocked in:**
+
 - `packages/playground/src/pages/mockups/<Path>.tsx:<line>`
 
 **What's needed:**
@@ -20,7 +21,7 @@ What the primitive should do in user terms — props, behavior, accessibility ex
 How the mockup hacks around the gap right now. Be specific so the reviewer can verify the workaround when the primitive replaces it.
 
 **When this ships:** refactor the mocked-in locations to use the new primitive, then tick this checkbox.
-````
+```
 
 Keep entries terse but specific. The "Mocked in" path is load-bearing — the implementer needs it to find the existing hack.
 
