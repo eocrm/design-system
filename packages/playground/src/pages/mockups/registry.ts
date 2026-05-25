@@ -18,6 +18,7 @@ export type ComponentName =
   | 'ConfirmationPopover'
   | 'CursorPagination'
   | 'DataTable'
+  | 'DefinitionList'
   | 'DatePicker'
   | 'DateRangePicker'
   | 'Divider'
