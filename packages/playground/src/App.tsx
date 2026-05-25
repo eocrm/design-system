@@ -8,6 +8,7 @@ import { ContactDetail } from './pages/mockups/ContactDetail/ContactDetail';
 import { Members } from './pages/mockups/Members/Members';
 import { ComponentsIndex } from './pages/components/ComponentsIndex';
 import { TokensPage } from './pages/Tokens/TokensPage';
+import { ArchitecturePage } from './pages/Architecture/ArchitecturePage';
 import { AccordionDemo } from './pages/components/AccordionDemo';
 import { AlertDemo } from './pages/components/AlertDemo';
 import { BreadcrumbDemo } from './pages/components/BreadcrumbDemo';
@@ -72,6 +73,7 @@ export default function App() {
 
           <Route path="/components" element={<ComponentsIndex />} />
           <Route path="/components/tokens" element={<TokensPage />} />
+          <Route path="/components/architecture" element={<ArchitecturePage />} />
           <Route path="/components/accordion" element={<AccordionDemo />} />
           <Route path="/components/alert" element={<AlertDemo />} />
           <Route path="/components/breadcrumb" element={<BreadcrumbDemo />} />

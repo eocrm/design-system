@@ -1,0 +1,102 @@
+.page {
+  max-width: 1100px;
+}
+
+.eyebrow {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.tierSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.clusterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.clusterHeading {
+  color: var(--color-fg-muted);
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-3);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-base);
+}
+
+.card:hover {
+  border-color: var(--color-border-strong);
+}
+
+.card:target {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--ring-accent);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cardRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.rowLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+}
+
+.rowChips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.componentLink {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  text-decoration: none;
+  color: var(--color-fg);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: pointer;
+}
+
+.componentLink:hover {
+  color: var(--color-accent);
+}
+
+.componentLink:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-accent);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- focus-ring offset, no token equivalent
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
