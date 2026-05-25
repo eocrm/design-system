@@ -55,12 +55,23 @@ export function Members() {
               {seatLimit - seatsUsed} seats remaining on your current plan.
             </Text>
           </Stack>
-          <Cluster gap="md" align="center" wrap={false}>
+          {/* TODO: replace when <Box width> ships — see components/TODO.md.
+              Progress is width:100% of parent; inside a Cluster (no defined
+              width) it collapses to 0, so the bar wrapper needs explicit
+              min-width to render at the original 320px target. */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-3)',
+              minWidth: '320px',
+            }}
+          >
             <Progress value={seatsUsed} max={seatLimit} size="sm" />
             <Button variant="secondary" size="sm">
               Upgrade plan
             </Button>
-          </Cluster>
+          </div>
         </Cluster>
       </Card>
 

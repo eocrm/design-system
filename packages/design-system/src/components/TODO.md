@@ -62,6 +62,29 @@ Distinct from `<Button>` (text + icon, not a layout container) and plain `<Card>
 
 **When this ships:** refactor the MockupsIndex mock in the file above (and any other mockup-index pages that follow the same grid-of-clickable-cards pattern), then tick this checkbox.
 
+### [ ] `<Box>` (or `<Constrain>`) — width-constrained container for flex children
+
+**Filed:** 2026-05-25
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/Members/Members.tsx` — the Progress + Upgrade-button cluster on the seats card. Progress is `width: 100%` of its parent; inside a `<Cluster>` (flex row, no explicit width) it collapses to 0. The original mockup gave that wrapper `min-width: 320px`.
+
+**What's needed:**
+A layout primitive that takes a `width` / `minWidth` / `maxWidth` prop and applies it to its container. Could also be the place to land a `flex` prop for "grow into remaining space in a parent flex row." Today, `<Cluster>` and `<Stack>` follow Rule 4 and can't carry any width tokens — they're spacing-only primitives.
+
+Adjacent gaps that this would close:
+
+- Members search Input — original had `max-width: 320px`; current refactor lets it stretch full-width (deliberate adoption gap, acceptable but worth fixing).
+- Contacts search Input — same pattern.
+- Any time a Progress / Slider / Input needs a defined intrinsic width inside a flex row.
+
+Props sketch: `width?`, `minWidth?`, `maxWidth?` (all strings — token names or px values), `flex?: 'grow' | 'shrink' | 'auto' | number`, plus passthrough children.
+
+**Current workaround:**
+A raw `<div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: '320px' }}>` at the exact mock site, with the standard TODO comment.
+
+**When this ships:** refactor the Members seats card and re-evaluate the search-input constraints across mockups, then tick this checkbox.
+
 ### [ ] `<MutedBox>` — non-Card subdued-background container
 
 **Filed:** 2026-05-25
