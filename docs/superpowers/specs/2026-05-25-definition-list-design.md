@@ -21,9 +21,12 @@ The lucide-icon-on-value pattern repeats anywhere a CRM shows entity properties.
 
 ```html
 <dl>
-  <div>                  <!-- DefinitionList.Item, HTML5-sanctioned grouper -->
-    <dt>Email</dt>       <!-- DefinitionList.Term -->
-    <dd>                 <!-- DefinitionList.Description -->
+  <div>
+    <!-- DefinitionList.Item, HTML5-sanctioned grouper -->
+    <dt>Email</dt>
+    <!-- DefinitionList.Term -->
+    <dd>
+      <!-- DefinitionList.Description -->
       <span aria-hidden>📬</span>
       foo@bar.com
     </dd>
@@ -86,12 +89,12 @@ export const DefinitionList = Object.assign(DefinitionListRoot, {
 
 ## Default rationale
 
-| Prop | Default | Why |
-| --- | --- | --- |
-| `layout` | `'horizontal'` | Matches the driving ContactDetail use case |
-| `termWidth` | undefined → `max-content` | Auto-size to the longest term; no guessing |
-| `spacing` | `'md'` | Matches Card.ListRow's vertical rhythm so the ContactDetail.About migration doesn't visually shift |
-| `dividers` | `false` | Clean default — matches Bootstrap / Tailwind / Mantine dl conventions; ContactDetail.About explicitly opts in |
+| Prop        | Default                   | Why                                                                                                           |
+| ----------- | ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `layout`    | `'horizontal'`            | Matches the driving ContactDetail use case                                                                    |
+| `termWidth` | undefined → `max-content` | Auto-size to the longest term; no guessing                                                                    |
+| `spacing`   | `'md'`                    | Matches Card.ListRow's vertical rhythm so the ContactDetail.About migration doesn't visually shift            |
+| `dividers`  | `false`                   | Clean default — matches Bootstrap / Tailwind / Mantine dl conventions; ContactDetail.About explicitly opts in |
 
 ## Layout mechanics
 
@@ -134,7 +137,11 @@ Inside `<DefinitionList.Description>`:
 
 ```tsx
 <dd className={styles.description}>
-  {icon && <span className={styles.icon} aria-hidden>{icon}</span>}
+  {icon && (
+    <span className={styles.icon} aria-hidden>
+      {icon}
+    </span>
+  )}
   {children}
 </dd>
 ```
@@ -145,11 +152,11 @@ Inside `<DefinitionList.Description>`:
 
 Per-item vertical padding controlled by the root's `spacing` prop, applied via `data-spacing` on the root (consistent with `data-layout` already used in the SCSS sketches above):
 
-| spacing | padding-block |
-| --- | --- |
-| `sm` | `var(--space-2)` |
-| `md` | `var(--space-3)` (default — matches Card.ListRow's vertical rhythm) |
-| `lg` | `var(--space-4)` |
+| spacing | padding-block                                                       |
+| ------- | ------------------------------------------------------------------- |
+| `sm`    | `var(--space-2)`                                                    |
+| `md`    | `var(--space-3)` (default — matches Card.ListRow's vertical rhythm) |
+| `lg`    | `var(--space-4)`                                                    |
 
 Padding sits on the `<dt>` and `<dd>` directly (because `<div>` is `display: contents` in horizontal mode and has no box).
 

@@ -16,20 +16,20 @@
 
 ## File Structure
 
-| Path | Created / Modified | Responsibility |
-| --- | --- | --- |
-| `packages/design-system/src/components/DefinitionList/DefinitionList.tsx` | Create | Root + 3 sub-components + Object.assign compound + flattenChildren helper + dev-mode validation warning |
-| `packages/design-system/src/components/DefinitionList/DefinitionList.module.scss` | Create | Grid (horizontal) + flex (stacked) + icon + spacing variants + dividers |
-| `packages/design-system/src/components/DefinitionList/DefinitionList.test.tsx` | Create | 14 unit cases |
-| `packages/design-system/src/components/DefinitionList/index.ts` | Create | Barrel exports |
-| `packages/design-system/src/index.ts` | Modify | Public re-export |
-| `packages/design-system/AGENTS.md` | Modify | TL;DR section after `<Card>` |
-| `packages/playground/src/pages/components/DefinitionListDemo.tsx` | Create | 5 examples |
-| `packages/playground/src/App.tsx` | Modify | Route registration |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | Modify | Display-cluster nav entry + lucide `List` import |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` | Modify | Overview-grid card |
-| `packages/playground/src/pages/mockups/ContactDetail/ContactDetail.tsx` | Modify | Migrate About card, delete local Field helper |
-| `packages/playground/src/pages/mockups/registry.ts` | Modify | Add `DefinitionList` to contact-detail.usesComponents |
+| Path                                                                              | Created / Modified | Responsibility                                                                                          |
+| --------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------- |
+| `packages/design-system/src/components/DefinitionList/DefinitionList.tsx`         | Create             | Root + 3 sub-components + Object.assign compound + flattenChildren helper + dev-mode validation warning |
+| `packages/design-system/src/components/DefinitionList/DefinitionList.module.scss` | Create             | Grid (horizontal) + flex (stacked) + icon + spacing variants + dividers                                 |
+| `packages/design-system/src/components/DefinitionList/DefinitionList.test.tsx`    | Create             | 14 unit cases                                                                                           |
+| `packages/design-system/src/components/DefinitionList/index.ts`                   | Create             | Barrel exports                                                                                          |
+| `packages/design-system/src/index.ts`                                             | Modify             | Public re-export                                                                                        |
+| `packages/design-system/AGENTS.md`                                                | Modify             | TL;DR section after `<Card>`                                                                            |
+| `packages/playground/src/pages/components/DefinitionListDemo.tsx`                 | Create             | 5 examples                                                                                              |
+| `packages/playground/src/App.tsx`                                                 | Modify             | Route registration                                                                                      |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`                            | Modify             | Display-cluster nav entry + lucide `List` import                                                        |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx`                    | Modify             | Overview-grid card                                                                                      |
+| `packages/playground/src/pages/mockups/ContactDetail/ContactDetail.tsx`           | Modify             | Migrate About card, delete local Field helper                                                           |
+| `packages/playground/src/pages/mockups/registry.ts`                               | Modify             | Add `DefinitionList` to contact-detail.usesComponents                                                   |
 
 ---
 
@@ -38,6 +38,7 @@
 Creates the 4-file component directory required by `structure.test.ts` (`*.tsx`, `*.module.scss`, `*.test.tsx`, `index.ts`). The test file is created in this task as a one-line stub so the structure check passes; full test cases land in Task 2.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DefinitionList/DefinitionList.tsx`
 - Create: `packages/design-system/src/components/DefinitionList/DefinitionList.module.scss`
 - Create: `packages/design-system/src/components/DefinitionList/DefinitionList.test.tsx` (stub)
@@ -473,6 +474,7 @@ EOF
 Replaces the stub in `DefinitionList.test.tsx` with 14 unit cases covering all four props, both layouts, the icon slot, dev-warning behavior, forwardRef, className merge, and edge cases. Vitest is configured with `globals: true` so `describe` / `it` / `expect` / `vi` are global — do NOT import them.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DefinitionList/DefinitionList.test.tsx` (replace stub)
 
 ---
@@ -724,13 +726,14 @@ EOF
 Insert a new TL;DR section after the existing `<Card>` block. Follows the canonical pattern: one-paragraph intro, snippet, prop summary, anti-patterns.
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 
 ---
 
 - [ ] **Step 1: Locate the insertion point**
 
-Open `packages/design-system/AGENTS.md`. The `<Card>` section starts at the line beginning with `### \`<Card>\` — bordered container`. Read down to find the line where the `<Card>` section ends and `### \`<Stack>\` — vertical layout` begins. The insertion point is the blank line immediately before `### \`<Stack>\``.
+Open `packages/design-system/AGENTS.md`. The `<Card>` section starts at the line beginning with `### \`<Card>\` — bordered container`. Read down to find the line where the `<Card>`section ends and`### \`<Stack>\` — vertical layout`begins. The insertion point is the blank line immediately before`### \`<Stack>\``.
 
 - [ ] **Step 2: Insert the DefinitionList section verbatim before `### \`<Stack>\``**
 
@@ -767,7 +770,6 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - ❌ Wrapping a `<DefinitionList.Description>` directly in `<DefinitionList>` without an enclosing `<DefinitionList.Item>` — the dev warning fires and grid layout breaks.
 - ❌ Putting interactive content in `<DefinitionList.Term>`. Use `<DefinitionList.Description>` for values, including ones containing `<Link>` or `<Button>`.
 - ❌ Stacking multiple `<DefinitionList.Description>` children under one Item to render "multiple values for one key." Works HTML-wise but doesn't have styling support — render multiple Items with the same Term text if you need that pattern.
-
 ````
 
 After the closing backticks of the anti-patterns section, leave one blank line before `### \`<Stack>\` — vertical layout`.
@@ -795,6 +797,7 @@ EOF
 Creates the demo file with 5 examples per spec §Playground demo and wires it into the four required places.
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/DefinitionListDemo.tsx`
 - Modify: `packages/playground/src/App.tsx` (route)
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx` (Display cluster + lucide import)
@@ -808,14 +811,7 @@ Path: `packages/playground/src/pages/components/DefinitionListDemo.tsx`
 
 ```tsx
 import { Mail, Phone, Building, MapPin, Globe, Briefcase, Cake, User } from 'lucide-react';
-import {
-  Badge,
-  Cluster,
-  DefinitionList,
-  Link,
-  Stack,
-  Text,
-} from '@eocrm/design-system';
+import { Badge, Cluster, DefinitionList, Link, Stack, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/DefinitionList/DefinitionList.tsx?raw';
@@ -961,9 +957,7 @@ export function DefinitionListDemo() {
           </DefinitionList.Item>
           <DefinitionList.Item>
             <DefinitionList.Term>Founded</DefinitionList.Term>
-            <DefinitionList.Description icon={<Cake size={14} />}>
-              1987
-            </DefinitionList.Description>
+            <DefinitionList.Description icon={<Cake size={14} />}>1987</DefinitionList.Description>
           </DefinitionList.Item>
         </DefinitionList>
       </Example>
@@ -997,8 +991,8 @@ export function DefinitionListDemo() {
           <DefinitionList.Item>
             <DefinitionList.Term>Workspace description</DefinitionList.Term>
             <DefinitionList.Description>
-              Internal tooling for the customer success team. Includes pipeline tracking,
-              onboarding workflows, and a shared inbox for support escalations.
+              Internal tooling for the customer success team. Includes pipeline tracking, onboarding
+              workflows, and a shared inbox for support escalations.
             </DefinitionList.Description>
           </DefinitionList.Item>
           <DefinitionList.Item>
@@ -1070,8 +1064,8 @@ export function DefinitionListDemo() {
 
       <Stack gap="xs">
         <Text size="sm" tone="muted">
-          Stack is imported above only to balance the spacing inside this demo file — DefinitionList does not
-          render a Stack internally.
+          Stack is imported above only to balance the spacing inside this demo file — DefinitionList
+          does not render a Stack internally.
         </Text>
       </Stack>
     </DemoLayout>
@@ -1213,6 +1207,7 @@ EOF
 Refactor the About card from `Card.List` + local `Field` helper to `DefinitionList`. Delete the now-unused `Field` helper. Add `DefinitionList` to the contact-detail mockup's registry entry.
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/ContactDetail/ContactDetail.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -1276,49 +1271,49 @@ import {
 In the same file, locate the About card. The current block is:
 
 ```tsx
-            <Card>
-              <Card.Header headerLevel="h2">About</Card.Header>
-              <Card.List>
-                <Field label="Email" value={contact.email} icon={<Mail size={14} />} />
-                <Field label="Phone" value="+1 (415) 555-0142" icon={<Phone size={14} />} />
-                <Field label="Company" value={contact.company} icon={<Building size={14} />} />
-                <Field label="Location" value="San Francisco, CA" icon={<MapPin size={14} />} />
-              </Card.List>
-            </Card>
+<Card>
+  <Card.Header headerLevel="h2">About</Card.Header>
+  <Card.List>
+    <Field label="Email" value={contact.email} icon={<Mail size={14} />} />
+    <Field label="Phone" value="+1 (415) 555-0142" icon={<Phone size={14} />} />
+    <Field label="Company" value={contact.company} icon={<Building size={14} />} />
+    <Field label="Location" value="San Francisco, CA" icon={<MapPin size={14} />} />
+  </Card.List>
+</Card>
 ```
 
 Replace it with:
 
 ```tsx
-            <Card>
-              <Card.Header headerLevel="h2">About</Card.Header>
-              <DefinitionList dividers>
-                <DefinitionList.Item>
-                  <DefinitionList.Term>Email</DefinitionList.Term>
-                  <DefinitionList.Description icon={<Mail size={14} />}>
-                    {contact.email}
-                  </DefinitionList.Description>
-                </DefinitionList.Item>
-                <DefinitionList.Item>
-                  <DefinitionList.Term>Phone</DefinitionList.Term>
-                  <DefinitionList.Description icon={<Phone size={14} />}>
-                    +1 (415) 555-0142
-                  </DefinitionList.Description>
-                </DefinitionList.Item>
-                <DefinitionList.Item>
-                  <DefinitionList.Term>Company</DefinitionList.Term>
-                  <DefinitionList.Description icon={<Building size={14} />}>
-                    {contact.company}
-                  </DefinitionList.Description>
-                </DefinitionList.Item>
-                <DefinitionList.Item>
-                  <DefinitionList.Term>Location</DefinitionList.Term>
-                  <DefinitionList.Description icon={<MapPin size={14} />}>
-                    San Francisco, CA
-                  </DefinitionList.Description>
-                </DefinitionList.Item>
-              </DefinitionList>
-            </Card>
+<Card>
+  <Card.Header headerLevel="h2">About</Card.Header>
+  <DefinitionList dividers>
+    <DefinitionList.Item>
+      <DefinitionList.Term>Email</DefinitionList.Term>
+      <DefinitionList.Description icon={<Mail size={14} />}>
+        {contact.email}
+      </DefinitionList.Description>
+    </DefinitionList.Item>
+    <DefinitionList.Item>
+      <DefinitionList.Term>Phone</DefinitionList.Term>
+      <DefinitionList.Description icon={<Phone size={14} />}>
+        +1 (415) 555-0142
+      </DefinitionList.Description>
+    </DefinitionList.Item>
+    <DefinitionList.Item>
+      <DefinitionList.Term>Company</DefinitionList.Term>
+      <DefinitionList.Description icon={<Building size={14} />}>
+        {contact.company}
+      </DefinitionList.Description>
+    </DefinitionList.Item>
+    <DefinitionList.Item>
+      <DefinitionList.Term>Location</DefinitionList.Term>
+      <DefinitionList.Description icon={<MapPin size={14} />}>
+        San Francisco, CA
+      </DefinitionList.Description>
+    </DefinitionList.Item>
+  </DefinitionList>
+</Card>
 ```
 
 - [ ] **Step 4: Delete the `Field` helper**
@@ -1642,24 +1637,24 @@ Expected: the `Quality / check` job passes. If it fails, read the log, fix local
 
 **1. Spec coverage**
 
-| Spec section | Task |
-| --- | --- |
-| §Why a new primitive | T1 (JSDoc) + T3 (AGENTS.md) |
-| §HTML/semantics — dl/div/dt/dd | T1 step 1 + T2 case "renders Item as <div>, Term as <dt>, Description as <dd>" |
-| §API surface — props | T1 step 1 (interface definitions) |
-| §Default rationale | T1 step 1 (default values) + T2 cases checking data-attributes |
-| §Layout mechanics — horizontal grid + display:contents | T1 step 2 |
-| §Layout mechanics — stacked flex | T1 step 2 |
-| §Layout mechanics — icon rendering | T1 step 1 + T2 cases 5, 6 |
-| §Spacing variants | T1 step 2 + T2 it.each |
-| §Dividers in both layouts | T1 step 2 + T2 cases 11, 12 |
-| §Files (4 per structure test) | T1 |
-| §Public exports (src/index.ts) | T1 step 5 |
-| §Tests (14 cases) | T2 |
-| §Migration (ContactDetail.About) | T5 |
-| §Playground demo (5 examples) | T4 |
-| §AGENTS.md placement after `<Card>` | T3 |
-| §Out of scope | (intentionally not implemented; no task) |
+| Spec section                                           | Task                                                                           |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| §Why a new primitive                                   | T1 (JSDoc) + T3 (AGENTS.md)                                                    |
+| §HTML/semantics — dl/div/dt/dd                         | T1 step 1 + T2 case "renders Item as <div>, Term as <dt>, Description as <dd>" |
+| §API surface — props                                   | T1 step 1 (interface definitions)                                              |
+| §Default rationale                                     | T1 step 1 (default values) + T2 cases checking data-attributes                 |
+| §Layout mechanics — horizontal grid + display:contents | T1 step 2                                                                      |
+| §Layout mechanics — stacked flex                       | T1 step 2                                                                      |
+| §Layout mechanics — icon rendering                     | T1 step 1 + T2 cases 5, 6                                                      |
+| §Spacing variants                                      | T1 step 2 + T2 it.each                                                         |
+| §Dividers in both layouts                              | T1 step 2 + T2 cases 11, 12                                                    |
+| §Files (4 per structure test)                          | T1                                                                             |
+| §Public exports (src/index.ts)                         | T1 step 5                                                                      |
+| §Tests (14 cases)                                      | T2                                                                             |
+| §Migration (ContactDetail.About)                       | T5                                                                             |
+| §Playground demo (5 examples)                          | T4                                                                             |
+| §AGENTS.md placement after `<Card>`                    | T3                                                                             |
+| §Out of scope                                          | (intentionally not implemented; no task)                                       |
 
 All spec sections mapped. No gaps.
 
@@ -1686,6 +1681,7 @@ All consistent. Plan is ready to execute.
 Plan complete and saved to `docs/superpowers/plans/2026-05-25-definition-list.md`. Per memory `feedback_plan_execution_mode`, this will execute via `superpowers:subagent-driven-development` — fresh subagent per task, two-stage review between tasks. No "which approach?" prompt.
 
 Model selection per task:
+
 - T1, T2, T4, T5: Sonnet (mechanical implementation with full plan-verbatim guidance)
 - T3: Haiku (AGENTS.md insert is small + mechanical)
 - T6: Opus reviewers

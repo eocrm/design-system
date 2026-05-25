@@ -1,12 +1,5 @@
 import { Mail, Phone, Building, MapPin, Globe, Briefcase, Cake, User } from 'lucide-react';
-import {
-  Badge,
-  Cluster,
-  DefinitionList,
-  Link,
-  Stack,
-  Text,
-} from '@eocrm/design-system';
+import { Badge, Cluster, DefinitionList, Link, Stack, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import tsxSource from '@lib-source/components/DefinitionList/DefinitionList.tsx?raw';
@@ -152,9 +145,7 @@ export function DefinitionListDemo() {
           </DefinitionList.Item>
           <DefinitionList.Item>
             <DefinitionList.Term>Founded</DefinitionList.Term>
-            <DefinitionList.Description icon={<Cake size={14} />}>
-              1987
-            </DefinitionList.Description>
+            <DefinitionList.Description icon={<Cake size={14} />}>1987</DefinitionList.Description>
           </DefinitionList.Item>
         </DefinitionList>
       </Example>
@@ -188,8 +179,8 @@ export function DefinitionListDemo() {
           <DefinitionList.Item>
             <DefinitionList.Term>Workspace description</DefinitionList.Term>
             <DefinitionList.Description>
-              Internal tooling for the customer success team. Includes pipeline tracking,
-              onboarding workflows, and a shared inbox for support escalations.
+              Internal tooling for the customer success team. Includes pipeline tracking, onboarding
+              workflows, and a shared inbox for support escalations.
             </DefinitionList.Description>
           </DefinitionList.Item>
           <DefinitionList.Item>
@@ -263,8 +254,8 @@ export function DefinitionListDemo() {
 
       <Stack gap="xs">
         <Text size="sm" tone="muted">
-          Stack is imported above only to balance the spacing inside this demo file — DefinitionList does not
-          render a Stack internally.
+          Stack is imported above only to balance the spacing inside this demo file — DefinitionList
+          does not render a Stack internally.
         </Text>
       </Stack>
     </DemoLayout>
