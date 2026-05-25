@@ -24,6 +24,7 @@ import { CircularProgressDemo } from './pages/components/CircularProgressDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
 import { SkeletonDemo } from './pages/components/SkeletonDemo';
 import { SliderDemo } from './pages/components/SliderDemo';
+import { SortableDemo } from './pages/components/SortableDemo';
 import { SwitchDemo } from './pages/components/SwitchDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { TextareaDemo } from './pages/components/TextareaDemo';
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="/components/select" element={<SelectDemo />} />
           <Route path="/components/skeleton" element={<SkeletonDemo />} />
           <Route path="/components/slider" element={<SliderDemo />} />
+          <Route path="/components/sortable" element={<SortableDemo />} />
           <Route path="/components/switch" element={<SwitchDemo />} />
           <Route path="/components/table" element={<TableDemo />} />
           <Route path="/components/card" element={<CardDemo />} />

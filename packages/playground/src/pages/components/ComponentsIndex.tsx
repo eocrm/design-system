@@ -25,6 +25,7 @@ import { PasswordStrengthMeter } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
 import { Skeleton } from '@eocrm/design-system';
 import { Slider } from '@eocrm/design-system';
+import { Sortable } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Switch } from '@eocrm/design-system';
 import { Table } from '@eocrm/design-system';
@@ -300,6 +301,23 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: (
       <div style={{ width: '100%', maxWidth: 220 }}>
         <Slider value={42} onChange={() => {}} aria-label="preview" />
+      </div>
+    ),
+  },
+  {
+    to: '/components/sortable',
+    name: 'Sortable',
+    description: 'Drag-to-reorder list with optional keyboard handle.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 220, pointerEvents: 'none' }}>
+        <Sortable onReorder={() => {}}>
+          <Sortable.Item id="a">
+            <Card padding="sm">First</Card>
+          </Sortable.Item>
+          <Sortable.Item id="b">
+            <Card padding="sm">Second</Card>
+          </Sortable.Item>
+        </Sortable>
       </div>
     ),
   },
