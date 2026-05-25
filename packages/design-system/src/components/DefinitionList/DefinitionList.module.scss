@@ -72,13 +72,12 @@
 // border goes on every dt/dd after the first row. Using :not(:first-of-type)
 // works because dt and dd are typed elements within the parent dl grid.
 .list[data-dividers='true'][data-layout='horizontal'] .term:not(:first-of-type),
-.list[data-dividers='true'][data-layout='horizontal'] .description:not(:nth-of-type(1)) {
+.list[data-dividers='true'][data-layout='horizontal'] .description:not(:first-of-type) {
   border-top: var(--border-width) solid var(--color-border);
 }
 
 // In stacked mode the .item HAS a box, so the border goes on each item
-// after the first. padding-top adds breathing room above the divider.
+// after the first.
 .list[data-dividers='true'][data-layout='stacked'] .item + .item {
   border-top: var(--border-width) solid var(--color-border);
-  padding-top: var(--space-3);
 }

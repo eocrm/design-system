@@ -50,10 +50,12 @@ export interface DefinitionListProps extends HTMLAttributes<HTMLDListElement> {
 }
 
 export interface DefinitionListItemProps extends HTMLAttributes<HTMLDivElement> {
+  /** A `DefinitionList.Term` and a `DefinitionList.Description`. */
   children: ReactNode;
 }
 
 export interface DefinitionListTermProps extends HTMLAttributes<HTMLElement> {
+  /** The label text — kept short, terms are headings for their values. */
   children: ReactNode;
 }
 
@@ -64,6 +66,7 @@ export interface DefinitionListDescriptionProps extends HTMLAttributes<HTMLEleme
    * so the icon is purely visual.
    */
   icon?: ReactNode;
+  /** The value content. Any ReactNode — text, Badges, Links, etc. */
   children: ReactNode;
 }
 
@@ -181,6 +184,11 @@ const DefinitionListRoot = forwardRef<HTMLDListElement, DefinitionListProps>(
 );
 DefinitionListRoot.displayName = 'DefinitionList';
 
+/**
+ * Wrapper div for one term + description pair. Use as `DefinitionList.Item`.
+ * In horizontal layout this renders `display: contents` so dt/dd participate
+ * in the parent dl's grid.
+ */
 export const DefinitionListItem = forwardRef<HTMLDivElement, DefinitionListItemProps>(
   function DefinitionListItem({ className, children, ...rest }, ref) {
     return (
@@ -192,6 +200,9 @@ export const DefinitionListItem = forwardRef<HTMLDivElement, DefinitionListItemP
 );
 DefinitionListItem.displayName = 'DefinitionListItem';
 
+/**
+ * The label of one entry. Renders as `<dt>`. Use as `DefinitionList.Term`.
+ */
 export const DefinitionListTerm = forwardRef<HTMLElement, DefinitionListTermProps>(
   function DefinitionListTerm({ className, children, ...rest }, ref) {
     return (
@@ -203,6 +214,11 @@ export const DefinitionListTerm = forwardRef<HTMLElement, DefinitionListTermProp
 );
 DefinitionListTerm.displayName = 'DefinitionListTerm';
 
+/**
+ * The value of one entry. Renders as `<dd>`. Use as `DefinitionList.Description`.
+ * Accepts an optional leading `icon` rendered before children, wrapped in an
+ * `aria-hidden` span (decorative — the dt carries the semantic label).
+ */
 export const DefinitionListDescription = forwardRef<HTMLElement, DefinitionListDescriptionProps>(
   function DefinitionListDescription({ icon, className, children, ...rest }, ref) {
     return (
