@@ -523,6 +523,49 @@ import { Switch } from '@eocrm/design-system';
 - ❌ `<Slider role="region">` — `role="slider"` is locked on each thumb. The TypeScript `Omit` prevents the root override.
 - ❌ Passing `value[0] > value[1]` in range mode. The component clamps but the inverted tuple is a consumer bug — fix the state shape.
 
+### `<Sortable>` — drag-to-reorder list (single column)
+
+For reorderable lists — todo priority, image gallery, settings ordering, queue management. Renders `<ol>`/`<li>`. Compound: `Sortable`, `Sortable.Item`, `Sortable.Handle`. Built on `@dnd-kit/sortable`; mouse / touch / pen via PointerSensor + keyboard via KeyboardSensor.
+
+```tsx
+import { arrayMove } from '@dnd-kit/sortable';
+
+const [items, setItems] = useState([
+  { id: 1, title: 'Onboarding email' },
+  { id: 2, title: 'Renewal reminder' },
+  { id: 3, title: 'Quarterly report' },
+]);
+
+<Sortable
+  onReorder={({ from, to }) => setItems((curr) => arrayMove(curr, from, to))}
+>
+  {items.map((item) => (
+    <Sortable.Item key={item.id} id={item.id}>
+      <Card>
+        <Cluster gap="sm" align="center">
+          <Sortable.Handle aria-label={`Reorder ${item.title}`}>
+            <GripVertical size={14} />
+          </Sortable.Handle>
+          <Title order={3}>{item.title}</Title>
+        </Cluster>
+      </Card>
+    </Sortable.Item>
+  ))}
+</Sortable>
+```
+
+Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when the drop position differs from the source. Consumer owns the items array and re-renders with the new order. `arrayMove` is shipped by `@dnd-kit/sortable` (the library is already a dep) — import it from there. Items must have a stable `id` prop (`string | number`).
+
+**Drag origin** (hybrid): if `<Sortable.Handle>` is present in the Item subtree, only the Handle initiates drag. If no Handle is present, the entire Item is draggable + focusable. A 5px activation distance means short clicks-without-movement on internal buttons / links pass through.
+
+**Keyboard reorder**: Tab to focus the Handle (or the Item if no Handle), press **Space** to pick up, **ArrowUp** / **ArrowDown** to move, **Space** to drop, **Escape** to cancel. dnd-kit's KeyboardSensor ships built-in `aria-live` announcements describing each move.
+
+**Anti-patterns**
+
+- ❌ Mutating items in place inside `onReorder`. Always return a new array (`arrayMove(items, from, to)` from `@dnd-kit/sortable`) — React needs a fresh reference.
+- ❌ Using a non-stable `id` (e.g. array index). The id must persist across reorders for React reconciliation and for `onReorder`'s `id` field to be meaningful.
+- ❌ Wrapping non-`Sortable.Item` content inside `<Sortable>`. dnd-kit's `SortableContext` only tracks the ids you pass it; arbitrary children render but won't be reorderable.
+
 ### `<ImageCrop>` — controlled image cropper
 
 ```tsx
