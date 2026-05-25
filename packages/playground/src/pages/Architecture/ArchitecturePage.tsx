@@ -139,15 +139,13 @@ export function ArchitecturePage() {
           <Text tone="muted">
             Live dependency graph of every component in{' '}
             <Code>packages/design-system/src/components/</Code>. The classification —{' '}
-            <Badge tone="info">Primitive</Badge> vs <Badge tone="success">Composition</Badge> —
-            is derived from actual <Code>import</Code> statements, not hand-maintained
-            metadata.
+            <Badge tone="info">Primitive</Badge> vs <Badge tone="success">Composition</Badge> — is
+            derived from actual <Code>import</Code> statements, not hand-maintained metadata.
           </Text>
           <Text tone="muted" size="sm">
-            <strong>{primitives.length}</strong> primitives ·{' '}
-            <strong>{compositions.length}</strong> compositions · re-run{' '}
-            <Code>npm run build:manifest -w @eocrm/design-system</Code> after adding a
-            component.
+            <strong>{primitives.length}</strong> primitives · <strong>{compositions.length}</strong>{' '}
+            compositions · re-run <Code>npm run build:manifest -w @eocrm/design-system</Code> after
+            adding a component.
           </Text>
         </Stack>
       </header>
