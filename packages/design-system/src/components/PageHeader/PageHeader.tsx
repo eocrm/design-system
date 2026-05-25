@@ -388,6 +388,9 @@ PageHeaderActions.displayName = 'PageHeaderActions';
  *   text-content for screen readers. Use `<PageHeader.Aside>` instead.
  * - ❌ `position: sticky` on `<PageHeader>` itself — out of scope for v1.
  *   Wrap PageHeader in your own sticky container if you need it.
+ * - ❌ Passing multiple `<PageHeader.Title>` (or any duplicate sub-component)
+ *   children. Only the FIRST match is rendered into the slot; subsequent
+ *   duplicates are silently dropped.
  */
 const PageHeaderRoot = forwardRef<HTMLDivElement, PageHeaderProps>(
   function PageHeaderRoot(

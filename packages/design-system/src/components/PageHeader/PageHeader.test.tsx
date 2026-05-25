@@ -119,6 +119,31 @@ describe('PageHeader — sub-component detection', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Fragmented' })).toBeInTheDocument();
     expect(screen.getByText('Also fragmented')).toBeInTheDocument();
   });
+
+  it('drops all but the first <PageHeader.Title> when multiple are passed', () => {
+    render(
+      <PageHeader>
+        <PageHeader.Title>First</PageHeader.Title>
+        <PageHeader.Title>Second</PageHeader.Title>
+      </PageHeader>,
+    );
+    const headings = screen.getAllByRole('heading', { level: 1 });
+    expect(headings).toHaveLength(1);
+    expect(headings[0].textContent).toBe('First');
+  });
+
+  it('does NOT unwrap deeply-nested Fragments (only one level)', () => {
+    render(
+      <PageHeader>
+        <>
+          <>
+            <PageHeader.Title>Deep</PageHeader.Title>
+          </>
+        </>
+      </PageHeader>,
+    );
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+  });
 });
 
 describe('PageHeader.Title', () => {
@@ -290,9 +315,7 @@ describe('PageHeader — misc', () => {
     expect(root.className).toMatch(/root/);
   });
 
-  it('aria-labelledby support — h1 has a stable id we can target if needed', () => {
-    // Sanity that Title renders the actual <h1> element with text content
-    // (not a button or generic role).
+  it('renders a real <h1> element (not a button or generic role)', () => {
     render(
       <PageHeader>
         <PageHeader.Title>Findable</PageHeader.Title>
