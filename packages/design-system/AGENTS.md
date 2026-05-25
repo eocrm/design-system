@@ -565,6 +565,7 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 - ❌ Mutating items in place inside `onReorder`. Always return a new array (`arrayMove(items, from, to)` from `@dnd-kit/sortable`) — React needs a fresh reference.
 - ❌ Using a non-stable `id` (e.g. array index). The id must persist across reorders for React reconciliation and for `onReorder`'s `id` field to be meaningful.
 - ❌ Wrapping non-`Sortable.Item` content inside `<Sortable>`. dnd-kit's `SortableContext` only tracks the ids you pass it; arbitrary children render but won't be reorderable.
+- ❌ Relying on whole-item drag (no Handle) for screen-reader-accessible lists. Without a Handle, dnd-kit puts `role="button"` on the `<li>` and the listitem semantics are lost — screen readers stop announcing "item N of M." For accessible lists, always include a `<Sortable.Handle>`.
 
 ### `<ImageCrop>` — controlled image cropper
 

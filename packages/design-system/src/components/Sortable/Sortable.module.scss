@@ -12,6 +12,11 @@
 
 .item {
   position: relative;
+
+  // Required for no-Handle whole-item drag on mobile. dnd-kit's PointerSensor
+  // can't initiate drag if the browser claims the touch gesture for scroll.
+  // Harmless on Items with a Handle (the Item itself isn't the activator).
+  touch-action: none;
 }
 
 .item[data-dragging='true'] {

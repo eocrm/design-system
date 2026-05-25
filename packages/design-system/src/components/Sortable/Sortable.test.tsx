@@ -108,6 +108,29 @@ describe('Sortable', () => {
     ).toBe('Reorder card A');
   });
 
+  it('with Handle present: <li> does not get tabIndex or role from dnd-kit', () => {
+    const { container } = render(
+      <Sortable>
+        <Sortable.Item id="a">
+          <Sortable.Handle>h</Sortable.Handle>
+        </Sortable.Item>
+      </Sortable>,
+    );
+    const li = container.querySelector('li');
+    expect(li?.getAttribute('tabIndex')).toBeNull();
+    expect(li?.getAttribute('role')).toBeNull();
+  });
+
+  it('without Handle: <li> is focusable (tabIndex=0) for keyboard reorder', () => {
+    const { container } = render(
+      <Sortable>
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    const li = container.querySelector('li');
+    expect(li?.getAttribute('tabIndex')).toBe('0');
+  });
+
   it('throws when Sortable.Handle is rendered outside a Sortable.Item', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<Sortable.Handle>orphan</Sortable.Handle>)).toThrow(

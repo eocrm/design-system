@@ -79,6 +79,13 @@ const SortableItemContext = createContext<SortableItemContextValue | null>(null)
  * Recursively check whether the children subtree contains a `Sortable.Handle`.
  * Used by `Sortable.Item` to decide whether to attach drag listeners to itself
  * (no Handle present) or rely on the Handle to attach them.
+ *
+ * **Limitation:** only walks `React.Children` and direct `props.children`.
+ * If a consumer wraps `<Sortable.Handle>` inside their own custom component
+ * (e.g. `<TaskRow>` whose JSX internally renders the Handle), the walk sees
+ * `<TaskRow>` but not the Handle inside it — the Item is classified as
+ * no-Handle and gets whole-item drag. Workaround: put `<Sortable.Handle>` at
+ * the same JSX nesting level as the rest of the Item's content.
  */
 function containsHandle(children: ReactNode): boolean {
   let found = false;
@@ -149,6 +156,14 @@ function containsHandle(children: ReactNode): boolean {
  *   with the future `<Kanban>` primitive.
  *
  * @remarks Anti-patterns
+ * - ❌ Relying on the no-Handle whole-item drag for screen-reader users.
+ *   When no Handle is present, dnd-kit applies `role="button"` and
+ *   `aria-roledescription="sortable"` to the `<li>`, which clobbers the
+ *   default `listitem` role. Screen readers stop announcing "item N of M".
+ *   dnd-kit's live-region announcements partially compensate during drag,
+ *   but for accessible lists ALWAYS include a `<Sortable.Handle>` — that
+ *   moves the button semantics onto the Handle and leaves the `<li>` as a
+ *   proper listitem.
  * - ❌ Mutating items in place inside `onReorder`. Always return a new
  *   array (immutable `arrayMove`) — React needs a fresh reference to
  *   re-render.
@@ -241,6 +256,10 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
         className={clsx(styles.item, className)}
         // Listeners + attributes go on the Item only when no Handle is present.
         // When a Handle exists, the Handle attaches them via context.
+        // dnd-kit drag attrs spread BEFORE {...rest} on Item (consumer rest wins).
+        // The Handle does the inverse: drag attrs after rest so they cannot be
+        // disabled. Item is more permissive — consumer may legitimately want to
+        // pre-empt drag on a per-item basis.
         {...(hasHandle ? {} : listeners)}
         {...(hasHandle ? {} : attributes)}
         {...rest}
