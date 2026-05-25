@@ -110,6 +110,16 @@
       #ff0000
     ) !important;
   }
+
+  // Slider also renders a separate `.fill` overlay (the colored portion from
+  // min to the thumb, defaulting to --color-accent). For a hue picker there's
+  // no "filled" concept — the entire rainbow is meaningful, so the fill must
+  // be invisible to let the rainbow show through.
+  // stylelint-disable-next-line selector-pseudo-class-no-unknown -- CSS Modules :global() escape hatch
+  & :global([class*='fill']) {
+    // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- transparent override for hue picker; !important needed to defeat Slider's tone variants
+    background: transparent !important;
+  }
 }
 
 .hexInput {
