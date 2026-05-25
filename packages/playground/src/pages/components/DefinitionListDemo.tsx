@@ -215,7 +215,7 @@ export function DefinitionListDemo() {
   <DefinitionList.Item>
     <DefinitionList.Term>Website</DefinitionList.Term>
     <DefinitionList.Description icon={<Globe size={14} />}>
-      <Link href="https://globex.example.com">globex.example.com</Link>
+      <Link href="https://globex.example.com" target="_blank" rel="noopener noreferrer">globex.example.com</Link>
     </DefinitionList.Description>
   </DefinitionList.Item>
   <DefinitionList.Item>
@@ -244,7 +244,9 @@ export function DefinitionListDemo() {
           <DefinitionList.Item>
             <DefinitionList.Term>Website</DefinitionList.Term>
             <DefinitionList.Description icon={<Globe size={14} />}>
-              <Link href="https://globex.example.com">globex.example.com</Link>
+              <Link href="https://globex.example.com" target="_blank" rel="noopener noreferrer">
+                globex.example.com
+              </Link>
             </DefinitionList.Description>
           </DefinitionList.Item>
           <DefinitionList.Item>
