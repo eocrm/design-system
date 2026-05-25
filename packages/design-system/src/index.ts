@@ -231,6 +231,14 @@ export type {
   SliderMark,
 } from './components/Slider';
 
+export { Sortable } from './components/Sortable';
+export type {
+  SortableProps,
+  SortableItemProps,
+  SortableHandleProps,
+  SortableReorderEvent,
+} from './components/Sortable';
+
 export { Table } from './components/Table';
 export type {
   TableProps,

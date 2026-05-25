@@ -326,6 +326,12 @@
       "ImageCrop"
     ]
   },
+  "Sortable": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": []
+  },
   "Stack": {
     "tier": "primitive",
     "cluster": "Layout",

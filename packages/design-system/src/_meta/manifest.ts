@@ -65,6 +65,7 @@ const CLUSTERS: Record<string, string> = {
   Radio: 'Forms',
   Select: 'Forms',
   Slider: 'Forms',
+  Sortable: 'Forms',
   Switch: 'Forms',
   Textarea: 'Forms',
 
