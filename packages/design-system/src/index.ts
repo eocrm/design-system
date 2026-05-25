@@ -290,6 +290,16 @@ export type {
   CellContext,
 } from './components/DataTable';
 
+export { DefinitionList } from './components/DefinitionList';
+export type {
+  DefinitionListProps,
+  DefinitionListLayout,
+  DefinitionListSpacing,
+  DefinitionListItemProps,
+  DefinitionListTermProps,
+  DefinitionListDescriptionProps,
+} from './components/DefinitionList';
+
 export { Link } from './components/Link';
 export type { LinkProps, LinkVariant } from './components/Link';
 
