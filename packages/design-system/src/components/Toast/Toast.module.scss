@@ -93,7 +93,13 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: var(--space-2);
-  align-items: start;
+
+  // Centers the icon and close button against the body (vs. top-aligned
+  // start, which left the leading visually high relative to the message's
+  // line-height: 1.4 baseline). For 2-line toasts (message + description)
+  // the icon centers between the two lines — same pattern as Sonner /
+  // react-hot-toast.
+  align-items: center;
   padding: var(--space-3);
   background: var(--color-bg);
   border-radius: var(--radius-md);
