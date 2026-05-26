@@ -581,14 +581,22 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       const initialToCol = initialItems.get(toColumn) ?? [];
       let toIndex: number;
       if (overId === toColumn) {
-        // Drop on column itself.
+        // Drop on column itself (padding / empty area).
         if (fromColumn === toColumn) {
-          // Within-column drop with no card target = cancel (preserves
-          // earlier semantics).
-          setLiveItems(null);
-          return;
+          // Within-column drop on padding: use active's position in
+          // liveItems (handleDragOver placed it there based on the cursor).
+          // Without this, the card snaps back to its original slot — visible
+          // as a jump because the new handleDragOver shows the live reflow.
+          const liveToCol = finalItems.get(toColumn) ?? [];
+          const liveIdx = liveToCol.indexOf(activeId);
+          if (liveIdx < 0) {
+            setLiveItems(null);
+            return;
+          }
+          toIndex = liveIdx;
+        } else {
+          toIndex = initialToCol.length;
         }
-        toIndex = initialToCol.length;
       } else if (overId === activeId) {
         // Use active's position in liveItems (where handleDragOver placed it
         // based on the cursor's latest target). Other cards in liveItems'
