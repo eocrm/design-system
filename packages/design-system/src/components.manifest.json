@@ -50,6 +50,7 @@
       "Drawer",
       "FileUpload",
       "Modal",
+      "OptionsPicker",
       "PasswordInput",
       "Toast"
     ]
@@ -100,7 +101,8 @@
     "composes": [],
     "composedBy": [
       "Calendar",
-      "ConfirmationPopover"
+      "ConfirmationPopover",
+      "OptionsPicker"
     ]
   },
   "Code": {
@@ -265,9 +267,12 @@
     "cluster": "Forms",
     "composes": [
       "Badge",
+      "Button",
       "Checkbox",
+      "Cluster",
       "Input",
       "Popover",
+      "Radio",
       "Stack",
       "Text"
     ],
@@ -326,7 +331,9 @@
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "OptionsPicker"
+    ]
   },
   "Select": {
     "tier": "primitive",

@@ -45,6 +45,8 @@
   color: var(--color-fg-subtle);
 }
 
+// Rule 4 note: internal flex layout — the public component is the panel,
+// not the input. The picker owns the search bar's internal arrangement.
 .searchInput {
   flex: 1;
   border: none;
