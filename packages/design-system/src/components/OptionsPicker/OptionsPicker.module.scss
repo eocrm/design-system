@@ -110,3 +110,7 @@ button.groupHeader {
     @include focus-ring;
   }
 }
+
+.rowFocused {
+  background: var(--color-bg-muted);
+}

@@ -373,3 +373,58 @@ it('single mode: pre-selected row reflects in the radio', async () => {
   expect(radios[0]).not.toBeChecked();
   expect(radios[1]).toBeChecked();
 });
+
+it('keyboard: ↓/↑ moves focused option via aria-activedescendant', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  const listbox = screen.getByRole('listbox');
+  await user.keyboard('{ArrowDown}');
+  expect(listbox.getAttribute('aria-activedescendant')).toMatch(/-opt-one$/);
+  await user.keyboard('{ArrowDown}');
+  expect(listbox.getAttribute('aria-activedescendant')).toMatch(/-opt-two$/);
+  // ArrowDown from last wraps to first
+  await user.keyboard('{ArrowDown}');
+  expect(listbox.getAttribute('aria-activedescendant')).toMatch(/-opt-one$/);
+});
+
+it('keyboard: Enter on focused option toggles (multi)', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.keyboard('{ArrowDown}{Enter}');
+  expect(screen.getAllByRole('checkbox')[0]).toBeChecked();
+});
+
+it('keyboard: Esc cancels and closes the panel', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker selected={['one']} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  // Toggle one off in draft
+  await user.click(screen.getAllByRole('checkbox')[0]);
+  await user.keyboard('{Escape}');
+  expect(onApply).not.toHaveBeenCalled();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});

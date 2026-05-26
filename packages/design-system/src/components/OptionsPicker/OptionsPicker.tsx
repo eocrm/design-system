@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useState,
   type ReactElement,
@@ -230,6 +231,8 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     const { label, className, searchPlaceholder = 'Filter…' } = props;
     const ctx = usePickerContext('Content');
 
+    const contentId = useId();
+
     const [draft, setDraft] = useState<string[]>(ctx.selected);
     const [filter, setFilter] = useState('');
 
@@ -293,8 +296,67 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
 
     const allOptionsForCount = useMemo(() => getAllOptions(props), [props]);
 
+    const visibleOptionsInOrder = useMemo<OptionsPickerOption[]>(() => {
+      if (isGrouped(props)) return visibleGroups.flatMap((g) => g.visibleOptions);
+      return visibleFlat;
+    }, [props, visibleGroups, visibleFlat]);
+
+    const [focusedValue, setFocusedValue] = useState<string | null>(null);
+
+    useEffect(() => {
+      if (!ctx.open) {
+        setFocusedValue(null);
+        return;
+      }
+      if (focusedValue && !visibleOptionsInOrder.some((o) => o.value === focusedValue)) {
+        setFocusedValue(null);
+      }
+    }, [ctx.open, visibleOptionsInOrder, focusedValue]);
+
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (visibleOptionsInOrder.length === 0) return;
+        const idx = focusedValue
+          ? visibleOptionsInOrder.findIndex((o) => o.value === focusedValue)
+          : -1;
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const next = idx + 1 >= visibleOptionsInOrder.length ? 0 : idx + 1;
+          setFocusedValue(visibleOptionsInOrder[next]!.value);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const next = idx <= 0 ? visibleOptionsInOrder.length - 1 : idx - 1;
+          setFocusedValue(visibleOptionsInOrder[next]!.value);
+        } else if (e.key === 'Home') {
+          e.preventDefault();
+          setFocusedValue(visibleOptionsInOrder[0]!.value);
+        } else if (e.key === 'End') {
+          e.preventDefault();
+          setFocusedValue(visibleOptionsInOrder[visibleOptionsInOrder.length - 1]!.value);
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          if (focusedValue) {
+            e.preventDefault();
+            toggle(focusedValue);
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setDraft(ctx.selected);
+          ctx.cancel();
+        } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && ctx.mode === 'multi') {
+          e.preventDefault();
+          ctx.commit(draft);
+        }
+      },
+      [visibleOptionsInOrder, focusedValue, toggle, ctx, draft],
+    );
+
     return (
-      <Popover.Content ref={ref} className={clsx(styles.panel, className)} aria-label={label}>
+      <Popover.Content
+        ref={ref}
+        className={clsx(styles.panel, className)}
+        aria-label={label}
+        onKeyDown={handleKeyDown}
+      >
         <Stack gap="xs">
           <div className={styles.searchBar}>
             <Search size={14} aria-hidden className={styles.searchIcon} />
@@ -319,7 +381,12 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             )}
           </div>
 
-          <div className={styles.list} role="listbox" aria-multiselectable={ctx.mode === 'multi'}>
+          <div
+            className={styles.list}
+            role="listbox"
+            aria-multiselectable={ctx.mode === 'multi'}
+            aria-activedescendant={focusedValue ? `${contentId}-opt-${focusedValue}` : undefined}
+          >
             {!hasAnyVisible && (
               <Text size="sm" tone="muted" className={styles.empty}>
                 {props.emptyState ?? 'No matches'}
@@ -359,12 +426,28 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                   </div>
                 )}
                 {g.visibleOptions.map((opt) => (
-                  <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} mode={ctx.mode} onToggle={toggle} />
+                  <OptionRow
+                    key={opt.value}
+                    option={opt}
+                    checked={draft.includes(opt.value)}
+                    mode={ctx.mode}
+                    rowId={`${contentId}-opt-${opt.value}`}
+                    focused={focusedValue === opt.value}
+                    onToggle={toggle}
+                  />
                 ))}
               </div>
             ))}
             {hasAnyVisible && !isGrouped(props) && visibleFlat.map((opt) => (
-              <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} mode={ctx.mode} onToggle={toggle} />
+              <OptionRow
+                key={opt.value}
+                option={opt}
+                checked={draft.includes(opt.value)}
+                mode={ctx.mode}
+                rowId={`${contentId}-opt-${opt.value}`}
+                focused={focusedValue === opt.value}
+                onToggle={toggle}
+              />
             ))}
           </div>
 
@@ -404,26 +487,28 @@ interface OptionRowProps {
   option: OptionsPickerOption;
   checked: boolean;
   mode: OptionsPickerMode;
+  rowId: string;
+  focused: boolean;
   onToggle: (value: string) => void;
 }
 
-function OptionRow({ option, checked, mode, onToggle }: OptionRowProps) {
-  // Checkbox onChange: (checked: boolean) => void — value ignored, drive via option.value
-  const checkboxOnChange = useCallback(
-    (_checked: boolean) => onToggle(option.value),
-    [onToggle, option.value],
-  );
-  // Radio onChange: (value: string, event) => void — value is the radio's value prop
-  const radioOnChange = useCallback(
-    (_value: string) => onToggle(option.value),
-    [onToggle, option.value],
-  );
+function OptionRow({ option, checked, mode, rowId, focused, onToggle }: OptionRowProps) {
+  const checkboxOnChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
+  const radioOnChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
   return (
-    <div className={clsx(styles.row, checked && styles.rowSelected)}>
+    <div
+      id={rowId}
+      className={clsx(styles.row, checked && styles.rowSelected, focused && styles.rowFocused)}
+    >
       {mode === 'multi' ? (
         <Checkbox checked={checked} onChange={checkboxOnChange} aria-label={option.label} />
       ) : (
-        <Radio value={option.value} checked={checked} onChange={radioOnChange} aria-label={option.label} />
+        <Radio
+          value={option.value}
+          checked={checked}
+          onChange={radioOnChange}
+          aria-label={option.label}
+        />
       )}
       <Text size="sm">{option.label}</Text>
     </div>
