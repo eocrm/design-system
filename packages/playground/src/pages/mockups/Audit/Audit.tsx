@@ -264,11 +264,24 @@ export function Audit() {
     [],
   );
 
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+
   const instance = useDataTable<AuditEntry>({
     data: auditEntries,
     columns,
     getRowId: (r) => r.id,
     renderExpandedRow: (row) => <ExpandedPanel entry={row} />,
+    expandedRows,
+    // Single-expand: closing the previous row when a new one opens reads as
+    // "drill into one event at a time" — keeps the surface focused and avoids
+    // a stack of expanded panels obscuring the rest of the table.
+    onExpandedRowsChange: (next) => {
+      const openIds = Object.entries(next)
+        .filter(([, open]) => open)
+        .map(([id]) => id);
+      const last = openIds[openIds.length - 1];
+      setExpandedRows(last ? { [last]: true } : {});
+    },
   });
 
   function removeChip(key: ChipKey) {
