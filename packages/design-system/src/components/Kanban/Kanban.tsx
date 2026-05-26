@@ -330,18 +330,23 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // ------------------------------------------------------------------
   // Parse children: extract column order, initial items, card elements,
   // and the before/after non-card slices for each column.
+  // columnElements is built in the same pass so render-time lookup is O(1)
+  // instead of O(N) per column (i.e., O(N²) total per render).
   // ------------------------------------------------------------------
-  const { columnOrder, initialItems, cardElements, columnChildrenSlices } = useMemo(() => {
+  const { columnOrder, columnElements, initialItems, cardElements, columnChildrenSlices } = useMemo(() => {
     const colOrder: (string | number)[] = [];
+    const colElems = new Map<string | number, ReactElement<KanbanColumnProps>>();
     const initItems = new Map<string | number, (string | number)[]>();
     const cardElems = new Map<string | number, ReactElement<KanbanCardProps>>();
     const colSlices = new Map<string | number, { before: ReactNode[]; after: ReactNode[] }>();
 
     Children.forEach(children, (child) => {
       if (!isValidElement(child) || child.type !== KanbanColumn) return;
-      const colProps = child.props as KanbanColumnProps;
+      const columnElement = child as ReactElement<KanbanColumnProps>;
+      const colProps = columnElement.props;
       const colId = colProps.id;
       colOrder.push(colId);
+      colElems.set(colId, columnElement);
 
       const colCardIds: (string | number)[] = [];
       let firstCardIdx = -1;
@@ -367,6 +372,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
 
     return {
       columnOrder: colOrder,
+      columnElements: colElems,
       initialItems: initItems,
       cardElements: cardElems,
       columnChildrenSlices: colSlices,
@@ -374,15 +380,14 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   }, [children]);
 
   // ------------------------------------------------------------------
-  // Stable serialization of initialItems to detect consumer state changes
+  // Stable serialization of initialItems to detect consumer state changes.
+  // JSON.stringify is robust against ids that contain `:` or `,` characters,
+  // unlike a hand-rolled delimiter-join.
   // ------------------------------------------------------------------
-  const initialItemsKey = useMemo(() => {
-    const parts: string[] = [];
-    for (const [colId, cards] of initialItems) {
-      parts.push(`${colId}:${cards.join(',')}`);
-    }
-    return parts.join('|');
-  }, [initialItems]);
+  const initialItemsKey = useMemo(
+    () => JSON.stringify(Array.from(initialItems.entries())),
+    [initialItems],
+  );
 
   // ------------------------------------------------------------------
   // Internal drag state: null when idle, populated on drag start
@@ -477,6 +482,16 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     (event: DragEndEvent) => {
       const { active, over } = event;
       const activeId = active.id as string | number;
+
+      // Release outside any droppable → cancel + snap back. dnd-kit fires
+      // onDragEnd with over=null when the cursor leaves all droppable areas
+      // before release. Treat that as a cancellation (matches Sortable
+      // semantics and Trello convention).
+      if (!over) {
+        setLiveItems(null);
+        return;
+      }
+
       const finalItems = liveItems ?? initialItems;
 
       // Locate card in initialItems (from-position).
@@ -507,19 +522,28 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
 
       if (fromColumn == null || toColumn == null) return;
 
-      // Within-column reorder finalization: liveItems won't have been updated
-      // by handleDragOver (which no-ops for same-column). Use over.id to
-      // compute the final position from the initial items array.
-      if (over && fromColumn === toColumn) {
-        const overId = over.id as string | number;
-        const cards = initialItems.get(fromColumn) ?? [];
-        const overIdx = cards.indexOf(overId);
-        if (overIdx >= 0) {
-          toIndex = overIdx;
-        } else {
-          // over.id is the column itself (dropped back on original column with no card target) — no move.
-          return;
+      // Within-column reorder finalization: use over.id semantics to pick the
+      // final index, but ONLY when the card never left this column during the
+      // drag. If it transited away and came back, the live-state diff already
+      // gave us the correct toIndex — don't overwrite it (would corrupt the
+      // drop position; cf. HR8 round-1 critical finding).
+      if (fromColumn === toColumn) {
+        const liveCol = finalItems.get(fromColumn) ?? [];
+        const livePosition = liveCol.indexOf(activeId);
+        if (livePosition === fromIndex) {
+          // Pure within-column reorder, no cross-column transit. dnd-kit's
+          // over.id is a sibling card or the column itself.
+          const overId = over.id as string | number;
+          const overIdx = liveCol.indexOf(overId);
+          if (overIdx >= 0) {
+            toIndex = overIdx;
+          } else {
+            // over.id is the column itself (no card target) — no move.
+            return;
+          }
         }
+        // else: card transited away and came back; toIndex from the live
+        // diff is already correct, don't touch it.
       }
 
       if (fromColumn === toColumn && fromIndex === toIndex) return;
@@ -549,21 +573,21 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      {/* {...rest} before role/aria-label so our semantics win */}
+      {/*
+        aria-label BEFORE {...rest} so consumer can pass a more specific
+        label (e.g. "Q3 sales pipeline") and have it win.
+        role="region" AFTER {...rest} so it stays locked — non-overridable
+        semantic guarantee.
+      */}
       <div
         ref={ref}
+        aria-label="Kanban board"
         className={clsx(styles.board, className)}
         {...rest}
         role="region"
-        aria-label="Kanban board"
       >
         {columnOrder.map((colId) => {
-          const columnElement = Children.toArray(children).find(
-            (c): c is ReactElement<KanbanColumnProps> =>
-              isValidElement(c) &&
-              c.type === KanbanColumn &&
-              (c.props as KanbanColumnProps).id === colId,
-          );
+          const columnElement = columnElements.get(colId);
           if (!columnElement) return null;
 
           const cardIds = effectiveItems.get(colId) ?? [];
