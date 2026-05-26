@@ -167,6 +167,27 @@ export const MOCKUPS = [
       'Title',
     ],
   },
+  {
+    slug: 'audit',
+    title: 'Audit log',
+    path: '/mockups/audit',
+    blurb: 'Tenant-wide event log with filter chips and expandable detail rows.',
+    usesComponents: [
+      'Avatar',
+      'Badge',
+      'Button',
+      'Cluster',
+      'Code',
+      'DataTable',
+      'DefinitionList',
+      'Divider',
+      'PageHeader',
+      'Stack',
+      'Text',
+      'Title',
+      'Tooltip',
+    ],
+  },
 ] as const satisfies readonly MockupEntry[];
 
 export type MockupSlug = (typeof MOCKUPS)[number]['slug'];

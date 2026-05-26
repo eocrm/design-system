@@ -70,6 +70,7 @@ const mockupItems = [
   { to: '/mockups/deals', label: 'Deals', icon: KanbanSquare, end: false },
   { to: '/mockups/contacts', label: 'Contacts', icon: Users, end: false },
   { to: '/mockups/members', label: 'Members', icon: UserCog, end: false },
+  { to: '/mockups/audit', label: 'Audit log', icon: Activity, end: false },
 ];
 
 const componentOverview = {
