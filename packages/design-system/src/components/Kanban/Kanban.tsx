@@ -276,7 +276,7 @@ KanbanColumn.displayName = 'KanbanColumn';
  *   setCols((prev) => {
  *     const fromCards = [...prev[from.columnId]];
  *     const [moved] = fromCards.splice(from.index, 1);
- *     const toCards = prev.to === prev.from
+ *     const toCards = to.columnId === from.columnId
  *       ? fromCards
  *       : [...prev[to.columnId]];
  *     toCards.splice(to.index, 0, moved);
@@ -303,6 +303,24 @@ KanbanColumn.displayName = 'KanbanColumn';
  *     </Kanban.Column>
  *   ))}
  * </Kanban>
+ *
+ * @remarks Drop position semantics
+ * - Cross-column drop on a sibling card → the active card lands at that
+ *   card's slot if the cursor crossed the column boundary above the over
+ *   card's midpoint, or after it if the cursor was past the midpoint
+ *   (cursor-position-vs-over-card-midpoint isBelow detection at the moment
+ *   of transit). Subsequent within-target-column cursor movement does NOT
+ *   re-evaluate the slot — only the cross-boundary moment matters.
+ * - Cross-column drop onto an empty column → index 0 of the destination.
+ * - Cross-column drop in the column's padding past the last card → appended
+ *   to the end of the destination.
+ * - Within-column reorder onto a sibling card → arrayMove semantics: the
+ *   active card ends at the over card's pre-move index (`from.index` →
+ *   `to.index`, where `to.index = initialItems[col].indexOf(overId)`).
+ * - Within-column drop on the source column's own padding past all cards →
+ *   appended to the end of the source column.
+ * - Release outside any droppable → cancel + snap back; `onMove` does NOT
+ *   fire.
  *
  * @remarks When NOT to use
  * - Single-column drag-to-reorder — use `<Sortable>` instead. It's simpler
@@ -466,41 +484,36 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         const activeContainer = findContainer(activeId, prev);
         const overContainer = findContainer(overId, prev);
         if (activeContainer == null || overContainer == null) return prev;
+        // Within-column reorder is finalized at dragEnd. Updating liveItems
+        // every dragOver here would oscillate when the cursor stays over a
+        // single sibling (the arrayMove would flip the card back and forth).
+        // useSortable's strategy handles the visual reflow during drag.
+        if (activeContainer === overContainer) return prev;
 
         const activeCards = prev.get(activeContainer) ?? [];
         const overCards = prev.get(overContainer) ?? [];
         if (!activeCards.includes(activeId)) return prev;
 
         // Resolve the target slot inside overContainer:
-        //   - over.id is a sibling card → use that card's index
+        //   - over.id is a sibling card → use that card's index, plus 1 if
+        //     the cursor is past the over card's vertical midpoint (active's
+        //     translated rect tracks the cursor centered around it).
         //   - over.id is the column itself (empty drop / padding) → append
         let insertAt: number;
         if (overCards.includes(overId)) {
-          insertAt = overCards.indexOf(overId);
+          const overIdx = overCards.indexOf(overId);
+          const activeRect = active.rect.current.translated;
+          const overRect = over.rect;
+          const isBelow =
+            activeRect != null &&
+            activeRect.top + activeRect.height / 2 > overRect.top + overRect.height / 2;
+          insertAt = overIdx + (isBelow ? 1 : 0);
         } else if (overId === overContainer) {
           insertAt = overCards.length;
         } else {
           return prev;
         }
 
-        if (activeContainer === overContainer) {
-          // Within-column reorder: keep liveItems in sync with the cursor's
-          // target slot (instead of relying purely on useSortable's transient
-          // CSS transforms). This way, the user's final drop position is
-          // captured in state and survives stale-closure edge cases at
-          // dragEnd. Uses arrayMove semantics: the active card's final index
-          // equals insertAt in the resulting array.
-          const currentIdx = activeCards.indexOf(activeId);
-          if (currentIdx === insertAt) return prev;
-          const newCards = [...activeCards];
-          newCards.splice(currentIdx, 1);
-          newCards.splice(insertAt, 0, activeId);
-          const next = new Map(prev);
-          next.set(activeContainer, newCards);
-          return next;
-        }
-
-        // Cross-column: remove active from source, insert into target.
         const next = new Map(prev);
         next.set(
           activeContainer,
@@ -532,7 +545,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       const overId = over.id as string | number;
       const finalItems = liveItems ?? initialItems;
 
-      // Source (from-position) is the card's pre-drag location.
+      // Source (from-position): the card's pre-drag location.
       let fromColumn: string | number | null = null;
       let fromIndex = -1;
       for (const [colId, cards] of initialItems) {
@@ -544,82 +557,76 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         }
       }
 
-      // Destination column resolution:
-      //   - over.id is a column id: drop on column itself (empty / padding).
-      //   - over.id is the active card: closestCorners picked the active
-      //     card (it's a droppable too and is visually positioned at the
-      //     cursor via transforms). Use liveItems to find where active was
-      //     moved during drag — that's the user's intended destination.
-      //   - over.id is a sibling card: resolve via initialItems
-      //     (deterministic, closure-stable).
-      let toColumn: string | number | null = null;
-      if (initialItems.has(overId)) {
-        toColumn = overId;
-      } else if (overId === activeId) {
-        for (const [colId, cards] of finalItems) {
-          if (cards.includes(activeId)) {
-            toColumn = colId;
-            break;
-          }
-        }
-      } else {
-        for (const [colId, cards] of initialItems) {
-          if (cards.includes(overId)) {
-            toColumn = colId;
-            break;
-          }
-        }
-      }
-
-      if (fromColumn == null || toColumn == null) {
+      if (fromColumn == null) {
         setLiveItems(null);
         return;
       }
 
-      // Compute toIndex (consumer's pre-move-state coordinates — what they'll
-      // splice into in their onMove reducer).
-      const initialToCol = initialItems.get(toColumn) ?? [];
+      // Where does active currently live in liveItems? handleDragOver moves
+      // it cross-column only (with isBelow detection determining the slot at
+      // the moment of transit), so:
+      //   - liveColumn !== fromColumn → cross-column drop. The live slot IS
+      //     the drop slot — useSortable's verticalListSortingStrategy renders
+      //     the active card at exactly that slot (no within-target visual
+      //     reflow when overId === activeId), so live === visual === commit.
+      //   - liveColumn === fromColumn → within-column drop. Finalize via
+      //     arrayMove semantics using over.id below.
+      let liveColumn: string | number | null = null;
+      let liveIdx = -1;
+      for (const [colId, cards] of finalItems) {
+        const idx = cards.indexOf(activeId);
+        if (idx >= 0) {
+          liveColumn = colId;
+          liveIdx = idx;
+          break;
+        }
+      }
+
+      let toColumn: string | number;
       let toIndex: number;
-      if (overId === toColumn) {
-        // Drop on column itself (padding / empty area).
-        if (fromColumn === toColumn) {
-          // Within-column drop on padding: use active's position in
-          // liveItems (handleDragOver placed it there based on the cursor).
-          // Without this, the card snaps back to its original slot — visible
-          // as a jump because the new handleDragOver shows the live reflow.
-          const liveToCol = finalItems.get(toColumn) ?? [];
-          const liveIdx = liveToCol.indexOf(activeId);
-          if (liveIdx < 0) {
-            setLiveItems(null);
-            return;
-          }
-          toIndex = liveIdx;
-        } else {
-          toIndex = initialToCol.length;
-        }
+
+      if (liveColumn != null && liveColumn !== fromColumn) {
+        // Cross-column drop: live slot wins. Keeps the commit consistent with
+        // the visual preview the user saw during drag.
+        toColumn = liveColumn;
+        toIndex = liveIdx;
+      } else if (initialItems.has(overId)) {
+        // Within-source-column drop on the column's padding (no card target).
+        // Default to "drop at end" so the card lands where the user dragged
+        // it, rather than snapping back to its original slot.
+        toColumn = fromColumn;
+        const fromCol = initialItems.get(fromColumn) ?? [];
+        toIndex = fromCol.length - 1;
       } else if (overId === activeId) {
-        // Use active's position in liveItems (where handleDragOver placed it
-        // based on the cursor's latest target). Other cards in liveItems'
-        // target column retain their initial relative order — handleDragOver
-        // only inserts active, never reorders the rest. So active's index in
-        // liveItems[toColumn] equals the consumer-side splice index for
-        // both within- and cross-column drops.
-        const liveToCol = finalItems.get(toColumn) ?? [];
-        toIndex = liveToCol.indexOf(activeId);
-        if (toIndex < 0) {
-          setLiveItems(null);
-          return;
-        }
+        // Cursor still over the active card — barely-moved drag, no real
+        // target. Cancel.
+        setLiveItems(null);
+        return;
       } else {
-        toIndex = initialToCol.indexOf(overId);
-        if (toIndex < 0) {
+        // Within-column drop on a sibling card. arrayMove semantics:
+        //   toIndex = sibling's index in the consumer's pre-move state.
+        // For cross-column drops where the cross-column transit didn't
+        // commit (rare stale-closure case at the very first dragOver), the
+        // sibling may live in a different column — handle that by resolving
+        // the column from initialItems.
+        let overCol: string | number | null = null;
+        for (const [colId, cards] of initialItems) {
+          if (cards.includes(overId)) {
+            overCol = colId;
+            break;
+          }
+        }
+        if (overCol == null) {
           setLiveItems(null);
           return;
         }
+        toColumn = overCol;
+        toIndex = (initialItems.get(toColumn) ?? []).indexOf(overId);
       }
 
       setLiveItems(null);
 
+      if (toIndex < 0) return;
       if (fromColumn === toColumn && fromIndex === toIndex) return;
 
       onMove?.({
