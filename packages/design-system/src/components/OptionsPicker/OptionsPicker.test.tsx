@@ -428,3 +428,39 @@ it('keyboard: Esc cancels and closes the panel', async () => {
   expect(onApply).not.toHaveBeenCalled();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
+
+it('Trigger carries aria-haspopup, aria-controls, and aria-expanded', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  const trigger = screen.getByRole('button', { name: 'Open' });
+  expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
+  expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  expect(trigger.getAttribute('aria-controls')).toBeTruthy();
+  await user.click(trigger);
+  expect(trigger).toHaveAttribute('aria-expanded', 'true');
+});
+
+it('group headers carry aria-controls listing all option ids', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  const header = screen.getByRole('button', { name: /Authentication/i });
+  const ids = header.getAttribute('aria-controls')!.split(' ');
+  expect(ids).toHaveLength(2);
+  expect(ids[0]).toMatch(/-opt-auth\.login$/);
+  expect(ids[1]).toMatch(/-opt-auth\.logout$/);
+});

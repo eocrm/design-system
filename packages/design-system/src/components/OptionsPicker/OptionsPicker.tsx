@@ -1,18 +1,26 @@
 import {
+  Children,
+  cloneElement,
   createContext,
   forwardRef,
+  isValidElement,
   useCallback,
   useContext,
   useEffect,
   useId,
   useMemo,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
   type ReactElement,
   type ReactNode,
+  type Ref,
 } from 'react';
 import clsx from 'clsx';
 import { Search } from 'lucide-react';
 import { Popover } from '../Popover';
+import { usePopoverContext } from '../Popover/context';
+import { chain, mergeRefs } from '../_internal/refs';
 import { Button } from '../Button';
 import { Checkbox } from '../Checkbox';
 import { Radio } from '../Radio';
@@ -111,6 +119,8 @@ interface PickerContextValue {
   commit: (next: string[]) => void;
   /** Called on Cancel/Esc/click-outside. */
   cancel: () => void;
+  /** Stable id for the Content panel; shared with Trigger for aria-controls. */
+  contentId: string;
 }
 
 const PickerContext = createContext<PickerContextValue | null>(null);
@@ -167,9 +177,11 @@ function OptionsPickerRoot(props: OptionsPickerProps) {
     setOpen(false);
   }, [props, setOpen]);
 
+  const contentId = useId();
+
   const ctxValue = useMemo<PickerContextValue>(
-    () => ({ mode, selected: normalizedSelected, open, setOpen, commit, cancel }),
-    [mode, normalizedSelected, open, setOpen, commit, cancel],
+    () => ({ mode, selected: normalizedSelected, open, setOpen, commit, cancel, contentId }),
+    [mode, normalizedSelected, open, setOpen, commit, cancel, contentId],
   );
 
   return (
@@ -193,10 +205,51 @@ export interface OptionsPickerTriggerProps {
 const OptionsPickerTrigger = forwardRef<HTMLButtonElement, OptionsPickerTriggerProps>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function OptionsPickerTrigger({ children }, _ref) {
-    usePickerContext('Trigger'); // assert inside root
-    // ref: Popover.Trigger injects the ref into its child via cloneElement;
-    // OptionsPickerTrigger's own forwarded ref is not plumbed further in this task.
-    return <Popover.Trigger>{children}</Popover.Trigger>;
+    const pickerCtx = usePickerContext('Trigger');
+    // Use the Popover context directly so we can inject aria-haspopup="listbox"
+    // rather than the "dialog" that Popover.Trigger injects. Popover.Trigger
+    // uses cloneElement and its extraProps would overwrite any pre-cloned attrs.
+    const popCtx = usePopoverContext('OptionsPickerTrigger');
+
+    const child = Children.only(children);
+    if (!isValidElement(child)) {
+      throw new Error('<OptionsPicker.Trigger> requires exactly one React element child.');
+    }
+
+    const childProps = child.props as {
+      ref?: Ref<HTMLElement>;
+      onClick?: (e: ReactMouseEvent<HTMLElement>) => void;
+      onKeyDown?: (e: ReactKeyboardEvent<HTMLElement>) => void;
+    };
+
+    const handleClick = useCallback(
+      (e: ReactMouseEvent<HTMLElement>) => {
+        e.stopPropagation();
+        popCtx.setOpen(!popCtx.open);
+      },
+      [popCtx],
+    );
+
+    const handleKeyDown = useCallback(
+      (e: ReactKeyboardEvent<HTMLElement>) => {
+        if (popCtx.open) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          popCtx.setOpen(true);
+        }
+      },
+      [popCtx],
+    );
+
+    return cloneElement(child as ReactElement<Record<string, unknown>>, {
+      ref: mergeRefs(popCtx.triggerRef, childProps.ref),
+      'aria-haspopup': 'listbox',
+      'aria-expanded': pickerCtx.open,
+      'aria-controls': pickerCtx.contentId,
+      onClick: chain(childProps.onClick, handleClick),
+      onKeyDown: chain(childProps.onKeyDown, handleKeyDown),
+    });
   },
 );
 
@@ -231,7 +284,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     const { label, className, searchPlaceholder = 'Filter…' } = props;
     const ctx = usePickerContext('Content');
 
-    const contentId = useId();
+    const contentId = ctx.contentId;
 
     const [draft, setDraft] = useState<string[]>(ctx.selected);
     const [filter, setFilter] = useState('');
@@ -400,6 +453,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                     className={styles.groupHeader}
                     aria-pressed={tristate(g.options.map((o) => o.value), draft)}
                     aria-label={`Toggle group ${g.label}`}
+                    aria-controls={g.options.map((o) => `${contentId}-opt-${o.value}`).join(' ')}
                     onClick={() => toggleGroup(g.options)}
                   >
                     <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
