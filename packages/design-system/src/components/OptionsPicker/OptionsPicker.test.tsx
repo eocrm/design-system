@@ -442,9 +442,12 @@ it('Trigger carries aria-haspopup, aria-controls, and aria-expanded', async () =
   const trigger = screen.getByRole('button', { name: 'Open' });
   expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
   expect(trigger).toHaveAttribute('aria-expanded', 'false');
-  expect(trigger.getAttribute('aria-controls')).toBeTruthy();
+  // aria-controls is absent when closed (conditional, per Popover.Trigger convention).
+  expect(trigger).not.toHaveAttribute('aria-controls');
   await user.click(trigger);
   expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  // aria-controls is present when open, pointing at the panel.
+  expect(trigger.getAttribute('aria-controls')).toBeTruthy();
 });
 
 it('group headers carry aria-controls listing all option ids', async () => {

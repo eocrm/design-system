@@ -1,9 +1,6 @@
 import {
-  Children,
-  cloneElement,
   createContext,
   forwardRef,
-  isValidElement,
   useCallback,
   useContext,
   useEffect,
@@ -11,16 +8,12 @@ import {
   useMemo,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
-  type MouseEvent as ReactMouseEvent,
   type ReactElement,
   type ReactNode,
-  type Ref,
 } from 'react';
 import clsx from 'clsx';
 import { Search } from 'lucide-react';
 import { Popover } from '../Popover';
-import { usePopoverContext } from '../Popover/context';
-import { chain, mergeRefs } from '../_internal/refs';
 import { Button } from '../Button';
 import { Checkbox } from '../Checkbox';
 import { Radio } from '../Radio';
@@ -205,51 +198,14 @@ export interface OptionsPickerTriggerProps {
 const OptionsPickerTrigger = forwardRef<HTMLButtonElement, OptionsPickerTriggerProps>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function OptionsPickerTrigger({ children }, _ref) {
-    const pickerCtx = usePickerContext('Trigger');
-    // Use the Popover context directly so we can inject aria-haspopup="listbox"
-    // rather than the "dialog" that Popover.Trigger injects. Popover.Trigger
-    // uses cloneElement and its extraProps would overwrite any pre-cloned attrs.
-    const popCtx = usePopoverContext('OptionsPickerTrigger');
-
-    const child = Children.only(children);
-    if (!isValidElement(child)) {
-      throw new Error('<OptionsPicker.Trigger> requires exactly one React element child.');
-    }
-
-    const childProps = child.props as {
-      ref?: Ref<HTMLElement>;
-      onClick?: (e: ReactMouseEvent<HTMLElement>) => void;
-      onKeyDown?: (e: ReactKeyboardEvent<HTMLElement>) => void;
-    };
-
-    const handleClick = useCallback(
-      (e: ReactMouseEvent<HTMLElement>) => {
-        e.stopPropagation();
-        popCtx.setOpen(!popCtx.open);
-      },
-      [popCtx],
+    // usePickerContext validates that this component is inside an OptionsPicker.
+    usePickerContext('Trigger');
+    return (
+      // Popover.Trigger handles aria-expanded, aria-controls, and click/keydown
+      // internally. We only override aria-haspopup to 'listbox' because the
+      // content panel surfaces a listbox role, not a generic dialog.
+      <Popover.Trigger aria-haspopup="listbox">{children}</Popover.Trigger>
     );
-
-    const handleKeyDown = useCallback(
-      (e: ReactKeyboardEvent<HTMLElement>) => {
-        if (popCtx.open) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          e.stopPropagation();
-          popCtx.setOpen(true);
-        }
-      },
-      [popCtx],
-    );
-
-    return cloneElement(child as ReactElement<Record<string, unknown>>, {
-      ref: mergeRefs(popCtx.triggerRef, childProps.ref),
-      'aria-haspopup': 'listbox',
-      'aria-expanded': pickerCtx.open,
-      'aria-controls': pickerCtx.contentId,
-      onClick: chain(childProps.onClick, handleClick),
-      onKeyDown: chain(childProps.onKeyDown, handleKeyDown),
-    });
   },
 );
 
@@ -367,7 +323,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     }, [ctx.open, visibleOptionsInOrder, focusedValue]);
 
     const handleKeyDown = useCallback(
-      (e: React.KeyboardEvent<HTMLDivElement>) => {
+      (e: ReactKeyboardEvent<HTMLDivElement>) => {
         if (visibleOptionsInOrder.length === 0) return;
         const idx = focusedValue
           ? visibleOptionsInOrder.findIndex((o) => o.value === focusedValue)

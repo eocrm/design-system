@@ -473,6 +473,18 @@ describe('Popover — cleanup + Tab traversal', () => {
     expect(trigger).toHaveClass('consumer');
   });
 
+  it('Trigger forwards a custom aria-haspopup override', () => {
+    render(
+      <Popover>
+        <Popover.Trigger aria-haspopup="listbox">
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>panel</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('button', { name: 'Open' })).toHaveAttribute('aria-haspopup', 'listbox');
+  });
+
   it('Trigger click does not bubble to ancestor click handlers', async () => {
     // Locks in the fix for "<ConfirmationPopover> inside <DropdownMenu.Item>
     // closes the dropdown instead of opening the popover" — the trigger
