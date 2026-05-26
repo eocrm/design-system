@@ -666,12 +666,23 @@ interface OptionRowProps {
 function OptionRow({ option, checked, mode, rowId, focused, onToggle }: OptionRowProps) {
   const checkboxOnChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
   const radioOnChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
-  // Pass the label THROUGH Checkbox/Radio so the whole text becomes part of the
-  // native <label> click target — clicking the text toggles the option (I8).
+  // Click anywhere inside the row toggles — the inner Checkbox/Radio handles
+  // clicks on the input + label itself (via native <label> semantics + onChange),
+  // and this onClick covers the surrounding padding. The `target === currentTarget`
+  // guard prevents double-fire: the row's onClick only runs when the click landed
+  // directly on the row div (i.e., on the padding), not when it bubbled up from
+  // the inner input or label.
+  const handleRowClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) onToggle(option.value);
+    },
+    [onToggle, option.value],
+  );
   return (
     <div
       id={rowId}
       className={clsx(styles.row, checked && styles.rowSelected, focused && styles.rowFocused)}
+      onClick={handleRowClick}
     >
       {mode === 'multi' ? (
         <Checkbox

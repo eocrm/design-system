@@ -10,7 +10,6 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
   max-height: 320px;
   overflow-y: auto;
 }
@@ -71,25 +70,34 @@
   flex-direction: column;
 }
 
+// Grid layout so the label stays left-aligned next to the dot and the
+// hint floats to the right column. `justify-content: space-between` on a
+// flex parent would put the label in the visual middle.
+// Taller header so group sections read as visually distinct from the rows
+// they label. The list itself is tightly packed (no gap), so the header's
+// own vertical padding is what creates breathing room between groups.
 .groupHeader {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-2) var(--space-1);
-}
-
-.groupDot {
-  flex-shrink: 0;
+  padding: var(--space-3) var(--space-2);
 }
 
 .groupLabel {
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  text-align: start;
 }
 
 .groupHint {
   font-family: var(--font-family-mono);
+}
+
+// Indent options that live inside a group so they read as nested under
+// the group header (the header's dot + label is the "outdent" anchor).
+.group .row {
+  padding-left: var(--space-5);
 }
 
 .empty {

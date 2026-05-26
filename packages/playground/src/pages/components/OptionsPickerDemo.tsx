@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import { Button, OptionsPicker, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
+import { InputExample } from './InputExample';
 import tsxSource from '@lib-source/components/OptionsPicker/OptionsPicker.tsx?raw';
 import scssSource from '@lib-source/components/OptionsPicker/OptionsPicker.module.scss?raw';
 
@@ -81,7 +82,7 @@ export function OptionsPickerDemo() {
   <OptionsPicker.Content label="Filter stage" options={flatOptions} />
 </OptionsPicker>`}
       >
-        <Stack gap="sm">
+        <InputExample width="auto">
           <OptionsPicker selected={multiFlat} onApply={setMultiFlat}>
             <OptionsPicker.Trigger>
               <Button variant="secondary">
@@ -90,7 +91,7 @@ export function OptionsPickerDemo() {
             </OptionsPicker.Trigger>
             <OptionsPicker.Content label="Filter stage" options={flatOptions} />
           </OptionsPicker>
-        </Stack>
+        </InputExample>
       </Example>
 
       <Example
@@ -103,14 +104,16 @@ export function OptionsPickerDemo() {
   <OptionsPicker.Content label="Filter events" groups={groupedOptions} />
 </OptionsPicker>`}
       >
-        <OptionsPicker selected={multiGrouped} onApply={setMultiGrouped}>
-          <OptionsPicker.Trigger>
-            <Button variant="secondary">
-              Events ({multiGrouped.length}) <ChevronDown size={14} />
-            </Button>
-          </OptionsPicker.Trigger>
-          <OptionsPicker.Content label="Filter events" groups={groupedOptions} />
-        </OptionsPicker>
+        <InputExample width="auto">
+          <OptionsPicker selected={multiGrouped} onApply={setMultiGrouped}>
+            <OptionsPicker.Trigger>
+              <Button variant="secondary">
+                Events ({multiGrouped.length}) <ChevronDown size={14} />
+              </Button>
+            </OptionsPicker.Trigger>
+            <OptionsPicker.Content label="Filter events" groups={groupedOptions} />
+          </OptionsPicker>
+        </InputExample>
       </Example>
 
       <Example
@@ -123,14 +126,16 @@ export function OptionsPickerDemo() {
   <OptionsPicker.Content label="Filter stage" options={flatOptions} />
 </OptionsPicker>`}
       >
-        <OptionsPicker mode="single" selected={single} onApply={setSingle}>
-          <OptionsPicker.Trigger>
-            <Button variant="secondary">
-              Stage: {single ?? '—'} <ChevronDown size={14} />
-            </Button>
-          </OptionsPicker.Trigger>
-          <OptionsPicker.Content label="Filter stage" options={flatOptions} />
-        </OptionsPicker>
+        <InputExample width="auto">
+          <OptionsPicker mode="single" selected={single} onApply={setSingle}>
+            <OptionsPicker.Trigger>
+              <Button variant="secondary">
+                Stage: {single ?? '—'} <ChevronDown size={14} />
+              </Button>
+            </OptionsPicker.Trigger>
+            <OptionsPicker.Content label="Filter stage" options={flatOptions} />
+          </OptionsPicker>
+        </InputExample>
       </Example>
 
       <Example
@@ -146,24 +151,26 @@ export function OptionsPickerDemo() {
   <OptionsPicker.Content label="Filter" options={flatOptions} />
 </OptionsPicker>`}
       >
-        <Stack gap="sm">
-          <OptionsPicker
-            open={controlledOpen}
-            onOpenChange={setControlledOpen}
-            selected={controlledValue}
-            onApply={setControlledValue}
-          >
-            <OptionsPicker.Trigger>
-              <Button variant="secondary">
-                Filter ({controlledValue.length}) <ChevronDown size={14} />
-              </Button>
-            </OptionsPicker.Trigger>
-            <OptionsPicker.Content label="Filter stage" options={flatOptions} />
-          </OptionsPicker>
-          <Button variant="ghost" size="sm" onClick={() => setControlledOpen((o) => !o)}>
-            Toggle externally (currently {controlledOpen ? 'open' : 'closed'})
-          </Button>
-        </Stack>
+        <InputExample width="auto">
+          <Stack gap="sm">
+            <OptionsPicker
+              open={controlledOpen}
+              onOpenChange={setControlledOpen}
+              selected={controlledValue}
+              onApply={setControlledValue}
+            >
+              <OptionsPicker.Trigger>
+                <Button variant="secondary">
+                  Filter ({controlledValue.length}) <ChevronDown size={14} />
+                </Button>
+              </OptionsPicker.Trigger>
+              <OptionsPicker.Content label="Filter stage" options={flatOptions} />
+            </OptionsPicker>
+            <Button variant="ghost" size="sm" onClick={() => setControlledOpen((o) => !o)}>
+              Toggle externally (currently {controlledOpen ? 'open' : 'closed'})
+            </Button>
+          </Stack>
+        </InputExample>
       </Example>
     </DemoLayout>
   );
