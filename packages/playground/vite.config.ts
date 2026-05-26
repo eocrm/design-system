@@ -23,10 +23,15 @@ export default defineConfig({
   server: {
     port: 8080,
     strictPort: true,
+    // Bind to 0.0.0.0 so the dev server is reachable from other machines on
+    // the LAN (phones, tablets, sibling dev VMs). `host: true` makes Vite log
+    // both the Local and Network URLs on startup.
+    host: true,
   },
   preview: {
     port: 8080,
     strictPort: true,
+    host: true,
   },
   css: {
     modules: {
