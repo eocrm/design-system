@@ -1,18 +1,24 @@
 import {
+  Children,
+  cloneElement,
   createContext,
   forwardRef,
+  isValidElement,
   useCallback,
   useContext,
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactElement,
   type ReactNode,
+  type Ref,
 } from 'react';
 import clsx from 'clsx';
 import { Search } from 'lucide-react';
+import { mergeRefs } from '../_internal/refs';
 import { Popover } from '../Popover';
 import { Button } from '../Button';
 import { Checkbox } from '../Checkbox';
@@ -201,7 +207,15 @@ function OptionsPickerRoot(props: OptionsPickerProps) {
   const isControlled = props.open !== undefined;
   const open = isControlled ? (props.open as boolean) : internalOpen;
 
-  const setOpen = useCallback(
+  // justCommittedRef: true when the most-recent open→close was triggered by
+  // a commit (Apply button / radio-click). When false on close, we fire onCancel.
+  const justCommittedRef = useRef(false);
+  // justFiredCancelRef: guards against double-fire when both Popover's
+  // document-level Escape listener AND Content's synthetic onKeyDown both
+  // call setOpen(false) in the same React event batch.
+  const justFiredCancelRef = useRef(false);
+
+  const setOpenRaw = useCallback(
     (next: boolean) => {
       if (!isControlled) setInternalOpen(next);
       props.onOpenChange?.(next);
@@ -209,8 +223,27 @@ function OptionsPickerRoot(props: OptionsPickerProps) {
     [isControlled, props],
   );
 
+  // Intercepts every open→close transition and fires onCancel exactly once
+  // when the close was NOT preceded by a commit (i.e., Esc or click-outside).
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (!next && open && !justCommittedRef.current && !justFiredCancelRef.current) {
+        justFiredCancelRef.current = true;
+        (props as { onCancel?: () => void }).onCancel?.();
+      }
+      if (next) {
+        // Reset both guards when reopening.
+        justCommittedRef.current = false;
+        justFiredCancelRef.current = false;
+      }
+      setOpenRaw(next);
+    },
+    [open, props, setOpenRaw],
+  );
+
   const commit = useCallback(
     (next: string[]) => {
+      justCommittedRef.current = true;
       if (mode === 'multi') {
         (props as MultiProps).onApply(next);
       } else {
@@ -222,9 +255,10 @@ function OptionsPickerRoot(props: OptionsPickerProps) {
   );
 
   const cancel = useCallback(() => {
-    (props as { onCancel?: () => void }).onCancel?.();
+    // Explicit cancel (Cancel button, Esc keydown on content) — mark as NOT a
+    // commit so setOpen fires onCancel via the interceptor above.
     setOpen(false);
-  }, [props, setOpen]);
+  }, [setOpen]);
 
   const contentId = useId();
 
@@ -251,16 +285,42 @@ export interface OptionsPickerTriggerProps {
   children: ReactElement;
 }
 
+/**
+ * The element that opens the picker panel. Pass a single child (typically a
+ * `<Button>`) — the ref + click-to-open wiring + ARIA (`aria-haspopup`,
+ * `aria-expanded`, `aria-controls`) are injected automatically.
+ *
+ * The consumer's ref is forwarded to the child element via `mergeRefs`, so
+ * both the picker's internal ref and any external ref receive the same DOM node.
+ *
+ * @example
+ * <OptionsPicker.Trigger>
+ *   <Button variant="secondary">Events <ChevronDown size={14}/></Button>
+ * </OptionsPicker.Trigger>
+ */
 const OptionsPickerTrigger = forwardRef<HTMLButtonElement, OptionsPickerTriggerProps>(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function OptionsPickerTrigger({ children }, _ref) {
+  function OptionsPickerTrigger({ children }, ref) {
     // usePickerContext validates that this component is inside an OptionsPicker.
     usePickerContext('Trigger');
+
+    if (!isValidElement(children)) {
+      throw new Error('<OptionsPicker.Trigger> requires exactly one React element child.');
+    }
+
+    // Merge the consumer's ref with the existing child ref so both receive the
+    // same DOM node. mergeRefs handles callback refs and object refs alike.
+    const child = Children.only(children) as ReactElement<{ ref?: Ref<HTMLButtonElement> }>;
+    const childRef = (child as ReactElement & { ref?: Ref<HTMLButtonElement> }).ref;
+    const mergedRef = ref ? mergeRefs<HTMLButtonElement>(ref, childRef ?? null) : childRef;
+    const childWithRef = cloneElement(child, { ref: mergedRef } as Partial<{ ref: Ref<HTMLButtonElement> }>);
+
     return (
       // Popover.Trigger handles aria-expanded, aria-controls, and click/keydown
       // internally. We only override aria-haspopup to 'listbox' because the
       // content panel surfaces a listbox role, not a generic dialog.
-      <Popover.Trigger aria-haspopup="listbox">{children}</Popover.Trigger>
+      <Popover.Trigger aria-haspopup="listbox">
+        {childWithRef}
+      </Popover.Trigger>
     );
   },
 );
@@ -291,6 +351,24 @@ function tristate(groupOptionValues: string[], draft: string[]): TriState {
   return 'mixed';
 }
 
+/**
+ * The panel rendered inside the Popover. Provide either `options` (flat) OR
+ * `groups` (grouped) — passing both is a TypeScript error. The panel hosts a
+ * search bar, an options list, and (in multi mode) an Apply/Cancel footer.
+ *
+ * @example
+ * <OptionsPicker.Content
+ *   label="Filter events"
+ *   groups={[{ id: 'auth', label: 'Authentication', tone: 'success', hint: 'auth.*', options: [...] }]}
+ * />
+ *
+ * @example
+ * // Flat options:
+ * <OptionsPicker.Content
+ *   label="Filter tenant"
+ *   options={tenants.map((t) => ({ value: t.id, label: t.slug }))}
+ * />
+ */
 const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProps>(
   function OptionsPickerContent(props, ref) {
     const { label, className, searchPlaceholder = 'Filter…' } = props;
@@ -301,12 +379,23 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     const [draft, setDraft] = useState<string[]>(ctx.selected);
     const [filter, setFilter] = useState('');
 
+    // Ref for the search input — used to focus it on open (see effect below).
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
     useEffect(() => {
       if (ctx.open) {
         setDraft(ctx.selected);
         setFilter('');
       }
     }, [ctx.open, ctx.selected]);
+
+    // Focus the search input on open. Deferred past Popover.Content's own
+    // queueMicrotask that focuses the panel div, so our microtask runs after.
+    useEffect(() => {
+      if (ctx.open) {
+        queueMicrotask(() => searchInputRef.current?.focus());
+      }
+    }, [ctx.open]);
 
     const matchesFilter = useCallback(
       (opt: OptionsPickerOption): boolean => {
@@ -398,6 +487,9 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
         } else if (e.key === 'End') {
           e.preventDefault();
           setFocusedValue(visibleOptionsInOrder[visibleOptionsInOrder.length - 1]!.value);
+        } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && ctx.mode === 'multi') {
+          e.preventDefault();
+          ctx.commit(draft);
         } else if (e.key === 'Enter' || e.key === ' ') {
           if (focusedValue) {
             e.preventDefault();
@@ -407,9 +499,6 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           e.preventDefault();
           setDraft(ctx.selected);
           ctx.cancel();
-        } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && ctx.mode === 'multi') {
-          e.preventDefault();
-          ctx.commit(draft);
         }
       },
       [visibleOptionsInOrder, focusedValue, toggle, ctx, draft],
@@ -426,12 +515,12 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           <div className={styles.searchBar}>
             <Search size={14} aria-hidden className={styles.searchIcon} />
             <Input
+              ref={searchInputRef}
               type="text"
               value={filter}
               onChange={(e) => setFilter(e.currentTarget.value)}
               placeholder={searchPlaceholder}
               aria-label={searchPlaceholder}
-              autoFocus
               className={styles.searchInput}
             />
             {ctx.mode === 'multi' && (
@@ -561,22 +650,27 @@ interface OptionRowProps {
 function OptionRow({ option, checked, mode, rowId, focused, onToggle }: OptionRowProps) {
   const checkboxOnChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
   const radioOnChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
+  // Pass the label THROUGH Checkbox/Radio so the whole text becomes part of the
+  // native <label> click target — clicking the text toggles the option (I8).
   return (
     <div
       id={rowId}
       className={clsx(styles.row, checked && styles.rowSelected, focused && styles.rowFocused)}
     >
       {mode === 'multi' ? (
-        <Checkbox checked={checked} onChange={checkboxOnChange} aria-label={option.label} />
+        <Checkbox
+          checked={checked}
+          onChange={checkboxOnChange}
+          label={<Text size="sm">{option.label}</Text>}
+        />
       ) : (
         <Radio
           value={option.value}
           checked={checked}
           onChange={radioOnChange}
-          aria-label={option.label}
+          label={<Text size="sm">{option.label}</Text>}
         />
       )}
-      <Text size="sm">{option.label}</Text>
     </div>
   );
 }

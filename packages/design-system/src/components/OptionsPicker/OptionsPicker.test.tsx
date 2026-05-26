@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { createRef } from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { OptionsPicker } from './OptionsPicker';
 import { Button } from '../Button';
@@ -466,4 +467,203 @@ it('group headers carry aria-controls listing all option ids', async () => {
   expect(ids).toHaveLength(2);
   expect(ids[0]).toMatch(/-opt-auth\.login$/);
   expect(ids[1]).toMatch(/-opt-auth\.logout$/);
+});
+
+// ---------------------------------------------------------------------------
+// C1: onCancel fires on Esc and on click-outside
+// ---------------------------------------------------------------------------
+
+it('C1: Esc fires onCancel', async () => {
+  const user = userEvent.setup();
+  const onCancel = vi.fn();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker selected={['one']} onApply={onApply} onCancel={onCancel}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.keyboard('{Escape}');
+  expect(onCancel).toHaveBeenCalledTimes(1);
+  expect(onApply).not.toHaveBeenCalled();
+});
+
+it('C1: click-outside fires onCancel', async () => {
+  const user = userEvent.setup();
+  const onCancel = vi.fn();
+  const onApply = vi.fn();
+  render(
+    <>
+      <OptionsPicker selected={[]} onApply={onApply} onCancel={onCancel}>
+        <OptionsPicker.Trigger>
+          <Button>Open</Button>
+        </OptionsPicker.Trigger>
+        <OptionsPicker.Content label="Filter" options={flatOptions} />
+      </OptionsPicker>
+      <div data-testid="elsewhere">elsewhere</div>
+    </>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  // pointerdown outside the panel — the canonical outside-click pattern.
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByTestId('elsewhere') });
+  expect(onCancel).toHaveBeenCalledTimes(1);
+  expect(onApply).not.toHaveBeenCalled();
+});
+
+it('C1: Apply does NOT fire onCancel', async () => {
+  const user = userEvent.setup();
+  const onCancel = vi.fn();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}} onCancel={onCancel}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(onCancel).not.toHaveBeenCalled();
+});
+
+// ---------------------------------------------------------------------------
+// C2: Cmd/Ctrl+Enter commits the draft in multi mode
+// ---------------------------------------------------------------------------
+
+it('C2: Cmd+Enter commits the draft', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker selected={[]} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  // Toggle 'one' via checkbox click then commit with Cmd+Enter
+  await user.click(screen.getByRole('checkbox', { name: 'One' }));
+  await user.keyboard('{Meta>}{Enter}{/Meta}');
+  expect(onApply).toHaveBeenCalledWith(['one']);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+
+it('C2: Ctrl+Enter commits the draft', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker selected={[]} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Two' }));
+  await user.keyboard('{Control>}{Enter}{/Control}');
+  expect(onApply).toHaveBeenCalledWith(['two']);
+});
+
+it('C2: plain Enter on focused option still toggles (Cmd+Enter reorder does not break it)', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  // ArrowDown focuses 'one', Enter should toggle it.
+  await user.keyboard('{ArrowDown}{Enter}');
+  expect(screen.getByRole('checkbox', { name: 'One' })).toBeChecked();
+});
+
+// ---------------------------------------------------------------------------
+// C3: Trigger forwards ref to the child element
+// ---------------------------------------------------------------------------
+
+it('C3: Trigger forwards ref to the child button element', async () => {
+  const user = userEvent.setup();
+  const ref = createRef<HTMLButtonElement>();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger ref={ref}>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  // Ref is populated before any interaction.
+  expect(ref.current).not.toBeNull();
+  expect(ref.current?.tagName).toBe('BUTTON');
+  // The ref points at the same node the user sees.
+  expect(ref.current).toBe(screen.getByRole('button', { name: 'Open' }));
+  // Sanity: the picker still opens normally.
+  await user.click(ref.current!);
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+});
+
+// ---------------------------------------------------------------------------
+// I5: Search input receives focus when the panel opens
+// ---------------------------------------------------------------------------
+
+it('I5: search input is focused when panel opens', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  // Microtask runs asynchronously — waitFor lets us observe after it settles.
+  await waitFor(() => {
+    expect(document.activeElement).toBe(screen.getByRole('textbox'));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// I8: clicking the label text (not the checkbox box) toggles the option
+// ---------------------------------------------------------------------------
+
+it('I8: clicking label text toggles the checkbox', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  // Click the label text — not the checkbox element directly.
+  await user.click(screen.getByText('One'));
+  expect(screen.getByRole('checkbox', { name: 'One' })).toBeChecked();
+});
+
+it('I8: clicking label text in single mode commits via onApply', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker mode="single" selected={null} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.click(screen.getByText('One'));
+  expect(onApply).toHaveBeenCalledWith('one');
 });
