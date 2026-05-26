@@ -188,7 +188,6 @@ export const MOCKUPS = [
       'PageHeader',
       'Stack',
       'Text',
-      'Title',
       'Tooltip',
     ],
   },
