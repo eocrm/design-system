@@ -14,6 +14,7 @@ import { Search } from 'lucide-react';
 import { Popover } from '../Popover';
 import { Button } from '../Button';
 import { Checkbox } from '../Checkbox';
+import { Radio } from '../Radio';
 import { Cluster } from '../Cluster';
 import { Input } from '../Input';
 import { Badge, type BadgeTone } from '../Badge';
@@ -358,12 +359,12 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                   </div>
                 )}
                 {g.visibleOptions.map((opt) => (
-                  <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
+                  <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} mode={ctx.mode} onToggle={toggle} />
                 ))}
               </div>
             ))}
             {hasAnyVisible && !isGrouped(props) && visibleFlat.map((opt) => (
-              <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
+              <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} mode={ctx.mode} onToggle={toggle} />
             ))}
           </div>
 
@@ -402,20 +403,28 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
 interface OptionRowProps {
   option: OptionsPickerOption;
   checked: boolean;
+  mode: OptionsPickerMode;
   onToggle: (value: string) => void;
 }
 
-function OptionRow({ option, checked, onToggle }: OptionRowProps) {
-  const handleChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
-  // Checkbox onChange receives (checked, event) — we ignore both and drive
-  // toggle via the option's value in the outer callback.
+function OptionRow({ option, checked, mode, onToggle }: OptionRowProps) {
+  // Checkbox onChange: (checked: boolean) => void — value ignored, drive via option.value
   const checkboxOnChange = useCallback(
-    (_checked: boolean) => handleChange(),
-    [handleChange],
+    (_checked: boolean) => onToggle(option.value),
+    [onToggle, option.value],
+  );
+  // Radio onChange: (value: string, event) => void — value is the radio's value prop
+  const radioOnChange = useCallback(
+    (_value: string) => onToggle(option.value),
+    [onToggle, option.value],
   );
   return (
     <div className={clsx(styles.row, checked && styles.rowSelected)}>
-      <Checkbox checked={checked} onChange={checkboxOnChange} aria-label={option.label} />
+      {mode === 'multi' ? (
+        <Checkbox checked={checked} onChange={checkboxOnChange} aria-label={option.label} />
+      ) : (
+        <Radio value={option.value} checked={checked} onChange={radioOnChange} aria-label={option.label} />
+      )}
       <Text size="sm">{option.label}</Text>
     </div>
   );

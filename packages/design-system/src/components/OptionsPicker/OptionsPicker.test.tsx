@@ -325,3 +325,51 @@ it('single mode: group header is presentational (no role=button)', async () => {
   expect(screen.queryByRole('button', { name: /Authentication/i })).not.toBeInTheDocument();
   expect(screen.getByText('Authentication')).toBeInTheDocument();
 });
+
+it('single mode: clicking a row commits via onApply and closes', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker mode="single" selected={null} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.click(screen.getAllByRole('radio')[1]);
+  expect(onApply).toHaveBeenCalledWith('two');
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+
+it('single mode: no Apply/Cancel footer', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker mode="single" selected={null} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+});
+
+it('single mode: pre-selected row reflects in the radio', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker mode="single" selected="two" onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  const radios = screen.getAllByRole('radio');
+  expect(radios[0]).not.toBeChecked();
+  expect(radios[1]).toBeChecked();
+});
