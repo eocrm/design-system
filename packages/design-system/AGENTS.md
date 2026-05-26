@@ -585,9 +585,8 @@ function handleMove(event: KanbanMoveEvent) {
     const source = [...next[from.columnId as keyof typeof curr]];
     const [moved] = source.splice(from.index, 1);
     next[from.columnId as keyof typeof curr] = source;
-    const target = from.columnId === to.columnId
-      ? source
-      : [...(next[to.columnId as keyof typeof curr] ?? [])];
+    const target =
+      from.columnId === to.columnId ? source : [...(next[to.columnId as keyof typeof curr] ?? [])];
     target.splice(to.index, 0, moved);
     next[to.columnId as keyof typeof curr] = target;
     return next;
@@ -605,7 +604,7 @@ function handleMove(event: KanbanMoveEvent) {
       ))}
     </Kanban.Column>
   ))}
-</Kanban>
+</Kanban>;
 ```
 
 Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once per drop with the diff between the initial layout and the final layout. Consumer applies the move (immutable splice in/out). Columns and Cards both need stable `id` props (`string | number`).

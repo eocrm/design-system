@@ -147,8 +147,15 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
   { id, className, children, ...rest },
   ref,
 ) {
-  const { setNodeRef, setActivatorNodeRef, listeners, attributes, transform, transition, isDragging } =
-    useSortable({ id });
+  const {
+    setNodeRef,
+    setActivatorNodeRef,
+    listeners,
+    attributes,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
 
   const hasHandle = useMemo(() => containsHandle(children), [children]);
 
@@ -230,7 +237,10 @@ export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(functi
 
   return (
     <div ref={setRef} className={clsx(styles.column, className)} {...rest}>
-      <SortableContext items={cardIds as (string | number)[]} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={cardIds as (string | number)[]}
+        strategy={verticalListSortingStrategy}
+      >
         {children}
       </SortableContext>
     </div>
@@ -333,51 +343,53 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // columnElements is built in the same pass so render-time lookup is O(1)
   // instead of O(N) per column (i.e., O(N²) total per render).
   // ------------------------------------------------------------------
-  const { columnOrder, columnElements, initialItems, cardElements, columnChildrenSlices } = useMemo(() => {
-    const colOrder: (string | number)[] = [];
-    const colElems = new Map<string | number, ReactElement<KanbanColumnProps>>();
-    const initItems = new Map<string | number, (string | number)[]>();
-    const cardElems = new Map<string | number, ReactElement<KanbanCardProps>>();
-    const colSlices = new Map<string | number, { before: ReactNode[]; after: ReactNode[] }>();
+  const { columnOrder, columnElements, initialItems, cardElements, columnChildrenSlices } =
+    useMemo(() => {
+      const colOrder: (string | number)[] = [];
+      const colElems = new Map<string | number, ReactElement<KanbanColumnProps>>();
+      const initItems = new Map<string | number, (string | number)[]>();
+      const cardElems = new Map<string | number, ReactElement<KanbanCardProps>>();
+      const colSlices = new Map<string | number, { before: ReactNode[]; after: ReactNode[] }>();
 
-    Children.forEach(children, (child) => {
-      if (!isValidElement(child) || child.type !== KanbanColumn) return;
-      const columnElement = child as ReactElement<KanbanColumnProps>;
-      const colProps = columnElement.props;
-      const colId = colProps.id;
-      colOrder.push(colId);
-      colElems.set(colId, columnElement);
+      Children.forEach(children, (child) => {
+        if (!isValidElement(child) || child.type !== KanbanColumn) return;
+        const columnElement = child as ReactElement<KanbanColumnProps>;
+        const colProps = columnElement.props;
+        const colId = colProps.id;
+        colOrder.push(colId);
+        colElems.set(colId, columnElement);
 
-      const colCardIds: (string | number)[] = [];
-      let firstCardIdx = -1;
-      let lastCardIdx = -1;
-      const colChildren = Children.toArray(colProps.children);
+        const colCardIds: (string | number)[] = [];
+        let firstCardIdx = -1;
+        let lastCardIdx = -1;
+        const colChildren = Children.toArray(colProps.children);
 
-      colChildren.forEach((grandchild, idx) => {
-        if (!isValidElement(grandchild) || grandchild.type !== KanbanCard) return;
-        const cardProps = grandchild.props as KanbanCardProps;
-        colCardIds.push(cardProps.id);
-        cardElems.set(cardProps.id, grandchild as ReactElement<KanbanCardProps>);
-        if (firstCardIdx < 0) firstCardIdx = idx;
-        lastCardIdx = idx;
+        colChildren.forEach((grandchild, idx) => {
+          if (!isValidElement(grandchild) || grandchild.type !== KanbanCard) return;
+          const cardProps = grandchild.props as KanbanCardProps;
+          colCardIds.push(cardProps.id);
+          cardElems.set(cardProps.id, grandchild as ReactElement<KanbanCardProps>);
+          if (firstCardIdx < 0) firstCardIdx = idx;
+          lastCardIdx = idx;
+        });
+
+        // Split into before/after slices (non-card children outside the card block).
+        const before: ReactNode[] =
+          firstCardIdx >= 0 ? colChildren.slice(0, firstCardIdx) : colChildren;
+        const after: ReactNode[] = lastCardIdx >= 0 ? colChildren.slice(lastCardIdx + 1) : [];
+
+        initItems.set(colId, colCardIds);
+        colSlices.set(colId, { before, after });
       });
 
-      // Split into before/after slices (non-card children outside the card block).
-      const before: ReactNode[] = firstCardIdx >= 0 ? colChildren.slice(0, firstCardIdx) : colChildren;
-      const after: ReactNode[] = lastCardIdx >= 0 ? colChildren.slice(lastCardIdx + 1) : [];
-
-      initItems.set(colId, colCardIds);
-      colSlices.set(colId, { before, after });
-    });
-
-    return {
-      columnOrder: colOrder,
-      columnElements: colElems,
-      initialItems: initItems,
-      cardElements: cardElems,
-      columnChildrenSlices: colSlices,
-    };
-  }, [children]);
+      return {
+        columnOrder: colOrder,
+        columnElements: colElems,
+        initialItems: initItems,
+        cardElements: cardElems,
+        columnChildrenSlices: colSlices,
+      };
+    }, [children]);
 
   // ------------------------------------------------------------------
   // Stable serialization of initialItems to detect consumer state changes.
@@ -392,7 +404,9 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // ------------------------------------------------------------------
   // Internal drag state: null when idle, populated on drag start
   // ------------------------------------------------------------------
-  const [liveItems, setLiveItems] = useState<Map<string | number, (string | number)[]> | null>(null);
+  const [liveItems, setLiveItems] = useState<Map<string | number, (string | number)[]> | null>(
+    null,
+  );
 
   // Reset live items when consumer state mutates (e.g. external update mid-drag).
   useEffect(() => {
@@ -468,7 +482,10 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         }
 
         const next = new Map(prev);
-        next.set(activeContainer, activeCards.filter((id) => id !== activeId));
+        next.set(
+          activeContainer,
+          activeCards.filter((id) => id !== activeId),
+        );
         const newOver = [...overCards];
         newOver.splice(insertAt, 0, activeId);
         next.set(overContainer, newOver);

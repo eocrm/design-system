@@ -46,9 +46,7 @@ const INITIAL_BOARD: Record<ColId, CardData[]> = {
   ],
 };
 
-function makeMoveHandler(
-  setter: React.Dispatch<React.SetStateAction<Record<ColId, CardData[]>>>,
-) {
+function makeMoveHandler(setter: React.Dispatch<React.SetStateAction<Record<ColId, CardData[]>>>) {
   return (event: KanbanMoveEvent) => {
     const { from, to, cardId } = event;
     setter((curr) => {
@@ -212,11 +210,10 @@ export function KanbanDemo() {
           Implementation notes
         </Title>
         <Text size="sm" tone="muted">
-          Each Column is a SortableContext; the Root provides a single shared DndContext
-          spanning all columns. Cards reflow live during cross-column drag — internal
-          Kanban state mutates on dragOver; consumer's onMove fires once on drop with
-          the diff. Keyboard reorder works within a column only (dnd-kit's stock
-          coordinateGetter is per-SortableContext).
+          Each Column is a SortableContext; the Root provides a single shared DndContext spanning
+          all columns. Cards reflow live during cross-column drag — internal Kanban state mutates on
+          dragOver; consumer's onMove fires once on drop with the diff. Keyboard reorder works
+          within a column only (dnd-kit's stock coordinateGetter is per-SortableContext).
         </Text>
       </Stack>
     </DemoLayout>

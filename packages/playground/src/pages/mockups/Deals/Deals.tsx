@@ -34,9 +34,7 @@ function groupByStage(dealList: Deal[]): Record<DealStage, Deal[]> {
 }
 
 export function Deals() {
-  const [dealsByStage, setDealsByStage] = useState<Record<DealStage, Deal[]>>(
-    groupByStage(deals),
-  );
+  const [dealsByStage, setDealsByStage] = useState<Record<DealStage, Deal[]>>(groupByStage(deals));
 
   function handleMove(event: KanbanMoveEvent) {
     const { from, to, cardId } = event;

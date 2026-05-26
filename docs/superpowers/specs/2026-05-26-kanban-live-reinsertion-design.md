@@ -88,6 +88,7 @@ The JSDoc / AGENTS.md "anti-patterns" bullet that documented the v1 commit-on-dr
 To re-arrange cards via internal state, Kanban needs to know WHERE in the column's child list to insert the reordered cards. The implementation assumes: **a `<Kanban.Column>`'s `<Kanban.Card>` children are a contiguous block** (typically after a header / before a footer).
 
 Concretely, when extracting column children at memo time:
+
 - Split each column's children into `[beforeCards, ...cards, afterCards]`.
 - `beforeCards` = all non-card children before the first card.
 - `cards` = the contiguous block of `KanbanCard` children.
@@ -113,7 +114,9 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     [initialItems],
   );
 
-  const [liveItems, setLiveItems] = useState<Map<string | number, (string | number)[]> | null>(null);
+  const [liveItems, setLiveItems] = useState<Map<string | number, (string | number)[]> | null>(
+    null,
+  );
 
   // Reset live items when consumer state mutates
   useEffect(() => {
@@ -135,101 +138,113 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setLiveItems(new Map([...initialItems].map(([col, cards]) => [col, [...cards]])));
-  }, [initialItems]);
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      setLiveItems(new Map([...initialItems].map(([col, cards]) => [col, [...cards]])));
+    },
+    [initialItems],
+  );
 
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over || !liveItems) return;
-    const activeId = active.id as string | number;
-    const overId = over.id as string | number;
-
-    const activeContainer = findContainer(activeId);
-    const overContainer = findContainer(overId);
-    if (activeContainer == null || overContainer == null) return;
-    if (activeContainer === overContainer) return;
-
-    setLiveItems((prev) => {
-      if (!prev) return prev;
-      const activeItems = prev.get(activeContainer) ?? [];
-      const overItems = prev.get(overContainer) ?? [];
-      const activeIdx = activeItems.indexOf(activeId);
-      if (activeIdx < 0) return prev;
-
-      // Insertion index: where in overContainer to place the active card.
-      // If over.id is a card in overContainer → insert at its position.
-      // If over.id is the column itself (empty drop) → append.
-      let insertAt: number;
-      if (overItems.includes(overId)) {
-        insertAt = overItems.indexOf(overId);
-      } else {
-        insertAt = overItems.length;
-      }
-
-      const next = new Map(prev);
-      next.set(activeContainer, activeItems.filter((id) => id !== activeId));
-      const newOverItems = [...overItems];
-      newOverItems.splice(insertAt, 0, activeId);
-      next.set(overContainer, newOverItems);
-      return next;
-    });
-  }, [liveItems, findContainer]);
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    const activeId = active.id as string | number;
-
-    // Compute the from-position from initialItems and to-position from liveItems
-    const final = liveItems ?? initialItems;
-    let toColumn: string | number | null = null;
-    let toIndex = -1;
-    for (const [colId, cards] of final) {
-      const idx = cards.indexOf(activeId);
-      if (idx >= 0) {
-        toColumn = colId;
-        toIndex = idx;
-        break;
-      }
-    }
-
-    let fromColumn: string | number | null = null;
-    let fromIndex = -1;
-    for (const [colId, cards] of initialItems) {
-      const idx = cards.indexOf(activeId);
-      if (idx >= 0) {
-        fromColumn = colId;
-        fromIndex = idx;
-        break;
-      }
-    }
-
-    setLiveItems(null);
-
-    if (fromColumn == null || toColumn == null) return;
-    // Within-column reorder finalization: use dnd-kit's arrayMove on the
-    // initial items if active and over are in the same column
-    if (over && fromColumn === toColumn) {
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const { active, over } = event;
+      if (!over || !liveItems) return;
+      const activeId = active.id as string | number;
       const overId = over.id as string | number;
-      const containerItems = initialItems.get(fromColumn) ?? [];
-      const overIdx = containerItems.indexOf(overId);
-      if (overIdx >= 0 && overIdx !== fromIndex) {
-        // Final position is the overIdx (or its neighbor)
-        toIndex = overIdx;
-      } else {
-        // No move
-        return;
+
+      const activeContainer = findContainer(activeId);
+      const overContainer = findContainer(overId);
+      if (activeContainer == null || overContainer == null) return;
+      if (activeContainer === overContainer) return;
+
+      setLiveItems((prev) => {
+        if (!prev) return prev;
+        const activeItems = prev.get(activeContainer) ?? [];
+        const overItems = prev.get(overContainer) ?? [];
+        const activeIdx = activeItems.indexOf(activeId);
+        if (activeIdx < 0) return prev;
+
+        // Insertion index: where in overContainer to place the active card.
+        // If over.id is a card in overContainer → insert at its position.
+        // If over.id is the column itself (empty drop) → append.
+        let insertAt: number;
+        if (overItems.includes(overId)) {
+          insertAt = overItems.indexOf(overId);
+        } else {
+          insertAt = overItems.length;
+        }
+
+        const next = new Map(prev);
+        next.set(
+          activeContainer,
+          activeItems.filter((id) => id !== activeId),
+        );
+        const newOverItems = [...overItems];
+        newOverItems.splice(insertAt, 0, activeId);
+        next.set(overContainer, newOverItems);
+        return next;
+      });
+    },
+    [liveItems, findContainer],
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      const activeId = active.id as string | number;
+
+      // Compute the from-position from initialItems and to-position from liveItems
+      const final = liveItems ?? initialItems;
+      let toColumn: string | number | null = null;
+      let toIndex = -1;
+      for (const [colId, cards] of final) {
+        const idx = cards.indexOf(activeId);
+        if (idx >= 0) {
+          toColumn = colId;
+          toIndex = idx;
+          break;
+        }
       }
-    }
 
-    if (fromColumn === toColumn && fromIndex === toIndex) return;
+      let fromColumn: string | number | null = null;
+      let fromIndex = -1;
+      for (const [colId, cards] of initialItems) {
+        const idx = cards.indexOf(activeId);
+        if (idx >= 0) {
+          fromColumn = colId;
+          fromIndex = idx;
+          break;
+        }
+      }
 
-    onMove?.({
-      from: { columnId: fromColumn, index: fromIndex },
-      to: { columnId: toColumn, index: toIndex },
-      cardId: activeId,
-    });
-  }, [liveItems, initialItems, onMove]);
+      setLiveItems(null);
+
+      if (fromColumn == null || toColumn == null) return;
+      // Within-column reorder finalization: use dnd-kit's arrayMove on the
+      // initial items if active and over are in the same column
+      if (over && fromColumn === toColumn) {
+        const overId = over.id as string | number;
+        const containerItems = initialItems.get(fromColumn) ?? [];
+        const overIdx = containerItems.indexOf(overId);
+        if (overIdx >= 0 && overIdx !== fromIndex) {
+          // Final position is the overIdx (or its neighbor)
+          toIndex = overIdx;
+        } else {
+          // No move
+          return;
+        }
+      }
+
+      if (fromColumn === toColumn && fromIndex === toIndex) return;
+
+      onMove?.({
+        from: { columnId: fromColumn, index: fromIndex },
+        to: { columnId: toColumn, index: toIndex },
+        cardId: activeId,
+      });
+    },
+    [liveItems, initialItems, onMove],
+  );
 
   const handleDragCancel = useCallback(() => {
     setLiveItems(null);
@@ -244,14 +259,25 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div ref={ref} role="region" aria-label="Kanban board" className={clsx(styles.board, className)} {...rest}>
+      <div
+        ref={ref}
+        role="region"
+        aria-label="Kanban board"
+        className={clsx(styles.board, className)}
+        {...rest}
+      >
         {columnOrder.map((colId) => {
           const columnElement = Children.toArray(children).find(
-            (c): c is ReactElement<KanbanColumnProps> => isValidElement(c) && c.type === KanbanColumn && (c.props as KanbanColumnProps).id === colId,
+            (c): c is ReactElement<KanbanColumnProps> =>
+              isValidElement(c) &&
+              c.type === KanbanColumn &&
+              (c.props as KanbanColumnProps).id === colId,
           );
           if (!columnElement) return null;
           const cardIds = effectiveItems.get(colId) ?? [];
-          const cards = cardIds.map((id) => cardElements.get(id)).filter((c): c is ReactElement => c != null);
+          const cards = cardIds
+            .map((id) => cardElements.get(id))
+            .filter((c): c is ReactElement => c != null);
           const { before, after } = columnNonCardChildren.get(colId) ?? { before: [], after: [] };
           return cloneElement(columnElement, {}, ...before, ...cards, ...after);
         })}
