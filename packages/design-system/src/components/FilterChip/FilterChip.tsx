@@ -48,7 +48,7 @@ const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function Filt
           onClick={onDismiss}
           aria-label={dismissLabel}
         >
-          <X size={12} aria-hidden />
+          <X size={12} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -82,7 +82,7 @@ const FilterChipValue = forwardRef<HTMLSpanElement, FilterChipValueProps>(functi
 ) {
   return (
     <span ref={ref} className={clsx(styles.value, className)} {...rest}>
-      {tone && <span className={styles.dot} data-tone={tone} aria-hidden />}
+      {tone && <span className={styles.dot} data-tone={tone} aria-hidden="true" />}
       <Text size="sm">{children}</Text>
     </span>
   );

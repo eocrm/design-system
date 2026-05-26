@@ -1,3 +1,4 @@
+import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FilterChip } from './FilterChip';
@@ -100,6 +101,55 @@ it('root has role="group"', () => {
     </FilterChip>,
   );
   expect(screen.getByRole('group')).toBeInTheDocument();
+});
+
+it('Root forwards ref to the wrapping div', () => {
+  const ref = createRef<HTMLDivElement>();
+  render(
+    <FilterChip ref={ref}>
+      <FilterChip.Value>x</FilterChip.Value>
+    </FilterChip>,
+  );
+  expect(ref.current).toBeInstanceOf(HTMLDivElement);
+});
+
+it('Label forwards ref to its span', () => {
+  const ref = createRef<HTMLSpanElement>();
+  render(
+    <FilterChip>
+      <FilterChip.Label ref={ref}>Event</FilterChip.Label>
+      <FilterChip.Value>x</FilterChip.Value>
+    </FilterChip>,
+  );
+  expect(ref.current).toBeInstanceOf(HTMLSpanElement);
+});
+
+it('Value forwards ref to its span', () => {
+  const ref = createRef<HTMLSpanElement>();
+  render(
+    <FilterChip>
+      <FilterChip.Value ref={ref}>x</FilterChip.Value>
+    </FilterChip>,
+  );
+  expect(ref.current).toBeInstanceOf(HTMLSpanElement);
+});
+
+it('dismiss button has type="button" to prevent accidental form submission', () => {
+  render(
+    <FilterChip onDismiss={() => {}}>
+      <FilterChip.Value>x</FilterChip.Value>
+    </FilterChip>,
+  );
+  expect(screen.getByRole('button', { name: 'Remove filter' })).toHaveAttribute('type', 'button');
+});
+
+it('spreads arbitrary HTML attributes onto the root div', () => {
+  const { container } = render(
+    <FilterChip data-testid="my-chip">
+      <FilterChip.Value>x</FilterChip.Value>
+    </FilterChip>,
+  );
+  expect(container.firstElementChild).toHaveAttribute('data-testid', 'my-chip');
 });
 
 it('className on root, Label, and Value merges with internal styles', () => {
