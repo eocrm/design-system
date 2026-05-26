@@ -9,7 +9,6 @@ import {
   DataTable,
   DefinitionList,
   Divider,
-  Link,
   PageHeader,
   Stack,
   Text,
@@ -175,19 +174,24 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
         <Text size="xs" tone="subtle" weight="semibold">
           Forensic actions
         </Text>
-        <Cluster gap="md" wrap>
-          <Link as="button" type="button" onClick={() => {}}>
+        {/*
+          Filter-mutation actions ("show me all events by X") are Button
+          variant="ghost", not Link — Link is for navigation. In production
+          these would dispatch a setFilter() call; here they're no-ops.
+        */}
+        <Cluster gap="sm" wrap>
+          <Button variant="ghost" size="sm" onClick={() => {}}>
             See all by {actorName}
-          </Link>
+          </Button>
           {entry.entity_type && (
-            <Link as="button" type="button" onClick={() => {}}>
+            <Button variant="ghost" size="sm" onClick={() => {}}>
               See all on {entityType}
-            </Link>
+            </Button>
           )}
           {entityId && (
-            <Link as="button" type="button" onClick={() => {}}>
+            <Button variant="ghost" size="sm" onClick={() => {}}>
               See all on {entityId}
-            </Link>
+            </Button>
           )}
         </Cluster>
       </Stack>
@@ -299,13 +303,28 @@ export function Audit() {
         </PageHeader.Meta>
         <PageHeader.Actions>
           <Cluster gap="sm">
+            {/*
+              aria-disabled (not disabled) so Tooltip's pointer/focus events
+              still fire — `disabled` swallows them and the "coming soon" copy
+              would never surface (anti-pattern noted in Tooltip's JSDoc).
+            */}
             <Tooltip content="Export coming soon">
-              <Button variant="secondary" size="sm" disabled>
+              <Button
+                variant="secondary"
+                size="sm"
+                aria-disabled
+                onClick={(e) => e.preventDefault()}
+              >
                 <Download size={14} /> Export CSV
               </Button>
             </Tooltip>
             <Tooltip content="Saved views coming soon">
-              <Button variant="secondary" size="sm" disabled>
+              <Button
+                variant="secondary"
+                size="sm"
+                aria-disabled
+                onClick={(e) => e.preventDefault()}
+              >
                 <Bookmark size={14} /> Saved views
               </Button>
             </Tooltip>
@@ -345,8 +364,7 @@ export function Audit() {
               aria-label={`Remove ${c.label}: ${c.value} filter`}
               style={{ cursor: 'pointer' }}
             >
-              {c.label}: {c.value}{' '}
-              <X size={12} aria-hidden style={{ verticalAlign: 'middle' }} />
+              {c.label}: {c.value} <X size={12} aria-hidden />
             </Badge>
           ))}
           <Button variant="ghost" size="sm" onClick={() => setChips([])}>
