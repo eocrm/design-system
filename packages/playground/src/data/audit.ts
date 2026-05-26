@@ -260,9 +260,7 @@ export const eventCatalog: OptionsPickerGroup[] = [
     label: 'System settings',
     tone: 'warning',
     hint: 'system_setting.*',
-    options: [
-      { value: 'system_setting.updated', label: 'updated' },
-    ],
+    options: [{ value: 'system_setting.updated', label: 'updated' }],
   },
 ];
 

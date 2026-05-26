@@ -63,7 +63,7 @@ import { OptionsPicker, Button, Badge } from '@eocrm/design-system';
       },
     ]}
   />
-</OptionsPicker>
+</OptionsPicker>;
 ```
 
 ### Types
@@ -184,30 +184,30 @@ The open state is held in `OptionsPicker` root via `useState` unless `open` + `o
 
 ### Mode-specific behavior
 
-| Behavior | Multi (default) | Single |
-|---|---|---|
-| Selection count | `{N} sel`; hidden when N=0 | `1 sel`; hidden when nothing selected |
-| Option rendering | `<Checkbox>` | `<Radio>` |
-| Click on option | Toggles draft | Sets draft to value, fires `onApply(value)`, closes panel |
-| Click on group header | Toggles all options in group | No-op (header is `role="presentation"`) |
-| Footer (Apply/Cancel) | Visible | Hidden |
-| `Enter` on focused option | Toggle draft | Select + commit + close |
-| `Cmd/Ctrl+Enter` | Commit draft (same as Apply) | No-op |
+| Behavior                  | Multi (default)              | Single                                                    |
+| ------------------------- | ---------------------------- | --------------------------------------------------------- |
+| Selection count           | `{N} sel`; hidden when N=0   | `1 sel`; hidden when nothing selected                     |
+| Option rendering          | `<Checkbox>`                 | `<Radio>`                                                 |
+| Click on option           | Toggles draft                | Sets draft to value, fires `onApply(value)`, closes panel |
+| Click on group header     | Toggles all options in group | No-op (header is `role="presentation"`)                   |
+| Footer (Apply/Cancel)     | Visible                      | Hidden                                                    |
+| `Enter` on focused option | Toggle draft                 | Select + commit + close                                   |
+| `Cmd/Ctrl+Enter`          | Commit draft (same as Apply) | No-op                                                     |
 
 ### Keyboard navigation
 
 Active when panel is open. Focus model uses `aria-activedescendant` on the list rather than per-row focus, so the search input retains DOM focus throughout — typing always goes to search.
 
-| Key | Action |
-|---|---|
-| `↓` / `↑` | Move `focusedValue` to next/previous visible option (skip group headers; wrap at ends) |
-| `Home` / `End` | First / last visible option |
-| `Enter` (on option) | Multi: toggle; Single: select + commit + close |
-| `Space` (on option) | Same as Enter |
-| `Enter` (in search input, exactly one match) | Multi: toggle the match; Single: select + commit + close |
-| `Tab` | Search → first option → footer Cancel (multi) → Apply → close; Shift+Tab reverses |
-| `Esc` | Cancel (revert draft, close, return focus to Trigger) |
-| `Cmd/Ctrl + Enter` | Multi: commit (same as Apply); Single: no-op |
+| Key                                          | Action                                                                                 |
+| -------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `↓` / `↑`                                    | Move `focusedValue` to next/previous visible option (skip group headers; wrap at ends) |
+| `Home` / `End`                               | First / last visible option                                                            |
+| `Enter` (on option)                          | Multi: toggle; Single: select + commit + close                                         |
+| `Space` (on option)                          | Same as Enter                                                                          |
+| `Enter` (in search input, exactly one match) | Multi: toggle the match; Single: select + commit + close                               |
+| `Tab`                                        | Search → first option → footer Cancel (multi) → Apply → close; Shift+Tab reverses      |
+| `Esc`                                        | Cancel (revert draft, close, return focus to Trigger)                                  |
+| `Cmd/Ctrl + Enter`                           | Multi: commit (same as Apply); Single: no-op                                           |
 
 ### Accessibility
 
@@ -235,17 +235,17 @@ Single `.tsx` keeps the compound API close-coupled to its shared context. Intern
 
 ### Composition — built on existing primitives
 
-| Layer | Built from |
-|---|---|
-| Trigger wrapper | thin pass-through to `children`; open state injected via context |
-| Popover panel | `<Popover>` (existing, uses Floating UI) |
-| Search input | `<Input>` with `<Search>` lucide icon as leading slot |
-| Selection count | `<Text size="xs" tone="subtle">` with `aria-live="polite"` |
-| Group header (multi) | role="button" container + `<Badge tone={group.tone} dot="start" size="sm">` for dot + `<Text size="xs">` label + `<Text size="xs" tone="subtle">` for hint |
-| Group header (single) | same visual, `role="presentation"` |
-| Option row | row container + `<Checkbox>` (multi) or `<Radio>` (single) + `<Text>` for label |
-| Footer | `<Cluster justify="between">` + `<Button variant="secondary">` Cancel + `<Button variant="primary">` Apply |
-| Empty state | inline `<Text tone="muted">` (no `<EmptyState>` — too heavy for a popover panel) |
+| Layer                 | Built from                                                                                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trigger wrapper       | thin pass-through to `children`; open state injected via context                                                                                           |
+| Popover panel         | `<Popover>` (existing, uses Floating UI)                                                                                                                   |
+| Search input          | `<Input>` with `<Search>` lucide icon as leading slot                                                                                                      |
+| Selection count       | `<Text size="xs" tone="subtle">` with `aria-live="polite"`                                                                                                 |
+| Group header (multi)  | role="button" container + `<Badge tone={group.tone} dot="start" size="sm">` for dot + `<Text size="xs">` label + `<Text size="xs" tone="subtle">` for hint |
+| Group header (single) | same visual, `role="presentation"`                                                                                                                         |
+| Option row            | row container + `<Checkbox>` (multi) or `<Radio>` (single) + `<Text>` for label                                                                            |
+| Footer                | `<Cluster justify="between">` + `<Button variant="secondary">` Cancel + `<Button variant="primary">` Apply                                                 |
+| Empty state           | inline `<Text tone="muted">` (no `<EmptyState>` — too heavy for a popover panel)                                                                           |
 
 ### Public exports
 
@@ -267,6 +267,7 @@ export type {
 Per Hard rule 1 minimum + key behavior tests:
 
 **Render-level (rule 1):**
+
 - Renders Trigger + closed panel without crash.
 - Opens on Trigger click; closes on Esc; closes on click-outside.
 - `mode='multi'` (or omitted) renders Apply/Cancel footer; `mode='single'` does not.
@@ -275,6 +276,7 @@ Per Hard rule 1 minimum + key behavior tests:
 - Ref forwarding on Trigger.
 
 **Behavior:**
+
 - Multi: clicking a checkbox toggles draft; Apply fires `onApply(draft)`; Cancel reverts; close-without-apply reverts; reopening shows the last-committed selection.
 - Single: clicking a row fires `onApply(value)` and closes the panel.
 - Search filter hides non-matching options; group sections with zero visible options hide entirely.

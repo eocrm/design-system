@@ -1524,11 +1524,13 @@ Multi mode buffers a draft until Apply; single mode commits per click.
 ```tsx
 <OptionsPicker selected={events} onApply={setEvents}>
   <OptionsPicker.Trigger>
-    <Button variant="secondary">Events <ChevronDown size={14}/></Button>
+    <Button variant="secondary">
+      Events <ChevronDown size={14} />
+    </Button>
   </OptionsPicker.Trigger>
   <OptionsPicker.Content
     label="Filter events"
-    groups={catalogGroups}      // OR `options={flatOptions}` — XOR
+    groups={catalogGroups} // OR `options={flatOptions}` — XOR
   />
 </OptionsPicker>
 ```

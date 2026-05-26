@@ -16,21 +16,21 @@
 
 ## File Structure
 
-| File | Role |
-|---|---|
-| `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx` (NEW) | Root + Trigger + Content + helpers; everything in one file |
-| `packages/design-system/src/components/OptionsPicker/OptionsPicker.module.scss` (NEW) | Visual styling (search bar, list, group headers, option rows, footer); tokens only |
-| `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx` (NEW) | Hard rule 1 minimum + behavior tests |
-| `packages/design-system/src/components/OptionsPicker/index.ts` (NEW) | `export { OptionsPicker } from './OptionsPicker'` + type re-exports |
-| `packages/design-system/src/index.ts` (MODIFY) | Add OptionsPicker + types to public exports |
-| `packages/design-system/AGENTS.md` (MODIFY) | TL;DR + canonical snippet per Hard rule 1 / agent primer |
-| `packages/playground/src/pages/components/OptionsPickerDemo.tsx` (NEW) | DemoLayout + 4 Example sections per Hard rule 2 |
-| `packages/playground/src/App.tsx` (MODIFY) | `<Route path="/components/options-picker" element={<OptionsPickerDemo/>}/>` + import |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY) | Sidebar entry in the components group |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY) | Overview card |
-| `packages/playground/src/pages/mockups/registry.ts` (MODIFY) | Add `'OptionsPicker'` to ComponentName union + audit's usesComponents |
-| `packages/playground/src/data/audit.ts` (MODIFY) | Add `eventCatalog: OptionsPickerGroup[]` + `tenantOptions: OptionsPickerOption[]` |
-| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (MODIFY) | Replace `Events ▾` + `Tenant ▾` Buttons with OptionsPicker |
+| File                                                                                  | Role                                                                                 |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx` (NEW)         | Root + Trigger + Content + helpers; everything in one file                           |
+| `packages/design-system/src/components/OptionsPicker/OptionsPicker.module.scss` (NEW) | Visual styling (search bar, list, group headers, option rows, footer); tokens only   |
+| `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx` (NEW)    | Hard rule 1 minimum + behavior tests                                                 |
+| `packages/design-system/src/components/OptionsPicker/index.ts` (NEW)                  | `export { OptionsPicker } from './OptionsPicker'` + type re-exports                  |
+| `packages/design-system/src/index.ts` (MODIFY)                                        | Add OptionsPicker + types to public exports                                          |
+| `packages/design-system/AGENTS.md` (MODIFY)                                           | TL;DR + canonical snippet per Hard rule 1 / agent primer                             |
+| `packages/playground/src/pages/components/OptionsPickerDemo.tsx` (NEW)                | DemoLayout + 4 Example sections per Hard rule 2                                      |
+| `packages/playground/src/App.tsx` (MODIFY)                                            | `<Route path="/components/options-picker" element={<OptionsPickerDemo/>}/>` + import |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)                       | Sidebar entry in the components group                                                |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY)               | Overview card                                                                        |
+| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)                          | Add `'OptionsPicker'` to ComponentName union + audit's usesComponents                |
+| `packages/playground/src/data/audit.ts` (MODIFY)                                      | Add `eventCatalog: OptionsPickerGroup[]` + `tenantOptions: OptionsPickerOption[]`    |
+| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (MODIFY)                      | Replace `Events ▾` + `Tenant ▾` Buttons with OptionsPicker                           |
 
 ---
 
@@ -39,6 +39,7 @@
 **Goal:** OptionsPicker renders, Trigger opens the Popover, Content is an empty placeholder. Establishes the file structure and compound API shell.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx`
 - Create: `packages/design-system/src/components/OptionsPicker/OptionsPicker.module.scss`
 - Create: `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx`
@@ -145,7 +146,8 @@ type SharedContentProps = {
   footerCount?: (selected: number, total: number) => ReactNode;
   className?: string;
 };
-export type OptionsPickerContentProps = (FlatContentProps | GroupedContentProps) & SharedContentProps;
+export type OptionsPickerContentProps = (FlatContentProps | GroupedContentProps) &
+  SharedContentProps;
 
 // ----------------------------------------------------------------------------
 // Context
@@ -367,6 +369,7 @@ it('throws when Trigger is used outside the root', () => {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 3 tests pass.
 
 If the second test fails because `Popover` doesn't yet render the panel — check the Popover source for how it gates rendering (`packages/design-system/src/components/Popover/Content.tsx`). The current test uses `userEvent.click` which should fire the Popover's open. If Popover requires an explicit `onOpenChange` controller, the Root component already wires that.
@@ -376,6 +379,7 @@ If the second test fails because `Popover` doesn't yet render the panel — chec
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm run typecheck 2>&1 | tail -5
 ```
+
 Expected: clean.
 
 - [ ] **Step 7: Commit**
@@ -402,6 +406,7 @@ EOF
 **Goal:** Content panel renders a flat list of options as Checkboxes. Clicking toggles a local draft. No search yet, no Apply/Cancel yet (those are Task 3 + Task 4).
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.module.scss`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx`
@@ -434,6 +439,7 @@ it('renders flat options as checkboxes when opened (multi mode)', async () => {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: FAIL — no checkboxes rendered.
 
 - [ ] **Step 3: Implement option rendering in Content**
@@ -445,7 +451,9 @@ Replace the entire `OptionsPickerContent` definition in `OptionsPicker.tsx` with
 // Content
 // ----------------------------------------------------------------------------
 
-function isGrouped(props: OptionsPickerContentProps): props is GroupedContentProps & SharedContentProps {
+function isGrouped(
+  props: OptionsPickerContentProps,
+): props is GroupedContentProps & SharedContentProps {
   return 'groups' in props && props.groups !== undefined;
 }
 
@@ -488,7 +496,12 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             {isGrouped(props)
               ? null /* grouped rendering ships in Task 6 */
               : (props.options ?? []).map((opt) => (
-                  <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
+                  <OptionRow
+                    key={opt.value}
+                    option={opt}
+                    checked={draft.includes(opt.value)}
+                    onToggle={toggle}
+                  />
                 ))}
           </div>
         </Stack>
@@ -551,6 +564,7 @@ Append to `OptionsPicker.module.scss`:
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 4 tests pass (3 prior + new one).
 
 - [ ] **Step 6: Add a toggle test**
@@ -583,6 +597,7 @@ it('multi mode: clicking a checkbox updates the draft (does not commit yet)', as
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 5 tests pass.
 
 - [ ] **Step 8: Typecheck + commit**
@@ -610,6 +625,7 @@ EOF
 **Goal:** Add the search bar at the top of the panel (Input with leading icon) and the "N sel" count text with `aria-live="polite"`. Search filters the visible options.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.module.scss`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx`
@@ -674,6 +690,7 @@ it('shows selection count "N sel" with aria-live=polite', async () => {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 2 new tests FAIL.
 
 - [ ] **Step 3: Add search state + selection count to Content**
@@ -759,7 +776,12 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             {isGrouped(props)
               ? null /* grouped rendering ships in Task 6 */
               : visibleFlat.map((opt) => (
-                  <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
+                  <OptionRow
+                    key={opt.value}
+                    option={opt}
+                    checked={draft.includes(opt.value)}
+                    onToggle={toggle}
+                  />
                 ))}
           </div>
         </Stack>
@@ -802,6 +824,7 @@ Append to `OptionsPicker.module.scss`:
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 7 tests pass (5 prior + 2 new).
 
 If the search test fails because `Input` renders with extra inner wrapping that hides it from the `textbox` role lookup, switch the assertion to `screen.getByPlaceholderText('Filter…')`.
@@ -831,6 +854,7 @@ EOF
 **Goal:** Multi mode shows the footer with Apply/Cancel buttons + the `N of TOTAL` count text. Apply fires `onApply(draft)` + closes panel. Cancel reverts and closes. Esc/click-outside reverts. Single mode does NOT show the footer (each click commits, see Task 7).
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.module.scss`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx`
@@ -899,6 +923,7 @@ it('multi mode: footer shows "N of TOTAL events" with default formatter', async 
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 3 new tests FAIL.
 
 - [ ] **Step 3: Add footer rendering**
@@ -906,67 +931,72 @@ Expected: 3 new tests FAIL.
 In `OptionsPicker.tsx`, modify the `OptionsPickerContent` return value. Replace the `<Stack gap="xs">…</Stack>` block (everything inside the `<Popover.Content>`) with:
 
 ```tsx
-        <Stack gap="xs">
-          <div className={styles.searchBar}>
-            <Search size={14} aria-hidden className={styles.searchIcon} />
-            <Input
-              type="text"
-              value={filter}
-              onChange={(e) => setFilter(e.currentTarget.value)}
-              placeholder={searchPlaceholder}
-              aria-label={searchPlaceholder}
-              autoFocus
-              className={styles.searchInput}
-            />
-            {ctx.mode === 'multi' && (
-              <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
-                {draft.length} sel
-              </Text>
-            )}
-            {ctx.mode === 'single' && draft.length > 0 && (
-              <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
-                1 sel
-              </Text>
-            )}
-          </div>
+<Stack gap="xs">
+  <div className={styles.searchBar}>
+    <Search size={14} aria-hidden className={styles.searchIcon} />
+    <Input
+      type="text"
+      value={filter}
+      onChange={(e) => setFilter(e.currentTarget.value)}
+      placeholder={searchPlaceholder}
+      aria-label={searchPlaceholder}
+      autoFocus
+      className={styles.searchInput}
+    />
+    {ctx.mode === 'multi' && (
+      <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
+        {draft.length} sel
+      </Text>
+    )}
+    {ctx.mode === 'single' && draft.length > 0 && (
+      <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
+        1 sel
+      </Text>
+    )}
+  </div>
 
-          <div className={styles.list} role="listbox" aria-multiselectable={ctx.mode === 'multi'}>
-            {isGrouped(props)
-              ? null /* grouped rendering ships in Task 6 */
-              : visibleFlat.map((opt) => (
-                  <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
-                ))}
-          </div>
+  <div className={styles.list} role="listbox" aria-multiselectable={ctx.mode === 'multi'}>
+    {isGrouped(props)
+      ? null /* grouped rendering ships in Task 6 */
+      : visibleFlat.map((opt) => (
+          <OptionRow
+            key={opt.value}
+            option={opt}
+            checked={draft.includes(opt.value)}
+            onToggle={toggle}
+          />
+        ))}
+  </div>
 
-          {ctx.mode === 'multi' && (
-            <div className={styles.footer}>
-              <Text size="xs" tone="muted">
-                {(props.footerCount ?? defaultFooterCount)(draft.length, allOptionsForCount.length)}
-              </Text>
-              <Cluster gap="sm">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setDraft(ctx.selected);
-                    ctx.cancel();
-                  }}
-                >
-                  {props.cancelLabel ?? 'Cancel'}
-                </Button>
-                <Button variant="primary" size="sm" onClick={() => ctx.commit(draft)}>
-                  {props.applyLabel ?? 'Apply'}
-                </Button>
-              </Cluster>
-            </div>
-          )}
-        </Stack>
+  {ctx.mode === 'multi' && (
+    <div className={styles.footer}>
+      <Text size="xs" tone="muted">
+        {(props.footerCount ?? defaultFooterCount)(draft.length, allOptionsForCount.length)}
+      </Text>
+      <Cluster gap="sm">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setDraft(ctx.selected);
+            ctx.cancel();
+          }}
+        >
+          {props.cancelLabel ?? 'Cancel'}
+        </Button>
+        <Button variant="primary" size="sm" onClick={() => ctx.commit(draft)}>
+          {props.applyLabel ?? 'Apply'}
+        </Button>
+      </Cluster>
+    </div>
+  )}
+</Stack>
 ```
 
 And add this helper + memoized count just before the `return` statement inside `OptionsPickerContent` (after `visibleFlat`):
 
 ```tsx
-    const allOptionsForCount = useMemo(() => allOptions, [allOptions]);
+const allOptionsForCount = useMemo(() => allOptions, [allOptions]);
 ```
 
 And add this default formatter at module scope (above the `OptionsPickerContent` definition):
@@ -997,6 +1027,7 @@ Append to `OptionsPicker.module.scss`:
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 10 tests pass (7 prior + 3 new).
 
 - [ ] **Step 6: Typecheck + commit**
@@ -1024,6 +1055,7 @@ EOF
 **Goal:** When `groups` is passed instead of `options`, render section headers with the colored dot + label + `ns.*` hint. Group headers are passive in this task (visual only — group-toggle ships in Task 6). Empty groups (zero matches) hide entirely. Empty state renders when all groups are empty.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.module.scss`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx`
@@ -1097,11 +1129,7 @@ it('shows emptyState when all groups are filtered to nothing', async () => {
       <OptionsPicker.Trigger>
         <Button>Open</Button>
       </OptionsPicker.Trigger>
-      <OptionsPicker.Content
-        label="Filter"
-        groups={groupedOptions}
-        emptyState="No matches"
-      />
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} emptyState="No matches" />
     </OptionsPicker>,
   );
   await user.click(screen.getByRole('button', { name: 'Open' }));
@@ -1115,6 +1143,7 @@ it('shows emptyState when all groups are filtered to nothing', async () => {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 3 new tests FAIL.
 
 - [ ] **Step 3: Implement grouped rendering**
@@ -1122,47 +1151,61 @@ Expected: 3 new tests FAIL.
 In `OptionsPicker.tsx`, inside `OptionsPickerContent`, add this helper just before the `return` statement (after `visibleFlat`):
 
 ```tsx
-    const visibleGroups = useMemo(() => {
-      if (!isGrouped(props)) return [];
-      return props.groups
-        .map((g) => ({ ...g, visibleOptions: g.options.filter(matchesFilter) }))
-        .filter((g) => g.visibleOptions.length > 0);
-    }, [props, matchesFilter]);
+const visibleGroups = useMemo(() => {
+  if (!isGrouped(props)) return [];
+  return props.groups
+    .map((g) => ({ ...g, visibleOptions: g.options.filter(matchesFilter) }))
+    .filter((g) => g.visibleOptions.length > 0);
+}, [props, matchesFilter]);
 
-    const hasAnyVisible = isGrouped(props) ? visibleGroups.length > 0 : visibleFlat.length > 0;
+const hasAnyVisible = isGrouped(props) ? visibleGroups.length > 0 : visibleFlat.length > 0;
 ```
 
 Replace the `<div className={styles.list} …>` block content with:
 
 ```tsx
-          <div className={styles.list} role="listbox" aria-multiselectable={ctx.mode === 'multi'}>
-            {!hasAnyVisible && (
-              <Text size="sm" tone="muted" className={styles.empty}>
-                {props.emptyState ?? 'No matches'}
-              </Text>
-            )}
-            {hasAnyVisible && isGrouped(props) && visibleGroups.map((g) => (
-              <div key={g.id} className={styles.group}>
-                <div className={styles.groupHeader} role="presentation">
-                  <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
-                  <Text size="xs" weight="semibold" className={styles.groupLabel}>
-                    {g.label}
-                  </Text>
-                  {g.hint && (
-                    <Text size="xs" tone="subtle" className={styles.groupHint}>
-                      {g.hint}
-                    </Text>
-                  )}
-                </div>
-                {g.visibleOptions.map((opt) => (
-                  <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
-                ))}
-              </div>
-            ))}
-            {hasAnyVisible && !isGrouped(props) && visibleFlat.map((opt) => (
-              <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
-            ))}
-          </div>
+<div className={styles.list} role="listbox" aria-multiselectable={ctx.mode === 'multi'}>
+  {!hasAnyVisible && (
+    <Text size="sm" tone="muted" className={styles.empty}>
+      {props.emptyState ?? 'No matches'}
+    </Text>
+  )}
+  {hasAnyVisible &&
+    isGrouped(props) &&
+    visibleGroups.map((g) => (
+      <div key={g.id} className={styles.group}>
+        <div className={styles.groupHeader} role="presentation">
+          <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
+          <Text size="xs" weight="semibold" className={styles.groupLabel}>
+            {g.label}
+          </Text>
+          {g.hint && (
+            <Text size="xs" tone="subtle" className={styles.groupHint}>
+              {g.hint}
+            </Text>
+          )}
+        </div>
+        {g.visibleOptions.map((opt) => (
+          <OptionRow
+            key={opt.value}
+            option={opt}
+            checked={draft.includes(opt.value)}
+            onToggle={toggle}
+          />
+        ))}
+      </div>
+    ))}
+  {hasAnyVisible &&
+    !isGrouped(props) &&
+    visibleFlat.map((opt) => (
+      <OptionRow
+        key={opt.value}
+        option={opt}
+        checked={draft.includes(opt.value)}
+        onToggle={toggle}
+      />
+    ))}
+</div>
 ```
 
 - [ ] **Step 4: Add group styles**
@@ -1207,6 +1250,7 @@ Append to `OptionsPicker.module.scss`:
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 13 tests pass (10 prior + 3 new).
 
 If the group-header `Badge dot="start"` requires children (it might warn for empty content), add `<span aria-hidden>{' '}</span>` as the Badge's child OR skip the Badge for the dot and render `<span className={styles.dot} />` instead with a `background: var(--color-{tone}-base)` rule. Check the Badge source at `packages/design-system/src/components/Badge/Badge.tsx` to determine which approach is acceptable.
@@ -1236,6 +1280,7 @@ EOF
 **Goal:** In multi mode, group headers become clickable: clicking selects every option in the group; clicking again deselects. Header carries `role="button"` + tri-state `aria-pressed` (`"false" | "mixed" | "true"`). Single mode keeps the passive headers.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.module.scss`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx`
@@ -1319,6 +1364,7 @@ it('single mode: group header is presentational (no role=button)', async () => {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 4 new tests FAIL.
 
 - [ ] **Step 3: Add tri-state + clickable headers**
@@ -1339,56 +1385,61 @@ function tristate(groupOptionValues: string[], draft: string[]): TriState {
 Inside `OptionsPickerContent`, add a `toggleGroup` callback before the `return`:
 
 ```tsx
-    const toggleGroup = useCallback(
-      (groupOptions: OptionsPickerOption[]) => {
-        if (ctx.mode !== 'multi') return;
-        setDraft((prev) => {
-          const allValues = groupOptions.map((o) => o.value);
-          const allSelected = allValues.every((v) => prev.includes(v));
-          if (allSelected) return prev.filter((v) => !allValues.includes(v));
-          const next = [...prev];
-          for (const v of allValues) if (!next.includes(v)) next.push(v);
-          return next;
-        });
-      },
-      [ctx.mode],
-    );
+const toggleGroup = useCallback(
+  (groupOptions: OptionsPickerOption[]) => {
+    if (ctx.mode !== 'multi') return;
+    setDraft((prev) => {
+      const allValues = groupOptions.map((o) => o.value);
+      const allSelected = allValues.every((v) => prev.includes(v));
+      if (allSelected) return prev.filter((v) => !allValues.includes(v));
+      const next = [...prev];
+      for (const v of allValues) if (!next.includes(v)) next.push(v);
+      return next;
+    });
+  },
+  [ctx.mode],
+);
 ```
 
 Replace the existing `<div className={styles.groupHeader} role="presentation">…</div>` block inside the grouped-rendering branch with:
 
 ```tsx
-                {ctx.mode === 'multi' ? (
-                  <button
-                    type="button"
-                    className={styles.groupHeader}
-                    aria-pressed={tristate(g.options.map((o) => o.value), draft)}
-                    aria-label={`Toggle group ${g.label}`}
-                    onClick={() => toggleGroup(g.options)}
-                  >
-                    <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
-                    <Text size="xs" weight="semibold" className={styles.groupLabel}>
-                      {g.label}
-                    </Text>
-                    {g.hint && (
-                      <Text size="xs" tone="subtle" className={styles.groupHint}>
-                        {g.hint}
-                      </Text>
-                    )}
-                  </button>
-                ) : (
-                  <div className={styles.groupHeader} role="presentation">
-                    <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
-                    <Text size="xs" weight="semibold" className={styles.groupLabel}>
-                      {g.label}
-                    </Text>
-                    {g.hint && (
-                      <Text size="xs" tone="subtle" className={styles.groupHint}>
-                        {g.hint}
-                      </Text>
-                    )}
-                  </div>
-                )}
+{
+  ctx.mode === 'multi' ? (
+    <button
+      type="button"
+      className={styles.groupHeader}
+      aria-pressed={tristate(
+        g.options.map((o) => o.value),
+        draft,
+      )}
+      aria-label={`Toggle group ${g.label}`}
+      onClick={() => toggleGroup(g.options)}
+    >
+      <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
+      <Text size="xs" weight="semibold" className={styles.groupLabel}>
+        {g.label}
+      </Text>
+      {g.hint && (
+        <Text size="xs" tone="subtle" className={styles.groupHint}>
+          {g.hint}
+        </Text>
+      )}
+    </button>
+  ) : (
+    <div className={styles.groupHeader} role="presentation">
+      <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
+      <Text size="xs" weight="semibold" className={styles.groupLabel}>
+        {g.label}
+      </Text>
+      {g.hint && (
+        <Text size="xs" tone="subtle" className={styles.groupHint}>
+          {g.hint}
+        </Text>
+      )}
+    </div>
+  );
+}
 ```
 
 - [ ] **Step 4: Add button styling for headers**
@@ -1419,6 +1470,7 @@ button.groupHeader {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 17 tests pass (13 prior + 4 new).
 
 - [ ] **Step 6: Typecheck + commit**
@@ -1446,6 +1498,7 @@ EOF
 **Goal:** Single mode renders `<Radio>` instead of `<Checkbox>` for each option row. Clicking a row commits the value and closes the panel (no Apply button). Single mode also accepts `selected: null` (nothing selected).
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx`
 
@@ -1508,6 +1561,7 @@ it('single mode: pre-selected row reflects in the radio', async () => {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 3 new tests FAIL (no radios rendered).
 
 - [ ] **Step 3: Branch the option row by mode**
@@ -1554,6 +1608,7 @@ Update both `OptionRow` usages inside `OptionsPickerContent` (the flat path and 
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 20 tests pass (17 prior + 3 new).
 
 - [ ] **Step 5: Typecheck + commit**
@@ -1581,6 +1636,7 @@ EOF
 **Goal:** Arrow keys move focus between visible options (skipping group headers). Enter/Space toggles (multi) or commits (single). Esc cancels. Cmd/Ctrl+Enter commits the multi draft. Focus stays in the search input; option focus is managed via `aria-activedescendant` on the listbox.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx`
 
@@ -1653,6 +1709,7 @@ it('keyboard: Esc cancels and closes the panel', async () => {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 3 new tests FAIL.
 
 - [ ] **Step 3: Add focused-option state + keyboard handler**
@@ -1660,66 +1717,66 @@ Expected: 3 new tests FAIL.
 In `OptionsPicker.tsx`, modify `OptionsPickerContent`. Add a generated content id near the top of the function body (after the `ctx` line):
 
 ```tsx
-    const contentId = useId();
+const contentId = useId();
 ```
 
 Add a flattened "visible options in render order" array (the list of options the keyboard nav cycles through). After `visibleGroups`/`visibleFlat`/`hasAnyVisible`, add:
 
 ```tsx
-    const visibleOptionsInOrder = useMemo<OptionsPickerOption[]>(() => {
-      if (isGrouped(props)) return visibleGroups.flatMap((g) => g.visibleOptions);
-      return visibleFlat;
-    }, [props, visibleGroups, visibleFlat]);
+const visibleOptionsInOrder = useMemo<OptionsPickerOption[]>(() => {
+  if (isGrouped(props)) return visibleGroups.flatMap((g) => g.visibleOptions);
+  return visibleFlat;
+}, [props, visibleGroups, visibleFlat]);
 
-    const [focusedValue, setFocusedValue] = useState<string | null>(null);
+const [focusedValue, setFocusedValue] = useState<string | null>(null);
 
-    useEffect(() => {
-      // Reset focused option on open OR when the visible set changes.
-      if (!ctx.open) {
-        setFocusedValue(null);
-        return;
+useEffect(() => {
+  // Reset focused option on open OR when the visible set changes.
+  if (!ctx.open) {
+    setFocusedValue(null);
+    return;
+  }
+  if (focusedValue && !visibleOptionsInOrder.some((o) => o.value === focusedValue)) {
+    setFocusedValue(null);
+  }
+}, [ctx.open, visibleOptionsInOrder, focusedValue]);
+
+const handleKeyDown = useCallback(
+  (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (visibleOptionsInOrder.length === 0) return;
+    const idx = focusedValue
+      ? visibleOptionsInOrder.findIndex((o) => o.value === focusedValue)
+      : -1;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = idx + 1 >= visibleOptionsInOrder.length ? 0 : idx + 1;
+      setFocusedValue(visibleOptionsInOrder[next]!.value);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const next = idx <= 0 ? visibleOptionsInOrder.length - 1 : idx - 1;
+      setFocusedValue(visibleOptionsInOrder[next]!.value);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setFocusedValue(visibleOptionsInOrder[0]!.value);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setFocusedValue(visibleOptionsInOrder[visibleOptionsInOrder.length - 1]!.value);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      if (focusedValue) {
+        e.preventDefault();
+        toggle(focusedValue);
       }
-      if (focusedValue && !visibleOptionsInOrder.some((o) => o.value === focusedValue)) {
-        setFocusedValue(null);
-      }
-    }, [ctx.open, visibleOptionsInOrder, focusedValue]);
-
-    const handleKeyDown = useCallback(
-      (e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (visibleOptionsInOrder.length === 0) return;
-        const idx = focusedValue
-          ? visibleOptionsInOrder.findIndex((o) => o.value === focusedValue)
-          : -1;
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          const next = idx + 1 >= visibleOptionsInOrder.length ? 0 : idx + 1;
-          setFocusedValue(visibleOptionsInOrder[next]!.value);
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          const next = idx <= 0 ? visibleOptionsInOrder.length - 1 : idx - 1;
-          setFocusedValue(visibleOptionsInOrder[next]!.value);
-        } else if (e.key === 'Home') {
-          e.preventDefault();
-          setFocusedValue(visibleOptionsInOrder[0]!.value);
-        } else if (e.key === 'End') {
-          e.preventDefault();
-          setFocusedValue(visibleOptionsInOrder[visibleOptionsInOrder.length - 1]!.value);
-        } else if (e.key === 'Enter' || e.key === ' ') {
-          if (focusedValue) {
-            e.preventDefault();
-            toggle(focusedValue);
-          }
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          setDraft(ctx.selected);
-          ctx.cancel();
-        } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && ctx.mode === 'multi') {
-          e.preventDefault();
-          ctx.commit(draft);
-        }
-      },
-      [visibleOptionsInOrder, focusedValue, toggle, ctx, draft],
-    );
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setDraft(ctx.selected);
+      ctx.cancel();
+    } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && ctx.mode === 'multi') {
+      e.preventDefault();
+      ctx.commit(draft);
+    }
+  },
+  [visibleOptionsInOrder, focusedValue, toggle, ctx, draft],
+);
 ```
 
 Modify the outer `<Stack gap="xs">` to bind the key handler. Wrap it in a `<div>` (since Stack might not accept `onKeyDown`), OR add the handler to `Popover.Content` if it accepts it. The Popover.Content from `packages/design-system/src/components/Popover/Content.tsx` accepts native HTML attributes via spread — so passing `onKeyDown` directly should work. Update the `<Popover.Content>` opening tag to:
@@ -1805,6 +1862,7 @@ Append to `OptionsPicker.module.scss`:
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 23 tests pass (20 prior + 3 new).
 
 If the focused-aria-activedescendant test fails because `userEvent.keyboard('{ArrowDown}')` doesn't dispatch the event to the right element, focus the listbox first OR put the `onKeyDown` on a wrapper `<div>` inside the Popover that has `tabIndex={-1}` and is focused on open. Check by reading the userEvent docs — `{ArrowDown}` fires against the currently-focused element, which after `autoFocus` on the search input should be the search input. Since `onKeyDown` bubbles up through `Popover.Content`, the handler should still fire. If not, move `onKeyDown` to the search input AND the listbox to cover both focus targets.
@@ -1835,6 +1893,7 @@ EOF
 **Goal:** Final ARIA pass. Trigger gets `aria-haspopup="listbox"` + `aria-controls={contentId}` + `aria-expanded`. Group headers get `aria-controls` pointing to all their option ids. Confirm `aria-pressed` tri-state values match.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tsx`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.test.tsx`
 
@@ -1857,18 +1916,18 @@ interface PickerContextValue {
 In `OptionsPickerRoot`, generate the id and include it in the context value:
 
 ```tsx
-  const contentId = useId();
+const contentId = useId();
 
-  const ctxValue = useMemo<PickerContextValue>(
-    () => ({ mode, selected: normalizedSelected, open, setOpen, commit, cancel, contentId }),
-    [mode, normalizedSelected, open, setOpen, commit, cancel, contentId],
-  );
+const ctxValue = useMemo<PickerContextValue>(
+  () => ({ mode, selected: normalizedSelected, open, setOpen, commit, cancel, contentId }),
+  [mode, normalizedSelected, open, setOpen, commit, cancel, contentId],
+);
 ```
 
 In `OptionsPickerContent`, remove the local `useId()` line — use `ctx.contentId` everywhere. Replace `const contentId = useId();` with:
 
 ```tsx
-    const contentId = ctx.contentId;
+const contentId = ctx.contentId;
 ```
 
 - [ ] **Step 2: Add ARIA attrs to Trigger**
@@ -1957,6 +2016,7 @@ it('group headers carry aria-controls listing all option ids', async () => {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- OptionsPicker 2>&1 | tail -15
 ```
+
 Expected: 25 tests pass (23 prior + 2 new).
 
 If `Popover.Trigger` doesn't pass-through the `aria-*` attributes, modify the Trigger implementation to spread them onto its rendered children using `cloneElement` (read Popover/Trigger.tsx first to see how it composes).
@@ -1986,6 +2046,7 @@ EOF
 **Goal:** Re-export `OptionsPicker` + types from `packages/design-system/src/index.ts`. Add a TL;DR section to `AGENTS.md` per Hard rule 1 / agent primer convention.
 
 **Files:**
+
 - Modify: `packages/design-system/src/index.ts`
 - Modify: `packages/design-system/AGENTS.md`
 
@@ -2072,7 +2133,7 @@ In `OptionsPicker.tsx`, add a comprehensive JSDoc block immediately above `funct
 
 Open `packages/design-system/AGENTS.md`. Find the existing alphabetic-by-name component sections. Add this section (placed alphabetically — probably between an `O` neighbor or at end of the list; use whatever the file's convention is):
 
-```markdown
+````markdown
 ## OptionsPicker
 
 **Use for filter UX, not form fields.** A compound picker that opens a Popover
@@ -2082,20 +2143,24 @@ Multi mode buffers a draft until Apply; single mode commits per click.
 ```tsx
 <OptionsPicker selected={events} onApply={setEvents}>
   <OptionsPicker.Trigger>
-    <Button variant="secondary">Events <ChevronDown size={14}/></Button>
+    <Button variant="secondary">
+      Events <ChevronDown size={14} />
+    </Button>
   </OptionsPicker.Trigger>
   <OptionsPicker.Content
     label="Filter events"
-    groups={catalogGroups}      // OR `options={flatOptions}` — XOR
+    groups={catalogGroups} // OR `options={flatOptions}` — XOR
   />
 </OptionsPicker>
 ```
+````
 
 `mode="single"` for single-select: `selected: string | null`, `onApply(value | null)`, no Apply/Cancel footer.
 
 Don't use for form selects (use `<Select>`), action menus (use `<DropdownMenu>`),
 or single boolean toggles (use `<Checkbox>` or `<Switch>`).
-```
+
+````
 
 - [ ] **Step 4: Typecheck + commit**
 
@@ -2113,7 +2178,7 @@ JSDoc with two @example blocks (multi-grouped, single-flat) and
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
-```
+````
 
 ---
 
@@ -2122,6 +2187,7 @@ EOF
 **Goal:** Create `OptionsPickerDemo.tsx` in the playground following `DemoLayout` + `Example` convention. Wire into App routes, AppShell nav, ComponentsIndex grid, and the `ComponentName` union in registry.
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/OptionsPickerDemo.tsx`
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
@@ -2366,6 +2432,7 @@ cd /Users/dpws/projects/design-system && npm run typecheck --workspaces --if-pre
 cd /Users/dpws/projects/design-system && make lint 2>&1 | tail -3
 cd /Users/dpws/projects/design-system && make build 2>&1 | tail -5
 ```
+
 Expected: clean exit on each.
 
 - [ ] **Step 7: Commit**
@@ -2392,6 +2459,7 @@ EOF
 **Goal:** Replace the static `Events ▾` and `Tenant ▾` buttons in `packages/playground/src/pages/mockups/Audit/Audit.tsx` with real `<OptionsPicker>` instances. Add catalog + tenant data to `audit.ts`. Update `usesComponents` for the audit registry entry.
 
 **Files:**
+
 - Modify: `packages/playground/src/data/audit.ts`
 - Modify: `packages/playground/src/pages/mockups/Audit/Audit.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
@@ -2485,9 +2553,7 @@ export const eventCatalog: OptionsPickerGroup[] = [
     label: 'System settings',
     tone: 'warning',
     hint: 'system_setting.*',
-    options: [
-      { value: 'system_setting.updated', label: 'updated' },
-    ],
+    options: [{ value: 'system_setting.updated', label: 'updated' }],
   },
 ];
 
@@ -2527,46 +2593,52 @@ import {
 And the data import:
 
 ```tsx
-import { auditEntries, eventCatalog, eventTone, tenantOptions, type AuditEntry } from '../../../data/audit';
+import {
+  auditEntries,
+  eventCatalog,
+  eventTone,
+  tenantOptions,
+  type AuditEntry,
+} from '../../../data/audit';
 ```
 
 Inside the `Audit` function, just above the existing `function removeChip(...)` declaration, add the picker state:
 
 ```tsx
-  const [selectedEvents, setSelectedEvents] = useState<string[]>(['role.assigned']);
-  const [selectedTenant, setSelectedTenant] = useState<string | null>('acme');
+const [selectedEvents, setSelectedEvents] = useState<string[]>(['role.assigned']);
+const [selectedTenant, setSelectedTenant] = useState<string | null>('acme');
 ```
 
 Find the existing `<Cluster gap="sm" wrap>` block that holds the three trigger Buttons (Events / Tenant / Last 7 days). Replace it with:
 
 ```tsx
-      <Cluster gap="sm" wrap>
-        <OptionsPicker selected={selectedEvents} onApply={setSelectedEvents}>
-          <OptionsPicker.Trigger>
-            <Button variant="secondary" size="sm">
-              <Badge tone="info" dot="start" size="sm" />
-              Event ({selectedEvents.length})
-              <ChevronDown size={14} />
-            </Button>
-          </OptionsPicker.Trigger>
-          <OptionsPicker.Content label="Filter events" groups={eventCatalog} />
-        </OptionsPicker>
+<Cluster gap="sm" wrap>
+  <OptionsPicker selected={selectedEvents} onApply={setSelectedEvents}>
+    <OptionsPicker.Trigger>
+      <Button variant="secondary" size="sm">
+        <Badge tone="info" dot="start" size="sm" />
+        Event ({selectedEvents.length})
+        <ChevronDown size={14} />
+      </Button>
+    </OptionsPicker.Trigger>
+    <OptionsPicker.Content label="Filter events" groups={eventCatalog} />
+  </OptionsPicker>
 
-        <OptionsPicker mode="single" selected={selectedTenant} onApply={setSelectedTenant}>
-          <OptionsPicker.Trigger>
-            <Button variant="secondary" size="sm">
-              <Badge tone="info" dot="start" size="sm" />
-              Tenant{selectedTenant ? `: ${selectedTenant}` : ''}
-              <ChevronDown size={14} />
-            </Button>
-          </OptionsPicker.Trigger>
-          <OptionsPicker.Content label="Filter tenant" options={tenantOptions} />
-        </OptionsPicker>
+  <OptionsPicker mode="single" selected={selectedTenant} onApply={setSelectedTenant}>
+    <OptionsPicker.Trigger>
+      <Button variant="secondary" size="sm">
+        <Badge tone="info" dot="start" size="sm" />
+        Tenant{selectedTenant ? `: ${selectedTenant}` : ''}
+        <ChevronDown size={14} />
+      </Button>
+    </OptionsPicker.Trigger>
+    <OptionsPicker.Content label="Filter tenant" options={tenantOptions} />
+  </OptionsPicker>
 
-        <Button variant="secondary" size="sm">
-          Last 7 days <ChevronDown size={14} />
-        </Button>
-      </Cluster>
+  <Button variant="secondary" size="sm">
+    Last 7 days <ChevronDown size={14} />
+  </Button>
+</Cluster>
 ```
 
 - [ ] **Step 3: Update the audit registry entry**
@@ -2584,6 +2656,7 @@ cd /Users/dpws/projects/design-system && npm run typecheck --workspaces --if-pre
 cd /Users/dpws/projects/design-system && make lint 2>&1 | tail -3
 cd /Users/dpws/projects/design-system && make build 2>&1 | tail -5
 ```
+
 Expected: all green.
 
 - [ ] **Step 5: Manual verification in browser**
@@ -2591,6 +2664,7 @@ Expected: all green.
 If the dev server is running on http://localhost:8080, navigate to `/mockups/audit`. If not, ask the user to run `make up` in their terminal and confirm when ready (do NOT start it from the agent).
 
 Confirm:
+
 1. Clicking the "Event (N)" trigger opens a popover with grouped event options + namespace hints.
 2. Selecting/deselecting checkboxes updates the draft; clicking Apply commits and closes; Cancel reverts.
 3. Clicking a group header toggles all options in that namespace.
@@ -2715,6 +2789,7 @@ The `gh pr create` command outputs the PR URL on success. Report it back to the 
 ## Self-Review
 
 **1. Spec coverage:**
+
 - API shape (compound, mode union, XOR options/groups) — Task 1 (scaffold) + Task 5 (groups) ✓
 - Types (Option, Group, Props discriminated by mode, ContentProps with XOR) — Task 1 ✓
 - Panel anatomy (search + count, list, footer) — Tasks 3 + 4 ✓
@@ -2733,6 +2808,7 @@ The `gh pr create` command outputs the PR URL on success. Report it back to the 
 **2. Placeholder scan:** no "TBD", "TODO", "fill in later", "similar to Task N", or "add appropriate error handling". Every step has code or commands.
 
 **3. Type consistency:**
+
 - `OptionsPickerOption.value: string` used consistently across tasks.
 - `OptionsPickerGroup.id: string` used both as React key and `aria-controls` id source.
 - `PickerContextValue` defined in Task 1 and extended in Task 9 (added `contentId`) — Task 9's diff shows the extension.
@@ -2740,6 +2816,6 @@ The `gh pr create` command outputs the PR URL on success. Report it back to the 
 - Mode-conditional `onApply(string[] | null)` signature matches in commit handler.
 - `OptionRow` props evolve: Task 2 introduces it with `option/checked/onToggle`; Task 7 adds `mode`; Task 8 adds `rowId/focused`. Each task explicitly shows the full replacement signature.
 
-One known risk: `Popover.Trigger` may not forward arbitrary aria-* attributes — Task 9 Step 2 notes this and instructs to check + adapt.
+One known risk: `Popover.Trigger` may not forward arbitrary aria-\* attributes — Task 9 Step 2 notes this and instructs to check + adapt.
 
 One coverage gap: Task 8 cmd/ctrl+Enter "commit multi draft" keyboard shortcut is implemented in the keyboard handler but doesn't have an explicit test. The arrow/Enter/Esc tests cover the core paths. Acceptable Nice-to-have — the implementation includes the branch and the spec lists it as an option, but skipping the test isn't a Critical gap.

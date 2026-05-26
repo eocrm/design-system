@@ -251,11 +251,7 @@ it('shows emptyState when all groups are filtered to nothing', async () => {
       <OptionsPicker.Trigger>
         <Button>Open</Button>
       </OptionsPicker.Trigger>
-      <OptionsPicker.Content
-        label="Filter"
-        groups={groupedOptions}
-        emptyState="No matches"
-      />
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} emptyState="No matches" />
     </OptionsPicker>,
   );
   await user.click(screen.getByRole('button', { name: 'Open' }));

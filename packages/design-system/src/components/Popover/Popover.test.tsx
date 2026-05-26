@@ -482,7 +482,10 @@ describe('Popover — cleanup + Tab traversal', () => {
         <Popover.Content>panel</Popover.Content>
       </Popover>,
     );
-    expect(screen.getByRole('button', { name: 'Open' })).toHaveAttribute('aria-haspopup', 'listbox');
+    expect(screen.getByRole('button', { name: 'Open' })).toHaveAttribute(
+      'aria-haspopup',
+      'listbox',
+    );
   });
 
   it('Trigger click does not bubble to ancestor click handlers', async () => {

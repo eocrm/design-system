@@ -102,7 +102,8 @@ type SharedContentProps = {
   footerCount?: (selected: number, total: number) => ReactNode;
   className?: string;
 };
-export type OptionsPickerContentProps = (FlatContentProps | GroupedContentProps) & SharedContentProps;
+export type OptionsPickerContentProps = (FlatContentProps | GroupedContentProps) &
+  SharedContentProps;
 
 // ----------------------------------------------------------------------------
 // Context
@@ -312,15 +313,15 @@ const OptionsPickerTrigger = forwardRef<HTMLButtonElement, OptionsPickerTriggerP
     const child = Children.only(children) as ReactElement<{ ref?: Ref<HTMLButtonElement> }>;
     const childRef = (child as ReactElement & { ref?: Ref<HTMLButtonElement> }).ref;
     const mergedRef = ref ? mergeRefs<HTMLButtonElement>(ref, childRef ?? null) : childRef;
-    const childWithRef = cloneElement(child, { ref: mergedRef } as Partial<{ ref: Ref<HTMLButtonElement> }>);
+    const childWithRef = cloneElement(child, { ref: mergedRef } as Partial<{
+      ref: Ref<HTMLButtonElement>;
+    }>);
 
     return (
       // Popover.Trigger handles aria-expanded, aria-controls, and click/keydown
       // internally. We only override aria-haspopup to 'listbox' because the
       // content panel surfaces a listbox role, not a generic dialog.
-      <Popover.Trigger aria-haspopup="listbox">
-        {childWithRef}
-      </Popover.Trigger>
+      <Popover.Trigger aria-haspopup="listbox">{childWithRef}</Popover.Trigger>
     );
   },
 );
@@ -329,7 +330,9 @@ const OptionsPickerTrigger = forwardRef<HTMLButtonElement, OptionsPickerTriggerP
 // Content
 // ----------------------------------------------------------------------------
 
-function isGrouped(props: OptionsPickerContentProps): props is GroupedContentProps & SharedContentProps {
+function isGrouped(
+  props: OptionsPickerContentProps,
+): props is GroupedContentProps & SharedContentProps {
   return 'groups' in props && props.groups !== undefined;
 }
 
@@ -546,64 +549,81 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                 {props.emptyState ?? 'No matches'}
               </Text>
             )}
-            {hasAnyVisible && isGrouped(props) && visibleGroups.map((g) => (
-              <div key={g.id} className={styles.group}>
-                {ctx.mode === 'multi' ? (
-                  <button
-                    type="button"
-                    className={styles.groupHeader}
-                    aria-pressed={tristate(g.options.map((o) => o.value), draft)}
-                    aria-label={`Toggle group ${g.label}`}
-                    aria-controls={g.options.map((o) => `${contentId}-opt-${o.value}`).join(' ')}
-                    onClick={() => toggleGroup(g.options)}
-                  >
-                    <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
-                    <Text size="xs" weight="semibold" className={styles.groupLabel}>
-                      {g.label}
-                    </Text>
-                    {g.hint && (
-                      <Text size="xs" tone="subtle" className={styles.groupHint}>
-                        {g.hint}
+            {hasAnyVisible &&
+              isGrouped(props) &&
+              visibleGroups.map((g) => (
+                <div key={g.id} className={styles.group}>
+                  {ctx.mode === 'multi' ? (
+                    <button
+                      type="button"
+                      className={styles.groupHeader}
+                      aria-pressed={tristate(
+                        g.options.map((o) => o.value),
+                        draft,
+                      )}
+                      aria-label={`Toggle group ${g.label}`}
+                      aria-controls={g.options.map((o) => `${contentId}-opt-${o.value}`).join(' ')}
+                      onClick={() => toggleGroup(g.options)}
+                    >
+                      <Badge
+                        tone={g.tone ?? 'neutral'}
+                        dot="start"
+                        size="sm"
+                        className={styles.groupDot}
+                      />
+                      <Text size="xs" weight="semibold" className={styles.groupLabel}>
+                        {g.label}
                       </Text>
-                    )}
-                  </button>
-                ) : (
-                  <div className={styles.groupHeader} role="presentation">
-                    <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
-                    <Text size="xs" weight="semibold" className={styles.groupLabel}>
-                      {g.label}
-                    </Text>
-                    {g.hint && (
-                      <Text size="xs" tone="subtle" className={styles.groupHint}>
-                        {g.hint}
+                      {g.hint && (
+                        <Text size="xs" tone="subtle" className={styles.groupHint}>
+                          {g.hint}
+                        </Text>
+                      )}
+                    </button>
+                  ) : (
+                    <div className={styles.groupHeader} role="presentation">
+                      <Badge
+                        tone={g.tone ?? 'neutral'}
+                        dot="start"
+                        size="sm"
+                        className={styles.groupDot}
+                      />
+                      <Text size="xs" weight="semibold" className={styles.groupLabel}>
+                        {g.label}
                       </Text>
-                    )}
-                  </div>
-                )}
-                {g.visibleOptions.map((opt) => (
-                  <OptionRow
-                    key={opt.value}
-                    option={opt}
-                    checked={draft.includes(opt.value)}
-                    mode={ctx.mode}
-                    rowId={`${contentId}-opt-${opt.value}`}
-                    focused={focusedValue === opt.value}
-                    onToggle={toggle}
-                  />
-                ))}
-              </div>
-            ))}
-            {hasAnyVisible && !isGrouped(props) && visibleFlat.map((opt) => (
-              <OptionRow
-                key={opt.value}
-                option={opt}
-                checked={draft.includes(opt.value)}
-                mode={ctx.mode}
-                rowId={`${contentId}-opt-${opt.value}`}
-                focused={focusedValue === opt.value}
-                onToggle={toggle}
-              />
-            ))}
+                      {g.hint && (
+                        <Text size="xs" tone="subtle" className={styles.groupHint}>
+                          {g.hint}
+                        </Text>
+                      )}
+                    </div>
+                  )}
+                  {g.visibleOptions.map((opt) => (
+                    <OptionRow
+                      key={opt.value}
+                      option={opt}
+                      checked={draft.includes(opt.value)}
+                      mode={ctx.mode}
+                      rowId={`${contentId}-opt-${opt.value}`}
+                      focused={focusedValue === opt.value}
+                      onToggle={toggle}
+                    />
+                  ))}
+                </div>
+              ))}
+            {hasAnyVisible &&
+              !isGrouped(props) &&
+              visibleFlat.map((opt) => (
+                <OptionRow
+                  key={opt.value}
+                  option={opt}
+                  checked={draft.includes(opt.value)}
+                  mode={ctx.mode}
+                  rowId={`${contentId}-opt-${opt.value}`}
+                  focused={focusedValue === opt.value}
+                  onToggle={toggle}
+                />
+              ))}
           </div>
 
           {ctx.mode === 'multi' && (
@@ -622,11 +642,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                 >
                   {props.cancelLabel ?? 'Cancel'}
                 </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => ctx.commit(draft)}
-                >
+                <Button variant="primary" size="sm" onClick={() => ctx.commit(draft)}>
                   {props.applyLabel ?? 'Apply'}
                 </Button>
               </Cluster>

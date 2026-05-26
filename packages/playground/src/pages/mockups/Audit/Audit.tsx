@@ -18,7 +18,13 @@ import {
   type BadgeTone,
   type ColumnDef,
 } from '@eocrm/design-system';
-import { auditEntries, eventCatalog, eventTone, tenantOptions, type AuditEntry } from '../../../data/audit';
+import {
+  auditEntries,
+  eventCatalog,
+  eventTone,
+  tenantOptions,
+  type AuditEntry,
+} from '../../../data/audit';
 import { CrossLinks } from '../../shared/CrossLinks';
 
 type ChipKey = 'event' | 'tenant' | 'entity';

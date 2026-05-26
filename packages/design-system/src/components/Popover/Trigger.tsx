@@ -41,7 +41,10 @@ export interface PopoverTriggerProps {
  *   <Button variant="secondary">Filters</Button>
  * </Popover.Trigger>
  */
-export function Trigger({ children, 'aria-haspopup': ariaHaspopup = 'dialog' }: PopoverTriggerProps) {
+export function Trigger({
+  children,
+  'aria-haspopup': ariaHaspopup = 'dialog',
+}: PopoverTriggerProps) {
   const ctx = usePopoverContext('Trigger');
 
   if (!isValidElement(children)) {
