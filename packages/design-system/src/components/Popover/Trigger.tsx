@@ -13,12 +13,21 @@ import { chain, mergeRefs } from '../_internal/refs';
 export interface PopoverTriggerProps {
   /**
    * Exactly one React element that accepts a ref. The Trigger clones this
-   * element to inject `aria-haspopup="dialog"`, `aria-expanded`,
-   * `aria-controls`, a click handler that toggles the popover, and a keydown
-   * handler that opens on Enter/Space. `<Button>` and raw `<button>` both
-   * qualify; a custom component without `forwardRef` does not.
+   * element to inject `aria-haspopup`, `aria-expanded`, `aria-controls`, a
+   * click handler that toggles the popover, and a keydown handler that opens
+   * on Enter/Space. `<Button>` and raw `<button>` both qualify; a custom
+   * component without `forwardRef` does not.
    */
   children: ReactElement;
+  /**
+   * Override the `aria-haspopup` value injected onto the trigger child.
+   * Defaults to `'dialog'` (matching the role of `Popover.Content`). Pass
+   * `'listbox'` for picker-style compound usages where the popover surfaces
+   * a listbox rather than a generic dialog.
+   *
+   * @default 'dialog'
+   */
+  'aria-haspopup'?: 'dialog' | 'listbox' | 'menu' | 'tree' | 'grid' | 'true' | 'false';
 }
 
 /**
@@ -32,7 +41,10 @@ export interface PopoverTriggerProps {
  *   <Button variant="secondary">Filters</Button>
  * </Popover.Trigger>
  */
-export function Trigger({ children }: PopoverTriggerProps) {
+export function Trigger({
+  children,
+  'aria-haspopup': ariaHaspopup = 'dialog',
+}: PopoverTriggerProps) {
   const ctx = usePopoverContext('Trigger');
 
   if (!isValidElement(children)) {
@@ -72,7 +84,7 @@ export function Trigger({ children }: PopoverTriggerProps) {
 
   return cloneElement(children, {
     ref: mergeRefs(ctx.triggerRef, childProps.ref),
-    'aria-haspopup': 'dialog',
+    'aria-haspopup': ariaHaspopup,
     'aria-expanded': ctx.open,
     'aria-controls': ctx.open ? ctx.contentId : undefined,
     onClick: chain(childProps.onClick, handleClick),

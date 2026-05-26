@@ -9,6 +9,7 @@ import {
   DataTable,
   DefinitionList,
   Divider,
+  OptionsPicker,
   PageHeader,
   Stack,
   Text,
@@ -17,7 +18,13 @@ import {
   type BadgeTone,
   type ColumnDef,
 } from '@eocrm/design-system';
-import { auditEntries, eventTone, type AuditEntry } from '../../../data/audit';
+import {
+  auditEntries,
+  eventCatalog,
+  eventTone,
+  tenantOptions,
+  type AuditEntry,
+} from '../../../data/audit';
 import { CrossLinks } from '../../shared/CrossLinks';
 
 type ChipKey = 'event' | 'tenant' | 'entity';
@@ -288,6 +295,9 @@ export function Audit() {
     },
   });
 
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(['role.assigned']);
+  const [selectedTenant, setSelectedTenant] = useState<string | null>('acme');
+
   function removeChip(key: ChipKey) {
     setChips((prev) => prev.filter((c) => c.key !== key));
   }
@@ -333,12 +343,28 @@ export function Audit() {
       </PageHeader>
 
       <Cluster gap="sm" wrap>
-        <Button variant="secondary" size="sm">
-          Events <ChevronDown size={14} />
-        </Button>
-        <Button variant="secondary" size="sm">
-          Tenant <ChevronDown size={14} />
-        </Button>
+        <OptionsPicker selected={selectedEvents} onApply={setSelectedEvents}>
+          <OptionsPicker.Trigger>
+            <Button variant="secondary" size="sm">
+              <Badge tone="info" dot="start" size="sm" />
+              Event ({selectedEvents.length})
+              <ChevronDown size={14} />
+            </Button>
+          </OptionsPicker.Trigger>
+          <OptionsPicker.Content label="Filter events" groups={eventCatalog} />
+        </OptionsPicker>
+
+        <OptionsPicker mode="single" selected={selectedTenant} onApply={setSelectedTenant}>
+          <OptionsPicker.Trigger>
+            <Button variant="secondary" size="sm">
+              <Badge tone="info" dot="start" size="sm" />
+              Tenant{selectedTenant ? `: ${selectedTenant}` : ''}
+              <ChevronDown size={14} />
+            </Button>
+          </OptionsPicker.Trigger>
+          <OptionsPicker.Content label="Filter tenant" options={tenantOptions} />
+        </OptionsPicker>
+
         <Button variant="secondary" size="sm">
           Last 7 days <ChevronDown size={14} />
         </Button>

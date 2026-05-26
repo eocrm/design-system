@@ -34,6 +34,7 @@ export type ComponentName =
   | 'Kanban'
   | 'Link'
   | 'Modal'
+  | 'OptionsPicker'
   | 'PageHeader'
   | 'Pagination'
   | 'PasswordInput'
@@ -181,6 +182,7 @@ export const MOCKUPS = [
       'DataTable',
       'DefinitionList',
       'Divider',
+      'OptionsPicker',
       'PageHeader',
       'Stack',
       'Text',

@@ -210,6 +210,16 @@ export type {
   SelectTriggerDisplay,
 } from './components/Select';
 
+export { OptionsPicker } from './components/OptionsPicker';
+export type {
+  OptionsPickerProps,
+  OptionsPickerContentProps,
+  OptionsPickerTriggerProps,
+  OptionsPickerMode,
+  OptionsPickerOption,
+  OptionsPickerGroup,
+} from './components/OptionsPicker';
+
 export { Progress } from './components/Progress';
 export type {
   ProgressProps,

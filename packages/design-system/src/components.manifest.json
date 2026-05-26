@@ -25,7 +25,9 @@
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "OptionsPicker"
+    ]
   },
   "Breadcrumb": {
     "tier": "composition",
@@ -48,6 +50,7 @@
       "Drawer",
       "FileUpload",
       "Modal",
+      "OptionsPicker",
       "PasswordInput",
       "Toast"
     ]
@@ -82,7 +85,8 @@
     "cluster": "Forms",
     "composes": [],
     "composedBy": [
-      "DataTable"
+      "DataTable",
+      "OptionsPicker"
     ]
   },
   "CircularProgress": {
@@ -97,7 +101,8 @@
     "composes": [],
     "composedBy": [
       "Calendar",
-      "ConfirmationPopover"
+      "ConfirmationPopover",
+      "OptionsPicker"
     ]
   },
   "Code": {
@@ -229,7 +234,8 @@
     "cluster": "Forms",
     "composes": [],
     "composedBy": [
-      "ColorPicker"
+      "ColorPicker",
+      "OptionsPicker"
     ]
   },
   "Kanban": {
@@ -253,6 +259,21 @@
     "cluster": "Overlays",
     "composes": [
       "Button"
+    ],
+    "composedBy": []
+  },
+  "OptionsPicker": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Badge",
+      "Button",
+      "Checkbox",
+      "Cluster",
+      "Input",
+      "Popover",
+      "Radio",
+      "Text"
     ],
     "composedBy": []
   },
@@ -293,7 +314,8 @@
     "composes": [],
     "composedBy": [
       "ColorPicker",
-      "ConfirmationPopover"
+      "ConfirmationPopover",
+      "OptionsPicker"
     ]
   },
   "Progress": {
@@ -308,7 +330,9 @@
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "OptionsPicker"
+    ]
   },
   "Select": {
     "tier": "primitive",
@@ -376,7 +400,9 @@
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "OptionsPicker"
+    ]
   },
   "Textarea": {
     "tier": "primitive",

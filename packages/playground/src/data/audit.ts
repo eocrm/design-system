@@ -176,6 +176,101 @@ export const auditEntries: AuditEntry[] = [
   },
 ];
 
+import type { OptionsPickerGroup, OptionsPickerOption } from '@eocrm/design-system';
+
+/**
+ * Hand-rolled audit event catalog for the mockup's Event picker. Covers the
+ * namespaces present in `auditEntries` plus a couple of common siblings to
+ * make the picker feel populated.
+ */
+export const eventCatalog: OptionsPickerGroup[] = [
+  {
+    id: 'auth',
+    label: 'Authentication',
+    tone: 'success',
+    hint: 'auth.*',
+    options: [
+      { value: 'auth.login_succeeded', label: 'login_succeeded' },
+      { value: 'auth.login_failed', label: 'login_failed' },
+      { value: 'auth.logout', label: 'logout' },
+      { value: 'auth.mfa_enabled', label: 'mfa_enabled' },
+      { value: 'auth.mfa_disabled', label: 'mfa_disabled' },
+      { value: 'auth.password_reset_requested', label: 'password_reset_requested' },
+      { value: 'auth.password_reset_completed', label: 'password_reset_completed' },
+    ],
+  },
+  {
+    id: 'role',
+    label: 'Roles',
+    tone: 'info',
+    hint: 'role.*',
+    options: [
+      { value: 'role.assigned', label: 'assigned' },
+      { value: 'role.updated', label: 'updated' },
+      { value: 'role.revoked', label: 'revoked' },
+    ],
+  },
+  {
+    id: 'user',
+    label: 'Users',
+    tone: 'info',
+    hint: 'user.*',
+    options: [
+      { value: 'user.created', label: 'created' },
+      { value: 'user.updated', label: 'updated' },
+      { value: 'user.deleted', label: 'deleted' },
+    ],
+  },
+  {
+    id: 'invitation',
+    label: 'Invitations',
+    tone: 'warning',
+    hint: 'invitation.*',
+    options: [
+      { value: 'invitation.sent', label: 'sent' },
+      { value: 'invitation.accepted', label: 'accepted' },
+      { value: 'invitation.expired', label: 'expired' },
+    ],
+  },
+  {
+    id: 'contact',
+    label: 'Contacts',
+    tone: 'neutral',
+    hint: 'contact.*',
+    options: [
+      { value: 'contact.created', label: 'created' },
+      { value: 'contact.updated', label: 'updated' },
+      { value: 'contact.deleted', label: 'deleted' },
+    ],
+  },
+  {
+    id: 'deal',
+    label: 'Deals',
+    tone: 'neutral',
+    hint: 'deal.*',
+    options: [
+      { value: 'deal.created', label: 'created' },
+      { value: 'deal.stage_changed', label: 'stage_changed' },
+      { value: 'deal.won', label: 'won' },
+      { value: 'deal.lost', label: 'lost' },
+    ],
+  },
+  {
+    id: 'system_setting',
+    label: 'System settings',
+    tone: 'warning',
+    hint: 'system_setting.*',
+    options: [{ value: 'system_setting.updated', label: 'updated' }],
+  },
+];
+
+export const tenantOptions: OptionsPickerOption[] = [
+  { value: 'acme', label: 'acme' },
+  { value: 'beta', label: 'beta' },
+  { value: 'hooli', label: 'hooli' },
+  { value: 'stark', label: 'stark' },
+];
+
 /**
  * Maps an audit event name to a Badge tone. Namespace-driven so new events
  * inherit a sensible default without explicit listing.

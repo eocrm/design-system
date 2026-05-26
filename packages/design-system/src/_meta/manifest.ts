@@ -64,6 +64,7 @@ const CLUSTERS: Record<string, string> = {
   PasswordInput: 'Forms',
   PasswordStrengthMeter: 'Forms',
   Radio: 'Forms',
+  OptionsPicker: 'Forms',
   Select: 'Forms',
   Slider: 'Forms',
   Sortable: 'Forms',
