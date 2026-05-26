@@ -30,3 +30,25 @@
 .rowSelected {
   background: var(--color-info-bg-subtle);
 }
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.searchIcon {
+  color: var(--color-fg-subtle);
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+}
+
+.count {
+  flex-shrink: 0;
+}

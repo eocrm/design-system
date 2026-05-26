@@ -84,3 +84,52 @@ it('multi mode: clicking a checkbox updates the draft (does not commit yet)', as
   // onApply should NOT have been called — multi mode waits for Apply.
   expect(onApply).not.toHaveBeenCalled();
 });
+
+it('filters visible options by search text (case-insensitive substring)', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content
+        label="Filter"
+        options={[
+          { value: 'a', label: 'login_succeeded' },
+          { value: 'b', label: 'login_failed' },
+          { value: 'c', label: 'logout' },
+        ]}
+      />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  expect(screen.getAllByRole('checkbox')).toHaveLength(3);
+  const search = screen.getByRole('textbox');
+  await user.type(search, 'failed');
+  expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+  expect(screen.getByText('login_failed')).toBeInTheDocument();
+});
+
+it('shows selection count "N sel" with aria-live=polite', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={['a']} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content
+        label="Filter"
+        options={[
+          { value: 'a', label: 'A' },
+          { value: 'b', label: 'B' },
+        ]}
+      />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  const count = screen.getByText('1 sel');
+  expect(count).toHaveAttribute('aria-live', 'polite');
+  // Toggle B on → count becomes 2 sel
+  await user.click(screen.getByRole('checkbox', { name: 'B' }));
+  expect(screen.getByText('2 sel')).toBeInTheDocument();
+});

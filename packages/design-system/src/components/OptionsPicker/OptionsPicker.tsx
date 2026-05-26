@@ -10,8 +10,10 @@ import {
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
+import { Search } from 'lucide-react';
 import { Popover } from '../Popover';
 import { Checkbox } from '../Checkbox';
+import { Input } from '../Input';
 import { type BadgeTone } from '../Badge';
 import { Text } from '../Text';
 import { Stack } from '../Stack';
@@ -202,6 +204,8 @@ function isGrouped(props: OptionsPickerContentProps): props is GroupedContentPro
   return 'groups' in props && props.groups !== undefined;
 }
 
+// Used by Task 4 for the footer "X of TOTAL" count.
+// @ts-expect-error TS6133 — forward-use stub; consumed in Task 4 footer.
 function getAllOptions(props: OptionsPickerContentProps): OptionsPickerOption[] {
   if (isGrouped(props)) return props.groups.flatMap((g) => g.options);
   return props.options ?? [];
@@ -209,18 +213,27 @@ function getAllOptions(props: OptionsPickerContentProps): OptionsPickerOption[] 
 
 const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProps>(
   function OptionsPickerContent(props, ref) {
-    const { label, className } = props;
+    const { label, className, searchPlaceholder = 'Filter…' } = props;
     const ctx = usePickerContext('Content');
 
-    // Draft state — initialized from committed selected on every open.
     const [draft, setDraft] = useState<string[]>(ctx.selected);
+    const [filter, setFilter] = useState('');
+
     useEffect(() => {
-      if (ctx.open) setDraft(ctx.selected);
+      if (ctx.open) {
+        setDraft(ctx.selected);
+        setFilter('');
+      }
     }, [ctx.open, ctx.selected]);
 
-    // Will be used by Task 3 search filtering.
-    const _allOptions = useMemo(() => getAllOptions(props), [props]);
-    void _allOptions;
+    const matchesFilter = useCallback(
+      (opt: OptionsPickerOption): boolean => {
+        if (filter === '') return true;
+        const haystack = (opt.searchText ?? opt.label).toLowerCase();
+        return haystack.includes(filter.toLowerCase());
+      },
+      [filter],
+    );
 
     const toggle = useCallback(
       (value: string) => {
@@ -229,20 +242,47 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
           );
         } else {
-          // Single mode commits immediately + closes.
           ctx.commit([value]);
         }
       },
       [ctx],
     );
 
+    const visibleFlat = useMemo(() => {
+      if (isGrouped(props)) return [];
+      return (props.options ?? []).filter(matchesFilter);
+    }, [props, matchesFilter]);
+
     return (
       <Popover.Content ref={ref} className={clsx(styles.panel, className)} aria-label={label}>
         <Stack gap="xs">
+          <div className={styles.searchBar}>
+            <Search size={14} aria-hidden className={styles.searchIcon} />
+            <Input
+              type="text"
+              value={filter}
+              onChange={(e) => setFilter(e.currentTarget.value)}
+              placeholder={searchPlaceholder}
+              aria-label={searchPlaceholder}
+              autoFocus
+              className={styles.searchInput}
+            />
+            {ctx.mode === 'multi' && (
+              <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
+                {draft.length} sel
+              </Text>
+            )}
+            {ctx.mode === 'single' && draft.length > 0 && (
+              <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
+                1 sel
+              </Text>
+            )}
+          </div>
+
           <div className={styles.list} role="listbox" aria-multiselectable={ctx.mode === 'multi'}>
             {isGrouped(props)
               ? null /* grouped rendering ships in Task 5 */
-              : (props.options ?? []).map((opt) => (
+              : visibleFlat.map((opt) => (
                   <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
                 ))}
           </div>
