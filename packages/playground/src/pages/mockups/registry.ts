@@ -182,6 +182,7 @@ export const MOCKUPS = [
       'DataTable',
       'DefinitionList',
       'Divider',
+      'OptionsPicker',
       'PageHeader',
       'Stack',
       'Text',
