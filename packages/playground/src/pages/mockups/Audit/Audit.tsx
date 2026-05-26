@@ -7,6 +7,9 @@ import {
   Cluster,
   Code,
   DataTable,
+  DefinitionList,
+  Divider,
+  Link,
   PageHeader,
   Stack,
   Text,
@@ -87,6 +90,111 @@ function changesHint(entry: AuditEntry) {
   return <Text size="sm">{fields.length} fields</Text>;
 }
 
+function formatDiffValue(v: unknown): string {
+  if (v === null) return 'null';
+  if (Array.isArray(v)) return `[${v.length}] ${JSON.stringify(v)}`;
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
+function isIdLikeContextKey(key: string): boolean {
+  return key.endsWith('_id') || key === 'ip' || key === 'entity_id';
+}
+
+function ExpandedPanel({ entry }: { entry: AuditEntry }) {
+  const actorName = entry.actor?.name ?? 'System';
+  const entityType = entry.entity_type ?? 'entity';
+  const entityId = entry.entity_id ?? '';
+
+  return (
+    <Stack gap="md">
+      <Stack gap="xs">
+        <Text size="xs" tone="subtle" weight="semibold">
+          Changes
+        </Text>
+        {entry.changes ? (
+          <DefinitionList layout="horizontal" spacing="sm">
+            {Object.entries(entry.changes).map(([field, { from, to }]) => (
+              <DefinitionList.Item key={field}>
+                <DefinitionList.Term>{field}</DefinitionList.Term>
+                <DefinitionList.Description>
+                  <Cluster gap="xs" align="center">
+                    <Code tone="danger">{formatDiffValue(from)}</Code>
+                    <Text size="sm" tone="muted" aria-hidden>
+                      →
+                    </Text>
+                    <Code tone="accent">{formatDiffValue(to)}</Code>
+                  </Cluster>
+                </DefinitionList.Description>
+              </DefinitionList.Item>
+            ))}
+          </DefinitionList>
+        ) : (
+          <Text size="sm" tone="muted">
+            No field changes recorded.
+          </Text>
+        )}
+      </Stack>
+
+      <Divider />
+
+      <Stack gap="xs">
+        <Text size="xs" tone="subtle" weight="semibold">
+          Context
+        </Text>
+        {Object.keys(entry.context).length === 0 ? (
+          <Text size="sm" tone="muted">
+            No additional context.
+          </Text>
+        ) : (
+          <DefinitionList layout="horizontal" spacing="sm">
+            {Object.entries(entry.context).map(([key, value]) => {
+              const renderAsCode =
+                isIdLikeContextKey(key) ||
+                (typeof value === 'string' && /^[a-z0-9_]+$/i.test(value) && value.length > 12);
+              return (
+                <DefinitionList.Item key={key}>
+                  <DefinitionList.Term>{key}</DefinitionList.Term>
+                  <DefinitionList.Description>
+                    {renderAsCode ? (
+                      <Code>{String(value)}</Code>
+                    ) : (
+                      <Text size="sm">{String(value)}</Text>
+                    )}
+                  </DefinitionList.Description>
+                </DefinitionList.Item>
+              );
+            })}
+          </DefinitionList>
+        )}
+      </Stack>
+
+      <Divider />
+
+      <Stack gap="xs">
+        <Text size="xs" tone="subtle" weight="semibold">
+          Forensic actions
+        </Text>
+        <Cluster gap="md" wrap>
+          <Link as="button" type="button" onClick={() => {}}>
+            See all by {actorName}
+          </Link>
+          {entry.entity_type && (
+            <Link as="button" type="button" onClick={() => {}}>
+              See all on {entityType}
+            </Link>
+          )}
+          {entityId && (
+            <Link as="button" type="button" onClick={() => {}}>
+              See all on {entityId}
+            </Link>
+          )}
+        </Cluster>
+      </Stack>
+    </Stack>
+  );
+}
+
 export function Audit() {
   const [chips, setChips] = useState<Chip[]>(initialChips);
 
@@ -160,6 +268,7 @@ export function Audit() {
     data: auditEntries,
     columns,
     getRowId: (r) => r.id,
+    renderExpandedRow: (row) => <ExpandedPanel entry={row} />,
   });
 
   function removeChip(key: ChipKey) {
