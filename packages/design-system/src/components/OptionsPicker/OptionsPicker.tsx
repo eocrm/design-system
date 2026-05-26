@@ -3,6 +3,7 @@ import {
   forwardRef,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactElement,
@@ -10,6 +11,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { Popover } from '../Popover';
+import { Checkbox } from '../Checkbox';
 import { type BadgeTone } from '../Badge';
 import { Text } from '../Text';
 import { Stack } from '../Stack';
@@ -193,23 +195,84 @@ const OptionsPickerTrigger = forwardRef<HTMLButtonElement, OptionsPickerTriggerP
 );
 
 // ----------------------------------------------------------------------------
-// Content — placeholder (filled in later tasks)
+// Content
 // ----------------------------------------------------------------------------
 
+function isGrouped(props: OptionsPickerContentProps): props is GroupedContentProps & SharedContentProps {
+  return 'groups' in props && props.groups !== undefined;
+}
+
+function getAllOptions(props: OptionsPickerContentProps): OptionsPickerOption[] {
+  if (isGrouped(props)) return props.groups.flatMap((g) => g.options);
+  return props.options ?? [];
+}
+
 const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProps>(
-  function OptionsPickerContent({ label, className }, ref) {
-    usePickerContext('Content');
+  function OptionsPickerContent(props, ref) {
+    const { label, className } = props;
+    const ctx = usePickerContext('Content');
+
+    // Draft state — initialized from committed selected on every open.
+    const [draft, setDraft] = useState<string[]>(ctx.selected);
+    useEffect(() => {
+      if (ctx.open) setDraft(ctx.selected);
+    }, [ctx.open, ctx.selected]);
+
+    // Will be used by Task 3 search filtering.
+    const _allOptions = useMemo(() => getAllOptions(props), [props]);
+    void _allOptions;
+
+    const toggle = useCallback(
+      (value: string) => {
+        if (ctx.mode === 'multi') {
+          setDraft((prev) =>
+            prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+          );
+        } else {
+          // Single mode commits immediately + closes.
+          ctx.commit([value]);
+        }
+      },
+      [ctx],
+    );
+
     return (
-      <Popover.Content ref={ref} aria-label={label} className={clsx(styles.panel, className)}>
-        <Stack gap="sm">
-          <Text size="sm" tone="muted">
-            (panel content lands in subsequent tasks)
-          </Text>
+      <Popover.Content ref={ref} className={clsx(styles.panel, className)} aria-label={label}>
+        <Stack gap="xs">
+          <div className={styles.list} role="listbox" aria-multiselectable={ctx.mode === 'multi'}>
+            {isGrouped(props)
+              ? null /* grouped rendering ships in Task 5 */
+              : (props.options ?? []).map((opt) => (
+                  <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
+                ))}
+          </div>
         </Stack>
       </Popover.Content>
     );
   },
 );
+
+interface OptionRowProps {
+  option: OptionsPickerOption;
+  checked: boolean;
+  onToggle: (value: string) => void;
+}
+
+function OptionRow({ option, checked, onToggle }: OptionRowProps) {
+  const handleChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
+  // Checkbox onChange receives (checked, event) — we ignore both and drive
+  // toggle via the option's value in the outer callback.
+  const checkboxOnChange = useCallback(
+    (_checked: boolean) => handleChange(),
+    [handleChange],
+  );
+  return (
+    <div className={clsx(styles.row, checked && styles.rowSelected)}>
+      <Checkbox checked={checked} onChange={checkboxOnChange} aria-label={option.label} />
+      <Text size="sm">{option.label}</Text>
+    </div>
+  );
+}
 
 // ----------------------------------------------------------------------------
 // Compound export

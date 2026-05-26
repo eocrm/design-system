@@ -48,3 +48,39 @@ it('throws when Trigger is used outside the root', () => {
   ).toThrow(/inside <OptionsPicker>/);
   err.mockRestore();
 });
+
+it('renders flat options as checkboxes when opened (multi mode)', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={['two']} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  const checkboxes = screen.getAllByRole('checkbox');
+  expect(checkboxes).toHaveLength(2);
+  expect(checkboxes[0]).not.toBeChecked();
+  expect(checkboxes[1]).toBeChecked();
+});
+
+it('multi mode: clicking a checkbox updates the draft (does not commit yet)', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker selected={[]} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  const [first] = screen.getAllByRole('checkbox');
+  await user.click(first);
+  expect(first).toBeChecked();
+  // onApply should NOT have been called — multi mode waits for Apply.
+  expect(onApply).not.toHaveBeenCalled();
+});

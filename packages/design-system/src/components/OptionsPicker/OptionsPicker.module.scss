@@ -4,3 +4,29 @@
   min-width: 280px;
   max-width: 360px;
 }
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
+.rowSelected {
+  background: var(--color-info-bg-subtle);
+}
