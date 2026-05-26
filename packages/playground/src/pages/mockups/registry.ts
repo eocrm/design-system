@@ -34,6 +34,7 @@ export type ComponentName =
   | 'Kanban'
   | 'Link'
   | 'Modal'
+  | 'OptionsPicker'
   | 'PageHeader'
   | 'Pagination'
   | 'PasswordInput'

@@ -42,6 +42,7 @@ import { DefinitionList } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
 import { FileUpload } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
+import { OptionsPicker } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
 import { PageHeader } from '@eocrm/design-system';
@@ -703,6 +704,35 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             <Button size="sm">OK</Button>
           </div>
         </div>
+      </div>
+    ),
+  },
+  {
+    to: '/components/options-picker',
+    name: 'OptionsPicker',
+    description:
+      'Filter-picker UX: popover with search, optional grouping, multi/single select, draft-then-Apply commit.',
+    preview: (
+      <div style={{ pointerEvents: 'none' }}>
+        <OptionsPicker
+          selected={['lead', 'won']}
+          onApply={() => {}}
+          open={false}
+          onOpenChange={() => {}}
+        >
+          <OptionsPicker.Trigger>
+            <Button size="sm" variant="secondary">
+              Stage (2) ▾
+            </Button>
+          </OptionsPicker.Trigger>
+          <OptionsPicker.Content
+            label="Filter stage"
+            options={[
+              { value: 'lead', label: 'Lead' },
+              { value: 'won', label: 'Won' },
+            ]}
+          />
+        </OptionsPicker>
       </div>
     ),
   },

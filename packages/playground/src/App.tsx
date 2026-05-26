@@ -44,6 +44,7 @@ import { TabsDemo } from './pages/components/TabsDemo';
 import { DropdownMenuDemo } from './pages/components/DropdownMenuDemo';
 import { TooltipDemo } from './pages/components/TooltipDemo';
 import { ModalDemo } from './pages/components/ModalDemo';
+import { OptionsPickerDemo } from './pages/components/OptionsPickerDemo';
 import { PageHeaderDemo } from './pages/components/PageHeaderDemo';
 import { PopoverDemo } from './pages/components/PopoverDemo';
 import { RadioDemo } from './pages/components/RadioDemo';
@@ -115,6 +116,7 @@ export default function App() {
           <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
           <Route path="/components/tooltip" element={<TooltipDemo />} />
           <Route path="/components/modal" element={<ModalDemo />} />
+          <Route path="/components/options-picker" element={<OptionsPickerDemo />} />
           <Route path="/components/page-header" element={<PageHeaderDemo />} />
           <Route path="/components/popover" element={<PopoverDemo />} />
           <Route path="/components/radio" element={<RadioDemo />} />
