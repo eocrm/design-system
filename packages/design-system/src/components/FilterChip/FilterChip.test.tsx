@@ -69,9 +69,7 @@ it('dismissLabel overrides the default aria-label', () => {
       <FilterChip.Value>auth.*</FilterChip.Value>
     </FilterChip>,
   );
-  expect(
-    screen.getByRole('button', { name: 'Remove Event: auth.* filter' }),
-  ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Remove Event: auth.* filter' })).toBeInTheDocument();
 });
 
 it('Value renders a tone dot when tone is set', () => {

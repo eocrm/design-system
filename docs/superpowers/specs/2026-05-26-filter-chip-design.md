@@ -102,13 +102,13 @@ export interface FilterChipValueProps extends HTMLAttributes<HTMLSpanElement> {
 
 ### Composition
 
-| Layer | Built from |
-|---|---|
+| Layer               | Built from                                                                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Root pill container | hand-rolled `<div>` with token-based styling — no existing primitive matches the pill geometry exactly (Badge is solid-fill, Card is square + heavier) |
-| Label | `<Text size="sm" tone="muted">` |
-| Value text | `<Text size="sm">` |
-| Value tone dot | inline `<span>` styled via a SCSS modifier class keyed off `data-tone` attribute |
-| Dismiss button | hand-rolled `<button>` + lucide `<X size={12} aria-hidden>` |
+| Label               | `<Text size="sm" tone="muted">`                                                                                                                        |
+| Value text          | `<Text size="sm">`                                                                                                                                     |
+| Value tone dot      | inline `<span>` styled via a SCSS modifier class keyed off `data-tone` attribute                                                                       |
+| Dismiss button      | hand-rolled `<button>` + lucide `<X size={12} aria-hidden>`                                                                                            |
 
 `Badge` is NOT reused for the value dot. Badge's dot prop is bound to its own pill shape; using it here would force a nested pill-in-pill. A 6px CSS span styled to the same tone palette is cleaner.
 
@@ -147,7 +147,7 @@ export type {
 Added to `packages/design-system/src/_meta/manifest.ts` + `packages/design-system/scripts/generate-manifest.mjs`:
 
 ```ts
-FilterChip: 'Display'
+FilterChip: 'Display';
 ```
 
 ### Tests
@@ -155,6 +155,7 @@ FilterChip: 'Display'
 Per Hard rule 1 minimum + key behaviors:
 
 **Render-level:**
+
 - Renders without crash with default props.
 - Renders Label, Value, and dismiss button when all three are provided.
 - Omits dismiss button when `onDismiss` is not passed.
@@ -163,6 +164,7 @@ Per Hard rule 1 minimum + key behaviors:
 - `className` on root, Label, and Value merges with internal styles.
 
 **Behavior:**
+
 - Clicking the dismiss button fires `onDismiss`.
 - Dismiss button is keyboard-actionable (Enter and Space fire `onDismiss`).
 - Root has `role="group"`.
@@ -207,9 +209,7 @@ becomes:
   dismissLabel={`Remove ${c.label}: ${c.value} filter`}
 >
   <FilterChip.Label>{c.label}</FilterChip.Label>
-  <FilterChip.Value tone={c.tone === 'neutral' ? undefined : c.tone}>
-    {c.value}
-  </FilterChip.Value>
+  <FilterChip.Value tone={c.tone === 'neutral' ? undefined : c.tone}>{c.value}</FilterChip.Value>
 </FilterChip>
 ```
 

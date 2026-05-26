@@ -16,29 +16,30 @@
 
 ## File Structure
 
-| File | Role |
-|---|---|
-| `packages/design-system/src/components/FilterChip/FilterChip.tsx` (NEW) | Root + Label + Value + dismiss in one file |
-| `packages/design-system/src/components/FilterChip/FilterChip.module.scss` (NEW) | Pill, tone-dot color map, dismiss-button hover, token-only |
-| `packages/design-system/src/components/FilterChip/FilterChip.test.tsx` (NEW) | Hard rule 1 minimum + behavior tests |
-| `packages/design-system/src/components/FilterChip/index.ts` (NEW) | Public exports |
-| `packages/design-system/src/index.ts` (MODIFY) | Add FilterChip + types to public exports |
-| `packages/design-system/AGENTS.md` (MODIFY) | TL;DR + canonical snippet |
-| `packages/design-system/src/_meta/manifest.ts` (MODIFY) | Cluster mapping `FilterChip: 'Display'` |
-| `packages/design-system/scripts/generate-manifest.mjs` (MODIFY) | Same cluster mapping (parallel JS copy) |
-| `packages/design-system/src/components/TODO.md` (MODIFY) | Remove the `DismissibleBadge` entry — replaced by FilterChip |
-| `packages/playground/src/pages/components/FilterChipDemo.tsx` (NEW) | DemoLayout + 4 InputExample blocks |
-| `packages/playground/src/App.tsx` (MODIFY) | Route + import |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY) | Sidebar entry under Display cluster |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY) | Overview card |
-| `packages/playground/src/pages/mockups/registry.ts` (MODIFY) | `ComponentName` union + audit `usesComponents` |
-| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (MODIFY) | Replace Badge-with-X chips with `<FilterChip>` |
+| File                                                                            | Role                                                         |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `packages/design-system/src/components/FilterChip/FilterChip.tsx` (NEW)         | Root + Label + Value + dismiss in one file                   |
+| `packages/design-system/src/components/FilterChip/FilterChip.module.scss` (NEW) | Pill, tone-dot color map, dismiss-button hover, token-only   |
+| `packages/design-system/src/components/FilterChip/FilterChip.test.tsx` (NEW)    | Hard rule 1 minimum + behavior tests                         |
+| `packages/design-system/src/components/FilterChip/index.ts` (NEW)               | Public exports                                               |
+| `packages/design-system/src/index.ts` (MODIFY)                                  | Add FilterChip + types to public exports                     |
+| `packages/design-system/AGENTS.md` (MODIFY)                                     | TL;DR + canonical snippet                                    |
+| `packages/design-system/src/_meta/manifest.ts` (MODIFY)                         | Cluster mapping `FilterChip: 'Display'`                      |
+| `packages/design-system/scripts/generate-manifest.mjs` (MODIFY)                 | Same cluster mapping (parallel JS copy)                      |
+| `packages/design-system/src/components/TODO.md` (MODIFY)                        | Remove the `DismissibleBadge` entry — replaced by FilterChip |
+| `packages/playground/src/pages/components/FilterChipDemo.tsx` (NEW)             | DemoLayout + 4 InputExample blocks                           |
+| `packages/playground/src/App.tsx` (MODIFY)                                      | Route + import                                               |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)                 | Sidebar entry under Display cluster                          |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY)         | Overview card                                                |
+| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)                    | `ComponentName` union + audit `usesComponents`               |
+| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (MODIFY)                | Replace Badge-with-X chips with `<FilterChip>`               |
 
 ---
 
 ## Task 1: Scaffold + smoke tests
 
 **Files:**
+
 - Create: `packages/design-system/src/components/FilterChip/FilterChip.tsx`
 - Create: `packages/design-system/src/components/FilterChip/FilterChip.module.scss`
 - Create: `packages/design-system/src/components/FilterChip/FilterChip.test.tsx`
@@ -256,11 +257,7 @@ Write `packages/design-system/src/components/FilterChip/index.ts`:
 
 ```ts
 export { FilterChip } from './FilterChip';
-export type {
-  FilterChipProps,
-  FilterChipLabelProps,
-  FilterChipValueProps,
-} from './FilterChip';
+export type { FilterChipProps, FilterChipLabelProps, FilterChipValueProps } from './FilterChip';
 ```
 
 - [ ] **Step 4: Write the smoke tests**
@@ -333,17 +330,12 @@ it('dismiss button is keyboard-actionable (Enter, Space)', async () => {
 
 it('dismissLabel overrides the default aria-label', () => {
   render(
-    <FilterChip
-      onDismiss={() => {}}
-      dismissLabel="Remove Event: auth.* filter"
-    >
+    <FilterChip onDismiss={() => {}} dismissLabel="Remove Event: auth.* filter">
       <FilterChip.Label>Event</FilterChip.Label>
       <FilterChip.Value>auth.*</FilterChip.Value>
     </FilterChip>,
   );
-  expect(
-    screen.getByRole('button', { name: 'Remove Event: auth.* filter' }),
-  ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Remove Event: auth.* filter' })).toBeInTheDocument();
 });
 
 it('Value renders a tone dot when tone is set', () => {
@@ -405,6 +397,7 @@ it('value-only chip (no label) renders cleanly', () => {
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm test -- FilterChip 2>&1 | tail -15
 ```
+
 Expected: 9 tests pass.
 
 If the `Value renders a tone dot` test fails because the dot's `aria-hidden` lands as `aria-hidden="true"` instead of bare `aria-hidden`, change the assertion to `.toHaveAttribute('aria-hidden', 'true')` or remove the second assertion and rely on the existence check alone.
@@ -416,6 +409,7 @@ If the `role="group"` test fails because the container's firstElementChild is th
 ```bash
 cd /Users/dpws/projects/design-system/packages/design-system && npm run typecheck 2>&1 | tail -5
 ```
+
 Expected: clean exit.
 
 - [ ] **Step 7: Lint**
@@ -423,6 +417,7 @@ Expected: clean exit.
 ```bash
 cd /Users/dpws/projects/design-system && make lint 2>&1 | tail -5
 ```
+
 Expected: clean. If SCSS lint catches anything (e.g., the `&[data-tone='X']` pattern), check `packages/design-system/.stylelintrc.json` for the allowed selector form and adjust.
 
 - [ ] **Step 8: Commit**
@@ -449,6 +444,7 @@ EOF
 ## Task 2: Public exports + manifest + AGENTS.md
 
 **Files:**
+
 - Modify: `packages/design-system/src/index.ts`
 - Modify: `packages/design-system/src/_meta/manifest.ts`
 - Modify: `packages/design-system/scripts/generate-manifest.mjs`
@@ -610,6 +606,7 @@ EOF
 ## Task 3: Component demo + nav wiring
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/FilterChipDemo.tsx`
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
@@ -773,7 +770,7 @@ Open `packages/playground/src/layout/AppShell/AppShell.tsx`. Locate the `compone
 Add the `Tag` import at the top if not already imported:
 
 ```tsx
-import { Tag, /* …other lucide icons… */ } from 'lucide-react';
+import { Tag /* …other lucide icons… */ } from 'lucide-react';
 ```
 
 If `Tag` is already imported, just add it to the existing import list. If the `icon` field isn't part of the sidebar shape (read the existing entries first to confirm), match whatever shape they use.
@@ -834,6 +831,7 @@ EOF
 ## Task 4: Audit mockup integration + TODO cleanup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Audit/Audit.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 - Modify: `packages/design-system/src/components/TODO.md`
@@ -904,18 +902,20 @@ If `<X` only appears in the chip block, remove it from the lucide-react import. 
 Find the `{chips.map((c) => (...))}` block and replace it with:
 
 ```tsx
-{chips.map((c) => (
-  <FilterChip
-    key={c.key}
-    onDismiss={() => removeChip(c.key)}
-    dismissLabel={`Remove ${c.label}: ${c.value} filter`}
-  >
-    <FilterChip.Label>{c.label}</FilterChip.Label>
-    <FilterChip.Value tone={c.tone === 'neutral' ? undefined : c.tone}>
-      {c.value}
-    </FilterChip.Value>
-  </FilterChip>
-))}
+{
+  chips.map((c) => (
+    <FilterChip
+      key={c.key}
+      onDismiss={() => removeChip(c.key)}
+      dismissLabel={`Remove ${c.label}: ${c.value} filter`}
+    >
+      <FilterChip.Label>{c.label}</FilterChip.Label>
+      <FilterChip.Value tone={c.tone === 'neutral' ? undefined : c.tone}>
+        {c.value}
+      </FilterChip.Value>
+    </FilterChip>
+  ));
+}
 ```
 
 - [ ] **Step 4: Verify Badge is still used elsewhere in the file**
@@ -955,6 +955,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/mockups/audit
 ```
 
 If it returns `200`, navigate to `/mockups/audit` and confirm:
+
 - Three filter chips render with the new pill shape (label + dot + value + ×).
 - Clicking × on any chip removes it.
 - The page still renders identically (no Badge-with-cursor remnant).
@@ -1079,6 +1080,7 @@ The `gh pr create` command outputs the PR URL on success. Report it back.
 ## Self-Review
 
 **1. Spec coverage:**
+
 - Compound API (`<FilterChip>` + `.Label` + `.Value`) — Task 1 ✓
 - `onDismiss` auto-renders the × — Task 1 ✓
 - `tone` on Value adds a 6px colored dot — Task 1 ✓
@@ -1100,6 +1102,7 @@ The `gh pr create` command outputs the PR URL on success. Report it back.
 **2. Placeholder scan:** no "TBD" / "TODO" / "implement later" / vague "add appropriate handling." Every step has concrete code, commands, or instructions.
 
 **3. Type consistency:**
+
 - `FilterChipProps`, `FilterChipLabelProps`, `FilterChipValueProps` defined in Task 1 and re-exported identically in Task 2.
 - `onDismiss?: () => void` consistent across spec, types, runtime check, and tests.
 - `dismissLabel?: string` with `'Remove filter'` default consistent in spec + Task 1 + Task 1 tests + Task 4 audit integration.

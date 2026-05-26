@@ -205,7 +205,9 @@ const FilterChipValue = forwardRef<HTMLSpanElement, FilterChipValueProps>(functi
   return (
     <span ref={ref} className={clsx(styles.value, className)} {...rest}>
       {tone && <span className={styles.dot} data-tone={tone} aria-hidden="true" />}
-      <Text as="span" size="sm">{children}</Text>
+      <Text as="span" size="sm">
+        {children}
+      </Text>
     </span>
   );
 });
