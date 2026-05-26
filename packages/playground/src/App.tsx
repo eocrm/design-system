@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './layout/AppShell';
 import { MockupsIndex } from './pages/mockups/MockupsIndex';
+import { Audit } from './pages/mockups/Audit/Audit';
 import { Dashboard } from './pages/mockups/Dashboard/Dashboard';
 import { Deals } from './pages/mockups/Deals/Deals';
 import { Contacts } from './pages/mockups/Contacts/Contacts';
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="/mockups/contacts" element={<Contacts />} />
           <Route path="/mockups/contacts/:id" element={<ContactDetail />} />
           <Route path="/mockups/members" element={<Members />} />
+          <Route path="/mockups/audit" element={<Audit />} />
 
           <Route path="/components" element={<ComponentsIndex />} />
           <Route path="/components/tokens" element={<TokensPage />} />
