@@ -273,7 +273,6 @@
       "Input",
       "Popover",
       "Radio",
-      "Stack",
       "Text"
     ],
     "composedBy": []
@@ -372,8 +371,7 @@
     "cluster": "Layout",
     "composes": [],
     "composedBy": [
-      "ConfirmationPopover",
-      "OptionsPicker"
+      "ConfirmationPopover"
     ]
   },
   "Switch": {
