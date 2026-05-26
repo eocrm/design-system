@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, Download, Bookmark, X } from 'lucide-react';
+import { ChevronDown, Download, Bookmark } from 'lucide-react';
 import {
   Avatar,
   Badge,
@@ -9,6 +9,7 @@ import {
   DataTable,
   DefinitionList,
   Divider,
+  FilterChip,
   OptionsPicker,
   PageHeader,
   Stack,
@@ -373,25 +374,16 @@ export function Audit() {
       {chips.length > 0 && (
         <Cluster gap="xs" align="center" wrap>
           {chips.map((c) => (
-            // TODO: replace inline cursor style when DismissibleBadge ships — see packages/design-system/src/components/TODO.md
-            <Badge
+            <FilterChip
               key={c.key}
-              tone={c.tone}
-              dot="start"
-              role="button"
-              tabIndex={0}
-              onClick={() => removeChip(c.key)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  removeChip(c.key);
-                }
-              }}
-              aria-label={`Remove ${c.label}: ${c.value} filter`}
-              style={{ cursor: 'pointer' }}
+              onDismiss={() => removeChip(c.key)}
+              dismissLabel={`Remove ${c.label}: ${c.value} filter`}
             >
-              {c.label}: {c.value} <X size={12} aria-hidden />
-            </Badge>
+              <FilterChip.Label>{c.label}</FilterChip.Label>
+              <FilterChip.Value tone={c.tone === 'neutral' ? undefined : c.tone}>
+                {c.value}
+              </FilterChip.Value>
+            </FilterChip>
           ))}
           <Button variant="ghost" size="sm" onClick={() => setChips([])}>
             Clear all
