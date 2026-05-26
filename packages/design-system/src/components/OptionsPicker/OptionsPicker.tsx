@@ -100,6 +100,14 @@ type SharedContentProps = {
   emptyState?: ReactNode;
   /** Footer count formatter (multi only). Default `'${selected} of ${total}'`. */
   footerCount?: (selected: number, total: number) => ReactNode;
+  /**
+   * Whether to render the search bar at the top of the panel. Defaults to
+   * `true`. Hide it (`false`) for small/curated option lists where typing
+   * filters would just be noise — the selection-count header is hidden
+   * alongside the search input (the footer's `N of TOTAL` text still
+   * shows in multi mode).
+   */
+  searchable?: boolean;
   className?: string;
 };
 export type OptionsPickerContentProps = (FlatContentProps | GroupedContentProps) &
@@ -374,7 +382,7 @@ function tristate(groupOptionValues: string[], draft: string[]): TriState {
  */
 const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProps>(
   function OptionsPickerContent(props, ref) {
-    const { label, className, searchPlaceholder = 'Filter…' } = props;
+    const { label, className, searchPlaceholder = 'Filter…', searchable = true } = props;
     const ctx = usePickerContext('Content');
 
     const contentId = ctx.contentId;
@@ -515,28 +523,30 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
         onKeyDown={handleKeyDown}
       >
         <Stack gap="xs">
-          <div className={styles.searchBar}>
-            <Search size={14} aria-hidden className={styles.searchIcon} />
-            <Input
-              ref={searchInputRef}
-              type="text"
-              value={filter}
-              onChange={(e) => setFilter(e.currentTarget.value)}
-              placeholder={searchPlaceholder}
-              aria-label={searchPlaceholder}
-              className={styles.searchInput}
-            />
-            {ctx.mode === 'multi' && (
-              <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
-                {draft.length} sel
-              </Text>
-            )}
-            {ctx.mode === 'single' && draft.length > 0 && (
-              <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
-                1 sel
-              </Text>
-            )}
-          </div>
+          {searchable && (
+            <div className={styles.searchBar}>
+              <Search size={14} aria-hidden className={styles.searchIcon} />
+              <Input
+                ref={searchInputRef}
+                type="text"
+                value={filter}
+                onChange={(e) => setFilter(e.currentTarget.value)}
+                placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
+                className={styles.searchInput}
+              />
+              {ctx.mode === 'multi' && (
+                <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
+                  {draft.length} sel
+                </Text>
+              )}
+              {ctx.mode === 'single' && draft.length > 0 && (
+                <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
+                  1 sel
+                </Text>
+              )}
+            </div>
+          )}
 
           <div
             className={styles.list}
