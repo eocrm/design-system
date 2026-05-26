@@ -19,7 +19,11 @@ export type AuditEntry = {
 const sarah: AuditActorRef = { id: 'u_super', name: 'Sarah Lin', email: 'sarah.lin@eocrm.io' };
 const mei: AuditActorRef = { id: 'u_mei', name: 'Mei Kim', email: 'mei.kim@eocrm.io' };
 const alex: AuditActorRef = { id: 'u_alex', name: 'Alex Rivera', email: 'alex.rivera@acme.io' };
-const jordan: AuditActorRef = { id: 'u_jordan', name: 'Jordan Park', email: 'jordan.park@northwind.io' };
+const jordan: AuditActorRef = {
+  id: 'u_jordan',
+  name: 'Jordan Park',
+  email: 'jordan.park@northwind.io',
+};
 const sam: AuditActorRef = { id: 'u_sam', name: 'Sam Chen', email: 'sam.chen@hooli.com' };
 const maya: AuditActorRef = { id: 'u_maya', name: 'Maya Owens', email: 'maya.owens@stark.co' };
 
@@ -69,7 +73,14 @@ export const auditEntries: AuditEntry[] = [
     changes: {
       permissions: {
         from: ['contacts.view', 'contacts.edit', 'deals.view'],
-        to: ['contacts.view', 'contacts.edit', 'contacts.delete', 'deals.view', 'deals.edit', 'audit.view'],
+        to: [
+          'contacts.view',
+          'contacts.edit',
+          'contacts.delete',
+          'deals.view',
+          'deals.edit',
+          'audit.view',
+        ],
       },
     },
     context: { role_name: 'Admin' },
@@ -156,7 +167,12 @@ export const auditEntries: AuditEntry[] = [
     entity_type: 'user',
     entity_id: 'u_unknown',
     changes: null,
-    context: { ip: '198.51.100.7', user_agent: 'curl/7.88', reason: 'invalid_credentials', attempts_last_hour: 14 },
+    context: {
+      ip: '198.51.100.7',
+      user_agent: 'curl/7.88',
+      reason: 'invalid_credentials',
+      attempts_last_hour: 14,
+    },
   },
 ];
 

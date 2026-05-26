@@ -13,6 +13,7 @@ A mockup for the audit log surface fills that gap and proves the primitives comp
 Add a single `/mockups/audit` page that shows the superadmin scope of the audit log (cross-tenant view, with the Tenant column) as a static-but-interactive demo. Built entirely from `@eocrm/design-system` primitives per Hard rule 6.
 
 **Non-goals:**
+
 - Tenant-scoped variant. Superadmin scope is a strict superset (adds the Tenant column + tenant filter); landing one variant first keeps the mockup focused.
 - Real filter logic. Filter pickers do not open; chips are visually applied with a working "remove" X to demonstrate the chip-removal UX.
 - Real data wiring or pagination. Mock data is hand-rolled and finite.
@@ -61,17 +62,17 @@ export type AuditEntry = {
 
 Roughly 10 entries spanning event categories and tones:
 
-| Event | Notes |
-| --- | --- |
-| `role.assigned` | Sarah Lin promotes Mei Kim to admin in acme |
-| `role.updated` | Permissions array diff (added 3, removed 0) |
-| `user.created` | Multiple fields created from null |
-| `auth.login_succeeded` | No changes; rich context (ip, ua, mfa) |
-| `auth.mfa_enabled` | Boolean enable |
-| `invitation.expired` | System-driven (actor=null), status diff |
-| `system_setting.updated` | Platform scope (tenant=null) feature flag flip |
-| `contact.deleted` | Soft delete with reason context |
-| `deal.won` | Amount field change |
+| Event                          | Notes                                          |
+| ------------------------------ | ---------------------------------------------- |
+| `role.assigned`                | Sarah Lin promotes Mei Kim to admin in acme    |
+| `role.updated`                 | Permissions array diff (added 3, removed 0)    |
+| `user.created`                 | Multiple fields created from null              |
+| `auth.login_succeeded`         | No changes; rich context (ip, ua, mfa)         |
+| `auth.mfa_enabled`             | Boolean enable                                 |
+| `invitation.expired`           | System-driven (actor=null), status diff        |
+| `system_setting.updated`       | Platform scope (tenant=null) feature flag flip |
+| `contact.deleted`              | Soft delete with reason context                |
+| `deal.won`                     | Amount field change                            |
 | `user.created` (impersonation) | Sarah Lin impersonating Mei Kim creates a user |
 
 Times within the last 7 days. Tenant slugs: `acme`, `beta`, `hooli`, `stark`. Actor names match the existing playground mock cast where reasonable (Alex Rivera, Jordan Park, Sam Chen, Maya Owens) plus one or two platform-side names (Sarah Lin, Mei Kim).
@@ -80,14 +81,14 @@ Times within the last 7 days. Tenant slugs: `acme`, `beta`, `hooli`, `stark`. Ac
 
 `useDataTable` hook with `getRowId: (r) => r.id` and `renderExpandedRow` provided. Columns:
 
-| Column | Width | Render | Primitives |
-| --- | --- | --- | --- |
-| When | 130px | Relative time string ("2 min ago") wrapped in `<Tooltip>` with absolute ISO | `Tooltip`, `Text` |
-| Event | flex 1, min 180 | `<Badge tone={eventTone(event)} dot="start">{event}</Badge>` | `Badge` |
-| Actor | flex 1.4, min 200 | `<Cluster>Avatar + Stack(name, email)</Cluster>`; impersonation: extra row `<Badge tone="warning" size="sm">impersonating</Badge>` + impersonator name | `Avatar`, `Cluster`, `Stack`, `Text`, `Badge` |
-| Tenant | 110px | `<Code tone="muted">{slug}</Code>` or em-dash | `Code`, `Text` |
-| Entity | flex 1, min 140 | `<Stack gap="3xs"><Text size="xs" tone="subtle">{entity_type}</Text><Code size="xs">{entity_id}</Code></Stack>` | `Stack`, `Text`, `Code` |
-| Changes | flex 1, min 200 | Text hint: "1 field" · "permissions: +3 / −0" · em-dash for null changes | `Text` |
+| Column  | Width             | Render                                                                                                                                                 | Primitives                                    |
+| ------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| When    | 130px             | Relative time string ("2 min ago") wrapped in `<Tooltip>` with absolute ISO                                                                            | `Tooltip`, `Text`                             |
+| Event   | flex 1, min 180   | `<Badge tone={eventTone(event)} dot="start">{event}</Badge>`                                                                                           | `Badge`                                       |
+| Actor   | flex 1.4, min 200 | `<Cluster>Avatar + Stack(name, email)</Cluster>`; impersonation: extra row `<Badge tone="warning" size="sm">impersonating</Badge>` + impersonator name | `Avatar`, `Cluster`, `Stack`, `Text`, `Badge` |
+| Tenant  | 110px             | `<Code tone="muted">{slug}</Code>` or em-dash                                                                                                          | `Code`, `Text`                                |
+| Entity  | flex 1, min 140   | `<Stack gap="3xs"><Text size="xs" tone="subtle">{entity_type}</Text><Code size="xs">{entity_id}</Code></Stack>`                                        | `Stack`, `Text`, `Code`                       |
+| Changes | flex 1, min 200   | Text hint: "1 field" · "permissions: +3 / −0" · em-dash for null changes                                                                               | `Text`                                        |
 
 Chevron auto-column is added by `useDataTable({ renderExpandedRow })`.
 
@@ -119,7 +120,7 @@ Chevron auto-column is added by `useDataTable({ renderExpandedRow })`.
   { key: 'event', label: 'Event', value: 'role.assigned', tone: 'info' },
   { key: 'tenant', label: 'Tenant', value: 'acme', tone: 'neutral' /* mono */ },
   { key: 'entity', label: 'Entity type', value: 'user', tone: 'neutral' },
-]
+];
 ```
 
 Each chip renders as `<Badge tone={tone} dot="start">{label}: {value} ✕</Badge>` — the ✕ is a small inline icon (`X` from lucide-react) and clicking the badge removes it. "Clear all" Button (variant="ghost", size="sm") empties the array.
@@ -139,6 +140,7 @@ Clicks are no-op. The buttons exist to show what the filter bar looks like, not 
 ### Pagination footer
 
 Static `<Cluster justify="between">` with:
+
 - `<Text size="sm" tone="muted">Showing 10 of 284+ events</Text>`
 - `<Button variant="secondary" size="sm">Load more</Button>` (no-op)
 

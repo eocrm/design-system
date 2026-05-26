@@ -16,14 +16,14 @@
 
 ## File Structure
 
-| File | Role |
-|---|---|
-| `packages/playground/src/data/audit.ts` (NEW) | `AuditEntry` type, `auditEntries` mock array (~10 entries), `eventTone()` helper |
-| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (NEW) | Page component + in-file render helpers (ActorCell, ChangesHint, ExpandedPanel) |
-| `packages/playground/src/pages/mockups/registry.ts` (MODIFY) | Add `audit` mockup entry |
-| `packages/playground/src/App.tsx` (MODIFY) | Add `<Route path="/mockups/audit" element={<Audit/>}/>` |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY) | Append "Audit log" to Mockups nav |
-| `packages/playground/src/pages/mockups/MockupsIndex.tsx` (MODIFY) | Add overview card |
+| File                                                              | Role                                                                             |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `packages/playground/src/data/audit.ts` (NEW)                     | `AuditEntry` type, `auditEntries` mock array (~10 entries), `eventTone()` helper |
+| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (NEW)     | Page component + in-file render helpers (ActorCell, ChangesHint, ExpandedPanel)  |
+| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)      | Add `audit` mockup entry                                                         |
+| `packages/playground/src/App.tsx` (MODIFY)                        | Add `<Route path="/mockups/audit" element={<Audit/>}/>`                          |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)   | Append "Audit log" to Mockups nav                                                |
+| `packages/playground/src/pages/mockups/MockupsIndex.tsx` (MODIFY) | Add overview card                                                                |
 
 **No co-located `.module.scss`** — Hard rule 6 forbids it for mockups; layout density comes from existing component props (Stack/Cluster gaps, Text size).
 
@@ -34,6 +34,7 @@
 ## Task 1: Mock data + event tone helper
 
 **Files:**
+
 - Create: `packages/playground/src/data/audit.ts`
 
 - [ ] **Step 1: Create the data file with type and entries**
@@ -62,7 +63,11 @@ export type AuditEntry = {
 const sarah: AuditActorRef = { id: 'u_super', name: 'Sarah Lin', email: 'sarah.lin@eocrm.io' };
 const mei: AuditActorRef = { id: 'u_mei', name: 'Mei Kim', email: 'mei.kim@eocrm.io' };
 const alex: AuditActorRef = { id: 'u_alex', name: 'Alex Rivera', email: 'alex.rivera@acme.io' };
-const jordan: AuditActorRef = { id: 'u_jordan', name: 'Jordan Park', email: 'jordan.park@northwind.io' };
+const jordan: AuditActorRef = {
+  id: 'u_jordan',
+  name: 'Jordan Park',
+  email: 'jordan.park@northwind.io',
+};
 const sam: AuditActorRef = { id: 'u_sam', name: 'Sam Chen', email: 'sam.chen@hooli.com' };
 const maya: AuditActorRef = { id: 'u_maya', name: 'Maya Owens', email: 'maya.owens@stark.co' };
 
@@ -112,7 +117,14 @@ export const auditEntries: AuditEntry[] = [
     changes: {
       permissions: {
         from: ['contacts.view', 'contacts.edit', 'deals.view'],
-        to: ['contacts.view', 'contacts.edit', 'contacts.delete', 'deals.view', 'deals.edit', 'audit.view'],
+        to: [
+          'contacts.view',
+          'contacts.edit',
+          'contacts.delete',
+          'deals.view',
+          'deals.edit',
+          'audit.view',
+        ],
       },
     },
     context: { role_name: 'Admin' },
@@ -199,7 +211,12 @@ export const auditEntries: AuditEntry[] = [
     entity_type: 'user',
     entity_id: 'u_unknown',
     changes: null,
-    context: { ip: '198.51.100.7', user_agent: 'curl/7.88', reason: 'invalid_credentials', attempts_last_hour: 14 },
+    context: {
+      ip: '198.51.100.7',
+      user_agent: 'curl/7.88',
+      reason: 'invalid_credentials',
+      attempts_last_hour: 14,
+    },
   },
 ];
 
@@ -224,9 +241,11 @@ export function eventTone(event: string): BadgeTone {
 - [ ] **Step 2: Typecheck**
 
 Run from repo root:
+
 ```bash
 cd /Users/dpws/projects/design-system/packages/playground && npm run typecheck
 ```
+
 Expected: clean exit (no errors).
 
 - [ ] **Step 3: Commit**
@@ -251,6 +270,7 @@ EOF
 ## Task 2: Audit page skeleton — header + filter triggers + chip row
 
 **Files:**
+
 - Create: `packages/playground/src/pages/mockups/Audit/Audit.tsx`
 
 - [ ] **Step 1: Create page with PageHeader + filter triggers + chip row (no table yet)**
@@ -340,8 +360,7 @@ export function Audit() {
               aria-label={`Remove ${c.label}: ${c.value} filter`}
               style={{ cursor: 'pointer' }}
             >
-              {c.label}: {c.value}{' '}
-              <X size={12} aria-hidden style={{ verticalAlign: 'middle' }} />
+              {c.label}: {c.value} <X size={12} aria-hidden style={{ verticalAlign: 'middle' }} />
             </Badge>
           ))}
           <Button variant="ghost" size="sm" onClick={() => setChips([])}>
@@ -369,7 +388,7 @@ export type { Chip };
 
 Append to `packages/design-system/src/components/TODO.md` (create the section if not present, otherwise append to the existing primitives-wanted list):
 
-```markdown
+````markdown
 ### ChipBar / DismissibleBadge
 
 **Used in mockups:** `packages/playground/src/pages/mockups/Audit/Audit.tsx` (filter chip row)
@@ -377,28 +396,35 @@ Append to `packages/design-system/src/components/TODO.md` (create the section if
 Filter-chip UX: a Badge variant with a built-in dismiss control (X button). Today the audit mockup composes Badge with `role="button"` + an inline `cursor: pointer` style as an escape hatch. Both EOCRM's real audit page and Trello/Linear-style filter bars need this pattern.
 
 API sketch:
+
 ```tsx
 <Badge tone="info" onDismiss={() => removeChip(id)}>
   Event: role.assigned
 </Badge>
 ```
+````
+
 or a parallel `<DismissibleBadge>` if mixing in a new prop is undesired.
 
 Mocked in: `Audit.tsx` chip row (escape-hatch inline style).
-```
+
+````
 
 Verify the file exists first:
 ```bash
 ls packages/design-system/src/components/TODO.md
-```
+````
+
 If it doesn't exist, create with just the section above plus an `# Wishlist` H1 at the top.
 
 - [ ] **Step 3: Verify PageHeader API**
 
 Confirm the PageHeader props used (`title`, `meta`, `actions`) exist:
+
 ```bash
 grep -E "title\?:|meta\?:|actions\?:" packages/design-system/src/components/PageHeader/PageHeader.tsx | head -10
 ```
+
 Expected: at least `title`, `meta` (or similar — could be `subtitle`/`metadata`), and `actions` keys appear.
 
 If the API differs (e.g., `subtitle` instead of `meta`), adjust the `<PageHeader>` usage in `Audit.tsx` accordingly. Re-read `packages/design-system/src/components/PageHeader/PageHeader.tsx` lines 1–60 to confirm.
@@ -408,6 +434,7 @@ If the API differs (e.g., `subtitle` instead of `meta`), adjust the `<PageHeader
 ```bash
 cd /Users/dpws/projects/design-system/packages/playground && npm run typecheck
 ```
+
 Expected: clean exit.
 
 If typecheck fails on prop names, fix them in `Audit.tsx`, then re-run.
@@ -434,6 +461,7 @@ EOF
 ## Task 3: DataTable with columns (collapsed rows only)
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Audit/Audit.tsx`
 
 - [ ] **Step 1: Add DataTable + columns**
@@ -484,18 +512,28 @@ function actorCell(entry: AuditEntry) {
   const a = entry.actor;
   const i = entry.impersonator;
   if (!a) {
-    return <Text size="sm" tone="subtle">System</Text>;
+    return (
+      <Text size="sm" tone="subtle">
+        System
+      </Text>
+    );
   }
   return (
     <Cluster gap="xs" align="center">
       <Avatar size="sm" name={a.name} />
       <Stack gap="3xs">
         <Text size="sm">{a.name}</Text>
-        <Text size="xs" tone="subtle">{a.email}</Text>
+        <Text size="xs" tone="subtle">
+          {a.email}
+        </Text>
         {i && (
           <Cluster gap="3xs" align="center">
-            <Badge tone="warning" size="sm">impersonating</Badge>
-            <Text size="xs" tone="muted">by {i.name}</Text>
+            <Badge tone="warning" size="sm">
+              impersonating
+            </Badge>
+            <Text size="xs" tone="muted">
+              by {i.name}
+            </Text>
           </Cluster>
         )}
       </Stack>
@@ -504,7 +542,12 @@ function actorCell(entry: AuditEntry) {
 }
 
 function changesHint(entry: AuditEntry): React.ReactNode {
-  if (!entry.changes) return <Text size="sm" tone="muted">—</Text>;
+  if (!entry.changes)
+    return (
+      <Text size="sm" tone="muted">
+        —
+      </Text>
+    );
   const fields = Object.keys(entry.changes);
   if (fields.length === 1) {
     const [only] = fields;
@@ -517,69 +560,77 @@ function changesHint(entry: AuditEntry): React.ReactNode {
 Inside the `Audit` function, BEFORE the `return`, add the columns + instance:
 
 ```tsx
-  const columns = useMemo<ColumnDef<AuditEntry>[]>(
-    () => [
-      {
-        id: 'when',
-        header: 'When',
-        size: 130,
-        cell: (r) => (
-          <Tooltip content={new Date(r.occurred_at).toISOString()}>
-            <Text size="sm" tone="muted">{relativeTime(r.occurred_at)}</Text>
-          </Tooltip>
+const columns = useMemo<ColumnDef<AuditEntry>[]>(
+  () => [
+    {
+      id: 'when',
+      header: 'When',
+      size: 130,
+      cell: (r) => (
+        <Tooltip content={new Date(r.occurred_at).toISOString()}>
+          <Text size="sm" tone="muted">
+            {relativeTime(r.occurred_at)}
+          </Text>
+        </Tooltip>
+      ),
+    },
+    {
+      id: 'event',
+      header: 'Event',
+      size: 200,
+      cell: (r) => (
+        <Badge tone={eventTone(r.event)} dot="start">
+          {r.event}
+        </Badge>
+      ),
+    },
+    {
+      id: 'actor',
+      header: 'Actor',
+      size: 240,
+      cell: (r) => actorCell(r),
+    },
+    {
+      id: 'tenant',
+      header: 'Tenant',
+      size: 110,
+      cell: (r) =>
+        r.tenant ? (
+          <Code tone="muted">{r.tenant.slug}</Code>
+        ) : (
+          <Text size="sm" tone="muted">
+            —
+          </Text>
         ),
-      },
-      {
-        id: 'event',
-        header: 'Event',
-        size: 200,
-        cell: (r) => (
-          <Badge tone={eventTone(r.event)} dot="start">{r.event}</Badge>
-        ),
-      },
-      {
-        id: 'actor',
-        header: 'Actor',
-        size: 240,
-        cell: (r) => actorCell(r),
-      },
-      {
-        id: 'tenant',
-        header: 'Tenant',
-        size: 110,
-        cell: (r) =>
-          r.tenant ? (
-            <Code tone="muted">{r.tenant.slug}</Code>
-          ) : (
-            <Text size="sm" tone="muted">—</Text>
-          ),
-      },
-      {
-        id: 'entity',
-        header: 'Entity',
-        size: 160,
-        cell: (r) => (
-          <Stack gap="3xs">
-            <Text size="xs" tone="subtle">{r.entity_type ?? '—'}</Text>
-            {r.entity_id ? <Code>{r.entity_id}</Code> : null}
-          </Stack>
-        ),
-      },
-      {
-        id: 'changes',
-        header: 'Changes',
-        size: 200,
-        cell: (r) => changesHint(r),
-      },
-    ],
-    [],
-  );
+    },
+    {
+      id: 'entity',
+      header: 'Entity',
+      size: 160,
+      cell: (r) => (
+        <Stack gap="3xs">
+          <Text size="xs" tone="subtle">
+            {r.entity_type ?? '—'}
+          </Text>
+          {r.entity_id ? <Code>{r.entity_id}</Code> : null}
+        </Stack>
+      ),
+    },
+    {
+      id: 'changes',
+      header: 'Changes',
+      size: 200,
+      cell: (r) => changesHint(r),
+    },
+  ],
+  [],
+);
 
-  const instance = useDataTable<AuditEntry>({
-    data: auditEntries,
-    columns,
-    getRowId: (r) => r.id,
-  });
+const instance = useDataTable<AuditEntry>({
+  data: auditEntries,
+  columns,
+  getRowId: (r) => r.id,
+});
 ```
 
 Replace the `<Text tone="muted">Table is rendered in the next task...</Text>` block with:
@@ -602,12 +653,15 @@ Replace the `<Text tone="muted">Table is rendered in the next task...</Text>` bl
 ```bash
 cd /Users/dpws/projects/design-system/packages/playground && npm run typecheck
 ```
+
 Expected: clean exit.
 
 If typecheck fails on `aria-label` (some components require `ariaLabel`), `Cluster.justify="between"` value, or any `size` prop on Avatar/Text/Badge that doesn't exist, run:
+
 ```bash
 grep -E "(size\?:|aria-label|justify\?:|gap\?:)" packages/design-system/src/components/Cluster/Cluster.tsx packages/design-system/src/components/Avatar/Avatar.tsx packages/design-system/src/components/Text/Text.tsx packages/design-system/src/components/Badge/Badge.tsx 2>/dev/null | head -20
 ```
+
 Adjust prop names/values to match the actual API.
 
 - [ ] **Step 3: Commit**
@@ -631,6 +685,7 @@ EOF
 ## Task 4: Expandable rows + ExpandedPanel
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Audit/Audit.tsx`
 
 - [ ] **Step 1: Add the ExpandedPanel render helper**
@@ -680,7 +735,9 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
   return (
     <Stack gap="md">
       <Stack gap="xs">
-        <Text size="xs" tone="subtle" weight="semibold">Changes</Text>
+        <Text size="xs" tone="subtle" weight="semibold">
+          Changes
+        </Text>
         {entry.changes ? (
           <DefinitionList layout="horizontal" spacing="sm">
             {Object.entries(entry.changes).map(([field, { from, to }]) => (
@@ -689,7 +746,9 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
                 <DefinitionList.Description>
                   <Cluster gap="xs" align="center">
                     <Code tone="danger">{formatDiffValue(from)}</Code>
-                    <Text size="sm" tone="muted" aria-hidden>→</Text>
+                    <Text size="sm" tone="muted" aria-hidden>
+                      →
+                    </Text>
                     <Code tone="accent">{formatDiffValue(to)}</Code>
                   </Cluster>
                 </DefinitionList.Description>
@@ -697,23 +756,32 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
             ))}
           </DefinitionList>
         ) : (
-          <Text size="sm" tone="muted">No field changes recorded.</Text>
+          <Text size="sm" tone="muted">
+            No field changes recorded.
+          </Text>
         )}
       </Stack>
 
       <Divider />
 
       <Stack gap="xs">
-        <Text size="xs" tone="subtle" weight="semibold">Context</Text>
+        <Text size="xs" tone="subtle" weight="semibold">
+          Context
+        </Text>
         {Object.keys(entry.context).length === 0 ? (
-          <Text size="sm" tone="muted">No additional context.</Text>
+          <Text size="sm" tone="muted">
+            No additional context.
+          </Text>
         ) : (
           <DefinitionList layout="horizontal" spacing="sm">
             {Object.entries(entry.context).map(([key, value]) => (
               <DefinitionList.Item key={key}>
                 <DefinitionList.Term>{key}</DefinitionList.Term>
                 <DefinitionList.Description>
-                  {isIdLikeKey(key) || typeof value === 'string' && /^[a-z0-9_]+$/i.test(value) && value.length > 12 ? (
+                  {isIdLikeKey(key) ||
+                  (typeof value === 'string' &&
+                    /^[a-z0-9_]+$/i.test(value) &&
+                    value.length > 12) ? (
                     <Code>{String(value)}</Code>
                   ) : (
                     <Text size="sm">{String(value)}</Text>
@@ -728,7 +796,9 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
       <Divider />
 
       <Stack gap="xs">
-        <Text size="xs" tone="subtle" weight="semibold">Forensic actions</Text>
+        <Text size="xs" tone="subtle" weight="semibold">
+          Forensic actions
+        </Text>
         <Cluster gap="md" wrap>
           <Link as="button" type="button" onClick={() => {}}>
             See all by {actorName}
@@ -755,12 +825,12 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
 Update the `useDataTable` call inside the `Audit` function:
 
 ```tsx
-  const instance = useDataTable<AuditEntry>({
-    data: auditEntries,
-    columns,
-    getRowId: (r) => r.id,
-    renderExpandedRow: (row) => <ExpandedPanel entry={row} />,
-  });
+const instance = useDataTable<AuditEntry>({
+  data: auditEntries,
+  columns,
+  getRowId: (r) => r.id,
+  renderExpandedRow: (row) => <ExpandedPanel entry={row} />,
+});
 ```
 
 - [ ] **Step 3: Typecheck**
@@ -768,12 +838,15 @@ Update the `useDataTable` call inside the `Audit` function:
 ```bash
 cd /Users/dpws/projects/design-system/packages/playground && npm run typecheck
 ```
+
 Expected: clean exit.
 
 If `DefinitionList.Item` / `DefinitionList.Term` / `DefinitionList.Description` don't exist as compound subcomponents, check the actual API:
+
 ```bash
 grep -E "^export const Definition" packages/design-system/src/components/DefinitionList/DefinitionList.tsx
 ```
+
 Adjust to whatever compound is exported (e.g., maybe they're named `Item`/`Term`/`Description` directly under the namespace, or take `term`/`description` as props).
 
 If `Link as="button"` doesn't accept `type` or the `onClick`, drop `type="button"` and re-check `packages/design-system/src/components/Link/Link.tsx` for the exact polymorphic prop shape.
@@ -800,6 +873,7 @@ EOF
 ## Task 5: Wire routing, nav, registry, and overview card
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
@@ -839,6 +913,7 @@ Open `packages/playground/src/pages/mockups/registry.ts`. Add this entry to the 
 ```bash
 grep -E "'(Avatar|Badge|Button|Cluster|Code|DataTable|DefinitionList|Divider|Link|PageHeader|Stack|Text|Title|Tooltip)'" packages/playground/src/pages/mockups/registry.ts
 ```
+
 Expected: each of the 14 names appears at least once (in the `ComponentName` union).
 
 If any are missing from the union, add them as members of the `ComponentName` type literal at the top of the file.
@@ -876,6 +951,7 @@ If the file already iterates over `MOCKUPS`, this step is a no-op — record tha
 ```bash
 cd /Users/dpws/projects/design-system && npm run typecheck --workspaces --if-present
 ```
+
 Expected: clean exit.
 
 - [ ] **Step 7: Commit**
@@ -905,6 +981,7 @@ EOF
 ```bash
 cd /Users/dpws/projects/design-system && make build 2>&1 | tail -15
 ```
+
 Expected: `✓ built in <ms>` with no errors. Warnings about chunk size are pre-existing and OK.
 
 - [ ] **Step 2: Lint**
@@ -912,6 +989,7 @@ Expected: `✓ built in <ms>` with no errors. Warnings about chunk size are pre-
 ```bash
 cd /Users/dpws/projects/design-system && make lint 2>&1 | tail -5
 ```
+
 Expected: clean exit (stylelint runs against SCSS — no SCSS changed, so this is trivially clean).
 
 - [ ] **Step 3: Tests**
@@ -919,11 +997,13 @@ Expected: clean exit (stylelint runs against SCSS — no SCSS changed, so this i
 ```bash
 cd /Users/dpws/projects/design-system && npm test 2>&1 | tail -5
 ```
+
 Expected: 1976 tests passing (matches the count from before this branch). Mockups don't add tests.
 
 - [ ] **Step 4: Manual verification — start the dev server**
 
 Check if the playground is already running on port 8080:
+
 ```bash
 curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 || echo "not running"
 ```
@@ -979,6 +1059,7 @@ For each Critical and Important finding, fix in the relevant file. Skipped findi
 ```bash
 cd /Users/dpws/projects/design-system && npm test && make lint && make build 2>&1 | tail -10
 ```
+
 Expected: green across the board.
 
 - [ ] **Step 4: Spawn another review agent**
@@ -988,6 +1069,7 @@ Same prompt as Step 1. Repeat until verdict is `clean enough to stop` AND there 
 - [ ] **Step 5: Commit any review-fix changes**
 
 If review-fix steps produced changes:
+
 ```bash
 cd /Users/dpws/projects/design-system
 git add -A
@@ -1016,13 +1098,17 @@ Fill in the bullet list with actual fixes applied. If no changes, skip this step
 ```bash
 cd /Users/dpws/projects/design-system && git push -u origin feat/audit-mockup 2>&1 | tail -10
 ```
+
 Expected: pre-push hook runs prettier + stylelint + typecheck, all pass; branch pushed.
 
 If the pre-push hook fails on prettier formatting, run:
+
 ```bash
 npx prettier --write packages/playground/src/pages/mockups/Audit/Audit.tsx packages/playground/src/data/audit.ts packages/playground/src/pages/mockups/registry.ts packages/playground/src/App.tsx packages/playground/src/layout/AppShell/AppShell.tsx packages/playground/src/pages/mockups/MockupsIndex.tsx
 ```
+
 Then commit the formatting fix as its own commit:
+
 ```bash
 git add -A
 git commit -m "chore: prettier"
@@ -1062,6 +1148,7 @@ The `gh pr create` command outputs the PR URL on success. Capture it and report 
 ## Self-Review
 
 **1. Spec coverage:**
+
 - Header (PageHeader, meta count, two disabled actions with Tooltip) — Task 2 ✓
 - Filter triggers (3 buttons, no-op) — Task 2 ✓
 - Active chips with working X removal — Task 2 ✓
