@@ -133,3 +133,55 @@ it('shows selection count "N sel" with aria-live=polite', async () => {
   await user.click(screen.getByRole('checkbox', { name: 'B' }));
   expect(screen.getByText('2 sel')).toBeInTheDocument();
 });
+
+it('multi mode: Apply commits the draft and closes the panel', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker selected={[]} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.click(screen.getAllByRole('checkbox')[0]);
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(onApply).toHaveBeenCalledWith(['one']);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+
+it('multi mode: Cancel discards the draft without firing onApply', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  const onCancel = vi.fn();
+  render(
+    <OptionsPicker selected={['one']} onApply={onApply} onCancel={onCancel}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.click(screen.getAllByRole('checkbox')[0]);
+  await user.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(onApply).not.toHaveBeenCalled();
+  expect(onCancel).toHaveBeenCalled();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+
+it('multi mode: footer shows "N of TOTAL events" with default formatter', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={['one']} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  expect(screen.getByText('1 of 2')).toBeInTheDocument();
+});

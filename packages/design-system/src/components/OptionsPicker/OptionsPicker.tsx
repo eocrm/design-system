@@ -12,7 +12,9 @@ import {
 import clsx from 'clsx';
 import { Search } from 'lucide-react';
 import { Popover } from '../Popover';
+import { Button } from '../Button';
 import { Checkbox } from '../Checkbox';
+import { Cluster } from '../Cluster';
 import { Input } from '../Input';
 import { type BadgeTone } from '../Badge';
 import { Text } from '../Text';
@@ -204,11 +206,13 @@ function isGrouped(props: OptionsPickerContentProps): props is GroupedContentPro
   return 'groups' in props && props.groups !== undefined;
 }
 
-// Used by Task 4 for the footer "X of TOTAL" count.
-// @ts-expect-error TS6133 — forward-use stub; consumed in Task 4 footer.
 function getAllOptions(props: OptionsPickerContentProps): OptionsPickerOption[] {
   if (isGrouped(props)) return props.groups.flatMap((g) => g.options);
   return props.options ?? [];
+}
+
+function defaultFooterCount(selected: number, total: number): string {
+  return `${selected} of ${total}`;
 }
 
 const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProps>(
@@ -253,6 +257,8 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
       return (props.options ?? []).filter(matchesFilter);
     }, [props, matchesFilter]);
 
+    const allOptionsForCount = useMemo(() => getAllOptions(props), [props]);
+
     return (
       <Popover.Content ref={ref} className={clsx(styles.panel, className)} aria-label={label}>
         <Stack gap="xs">
@@ -286,6 +292,33 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                   <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
                 ))}
           </div>
+
+          {ctx.mode === 'multi' && (
+            <div className={styles.footer}>
+              <Text size="xs" tone="muted">
+                {(props.footerCount ?? defaultFooterCount)(draft.length, allOptionsForCount.length)}
+              </Text>
+              <Cluster gap="sm">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setDraft(ctx.selected);
+                    ctx.cancel();
+                  }}
+                >
+                  {props.cancelLabel ?? 'Cancel'}
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => ctx.commit(draft)}
+                >
+                  {props.applyLabel ?? 'Apply'}
+                </Button>
+              </Cluster>
+            </div>
+          )}
         </Stack>
       </Popover.Content>
     );
