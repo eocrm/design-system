@@ -565,6 +565,65 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 - ❌ Wrapping non-`Sortable.Item` content inside `<Sortable>`. dnd-kit's `SortableContext` only tracks the ids you pass it; arbitrary children render but won't be reorderable.
 - ❌ Relying on whole-item drag (no Handle) for screen-reader-accessible lists. Without a Handle, dnd-kit puts `role="button"` on the `<li>` and the listitem semantics are lost — screen readers stop announcing "item N of M." For accessible lists, always include a `<Sortable.Handle>`.
 
+### `<Kanban>` — multi-column board (drag-to-reorder + cross-column drag with live reflow)
+
+Trello/Jira-style board UI. Compound: `Kanban`, `Kanban.Column`, `Kanban.Card`, `Kanban.Handle` (re-exported `Sortable.Handle`). Built on the same `@dnd-kit/sortable` plumbing as `<Sortable>` with internal items state that re-arranges cards live as the dragged card crosses column boundaries.
+
+```tsx
+import { Kanban, type KanbanMoveEvent } from '@eocrm/design-system';
+
+const [board, setBoard] = useState({
+  todo: [{ id: 'a', title: 'Buy milk' }],
+  doing: [{ id: 'b', title: 'Write spec' }],
+  done: [{ id: 'c', title: 'Ship Sortable' }],
+});
+
+function handleMove(event: KanbanMoveEvent) {
+  const { from, to, cardId } = event;
+  setBoard((curr) => {
+    const next = { ...curr };
+    const source = [...next[from.columnId as keyof typeof curr]];
+    const [moved] = source.splice(from.index, 1);
+    next[from.columnId as keyof typeof curr] = source;
+    const target = from.columnId === to.columnId
+      ? source
+      : [...(next[to.columnId as keyof typeof curr] ?? [])];
+    target.splice(to.index, 0, moved);
+    next[to.columnId as keyof typeof curr] = target;
+    return next;
+  });
+}
+
+<Kanban onMove={handleMove}>
+  {(['todo', 'doing', 'done'] as const).map((colId) => (
+    <Kanban.Column key={colId} id={colId}>
+      <Title order={3}>{colId}</Title>
+      {board[colId].map((c) => (
+        <Kanban.Card key={c.id} id={c.id}>
+          <Card>{c.title}</Card>
+        </Kanban.Card>
+      ))}
+    </Kanban.Column>
+  ))}
+</Kanban>
+```
+
+Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once per drop with the diff between the initial layout and the final layout. Consumer applies the move (immutable splice in/out). Columns and Cards both need stable `id` props (`string | number`).
+
+**Drag origin** (hybrid): `<Kanban.Handle>` inside a Card restricts drag origin to the Handle. Without a Handle, the whole Card is draggable (and dnd-kit assigns it `role="button"`).
+
+**Cross-column drag is LIVE**: as the dragged card crosses into a new column, cards in the target column shift to make room in real time. `onMove` still fires only once on release. This is driven by internal Kanban state — consumer's state is untouched until drop, so re-renders are scoped to the Kanban subtree (avoids the measureRect cascade that would happen if mid-drag mutations went through consumer setState).
+
+**Keyboard reorder** works WITHIN a column (Tab to Card/Handle, Space pick up, Arrow keys move, Space drop). Cross-column keyboard moves are NOT supported in v1.
+
+**Anti-patterns**
+
+- ❌ Expecting cross-column keyboard reorder. dnd-kit's stock coordinate-getter is per-`SortableContext`. v2 will ship a custom getter that bridges columns.
+- ❌ Interleaving non-`Kanban.Card` children with cards inside a `<Kanban.Column>`. The Root walks each column's children to extract a contiguous card block; if non-cards appear between cards, the rendering re-arranges them awkwardly. Keep header / count badges BEFORE the cards, footer / "Add card" buttons AFTER.
+- ❌ Wrapping `<Kanban.Card>` inside a custom component. The Root walks direct descendants of `<Kanban.Column>` to find cards; nested cards are invisible to it.
+- ❌ Non-stable column / card ids (e.g. array indices). Both must persist across reorders.
+- ❌ Mutating board state in place inside `onMove`. Always return a new object/array reference.
+
 ### `<ImageCrop>` — controlled image cropper
 
 ```tsx
