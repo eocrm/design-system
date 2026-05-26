@@ -215,6 +215,15 @@ function defaultFooterCount(selected: number, total: number): string {
   return `${selected} of ${total}`;
 }
 
+type TriState = 'false' | 'mixed' | 'true';
+
+function tristate(groupOptionValues: string[], draft: string[]): TriState {
+  const selectedInGroup = groupOptionValues.filter((v) => draft.includes(v)).length;
+  if (selectedInGroup === 0) return 'false';
+  if (selectedInGroup === groupOptionValues.length) return 'true';
+  return 'mixed';
+}
+
 const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProps>(
   function OptionsPickerContent(props, ref) {
     const { label, className, searchPlaceholder = 'Filter…' } = props;
@@ -250,6 +259,21 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
         }
       },
       [ctx],
+    );
+
+    const toggleGroup = useCallback(
+      (groupOptions: OptionsPickerOption[]) => {
+        if (ctx.mode !== 'multi') return;
+        setDraft((prev) => {
+          const allValues = groupOptions.map((o) => o.value);
+          const allSelected = allValues.every((v) => prev.includes(v));
+          if (allSelected) return prev.filter((v) => !allValues.includes(v));
+          const next = [...prev];
+          for (const v of allValues) if (!next.includes(v)) next.push(v);
+          return next;
+        });
+      },
+      [ctx.mode],
     );
 
     const visibleFlat = useMemo(() => {
@@ -302,17 +326,37 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             )}
             {hasAnyVisible && isGrouped(props) && visibleGroups.map((g) => (
               <div key={g.id} className={styles.group}>
-                <div className={styles.groupHeader} role="presentation">
-                  <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
-                  <Text size="xs" weight="semibold" className={styles.groupLabel}>
-                    {g.label}
-                  </Text>
-                  {g.hint && (
-                    <Text size="xs" tone="subtle" className={styles.groupHint}>
-                      {g.hint}
+                {ctx.mode === 'multi' ? (
+                  <button
+                    type="button"
+                    className={styles.groupHeader}
+                    aria-pressed={tristate(g.options.map((o) => o.value), draft)}
+                    aria-label={`Toggle group ${g.label}`}
+                    onClick={() => toggleGroup(g.options)}
+                  >
+                    <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
+                    <Text size="xs" weight="semibold" className={styles.groupLabel}>
+                      {g.label}
                     </Text>
-                  )}
-                </div>
+                    {g.hint && (
+                      <Text size="xs" tone="subtle" className={styles.groupHint}>
+                        {g.hint}
+                      </Text>
+                    )}
+                  </button>
+                ) : (
+                  <div className={styles.groupHeader} role="presentation">
+                    <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
+                    <Text size="xs" weight="semibold" className={styles.groupLabel}>
+                      {g.label}
+                    </Text>
+                    {g.hint && (
+                      <Text size="xs" tone="subtle" className={styles.groupHint}>
+                        {g.hint}
+                      </Text>
+                    )}
+                  </div>
+                )}
                 {g.visibleOptions.map((opt) => (
                   <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
                 ))}

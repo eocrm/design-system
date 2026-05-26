@@ -261,3 +261,67 @@ it('shows emptyState when all groups are filtered to nothing', async () => {
   await user.type(screen.getByRole('textbox'), 'zzz');
   expect(screen.getByText('No matches')).toBeInTheDocument();
 });
+
+it('multi mode: clicking a group header selects all options in that group', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.click(screen.getByRole('button', { name: /Authentication/i }));
+  expect(screen.getByRole('checkbox', { name: 'login' })).toBeChecked();
+  expect(screen.getByRole('checkbox', { name: 'logout' })).toBeChecked();
+});
+
+it('multi mode: clicking a fully-selected group header deselects all', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={['auth.login', 'auth.logout']} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.click(screen.getByRole('button', { name: /Authentication/i }));
+  expect(screen.getByRole('checkbox', { name: 'login' })).not.toBeChecked();
+  expect(screen.getByRole('checkbox', { name: 'logout' })).not.toBeChecked();
+});
+
+it('multi mode: group header aria-pressed reflects tri-state', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={['auth.login']} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  const authHeader = screen.getByRole('button', { name: /Authentication/i });
+  expect(authHeader).toHaveAttribute('aria-pressed', 'mixed');
+  await user.click(screen.getByRole('checkbox', { name: 'logout' }));
+  expect(authHeader).toHaveAttribute('aria-pressed', 'true');
+});
+
+it('single mode: group header is presentational (no role=button)', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker mode="single" selected={null} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  expect(screen.queryByRole('button', { name: /Authentication/i })).not.toBeInTheDocument();
+  expect(screen.getByText('Authentication')).toBeInTheDocument();
+});
