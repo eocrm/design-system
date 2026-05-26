@@ -10,17 +10,55 @@ import styles from './FilterChip.module.scss';
 // ----------------------------------------------------------------------------
 
 export interface FilterChipProps extends Omit<HTMLAttributes<HTMLDivElement>, 'role'> {
+  /**
+   * Dismiss callback. When provided, the chip renders a trailing `×`
+   * button wired to this handler; the chip itself does NOT animate or
+   * unmount — the consumer's state update must remove the chip. Omit
+   * the prop to render a read-only chip with no dismiss button.
+   */
   onDismiss?: () => void;
+
+  /**
+   * Override the dismiss button's `aria-label`. Defaults to
+   * `'Remove filter'`. Pass a contextual label (e.g.,
+   * `'Remove Event: auth.* filter'`) when the chip's filter category
+   * isn't obvious from the surrounding screen-reader context.
+   */
   dismissLabel?: string;
+
+  /**
+   * One or two `FilterChip.Label` / `FilterChip.Value` subcomponents.
+   * Use both for `Label: Value` chips; pass just a Value for chips
+   * where the category is implicit (e.g., a tenant slug).
+   */
   children: ReactNode;
 }
 
 export interface FilterChipLabelProps extends HTMLAttributes<HTMLSpanElement> {
+  /**
+   * The category text — typically a noun describing the filter
+   * dimension (`Event`, `Tenant`, `Stage`, `Owner`). Rendered muted so
+   * the Value is the visual anchor.
+   */
   children: ReactNode;
 }
 
 export interface FilterChipValueProps extends HTMLAttributes<HTMLSpanElement> {
+  /**
+   * Optional dot tone. When set, prefixes a 6px colored circle before
+   * the value text — use to distinguish filter categories that share
+   * a screen (e.g., event filters get a tone-matched dot, tenant
+   * filters get no dot). Reuses Badge's tone palette: `neutral`,
+   * `info`, `success`, `warning`, `danger`, `purple`. Omit for plain
+   * text values.
+   */
   tone?: BadgeTone;
+
+  /**
+   * The value text — what the filter is actually filtering by
+   * (`auth.*`, `beta`, `Won`). Pair with an optional `tone` dot to
+   * categorize.
+   */
   children: ReactNode;
 }
 
@@ -112,7 +150,16 @@ const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function Filt
 /**
  * Label slot for the chip's filter category (e.g., `Event`, `Tenant`,
  * `Stage`). Renders muted text — the visual lead-in to the Value.
- * Optional; omit for value-only chips.
+ * Optional; omit for value-only chips where the category is implicit.
+ *
+ * @example
+ * <FilterChip.Label>Event</FilterChip.Label>
+ *
+ * @example
+ * <FilterChip onDismiss={remove}>
+ *   <FilterChip.Label>Tenant</FilterChip.Label>
+ *   <FilterChip.Value>beta</FilterChip.Value>
+ * </FilterChip>
  */
 const FilterChipLabel = forwardRef<HTMLSpanElement, FilterChipLabelProps>(function FilterChipLabel(
   { className, children, ...rest },
@@ -120,7 +167,7 @@ const FilterChipLabel = forwardRef<HTMLSpanElement, FilterChipLabelProps>(functi
 ) {
   return (
     <span ref={ref} className={clsx(styles.label, className)} {...rest}>
-      <Text size="sm" tone="muted">
+      <Text as="span" size="sm" tone="muted">
         {children}
       </Text>
     </span>
@@ -132,9 +179,24 @@ const FilterChipLabel = forwardRef<HTMLSpanElement, FilterChipLabelProps>(functi
 // ----------------------------------------------------------------------------
 
 /**
- * Value slot for the chip's filter value. Set `tone` to prefix a
- * colored 6px dot — use the same `BadgeTone` palette as Badge for
- * cross-component consistency.
+ * Value slot for the chip's filter value. Set `tone` to prefix a 6px
+ * colored dot before the text — use the same `BadgeTone` palette as
+ * `<Badge>` for cross-component consistency. Omit `tone` for plain
+ * values (e.g., a tenant slug).
+ *
+ * @example
+ * // Plain value, no dot
+ * <FilterChip.Value>beta</FilterChip.Value>
+ *
+ * @example
+ * // Tone-dotted value
+ * <FilterChip.Value tone="info">auth.* (3)</FilterChip.Value>
+ *
+ * @example
+ * // Mixed content — Value accepts any ReactNode
+ * <FilterChip.Value tone="success">
+ *   <Avatar size="2xs" name="Sarah" /> Sarah
+ * </FilterChip.Value>
  */
 const FilterChipValue = forwardRef<HTMLSpanElement, FilterChipValueProps>(function FilterChipValue(
   { tone, className, children, ...rest },
@@ -143,7 +205,7 @@ const FilterChipValue = forwardRef<HTMLSpanElement, FilterChipValueProps>(functi
   return (
     <span ref={ref} className={clsx(styles.value, className)} {...rest}>
       {tone && <span className={styles.dot} data-tone={tone} aria-hidden="true" />}
-      <Text size="sm">{children}</Text>
+      <Text as="span" size="sm">{children}</Text>
     </span>
   );
 });
