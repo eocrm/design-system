@@ -130,6 +130,62 @@ function usePickerContext(label: string): PickerContextValue {
 // Root
 // ----------------------------------------------------------------------------
 
+/**
+ * Compound multi/single-select picker with search, optional grouping, and
+ * draft-then-Apply commit semantics. Built on `Popover`, `Input`, `Checkbox`,
+ * `Radio`, `Badge`. Use it for filter UX (audit log Events / Tenant, contact
+ * list owner picker, deal stage picker) — NOT as a form field (use `Select`
+ * for forms).
+ *
+ * Multi mode (default): draft state until Apply. Cancel/Esc/click-outside
+ * revert. Single mode: each click commits via onApply + closes the panel
+ * (no Apply/Cancel footer).
+ *
+ * @example
+ * // Multi-select with grouped options + namespace hints
+ * <OptionsPicker
+ *   selected={selectedEvents}
+ *   onApply={(next) => setSelectedEvents(next)}
+ * >
+ *   <OptionsPicker.Trigger>
+ *     <Button variant="secondary">Events <ChevronDown size={14}/></Button>
+ *   </OptionsPicker.Trigger>
+ *   <OptionsPicker.Content
+ *     label="Filter events"
+ *     groups={[
+ *       { id: 'auth', label: 'Authentication', tone: 'success', hint: 'auth.*',
+ *         options: [{ value: 'auth.login_succeeded', label: 'login_succeeded' }] },
+ *     ]}
+ *   />
+ * </OptionsPicker>
+ *
+ * @example
+ * // Single-select flat list (auto-commits on click)
+ * <OptionsPicker mode="single" selected={tenantId} onApply={setTenantId}>
+ *   <OptionsPicker.Trigger>
+ *     <Button variant="secondary">Tenant</Button>
+ *   </OptionsPicker.Trigger>
+ *   <OptionsPicker.Content
+ *     label="Filter tenant"
+ *     options={tenants.map((t) => ({ value: t.id, label: t.slug }))}
+ *   />
+ * </OptionsPicker>
+ *
+ * @remarks When NOT to use
+ * - Form fields with one required selection — use `<Select>` instead. OptionsPicker
+ *   has no notion of a `name` attribute, no implicit form association.
+ * - Action menus (Edit / Delete / Archive on a row) — use `<DropdownMenu>`. Those
+ *   are commands, not filters.
+ * - Settings toggles or single-checkbox prompts — use `<Checkbox>` directly.
+ *
+ * @remarks Anti-patterns
+ * - ❌ Passing BOTH `options` and `groups` to Content — TypeScript rejects it. Pick one.
+ * - ❌ Calling onApply yourself inside Content's render. The picker owns commit
+ *   via Apply/click-on-radio; consumers should treat `onApply(next)` as the
+ *   single source of truth and update React state from it.
+ * - ❌ Holding open state externally without `open` + `onOpenChange` both being
+ *   passed. Partial control breaks invariants.
+ */
 function OptionsPickerRoot(props: OptionsPickerProps) {
   const mode: OptionsPickerMode = props.mode ?? 'multi';
 
