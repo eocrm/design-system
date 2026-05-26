@@ -31,6 +31,7 @@ export type ComponentName =
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'
   | 'Input'
+  | 'Kanban'
   | 'Link'
   | 'Modal'
   | 'PageHeader'
@@ -95,7 +96,7 @@ export const MOCKUPS = [
       'Cluster',
       'Code',
       'DropdownMenu',
-      'Grid',
+      'Kanban',
       'Stack',
       'Text',
       'Title',

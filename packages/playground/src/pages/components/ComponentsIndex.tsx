@@ -25,6 +25,7 @@ import { PasswordStrengthMeter } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
 import { Skeleton } from '@eocrm/design-system';
 import { Slider } from '@eocrm/design-system';
+import { Kanban } from '@eocrm/design-system';
 import { Sortable } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Switch } from '@eocrm/design-system';
@@ -301,6 +302,27 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: (
       <div style={{ width: '100%', maxWidth: 220 }}>
         <Slider value={42} onChange={() => {}} aria-label="preview" />
+      </div>
+    ),
+  },
+  {
+    to: '/components/kanban',
+    name: 'Kanban',
+    description: 'Multi-column board with live cross-column drag.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 220, pointerEvents: 'none' }}>
+        <Kanban>
+          <Kanban.Column id="a">
+            <Kanban.Card id="card-a">
+              <Card padding="sm">A</Card>
+            </Kanban.Card>
+          </Kanban.Column>
+          <Kanban.Column id="b">
+            <Kanban.Card id="card-b">
+              <Card padding="sm">B</Card>
+            </Kanban.Card>
+          </Kanban.Column>
+        </Kanban>
       </div>
     ),
   },

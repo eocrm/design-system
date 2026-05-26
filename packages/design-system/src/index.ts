@@ -13,6 +13,14 @@ export type {
 export { Input } from './components/Input';
 export type { InputProps, InputSize } from './components/Input';
 
+export { Kanban } from './components/Kanban';
+export type {
+  KanbanProps,
+  KanbanColumnProps,
+  KanbanCardProps,
+  KanbanMoveEvent,
+} from './components/Kanban';
+
 export { Card } from './components/Card';
 export type { CardProps, CardPadding, CardTone } from './components/Card';
 export type { CardHeaderProps, CardHeaderLevel } from './components/Card';

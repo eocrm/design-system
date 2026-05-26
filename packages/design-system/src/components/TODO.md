@@ -85,7 +85,9 @@ A raw `<div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)
 
 **When this ships:** refactor the Members seats card and re-evaluate the search-input constraints across mockups, then tick this checkbox.
 
-### [ ] `<MutedBox>` — non-Card subdued-background container
+## Closed
+
+### [x] `<MutedBox>` — non-Card subdued-background container
 
 **Filed:** 2026-05-25
 **Mocked in:**
@@ -102,6 +104,4 @@ Inline `style={{ background: 'var(--color-bg-muted)', borderRadius: 'var(--radiu
 
 **When this ships:** refactor the Deals mockup column-wrapper sites, then tick this checkbox.
 
-## Closed
-
-_(filled as entries are resolved.)_
+**Resolved:** absorbed by `<Kanban.Column>`'s built-in muted-background styling (commit `08853a3`). Deals mockup migrated to use `<Kanban>` in the same PR.

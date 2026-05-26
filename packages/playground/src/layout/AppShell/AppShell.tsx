@@ -126,6 +126,7 @@ const componentGroups = [
       { to: '/components/radio', label: 'Radio', icon: CircleDot, end: false },
       { to: '/components/select', label: 'Select', icon: ChevronsUpDown, end: false },
       { to: '/components/slider', label: 'Slider', icon: SlidersHorizontal, end: false },
+      { to: '/components/kanban', label: 'Kanban', icon: KanbanSquare, end: false },
       { to: '/components/sortable', label: 'Sortable', icon: GripVertical, end: false },
       { to: '/components/switch', label: 'Switch', icon: ToggleRight, end: false },
       { to: '/components/textarea', label: 'Textarea', icon: MessageSquareText, end: false },

@@ -16,6 +16,7 @@ import { ButtonDemo } from './pages/components/ButtonDemo';
 import { ButtonGroupDemo } from './pages/components/ButtonGroupDemo';
 import { DatePickersDemo } from './pages/components/DatePickersDemo';
 import { InputDemo } from './pages/components/InputDemo';
+import { KanbanDemo } from './pages/components/KanbanDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
 import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
 import { PaginationDemo } from './pages/components/PaginationDemo';
@@ -83,6 +84,7 @@ export default function App() {
           <Route path="/components/button-group" element={<ButtonGroupDemo />} />
           <Route path="/components/datepickers" element={<DatePickersDemo />} />
           <Route path="/components/input" element={<InputDemo />} />
+          <Route path="/components/kanban" element={<KanbanDemo />} />
           <Route path="/components/pagination" element={<PaginationDemo />} />
           <Route path="/components/progress" element={<ProgressDemo />} />
           <Route path="/components/circular-progress" element={<CircularProgressDemo />} />

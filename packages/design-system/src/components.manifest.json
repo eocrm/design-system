@@ -232,6 +232,14 @@
       "ColorPicker"
     ]
   },
+  "Kanban": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Sortable"
+    ],
+    "composedBy": []
+  },
   "Link": {
     "tier": "primitive",
     "cluster": "Navigation",
@@ -330,7 +338,9 @@
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "Kanban"
+    ]
   },
   "Stack": {
     "tier": "primitive",
