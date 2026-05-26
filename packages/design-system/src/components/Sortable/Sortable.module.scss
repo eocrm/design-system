@@ -1,0 +1,63 @@
+.list {
+  // UA reset — <ol> ships with default browser margin and padding.
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ol> default margin
+  margin: 0;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ol> default padding (bullet gutter)
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.item {
+  position: relative;
+
+  // Required for no-Handle whole-item drag on mobile. dnd-kit's PointerSensor
+  // can't initiate drag if the browser claims the touch gesture for scroll.
+  // Harmless on Items with a Handle (the Item itself isn't the activator).
+  touch-action: none;
+}
+
+.item[data-dragging='true'] {
+  cursor: grabbing;
+  box-shadow: var(--shadow-lg);
+  z-index: 1;
+}
+
+.handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-subtle);
+  cursor: grab;
+  padding: var(--space-1);
+  touch-action: none;
+
+  &:hover {
+    color: var(--color-fg);
+    background: var(--color-bg-subtle);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+  }
+}
+
+.item[data-dragging='true'] .handle {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    // dnd-kit applies an inline `transition` for smooth slide animations;
+    // we override it under reduced motion. !important is the canonical way
+    // to override inline styles with the same property at higher specificity.
+    transition: none !important; // stylelint-disable-line declaration-no-important -- override dnd-kit's inline transition
+  }
+}

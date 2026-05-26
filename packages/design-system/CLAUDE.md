@@ -183,7 +183,7 @@ Then:
 
 Wishlist for the CRM, in rough priority order. Until each exists, CRM pages should NOT roll their own — use a placeholder + token-correct native HTML, or request the component.
 
-**Dependency policy:** No UI / component libraries. `@floating-ui/react-dom` is used for collision-aware positioning (DropdownMenu and any future popover-shaped component); everything else — ARIA, focus, keyboard, dismissal — is hand-rolled per WAI-ARIA APG patterns. When CSS anchor positioning has acceptable browser support, Floating UI can be removed without changing public APIs.
+**Dependency policy:** No UI / component libraries. Two narrow exceptions: (a) `@floating-ui/react-dom` for collision-aware positioning (DropdownMenu and any future popover-shaped component), and (b) `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` for drag-and-drop sortable behavior (used by DataTable's column reorder and by Sortable). Everything else — ARIA, focus, keyboard, dismissal — is hand-rolled per WAI-ARIA APG patterns. When CSS anchor positioning has acceptable browser support, Floating UI can be removed without changing public APIs.
 
 - `Modal` / `Dialog` (hand-roll, no positioning needed; needs focus trap + scroll lock)
 - `Tooltip` (hand-roll on Floating UI; lightweight, no focus trap)

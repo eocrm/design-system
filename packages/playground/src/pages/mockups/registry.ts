@@ -44,6 +44,7 @@ export type ComponentName =
   | 'Select'
   | 'Skeleton'
   | 'Slider'
+  | 'Sortable'
   | 'Stack'
   | 'Switch'
   | 'Table'
