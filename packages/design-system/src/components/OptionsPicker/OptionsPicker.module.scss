@@ -61,3 +61,34 @@
   padding: var(--space-2);
   border-top: var(--border-width) solid var(--color-border);
 }
+
+.group {
+  display: flex;
+  flex-direction: column;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-1);
+}
+
+.groupDot {
+  flex-shrink: 0;
+}
+
+.groupLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.groupHint {
+  font-family: var(--font-family-mono);
+}
+
+.empty {
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+}

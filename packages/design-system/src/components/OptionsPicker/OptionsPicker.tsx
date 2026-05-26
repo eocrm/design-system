@@ -16,7 +16,7 @@ import { Button } from '../Button';
 import { Checkbox } from '../Checkbox';
 import { Cluster } from '../Cluster';
 import { Input } from '../Input';
-import { type BadgeTone } from '../Badge';
+import { Badge, type BadgeTone } from '../Badge';
 import { Text } from '../Text';
 import { Stack } from '../Stack';
 import styles from './OptionsPicker.module.scss';
@@ -257,6 +257,15 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
       return (props.options ?? []).filter(matchesFilter);
     }, [props, matchesFilter]);
 
+    const visibleGroups = useMemo(() => {
+      if (!isGrouped(props)) return [];
+      return props.groups
+        .map((g) => ({ ...g, visibleOptions: g.options.filter(matchesFilter) }))
+        .filter((g) => g.visibleOptions.length > 0);
+    }, [props, matchesFilter]);
+
+    const hasAnyVisible = isGrouped(props) ? visibleGroups.length > 0 : visibleFlat.length > 0;
+
     const allOptionsForCount = useMemo(() => getAllOptions(props), [props]);
 
     return (
@@ -286,11 +295,32 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           </div>
 
           <div className={styles.list} role="listbox" aria-multiselectable={ctx.mode === 'multi'}>
-            {isGrouped(props)
-              ? null /* grouped rendering ships in Task 5 */
-              : visibleFlat.map((opt) => (
+            {!hasAnyVisible && (
+              <Text size="sm" tone="muted" className={styles.empty}>
+                {props.emptyState ?? 'No matches'}
+              </Text>
+            )}
+            {hasAnyVisible && isGrouped(props) && visibleGroups.map((g) => (
+              <div key={g.id} className={styles.group}>
+                <div className={styles.groupHeader} role="presentation">
+                  <Badge tone={g.tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />
+                  <Text size="xs" weight="semibold" className={styles.groupLabel}>
+                    {g.label}
+                  </Text>
+                  {g.hint && (
+                    <Text size="xs" tone="subtle" className={styles.groupHint}>
+                      {g.hint}
+                    </Text>
+                  )}
+                </div>
+                {g.visibleOptions.map((opt) => (
                   <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
                 ))}
+              </div>
+            ))}
+            {hasAnyVisible && !isGrouped(props) && visibleFlat.map((opt) => (
+              <OptionRow key={opt.value} option={opt} checked={draft.includes(opt.value)} onToggle={toggle} />
+            ))}
           </div>
 
           {ctx.mode === 'multi' && (

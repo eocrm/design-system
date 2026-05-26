@@ -185,3 +185,79 @@ it('multi mode: footer shows "N of TOTAL events" with default formatter', async 
   await user.click(screen.getByRole('button', { name: 'Open' }));
   expect(screen.getByText('1 of 2')).toBeInTheDocument();
 });
+
+const groupedOptions = [
+  {
+    id: 'auth',
+    label: 'Authentication',
+    tone: 'success' as const,
+    hint: 'auth.*',
+    options: [
+      { value: 'auth.login', label: 'login' },
+      { value: 'auth.logout', label: 'logout' },
+    ],
+  },
+  {
+    id: 'role',
+    label: 'Roles',
+    tone: 'info' as const,
+    hint: 'role.*',
+    options: [
+      { value: 'role.assigned', label: 'assigned' },
+      { value: 'role.revoked', label: 'revoked' },
+    ],
+  },
+];
+
+it('renders groups with section headers + hint labels', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  expect(screen.getByText('Authentication')).toBeInTheDocument();
+  expect(screen.getByText('auth.*')).toBeInTheDocument();
+  expect(screen.getByText('Roles')).toBeInTheDocument();
+  expect(screen.getByText('role.*')).toBeInTheDocument();
+  expect(screen.getAllByRole('checkbox')).toHaveLength(4);
+});
+
+it('hides groups whose every option is filtered out', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.type(screen.getByRole('textbox'), 'login');
+  expect(screen.getByText('Authentication')).toBeInTheDocument();
+  expect(screen.queryByText('Roles')).not.toBeInTheDocument();
+});
+
+it('shows emptyState when all groups are filtered to nothing', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content
+        label="Filter"
+        groups={groupedOptions}
+        emptyState="No matches"
+      />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.type(screen.getByRole('textbox'), 'zzz');
+  expect(screen.getByText('No matches')).toBeInTheDocument();
+});
