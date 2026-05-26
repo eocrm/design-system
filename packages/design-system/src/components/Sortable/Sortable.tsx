@@ -67,13 +67,13 @@ export interface SortableHandleProps extends ButtonHTMLAttributes<HTMLButtonElem
   children?: ReactNode;
 }
 
-interface SortableItemContextValue {
+export interface SortableItemContextValue {
   listeners: ReturnType<typeof useSortable>['listeners'];
   attributes: ReturnType<typeof useSortable>['attributes'];
   setActivatorNodeRef: ReturnType<typeof useSortable>['setActivatorNodeRef'];
 }
 
-const SortableItemContext = createContext<SortableItemContextValue | null>(null);
+export const SortableItemContext = createContext<SortableItemContextValue | null>(null);
 
 /**
  * Recursively check whether the children subtree contains a `Sortable.Handle`.

@@ -38,6 +38,7 @@ const CLUSTERS = {
   FileUpload: 'Forms',
   ImageCrop: 'Forms',
   Input: 'Forms',
+  Kanban: 'Forms',
   PasswordInput: 'Forms',
   PasswordStrengthMeter: 'Forms',
   Radio: 'Forms',

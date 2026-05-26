@@ -60,6 +60,7 @@ const CLUSTERS: Record<string, string> = {
   FileUpload: 'Forms',
   ImageCrop: 'Forms',
   Input: 'Forms',
+  Kanban: 'Forms',
   PasswordInput: 'Forms',
   PasswordStrengthMeter: 'Forms',
   Radio: 'Forms',
