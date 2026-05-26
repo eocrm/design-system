@@ -1,10 +1,14 @@
 @use '../../styles/mixins' as *;
 
+// Override Popover.Content's default padding — the picker manages its own
+// section padding internally (searchBar, list rows, footer each have their
+// own space-2 padding) so the panel wrapper itself sits flush.
 .panel {
   display: flex;
   flex-direction: column;
   min-width: 280px;
   max-width: 360px;
+  padding: 0;
 }
 
 .list {

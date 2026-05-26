@@ -27,7 +27,6 @@ import { Cluster } from '../Cluster';
 import { Input } from '../Input';
 import { Badge, type BadgeTone } from '../Badge';
 import { Text } from '../Text';
-import { Stack } from '../Stack';
 import styles from './OptionsPicker.module.scss';
 
 // ----------------------------------------------------------------------------
@@ -522,7 +521,13 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
         aria-label={label}
         onKeyDown={handleKeyDown}
       >
-        <Stack gap="xs">
+        {/*
+          Plain <div> instead of <Stack> — each region (searchBar, list,
+          footer) has its own padding + borders that separate them
+          visually. A Stack gap here would add unwanted whitespace between
+          the borders.
+        */}
+        <div>
           {searchable && (
             <div className={styles.searchBar}>
               <Search size={14} aria-hidden className={styles.searchIcon} />
@@ -535,16 +540,6 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                 aria-label={searchPlaceholder}
                 className={styles.searchInput}
               />
-              {ctx.mode === 'multi' && (
-                <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
-                  {draft.length} sel
-                </Text>
-              )}
-              {ctx.mode === 'single' && draft.length > 0 && (
-                <Text size="xs" tone="subtle" aria-live="polite" className={styles.count}>
-                  1 sel
-                </Text>
-              )}
             </div>
           )}
 
@@ -658,7 +653,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
               </Cluster>
             </div>
           )}
-        </Stack>
+        </div>
       </Popover.Content>
     );
   },

@@ -111,7 +111,7 @@ it('filters visible options by search text (case-insensitive substring)', async 
   expect(screen.getByText('login_failed')).toBeInTheDocument();
 });
 
-it('shows selection count "N sel" with aria-live=polite', async () => {
+it('does not render the "N sel" count in the search bar (selection count lives in the footer only)', async () => {
   const user = userEvent.setup();
   render(
     <OptionsPicker selected={['a']} onApply={() => {}}>
@@ -128,11 +128,8 @@ it('shows selection count "N sel" with aria-live=polite', async () => {
     </OptionsPicker>,
   );
   await user.click(screen.getByRole('button', { name: 'Open' }));
-  const count = screen.getByText('1 sel');
-  expect(count).toHaveAttribute('aria-live', 'polite');
-  // Toggle B on → count becomes 2 sel
-  await user.click(screen.getByRole('checkbox', { name: 'B' }));
-  expect(screen.getByText('2 sel')).toBeInTheDocument();
+  expect(screen.queryByText('1 sel')).not.toBeInTheDocument();
+  expect(screen.queryByText('2 sel')).not.toBeInTheDocument();
 });
 
 it('multi mode: Apply commits the draft and closes the panel', async () => {
