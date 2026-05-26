@@ -25,6 +25,7 @@ export type ComponentName =
   | 'Drawer'
   | 'DropdownMenu'
   | 'EmptyState'
+  | 'FilterChip'
   | 'FileUpload'
   | 'ImageCrop'
   | 'Grid'

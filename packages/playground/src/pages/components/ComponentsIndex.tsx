@@ -41,6 +41,7 @@ import { DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
 import { DefinitionList } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
 import { FileUpload } from '@eocrm/design-system';
+import { FilterChip } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
 import { OptionsPicker } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
@@ -704,6 +705,20 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             <Button size="sm">OK</Button>
           </div>
         </div>
+      </div>
+    ),
+  },
+  {
+    to: '/components/filter-chip',
+    name: 'FilterChip',
+    description:
+      'Dismissible "active filter" pill — Label + tone-dotted Value + auto-rendered × dismiss button.',
+    preview: (
+      <div style={{ pointerEvents: 'none' }}>
+        <FilterChip onDismiss={() => {}}>
+          <FilterChip.Label>Event</FilterChip.Label>
+          <FilterChip.Value tone="info">auth.*</FilterChip.Value>
+        </FilterChip>
       </div>
     ),
   },
