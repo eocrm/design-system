@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { ChevronDown, Download, Plus, MoreHorizontal } from 'lucide-react';
 import {
   Badge,
@@ -10,6 +11,7 @@ import {
   DropdownMenu,
   EmptyState,
   Input,
+  Link,
   OptionsPicker,
   Page,
   PageHeader,
@@ -169,7 +171,11 @@ export function Tenants() {
                     <Table.Cell>
                       <PersonDisplay size="sm">
                         <PersonDisplay.Avatar name={t.name} />
-                        <PersonDisplay.Name>{t.name}</PersonDisplay.Name>
+                        <PersonDisplay.Name>
+                          <Link as={RouterLink} to={`/mockups/tenants/${t.slug}`} variant="subtle">
+                            {t.name}
+                          </Link>
+                        </PersonDisplay.Name>
                         <PersonDisplay.Description>
                           <Code tone="muted">{t.slug}</Code>
                         </PersonDisplay.Description>

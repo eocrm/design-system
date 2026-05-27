@@ -215,6 +215,10 @@ export function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+export function getTenant(slug: string): Tenant | undefined {
+  return tenants.find((t) => t.slug === slug);
+}
+
 /** Format a GB number for display ("0.48 GB", "10 GB"). Returns "—" for null. */
 export function formatGb(gb: number | null): string {
   if (gb == null) return '—';
