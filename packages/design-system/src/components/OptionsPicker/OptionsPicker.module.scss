@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './OptionsPicker.tokens';
 
 // Override Popover.Content's default padding — the picker manages its own
 // section padding internally (searchBar, list rows, footer each have their
@@ -6,46 +7,46 @@
 .panel {
   display: flex;
   flex-direction: column;
-  min-width: 280px;
-  max-width: 360px;
+  min-width: var(--options-picker-panel-min-width);
+  max-width: var(--options-picker-panel-max-width);
   padding: 0;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  max-height: 320px;
+  max-height: var(--options-picker-list-max-height);
   overflow-y: auto;
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
+  gap: var(--options-picker-row-gap);
+  padding: var(--options-picker-row-padding);
+  border-radius: var(--options-picker-row-radius);
   cursor: pointer;
   user-select: none;
 
   &:hover {
-    background: var(--color-bg-muted);
+    background: var(--options-picker-row-bg-hover);
   }
 }
 
 .rowSelected {
-  background: var(--color-info-bg-subtle);
+  background: var(--options-picker-row-bg-selected);
 }
 
 .searchBar {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border-bottom: var(--border-width) solid var(--color-border);
+  gap: var(--options-picker-search-gap);
+  padding: var(--options-picker-search-padding);
+  border-bottom: var(--border-width) solid var(--options-picker-search-border-color);
 }
 
 .searchIcon {
-  color: var(--color-fg-subtle);
+  color: var(--options-picker-search-icon-color);
 }
 
 // Rule 4 note: internal flex layout — the public component is the panel,
@@ -64,9 +65,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border-top: var(--border-width) solid var(--color-border);
+  gap: var(--options-picker-footer-gap);
+  padding: var(--options-picker-footer-padding);
+  border-top: var(--border-width) solid var(--options-picker-footer-border-color);
 }
 
 .group {
@@ -84,9 +85,9 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-2);
-  background: var(--color-bg-muted);
+  gap: var(--options-picker-group-header-gap);
+  padding: var(--options-picker-group-header-padding-y) var(--options-picker-group-header-padding-x);
+  background: var(--options-picker-group-header-bg);
 }
 
 // Bottom border in the namespace's palette color. The width + style come
@@ -99,11 +100,11 @@
 // own, so we need separate selectors for the div + button branches
 // that match or beat its specificity.
 .groupHeaderWithBorder {
-  border-bottom: var(--border-width-emphasis) solid transparent;
+  border-bottom: var(--options-picker-group-header-border-width) solid transparent;
 }
 
 button.groupHeader.groupHeaderWithBorder {
-  border-bottom: var(--border-width-emphasis) solid transparent;
+  border-bottom: var(--options-picker-group-header-border-width) solid transparent;
 }
 
 .groupLabel {
@@ -121,20 +122,20 @@ button.groupHeader.groupHeaderWithBorder {
 // applies the same class to the Badge wrapper — the size is identical so
 // both rendering branches land at the same visual size.
 .groupDot {
-  width: var(--size-badge-dot);
-  height: var(--size-badge-dot);
-  border-radius: var(--radius-full);
+  width: var(--options-picker-group-dot-size);
+  height: var(--options-picker-group-dot-size);
+  border-radius: var(--options-picker-group-dot-radius);
   flex-shrink: 0;
 }
 
 // Indent options that live inside a group so they read as nested under
 // the group header (the header's dot + label is the "outdent" anchor).
 .group .row {
-  padding-left: var(--space-5);
+  padding-left: var(--options-picker-row-padding-left-grouped);
 }
 
 .empty {
-  padding: var(--space-3) var(--space-2);
+  padding: var(--options-picker-empty-padding-y) var(--options-picker-empty-padding-x);
   text-align: center;
 }
 
@@ -145,7 +146,7 @@ button.groupHeader {
   text-align: left;
 
   &:hover {
-    background: var(--color-bg-subtle);
+    background: var(--options-picker-group-header-bg-hover);
   }
 
   &:focus-visible {
@@ -154,5 +155,5 @@ button.groupHeader {
 }
 
 .rowFocused {
-  background: var(--color-bg-muted);
+  background: var(--options-picker-row-bg-focused);
 }

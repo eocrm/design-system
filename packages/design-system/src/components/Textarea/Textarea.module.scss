@@ -1,3 +1,5 @@
+@use './Textarea.tokens';
+
 .wrapper {
   width: 100%;
   display: block;
@@ -6,52 +8,52 @@
 .textarea {
   display: block;
   width: 100%;
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  color: var(--color-fg);
+  border: var(--border-width) solid var(--textarea-border-color);
+  border-radius: var(--textarea-radius);
+  background: var(--textarea-bg);
+  color: var(--textarea-fg);
   font-family: inherit;
-  line-height: var(--line-height-normal);
+  line-height: var(--textarea-line-height);
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast);
 
   &::placeholder {
-    color: var(--color-fg-subtle);
+    color: var(--textarea-placeholder-fg);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+    border-color: var(--textarea-border-color-focus);
+    box-shadow: 0 0 0 var(--ring-width) var(--textarea-ring-focus);
   }
 
   &:disabled {
-    background: var(--color-bg-subtle);
-    border-color: var(--color-border);
-    color: var(--color-fg-subtle);
+    background: var(--textarea-bg-disabled);
+    border-color: var(--textarea-border-color-disabled);
+    color: var(--textarea-fg-disabled);
     cursor: not-allowed;
   }
 
   &[readonly] {
-    background: var(--color-bg-subtle);
+    background: var(--textarea-bg-read-only);
   }
 }
 
 // Size — typography + padding. NO height (textarea height comes from rows + autoGrow).
 .sizeSm {
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-sm);
+  padding: var(--textarea-padding-y-sm) var(--textarea-padding-x-sm);
+  font-size: var(--textarea-font-size-sm);
 }
 
 .sizeMd {
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-md);
+  padding: var(--textarea-padding-y-md) var(--textarea-padding-x-md);
+  font-size: var(--textarea-font-size-md);
 }
 
 .sizeLg {
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-lg);
+  padding: var(--textarea-padding-y-lg) var(--textarea-padding-x-lg);
+  font-size: var(--textarea-font-size-lg);
 }
 
 // Resize direction
@@ -68,11 +70,11 @@
 }
 
 .invalid {
-  border-color: var(--color-danger);
+  border-color: var(--textarea-border-color-invalid);
 
   &:focus-visible {
-    border-color: var(--color-danger);
-    box-shadow: 0 0 0 var(--ring-width) var(--ring-danger);
+    border-color: var(--textarea-border-color-invalid);
+    box-shadow: 0 0 0 var(--ring-width) var(--textarea-ring-invalid);
   }
 }
 
@@ -83,8 +85,8 @@
   display: block;
   text-align: right;
   // stylelint-disable-next-line property-disallowed-list -- internal spacing between textarea and its counter child
-  margin-top: var(--space-1);
-  font-size: var(--font-size-sm);
-  color: var(--color-fg-muted);
+  margin-top: var(--textarea-counter-margin-top);
+  font-size: var(--textarea-counter-font-size);
+  color: var(--textarea-counter-fg);
   line-height: 1;
 }

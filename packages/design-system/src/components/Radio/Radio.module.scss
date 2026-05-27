@@ -1,7 +1,9 @@
+@use './Radio.tokens';
+
 .radio {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--radio-gap);
   cursor: pointer;
   user-select: none;
 
@@ -40,9 +42,9 @@
 
   // Constant line-box height across checked/unchecked states.
   line-height: 1;
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-full);
-  background: var(--color-bg);
+  border: var(--border-width) solid var(--radio-ring-border-color);
+  border-radius: var(--radio-ring-radius);
+  background: var(--radio-ring-bg);
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast);
@@ -52,73 +54,73 @@
 // is set per-size below to whole-pixel values so the dot always sits on
 // the pixel grid (no asymmetric sub-pixel snapping at md / lg).
 .dot {
-  border-radius: var(--radius-full);
+  border-radius: var(--radio-dot-radius);
   background: transparent;
   transition: background var(--transition-fast);
 }
 
 // Size modifiers — ring diameter + dot diameter + label font.
 .size-sm .ring {
-  width: var(--size-radio-sm);
-  height: var(--size-radio-sm);
+  width: var(--radio-ring-size-sm);
+  height: var(--radio-ring-size-sm);
 }
 
 .size-sm .dot {
-  width: var(--size-radio-dot-sm);
-  height: var(--size-radio-dot-sm);
+  width: var(--radio-dot-size-sm);
+  height: var(--radio-dot-size-sm);
 }
 
 .size-md .ring {
-  width: var(--size-radio-md);
-  height: var(--size-radio-md);
+  width: var(--radio-ring-size-md);
+  height: var(--radio-ring-size-md);
 }
 
 .size-md .dot {
-  width: var(--size-radio-dot-md);
-  height: var(--size-radio-dot-md);
+  width: var(--radio-dot-size-md);
+  height: var(--radio-dot-size-md);
 }
 
 .size-lg .ring {
-  width: var(--size-radio-lg);
-  height: var(--size-radio-lg);
+  width: var(--radio-ring-size-lg);
+  height: var(--radio-ring-size-lg);
 }
 
 .size-lg .dot {
-  width: var(--size-radio-dot-lg);
-  height: var(--size-radio-dot-lg);
+  width: var(--radio-dot-size-lg);
+  height: var(--radio-dot-size-lg);
 }
 
 .size-sm .labelText {
-  font-size: var(--font-size-sm);
+  font-size: var(--radio-label-font-size-sm);
 }
 
 .size-md .labelText {
-  font-size: var(--font-size-md);
+  font-size: var(--radio-label-font-size-md);
 }
 
 .size-lg .labelText {
-  font-size: var(--font-size-lg);
+  font-size: var(--radio-label-font-size-lg);
 }
 
 // Hover preview — border-only shift to accent. Excludes .disabled AND
 // .invalid so the danger border stays visible on hover (same fix as
 // Checkbox cycle-1).
 .radio:not(.disabled, .invalid):hover .ring {
-  border-color: var(--color-accent);
+  border-color: var(--radio-ring-border-color-hover);
 }
 
 // Checked — accent border + filled accent dot.
 .input:checked + .ring {
-  border-color: var(--color-accent);
+  border-color: var(--radio-ring-border-color-checked);
 }
 
 .input:checked + .ring .dot {
-  background: var(--color-accent);
+  background: var(--radio-dot-bg-checked);
 }
 
 // Focus ring on the ring (sibling selector picks up native input focus).
 .input:focus-visible + .ring {
-  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+  box-shadow: 0 0 0 var(--ring-width) var(--radio-ring-focus);
 }
 
 // Disabled — muted bg + border + dot.
@@ -128,20 +130,20 @@
 // and wins so a disabled+checked radio keeps the gray border instead of
 // reverting to accent blue.
 .disabled .ring {
-  background: var(--color-bg-subtle);
-  border-color: var(--color-border);
+  background: var(--radio-ring-bg-disabled);
+  border-color: var(--radio-ring-border-color-disabled);
 }
 
 .disabled .input:checked + .ring {
-  border-color: var(--color-border);
+  border-color: var(--radio-ring-border-color-disabled);
 }
 
 .disabled .input:checked + .ring .dot {
-  background: var(--color-fg-disabled);
+  background: var(--radio-dot-bg-checked-disabled);
 }
 
 .disabled .labelText {
-  color: var(--color-fg-disabled);
+  color: var(--radio-label-fg-disabled);
 }
 
 // Invalid — danger border + danger dot + danger focus ring.
@@ -150,21 +152,21 @@
 // checked radio would render with an accent-blue border instead of red.
 // The explicit `.invalid .input:checked + .ring` rule (0,4,0) wins.
 .invalid .ring {
-  border-color: var(--color-danger);
+  border-color: var(--radio-ring-border-color-invalid);
 }
 
 .invalid .input:checked + .ring {
-  border-color: var(--color-danger);
+  border-color: var(--radio-ring-border-color-invalid);
 }
 
 .invalid .input:checked + .ring .dot {
-  background: var(--color-danger);
+  background: var(--radio-dot-bg-checked-invalid);
 }
 
 .invalid .input:focus-visible + .ring {
-  box-shadow: 0 0 0 var(--ring-width) var(--ring-danger);
+  box-shadow: 0 0 0 var(--ring-width) var(--radio-ring-focus-invalid);
 }
 
 .labelText {
-  line-height: var(--line-height-normal);
+  line-height: var(--radio-label-line-height);
 }

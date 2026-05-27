@@ -1,0 +1,22 @@
+// Sortable.tokens.scss — component-scoped tokens for <Sortable> (list + item + drag handle). Defaults preserve byte-identical visuals.
+:root {
+  // List
+  --sortable-list-gap: var(--space-2);
+
+  // Item (dragging state)
+  --sortable-item-shadow-dragging: var(--shadow-lg);
+
+  // Handle
+  --sortable-handle-bg: transparent;
+  --sortable-handle-radius: var(--radius-sm);
+  --sortable-handle-fg: var(--color-fg-subtle);
+  --sortable-handle-padding: var(--space-1);
+
+  // Handle — hover
+  --sortable-handle-fg-hover: var(--color-fg);
+  --sortable-handle-bg-hover: var(--color-bg-subtle);
+
+  // Handle — focus
+  --sortable-handle-border-color-focus: var(--color-accent);
+  --sortable-handle-ring-focus: var(--ring-accent);
+}

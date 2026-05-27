@@ -1,3 +1,5 @@
+@use './Select.tokens';
+
 .root {
   display: block;
   width: 100%;
@@ -23,25 +25,25 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  min-height: var(--size-md);
-  padding: 0 var(--space-3);
+  min-height: var(--select-trigger-height-md);
+  padding: 0 var(--select-trigger-padding-x);
   font-family: var(--font-family-sans);
-  font-size: var(--font-size-md);
-  color: var(--color-fg);
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  font-size: var(--select-trigger-font-size);
+  color: var(--select-trigger-fg);
+  background: var(--select-trigger-bg);
+  border: var(--border-width) solid var(--select-trigger-border-color);
+  border-radius: var(--select-trigger-radius);
   cursor: pointer;
 
   &:focus-visible {
     outline: none;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+    border-color: var(--select-trigger-border-color-focus);
+    box-shadow: 0 0 0 var(--ring-width) var(--select-trigger-ring-focus);
   }
 
   &[disabled] {
-    color: var(--color-fg-disabled);
-    background: var(--color-bg-subtle);
+    color: var(--select-trigger-fg-disabled);
+    background: var(--select-trigger-bg-disabled);
     cursor: not-allowed;
   }
 }
@@ -50,7 +52,7 @@
   // Reserve `--space-8` on the right for the chevron (and the ✕ when
   // clearable). The chevron sits at `right: var(--space-3)`, the ✕ sits
   // at `right: var(--space-6)` — both inside the `.triggerWrap`'s padding.
-  padding-right: var(--space-8);
+  padding-right: var(--select-trigger-padding-right-reserved);
   text-align: left;
 
   // Multi-summary text can grow longer than the trigger width — clip with
@@ -72,16 +74,16 @@
 .triggerInput {
   // Same right-side reservation as `.triggerButton` — chevron + ✕ overlay
   // need clear space inside the `.triggerWrap`.
-  padding-right: var(--space-8);
+  padding-right: var(--select-trigger-padding-right-reserved);
   cursor: text;
 
   &::placeholder {
-    color: var(--color-fg-muted);
+    color: var(--select-placeholder-fg);
   }
 }
 
 .placeholder {
-  color: var(--color-fg-muted);
+  color: var(--select-placeholder-fg);
 }
 
 // ─── Chevron + clear-✕ inside the trigger wrap ─────────────────────────────
@@ -91,8 +93,8 @@
 .chevron {
   position: absolute;
   top: 50%;
-  right: var(--space-3);
-  color: var(--color-fg-muted);
+  right: var(--select-chevron-right);
+  color: var(--select-chevron-color);
   pointer-events: none;
   transform: translateY(-50%);
 }
@@ -102,16 +104,16 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  color: var(--color-fg-muted);
+  color: var(--select-clear-color);
   cursor: pointer;
   background: transparent;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--select-clear-radius);
 
   &:hover,
   &:focus-visible {
-    color: var(--color-fg);
-    background: var(--color-bg-muted);
+    color: var(--select-clear-color-hover);
+    background: var(--select-clear-bg-hover);
   }
 }
 
@@ -121,9 +123,9 @@
 .clearButton:not(.clearButtonInline) {
   position: absolute;
   top: 50%;
-  right: var(--space-6);
-  width: var(--space-4);
-  height: var(--space-4);
+  right: var(--select-clear-right);
+  width: var(--select-clear-size);
+  height: var(--select-clear-size);
   transform: translateY(-50%);
 }
 
@@ -131,8 +133,8 @@
 // child alongside chips + (optionally) an input. No `position`; layout is
 // handled by the parent's flex.
 .clearButtonInline {
-  width: var(--space-4);
-  height: var(--space-4);
+  width: var(--select-clear-size);
+  height: var(--select-clear-size);
 }
 
 // ─── Listbox panel ──────────────────────────────────────────────────────────
@@ -147,11 +149,11 @@
 .listbox {
   z-index: var(--z-popover);
   overflow-y: auto;
-  padding: var(--space-1);
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  padding: var(--select-listbox-padding);
+  background: var(--select-listbox-bg);
+  border: var(--border-width) solid var(--select-listbox-border-color);
+  border-radius: var(--select-listbox-radius);
+  box-shadow: var(--select-listbox-shadow);
   list-style: none;
   animation: select-open 140ms ease-out;
   transform-origin: top;
@@ -159,12 +161,12 @@
 
 @keyframes select-open {
   from {
-    opacity: var(--opacity-hidden);
+    opacity: var(--select-listbox-anim-opacity-from);
     transform: scale(0.96);
   }
 
   to {
-    opacity: var(--opacity-visible);
+    opacity: var(--select-listbox-anim-opacity-to);
     transform: scale(1);
   }
 }
@@ -176,11 +178,11 @@
 }
 
 .groupHeader {
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-xs);
-  color: var(--color-fg-muted);
+  padding: var(--select-group-header-padding-y) var(--select-group-header-padding-x);
+  font-size: var(--select-group-header-font-size);
+  color: var(--select-group-header-fg);
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-caps);
+  letter-spacing: var(--select-group-header-letter-spacing);
   user-select: none;
 }
 
@@ -194,24 +196,24 @@
 }
 
 .option {
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-md);
-  color: var(--color-fg);
+  padding: var(--select-option-padding-y) var(--select-option-padding-x);
+  font-size: var(--select-option-font-size);
+  color: var(--select-option-fg);
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--select-option-radius);
 }
 
 .optionActive {
-  background: var(--color-bg-muted);
+  background: var(--select-option-bg-active);
 }
 
 .optionSelected {
-  background: var(--color-accent-subtle-bg);
-  box-shadow: inset var(--border-width-emphasis) 0 0 var(--color-accent);
+  background: var(--select-option-bg-selected);
+  box-shadow: inset var(--select-option-marker-width-selected) 0 0 var(--select-option-marker-color-selected);
 }
 
 .optionDisabled {
-  color: var(--color-fg-disabled);
+  color: var(--select-option-fg-disabled);
   cursor: not-allowed;
 }
 
@@ -219,7 +221,7 @@
 // separate it from real options without inventing a new pattern.
 .optionCreate {
   font-style: italic;
-  color: var(--color-accent);
+  color: var(--select-option-fg-create);
 }
 
 // ─── In-panel search input (multi-summary-searchable variant) ──────────────
@@ -229,21 +231,21 @@
 .popoverSearch {
   display: block;
   width: 100%;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--select-popover-search-padding-y) var(--select-popover-search-padding-x);
   font-family: var(--font-family-sans);
-  font-size: var(--font-size-md);
-  color: var(--color-fg);
-  background: var(--color-bg);
+  font-size: var(--select-popover-search-font-size);
+  color: var(--select-popover-search-fg);
+  background: var(--select-popover-search-bg);
   border: 0;
-  border-bottom: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--select-popover-search-border-color);
   outline: none;
 
   &::placeholder {
-    color: var(--color-fg-muted);
+    color: var(--select-popover-search-placeholder-fg);
   }
 
   &:focus-visible {
-    border-bottom-color: var(--color-accent);
+    border-bottom-color: var(--select-popover-search-border-color-focus);
   }
 }
 
@@ -254,10 +256,10 @@
 // so wrapped chip rows have breathing room.
 .triggerChips {
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: var(--select-chips-gap);
   align-items: center;
   justify-content: flex-start;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--select-chips-padding-y) var(--select-chips-padding-x);
   white-space: normal;
 }
 
@@ -268,12 +270,12 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--color-badge-neutral-fg);
-  background: var(--color-badge-neutral-bg);
-  border-radius: var(--radius-sm);
+  gap: var(--select-chip-gap);
+  padding: var(--select-chip-padding-y) var(--select-chip-padding-x);
+  font-size: var(--select-chip-font-size);
+  color: var(--select-chip-fg);
+  background: var(--select-chip-bg);
+  border-radius: var(--select-chip-radius);
   user-select: none;
 }
 
@@ -290,17 +292,17 @@
   cursor: pointer;
   background: transparent;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--select-chip-remove-radius);
 
   &:hover,
   &:focus-visible {
-    color: var(--color-danger);
-    background: var(--color-bg-danger-subtle);
+    color: var(--select-chip-remove-fg-hover);
+    background: var(--select-chip-remove-bg-hover);
   }
 }
 
 .chipDisabled {
-  color: var(--color-fg-disabled);
+  color: var(--select-chip-fg-disabled);
   cursor: not-allowed;
 }
 
@@ -331,7 +333,7 @@
   outline: none;
 
   &::placeholder {
-    color: var(--color-fg-muted);
+    color: var(--select-placeholder-fg);
   }
 }
 
@@ -342,12 +344,12 @@
 // rather than aligning with the option text on the left.
 .stateRow {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--select-state-row-gap);
   align-items: center;
   justify-content: center;
-  padding: var(--space-3);
-  font-size: var(--font-size-sm);
-  color: var(--color-fg-muted);
+  padding: var(--select-state-row-padding);
+  font-size: var(--select-state-row-font-size);
+  color: var(--select-state-row-fg);
 }
 
 // Indeterminate circular spinner. The 2-state border (most of it muted,
@@ -355,11 +357,11 @@
 // adjacent "Loading…" label carries the meaning for screen readers.
 .spinner {
   display: inline-block;
-  width: var(--size-spinner);
-  height: var(--size-spinner);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-top-color: var(--color-accent);
-  border-radius: var(--radius-full);
+  width: var(--select-spinner-size);
+  height: var(--select-spinner-size);
+  border: var(--border-width) solid var(--select-spinner-border-color);
+  border-top-color: var(--select-spinner-border-color-top);
+  border-radius: var(--select-spinner-radius);
   animation: select-spin 0.8s linear infinite;
 }
 
@@ -372,17 +374,17 @@
 // Retry button inside the error state row. Subtle so it doesn't compete
 // with the message; `:focus-visible` per Hard Rule 3a (not `:focus`).
 .retryButton {
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--color-accent);
+  padding: var(--select-retry-padding-y) var(--select-retry-padding-x);
+  font-size: var(--select-retry-font-size);
+  color: var(--select-retry-fg);
   cursor: pointer;
   background: transparent;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--select-retry-border-color);
+  border-radius: var(--select-retry-radius);
 
   &:hover,
   &:focus-visible {
-    background: var(--color-bg-muted);
+    background: var(--select-retry-bg-hover);
   }
 }
 
@@ -393,37 +395,37 @@
 // (chips wrap onto multiple lines and need the existing `--space-1` Y-padding
 // instead of a flat `0`); height-bearing `min-height` still applies.
 .size-sm .trigger {
-  min-height: var(--size-sm);
-  font-size: var(--font-size-sm);
+  min-height: var(--select-trigger-height-sm);
+  font-size: var(--select-trigger-font-size-sm);
 
   &:not(.triggerChips) {
-    padding: 0 var(--space-2);
+    padding: 0 var(--select-trigger-padding-x-sm);
   }
 }
 
 .size-md .trigger {
-  min-height: var(--size-md);
-  font-size: var(--font-size-md);
+  min-height: var(--select-trigger-height-md);
+  font-size: var(--select-trigger-font-size-md);
 
   &:not(.triggerChips) {
-    padding: 0 var(--space-3);
+    padding: 0 var(--select-trigger-padding-x-md);
   }
 }
 
 .size-lg .trigger {
-  min-height: var(--size-lg);
-  font-size: var(--font-size-lg);
+  min-height: var(--select-trigger-height-lg);
+  font-size: var(--select-trigger-font-size-lg);
 
   &:not(.triggerChips) {
-    padding: 0 var(--space-3);
+    padding: 0 var(--select-trigger-padding-x-lg);
   }
 }
 
 .invalid .trigger {
-  border-color: var(--color-danger);
+  border-color: var(--select-trigger-border-color-invalid);
 
   &:focus-visible {
-    box-shadow: 0 0 0 var(--ring-width) var(--ring-danger);
+    box-shadow: 0 0 0 var(--ring-width) var(--select-trigger-ring-invalid);
   }
 }
 
@@ -432,12 +434,12 @@
 // reads cleanly — only the subtle bg + default cursor signal "you can see
 // this but not edit." Matches the convention used by native form controls.
 .disabled .trigger {
-  color: var(--color-fg-disabled);
+  color: var(--select-trigger-fg-disabled-class);
   cursor: not-allowed;
-  background: var(--color-bg-subtle);
+  background: var(--select-trigger-bg-disabled-class);
 }
 
 .readOnly .trigger {
   cursor: default;
-  background: var(--color-bg-subtle);
+  background: var(--select-trigger-bg-read-only);
 }

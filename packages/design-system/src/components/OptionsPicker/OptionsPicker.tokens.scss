@@ -1,0 +1,45 @@
+// OptionsPicker.tokens.scss — component-scoped tokens for <OptionsPicker>. The React layer still injects --color-palette-<name>-fg (group dot bg + group header bottom-border) inline; that channel is preserved.
+:root {
+  // Panel sizing (managed internally — panel sits flush; sections handle their own padding)
+  --options-picker-panel-min-width: 280px;
+  --options-picker-panel-max-width: 360px;
+  --options-picker-list-max-height: 320px;
+
+  // Row (option line) — gap + padding + radius + hover/selected bg
+  --options-picker-row-gap: var(--space-2);
+  --options-picker-row-padding: var(--space-2);
+  --options-picker-row-radius: var(--radius-sm);
+  --options-picker-row-bg-hover: var(--color-bg-muted);
+  --options-picker-row-bg-selected: var(--color-info-bg-subtle);
+  --options-picker-row-bg-focused: var(--color-bg-muted);
+
+  // Search bar
+  --options-picker-search-gap: var(--space-2);
+  --options-picker-search-padding: var(--space-2);
+  --options-picker-search-border-color: var(--color-border);
+  --options-picker-search-icon-color: var(--color-fg-subtle);
+
+  // Footer
+  --options-picker-footer-gap: var(--space-2);
+  --options-picker-footer-padding: var(--space-2);
+  --options-picker-footer-border-color: var(--color-border);
+
+  // Group header
+  --options-picker-group-header-gap: var(--space-2);
+  --options-picker-group-header-padding-y: var(--space-3);
+  --options-picker-group-header-padding-x: var(--space-2);
+  --options-picker-group-header-bg: var(--color-bg-muted);
+  --options-picker-group-header-bg-hover: var(--color-bg-subtle);
+  --options-picker-group-header-border-width: var(--border-width-emphasis);
+
+  // Group dot
+  --options-picker-group-dot-size: var(--size-badge-dot);
+  --options-picker-group-dot-radius: var(--radius-full);
+
+  // Grouped row indent (rows nested under a group header)
+  --options-picker-row-padding-left-grouped: var(--space-5);
+
+  // Empty state
+  --options-picker-empty-padding-y: var(--space-3);
+  --options-picker-empty-padding-x: var(--space-2);
+}
