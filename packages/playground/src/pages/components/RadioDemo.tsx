@@ -3,8 +3,7 @@ import { Button, Radio, RadioGroup, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/Radio/Radio.tsx?raw';
-import scssSource from '@lib-source/components/Radio/Radio.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 function ControlledDemo() {
   const [plan, setPlan] = useState('free');
@@ -57,10 +56,7 @@ export function RadioDemo() {
       name="Radio"
       componentName="Radio"
       description="Native `<input type='radio'>` visually hidden + custom-painted ring + dot. Pair with `<RadioGroup>` for proper a11y grouping (fieldset/legend), shared name, and centralized state."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Radio.tsx"
-      scssFilename="Radio.module.scss"
+      files={getComponentFiles('Radio')}
     >
       <Example
         title="Default — RadioGroup (preferred)"

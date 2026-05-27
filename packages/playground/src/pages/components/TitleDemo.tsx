@@ -3,18 +3,14 @@ import { Stack } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Title/Title.tsx?raw';
-import scssSource from '@lib-source/components/Title/Title.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function TitleDemo() {
   return (
     <DemoLayout
       name="Title"
       description="Semantic heading primitive. Renders <h1>-<h6> from the required `order` prop. Use for every heading in your UI."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Title.tsx"
-      scssFilename="Title.module.scss"
+      files={getComponentFiles('Title')}
       componentName="Title"
     >
       <Example

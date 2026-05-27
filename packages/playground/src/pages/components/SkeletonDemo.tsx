@@ -1,8 +1,7 @@
 import { Card, Cluster, Skeleton, Stack, Table } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Skeleton/Skeleton.tsx?raw';
-import scssSource from '@lib-source/components/Skeleton/Skeleton.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function SkeletonDemo() {
   return (
@@ -10,10 +9,7 @@ export function SkeletonDemo() {
       name="Skeleton"
       componentName="Skeleton"
       description="Placeholder rectangle for loading states. Three variants (text / circular / rectangular), pulse animation respects prefers-reduced-motion."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Skeleton.tsx"
-      scssFilename="Skeleton.module.scss"
+      files={getComponentFiles('Skeleton')}
     >
       <Example
         title="Text — inline placeholder"

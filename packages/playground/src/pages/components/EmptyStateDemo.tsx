@@ -2,8 +2,7 @@ import { Button, Card, Cluster, EmptyState, Stack, Table } from '@eocrm/design-s
 import { Inbox, PackageOpen, Search, SearchX, Users } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/EmptyState/EmptyState.tsx?raw';
-import scssSource from '@lib-source/components/EmptyState/EmptyState.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function EmptyStateDemo() {
   return (
@@ -11,10 +10,7 @@ export function EmptyStateDemo() {
       name="EmptyState"
       componentName="EmptyState"
       description="Opinionated 'nothing here' container — icon, title, description, actions. Three sizes for inline / card / hero use."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="EmptyState.tsx"
-      scssFilename="EmptyState.module.scss"
+      files={getComponentFiles('EmptyState')}
     >
       <Example
         title="Title only"

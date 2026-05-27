@@ -3,8 +3,7 @@ import { Button, PasswordInput, PasswordStrengthMeter, Stack } from '@eocrm/desi
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/PasswordInput/PasswordInput.tsx?raw';
-import scssSource from '@lib-source/components/PasswordInput/PasswordInput.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 function ControlledDemo() {
   const [revealed, setRevealed] = useState(false);
@@ -77,10 +76,7 @@ export function PasswordInputDemo() {
       name="PasswordInput"
       componentName="PasswordInput"
       description="Password text field with an eye toggle that reveals/hides the value. Optional caps-lock and wrong-keyboard-layout warnings. Pair with <PasswordStrengthMeter> for signup forms."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="PasswordInput.tsx"
-      scssFilename="PasswordInput.module.scss"
+      files={getComponentFiles('PasswordInput')}
     >
       <Example
         title="Default"

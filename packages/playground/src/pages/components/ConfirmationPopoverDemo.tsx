@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Button, Cluster, ConfirmationPopover, DropdownMenu } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/ConfirmationPopover/ConfirmationPopover.tsx?raw';
-import scssSource from '@lib-source/components/ConfirmationPopover/ConfirmationPopover.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const fakeDelay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -16,10 +15,7 @@ export function ConfirmationPopoverDemo() {
       name="ConfirmationPopover"
       componentName="ConfirmationPopover"
       description="Opinionated 'Are you sure?' preset on top of Popover. Title + optional description + Cancel + Confirm. Initial focus on Cancel; async-aware onConfirm with pending state."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="ConfirmationPopover.tsx"
-      scssFilename="ConfirmationPopover.module.scss"
+      files={getComponentFiles('ConfirmationPopover')}
     >
       <Example
         title="Default variant — Archive"

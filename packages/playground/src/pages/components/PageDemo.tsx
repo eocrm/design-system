@@ -2,8 +2,7 @@ import { Card, Page, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/Page/Page.tsx?raw';
-import scssSource from '@lib-source/components/Page/Page.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 function Stand({ children }: { children: string }) {
   return (
@@ -19,10 +18,7 @@ export function PageDemo() {
       name="Page"
       componentName="Page"
       description="Page-root layout primitive. Wraps a CRM page's top-level sections with the canonical vertical rhythm (gap='lg'). Each example shows the same three sections under a different gap setting."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Page.tsx"
-      scssFilename="Page.module.scss"
+      files={getComponentFiles('Page')}
     >
       <Example
         title='Default — gap="lg"'

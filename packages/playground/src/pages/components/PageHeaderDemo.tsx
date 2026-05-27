@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { PageHeader, Avatar, Badge, Button, Breadcrumb, Tabs, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/PageHeader/PageHeader.tsx?raw';
-import scssSource from '@lib-source/components/PageHeader/PageHeader.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 function MinimalDemo() {
   return (
@@ -96,10 +95,7 @@ export function PageHeaderDemo() {
     <DemoLayout
       name="PageHeader"
       description="Compound layout primitive for top-of-page headers. Seven slots (Breadcrumb, BackButton, Aside, Title, Subtitle, Meta, Actions) attached via Object.assign. Missing slots collapse; unrecognized children are silently dropped."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="PageHeader.tsx"
-      scssFilename="PageHeader.module.scss"
+      files={getComponentFiles('PageHeader')}
       componentName="PageHeader"
     >
       <Example

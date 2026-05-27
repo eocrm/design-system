@@ -7,18 +7,14 @@ import { Button } from '@eocrm/design-system';
 import { Link } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Card/Card.tsx?raw';
-import scssSource from '@lib-source/components/Card/Card.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function CardDemo() {
   return (
     <DemoLayout
       name="Card"
       description="A bordered container for grouping related content. Used for stat panels, list rows, info blocks. Do not nest cards inside cards."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Card.tsx"
-      scssFilename="Card.module.scss"
+      files={getComponentFiles('Card')}
       componentName="Card"
     >
       <Example

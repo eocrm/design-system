@@ -3,8 +3,7 @@ import { Cluster, FilterChip } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/FilterChip/FilterChip.tsx?raw';
-import scssSource from '@lib-source/components/FilterChip/FilterChip.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function FilterChipDemo() {
   const [chips, setChips] = useState<string[]>(['event', 'tenant']);
@@ -15,10 +14,7 @@ export function FilterChipDemo() {
       name="FilterChip"
       componentName="FilterChip"
       description='Dismissible "active filter" pill: Label + tone-dotted Value + auto-rendered × button when onDismiss is passed.'
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="FilterChip.tsx"
-      scssFilename="FilterChip.module.scss"
+      files={getComponentFiles('FilterChip')}
     >
       <Example
         title="Label + tone-dotted value + dismiss"

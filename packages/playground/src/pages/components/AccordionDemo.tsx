@@ -3,8 +3,7 @@ import { Plus } from 'lucide-react';
 import { Accordion, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Accordion/Accordion.tsx?raw';
-import scssSource from '@lib-source/components/Accordion/Accordion.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function AccordionDemo() {
   const [controlled, setControlled] = useState<string>('');
@@ -14,10 +13,7 @@ export function AccordionDemo() {
       name="Accordion"
       componentName="Accordion"
       description="Vertically-stacked collapsible panels. Compound component (Accordion.Item + Accordion.Trigger + Accordion.Content). Two modes: type='single' (one open at a time) or type='multiple' (any combination)."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Accordion.tsx"
-      scssFilename="Accordion.module.scss"
+      files={getComponentFiles('Accordion')}
     >
       <Example
         title="Single, collapsible (FAQ-style)"

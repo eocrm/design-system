@@ -9,8 +9,7 @@ import {
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/DateRangePicker/InlineDateRangePicker.tsx?raw';
-import scssSource from '@lib-source/components/DateRangePicker/InlineDateRangePicker.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const TODAY = new Date();
 const IN_14 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 14);
@@ -64,13 +63,7 @@ function FormDemo() {
 
 export function InlineDateRangePickerDemoPanel() {
   return (
-    <DemoBody
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="InlineDateRangePicker.tsx"
-      scssFilename="InlineDateRangePicker.module.scss"
-      componentName="InlineDateRangePicker"
-    >
+    <DemoBody files={getComponentFiles('DateRangePicker')} componentName="InlineDateRangePicker">
       <Example
         title="Uncontrolled"
         description="No `value` / `onChange` — the picker owns state. Click start then end; hover (or arrow-key) between clicks shows the preview range."

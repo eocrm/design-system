@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Cluster, Stack, Switch } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Switch/Switch.tsx?raw';
-import scssSource from '@lib-source/components/Switch/Switch.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function SwitchDemo() {
   const [controlled, setControlled] = useState(false);
@@ -23,10 +22,7 @@ export function SwitchDemo() {
       name="Switch"
       componentName="Switch"
       description="Binary on/off toggle. Native checkbox with switch role + sliding thumb. Three tones, loading state with thumb-spinner, invalid parity with Input/Textarea."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Switch.tsx"
-      scssFilename="Switch.module.scss"
+      files={getComponentFiles('Switch')}
     >
       <Example
         title="Default + with label"

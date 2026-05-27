@@ -3,8 +3,7 @@ import { Slash } from 'lucide-react';
 import { Breadcrumb } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Breadcrumb/Breadcrumb.tsx?raw';
-import scssSource from '@lib-source/components/Breadcrumb/Breadcrumb.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function BreadcrumbDemo() {
   return (
@@ -12,10 +11,7 @@ export function BreadcrumbDemo() {
       name="Breadcrumb"
       componentName="Breadcrumb"
       description="Compound navigation breadcrumb. Last child auto-marks as the current page. Default separator is a ChevronRight icon."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Breadcrumb.tsx"
-      scssFilename="Breadcrumb.module.scss"
+      files={getComponentFiles('Breadcrumb')}
     >
       <Example
         title="Basic — auto-current on last child"

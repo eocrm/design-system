@@ -4,13 +4,11 @@ import { Card, Tabs } from '@eocrm/design-system';
 import { CodeBlock } from './CodeBlock';
 import { CrossLinks } from '../shared/CrossLinks';
 import type { ComponentName } from '../mockups/registry';
+import type { ComponentFile } from '../../lib/componentFiles';
 import styles from './DemoLayout.module.scss';
 
 export interface DemoBodyProps {
-  tsxSource: string;
-  scssSource: string;
-  tsxFilename: string;
-  scssFilename: string;
+  files: ComponentFile[];
   componentName?: ComponentName;
   children: ReactNode;
 }
@@ -20,15 +18,9 @@ export interface DemoBodyProps {
  * `<DemoLayout>` — reusable inside multi-variant pages where the page
  * header is rendered once and tabs swap the body.
  */
-export function DemoBody({
-  tsxSource,
-  scssSource,
-  tsxFilename,
-  scssFilename,
-  componentName,
-  children,
-}: DemoBodyProps) {
-  const [sourceTab, setSourceTab] = useState<'tsx' | 'scss'>('tsx');
+export function DemoBody({ files, componentName, children }: DemoBodyProps) {
+  const [activeId, setActiveId] = useState(files[0]?.filename ?? '');
+  const active = files.find((f) => f.filename === activeId) ?? files[0];
 
   return (
     <>
@@ -43,20 +35,19 @@ export function DemoBody({
           </summary>
           <div className={styles.sourceBody}>
             <Tabs
-              items={[
-                { id: 'tsx', label: 'Component' },
-                { id: 'scss', label: 'Styles' },
-              ]}
-              activeId={sourceTab}
-              onChange={(id) => setSourceTab(id as 'tsx' | 'scss')}
+              items={files.map((f) => ({ id: f.filename, label: f.filename }))}
+              activeId={activeId}
+              onChange={setActiveId}
             />
-            <div className={styles.sourceCode}>
-              {sourceTab === 'tsx' ? (
-                <CodeBlock code={tsxSource} language="tsx" filename={tsxFilename} />
-              ) : (
-                <CodeBlock code={scssSource} language="scss" filename={scssFilename} />
-              )}
-            </div>
+            {active && (
+              <div className={styles.sourceCode}>
+                <CodeBlock
+                  code={active.code}
+                  language={active.language}
+                  filename={active.filename}
+                />
+              </div>
+            )}
           </div>
         </details>
       </Card>

@@ -11,8 +11,7 @@ import {
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/DataTable/DataTable.tsx?raw';
-import scssSource from '@lib-source/components/DataTable/DataTable.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 type Deal = {
   id: string;
@@ -83,10 +82,7 @@ export function DataTableDemo() {
       name="DataTable"
       componentName="DataTable"
       description="Composition over the Table primitive with column ordering / sizing / visibility, row selection, row click, sortable headers, loading/empty states, plus left/right column pinning and pinned rows (Phase 2). Expandable rows ship in Phase 3."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="DataTable.tsx"
-      scssFilename="DataTable.module.scss"
+      files={getComponentFiles('DataTable')}
     >
       <BasicExample />
       <BorderedExample />

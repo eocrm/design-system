@@ -6,8 +6,7 @@ import { DropdownMenu } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/DropdownMenu/DropdownMenu.tsx?raw';
-import scssSource from '@lib-source/components/DropdownMenu/DropdownMenu.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function DropdownMenuDemo() {
   return (
@@ -15,10 +14,7 @@ export function DropdownMenuDemo() {
       name="DropdownMenu"
       componentName="DropdownMenu"
       description="Action menu opened from a trigger. Compound API — pair Trigger / Content / Item / Separator. Portaled, Floating-UI-positioned, full WAI-ARIA menu keyboard behavior."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="DropdownMenu.tsx"
-      scssFilename="DropdownMenu.module.scss"
+      files={getComponentFiles('DropdownMenu')}
     >
       <Example
         title="Toolbar overflow"

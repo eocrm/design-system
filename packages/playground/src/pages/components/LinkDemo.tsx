@@ -3,8 +3,7 @@ import { ExternalLink } from 'lucide-react';
 import { Cluster, Link, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Link/Link.tsx?raw';
-import scssSource from '@lib-source/components/Link/Link.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function LinkDemo() {
   return (
@@ -12,10 +11,7 @@ export function LinkDemo() {
       name="Link"
       componentName="Link"
       description="Polymorphic styled anchor. Default <a>; consumers pass `as={RouterLink}` for SPA navigation. Three visual variants cover inline CTA, muted nav, and subtle name-link patterns."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Link.tsx"
-      scssFilename="Link.module.scss"
+      files={getComponentFiles('Link')}
     >
       <Example
         title="Default — external link"

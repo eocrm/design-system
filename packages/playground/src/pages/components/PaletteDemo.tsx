@@ -72,10 +72,10 @@ export function PaletteDemo() {
       name="Palette"
       componentName="Palette"
       description="30 categorical bg + fg color pairs in the --color-palette-* namespace. Consumer-defined domain → color mapping; library Checkbox accepts palette colors out-of-the-box."
-      tsxSource={paletteSource}
-      scssSource={tokensSource}
-      tsxFilename="palette.ts"
-      scssFilename="tokens.scss"
+      files={[
+        { filename: 'palette.ts', code: paletteSource, language: 'ts' },
+        { filename: 'tokens.scss', code: tokensSource, language: 'scss' },
+      ]}
     >
       <Example
         title="All 30 colors"

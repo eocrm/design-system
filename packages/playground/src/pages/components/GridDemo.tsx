@@ -1,8 +1,7 @@
 import { Card, Cluster, Grid, Input, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Grid/Grid.tsx?raw';
-import scssSource from '@lib-source/components/Grid/Grid.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function GridDemo() {
   return (
@@ -10,10 +9,7 @@ export function GridDemo() {
       name="Grid"
       componentName="Grid"
       description="2D layout primitive — CSS Grid wrapper. Use it when you need equal-width columns OR a responsive tile layout that reflows by container width (no breakpoints needed). Pair with Stack (vertical) and Cluster (horizontal-with-wrap)."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Grid.tsx"
-      scssFilename="Grid.module.scss"
+      files={getComponentFiles('Grid')}
     >
       <AutoFitExample />
       <FixedColumnsExample />

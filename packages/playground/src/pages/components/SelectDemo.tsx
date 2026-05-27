@@ -11,8 +11,7 @@ import {
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/Select/Select.tsx?raw';
-import scssSource from '@lib-source/components/Select/Select.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 // ── Demo data ───────────────────────────────────────────────────────────────
 
@@ -85,10 +84,7 @@ export function SelectDemo() {
       name="Select"
       componentName="Select"
       description="Value picker — single, multi (chips and summary), searchable, async, creatable. The generalist."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Select.tsx"
-      scssFilename="Select.module.scss"
+      files={getComponentFiles('Select')}
     >
       <Example
         title="Status — single, non-searchable"

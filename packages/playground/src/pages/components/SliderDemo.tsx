@@ -6,8 +6,7 @@ import { Text } from '@eocrm/design-system';
 import { Code } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Slider/Slider.tsx?raw';
-import scssSource from '@lib-source/components/Slider/Slider.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 function BasicSingle() {
   const [value, setValue] = useState(50);
@@ -143,10 +142,7 @@ export function SliderDemo() {
     <DemoLayout
       name="Slider"
       description="Controlled slider primitive. Single-thumb (value: number) or range (value: [number, number]). Horizontal or vertical. Custom-painted with manual ARIA per thumb."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Slider.tsx"
-      scssFilename="Slider.module.scss"
+      files={getComponentFiles('Slider')}
       componentName="Slider"
     >
       <Example

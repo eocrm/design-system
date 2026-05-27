@@ -3,8 +3,7 @@ import { Bell } from 'lucide-react';
 import { Alert, Button, Cluster, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Alert/Alert.tsx?raw';
-import scssSource from '@lib-source/components/Alert/Alert.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function AlertDemo() {
   const [showSaved, setShowSaved] = useState(true);
@@ -14,10 +13,7 @@ export function AlertDemo() {
       name="Alert"
       componentName="Alert"
       description="Persistent in-flow notification. Four tones with tinted background + accent stripe. Optional title / description / icon / actions / dismiss. Use Toast for transient messages instead."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Alert.tsx"
-      scssFilename="Alert.module.scss"
+      files={getComponentFiles('Alert')}
     >
       <Example
         title="Four tones"

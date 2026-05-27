@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Button, Cluster, DropdownMenu, Popover, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Popover/Popover.tsx?raw';
-import scssSource from '@lib-source/components/Popover/Popover.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function PopoverDemo() {
   return (
@@ -11,10 +10,7 @@ export function PopoverDemo() {
       name="Popover"
       componentName="Popover"
       description="Non-modal floating panel for arbitrary small surfaces. Compound API — pair Trigger / Content / optionally Heading / Close. Focus moves to the panel on open; Tab traverses out; click-outside or Escape dismisses."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Popover.tsx"
-      scssFilename="Popover.module.scss"
+      files={getComponentFiles('Popover')}
     >
       <Example
         title="Default — filter panel"

@@ -3,8 +3,7 @@ import { Button, InlineDatePicker, Stack, toDateKey } from '@eocrm/design-system
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/DatePicker/InlineDatePicker.tsx?raw';
-import scssSource from '@lib-source/components/DatePicker/InlineDatePicker.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const TODAY = new Date();
 const IN_90 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 90);
@@ -48,13 +47,7 @@ function FormDemo() {
 
 export function InlineDatePickerDemoPanel() {
   return (
-    <DemoBody
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="InlineDatePicker.tsx"
-      scssFilename="InlineDatePicker.module.scss"
-      componentName="InlineDatePicker"
-    >
+    <DemoBody files={getComponentFiles('DatePicker')} componentName="InlineDatePicker">
       <Example
         title="Uncontrolled"
         description="No `value` / `onChange` — the picker owns state. Click a cell to set; use the chevrons or PageUp/PageDown to navigate."

@@ -5,18 +5,14 @@ import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Text/Text.tsx?raw';
-import scssSource from '@lib-source/components/Text/Text.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function TextDemo() {
   return (
     <DemoLayout
       name="Text"
       description="Body / inline text primitive. Constrained-as (p/span/div/label). Use for every non-heading run — stop reaching for raw <p> + style={{ fontSize: ... }}."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Text.tsx"
-      scssFilename="Text.module.scss"
+      files={getComponentFiles('Text')}
       componentName="Text"
     >
       <Example

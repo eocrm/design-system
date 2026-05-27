@@ -3,8 +3,7 @@ import { Button, DateRangePicker, Stack, toDateKey, type DateRange } from '@eocr
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/DateRangePicker/DateRangePicker.tsx?raw';
-import scssSource from '@lib-source/components/DateRangePicker/DateRangePicker.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const TODAY = new Date();
 const IN_14 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 14);
@@ -61,13 +60,7 @@ function FormDemo() {
 
 export function DateRangePickerDemoPanel() {
   return (
-    <DemoBody
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="DateRangePicker.tsx"
-      scssFilename="DateRangePicker.module.scss"
-      componentName="DateRangePicker"
-    >
+    <DemoBody files={getComponentFiles('DateRangePicker')} componentName="DateRangePicker">
       <Example
         title="Uncontrolled"
         description="No `value` / `onChange` — the picker owns state. Click the input or the calendar button to open; pick start then end."

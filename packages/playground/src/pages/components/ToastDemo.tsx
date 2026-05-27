@@ -3,8 +3,7 @@ import { Button, Cluster, Stack, toast } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import apiSource from '@lib-source/components/Toast/api.ts?raw';
-import scssSource from '@lib-source/components/Toast/Toast.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function ToastDemo() {
   const [bursting, setBursting] = useState(false);
@@ -14,10 +13,7 @@ export function ToastDemo() {
       name="Toast"
       componentName="Toast"
       description="Imperative transient notifications. Singleton `toast` API + one `<ToastViewport>` mounted at app root."
-      tsxSource={apiSource}
-      scssSource={scssSource}
-      tsxFilename="api.ts"
-      scssFilename="Toast.module.scss"
+      files={getComponentFiles('Toast')}
     >
       <Example
         title="Tones"
