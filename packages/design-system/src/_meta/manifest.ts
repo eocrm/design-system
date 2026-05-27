@@ -47,6 +47,7 @@ const CLUSTERS: Record<string, string> = {
   Divider: 'Layout',
   Grid: 'Layout',
   Card: 'Layout',
+  Page: 'Layout',
   PageHeader: 'Layout',
 
   // Forms

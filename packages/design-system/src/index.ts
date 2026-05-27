@@ -169,6 +169,9 @@ export type {
   ModalCloseProps,
 } from './components/Modal';
 
+export { Page } from './components/Page';
+export type { PageProps, PageGap } from './components/Page';
+
 export { PageHeader } from './components/PageHeader';
 export type {
   PageHeaderProps,

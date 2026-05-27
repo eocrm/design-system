@@ -25,6 +25,7 @@ const CLUSTERS = {
   Divider: 'Layout',
   Grid: 'Layout',
   Card: 'Layout',
+  Page: 'Layout',
   PageHeader: 'Layout',
 
   // Forms
