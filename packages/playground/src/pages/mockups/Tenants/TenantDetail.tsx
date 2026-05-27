@@ -427,14 +427,7 @@ export function TenantDetail() {
           <Avatar name={tenant.name} size="lg" />
         </PageHeader.Aside>
 
-        <PageHeader.Title>
-          <Cluster gap="sm" align="center">
-            {tenant.name}
-            <Badge tone="warning" size="sm">
-              Superadmin
-            </Badge>
-          </Cluster>
-        </PageHeader.Title>
+        <PageHeader.Title>{tenant.name}</PageHeader.Title>
 
         <PageHeader.Meta>
           <Cluster gap="sm" align="center">

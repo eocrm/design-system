@@ -55,14 +55,7 @@ export function Tenants() {
   return (
     <Page>
       <PageHeader>
-        <PageHeader.Title>
-          <Cluster gap="sm" align="center">
-            Tenants
-            <Badge tone="warning" size="sm">
-              Superadmin
-            </Badge>
-          </Cluster>
-        </PageHeader.Title>
+        <PageHeader.Title>Tenants</PageHeader.Title>
         <PageHeader.Meta>
           <Text size="sm" tone="muted">
             {rows.length} {rows.length === 1 ? 'tenant' : 'tenants'}
