@@ -98,6 +98,17 @@
   font-family: var(--font-family-mono);
 }
 
+// Group-header dot. Used by the palette-colored variant (when group.color
+// is set, GroupDot renders a <span> with this class). The Badge-tone path
+// applies the same class to the Badge wrapper — the size is identical so
+// both rendering branches land at the same visual size.
+.groupDot {
+  width: var(--size-badge-dot);
+  height: var(--size-badge-dot);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
 // Indent options that live inside a group so they read as nested under
 // the group header (the header's dot + label is the "outdent" anchor).
 .group .row {
