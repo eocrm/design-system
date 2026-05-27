@@ -31,28 +31,29 @@
 
 ## File Structure
 
-| File | Role |
-|---|---|
-| `packages/design-system/src/styles/tokens.scss` (MODIFY) | Add 60 palette tokens in a dedicated block |
-| `packages/design-system/src/palette/palette.ts` (NEW) | `PaletteColor` type + `PALETTE_COLORS` + `paletteTokens()` |
-| `packages/design-system/src/palette/palette.test.ts` (NEW) | Unit tests for the helper |
-| `packages/design-system/src/palette/index.ts` (NEW) | Public re-exports |
-| `packages/design-system/src/index.ts` (MODIFY) | Re-export palette surface |
-| `packages/design-system/src/components/Checkbox/Checkbox.tsx` (MODIFY) | Add `color?: PaletteColor` + inline CSS-var |
-| `packages/design-system/src/components/Checkbox/Checkbox.module.scss` (MODIFY) | Use `var(--checkbox-color, var(--color-accent))` |
-| `packages/design-system/src/components/Checkbox/Checkbox.test.tsx` (MODIFY) | Tests for the new prop |
-| `packages/design-system/AGENTS.md` (MODIFY) | Palette section in the Display cluster |
-| `packages/playground/src/pages/components/PaletteDemo.tsx` (NEW) | Demo page (swatch grid + consumer pattern + Checkbox colors) |
-| `packages/playground/src/App.tsx` (MODIFY) | Route + import |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY) | Sidebar entry (Display cluster) |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY) | Overview card |
-| `packages/playground/src/pages/mockups/registry.ts` (MODIFY) | Add `'Palette'` to `ComponentName` union |
+| File                                                                           | Role                                                         |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `packages/design-system/src/styles/tokens.scss` (MODIFY)                       | Add 60 palette tokens in a dedicated block                   |
+| `packages/design-system/src/palette/palette.ts` (NEW)                          | `PaletteColor` type + `PALETTE_COLORS` + `paletteTokens()`   |
+| `packages/design-system/src/palette/palette.test.ts` (NEW)                     | Unit tests for the helper                                    |
+| `packages/design-system/src/palette/index.ts` (NEW)                            | Public re-exports                                            |
+| `packages/design-system/src/index.ts` (MODIFY)                                 | Re-export palette surface                                    |
+| `packages/design-system/src/components/Checkbox/Checkbox.tsx` (MODIFY)         | Add `color?: PaletteColor` + inline CSS-var                  |
+| `packages/design-system/src/components/Checkbox/Checkbox.module.scss` (MODIFY) | Use `var(--checkbox-color, var(--color-accent))`             |
+| `packages/design-system/src/components/Checkbox/Checkbox.test.tsx` (MODIFY)    | Tests for the new prop                                       |
+| `packages/design-system/AGENTS.md` (MODIFY)                                    | Palette section in the Display cluster                       |
+| `packages/playground/src/pages/components/PaletteDemo.tsx` (NEW)               | Demo page (swatch grid + consumer pattern + Checkbox colors) |
+| `packages/playground/src/App.tsx` (MODIFY)                                     | Route + import                                               |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)                | Sidebar entry (Display cluster)                              |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY)        | Overview card                                                |
+| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)                   | Add `'Palette'` to `ComponentName` union                     |
 
 ---
 
 ## Task 1: Add 60 palette tokens to `tokens.scss`
 
 **Files:**
+
 - Modify: `packages/design-system/src/styles/tokens.scss`
 
 - [ ] **Step 1: Locate the existing badge token block**
@@ -69,71 +70,71 @@ The badge tokens occupy roughly lines 44–55. The palette block goes immediatel
 After the `--color-badge-purple-fg: #403294;` line, add a blank line and then this block exactly:
 
 ```scss
-  // ─── Categorical palette (consumer-defined mapping) ─────────────────────
-  // 30 named colors with bg + fg pairs. Use for consumer-defined domain →
-  // color mappings (audit event namespaces, tag picker, team-colored
-  // checkboxes, …). NOT semantic — use --color-badge-* for status. See
-  // packages/design-system/src/palette/palette.ts for the TypeScript surface.
-  --color-palette-red-bg: #ffebe6;
-  --color-palette-red-fg: #bf2600;
-  --color-palette-coral-bg: #ffe5dd;
-  --color-palette-coral-fg: #9e3a14;
-  --color-palette-orange-bg: #fff0db;
-  --color-palette-orange-fg: #974f00;
-  --color-palette-amber-bg: #fff7d6;
-  --color-palette-amber-fg: #7a5300;
-  --color-palette-gold-bg: #fff3c0;
-  --color-palette-gold-fg: #806100;
-  --color-palette-yellow-bg: #fffacc;
-  --color-palette-yellow-fg: #6b5f00;
-  --color-palette-olive-bg: #f0f3cc;
-  --color-palette-olive-fg: #4d5a00;
-  --color-palette-lime-bg: #e8f7c8;
-  --color-palette-lime-fg: #3c6900;
-  --color-palette-green-bg: #d4f5dd;
-  --color-palette-green-fg: #006633;
-  --color-palette-emerald-bg: #d2f0e1;
-  --color-palette-emerald-fg: #00714d;
-  --color-palette-mint-bg: #d6f5ec;
-  --color-palette-mint-fg: #00755a;
-  --color-palette-teal-bg: #d6f0f0;
-  --color-palette-teal-fg: #006970;
-  --color-palette-cyan-bg: #dff5f9;
-  --color-palette-cyan-fg: #00657a;
-  --color-palette-sky-bg: #dceefb;
-  --color-palette-sky-fg: #1f5285;
-  --color-palette-blue-bg: #deebff;
-  --color-palette-blue-fg: #0747a6;
-  --color-palette-navy-bg: #d8e0f0;
-  --color-palette-navy-fg: #1a2e63;
-  --color-palette-indigo-bg: #e2e2f7;
-  --color-palette-indigo-fg: #2c2d80;
-  --color-palette-violet-bg: #e3deff;
-  --color-palette-violet-fg: #4030a6;
-  --color-palette-lavender-bg: #ece6ff;
-  --color-palette-lavender-fg: #5d4ba6;
-  --color-palette-purple-bg: #eae6ff;
-  --color-palette-purple-fg: #403294;
-  --color-palette-plum-bg: #efddf0;
-  --color-palette-plum-fg: #6a2b6b;
-  --color-palette-fuchsia-bg: #fbdef5;
-  --color-palette-fuchsia-fg: #7a1c70;
-  --color-palette-magenta-bg: #ffd9f0;
-  --color-palette-magenta-fg: #8c195e;
-  --color-palette-pink-bg: #ffe0eb;
-  --color-palette-pink-fg: #a3174a;
-  --color-palette-rose-bg: #ffe1e1;
-  --color-palette-rose-fg: #a01a35;
-  --color-palette-brown-bg: #f1e3d3;
-  --color-palette-brown-fg: #6b4a1f;
-  --color-palette-taupe-bg: #ece5db;
-  --color-palette-taupe-fg: #5a4a3a;
-  --color-palette-slate-bg: #e2e6ed;
-  --color-palette-slate-fg: #3d4b66;
-  --color-palette-stone-bg: #e9e7e3;
-  --color-palette-stone-fg: #4d4944;
-  --color-palette-charcoal-bg: #d8dadc;
-  --color-palette-charcoal-fg: #2e3338;
+// ─── Categorical palette (consumer-defined mapping) ─────────────────────
+// 30 named colors with bg + fg pairs. Use for consumer-defined domain →
+// color mappings (audit event namespaces, tag picker, team-colored
+// checkboxes, …). NOT semantic — use --color-badge-* for status. See
+// packages/design-system/src/palette/palette.ts for the TypeScript surface.
+--color-palette-red-bg: #ffebe6;
+--color-palette-red-fg: #bf2600;
+--color-palette-coral-bg: #ffe5dd;
+--color-palette-coral-fg: #9e3a14;
+--color-palette-orange-bg: #fff0db;
+--color-palette-orange-fg: #974f00;
+--color-palette-amber-bg: #fff7d6;
+--color-palette-amber-fg: #7a5300;
+--color-palette-gold-bg: #fff3c0;
+--color-palette-gold-fg: #806100;
+--color-palette-yellow-bg: #fffacc;
+--color-palette-yellow-fg: #6b5f00;
+--color-palette-olive-bg: #f0f3cc;
+--color-palette-olive-fg: #4d5a00;
+--color-palette-lime-bg: #e8f7c8;
+--color-palette-lime-fg: #3c6900;
+--color-palette-green-bg: #d4f5dd;
+--color-palette-green-fg: #006633;
+--color-palette-emerald-bg: #d2f0e1;
+--color-palette-emerald-fg: #00714d;
+--color-palette-mint-bg: #d6f5ec;
+--color-palette-mint-fg: #00755a;
+--color-palette-teal-bg: #d6f0f0;
+--color-palette-teal-fg: #006970;
+--color-palette-cyan-bg: #dff5f9;
+--color-palette-cyan-fg: #00657a;
+--color-palette-sky-bg: #dceefb;
+--color-palette-sky-fg: #1f5285;
+--color-palette-blue-bg: #deebff;
+--color-palette-blue-fg: #0747a6;
+--color-palette-navy-bg: #d8e0f0;
+--color-palette-navy-fg: #1a2e63;
+--color-palette-indigo-bg: #e2e2f7;
+--color-palette-indigo-fg: #2c2d80;
+--color-palette-violet-bg: #e3deff;
+--color-palette-violet-fg: #4030a6;
+--color-palette-lavender-bg: #ece6ff;
+--color-palette-lavender-fg: #5d4ba6;
+--color-palette-purple-bg: #eae6ff;
+--color-palette-purple-fg: #403294;
+--color-palette-plum-bg: #efddf0;
+--color-palette-plum-fg: #6a2b6b;
+--color-palette-fuchsia-bg: #fbdef5;
+--color-palette-fuchsia-fg: #7a1c70;
+--color-palette-magenta-bg: #ffd9f0;
+--color-palette-magenta-fg: #8c195e;
+--color-palette-pink-bg: #ffe0eb;
+--color-palette-pink-fg: #a3174a;
+--color-palette-rose-bg: #ffe1e1;
+--color-palette-rose-fg: #a01a35;
+--color-palette-brown-bg: #f1e3d3;
+--color-palette-brown-fg: #6b4a1f;
+--color-palette-taupe-bg: #ece5db;
+--color-palette-taupe-fg: #5a4a3a;
+--color-palette-slate-bg: #e2e6ed;
+--color-palette-slate-fg: #3d4b66;
+--color-palette-stone-bg: #e9e7e3;
+--color-palette-stone-fg: #4d4944;
+--color-palette-charcoal-bg: #d8dadc;
+--color-palette-charcoal-fg: #2e3338;
 ```
 
 Verify the block has exactly 60 token lines (30 colors × 2 lines each).
@@ -169,6 +170,7 @@ EOF
 ## Task 2: Create the palette TypeScript module
 
 **Files:**
+
 - Create: `packages/design-system/src/palette/palette.ts`
 - Create: `packages/design-system/src/palette/palette.test.ts`
 - Create: `packages/design-system/src/palette/index.ts`
@@ -386,6 +388,7 @@ EOF
 ## Task 3: Re-export palette from the library barrel
 
 **Files:**
+
 - Modify: `packages/design-system/src/index.ts`
 
 - [ ] **Step 1: Add the re-export**
@@ -430,6 +433,7 @@ EOF
 ## Task 4: Add `color` prop to Checkbox
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Checkbox/Checkbox.tsx`
 - Modify: `packages/design-system/src/components/Checkbox/Checkbox.module.scss`
 - Modify: `packages/design-system/src/components/Checkbox/Checkbox.test.tsx`
@@ -439,6 +443,7 @@ EOF
 Open `packages/design-system/src/components/Checkbox/Checkbox.module.scss`. Find the checked/indeterminate rule (around lines 91–96):
 
 Before:
+
 ```scss
 // Checked + indeterminate share the filled-accent visual.
 .input:checked + .box,
@@ -449,6 +454,7 @@ Before:
 ```
 
 After (swap both values for a CSS-var fallback):
+
 ```scss
 // Checked + indeterminate share the filled-accent visual. The
 // --checkbox-color CSS variable is set by the React layer when the
@@ -543,6 +549,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
 ```
 
 Notes:
+
 - The cast `as React.CSSProperties` is needed because TypeScript's CSSProperties type doesn't know about arbitrary CSS custom properties.
 - The `style` attribute on the label is set ONLY when `color` is provided. When `color` is undefined, `style={undefined}` — React renders nothing extra.
 - The `disabled` state's SCSS rule (`.disabled .box { background: var(--color-bg-subtle); … }`) wins over the checked rule because it's declared later and has equal specificity — so disabled checkboxes keep their muted look regardless of `color`.
@@ -557,9 +564,7 @@ it('color="violet" sets --checkbox-color to the violet palette fg token', () => 
   const label = container.querySelector('label');
   expect(label).not.toBeNull();
   // Inline style sets the CSS custom property.
-  expect(label?.style.getPropertyValue('--checkbox-color')).toBe(
-    'var(--color-palette-violet-fg)',
-  );
+  expect(label?.style.getPropertyValue('--checkbox-color')).toBe('var(--color-palette-violet-fg)');
 });
 
 it('no color prop means no --checkbox-color custom property is set', () => {
@@ -571,9 +576,7 @@ it('no color prop means no --checkbox-color custom property is set', () => {
 it('color="teal" produces the teal token reference', () => {
   const { container } = render(<Checkbox color="teal" label="Engineering" />);
   const label = container.querySelector('label');
-  expect(label?.style.getPropertyValue('--checkbox-color')).toBe(
-    'var(--color-palette-teal-fg)',
-  );
+  expect(label?.style.getPropertyValue('--checkbox-color')).toBe('var(--color-palette-teal-fg)');
 });
 
 it('color does not affect the unchecked checkbox visual (no fill)', () => {
@@ -634,6 +637,7 @@ EOF
 ## Task 5: AGENTS.md section for Palette
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 
 - [ ] **Step 1: Locate the insertion point**
@@ -642,7 +646,7 @@ EOF
 grep -nE "^### \`<Badge" packages/design-system/AGENTS.md
 ```
 
-Palette is a token utility, conceptually adjacent to Badge tones. Insert immediately AFTER the `### \`<Badge>\`` section ends (find Badge's last bullet, then the next blank line, then the next `### `) and BEFORE the next component section.
+Palette is a token utility, conceptually adjacent to Badge tones. Insert immediately AFTER the `### \`<Badge>\``section ends (find Badge's last bullet, then the next blank line, then the next`### `) and BEFORE the next component section.
 
 Concretely: find the line that says `### \`<Badge>\` — status / category pill`, scroll to where Badge's bullets end (the last `-`-prefixed line in the Badge section), and insert the new Palette section there.
 
@@ -651,7 +655,6 @@ Concretely: find the line that says `### \`<Badge>\` — status / category pill`
 The content (note the leading blank line for markdown spacing):
 
 ````markdown
-
 ### Palette — categorical color set
 
 ```tsx
@@ -668,11 +671,13 @@ const TEAM_COLOR: Record<string, PaletteColor> = {
 // Custom consumer chip using the palette tokens
 function TeamChip({ team }: { team: string }) {
   const { bg, fg } = paletteTokens(TEAM_COLOR[team] ?? 'stone');
-  return <span style={{ background: bg, color: fg, padding: '2px 8px', borderRadius: 4 }}>{team}</span>;
+  return (
+    <span style={{ background: bg, color: fg, padding: '2px 8px', borderRadius: 4 }}>{team}</span>
+  );
 }
 
 // Color-tagged checkbox (library-level integration)
-<Checkbox color="violet" label="Marketing" />
+<Checkbox color="violet" label="Marketing" />;
 ```
 
 - 30 named colors with bg + fg pairs: `red` / `coral` / `orange` / `amber` / `gold` / `yellow` / `olive` / `lime` / `green` / `emerald` / `mint` / `teal` / `cyan` / `sky` / `blue` / `navy` / `indigo` / `violet` / `lavender` / `purple` / `plum` / `fuchsia` / `magenta` / `pink` / `rose` / `brown` / `taupe` / `slate` / `stone` / `charcoal`.
@@ -716,6 +721,7 @@ EOF
 ## Task 6: Demo page + nav wiring
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/PaletteDemo.tsx`
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
@@ -905,7 +911,11 @@ events.map((e) => <CategoryChip color={eventPaletteColor(e)}>{e}</CategoryChip>)
               />
             ))}
             <Text size="sm" tone="muted">
-              Selected: {Object.entries(teams).filter(([, v]) => v).map(([k]) => k).join(', ') || 'none'}
+              Selected:{' '}
+              {Object.entries(teams)
+                .filter(([, v]) => v)
+                .map(([k]) => k)
+                .join(', ') || 'none'}
             </Text>
           </Stack>
         </InputExample>
@@ -1064,6 +1074,7 @@ All four green; pack grep zero lines. The palette files (`palette.ts`, `palette/
 Spawn a fresh-context `general-purpose` agent. Brief on the 10 categories: bugs, a11y, API inconsistencies, type safety, rule violations (Hard rules 1, 3, 3a, 4, 5, 6, 7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution.
 
 Special focus areas for this review:
+
 - `src/palette/` is outside `src/components/` — meta-tests should still pass (they iterate components only).
 - Checkbox `color` prop: does the inline `--checkbox-color` CSS var injection respect Hard rule 6 (no inline `style` … except this single CSS-var assignment which is the canonical pattern)? Verify the SCSS fallback works for the default case (unchanged behavior).
 - 30 hex values in `tokens.scss` — eyeball whether any two are too close (e.g., `pink` vs `rose`, `purple` vs `lavender`); if so, nudge one and document.

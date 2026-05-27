@@ -33,48 +33,48 @@ The audit-event-chip use case is solved on the **consumer side** (no library API
 
 30 named colors covering the color wheel + earth + grays. Each name maps to a `bg` (very light tint, lightness ~94–97 %) and `fg` (dark saturated, lightness ~25–40 %) pair. Same shape as existing `--color-badge-*-bg/--color-badge-*-fg` tokens.
 
-| #   | Name        | Family        | bg (target light) | fg (target dark) |
-| --- | ----------- | ------------- | ----------------- | ---------------- |
-| 1   | `red`       | warm          | #ffebe6           | #bf2600          |
-| 2   | `coral`     | warm          | #ffe5dd           | #9e3a14          |
-| 3   | `orange`    | warm          | #fff0db           | #974f00          |
-| 4   | `amber`     | warm          | #fff7d6           | #7a5300          |
-| 5   | `gold`      | warm          | #fff3c0           | #806100          |
-| 6   | `yellow`    | warm          | #fffacc           | #6b5f00          |
-| 7   | `olive`     | green-warm    | #f0f3cc           | #4d5a00          |
-| 8   | `lime`      | green         | #e8f7c8           | #3c6900          |
-| 9   | `green`     | green         | #d4f5dd           | #006633          |
-| 10  | `emerald`   | green         | #d2f0e1           | #00714d          |
-| 11  | `mint`      | green-cool    | #d6f5ec           | #00755a          |
-| 12  | `teal`      | cool          | #d6f0f0           | #006970          |
-| 13  | `cyan`      | cool          | #dff5f9           | #00657a          |
-| 14  | `sky`       | cool          | #dceefb           | #1f5285          |
-| 15  | `blue`      | cool          | #deebff           | #0747a6          |
-| 16  | `navy`      | cool          | #d8e0f0           | #1a2e63          |
-| 17  | `indigo`    | purple        | #e2e2f7           | #2c2d80          |
-| 18  | `violet`    | purple        | #e3deff           | #4030a6          |
-| 19  | `lavender`  | purple        | #ece6ff           | #5d4ba6          |
-| 20  | `purple`    | purple        | #eae6ff           | #403294          |
-| 21  | `plum`      | purple-warm   | #efddf0           | #6a2b6b          |
-| 22  | `fuchsia`   | pink          | #fbdef5           | #7a1c70          |
-| 23  | `magenta`   | pink          | #ffd9f0           | #8c195e          |
-| 24  | `pink`      | pink          | #ffe0eb           | #a3174a          |
-| 25  | `rose`      | pink-warm     | #ffe1e1           | #a01a35          |
-| 26  | `brown`     | earth         | #f1e3d3           | #6b4a1f          |
-| 27  | `taupe`     | earth-gray    | #ece5db           | #5a4a3a          |
-| 28  | `slate`     | gray          | #e2e6ed           | #3d4b66          |
-| 29  | `stone`     | gray          | #e9e7e3           | #4d4944          |
-| 30  | `charcoal`  | gray          | #d8dadc           | #2e3338          |
+| #   | Name       | Family      | bg (target light) | fg (target dark) |
+| --- | ---------- | ----------- | ----------------- | ---------------- |
+| 1   | `red`      | warm        | #ffebe6           | #bf2600          |
+| 2   | `coral`    | warm        | #ffe5dd           | #9e3a14          |
+| 3   | `orange`   | warm        | #fff0db           | #974f00          |
+| 4   | `amber`    | warm        | #fff7d6           | #7a5300          |
+| 5   | `gold`     | warm        | #fff3c0           | #806100          |
+| 6   | `yellow`   | warm        | #fffacc           | #6b5f00          |
+| 7   | `olive`    | green-warm  | #f0f3cc           | #4d5a00          |
+| 8   | `lime`     | green       | #e8f7c8           | #3c6900          |
+| 9   | `green`    | green       | #d4f5dd           | #006633          |
+| 10  | `emerald`  | green       | #d2f0e1           | #00714d          |
+| 11  | `mint`     | green-cool  | #d6f5ec           | #00755a          |
+| 12  | `teal`     | cool        | #d6f0f0           | #006970          |
+| 13  | `cyan`     | cool        | #dff5f9           | #00657a          |
+| 14  | `sky`      | cool        | #dceefb           | #1f5285          |
+| 15  | `blue`     | cool        | #deebff           | #0747a6          |
+| 16  | `navy`     | cool        | #d8e0f0           | #1a2e63          |
+| 17  | `indigo`   | purple      | #e2e2f7           | #2c2d80          |
+| 18  | `violet`   | purple      | #e3deff           | #4030a6          |
+| 19  | `lavender` | purple      | #ece6ff           | #5d4ba6          |
+| 20  | `purple`   | purple      | #eae6ff           | #403294          |
+| 21  | `plum`     | purple-warm | #efddf0           | #6a2b6b          |
+| 22  | `fuchsia`  | pink        | #fbdef5           | #7a1c70          |
+| 23  | `magenta`  | pink        | #ffd9f0           | #8c195e          |
+| 24  | `pink`     | pink        | #ffe0eb           | #a3174a          |
+| 25  | `rose`     | pink-warm   | #ffe1e1           | #a01a35          |
+| 26  | `brown`    | earth       | #f1e3d3           | #6b4a1f          |
+| 27  | `taupe`    | earth-gray  | #ece5db           | #5a4a3a          |
+| 28  | `slate`    | gray        | #e2e6ed           | #3d4b66          |
+| 29  | `stone`    | gray        | #e9e7e3           | #4d4944          |
+| 30  | `charcoal` | gray        | #d8dadc           | #2e3338          |
 
 Color values are starting targets. The implementer should eyeball-test all 30 swatches together to confirm distinctness at small sizes; if any two land too close, nudge one and document the change in the implementation PR.
 
 ### Token names
 
 ```scss
---color-palette-red-bg:      #ffebe6;
---color-palette-red-fg:      #bf2600;
---color-palette-coral-bg:    #ffe5dd;
---color-palette-coral-fg:    #9e3a14;
+--color-palette-red-bg: #ffebe6;
+--color-palette-red-fg: #bf2600;
+--color-palette-coral-bg: #ffe5dd;
+--color-palette-coral-fg: #9e3a14;
 /* … 28 more pairs … */
 --color-palette-charcoal-bg: #d8dadc;
 --color-palette-charcoal-fg: #2e3338;
@@ -96,20 +96,68 @@ A new module `packages/design-system/src/palette/palette.ts`:
  * for status. Palette colors carry no meaning beyond visual identity.
  */
 export type PaletteColor =
-  | 'red' | 'coral' | 'orange' | 'amber' | 'gold' | 'yellow'
-  | 'olive' | 'lime' | 'green' | 'emerald' | 'mint' | 'teal'
-  | 'cyan' | 'sky' | 'blue' | 'navy' | 'indigo' | 'violet'
-  | 'lavender' | 'purple' | 'plum' | 'fuchsia' | 'magenta'
-  | 'pink' | 'rose' | 'brown' | 'taupe' | 'slate' | 'stone'
+  | 'red'
+  | 'coral'
+  | 'orange'
+  | 'amber'
+  | 'gold'
+  | 'yellow'
+  | 'olive'
+  | 'lime'
+  | 'green'
+  | 'emerald'
+  | 'mint'
+  | 'teal'
+  | 'cyan'
+  | 'sky'
+  | 'blue'
+  | 'navy'
+  | 'indigo'
+  | 'violet'
+  | 'lavender'
+  | 'purple'
+  | 'plum'
+  | 'fuchsia'
+  | 'magenta'
+  | 'pink'
+  | 'rose'
+  | 'brown'
+  | 'taupe'
+  | 'slate'
+  | 'stone'
   | 'charcoal';
 
 /** Ordered list of all 30 palette colors. Use for demo grids / pickers. */
 export const PALETTE_COLORS: readonly PaletteColor[] = [
-  'red', 'coral', 'orange', 'amber', 'gold', 'yellow',
-  'olive', 'lime', 'green', 'emerald', 'mint', 'teal',
-  'cyan', 'sky', 'blue', 'navy', 'indigo', 'violet',
-  'lavender', 'purple', 'plum', 'fuchsia', 'magenta',
-  'pink', 'rose', 'brown', 'taupe', 'slate', 'stone',
+  'red',
+  'coral',
+  'orange',
+  'amber',
+  'gold',
+  'yellow',
+  'olive',
+  'lime',
+  'green',
+  'emerald',
+  'mint',
+  'teal',
+  'cyan',
+  'sky',
+  'blue',
+  'navy',
+  'indigo',
+  'violet',
+  'lavender',
+  'purple',
+  'plum',
+  'fuchsia',
+  'magenta',
+  'pink',
+  'rose',
+  'brown',
+  'taupe',
+  'slate',
+  'stone',
   'charcoal',
 ] as const;
 

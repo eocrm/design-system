@@ -143,9 +143,7 @@ describe('Checkbox', () => {
   it('color="teal" produces the teal token reference', () => {
     const { container } = render(<Checkbox color="teal" label="Engineering" />);
     const label = container.querySelector('label');
-    expect(label?.style.getPropertyValue('--checkbox-color')).toBe(
-      'var(--color-palette-teal-fg)',
-    );
+    expect(label?.style.getPropertyValue('--checkbox-color')).toBe('var(--color-palette-teal-fg)');
   });
 
   it('color does not affect the unchecked checkbox visual (no fill applied)', () => {

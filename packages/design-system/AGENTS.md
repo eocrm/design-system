@@ -1081,11 +1081,13 @@ const TEAM_COLOR: Record<string, PaletteColor> = {
 // Custom consumer chip using the palette tokens
 function TeamChip({ team }: { team: string }) {
   const { bg, fg } = paletteTokens(TEAM_COLOR[team] ?? 'stone');
-  return <span style={{ background: bg, color: fg, padding: '2px 8px', borderRadius: 4 }}>{team}</span>;
+  return (
+    <span style={{ background: bg, color: fg, padding: '2px 8px', borderRadius: 4 }}>{team}</span>
+  );
 }
 
 // Color-tagged checkbox (library-level integration)
-<Checkbox color="violet" label="Marketing" />
+<Checkbox color="violet" label="Marketing" />;
 ```
 
 - 30 named colors with bg + fg pairs: `red` / `coral` / `orange` / `amber` / `gold` / `yellow` / `olive` / `lime` / `green` / `emerald` / `mint` / `teal` / `cyan` / `sky` / `blue` / `navy` / `indigo` / `violet` / `lavender` / `purple` / `plum` / `fuchsia` / `magenta` / `pink` / `rose` / `brown` / `taupe` / `slate` / `stone` / `charcoal`.
