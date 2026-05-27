@@ -11,9 +11,12 @@ import { ru } from './ru';
 // canonical proof that the resolution chain works end-to-end.
 declare module './messages' {
   interface Messages {
-    greeting: string;
-    nested: { dismiss: string };
-    fn: (params: Record<string, unknown>) => string;
+    // All optional so the real en/ru locale files (which don't populate these)
+    // still satisfy the interface at compile time. Tests `seed()` them at
+    // runtime before exercising the resolution chain.
+    greeting?: string;
+    nested?: { dismiss: string };
+    fn?: (params: Record<string, unknown>) => string;
   }
 }
 

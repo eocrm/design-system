@@ -6,7 +6,46 @@
 // e.g. `alert: { dismiss: string }`. Both en.ts and ru.ts must then populate
 // the new keys.
 export interface Messages {
-  // Will be populated cluster by cluster. See spec §"Messages shape".
+  alert: {
+    /** aria-label on the Alert's dismiss (×) button. */
+    dismiss: string;
+  };
+  colorPicker: {
+    /** aria-label for the SV (saturation × brightness) square. */
+    saturationBrightness: string;
+    /** aria-label for the hue slider. */
+    hue: string;
+    /** aria-label for the hex value input. */
+    hexValue: string;
+    /** aria-label for the preset color swatch row. */
+    presetColors: string;
+  };
+  drawer: {
+    /** aria-label for the Drawer header's close button. */
+    close: string;
+  };
+  fileUpload: {
+    /** aria-label/title on the success Check icon in FileUpload's item list. */
+    done: string;
+  };
+  imageCrop: {
+    /** aria-label for the zoom slider. */
+    zoom: string;
+  };
+  kanban: {
+    /** aria-label for the Kanban scroll container (the board itself). */
+    board: string;
+  };
+  modal: {
+    /** aria-label for the Modal header's close button. */
+    close: string;
+  };
+  toast: {
+    /** aria-label for an individual toast's dismiss button. */
+    dismiss: string;
+    /** aria-label for the toast region (ToastViewport). */
+    notifications: string;
+  };
 }
 
 /** Supported locale codes. v1 ships English and Russian. */

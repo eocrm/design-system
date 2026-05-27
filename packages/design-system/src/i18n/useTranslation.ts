@@ -23,7 +23,7 @@ export function useTranslation() {
   const { messages } = useContext(I18nContext);
   return useMemo(() => {
     return function t<K extends MessageKey>(key: K, params?: Record<string, unknown>): string {
-      const leaf = lookupKey(messages as Record<string, unknown>, key as string);
+      const leaf = lookupKey(messages as unknown as Record<string, unknown>, key as string);
       if (leaf == null) {
         if (typeof console !== 'undefined') console.warn('[i18n] missing key:', key);
         return key as string;
@@ -49,7 +49,7 @@ export function useTranslationArray() {
   const { messages } = useContext(I18nContext);
   return useMemo(() => {
     return function ta(key: string): readonly string[] {
-      const leaf = lookupKey(messages as Record<string, unknown>, key);
+      const leaf = lookupKey(messages as unknown as Record<string, unknown>, key);
       return Array.isArray(leaf) ? (leaf as readonly string[]) : [];
     };
   }, [messages]);

@@ -13,6 +13,7 @@ import { CloudUpload, Check, X } from 'lucide-react';
 import clsx from 'clsx';
 import { Button } from '../Button';
 import { Progress } from '../Progress';
+import { useTranslation } from '../../i18n/useTranslation';
 import { formatBytes } from './formatBytes';
 import { iconForFile } from './iconForFile';
 import styles from './FileUpload.module.scss';
@@ -294,6 +295,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   },
   ref,
 ) {
+  const t = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -485,7 +487,12 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
                     <span className={styles.rowErrorMsg}>{entry.error}</span>
                   )}
                   {entry.status === 'done' && (
-                    <Check className={styles.rowDoneIcon} size={16} role="img" aria-label="Done" />
+                    <Check
+                      className={styles.rowDoneIcon}
+                      size={16}
+                      role="img"
+                      aria-label={t('fileUpload.done')}
+                    />
                   )}
                 </span>
                 <Button

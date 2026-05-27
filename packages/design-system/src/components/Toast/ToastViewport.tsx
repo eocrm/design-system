@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import { _setViewportConfig } from './api';
 import { store, type ToastEntry, type ToastPosition } from './store';
 import { Toast } from './Toast';
@@ -61,6 +62,7 @@ export function ToastViewport({
   gap = 'sm',
   expand = false,
 }: ToastViewportProps) {
+  const t = useTranslation();
   // Track viewport count for dev-warning. State so React doesn't unmount us
   // when the count flips back to 1.
   const [isFirstViewport] = useState(() => {
@@ -112,7 +114,7 @@ export function ToastViewport({
               POSITION_CLASS[pos],
               gap === 'sm' ? styles.gapSm : styles.gapMd,
             )}
-            aria-label="Notifications"
+            aria-label={t('toast.notifications')}
             data-position={pos}
             data-expanded={isExpanded ? 'true' : 'false'}
             onMouseEnter={() => {

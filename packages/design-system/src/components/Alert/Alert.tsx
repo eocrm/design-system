@@ -2,6 +2,7 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import clsx from 'clsx';
 import { Button } from '../Button';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Alert.module.scss';
 
 /**
@@ -121,6 +122,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
   { tone = 'info', title, children, icon, actions, onDismiss, className, ...props },
   ref,
 ) {
+  const t = useTranslation();
   const role = tone === 'error' ? 'alert' : 'status';
   const renderedIcon = icon === null ? null : (icon ?? DEFAULT_ICONS[tone]);
 
@@ -139,7 +141,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
         {actions && <div className={styles.actions}>{actions}</div>}
       </div>
       {onDismiss && (
-        <Button variant="ghost" size="xs" iconOnly aria-label="Dismiss" onClick={onDismiss}>
+        <Button variant="ghost" size="xs" iconOnly aria-label={t('alert.dismiss')} onClick={onDismiss}>
           <X size={14} aria-hidden="true" />
         </Button>
       )}
