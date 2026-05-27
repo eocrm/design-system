@@ -991,6 +991,38 @@ import { Divider } from '@eocrm/design-system';
 - The group wrapper is `role="list"` and each visible avatar is wrapped in a `role="listitem"` div; the +N (button or span) is the last list item.
 - forwardRef to the outer `<div>`. `className` is merged.
 
+### `<PersonDisplay>` — Avatar + name (+ optional description lines)
+
+```tsx
+// Canonical: avatar + linked name + email
+<PersonDisplay size="md">
+  <PersonDisplay.Avatar name="Sarah Chen" src="/avatars/sarah.png" />
+  <PersonDisplay.Name href="/contacts/sarah-chen">Sarah Chen</PersonDisplay.Name>
+  <PersonDisplay.Description>sarah@acme.com</PersonDisplay.Description>
+</PersonDisplay>
+
+// Multiple description lines (email + role)
+<PersonDisplay size="md">
+  <PersonDisplay.Avatar name="Marcus Vega" />
+  <PersonDisplay.Name>Marcus Vega</PersonDisplay.Name>
+  <PersonDisplay.Description>marcus@acme.com</PersonDisplay.Description>
+  <PersonDisplay.Description>Account Executive</PersonDisplay.Description>
+</PersonDisplay>
+
+// Tight table cell — sm; name only
+<PersonDisplay size="sm">
+  <PersonDisplay.Avatar name="Avery Liu" />
+  <PersonDisplay.Name>Avery Liu</PersonDisplay.Name>
+</PersonDisplay>
+```
+
+- Compound: `<PersonDisplay>` + `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` + repeating `<PersonDisplay.Description>`.
+- `size`: `'sm'` / `'md'` (default) / `'lg'`. Propagates to Avatar size and Text scales via context. Don't pass `size` to `PersonDisplay.Avatar` directly — Root controls it (the prop is omitted from `PersonDisplayAvatarProps` by type).
+- `<PersonDisplay.Name href="...">` renders the name as a `<Link variant="subtle">` (real `<a>`). Omit `href` for read-only displays (audit actor, activity timeline).
+- `<PersonDisplay.Description>` is muted text; repeat for additional lines. Children can be `ReactNode` — e.g. `admin@acme.com <Badge tone="warning" size="sm">impersonating</Badge>` to inline a marker.
+- All Avatar props (`status`, `src`, `initialsTone`, …) flow through `<PersonDisplay.Avatar>` except `size`.
+- **Use for the standard "person row" — Avatar + name + 0–2 muted lines.** Not for Avatar-only badges (use `<Avatar>`), avatar stacks (use `<AvatarGroup>`), or click-anywhere row interactions (wrap PersonDisplay in your own Link).
+
 ### `<Badge>` — status / category pill
 
 ```tsx
