@@ -201,9 +201,10 @@
 // More vertical breathing room than a data cell — typically the detail
 // content is a panel of multiple lines, not a single value. Bottom
 // padding is larger than top because expansion panels often end with an
-// action row that needs more breathing room than the title row at the top
-// (which sits right under the data row that was clicked).
+// action row (buttons, footer) and need space before the next data row;
+// the top sits flush against the data row that was clicked, which acts
+// as its own visual anchor and needs less explicit padding.
 .expandedDetailCell {
-  padding: var(--space-3) var(--space-4) var(--space-5);
+  padding: var(--space-4) var(--space-4) var(--space-6);
   white-space: normal;
 }
