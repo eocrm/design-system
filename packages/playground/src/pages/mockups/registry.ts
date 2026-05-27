@@ -212,7 +212,6 @@ export const MOCKUPS = [
       'Superadmin list of platform tenants — state, members, app version, storage usage, row actions.',
     usesComponents: [
       'Badge',
-      'Breadcrumb',
       'Button',
       'Card',
       'Cluster',

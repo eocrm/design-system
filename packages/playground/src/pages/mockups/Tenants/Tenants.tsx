@@ -3,7 +3,6 @@ import { Link as RouterLink } from 'react-router-dom';
 import { ChevronDown, Download, Plus, MoreHorizontal } from 'lucide-react';
 import {
   Badge,
-  Breadcrumb,
   Button,
   Card,
   Cluster,
@@ -56,11 +55,6 @@ export function Tenants() {
   return (
     <Page>
       <PageHeader>
-        <PageHeader.Breadcrumb>
-          <Breadcrumb>
-            <Breadcrumb.Item current>Tenants</Breadcrumb.Item>
-          </Breadcrumb>
-        </PageHeader.Breadcrumb>
         <PageHeader.Title>
           <Cluster gap="sm" align="center">
             Tenants
