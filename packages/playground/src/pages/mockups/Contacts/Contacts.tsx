@@ -10,6 +10,7 @@ import {
   DropdownMenu,
   Input,
   Link,
+  Page,
   PageHeader,
   PersonDisplay,
   Stack,
@@ -33,7 +34,7 @@ export function Contacts() {
   const [ownerFilter, setOwnerFilter] = useState('all');
 
   return (
-    <Stack gap="lg">
+    <Page>
       <PageHeader>
         <PageHeader.Title>Contacts</PageHeader.Title>
         <PageHeader.Meta>
@@ -158,6 +159,6 @@ export function Contacts() {
       </Table>
 
       <CrossLinks kind="mockup" slug="contacts" />
-    </Stack>
+    </Page>
   );
 }

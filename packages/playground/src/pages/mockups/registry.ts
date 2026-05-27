@@ -36,6 +36,7 @@ export type ComponentName =
   | 'Link'
   | 'Modal'
   | 'OptionsPicker'
+  | 'Page'
   | 'PageHeader'
   | 'Pagination'
   | 'PasswordInput'
@@ -81,6 +82,7 @@ export const MOCKUPS = [
       'Cluster',
       'Grid',
       'Link',
+      'Page',
       'PageHeader',
       'PersonDisplay',
       'Stack',
@@ -102,6 +104,7 @@ export const MOCKUPS = [
       'Code',
       'DropdownMenu',
       'Kanban',
+      'Page',
       'PageHeader',
       'Stack',
       'Text',
@@ -122,6 +125,7 @@ export const MOCKUPS = [
       'DropdownMenu',
       'Input',
       'Link',
+      'Page',
       'PageHeader',
       'PersonDisplay',
       'Stack',
@@ -145,6 +149,7 @@ export const MOCKUPS = [
       'DropdownMenu',
       'Grid',
       'Link',
+      'Page',
       'PageHeader',
       'PersonDisplay',
       'Stack',
@@ -165,6 +170,7 @@ export const MOCKUPS = [
       'Cluster',
       'DropdownMenu',
       'Input',
+      'Page',
       'PageHeader',
       'PersonDisplay',
       'Progress',
@@ -189,6 +195,7 @@ export const MOCKUPS = [
       'Divider',
       'FilterChip',
       'OptionsPicker',
+      'Page',
       'PageHeader',
       'PersonDisplay',
       'Stack',

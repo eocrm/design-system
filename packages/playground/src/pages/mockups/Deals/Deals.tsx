@@ -9,6 +9,7 @@ import {
   Code,
   DropdownMenu,
   Kanban,
+  Page,
   PageHeader,
   Stack,
   Text,
@@ -63,7 +64,7 @@ export function Deals() {
   const totalDeals = Object.values(dealsByStage).reduce((sum, arr) => sum + arr.length, 0);
 
   return (
-    <Stack gap="lg">
+    <Page>
       <PageHeader>
         <PageHeader.Title>Deals</PageHeader.Title>
         <PageHeader.Subtitle>{totalDeals} active deals across 4 stages</PageHeader.Subtitle>
@@ -170,7 +171,7 @@ export function Deals() {
       </Kanban>
 
       <CrossLinks kind="mockup" slug="deals" />
-    </Stack>
+    </Page>
   );
 }
 

@@ -7,6 +7,7 @@ import {
   Cluster,
   DropdownMenu,
   Input,
+  Page,
   PageHeader,
   PersonDisplay,
   Progress,
@@ -28,7 +29,7 @@ export function Members() {
   ];
 
   return (
-    <Stack gap="lg">
+    <Page>
       <PageHeader>
         <PageHeader.Title>Members</PageHeader.Title>
         <PageHeader.Subtitle>People with access to your Orbit CRM workspace.</PageHeader.Subtitle>
@@ -218,6 +219,6 @@ export function Members() {
       )}
 
       <CrossLinks kind="mockup" slug="members" />
-    </Stack>
+    </Page>
   );
 }

@@ -11,6 +11,7 @@ import {
   Divider,
   FilterChip,
   OptionsPicker,
+  Page,
   PageHeader,
   PersonDisplay,
   Stack,
@@ -293,7 +294,7 @@ export function Audit() {
   }
 
   return (
-    <Stack gap="lg">
+    <Page>
       <PageHeader>
         <PageHeader.Title>Audit log</PageHeader.Title>
         <PageHeader.Meta>
@@ -392,7 +393,7 @@ export function Audit() {
       </Cluster>
 
       <CrossLinks kind="mockup" slug="audit" />
-    </Stack>
+    </Page>
   );
 }
 

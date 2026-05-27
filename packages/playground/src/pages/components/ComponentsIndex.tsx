@@ -47,6 +47,7 @@ import { OptionsPicker } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
 import { PersonDisplay } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
+import { Page } from '@eocrm/design-system';
 import { PageHeader } from '@eocrm/design-system';
 import { toast } from '@eocrm/design-system';
 import styles from './ComponentsIndex.module.scss';
@@ -763,6 +764,22 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           />
         </OptionsPicker>
       </div>
+    ),
+  },
+  {
+    to: '/components/page',
+    name: 'Page',
+    description:
+      'Page-root layout primitive. Wraps top-level sections with the canonical CRM rhythm (gap="lg").',
+    preview: (
+      <Page>
+        <Card padding="sm">
+          <Text size="sm">Header</Text>
+        </Card>
+        <Card padding="sm">
+          <Text size="sm">Body</Text>
+        </Card>
+      </Page>
     ),
   },
   {

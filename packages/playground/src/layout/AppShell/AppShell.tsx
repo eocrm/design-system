@@ -28,6 +28,7 @@ import {
   List,
   ArrowRight,
   ExternalLink,
+  FileText,
   MessageSquare,
   MessageSquareText,
   AppWindow,
@@ -107,6 +108,7 @@ const componentGroups = [
       { to: '/components/grid', label: 'Grid', icon: LayoutGrid, end: false },
       { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
       { to: '/components/page-header', label: 'PageHeader', icon: LayoutPanelTop, end: false },
+      { to: '/components/page', label: 'Page', icon: FileText, end: false },
     ],
   },
   {

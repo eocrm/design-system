@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Link,
+  Page,
   PageHeader,
   PersonDisplay,
   Title,
@@ -63,7 +64,7 @@ export function Dashboard() {
   const upcoming = deals.filter((d) => d.stage !== 'won').slice(0, 4);
 
   return (
-    <Stack gap="lg">
+    <Page>
       <PageHeader>
         <PageHeader.Title>Dashboard</PageHeader.Title>
         <PageHeader.Subtitle>
@@ -187,6 +188,6 @@ export function Dashboard() {
       </Card>
 
       <CrossLinks kind="mockup" slug="dashboard" />
-    </Stack>
+    </Page>
   );
 }
