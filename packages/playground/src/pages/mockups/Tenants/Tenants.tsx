@@ -209,13 +209,13 @@ export function Tenants() {
                       )}
                     </Table.Cell>
                     <Table.Cell align="end">
-                      <Text size="sm" tone={t.membersCount === 0 ? 'muted' : 'default'}>
+                      <Text as="span" size="sm" tone={t.membersCount === 0 ? 'muted' : 'default'}>
                         {t.membersCount}
                       </Text>
                     </Table.Cell>
                     <Table.Cell align="end">
                       {t.pendingInvitesCount === 0 ? (
-                        <Text size="sm" tone="muted">
+                        <Text as="span" size="sm" tone="muted">
                           —
                         </Text>
                       ) : (
