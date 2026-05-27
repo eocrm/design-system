@@ -13,17 +13,19 @@
   line-height: var(--badge-line-height);
 }
 
-// Sizes
+// Sizes — vertical padding is asymmetric (0 top, var(--badge-optical-offset-bottom)
+// bottom) so the visible glyphs center optically. See the token definition for
+// the reasoning.
 .sm {
   height: var(--badge-height-sm);
-  padding: 0 var(--badge-padding-x-sm);
+  padding: 0 var(--badge-padding-x-sm) var(--badge-optical-offset-bottom);
   text-transform: none;
   letter-spacing: normal;
 }
 
 .md {
   height: var(--badge-height-md);
-  padding: 0 var(--badge-padding-x-md);
+  padding: 0 var(--badge-padding-x-md) var(--badge-optical-offset-bottom);
 }
 
 .neutral {

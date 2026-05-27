@@ -32,6 +32,14 @@
   --badge-padding-x-sm: var(--space-1);
   --badge-padding-x-md: var(--space-2);
 
+  // Optical-centering offset. The line-box is mathematically centered via
+  // align-items: center, but the font's descender space (~15-20% of em-height)
+  // is unused when the badge text has no descender glyphs (cap-letters,
+  // lowercase without g/j/p/q/y). That makes the visible glyphs sit ~1px
+  // below the geometric center. A small padding-bottom shrinks the content
+  // area from the bottom, shifting the line-box up so visible glyphs center.
+  --badge-optical-offset-bottom: 1px;
+
   // Stripe variant (rectangular block with left border)
   --badge-stripe-border-width: var(--border-width-strong);
   --badge-stripe-font-weight: var(--font-weight-medium);
