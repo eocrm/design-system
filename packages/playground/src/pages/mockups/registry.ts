@@ -204,6 +204,30 @@ export const MOCKUPS = [
       'Tooltip',
     ],
   },
+  {
+    slug: 'tenants',
+    title: 'Tenants',
+    path: '/mockups/tenants',
+    blurb: 'Superadmin list of platform tenants — state, members, app version, row actions.',
+    usesComponents: [
+      'Badge',
+      'Breadcrumb',
+      'Button',
+      'Card',
+      'Cluster',
+      'Code',
+      'DropdownMenu',
+      'EmptyState',
+      'Input',
+      'Page',
+      'PageHeader',
+      'Pagination',
+      'PersonDisplay',
+      'Table',
+      'Text',
+      'Tooltip',
+    ],
+  },
 ] as const satisfies readonly MockupEntry[];
 
 export type MockupSlug = (typeof MOCKUPS)[number]['slug'];
