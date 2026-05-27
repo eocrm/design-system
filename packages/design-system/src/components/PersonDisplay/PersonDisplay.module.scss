@@ -1,0 +1,31 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  // Size-keyed gap — descriptive text doesn't need to crowd the avatar.
+  // sm tightens; md and lg share the same outer gap.
+  &[data-size='sm'] {
+    gap: var(--space-2);
+  }
+}
+
+// The inner column that holds Name + Descriptions stacked vertically.
+.column {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.description {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
