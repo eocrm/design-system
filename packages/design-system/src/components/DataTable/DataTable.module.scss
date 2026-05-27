@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './DataTable.tokens';
 
 // Visual / behavior modifiers ONLY. No layout (Rule 4).
 
@@ -50,15 +51,15 @@
 
     outline: none;
     outline-offset: -2px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--data-table-clickable-row-radius);
   }
 }
 
 // Empty state row — single colspan cell with centered content.
 .emptyCell {
   text-align: center;
-  padding: var(--space-6) var(--space-4);
-  color: var(--color-fg-muted);
+  padding: var(--data-table-empty-padding);
+  color: var(--data-table-empty-fg);
 }
 
 // Skeleton row cells — give some visual breathing room.
@@ -75,14 +76,14 @@
 //   - Pinned body cells (z-index 1 per DataTable.module.scss)
 // :where() in Table.module.scss drops the header band's specificity so this wins.
 .autoCellStickyHeader {
-  background: var(--color-table-header-bg);
+  background: var(--data-table-auto-cell-sticky-header-bg);
   z-index: 3;
 }
 
 // Body version (applied in Task 7): stays above unpinned body cells (z-index 0)
 // but below sticky header band (z-index 1 in Table primitive).
 .autoCellStickyBody {
-  background: var(--color-table-bg);
+  background: var(--data-table-auto-cell-sticky-body-bg);
   z-index: 1;
 }
 
@@ -91,21 +92,21 @@
 
 .pinnedLeft,
 .pinnedRight {
-  background: var(--color-table-bg);
+  background: var(--data-table-pinned-bg);
   z-index: 1;
 }
 
 .pinnedLeft {
-  box-shadow: var(--shadow-table-pinned-edge);
+  box-shadow: var(--data-table-pinned-shadow-left);
 }
 
 .pinnedRight {
-  box-shadow: var(--shadow-table-pinned-edge-right);
+  box-shadow: var(--data-table-pinned-shadow-right);
 }
 
 // Pinned rows (separate <tbody> above the main body) get a subtle tint.
 .pinnedRow {
-  background: var(--color-bg-row-pinned);
+  background: var(--data-table-pinned-row-bg);
 }
 
 .pinnedRow .pinnedLeft,
@@ -113,13 +114,13 @@
   // Explicitly re-apply the pinned-row tint so it overrides the per-cell
   // --color-table-bg background that would otherwise win via higher specificity
   // from the body .pinnedLeft / .pinnedRight rule above.
-  background: var(--color-bg-row-pinned);
+  background: var(--data-table-pinned-row-bg);
 }
 
 // Dedicated tbody class for the pinned-rows section (used in Task 8).
 .pinnedRowsTbody {
   // No layout-affecting styles — Rule 4. Background and visual modifiers only.
-  background: var(--color-bg-row-pinned);
+  background: var(--data-table-pinned-row-bg);
 }
 
 // Pinned cells have an opaque background (so unpinned scrolling content can't
@@ -135,13 +136,13 @@
 .root tbody tr:not(.pinnedRow):hover .pinnedLeft,
 .root tbody tr:not(.pinnedRow):hover .pinnedRight,
 .root tbody tr:not(.pinnedRow):hover .autoCellStickyBody {
-  background: var(--color-table-row-bg-hover);
+  background: var(--data-table-pinned-bg-row-hover);
 }
 
 .root tbody tr:not(.pinnedRow)[aria-selected='true'] .pinnedLeft,
 .root tbody tr:not(.pinnedRow)[aria-selected='true'] .pinnedRight,
 .root tbody tr:not(.pinnedRow)[aria-selected='true'] .autoCellStickyBody {
-  background: var(--color-table-row-bg-selected);
+  background: var(--data-table-pinned-bg-row-selected);
 }
 
 // Expand chevron button — small clickable target inside the auto-expand
@@ -156,16 +157,16 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--color-fg-muted);
+  color: var(--data-table-expand-button-fg);
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--data-table-expand-button-radius);
   transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
+    background var(--data-table-expand-button-transition-bg),
+    color var(--data-table-expand-button-transition-color);
 
   &:hover {
-    background: var(--color-bg-muted);
-    color: var(--color-fg);
+    background: var(--data-table-expand-button-bg-hover);
+    color: var(--data-table-expand-button-fg-hover);
   }
 
   &:focus-visible {
@@ -207,6 +208,6 @@
 //   .density-comfortable .td → (0,2,0)
 // `.root .expandedDetailRow .expandedDetailCell` is (0,3,0) — wins.
 .root .expandedDetailRow .expandedDetailCell {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--data-table-expanded-detail-padding);
   white-space: normal;
 }

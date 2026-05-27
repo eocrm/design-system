@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './DataTable.tokens';
 
 .headerCell {
   position: relative;
@@ -27,29 +28,29 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-fg-muted);
-  opacity: var(--opacity-hidden);
+  color: var(--data-table-header-grip-fg);
+  opacity: var(--data-table-header-grip-opacity-hidden);
   cursor: grab;
-  transition: opacity var(--transition-fast);
+  transition: opacity var(--data-table-header-grip-transition);
 
   // Reveal on header hover OR when grip itself is focused.
   .headerCell:hover &,
   &:focus-visible {
-    opacity: var(--opacity-visible);
+    opacity: var(--data-table-header-grip-opacity-visible);
   }
 
   &:focus-visible {
     @include focus-ring;
 
     outline-offset: -2px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--data-table-header-grip-focus-radius);
   }
 }
 
 .inner {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--data-table-header-inner-gap);
   height: 100%;
 
   // Prevent content overflow from expanding the measured cell width.
@@ -83,7 +84,7 @@
 .label {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--data-table-header-label-gap);
   flex: 1 1 auto;
   min-width: 0;
 
@@ -91,8 +92,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-fg);
+  font-weight: var(--data-table-header-label-font-weight);
+  color: var(--data-table-header-label-fg);
   cursor: default;
   user-select: none;
 
@@ -104,7 +105,7 @@
     @include focus-ring;
 
     outline-offset: -2px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--data-table-header-label-focus-radius);
   }
 }
 
@@ -113,12 +114,12 @@
 // (matches the .label.sortable cursor: pointer treatment).
 .sortIcon {
   flex-shrink: 0;
-  color: var(--color-fg-muted);
+  color: var(--data-table-header-sort-icon-fg);
   cursor: pointer;
 }
 
 .sortIconActive {
-  color: var(--color-fg);
+  color: var(--data-table-header-sort-icon-fg-active);
 }
 
 // Resize handle — absolutely positioned at the right edge of the cell so it
@@ -134,47 +135,47 @@
   align-items: center;
   justify-content: center;
   user-select: none;
-  opacity: var(--opacity-hidden);
-  transition: opacity var(--transition-fast);
+  opacity: var(--data-table-header-resize-handle-opacity-hidden);
+  transition: opacity var(--data-table-header-resize-handle-transition);
 
   // Reveal when hovering anywhere on the header cell.
   .headerCell:hover & {
-    opacity: var(--opacity-visible);
+    opacity: var(--data-table-header-resize-handle-opacity-visible);
   }
 }
 
 .resizeChevron {
   width: 8px;
   height: 8px;
-  color: var(--color-fg-muted);
+  color: var(--data-table-header-resize-chevron-fg);
   flex-shrink: 0;
-  transition: color var(--transition-fast);
+  transition: color var(--data-table-header-resize-chevron-transition);
 }
 
 .resizeBar {
   width: 1px;
   height: 60%;
-  background: var(--color-fg-muted);
+  background: var(--data-table-header-resize-bar-bg);
   flex-shrink: 0;
   transition:
-    background var(--transition-fast),
-    width var(--transition-fast);
+    background var(--data-table-header-resize-bar-transition-bg),
+    width var(--data-table-header-resize-bar-transition-width);
 }
 
 // Accent-colour the bar and chevrons when hovered or actively resizing.
 .resizeHandle:hover .resizeBar,
 .resizeBar.active {
-  background: var(--color-accent);
+  background: var(--data-table-header-resize-bar-bg-active);
   width: 2px;
 }
 
 .resizeHandle:hover .resizeChevron,
 .resizeHandle:has(.resizeBar.active) .resizeChevron {
-  color: var(--color-accent);
+  color: var(--data-table-header-resize-chevron-fg-active);
 }
 
 .dragging {
-  opacity: var(--opacity-dragging);
+  opacity: var(--data-table-header-dragging-opacity);
 }
 
 // Pinned columns get sticky positioning via inline `left` / `right` styles;
@@ -186,7 +187,7 @@
   // Solid background so unpinned content doesn't show through during scroll.
   // Header cells use --color-table-header-bg (muted gray chrome) — match it
   // here so the pinned corner cell blends with the rest of the header band.
-  background: var(--color-table-header-bg);
+  background: var(--data-table-header-pinned-bg);
 
   // Sticky pinned column header — the "corner" that stacks above:
   //   - Table's sticky-header band (z-index 1 per Table.module.scss)
@@ -199,10 +200,10 @@
 
 .pinnedLeft {
   // Inside-edge shadow on the right of left-pinned columns.
-  box-shadow: var(--shadow-table-pinned-edge);
+  box-shadow: var(--data-table-header-pinned-shadow-left);
 }
 
 .pinnedRight {
   // Mirror shadow on the left of right-pinned columns.
-  box-shadow: var(--shadow-table-pinned-edge-right);
+  box-shadow: var(--data-table-header-pinned-shadow-right);
 }

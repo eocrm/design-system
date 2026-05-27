@@ -1,26 +1,28 @@
+@use './Code.tokens';
+
 .code {
   font-family: var(--font-family-mono);
-  font-size: var(--font-size-code);
+  font-size: var(--code-font-size);
 
   // stylelint-disable-next-line property-disallowed-list -- inline chip padding (component-internal, not at the boundary)
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-muted);
-  color: var(--color-fg);
+  padding: 0 var(--code-padding-x);
+  border-radius: var(--code-radius);
+  background: var(--code-bg);
+  color: var(--code-fg);
 }
 
 .toneDefault {
-  color: var(--color-fg);
+  color: var(--code-fg-default);
 }
 
 .toneMuted {
-  color: var(--color-fg-muted);
+  color: var(--code-fg-muted);
 }
 
 .toneAccent {
-  color: var(--color-accent);
+  color: var(--code-fg-accent);
 }
 
 .toneDanger {
-  color: var(--color-danger);
+  color: var(--code-fg-danger);
 }

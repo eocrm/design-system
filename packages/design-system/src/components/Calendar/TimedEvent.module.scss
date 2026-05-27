@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './Calendar.tokens';
 
 .block {
   // Per-block cascade geometry is passed as CSS custom properties from
@@ -11,27 +12,27 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
+  gap: var(--calendar-timed-event-gap);
+  padding: var(--calendar-timed-event-padding);
 
   // Border is set per-tone (see rules below) so neutral blocks stay visible
   // on the tinted today / weekend column backgrounds. Tone blocks get a
   // border matching their accent color for the same reason.
   border: var(--border-width) solid currentColor;
-  border-radius: var(--radius-sm);
+  border-radius: var(--calendar-timed-event-radius);
   font-family: inherit;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--calendar-timed-event-font-size);
+  font-weight: var(--calendar-timed-event-font-weight);
   line-height: 1.2;
   text-align: left;
   overflow: hidden;
   cursor: pointer;
   user-select: none;
   transition:
-    left var(--transition-base),
-    width var(--transition-base),
-    filter var(--transition-fast),
-    background var(--transition-fast);
+    left var(--calendar-timed-event-transition-position),
+    width var(--calendar-timed-event-transition-position),
+    filter var(--calendar-timed-event-transition-filter),
+    background var(--calendar-timed-event-transition-bg);
 
   // Hover (and keyboard-focus) lifts the block to full column width and on
   // top of any cascade neighbours. Animated via the transition above.
@@ -56,9 +57,9 @@
 }
 
 .time {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  opacity: var(--opacity-muted);
+  font-size: var(--calendar-timed-event-time-font-size);
+  font-weight: var(--calendar-timed-event-time-font-weight);
+  opacity: var(--calendar-timed-event-time-opacity);
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -73,43 +74,43 @@
 .tooltipBody {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--calendar-event-tooltip-gap);
 }
 
 .tooltipTime {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  color: var(--color-bg-subtle);
+  font-size: var(--calendar-event-tooltip-time-font-size);
+  font-weight: var(--calendar-event-tooltip-time-font-weight);
+  color: var(--calendar-event-tooltip-time-fg);
 }
 
 .tooltipTitle {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-bg);
+  font-size: var(--calendar-event-tooltip-title-font-size);
+  font-weight: var(--calendar-event-tooltip-title-font-weight);
+  color: var(--calendar-event-tooltip-title-fg);
 }
 
 .neutral {
-  background: var(--color-bg-subtle);
-  color: var(--color-fg);
-  border-color: var(--color-border-strong);
+  background: var(--calendar-timed-event-bg-neutral);
+  color: var(--calendar-timed-event-fg-neutral);
+  border-color: var(--calendar-timed-event-border-color-neutral);
 }
 
 .accent {
-  background: var(--color-accent-bg-subtle);
-  color: var(--color-accent);
+  background: var(--calendar-timed-event-bg-accent);
+  color: var(--calendar-timed-event-fg-accent);
 }
 
 .success {
-  background: var(--color-success-bg-subtle);
-  color: var(--color-success);
+  background: var(--calendar-timed-event-bg-success);
+  color: var(--calendar-timed-event-fg-success);
 }
 
 .warning {
-  background: var(--color-warning-bg-subtle);
-  color: var(--color-warning);
+  background: var(--calendar-timed-event-bg-warning);
+  color: var(--calendar-timed-event-fg-warning);
 }
 
 .danger {
-  background: var(--color-danger-bg-subtle);
-  color: var(--color-danger);
+  background: var(--calendar-timed-event-bg-danger);
+  color: var(--calendar-timed-event-fg-danger);
 }

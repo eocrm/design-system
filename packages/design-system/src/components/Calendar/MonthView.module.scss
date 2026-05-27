@@ -1,29 +1,30 @@
 @use '../../styles/mixins' as *;
+@use './Calendar.tokens';
 
 .grid {
   display: flex;
   flex-direction: column;
-  border-top: var(--border-width) solid var(--color-border);
-  border-left: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-top: var(--border-width) solid var(--calendar-border-color);
+  border-left: var(--border-width) solid var(--calendar-border-color);
+  border-radius: var(--calendar-radius);
   overflow: hidden;
-  background: var(--color-bg);
+  background: var(--calendar-bg);
 }
 
 .weekdayHeader {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background: var(--color-bg-subtle);
-  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--calendar-bg-subtle);
+  border-bottom: var(--border-width) solid var(--calendar-border-color);
 }
 
 .weekdayLabel {
-  padding: var(--space-2);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg-muted);
+  padding: var(--calendar-weekday-padding);
+  font-size: var(--calendar-weekday-font-size);
+  font-weight: var(--calendar-weekday-font-weight);
+  color: var(--calendar-weekday-fg);
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-caps);
+  letter-spacing: var(--calendar-weekday-letter-spacing);
   text-align: left;
 }
 
@@ -50,46 +51,46 @@
    `min-height` makes empty weeks still look like cells without inflating
    the day-number row (events sit immediately below the day number). */
 .dayColumn {
-  min-height: var(--size-calendar-day-cell-min-height);
-  border-right: var(--border-width) solid var(--color-border);
-  border-bottom: var(--border-width) solid var(--color-border);
+  min-height: var(--calendar-day-cell-min-height);
+  border-right: var(--border-width) solid var(--calendar-border-color);
+  border-bottom: var(--border-width) solid var(--calendar-border-color);
 }
 
 // Today's cell uses an accent border-top (emphasis-weight) instead of a
 // tinted background, so events with the `accent` tone don't visually blend
 // into the cell.
 .dayColumnToday {
-  box-shadow: inset 0 var(--border-width-emphasis) 0 var(--color-accent);
+  box-shadow: inset 0 var(--calendar-day-cell-today-ring-width) 0 var(--calendar-accent);
 }
 
 .dayColumnWeekend {
-  background: var(--color-bg-muted);
+  background: var(--calendar-bg-muted);
 }
 
 .barSlot {
   min-width: 0;
-  padding: var(--space-1);
+  padding: var(--calendar-bar-slot-padding);
 }
 
 .moreChipWrapper {
   display: flex;
   justify-content: flex-start;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--calendar-more-chip-wrapper-padding);
 }
 
 .moreChip {
-  padding: var(--space-1) var(--space-2);
+  padding: var(--calendar-more-chip-padding);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--calendar-more-chip-radius);
   background: transparent;
   font-family: inherit;
-  font-size: var(--font-size-xs);
-  color: var(--color-fg-muted);
+  font-size: var(--calendar-more-chip-font-size);
+  color: var(--calendar-more-chip-fg);
   cursor: pointer;
 
   &:hover {
-    background: var(--color-bg-subtle);
-    color: var(--color-fg);
+    background: var(--calendar-more-chip-bg-hover);
+    color: var(--calendar-more-chip-fg-hover);
   }
 
   &:focus-visible {

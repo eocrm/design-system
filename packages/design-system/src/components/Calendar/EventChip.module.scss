@@ -1,29 +1,30 @@
 @use '../../styles/mixins' as *;
+@use './Calendar.tokens';
 
 .chip {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--calendar-event-chip-gap);
   width: 100%;
-  padding: 0 var(--space-2);
-  height: var(--space-5);
+  padding: 0 var(--calendar-event-chip-padding-x);
+  height: var(--calendar-event-chip-height);
 
   // Border is set per-tone (see below) so neutral chips stay visible on
   // tinted backgrounds (today column, weekend columns). Tone chips get a
   // border matching their accent color for the same reason.
   border: var(--border-width) solid currentColor;
-  border-radius: var(--radius-sm);
+  border-radius: var(--calendar-event-chip-radius);
   font-family: inherit;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--calendar-event-chip-font-size);
+  font-weight: var(--calendar-event-chip-font-weight);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   cursor: pointer;
   user-select: none;
   transition:
-    filter var(--transition-fast),
-    background var(--transition-fast);
+    filter var(--calendar-event-chip-transition-filter),
+    background var(--calendar-event-chip-transition-bg);
 
   &:hover:not(:disabled) {
     filter: brightness(0.95);
@@ -46,7 +47,7 @@
 
 .time {
   flex-shrink: 0;
-  opacity: var(--opacity-muted);
+  opacity: var(--calendar-event-chip-time-opacity);
 }
 
 .title {
@@ -61,72 +62,72 @@
 .tooltipBody {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--calendar-event-tooltip-gap);
 }
 
 // Tooltip background is dark (var(--color-fg)); foreground colors here are
 // the inverse so the time and title are readable.
 .tooltipTime {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  color: var(--color-bg-subtle);
+  font-size: var(--calendar-event-tooltip-time-font-size);
+  font-weight: var(--calendar-event-tooltip-time-font-weight);
+  color: var(--calendar-event-tooltip-time-fg);
 }
 
 .tooltipTitle {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-bg);
+  font-size: var(--calendar-event-tooltip-title-font-size);
+  font-weight: var(--calendar-event-tooltip-title-font-weight);
+  color: var(--calendar-event-tooltip-title-fg);
 }
 
 // Tones — non-allDay (tinted background, strong-color foreground)
 .neutral {
-  background: var(--color-bg-subtle);
-  color: var(--color-fg);
-  border-color: var(--color-border-strong);
+  background: var(--calendar-event-chip-bg-neutral);
+  color: var(--calendar-event-chip-fg-neutral);
+  border-color: var(--calendar-event-chip-border-color-neutral);
 }
 
 .accent {
-  background: var(--color-accent-bg-subtle);
-  color: var(--color-accent);
+  background: var(--calendar-event-chip-bg-accent);
+  color: var(--calendar-event-chip-fg-accent);
 }
 
 .success {
-  background: var(--color-success-bg-subtle);
-  color: var(--color-success);
+  background: var(--calendar-event-chip-bg-success);
+  color: var(--calendar-event-chip-fg-success);
 }
 
 .warning {
-  background: var(--color-warning-bg-subtle);
-  color: var(--color-warning);
+  background: var(--calendar-event-chip-bg-warning);
+  color: var(--calendar-event-chip-fg-warning);
 }
 
 .danger {
-  background: var(--color-danger-bg-subtle);
-  color: var(--color-danger);
+  background: var(--calendar-event-chip-bg-danger);
+  color: var(--calendar-event-chip-fg-danger);
 }
 
 // allDay — tone-filled background, contrast foreground
 .allDay.neutral {
-  background: var(--color-fg);
-  color: var(--color-bg);
+  background: var(--calendar-event-chip-all-day-bg-neutral);
+  color: var(--calendar-event-chip-all-day-fg-neutral);
 }
 
 .allDay.accent {
-  background: var(--color-accent);
-  color: var(--color-accent-fg);
+  background: var(--calendar-event-chip-all-day-bg-accent);
+  color: var(--calendar-event-chip-all-day-fg-accent);
 }
 
 .allDay.success {
-  background: var(--color-success);
-  color: var(--color-success-fg);
+  background: var(--calendar-event-chip-all-day-bg-success);
+  color: var(--calendar-event-chip-all-day-fg-success);
 }
 
 .allDay.warning {
-  background: var(--color-warning);
-  color: var(--color-warning-fg);
+  background: var(--calendar-event-chip-all-day-bg-warning);
+  color: var(--calendar-event-chip-all-day-fg-warning);
 }
 
 .allDay.danger {
-  background: var(--color-danger);
-  color: var(--color-danger-fg);
+  background: var(--calendar-event-chip-all-day-bg-danger);
+  color: var(--calendar-event-chip-all-day-fg-danger);
 }

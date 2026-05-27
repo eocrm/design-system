@@ -1,7 +1,8 @@
 @use '../../styles/mixins' as *;
+@use './Calendar.tokens';
 
 .cell {
-  padding: var(--space-2);
+  padding: var(--calendar-day-cell-padding);
   cursor: pointer;
   outline: none;
 
@@ -11,17 +12,17 @@
 }
 
 .otherMonth .dayNumber {
-  opacity: var(--opacity-disabled);
+  opacity: var(--calendar-day-cell-opacity-other-month);
 }
 
 .dayNumber {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg);
+  font-size: var(--calendar-day-cell-number-font-size);
+  font-weight: var(--calendar-day-cell-number-font-weight);
+  color: var(--calendar-day-cell-number-fg);
   line-height: 1;
 }
 
 .todayNumber {
-  color: var(--color-accent);
-  font-weight: var(--font-weight-bold);
+  color: var(--calendar-day-cell-today-fg);
+  font-weight: var(--calendar-day-cell-today-font-weight);
 }

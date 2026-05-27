@@ -1,3 +1,5 @@
+@use './Avatar.tokens';
+
 // Outer wrapper — position:relative anchors the .presence dot (Rule 4 escape
 // hatch for an internal child). No overflow:hidden here — that lives on .crop
 // so the presence dot sibling is never clipped.
@@ -7,9 +9,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: var(--radius-full);
-  color: var(--color-avatar-fg);
-  font-weight: var(--font-weight-semibold);
+  border-radius: var(--avatar-radius);
+  color: var(--avatar-fg);
+  font-weight: var(--avatar-font-weight);
   text-transform: uppercase;
   user-select: none;
 }
@@ -25,7 +27,7 @@
   justify-content: center;
   border-radius: inherit;
   overflow: hidden;
-  background: var(--avatar-bg, var(--color-bg-sunken));
+  background: var(--avatar-bg, var(--avatar-bg-fallback));
 }
 
 .crop img {
@@ -35,21 +37,21 @@
 }
 
 .sm {
-  width: var(--size-sm);
-  height: var(--size-sm);
-  font-size: var(--font-size-xs);
+  width: var(--avatar-size-sm);
+  height: var(--avatar-size-sm);
+  font-size: var(--avatar-font-size-sm);
 }
 
 .md {
-  width: var(--size-md);
-  height: var(--size-md);
-  font-size: var(--font-size-sm);
+  width: var(--avatar-size-md);
+  height: var(--avatar-size-md);
+  font-size: var(--avatar-font-size-md);
 }
 
 .lg {
-  width: var(--size-lg);
-  height: var(--size-lg);
-  font-size: var(--font-size-md);
+  width: var(--avatar-size-lg);
+  height: var(--avatar-size-lg);
+  font-size: var(--avatar-font-size-lg);
 }
 
 // Presence dot (Avatar status). Anchored to the bottom-right via the
@@ -59,45 +61,45 @@
   position: absolute;
   right: 0;
   bottom: 0;
-  border-radius: var(--radius-full);
-  box-shadow: 0 0 0 var(--border-width-emphasis) var(--color-bg);
+  border-radius: var(--avatar-presence-radius);
+  box-shadow: 0 0 0 var(--avatar-presence-ring-width) var(--avatar-presence-ring-color);
 
   &[data-status='online'] {
-    background: var(--color-presence-online);
+    background: var(--avatar-presence-bg-online);
   }
 
   &[data-status='busy'] {
-    background: var(--color-presence-busy);
+    background: var(--avatar-presence-bg-busy);
   }
 
   &[data-status='away'] {
-    background: var(--color-presence-away);
+    background: var(--avatar-presence-bg-away);
   }
 
   &[data-status='offline'] {
-    background: var(--color-presence-offline);
+    background: var(--avatar-presence-bg-offline);
   }
 }
 
 // Per-size dot dimensions. The size class lives on the avatar wrapper (the
 // .presence child's parent), so a descendant selector picks the right size.
 .sm .presence {
-  width: var(--size-presence-sm);
-  height: var(--size-presence-sm);
+  width: var(--avatar-presence-size-sm);
+  height: var(--avatar-presence-size-sm);
 }
 
 .md .presence {
-  width: var(--size-presence-md);
-  height: var(--size-presence-md);
+  width: var(--avatar-presence-size-md);
+  height: var(--avatar-presence-size-md);
 }
 
 .lg .presence {
-  width: var(--size-presence-lg);
-  height: var(--size-presence-lg);
+  width: var(--avatar-presence-size-lg);
+  height: var(--avatar-presence-size-lg);
 }
 
 // When inside an AvatarGroup, each avatar picks up a --color-bg ring so
 // stacked siblings read as distinct.
 .inGroup {
-  box-shadow: 0 0 0 var(--border-width-emphasis) var(--color-bg);
+  box-shadow: 0 0 0 var(--avatar-in-group-ring-width) var(--avatar-in-group-ring-color);
 }

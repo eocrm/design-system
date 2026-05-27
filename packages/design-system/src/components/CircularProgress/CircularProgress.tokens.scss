@@ -1,0 +1,23 @@
+// CircularProgress.tokens.scss — Component-scoped tokens for <CircularProgress>. Covers the donut track + per-tone fill stroke, the centered label, and the determinate-fill transition. SVG attribute literals (fill: none, stroke-linecap, exact size pixels per size variant) stay as-is.
+:root {
+  // Track + base fill stroke
+  --circular-progress-track-color: var(--color-bg-muted);
+  --circular-progress-fill-color: var(--color-accent);
+
+  // Per-tone fill stroke
+  --circular-progress-fill-color-default: var(--color-accent);
+  --circular-progress-fill-color-success: var(--color-success);
+  --circular-progress-fill-color-warning: var(--color-warning);
+  --circular-progress-fill-color-danger: var(--color-danger);
+
+  // Indeterminate spinner — always accent (matches existing override)
+  --circular-progress-indeterminate-color: var(--color-accent);
+
+  // Determinate sweep transition
+  --circular-progress-fill-transition: var(--transition-base);
+
+  // Centered label
+  --circular-progress-label-font-size: var(--font-size-sm);
+  --circular-progress-label-font-weight: var(--font-weight-medium);
+  --circular-progress-label-fg: var(--color-fg);
+}

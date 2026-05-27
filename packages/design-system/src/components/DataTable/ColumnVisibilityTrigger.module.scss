@@ -1,5 +1,7 @@
+@use './DataTable.tokens';
+
 .trigger {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--data-table-column-visibility-gap);
 }
