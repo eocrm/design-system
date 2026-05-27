@@ -139,6 +139,28 @@ it('Description forwards ref to its span', () => {
   expect(ref.current).toBeInstanceOf(HTMLSpanElement);
 });
 
+it('Avatar forwards ref to its span', () => {
+  const ref = createRef<HTMLSpanElement>();
+  render(
+    <PersonDisplay>
+      <PersonDisplay.Avatar ref={ref} name="Sarah" />
+      <PersonDisplay.Name>Sarah</PersonDisplay.Name>
+    </PersonDisplay>,
+  );
+  expect(ref.current).toBeInstanceOf(HTMLSpanElement);
+});
+
+it('Name (no href) forwards ref to its span', () => {
+  const ref = createRef<HTMLSpanElement>();
+  render(
+    <PersonDisplay>
+      <PersonDisplay.Avatar name="Sarah" />
+      <PersonDisplay.Name ref={ref}>Sarah</PersonDisplay.Name>
+    </PersonDisplay>,
+  );
+  expect(ref.current).toBeInstanceOf(HTMLSpanElement);
+});
+
 it('spreads arbitrary HTML attributes onto the root div', () => {
   const { container } = render(
     <PersonDisplay data-testid="person-row">

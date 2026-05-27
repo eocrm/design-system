@@ -19,7 +19,9 @@
     "composes": [
       "Tooltip"
     ],
-    "composedBy": []
+    "composedBy": [
+      "PersonDisplay"
+    ]
   },
   "Badge": {
     "tier": "primitive",
@@ -261,7 +263,8 @@
     "cluster": "Navigation",
     "composes": [],
     "composedBy": [
-      "Breadcrumb"
+      "Breadcrumb",
+      "PersonDisplay"
     ]
   },
   "Modal": {
@@ -316,6 +319,16 @@
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
+    "composedBy": []
+  },
+  "PersonDisplay": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Avatar",
+      "Link",
+      "Text"
+    ],
     "composedBy": []
   },
   "Popover": {
@@ -412,7 +425,8 @@
     "composes": [],
     "composedBy": [
       "FilterChip",
-      "OptionsPicker"
+      "OptionsPicker",
+      "PersonDisplay"
     ]
   },
   "Textarea": {

@@ -18,6 +18,10 @@ import styles from './PersonDisplay.module.scss';
 // Public types
 // ----------------------------------------------------------------------------
 
+/**
+ * Visual size of the PersonDisplay composition. Drives Avatar diameter
+ * and Name / Description text sizes via context.
+ */
 export type PersonDisplaySize = 'sm' | 'md' | 'lg';
 
 export interface PersonDisplayProps extends HTMLAttributes<HTMLDivElement> {
@@ -29,6 +33,11 @@ export interface PersonDisplayProps extends HTMLAttributes<HTMLDivElement> {
    * text sizes via context.
    */
   size?: PersonDisplaySize;
+  /**
+   * `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` (+ optional repeating
+   * `<PersonDisplay.Description>`) subcomponents in any order — Root sorts
+   * the Avatar into its own slot.
+   */
   children: ReactNode;
 }
 
@@ -42,6 +51,7 @@ export interface PersonDisplayNameProps extends HTMLAttributes<HTMLElement> {
    * timeline) where the name is plain text.
    */
   href?: string;
+  /** The person's display name — usually a plain string. */
   children: ReactNode;
 }
 
@@ -102,7 +112,8 @@ const DESCRIPTION_TEXT_SIZE: Record<PersonDisplaySize, TextSize> = {
 const PersonDisplayAvatar = forwardRef<HTMLSpanElement, PersonDisplayAvatarProps>(
   function PersonDisplayAvatar(props, ref) {
     const size = useSize();
-    return <Avatar ref={ref} size={AVATAR_SIZE[size]} {...props} />;
+    // {...props} first so internally-computed size (from context) wins (Pattern B)
+    return <Avatar {...props} ref={ref} size={AVATAR_SIZE[size]} />;
   },
 );
 
@@ -130,7 +141,9 @@ const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
         <Link
           ref={ref as Ref<HTMLAnchorElement>}
           href={href}
+          variant="subtle"
           className={clsx(styles.name, className)}
+          // {...rest} last so consumer overrides win (Pattern A)
           {...rest}
         >
           <Text as="span" size={textSize} weight="medium">
@@ -143,6 +156,7 @@ const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
       <span
         ref={ref as Ref<HTMLSpanElement>}
         className={clsx(styles.name, className)}
+        // {...rest} last so consumer overrides win (Pattern A)
         {...rest}
       >
         <Text as="span" size={textSize} weight="medium">
@@ -176,7 +190,12 @@ const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescri
     const size = useSize();
     const textSize = DESCRIPTION_TEXT_SIZE[size];
     return (
-      <span ref={ref} className={clsx(styles.description, className)} {...rest}>
+      <span
+        ref={ref}
+        className={clsx(styles.description, className)}
+        // {...rest} last so consumer overrides win (Pattern A)
+        {...rest}
+      >
         <Text as="span" size={textSize} tone="muted">
           {children}
         </Text>
@@ -258,6 +277,7 @@ const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(
     });
     return (
       <PersonDisplayContext.Provider value={{ size }}>
+        {/* {...rest} last so consumer overrides win (Pattern A — Root has no locked-in attributes) */}
         <div
           ref={ref}
           className={clsx(styles.root, className)}
