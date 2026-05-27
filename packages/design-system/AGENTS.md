@@ -1009,6 +1009,33 @@ import { Divider } from '@eocrm/design-system';
 - **Non-interactive.** If it's clickable, use `<Button>` instead.
 - Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced.
 
+### `<FilterChip>` — dismissible "active filter" pill
+
+```tsx
+<FilterChip onDismiss={() => removeFilter('event')}>
+  <FilterChip.Label>Event</FilterChip.Label>
+  <FilterChip.Value tone="info">auth.* (3)</FilterChip.Value>
+</FilterChip>
+
+// Value-only chip (no label slot):
+<FilterChip onDismiss={() => removeFilter('tenant')}>
+  <FilterChip.Value>beta</FilterChip.Value>
+</FilterChip>
+
+// Read-only chip (no dismiss button):
+<FilterChip>
+  <FilterChip.Label>Status</FilterChip.Label>
+  <FilterChip.Value>Active</FilterChip.Value>
+</FilterChip>
+```
+
+- Compound API: `<FilterChip>` root + optional `<FilterChip.Label>` and `<FilterChip.Value>` children.
+- `onDismiss`: when provided, the chip renders a trailing `×` button wired to this callback. Omit for a read-only chip.
+- `dismissLabel`: overrides the default `'Remove filter'` `aria-label` on the dismiss button. Pass a contextual label (`'Remove Event: auth.* filter'`) for screen-reader clarity.
+- `<FilterChip.Value tone={...}>`: optional `tone` (same palette as `<Badge>`) prefixes a colored 6px dot before the value text. Omit `tone` for plain values (e.g., a tenant slug).
+- **Use for active-filter pills, not tags / status badges.** If it's a status or category, use `<Badge>`. If it's a clickable filter trigger, use `<Button>` or `<OptionsPicker.Trigger>`.
+- Root carries `role="group"` so screen readers announce the chip as one unit. The dismiss button is the only interactive target.
+
 ### `<Tabs>` — horizontal tab strip
 
 ```tsx

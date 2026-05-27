@@ -1,0 +1,80 @@
+@use '../../styles/mixins' as *;
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dot {
+  // Reuse the existing Badge dot size token (6px). Keeps the chip's tone
+  // dot visually identical to Badge's tone dot and avoids raw px literals.
+  display: inline-block;
+  width: var(--size-badge-dot);
+  height: var(--size-badge-dot);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+
+  // Tone color map for the dot. Saturated colors so the dot stays
+  // visible at small size. Token names match tokens.scss exactly — no
+  // top-level --color-purple, so purple uses --color-badge-purple-fg.
+  &[data-tone='neutral'] {
+    background: var(--color-fg-subtle);
+  }
+
+  &[data-tone='info'] {
+    background: var(--color-info);
+  }
+
+  &[data-tone='success'] {
+    background: var(--color-success);
+  }
+
+  &[data-tone='warning'] {
+    background: var(--color-warning);
+  }
+
+  &[data-tone='danger'] {
+    background: var(--color-danger);
+  }
+
+  &[data-tone='purple'] {
+    background: var(--color-badge-purple-fg);
+  }
+}
+
+.dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-05);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-fg-subtle);
+
+  &:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-fg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}

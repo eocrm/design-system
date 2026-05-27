@@ -85,32 +85,17 @@ A raw `<div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)
 
 **When this ships:** refactor the Members seats card and re-evaluate the search-input constraints across mockups, then tick this checkbox.
 
-### [ ] `<DismissibleBadge>` (or `<Badge onDismiss>`) — Badge variant with built-in dismiss control
+## Closed
+
+### [x] `<FilterChip>` — dismissible "active filter" pill
 
 **Filed:** 2026-05-26
+**Shipped:** 2026-05-26
 **Mocked in:**
 
-- `packages/playground/src/pages/mockups/Audit/Audit.tsx` — filter chip row (chip X button)
+- `packages/playground/src/pages/mockups/Audit/Audit.tsx` — filter chip row (now uses real `<FilterChip>`)
 
-**What's needed:**
-Filter-chip UX: a Badge that carries a dismiss/close action (X button). Today the audit mockup composes Badge with `role="button"` + an inline `cursor: pointer` style as a Hard rule 6 escape hatch. Both EOCRM's real audit page and Trello/Linear-style filter bars need this pattern.
-
-API sketch:
-
-```tsx
-<Badge tone="info" onDismiss={() => removeChip(id)}>
-  Event: role.assigned
-</Badge>
-```
-
-or a parallel `<DismissibleBadge>` component if mixing a new interactive prop into the existing `Badge` is undesired. Must be keyboard-accessible (Enter / Space removes; or the X itself is focusable with a labelled button).
-
-**Current workaround:**
-`<Badge>` with `role="button"`, `tabIndex={0}`, `onClick`, `onKeyDown`, and `style={{ cursor: 'pointer' }}` inline on the element. The `cursor` style is the single Hard rule 6 escape hatch for this mockup, marked with the standard TODO comment.
-
-**When this ships:** refactor the Audit mockup chip row (remove the inline `style`, `role="button"`, `tabIndex`, and manual `onKeyDown`; replace with the new `onDismiss` prop or `<DismissibleBadge>`), then tick this checkbox.
-
-## Closed
+Shipped as a standalone primitive `<FilterChip>` (not as a Badge variant) — the compound API (`<FilterChip.Label>` + `<FilterChip.Value>`) and the dedicated white-pill geometry mapped poorly onto Badge's solid-fill shape. The Audit mockup's chip row was refactored to drop the Hard rule 6 escape hatch (no more `role="button"` + `tabIndex={0}` + inline `cursor: pointer` on a `<Badge>`); the dismiss control is now keyboard-accessible via the chip's built-in dismiss button. See `packages/design-system/src/components/FilterChip/`.
 
 ### [x] `<MutedBox>` — non-Card subdued-background container
 

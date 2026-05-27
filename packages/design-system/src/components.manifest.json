@@ -26,6 +26,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "FilterChip",
       "OptionsPicker"
     ]
   },
@@ -211,6 +212,15 @@
     "composes": [
       "Button",
       "Progress"
+    ],
+    "composedBy": []
+  },
+  "FilterChip": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Badge",
+      "Text"
     ],
     "composedBy": []
   },
@@ -401,6 +411,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "FilterChip",
       "OptionsPicker"
     ]
   },

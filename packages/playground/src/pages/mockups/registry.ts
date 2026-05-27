@@ -25,6 +25,7 @@ export type ComponentName =
   | 'Drawer'
   | 'DropdownMenu'
   | 'EmptyState'
+  | 'FilterChip'
   | 'FileUpload'
   | 'ImageCrop'
   | 'Grid'
@@ -182,11 +183,11 @@ export const MOCKUPS = [
       'DataTable',
       'DefinitionList',
       'Divider',
+      'FilterChip',
       'OptionsPicker',
       'PageHeader',
       'Stack',
       'Text',
-      'Title',
       'Tooltip',
     ],
   },

@@ -80,6 +80,13 @@ export type { AvatarProps, AvatarSize, AvatarStatus, AvatarGroupProps } from './
 export { Badge } from './components/Badge';
 export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot, BadgeVariant } from './components/Badge';
 
+export { FilterChip } from './components/FilterChip';
+export type {
+  FilterChipProps,
+  FilterChipLabelProps,
+  FilterChipValueProps,
+} from './components/FilterChip';
+
 export { Tabs } from './components/Tabs';
 export type { TabsProps, TabItem, TabsActivationMode, TabsOrientation } from './components/Tabs';
 
