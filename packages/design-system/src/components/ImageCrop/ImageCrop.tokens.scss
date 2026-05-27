@@ -1,0 +1,22 @@
+// ImageCrop.tokens.scss — component-scoped tokens for <ImageCrop>. Covers viewport surface, crop-box border, error state, and disabled mute. Cursor keywords and the scrim's literal 50% black stay raw in .module.scss.
+:root {
+  // Root layout
+  --image-crop-gap: var(--space-3);
+
+  // Viewport surface
+  --image-crop-viewport-bg: var(--color-bg-muted);
+  --image-crop-viewport-radius: var(--radius-md);
+  --image-crop-viewport-focus-color: var(--color-accent);
+
+  // Crop box outline
+  --image-crop-cropbox-border-color: var(--color-accent);
+
+  // Error state
+  --image-crop-error-gap: var(--space-2);
+  --image-crop-error-padding: var(--space-4);
+  --image-crop-error-fg: var(--color-danger);
+  --image-crop-error-font-size: var(--font-size-sm);
+
+  // Disabled mute
+  --image-crop-opacity-disabled: var(--opacity-disabled);
+}

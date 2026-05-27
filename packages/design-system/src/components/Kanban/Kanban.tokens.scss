@@ -1,0 +1,15 @@
+// Kanban.tokens.scss — component-scoped tokens for <Kanban>. Covers the board scroller, column surface, and the drag-shadow lift on cards.
+:root {
+  // Board (horizontal scroller)
+  --kanban-board-gap: var(--space-3);
+  --kanban-board-padding-block: var(--space-1);
+
+  // Column surface
+  --kanban-column-bg: var(--color-bg-muted);
+  --kanban-column-radius: var(--radius-md);
+  --kanban-column-padding: var(--space-3);
+  --kanban-column-gap: var(--space-2);
+
+  // Card — drag state lift
+  --kanban-card-shadow-dragging: var(--shadow-lg);
+}

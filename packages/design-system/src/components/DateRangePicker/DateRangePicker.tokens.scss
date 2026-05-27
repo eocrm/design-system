@@ -1,0 +1,78 @@
+// DateRangePicker.tokens.scss — component-scoped tokens for <DateRangePicker> + <InlineDateRangePicker>. Mirrors DatePicker.tokens.scss for the wrapper but layers on its own popover/grid-pair chrome. The two child grids re-use DatePicker grid tokens since they render via <DatePickerGrid>.
+:root {
+  // Wrapper — surface
+  --date-range-picker-gap: var(--space-1);
+  --date-range-picker-bg: var(--color-bg);
+  --date-range-picker-border-color: var(--color-border);
+  --date-range-picker-radius: var(--radius-md);
+  --date-range-picker-border-color-focus: var(--color-accent);
+
+  // Wrapper — invalid
+  --date-range-picker-border-color-invalid: var(--color-danger);
+  --date-range-picker-ring-invalid: var(--ring-danger);
+
+  // Wrapper — disabled
+  --date-range-picker-bg-disabled: var(--color-bg-subtle);
+  --date-range-picker-fg-disabled: var(--color-fg-muted);
+
+  // Input
+  --date-range-picker-input-fg: var(--color-fg);
+  --date-range-picker-input-placeholder-fg: var(--color-fg-muted);
+
+  // Clear / open buttons
+  --date-range-picker-button-radius: var(--radius-sm);
+  --date-range-picker-button-fg: var(--color-fg-muted);
+  --date-range-picker-button-bg-hover: var(--color-bg-subtle);
+  --date-range-picker-button-fg-hover: var(--color-fg);
+  --date-range-picker-button-opacity-disabled: var(--opacity-disabled);
+
+  // Size variants — wrapper padding + input height/font + button slot
+  --date-range-picker-padding-sm: var(--space-2);
+  --date-range-picker-padding-md: var(--space-2);
+  --date-range-picker-padding-lg: var(--space-3);
+  --date-range-picker-input-height-sm: var(--size-sm);
+  --date-range-picker-input-height-md: var(--size-md);
+  --date-range-picker-input-height-lg: var(--size-lg);
+  --date-range-picker-input-font-size-sm: var(--font-size-sm);
+  --date-range-picker-input-font-size-md: var(--font-size-md);
+  --date-range-picker-input-font-size-lg: var(--font-size-lg);
+  --date-range-picker-button-size-sm: var(--space-5);
+  --date-range-picker-button-size-md: var(--space-5);
+  --date-range-picker-button-size-lg: var(--space-6);
+
+  // Popover — surface
+  --date-range-picker-popover-z: var(--z-popover);
+  --date-range-picker-popover-width: var(--size-daterange-popover-width);
+  --date-range-picker-popover-padding: var(--space-2);
+  --date-range-picker-popover-bg: var(--color-bg);
+  --date-range-picker-popover-border-color: var(--color-border);
+  --date-range-picker-popover-radius: var(--radius-md);
+  --date-range-picker-popover-shadow: var(--shadow-lg);
+  --date-range-picker-popover-gap: var(--space-2);
+
+  // Popover header (external chevrons above the two grids)
+  --date-range-picker-popover-header-padding-x: var(--space-1);
+  --date-range-picker-popover-nav-size: var(--space-6);
+  --date-range-picker-popover-nav-radius: var(--radius-sm);
+  --date-range-picker-popover-nav-fg: var(--color-fg-muted);
+  --date-range-picker-popover-nav-bg-hover: var(--color-bg-subtle);
+  --date-range-picker-popover-nav-fg-hover: var(--color-fg);
+
+  // Grids (the side-by-side pair gutter)
+  --date-range-picker-grids-gap: var(--space-3);
+
+  // Inline variant — surface
+  --date-range-picker-inline-gap: var(--space-2);
+  --date-range-picker-inline-padding: var(--space-2);
+  --date-range-picker-inline-bg: var(--color-bg);
+  --date-range-picker-inline-border-color: var(--color-border);
+  --date-range-picker-inline-radius: var(--radius-md);
+
+  // Inline header
+  --date-range-picker-inline-header-padding-x: var(--space-1);
+  --date-range-picker-inline-nav-size: var(--space-6);
+  --date-range-picker-inline-nav-radius: var(--radius-sm);
+  --date-range-picker-inline-nav-fg: var(--color-fg-muted);
+  --date-range-picker-inline-nav-bg-hover: var(--color-bg-subtle);
+  --date-range-picker-inline-nav-fg-hover: var(--color-fg);
+}

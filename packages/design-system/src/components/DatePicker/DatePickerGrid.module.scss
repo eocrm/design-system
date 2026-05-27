@@ -1,43 +1,44 @@
 @use '../../styles/mixins' as *;
+@use './DatePicker.tokens';
 
 .grid {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
+  gap: var(--date-picker-grid-gap);
+  padding: var(--date-picker-grid-padding);
+  background: var(--date-picker-grid-bg);
+  border: var(--border-width) solid var(--date-picker-grid-border-color);
+  border-radius: var(--date-picker-grid-radius);
+  box-shadow: var(--date-picker-grid-shadow);
 
   // Floating popover: fixed width is intentional (escape hatch from Rule 4 —
   // analogous to DropdownMenu/Popover).
-  width: var(--size-datepicker-popover-width);
+  width: var(--date-picker-grid-width);
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-1);
+  padding: 0 var(--date-picker-grid-header-padding-x);
 }
 
 .navButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--space-6);
-  height: var(--space-6);
+  width: var(--date-picker-nav-size);
+  height: var(--date-picker-nav-size);
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
-  color: var(--color-fg-muted);
+  border-radius: var(--date-picker-nav-radius);
+  color: var(--date-picker-nav-fg);
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: var(--color-bg-subtle);
-    color: var(--color-fg);
+    background: var(--date-picker-nav-bg-hover);
+    color: var(--date-picker-nav-fg-hover);
   }
 
   &:focus-visible {
@@ -46,9 +47,9 @@
 }
 
 .monthLabel {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg);
+  font-size: var(--date-picker-month-font-size);
+  font-weight: var(--date-picker-month-font-weight);
+  color: var(--date-picker-month-fg);
   font-variant-numeric: tabular-nums;
 }
 
@@ -67,35 +68,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--space-4);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg-muted);
+  height: var(--date-picker-weekday-height);
+  font-size: var(--date-picker-weekday-font-size);
+  font-weight: var(--date-picker-weekday-font-weight);
+  color: var(--date-picker-weekday-fg);
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-caps);
+  letter-spacing: var(--date-picker-weekday-letter-spacing);
 }
 
 .cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--size-datepicker-cell);
-  height: var(--size-datepicker-cell);
+  width: var(--date-picker-cell-size);
+  height: var(--date-picker-cell-size);
   padding: 0;
   background: transparent;
   border: var(--border-width) solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--date-picker-cell-radius);
   font-family: inherit;
-  font-size: var(--font-size-sm);
+  font-size: var(--date-picker-cell-font-size);
   font-variant-numeric: tabular-nums;
-  color: var(--color-fg);
+  color: var(--date-picker-cell-fg);
   cursor: pointer;
 
   // Hover-bg only on neutral cells. Selected / in-range / range-boundary
   // cells already carry an accent fill — overriding it with bg-subtle would
   // turn the text unreadable (white-on-grey).
   &:hover:not(:disabled, .disabled, .selected, .inRange, .rangeStart, .rangeEnd) {
-    background: var(--color-bg-subtle);
+    background: var(--date-picker-cell-bg-hover);
   }
 
   &:focus-visible {
@@ -104,22 +105,22 @@
 }
 
 .outside {
-  color: var(--color-fg-muted);
+  color: var(--date-picker-cell-fg-outside);
 }
 
 .today {
-  border-color: var(--color-accent);
+  border-color: var(--date-picker-cell-border-today);
 }
 
 .selected {
-  background: var(--color-accent);
-  color: var(--color-accent-fg);
-  border-color: var(--color-accent);
+  background: var(--date-picker-cell-bg-selected);
+  color: var(--date-picker-cell-fg-selected);
+  border-color: var(--date-picker-cell-border-selected);
 }
 
 .disabled {
-  color: var(--color-fg-muted);
-  opacity: var(--opacity-disabled);
+  color: var(--date-picker-cell-fg-disabled);
+  opacity: var(--date-picker-cell-opacity-disabled);
   cursor: default;
 }
 
@@ -128,8 +129,8 @@
 // cells inside the range keep their muted color but still get .inRange so
 // the band reads as contiguous.
 .inRange {
-  background: var(--color-accent-bg-subtle);
-  color: var(--color-accent);
+  background: var(--date-picker-cell-bg-in-range);
+  color: var(--date-picker-cell-fg-in-range);
   border-radius: 0;
 }
 
@@ -137,27 +138,27 @@
 // still read as disabled — only the background tint is inherited from
 // .inRange to keep the band visually contiguous.
 .disabled.inRange {
-  color: var(--color-fg-muted);
+  color: var(--date-picker-cell-fg-disabled);
 }
 
 // The two range boundaries get the same fill as a regular `.selected`
 // cell, but with rounded edges only on the OUTSIDE of the range so they
 // visually anchor the band.
 .rangeStart {
-  background: var(--color-accent);
-  color: var(--color-accent-fg);
-  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--date-picker-cell-bg-range-boundary);
+  color: var(--date-picker-cell-fg-range-boundary);
+  border-radius: var(--date-picker-cell-radius) 0 0 var(--date-picker-cell-radius);
 }
 
 .rangeEnd {
-  background: var(--color-accent);
-  color: var(--color-accent-fg);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--date-picker-cell-bg-range-boundary);
+  color: var(--date-picker-cell-fg-range-boundary);
+  border-radius: 0 var(--date-picker-cell-radius) var(--date-picker-cell-radius) 0;
 }
 
 // Single-day range — both rangeStart AND rangeEnd are the same cell.
 .rangeStart.rangeEnd {
-  border-radius: var(--radius-sm);
+  border-radius: var(--date-picker-cell-radius);
 }
 
 // Disabled state — applied to the outer grid container by inline pickers
@@ -167,5 +168,5 @@
 // + no-op click/keyboard handlers; layering pointer-events on top would
 // also block hover styles which is worse UX.
 .disabledGrid {
-  opacity: var(--opacity-disabled);
+  opacity: var(--date-picker-grid-opacity-disabled);
 }

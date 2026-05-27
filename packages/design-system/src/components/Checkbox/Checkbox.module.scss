@@ -1,7 +1,9 @@
+@use './Checkbox.tokens';
+
 .checkbox {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--checkbox-gap);
   cursor: pointer;
   user-select: none;
 
@@ -43,10 +45,10 @@
   // Without this the inline-box height jumps between states because the
   // child SVG's baseline contributes to the line-box.
   line-height: 1;
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  color: var(--color-accent-fg);
+  border: var(--border-width) solid var(--checkbox-border-color);
+  border-radius: var(--checkbox-radius);
+  background: var(--checkbox-bg);
+  color: var(--checkbox-fg);
   transition:
     border-color var(--transition-fast),
     background var(--transition-fast),
@@ -55,37 +57,37 @@
 
 // Size modifiers — box diameter + label font.
 .size-sm .box {
-  width: var(--size-checkbox-sm);
-  height: var(--size-checkbox-sm);
+  width: var(--checkbox-box-size-sm);
+  height: var(--checkbox-box-size-sm);
 }
 
 .size-md .box {
-  width: var(--size-checkbox-md);
-  height: var(--size-checkbox-md);
+  width: var(--checkbox-box-size-md);
+  height: var(--checkbox-box-size-md);
 }
 
 .size-lg .box {
-  width: var(--size-checkbox-lg);
-  height: var(--size-checkbox-lg);
+  width: var(--checkbox-box-size-lg);
+  height: var(--checkbox-box-size-lg);
 }
 
 .size-sm .labelText {
-  font-size: var(--font-size-sm);
+  font-size: var(--checkbox-label-font-size-sm);
 }
 
 .size-md .labelText {
-  font-size: var(--font-size-md);
+  font-size: var(--checkbox-label-font-size-md);
 }
 
 .size-lg .labelText {
-  font-size: var(--font-size-lg);
+  font-size: var(--checkbox-label-font-size-lg);
 }
 
 // Hover preview — border only, no fill (Atlassian-style restraint).
 // Excludes .invalid so the danger border stays visible on hover instead
 // of flipping to accent and hiding the error signal.
 .checkbox:not(.disabled, .invalid):hover .box {
-  border-color: var(--color-accent);
+  border-color: var(--checkbox-border-color-hover);
 }
 
 // Checked + indeterminate share the filled-accent visual. The
@@ -94,49 +96,49 @@
 // keeps the existing accent fill — defaults are byte-identical.
 .input:checked + .box,
 .input:indeterminate + .box {
-  background: var(--checkbox-color, var(--color-accent));
-  border-color: var(--checkbox-color, var(--color-accent));
+  background: var(--checkbox-color, var(--checkbox-bg-checked));
+  border-color: var(--checkbox-color, var(--checkbox-bg-checked));
 }
 
 // Focus ring on the box (sibling selector picks up native input focus).
 .input:focus-visible + .box {
-  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+  box-shadow: 0 0 0 var(--ring-width) var(--checkbox-ring);
 }
 
 // Disabled — muted bg + border. The input still receives `disabled`
 // natively which gates pointer events on the label.
 .disabled .box {
-  background: var(--color-bg-subtle);
-  border-color: var(--color-border);
-  color: var(--color-fg-disabled);
+  background: var(--checkbox-bg-disabled);
+  border-color: var(--checkbox-border-color-disabled);
+  color: var(--checkbox-fg-disabled);
 }
 
 .disabled .input:checked + .box,
 .disabled .input:indeterminate + .box {
-  background: var(--color-border);
-  border-color: var(--color-border);
+  background: var(--checkbox-bg-checked-disabled);
+  border-color: var(--checkbox-border-color-checked-disabled);
 }
 
 .disabled .labelText {
-  color: var(--color-fg-disabled);
+  color: var(--checkbox-fg-disabled);
 }
 
 // Invalid — danger border + danger focus ring. Wins over the unchecked
 // hover preview.
 .invalid .box {
-  border-color: var(--color-danger);
+  border-color: var(--checkbox-border-color-invalid);
 }
 
 .invalid .input:focus-visible + .box {
-  box-shadow: 0 0 0 var(--ring-width) var(--ring-danger);
+  box-shadow: 0 0 0 var(--ring-width) var(--checkbox-ring-invalid);
 }
 
 .invalid .input:checked + .box,
 .invalid .input:indeterminate + .box {
-  background: var(--color-danger);
-  border-color: var(--color-danger);
+  background: var(--checkbox-bg-checked-invalid);
+  border-color: var(--checkbox-border-color-checked-invalid);
 }
 
 .labelText {
-  line-height: var(--line-height-normal);
+  line-height: var(--checkbox-label-line-height);
 }

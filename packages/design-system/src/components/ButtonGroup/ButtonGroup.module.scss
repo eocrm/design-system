@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './ButtonGroup.tokens';
 
 // ─── Visual mode ────────────────────────────────────────────────────────
 // Joined Button children: flatten inner borders, round outer corners.
@@ -31,13 +32,13 @@
 .group[data-mode='visual'] > button:first-child {
   // stylelint-disable-next-line property-disallowed-list -- counterpart to the join above
   margin-left: 0;
-  border-top-left-radius: var(--radius-md);
-  border-bottom-left-radius: var(--radius-md);
+  border-top-left-radius: var(--button-group-radius);
+  border-bottom-left-radius: var(--button-group-radius);
 }
 
 .group[data-mode='visual'] > button:last-child {
-  border-top-right-radius: var(--radius-md);
-  border-bottom-right-radius: var(--radius-md);
+  border-top-right-radius: var(--button-group-radius);
+  border-bottom-right-radius: var(--button-group-radius);
 }
 
 // Lift on hover/focus so the focus ring isn't clipped by neighbors.
@@ -52,11 +53,11 @@
 // — items are NOT Buttons, they're internal radio-role <button>s.
 
 .group[data-mode='segmented'] {
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-md);
-  padding: var(--space-05);
+  background: var(--button-group-segmented-bg);
+  border-radius: var(--button-group-segmented-radius);
+  padding: var(--button-group-segmented-padding);
   display: inline-flex;
-  gap: var(--space-05);
+  gap: var(--button-group-segmented-gap);
 
   // Shrink-to-content inside flex/grid parents (e.g. Stack with align=stretch).
   // Documented Rule-4 exception for intrinsically compact inline controls.
@@ -67,29 +68,29 @@
 .item {
   border: none;
   background: transparent;
-  color: var(--color-fg-muted);
+  color: var(--button-group-item-fg);
   cursor: pointer;
   font: inherit;
   white-space: nowrap;
-  border-radius: calc(var(--radius-md) - var(--space-05));
+  border-radius: calc(var(--button-group-segmented-radius) - var(--button-group-segmented-padding));
   transition:
     background var(--transition-fast),
     color var(--transition-fast);
 }
 
 .item[data-selected] {
-  background: var(--color-bg);
-  color: var(--color-fg);
-  box-shadow: var(--shadow-xs);
+  background: var(--button-group-item-bg-selected);
+  color: var(--button-group-item-fg-selected);
+  box-shadow: var(--button-group-item-shadow-selected);
 }
 
 .item:hover:not([data-selected], [aria-disabled]) {
-  color: var(--color-fg);
+  color: var(--button-group-item-fg-hover);
 }
 
 .item[aria-disabled] {
   cursor: not-allowed;
-  opacity: var(--opacity-disabled);
+  opacity: var(--button-group-item-opacity-disabled);
 }
 
 .item:focus-visible {
@@ -100,25 +101,25 @@
 
 // Size variants — match Button's --size-* scale for visual consistency.
 .sizeXs {
-  height: var(--size-xs);
-  padding: 0 var(--space-2);
-  font-size: var(--font-size-xs);
+  height: var(--button-group-item-height-xs);
+  padding: 0 var(--button-group-item-padding-x-xs);
+  font-size: var(--button-group-item-font-size-xs);
 }
 
 .sizeSm {
-  height: var(--size-sm);
-  padding: 0 var(--space-3);
-  font-size: var(--font-size-sm);
+  height: var(--button-group-item-height-sm);
+  padding: 0 var(--button-group-item-padding-x-sm);
+  font-size: var(--button-group-item-font-size-sm);
 }
 
 .sizeMd {
-  height: var(--size-md);
-  padding: 0 var(--space-3);
-  font-size: var(--font-size-md);
+  height: var(--button-group-item-height-md);
+  padding: 0 var(--button-group-item-padding-x-md);
+  font-size: var(--button-group-item-font-size-md);
 }
 
 .sizeLg {
-  height: var(--size-lg);
-  padding: 0 var(--space-4);
-  font-size: var(--font-size-md);
+  height: var(--button-group-item-height-lg);
+  padding: 0 var(--button-group-item-padding-x-lg);
+  font-size: var(--button-group-item-font-size-lg);
 }

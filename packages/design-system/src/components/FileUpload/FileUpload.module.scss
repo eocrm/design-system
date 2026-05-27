@@ -1,7 +1,9 @@
+@use './FileUpload.tokens';
+
 .root {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--file-upload-gap);
   width: 100%;
 }
 
@@ -10,12 +12,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  border: var(--border-width-emphasis) dashed var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  color: var(--color-fg-muted);
+  gap: var(--file-upload-dropzone-gap);
+  padding: var(--file-upload-dropzone-padding);
+  border: var(--border-width-emphasis) dashed var(--file-upload-dropzone-border-color);
+  border-radius: var(--file-upload-dropzone-radius);
+  background: var(--file-upload-dropzone-bg);
+  color: var(--file-upload-dropzone-fg);
   cursor: pointer;
   transition:
     border-color var(--transition-base),
@@ -23,37 +25,37 @@
 
   &:hover,
   &:focus-visible {
-    border-color: var(--color-accent);
-    color: var(--color-fg);
+    border-color: var(--file-upload-dropzone-border-color-hover);
+    color: var(--file-upload-dropzone-fg-hover);
     outline: none;
   }
 }
 
 .dragOver {
-  border-color: var(--color-accent);
+  border-color: var(--file-upload-dragover-border-color);
   border-style: solid;
-  background: var(--color-accent-bg-subtle);
-  color: var(--color-fg);
+  background: var(--file-upload-dragover-bg);
+  color: var(--file-upload-dragover-fg);
 }
 
 .dropzoneIcon {
-  color: var(--color-fg-subtle);
+  color: var(--file-upload-icon-fg);
 }
 
 .dropzoneLabel {
-  font-size: var(--font-size-md);
+  font-size: var(--file-upload-label-font-size);
   text-align: center;
 }
 
 .browseLink {
-  color: var(--color-accent);
-  font-weight: var(--font-weight-medium);
+  color: var(--file-upload-browse-fg);
+  font-weight: var(--file-upload-browse-font-weight);
   text-decoration: underline;
 }
 
 .dropzoneHint {
-  font-size: var(--font-size-sm);
-  color: var(--color-fg-subtle);
+  font-size: var(--file-upload-hint-font-size);
+  color: var(--file-upload-hint-fg);
   text-align: center;
 }
 
@@ -80,7 +82,7 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--file-upload-list-gap);
 
   // stylelint-disable-next-line property-disallowed-list -- native <ul> margin reset (component-internal)
   margin: 0;
@@ -94,11 +96,11 @@
   display: grid;
   grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
+  gap: var(--file-upload-row-gap);
+  padding: var(--file-upload-row-padding-y) var(--file-upload-row-padding-x);
+  border: var(--border-width) solid var(--file-upload-row-border-color);
+  border-radius: var(--file-upload-row-radius);
+  background: var(--file-upload-row-bg);
 }
 
 // stylelint-disable-next-line block-no-empty -- intentional no-op placeholder for status row variants
@@ -109,17 +111,17 @@
 }
 
 .rowError {
-  border-color: var(--color-danger);
+  border-color: var(--file-upload-row-border-color-error);
 }
 
 .rowIcon {
   display: flex;
-  color: var(--color-fg-subtle);
+  color: var(--file-upload-row-icon-fg);
 }
 
 .rowName {
-  font-size: var(--font-size-md);
-  color: var(--color-fg);
+  font-size: var(--file-upload-row-name-font-size);
+  color: var(--file-upload-row-name-fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -127,8 +129,8 @@
 }
 
 .rowMeta {
-  font-size: var(--font-size-sm);
-  color: var(--color-fg-subtle);
+  font-size: var(--file-upload-row-meta-font-size);
+  color: var(--file-upload-row-meta-fg);
   font-variant-numeric: tabular-nums;
 }
 
@@ -142,16 +144,16 @@
 }
 
 .rowErrorMsg {
-  font-size: var(--font-size-sm);
-  color: var(--color-danger);
+  font-size: var(--file-upload-row-error-font-size);
+  color: var(--file-upload-row-error-fg);
 }
 
 .rowDoneIcon {
-  color: var(--color-success);
+  color: var(--file-upload-row-done-fg);
 }
 
 .disabled .dropzone {
   cursor: not-allowed;
-  opacity: var(--opacity-subtle);
+  opacity: var(--file-upload-opacity-disabled);
   pointer-events: none;
 }
