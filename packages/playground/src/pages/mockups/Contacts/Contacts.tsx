@@ -10,11 +10,11 @@ import {
   DropdownMenu,
   Input,
   Link,
+  PageHeader,
   PersonDisplay,
   Stack,
   Table,
   Text,
-  Title,
 } from '@eocrm/design-system';
 import { contacts, statusTone, statusLabel } from '../../../data/mock';
 import { CrossLinks } from '../../shared/CrossLinks';
@@ -34,20 +34,24 @@ export function Contacts() {
 
   return (
     <Stack gap="lg">
-      <Cluster justify="between" align="end" gap="md">
-        <Stack gap="xs">
-          <Title order={1}>Contacts</Title>
-          <Text tone="muted">{contacts.length} contacts</Text>
-        </Stack>
-        <Cluster gap="sm">
-          <Button variant="secondary">
-            <Filter size={14} /> Filter
-          </Button>
-          <Button>
-            <Plus size={14} /> Add contact
-          </Button>
-        </Cluster>
-      </Cluster>
+      <PageHeader>
+        <PageHeader.Title>Contacts</PageHeader.Title>
+        <PageHeader.Meta>
+          <Text size="sm" tone="muted">
+            {contacts.length} contacts
+          </Text>
+        </PageHeader.Meta>
+        <PageHeader.Actions>
+          <Cluster gap="sm">
+            <Button variant="secondary">
+              <Filter size={14} /> Filter
+            </Button>
+            <Button>
+              <Plus size={14} /> Add contact
+            </Button>
+          </Cluster>
+        </PageHeader.Actions>
+      </PageHeader>
 
       <Card padding="sm">
         <Cluster justify="between" align="center" gap="md" wrap={false}>

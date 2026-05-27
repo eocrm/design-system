@@ -9,6 +9,7 @@ import {
   Code,
   DropdownMenu,
   Kanban,
+  PageHeader,
   Stack,
   Text,
   Title,
@@ -63,20 +64,20 @@ export function Deals() {
 
   return (
     <Stack gap="lg">
-      <Cluster justify="between" align="end" gap="md">
-        <Stack gap="xs">
-          <Title order={1}>Deals</Title>
-          <Text tone="muted">{totalDeals} active deals across 4 stages</Text>
-        </Stack>
-        <Cluster gap="sm">
-          <Button variant="secondary">
-            <Filter size={14} /> Filter
-          </Button>
-          <Button>
-            <Plus size={14} /> New deal
-          </Button>
-        </Cluster>
-      </Cluster>
+      <PageHeader>
+        <PageHeader.Title>Deals</PageHeader.Title>
+        <PageHeader.Subtitle>{totalDeals} active deals across 4 stages</PageHeader.Subtitle>
+        <PageHeader.Actions>
+          <Cluster gap="sm">
+            <Button variant="secondary">
+              <Filter size={14} /> Filter
+            </Button>
+            <Button>
+              <Plus size={14} /> New deal
+            </Button>
+          </Cluster>
+        </PageHeader.Actions>
+      </PageHeader>
 
       <Kanban onMove={handleMove}>
         {dealStages.map((stage) => {
