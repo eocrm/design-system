@@ -220,7 +220,7 @@ export function Audit() {
         header: 'Event',
         size: 200,
         cell: (r) => (
-          <Badge variant="stripe" size="sm" color={eventColor(r.event)}>
+          <Badge size="sm" color={eventColor(r.event)}>
             {r.event}
           </Badge>
         ),
