@@ -4,12 +4,14 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type CSSProperties,
   type InputHTMLAttributes,
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
 import { Check, Minus } from 'lucide-react';
 import { mergeRefs } from '../_internal/refs';
+import { type PaletteColor } from '../../palette';
 import styles from './Checkbox.module.scss';
 
 /** Box diameter + label type scale. */
@@ -60,6 +62,18 @@ export interface CheckboxProps extends Omit<
 
   /** Toggles the error visual + sets `aria-invalid="true"`. */
   invalid?: boolean;
+
+  /**
+   * Optional palette color for the checked / indeterminate fill. When
+   * set, the filled state uses the palette color's fg token instead
+   * of `--color-accent`. Use to color-tag checkbox groups (per-team,
+   * per-status, per-category). Default unchanged (accent blue).
+   *
+   * The focus ring, hover border, and unchecked state remain
+   * accent-colored regardless of `color` — only the checked /
+   * indeterminate fill is affected.
+   */
+  color?: PaletteColor;
 
   /**
    * Fires on every change. Receives the next checked state AND the native
@@ -128,6 +142,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     onChange,
     className,
     disabled,
+    color,
     ...props
   },
   ref,
@@ -154,6 +169,13 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     onChange?.(next, event);
   };
 
+  // When a palette color is set, expose it as a CSS variable scoped to
+  // this checkbox. The SCSS reads `var(--checkbox-color, var(--color-accent))`
+  // so undef = default accent.
+  const colorStyle = color
+    ? ({ '--checkbox-color': `var(--color-palette-${color}-fg)` } as CSSProperties)
+    : undefined;
+
   return (
     <label
       className={clsx(
@@ -163,6 +185,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
         invalid && styles.invalid,
         className,
       )}
+      style={colorStyle}
     >
       {/* Pattern B — props first so the component-owned attrs below
           (type, checked, disabled, aria-invalid, onChange, className) win.
