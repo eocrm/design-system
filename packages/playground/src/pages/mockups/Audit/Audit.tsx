@@ -68,9 +68,8 @@ function actorCell(entry: AuditEntry) {
       {i && (
         <PersonDisplay.Description>
           <Badge tone="warning" size="sm">
-            impersonating
+            impersonating {i.name}
           </Badge>
-          by {i.name}
         </PersonDisplay.Description>
       )}
     </PersonDisplay>
