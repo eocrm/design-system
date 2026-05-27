@@ -1,14 +1,15 @@
 @use '../../styles/mixins' as *;
+@use './Button.tokens';
 
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  border: var(--border-width) solid transparent;
-  border-radius: var(--radius-md);
+  gap: var(--button-gap);
+  border: var(--border-width) solid var(--button-border-color);
+  border-radius: var(--button-radius);
   font-family: inherit;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--button-font-weight);
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
@@ -18,11 +19,11 @@
     color var(--transition-fast);
 
   &:focus-visible {
-    @include focus-ring;
+    @include focus-ring(var(--button-ring));
   }
 
   &:disabled {
-    opacity: var(--opacity-disabled);
+    opacity: var(--button-opacity-disabled);
     cursor: not-allowed;
     pointer-events: none;
   }
@@ -30,87 +31,87 @@
 
 // Sizes
 .xs {
-  height: var(--size-xs);
-  padding: 0 var(--space-2);
-  font-size: var(--font-size-xs);
-  gap: var(--space-1);
+  height: var(--button-height-xs);
+  padding: 0 var(--button-padding-x-xs);
+  font-size: var(--button-font-size-xs);
+  gap: var(--button-gap-xs);
 }
 
 .sm {
-  height: var(--size-sm);
-  padding: 0 var(--space-3);
-  font-size: var(--font-size-sm);
+  height: var(--button-height-sm);
+  padding: 0 var(--button-padding-x-sm);
+  font-size: var(--button-font-size-sm);
 }
 
 .md {
-  height: var(--size-md);
-  padding: 0 var(--space-4);
-  font-size: var(--font-size-md);
+  height: var(--button-height-md);
+  padding: 0 var(--button-padding-x-md);
+  font-size: var(--button-font-size-md);
 }
 
 .lg {
-  height: var(--size-lg);
-  padding: 0 var(--space-5);
-  font-size: var(--font-size-lg);
+  height: var(--button-height-lg);
+  padding: 0 var(--button-padding-x-lg);
+  font-size: var(--button-font-size-lg);
 }
 
 // MUST stay below the size blocks so `padding` overrides their horizontal padding.
 .iconOnly {
   aspect-ratio: 1;
-  padding: var(--space-1);
+  padding: var(--button-padding-icon-only);
 }
 
 // Variants
 .primary {
-  background: var(--color-accent);
-  color: var(--color-accent-fg);
+  background: var(--button-bg);
+  color: var(--button-fg);
 
   &:hover:not(:disabled) {
-    background: var(--color-accent-hover);
+    background: var(--button-bg-hover);
   }
 }
 
 .secondary {
-  background: var(--color-bg);
-  color: var(--color-fg);
-  border-color: var(--color-border-strong);
+  background: var(--button-bg-secondary);
+  color: var(--button-fg-secondary);
+  border-color: var(--button-border-color-secondary);
 
   &:hover:not(:disabled) {
-    background: var(--color-bg-subtle);
+    background: var(--button-bg-secondary-hover);
   }
 }
 
 .ghost {
-  background: transparent;
-  color: var(--color-fg);
+  background: var(--button-bg-ghost);
+  color: var(--button-fg-ghost);
 
   &:hover:not(:disabled) {
-    background: var(--color-bg-muted);
+    background: var(--button-bg-ghost-hover);
   }
 }
 
 .danger {
-  background: var(--color-danger);
-  color: var(--color-danger-fg);
+  background: var(--button-bg-danger);
+  color: var(--button-fg-danger);
 
   &:hover:not(:disabled) {
-    background: var(--color-danger-hover);
+    background: var(--button-bg-danger-hover);
   }
 
   &:focus-visible {
-    @include focus-ring(var(--ring-danger));
+    @include focus-ring(var(--button-ring-danger));
   }
 }
 
 .success {
-  background: var(--color-success);
-  color: var(--color-success-fg);
+  background: var(--button-bg-success);
+  color: var(--button-fg-success);
 
   &:hover:not(:disabled) {
-    background: var(--color-success-hover);
+    background: var(--button-bg-success-hover);
   }
 
   &:focus-visible {
-    @include focus-ring(var(--ring-success));
+    @include focus-ring(var(--button-ring-success));
   }
 }
