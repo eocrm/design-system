@@ -81,6 +81,7 @@ export const MOCKUPS = [
       'Cluster',
       'Grid',
       'Link',
+      'PersonDisplay',
       'Stack',
       'Text',
       'Title',
