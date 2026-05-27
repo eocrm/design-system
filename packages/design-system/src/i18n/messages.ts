@@ -64,6 +64,22 @@ export interface Messages {
     /** Segmented-control label for the agenda view. */
     viewAgenda: string;
   };
+  datePicker: {
+    /** Visible label / aria-label for the "Today" jump button. */
+    today: string;
+    /** aria-label for the ✕ clear button shown when a value is set. */
+    clear: string;
+    /** aria-label for the calendar-toggle button on the right of the input. */
+    openCalendar: string;
+    /** aria-label for the previous-month chevron in the popover header. */
+    previousMonth: string;
+    /** aria-label for the next-month chevron in the popover header. */
+    nextMonth: string;
+    /** aria-label for the range-start input (DateRangePicker dual-input). */
+    rangeStart: string;
+    /** aria-label for the range-end input (DateRangePicker dual-input). */
+    rangeEnd: string;
+  };
   dataTable: {
     /** aria-label for the select-all checkbox in the header. */
     selectAll: string;

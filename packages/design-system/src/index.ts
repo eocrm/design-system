@@ -446,24 +446,20 @@ export type {
 } from './components/Calendar';
 
 export { DatePicker } from './components/DatePicker';
-export type { DatePickerProps, DatePickerLabels, DatePickerSize } from './components/DatePicker';
+export type { DatePickerProps, DatePickerSize } from './components/DatePicker';
 
 export { DateRangePicker } from './components/DateRangePicker';
 export type {
   DateRangePickerProps,
-  DateRangePickerLabels,
   DateRangePickerSize,
   DateRange,
 } from './components/DateRangePicker';
 
 export { InlineDatePicker } from './components/DatePicker';
-export type { InlineDatePickerProps, InlineDatePickerLabels } from './components/DatePicker';
+export type { InlineDatePickerProps } from './components/DatePicker';
 
 export { InlineDateRangePicker } from './components/DateRangePicker';
-export type {
-  InlineDateRangePickerProps,
-  InlineDateRangePickerLabels,
-} from './components/DateRangePicker';
+export type { InlineDateRangePickerProps } from './components/DateRangePicker';
 
 // ─── Palette (categorical color set) ──────────────────────────────────────
 export type { PaletteColor } from './palette';

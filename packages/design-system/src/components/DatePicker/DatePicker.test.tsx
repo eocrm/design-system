@@ -110,7 +110,7 @@ describe('DatePicker', () => {
       <DatePicker defaultValue={new Date(2026, 4, 21)} onChange={onChange} aria-label="Date" />,
       { wrapper: wrap() },
     );
-    await user.click(screen.getByRole('button', { name: 'Clear date' }));
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
     expect(onChange).toHaveBeenCalledWith(null);
     expect(document.activeElement).toBe(screen.getByRole('textbox'));
   });

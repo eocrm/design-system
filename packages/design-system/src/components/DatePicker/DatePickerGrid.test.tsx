@@ -10,7 +10,6 @@ function wrap(locale = 'en-US') {
   );
 }
 
-const LABELS = { previousMonth: 'Previous month', nextMonth: 'Next month' };
 
 describe('DatePickerGrid', () => {
   it('renders the cursor month label and 7 weekday headers', () => {
@@ -20,7 +19,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -35,7 +33,6 @@ describe('DatePickerGrid', () => {
         value={new Date(2026, 4, 21)}
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -51,7 +48,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={onSelect}
         onCursorChange={() => {}}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -70,7 +66,6 @@ describe('DatePickerGrid', () => {
         onCursorChange={() => {}}
         min={new Date(2026, 4, 10)}
         max={new Date(2026, 4, 20)}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -88,7 +83,6 @@ describe('DatePickerGrid', () => {
         onSelect={() => {}}
         onCursorChange={() => {}}
         isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -107,7 +101,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={onCursorChange}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -124,7 +117,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={onCursorChange}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -141,7 +133,6 @@ describe('DatePickerGrid', () => {
         value={new Date(2026, 4, 15)}
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -166,7 +157,6 @@ describe('DatePickerGrid', () => {
         onSelect={() => {}}
         onCursorChange={() => {}}
         isDateDisabled={(d) => d.getDate() === 16}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -186,7 +176,6 @@ describe('DatePickerGrid', () => {
         value={new Date(2026, 4, 15)}
         onSelect={onSelect}
         onCursorChange={() => {}}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -206,7 +195,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={onCursorChange}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -225,7 +213,6 @@ describe('DatePickerGrid', () => {
         value={new Date(2026, 4, 20)} // Wed May 20
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
       />,
       { wrapper: wrap() },
     );
@@ -246,7 +233,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
         locale="ru-RU"
       />,
       { wrapper: wrap('ru-RU') },
@@ -261,7 +247,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
         selectionMode="range"
         rangeStart={new Date(2026, 4, 5)}
         rangeEnd={new Date(2026, 4, 10)}
@@ -287,7 +272,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
         selectionMode="range"
         rangeStart={new Date(2026, 4, 5)}
         hoverDate={new Date(2026, 4, 12)}
@@ -311,7 +295,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
         selectionMode="range"
         rangeStart={new Date(2026, 4, 5)}
         onHoverDate={onHoverDate}
@@ -344,7 +327,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
         selectionMode="range"
         rangeStart={new Date(2026, 4, 5)}
         isDateDisabled={(d) => d.getDate() === 12}
@@ -364,7 +346,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={() => {}}
         onCursorChange={() => {}}
-        labels={LABELS}
         chevrons={false}
       />,
       { wrapper: wrap() },
@@ -384,7 +365,6 @@ describe('DatePickerGrid', () => {
         value={null}
         onSelect={onSelect}
         onCursorChange={onCursorChange}
-        labels={LABELS}
         disabled
       />,
       { wrapper: wrap() },

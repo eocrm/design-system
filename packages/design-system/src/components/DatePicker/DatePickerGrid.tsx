@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMonth } from '../../calendar/useMonth';
 import { useLocale } from '../../i18n/useLocale';
+import { useTranslation } from '../../i18n/useTranslation';
 import { isSameDay, isSameMonth, startOfDay, toDateKey } from '../../calendar/dateMath';
 import { isDateOutOfRange } from './utils';
 import styles from './DatePickerGrid.module.scss';
@@ -24,8 +25,6 @@ export interface DatePickerGridProps {
   isDateDisabled?: (date: Date) => boolean;
   /** Override locale (otherwise reads `useLocale()`). */
   locale?: string;
-  /** Localized strings for the chevrons. */
-  labels: { previousMonth: string; nextMonth: string };
   /** Selection model. Defaults to 'single'. */
   selectionMode?: 'single' | 'range';
   /** Range start (when selectionMode='range'). The left boundary of the committed range. */
@@ -76,7 +75,6 @@ export function DatePickerGrid({
   max,
   isDateDisabled,
   locale: localeOverride,
-  labels,
   selectionMode = 'single',
   rangeStart = null,
   rangeEnd = null,
@@ -87,6 +85,7 @@ export function DatePickerGrid({
 }: DatePickerGridProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
+  const t = useTranslation();
   const grid = useMonth(cursor, { locale });
   const today = useMemo(() => startOfDay(new Date()), []);
 
@@ -257,7 +256,7 @@ export function DatePickerGrid({
           <button
             type="button"
             className={styles.navButton}
-            aria-label={labels.previousMonth}
+            aria-label={t('datePicker.previousMonth')}
             onClick={goPrev}
             disabled={disabled}
           >
@@ -271,7 +270,7 @@ export function DatePickerGrid({
           <button
             type="button"
             className={styles.navButton}
-            aria-label={labels.nextMonth}
+            aria-label={t('datePicker.nextMonth')}
             onClick={goNext}
             disabled={disabled}
           >

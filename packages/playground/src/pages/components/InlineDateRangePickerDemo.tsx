@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Button,
+  I18nProvider,
   InlineDateRangePicker,
   Stack,
   toDateKey,
@@ -159,29 +160,22 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
 
       <Example
         title="ru-RU locale"
-        description="Locale-aware labels. UI strings (chevron tooltips) localized via the labels prop."
-        code={`const today = new Date();
-const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);
-
-<InlineDateRangePicker
-  defaultValue={{ start: today, end: in14 }}
-  locale="ru-RU"
-  labels={{
-    previousMonth: 'Предыдущий месяц',
-    nextMonth: 'Следующий месяц',
-  }}
-/>`}
+        description="Locale-aware labels. UI strings (chevron tooltips) come from <I18nProvider locale='ru'>."
+        code={`<I18nProvider locale="ru">
+  <InlineDateRangePicker
+    defaultValue={{ start: today, end: in14 }}
+    locale="ru-RU"
+  />
+</I18nProvider>`}
       >
         <InputExample width="auto">
-          <InlineDateRangePicker
-            defaultValue={{ start: TODAY, end: IN_14 }}
-            locale="ru-RU"
-            aria-label="Диапазон дат"
-            labels={{
-              previousMonth: 'Предыдущий месяц',
-              nextMonth: 'Следующий месяц',
-            }}
-          />
+          <I18nProvider locale="ru">
+            <InlineDateRangePicker
+              defaultValue={{ start: TODAY, end: IN_14 }}
+              locale="ru-RU"
+              aria-label="Диапазон дат"
+            />
+          </I18nProvider>
         </InputExample>
       </Example>
     </DemoBody>

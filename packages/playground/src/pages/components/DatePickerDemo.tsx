@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, DatePicker, Stack, toDateKey } from '@eocrm/design-system';
+import { Button, DatePicker, I18nProvider, Stack, toDateKey } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -165,32 +165,15 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
 
       <Example
         title="ru-RU locale"
-        description="Input parses and formats as DD.MM.YYYY. UI labels (button tooltips, dialog name) are the consumer's responsibility — pass localized strings via the labels prop."
-        code={`<DatePicker
-  defaultValue={new Date()}
-  locale="ru-RU"
-  labels={{
-    previousMonth: 'Предыдущий месяц',
-    nextMonth: 'Следующий месяц',
-    openCalendar: 'Открыть календарь',
-    clear: 'Очистить дату',
-    dialogLabel: 'Выберите дату',
-  }}
-/>`}
+        description="Input parses and formats as DD.MM.YYYY. UI labels (button tooltips) come from <I18nProvider locale='ru'>."
+        code={`<I18nProvider locale="ru">
+  <DatePicker defaultValue={new Date()} locale="ru-RU" />
+</I18nProvider>`}
       >
         <InputExample>
-          <DatePicker
-            defaultValue={TODAY}
-            locale="ru-RU"
-            aria-label="Дата"
-            labels={{
-              previousMonth: 'Предыдущий месяц',
-              nextMonth: 'Следующий месяц',
-              openCalendar: 'Открыть календарь',
-              clear: 'Очистить дату',
-              dialogLabel: 'Выберите дату',
-            }}
-          />
+          <I18nProvider locale="ru">
+            <DatePicker defaultValue={TODAY} locale="ru-RU" aria-label="Дата" />
+          </I18nProvider>
         </InputExample>
       </Example>
     </DemoBody>

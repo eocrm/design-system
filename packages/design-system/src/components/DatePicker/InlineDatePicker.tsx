@@ -5,11 +5,6 @@ import { DatePickerGrid } from './DatePickerGrid';
 import { toIsoDate } from './utils';
 import styles from './InlineDatePicker.module.scss';
 
-export interface InlineDatePickerLabels {
-  previousMonth?: string;
-  nextMonth?: string;
-}
-
 export interface InlineDatePickerProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'defaultValue'
@@ -38,15 +33,7 @@ export interface InlineDatePickerProps extends Omit<
 
   /** Disables interaction — cells / chevrons / keyboard nav all blocked. Defaults to `false`. */
   disabled?: boolean;
-
-  /** Localized chevron strings. */
-  labels?: InlineDatePickerLabels;
 }
-
-const DEFAULT_LABELS: Required<InlineDatePickerLabels> = {
-  previousMonth: 'Previous month',
-  nextMonth: 'Next month',
-};
 
 /**
  * Inline single-date calendar — same month grid as `<DatePicker>` but
@@ -97,7 +84,6 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
       isDateDisabled,
       name,
       disabled = false,
-      labels,
       className,
       ...rest
     },
@@ -105,7 +91,6 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
   ) {
     const contextLocale = useLocale();
     const locale = localeOverride ?? contextLocale;
-    const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
 
     const [uncontrolled, setUncontrolled] = useState<Date | null>(defaultValue);
     const value = valueProp !== undefined ? valueProp : uncontrolled;
@@ -146,7 +131,6 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
           max={max}
           isDateDisabled={isDateDisabled}
           locale={locale}
-          labels={resolvedLabels}
           disabled={disabled}
         />
         {name && <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />}

@@ -2,16 +2,12 @@ import { forwardRef, useCallback, useEffect, useRef, useState, type HTMLAttribut
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
+import { useTranslation } from '../../i18n/useTranslation';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
 import { toIsoDate } from '../DatePicker/utils';
 import { autoSwapRange, type DateRange } from './utils';
 import styles from './InlineDateRangePicker.module.scss';
-
-export interface InlineDateRangePickerLabels {
-  previousMonth?: string;
-  nextMonth?: string;
-}
 
 export interface InlineDateRangePickerProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
@@ -44,15 +40,7 @@ export interface InlineDateRangePickerProps extends Omit<
 
   /** Disables interaction. Defaults to `false`. */
   disabled?: boolean;
-
-  /** Localized chevron strings. */
-  labels?: InlineDateRangePickerLabels;
 }
-
-const DEFAULT_LABELS: Required<InlineDateRangePickerLabels> = {
-  previousMonth: 'Previous month',
-  nextMonth: 'Next month',
-};
 
 /**
  * Inline date-range calendar — same two-month grid as `<DateRangePicker>`
@@ -106,7 +94,6 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
       nameStart,
       nameEnd,
       disabled = false,
-      labels,
       className,
       ...rest
     },
@@ -114,7 +101,7 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
   ) {
     const contextLocale = useLocale();
     const locale = localeOverride ?? contextLocale;
-    const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
+    const t = useTranslation();
 
     const [uncontrolled, setUncontrolled] = useState<DateRange | null>(defaultValue);
     const value = valueProp !== undefined ? valueProp : uncontrolled;
@@ -182,7 +169,7 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
           <button
             type="button"
             className={styles.navButton}
-            aria-label={resolvedLabels.previousMonth}
+            aria-label={t('datePicker.previousMonth')}
             onClick={goPrev}
             disabled={disabled}
           >
@@ -192,7 +179,7 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
           <button
             type="button"
             className={styles.navButton}
-            aria-label={resolvedLabels.nextMonth}
+            aria-label={t('datePicker.nextMonth')}
             onClick={goNext}
             disabled={disabled}
           >
@@ -209,7 +196,6 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
             max={max}
             isDateDisabled={isDateDisabled}
             locale={locale}
-            labels={resolvedLabels}
             selectionMode="range"
             rangeStart={gridRangeStart}
             rangeEnd={gridRangeEnd}
@@ -227,7 +213,6 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
             max={max}
             isDateDisabled={isDateDisabled}
             locale={locale}
-            labels={resolvedLabels}
             selectionMode="range"
             rangeStart={gridRangeStart}
             rangeEnd={gridRangeEnd}

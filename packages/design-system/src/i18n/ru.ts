@@ -42,6 +42,15 @@ export const ru: Messages = {
     viewDay: 'День',
     viewAgenda: 'Повестка',
   },
+  datePicker: {
+    today: 'Сегодня',
+    clear: 'Очистить',
+    openCalendar: 'Открыть календарь',
+    previousMonth: 'Предыдущий месяц',
+    nextMonth: 'Следующий месяц',
+    rangeStart: 'Дата начала',
+    rangeEnd: 'Дата окончания',
+  },
   dataTable: {
     selectAll: 'Выбрать все строки на странице',
     rowExpansion: 'Развёртывание строки',

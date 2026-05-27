@@ -42,6 +42,15 @@ export const en: Messages = {
     viewDay: 'Day',
     viewAgenda: 'Agenda',
   },
+  datePicker: {
+    today: 'Today',
+    clear: 'Clear',
+    openCalendar: 'Open calendar',
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+    rangeStart: 'Start date',
+    rangeEnd: 'End date',
+  },
   dataTable: {
     selectAll: 'Select all rows on page',
     rowExpansion: 'Row expansion',

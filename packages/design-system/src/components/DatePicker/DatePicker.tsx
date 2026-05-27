@@ -15,6 +15,7 @@ import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
+import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { DatePickerGrid } from './DatePickerGrid';
 import { formatDate, parseDate, toIsoDate, isDateOutOfRange } from './utils';
@@ -22,19 +23,6 @@ import styles from './DatePicker.module.scss';
 
 /** Field height + type scale. Pairs with `<Input>` and `<Select>`. */
 export type DatePickerSize = 'sm' | 'md' | 'lg';
-
-export interface DatePickerLabels {
-  /** aria-label for the previous-month chevron. */
-  previousMonth?: string;
-  /** aria-label for the next-month chevron. */
-  nextMonth?: string;
-  /** aria-label for the calendar-toggle button on the right of the input. */
-  openCalendar?: string;
-  /** aria-label for the ✕ clear button shown when a value is set. */
-  clear?: string;
-  /** aria-label applied to the popover wrapper (role="dialog"). */
-  dialogLabel?: string;
-}
 
 export interface DatePickerProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -73,18 +61,7 @@ export interface DatePickerProps extends Omit<
    * - `'lg'` — 40px tall.
    */
   size?: DatePickerSize;
-
-  /** Localized strings. */
-  labels?: DatePickerLabels;
 }
-
-const DEFAULT_LABELS: Required<DatePickerLabels> = {
-  previousMonth: 'Previous month',
-  nextMonth: 'Next month',
-  openCalendar: 'Open calendar',
-  clear: 'Clear date',
-  dialogLabel: 'Choose date',
-};
 
 const ICON_SIZE_FOR: Record<DatePickerSize, number> = {
   sm: 14,
@@ -144,7 +121,6 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     disabled = false,
     size = 'md',
     name,
-    labels,
     placeholder,
     className,
     id: idProp,
@@ -158,7 +134,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 ) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
-  const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
+  const t = useTranslation();
   const generatedId = useId();
   const inputId = idProp ?? generatedId;
 
@@ -374,7 +350,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         <button
           type="button"
           className={styles.clearButton}
-          aria-label={resolvedLabels.clear}
+          aria-label={t('datePicker.clear')}
           onClick={handleClear}
         >
           <X size={ICON_SIZE_FOR[size]} />
@@ -383,7 +359,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       <button
         type="button"
         className={styles.openButton}
-        aria-label={resolvedLabels.openCalendar}
+        aria-label={t('datePicker.openCalendar')}
         onClick={handleToggle}
         disabled={disabled}
       >
@@ -398,7 +374,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
             className={styles.popover}
             role="dialog"
             aria-modal="false"
-            aria-label={resolvedLabels.dialogLabel}
+            aria-label={t('datePicker.openCalendar')}
             onMouseDown={(e) => e.preventDefault()} // keep input focus on grid click
           >
             <DatePickerGrid
@@ -410,10 +386,6 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
               max={max}
               isDateDisabled={isDateDisabled}
               locale={locale}
-              labels={{
-                previousMonth: resolvedLabels.previousMonth,
-                nextMonth: resolvedLabels.nextMonth,
-              }}
             />
           </div>,
           document.body,

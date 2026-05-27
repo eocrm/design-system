@@ -15,6 +15,7 @@ import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
+import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
@@ -24,19 +25,6 @@ import styles from './DateRangePicker.module.scss';
 
 /** Field height + type scale. Pairs with `<Input>`, `<Select>`, and `<DatePicker>`. */
 export type DateRangePickerSize = 'sm' | 'md' | 'lg';
-
-export interface DateRangePickerLabels {
-  /** aria-label for the previous-month chevron. */
-  previousMonth?: string;
-  /** aria-label for the next-month chevron. */
-  nextMonth?: string;
-  /** aria-label for the calendar-toggle button on the right of the input. */
-  openCalendar?: string;
-  /** aria-label for the ✕ clear button shown when a range is set. */
-  clear?: string;
-  /** aria-label applied to the popover wrapper (role="dialog"). */
-  dialogLabel?: string;
-}
 
 export interface DateRangePickerProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -77,18 +65,7 @@ export interface DateRangePickerProps extends Omit<
   nameStart?: string;
   /** Form name for the END half. */
   nameEnd?: string;
-
-  /** Localized strings. */
-  labels?: DateRangePickerLabels;
 }
-
-const DEFAULT_LABELS: Required<DateRangePickerLabels> = {
-  previousMonth: 'Previous month',
-  nextMonth: 'Next month',
-  openCalendar: 'Open calendar',
-  clear: 'Clear range',
-  dialogLabel: 'Choose date range',
-};
 
 const ICON_SIZE_FOR: Record<DateRangePickerSize, number> = {
   sm: 14,
@@ -148,7 +125,6 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       size = 'md',
       nameStart,
       nameEnd,
-      labels,
       placeholder,
       className,
       id: idProp,
@@ -162,7 +138,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
   ) {
     const contextLocale = useLocale();
     const locale = localeOverride ?? contextLocale;
-    const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
+    const t = useTranslation();
     const generatedId = useId();
     const inputId = idProp ?? generatedId;
 
@@ -445,7 +421,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           <button
             type="button"
             className={styles.clearButton}
-            aria-label={resolvedLabels.clear}
+            aria-label={t('datePicker.clear')}
             onClick={handleClear}
           >
             <X size={ICON_SIZE_FOR[size]} />
@@ -454,7 +430,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
         <button
           type="button"
           className={styles.openButton}
-          aria-label={resolvedLabels.openCalendar}
+          aria-label={t('datePicker.openCalendar')}
           onClick={handleToggle}
           disabled={disabled}
         >
@@ -474,14 +450,14 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
               className={styles.popover}
               role="dialog"
               aria-modal="false"
-              aria-label={resolvedLabels.dialogLabel}
+              aria-label={t('datePicker.openCalendar')}
               onMouseDown={(e) => e.preventDefault()}
             >
               <header className={styles.popoverHeader}>
                 <button
                   type="button"
                   className={styles.popoverNavButton}
-                  aria-label={resolvedLabels.previousMonth}
+                  aria-label={t('datePicker.previousMonth')}
                   onClick={goPrev}
                 >
                   <ChevronLeft size={14} />
@@ -490,7 +466,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                 <button
                   type="button"
                   className={styles.popoverNavButton}
-                  aria-label={resolvedLabels.nextMonth}
+                  aria-label={t('datePicker.nextMonth')}
                   onClick={goNext}
                 >
                   <ChevronRight size={14} />
@@ -506,10 +482,6 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                   max={max}
                   isDateDisabled={isDateDisabled}
                   locale={locale}
-                  labels={{
-                    previousMonth: resolvedLabels.previousMonth,
-                    nextMonth: resolvedLabels.nextMonth,
-                  }}
                   selectionMode="range"
                   rangeStart={gridRangeStart}
                   rangeEnd={gridRangeEnd}
@@ -526,10 +498,6 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                   max={max}
                   isDateDisabled={isDateDisabled}
                   locale={locale}
-                  labels={{
-                    previousMonth: resolvedLabels.previousMonth,
-                    nextMonth: resolvedLabels.nextMonth,
-                  }}
                   selectionMode="range"
                   rangeStart={gridRangeStart}
                   rangeEnd={gridRangeEnd}
