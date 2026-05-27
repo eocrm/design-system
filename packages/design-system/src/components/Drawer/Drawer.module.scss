@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './Drawer.tokens';
 
 // ─── Overlay ────────────────────────────────────────────────────────────
 // stylelint-disable property-disallowed-list -- internal positioning, not consumer layout
@@ -11,10 +12,10 @@
   width: 100dvw;
   height: 100vh;
   height: 100dvh;
-  background: var(--color-bg-overlay);
-  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2);
-  opacity: var(--drag-opacity, var(--opacity-visible));
-  transition: opacity var(--transition-base);
+  background: var(--drawer-overlay-bg);
+  z-index: calc(var(--drawer-overlay-z) + var(--modal-depth, 0) * 2);
+  opacity: var(--drag-opacity, var(--drawer-overlay-opacity-visible));
+  transition: opacity var(--drawer-overlay-transition);
   overscroll-behavior: contain;
 
   // Hint to the browser to promote this element to its own compositor
@@ -27,12 +28,12 @@
   contain: layout paint;
 
   @starting-style {
-    opacity: var(--opacity-hidden);
+    opacity: var(--drawer-overlay-opacity-hidden);
   }
 }
 
 .overlay[data-state='closed'] {
-  opacity: var(--opacity-hidden);
+  opacity: var(--drawer-overlay-opacity-hidden);
 }
 
 .overlay[data-stack-position='hidden'] {
@@ -40,7 +41,7 @@
 }
 
 .overlay[data-variant='blur'] {
-  background: var(--color-bg-overlay-blur);
+  background: var(--drawer-overlay-bg-blur);
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value
   backdrop-filter: blur(4px);
   // stylelint-disable-next-line property-no-vendor-prefix, scale-unlimited/declaration-strict-value
@@ -62,10 +63,10 @@
   position: fixed;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg);
-  box-shadow: var(--shadow-lg);
-  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2 + 1);
-  transition: transform var(--transition-base);
+  background: var(--drawer-bg);
+  box-shadow: var(--drawer-shadow);
+  z-index: calc(var(--drawer-overlay-z) + var(--modal-depth, 0) * 2 + 1);
+  transition: transform var(--drawer-transition);
   overscroll-behavior: contain;
 
   // Promote to its own compositor layer for smooth slide animation.
@@ -85,8 +86,8 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: min(var(--drawer-size, var(--size-drawer-md)), 100vw - 32px);
-  width: min(var(--drawer-size, var(--size-drawer-md)), 100dvw - 32px);
+  width: min(var(--drawer-size, var(--drawer-content-size-md)), 100vw - 32px);
+  width: min(var(--drawer-size, var(--drawer-content-size-md)), 100dvw - 32px);
   transform: translateX(var(--drag-translate-x, 0));
 
   @starting-style {
@@ -102,8 +103,8 @@
   top: 0;
   left: 0;
   bottom: 0;
-  width: min(var(--drawer-size, var(--size-drawer-md)), 100vw - 32px);
-  width: min(var(--drawer-size, var(--size-drawer-md)), 100dvw - 32px);
+  width: min(var(--drawer-size, var(--drawer-content-size-md)), 100vw - 32px);
+  width: min(var(--drawer-size, var(--drawer-content-size-md)), 100dvw - 32px);
   transform: translateX(var(--drag-translate-x, 0));
 
   @starting-style {
@@ -119,8 +120,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: min(var(--drawer-size, var(--size-drawer-md)), 100vh - 32px);
-  height: min(var(--drawer-size, var(--size-drawer-md)), 100dvh - 32px);
+  height: min(var(--drawer-size, var(--drawer-content-size-md)), 100vh - 32px);
+  height: min(var(--drawer-size, var(--drawer-content-size-md)), 100dvh - 32px);
   transform: translateY(var(--drag-translate-y, 0));
 
   @starting-style {
@@ -136,8 +137,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: min(var(--drawer-size, var(--size-drawer-md)), 100vh - 32px);
-  height: min(var(--drawer-size, var(--size-drawer-md)), 100dvh - 32px);
+  height: min(var(--drawer-size, var(--drawer-content-size-md)), 100vh - 32px);
+  height: min(var(--drawer-size, var(--drawer-content-size-md)), 100dvh - 32px);
   transform: translateY(var(--drag-translate-y, 0));
 
   @starting-style {
@@ -152,15 +153,15 @@
 
 // Size presets drive --drawer-size which the side rules consume via min().
 .size-sm {
-  --drawer-size: var(--size-drawer-sm);
+  --drawer-size: var(--drawer-content-size-sm);
 }
 
 .size-md {
-  --drawer-size: var(--size-drawer-md);
+  --drawer-size: var(--drawer-content-size-md);
 }
 
 .size-lg {
-  --drawer-size: var(--size-drawer-lg);
+  --drawer-size: var(--drawer-content-size-lg);
 }
 
 // ─── Header ─────────────────────────────────────────────────────────────
@@ -168,9 +169,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border-bottom: var(--border-width) solid var(--color-border);
+  gap: var(--drawer-header-gap);
+  padding: var(--drawer-header-padding);
+  border-bottom: var(--border-width) solid var(--drawer-header-border-color);
   touch-action: none;
   cursor: grab;
 }
@@ -178,14 +179,14 @@
 .headerTitle {
   // stylelint-disable-next-line property-disallowed-list -- reset h2 default margin; internal
   margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-fg);
+  font-size: var(--drawer-header-title-font-size);
+  font-weight: var(--drawer-header-title-font-weight);
+  color: var(--drawer-header-title-fg);
 }
 
 // ─── Body ───────────────────────────────────────────────────────────────
 .body {
-  padding: var(--space-4);
+  padding: var(--drawer-body-padding);
   overflow-y: auto;
   flex: 1 1 auto;
   overscroll-behavior: contain;
@@ -199,9 +200,9 @@
 .footer {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  border-top: var(--border-width) solid var(--color-border);
+  gap: var(--drawer-footer-gap);
+  padding: var(--drawer-footer-padding);
+  border-top: var(--border-width) solid var(--drawer-footer-border-color);
 }
 
 .footerAlign-start {
@@ -223,7 +224,7 @@
     transition: none;
 
     @starting-style {
-      opacity: var(--opacity-visible);
+      opacity: var(--drawer-opacity-visible);
       transform: none;
     }
   }

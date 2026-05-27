@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './Modal.tokens';
 
 // ─── Overlay ────────────────────────────────────────────────────────────
 // Dimming / blurred backdrop. Portaled directly inside <body>. Fills the
@@ -28,10 +29,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-overlay);
-  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2);
-  opacity: var(--opacity-visible);
-  transition: opacity var(--transition-base);
+  background: var(--modal-overlay-bg);
+  z-index: calc(var(--modal-overlay-z) + var(--modal-depth, 0) * 2);
+  opacity: var(--modal-overlay-opacity-visible);
+  transition: opacity var(--modal-overlay-transition);
 
   // Prevent touch-scroll chaining from modal body scrolling to the document.
   overscroll-behavior: contain;
@@ -44,12 +45,12 @@
   contain: layout paint;
 
   @starting-style {
-    opacity: var(--opacity-hidden);
+    opacity: var(--modal-overlay-opacity-hidden);
   }
 }
 
 .overlay[data-state='closed'] {
-  opacity: var(--opacity-hidden);
+  opacity: var(--modal-overlay-opacity-hidden);
 }
 
 // Stacked-modal display model: lower overlays are hidden via display:none
@@ -61,7 +62,7 @@
 // Frosted-glass variant. Light tinted background + backdrop-filter for the
 // glass effect. -webkit prefix for Safari < 18.
 .overlay[data-variant='blur'] {
-  background: var(--color-bg-overlay-blur);
+  background: var(--modal-overlay-bg-blur);
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value
   backdrop-filter: blur(4px);
   // stylelint-disable-next-line property-no-vendor-prefix, scale-unlimited/declaration-strict-value -- Safari < 18 requires the prefix
@@ -96,23 +97,23 @@
   // overrides these to tighter values. Routing through custom props keeps
   // each sub-component rule at single-class specificity (0,1,0), so a
   // consumer-supplied className on e.g. <Modal.Header> can always win.
-  --modal-pad: var(--space-4);
-  --modal-title-size: var(--font-size-lg);
+  --modal-pad: var(--modal-content-padding-default);
+  --modal-title-size: var(--modal-title-size-default);
 
   display: flex;
   flex-direction: column;
-  background: var(--color-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  z-index: calc(var(--z-modal) + var(--modal-depth, 0) * 2 + 1);
+  background: var(--modal-bg);
+  border-radius: var(--modal-radius);
+  box-shadow: var(--modal-shadow);
+  z-index: calc(var(--modal-overlay-z) + var(--modal-depth, 0) * 2 + 1);
   max-height: calc(100vh - 64px);
   max-height: calc(100dvh - 64px);
-  width: min(100% - 32px, var(--modal-width, var(--size-modal-md)));
-  opacity: var(--opacity-visible);
+  width: min(100% - 32px, var(--modal-width, var(--modal-content-width-md)));
+  opacity: var(--modal-opacity-visible);
   transform: translateY(0) scale(1);
   transition:
-    opacity var(--transition-base),
-    transform var(--transition-base);
+    opacity var(--modal-transition),
+    transform var(--modal-transition);
 
   // Promote to its own compositor layer so opacity + transform animate
   // on the GPU from the first frame, not after a paint upgrade.
@@ -122,13 +123,13 @@
   contain: layout paint;
 
   @starting-style {
-    opacity: var(--opacity-hidden);
+    opacity: var(--modal-opacity-hidden);
     transform: translateY(8px) scale(0.96);
   }
 }
 
 .content[data-state='closed'] {
-  opacity: var(--opacity-hidden);
+  opacity: var(--modal-opacity-hidden);
   transform: translateY(8px) scale(0.96);
 }
 // stylelint-enable property-disallowed-list
@@ -137,17 +138,17 @@
 // the `min(100% - 32px, var(--modal-width, ...))` clamp above. Using a custom
 // prop keeps the size logic in one place.
 .size-sm {
-  --modal-width: var(--size-modal-sm);
-  --modal-pad: var(--space-3);
-  --modal-title-size: var(--font-size-md);
+  --modal-width: var(--modal-content-width-sm);
+  --modal-pad: var(--modal-content-padding-sm);
+  --modal-title-size: var(--modal-title-size-sm);
 }
 
 .size-md {
-  --modal-width: var(--size-modal-md);
+  --modal-width: var(--modal-content-width-md);
 }
 
 .size-lg {
-  --modal-width: var(--size-modal-lg);
+  --modal-width: var(--modal-content-width-lg);
 }
 
 // ─── Header ─────────────────────────────────────────────────────────────
@@ -156,17 +157,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--modal-header-gap);
   padding: var(--modal-pad);
-  border-bottom: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--modal-header-border-color);
 }
 
 .headerTitle {
   // stylelint-disable-next-line property-disallowed-list -- reset browser default h2 margin; internal to component
   margin: 0;
   font-size: var(--modal-title-size);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-fg);
+  font-weight: var(--modal-header-title-font-weight);
+  color: var(--modal-header-title-fg);
 }
 
 // ─── Body ───────────────────────────────────────────────────────────────
@@ -190,9 +191,9 @@
 .footer {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--modal-footer-gap);
   padding: var(--modal-pad);
-  border-top: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--modal-footer-border-color);
 }
 
 .footerAlign-start {
@@ -244,7 +245,7 @@
     transition: none;
 
     @starting-style {
-      opacity: var(--opacity-visible);
+      opacity: var(--modal-opacity-visible);
       transform: none;
     }
   }

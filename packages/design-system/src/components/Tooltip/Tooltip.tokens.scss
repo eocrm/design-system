@@ -1,0 +1,23 @@
+// Tooltip.tokens.scss — Component-scoped tokens for <Tooltip>. Each token defaults to the primitive the SCSS used before this migration. Tooltip uses an inverted (dark) surface — `--color-fg` for bg and `--color-bg` for fg — so the arrow color matches the panel bg.
+:root {
+  // Panel surface (inverted: dark bg + light fg)
+  --tooltip-bg: var(--color-fg);
+  --tooltip-fg: var(--color-bg);
+  --tooltip-radius: var(--radius-md);
+  --tooltip-shadow: var(--shadow-md);
+  --tooltip-padding-y: var(--space-1);
+  --tooltip-padding-x: var(--space-2);
+  --tooltip-z: var(--z-tooltip);
+
+  // Typography
+  --tooltip-font-size: var(--font-size-sm);
+  --tooltip-line-height: var(--line-height-normal);
+
+  // Entrance transition
+  --tooltip-transition: var(--transition-base);
+  --tooltip-opacity-hidden: var(--opacity-hidden);
+
+  // Arrow (matches panel bg, no border)
+  --tooltip-arrow-size: var(--space-2);
+  --tooltip-arrow-bg: var(--color-fg);
+}

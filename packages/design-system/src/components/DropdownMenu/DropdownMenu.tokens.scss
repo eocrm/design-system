@@ -1,0 +1,73 @@
+// DropdownMenu.tokens.scss — Component-scoped tokens for <DropdownMenu>. Each token defaults to the primitive the SCSS used before this migration. Covers the floating panel surface, per-item hover/checked/danger states, separator, group label, indicator, and submenu trigger.
+:root {
+  // Panel surface
+  --dropdown-menu-bg: var(--color-bg);
+  --dropdown-menu-border-color: var(--color-border);
+  --dropdown-menu-radius: var(--radius-md);
+  --dropdown-menu-shadow: var(--shadow-md);
+  --dropdown-menu-padding: var(--space-1);
+  --dropdown-menu-gap: var(--space-0);
+  --dropdown-menu-min-width: var(--size-dropdown-min-width);
+  --dropdown-menu-z: var(--z-dropdown);
+
+  // Entrance transition. Note: the `opacity: var(--opacity-hidden)` reference
+  // inside @starting-style is kept as the primitive directly — a unit test
+  // pins that exact substring (DropdownMenu.test.tsx → "animation hook"
+  // contract). Re-routing it through a component token would break the test.
+  --dropdown-menu-transition: var(--transition-base);
+
+  // Item
+  --dropdown-menu-item-gap: var(--space-2);
+  --dropdown-menu-item-padding-y: var(--space-1);
+  --dropdown-menu-item-padding-x: var(--space-2);
+  --dropdown-menu-item-radius: var(--radius-sm);
+  --dropdown-menu-item-font-size: var(--font-size-md);
+  --dropdown-menu-item-line-height: var(--line-height-normal);
+  --dropdown-menu-item-fg: var(--color-fg);
+  --dropdown-menu-item-bg-hover: var(--color-bg-muted);
+  --dropdown-menu-item-fg-disabled: var(--color-fg-disabled);
+
+  // Item — danger tone
+  --dropdown-menu-item-fg-danger: var(--color-danger);
+  --dropdown-menu-item-bg-danger-hover: var(--color-bg-danger-subtle);
+
+  // Item — checked state (info-tinted with left accent)
+  --dropdown-menu-item-bg-checked: var(--color-badge-info-bg);
+  --dropdown-menu-item-fg-checked: var(--color-badge-info-fg);
+  --dropdown-menu-item-accent-checked: var(--color-info);
+  --dropdown-menu-item-accent-width-checked: var(--border-width-emphasis);
+
+  // Icon slot
+  --dropdown-menu-icon-size: var(--space-4);
+  --dropdown-menu-icon-fg: var(--color-fg-subtle);
+
+  // Shortcut label
+  --dropdown-menu-shortcut-fg: var(--color-fg-subtle);
+  --dropdown-menu-shortcut-font-size: var(--font-size-sm);
+  --dropdown-menu-shortcut-padding-left: var(--space-3);
+
+  // Separator
+  --dropdown-menu-separator-height: var(--space-2);
+  --dropdown-menu-separator-color: var(--color-border);
+
+  // Group
+  --dropdown-menu-group-padding-block: var(--space-1);
+
+  // Group label
+  --dropdown-menu-label-padding-y: var(--space-1);
+  --dropdown-menu-label-padding-x: var(--space-2);
+  --dropdown-menu-label-font-size: var(--font-size-xs);
+  --dropdown-menu-label-font-weight: var(--font-weight-semibold);
+  --dropdown-menu-label-letter-spacing: var(--letter-spacing-caps);
+  --dropdown-menu-label-fg: var(--color-fg-subtle);
+
+  // Indicator slot
+  --dropdown-menu-indicator-size: var(--size-dropdown-indicator);
+
+  // Submenu trigger
+  --dropdown-menu-sub-chevron-font-size: var(--font-size-md);
+  --dropdown-menu-sub-chevron-line-height: var(--line-height-none);
+  --dropdown-menu-sub-chevron-fg: var(--color-fg-subtle);
+  --dropdown-menu-sub-chevron-padding-left: var(--space-2);
+  --dropdown-menu-sub-trigger-bg-open: var(--color-bg-muted);
+}

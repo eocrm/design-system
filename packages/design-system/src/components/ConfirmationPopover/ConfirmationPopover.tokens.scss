@@ -1,0 +1,13 @@
+// ConfirmationPopover.tokens.scss — Component-scoped tokens for <ConfirmationPopover>. Each token defaults to the primitive the SCSS used before this migration. ConfirmationPopover's panel chrome is delegated to <Popover>; these tokens cover the description text and the in-flight spinner only.
+:root {
+  // Description text
+  --confirmation-popover-description-font-size: var(--font-size-sm);
+  --confirmation-popover-description-line-height: var(--line-height-normal);
+  --confirmation-popover-description-fg: var(--color-fg-muted);
+
+  // Spinner (shown while the async confirm handler is in flight)
+  --confirmation-popover-spinner-size: var(--space-3);
+  --confirmation-popover-spinner-margin-right: var(--space-1);
+  --confirmation-popover-spinner-border-width: var(--border-width-emphasis);
+  --confirmation-popover-spinner-radius: var(--radius-full);
+}

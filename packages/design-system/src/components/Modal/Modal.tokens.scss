@@ -1,0 +1,41 @@
+// Modal.tokens.scss — Component-scoped tokens for <Modal>. Each token defaults to the primitive the SCSS used before this migration. Note: Modal.module.scss also declares internal routing vars (--modal-pad, --modal-title-size, --modal-width, --modal-depth) that are set/consumed within the SCSS; those are NOT consumer-facing tokens and stay in the module.
+:root {
+  // Overlay (scrim)
+  --modal-overlay-bg: var(--color-bg-overlay);
+  --modal-overlay-bg-blur: var(--color-bg-overlay-blur);
+  --modal-overlay-z: var(--z-modal);
+  --modal-overlay-opacity-hidden: var(--opacity-hidden);
+  --modal-overlay-opacity-visible: var(--opacity-visible);
+  --modal-overlay-transition: var(--transition-base);
+
+  // Content (dialog box)
+  --modal-bg: var(--color-bg);
+  --modal-radius: var(--radius-lg);
+  --modal-shadow: var(--shadow-lg);
+  --modal-opacity-hidden: var(--opacity-hidden);
+  --modal-opacity-visible: var(--opacity-visible);
+  --modal-transition: var(--transition-base);
+
+  // Size variants — width per size
+  --modal-content-width-sm: var(--size-modal-sm);
+  --modal-content-width-md: var(--size-modal-md);
+  --modal-content-width-lg: var(--size-modal-lg);
+
+  // Size variants — internal padding per size (sm tightens to space-3)
+  --modal-content-padding-default: var(--space-4);
+  --modal-content-padding-sm: var(--space-3);
+
+  // Size variants — title font-size per size (sm tightens to font-size-md)
+  --modal-title-size-default: var(--font-size-lg);
+  --modal-title-size-sm: var(--font-size-md);
+
+  // Header
+  --modal-header-gap: var(--space-3);
+  --modal-header-border-color: var(--color-border);
+  --modal-header-title-font-weight: var(--font-weight-semibold);
+  --modal-header-title-fg: var(--color-fg);
+
+  // Footer
+  --modal-footer-gap: var(--space-2);
+  --modal-footer-border-color: var(--color-border);
+}
