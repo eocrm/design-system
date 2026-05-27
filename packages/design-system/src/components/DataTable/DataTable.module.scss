@@ -176,20 +176,24 @@
 }
 
 // Expanded detail row — the extra <Table.Row> rendered below a data row
-// when its expansion state is true. Spans all columns via colSpan and gets
-// a subtle tint to differentiate it from neighboring data rows. Crucially
+// when its expansion state is true. Spans all columns via colSpan. It's
+// a panel, not a table row: the consumer's renderExpandedRow output lives
+// inside, so we strip all row-level styling (striped tint, hover flash,
+// cursor) and let the panel sit on the table's base background. Crucially
 // NOT clickable (no .clickableRow class) so onRowClick doesn't fire when
 // the consumer interacts with their rendered detail content.
+// !important is used because Table primitive's selectors that style data
+// rows are higher-specificity 4-class chains (`.hover .tbody .tr:hover`
+// and `.striped .tbody .tr:nth-of-type(even)`) and cannot be defeated by
+// a single-class override from this file. The intent here is absolute:
+// the expanded panel must never adopt row interaction styling regardless
+// of which Table modifiers are enabled.
 .expandedDetailRow {
-  background: var(--color-table-row-bg-striped);
+  background: transparent !important;
+  cursor: default !important;
 
   &:hover {
-    // The Table primitive's `.hover .tbody .tr:hover` rule (specificity 0,3,0)
-    // would otherwise overwrite this background with the row-hover color. The
-    // detail row isn't clickable — hover flashing carries no signal — so we
-    // re-assert the tint at both rest and hover with a compound selector that
-    // tops the Table-level specificity.
-    background: var(--color-table-row-bg-striped);
+    background: transparent !important;
   }
 }
 
