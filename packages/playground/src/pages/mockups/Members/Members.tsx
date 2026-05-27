@@ -7,13 +7,13 @@ import {
   Cluster,
   DropdownMenu,
   Input,
+  PageHeader,
   PersonDisplay,
   Progress,
   Stack,
   Table,
   Tabs,
   Text,
-  Title,
 } from '@eocrm/design-system';
 import { members, pendingInvites, roleTone, roleLabel, seatLimit } from '../../../data/mock';
 import { CrossLinks } from '../../shared/CrossLinks';
@@ -29,15 +29,17 @@ export function Members() {
 
   return (
     <Stack gap="lg">
-      <Cluster justify="between" align="end" gap="md">
-        <Stack gap="xs">
-          <Title order={1}>Members</Title>
-          <Text tone="muted">People with access to your Orbit CRM workspace.</Text>
-        </Stack>
-        <Button>
-          <UserPlus size={14} /> Invite members
-        </Button>
-      </Cluster>
+      <PageHeader>
+        <PageHeader.Title>Members</PageHeader.Title>
+        <PageHeader.Subtitle>
+          People with access to your Orbit CRM workspace.
+        </PageHeader.Subtitle>
+        <PageHeader.Actions>
+          <Button>
+            <UserPlus size={14} /> Invite members
+          </Button>
+        </PageHeader.Actions>
+      </PageHeader>
 
       <Card padding="md">
         <Cluster justify="between" align="center" gap="md" wrap={false}>
