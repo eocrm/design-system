@@ -75,7 +75,8 @@
 .item[aria-checked='true'] {
   background: var(--dropdown-menu-item-bg-checked);
   color: var(--dropdown-menu-item-fg-checked);
-  box-shadow: inset var(--dropdown-menu-item-accent-width-checked) 0 0 var(--dropdown-menu-item-accent-checked);
+  box-shadow: inset var(--dropdown-menu-item-accent-width-checked) 0 0
+    var(--dropdown-menu-item-accent-checked);
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }

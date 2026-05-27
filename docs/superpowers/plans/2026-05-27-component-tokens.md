@@ -23,13 +23,13 @@
 
 ## File Structure
 
-| File | Role |
-|---|---|
-| `packages/design-system/src/components/<Component>/<Component>.tokens.scss` (NEW × 57) | Component-scoped tokens at `:root` |
-| `packages/design-system/src/components/<Component>/<Component>.module.scss` (MODIFY × 57) | `@use` the tokens file; reference tokens instead of primitives |
-| `packages/design-system/src/styles/tokens.scss` (MODIFY) | Add deprecated `--color-badge-<tone>-*` aliases pointing at the new Badge tokens |
-| `packages/design-system/AGENTS.md` (MODIFY) | New "Theming via component tokens" section |
-| `packages/design-system/CLAUDE.md` (MODIFY) | Update Hard rule 3 commentary — component SCSS should reference component tokens, not primitives directly |
+| File                                                                                      | Role                                                                                                      |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `packages/design-system/src/components/<Component>/<Component>.tokens.scss` (NEW × 57)    | Component-scoped tokens at `:root`                                                                        |
+| `packages/design-system/src/components/<Component>/<Component>.module.scss` (MODIFY × 57) | `@use` the tokens file; reference tokens instead of primitives                                            |
+| `packages/design-system/src/styles/tokens.scss` (MODIFY)                                  | Add deprecated `--color-badge-<tone>-*` aliases pointing at the new Badge tokens                          |
+| `packages/design-system/AGENTS.md` (MODIFY)                                               | New "Theming via component tokens" section                                                                |
+| `packages/design-system/CLAUDE.md` (MODIFY)                                               | Update Hard rule 3 commentary — component SCSS should reference component tokens, not primitives directly |
 
 **Component clusters and counts (per `manifest.ts`):**
 
@@ -64,6 +64,7 @@ When a per-component task says "migrate Component X", these are the exact mechan
 6. Replace every `var(--<primitive>)` with `var(--x-<part>-<state>)` in `X.module.scss`.
 
 **DO NOT** tokenize:
+
 - `var(--font-family-sans)` / `var(--font-family-mono)` — theme-wide.
 - `var(--border-width)` — uniform 1px across the library. (Tokenize as `--x-border-width` only when the value is non-default — e.g., `--border-width-strong` for an emphasis stripe.)
 - `var(--motion-*)` if used — system concern.
@@ -76,6 +77,7 @@ When a per-component task says "migrate Component X", these are the exact mechan
 ## Task 1: Convention + reference migration — Button
 
 **Files:**
+
 - Create: `packages/design-system/src/components/Button/Button.tokens.scss`
 - Modify: `packages/design-system/src/components/Button/Button.module.scss`
 
@@ -203,6 +205,7 @@ color: var(--button-fg);
 **Do not change** any other aspect of `Button.module.scss`: no selector restructuring, no nesting cleanup, no token re-grouping. The diff per existing line is exactly `var(--primitive) → var(--button-component-token)`.
 
 **Do not change** references that should stay as primitives per the spec:
+
 - `var(--font-family-sans)` — stays
 - `var(--border-width)` — stays (default-width borders use the primitive)
 - `var(--ring-width)` — stays (the ring WIDTH is primitive; only the COLOR moves to `--button-ring`)
@@ -253,6 +256,7 @@ EOF
 ## Task 2: Reference migration — Badge with tone-token rename + deprecation shim
 
 **Files:**
+
 - Create: `packages/design-system/src/components/Badge/Badge.tokens.scss`
 - Modify: `packages/design-system/src/components/Badge/Badge.module.scss`
 - Modify: `packages/design-system/src/styles/tokens.scss` (deprecation shim block)
@@ -424,6 +428,7 @@ EOF
 ## Task 3: Migrate the Layout cluster (7 components)
 
 **Files (per component, NEW + MODIFY):**
+
 - Stack: `Stack.tokens.scss` (NEW), `Stack.module.scss` (MODIFY)
 - Cluster: `Cluster.tokens.scss` (NEW), `Cluster.module.scss` (MODIFY)
 - Divider: `Divider.tokens.scss` (NEW), `Divider.module.scss` (MODIFY)
@@ -552,7 +557,7 @@ The component dirs above MAY not all exist (e.g., `InlineDatePicker` might be a 
 - **DataTable**: Lots of internal classes (`.expandedDetailRow`, `.expandedDetailCell`, `.pinnedLeft`, etc.). Each gets its own tokens for backgrounds (e.g., `--data-table-expanded-row-bg`, `--data-table-row-bg-hover`). Mind the cascade — DataTable currently overrides Table primitive's hover via doubled-class selectors; that pattern is preserved.
 - **FilterChip**: Already has palette-color logic (the tone dot is a 6px span with `data-tone={tone}` SCSS rules). Keep the data-tone SCSS rules; just tokenize the chip pill (bg, border, radius, padding) into `--filter-chip-*`.
 - **PersonDisplay**: Compound primitive — its sub-elements (name span, description span, column wrapper) use tokens like `--person-display-gap-sm`, `--person-display-name-text-size`, etc. Read the existing SCSS first; tokens follow what's there.
-- **Calendar**: Shared by DatePicker/DateRangePicker. Define calendar-level tokens in `Calendar.tokens.scss`. The Date*Picker components reference them through their own tokens (or directly — the spec says cross-component composition is fine).
+- **Calendar**: Shared by DatePicker/DateRangePicker. Define calendar-level tokens in `Calendar.tokens.scss`. The Date\*Picker components reference them through their own tokens (or directly — the spec says cross-component composition is fine).
 - **Text / Title / Code**: Mostly font-size + tone color. Token-ize the per-size + per-tone refs.
 
 Apply the per-component convention.
@@ -723,6 +728,7 @@ EOF
 ## Task 9: Documentation — AGENTS.md "Theming via component tokens"
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 - Modify: `packages/design-system/CLAUDE.md` (Hard rule 3 commentary)
 
@@ -731,7 +737,6 @@ EOF
 Find the existing "## Tokens" section in AGENTS.md. Add a new "## Theming via component tokens" section immediately after it. Content:
 
 ````markdown
-
 ## Theming via component tokens
 
 Every component ships a `Component.tokens.scss` file that defines `--<component>-<part>-<state>` CSS custom properties at `:root`. The component's `.module.scss` references those tokens instead of the global primitives. This lets consumers re-theme one component without affecting others.
@@ -774,17 +779,15 @@ Every component ships a `Component.tokens.scss` file that defines `--<component>
 The authoritative list of tokens per component lives in that component's `<Name>.tokens.scss` file. Read it to see what's available.
 
 **Deprecated:** `--color-badge-<tone>-bg/-fg` tokens are aliased to the new `--badge-bg-<tone>` / `--badge-fg-<tone>` tokens. They still work but will be removed in a future major version.
-
 ````
 
 - [ ] **Step 2: Update CLAUDE.md Hard rule 3 commentary**
 
 Find "Hard rule 3" in `packages/design-system/CLAUDE.md`. After its existing body, add a paragraph noting the component-token convention:
 
-````markdown
-
+```markdown
 **Component tokens layer:** Within a component's `.module.scss`, prefer the component's own tokens (`var(--button-bg)`) over primitives (`var(--color-accent)`) directly. The component tokens live in `Component.tokens.scss` and default to the primitive — so the resolved value is identical, but the SCSS reads as "the button's background" instead of "the accent color we happen to use here." See `docs/superpowers/specs/2026-05-27-component-tokens-design.md` and AGENTS.md's "Theming via component tokens" section. Not enforced by stylelint (yet); convention-only in v1.
-````
+```
 
 - [ ] **Step 3: Gates + commit**
 

@@ -86,7 +86,8 @@
     outline: none;
     box-shadow:
       0 0 0 var(--avatar-overflow-ring-width) var(--avatar-overflow-ring-color),
-      0 0 0 calc(var(--avatar-overflow-ring-width) + var(--ring-width)) var(--avatar-overflow-ring-focus);
+      0 0 0 calc(var(--avatar-overflow-ring-width) + var(--ring-width))
+        var(--avatar-overflow-ring-focus);
   }
 }
 

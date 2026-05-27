@@ -209,7 +209,8 @@
 
 .optionSelected {
   background: var(--select-option-bg-selected);
-  box-shadow: inset var(--select-option-marker-width-selected) 0 0 var(--select-option-marker-color-selected);
+  box-shadow: inset var(--select-option-marker-width-selected) 0 0
+    var(--select-option-marker-color-selected);
 }
 
 .optionDisabled {
