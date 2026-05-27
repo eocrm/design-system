@@ -1991,6 +1991,51 @@ All available as CSS custom properties after you import `global.scss`:
 
 ---
 
+## Theming via component tokens
+
+Every component ships a `Component.tokens.scss` file alongside its `.module.scss`, defining `--<component>-<part>-<state>` CSS custom properties at `:root`. The `.module.scss` references those tokens instead of the global primitives. This lets consumers re-theme one component without affecting others.
+
+**Pattern:**
+
+- Token name: `--<component>-<part>[-<state>]`. Component is kebab-cased (`--data-table-*`, `--dropdown-menu-*`, `--page-header-*`). Part is the surface (`bg` / `fg` / `border-color` / `radius` / `padding-x` / `height` / `ring` / etc.). State is appended when there's a state variant (`hover` / `active` / `focus` / `disabled` / `checked` / `selected` / `invalid`).
+- Defaults: every component token defaults to the same primitive the SCSS used before this layer existed. Overriding the token re-themes the component without touching the primitive.
+
+**Override globally (every Button in the app turns red):**
+
+```css
+:root {
+  --button-bg: red;
+  --button-bg-hover: darkred;
+}
+```
+
+**Override per-scope (only Buttons inside this region turn red):**
+
+```css
+.danger-zone {
+  --button-bg: red;
+  --button-bg-hover: darkred;
+}
+```
+
+```tsx
+<div className="danger-zone">
+  <Button>Delete</Button>
+</div>
+```
+
+**Override per-instance (one Button, inline):**
+
+```tsx
+<Button style={{ '--button-bg': 'red' } as React.CSSProperties}>Delete</Button>
+```
+
+The authoritative list of tokens per component lives in that component's `<Name>.tokens.scss` file. Read it to see what's available.
+
+**Deprecated:** `--color-badge-<tone>-bg/-fg` tokens are aliased to the new `--badge-bg-<tone>` / `--badge-fg-<tone>` tokens. They still work but will be removed in a future major version.
+
+---
+
 ## Anti-patterns to never generate
 
 | Don't write                                                                           | Write instead                                                                                                                      |

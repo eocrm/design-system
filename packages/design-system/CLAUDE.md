@@ -36,6 +36,8 @@ When adding `src/components/<Name>/`, the same change must add `packages/playgro
 
 Colors, spacing, radii, shadows, font sizes — all via `var(--...)`. If you need a value that isn't a token, **add it to `src/styles/tokens.scss` first**, then use it. Stylelint blocks `color: #fff` and `background: red`-style raw values.
 
+**Component tokens layer:** Within a component's `.module.scss`, prefer the component's own tokens (`var(--button-bg)`) over primitives (`var(--color-accent)`) directly. The component tokens live in `Component.tokens.scss` and default to the primitive — so the resolved value is identical, but the SCSS reads as "the button's background" instead of "the accent color we happen to use here." See `docs/superpowers/specs/2026-05-27-component-tokens-design.md` and AGENTS.md's "Theming via component tokens" section. Not enforced by stylelint (yet); convention-only in v1.
+
 ### 3a. Focus styling — `:focus-visible`, not `:focus`
 
 For buttons, menu items, tabs, and other **non-input focusable elements**, style focus with `:focus-visible`, not `:focus`. The difference matters for mouse interaction:
