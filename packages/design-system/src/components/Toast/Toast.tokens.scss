@@ -1,0 +1,55 @@
+// Toast.tokens.scss — Component-scoped tokens for <Toast>. Per-tone border + icon color pairs (info/success/warning/danger), plus shared shape, sizing, and viewport-stack spacing. Each token defaults to the primitive the SCSS used before this migration.
+:root {
+  // Toast card surface
+  --toast-bg: var(--color-bg);
+  --toast-fg: var(--color-fg);
+  --toast-border-color: var(--color-fg-muted);
+  --toast-border-width: var(--border-width-strong);
+  --toast-radius: var(--radius-md);
+  --toast-shadow: var(--shadow-md);
+  --toast-padding: var(--space-3);
+  --toast-gap: var(--space-2);
+
+  // Toast typography
+  --toast-message-font-size: var(--font-size-md);
+  --toast-message-font-weight: var(--font-weight-medium);
+  --toast-description-font-size: var(--font-size-sm);
+  --toast-description-fg: var(--color-fg-muted);
+  --toast-description-gap: var(--space-1);
+
+  // Leading icon
+  --toast-icon: var(--color-fg-muted);
+
+  // Tail (action + close cluster)
+  --toast-tail-gap: var(--space-2);
+
+  // Per-tone surfaces (background + border + icon + fg)
+  --toast-bg-info: var(--color-bg);
+  --toast-fg-info: var(--color-fg);
+  --toast-icon-info: var(--color-info);
+  --toast-border-color-info: var(--color-info);
+
+  --toast-bg-success: var(--color-bg);
+  --toast-fg-success: var(--color-fg);
+  --toast-icon-success: var(--color-success);
+  --toast-border-color-success: var(--color-success);
+
+  --toast-bg-warning: var(--color-bg);
+  --toast-fg-warning: var(--color-fg);
+  --toast-icon-warning: var(--color-warning);
+  --toast-border-color-warning: var(--color-warning);
+
+  --toast-bg-danger: var(--color-bg);
+  --toast-fg-danger: var(--color-fg);
+  --toast-icon-danger: var(--color-danger);
+  --toast-border-color-danger: var(--color-danger);
+
+  // Loading tone (spinner state) — non-semantic tone, kept for parity
+  --toast-icon-loading: var(--color-fg-muted);
+  --toast-border-color-loading: var(--color-fg-muted);
+
+  // Viewport stack — edge insets + inter-toast gaps
+  --toast-viewport-inset: var(--space-3);
+  --toast-viewport-gap-sm: var(--space-2);
+  --toast-viewport-gap-md: var(--space-3);
+}
