@@ -14,6 +14,8 @@ import {
   PageHeader,
   Pagination,
   PersonDisplay,
+  Progress,
+  Stack,
   Table,
   Text,
   Tooltip,
@@ -26,6 +28,8 @@ import {
   actionLabel,
   relativeTime,
   shortDate,
+  formatGb,
+  usagePercent,
   type TenantState,
 } from '../../../data/tenants';
 import { CrossLinks } from '../../shared/CrossLinks';
@@ -171,6 +175,8 @@ export function Tenants() {
                 <Table.HeaderCell align="end">Invites</Table.HeaderCell>
                 <Table.HeaderCell>Last active</Table.HeaderCell>
                 <Table.HeaderCell>App version</Table.HeaderCell>
+                <Table.HeaderCell align="end">DB size</Table.HeaderCell>
+                <Table.HeaderCell>Used</Table.HeaderCell>
                 <Table.HeaderCell>Created</Table.HeaderCell>
                 <Table.HeaderCell align="end" />
               </Table.Row>
@@ -245,6 +251,37 @@ export function Tenants() {
                           —
                         </Text>
                       )}
+                    </Table.Cell>
+                    <Table.Cell align="end">
+                      <Text as="span" size="sm" tone={t.dbSizeGb == null ? 'muted' : 'default'}>
+                        {formatGb(t.dbSizeGb)}
+                      </Text>
+                    </Table.Cell>
+                    <Table.Cell>
+                      {(() => {
+                        const pct = usagePercent(t.usedSpaceGb, t.dbSizeGb);
+                        if (pct == null) {
+                          return (
+                            <Text size="sm" tone="muted">
+                              —
+                            </Text>
+                          );
+                        }
+                        const tone: 'default' | 'warning' | 'danger' =
+                          pct > 90 ? 'danger' : pct > 75 ? 'warning' : 'default';
+                        return (
+                          <Tooltip
+                            content={`${formatGb(t.usedSpaceGb)} of ${formatGb(t.dbSizeGb)}`}
+                          >
+                            <Stack gap="xs">
+                              <Progress value={pct} size="sm" tone={tone} />
+                              <Text as="span" size="xs" tone="muted">
+                                {pct}%
+                              </Text>
+                            </Stack>
+                          </Tooltip>
+                        );
+                      })()}
                     </Table.Cell>
                     <Table.Cell>
                       <Text size="sm" tone="muted">

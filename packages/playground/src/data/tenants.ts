@@ -15,6 +15,10 @@ export interface Tenant {
   pendingInvitesCount: number;
   lastMemberActiveAt: string | null;
   createdAt: string;
+  /** Per-tenant database quota in GB. Null while the DB hasn't been provisioned yet. */
+  dbSizeGb: number | null;
+  /** Actual storage consumed in GB. Null while no DB exists. */
+  usedSpaceGb: number | null;
 }
 
 export const stateTone: Record<TenantState, BadgeTone> = {
@@ -49,6 +53,8 @@ export const tenants: Tenant[] = [
     pendingInvitesCount: 0,
     lastMemberActiveAt: '2026-05-27T13:52:00Z', // 8 min ago at 14:00 UTC anchor
     createdAt: '2025-09-04T12:00:00Z',
+    dbSizeGb: 2,
+    usedSpaceGb: 0.48,
   },
   {
     id: '01HX1UMBR0000000000000001',
@@ -63,6 +69,8 @@ export const tenants: Tenant[] = [
     pendingInvitesCount: 3,
     lastMemberActiveAt: '2026-05-27T12:00:00Z',
     createdAt: '2024-11-21T09:30:00Z',
+    dbSizeGb: 10,
+    usedSpaceGb: 8.2,
   },
   {
     id: '01HX1NORW0000000000000002',
@@ -77,6 +85,8 @@ export const tenants: Tenant[] = [
     pendingInvitesCount: 0,
     lastMemberActiveAt: '2026-05-23T18:00:00Z',
     createdAt: '2025-03-12T14:11:00Z',
+    dbSizeGb: 1,
+    usedSpaceGb: 0.145,
   },
   {
     id: '01HX1INIT0000000000000003',
@@ -92,6 +102,8 @@ export const tenants: Tenant[] = [
     pendingInvitesCount: 1,
     lastMemberActiveAt: null,
     createdAt: '2026-05-26T14:00:00Z',
+    dbSizeGb: null,
+    usedSpaceGb: null,
   },
   {
     id: '01HX1GLOB0000000000000004',
@@ -106,6 +118,8 @@ export const tenants: Tenant[] = [
     pendingInvitesCount: 5,
     lastMemberActiveAt: null,
     createdAt: '2026-05-27T13:40:00Z',
+    dbSizeGb: null,
+    usedSpaceGb: null,
   },
   {
     id: '01HX1HOOL0000000000000005',
@@ -120,6 +134,8 @@ export const tenants: Tenant[] = [
     pendingInvitesCount: 2,
     lastMemberActiveAt: '2026-05-27T13:38:00Z',
     createdAt: '2025-07-01T10:00:00Z',
+    dbSizeGb: 5,
+    usedSpaceGb: 3.1,
   },
   {
     id: '01HX1VAND0000000000000006',
@@ -134,6 +150,8 @@ export const tenants: Tenant[] = [
     pendingInvitesCount: 1,
     lastMemberActiveAt: null,
     createdAt: '2026-05-27T13:55:00Z',
+    dbSizeGb: null,
+    usedSpaceGb: null,
   },
   {
     id: '01HX1STRK0000000000000007',
@@ -148,6 +166,8 @@ export const tenants: Tenant[] = [
     pendingInvitesCount: 4,
     lastMemberActiveAt: null,
     createdAt: '2026-05-27T13:58:00Z',
+    dbSizeGb: null,
+    usedSpaceGb: null,
   },
 ];
 
@@ -170,6 +190,19 @@ export function relativeTime(iso: string | null): string {
 
 export function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/** Format a GB number for display ("0.48 GB", "10 GB"). Returns "—" for null. */
+export function formatGb(gb: number | null): string {
+  if (gb == null) return '—';
+  if (gb >= 1) return `${gb.toLocaleString('en-US', { maximumFractionDigits: 1 })} GB`;
+  return `${Math.round(gb * 1024)} MB`;
+}
+
+/** Used-space tone for a Progress bar: warning at >75%, danger at >90%. */
+export function usagePercent(used: number | null, total: number | null): number | null {
+  if (used == null || total == null || total <= 0) return null;
+  return Math.round((used / total) * 100);
 }
 
 export type TenantAction =

@@ -208,7 +208,8 @@ export const MOCKUPS = [
     slug: 'tenants',
     title: 'Tenants',
     path: '/mockups/tenants',
-    blurb: 'Superadmin list of platform tenants — state, members, app version, row actions.',
+    blurb:
+      'Superadmin list of platform tenants — state, members, app version, storage usage, row actions.',
     usesComponents: [
       'Badge',
       'Breadcrumb',
@@ -223,6 +224,8 @@ export const MOCKUPS = [
       'PageHeader',
       'Pagination',
       'PersonDisplay',
+      'Progress',
+      'Stack',
       'Table',
       'Text',
       'Tooltip',
