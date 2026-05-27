@@ -55,6 +55,7 @@ import { DefinitionListDemo } from './pages/components/DefinitionListDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
 import { FileUploadDemo } from './pages/components/FileUploadDemo';
 import { FilterChipDemo } from './pages/components/FilterChipDemo';
+import { PersonDisplayDemo } from './pages/components/PersonDisplayDemo';
 import { ImageCropDemo } from './pages/components/ImageCropDemo';
 import { DividerDemo } from './pages/components/DividerDemo';
 import { DrawerDemo } from './pages/components/DrawerDemo';
@@ -90,6 +91,7 @@ export default function App() {
           <Route path="/components/input" element={<InputDemo />} />
           <Route path="/components/kanban" element={<KanbanDemo />} />
           <Route path="/components/pagination" element={<PaginationDemo />} />
+          <Route path="/components/person-display" element={<PersonDisplayDemo />} />
           <Route path="/components/progress" element={<ProgressDemo />} />
           <Route path="/components/circular-progress" element={<CircularProgressDemo />} />
           <Route path="/components/password-input" element={<PasswordInputDemo />} />

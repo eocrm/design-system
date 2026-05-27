@@ -87,6 +87,15 @@ export type {
   FilterChipValueProps,
 } from './components/FilterChip';
 
+export { PersonDisplay } from './components/PersonDisplay';
+export type {
+  PersonDisplayProps,
+  PersonDisplayAvatarProps,
+  PersonDisplayNameProps,
+  PersonDisplayDescriptionProps,
+  PersonDisplaySize,
+} from './components/PersonDisplay';
+
 export { Tabs } from './components/Tabs';
 export type { TabsProps, TabItem, TabsActivationMode, TabsOrientation } from './components/Tabs';
 

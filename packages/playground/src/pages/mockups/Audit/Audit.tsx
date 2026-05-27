@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown, Download, Bookmark } from 'lucide-react';
 import {
-  Avatar,
   Badge,
   Button,
   Cluster,
@@ -12,6 +11,7 @@ import {
   FilterChip,
   OptionsPicker,
   PageHeader,
+  PersonDisplay,
   Stack,
   Text,
   Tooltip,
@@ -61,25 +61,18 @@ function actorCell(entry: AuditEntry) {
     );
   }
   return (
-    <Cluster gap="xs" align="center">
-      <Avatar size="sm" name={a.name} />
-      <Stack gap="xs">
-        <Text size="sm">{a.name}</Text>
-        <Text size="xs" tone="subtle">
-          {a.email}
-        </Text>
-        {i && (
-          <Cluster gap="xs" align="center">
-            <Badge tone="warning" size="sm">
-              impersonating
-            </Badge>
-            <Text size="xs" tone="muted">
-              by {i.name}
-            </Text>
-          </Cluster>
-        )}
-      </Stack>
-    </Cluster>
+    <PersonDisplay size="sm">
+      <PersonDisplay.Avatar name={a.name} />
+      <PersonDisplay.Name>{a.name}</PersonDisplay.Name>
+      <PersonDisplay.Description>{a.email}</PersonDisplay.Description>
+      {i && (
+        <PersonDisplay.Description>
+          <Badge tone="warning" size="sm">
+            impersonating {i.name}
+          </Badge>
+        </PersonDisplay.Description>
+      )}
+    </PersonDisplay>
   );
 }
 

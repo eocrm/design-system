@@ -40,6 +40,7 @@ export type ComponentName =
   | 'Pagination'
   | 'PasswordInput'
   | 'PasswordStrengthMeter'
+  | 'PersonDisplay'
   | 'Popover'
   | 'Progress'
   | 'Radio'
@@ -80,6 +81,7 @@ export const MOCKUPS = [
       'Cluster',
       'Grid',
       'Link',
+      'PersonDisplay',
       'Stack',
       'Text',
       'Title',
@@ -110,7 +112,6 @@ export const MOCKUPS = [
     path: '/mockups/contacts',
     blurb: 'Tabular contact list with status chips and quick filters.',
     usesComponents: [
-      'Avatar',
       'Badge',
       'Button',
       'Card',
@@ -119,6 +120,7 @@ export const MOCKUPS = [
       'DropdownMenu',
       'Input',
       'Link',
+      'PersonDisplay',
       'Stack',
       'Table',
       'Text',
@@ -142,6 +144,7 @@ export const MOCKUPS = [
       'Grid',
       'Link',
       'PageHeader',
+      'PersonDisplay',
       'Stack',
       'Tabs',
       'Text',
@@ -154,13 +157,13 @@ export const MOCKUPS = [
     path: '/mockups/members',
     blurb: 'Team & seat management — roles, invites, seat usage.',
     usesComponents: [
-      'Avatar',
       'Badge',
       'Button',
       'Card',
       'Cluster',
       'DropdownMenu',
       'Input',
+      'PersonDisplay',
       'Progress',
       'Stack',
       'Table',
@@ -175,7 +178,6 @@ export const MOCKUPS = [
     path: '/mockups/audit',
     blurb: 'Tenant-wide event log with filter chips and expandable detail rows.',
     usesComponents: [
-      'Avatar',
       'Badge',
       'Button',
       'Cluster',
@@ -186,6 +188,7 @@ export const MOCKUPS = [
       'FilterChip',
       'OptionsPicker',
       'PageHeader',
+      'PersonDisplay',
       'Stack',
       'Text',
       'Tooltip',

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { UserPlus, MoreHorizontal, MailPlus, Trash2 } from 'lucide-react';
 import {
-  Avatar,
   Badge,
   Button,
   Card,
   Cluster,
   DropdownMenu,
   Input,
+  PersonDisplay,
   Progress,
   Stack,
   Table,
@@ -94,17 +94,14 @@ export function Members() {
               {members.map((m) => (
                 <Table.Row key={m.id}>
                   <Table.Cell>
-                    <Cluster gap="sm" align="center" wrap={false}>
-                      <Avatar name={m.name} size="md" status={m.online ? 'online' : undefined} />
-                      <Stack gap="xs">
-                        <Text as="span" weight="medium">
-                          {m.name}
-                        </Text>
-                        <Text as="span" size="sm" tone="subtle">
-                          {m.email}
-                        </Text>
-                      </Stack>
-                    </Cluster>
+                    <PersonDisplay size="md">
+                      <PersonDisplay.Avatar
+                        name={m.name}
+                        status={m.online ? 'online' : undefined}
+                      />
+                      <PersonDisplay.Name>{m.name}</PersonDisplay.Name>
+                      <PersonDisplay.Description>{m.email}</PersonDisplay.Description>
+                    </PersonDisplay>
                   </Table.Cell>
                   <Table.Cell>
                     <Text as="span" size="sm" tone="subtle">
@@ -194,10 +191,10 @@ export function Members() {
                   <Badge tone={roleTone[inv.role]}>{roleLabel[inv.role]}</Badge>
                 </Table.Cell>
                 <Table.Cell>
-                  <Cluster gap="sm" align="center" wrap={false}>
-                    <Avatar name={inv.invitedBy} size="sm" />
-                    <Text as="span">{inv.invitedBy}</Text>
-                  </Cluster>
+                  <PersonDisplay size="sm">
+                    <PersonDisplay.Avatar name={inv.invitedBy} />
+                    <PersonDisplay.Name>{inv.invitedBy}</PersonDisplay.Name>
+                  </PersonDisplay>
                 </Table.Cell>
                 <Table.Cell>
                   <Text as="span" size="sm" tone="subtle">

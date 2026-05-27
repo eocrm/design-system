@@ -45,6 +45,7 @@ import { FilterChip } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
 import { OptionsPicker } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
+import { PersonDisplay } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
 import { PageHeader } from '@eocrm/design-system';
 import { toast } from '@eocrm/design-system';
@@ -212,6 +213,19 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description:
       'Numbered nav with windowing, plus a cursor variant for streams without total. Both controlled, no built-in page size.',
     preview: <Pagination currentPage={3} pageCount={10} onPageChange={() => {}} size="sm" />,
+  },
+  {
+    to: '/components/person-display',
+    name: 'PersonDisplay',
+    description:
+      'Avatar + name (+ optional description lines). Three sizes drive Avatar + Text scales.',
+    preview: (
+      <PersonDisplay size="md">
+        <PersonDisplay.Avatar name="Sarah Chen" />
+        <PersonDisplay.Name>Sarah Chen</PersonDisplay.Name>
+        <PersonDisplay.Description>sarah@acme.com</PersonDisplay.Description>
+      </PersonDisplay>
+    ),
   },
   {
     to: '/components/password-input',

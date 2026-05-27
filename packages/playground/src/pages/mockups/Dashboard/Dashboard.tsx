@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Link,
+  PersonDisplay,
   Title,
   Text,
 } from '@eocrm/design-system';
@@ -149,21 +150,18 @@ export function Dashboard() {
           <Card.List>
             {activity.map((a, i) => (
               <Card.ListRow key={i}>
-                <Cluster gap="sm" wrap={false} align="start">
-                  <Avatar name={a.who} size="sm" />
-                  <Stack gap="xs">
-                    {/* Inner Text on `a.target` is intentional — re-tone an inline run inside a sentence without raw style. Inner needs explicit size="sm" so it doesn't pop to its default md. */}
-                    <Text as="span" size="sm" tone="muted">
-                      <strong>{a.who}</strong> {a.what}{' '}
-                      <Text as="span" size="sm" tone="accent">
-                        {a.target}
-                      </Text>
+                <PersonDisplay size="sm">
+                  <PersonDisplay.Avatar name={a.who} />
+                  <PersonDisplay.Name>{a.who}</PersonDisplay.Name>
+                  <PersonDisplay.Description>
+                    {a.what}{' '}
+                    <Text as="span" size="xs" tone="accent">
+                      {a.target}
                     </Text>
-                    <Text as="span" size="sm" tone="subtle">
-                      {a.when}
-                    </Text>
-                  </Stack>
-                </Cluster>
+                    {' · '}
+                    {a.when}
+                  </PersonDisplay.Description>
+                </PersonDisplay>
               </Card.ListRow>
             ))}
           </Card.List>
@@ -177,17 +175,11 @@ export function Dashboard() {
           </Title>
           <Grid minColumnWidth="220px" gap="sm">
             {contacts.slice(0, 4).map((c) => (
-              <Cluster key={c.id} gap="sm" wrap={false} align="center">
-                <Avatar name={c.name} size="md" />
-                <Stack gap="xs">
-                  <Text as="span" weight="medium">
-                    {c.name}
-                  </Text>
-                  <Text as="span" size="sm" tone="subtle">
-                    {c.title}
-                  </Text>
-                </Stack>
-              </Cluster>
+              <PersonDisplay key={c.id} size="md">
+                <PersonDisplay.Avatar name={c.name} />
+                <PersonDisplay.Name>{c.name}</PersonDisplay.Name>
+                <PersonDisplay.Description>{c.title}</PersonDisplay.Description>
+              </PersonDisplay>
             ))}
           </Grid>
         </Stack>
