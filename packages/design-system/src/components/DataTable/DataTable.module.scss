@@ -199,8 +199,11 @@
 
 // The single colSpan cell that holds the consumer's renderExpandedRow output.
 // More vertical breathing room than a data cell — typically the detail
-// content is a panel of multiple lines, not a single value.
+// content is a panel of multiple lines, not a single value. Bottom
+// padding is larger than top because expansion panels often end with an
+// action row that needs more breathing room than the title row at the top
+// (which sits right under the data row that was clicked).
 .expandedDetailCell {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-5);
   white-space: normal;
 }
