@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button, Cluster, Stack, toast } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
+import { InputExample } from './InputExample';
 import apiSource from '@lib-source/components/Toast/api.ts?raw';
 import scssSource from '@lib-source/components/Toast/Toast.module.scss?raw';
 
@@ -27,13 +28,25 @@ toast.warning('Storage almost full');
 toast.error('Request failed');
 toast.loading('Uploading…');`}
       >
-        <Cluster gap="sm">
-          <Button onClick={() => toast.info('Heads up')}>info</Button>
-          <Button onClick={() => toast.success('Saved')}>success</Button>
-          <Button onClick={() => toast.warning('Storage almost full')}>warning</Button>
-          <Button onClick={() => toast.error('Request failed')}>error</Button>
-          <Button onClick={() => toast.loading('Uploading…')}>loading</Button>
-        </Cluster>
+        <InputExample width="auto">
+          <Cluster gap="sm">
+            <Button variant="secondary" onClick={() => toast.info('Heads up')}>
+              info
+            </Button>
+            <Button variant="secondary" onClick={() => toast.success('Saved')}>
+              success
+            </Button>
+            <Button variant="secondary" onClick={() => toast.warning('Storage almost full')}>
+              warning
+            </Button>
+            <Button variant="secondary" onClick={() => toast.error('Request failed')}>
+              error
+            </Button>
+            <Button variant="secondary" onClick={() => toast.loading('Uploading…')}>
+              loading
+            </Button>
+          </Cluster>
+        </InputExample>
       </Example>
 
       <Example
@@ -43,15 +56,18 @@ toast.loading('Uploading…');`}
   description: 'Your changes are now live.',
 });`}
       >
-        <Button
-          onClick={() =>
-            toast.success('Saved', {
-              description: 'Your changes are now live.',
-            })
-          }
-        >
-          Fire with description
-        </Button>
+        <InputExample width="auto">
+          <Button
+            variant="secondary"
+            onClick={() =>
+              toast.success('Saved', {
+                description: 'Your changes are now live.',
+              })
+            }
+          >
+            Fire with description
+          </Button>
+        </InputExample>
       </Example>
 
       <Example
@@ -64,18 +80,21 @@ toast.loading('Uploading…');`}
   },
 });`}
       >
-        <Button
-          onClick={() =>
-            toast.success('Item deleted', {
-              action: {
-                label: 'Undo',
-                onClick: () => toast.info('Restored'),
-              },
-            })
-          }
-        >
-          Delete (with Undo)
-        </Button>
+        <InputExample width="auto">
+          <Button
+            variant="secondary"
+            onClick={() =>
+              toast.success('Item deleted', {
+                action: {
+                  label: 'Undo',
+                  onClick: () => toast.info('Restored'),
+                },
+              })
+            }
+          >
+            Delete (with Undo)
+          </Button>
+        </InputExample>
       </Example>
 
       <Example
@@ -86,16 +105,19 @@ setTimeout(() => {
   toast.success('Uploaded', { id });
 }, 2000);`}
       >
-        <Button
-          onClick={() => {
-            const id = toast.loading('Uploading…');
-            setTimeout(() => {
-              toast.success('Uploaded', { id });
-            }, 2000);
-          }}
-        >
-          Start upload
-        </Button>
+        <InputExample width="auto">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              const id = toast.loading('Uploading…');
+              setTimeout(() => {
+                toast.success('Uploaded', { id });
+              }, 2000);
+            }}
+          >
+            Start upload
+          </Button>
+        </InputExample>
       </Example>
 
       <Example
@@ -112,25 +134,28 @@ setTimeout(() => {
   }
 );`}
       >
-        <Button
-          onClick={() =>
-            toast.promise(
-              new Promise((resolve, reject) =>
-                setTimeout(
-                  () => (Math.random() > 0.5 ? resolve('done') : reject(new Error('500'))),
-                  1500,
+        <InputExample width="auto">
+          <Button
+            variant="secondary"
+            onClick={() =>
+              toast.promise(
+                new Promise((resolve, reject) =>
+                  setTimeout(
+                    () => (Math.random() > 0.5 ? resolve('done') : reject(new Error('500'))),
+                    1500,
+                  ),
                 ),
-              ),
-              {
-                loading: 'Working…',
-                success: 'Worked',
-                error: (e) => `Failed: ${(e as Error).message}`,
-              },
-            )
-          }
-        >
-          Fire promise toast
-        </Button>
+                {
+                  loading: 'Working…',
+                  success: 'Worked',
+                  error: (e) => `Failed: ${(e as Error).message}`,
+                },
+              )
+            }
+          >
+            Fire promise toast
+          </Button>
+        </InputExample>
       </Example>
 
       <Example
@@ -138,9 +163,14 @@ setTimeout(() => {
         description="duration: 'persistent' disables auto-dismiss. The close (×) button is force-enabled even if you pass dismissible: false."
         code={`toast.error('Connection lost', { duration: 'persistent' });`}
       >
-        <Button onClick={() => toast.error('Connection lost', { duration: 'persistent' })}>
-          Fire persistent error
-        </Button>
+        <InputExample width="auto">
+          <Button
+            variant="secondary"
+            onClick={() => toast.error('Connection lost', { duration: 'persistent' })}
+          >
+            Fire persistent error
+          </Button>
+        </InputExample>
       </Example>
 
       <Example
@@ -151,20 +181,34 @@ toast.info('top-center', { position: 'top-center' });
 toast.info('bottom-left', { position: 'bottom-left' });
 toast.info('bottom-center', { position: 'bottom-center' });`}
       >
-        <Cluster gap="sm">
-          <Button onClick={() => toast.info('top-right', { position: 'top-right' })}>
-            top-right
-          </Button>
-          <Button onClick={() => toast.info('top-center', { position: 'top-center' })}>
-            top-center
-          </Button>
-          <Button onClick={() => toast.info('bottom-left', { position: 'bottom-left' })}>
-            bottom-left
-          </Button>
-          <Button onClick={() => toast.info('bottom-center', { position: 'bottom-center' })}>
-            bottom-center
-          </Button>
-        </Cluster>
+        <InputExample width="auto">
+          <Cluster gap="sm">
+            <Button
+              variant="secondary"
+              onClick={() => toast.info('top-right', { position: 'top-right' })}
+            >
+              top-right
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => toast.info('top-center', { position: 'top-center' })}
+            >
+              top-center
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => toast.info('bottom-left', { position: 'bottom-left' })}
+            >
+              bottom-left
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => toast.info('bottom-center', { position: 'bottom-center' })}
+            >
+              bottom-center
+            </Button>
+          </Cluster>
+        </InputExample>
       </Example>
 
       <Example
@@ -174,20 +218,23 @@ toast.info('bottom-center', { position: 'bottom-center' });`}
   setTimeout(() => toast.info(\`Message #\${i}\`), i * 60);
 }`}
       >
-        <Stack gap="sm">
-          <Button
-            disabled={bursting}
-            onClick={() => {
-              setBursting(true);
-              for (let i = 1; i <= 7; i++) {
-                setTimeout(() => toast.info(`Message #${i}`), i * 60);
-              }
-              setTimeout(() => setBursting(false), 600);
-            }}
-          >
-            Fire 7 toasts
-          </Button>
-        </Stack>
+        <InputExample width="auto">
+          <Stack gap="sm">
+            <Button
+              variant="secondary"
+              disabled={bursting}
+              onClick={() => {
+                setBursting(true);
+                for (let i = 1; i <= 7; i++) {
+                  setTimeout(() => toast.info(`Message #${i}`), i * 60);
+                }
+                setTimeout(() => setBursting(false), 600);
+              }}
+            >
+              Fire 7 toasts
+            </Button>
+          </Stack>
+        </InputExample>
       </Example>
     </DemoLayout>
   );
