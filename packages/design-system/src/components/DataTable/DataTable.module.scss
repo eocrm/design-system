@@ -37,6 +37,16 @@
   white-space: nowrap;
 }
 
+// Reserve room in the cell's left padding for the column reorder grip. The
+// grip is absolute-positioned inside the header's padding zone; body cells
+// share the same padding-left so the header label aligns with the body
+// content below it. Doubled `.root` so this beats the Table primitive's
+// density-driven `.density-dense .td` rule (specificity 0,2,0) — without
+// the doubling, density would override us back to its default padding-x.
+.root.root :is(th, td) {
+  padding-left: var(--data-table-cell-padding-inline-start);
+}
+
 // Selection auto-column — fixed narrow width is set via inline <col width> in colgroup.
 .autoCell {
   // text-align center is set by <Table.Cell align="center" />
