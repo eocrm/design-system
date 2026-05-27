@@ -14,8 +14,7 @@ import {
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Kanban/Kanban.tsx?raw';
-import scssSource from '@lib-source/components/Kanban/Kanban.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 type ColId = 'todo' | 'doing' | 'done';
 
@@ -80,10 +79,7 @@ export function KanbanDemo() {
       name="Kanban"
       componentName="Kanban"
       description="Multi-column board with live cross-column drag. Cards reflow into the target column as the dragged card crosses in — internal state, consumer's onMove fires once on drop."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Kanban.tsx"
-      scssFilename="Kanban.module.scss"
+      files={getComponentFiles('Kanban')}
     >
       <Example
         title="Basic board (3 columns)"

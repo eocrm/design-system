@@ -7,8 +7,7 @@ import { Text } from '@eocrm/design-system';
 import { Code } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/FileUpload/FileUpload.tsx?raw';
-import scssSource from '@lib-source/components/FileUpload/FileUpload.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 function makeId() {
   // crypto.randomUUID exists in modern browsers; fall back to a counter for jsdom.
@@ -189,10 +188,7 @@ export function FileUploadDemo() {
     <DemoLayout
       name="FileUpload"
       description="Controlled, dropzone-style file picker. Pure UI shell — consumer owns the FileEntry[] state and the upload network code. Drop or click to add files; the component handles validation, drag-over feedback, per-row rendering, and the remove button."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="FileUpload.tsx"
-      scssFilename="FileUpload.module.scss"
+      files={getComponentFiles('FileUpload')}
       componentName="FileUpload"
     >
       <Example

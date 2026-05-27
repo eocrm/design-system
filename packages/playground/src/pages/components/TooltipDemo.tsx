@@ -3,8 +3,7 @@ import { Sparkles } from 'lucide-react';
 import { Button, Cluster, DropdownMenu, Tooltip } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Tooltip/Tooltip.tsx?raw';
-import scssSource from '@lib-source/components/Tooltip/Tooltip.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function TooltipDemo() {
   return (
@@ -12,10 +11,7 @@ export function TooltipDemo() {
       name="Tooltip"
       componentName="Tooltip"
       description="Small floating label that opens on hover or keyboard focus and points at its trigger. Hand-rolled on Floating UI; lightweight, no focus trap."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Tooltip.tsx"
-      scssFilename="Tooltip.module.scss"
+      files={getComponentFiles('Tooltip')}
     >
       <Example
         title="Default — top + center"

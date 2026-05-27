@@ -3,8 +3,7 @@ import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { Button, Cluster } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Button/Button.tsx?raw';
-import scssSource from '@lib-source/components/Button/Button.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 function SaveWithSuccessFlash() {
   const [saved, setSaved] = useState(false);
@@ -43,10 +42,7 @@ export function ButtonDemo() {
     <DemoLayout
       name="Button"
       description="Renders a <button>. The action element you reach for first — submit a form, open a modal, delete a row, navigate within the app."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Button.tsx"
-      scssFilename="Button.module.scss"
+      files={getComponentFiles('Button')}
       componentName="Button"
     >
       <Example

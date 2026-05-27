@@ -14,8 +14,7 @@ import { Code } from '@eocrm/design-system';
 import { CircularProgress } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/ImageCrop/ImageCrop.tsx?raw';
-import scssSource from '@lib-source/components/ImageCrop/ImageCrop.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 // Public sample image used across all examples — a generic photo from picsum.
 // Using a fixed seed so the image is stable across page loads.
@@ -193,10 +192,7 @@ export function ImageCropDemo() {
     <DemoLayout
       name="ImageCrop"
       description="Controlled image-crop primitive. Pattern-A drag (crop box centered, image dragged, slider-controlled zoom). Hand-rolled on <canvas>. extractCropBlob utility for the consumer's Save handler."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="ImageCrop.tsx"
-      scssFilename="ImageCrop.module.scss"
+      files={getComponentFiles('ImageCrop')}
       componentName="ImageCrop"
     >
       <Example

@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Avatar, AvatarGroup, Cluster, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Avatar/Avatar.tsx?raw';
-import scssSource from '@lib-source/components/Avatar/Avatar.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const TEAM = [
   'Alex Rivera',
@@ -38,10 +37,7 @@ export function AvatarDemo() {
     <DemoLayout
       name="Avatar"
       description="Circular profile element. Renders an image if src is provided, otherwise the person's initials on a deterministic color background — the same name always gets the same color."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Avatar.tsx"
-      scssFilename="Avatar.module.scss"
+      files={getComponentFiles('Avatar')}
       componentName="Avatar"
     >
       <Example

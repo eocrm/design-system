@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Button, ButtonGroup, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/ButtonGroup/ButtonGroup.tsx?raw';
-import scssSource from '@lib-source/components/ButtonGroup/ButtonGroup.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function ButtonGroupDemo() {
   return (
@@ -11,10 +10,7 @@ export function ButtonGroupDemo() {
       name="ButtonGroup"
       componentName="ButtonGroup"
       description="Compound with two modes. Visual mode joins <Button> children into a single unit (toolbar actions). Segmented mode (value + onValueChange) is a single-select radiogroup with arrow-key navigation (view toggles, timeframe filters)."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="ButtonGroup.tsx"
-      scssFilename="ButtonGroup.module.scss"
+      files={getComponentFiles('ButtonGroup')}
     >
       <VisualSimpleExample />
       <VisualMixedVariantsExample />

@@ -3,8 +3,7 @@ import { Input, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/Input/Input.tsx?raw';
-import scssSource from '@lib-source/components/Input/Input.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function InputDemo() {
   const [value, setValue] = useState('priya@acme.com');
@@ -14,10 +13,7 @@ export function InputDemo() {
     <DemoLayout
       name="Input"
       description="A controlled single-line text field. Renders an <input> and forwards all native props. The component is deliberately dumb — validation logic lives in your form layer."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Input.tsx"
-      scssFilename="Input.module.scss"
+      files={getComponentFiles('Input')}
       componentName="Input"
     >
       <Example

@@ -8,8 +8,7 @@ import {
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/PasswordStrengthMeter/PasswordStrengthMeter.tsx?raw';
-import scssSource from '@lib-source/components/PasswordStrengthMeter/PasswordStrengthMeter.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 function LiveWithInputDemo() {
   const [pw, setPw] = useState('');
@@ -52,10 +51,7 @@ export function PasswordStrengthMeterDemo() {
       name="PasswordStrengthMeter"
       componentName="PasswordStrengthMeter"
       description="4-segment password-strength visualization. The default heuristic (length + character classes) is suitable for prototypes — pass `score` from zxcvbn or server-side scoring for production."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="PasswordStrengthMeter.tsx"
-      scssFilename="PasswordStrengthMeter.module.scss"
+      files={getComponentFiles('PasswordStrengthMeter')}
     >
       <Example
         title="Live with PasswordInput"

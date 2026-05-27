@@ -1,8 +1,7 @@
 import { Button, Card, Cluster, Divider, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Divider/Divider.tsx?raw';
-import scssSource from '@lib-source/components/Divider/Divider.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function DividerDemo() {
   return (
@@ -10,10 +9,7 @@ export function DividerDemo() {
       name="Divider"
       componentName="Divider"
       description="Thin separator primitive. Horizontal or vertical, solid or dashed, three size tiers, optional centered label."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Divider.tsx"
-      scssFilename="Divider.module.scss"
+      files={getComponentFiles('Divider')}
     >
       <Example
         title="Horizontal default"

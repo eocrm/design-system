@@ -2,8 +2,7 @@ import { useRef, useState } from 'react';
 import { Badge, Button, Cluster, Input, Modal, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Modal/ModalRoot.tsx?raw';
-import scssSource from '@lib-source/components/Modal/Modal.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function ModalDemo() {
   return (
@@ -11,10 +10,7 @@ export function ModalDemo() {
       name="Modal"
       componentName="Modal"
       description="Focus-locked, scroll-locked dialog with a compound API (Header / Body / Footer / Close). Three size presets, solid + blur overlay variants, fullscreen on mobile. Stacked-modal support: overlay mode (default) keeps the parent visible; replace mode hides it."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="ModalRoot.tsx"
-      scssFilename="Modal.module.scss"
+      files={getComponentFiles('Modal')}
     >
       <BasicExample />
       <SizesExample />

@@ -3,8 +3,7 @@ import { Button, DatePicker, Stack, toDateKey } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/DatePicker/DatePicker.tsx?raw';
-import scssSource from '@lib-source/components/DatePicker/DatePicker.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const TODAY = new Date();
 const IN_90_DAYS = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 90);
@@ -49,10 +48,7 @@ function FormDemo() {
 export function DatePickerDemoPanel() {
   return (
     <DemoBody
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="DatePicker.tsx"
-      scssFilename="DatePicker.module.scss"
+      files={getComponentFiles('DatePicker')}
       componentName="DatePicker"
     >
       <Example

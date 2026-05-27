@@ -6,8 +6,7 @@ import { Badge } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import outlineStyles from './demoOutline.module.scss';
-import tsxSource from '@lib-source/components/Stack/Stack.tsx?raw';
-import scssSource from '@lib-source/components/Stack/Stack.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const Block = ({ children }: { children: React.ReactNode }) => (
   <div
@@ -28,10 +27,7 @@ export function StackDemo() {
     <DemoLayout
       name="Stack"
       description="Vertical flex layout with consistent gap. The most-used layout primitive — form fields, page sections, sidebar contents. Replaces ad-hoc display: flex; flex-direction: column."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Stack.tsx"
-      scssFilename="Stack.module.scss"
+      files={getComponentFiles('Stack')}
       componentName="Stack"
     >
       <Example

@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Table, Badge } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Table/Table.tsx?raw';
-import scssSource from '@lib-source/components/Table/Table.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 interface Row {
   id: string;
@@ -145,10 +144,7 @@ export function TableDemo() {
       name="Table"
       componentName="Table"
       description="Tabular data primitive — compound subcomponents (Table.Header, Table.Body, Table.Row, Table.Cell, Table.HeaderCell, Table.Caption, Table.Footer) over native HTML semantics. Density, hover, striped, sticky-header, and sort-indicator visuals; data behavior (sort/filter/pagination) is the consumer's job."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Table.tsx"
-      scssFilename="Table.module.scss"
+      files={getComponentFiles('Table')}
     >
       <Example
         title="Default"

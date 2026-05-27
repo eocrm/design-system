@@ -5,8 +5,7 @@ import { Badge } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import outlineStyles from './demoOutline.module.scss';
-import tsxSource from '@lib-source/components/Cluster/Cluster.tsx?raw';
-import scssSource from '@lib-source/components/Cluster/Cluster.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const Block = ({ children }: { children: React.ReactNode }) => (
   <div
@@ -28,10 +27,7 @@ export function ClusterDemo() {
     <DemoLayout
       name="Cluster"
       description="Horizontal flex layout that wraps. Use for button rows, toolbars, tag lists, breadcrumbs. Replaces ad-hoc display: flex with flex-wrap."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Cluster.tsx"
-      scssFilename="Cluster.module.scss"
+      files={getComponentFiles('Cluster')}
       componentName="Cluster"
     >
       <Example

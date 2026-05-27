@@ -4,8 +4,7 @@ import { Button, OptionsPicker, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/OptionsPicker/OptionsPicker.tsx?raw';
-import scssSource from '@lib-source/components/OptionsPicker/OptionsPicker.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const flatOptions = [
   { value: 'lead', label: 'Lead' },
@@ -67,10 +66,7 @@ export function OptionsPickerDemo() {
       name="OptionsPicker"
       componentName="OptionsPicker"
       description="Filter-picker UX: popover with search, optional grouping, multi/single select, draft-then-Apply commit."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="OptionsPicker.tsx"
-      scssFilename="OptionsPicker.module.scss"
+      files={getComponentFiles('OptionsPicker')}
     >
       <Example
         title="Multi-select, flat options"

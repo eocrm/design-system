@@ -5,18 +5,14 @@ import { Cluster } from '@eocrm/design-system';
 import { Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/CircularProgress/CircularProgress.tsx?raw';
-import scssSource from '@lib-source/components/CircularProgress/CircularProgress.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function CircularProgressDemo() {
   return (
     <DemoLayout
       name="CircularProgress"
       description="Circular progress / loading spinner. Determinate via value/max draws a donut arc; indeterminate is the canonical inline 'Saving…' spinner. Same prop vocabulary as <Progress>."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="CircularProgress.tsx"
-      scssFilename="CircularProgress.module.scss"
+      files={getComponentFiles('CircularProgress')}
       componentName="CircularProgress"
     >
       <Example

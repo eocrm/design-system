@@ -7,8 +7,7 @@ import { Text } from '@eocrm/design-system';
 import { Code } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/ColorPicker/ColorPicker.tsx?raw';
-import scssSource from '@lib-source/components/ColorPicker/ColorPicker.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const BRAND_PRESETS = [
   '#4F46E5',
@@ -88,10 +87,7 @@ export function ColorPickerDemo() {
     <DemoLayout
       name="ColorPicker"
       description="Controlled HEX color picker with two distribution shapes — compact popover trigger for form fields, and an inline <ColorPicker.Panel> for theme builders. Hand-rolled SV square + hue slider + HEX input. Consumer-supplied preset swatches."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="ColorPicker.tsx"
-      scssFilename="ColorPicker.module.scss"
+      files={getComponentFiles('ColorPicker')}
       componentName="ColorPicker"
     >
       <Example

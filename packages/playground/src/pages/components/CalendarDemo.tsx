@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Calendar, type CalendarEvent, type CalendarView } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Calendar/Calendar.tsx?raw';
-import scssSource from '@lib-source/components/Calendar/Calendar.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 // ── Demo data ───────────────────────────────────────────────────────────────
 //
@@ -170,10 +169,7 @@ export function CalendarDemo() {
       name="Calendar"
       componentName="Calendar"
       description="Month view with continuous event bars. Multi-day events span across days; week boundaries split into separate bars with flattened edges."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Calendar.tsx"
-      scssFilename="Calendar.module.scss"
+      files={getComponentFiles('Calendar')}
     >
       <Example
         title="Default (empty)"

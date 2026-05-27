@@ -14,8 +14,7 @@ import {
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Sortable/Sortable.tsx?raw';
-import scssSource from '@lib-source/components/Sortable/Sortable.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function SortableDemo() {
   const [todos, setTodos] = useState([
@@ -48,10 +47,7 @@ export function SortableDemo() {
       name="Sortable"
       componentName="Sortable"
       description="Drag-to-reorder list (single column) built on @dnd-kit/sortable. Compound API with Sortable, Sortable.Item, and an optional Sortable.Handle for click-isolation + keyboard a11y."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Sortable.tsx"
-      scssFilename="Sortable.module.scss"
+      files={getComponentFiles('Sortable')}
     >
       <Example
         title="Plain text list (no Handle)"

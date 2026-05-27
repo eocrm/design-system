@@ -4,10 +4,7 @@ import { CursorPagination, Cluster, Pagination, Select, Stack, Tabs } from '@eoc
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import styles from './DemoLayout.module.scss';
-import paginationTsx from '@lib-source/components/Pagination/Pagination.tsx?raw';
-import paginationScss from '@lib-source/components/Pagination/Pagination.module.scss?raw';
-import cursorPaginationTsx from '@lib-source/components/CursorPagination/CursorPagination.tsx?raw';
-import cursorPaginationScss from '@lib-source/components/CursorPagination/CursorPagination.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 type Variant = 'pagination' | 'cursor-pagination';
 
@@ -29,13 +26,7 @@ function PaginationDemoPanel() {
   const pageSizeNum = Number(pageSize);
 
   return (
-    <DemoBody
-      tsxSource={paginationTsx}
-      scssSource={paginationScss}
-      tsxFilename="Pagination.tsx"
-      scssFilename="Pagination.module.scss"
-      componentName="Pagination"
-    >
+    <DemoBody files={getComponentFiles('Pagination')} componentName="Pagination">
       <Example
         title="Basic"
         description="Default md size. Click prev / next / a page number to update."
@@ -190,12 +181,7 @@ function CursorPaginationDemoPanel() {
   const hasNext = cursor < 5;
 
   return (
-    <DemoBody
-      tsxSource={cursorPaginationTsx}
-      scssSource={cursorPaginationScss}
-      tsxFilename="CursorPagination.tsx"
-      scssFilename="CursorPagination.module.scss"
-    >
+    <DemoBody files={getComponentFiles('CursorPagination')}>
       <Example
         title="Basic"
         description="Both buttons enabled — has both directions to navigate."

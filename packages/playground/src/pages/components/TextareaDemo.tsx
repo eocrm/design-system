@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Cluster, Stack, Textarea } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Textarea/Textarea.tsx?raw';
-import scssSource from '@lib-source/components/Textarea/Textarea.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function TextareaDemo() {
   const [tweet, setTweet] = useState("What's happening?");
@@ -14,10 +13,7 @@ export function TextareaDemo() {
       name="Textarea"
       componentName="Textarea"
       description="Multi-line text input. Auto-grows by default, optional character counter, configurable resize handle."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Textarea.tsx"
-      scssFilename="Textarea.module.scss"
+      files={getComponentFiles('Textarea')}
     >
       <Example
         title="Default"

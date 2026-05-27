@@ -7,8 +7,7 @@ import { Title } from '@eocrm/design-system';
 import { Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Progress/Progress.tsx?raw';
-import scssSource from '@lib-source/components/Progress/Progress.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 function LiveProgress() {
   const [value, setValue] = useState(45);
@@ -33,10 +32,7 @@ export function ProgressDemo() {
     <DemoLayout
       name="Progress"
       description="Linear progress bar — determinate via value/max, or indeterminate when value is omitted. Use for tracked progress (file upload, wizard step, disk usage). For inline 'loading' spinners next to a button, use <CircularProgress> instead."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Progress.tsx"
-      scssFilename="Progress.module.scss"
+      files={getComponentFiles('Progress')}
       componentName="Progress"
     >
       <Example

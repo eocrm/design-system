@@ -2,8 +2,7 @@ import { Mail, Phone, Building, MapPin, Globe, Briefcase, Cake, User } from 'luc
 import { Badge, Cluster, DefinitionList, Link, Stack, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/DefinitionList/DefinitionList.tsx?raw';
-import scssSource from '@lib-source/components/DefinitionList/DefinitionList.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function DefinitionListDemo() {
   return (
@@ -11,10 +10,7 @@ export function DefinitionListDemo() {
       name="DefinitionList"
       componentName="DefinitionList"
       description="Semantic key/value pairs (dl/dt/dd) with optional leading icon on the description. Use this instead of Card.List when every row has a label."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="DefinitionList.tsx"
-      scssFilename="DefinitionList.module.scss"
+      files={getComponentFiles('DefinitionList')}
     >
       <Example
         title="Horizontal with icons"

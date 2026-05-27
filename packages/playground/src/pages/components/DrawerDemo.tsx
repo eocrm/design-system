@@ -2,8 +2,7 @@ import { useRef, useState } from 'react';
 import { Button, Cluster, Drawer, Input, Modal, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Drawer/DrawerRoot.tsx?raw';
-import scssSource from '@lib-source/components/Drawer/Drawer.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function DrawerDemo() {
   return (
@@ -11,10 +10,7 @@ export function DrawerDemo() {
       name="Drawer"
       componentName="Drawer"
       description="Edge-anchored slide-in panel. Four sides (left/right/top/bottom), three sizes, overlay variants, drag-to-close on mobile, and cross-component stacking with Modal."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="DrawerRoot.tsx"
-      scssFilename="Drawer.module.scss"
+      files={getComponentFiles('Drawer')}
     >
       <BasicExample />
       <SidesExample />

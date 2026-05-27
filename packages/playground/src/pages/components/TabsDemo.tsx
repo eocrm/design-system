@@ -5,8 +5,7 @@ import { Card } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Tabs/Tabs.tsx?raw';
-import scssSource from '@lib-source/components/Tabs/Tabs.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function TabsDemo() {
   const [t1, setT1] = useState('overview');
@@ -18,10 +17,7 @@ export function TabsDemo() {
     <DemoLayout
       name="Tabs"
       description="Horizontal tab strip with optional count chips. Controlled by the caller: pass activeId and onChange. Best for switching between views of the same entity — not for cross-page navigation."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Tabs.tsx"
-      scssFilename="Tabs.module.scss"
+      files={getComponentFiles('Tabs')}
       componentName="Tabs"
     >
       <Example

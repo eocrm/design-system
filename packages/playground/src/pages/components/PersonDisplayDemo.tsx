@@ -2,8 +2,7 @@ import { Badge, PersonDisplay, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/PersonDisplay/PersonDisplay.tsx?raw';
-import scssSource from '@lib-source/components/PersonDisplay/PersonDisplay.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function PersonDisplayDemo() {
   return (
@@ -11,10 +10,7 @@ export function PersonDisplayDemo() {
       name="PersonDisplay"
       componentName="PersonDisplay"
       description="Avatar + name (+ optional description lines) — the canonical person-row composition. Three sizes (sm / md / lg) drive Avatar + Text scales."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="PersonDisplay.tsx"
-      scssFilename="PersonDisplay.module.scss"
+      files={getComponentFiles('PersonDisplay')}
     >
       <Example
         title="All three sizes"

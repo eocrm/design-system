@@ -4,18 +4,14 @@ import { Stack } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Code/Code.tsx?raw';
-import scssSource from '@lib-source/components/Code/Code.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function CodeDemo() {
   return (
     <DemoLayout
       name="Code"
       description="Inline <code> chip — monospace text with a subtle background. Inline only; block code with syntax highlighting lives in the playground's CodeBlock (Prism)."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Code.tsx"
-      scssFilename="Code.module.scss"
+      files={getComponentFiles('Code')}
       componentName="Code"
     >
       <Example

@@ -9,8 +9,7 @@ import {
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/DateRangePicker/InlineDateRangePicker.tsx?raw';
-import scssSource from '@lib-source/components/DateRangePicker/InlineDateRangePicker.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const TODAY = new Date();
 const IN_14 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 14);
@@ -65,10 +64,7 @@ function FormDemo() {
 export function InlineDateRangePickerDemoPanel() {
   return (
     <DemoBody
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="InlineDateRangePicker.tsx"
-      scssFilename="InlineDateRangePicker.module.scss"
+      files={getComponentFiles('DateRangePicker')}
       componentName="InlineDateRangePicker"
     >
       <Example

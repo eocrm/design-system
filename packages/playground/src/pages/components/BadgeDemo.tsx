@@ -3,18 +3,14 @@ import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/Badge/Badge.tsx?raw';
-import scssSource from '@lib-source/components/Badge/Badge.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function BadgeDemo() {
   return (
     <DemoLayout
       name="Badge"
       description="Small inline pill for status, category, or count. Use semantic tones consistently — success means good, danger means problematic, etc."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Badge.tsx"
-      scssFilename="Badge.module.scss"
+      files={getComponentFiles('Badge')}
       componentName="Badge"
     >
       <Example

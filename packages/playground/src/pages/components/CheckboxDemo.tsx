@@ -3,8 +3,7 @@ import { Button, Checkbox, Stack, Text, type PaletteColor } from '@eocrm/design-
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
-import tsxSource from '@lib-source/components/Checkbox/Checkbox.tsx?raw';
-import scssSource from '@lib-source/components/Checkbox/Checkbox.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 const TEAM = ['Alex', 'Priya', 'Tom', 'Sara', 'Jaden'];
 
@@ -136,10 +135,7 @@ export function CheckboxDemo() {
       name="Checkbox"
       componentName="Checkbox"
       description="Native `<input type='checkbox'>` visually hidden + custom-painted box. Supports controlled / uncontrolled state, indeterminate (mixed) state, sizes, label, disabled, invalid, and full native form integration."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="Checkbox.tsx"
-      scssFilename="Checkbox.module.scss"
+      files={getComponentFiles('Checkbox')}
     >
       <Example
         title="Default"
