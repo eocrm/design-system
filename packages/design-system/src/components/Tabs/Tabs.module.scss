@@ -1,3 +1,5 @@
+@use './Tabs.tokens';
+
 // The outer wrapper handles horizontal scrolling. Putting overflow here
 // instead of on .tabs means the tablist itself remains an overflow-visible
 // box, so the active-tab underline (positioned just below its baseline) is
@@ -15,40 +17,40 @@
   // permits `relative` for an internal child anchor).
   position: relative;
   display: inline-flex;
-  gap: var(--space-1);
-  border-bottom: var(--border-width-emphasis) solid var(--color-border);
+  gap: var(--tabs-gap);
+  border-bottom: var(--border-width-emphasis) solid var(--tabs-border-color);
   min-width: 100%;
 }
 
 .tab {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  gap: var(--tabs-tab-gap);
+  padding: var(--tabs-tab-padding-y) var(--tabs-tab-padding-x);
   border: none;
   background: transparent;
-  color: var(--color-fg-muted);
+  color: var(--tabs-tab-fg);
   font-family: inherit;
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--tabs-tab-font-size);
+  font-weight: var(--tabs-tab-font-weight);
   cursor: pointer;
   transition: color var(--transition-fast);
 
   // Hover applies only to non-active tabs — explicit selector beats relying on
   // rule order with `.active:hover` later in the file.
   &:not(.active):hover {
-    color: var(--color-fg);
+    color: var(--tabs-tab-fg-hover);
   }
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
-    border-radius: var(--radius-sm);
+    box-shadow: 0 0 0 var(--ring-width) var(--tabs-tab-ring);
+    border-radius: var(--tabs-tab-radius);
   }
 }
 
 .active {
-  color: var(--color-accent);
+  color: var(--tabs-tab-fg-active);
 }
 
 .icon {
@@ -66,16 +68,16 @@
   justify-content: center;
   min-width: var(--size-badge);
   height: var(--size-chip);
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-muted);
-  color: var(--color-fg-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
+  padding: 0 var(--tabs-count-padding-x);
+  border-radius: var(--tabs-count-radius);
+  background: var(--tabs-count-bg);
+  color: var(--tabs-count-fg);
+  font-size: var(--tabs-count-font-size);
+  font-weight: var(--tabs-count-font-weight);
 
   .active & {
-    background: var(--color-accent-subtle-bg);
-    color: var(--color-accent);
+    background: var(--tabs-count-bg-active);
+    color: var(--tabs-count-fg-active);
   }
 }
 
@@ -92,7 +94,7 @@
   bottom: calc(-1 * var(--border-width-emphasis));
   height: var(--border-width-emphasis);
   width: 0;
-  background: var(--color-accent);
+  background: var(--tabs-indicator-bg);
   transform: translateX(0);
   transition:
     transform var(--transition-base),
