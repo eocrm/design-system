@@ -1,0 +1,59 @@
+// Switch.tokens.scss — component-scoped tokens for <Switch>. Track bg per (tone + checked state), thumb travel per size, focus ring, invalid border. Defaults preserve byte-identical visuals.
+:root {
+  // Layout
+  --switch-gap: var(--space-2);
+
+  // Track — base (unchecked) + hover
+  --switch-track-bg: var(--color-border-strong);
+  --switch-track-bg-hover: var(--color-fg-disabled);
+  --switch-track-radius: var(--radius-full);
+
+  // Track — checked per tone
+  --switch-track-bg-checked-accent: var(--color-accent);
+  --switch-track-bg-checked-success: var(--color-success);
+  --switch-track-bg-checked-danger: var(--color-danger);
+
+  // Track — checked hover per tone
+  --switch-track-bg-checked-accent-hover: var(--color-accent-hover);
+  --switch-track-bg-checked-success-hover: var(--color-success-hover);
+  --switch-track-bg-checked-danger-hover: var(--color-danger-hover);
+
+  // Track — invalid border
+  --switch-track-border-color-invalid: var(--color-danger);
+
+  // Focus ring (track when input is :focus-visible)
+  --switch-track-ring-focus: var(--ring-accent);
+  --switch-track-ring-focus-invalid: var(--ring-danger);
+
+  // Thumb
+  --switch-thumb-bg: var(--color-bg);
+  --switch-thumb-left: 2px;
+
+  // Sizes (track box + thumb diameter + thumb travel)
+  --switch-track-width-sm: 28px;
+  --switch-track-height-sm: 16px;
+  --switch-thumb-size-sm: 12px;
+  --switch-thumb-travel-sm: 12px;
+
+  --switch-track-width-md: 36px;
+  --switch-track-height-md: 20px;
+  --switch-thumb-size-md: 16px;
+  --switch-thumb-travel-md: 14px;
+
+  --switch-track-width-lg: 44px;
+  --switch-track-height-lg: 24px;
+  --switch-thumb-size-lg: 20px;
+  --switch-thumb-travel-lg: 18px;
+
+  // Label
+  --switch-label-fg: var(--color-fg);
+  --switch-label-font-size-sm: var(--font-size-sm);
+  --switch-label-font-size-md: var(--font-size-md);
+  --switch-label-font-size-lg: var(--font-size-lg);
+
+  // Disabled
+  --switch-opacity-disabled: var(--opacity-disabled);
+
+  // Spinner
+  --switch-spin-fg: var(--color-fg-muted);
+}

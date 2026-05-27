@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './DefinitionList.tokens';
 
 .list {
   // UA reset — <dl> ships with default browser margin we don't want.
@@ -9,7 +10,7 @@
 .list[data-layout='horizontal'] {
   display: grid;
   grid-template-columns: var(--dl-term-width, max-content) 1fr;
-  column-gap: var(--space-4);
+  column-gap: var(--definition-list-column-gap);
 }
 
 .list[data-layout='stacked'] {
@@ -31,17 +32,17 @@
 }
 
 .term {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg-muted);
+  font-size: var(--definition-list-term-font-size);
+  font-weight: var(--definition-list-term-font-weight);
+  color: var(--definition-list-term-fg);
 }
 
 .description {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--color-fg);
+  gap: var(--definition-list-description-gap);
+  font-size: var(--definition-list-description-font-size);
+  color: var(--definition-list-description-fg);
 }
 
 // Horizontal padding matches Card.ListRow's `var(--space-3) var(--space-4)`
@@ -50,13 +51,13 @@
 // Outside a Card, this acts as sensible default internal inset.
 .term,
 .description {
-  padding-inline: var(--space-4);
+  padding-inline: var(--definition-list-padding-x);
 }
 
 .icon {
   display: inline-flex;
   align-items: center;
-  color: var(--color-fg-subtle);
+  color: var(--definition-list-icon-fg);
 }
 
 // Spacing — padding-block on dt and dd directly. In horizontal mode the
@@ -64,17 +65,17 @@
 // mode the same rules still produce the right vertical rhythm.
 .list[data-spacing='sm'] .term,
 .list[data-spacing='sm'] .description {
-  padding-block: var(--space-2);
+  padding-block: var(--definition-list-padding-y-sm);
 }
 
 .list[data-spacing='md'] .term,
 .list[data-spacing='md'] .description {
-  padding-block: var(--space-3);
+  padding-block: var(--definition-list-padding-y-md);
 }
 
 .list[data-spacing='lg'] .term,
 .list[data-spacing='lg'] .description {
-  padding-block: var(--space-4);
+  padding-block: var(--definition-list-padding-y-lg);
 }
 
 // Dividers — in horizontal mode .item is display:contents (no box), so the
@@ -82,11 +83,11 @@
 // works because dt and dd are typed elements within the parent dl grid.
 .list[data-dividers='true'][data-layout='horizontal'] .term:not(:first-of-type),
 .list[data-dividers='true'][data-layout='horizontal'] .description:not(:first-of-type) {
-  border-top: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--definition-list-divider-color);
 }
 
 // In stacked mode the .item HAS a box, so the border goes on each item
 // after the first.
 .list[data-dividers='true'][data-layout='stacked'] .item + .item {
-  border-top: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--definition-list-divider-color);
 }

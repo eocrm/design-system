@@ -1,0 +1,38 @@
+// Drawer.tokens.scss — Component-scoped tokens for <Drawer>. Each token defaults to the primitive the SCSS used before this migration. Drawer shares the modal z-index stack and overlay scrim with <Modal>; per-side slide transforms and the drag-to-close routing vars (--drag-translate-x/-y, --drag-opacity, --drawer-size, --modal-depth) are internal to the SCSS and not consumer-facing tokens.
+:root {
+  // Overlay (scrim)
+  --drawer-overlay-bg: var(--color-bg-overlay);
+  --drawer-overlay-bg-blur: var(--color-bg-overlay-blur);
+  --drawer-overlay-z: var(--z-modal);
+  --drawer-overlay-opacity-hidden: var(--opacity-hidden);
+  --drawer-overlay-opacity-visible: var(--opacity-visible);
+  --drawer-overlay-transition: var(--transition-base);
+
+  // Content (panel)
+  --drawer-bg: var(--color-bg);
+  --drawer-shadow: var(--shadow-lg);
+  --drawer-transition: var(--transition-base);
+  --drawer-opacity-visible: var(--opacity-visible);
+
+  // Size variants — width/height per size
+  --drawer-content-size-sm: var(--size-drawer-sm);
+  --drawer-content-size-md: var(--size-drawer-md);
+  --drawer-content-size-lg: var(--size-drawer-lg);
+
+  // Header
+  --drawer-header-gap: var(--space-3);
+  --drawer-header-padding: var(--space-4);
+  --drawer-header-border-color: var(--color-border);
+
+  --drawer-header-title-font-size: var(--font-size-lg);
+  --drawer-header-title-font-weight: var(--font-weight-semibold);
+  --drawer-header-title-fg: var(--color-fg);
+
+  // Body
+  --drawer-body-padding: var(--space-4);
+
+  // Footer
+  --drawer-footer-gap: var(--space-2);
+  --drawer-footer-padding: var(--space-4);
+  --drawer-footer-border-color: var(--color-border);
+}

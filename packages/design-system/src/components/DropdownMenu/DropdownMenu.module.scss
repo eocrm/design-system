@@ -1,3 +1,5 @@
+@use './DropdownMenu.tokens';
+
 // `.content` carries both the visual chrome and the open-only entrance
 // animation. The animation half (transition + @starting-style + per-side
 // transform-origin rules below) relies on Floating UI being in `transform:
@@ -6,14 +8,14 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-0);
-  min-width: var(--size-dropdown-min-width);
-  padding: var(--space-1);
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: var(--z-dropdown);
+  gap: var(--dropdown-menu-gap);
+  min-width: var(--dropdown-menu-min-width);
+  padding: var(--dropdown-menu-padding);
+  background: var(--dropdown-menu-bg);
+  border: var(--border-width) solid var(--dropdown-menu-border-color);
+  border-radius: var(--dropdown-menu-radius);
+  box-shadow: var(--dropdown-menu-shadow);
+  z-index: var(--dropdown-menu-z);
   outline: none;
 
   // Explicit so each per-side @starting-style transform has a defined
@@ -21,8 +23,8 @@
   // it here prevents a future cleanup PR from removing the "redundant" line.
   transform: none;
   transition:
-    opacity var(--transition-base),
-    transform var(--transition-base);
+    opacity var(--dropdown-menu-transition),
+    transform var(--dropdown-menu-transition);
 
   // Open-only entrance — Content unmounts on close so there is no exit.
   // @starting-style only applies while a transition is active; the
@@ -36,12 +38,12 @@
 .item {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-normal);
-  color: var(--color-fg);
+  gap: var(--dropdown-menu-item-gap);
+  padding: var(--dropdown-menu-item-padding-y) var(--dropdown-menu-item-padding-x);
+  border-radius: var(--dropdown-menu-item-radius);
+  font-size: var(--dropdown-menu-item-font-size);
+  line-height: var(--dropdown-menu-item-line-height);
+  color: var(--dropdown-menu-item-fg);
   cursor: pointer;
   user-select: none;
   outline: none;
@@ -49,21 +51,21 @@
 
 .item:hover:not([aria-disabled='true']),
 .item:focus-visible:not([aria-disabled='true']) {
-  background: var(--color-bg-muted);
+  background: var(--dropdown-menu-item-bg-hover);
 }
 
 .item[data-tone='danger'] {
-  color: var(--color-danger);
+  color: var(--dropdown-menu-item-fg-danger);
 }
 
 .item[data-tone='danger']:hover:not([aria-disabled='true']),
 .item[data-tone='danger']:focus-visible:not([aria-disabled='true']) {
-  background: var(--color-bg-danger-subtle);
-  color: var(--color-danger);
+  background: var(--dropdown-menu-item-bg-danger-hover);
+  color: var(--dropdown-menu-item-fg-danger);
 }
 
 .item[aria-disabled='true'] {
-  color: var(--color-fg-disabled);
+  color: var(--dropdown-menu-item-fg-disabled);
   cursor: not-allowed;
 }
 
@@ -71,9 +73,10 @@
 // accent. Replaces the default ✓/● glyphs from earlier versions of the API.
 // Left corners square off so the 2px accent sits flush against a straight edge.
 .item[aria-checked='true'] {
-  background: var(--color-badge-info-bg);
-  color: var(--color-badge-info-fg);
-  box-shadow: inset var(--border-width-emphasis) 0 0 var(--color-info);
+  background: var(--dropdown-menu-item-bg-checked);
+  color: var(--dropdown-menu-item-fg-checked);
+  box-shadow: inset var(--dropdown-menu-item-accent-width-checked) 0 0
+    var(--dropdown-menu-item-accent-checked);
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
@@ -86,24 +89,24 @@
 // rule wins, and this rule would silently suppress the danger color.
 .item[aria-checked='true']:hover:not([aria-disabled='true']),
 .item[aria-checked='true']:focus-visible:not([aria-disabled='true']) {
-  background: var(--color-badge-info-bg);
-  color: var(--color-badge-info-fg);
+  background: var(--dropdown-menu-item-bg-checked);
+  color: var(--dropdown-menu-item-fg-checked);
 }
 
 // Disabled + checked: keep the visual cue but use disabled foreground so the
 // user can still see what was selected, just not interact with it.
 .item[aria-checked='true'][aria-disabled='true'] {
-  color: var(--color-fg-disabled);
+  color: var(--dropdown-menu-item-fg-disabled);
 }
 
 .icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--space-4);
-  height: var(--space-4);
+  width: var(--dropdown-menu-icon-size);
+  height: var(--dropdown-menu-icon-size);
   flex-shrink: 0;
-  color: var(--color-fg-subtle);
+  color: var(--dropdown-menu-icon-fg);
 }
 
 .itemLabel {
@@ -111,15 +114,15 @@
 }
 
 .shortcut {
-  color: var(--color-fg-subtle);
-  font-size: var(--font-size-sm);
-  padding-left: var(--space-3);
+  color: var(--dropdown-menu-shortcut-fg);
+  font-size: var(--dropdown-menu-shortcut-font-size);
+  padding-left: var(--dropdown-menu-shortcut-padding-left);
 }
 
 .separator {
   display: flex;
   align-items: center;
-  height: var(--space-2);
+  height: var(--dropdown-menu-separator-height);
 }
 
 .separator::before {
@@ -127,23 +130,23 @@
   display: block;
   width: 100%;
   height: var(--border-width);
-  background: var(--color-border);
+  background: var(--dropdown-menu-separator-color);
 }
 
 .group {
   display: flex;
   flex-direction: column;
-  padding-block: var(--space-1);
+  padding-block: var(--dropdown-menu-group-padding-block);
 }
 
 // Section label: uppercase muted text identifying a group of items.
 .label {
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-caps);
+  padding: var(--dropdown-menu-label-padding-y) var(--dropdown-menu-label-padding-x);
+  font-size: var(--dropdown-menu-label-font-size);
+  font-weight: var(--dropdown-menu-label-font-weight);
+  letter-spacing: var(--dropdown-menu-label-letter-spacing);
   text-transform: uppercase;
-  color: var(--color-fg-subtle);
+  color: var(--dropdown-menu-label-fg);
   user-select: none;
 }
 
@@ -154,8 +157,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--size-dropdown-indicator);
-  height: var(--size-dropdown-indicator);
+  width: var(--dropdown-menu-indicator-size);
+  height: var(--dropdown-menu-indicator-size);
   flex-shrink: 0;
 }
 
@@ -168,14 +171,14 @@
 .subTriggerChevron {
   display: inline-flex;
   align-items: center;
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-none);
-  color: var(--color-fg-subtle);
-  padding-left: var(--space-2);
+  font-size: var(--dropdown-menu-sub-chevron-font-size);
+  line-height: var(--dropdown-menu-sub-chevron-line-height);
+  color: var(--dropdown-menu-sub-chevron-fg);
+  padding-left: var(--dropdown-menu-sub-chevron-padding-left);
 }
 
 .subTrigger[data-state='open'] {
-  background: var(--color-bg-muted);
+  background: var(--dropdown-menu-sub-trigger-bg-open);
 }
 
 // --- Open-only entrance: per-side origin + starting-transform -------------

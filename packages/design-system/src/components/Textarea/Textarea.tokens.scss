@@ -1,0 +1,48 @@
+// Textarea.tokens.scss — component-scoped tokens for <Textarea>. Mirrors Input field tokens but no height per size (textarea height comes from rows + autoGrow). Counter sits as a child below the field.
+:root {
+  // Surface
+  --textarea-bg: var(--color-bg);
+  --textarea-fg: var(--color-fg);
+  --textarea-border-color: var(--color-border-strong);
+  --textarea-radius: var(--radius-md);
+  --textarea-line-height: var(--line-height-normal);
+
+  // Placeholder
+  --textarea-placeholder-fg: var(--color-fg-subtle);
+
+  // Focus
+  --textarea-border-color-focus: var(--color-accent);
+  --textarea-ring-focus: var(--ring-accent);
+
+  // Disabled
+  --textarea-bg-disabled: var(--color-bg-subtle);
+  --textarea-border-color-disabled: var(--color-border);
+  --textarea-fg-disabled: var(--color-fg-subtle);
+
+  // ReadOnly
+  --textarea-bg-read-only: var(--color-bg-subtle);
+
+  // Invalid
+  --textarea-border-color-invalid: var(--color-danger);
+  --textarea-ring-invalid: var(--ring-danger);
+
+  // Size — vertical padding per size
+  --textarea-padding-y-sm: var(--space-1);
+  --textarea-padding-y-md: var(--space-2);
+  --textarea-padding-y-lg: var(--space-2);
+
+  // Size — horizontal padding per size
+  --textarea-padding-x-sm: var(--space-2);
+  --textarea-padding-x-md: var(--space-3);
+  --textarea-padding-x-lg: var(--space-3);
+
+  // Size — font-size per size
+  --textarea-font-size-sm: var(--font-size-sm);
+  --textarea-font-size-md: var(--font-size-md);
+  --textarea-font-size-lg: var(--font-size-lg);
+
+  // Counter
+  --textarea-counter-margin-top: var(--space-1);
+  --textarea-counter-font-size: var(--font-size-sm);
+  --textarea-counter-fg: var(--color-fg-muted);
+}

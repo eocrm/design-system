@@ -1,3 +1,5 @@
+@use './Slider.tokens';
+
 .root {
   position: relative;
   display: flex;
@@ -13,7 +15,7 @@
 
   // Reserve vertical space for the marks (below the track) + the label bubble
   // (above). Component-internal sizing for an unfixed-height row.
-  min-height: 32px;
+  min-height: var(--slider-min-height-horizontal);
 }
 
 .orientation-vertical {
@@ -21,14 +23,14 @@
 
   // 200px is a reasonable default vertical track length; consumer can override
   // via style or className.
-  height: 200px;
-  min-width: 32px;
+  height: var(--slider-height-vertical);
+  min-width: var(--slider-min-width-vertical);
 }
 
 .track {
   position: relative;
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-full);
+  background: var(--slider-track-bg);
+  border-radius: var(--slider-track-radius);
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   overflow: visible;
@@ -36,34 +38,34 @@
 
 .orientation-horizontal .track {
   width: 100%;
-  height: 6px;
+  height: var(--slider-track-size-md-horizontal);
 }
 
 .orientation-vertical .track {
   height: 100%;
-  width: 6px;
+  width: var(--slider-track-size-md-vertical);
 }
 
 .size-sm.orientation-horizontal .track {
-  height: 4px;
+  height: var(--slider-track-size-sm-horizontal);
 }
 
 .size-lg.orientation-horizontal .track {
-  height: 8px;
+  height: var(--slider-track-size-lg-horizontal);
 }
 
 .size-sm.orientation-vertical .track {
-  width: 4px;
+  width: var(--slider-track-size-sm-vertical);
 }
 
 .size-lg.orientation-vertical .track {
-  width: 8px;
+  width: var(--slider-track-size-lg-vertical);
 }
 
 .fill {
   position: absolute;
-  background: var(--color-accent);
-  border-radius: var(--radius-full);
+  background: var(--slider-fill-bg);
+  border-radius: var(--slider-fill-radius);
 }
 
 .orientation-horizontal .fill {
@@ -77,27 +79,27 @@
 }
 
 .tone-default .fill {
-  background: var(--color-accent);
+  background: var(--slider-fill-bg-tone-default);
 }
 
 .tone-success .fill {
-  background: var(--color-success);
+  background: var(--slider-fill-bg-tone-success);
 }
 
 .tone-warning .fill {
-  background: var(--color-warning);
+  background: var(--slider-fill-bg-tone-warning);
 }
 
 .tone-danger .fill {
-  background: var(--color-danger);
+  background: var(--slider-fill-bg-tone-danger);
 }
 
 .thumb {
   position: absolute;
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-full);
-  box-shadow: var(--shadow-sm);
+  background: var(--slider-thumb-bg);
+  border: var(--border-width) solid var(--slider-thumb-border-color);
+  border-radius: var(--slider-thumb-radius);
+  box-shadow: var(--slider-thumb-shadow);
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: grab;
@@ -115,24 +117,24 @@
 }
 
 .size-sm .thumb {
-  width: 14px;
-  height: 14px;
+  width: var(--slider-thumb-size-sm);
+  height: var(--slider-thumb-size-sm);
 }
 
 .size-md .thumb {
-  width: 18px;
-  height: 18px;
+  width: var(--slider-thumb-size-md);
+  height: var(--slider-thumb-size-md);
 }
 
 .size-lg .thumb {
-  width: 22px;
-  height: 22px;
+  width: var(--slider-thumb-size-lg);
+  height: var(--slider-thumb-size-lg);
 }
 
 .thumb:hover,
 .thumb:focus-visible {
-  border-color: var(--color-accent);
-  box-shadow: var(--shadow-md);
+  border-color: var(--slider-thumb-border-color-hover);
+  box-shadow: var(--slider-thumb-shadow-hover);
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   outline: none;
@@ -141,18 +143,18 @@
 .thumbDragging {
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: grabbing;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--slider-thumb-shadow-dragging);
 }
 
 .label {
   position: absolute;
-  background: var(--color-fg);
-  color: var(--color-bg);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  background: var(--slider-label-bg);
+  color: var(--slider-label-fg);
+  font-size: var(--slider-label-font-size);
+  font-weight: var(--slider-label-font-weight);
   font-variant-numeric: tabular-nums;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
+  padding: var(--slider-label-padding-y) var(--slider-label-padding-x);
+  border-radius: var(--slider-label-radius);
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   white-space: nowrap;
@@ -162,39 +164,39 @@
 }
 
 .orientation-horizontal .label {
-  bottom: calc(100% + var(--space-2));
+  bottom: calc(100% + var(--slider-label-offset));
   left: 50%;
   transform: translateX(-50%);
 }
 
 .orientation-vertical .label {
-  left: calc(100% + var(--space-2));
+  left: calc(100% + var(--slider-label-offset));
   top: 50%;
   transform: translateY(-50%);
 }
 
 .mark {
   position: absolute;
-  width: 2px;
-  height: 8px;
-  background: var(--color-border);
-  border-radius: var(--radius-sm);
+  width: var(--slider-mark-width);
+  height: var(--slider-mark-height);
+  background: var(--slider-mark-bg);
+  border-radius: var(--slider-mark-radius);
 }
 
 .markFilled {
-  background: var(--color-accent);
+  background: var(--slider-mark-filled-bg);
 }
 
 .tone-success .markFilled {
-  background: var(--color-success);
+  background: var(--slider-mark-filled-bg-tone-success);
 }
 
 .tone-warning .markFilled {
-  background: var(--color-warning);
+  background: var(--slider-mark-filled-bg-tone-warning);
 }
 
 .tone-danger .markFilled {
-  background: var(--color-danger);
+  background: var(--slider-mark-filled-bg-tone-danger);
 }
 
 .orientation-horizontal .mark {
@@ -205,14 +207,14 @@
 .orientation-vertical .mark {
   left: 50%;
   transform: translate(-50%, 50%);
-  width: 8px;
-  height: 2px;
+  width: var(--slider-mark-height);
+  height: var(--slider-mark-width);
 }
 
 .markLabel {
   position: absolute;
-  font-size: var(--font-size-xs);
-  color: var(--color-fg-muted);
+  font-size: var(--slider-mark-label-font-size);
+  color: var(--slider-mark-label-fg);
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   white-space: nowrap;
@@ -222,19 +224,19 @@
 }
 
 .orientation-horizontal .markLabel {
-  top: calc(100% + var(--space-1));
+  top: calc(100% + var(--slider-mark-label-offset));
   left: 50%;
   transform: translateX(-50%);
 }
 
 .orientation-vertical .markLabel {
-  left: calc(100% + var(--space-1));
+  left: calc(100% + var(--slider-mark-label-offset));
   top: 50%;
   transform: translateY(-50%);
 }
 
 .disabled {
-  opacity: var(--opacity-disabled);
+  opacity: var(--slider-opacity-disabled);
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: not-allowed;

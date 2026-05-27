@@ -1,11 +1,12 @@
 @use '../../styles/mixins' as *;
+@use './Link.tokens';
 
 .link {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
   text-decoration: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--link-radius);
   transition:
     color var(--transition-fast),
     text-decoration-color var(--transition-fast);
@@ -23,32 +24,32 @@
   &:has(svg) {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-1);
+    gap: var(--link-icon-gap);
   }
 }
 
 .default {
-  color: var(--color-accent);
+  color: var(--link-fg-default);
 
   &:hover {
-    color: var(--color-accent-hover);
+    color: var(--link-fg-default-hover);
     text-decoration: underline;
   }
 }
 
 .muted {
-  color: var(--color-fg-muted);
+  color: var(--link-fg-muted);
 
   &:hover {
-    color: var(--color-accent);
+    color: var(--link-fg-muted-hover);
   }
 }
 
 .subtle {
-  color: var(--color-fg);
+  color: var(--link-fg-subtle);
 
   &:hover {
-    color: var(--color-accent);
+    color: var(--link-fg-subtle-hover);
     text-decoration: underline;
   }
 }

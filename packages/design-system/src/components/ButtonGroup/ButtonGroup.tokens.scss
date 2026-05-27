@@ -1,0 +1,37 @@
+// ButtonGroup.tokens.scss — component-scoped tokens for <ButtonGroup>. Visual mode joins Button children; segmented mode owns its own pill-inset styling.
+:root {
+  // Visual mode — outer-corner radius applied to first/last children
+  --button-group-radius: var(--radius-md);
+
+  // Segmented mode — track surface + shape
+  --button-group-segmented-bg: var(--color-bg-muted);
+  --button-group-segmented-radius: var(--radius-md);
+  --button-group-segmented-padding: var(--space-05);
+  --button-group-segmented-gap: var(--space-05);
+
+  // Segmented item — base appearance
+  --button-group-item-fg: var(--color-fg-muted);
+  --button-group-item-fg-hover: var(--color-fg);
+
+  // Segmented item — selected state
+  --button-group-item-bg-selected: var(--color-bg);
+  --button-group-item-fg-selected: var(--color-fg);
+  --button-group-item-shadow-selected: var(--shadow-xs);
+
+  // Segmented item — disabled
+  --button-group-item-opacity-disabled: var(--opacity-disabled);
+
+  // Segmented item — sizes
+  --button-group-item-height-xs: var(--size-xs);
+  --button-group-item-height-sm: var(--size-sm);
+  --button-group-item-height-md: var(--size-md);
+  --button-group-item-height-lg: var(--size-lg);
+  --button-group-item-padding-x-xs: var(--space-2);
+  --button-group-item-padding-x-sm: var(--space-3);
+  --button-group-item-padding-x-md: var(--space-3);
+  --button-group-item-padding-x-lg: var(--space-4);
+  --button-group-item-font-size-xs: var(--font-size-xs);
+  --button-group-item-font-size-sm: var(--font-size-sm);
+  --button-group-item-font-size-md: var(--font-size-md);
+  --button-group-item-font-size-lg: var(--font-size-md);
+}

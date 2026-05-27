@@ -1,0 +1,47 @@
+// Alert.tokens.scss — Component-scoped tokens for <Alert>. Per-tone bg/fg/icon/border-color pairs for info/success/warning/danger, plus shared shape and typography defaults. Each token defaults to the primitive the SCSS used before this migration.
+:root {
+  // Shared shape + typography
+  --alert-bg: var(--color-bg);
+  --alert-fg: var(--color-fg);
+  --alert-border-color: var(--color-fg-muted);
+  --alert-border-width: var(--border-width-strong);
+  --alert-radius: var(--radius-md);
+  --alert-padding-y: var(--space-3);
+  --alert-padding-x: var(--space-4);
+  --alert-gap: var(--space-3);
+  --alert-icon: var(--color-fg-muted);
+
+  // Title
+  --alert-title-fg: var(--color-fg);
+  --alert-title-font-size: var(--font-size-md);
+  --alert-title-font-weight: var(--font-weight-medium);
+
+  // Description
+  --alert-description-fg: var(--color-fg-muted);
+  --alert-description-font-size: var(--font-size-sm);
+
+  // Internal spacing (title-to-description, body-to-actions)
+  --alert-title-description-gap: var(--space-1);
+  --alert-actions-gap: var(--space-2);
+
+  // Per-tone surfaces (background + border + icon)
+  --alert-bg-info: var(--color-info-bg-subtle);
+  --alert-fg-info: var(--color-fg);
+  --alert-icon-info: var(--color-info);
+  --alert-border-color-info: var(--color-info);
+
+  --alert-bg-success: var(--color-success-bg-subtle);
+  --alert-fg-success: var(--color-fg);
+  --alert-icon-success: var(--color-success);
+  --alert-border-color-success: var(--color-success);
+
+  --alert-bg-warning: var(--color-warning-bg-subtle);
+  --alert-fg-warning: var(--color-fg);
+  --alert-icon-warning: var(--color-warning);
+  --alert-border-color-warning: var(--color-warning);
+
+  --alert-bg-danger: var(--color-danger-bg-subtle);
+  --alert-fg-danger: var(--color-fg);
+  --alert-icon-danger: var(--color-danger);
+  --alert-border-color-danger: var(--color-danger);
+}

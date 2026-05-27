@@ -1,13 +1,15 @@
+@use './Divider.tokens';
+
 .divider {
   border: 0;
-  color: var(--color-border);
+  color: var(--divider-fg);
 }
 
 // ─── No-label cases: <hr> with a single border edge ─────────────────────
 
 .horizontal {
   width: 100%;
-  border-top: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--divider-fg);
 }
 
 // Rule 4 exception: vertical separators need parent height. Without
@@ -16,8 +18,8 @@
 .vertical {
   // stylelint-disable-next-line property-disallowed-list -- vertical separator needs parent height
   align-self: stretch;
-  border-left: var(--border-width) solid var(--color-border);
-  min-height: var(--space-3);
+  border-left: var(--border-width) solid var(--divider-fg);
+  min-height: var(--divider-min-length);
 }
 
 // ─── Variants ──────────────────────────────────────────────────────────
@@ -33,19 +35,19 @@
 // ─── Sizes (no-label cases) ─────────────────────────────────────────────
 
 .sizeMd.horizontal {
-  border-top-width: var(--border-width-emphasis);
+  border-top-width: var(--divider-thickness-md);
 }
 
 .sizeMd.vertical {
-  border-left-width: var(--border-width-emphasis);
+  border-left-width: var(--divider-thickness-md);
 }
 
 .sizeLg.horizontal {
-  border-top-width: var(--border-width-strong);
+  border-top-width: var(--divider-thickness-lg);
 }
 
 .sizeLg.vertical {
-  border-left-width: var(--border-width-strong);
+  border-left-width: var(--divider-thickness-lg);
 }
 
 // ─── Labeled — flex layout with two line spans flanking the label ───────
@@ -53,7 +55,7 @@
 .labeled {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--divider-label-gap);
   border-top: 0;
   border-left: 0;
 }
@@ -63,13 +65,13 @@
   flex-direction: column;
   // stylelint-disable-next-line property-disallowed-list -- vertical separator needs parent height; same exception as the no-label case
   align-self: stretch;
-  min-height: var(--space-3);
+  min-height: var(--divider-min-length);
 }
 
 .line {
   flex: 1;
   border: 0;
-  background: var(--color-border);
+  background: var(--divider-fg);
   height: var(--border-width);
   border-radius: 0;
 }
@@ -86,57 +88,57 @@
 .dashed .line {
   background: transparent;
   height: 0;
-  border-top: var(--border-width) dashed var(--color-border);
+  border-top: var(--border-width) dashed var(--divider-fg);
 }
 
 .dashed.vertical .line {
   width: 0;
   border-top: 0;
-  border-left: var(--border-width) dashed var(--color-border);
+  border-left: var(--border-width) dashed var(--divider-fg);
 }
 
 .sizeMd .line {
-  height: var(--border-width-emphasis);
+  height: var(--divider-thickness-md);
 }
 
 .sizeLg .line {
-  height: var(--border-width-strong);
+  height: var(--divider-thickness-lg);
 }
 
 .sizeMd.vertical .line {
-  width: var(--border-width-emphasis);
+  width: var(--divider-thickness-md);
   height: auto;
 }
 
 .sizeLg.vertical .line {
-  width: var(--border-width-strong);
+  width: var(--divider-thickness-lg);
   height: auto;
 }
 
 .sizeMd.dashed .line {
-  border-top-width: var(--border-width-emphasis);
+  border-top-width: var(--divider-thickness-md);
   height: 0;
 }
 
 .sizeLg.dashed .line {
-  border-top-width: var(--border-width-strong);
+  border-top-width: var(--divider-thickness-lg);
   height: 0;
 }
 
 .sizeMd.dashed.vertical .line {
-  border-left-width: var(--border-width-emphasis);
+  border-left-width: var(--divider-thickness-md);
   width: 0;
 }
 
 .sizeLg.dashed.vertical .line {
-  border-left-width: var(--border-width-strong);
+  border-left-width: var(--divider-thickness-lg);
   width: 0;
 }
 
 .label {
   flex: 0 0 auto;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg-muted);
+  font-size: var(--divider-label-font-size);
+  font-weight: var(--divider-label-font-weight);
+  color: var(--divider-label-fg);
   white-space: nowrap;
 }

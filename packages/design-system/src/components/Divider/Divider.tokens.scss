@@ -1,0 +1,21 @@
+// Divider.tokens.scss — Component-scoped tokens for <Divider>. Each token
+// defaults to the primitive the SCSS used before this migration.
+:root {
+  // Line color (and root color inherited by border edges)
+  --divider-fg: var(--color-border);
+
+  // Thickness per size (sm uses the library-default --border-width primitive)
+  --divider-thickness-md: var(--border-width-emphasis);
+  --divider-thickness-lg: var(--border-width-strong);
+
+  // Min-length for vertical orientation (so it doesn't collapse in flex/grid)
+  --divider-min-length: var(--space-3);
+
+  // Labeled variant — gap between line and label
+  --divider-label-gap: var(--space-2);
+
+  // Label typography
+  --divider-label-font-size: var(--font-size-sm);
+  --divider-label-font-weight: var(--font-weight-medium);
+  --divider-label-fg: var(--color-fg-muted);
+}

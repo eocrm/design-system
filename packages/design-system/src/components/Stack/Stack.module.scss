@@ -1,30 +1,32 @@
+@use './Stack.tokens';
+
 .stack {
   display: flex;
   flex-direction: column;
 }
 
 .gapXs {
-  gap: var(--space-1);
+  gap: var(--stack-gap-xs);
 }
 
 .gapSm {
-  gap: var(--space-2);
+  gap: var(--stack-gap-sm);
 }
 
 .gapMd {
-  gap: var(--space-3);
+  gap: var(--stack-gap-md);
 }
 
 .gapLg {
-  gap: var(--space-4);
+  gap: var(--stack-gap-lg);
 }
 
 .gapXl {
-  gap: var(--space-6);
+  gap: var(--stack-gap-xl);
 }
 
 .gap2xl {
-  gap: var(--space-8);
+  gap: var(--stack-gap-2xl);
 }
 
 .alignStart {

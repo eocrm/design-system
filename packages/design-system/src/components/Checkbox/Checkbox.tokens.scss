@@ -1,0 +1,44 @@
+// Checkbox.tokens.scss — component-scoped tokens for <Checkbox>. NOTE: --checkbox-color is a consumer-injection variable set by the React layer (palette `color` prop) — DO NOT shadow it here.
+:root {
+  // Box — shape + base surface
+  --checkbox-radius: var(--radius-sm);
+  --checkbox-bg: var(--color-bg);
+  --checkbox-fg: var(--color-accent-fg);
+  --checkbox-border-color: var(--color-border-strong);
+
+  // Default fill (used as fallback when --checkbox-color isn't set)
+  --checkbox-bg-checked: var(--color-accent);
+
+  // Hover preview (border-only, no fill)
+  --checkbox-border-color-hover: var(--color-accent);
+
+  // Focus ring
+  --checkbox-ring: var(--ring-accent);
+
+  // Disabled
+  --checkbox-bg-disabled: var(--color-bg-subtle);
+  --checkbox-border-color-disabled: var(--color-border);
+  --checkbox-fg-disabled: var(--color-fg-disabled);
+  --checkbox-bg-checked-disabled: var(--color-border);
+  --checkbox-border-color-checked-disabled: var(--color-border);
+
+  // Invalid
+  --checkbox-border-color-invalid: var(--color-danger);
+  --checkbox-bg-checked-invalid: var(--color-danger);
+  --checkbox-border-color-checked-invalid: var(--color-danger);
+  --checkbox-ring-invalid: var(--ring-danger);
+
+  // Size — box diameter per size
+  --checkbox-box-size-sm: var(--size-checkbox-sm);
+  --checkbox-box-size-md: var(--size-checkbox-md);
+  --checkbox-box-size-lg: var(--size-checkbox-lg);
+
+  // Size — label font-size per size
+  --checkbox-label-font-size-sm: var(--font-size-sm);
+  --checkbox-label-font-size-md: var(--font-size-md);
+  --checkbox-label-font-size-lg: var(--font-size-lg);
+
+  // Label
+  --checkbox-label-line-height: var(--line-height-normal);
+  --checkbox-gap: var(--space-2);
+}

@@ -1,0 +1,32 @@
+// CursorPagination.tokens.scss — Component-scoped tokens for <CursorPagination>. Covers the outer row gap and the prev/next button surface, hover/active backgrounds, disabled fg, plus per-size height + horizontal padding + font-size.
+:root {
+  // Row layout
+  --cursor-pagination-gap: var(--space-2);
+
+  // Button — base
+  --cursor-pagination-button-gap: var(--space-1);
+  --cursor-pagination-button-height: var(--size-md);
+  --cursor-pagination-button-padding-x: var(--space-3);
+  --cursor-pagination-button-radius: var(--radius-md);
+  --cursor-pagination-button-bg: var(--color-bg);
+  --cursor-pagination-button-fg: var(--color-fg);
+  --cursor-pagination-button-border-color: var(--color-border);
+  --cursor-pagination-button-font-weight: var(--font-weight-medium);
+  --cursor-pagination-button-bg-hover: var(--color-bg-muted);
+  --cursor-pagination-button-bg-active: var(--color-bg-sunken);
+  --cursor-pagination-button-fg-disabled: var(--color-fg-disabled);
+
+  // Button — transitions
+  --cursor-pagination-button-transition-bg: var(--transition-fast);
+  --cursor-pagination-button-transition-border: var(--transition-fast);
+  --cursor-pagination-button-transition-color: var(--transition-fast);
+
+  // Size variants
+  --cursor-pagination-font-size-sm: var(--font-size-sm);
+  --cursor-pagination-font-size-md: var(--font-size-md);
+  --cursor-pagination-font-size-lg: var(--font-size-md);
+  --cursor-pagination-button-height-sm: var(--size-sm);
+  --cursor-pagination-button-height-lg: var(--size-lg);
+  --cursor-pagination-button-padding-x-sm: var(--space-2);
+  --cursor-pagination-button-padding-x-lg: var(--space-4);
+}

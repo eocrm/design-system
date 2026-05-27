@@ -1,0 +1,12 @@
+// PersonDisplay.tokens.scss — Component-scoped tokens for <PersonDisplay>.
+// Size context (sm/md/lg) is driven by a [data-size] attribute selector on
+// the root in PersonDisplay.module.scss; that mechanism stays. Tokenizes the
+// outer gap per size and the inner Description-line gap.
+:root {
+  // Outer row gap — sm tightens, md and lg share the same gap.
+  --person-display-gap: var(--space-3);
+  --person-display-gap-sm: var(--space-2);
+
+  // Inner description (single metadata line) gap between atoms.
+  --person-display-description-gap: var(--space-1);
+}

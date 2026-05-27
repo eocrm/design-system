@@ -1,0 +1,51 @@
+// Accordion.tokens.scss — Component-scoped tokens for <Accordion>. Covers the
+// outer chrome (border, radius, bg), per-item divider, trigger surface +
+// hover/focus, indicator color + rotation, and per-size padding/font scale.
+:root {
+  // Outer chrome
+  --accordion-bg: var(--color-bg);
+  --accordion-border-color: var(--color-border);
+  --accordion-radius: var(--radius-md);
+
+  // Item divider
+  --accordion-item-border-color: var(--color-border);
+
+  // Header
+  --accordion-header-font-weight: var(--font-weight-medium);
+  --accordion-header-font-size: var(--font-size-md);
+
+  // Trigger
+  --accordion-trigger-fg: var(--color-fg);
+  --accordion-trigger-bg-hover: var(--color-bg-muted);
+  --accordion-trigger-ring: var(--ring-accent);
+  --accordion-trigger-opacity-disabled: var(--opacity-disabled);
+
+  // Indicator (chevron)
+  --accordion-indicator-fg: var(--color-fg-muted);
+
+  // Size: sm
+  --accordion-header-font-size-sm: var(--font-size-sm);
+  --accordion-trigger-padding-y-sm: var(--space-2);
+  --accordion-trigger-padding-x-sm: var(--space-3);
+  --accordion-trigger-font-size-sm: var(--font-size-sm);
+  --accordion-content-padding-y-sm: var(--space-2);
+  --accordion-content-padding-x-sm: var(--space-3);
+  --accordion-content-font-size-sm: var(--font-size-sm);
+
+  // Size: md
+  --accordion-header-font-size-md: var(--font-size-md);
+  --accordion-trigger-padding-y-md: var(--space-3);
+  --accordion-trigger-padding-x-md: var(--space-4);
+  --accordion-trigger-font-size-md: var(--font-size-md);
+  --accordion-content-padding-y-md: var(--space-3);
+  --accordion-content-padding-x-md: var(--space-4);
+
+  // Size: lg
+  --accordion-header-font-size-lg: var(--font-size-lg);
+  --accordion-trigger-padding-y-lg: var(--space-4);
+  --accordion-trigger-padding-x-lg: var(--space-5);
+  --accordion-trigger-font-size-lg: var(--font-size-lg);
+  --accordion-content-padding-y-lg: var(--space-4);
+  --accordion-content-padding-x-lg: var(--space-5);
+  --accordion-content-font-size-lg: var(--font-size-md);
+}

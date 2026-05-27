@@ -1,11 +1,13 @@
+@use './Breadcrumb.tokens';
+
 .nav {
-  font-size: var(--font-size-sm);
+  font-size: var(--breadcrumb-font-size);
 }
 
 .list {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--breadcrumb-gap);
   list-style: none;
   /* stylelint-disable-next-line property-disallowed-list -- native <ol> margin reset */
   margin: 0;
@@ -16,15 +18,15 @@
 .item {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--breadcrumb-gap);
 }
 
 .separator {
   display: inline-flex;
   align-items: center;
-  color: var(--color-fg-muted);
+  color: var(--breadcrumb-separator-fg);
 }
 
 .current {
-  color: var(--color-fg);
+  color: var(--breadcrumb-current-fg);
 }

@@ -1,28 +1,30 @@
+@use './Page.tokens';
+
 .root {
   display: flex;
   flex-direction: column;
 }
 
 .gapXs {
-  gap: var(--space-1);
+  gap: var(--page-gap-xs);
 }
 
 .gapSm {
-  gap: var(--space-2);
+  gap: var(--page-gap-sm);
 }
 
 .gapMd {
-  gap: var(--space-3);
+  gap: var(--page-gap-md);
 }
 
 .gapLg {
-  gap: var(--space-4);
+  gap: var(--page-gap-lg);
 }
 
 .gapXl {
-  gap: var(--space-6);
+  gap: var(--page-gap-xl);
 }
 
 .gap2xl {
-  gap: var(--space-8);
+  gap: var(--page-gap-2xl);
 }

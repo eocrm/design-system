@@ -1,8 +1,10 @@
+@use './Calendar.tokens';
+
 .dayView {
   display: flex;
   flex-direction: column;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  border: var(--border-width) solid var(--calendar-border-color);
+  border-radius: var(--calendar-radius);
   overflow: hidden;
-  background: var(--color-bg);
+  background: var(--calendar-bg);
 }

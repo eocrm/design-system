@@ -1,18 +1,20 @@
+@use './Kanban.tokens';
+
 .board {
   display: flex;
   flex-direction: row;
-  gap: var(--space-3);
+  gap: var(--kanban-board-gap);
   overflow-x: auto;
-  padding-block: var(--space-1);
+  padding-block: var(--kanban-board-padding-block);
 }
 
 .column {
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
+  background: var(--kanban-column-bg);
+  border-radius: var(--kanban-column-radius);
+  padding: var(--kanban-column-padding);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--kanban-column-gap);
   min-width: 260px;
   flex-shrink: 0;
   min-height: 80px;
@@ -26,7 +28,7 @@
 
 .card[data-dragging='true'] {
   cursor: grabbing;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--kanban-card-shadow-dragging);
   z-index: 1;
 }
 

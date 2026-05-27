@@ -1,0 +1,33 @@
+// Card.tokens.scss — Component-scoped tokens for <Card>. Each token
+// defaults to the primitive the SCSS used before this migration.
+:root {
+  // Surface + border
+  --card-bg: var(--color-bg);
+  --card-border-color: var(--color-border);
+  --card-radius: var(--radius-lg);
+  --card-shadow: var(--shadow-sm);
+
+  // Tone stripe — width + per-tone color (inset box-shadow on the card)
+  --card-stripe-width: var(--border-width-strong);
+  --card-stripe-color-accent: var(--color-accent);
+  --card-stripe-color-info: var(--color-info);
+  --card-stripe-color-success: var(--color-success);
+  --card-stripe-color-warning: var(--color-warning);
+  --card-stripe-color-danger: var(--color-danger);
+
+  // Padding per size
+  --card-padding-sm: var(--space-3);
+  --card-padding-md: var(--space-4);
+  --card-padding-lg: var(--space-6);
+
+  // Header / list-row internal layout
+  --card-section-gap: var(--space-3);
+  --card-section-padding-y: var(--space-3);
+  --card-section-padding-x: var(--space-4);
+  --card-section-border-color: var(--color-border);
+
+  // Title typography
+  --card-title-font-size: var(--font-size-md);
+  --card-title-font-weight: var(--font-weight-semibold);
+  --card-title-fg: var(--color-fg);
+}

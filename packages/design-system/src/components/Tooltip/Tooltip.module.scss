@@ -1,3 +1,5 @@
+@use './Tooltip.tokens';
+
 // `.content` carries the chrome AND the open-only scale-fade entrance. The
 // animation half (transition + @starting-style + per-side transform-origin
 // rules) relies on Floating UI being in `transform: false` mode (see
@@ -5,14 +7,14 @@
 .content {
   position: relative;
   max-width: 240px;
-  padding: var(--space-1) var(--space-2);
-  background: var(--color-fg);
-  color: var(--color-bg);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
-  z-index: var(--z-tooltip);
+  padding: var(--tooltip-padding-y) var(--tooltip-padding-x);
+  background: var(--tooltip-bg);
+  color: var(--tooltip-fg);
+  border-radius: var(--tooltip-radius);
+  box-shadow: var(--tooltip-shadow);
+  font-size: var(--tooltip-font-size);
+  line-height: var(--tooltip-line-height);
+  z-index: var(--tooltip-z);
   outline: none;
 
   // Explicit so each per-side @starting-style transform has a defined
@@ -20,23 +22,23 @@
   // pattern (see DropdownMenu.module.scss for the original).
   transform: none;
   transition:
-    opacity var(--transition-base),
-    transform var(--transition-base);
+    opacity var(--tooltip-transition),
+    transform var(--tooltip-transition);
 
   // Open-only entrance — the tooltip unmounts on close, so there is no
   // exit. @starting-style only applies while a transition is active; the
   // prefers-reduced-motion override below disables the transition, which
   // neutralises @starting-style (tooltip renders directly at its rest style).
   @starting-style {
-    opacity: var(--opacity-hidden);
+    opacity: var(--tooltip-opacity-hidden);
   }
 }
 
 .arrow {
   position: absolute;
-  width: var(--space-2);
-  height: var(--space-2);
-  background: var(--color-fg);
+  width: var(--tooltip-arrow-size);
+  height: var(--tooltip-arrow-size);
+  background: var(--tooltip-arrow-bg);
 
   // 45° rotation makes the diamond's corners point along ±x and ±y axes;
   // pairing this with `[data-side]`-based positioning of the arrow against

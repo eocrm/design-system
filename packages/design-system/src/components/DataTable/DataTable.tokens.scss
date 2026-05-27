@@ -1,0 +1,74 @@
+// DataTable.tokens.scss — Component-scoped tokens for <DataTable>, its <HeaderCell>, and <ColumnVisibilityTrigger>. Mirrors the structural-selector hierarchy (header / pinned / pinned-row tints + the doubled-class expanded-detail row). The Table-primitive surface tokens (--color-table-*) are kept primitive — DataTable references them by their semantic name so a Table theme override still reaches DataTable.
+:root {
+  // ── Root + cell defaults ─────────────────────────────────────────────────
+  --data-table-clickable-row-radius: var(--radius-sm);
+
+  // ── Empty state ──────────────────────────────────────────────────────────
+  --data-table-empty-padding: var(--space-6) var(--space-4);
+  --data-table-empty-fg: var(--color-fg-muted);
+
+  // ── Sticky auto-select cells ─────────────────────────────────────────────
+  --data-table-auto-cell-sticky-header-bg: var(--color-table-header-bg);
+  --data-table-auto-cell-sticky-body-bg: var(--color-table-bg);
+
+  // ── Pinned columns (body) ────────────────────────────────────────────────
+  --data-table-pinned-bg: var(--color-table-bg);
+  --data-table-pinned-shadow-left: var(--shadow-table-pinned-edge);
+  --data-table-pinned-shadow-right: var(--shadow-table-pinned-edge-right);
+
+  // ── Pinned rows ──────────────────────────────────────────────────────────
+  --data-table-pinned-row-bg: var(--color-bg-row-pinned);
+
+  // ── Pinned-cell hover / selected (mirrors row-level Table primitive) ─────
+  --data-table-pinned-bg-row-hover: var(--color-table-row-bg-hover);
+  --data-table-pinned-bg-row-selected: var(--color-table-row-bg-selected);
+
+  // ── Expand button (chevron) ──────────────────────────────────────────────
+  --data-table-expand-button-fg: var(--color-fg-muted);
+  --data-table-expand-button-radius: var(--radius-sm);
+  --data-table-expand-button-bg-hover: var(--color-bg-muted);
+  --data-table-expand-button-fg-hover: var(--color-fg);
+  --data-table-expand-button-transition-bg: var(--transition-fast);
+  --data-table-expand-button-transition-color: var(--transition-fast);
+
+  // ── Expanded detail row ──────────────────────────────────────────────────
+  --data-table-expanded-detail-padding: var(--space-3) var(--space-4);
+
+  // ── ColumnVisibilityTrigger ──────────────────────────────────────────────
+  --data-table-column-visibility-gap: var(--space-1);
+
+  // ── HeaderCell — grip / inner / label / sort / resize / drag ────────────
+  --data-table-header-grip-fg: var(--color-fg-muted);
+  --data-table-header-grip-opacity-hidden: var(--opacity-hidden);
+  --data-table-header-grip-opacity-visible: var(--opacity-visible);
+  --data-table-header-grip-transition: var(--transition-fast);
+  --data-table-header-grip-focus-radius: var(--radius-sm);
+
+  --data-table-header-inner-gap: var(--space-1);
+
+  --data-table-header-label-gap: var(--space-1);
+  --data-table-header-label-font-weight: var(--font-weight-semibold);
+  --data-table-header-label-fg: var(--color-fg);
+  --data-table-header-label-focus-radius: var(--radius-sm);
+
+  --data-table-header-sort-icon-fg: var(--color-fg-muted);
+  --data-table-header-sort-icon-fg-active: var(--color-fg);
+
+  --data-table-header-resize-handle-opacity-hidden: var(--opacity-hidden);
+  --data-table-header-resize-handle-opacity-visible: var(--opacity-visible);
+  --data-table-header-resize-handle-transition: var(--transition-fast);
+  --data-table-header-resize-chevron-fg: var(--color-fg-muted);
+  --data-table-header-resize-chevron-transition: var(--transition-fast);
+  --data-table-header-resize-bar-bg: var(--color-fg-muted);
+  --data-table-header-resize-bar-transition-bg: var(--transition-fast);
+  --data-table-header-resize-bar-transition-width: var(--transition-fast);
+  --data-table-header-resize-bar-bg-active: var(--color-accent);
+  --data-table-header-resize-chevron-fg-active: var(--color-accent);
+
+  --data-table-header-dragging-opacity: var(--opacity-dragging);
+
+  // HeaderCell — pinned column variant
+  --data-table-header-pinned-bg: var(--color-table-header-bg);
+  --data-table-header-pinned-shadow-left: var(--shadow-table-pinned-edge);
+  --data-table-header-pinned-shadow-right: var(--shadow-table-pinned-edge-right);
+}

@@ -1,0 +1,20 @@
+// Link.tokens.scss — Component-scoped tokens for <Link>. Three variants:
+// default (accent), muted (fg-muted -> accent on hover), subtle (fg -> accent
+// on hover). Each variant has its own fg + fg-hover pair. Icon gap is shared.
+:root {
+  // Shape + icon gap
+  --link-radius: var(--radius-sm);
+  --link-icon-gap: var(--space-1);
+
+  // Variant: default
+  --link-fg-default: var(--color-accent);
+  --link-fg-default-hover: var(--color-accent-hover);
+
+  // Variant: muted
+  --link-fg-muted: var(--color-fg-muted);
+  --link-fg-muted-hover: var(--color-accent);
+
+  // Variant: subtle
+  --link-fg-subtle: var(--color-fg);
+  --link-fg-subtle-hover: var(--color-accent);
+}

@@ -1,74 +1,76 @@
+@use './Text.tokens';
+
 .text {
   // stylelint-disable-next-line property-disallowed-list -- native <p> margin reset (component-internal, not at the boundary)
   margin: 0;
   font-family: var(--font-family-sans);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-normal);
-  color: var(--color-fg);
+  font-weight: var(--text-font-weight);
+  line-height: var(--text-line-height);
+  color: var(--text-fg);
 }
 
 .sizeXs {
-  font-size: var(--font-size-xs);
+  font-size: var(--text-font-size-xs);
 }
 
 .sizeSm {
-  font-size: var(--font-size-sm);
+  font-size: var(--text-font-size-sm);
 }
 
 .sizeMd {
-  font-size: var(--font-size-md);
+  font-size: var(--text-font-size-md);
 }
 
 .sizeLg {
-  font-size: var(--font-size-lg);
+  font-size: var(--text-font-size-lg);
 }
 
 .sizeXl {
-  font-size: var(--font-size-xl);
+  font-size: var(--text-font-size-xl);
 }
 
 .weightRegular {
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--text-font-weight-regular);
 }
 
 .weightMedium {
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--text-font-weight-medium);
 }
 
 .weightSemibold {
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--text-font-weight-semibold);
 }
 
 .weightBold {
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--text-font-weight-bold);
 }
 
 .toneDefault {
-  color: var(--color-fg);
+  color: var(--text-fg-default);
 }
 
 .toneMuted {
-  color: var(--color-fg-muted);
+  color: var(--text-fg-muted);
 }
 
 .toneSubtle {
-  color: var(--color-fg-subtle);
+  color: var(--text-fg-subtle);
 }
 
 .toneAccent {
-  color: var(--color-accent);
+  color: var(--text-fg-accent);
 }
 
 .toneDanger {
-  color: var(--color-danger);
+  color: var(--text-fg-danger);
 }
 
 .toneSuccess {
-  color: var(--color-success);
+  color: var(--text-fg-success);
 }
 
 .toneWarning {
-  color: var(--color-warning);
+  color: var(--text-fg-warning);
 }
 
 .alignLeft {

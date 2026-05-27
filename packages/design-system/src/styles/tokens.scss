@@ -1,3 +1,7 @@
+// Emit Badge component tokens at the global level so consumers can
+// reference them without first rendering a Badge.
+@use '../components/Badge/Badge.tokens';
+
 :root {
   // Neutral surfaces & text (Atlassian-inspired N palette)
   --color-bg: #ffffff;
@@ -39,20 +43,6 @@
   --color-warning-bg-subtle: #fff7ed; // tinted surface for event chips / highlights
   --color-info: #0052cc;
   --color-info-bg-subtle: #ebf3ff; // very light blue tint — between white and --color-accent-bg-subtle (#deebff); used for soft "hint" surfaces like table row hover
-
-  // Badge palette — subtle bg + readable fg pairs
-  --color-badge-neutral-bg: #f4f5f7;
-  --color-badge-neutral-fg: #42526e;
-  --color-badge-info-bg: #deebff;
-  --color-badge-info-fg: #0747a6;
-  --color-badge-success-bg: #e3fcef;
-  --color-badge-success-fg: #006644;
-  --color-badge-warning-bg: #fffae6;
-  --color-badge-warning-fg: #974f00;
-  --color-badge-danger-bg: #ffebe6;
-  --color-badge-danger-fg: #bf2600;
-  --color-badge-purple-bg: #eae6ff;
-  --color-badge-purple-fg: #403294;
 
   // ─── Categorical palette (consumer-defined mapping) ─────────────────────
   // 30 named colors with bg + fg pairs. Use for consumer-defined domain →
@@ -343,4 +333,23 @@
   --z-modal: 1100;
   --z-toast: 1200;
   --z-tooltip: 1300; // above modal + toast so tooltips remain visible inside any host UI
+}
+
+// DEPRECATED Badge tone tokens — kept as aliases for backward compat.
+// These were renamed to --badge-bg-<tone> / --badge-fg-<tone> as part
+// of the component-token migration. Will be removed in a future major
+// version; new code should use the --badge-* names directly.
+:root {
+  --color-badge-neutral-bg: var(--badge-bg-neutral);
+  --color-badge-neutral-fg: var(--badge-fg-neutral);
+  --color-badge-info-bg: var(--badge-bg-info);
+  --color-badge-info-fg: var(--badge-fg-info);
+  --color-badge-success-bg: var(--badge-bg-success);
+  --color-badge-success-fg: var(--badge-fg-success);
+  --color-badge-warning-bg: var(--badge-bg-warning);
+  --color-badge-warning-fg: var(--badge-fg-warning);
+  --color-badge-danger-bg: var(--badge-bg-danger);
+  --color-badge-danger-fg: var(--badge-fg-danger);
+  --color-badge-purple-bg: var(--badge-bg-purple);
+  --color-badge-purple-fg: var(--badge-fg-purple);
 }

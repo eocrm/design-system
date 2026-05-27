@@ -1,3 +1,5 @@
+@use './EmptyState.tokens';
+
 .emptyState {
   display: flex;
   flex-direction: column;
@@ -16,18 +18,18 @@
 
 // Size modifiers — gap between stacked children + outer padding.
 .size-sm {
-  gap: var(--space-2);
-  padding: var(--space-3);
+  gap: var(--empty-state-gap-sm);
+  padding: var(--empty-state-padding-sm);
 }
 
 .size-md {
-  gap: var(--space-3);
-  padding: var(--space-6);
+  gap: var(--empty-state-gap-md);
+  padding: var(--empty-state-padding-md);
 }
 
 .size-lg {
-  gap: var(--space-4);
-  padding: var(--space-10);
+  gap: var(--empty-state-gap-lg);
+  padding: var(--empty-state-padding-lg);
 }
 
 // Icon — uses --color-fg-muted so it sits visually "behind" the title.
@@ -37,8 +39,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-fg-muted);
-  line-height: var(--line-height-none);
+  color: var(--empty-state-icon-fg);
+  line-height: var(--empty-state-icon-line-height);
 }
 
 // Title — semantic heading. Reset user-agent margins (h1-h6 default to
@@ -47,22 +49,22 @@
 // stylelint-disable property-disallowed-list -- defensive reset of user-agent <h*> margins; not a layout property on the component box.
 .title {
   margin: 0;
-  color: var(--color-fg);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
+  color: var(--empty-state-title-fg);
+  font-weight: var(--empty-state-title-font-weight);
+  line-height: var(--empty-state-title-line-height);
 }
 // stylelint-enable property-disallowed-list
 
 .size-sm .title {
-  font-size: var(--font-size-sm);
+  font-size: var(--empty-state-title-font-size-sm);
 }
 
 .size-md .title {
-  font-size: var(--font-size-md);
+  font-size: var(--empty-state-title-font-size-md);
 }
 
 .size-lg .title {
-  font-size: var(--font-size-xl);
+  font-size: var(--empty-state-title-font-size-lg);
 }
 
 // stylelint-disable property-disallowed-list -- `margin: 0` is a defensive
@@ -70,8 +72,8 @@
 // readable-width cap. Neither is a layout property on the component box.
 .description {
   margin: 0;
-  color: var(--color-fg-subtle);
-  line-height: var(--line-height-normal);
+  color: var(--empty-state-description-fg);
+  line-height: var(--empty-state-description-line-height);
 
   // Cap the readable line length. Most visible on `size-lg` (the only
   // size that lives inside wide containers), but applied unconditionally
@@ -81,12 +83,12 @@
 // stylelint-enable property-disallowed-list
 
 .size-sm .description {
-  font-size: var(--font-size-sm);
+  font-size: var(--empty-state-description-font-size-sm);
 }
 
 .size-md .description,
 .size-lg .description {
-  font-size: var(--font-size-md);
+  font-size: var(--empty-state-description-font-size-md);
 }
 
 // Shrink-to-fit wrapper around the consumer's actions slot. `inline-flex`

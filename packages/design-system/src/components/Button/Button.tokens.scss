@@ -1,0 +1,73 @@
+// Button.tokens.scss
+// Component-scoped tokens for <Button>. Each token defaults to the
+// primitive the SCSS used before this migration — overriding any of
+// these at :root re-themes Button without touching globals.
+// Convention: --button-<part>-<state>. See
+// docs/superpowers/specs/2026-05-27-component-tokens-design.md
+:root {
+  // Surface (primary is the base; per-variant overrides further down)
+  --button-bg: var(--color-accent);
+  --button-bg-hover: var(--color-accent-hover);
+
+  // Foreground
+  --button-fg: var(--color-accent-fg);
+
+  // Border / radius
+  --button-border-color: transparent;
+  --button-radius: var(--radius-md);
+
+  // Focus ring (color only; ring width stays primitive)
+  --button-ring: var(--ring-accent);
+
+  // Disabled state
+  --button-opacity-disabled: var(--opacity-disabled);
+
+  // Sizing — height per size
+  --button-height-xs: var(--size-xs);
+  --button-height-sm: var(--size-sm);
+  --button-height-md: var(--size-md);
+  --button-height-lg: var(--size-lg);
+
+  // Sizing — horizontal padding per size
+  --button-padding-x-xs: var(--space-2);
+  --button-padding-x-sm: var(--space-3);
+  --button-padding-x-md: var(--space-4);
+  --button-padding-x-lg: var(--space-5);
+
+  // Sizing — icon-to-label gap (xs gets a tighter override)
+  --button-gap: var(--space-2);
+  --button-gap-xs: var(--space-1);
+
+  // Sizing — iconOnly inset
+  --button-padding-icon-only: var(--space-1);
+
+  // Typography
+  --button-font-weight: var(--font-weight-medium);
+  --button-font-size-xs: var(--font-size-xs);
+  --button-font-size-sm: var(--font-size-sm);
+  --button-font-size-md: var(--font-size-md);
+  --button-font-size-lg: var(--font-size-lg);
+
+  // Variant: secondary
+  --button-bg-secondary: var(--color-bg);
+  --button-bg-secondary-hover: var(--color-bg-subtle);
+  --button-fg-secondary: var(--color-fg);
+  --button-border-color-secondary: var(--color-border-strong);
+
+  // Variant: ghost
+  --button-bg-ghost: transparent;
+  --button-bg-ghost-hover: var(--color-bg-muted);
+  --button-fg-ghost: var(--color-fg);
+
+  // Variant: danger
+  --button-bg-danger: var(--color-danger);
+  --button-bg-danger-hover: var(--color-danger-hover);
+  --button-fg-danger: var(--color-danger-fg);
+  --button-ring-danger: var(--ring-danger);
+
+  // Variant: success
+  --button-bg-success: var(--color-success);
+  --button-bg-success-hover: var(--color-success-hover);
+  --button-fg-success: var(--color-success-fg);
+  --button-ring-success: var(--ring-success);
+}

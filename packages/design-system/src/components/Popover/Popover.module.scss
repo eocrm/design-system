@@ -1,39 +1,41 @@
+@use './Popover.tokens';
+
 // `.content` carries chrome + the open-only scale-fade entrance. The animation
 // (transition + @starting-style + per-side transform-origin) relies on
 // Floating UI being in `transform: false` mode (see Content.tsx) so the CSS
 // `transform` property is free for the entrance.
 .content {
   position: relative;
-  min-width: var(--size-popover-min-width);
+  min-width: var(--popover-min-width);
   max-width: 360px;
-  padding: var(--space-3);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  z-index: var(--z-popover);
+  padding: var(--popover-padding);
+  background: var(--popover-bg);
+  color: var(--popover-fg);
+  border: var(--border-width) solid var(--popover-border-color);
+  border-radius: var(--popover-radius);
+  box-shadow: var(--popover-shadow);
+  z-index: var(--popover-z);
   outline: none;
 
   // Explicit so each per-side @starting-style transform has a defined
   // resting target to interpolate to.
   transform: none;
   transition:
-    opacity var(--transition-base),
-    transform var(--transition-base);
+    opacity var(--popover-transition),
+    transform var(--popover-transition);
 
   @starting-style {
-    opacity: var(--opacity-hidden);
+    opacity: var(--popover-opacity-hidden);
   }
 }
 
 .arrow {
   position: absolute;
-  width: var(--space-3);
-  height: var(--space-3);
-  background: var(--color-bg);
-  border-right: var(--border-width) solid var(--color-border);
-  border-bottom: var(--border-width) solid var(--color-border);
+  width: var(--popover-arrow-size);
+  height: var(--popover-arrow-size);
+  background: var(--popover-arrow-bg);
+  border-right: var(--border-width) solid var(--popover-arrow-border-color);
+  border-bottom: var(--border-width) solid var(--popover-arrow-border-color);
   transform: rotate(45deg);
   pointer-events: none;
 }
@@ -43,22 +45,22 @@
 // right borders (panel above trigger → arrow pokes downward), which matches
 // data-side='top'. Override for the other three sides:
 .content[data-side='bottom'] .arrow {
-  border-top: var(--border-width) solid var(--color-border);
-  border-left: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--popover-arrow-border-color);
+  border-left: var(--border-width) solid var(--popover-arrow-border-color);
   border-right: 0;
   border-bottom: 0;
 }
 
 .content[data-side='left'] .arrow {
-  border-top: var(--border-width) solid var(--color-border);
-  border-right: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--popover-arrow-border-color);
+  border-right: var(--border-width) solid var(--popover-arrow-border-color);
   border-bottom: 0;
   border-left: 0;
 }
 
 .content[data-side='right'] .arrow {
-  border-bottom: var(--border-width) solid var(--color-border);
-  border-left: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--popover-arrow-border-color);
+  border-left: var(--border-width) solid var(--popover-arrow-border-color);
   border-top: 0;
   border-right: 0;
 }

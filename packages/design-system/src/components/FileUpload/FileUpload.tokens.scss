@@ -1,0 +1,55 @@
+// FileUpload.tokens.scss — component-scoped tokens for <FileUpload>. Covers the drop-zone, drag-over state, and per-row item chrome (border, status icon colors).
+:root {
+  // Root layout
+  --file-upload-gap: var(--space-3);
+
+  // Dropzone
+  --file-upload-dropzone-gap: var(--space-2);
+  --file-upload-dropzone-padding: var(--space-4);
+  --file-upload-dropzone-border-color: var(--color-border);
+  --file-upload-dropzone-radius: var(--radius-md);
+  --file-upload-dropzone-bg: var(--color-bg);
+  --file-upload-dropzone-fg: var(--color-fg-muted);
+  --file-upload-dropzone-border-color-hover: var(--color-accent);
+  --file-upload-dropzone-fg-hover: var(--color-fg);
+
+  // Drag-over (active drop target)
+  --file-upload-dragover-border-color: var(--color-accent);
+  --file-upload-dragover-bg: var(--color-accent-bg-subtle);
+  --file-upload-dragover-fg: var(--color-fg);
+
+  // Dropzone children
+  --file-upload-icon-fg: var(--color-fg-subtle);
+  --file-upload-label-font-size: var(--font-size-md);
+  --file-upload-browse-fg: var(--color-accent);
+  --file-upload-browse-font-weight: var(--font-weight-medium);
+  --file-upload-hint-font-size: var(--font-size-sm);
+  --file-upload-hint-fg: var(--color-fg-subtle);
+
+  // File list
+  --file-upload-list-gap: var(--space-2);
+
+  // Row — surface
+  --file-upload-row-gap: var(--space-3);
+  --file-upload-row-padding-y: var(--space-2);
+  --file-upload-row-padding-x: var(--space-3);
+  --file-upload-row-border-color: var(--color-border);
+  --file-upload-row-radius: var(--radius-md);
+  --file-upload-row-bg: var(--color-bg);
+
+  // Row — error variant
+  --file-upload-row-border-color-error: var(--color-danger);
+
+  // Row — text + icon colors
+  --file-upload-row-icon-fg: var(--color-fg-subtle);
+  --file-upload-row-name-font-size: var(--font-size-md);
+  --file-upload-row-name-fg: var(--color-fg);
+  --file-upload-row-meta-font-size: var(--font-size-sm);
+  --file-upload-row-meta-fg: var(--color-fg-subtle);
+  --file-upload-row-error-font-size: var(--font-size-sm);
+  --file-upload-row-error-fg: var(--color-danger);
+  --file-upload-row-done-fg: var(--color-success);
+
+  // Disabled state
+  --file-upload-opacity-disabled: var(--opacity-subtle);
+}

@@ -1,0 +1,69 @@
+// Slider.tokens.scss — component-scoped tokens for <Slider> (track + filled range + thumbs + tooltip + marks). Each tone (default/success/warning/danger) overrides the filled-range and filled-mark color.
+:root {
+  // Orientation sizing — horizontal min-height + vertical height/min-width
+  --slider-min-height-horizontal: 32px;
+  --slider-height-vertical: 200px;
+  --slider-min-width-vertical: 32px;
+
+  // Track — bg + radius + per-orientation thickness
+  --slider-track-bg: var(--color-bg-muted);
+  --slider-track-radius: var(--radius-full);
+  --slider-track-size-md-horizontal: 6px;
+  --slider-track-size-sm-horizontal: 4px;
+  --slider-track-size-lg-horizontal: 8px;
+  --slider-track-size-md-vertical: 6px;
+  --slider-track-size-sm-vertical: 4px;
+  --slider-track-size-lg-vertical: 8px;
+
+  // Filled range (per tone)
+  --slider-fill-bg: var(--color-accent);
+  --slider-fill-bg-tone-default: var(--color-accent);
+  --slider-fill-bg-tone-success: var(--color-success);
+  --slider-fill-bg-tone-warning: var(--color-warning);
+  --slider-fill-bg-tone-danger: var(--color-danger);
+  --slider-fill-radius: var(--radius-full);
+
+  // Thumb — base
+  --slider-thumb-bg: var(--color-bg);
+  --slider-thumb-border-color: var(--color-border);
+  --slider-thumb-radius: var(--radius-full);
+  --slider-thumb-shadow: var(--shadow-sm);
+  --slider-thumb-border-color-hover: var(--color-accent);
+  --slider-thumb-shadow-hover: var(--shadow-md);
+  --slider-thumb-shadow-dragging: var(--shadow-md);
+
+  // Thumb diameter per size
+  --slider-thumb-size-sm: 14px;
+  --slider-thumb-size-md: 18px;
+  --slider-thumb-size-lg: 22px;
+
+  // Tooltip / label bubble
+  --slider-label-bg: var(--color-fg);
+  --slider-label-fg: var(--color-bg);
+  --slider-label-font-size: var(--font-size-xs);
+  --slider-label-font-weight: var(--font-weight-medium);
+  --slider-label-padding-y: var(--space-1);
+  --slider-label-padding-x: var(--space-2);
+  --slider-label-radius: var(--radius-sm);
+  --slider-label-offset: var(--space-2);
+
+  // Mark (notch on track)
+  --slider-mark-width: 2px;
+  --slider-mark-height: 8px;
+  --slider-mark-bg: var(--color-border);
+  --slider-mark-radius: var(--radius-sm);
+
+  // Mark filled — base + tones
+  --slider-mark-filled-bg: var(--color-accent);
+  --slider-mark-filled-bg-tone-success: var(--color-success);
+  --slider-mark-filled-bg-tone-warning: var(--color-warning);
+  --slider-mark-filled-bg-tone-danger: var(--color-danger);
+
+  // Mark label text
+  --slider-mark-label-font-size: var(--font-size-xs);
+  --slider-mark-label-fg: var(--color-fg-muted);
+  --slider-mark-label-offset: var(--space-1);
+
+  // Disabled
+  --slider-opacity-disabled: var(--opacity-disabled);
+}

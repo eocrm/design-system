@@ -1,0 +1,33 @@
+// Tabs.tokens.scss — Component-scoped tokens for <Tabs>. Covers tablist
+// bottom border, tab inactive vs active fg, tab hover fg, focus ring, the
+// active-tab indicator color, and the optional count pill (active vs idle).
+:root {
+  // Tablist
+  --tabs-gap: var(--space-1);
+  --tabs-border-color: var(--color-border);
+
+  // Tab
+  --tabs-tab-padding-y: var(--space-2);
+  --tabs-tab-padding-x: var(--space-3);
+  --tabs-tab-gap: var(--space-2);
+  --tabs-tab-fg: var(--color-fg-muted);
+  --tabs-tab-fg-hover: var(--color-fg);
+  --tabs-tab-fg-active: var(--color-accent);
+  --tabs-tab-font-size: var(--font-size-md);
+  --tabs-tab-font-weight: var(--font-weight-medium);
+  --tabs-tab-ring: var(--ring-accent);
+  --tabs-tab-radius: var(--radius-sm);
+
+  // Indicator
+  --tabs-indicator-bg: var(--color-accent);
+
+  // Count pill
+  --tabs-count-bg: var(--color-bg-muted);
+  --tabs-count-fg: var(--color-fg-muted);
+  --tabs-count-bg-active: var(--color-accent-subtle-bg);
+  --tabs-count-fg-active: var(--color-accent);
+  --tabs-count-radius: var(--radius-sm);
+  --tabs-count-padding-x: var(--space-1);
+  --tabs-count-font-size: var(--font-size-xs);
+  --tabs-count-font-weight: var(--font-weight-semibold);
+}

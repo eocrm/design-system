@@ -1,0 +1,21 @@
+// Popover.tokens.scss — Component-scoped tokens for <Popover>. Each token defaults to the primitive the SCSS used before this migration. Floating-positioned panel base used by ConfirmationPopover; Tooltip and DropdownMenu maintain their own surfaces.
+:root {
+  // Panel surface
+  --popover-bg: var(--color-bg);
+  --popover-fg: var(--color-fg);
+  --popover-border-color: var(--color-border);
+  --popover-radius: var(--radius-md);
+  --popover-shadow: var(--shadow-lg);
+  --popover-padding: var(--space-3);
+  --popover-min-width: var(--size-popover-min-width);
+  --popover-z: var(--z-popover);
+
+  // Entrance transition
+  --popover-transition: var(--transition-base);
+  --popover-opacity-hidden: var(--opacity-hidden);
+
+  // Arrow
+  --popover-arrow-size: var(--space-3);
+  --popover-arrow-bg: var(--color-bg);
+  --popover-arrow-border-color: var(--color-border);
+}

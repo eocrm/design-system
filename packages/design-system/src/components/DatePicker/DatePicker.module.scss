@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './DatePicker.tokens';
 
 // Field convention: `display: flex; width: 100%` so the wrapper fills its
 // parent's column the same way `<Input>` and `<Select>` do. Consumers wrap
@@ -9,32 +10,32 @@
   display: flex;
   width: 100%;
   align-items: center;
-  gap: var(--space-1);
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  gap: var(--date-picker-gap);
+  background: var(--date-picker-bg);
+  border: var(--border-width) solid var(--date-picker-border-color);
+  border-radius: var(--date-picker-radius);
   transition: border-color var(--transition-fast);
 
   &:focus-within {
     @include focus-ring;
 
-    border-color: var(--color-accent);
+    border-color: var(--date-picker-border-color-focus);
   }
 }
 
 .invalid {
-  border-color: var(--color-danger);
+  border-color: var(--date-picker-border-color-invalid);
 
   &:focus-within {
-    @include focus-ring(var(--ring-danger));
+    @include focus-ring(var(--date-picker-ring-invalid));
 
-    border-color: var(--color-danger);
+    border-color: var(--date-picker-border-color-invalid);
   }
 }
 
 .disabled {
-  background: var(--color-bg-subtle);
-  color: var(--color-fg-muted);
+  background: var(--date-picker-bg-disabled);
+  color: var(--date-picker-fg-disabled);
   cursor: not-allowed;
 }
 
@@ -51,10 +52,10 @@
   border: none;
   outline: none;
   font-family: inherit;
-  color: var(--color-fg);
+  color: var(--date-picker-input-fg);
 
   &::placeholder {
-    color: var(--color-fg-muted);
+    color: var(--date-picker-input-placeholder-fg);
   }
 }
 
@@ -67,13 +68,13 @@
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
-  color: var(--color-fg-muted);
+  border-radius: var(--date-picker-button-radius);
+  color: var(--date-picker-button-fg);
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: var(--color-bg-subtle);
-    color: var(--color-fg);
+    background: var(--date-picker-button-bg-hover);
+    color: var(--date-picker-button-fg-hover);
   }
 
   &:focus-visible {
@@ -82,58 +83,58 @@
 
   &:disabled {
     cursor: not-allowed;
-    opacity: var(--opacity-disabled);
+    opacity: var(--date-picker-button-opacity-disabled);
   }
 }
 
 .popover {
-  z-index: var(--z-popover);
+  z-index: var(--date-picker-popover-z);
 }
 
 // Size modifiers — drive wrapper padding, inner input height + font, and
 // clear/open button slot dimensions. The chevrons inside the popover grid
 // are NOT controlled here; they belong to DatePickerGrid.
 .size-sm {
-  padding: 0 var(--space-2);
+  padding: 0 var(--date-picker-padding-sm);
 
   .input {
-    height: var(--size-sm);
-    font-size: var(--font-size-sm);
+    height: var(--date-picker-input-height-sm);
+    font-size: var(--date-picker-input-font-size-sm);
   }
 
   .clearButton,
   .openButton {
-    width: var(--space-5);
-    height: var(--space-5);
+    width: var(--date-picker-button-size-sm);
+    height: var(--date-picker-button-size-sm);
   }
 }
 
 .size-md {
-  padding: 0 var(--space-2);
+  padding: 0 var(--date-picker-padding-md);
 
   .input {
-    height: var(--size-md);
-    font-size: var(--font-size-md);
+    height: var(--date-picker-input-height-md);
+    font-size: var(--date-picker-input-font-size-md);
   }
 
   .clearButton,
   .openButton {
-    width: var(--space-5);
-    height: var(--space-5);
+    width: var(--date-picker-button-size-md);
+    height: var(--date-picker-button-size-md);
   }
 }
 
 .size-lg {
-  padding: 0 var(--space-3);
+  padding: 0 var(--date-picker-padding-lg);
 
   .input {
-    height: var(--size-lg);
-    font-size: var(--font-size-lg);
+    height: var(--date-picker-input-height-lg);
+    font-size: var(--date-picker-input-font-size-lg);
   }
 
   .clearButton,
   .openButton {
-    width: var(--space-6);
-    height: var(--space-6);
+    width: var(--date-picker-button-size-lg);
+    height: var(--date-picker-button-size-lg);
   }
 }

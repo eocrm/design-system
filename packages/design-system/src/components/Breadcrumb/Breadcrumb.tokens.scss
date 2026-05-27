@@ -1,0 +1,9 @@
+// Breadcrumb.tokens.scss — Component-scoped tokens for <Breadcrumb>. Covers
+// the nav font-size, inter-item gap, separator color, and the current-item
+// (terminal crumb) foreground.
+:root {
+  --breadcrumb-font-size: var(--font-size-sm);
+  --breadcrumb-gap: var(--space-1);
+  --breadcrumb-separator-fg: var(--color-fg-muted);
+  --breadcrumb-current-fg: var(--color-fg);
+}

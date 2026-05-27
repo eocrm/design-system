@@ -1,57 +1,59 @@
+@use './Badge.tokens';
+
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-caps);
+  gap: var(--badge-gap);
+  border-radius: var(--badge-radius);
+  font-size: var(--badge-font-size);
+  font-weight: var(--badge-font-weight);
+  letter-spacing: var(--badge-letter-spacing);
   text-transform: uppercase;
   white-space: nowrap;
-  line-height: var(--line-height-none);
+  line-height: var(--badge-line-height);
 }
 
 // Sizes
 .sm {
-  height: var(--size-badge-sm);
-  padding: 0 var(--space-1);
+  height: var(--badge-height-sm);
+  padding: 0 var(--badge-padding-x-sm);
   text-transform: none;
   letter-spacing: normal;
 }
 
 .md {
-  height: var(--size-badge);
-  padding: 0 var(--space-2);
+  height: var(--badge-height-md);
+  padding: 0 var(--badge-padding-x-md);
 }
 
 .neutral {
-  background: var(--color-badge-neutral-bg);
-  color: var(--color-badge-neutral-fg);
+  background: var(--badge-bg-neutral);
+  color: var(--badge-fg-neutral);
 }
 
 .info {
-  background: var(--color-badge-info-bg);
-  color: var(--color-badge-info-fg);
+  background: var(--badge-bg-info);
+  color: var(--badge-fg-info);
 }
 
 .success {
-  background: var(--color-badge-success-bg);
-  color: var(--color-badge-success-fg);
+  background: var(--badge-bg-success);
+  color: var(--badge-fg-success);
 }
 
 .warning {
-  background: var(--color-badge-warning-bg);
-  color: var(--color-badge-warning-fg);
+  background: var(--badge-bg-warning);
+  color: var(--badge-fg-warning);
 }
 
 .danger {
-  background: var(--color-badge-danger-bg);
-  color: var(--color-badge-danger-fg);
+  background: var(--badge-bg-danger);
+  color: var(--badge-fg-danger);
 }
 
 .purple {
-  background: var(--color-badge-purple-bg);
-  color: var(--color-badge-purple-fg);
+  background: var(--badge-bg-purple);
+  color: var(--badge-fg-purple);
 }
 
 .dot {
@@ -65,49 +67,49 @@
 // Stripe variant — rectangular block with a tone-colored left stripe + tinted body.
 // Rules come AFTER the filled tone rules so .stripe.* overrides .filled tone backgrounds.
 .stripe {
-  border-radius: var(--radius-sm);
+  border-radius: var(--badge-radius);
   text-transform: none;
   letter-spacing: normal;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--badge-stripe-font-weight);
 
   // Reserve transparent border-left so toggling tone doesn't shift layout.
-  border-left: var(--border-width-strong) solid transparent;
-  padding-left: var(--space-2);
+  border-left: var(--badge-stripe-border-width) solid transparent;
+  padding-left: var(--badge-stripe-padding-left);
 }
 
 // Stripe + tone overrides — specificity 0,2,0 beats the plain tone rules (0,1,0).
 .stripe.neutral {
-  background: var(--color-bg-muted);
-  color: var(--color-fg);
-  border-left-color: var(--color-fg-muted);
+  background: var(--badge-stripe-bg-neutral);
+  color: var(--badge-stripe-fg-neutral);
+  border-left-color: var(--badge-stripe-border-color-neutral);
 }
 
 .stripe.info {
-  background: var(--color-info-bg-subtle);
-  color: var(--color-info);
-  border-left-color: var(--color-info);
+  background: var(--badge-stripe-bg-info);
+  color: var(--badge-stripe-fg-info);
+  border-left-color: var(--badge-stripe-border-color-info);
 }
 
 .stripe.success {
-  background: var(--color-success-bg-subtle);
-  color: var(--color-success);
-  border-left-color: var(--color-success);
+  background: var(--badge-stripe-bg-success);
+  color: var(--badge-stripe-fg-success);
+  border-left-color: var(--badge-stripe-border-color-success);
 }
 
 .stripe.warning {
-  background: var(--color-warning-bg-subtle);
-  color: var(--color-warning);
-  border-left-color: var(--color-warning);
+  background: var(--badge-stripe-bg-warning);
+  color: var(--badge-stripe-fg-warning);
+  border-left-color: var(--badge-stripe-border-color-warning);
 }
 
 .stripe.danger {
-  background: var(--color-danger-bg-subtle);
-  color: var(--color-danger);
-  border-left-color: var(--color-danger);
+  background: var(--badge-stripe-bg-danger);
+  color: var(--badge-stripe-fg-danger);
+  border-left-color: var(--badge-stripe-border-color-danger);
 }
 
 .stripe.purple {
-  background: var(--color-badge-purple-bg);
-  color: var(--color-badge-purple-fg);
-  border-left-color: var(--color-badge-purple-fg);
+  background: var(--badge-stripe-bg-purple);
+  color: var(--badge-stripe-fg-purple);
+  border-left-color: var(--badge-stripe-border-color-purple);
 }

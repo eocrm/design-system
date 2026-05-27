@@ -1,3 +1,5 @@
+@use './Calendar.tokens';
+
 .scroll {
   overflow: auto;
   max-height: 70vh;
@@ -5,7 +7,7 @@
 
 .grid {
   display: grid;
-  background: var(--color-bg);
+  background: var(--calendar-hour-grid-bg);
 }
 
 // ARIA-row wrapper: `display: contents` keeps the corner cell + column
@@ -16,48 +18,48 @@
 }
 
 .cornerCell {
-  border-right: var(--border-width) solid var(--color-border);
-  border-bottom: var(--border-width) solid var(--color-border);
-  background: var(--color-bg-subtle);
+  border-right: var(--border-width) solid var(--calendar-border-color);
+  border-bottom: var(--border-width) solid var(--calendar-border-color);
+  background: var(--calendar-hour-corner-bg);
 }
 
 .columnHeader {
-  padding: var(--space-2);
-  background: var(--color-bg-subtle);
-  border-right: var(--border-width) solid var(--color-border);
-  border-bottom: var(--border-width) solid var(--color-border);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-fg);
+  padding: var(--calendar-hour-column-header-padding);
+  background: var(--calendar-hour-column-header-bg);
+  border-right: var(--border-width) solid var(--calendar-border-color);
+  border-bottom: var(--border-width) solid var(--calendar-border-color);
+  font-size: var(--calendar-hour-column-header-font-size);
+  font-weight: var(--calendar-hour-column-header-font-weight);
+  color: var(--calendar-hour-column-header-fg);
   text-align: center;
 }
 
 .weekendHeader {
-  background: var(--color-bg-muted);
+  background: var(--calendar-hour-column-header-bg-weekend);
 }
 
 .todayHeader {
-  background: var(--color-accent-bg-subtle);
-  color: var(--color-accent);
+  background: var(--calendar-hour-column-header-bg-today);
+  color: var(--calendar-hour-column-header-fg-today);
 }
 
 .hourLabel {
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-xs);
-  color: var(--color-fg-muted);
+  padding: var(--calendar-hour-label-padding);
+  font-size: var(--calendar-hour-label-font-size);
+  color: var(--calendar-hour-label-fg);
   text-align: right;
-  border-right: var(--border-width) solid var(--color-border);
-  border-bottom: var(--border-width) solid var(--color-border);
-  background: var(--color-bg-subtle);
+  border-right: var(--border-width) solid var(--calendar-border-color);
+  border-bottom: var(--border-width) solid var(--calendar-border-color);
+  background: var(--calendar-hour-label-bg);
 }
 
 .dayColumn {
   position: relative;
-  border-right: var(--border-width) solid var(--color-border);
+  border-right: var(--border-width) solid var(--calendar-border-color);
 }
 
 .weekendColumn {
-  background: var(--color-bg-muted);
+  background: var(--calendar-hour-day-column-bg-weekend);
 }
 
 // Today's column body intentionally has NO tint — only the column header
@@ -69,7 +71,7 @@
   left: 0;
   right: 0;
   height: var(--border-width);
-  background: var(--color-border);
+  background: var(--calendar-hour-separator-bg);
 }
 
 // The now-line sits above lane-stacked event blocks (z-index = lane + 1,
@@ -80,7 +82,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: var(--border-width-emphasis);
-  background: var(--color-danger);
+  height: var(--calendar-now-line-height);
+  background: var(--calendar-now-line-bg);
   z-index: 50;
 }

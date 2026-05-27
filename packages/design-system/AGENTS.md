@@ -1974,7 +1974,7 @@ All available as CSS custom properties after you import `global.scss`:
 | Neutral colors  | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted`, `--color-fg-subtle`, `--color-fg-disabled` |
 | Accent colors   | `--color-accent`, `--color-accent-hover`, `--color-accent-pressed`, `--color-accent-fg`, `--color-accent-subtle-bg`                                                                                 |
 | Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-bg-danger-subtle`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info`      |
-| Badge palette   | `--color-badge-{neutral,info,success,warning,danger,purple}-{bg,fg}`                                                                                                                                |
+| Badge palette   | `--badge-{bg,fg}-{neutral,info,success,warning,danger,purple}` (was `--color-badge-<tone>-{bg,fg}`, kept as deprecated aliases)                                                                     |
 | Avatar palette  | `--color-avatar-fg`, `--color-avatar-1` through `--color-avatar-6`                                                                                                                                  |
 | Spacing         | `--space-0` `--space-1` (4) `--space-2` (8) `--space-3` (12) `--space-4` (16) `--space-5` (20) `--space-6` (24) `--space-8` (32) `--space-10` (40) `--space-12` (48) `--space-16` (64)              |
 | Radii           | `--radius-sm` (3) / `--radius-md` (4) / `--radius-lg` (8) / `--radius-full`                                                                                                                         |
@@ -1988,6 +1988,51 @@ All available as CSS custom properties after you import `global.scss`:
 | Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width`                                                                                                                               |
 | Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
 | Layer (z-index) | `--z-dropdown` / `--z-popover` / `--z-modal` / `--z-toast` / `--z-tooltip`                                                                                                                          |
+
+---
+
+## Theming via component tokens
+
+Every component ships a `Component.tokens.scss` file alongside its `.module.scss`, defining `--<component>-<part>-<state>` CSS custom properties at `:root`. The `.module.scss` references those tokens instead of the global primitives. This lets consumers re-theme one component without affecting others.
+
+**Pattern:**
+
+- Token name: `--<component>-<part>[-<state>]`. Component is kebab-cased (`--data-table-*`, `--dropdown-menu-*`, `--page-header-*`). Part is the surface (`bg` / `fg` / `border-color` / `radius` / `padding-x` / `height` / `ring` / etc.). State is appended when there's a state variant (`hover` / `active` / `focus` / `disabled` / `checked` / `selected` / `invalid`).
+- Defaults: every component token defaults to the same primitive the SCSS used before this layer existed. Overriding the token re-themes the component without touching the primitive.
+
+**Override globally (every Button in the app turns red):**
+
+```css
+:root {
+  --button-bg: red;
+  --button-bg-hover: darkred;
+}
+```
+
+**Override per-scope (only Buttons inside this region turn red):**
+
+```css
+.danger-zone {
+  --button-bg: red;
+  --button-bg-hover: darkred;
+}
+```
+
+```tsx
+<div className="danger-zone">
+  <Button>Delete</Button>
+</div>
+```
+
+**Override per-instance (one Button, inline):**
+
+```tsx
+<Button style={{ '--button-bg': 'red' } as React.CSSProperties}>Delete</Button>
+```
+
+The authoritative list of tokens per component lives in that component's `<Name>.tokens.scss` file. Read it to see what's available.
+
+**Deprecated:** `--color-badge-<tone>-bg/-fg` tokens are aliased to the new `--badge-bg-<tone>` / `--badge-fg-<tone>` tokens. They still work but will be removed in a future major version.
 
 ---
 

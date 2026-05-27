@@ -1,6 +1,8 @@
+@use './Skeleton.tokens';
+
 .skeleton {
   display: inline-block;
-  background: var(--color-bg-muted);
+  background: var(--skeleton-bg);
 
   // Prevent text selection — skeletons are decorative.
   user-select: none;
@@ -10,16 +12,16 @@
 }
 
 .variant-text {
-  border-radius: var(--radius-sm);
+  border-radius: var(--skeleton-radius-text);
 }
 
 .variant-circular {
-  border-radius: var(--radius-full);
+  border-radius: var(--skeleton-radius-circular);
 }
 
 .variant-rectangular {
   display: block;
-  border-radius: var(--radius-md);
+  border-radius: var(--skeleton-radius-rectangular);
 }
 
 // Pulse — opacity cycle. Hardware-accelerated (opacity is a compositor
@@ -30,15 +32,15 @@
 
 @keyframes skeleton-pulse {
   0% {
-    opacity: var(--opacity-visible);
+    opacity: var(--skeleton-opacity-high);
   }
 
   50% {
-    opacity: var(--opacity-subtle);
+    opacity: var(--skeleton-opacity-low);
   }
 
   100% {
-    opacity: var(--opacity-visible);
+    opacity: var(--skeleton-opacity-high);
   }
 }
 

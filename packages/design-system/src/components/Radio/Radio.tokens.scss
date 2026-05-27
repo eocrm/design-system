@@ -1,0 +1,59 @@
+// Radio.tokens.scss — component-scoped tokens for <Radio> and <RadioGroup>. Mirrors Checkbox structure: visually-hidden native input + painted ring + painted dot.
+:root {
+  // Layout
+  --radio-gap: var(--space-2);
+
+  // Ring (outer circle)
+  --radio-ring-bg: var(--color-bg);
+  --radio-ring-border-color: var(--color-border-strong);
+  --radio-ring-border-color-hover: var(--color-accent);
+  --radio-ring-border-color-checked: var(--color-accent);
+  --radio-ring-radius: var(--radius-full);
+
+  // Focus ring
+  --radio-ring-focus: var(--ring-accent);
+
+  // Dot (inner painted circle)
+  --radio-dot-bg-checked: var(--color-accent);
+  --radio-dot-radius: var(--radius-full);
+
+  // Disabled
+  --radio-ring-bg-disabled: var(--color-bg-subtle);
+  --radio-ring-border-color-disabled: var(--color-border);
+  --radio-dot-bg-checked-disabled: var(--color-fg-disabled);
+  --radio-label-fg-disabled: var(--color-fg-disabled);
+
+  // Invalid
+  --radio-ring-border-color-invalid: var(--color-danger);
+  --radio-dot-bg-checked-invalid: var(--color-danger);
+  --radio-ring-focus-invalid: var(--ring-danger);
+
+  // Size — ring diameter per size
+  --radio-ring-size-sm: var(--size-radio-sm);
+  --radio-ring-size-md: var(--size-radio-md);
+  --radio-ring-size-lg: var(--size-radio-lg);
+
+  // Size — dot diameter per size
+  --radio-dot-size-sm: var(--size-radio-dot-sm);
+  --radio-dot-size-md: var(--size-radio-dot-md);
+  --radio-dot-size-lg: var(--size-radio-dot-lg);
+
+  // Size — label font-size per size
+  --radio-label-font-size-sm: var(--font-size-sm);
+  --radio-label-font-size-md: var(--font-size-md);
+  --radio-label-font-size-lg: var(--font-size-lg);
+
+  // Label
+  --radio-label-line-height: var(--line-height-normal);
+
+  // RadioGroup — legend
+  --radio-group-legend-fg: var(--color-fg);
+  --radio-group-legend-font-size: var(--font-size-md);
+  --radio-group-legend-font-weight: var(--font-weight-semibold);
+  --radio-group-legend-margin-bottom: var(--space-2);
+  --radio-group-legend-fg-invalid: var(--color-danger);
+
+  // RadioGroup — items
+  --radio-group-gap-vertical: var(--space-2);
+  --radio-group-gap-horizontal: var(--space-4);
+}

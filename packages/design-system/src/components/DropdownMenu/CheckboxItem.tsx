@@ -54,7 +54,7 @@ export interface DropdownMenuCheckboxItemProps extends Omit<
  * `true` for single-toggle menus.
  *
  * **Checked-state visual**: when checked, the row is tinted with the info
- * surface color (`--color-badge-info-bg` / `--color-badge-info-fg`) and gets
+ * surface color (`--badge-bg-info` / `--badge-fg-info`) and gets
  * a 2px left accent (`--color-info`). No default glyph is rendered. Provide a
  * `<DropdownMenu.ItemIndicator>` as a direct child if you want an additional
  * indicator glyph alongside the tinted row.

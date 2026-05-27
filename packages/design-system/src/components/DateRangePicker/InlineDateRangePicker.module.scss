@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './DateRangePicker.tokens';
 
 // Inline range picker — mirrors the DateRangePicker popover content but
 // lives in flow (no popover, no portal). Wrapper carries no Rule-4
@@ -6,11 +7,11 @@
 .inline {
   display: inline-flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  gap: var(--date-range-picker-inline-gap);
+  padding: var(--date-range-picker-inline-padding);
+  background: var(--date-range-picker-inline-bg);
+  border: var(--border-width) solid var(--date-range-picker-inline-border-color);
+  border-radius: var(--date-range-picker-inline-radius);
 }
 
 // External chevron header — same shape as DateRangePicker.popoverHeader.
@@ -23,7 +24,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-1);
+  padding: 0 var(--date-range-picker-inline-header-padding-x);
 }
 
 .headerSpacer {
@@ -34,18 +35,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--space-6);
-  height: var(--space-6);
+  width: var(--date-range-picker-inline-nav-size);
+  height: var(--date-range-picker-inline-nav-size);
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
-  color: var(--color-fg-muted);
+  border-radius: var(--date-range-picker-inline-nav-radius);
+  color: var(--date-range-picker-inline-nav-fg);
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: var(--color-bg-subtle);
-    color: var(--color-fg);
+    background: var(--date-range-picker-inline-nav-bg-hover);
+    color: var(--date-range-picker-inline-nav-fg-hover);
   }
 
   &:focus-visible {
@@ -60,5 +61,5 @@
 // Two grids side-by-side with a small gutter.
 .grids {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--date-range-picker-grids-gap);
 }

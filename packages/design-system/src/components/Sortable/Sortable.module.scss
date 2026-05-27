@@ -1,3 +1,5 @@
+@use './Sortable.tokens';
+
 .list {
   // UA reset — <ol> ships with default browser margin and padding.
   // stylelint-disable-next-line property-disallowed-list -- UA reset for <ol> default margin
@@ -7,7 +9,7 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--sortable-list-gap);
 }
 
 .item {
@@ -21,7 +23,7 @@
 
 .item[data-dragging='true'] {
   cursor: grabbing;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--sortable-item-shadow-dragging);
   z-index: 1;
 }
 
@@ -29,23 +31,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: var(--sortable-handle-bg);
   border: var(--border-width) solid transparent;
-  border-radius: var(--radius-sm);
-  color: var(--color-fg-subtle);
+  border-radius: var(--sortable-handle-radius);
+  color: var(--sortable-handle-fg);
   cursor: grab;
-  padding: var(--space-1);
+  padding: var(--sortable-handle-padding);
   touch-action: none;
 
   &:hover {
-    color: var(--color-fg);
-    background: var(--color-bg-subtle);
+    color: var(--sortable-handle-fg-hover);
+    background: var(--sortable-handle-bg-hover);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+    border-color: var(--sortable-handle-border-color-focus);
+    box-shadow: 0 0 0 var(--ring-width) var(--sortable-handle-ring-focus);
   }
 }
 

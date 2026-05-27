@@ -1,17 +1,19 @@
+@use './ColorPicker.tokens';
+
 .panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--color-picker-panel-gap);
+  padding: var(--color-picker-panel-padding);
   width: 240px;
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  background: var(--color-picker-panel-bg);
+  border: var(--border-width) solid var(--color-picker-panel-border-color);
+  border-radius: var(--color-picker-panel-radius);
+  box-shadow: var(--color-picker-panel-shadow);
 }
 
 .panelDisabled {
-  opacity: var(--opacity-disabled);
+  opacity: var(--color-picker-panel-opacity-disabled);
 
   // CSS keyword — disabled panel is non-interactive at the wrapper level too.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
@@ -21,7 +23,7 @@
 .svSquare {
   position: relative;
   aspect-ratio: 1;
-  border-radius: var(--radius-md);
+  border-radius: var(--color-picker-sv-radius);
   overflow: hidden;
 
   // CSS keyword — crosshair cursor signals 2D pick affordance.
@@ -55,7 +57,7 @@
 }
 
 .svSquare:focus-visible {
-  outline: var(--border-width-emphasis) solid var(--color-accent);
+  outline: var(--border-width-emphasis) solid var(--color-picker-sv-focus-color);
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
   outline-offset: 2px;
@@ -132,7 +134,7 @@
 .presets {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(24px, 1fr));
-  gap: var(--space-2);
+  gap: var(--color-picker-presets-gap);
 }
 
 .presetSwatch {
@@ -142,8 +144,8 @@
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   padding: 0;
   aspect-ratio: 1;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--color-picker-preset-border-color);
+  border-radius: var(--color-picker-preset-radius);
 
   // CSS keyword — swatches are clickable.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
@@ -152,7 +154,7 @@
 }
 
 .presetSwatch:focus-visible {
-  outline: var(--border-width-emphasis) solid var(--color-accent);
+  outline: var(--border-width-emphasis) solid var(--color-picker-preset-focus-color);
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
   outline-offset: 2px;
@@ -162,12 +164,12 @@
   // CSS keyword.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: not-allowed;
-  opacity: var(--opacity-disabled);
+  opacity: var(--color-picker-preset-opacity-disabled);
 }
 
 .presetSwatchSelected {
   // Inset ring + check-mark via ::after.
-  box-shadow: inset 0 0 0 2px var(--color-accent);
+  box-shadow: inset 0 0 0 2px var(--color-picker-preset-selected-ring-color);
 }
 
 .presetSwatchSelected::after {
@@ -191,14 +193,14 @@
 .trigger {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  gap: var(--color-picker-trigger-gap);
+  padding: var(--color-picker-trigger-padding-y) var(--color-picker-trigger-padding-x);
+  background: var(--color-picker-trigger-bg);
+  color: var(--color-picker-trigger-fg);
+  border: var(--border-width) solid var(--color-picker-trigger-border-color);
+  border-radius: var(--color-picker-trigger-radius);
   font-family: inherit;
-  font-size: var(--font-size-sm);
+  font-size: var(--color-picker-trigger-font-size);
   line-height: 1;
 
   // CSS keyword — clickable trigger.
@@ -210,11 +212,11 @@
 }
 
 .trigger:hover:not(:disabled) {
-  border-color: var(--color-border-emphasis);
+  border-color: var(--color-picker-trigger-border-color-hover);
 }
 
 .trigger:focus-visible {
-  outline: var(--border-width-emphasis) solid var(--color-accent);
+  outline: var(--border-width-emphasis) solid var(--color-picker-trigger-focus-color);
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
   outline-offset: 2px;
@@ -224,14 +226,14 @@
   // CSS keyword.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: not-allowed;
-  opacity: var(--opacity-disabled);
+  opacity: var(--color-picker-trigger-opacity-disabled);
 }
 
 .triggerSwatch {
   width: 16px;
   height: 16px;
-  border-radius: var(--radius-sm);
-  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--color-picker-trigger-swatch-radius);
+  border: var(--border-width) solid var(--color-picker-trigger-swatch-border-color);
   flex-shrink: 0;
 }
 
@@ -244,7 +246,7 @@
 }
 
 .disabled {
-  opacity: var(--opacity-disabled);
+  opacity: var(--color-picker-opacity-disabled);
 
   // CSS keyword — wrapper intercepts clicks for the custom-trigger case
   // where the consumer's button doesn't visually communicate disabled.

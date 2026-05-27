@@ -1,0 +1,134 @@
+// Select.tokens.scss — component-scoped tokens for <Select> (trigger + listbox + chips + state rows). Defaults preserve byte-identical visuals.
+:root {
+  // Trigger
+  --select-trigger-padding-x: var(--space-3);
+  --select-trigger-fg: var(--color-fg);
+  --select-trigger-bg: var(--color-bg);
+  --select-trigger-border-color: var(--color-border);
+  --select-trigger-radius: var(--radius-md);
+  --select-trigger-font-size: var(--font-size-md);
+
+  // Trigger — focus
+  --select-trigger-border-color-focus: var(--color-accent);
+  --select-trigger-ring-focus: var(--ring-accent);
+
+  // Trigger — disabled (native [disabled] attribute on button)
+  --select-trigger-fg-disabled: var(--color-fg-disabled);
+  --select-trigger-bg-disabled: var(--color-bg-subtle);
+
+  // Trigger — invalid
+  --select-trigger-border-color-invalid: var(--color-danger);
+  --select-trigger-ring-invalid: var(--ring-danger);
+
+  // Trigger — disabled (class-modifier path)
+  --select-trigger-fg-disabled-class: var(--color-fg-disabled);
+  --select-trigger-bg-disabled-class: var(--color-bg-subtle);
+
+  // Trigger — readOnly
+  --select-trigger-bg-read-only: var(--color-bg-subtle);
+
+  // Trigger — chevron / clear icons
+  --select-chevron-fg: var(--color-fg-muted);
+  --select-chevron-right: var(--space-3);
+  --select-clear-fg: var(--color-fg-muted);
+  --select-clear-fg-hover: var(--color-fg);
+  --select-clear-bg-hover: var(--color-bg-muted);
+  --select-clear-radius: var(--radius-sm);
+  --select-clear-right: var(--space-6);
+  --select-clear-size: var(--space-4);
+
+  // Right-side reservation for chevron + clear inside the trigger
+  --select-trigger-padding-right-reserved: var(--space-8);
+
+  // Trigger sizes
+  --select-trigger-height-sm: var(--size-sm);
+  --select-trigger-height-md: var(--size-md);
+  --select-trigger-height-lg: var(--size-lg);
+  --select-trigger-padding-x-sm: var(--space-2);
+  --select-trigger-padding-x-md: var(--space-3);
+  --select-trigger-padding-x-lg: var(--space-3);
+  --select-trigger-font-size-sm: var(--font-size-sm);
+  --select-trigger-font-size-md: var(--font-size-md);
+  --select-trigger-font-size-lg: var(--font-size-lg);
+
+  // Placeholder text
+  --select-placeholder-fg: var(--color-fg-muted);
+
+  // Listbox panel
+  --select-listbox-bg: var(--color-bg);
+  --select-listbox-border-color: var(--color-border);
+  --select-listbox-radius: var(--radius-md);
+  --select-listbox-shadow: var(--shadow-md);
+  --select-listbox-padding: var(--space-1);
+
+  // Listbox — group header
+  --select-group-header-padding-y: var(--space-2);
+  --select-group-header-padding-x: var(--space-3);
+  --select-group-header-font-size: var(--font-size-xs);
+  --select-group-header-fg: var(--color-fg-muted);
+  --select-group-header-letter-spacing: var(--letter-spacing-caps);
+
+  // Options
+  --select-option-padding-y: var(--space-2);
+  --select-option-padding-x: var(--space-3);
+  --select-option-font-size: var(--font-size-md);
+  --select-option-fg: var(--color-fg);
+  --select-option-radius: var(--radius-sm);
+  --select-option-bg-active: var(--color-bg-muted);
+  --select-option-bg-selected: var(--color-accent-subtle-bg);
+  --select-option-marker-color-selected: var(--color-accent);
+  --select-option-marker-width-selected: var(--border-width-emphasis);
+  --select-option-fg-disabled: var(--color-fg-disabled);
+  --select-option-fg-create: var(--color-accent);
+
+  // Popover search input
+  --select-popover-search-padding-y: var(--space-2);
+  --select-popover-search-padding-x: var(--space-3);
+  --select-popover-search-font-size: var(--font-size-md);
+  --select-popover-search-fg: var(--color-fg);
+  --select-popover-search-bg: var(--color-bg);
+  --select-popover-search-border-color: var(--color-border);
+  --select-popover-search-placeholder-fg: var(--color-fg-muted);
+  --select-popover-search-border-color-focus: var(--color-accent);
+
+  // Chips trigger + chip
+  --select-chips-padding-y: var(--space-1);
+  --select-chips-padding-x: var(--space-2);
+  --select-chips-gap: var(--space-1);
+  --select-chip-gap: var(--space-1);
+  --select-chip-padding-y: var(--space-1);
+  --select-chip-padding-x: var(--space-2);
+  --select-chip-font-size: var(--font-size-sm);
+  --select-chip-fg: var(--badge-fg-neutral);
+  --select-chip-bg: var(--badge-bg-neutral);
+  --select-chip-radius: var(--radius-sm);
+  --select-chip-remove-radius: var(--radius-sm);
+  --select-chip-remove-fg-hover: var(--color-danger);
+  --select-chip-remove-bg-hover: var(--color-bg-danger-subtle);
+  --select-chip-fg-disabled: var(--color-fg-disabled);
+
+  // State rows (loading / error / empty)
+  --select-state-row-gap: var(--space-2);
+  --select-state-row-padding: var(--space-3);
+  --select-state-row-font-size: var(--font-size-sm);
+  --select-state-row-fg: var(--color-fg-muted);
+
+  // Spinner
+  --select-spinner-size: var(--size-spinner);
+  --select-spinner-border-color: var(--color-border-strong);
+  --select-spinner-border-color-top: var(--color-accent);
+  --select-spinner-radius: var(--radius-full);
+
+  // Retry button
+  --select-retry-padding-y: var(--space-1);
+  --select-retry-padding-x: var(--space-2);
+  --select-retry-font-size: var(--font-size-sm);
+  --select-retry-fg: var(--color-accent);
+  --select-retry-border-color: var(--color-border);
+  --select-retry-radius: var(--radius-sm);
+  --select-retry-bg-hover: var(--color-bg-muted);
+
+  // Animation
+  --select-listbox-anim-opacity-from: var(--opacity-hidden);
+  --select-listbox-anim-opacity-to: var(--opacity-visible);
+}

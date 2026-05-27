@@ -1,14 +1,16 @@
+@use './ImageCrop.tokens';
+
 .root {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--image-crop-gap);
   width: 100%;
 }
 
 .viewport {
   position: relative;
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-md);
+  background: var(--image-crop-viewport-bg);
+  border-radius: var(--image-crop-viewport-radius);
   overflow: hidden;
 
   // Reserve canvas space before image loads so the layout doesn't shift.
@@ -21,7 +23,7 @@
 }
 
 .viewport:focus-visible {
-  outline: var(--border-width-emphasis) solid var(--color-accent);
+  outline: var(--border-width-emphasis) solid var(--image-crop-viewport-focus-color);
 
   // CSS keyword; offset the outline to keep it visible.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
@@ -63,7 +65,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  border: var(--border-width) solid var(--color-accent);
+  border: var(--border-width) solid var(--image-crop-cropbox-border-color);
 
   // The box-shadow trick paints a dim overlay everywhere OUTSIDE the box
   // without an extra DOM element. The 9999px spread covers the viewport.
@@ -89,10 +91,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  color: var(--color-danger);
-  font-size: var(--font-size-sm);
+  gap: var(--image-crop-error-gap);
+  padding: var(--image-crop-error-padding);
+  color: var(--image-crop-error-fg);
+  font-size: var(--image-crop-error-font-size);
 
   // CSS keyword — text alignment.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
@@ -104,7 +106,7 @@
 }
 
 .disabled .viewport {
-  opacity: var(--opacity-disabled);
+  opacity: var(--image-crop-opacity-disabled);
 }
 
 .disabled .image {

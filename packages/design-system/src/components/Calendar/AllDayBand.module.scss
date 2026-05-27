@@ -1,16 +1,18 @@
+@use './Calendar.tokens';
+
 .band {
   display: grid;
-  gap: var(--space-1);
-  padding: var(--space-1) 0;
-  border-bottom: var(--border-width) solid var(--color-border);
-  background: var(--color-bg);
+  gap: var(--calendar-all-day-band-gap);
+  padding: var(--calendar-all-day-band-padding-y) 0;
+  border-bottom: var(--border-width) solid var(--calendar-border-color);
+  background: var(--calendar-all-day-band-bg);
 }
 
 .gutter {
-  border-right: var(--border-width) solid var(--color-border);
+  border-right: var(--border-width) solid var(--calendar-border-color);
 }
 
 .barSlot {
   min-width: 0;
-  padding: 0 var(--space-1);
+  padding: 0 var(--calendar-all-day-band-bar-slot-padding-x);
 }
