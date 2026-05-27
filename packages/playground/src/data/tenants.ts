@@ -219,6 +219,341 @@ export function getTenant(slug: string): Tenant | undefined {
   return tenants.find((t) => t.slug === slug);
 }
 
+// ─── Members ──────────────────────────────────────────────────────────────
+//
+// Per-tenant membership snapshot (truncated — real tenants have many more;
+// the detail page shows "Showing 5 of N" + a stub pagination).
+
+export type TenantRole = 'owner' | 'admin' | 'member';
+
+export interface TenantMember {
+  id: string;
+  name: string;
+  email: string;
+  role: TenantRole;
+  acceptedAt: string | null;
+  lastActiveAt: string | null;
+}
+
+export const roleLabel: Record<TenantRole, string> = {
+  owner: 'Owner',
+  admin: 'Admin',
+  member: 'Member',
+};
+
+export const roleTone: Record<TenantRole, BadgeTone> = {
+  owner: 'purple',
+  admin: 'info',
+  member: 'neutral',
+};
+
+const tenantMembers: Record<string, TenantMember[]> = {
+  acme: [
+    {
+      id: 'u-acme-1',
+      name: 'Olivia Chen',
+      email: 'olivia@acme.com',
+      role: 'owner',
+      acceptedAt: '2025-09-04T12:05:00Z',
+      lastActiveAt: '2026-05-27T13:52:00Z',
+    },
+    {
+      id: 'u-acme-2',
+      name: 'Marcus Hale',
+      email: 'marcus@acme.com',
+      role: 'admin',
+      acceptedAt: '2025-09-10T09:14:00Z',
+      lastActiveAt: '2026-05-27T11:20:00Z',
+    },
+    {
+      id: 'u-acme-3',
+      name: 'Priya Shah',
+      email: 'priya@acme.com',
+      role: 'member',
+      acceptedAt: '2025-10-22T16:30:00Z',
+      lastActiveAt: '2026-05-26T18:00:00Z',
+    },
+    {
+      id: 'u-acme-4',
+      name: 'Jonas Weber',
+      email: 'jonas@acme.com',
+      role: 'member',
+      acceptedAt: '2026-01-15T08:05:00Z',
+      lastActiveAt: '2026-05-25T09:30:00Z',
+    },
+    {
+      id: 'u-acme-5',
+      name: 'Sara Lindgren',
+      email: 'sara@acme.com',
+      role: 'member',
+      acceptedAt: '2026-03-08T11:00:00Z',
+      lastActiveAt: '2026-05-27T08:11:00Z',
+    },
+  ],
+  'umbrella-corp': [
+    {
+      id: 'u-umb-1',
+      name: 'Albert Wesker',
+      email: 'a.wesker@umbrella.com',
+      role: 'owner',
+      acceptedAt: '2024-11-21T09:35:00Z',
+      lastActiveAt: '2026-05-27T12:00:00Z',
+    },
+    {
+      id: 'u-umb-2',
+      name: 'Ada Wong',
+      email: 'ada@umbrella.com',
+      role: 'admin',
+      acceptedAt: '2024-11-22T10:00:00Z',
+      lastActiveAt: '2026-05-27T09:48:00Z',
+    },
+    {
+      id: 'u-umb-3',
+      name: 'Leon Kennedy',
+      email: 'l.kennedy@umbrella.com',
+      role: 'member',
+      acceptedAt: '2024-12-04T14:22:00Z',
+      lastActiveAt: '2026-05-27T07:10:00Z',
+    },
+    {
+      id: 'u-umb-4',
+      name: 'Jill Valentine',
+      email: 'jill@umbrella.com',
+      role: 'member',
+      acceptedAt: '2025-01-17T08:00:00Z',
+      lastActiveAt: '2026-05-26T16:45:00Z',
+    },
+    {
+      id: 'u-umb-5',
+      name: 'Chris Redfield',
+      email: 'chris@umbrella.com',
+      role: 'member',
+      acceptedAt: null, // invited but never accepted — NOT counted toward membersCount
+      lastActiveAt: null,
+    },
+  ],
+  'northwind-trading': [
+    {
+      id: 'u-nw-1',
+      name: 'Margaret Peacock',
+      email: 'margaret@northwind.com',
+      role: 'owner',
+      acceptedAt: '2025-03-12T14:15:00Z',
+      lastActiveAt: '2026-05-23T18:00:00Z',
+    },
+    {
+      id: 'u-nw-2',
+      name: 'Nancy Davolio',
+      email: 'nancy@northwind.com',
+      role: 'admin',
+      acceptedAt: '2025-03-13T10:00:00Z',
+      lastActiveAt: '2026-05-22T15:30:00Z',
+    },
+    {
+      id: 'u-nw-3',
+      name: 'Andrew Fuller',
+      email: 'andrew@northwind.com',
+      role: 'member',
+      acceptedAt: '2025-04-01T09:00:00Z',
+      lastActiveAt: '2026-05-20T11:15:00Z',
+    },
+  ],
+  hooli: [
+    {
+      id: 'u-hooli-1',
+      name: 'Gavin Belson',
+      email: 'gavin@hooli.io',
+      role: 'owner',
+      acceptedAt: '2025-07-01T10:05:00Z',
+      lastActiveAt: '2026-05-27T13:38:00Z',
+    },
+    {
+      id: 'u-hooli-2',
+      name: 'Hoover',
+      email: 'hoover@hooli.io',
+      role: 'admin',
+      acceptedAt: '2025-07-02T08:30:00Z',
+      lastActiveAt: '2026-05-27T12:50:00Z',
+    },
+    {
+      id: 'u-hooli-3',
+      name: 'Patrice Smith',
+      email: 'patrice@hooli.io',
+      role: 'member',
+      acceptedAt: '2025-08-14T13:00:00Z',
+      lastActiveAt: '2026-05-27T10:00:00Z',
+    },
+  ],
+};
+
+export function getTenantMembers(slug: string): TenantMember[] {
+  return tenantMembers[slug] ?? [];
+}
+
+// ─── Invitations ──────────────────────────────────────────────────────────
+
+export type InvitationState = 'pending' | 'expired';
+
+export interface TenantInvitation {
+  id: string;
+  email: string;
+  role: TenantRole;
+  invitedBy: string;
+  sentAt: string;
+  expiresAt: string;
+}
+
+const tenantInvitations: Record<string, TenantInvitation[]> = {
+  'umbrella-corp': [
+    {
+      id: 'inv-umb-1',
+      email: 'rebecca@umbrella.com',
+      role: 'member',
+      invitedBy: 'Ada Wong',
+      sentAt: '2026-05-25T10:00:00Z',
+      expiresAt: '2026-06-01T10:00:00Z',
+    },
+    {
+      id: 'inv-umb-2',
+      email: 'sherry@umbrella.com',
+      role: 'member',
+      invitedBy: 'Ada Wong',
+      sentAt: '2026-05-24T15:30:00Z',
+      expiresAt: '2026-05-31T15:30:00Z',
+    },
+    {
+      id: 'inv-umb-3',
+      email: 'claire@umbrella.com',
+      role: 'admin',
+      invitedBy: 'Albert Wesker',
+      sentAt: '2026-05-20T09:00:00Z',
+      expiresAt: '2026-05-27T09:00:00Z', // expires today
+    },
+  ],
+  hooli: [
+    {
+      id: 'inv-hooli-1',
+      email: 'jared@hooli.io',
+      role: 'member',
+      invitedBy: 'Gavin Belson',
+      sentAt: '2026-05-26T11:00:00Z',
+      expiresAt: '2026-06-02T11:00:00Z',
+    },
+    {
+      id: 'inv-hooli-2',
+      email: 'big-head@hooli.io',
+      role: 'member',
+      invitedBy: 'Hoover',
+      sentAt: '2026-05-22T16:00:00Z',
+      expiresAt: '2026-05-29T16:00:00Z',
+    },
+  ],
+  initech: [
+    {
+      id: 'inv-init-1',
+      email: 'peter@initech.co',
+      role: 'owner',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-26T14:05:00Z',
+      expiresAt: '2026-06-02T14:05:00Z',
+    },
+  ],
+  globex: [
+    {
+      id: 'inv-glob-1',
+      email: 'hank@globex.com',
+      role: 'owner',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T13:40:00Z',
+      expiresAt: '2026-06-03T13:40:00Z',
+    },
+    {
+      id: 'inv-glob-2',
+      email: 'tina@globex.com',
+      role: 'admin',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T13:41:00Z',
+      expiresAt: '2026-06-03T13:41:00Z',
+    },
+    {
+      id: 'inv-glob-3',
+      email: 'milhouse@globex.com',
+      role: 'member',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T13:42:00Z',
+      expiresAt: '2026-06-03T13:42:00Z',
+    },
+    {
+      id: 'inv-glob-4',
+      email: 'apu@globex.com',
+      role: 'member',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T13:43:00Z',
+      expiresAt: '2026-06-03T13:43:00Z',
+    },
+    {
+      id: 'inv-glob-5',
+      email: 'moe@globex.com',
+      role: 'member',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T13:44:00Z',
+      expiresAt: '2026-06-03T13:44:00Z',
+    },
+  ],
+  vandelay: [
+    {
+      id: 'inv-van-1',
+      email: 'george@vandelay.com',
+      role: 'owner',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T13:55:00Z',
+      expiresAt: '2026-06-03T13:55:00Z',
+    },
+  ],
+  'stark-industries': [
+    {
+      id: 'inv-stark-1',
+      email: 'tony@stark.com',
+      role: 'owner',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T13:58:00Z',
+      expiresAt: '2026-06-03T13:58:00Z',
+    },
+    {
+      id: 'inv-stark-2',
+      email: 'pepper@stark.com',
+      role: 'admin',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T13:59:00Z',
+      expiresAt: '2026-06-03T13:59:00Z',
+    },
+    {
+      id: 'inv-stark-3',
+      email: 'happy@stark.com',
+      role: 'member',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T14:00:00Z',
+      expiresAt: '2026-06-03T14:00:00Z',
+    },
+    {
+      id: 'inv-stark-4',
+      email: 'rhodey@stark.com',
+      role: 'member',
+      invitedBy: 'platform-admin',
+      sentAt: '2026-05-27T14:01:00Z',
+      expiresAt: '2026-06-03T14:01:00Z',
+    },
+  ],
+};
+
+export function getTenantInvitations(slug: string): TenantInvitation[] {
+  return tenantInvitations[slug] ?? [];
+}
+
+export function invitationState(iso: string): InvitationState {
+  return new Date(iso).getTime() <= NOW ? 'expired' : 'pending';
+}
+
 /** Format a GB number for display ("0.48 GB", "10 GB"). Returns "—" for null. */
 export function formatGb(gb: number | null): string {
   if (gb == null) return '—';
