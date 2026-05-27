@@ -10,6 +10,7 @@ import {
   DropdownMenu,
   EmptyState,
   Input,
+  OptionsPicker,
   Page,
   PageHeader,
   Pagination,
@@ -24,43 +25,31 @@ import {
   tenants as ALL_TENANTS,
   stateTone,
   stateLabel,
+  stateOptions,
+  sortOptions,
+  sortLabel,
   tenantActions,
   actionLabel,
   relativeTime,
   shortDate,
   formatGb,
   usagePercent,
-  type TenantState,
 } from '../../../data/tenants';
 import { CrossLinks } from '../../shared/CrossLinks';
 
-type StateFilterValue = TenantState | 'all';
-
-const STATE_FILTER_OPTIONS: { value: StateFilterValue; label: string }[] = [
-  { value: 'all', label: 'All states' },
-  { value: 'active', label: 'Active' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'queued', label: 'Queued' },
-  { value: 'provisioning', label: 'Provisioning' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'suspended', label: 'Suspended' },
-];
-
 export function Tenants() {
   const [search, setSearch] = useState('');
-  const [stateFilter, setStateFilter] = useState<StateFilterValue>('all');
+  const [selectedStates, setSelectedStates] = useState<string[]>([]);
+  const [sortKey, setSortKey] = useState<string | null>('last-active');
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     return ALL_TENANTS.filter((t) => {
-      if (stateFilter !== 'all' && t.state !== stateFilter) return false;
+      if (selectedStates.length > 0 && !selectedStates.includes(t.state)) return false;
       if (q && !t.name.toLowerCase().includes(q) && !t.slug.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [search, stateFilter]);
-
-  const stateFilterLabel =
-    STATE_FILTER_OPTIONS.find((o) => o.value === stateFilter)?.label ?? 'All states';
+  }, [search, selectedStates]);
 
   return (
     <Page>
@@ -112,38 +101,24 @@ export function Tenants() {
             aria-label="Search tenants"
           />
           <Cluster gap="sm" wrap={false}>
-            <DropdownMenu>
-              <DropdownMenu.Trigger>
+            <OptionsPicker selected={selectedStates} onApply={setSelectedStates}>
+              <OptionsPicker.Trigger>
                 <Button variant="secondary" size="sm">
-                  State: {stateFilterLabel} <ChevronDown size={12} />
+                  State
+                  {selectedStates.length > 0 ? ` (${selectedStates.length})` : ''}
+                  <ChevronDown size={12} />
                 </Button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Content>
-                <DropdownMenu.RadioGroup
-                  value={stateFilter}
-                  onValueChange={(v) => setStateFilter(v as StateFilterValue)}
-                >
-                  {STATE_FILTER_OPTIONS.map((o) => (
-                    <DropdownMenu.RadioItem key={o.value} value={o.value}>
-                      {o.label}
-                    </DropdownMenu.RadioItem>
-                  ))}
-                </DropdownMenu.RadioGroup>
-              </DropdownMenu.Content>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenu.Trigger>
+              </OptionsPicker.Trigger>
+              <OptionsPicker.Content label="Filter by state" options={stateOptions} />
+            </OptionsPicker>
+            <OptionsPicker mode="single" selected={sortKey} onApply={setSortKey}>
+              <OptionsPicker.Trigger>
                 <Button variant="secondary" size="sm">
-                  Sort: Last active <ChevronDown size={12} />
+                  Sort: {sortKey ? sortLabel[sortKey] : 'None'} <ChevronDown size={12} />
                 </Button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Content>
-                <DropdownMenu.Item onSelect={() => {}}>Last active</DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={() => {}}>Name (A→Z)</DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={() => {}}>Created (newest)</DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={() => {}}>Members</DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu>
+              </OptionsPicker.Trigger>
+              <OptionsPicker.Content label="Sort by" options={sortOptions} />
+            </OptionsPicker>
           </Cluster>
         </Cluster>
       </Card>
@@ -158,7 +133,7 @@ export function Tenants() {
                 variant="secondary"
                 onClick={() => {
                   setSearch('');
-                  setStateFilter('all');
+                  setSelectedStates([]);
                 }}
               >
                 Clear filters

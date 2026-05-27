@@ -1,4 +1,4 @@
-import type { BadgeTone } from '@eocrm/design-system';
+import type { BadgeTone, OptionsPickerOption } from '@eocrm/design-system';
 
 export type TenantState = 'pending' | 'queued' | 'provisioning' | 'active' | 'failed' | 'suspended';
 
@@ -37,6 +37,29 @@ export const stateLabel: Record<TenantState, string> = {
   provisioning: 'Provisioning',
   failed: 'Failed',
   suspended: 'Suspended',
+};
+
+export const stateOptions: OptionsPickerOption[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'queued', label: 'Queued' },
+  { value: 'provisioning', label: 'Provisioning' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'suspended', label: 'Suspended' },
+];
+
+export const sortOptions: OptionsPickerOption[] = [
+  { value: 'last-active', label: 'Last active' },
+  { value: 'name', label: 'Name (A→Z)' },
+  { value: 'created', label: 'Created (newest)' },
+  { value: 'members', label: 'Members' },
+];
+
+export const sortLabel: Record<string, string> = {
+  'last-active': 'Last active',
+  name: 'Name',
+  created: 'Created',
+  members: 'Members',
 };
 
 export const tenants: Tenant[] = [
