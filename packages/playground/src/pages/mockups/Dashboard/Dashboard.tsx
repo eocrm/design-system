@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Link,
+  PageHeader,
   PersonDisplay,
   Title,
   Text,
@@ -63,17 +64,17 @@ export function Dashboard() {
 
   return (
     <Stack gap="lg">
-      <Cluster justify="between" align="end" gap="md">
-        <Stack gap="xs">
-          <Title order={1}>Dashboard</Title>
-          <Text size="lg" tone="muted">
-            Good morning, Alex. Here's where your pipeline stands.
-          </Text>
-        </Stack>
-        <Button>
-          <UserPlus size={14} /> Add contact
-        </Button>
-      </Cluster>
+      <PageHeader>
+        <PageHeader.Title>Dashboard</PageHeader.Title>
+        <PageHeader.Subtitle>
+          Good morning, Alex. Here's where your pipeline stands.
+        </PageHeader.Subtitle>
+        <PageHeader.Actions>
+          <Button>
+            <UserPlus size={14} /> Add contact
+          </Button>
+        </PageHeader.Actions>
+      </PageHeader>
 
       <Grid columns={3} gap="md">
         {stats.map(({ label, value, delta, deltaTone, icon: Icon }) => (
