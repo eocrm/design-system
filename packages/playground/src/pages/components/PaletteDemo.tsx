@@ -1,10 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import {
-  Checkbox,
   Grid,
   PALETTE_COLORS,
   Stack,
-  Text,
   paletteTokens,
   type PaletteColor,
 } from '@eocrm/design-system';
@@ -68,25 +66,7 @@ function Swatch({ color }: { color: PaletteColor }) {
   );
 }
 
-const TEAM_COLORS: { team: string; color: PaletteColor }[] = [
-  { team: 'Marketing', color: 'violet' },
-  { team: 'Engineering', color: 'teal' },
-  { team: 'Sales', color: 'amber' },
-  { team: 'Support', color: 'rose' },
-  { team: 'Design', color: 'fuchsia' },
-  { team: 'Operations', color: 'slate' },
-];
-
 export function PaletteDemo() {
-  const [teams, setTeams] = useState<Record<string, boolean>>({
-    Marketing: true,
-    Engineering: true,
-    Sales: false,
-    Support: false,
-    Design: true,
-    Operations: false,
-  });
-
   return (
     <DemoLayout
       name="Palette"
@@ -153,35 +133,6 @@ events.map((e) => <CategoryChip color={eventPaletteColor(e)}>{e}</CategoryChip>)
                 {event}
               </CategoryChip>
             ))}
-          </Stack>
-        </InputExample>
-      </Example>
-
-      <Example
-        title='Checkbox color="…"'
-        description="The library Checkbox accepts a palette color and tints the checked / indeterminate fill. Focus ring and hover stay accent-colored."
-        code={`<Checkbox color="violet" label="Marketing" />
-<Checkbox color="teal" label="Engineering" />
-<Checkbox color="amber" label="Sales" />`}
-      >
-        <InputExample width={280}>
-          <Stack gap="sm" align="start">
-            {TEAM_COLORS.map(({ team, color }) => (
-              <Checkbox
-                key={team}
-                color={color}
-                label={team}
-                checked={teams[team] ?? false}
-                onChange={(next) => setTeams((prev) => ({ ...prev, [team]: next }))}
-              />
-            ))}
-            <Text size="sm" tone="muted">
-              Selected:{' '}
-              {Object.entries(teams)
-                .filter(([, v]) => v)
-                .map(([k]) => k)
-                .join(', ') || 'none'}
-            </Text>
           </Stack>
         </InputExample>
       </Example>
