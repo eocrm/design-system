@@ -93,70 +93,72 @@ export function Contacts() {
         </Cluster>
       </Card>
 
-      <Table hover>
-        <Table.Header>
-          <Table.Row>
-            <Table.HeaderCell>
-              <Checkbox aria-label="Select all" />
-            </Table.HeaderCell>
-            <Table.HeaderCell>Name</Table.HeaderCell>
-            <Table.HeaderCell>Company</Table.HeaderCell>
-            <Table.HeaderCell>Status</Table.HeaderCell>
-            <Table.HeaderCell>Owner</Table.HeaderCell>
-            <Table.HeaderCell>Last activity</Table.HeaderCell>
-            <Table.HeaderCell />
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {contacts.map((c) => (
-            <Table.Row key={c.id}>
-              <Table.Cell>
-                <Checkbox aria-label={`Select ${c.name}`} />
-              </Table.Cell>
-              <Table.Cell>
-                <PersonDisplay size="sm">
-                  <PersonDisplay.Avatar name={c.name} />
-                  <PersonDisplay.Name>
-                    <Link as={RouterLink} to={`/mockups/contacts/${c.id}`} variant="subtle">
-                      {c.name}
-                    </Link>
-                  </PersonDisplay.Name>
-                  <PersonDisplay.Description>{c.title}</PersonDisplay.Description>
-                </PersonDisplay>
-              </Table.Cell>
-              <Table.Cell>
-                <Stack gap="xs">
-                  <Text as="span" weight="medium">
-                    {c.company}
-                  </Text>
-                  <Text as="span" size="sm" tone="subtle">
-                    {c.email}
-                  </Text>
-                </Stack>
-              </Table.Cell>
-              <Table.Cell>
-                <Badge tone={statusTone[c.status]}>{statusLabel[c.status]}</Badge>
-              </Table.Cell>
-              <Table.Cell>
-                <PersonDisplay size="sm">
-                  <PersonDisplay.Avatar name={c.owner} />
-                  <PersonDisplay.Name>{c.owner}</PersonDisplay.Name>
-                </PersonDisplay>
-              </Table.Cell>
-              <Table.Cell>
-                <Text as="span" size="sm" tone="subtle">
-                  {c.lastActivity}
-                </Text>
-              </Table.Cell>
-              <Table.Cell align="end">
-                <Link as={RouterLink} to={`/mockups/contacts/${c.id}`}>
-                  View
-                </Link>
-              </Table.Cell>
+      <Card padding="none">
+        <Table hover>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>
+                <Checkbox aria-label="Select all" />
+              </Table.HeaderCell>
+              <Table.HeaderCell>Name</Table.HeaderCell>
+              <Table.HeaderCell>Company</Table.HeaderCell>
+              <Table.HeaderCell>Status</Table.HeaderCell>
+              <Table.HeaderCell>Owner</Table.HeaderCell>
+              <Table.HeaderCell>Last activity</Table.HeaderCell>
+              <Table.HeaderCell />
             </Table.Row>
-          ))}
-        </Table.Body>
-      </Table>
+          </Table.Header>
+          <Table.Body>
+            {contacts.map((c) => (
+              <Table.Row key={c.id}>
+                <Table.Cell>
+                  <Checkbox aria-label={`Select ${c.name}`} />
+                </Table.Cell>
+                <Table.Cell>
+                  <PersonDisplay size="sm">
+                    <PersonDisplay.Avatar name={c.name} />
+                    <PersonDisplay.Name>
+                      <Link as={RouterLink} to={`/mockups/contacts/${c.id}`} variant="subtle">
+                        {c.name}
+                      </Link>
+                    </PersonDisplay.Name>
+                    <PersonDisplay.Description>{c.title}</PersonDisplay.Description>
+                  </PersonDisplay>
+                </Table.Cell>
+                <Table.Cell>
+                  <Stack gap="xs">
+                    <Text as="span" weight="medium">
+                      {c.company}
+                    </Text>
+                    <Text as="span" size="sm" tone="subtle">
+                      {c.email}
+                    </Text>
+                  </Stack>
+                </Table.Cell>
+                <Table.Cell>
+                  <Badge tone={statusTone[c.status]}>{statusLabel[c.status]}</Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <PersonDisplay size="sm">
+                    <PersonDisplay.Avatar name={c.owner} />
+                    <PersonDisplay.Name>{c.owner}</PersonDisplay.Name>
+                  </PersonDisplay>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text as="span" size="sm" tone="subtle">
+                    {c.lastActivity}
+                  </Text>
+                </Table.Cell>
+                <Table.Cell align="end">
+                  <Link as={RouterLink} to={`/mockups/contacts/${c.id}`}>
+                    View
+                  </Link>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+      </Card>
 
       <CrossLinks kind="mockup" slug="contacts" />
     </Page>

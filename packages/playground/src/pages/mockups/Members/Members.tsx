@@ -81,141 +81,147 @@ export function Members() {
       {activeTab === 'active' && (
         <Stack gap="md">
           <Input placeholder="Search members by name or email…" />
+          <Card padding="none">
+            <Table hover>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>Name</Table.HeaderCell>
+                  <Table.HeaderCell>Job title</Table.HeaderCell>
+                  <Table.HeaderCell>Role</Table.HeaderCell>
+                  <Table.HeaderCell>Last active</Table.HeaderCell>
+                  <Table.HeaderCell />
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {members.map((m) => (
+                  <Table.Row key={m.id}>
+                    <Table.Cell>
+                      <PersonDisplay size="md">
+                        <PersonDisplay.Avatar
+                          name={m.name}
+                          status={m.online ? 'online' : undefined}
+                        />
+                        <PersonDisplay.Name>{m.name}</PersonDisplay.Name>
+                        <PersonDisplay.Description>{m.email}</PersonDisplay.Description>
+                      </PersonDisplay>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Text as="span" size="sm" tone="subtle">
+                        {m.jobTitle}
+                      </Text>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Badge tone={roleTone[m.role]}>{roleLabel[m.role]}</Badge>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Text as="span" size="sm" tone="subtle">
+                        {m.lastActive}
+                      </Text>
+                    </Table.Cell>
+                    <Table.Cell align="end">
+                      <DropdownMenu>
+                        <DropdownMenu.Trigger>
+                          <Button variant="ghost" size="sm" iconOnly aria-label="More">
+                            <MoreHorizontal size={16} />
+                          </Button>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Content align="end">
+                          <DropdownMenu.Item onSelect={() => {}}>View profile</DropdownMenu.Item>
+                          <DropdownMenu.Sub>
+                            <DropdownMenu.SubTrigger>Change role</DropdownMenu.SubTrigger>
+                            <DropdownMenu.SubContent>
+                              <DropdownMenu.RadioGroup value={m.role} onValueChange={() => {}}>
+                                <DropdownMenu.RadioItem value="admin">Admin</DropdownMenu.RadioItem>
+                                <DropdownMenu.RadioItem value="member">
+                                  Member
+                                </DropdownMenu.RadioItem>
+                                <DropdownMenu.RadioItem value="guest">Guest</DropdownMenu.RadioItem>
+                              </DropdownMenu.RadioGroup>
+                            </DropdownMenu.SubContent>
+                          </DropdownMenu.Sub>
+                          <DropdownMenu.Separator />
+                          <DropdownMenu.Item onSelect={() => {}} tone="danger">
+                            Remove member
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+          </Card>
+        </Stack>
+      )}
+
+      {activeTab === 'invites' && (
+        <Card padding="none">
           <Table hover>
             <Table.Header>
               <Table.Row>
-                <Table.HeaderCell>Name</Table.HeaderCell>
-                <Table.HeaderCell>Job title</Table.HeaderCell>
+                <Table.HeaderCell>Email</Table.HeaderCell>
                 <Table.HeaderCell>Role</Table.HeaderCell>
-                <Table.HeaderCell>Last active</Table.HeaderCell>
+                <Table.HeaderCell>Invited by</Table.HeaderCell>
+                <Table.HeaderCell>Sent</Table.HeaderCell>
                 <Table.HeaderCell />
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {members.map((m) => (
-                <Table.Row key={m.id}>
+              {pendingInvites.map((inv) => (
+                <Table.Row key={inv.id}>
                   <Table.Cell>
-                    <PersonDisplay size="md">
-                      <PersonDisplay.Avatar
-                        name={m.name}
-                        status={m.online ? 'online' : undefined}
-                      />
-                      <PersonDisplay.Name>{m.name}</PersonDisplay.Name>
-                      <PersonDisplay.Description>{m.email}</PersonDisplay.Description>
+                    <Cluster gap="sm" align="center" wrap={false}>
+                      {/* TODO: replace when <StatTile> ships (circular variant) — see components/TODO.md */}
+                      <span
+                        aria-hidden
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 'var(--size-md)',
+                          height: 'var(--size-md)',
+                          borderRadius: 'var(--radius-full)',
+                          background: 'var(--color-badge-warning-bg)',
+                          color: 'var(--color-badge-warning-fg)',
+                        }}
+                      >
+                        <MailPlus size={14} />
+                      </span>
+                      <Text as="span" weight="medium">
+                        {inv.email}
+                      </Text>
+                      <Badge tone="warning">Pending</Badge>
+                    </Cluster>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Badge tone={roleTone[inv.role]}>{roleLabel[inv.role]}</Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <PersonDisplay size="sm">
+                      <PersonDisplay.Avatar name={inv.invitedBy} />
+                      <PersonDisplay.Name>{inv.invitedBy}</PersonDisplay.Name>
                     </PersonDisplay>
                   </Table.Cell>
                   <Table.Cell>
                     <Text as="span" size="sm" tone="subtle">
-                      {m.jobTitle}
-                    </Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Badge tone={roleTone[m.role]}>{roleLabel[m.role]}</Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text as="span" size="sm" tone="subtle">
-                      {m.lastActive}
+                      {inv.invitedAt}
                     </Text>
                   </Table.Cell>
                   <Table.Cell align="end">
-                    <DropdownMenu>
-                      <DropdownMenu.Trigger>
-                        <Button variant="ghost" size="sm" iconOnly aria-label="More">
-                          <MoreHorizontal size={16} />
-                        </Button>
-                      </DropdownMenu.Trigger>
-                      <DropdownMenu.Content align="end">
-                        <DropdownMenu.Item onSelect={() => {}}>View profile</DropdownMenu.Item>
-                        <DropdownMenu.Sub>
-                          <DropdownMenu.SubTrigger>Change role</DropdownMenu.SubTrigger>
-                          <DropdownMenu.SubContent>
-                            <DropdownMenu.RadioGroup value={m.role} onValueChange={() => {}}>
-                              <DropdownMenu.RadioItem value="admin">Admin</DropdownMenu.RadioItem>
-                              <DropdownMenu.RadioItem value="member">Member</DropdownMenu.RadioItem>
-                              <DropdownMenu.RadioItem value="guest">Guest</DropdownMenu.RadioItem>
-                            </DropdownMenu.RadioGroup>
-                          </DropdownMenu.SubContent>
-                        </DropdownMenu.Sub>
-                        <DropdownMenu.Separator />
-                        <DropdownMenu.Item onSelect={() => {}} tone="danger">
-                          Remove member
-                        </DropdownMenu.Item>
-                      </DropdownMenu.Content>
-                    </DropdownMenu>
+                    <Cluster gap="xs" justify="end" wrap={false}>
+                      <Button variant="ghost" size="sm">
+                        Resend
+                      </Button>
+                      <Button variant="ghost" size="sm" iconOnly aria-label="Revoke invitation">
+                        <Trash2 size={14} />
+                      </Button>
+                    </Cluster>
                   </Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>
           </Table>
-        </Stack>
-      )}
-
-      {activeTab === 'invites' && (
-        <Table hover>
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell>Email</Table.HeaderCell>
-              <Table.HeaderCell>Role</Table.HeaderCell>
-              <Table.HeaderCell>Invited by</Table.HeaderCell>
-              <Table.HeaderCell>Sent</Table.HeaderCell>
-              <Table.HeaderCell />
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {pendingInvites.map((inv) => (
-              <Table.Row key={inv.id}>
-                <Table.Cell>
-                  <Cluster gap="sm" align="center" wrap={false}>
-                    {/* TODO: replace when <StatTile> ships (circular variant) — see components/TODO.md */}
-                    <span
-                      aria-hidden
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 'var(--size-md)',
-                        height: 'var(--size-md)',
-                        borderRadius: 'var(--radius-full)',
-                        background: 'var(--color-badge-warning-bg)',
-                        color: 'var(--color-badge-warning-fg)',
-                      }}
-                    >
-                      <MailPlus size={14} />
-                    </span>
-                    <Text as="span" weight="medium">
-                      {inv.email}
-                    </Text>
-                    <Badge tone="warning">Pending</Badge>
-                  </Cluster>
-                </Table.Cell>
-                <Table.Cell>
-                  <Badge tone={roleTone[inv.role]}>{roleLabel[inv.role]}</Badge>
-                </Table.Cell>
-                <Table.Cell>
-                  <PersonDisplay size="sm">
-                    <PersonDisplay.Avatar name={inv.invitedBy} />
-                    <PersonDisplay.Name>{inv.invitedBy}</PersonDisplay.Name>
-                  </PersonDisplay>
-                </Table.Cell>
-                <Table.Cell>
-                  <Text as="span" size="sm" tone="subtle">
-                    {inv.invitedAt}
-                  </Text>
-                </Table.Cell>
-                <Table.Cell align="end">
-                  <Cluster gap="xs" justify="end" wrap={false}>
-                    <Button variant="ghost" size="sm">
-                      Resend
-                    </Button>
-                    <Button variant="ghost" size="sm" iconOnly aria-label="Revoke invitation">
-                      <Trash2 size={14} />
-                    </Button>
-                  </Cluster>
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
+        </Card>
       )}
 
       <CrossLinks kind="mockup" slug="members" />
