@@ -220,6 +220,7 @@ export const MOCKUPS = [
       'DropdownMenu',
       'EmptyState',
       'Input',
+      'OptionsPicker',
       'Page',
       'PageHeader',
       'Pagination',
