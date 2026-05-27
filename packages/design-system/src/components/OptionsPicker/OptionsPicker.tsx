@@ -26,6 +26,7 @@ import { Radio } from '../Radio';
 import { Cluster } from '../Cluster';
 import { Input } from '../Input';
 import { Badge, type BadgeTone } from '../Badge';
+import { type PaletteColor } from '../../palette';
 import { Text } from '../Text';
 import styles from './OptionsPicker.module.scss';
 
@@ -52,6 +53,14 @@ export interface OptionsPickerGroup {
   options: OptionsPickerOption[];
   /** Colored dot tone for the group header. Default `'neutral'`. */
   tone?: BadgeTone;
+  /**
+   * Categorical palette color. When set, takes precedence over `tone`:
+   * the group header dot uses the palette color, AND every option's
+   * Checkbox in this group adopts the same palette color for its
+   * checked / indeterminate fill. Use to give each namespace its own
+   * visual identity (e.g., auth.* = blue, role.* = amber).
+   */
+  color?: PaletteColor;
   /** Right-side hint label (e.g., `"auth.*"`). Omitted → no hint renders. */
   hint?: string;
 }
@@ -570,12 +579,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                       aria-controls={g.options.map((o) => `${contentId}-opt-${o.value}`).join(' ')}
                       onClick={() => toggleGroup(g.options)}
                     >
-                      <Badge
-                        tone={g.tone ?? 'neutral'}
-                        dot="start"
-                        size="sm"
-                        className={styles.groupDot}
-                      />
+                      <GroupDot color={g.color} tone={g.tone} />
                       <Text size="xs" weight="semibold" className={styles.groupLabel}>
                         {g.label}
                       </Text>
@@ -587,12 +591,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                     </button>
                   ) : (
                     <div className={styles.groupHeader} role="presentation">
-                      <Badge
-                        tone={g.tone ?? 'neutral'}
-                        dot="start"
-                        size="sm"
-                        className={styles.groupDot}
-                      />
+                      <GroupDot color={g.color} tone={g.tone} />
                       <Text size="xs" weight="semibold" className={styles.groupLabel}>
                         {g.label}
                       </Text>
@@ -612,6 +611,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                       rowId={`${contentId}-opt-${opt.value}`}
                       focused={focusedValue === opt.value}
                       onToggle={toggle}
+                      color={g.color}
                     />
                   ))}
                 </div>
@@ -659,6 +659,27 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
   },
 );
 
+/**
+ * Group-header dot. Default path uses `<Badge tone>` (the legacy
+ * semantic-tone behavior). When a palette `color` is set on the group,
+ * render a custom palette-colored dot instead — the same saturated
+ * `--color-palette-<name>-fg` token used by the group's Checkboxes,
+ * so the header and the row fills match exactly.
+ */
+function GroupDot({ color, tone }: { color?: PaletteColor; tone?: BadgeTone }) {
+  if (color) {
+    return (
+      <span
+        aria-hidden="true"
+        className={styles.groupDot}
+        style={{ background: `var(--color-palette-${color}-fg)` }}
+        data-palette={color}
+      />
+    );
+  }
+  return <Badge tone={tone ?? 'neutral'} dot="start" size="sm" className={styles.groupDot} />;
+}
+
 interface OptionRowProps {
   option: OptionsPickerOption;
   checked: boolean;
@@ -666,9 +687,10 @@ interface OptionRowProps {
   rowId: string;
   focused: boolean;
   onToggle: (value: string) => void;
+  color?: PaletteColor;
 }
 
-function OptionRow({ option, checked, mode, rowId, focused, onToggle }: OptionRowProps) {
+function OptionRow({ option, checked, mode, rowId, focused, onToggle, color }: OptionRowProps) {
   const checkboxOnChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
   const radioOnChange = useCallback(() => onToggle(option.value), [onToggle, option.value]);
   // Click anywhere inside the row toggles — the inner Checkbox/Radio handles
@@ -694,6 +716,7 @@ function OptionRow({ option, checked, mode, rowId, focused, onToggle }: OptionRo
           checked={checked}
           onChange={checkboxOnChange}
           label={<Text size="sm">{option.label}</Text>}
+          color={color}
         />
       ) : (
         <Radio

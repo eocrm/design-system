@@ -19,7 +19,7 @@ const groupedOptions = [
   {
     id: 'auth',
     label: 'Authentication',
-    tone: 'success' as const,
+    color: 'blue' as const,
     hint: 'auth.*',
     options: [
       { value: 'auth.login_succeeded', label: 'login_succeeded' },
@@ -31,7 +31,7 @@ const groupedOptions = [
   {
     id: 'role',
     label: 'Roles',
-    tone: 'info' as const,
+    color: 'violet' as const,
     hint: 'role.*',
     options: [
       { value: 'role.assigned', label: 'assigned' },
@@ -42,7 +42,7 @@ const groupedOptions = [
   {
     id: 'invitation',
     label: 'Invitations',
-    tone: 'warning' as const,
+    color: 'amber' as const,
     hint: 'invitation.*',
     options: [
       { value: 'invitation.sent', label: 'sent' },
