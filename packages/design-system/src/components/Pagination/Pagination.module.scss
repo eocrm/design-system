@@ -1,22 +1,23 @@
 @use '../../styles/mixins' as *;
+@use './Pagination.tokens';
 
 .pagination {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--pagination-gap);
 }
 
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  color: var(--color-fg);
+  gap: var(--pagination-button-gap);
+  border: var(--border-width) solid var(--pagination-button-border-color);
+  border-radius: var(--pagination-button-radius);
+  background: var(--pagination-button-bg);
+  color: var(--pagination-button-fg);
   font-family: inherit;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--pagination-button-font-weight);
   cursor: pointer;
   user-select: none;
 
@@ -27,11 +28,11 @@
   // Same precedent as Stripe / Linear / GitHub pagination.
 
   &:hover:not(:disabled) {
-    background: var(--color-bg-muted);
+    background: var(--pagination-button-bg-hover);
   }
 
   &:active:not(:disabled) {
-    background: var(--color-bg-sunken);
+    background: var(--pagination-button-bg-active);
   }
 
   &:focus-visible {
@@ -40,33 +41,33 @@
 
   &:disabled {
     cursor: not-allowed;
-    color: var(--color-fg-disabled);
+    color: var(--pagination-button-fg-disabled);
   }
 }
 
 .pageButton {
-  min-width: var(--size-md);
-  height: var(--size-md);
+  min-width: var(--pagination-page-button-min-width-md);
+  height: var(--pagination-page-button-height-md);
   padding: 0;
 }
 
 .navButton {
-  height: var(--size-md);
-  padding: 0 var(--space-2);
+  height: var(--pagination-nav-button-height-md);
+  padding: 0 var(--pagination-nav-button-padding-x-md);
 }
 
 // Current-page button — accent palette. Override the `.button` defaults
 // AND `:disabled` (since current is rendered as disabled, but should look
 // "selected," not "unavailable").
 .current {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-accent-fg);
+  background: var(--pagination-current-bg);
+  border-color: var(--pagination-current-border-color);
+  color: var(--pagination-current-fg);
 
   &:disabled {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: var(--color-accent-fg);
+    background: var(--pagination-current-bg);
+    border-color: var(--pagination-current-border-color);
+    color: var(--pagination-current-fg);
     cursor: default;
   }
 }
@@ -75,42 +76,42 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: var(--size-md);
-  height: var(--size-md);
-  color: var(--color-fg-muted);
+  min-width: var(--pagination-ellipsis-min-width-md);
+  height: var(--pagination-ellipsis-height-md);
+  color: var(--pagination-ellipsis-fg);
   user-select: none;
 }
 
 // Size modifiers — scale height + min-width + horizontal padding.
 .size-sm {
-  font-size: var(--font-size-sm);
+  font-size: var(--pagination-font-size-sm);
 
   .pageButton,
   .ellipsis {
-    min-width: var(--size-sm);
-    height: var(--size-sm);
+    min-width: var(--pagination-page-button-min-width-sm);
+    height: var(--pagination-page-button-height-sm);
   }
 
   .navButton {
-    height: var(--size-sm);
+    height: var(--pagination-nav-button-height-sm);
   }
 }
 
 .size-md {
-  font-size: var(--font-size-md);
+  font-size: var(--pagination-font-size-md);
 }
 
 .size-lg {
-  font-size: var(--font-size-md);
+  font-size: var(--pagination-font-size-lg);
 
   .pageButton,
   .ellipsis {
-    min-width: var(--size-lg);
-    height: var(--size-lg);
+    min-width: var(--pagination-page-button-min-width-lg);
+    height: var(--pagination-page-button-height-lg);
   }
 
   .navButton {
-    height: var(--size-lg);
-    padding: 0 var(--space-3);
+    height: var(--pagination-nav-button-height-lg);
+    padding: 0 var(--pagination-nav-button-padding-x-lg);
   }
 }

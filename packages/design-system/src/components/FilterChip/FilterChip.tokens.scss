@@ -1,0 +1,25 @@
+// FilterChip.tokens.scss — Component-scoped tokens for <FilterChip>. The
+// pill chrome (bg/border/radius/padding) plus the dismiss-button hover state
+// are tokenized here. The per-tone value-dot colors are driven by a
+// [data-tone] attribute selector in FilterChip.module.scss and intentionally
+// stay on palette tokens — overriding the dot color is not a chip-level
+// concern.
+:root {
+  // Chip pill
+  --filter-chip-gap: var(--space-2);
+  --filter-chip-padding-y: var(--space-1);
+  --filter-chip-padding-x: var(--space-2);
+  --filter-chip-border-color: var(--color-border);
+  --filter-chip-radius: var(--radius-sm);
+  --filter-chip-bg: var(--color-bg);
+
+  // Value cluster (label + dot + value text)
+  --filter-chip-value-gap: var(--space-2);
+
+  // Dismiss button
+  --filter-chip-dismiss-padding: var(--space-05);
+  --filter-chip-dismiss-radius: var(--radius-sm);
+  --filter-chip-dismiss-fg: var(--color-fg-subtle);
+  --filter-chip-dismiss-bg-hover: var(--color-bg-muted);
+  --filter-chip-dismiss-fg-hover: var(--color-fg);
+}

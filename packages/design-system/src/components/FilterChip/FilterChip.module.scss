@@ -1,13 +1,14 @@
 @use '../../styles/mixins' as *;
+@use './FilterChip.tokens';
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
+  gap: var(--filter-chip-gap);
+  padding: var(--filter-chip-padding-y) var(--filter-chip-padding-x);
+  border: var(--border-width) solid var(--filter-chip-border-color);
+  border-radius: var(--filter-chip-radius);
+  background: var(--filter-chip-bg);
 }
 
 .label {
@@ -18,7 +19,7 @@
 .value {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--filter-chip-value-gap);
 }
 
 .dot {
@@ -62,16 +63,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-05);
+  padding: var(--filter-chip-dismiss-padding);
   border: none;
   background: transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--filter-chip-dismiss-radius);
   cursor: pointer;
-  color: var(--color-fg-subtle);
+  color: var(--filter-chip-dismiss-fg);
 
   &:hover {
-    background: var(--color-bg-muted);
-    color: var(--color-fg);
+    background: var(--filter-chip-dismiss-bg-hover);
+    color: var(--filter-chip-dismiss-fg-hover);
   }
 
   &:focus-visible {

@@ -1,0 +1,33 @@
+// Title.tokens.scss — Component-scoped tokens for <Title>. Base block, the
+// per-size font-size scale (xs/sm/md/lg/xl/2xl/3xl), per-weight, and per-tone
+// colors. Title's default weight is semibold (vs Text's regular) and its
+// default line-height is tight (vs Text's normal). --font-family-sans is not
+// tokenized per migration rules.
+:root {
+  // Base
+  --title-font-weight: var(--font-weight-semibold);
+  --title-line-height: var(--line-height-tight);
+  --title-color: var(--color-fg);
+
+  // Size scale
+  --title-font-size-xs: var(--font-size-xs);
+  --title-font-size-sm: var(--font-size-sm);
+  --title-font-size-md: var(--font-size-md);
+  --title-font-size-lg: var(--font-size-lg);
+  --title-font-size-xl: var(--font-size-xl);
+  --title-font-size-2xl: var(--font-size-2xl);
+  --title-font-size-3xl: var(--font-size-3xl);
+
+  // Weight scale
+  --title-font-weight-regular: var(--font-weight-regular);
+  --title-font-weight-medium: var(--font-weight-medium);
+  --title-font-weight-semibold: var(--font-weight-semibold);
+  --title-font-weight-bold: var(--font-weight-bold);
+
+  // Tone palette
+  --title-color-default: var(--color-fg);
+  --title-color-muted: var(--color-fg-muted);
+  --title-color-subtle: var(--color-fg-subtle);
+  --title-color-accent: var(--color-accent);
+  --title-color-danger: var(--color-danger);
+}

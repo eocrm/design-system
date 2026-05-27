@@ -1,0 +1,33 @@
+// Text.tokens.scss — Component-scoped tokens for <Text>. Base block, the
+// per-size font-size scale (xs/sm/md/lg/xl), per-weight (regular / medium /
+// semibold / bold), and per-tone colors (default / muted / subtle / accent /
+// danger / success / warning). --font-family-sans is not tokenized per
+// migration rules.
+:root {
+  // Base
+  --text-font-weight: var(--font-weight-regular);
+  --text-line-height: var(--line-height-normal);
+  --text-color: var(--color-fg);
+
+  // Size scale
+  --text-font-size-xs: var(--font-size-xs);
+  --text-font-size-sm: var(--font-size-sm);
+  --text-font-size-md: var(--font-size-md);
+  --text-font-size-lg: var(--font-size-lg);
+  --text-font-size-xl: var(--font-size-xl);
+
+  // Weight scale
+  --text-font-weight-regular: var(--font-weight-regular);
+  --text-font-weight-medium: var(--font-weight-medium);
+  --text-font-weight-semibold: var(--font-weight-semibold);
+  --text-font-weight-bold: var(--font-weight-bold);
+
+  // Tone palette
+  --text-color-default: var(--color-fg);
+  --text-color-muted: var(--color-fg-muted);
+  --text-color-subtle: var(--color-fg-subtle);
+  --text-color-accent: var(--color-accent);
+  --text-color-danger: var(--color-danger);
+  --text-color-success: var(--color-success);
+  --text-color-warning: var(--color-warning);
+}

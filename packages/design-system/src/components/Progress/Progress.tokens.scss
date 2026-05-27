@@ -1,0 +1,27 @@
+// Progress.tokens.scss — Component-scoped tokens for <Progress>. Cluster
+// gap, track bg + radius, fill bg per tone, fill radius, per-size track
+// heights (literal px), and the label typography. The width transition
+// stays primitive since --motion-* is not tokenized.
+:root {
+  // Cluster
+  --progress-gap: var(--space-2);
+
+  // Track
+  --progress-track-bg: var(--color-bg-muted);
+  --progress-track-radius: var(--radius-full);
+
+  // Fill — default tone is accent.
+  --progress-fill-bg: var(--color-accent);
+  --progress-fill-radius: var(--radius-full);
+  --progress-fill-bg-success: var(--color-success);
+  --progress-fill-bg-warning: var(--color-warning);
+  --progress-fill-bg-danger: var(--color-danger);
+
+  // Indeterminate always uses accent (tone semantics don't apply to unknown total).
+  --progress-fill-bg-indeterminate: var(--color-accent);
+
+  // Label
+  --progress-label-font-size: var(--font-size-sm);
+  --progress-label-fg: var(--color-fg-muted);
+  --progress-label-font-weight: var(--font-weight-medium);
+}

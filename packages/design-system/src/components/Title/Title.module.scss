@@ -1,74 +1,76 @@
+@use './Title.tokens';
+
 .title {
   // stylelint-disable-next-line property-disallowed-list -- native heading margin reset
   margin: 0;
   font-family: var(--font-family-sans);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  color: var(--color-fg);
+  font-weight: var(--title-font-weight);
+  line-height: var(--title-line-height);
+  color: var(--title-color);
 }
 
 .sizeXs {
-  font-size: var(--font-size-xs);
+  font-size: var(--title-font-size-xs);
 }
 
 .sizeSm {
-  font-size: var(--font-size-sm);
+  font-size: var(--title-font-size-sm);
 }
 
 .sizeMd {
-  font-size: var(--font-size-md);
+  font-size: var(--title-font-size-md);
 }
 
 .sizeLg {
-  font-size: var(--font-size-lg);
+  font-size: var(--title-font-size-lg);
 }
 
 .sizeXl {
-  font-size: var(--font-size-xl);
+  font-size: var(--title-font-size-xl);
 }
 
 .size2xl {
-  font-size: var(--font-size-2xl);
+  font-size: var(--title-font-size-2xl);
 }
 
 .size3xl {
-  font-size: var(--font-size-3xl);
+  font-size: var(--title-font-size-3xl);
 }
 
 .weightRegular {
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--title-font-weight-regular);
 }
 
 .weightMedium {
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--title-font-weight-medium);
 }
 
 .weightSemibold {
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--title-font-weight-semibold);
 }
 
 .weightBold {
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--title-font-weight-bold);
 }
 
 .toneDefault {
-  color: var(--color-fg);
+  color: var(--title-color-default);
 }
 
 .toneMuted {
-  color: var(--color-fg-muted);
+  color: var(--title-color-muted);
 }
 
 .toneSubtle {
-  color: var(--color-fg-subtle);
+  color: var(--title-color-subtle);
 }
 
 .toneAccent {
-  color: var(--color-accent);
+  color: var(--title-color-accent);
 }
 
 .toneDanger {
-  color: var(--color-danger);
+  color: var(--title-color-danger);
 }
 
 .truncate {

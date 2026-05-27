@@ -1,0 +1,50 @@
+// Table.tokens.scss — Component-scoped tokens for <Table>. Surface
+// backgrounds per row state (body / header / footer / striped / hover /
+// selected), the cell border, the header text + sort icon, density padding
+// per mode, caption typography, and the sticky-header focus ring. DataTable
+// sits on top of this primitive and overrides --color-table-* via its own
+// surface tokens — keeping Table's tokens semantic ensures a Table theme
+// override propagates to DataTable.
+:root {
+  // Table surface
+  --table-fg: var(--color-table-fg);
+  --table-bg: var(--color-table-bg);
+  --table-border-color: var(--color-table-border);
+
+  // Header / footer chrome
+  --table-header-bg: var(--color-table-header-bg);
+  --table-header-bg-hover: var(--color-table-header-bg-hover);
+  --table-header-fg: var(--color-table-header-fg);
+  --table-header-font-weight: var(--font-weight-semibold);
+  --table-footer-bg: var(--color-table-header-bg);
+
+  // Row states
+  --table-row-bg-striped: var(--color-table-row-bg-striped);
+  --table-row-bg-hover: var(--color-table-row-bg-hover);
+  --table-row-bg-selected: var(--color-table-row-bg-selected);
+  --table-row-fg-selected: var(--color-table-row-fg-selected);
+
+  // Caption
+  --table-caption-fg: var(--color-table-caption-fg);
+  --table-caption-font-size: var(--font-size-sm);
+  --table-caption-padding-y: var(--space-2);
+  --table-caption-padding-x: var(--space-3);
+
+  // Density
+  --table-density-comfortable-padding-y: var(--space-2);
+  --table-density-comfortable-padding-x: var(--space-3);
+  --table-density-comfortable-font-size: var(--font-size-md);
+  --table-density-dense-padding-y: var(--space-1);
+  --table-density-dense-padding-x: var(--space-2);
+  --table-density-dense-font-size: var(--font-size-sm);
+
+  // Header inner cluster (label + sort chevron)
+  --table-th-inner-gap: var(--space-1);
+
+  // Sort icon
+  --table-sort-icon-fg: var(--color-table-header-fg);
+  --table-sort-icon-fg-active: var(--color-table-fg);
+
+  // Sortable focus ring
+  --table-sortable-ring: var(--ring-accent);
+}

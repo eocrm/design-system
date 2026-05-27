@@ -1,0 +1,54 @@
+// Pagination.tokens.scss — Component-scoped tokens for <Pagination>. Covers
+// the cluster gap, the per-button chrome (bg / border / fg), the per-state
+// (hover / active / disabled / current) overrides, and the per-size height +
+// padding. Current-page button uses --pagination-current-* so an override can
+// retint the "selected" state without touching the accent palette globally.
+:root {
+  // Outer cluster
+  --pagination-gap: var(--space-1);
+
+  // Button base
+  --pagination-button-gap: var(--space-1);
+  --pagination-button-border-color: var(--color-border);
+  --pagination-button-radius: var(--radius-md);
+  --pagination-button-bg: var(--color-bg);
+  --pagination-button-fg: var(--color-fg);
+  --pagination-button-font-weight: var(--font-weight-medium);
+  --pagination-button-bg-hover: var(--color-bg-muted);
+  --pagination-button-bg-active: var(--color-bg-sunken);
+  --pagination-button-fg-disabled: var(--color-fg-disabled);
+
+  // Page button (square)
+  --pagination-page-button-min-width-sm: var(--size-sm);
+  --pagination-page-button-min-width-md: var(--size-md);
+  --pagination-page-button-min-width-lg: var(--size-lg);
+  --pagination-page-button-height-sm: var(--size-sm);
+  --pagination-page-button-height-md: var(--size-md);
+  --pagination-page-button-height-lg: var(--size-lg);
+
+  // Nav button (prev / next)
+  --pagination-nav-button-height-sm: var(--size-sm);
+  --pagination-nav-button-height-md: var(--size-md);
+  --pagination-nav-button-height-lg: var(--size-lg);
+  --pagination-nav-button-padding-x-md: var(--space-2);
+  --pagination-nav-button-padding-x-lg: var(--space-3);
+
+  // Current-page button (selected look, uses accent)
+  --pagination-current-bg: var(--color-accent);
+  --pagination-current-border-color: var(--color-accent);
+  --pagination-current-fg: var(--color-accent-fg);
+
+  // Ellipsis
+  --pagination-ellipsis-min-width-sm: var(--size-sm);
+  --pagination-ellipsis-min-width-md: var(--size-md);
+  --pagination-ellipsis-min-width-lg: var(--size-lg);
+  --pagination-ellipsis-height-sm: var(--size-sm);
+  --pagination-ellipsis-height-md: var(--size-md);
+  --pagination-ellipsis-height-lg: var(--size-lg);
+  --pagination-ellipsis-fg: var(--color-fg-muted);
+
+  // Per-size typography
+  --pagination-font-size-sm: var(--font-size-sm);
+  --pagination-font-size-md: var(--font-size-md);
+  --pagination-font-size-lg: var(--font-size-md);
+}

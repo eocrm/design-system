@@ -1,21 +1,23 @@
+@use './Progress.tokens';
+
 .progress {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--progress-gap);
   width: 100%;
 }
 
 .track {
   flex: 1;
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-full);
+  background: var(--progress-track-bg);
+  border-radius: var(--progress-track-radius);
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
-  background: var(--color-accent);
-  border-radius: var(--radius-full);
+  background: var(--progress-fill-bg);
+  border-radius: var(--progress-fill-radius);
   transition: width var(--transition-base);
 }
 
@@ -35,19 +37,19 @@
 }
 
 .toneDefault .fill {
-  background: var(--color-accent);
+  background: var(--progress-fill-bg);
 }
 
 .toneSuccess .fill {
-  background: var(--color-success);
+  background: var(--progress-fill-bg-success);
 }
 
 .toneWarning .fill {
-  background: var(--color-warning);
+  background: var(--progress-fill-bg-warning);
 }
 
 .toneDanger .fill {
-  background: var(--color-danger);
+  background: var(--progress-fill-bg-danger);
 }
 
 .indeterminate {
@@ -60,7 +62,7 @@
   // Indeterminate always uses the accent color — tone semantics don't apply
   // to an unknown total. Override any .tone-* rule that would otherwise
   // win via specificity.
-  background: var(--color-accent) !important;
+  background: var(--progress-fill-bg-indeterminate) !important;
 
   // Disable the width transition so determinate→indeterminate switches don't
   // animate from the determinate width down to 30% before the loop fires.
@@ -78,9 +80,9 @@
 }
 
 .label {
-  font-size: var(--font-size-sm);
-  color: var(--color-fg-muted);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--progress-label-font-size);
+  color: var(--progress-label-fg);
+  font-weight: var(--progress-label-font-weight);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 

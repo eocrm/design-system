@@ -1,0 +1,17 @@
+// Skeleton.tokens.scss — Component-scoped tokens for <Skeleton>. Background
+// (the muted block), the per-variant radii (text/circular/rectangular), and
+// the pulse animation's opacity extremes. The 1.5s pulse duration stays raw
+// since motion timings are not tokenized.
+:root {
+  // Block
+  --skeleton-bg: var(--color-bg-muted);
+
+  // Variant radii
+  --skeleton-radius-text: var(--radius-sm);
+  --skeleton-radius-circular: var(--radius-full);
+  --skeleton-radius-rectangular: var(--radius-md);
+
+  // Pulse opacity range
+  --skeleton-opacity-high: var(--opacity-visible);
+  --skeleton-opacity-low: var(--opacity-subtle);
+}
