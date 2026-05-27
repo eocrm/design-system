@@ -139,6 +139,21 @@ describe('Card', () => {
     expect(root).toHaveAttribute('data-tone', 'accent');
     expect(root.className).toMatch(/custom/);
   });
+
+  it('overflow defaults to "hidden" — does NOT add the visible modifier class', () => {
+    const { container } = render(<Card>x</Card>);
+    expect((container.firstChild as HTMLElement).className).not.toMatch(/overflowVisible/);
+  });
+
+  it('overflow="visible" adds the modifier class', () => {
+    const { container } = render(<Card overflow="visible">x</Card>);
+    expect((container.firstChild as HTMLElement).className).toMatch(/overflowVisible/);
+  });
+
+  it('overflow="hidden" explicit is equivalent to default (no modifier)', () => {
+    const { container } = render(<Card overflow="hidden">x</Card>);
+    expect((container.firstChild as HTMLElement).className).not.toMatch(/overflowVisible/);
+  });
 });
 
 describe('compound API', () => {

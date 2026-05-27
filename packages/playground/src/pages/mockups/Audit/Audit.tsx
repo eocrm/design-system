@@ -4,6 +4,7 @@ import {
   Badge,
   Button,
   ButtonGroup,
+  Card,
   Cluster,
   Code,
   DataTable,
@@ -381,7 +382,9 @@ export function Audit() {
         </Cluster>
       )}
 
-      <DataTable instance={instance} density="dense" aria-label="Audit events" />
+      <Card padding="none">
+        <DataTable instance={instance} density="dense" aria-label="Audit events" />
+      </Card>
 
       <Cluster justify="between" align="center" gap="sm">
         <Text size="sm" tone="muted">

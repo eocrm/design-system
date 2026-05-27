@@ -21,6 +21,9 @@ export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
  */
 export type CardTone = 'accent' | 'info' | 'success' | 'warning' | 'danger';
 
+/** How the Card clips its children. See CardProps#overflow. */
+export type CardOverflow = 'hidden' | 'visible';
+
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Inner padding.
@@ -52,6 +55,21 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
    * `warning` / `danger`.
    */
   tone?: CardTone;
+  /**
+   * How the card clips its children at the rounded border.
+   * - `hidden` (default) — children are clipped to the rounded border. This
+   *   prevents the visible seam that appears at the corners when a child has
+   *   square corners (Table's internal scroll wrapper, images, full-bleed
+   *   media). Overlays in this library (DropdownMenu, Tooltip, Popover, Drawer,
+   *   Modal) portal to `document.body` and are NOT clipped by this. Focus
+   *   outlines use CSS `outline`, which is not affected by ancestor overflow.
+   * - `visible` — opt out of clipping. Use when a direct child needs to
+   *   overhang the card edge — decorative badges that protrude from a corner,
+   *   hover-lift transforms whose shadow extends past the card border, etc.
+   *
+   * @default 'hidden'
+   */
+  overflow?: CardOverflow;
 }
 
 const paddingClass: Record<CardPadding, string> = {
@@ -140,6 +158,10 @@ function hasCompoundChildren(children: ReactNode): boolean {
  * @remarks Anti-patterns
  * - ❌ `<Card style={{ padding: 20 }}>` — use the `padding` prop. If the
  *   value you need isn't there, it's a token/scale conversation.
+ * - ❌ `<Card style={{ overflow: 'visible' }}>` — use `<Card overflow="visible">`.
+ *   The default `hidden` exists so square-cornered children (Tables with internal
+ *   scroll wrappers, images, full-bleed media) don't show a seam at the rounded
+ *   corner.
  * - ❌ Adding hover shadows to make Cards "interactive". If the whole card
  *   is clickable, that's a different component (`LinkCard`, not yet shipped).
  * - ❌ Cards nested in Cards. Almost always means your information
@@ -150,7 +172,7 @@ function hasCompoundChildren(children: ReactNode): boolean {
  *   compound API (`Card.Header` / `Card.List` / `Card.ListRow`) instead.
  */
 const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
-  { padding, tone, className, children, ...props },
+  { padding, tone, overflow = 'hidden', className, children, ...props },
   ref,
 ) {
   // Compound subcomponents (Card.Header / Card.List / Card.ListRow) manage
@@ -162,7 +184,12 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
   return (
     <div
       ref={ref}
-      className={clsx(styles.card, paddingClass[effectivePadding], className)}
+      className={clsx(
+        styles.card,
+        paddingClass[effectivePadding],
+        overflow === 'visible' && styles.overflowVisible,
+        className,
+      )}
       data-tone={tone}
       {...props}
     >
