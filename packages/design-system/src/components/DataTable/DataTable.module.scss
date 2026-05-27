@@ -177,34 +177,37 @@
 
 // Expanded detail row — the extra <Table.Row> rendered below a data row
 // when its expansion state is true. Spans all columns via colSpan. It's
-// a panel, not a table row: the consumer's renderExpandedRow output lives
-// inside, so we strip all row-level styling (striped tint, hover flash,
-// cursor) and let the panel sit on the table's base background. Crucially
-// NOT clickable (no .clickableRow class) so onRowClick doesn't fire when
-// the consumer interacts with their rendered detail content.
-// !important is used because Table primitive's selectors that style data
-// rows are higher-specificity 4-class chains (`.hover .tbody .tr:hover`
-// and `.striped .tbody .tr:nth-of-type(even)`) and cannot be defeated by
-// a single-class override from this file. The intent here is absolute:
-// the expanded panel must never adopt row interaction styling regardless
-// of which Table modifiers are enabled.
-.expandedDetailRow {
-  background: transparent !important;
-  cursor: default !important;
-
-  &:hover {
-    background: transparent !important;
-  }
+// a panel, not a table row: the consumer's renderExpandedRow output
+// lives inside, so we strip all row-level styling (striped tint, hover
+// flash, cursor) and let the panel sit on the table's base background.
+// Crucially NOT clickable (no .clickableRow class) so onRowClick
+// doesn't fire when the consumer interacts with their rendered detail
+// content.
+// Selectors must beat the Table primitive's row-styling chains:
+//   .hover   .tbody .tr:hover             → (0,4,0)
+//   .striped .tbody .tr:nth-of-type(even) → (0,4,0)
+// The doubled-class trick (`.expandedDetailRow.expandedDetailRow`) plus
+// `tbody tr` elements yields (0,4,2) — wins by element count on tie.
+.root tbody tr.expandedDetailRow.expandedDetailRow {
+  background: transparent;
+  cursor: default;
 }
 
-// The single colSpan cell that holds the consumer's renderExpandedRow output.
-// More vertical breathing room than a data cell — typically the detail
-// content is a panel of multiple lines, not a single value. Bottom
-// padding is larger than top because expansion panels often end with an
-// action row (buttons, footer) and need space before the next data row;
-// the top sits flush against the data row that was clicked, which acts
-// as its own visual anchor and needs less explicit padding.
-.expandedDetailCell {
-  padding: var(--space-4) var(--space-4) var(--space-6);
+.root tbody tr.expandedDetailRow.expandedDetailRow:hover,
+.root tbody tr.expandedDetailRow.expandedDetailRow:nth-of-type(even) {
+  background: transparent;
+}
+
+// The single colSpan cell that holds the consumer's renderExpandedRow
+// output. Bottom padding is slightly larger than top so the action row
+// at the panel's end gets breathing room before the next data row; the
+// top sits flush against the data row that was clicked, which acts as
+// its own visual anchor.
+// Selector must beat Table primitive's density modifiers:
+//   .density-dense       .td → (0,2,0)
+//   .density-comfortable .td → (0,2,0)
+// `.root .expandedDetailRow .expandedDetailCell` is (0,3,0) — wins.
+.root .expandedDetailRow .expandedDetailCell {
+  padding: var(--space-3) var(--space-4) var(--space-4);
   white-space: normal;
 }
