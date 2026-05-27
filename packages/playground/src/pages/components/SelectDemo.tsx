@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
-  Avatar,
   Badge,
   Button,
   Cluster,
+  PersonDisplay,
   Select,
   Stack,
   type SelectOption,
@@ -175,13 +175,11 @@ const [status, setStatus] = useState('');
   onChange={(v) => setAssignee(v as string)}
   placeholder="Find a user…"
   renderOption={(opt) => (
-    <Cluster gap="sm" align="center">
-      <Avatar name={opt.label} size="sm" />
-      <Stack gap="xs">
-        <span>{opt.label}</span>
-        <small>{opt.description}</small>
-      </Stack>
-    </Cluster>
+    <PersonDisplay size="sm">
+      <PersonDisplay.Avatar name={opt.label} />
+      <PersonDisplay.Name>{opt.label}</PersonDisplay.Name>
+      <PersonDisplay.Description>{opt.description}</PersonDisplay.Description>
+    </PersonDisplay>
   )}
 />`}
       >
@@ -422,13 +420,11 @@ function AssigneeExample() {
           onChange={(v) => setAssignee(v as string)}
           placeholder="Find a user…"
           renderOption={(opt) => (
-            <Cluster gap="sm" align="center">
-              <Avatar name={opt.label} size="sm" />
-              <Stack gap="xs">
-                <span>{opt.label}</span>
-                <small style={{ color: 'var(--color-fg-muted)' }}>{opt.description}</small>
-              </Stack>
-            </Cluster>
+            <PersonDisplay size="sm">
+              <PersonDisplay.Avatar name={opt.label} />
+              <PersonDisplay.Name>{opt.label}</PersonDisplay.Name>
+              <PersonDisplay.Description>{opt.description}</PersonDisplay.Description>
+            </PersonDisplay>
           )}
         />
       </div>
