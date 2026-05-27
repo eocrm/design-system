@@ -461,3 +461,7 @@ export type {
   InlineDateRangePickerProps,
   InlineDateRangePickerLabels,
 } from './components/DateRangePicker';
+
+// ─── Palette (categorical color set) ──────────────────────────────────────
+export type { PaletteColor } from './palette';
+export { PALETTE_COLORS, paletteTokens } from './palette';
