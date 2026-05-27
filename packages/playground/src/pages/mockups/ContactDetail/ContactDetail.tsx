@@ -12,6 +12,7 @@ import {
   DropdownMenu,
   Grid,
   Link,
+  Page,
   PageHeader,
   PersonDisplay,
   Stack,
@@ -37,7 +38,7 @@ export function ContactDetail() {
   if (!contact) return <Navigate to="/mockups/contacts" replace />;
 
   return (
-    <Stack gap="lg">
+    <Page>
       <Breadcrumb>
         <Breadcrumb.Item as={RouterLink} to="/mockups/contacts">
           Contacts
@@ -221,7 +222,7 @@ export function ContactDetail() {
       )}
 
       <CrossLinks kind="mockup" slug="contact-detail" />
-    </Stack>
+    </Page>
   );
 }
 
