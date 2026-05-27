@@ -176,7 +176,6 @@ export const MOCKUPS = [
     path: '/mockups/audit',
     blurb: 'Tenant-wide event log with filter chips and expandable detail rows.',
     usesComponents: [
-      'Avatar',
       'Badge',
       'Button',
       'Cluster',
@@ -187,6 +186,7 @@ export const MOCKUPS = [
       'FilterChip',
       'OptionsPicker',
       'PageHeader',
+      'PersonDisplay',
       'Stack',
       'Text',
       'Tooltip',
