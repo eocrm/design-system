@@ -266,40 +266,34 @@ const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescri
  *   direct child; use `{shouldShow ? <PersonDisplay.Avatar … /> : null}`
  *   for conditional rendering (`null`/`false` are safely ignored).
  */
-const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(
-  function PersonDisplayRoot({ size = 'md', className, children, ...rest }, ref) {
-    // Sort children into the Avatar (rendered first as a flex sibling)
-    // and everything else (rendered inside an inner column so Name +
-    // Descriptions stack vertically). Consumers write children in
-    // natural source order; the split layout is internal.
-    const avatarChildren: ReactNode[] = [];
-    const columnChildren: ReactNode[] = [];
-    Children.forEach(children, (child) => {
-      if (isValidElement(child) && child.type === PersonDisplayAvatar) {
-        avatarChildren.push(child);
-      } else {
-        columnChildren.push(child);
-      }
-    });
-    return (
-      <PersonDisplayContext.Provider value={{ size }}>
-        {/* {...rest} first so internally-computed data-size (load-bearing for SCSS gap)
+const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(function PersonDisplayRoot(
+  { size = 'md', className, children, ...rest },
+  ref,
+) {
+  // Sort children into the Avatar (rendered first as a flex sibling)
+  // and everything else (rendered inside an inner column so Name +
+  // Descriptions stack vertically). Consumers write children in
+  // natural source order; the split layout is internal.
+  const avatarChildren: ReactNode[] = [];
+  const columnChildren: ReactNode[] = [];
+  Children.forEach(children, (child) => {
+    if (isValidElement(child) && child.type === PersonDisplayAvatar) {
+      avatarChildren.push(child);
+    } else {
+      columnChildren.push(child);
+    }
+  });
+  return (
+    <PersonDisplayContext.Provider value={{ size }}>
+      {/* {...rest} first so internally-computed data-size (load-bearing for SCSS gap)
             can't be stomped by a consumer (Pattern B — data-size is the only locked attr). */}
-        <div
-          ref={ref}
-          className={clsx(styles.root, className)}
-          {...rest}
-          data-size={size}
-        >
-          {avatarChildren}
-          {columnChildren.length > 0 && (
-            <div className={styles.column}>{columnChildren}</div>
-          )}
-        </div>
-      </PersonDisplayContext.Provider>
-    );
-  },
-);
+      <div ref={ref} className={clsx(styles.root, className)} {...rest} data-size={size}>
+        {avatarChildren}
+        {columnChildren.length > 0 && <div className={styles.column}>{columnChildren}</div>}
+      </div>
+    </PersonDisplayContext.Provider>
+  );
+});
 
 // ----------------------------------------------------------------------------
 // Compound export

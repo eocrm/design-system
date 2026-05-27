@@ -166,7 +166,9 @@ it('Name (with href) forwards ref to its anchor', () => {
   render(
     <PersonDisplay>
       <PersonDisplay.Avatar name="Sarah" />
-      <PersonDisplay.Name ref={ref} href="/contacts/sarah">Sarah</PersonDisplay.Name>
+      <PersonDisplay.Name ref={ref} href="/contacts/sarah">
+        Sarah
+      </PersonDisplay.Name>
     </PersonDisplay>,
   );
   expect(ref.current).toBeInstanceOf(HTMLAnchorElement);

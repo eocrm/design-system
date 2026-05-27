@@ -13,6 +13,7 @@
 **Branch:** `feat/person-display` (already checked out)
 
 **Confirmed primitive facts (probed before writing this plan):**
+
 - `AvatarSize = 'sm' | 'md' | 'lg'` — perfect 1:1 with PersonDisplay sizes
 - `TextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'` — every size in the map below resolves
 - `AvatarProps extends HTMLAttributes<HTMLSpanElement>`, requires `name: string`, optional `src`, `status`, `size`
@@ -22,33 +23,34 @@
 
 ## File Structure
 
-| File | Role |
-|---|---|
-| `packages/design-system/src/components/PersonDisplay/PersonDisplay.tsx` (NEW) | Root + Avatar + Name + Description in one file; Context for size |
+| File                                                                                  | Role                                                                |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `packages/design-system/src/components/PersonDisplay/PersonDisplay.tsx` (NEW)         | Root + Avatar + Name + Description in one file; Context for size    |
 | `packages/design-system/src/components/PersonDisplay/PersonDisplay.module.scss` (NEW) | Pill-free layout — flex root with size-keyed gap; inner column flex |
-| `packages/design-system/src/components/PersonDisplay/PersonDisplay.test.tsx` (NEW) | Hard rule 1 + size propagation + href→Link + ref forwarding |
-| `packages/design-system/src/components/PersonDisplay/index.ts` (NEW) | Re-exports |
-| `packages/design-system/src/index.ts` (MODIFY) | Add PersonDisplay + types |
-| `packages/design-system/AGENTS.md` (MODIFY) | TL;DR section |
-| `packages/design-system/src/_meta/manifest.ts` (MODIFY) | Cluster mapping `PersonDisplay: 'Display'` |
-| `packages/design-system/scripts/generate-manifest.mjs` (MODIFY) | Same cluster mapping (JS copy) |
-| `packages/playground/src/pages/components/PersonDisplayDemo.tsx` (NEW) | DemoLayout + 6 examples |
-| `packages/playground/src/App.tsx` (MODIFY) | Route + import |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY) | Sidebar entry (Display cluster) |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY) | Overview card |
-| `packages/playground/src/pages/mockups/registry.ts` (MODIFY) | `ComponentName` union + `usesComponents` for each mockup migrated |
-| `packages/playground/src/pages/mockups/Contacts/Contacts.tsx` (MODIFY) | Name + Owner columns |
-| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (MODIFY) | Actor column |
-| `packages/playground/src/pages/mockups/Members/Members.tsx` (MODIFY) | Active + Invitations tabs |
-| `packages/playground/src/pages/mockups/ContactDetail/ContactDetail.tsx` (MODIFY) | Owner card + activity timeline |
-| `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx` (MODIFY) | Recent activity + recent contacts |
-| `packages/playground/src/pages/components/SelectDemo.tsx` (MODIFY) | Custom option render |
+| `packages/design-system/src/components/PersonDisplay/PersonDisplay.test.tsx` (NEW)    | Hard rule 1 + size propagation + href→Link + ref forwarding         |
+| `packages/design-system/src/components/PersonDisplay/index.ts` (NEW)                  | Re-exports                                                          |
+| `packages/design-system/src/index.ts` (MODIFY)                                        | Add PersonDisplay + types                                           |
+| `packages/design-system/AGENTS.md` (MODIFY)                                           | TL;DR section                                                       |
+| `packages/design-system/src/_meta/manifest.ts` (MODIFY)                               | Cluster mapping `PersonDisplay: 'Display'`                          |
+| `packages/design-system/scripts/generate-manifest.mjs` (MODIFY)                       | Same cluster mapping (JS copy)                                      |
+| `packages/playground/src/pages/components/PersonDisplayDemo.tsx` (NEW)                | DemoLayout + 6 examples                                             |
+| `packages/playground/src/App.tsx` (MODIFY)                                            | Route + import                                                      |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)                       | Sidebar entry (Display cluster)                                     |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY)               | Overview card                                                       |
+| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)                          | `ComponentName` union + `usesComponents` for each mockup migrated   |
+| `packages/playground/src/pages/mockups/Contacts/Contacts.tsx` (MODIFY)                | Name + Owner columns                                                |
+| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (MODIFY)                      | Actor column                                                        |
+| `packages/playground/src/pages/mockups/Members/Members.tsx` (MODIFY)                  | Active + Invitations tabs                                           |
+| `packages/playground/src/pages/mockups/ContactDetail/ContactDetail.tsx` (MODIFY)      | Owner card + activity timeline                                      |
+| `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx` (MODIFY)              | Recent activity + recent contacts                                   |
+| `packages/playground/src/pages/components/SelectDemo.tsx` (MODIFY)                    | Custom option render                                                |
 
 ---
 
 ## Task 1: Scaffold the primitive + tests
 
 **Files:**
+
 - Create: `packages/design-system/src/components/PersonDisplay/PersonDisplay.tsx`
 - Create: `packages/design-system/src/components/PersonDisplay/PersonDisplay.module.scss`
 - Create: `packages/design-system/src/components/PersonDisplay/PersonDisplay.test.tsx`
@@ -59,13 +61,7 @@
 Write `packages/design-system/src/components/PersonDisplay/PersonDisplay.tsx`:
 
 ```tsx
-import {
-  createContext,
-  forwardRef,
-  useContext,
-  type HTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { createContext, forwardRef, useContext, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { Avatar, type AvatarProps, type AvatarSize } from '../Avatar';
 import { Text, type TextSize } from '../Text';
@@ -203,22 +199,18 @@ const DESCRIPTION_TEXT_SIZE: Record<PersonDisplaySize, TextSize> = {
  *   makes the proportions wrong. The Avatar's `size` prop is omitted
  *   from `PersonDisplayAvatarProps` by design.
  */
-const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(
-  function PersonDisplayRoot({ size = 'md', className, children, ...rest }, ref) {
-    return (
-      <PersonDisplayContext.Provider value={{ size }}>
-        <div
-          ref={ref}
-          className={clsx(styles.root, className)}
-          data-size={size}
-          {...rest}
-        >
-          {children}
-        </div>
-      </PersonDisplayContext.Provider>
-    );
-  },
-);
+const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(function PersonDisplayRoot(
+  { size = 'md', className, children, ...rest },
+  ref,
+) {
+  return (
+    <PersonDisplayContext.Provider value={{ size }}>
+      <div ref={ref} className={clsx(styles.root, className)} data-size={size} {...rest}>
+        {children}
+      </div>
+    </PersonDisplayContext.Provider>
+  );
+});
 
 // ----------------------------------------------------------------------------
 // Avatar
@@ -382,29 +374,25 @@ The cleanest fix: separate the Avatar child from the rest at render time. React 
 **Better solution:** keep the wrapper visible in markup. Modify Step 1's PersonDisplayRoot to:
 
 ```tsx
-const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(
-  function PersonDisplayRoot({ size = 'md', className, children, ...rest }, ref) {
-    // Split children into the Avatar (rendered first) and the rest (rendered in
-    // the inner column). We don't introspect React children — instead, consumers
-    // place the Avatar as the first child and the column treatment applies to
-    // every following child via the structural CSS rule above. The simpler
-    // wrapper approach (auto-split via React.Children) hurts composition (a
-    // consumer can't omit the Avatar or interleave decorations); the order
-    // contract is documented in the Root JSDoc.
-    return (
-      <PersonDisplayContext.Provider value={{ size }}>
-        <div
-          ref={ref}
-          className={clsx(styles.root, className)}
-          data-size={size}
-          {...rest}
-        >
-          {children}
-        </div>
-      </PersonDisplayContext.Provider>
-    );
-  },
-);
+const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(function PersonDisplayRoot(
+  { size = 'md', className, children, ...rest },
+  ref,
+) {
+  // Split children into the Avatar (rendered first) and the rest (rendered in
+  // the inner column). We don't introspect React children — instead, consumers
+  // place the Avatar as the first child and the column treatment applies to
+  // every following child via the structural CSS rule above. The simpler
+  // wrapper approach (auto-split via React.Children) hurts composition (a
+  // consumer can't omit the Avatar or interleave decorations); the order
+  // contract is documented in the Root JSDoc.
+  return (
+    <PersonDisplayContext.Provider value={{ size }}>
+      <div ref={ref} className={clsx(styles.root, className)} data-size={size} {...rest}>
+        {children}
+      </div>
+    </PersonDisplayContext.Provider>
+  );
+});
 ```
 
 And update SCSS to use a CSS-only sibling rule. Replace the SCSS above with:
@@ -450,37 +438,33 @@ And update SCSS to use a CSS-only sibling rule. Replace the SCSS above with:
 And then in PersonDisplay.tsx replace the Root body so that Name + Descriptions are auto-grouped into `<div className={styles.column}>` via `React.Children`. The full updated Root:
 
 ```tsx
-const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(
-  function PersonDisplayRoot({ size = 'md', className, children, ...rest }, ref) {
-    // Sort children into the Avatar (rendered first as a flex sibling)
-    // and everything else (rendered inside an inner column so Name +
-    // Descriptions stack vertically). This keeps the public API
-    // flat — consumers write children in source order — while the
-    // layout splits horizontal/vertical correctly.
-    const avatarChildren: ReactNode[] = [];
-    const columnChildren: ReactNode[] = [];
-    Children.forEach(children, (child) => {
-      if (isValidElement(child) && child.type === PersonDisplayAvatar) {
-        avatarChildren.push(child);
-      } else {
-        columnChildren.push(child);
-      }
-    });
-    return (
-      <PersonDisplayContext.Provider value={{ size }}>
-        <div
-          ref={ref}
-          className={clsx(styles.root, className)}
-          data-size={size}
-          {...rest}
-        >
-          {avatarChildren}
-          {columnChildren.length > 0 && <div className={styles.column}>{columnChildren}</div>}
-        </div>
-      </PersonDisplayContext.Provider>
-    );
-  },
-);
+const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(function PersonDisplayRoot(
+  { size = 'md', className, children, ...rest },
+  ref,
+) {
+  // Sort children into the Avatar (rendered first as a flex sibling)
+  // and everything else (rendered inside an inner column so Name +
+  // Descriptions stack vertically). This keeps the public API
+  // flat — consumers write children in source order — while the
+  // layout splits horizontal/vertical correctly.
+  const avatarChildren: ReactNode[] = [];
+  const columnChildren: ReactNode[] = [];
+  Children.forEach(children, (child) => {
+    if (isValidElement(child) && child.type === PersonDisplayAvatar) {
+      avatarChildren.push(child);
+    } else {
+      columnChildren.push(child);
+    }
+  });
+  return (
+    <PersonDisplayContext.Provider value={{ size }}>
+      <div ref={ref} className={clsx(styles.root, className)} data-size={size} {...rest}>
+        {avatarChildren}
+        {columnChildren.length > 0 && <div className={styles.column}>{columnChildren}</div>}
+      </div>
+    </PersonDisplayContext.Provider>
+  );
+});
 ```
 
 Add `Children, isValidElement` to the React import at the top of the file:
@@ -743,6 +727,7 @@ EOF
 ## Task 2: Public exports + manifest + AGENTS.md
 
 **Files:**
+
 - Modify: `packages/design-system/src/index.ts`
 - Modify: `packages/design-system/src/_meta/manifest.ts`
 - Modify: `packages/design-system/scripts/generate-manifest.mjs`
@@ -804,7 +789,6 @@ Open `packages/design-system/AGENTS.md`. Find the `### `<Avatar>` — profile ci
 Section content (the leading blank line is required for markdown spacing):
 
 ````markdown
-
 ### `<PersonDisplay>` — Avatar + name (+ optional description lines)
 
 ```tsx
@@ -872,6 +856,7 @@ EOF
 ## Task 3: Component demo + nav wiring
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/PersonDisplayDemo.tsx`
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
@@ -1017,7 +1002,10 @@ export function PersonDisplayDemo() {
             <PersonDisplay.Avatar name="System Admin" />
             <PersonDisplay.Name>System Admin</PersonDisplay.Name>
             <PersonDisplay.Description>
-              admin@acme.com <Badge tone="warning" size="sm">impersonating Sarah Chen</Badge>
+              admin@acme.com{' '}
+              <Badge tone="warning" size="sm">
+                impersonating Sarah Chen
+              </Badge>
             </PersonDisplay.Description>
           </PersonDisplay>
         </InputExample>
@@ -1118,6 +1106,7 @@ EOF
 ## Task 4: Migrate Contacts mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Contacts/Contacts.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts` (audit `usesComponents`)
 
@@ -1210,6 +1199,7 @@ EOF
 ## Task 5: Migrate Audit mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Audit/Audit.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -1232,7 +1222,9 @@ Replace the actor cell composition with:
   <PersonDisplay.Description>
     {actor.email}
     {actor.impersonating && (
-      <Badge tone="warning" size="sm">impersonating {actor.impersonating}</Badge>
+      <Badge tone="warning" size="sm">
+        impersonating {actor.impersonating}
+      </Badge>
     )}
   </PersonDisplay.Description>
 </PersonDisplay>
@@ -1247,7 +1239,9 @@ If the existing code stacks the email and the impersonation Badge as separate ve
   <PersonDisplay.Description>{actor.email}</PersonDisplay.Description>
   {actor.impersonating && (
     <PersonDisplay.Description>
-      <Badge tone="warning" size="sm">impersonating {actor.impersonating}</Badge>
+      <Badge tone="warning" size="sm">
+        impersonating {actor.impersonating}
+      </Badge>
     </PersonDisplay.Description>
   )}
 </PersonDisplay>
@@ -1294,6 +1288,7 @@ EOF
 ## Task 6: Migrate Members mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Members/Members.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -1304,6 +1299,7 @@ grep -nE "Avatar|status|email|invitation|active" packages/playground/src/pages/m
 ```
 
 Two cells to migrate:
+
 1. Active tab → Avatar `md` with `status` dot + name + email
 2. Invitations tab → Avatar `sm` + name only
 
@@ -1362,6 +1358,7 @@ EOF
 ## Task 7: Migrate ContactDetail mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/ContactDetail/ContactDetail.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -1372,6 +1369,7 @@ grep -nE "Owner|owner|Activity|Avatar|TimelineItem" packages/playground/src/page
 ```
 
 Two patterns:
+
 1. Owner sidebar card — Avatar `md` + name + role
 2. Activity timeline rows — Avatar `sm` + name (bold) + action + timestamp
 
@@ -1433,6 +1431,7 @@ EOF
 ## Task 8: Migrate Dashboard mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -1443,6 +1442,7 @@ grep -nE "Activity|Avatar|recent|Contacts" packages/playground/src/pages/mockups
 ```
 
 Two patterns:
+
 1. Recent activity cards — Avatar `sm` + name + action + timestamp
 2. Recent contacts — Avatar `md` + name + title
 
@@ -1499,6 +1499,7 @@ EOF
 ## Task 9: Migrate SelectDemo custom-render
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/SelectDemo.tsx`
 
 - [ ] **Step 1: Locate the custom renderOption**
@@ -1639,6 +1640,7 @@ EOF
 ## Self-Review
 
 **1. Spec coverage:**
+
 - Compound API (`<PersonDisplay>` + .Avatar + .Name + .Description) — Task 1 ✓
 - Three sizes (`sm` / `md` / `lg`), `md` default — Task 1 ✓
 - Size context propagation — Task 1 ✓
@@ -1659,6 +1661,7 @@ EOF
 **2. Placeholder scan:** every step has concrete code or commands. Field-name placeholders (e.g., `row.name`, `actor.email`) are flagged as "use the existing accessors" — that's not a placeholder, that's an instruction to match real code that I can't see from here without reading each mockup. The plan instructs the implementer to grep first.
 
 **3. Type consistency:**
+
 - `PersonDisplaySize`, `PersonDisplayProps`, `PersonDisplayAvatarProps`, `PersonDisplayNameProps`, `PersonDisplayDescriptionProps` defined in Task 1 and re-exported identically in Task 2.
 - `size: 'sm' | 'md' | 'lg'` consistent across spec, types, runtime check, tests, demo, all migrations.
 - `AVATAR_SIZE`, `NAME_TEXT_SIZE`, `DESCRIPTION_TEXT_SIZE` lookup tables defined in Task 1 with values matching the spec size table.

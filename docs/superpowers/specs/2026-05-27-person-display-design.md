@@ -8,18 +8,18 @@ The Avatar-plus-name pattern is the single most-duplicated composition in the pl
 
 Concrete sites:
 
-| Mockup | Where | Shape |
-|---|---|---|
-| `Contacts` table | Name column | Avatar `sm` + `<Link>` name + muted title |
-| `Contacts` table | Owner column | Avatar `sm` + plain name |
-| `Audit` table | Actor column | Avatar `sm` + name + email + (optional) impersonation Badge |
-| `Members` table | Active tab | Avatar `md` with `status` dot + name + email |
-| `Members` table | Invitations tab | Avatar `sm` + plain name |
-| `ContactDetail` sidebar | Owner card | Avatar `md` + name + role |
-| `ContactDetail` timeline | Activity row | Avatar `sm` + name (bold) + action sentence + timestamp |
-| `Dashboard` activity card | Recent activity | Avatar `sm` + name + action + timestamp |
-| `Dashboard` recent contacts | Micro card | Avatar `md` + name + title |
-| `SelectDemo` | Custom option render | Avatar `sm` + name + email |
+| Mockup                      | Where                | Shape                                                       |
+| --------------------------- | -------------------- | ----------------------------------------------------------- |
+| `Contacts` table            | Name column          | Avatar `sm` + `<Link>` name + muted title                   |
+| `Contacts` table            | Owner column         | Avatar `sm` + plain name                                    |
+| `Audit` table               | Actor column         | Avatar `sm` + name + email + (optional) impersonation Badge |
+| `Members` table             | Active tab           | Avatar `md` with `status` dot + name + email                |
+| `Members` table             | Invitations tab      | Avatar `sm` + plain name                                    |
+| `ContactDetail` sidebar     | Owner card           | Avatar `md` + name + role                                   |
+| `ContactDetail` timeline    | Activity row         | Avatar `sm` + name (bold) + action sentence + timestamp     |
+| `Dashboard` activity card   | Recent activity      | Avatar `sm` + name + action + timestamp                     |
+| `Dashboard` recent contacts | Micro card           | Avatar `md` + name + title                                  |
+| `SelectDemo`                | Custom option render | Avatar `sm` + name + email                                  |
 
 The drift is real (some sites use `Cluster gap="sm"`, others `gap="xs"`; some put the name in `<Text size="sm">`, others in `<Text>` with no size). Without a shared primitive, every new mockup or CRM page invents another variant — and the audit-style "impersonation" inline marker shows that the description slot needs to accept more than plain text.
 
@@ -147,7 +147,7 @@ export interface PersonDisplayDescriptionProps extends HTMLAttributes<HTMLSpanEl
 The `size` prop on Root controls three things via context:
 
 | Root `size` | Avatar `size` | Name `<Text size>` | Description `<Text size>` |
-|-------------|---------------|--------------------|---------------------------|
+| ----------- | ------------- | ------------------ | ------------------------- |
 | `sm`        | `sm`          | `sm`               | `xs`                      |
 | `md`        | `md`          | `md`               | `sm`                      |
 | `lg`        | `lg`          | `lg`               | `md`                      |
@@ -158,13 +158,13 @@ Confirmed against the existing primitives: `AvatarSize = 'sm' | 'md' | 'lg'` and
 
 ### Composition
 
-| Layer | Built from |
-|---|---|
-| Root container | hand-rolled `<div>` with `display: flex; align-items: center; gap` keyed off `data-size`. No layout-property leakage because Root IS layout — it owns its inner flex by definition (Hard rule 4 carve-out for explicitly-layout primitives like `Cluster` itself). |
-| Avatar | `<Avatar>` with `size` from context |
-| Name | `<Text>` or `<Link>` (depending on `href`) |
-| Description | `<Text tone="muted">` |
-| Name+Description column | internal `<div>` with `display: flex; flex-direction: column` |
+| Layer                   | Built from                                                                                                                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Root container          | hand-rolled `<div>` with `display: flex; align-items: center; gap` keyed off `data-size`. No layout-property leakage because Root IS layout — it owns its inner flex by definition (Hard rule 4 carve-out for explicitly-layout primitives like `Cluster` itself). |
+| Avatar                  | `<Avatar>` with `size` from context                                                                                                                                                                                                                                |
+| Name                    | `<Text>` or `<Link>` (depending on `href`)                                                                                                                                                                                                                         |
+| Description             | `<Text tone="muted">`                                                                                                                                                                                                                                              |
+| Name+Description column | internal `<div>` with `display: flex; flex-direction: column`                                                                                                                                                                                                      |
 
 `<Stack>` / `<Cluster>` are NOT used internally because Root is itself a layout primitive — adding another layout wrapper for the inner column would be redundant.
 
@@ -209,6 +209,7 @@ Manifest cluster: `Display` (sits next to Avatar, Badge, Code).
 Per Hard rule 1 minimum + behavior:
 
 **Render-level:**
+
 - Renders without crash with default props (size=md, single name).
 - Renders Avatar, Name, Description all together.
 - `size="sm"` propagates Avatar `size="sm"` (queryable via Avatar's data-attr or rendered class).
@@ -222,6 +223,7 @@ Per Hard rule 1 minimum + behavior:
 - ref forwarding: Root forwards to the underlying `<div>`; Avatar/Name/Description forward to their respective DOM nodes.
 
 **Behavior:**
+
 - Clicking a `<PersonDisplay.Name href="...">` is a normal anchor navigation (no preventDefault; nothing fancy).
 - `type` and `data-*` attribute spread reaches the root `<div>`.
 
@@ -242,18 +244,18 @@ Per Hard rule 1 minimum + behavior:
 
 After the primitive ships, refactor all surveyed sites to use `<PersonDisplay>`:
 
-| Mockup | What changes |
-|---|---|
-| `Contacts.tsx` — Name column | Replace Cluster+Avatar+Stack+Link+Text with `<PersonDisplay size="sm">` (Name uses `href`) |
-| `Contacts.tsx` — Owner column | `<PersonDisplay size="sm">` with no `href` on Name |
-| `Audit.tsx` — Actor column | `<PersonDisplay size="sm">` with Description holding email; impersonation Badge inlined inside the second Description |
-| `Members.tsx` — Active tab | `<PersonDisplay size="md">` with Avatar `status` for online dot |
-| `Members.tsx` — Invitations tab | `<PersonDisplay size="sm">` with name only |
-| `ContactDetail.tsx` — Owner card | `<PersonDisplay size="md">` (name + role) |
-| `ContactDetail.tsx` — Timeline rows | `<PersonDisplay size="sm">` with one Description holding the action + timestamp inline (or keep timestamp outside the display — implementation decides per-row layout) |
-| `Dashboard.tsx` — Recent activity | `<PersonDisplay size="sm">` similar to timeline |
-| `Dashboard.tsx` — Recent contacts | `<PersonDisplay size="md">` |
-| `SelectDemo.tsx` — Custom option render | `<PersonDisplay size="sm">` (Replaces hand-rolled `<span>` + `<small>`) |
+| Mockup                                  | What changes                                                                                                                                                           |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Contacts.tsx` — Name column            | Replace Cluster+Avatar+Stack+Link+Text with `<PersonDisplay size="sm">` (Name uses `href`)                                                                             |
+| `Contacts.tsx` — Owner column           | `<PersonDisplay size="sm">` with no `href` on Name                                                                                                                     |
+| `Audit.tsx` — Actor column              | `<PersonDisplay size="sm">` with Description holding email; impersonation Badge inlined inside the second Description                                                  |
+| `Members.tsx` — Active tab              | `<PersonDisplay size="md">` with Avatar `status` for online dot                                                                                                        |
+| `Members.tsx` — Invitations tab         | `<PersonDisplay size="sm">` with name only                                                                                                                             |
+| `ContactDetail.tsx` — Owner card        | `<PersonDisplay size="md">` (name + role)                                                                                                                              |
+| `ContactDetail.tsx` — Timeline rows     | `<PersonDisplay size="sm">` with one Description holding the action + timestamp inline (or keep timestamp outside the display — implementation decides per-row layout) |
+| `Dashboard.tsx` — Recent activity       | `<PersonDisplay size="sm">` similar to timeline                                                                                                                        |
+| `Dashboard.tsx` — Recent contacts       | `<PersonDisplay size="md">`                                                                                                                                            |
+| `SelectDemo.tsx` — Custom option render | `<PersonDisplay size="sm">` (Replaces hand-rolled `<span>` + `<small>`)                                                                                                |
 
 Each migrated mockup adds `'PersonDisplay'` to its `usesComponents` array. Where the migration removes the last reference to a previously-listed primitive (unlikely — Avatar / Text / Link are used elsewhere too), drop that entry.
 
