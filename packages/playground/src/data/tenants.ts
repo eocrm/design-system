@@ -1,12 +1,6 @@
 import type { BadgeTone } from '@eocrm/design-system';
 
-export type TenantState =
-  | 'pending'
-  | 'queued'
-  | 'provisioning'
-  | 'active'
-  | 'failed'
-  | 'suspended';
+export type TenantState = 'pending' | 'queued' | 'provisioning' | 'active' | 'failed' | 'suspended';
 
 export interface Tenant {
   id: string;

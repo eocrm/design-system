@@ -50,8 +50,7 @@ export function Tenants() {
     const q = search.trim().toLowerCase();
     return ALL_TENANTS.filter((t) => {
       if (stateFilter !== 'all' && t.state !== stateFilter) return false;
-      if (q && !t.name.toLowerCase().includes(q) && !t.slug.toLowerCase().includes(q))
-        return false;
+      if (q && !t.name.toLowerCase().includes(q) && !t.slug.toLowerCase().includes(q)) return false;
       return true;
     });
   }, [search, stateFilter]);
@@ -255,11 +254,7 @@ export function Tenants() {
                     <Table.Cell align="end">
                       <DropdownMenu>
                         <DropdownMenu.Trigger>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            aria-label={`Actions for ${t.name}`}
-                          >
+                          <Button variant="ghost" size="sm" aria-label={`Actions for ${t.name}`}>
                             <MoreHorizontal size={14} />
                           </Button>
                         </DropdownMenu.Trigger>
@@ -288,12 +283,7 @@ export function Tenants() {
         <Text size="sm" tone="muted">
           Showing 1–{rows.length} of 84 tenants
         </Text>
-        <Pagination
-          currentPage={1}
-          pageCount={4}
-          onPageChange={() => undefined}
-          size="sm"
-        />
+        <Pagination currentPage={1} pageCount={4} onPageChange={() => undefined} size="sm" />
       </Cluster>
 
       <CrossLinks kind="mockup" slug="tenants" />

@@ -21,13 +21,7 @@
 ```ts
 import type { BadgeTone } from '@eocrm/design-system';
 
-export type TenantState =
-  | 'pending'
-  | 'queued'
-  | 'provisioning'
-  | 'active'
-  | 'failed'
-  | 'suspended';
+export type TenantState = 'pending' | 'queued' | 'provisioning' | 'active' | 'failed' | 'suspended';
 
 export interface Tenant {
   id: string;
@@ -199,7 +193,14 @@ export function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export type TenantAction = 'view' | 'suspend' | 'unsuspend' | 'retry' | 'edit' | 'cancel' | 'view-error';
+export type TenantAction =
+  | 'view'
+  | 'suspend'
+  | 'unsuspend'
+  | 'retry'
+  | 'edit'
+  | 'cancel'
+  | 'view-error';
 
 export function tenantActions(state: TenantState): TenantAction[] {
   switch (state) {
@@ -304,7 +305,8 @@ export function Tenants() {
     });
   }, [search, stateFilter]);
 
-  const stateFilterLabel = STATE_FILTER_OPTIONS.find((o) => o.value === stateFilter)?.label ?? 'All states';
+  const stateFilterLabel =
+    STATE_FILTER_OPTIONS.find((o) => o.value === stateFilter)?.label ?? 'All states';
 
   return (
     <Page>
@@ -437,7 +439,11 @@ export function Tenants() {
                       </PersonDisplay>
                     </Table.Cell>
                     <Table.Cell>
-                      {t.stateReason ? <Tooltip content={t.stateReason}>{stateBadge}</Tooltip> : stateBadge}
+                      {t.stateReason ? (
+                        <Tooltip content={t.stateReason}>{stateBadge}</Tooltip>
+                      ) : (
+                        stateBadge
+                      )}
                     </Table.Cell>
                     <Table.Cell align="end">
                       {t.membersCount === 0 ? (

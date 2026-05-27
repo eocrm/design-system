@@ -25,27 +25,27 @@ The page renders inside the existing playground AppShell (Mockups section). The 
 
 ## Columns
 
-| Column | Source field | Cell |
-| --- | --- | --- |
-| Tenant | `slug`, `name` | `<PersonDisplay>` shape — initials-style mark + name (top) + slug (bottom, monospace) |
-| State | `state`, `state_reason` | `<Badge>` with tone per state (see mapping below) + optional `<Tooltip>` exposing `state_reason` for failed/suspended rows |
-| Members | `members_count` | Right-aligned number; `<Text tone="muted">` if 0 |
-| Invites | `pending_invites_count` | Right-aligned number; muted "—" if 0; `<Badge tone="info" size="sm">` if > 0 |
-| Last active | `last_member_active_at` | Relative time ("2h ago"); "—" if null |
-| App version | `app_version` | `<Code>` for the version string; "—" if null (still provisioning) |
-| Created | `created_at` | Short date ("May 12") |
-| ⋯ | — | `<DropdownMenu>` with state-appropriate actions |
+| Column      | Source field            | Cell                                                                                                                       |
+| ----------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Tenant      | `slug`, `name`          | `<PersonDisplay>` shape — initials-style mark + name (top) + slug (bottom, monospace)                                      |
+| State       | `state`, `state_reason` | `<Badge>` with tone per state (see mapping below) + optional `<Tooltip>` exposing `state_reason` for failed/suspended rows |
+| Members     | `members_count`         | Right-aligned number; `<Text tone="muted">` if 0                                                                           |
+| Invites     | `pending_invites_count` | Right-aligned number; muted "—" if 0; `<Badge tone="info" size="sm">` if > 0                                               |
+| Last active | `last_member_active_at` | Relative time ("2h ago"); "—" if null                                                                                      |
+| App version | `app_version`           | `<Code>` for the version string; "—" if null (still provisioning)                                                          |
+| Created     | `created_at`            | Short date ("May 12")                                                                                                      |
+| ⋯           | —                       | `<DropdownMenu>` with state-appropriate actions                                                                            |
 
 State-to-badge-tone mapping:
 
-| State | Tone | Reasoning |
-| --- | --- | --- |
-| `active` | `success` | Operational, serving traffic |
-| `pending` | `neutral` | Submitted, not yet picked up |
-| `queued` | `info` | In queue, awaiting worker |
-| `provisioning` | `info` | Actively being set up |
-| `failed` | `danger` | Provisioning broke |
-| `suspended` | `warning` | Operator-disabled |
+| State          | Tone      | Reasoning                    |
+| -------------- | --------- | ---------------------------- |
+| `active`       | `success` | Operational, serving traffic |
+| `pending`      | `neutral` | Submitted, not yet picked up |
+| `queued`       | `info`    | In queue, awaiting worker    |
+| `provisioning` | `info`    | Actively being set up        |
+| `failed`       | `danger`  | Provisioning broke           |
+| `suspended`    | `warning` | Operator-disabled            |
 
 ## Per-state row actions
 
@@ -63,16 +63,16 @@ The submenu items use `<DropdownMenu.Item destructive>` for Suspend; everything 
 
 The data file gives every state at least one representative row. Names follow the existing mockup data convention (fictional orgs with `slug` + `name`).
 
-| # | slug | name | state | members | pending | last_active | app_version |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `acme` | Acme Inc. | active | 24 | 0 | 8 min ago | 2026.5.12 |
-| 2 | `umbrella-corp` | Umbrella Corporation | active | 142 | 3 | 2h ago | 2026.5.12 |
-| 3 | `northwind-trading` | Northwind Trading | suspended | 8 | 0 | 4d ago | 2026.5.04 |
-| 4 | `initech` | Initech | failed | 0 | 1 | — | — |
-| 5 | `globex` | Globex Corp | provisioning | 0 | 5 | — | — |
-| 6 | `hooli` | Hooli | active | 67 | 2 | 22 min ago | 2026.5.12 |
-| 7 | `vandelay` | Vandelay Industries | queued | 0 | 1 | — | — |
-| 8 | `stark-industries` | Stark Industries | pending | 0 | 4 | — | — |
+| #   | slug                | name                 | state        | members | pending | last_active | app_version |
+| --- | ------------------- | -------------------- | ------------ | ------- | ------- | ----------- | ----------- |
+| 1   | `acme`              | Acme Inc.            | active       | 24      | 0       | 8 min ago   | 2026.5.12   |
+| 2   | `umbrella-corp`     | Umbrella Corporation | active       | 142     | 3       | 2h ago      | 2026.5.12   |
+| 3   | `northwind-trading` | Northwind Trading    | suspended    | 8       | 0       | 4d ago      | 2026.5.04   |
+| 4   | `initech`           | Initech              | failed       | 0       | 1       | —           | —           |
+| 5   | `globex`            | Globex Corp          | provisioning | 0       | 5       | —           | —           |
+| 6   | `hooli`             | Hooli                | active       | 67      | 2       | 22 min ago  | 2026.5.12   |
+| 7   | `vandelay`          | Vandelay Industries  | queued       | 0       | 1       | —           | —           |
+| 8   | `stark-industries`  | Stark Industries     | pending      | 0       | 4       | —           | —           |
 
 `state_reason` is populated for rows 3 (suspended), 4 (failed): "Manual suspension — billing issue (2026-05-23)" / "Database migration timeout on `add_audit_index` step (last attempt 2026-05-26 14:22 UTC)". A `<Tooltip>` on the state badge of those rows surfaces the reason.
 
@@ -130,13 +130,13 @@ All vertical spacing comes from the `<Page>` Stack default gap; no custom margin
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| `packages/playground/src/data/tenants.ts` (NEW) | Mock data array + helpers (`stateTone`, `stateLabel`, `relativeTime`, `tenantActions`) |
-| `packages/playground/src/pages/mockups/Tenants/Tenants.tsx` (NEW) | Page component |
-| `packages/playground/src/pages/mockups/registry.ts` (MODIFY) | Register `tenants` slug + components used |
-| `packages/playground/src/App.tsx` (MODIFY) | Route: `/mockups/tenants → <Tenants />` |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY) | Sidebar item under Mockups group |
+| File                                                              | Role                                                                                   |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `packages/playground/src/data/tenants.ts` (NEW)                   | Mock data array + helpers (`stateTone`, `stateLabel`, `relativeTime`, `tenantActions`) |
+| `packages/playground/src/pages/mockups/Tenants/Tenants.tsx` (NEW) | Page component                                                                         |
+| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)      | Register `tenants` slug + components used                                              |
+| `packages/playground/src/App.tsx` (MODIFY)                        | Route: `/mockups/tenants → <Tenants />`                                                |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)   | Sidebar item under Mockups group                                                       |
 
 ## Out of scope
 
