@@ -379,9 +379,13 @@ export type {
 export { Title } from './components/Title';
 export type { TitleProps, TitleOrder, TitleSize, TitleTone, TitleWeight } from './components/Title';
 
-// i18n
+// i18n — BCP-47 locale tagging (Intl-facing).
 export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';
+
+// i18n — translated UI strings.
+export { I18nProvider, useTranslation, useTranslationArray } from './i18n';
+export type { I18nProviderProps, Locale, Messages, MessageKey, DeepPartial } from './i18n';
 
 // Calendar primitives (hooks + date math + Intl formatters + locale week info).
 // The Calendar UI components below and a future DatePicker compose against
