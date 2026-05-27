@@ -15,10 +15,12 @@
   user-select: none;
 }
 
-// Drag grip — absolutely positioned at the left edge of the cell, sized to
-// fit inside the cell's left padding area (var(--space-3) = 12px) so it
-// never overlaps the label and nothing has to shift on hover. Only the
-// grip's opacity toggles — no padding/layout animation.
+// Drag grip — absolutely positioned at the left edge of the cell. The cell's
+// left padding is reserved via `--data-table-cell-padding-left` (16px) on the
+// DataTable root (see DataTable.module.scss); the 12px grip sits in that
+// padding area with a small gap before the column label, and body cells share
+// the same padding-left so the header label stays aligned with body content.
+// Only the grip's opacity toggles on hover — no layout shift.
 .grip {
   position: absolute;
   top: 0;

@@ -3,6 +3,12 @@
   // ── Root + cell defaults ─────────────────────────────────────────────────
   --data-table-clickable-row-radius: var(--radius-sm);
 
+  // Reserved left-padding on every DataTable cell so the absolutely-positioned
+  // header reorder grip sits in dedicated space without overlapping the column
+  // label. Applied uniformly to body cells too so the header label visually
+  // aligns with the column's body content.
+  --data-table-cell-padding-left: var(--space-4);
+
   // ── Empty state ──────────────────────────────────────────────────────────
   --data-table-empty-padding: var(--space-6) var(--space-4);
   --data-table-empty-fg: var(--color-fg-muted);

@@ -37,6 +37,23 @@
   white-space: nowrap;
 }
 
+// Reserve room in the cell's left padding for the column reorder grip. The
+// grip is absolute-positioned inside the header's padding zone; body cells
+// share the same padding-left so the header label aligns with the body
+// content below it.
+// Doubled `.root` is deliberate: specificity 0,2,1 beats the Table primitive's
+// density-driven `.density-dense .th` / `.density-comfortable .td` rules
+// (0,2,0) which would otherwise reset padding-x via the density shorthand.
+// `:is(th, td)` over `:where(th, td)` is also deliberate — `:is()` preserves
+// the type-selector specificity bump (whereas `:where()` drops to 0,0,0).
+// Only padding-LEFT is overridden; the right side stays density-driven so
+// dense tables keep their tight trailing edge. The auto-select cell is
+// excluded so its centered checkbox stays centered (asymmetric L/R padding
+// would otherwise shift the checkbox right).
+.root.root :is(th, td):not(.autoCell) {
+  padding-left: var(--data-table-cell-padding-left);
+}
+
 // Selection auto-column — fixed narrow width is set via inline <col width> in colgroup.
 .autoCell {
   // text-align center is set by <Table.Cell align="center" />
