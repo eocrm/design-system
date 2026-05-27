@@ -98,6 +98,7 @@ function SettingRow({ setting, value, onChange, onReset }: SettingRowProps) {
           options={setting.options}
           value={String(value)}
           onChange={(next) => onChange(next)}
+          clearable={false}
           aria-label={setting.label}
         />
       );

@@ -395,12 +395,18 @@
 // `:not(.triggerChips)` keeps the vertical padding of chips triggers intact
 // (chips wrap onto multiple lines and need the existing `--space-1` Y-padding
 // instead of a flat `0`); height-bearing `min-height` still applies.
+// Per-size padding: explicitly set padding-block (top/bottom) and
+// padding-left only. The `padding` shorthand would clobber the
+// padding-right reservation set by `.triggerButton` / `.triggerInput`,
+// which is what reserves space for the absolute-positioned chevron + ✕
+// overlays. Setting padding-left alone preserves that reservation.
 .size-sm .trigger {
   min-height: var(--select-trigger-height-sm);
   font-size: var(--select-trigger-font-size-sm);
 
   &:not(.triggerChips) {
-    padding: 0 var(--select-trigger-padding-x-sm);
+    padding-block: 0;
+    padding-left: var(--select-trigger-padding-x-sm);
   }
 }
 
@@ -409,7 +415,8 @@
   font-size: var(--select-trigger-font-size-md);
 
   &:not(.triggerChips) {
-    padding: 0 var(--select-trigger-padding-x-md);
+    padding-block: 0;
+    padding-left: var(--select-trigger-padding-x-md);
   }
 }
 
@@ -418,7 +425,8 @@
   font-size: var(--select-trigger-font-size-lg);
 
   &:not(.triggerChips) {
-    padding: 0 var(--select-trigger-padding-x-lg);
+    padding-block: 0;
+    padding-left: var(--select-trigger-padding-x-lg);
   }
 }
 
