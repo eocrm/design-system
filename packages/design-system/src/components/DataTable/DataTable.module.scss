@@ -176,27 +176,37 @@
 }
 
 // Expanded detail row — the extra <Table.Row> rendered below a data row
-// when its expansion state is true. Spans all columns via colSpan and gets
-// a subtle tint to differentiate it from neighboring data rows. Crucially
-// NOT clickable (no .clickableRow class) so onRowClick doesn't fire when
-// the consumer interacts with their rendered detail content.
-.expandedDetailRow {
-  background: var(--color-table-row-bg-striped);
-
-  &:hover {
-    // The Table primitive's `.hover .tbody .tr:hover` rule (specificity 0,3,0)
-    // would otherwise overwrite this background with the row-hover color. The
-    // detail row isn't clickable — hover flashing carries no signal — so we
-    // re-assert the tint at both rest and hover with a compound selector that
-    // tops the Table-level specificity.
-    background: var(--color-table-row-bg-striped);
-  }
+// when its expansion state is true. Spans all columns via colSpan. It's
+// a panel, not a table row: the consumer's renderExpandedRow output
+// lives inside, so we strip all row-level styling (striped tint, hover
+// flash, cursor) and let the panel sit on the table's base background.
+// Crucially NOT clickable (no .clickableRow class) so onRowClick
+// doesn't fire when the consumer interacts with their rendered detail
+// content.
+// Selectors must beat the Table primitive's row-styling chains:
+//   .hover   .tbody .tr:hover             → (0,4,0)
+//   .striped .tbody .tr:nth-of-type(even) → (0,4,0)
+// The doubled-class trick (`.expandedDetailRow.expandedDetailRow`) plus
+// `tbody tr` elements yields (0,4,2) — wins by element count on tie.
+.root tbody tr.expandedDetailRow.expandedDetailRow {
+  background: transparent;
+  cursor: default;
 }
 
-// The single colSpan cell that holds the consumer's renderExpandedRow output.
-// More vertical breathing room than a data cell — typically the detail
-// content is a panel of multiple lines, not a single value.
-.expandedDetailCell {
+.root tbody tr.expandedDetailRow.expandedDetailRow:hover,
+.root tbody tr.expandedDetailRow.expandedDetailRow:nth-of-type(even) {
+  background: transparent;
+}
+
+// The single colSpan cell that holds the consumer's renderExpandedRow
+// output. Symmetric vertical padding — the panel sits flush against
+// the data row above it (which acts as its own visual anchor) and
+// needs the same breathing room below before the next data row.
+// Selector must beat Table primitive's density modifiers:
+//   .density-dense       .td → (0,2,0)
+//   .density-comfortable .td → (0,2,0)
+// `.root .expandedDetailRow .expandedDetailCell` is (0,3,0) — wins.
+.root .expandedDetailRow .expandedDetailCell {
   padding: var(--space-3) var(--space-4);
   white-space: normal;
 }
