@@ -70,9 +70,7 @@ function actorCell(entry: AuditEntry) {
           <Badge tone="warning" size="sm">
             impersonating
           </Badge>
-          <Text size="xs" tone="muted">
-            by {i.name}
-          </Text>
+          by {i.name}
         </PersonDisplay.Description>
       )}
     </PersonDisplay>
