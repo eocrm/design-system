@@ -63,6 +63,7 @@ import {
   SlidersHorizontal,
   Crop,
   Palette,
+  Settings as SettingsIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@eocrm/design-system';
@@ -77,6 +78,7 @@ const mockupItems = [
   { to: '/mockups/members', label: 'Members', icon: UserCog, end: false },
   { to: '/mockups/tenants', label: 'Tenants', icon: Building2, end: false },
   { to: '/mockups/audit', label: 'Audit log', icon: Activity, end: false },
+  { to: '/mockups/system-settings', label: 'System settings', icon: SettingsIcon, end: false },
 ];
 
 const componentOverview = {

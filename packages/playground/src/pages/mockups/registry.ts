@@ -262,6 +262,30 @@ export const MOCKUPS = [
       'Tooltip',
     ],
   },
+  {
+    slug: 'system-settings',
+    title: 'System settings',
+    path: '/mockups/system-settings',
+    blurb:
+      'Superadmin global settings — data retention, tenant provisioning defaults, security policy, maintenance toggles.',
+    usesComponents: [
+      'Badge',
+      'Button',
+      'Card',
+      'Cluster',
+      'Code',
+      'Divider',
+      'Input',
+      'Page',
+      'PageHeader',
+      'Select',
+      'Stack',
+      'Switch',
+      'Text',
+      'Title',
+      'Tooltip',
+    ],
+  },
 ] as const satisfies readonly MockupEntry[];
 
 export type MockupSlug = (typeof MOCKUPS)[number]['slug'];
