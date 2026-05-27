@@ -63,10 +63,7 @@ function FormDemo() {
 
 export function InlineDateRangePickerDemoPanel() {
   return (
-    <DemoBody
-      files={getComponentFiles('DateRangePicker')}
-      componentName="InlineDateRangePicker"
-    >
+    <DemoBody files={getComponentFiles('DateRangePicker')} componentName="InlineDateRangePicker">
       <Example
         title="Uncontrolled"
         description="No `value` / `onChange` — the picker owns state. Click start then end; hover (or arrow-key) between clicks shows the preview range."

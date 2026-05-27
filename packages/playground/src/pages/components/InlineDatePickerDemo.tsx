@@ -47,10 +47,7 @@ function FormDemo() {
 
 export function InlineDatePickerDemoPanel() {
   return (
-    <DemoBody
-      files={getComponentFiles('DatePicker')}
-      componentName="InlineDatePicker"
-    >
+    <DemoBody files={getComponentFiles('DatePicker')} componentName="InlineDatePicker">
       <Example
         title="Uncontrolled"
         description="No `value` / `onChange` — the picker owns state. Click a cell to set; use the chevrons or PageUp/PageDown to navigate."

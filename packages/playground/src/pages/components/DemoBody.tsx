@@ -41,7 +41,11 @@ export function DemoBody({ files, componentName, children }: DemoBodyProps) {
             />
             {active && (
               <div className={styles.sourceCode}>
-                <CodeBlock code={active.code} language={active.language} filename={active.filename} />
+                <CodeBlock
+                  code={active.code}
+                  language={active.language}
+                  filename={active.filename}
+                />
               </div>
             )}
           </div>

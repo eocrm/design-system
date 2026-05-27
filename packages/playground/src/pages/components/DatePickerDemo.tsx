@@ -47,10 +47,7 @@ function FormDemo() {
 
 export function DatePickerDemoPanel() {
   return (
-    <DemoBody
-      files={getComponentFiles('DatePicker')}
-      componentName="DatePicker"
-    >
+    <DemoBody files={getComponentFiles('DatePicker')} componentName="DatePicker">
       <Example
         title="Uncontrolled"
         description="No `value` / `onChange` — the picker owns state. Type a date, click in the grid, or use the clear button."

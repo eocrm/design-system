@@ -181,7 +181,11 @@ export function DemoBody({ files, componentName, children }: DemoBodyProps) {
             />
             {active && (
               <div className={styles.sourceCode}>
-                <CodeBlock code={active.code} language={active.language} filename={active.filename} />
+                <CodeBlock
+                  code={active.code}
+                  language={active.language}
+                  filename={active.filename}
+                />
               </div>
             )}
           </div>
@@ -244,10 +248,10 @@ The migration per file:
 3. In the `<DemoLayout>` invocation, drop the four lines:
 
    ```tsx
-   tsxSource={tsxSource}
-   scssSource={scssSource}
-   tsxFilename="<X>.tsx"
-   scssFilename="<X>.module.scss"
+   tsxSource = { tsxSource };
+   scssSource = { scssSource };
+   tsxFilename = '<X>.tsx';
+   scssFilename = '<X>.module.scss';
    ```
 
 4. Add one line:

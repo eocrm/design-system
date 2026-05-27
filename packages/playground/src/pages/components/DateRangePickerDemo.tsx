@@ -60,10 +60,7 @@ function FormDemo() {
 
 export function DateRangePickerDemoPanel() {
   return (
-    <DemoBody
-      files={getComponentFiles('DateRangePicker')}
-      componentName="DateRangePicker"
-    >
+    <DemoBody files={getComponentFiles('DateRangePicker')} componentName="DateRangePicker">
       <Example
         title="Uncontrolled"
         description="No `value` / `onChange` — the picker owns state. Click the input or the calendar button to open; pick start then end."
