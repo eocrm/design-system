@@ -391,7 +391,12 @@ const PageHeaderRoot = forwardRef<HTMLDivElement, PageHeaderProps>(function Page
   return (
     <div
       ref={ref}
-      className={clsx(styles.root, borderBottom && styles.rootWithBorder, className)}
+      className={clsx(
+        styles.root,
+        aside && styles.rootWithAside,
+        borderBottom && styles.rootWithBorder,
+        className,
+      )}
       {...rest}
     >
       {(breadcrumb || backButton) && (
