@@ -172,31 +172,26 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
 
       <Divider />
 
-      <Stack gap="xs">
-        <Text size="xs" tone="subtle" weight="semibold">
-          Forensic actions
-        </Text>
-        {/*
-          Filter-mutation actions ("show me all events by X") are Buttons,
-          not Links — Link is for navigation. In production these would
-          dispatch a setFilter() call; here they're no-ops.
-        */}
-        <ButtonGroup size="sm" aria-label="Forensic actions">
+      {/*
+        Filter-mutation actions ("show me all events by X") are Buttons,
+        not Links — Link is for navigation. In production these would
+        dispatch a setFilter() call; here they're no-ops.
+      */}
+      <ButtonGroup size="sm" aria-label="Forensic actions">
+        <Button variant="secondary" onClick={() => {}}>
+          See all by {actorName}
+        </Button>
+        {entry.entity_type && (
           <Button variant="secondary" onClick={() => {}}>
-            See all by {actorName}
+            See all on {entityType}
           </Button>
-          {entry.entity_type && (
-            <Button variant="secondary" onClick={() => {}}>
-              See all on {entityType}
-            </Button>
-          )}
-          {entityId && (
-            <Button variant="secondary" onClick={() => {}}>
-              See all on {entityId}
-            </Button>
-          )}
-        </ButtonGroup>
-      </Stack>
+        )}
+        {entityId && (
+          <Button variant="secondary" onClick={() => {}}>
+            See all on {entityId}
+          </Button>
+        )}
+      </ButtonGroup>
     </Stack>
   );
 }
