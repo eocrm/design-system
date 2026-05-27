@@ -44,7 +44,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={[]}
-        emptyLabel="No events"
+
       />,
       { wrapper: wrap() },
     );
@@ -71,7 +71,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
       />,
       { wrapper: wrap() },
     );
@@ -98,7 +98,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
       />,
       { wrapper: wrap() },
     );
@@ -123,7 +123,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
       />,
       { wrapper: wrap() },
     );
@@ -145,7 +145,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
       />,
       { wrapper: wrap() },
     );
@@ -174,7 +174,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
       />,
       { wrapper: wrap() },
     );
@@ -199,7 +199,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
         onEventClick={onEventClick}
       />,
       { wrapper: wrap() },
@@ -231,7 +231,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
         renderEvent={(event, ctx) => {
           calls.push({
             id: event.id,
@@ -272,7 +272,7 @@ describe('AgendaView', () => {
       },
     ];
     render(
-      <AgendaView days={[todayDay]} rangeLabel="Today" events={events} emptyLabel="No events" />,
+      <AgendaView days={[todayDay]} rangeLabel="Today" events={events} />,
       { wrapper: wrap() },
     );
     const group = screen.getByRole('listitem');
@@ -292,7 +292,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
       />,
       { wrapper: wrap() },
     );
@@ -316,7 +316,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
       />,
       { wrapper: wrap() },
     );
@@ -341,7 +341,7 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-        emptyLabel="No events"
+
         locale="ru-RU"
       />,
       { wrapper: wrap('ru-RU') },

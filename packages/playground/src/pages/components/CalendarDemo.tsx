@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { Calendar, type CalendarEvent, type CalendarView } from '@eocrm/design-system';
+import {
+  Calendar,
+  I18nProvider,
+  type CalendarEvent,
+  type CalendarView,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -225,52 +230,18 @@ export function CalendarDemo() {
 
       <Example
         title="ru-RU locale"
-        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings like the Today button and view-switcher labels are the consumer's responsibility; pass them via the labels prop."
-        code={`<Calendar
-  defaultValue={new Date(2026, 4, 15)}
-  events={SAMPLE_EVENTS}
-  locale="ru-RU"
-  labels={{
-    today: 'Сегодня',
-    previousMonth: 'Предыдущий месяц',
-    nextMonth: 'Следующий месяц',
-    previousWeek: 'Предыдущая неделя',
-    nextWeek: 'Следующая неделя',
-    previousDay: 'Предыдущий день',
-    nextDay: 'Следующий день',
-    previousAgenda: 'Предыдущая неделя',
-    nextAgenda: 'Следующая неделя',
-    moreEvents: (n) => \`ещё ${'${n}'} событий\`,
-    viewMonth: 'Месяц',
-    viewWeek: 'Неделя',
-    viewDay: 'День',
-    viewAgenda: 'Повестка',
-    agendaEmpty: 'Нет событий',
-  }}
-/>`}
+        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings (Today button, prev/next aria-labels, view-switcher) come from the i18n provider — wrap the Calendar in <I18nProvider locale='ru'> to use the built-in Russian translations."
+        code={`<I18nProvider locale="ru">
+  <Calendar
+    defaultValue={new Date(2026, 4, 15)}
+    events={SAMPLE_EVENTS}
+    locale="ru-RU"
+  />
+</I18nProvider>`}
       >
-        <Calendar
-          defaultValue={TODAY}
-          events={SAMPLE_EVENTS}
-          locale="ru-RU"
-          labels={{
-            today: 'Сегодня',
-            previousMonth: 'Предыдущий месяц',
-            nextMonth: 'Следующий месяц',
-            previousWeek: 'Предыдущая неделя',
-            nextWeek: 'Следующая неделя',
-            previousDay: 'Предыдущий день',
-            nextDay: 'Следующий день',
-            previousAgenda: 'Предыдущая неделя',
-            nextAgenda: 'Следующая неделя',
-            moreEvents: (n) => `ещё ${n} событий`,
-            viewMonth: 'Месяц',
-            viewWeek: 'Неделя',
-            viewDay: 'День',
-            viewAgenda: 'Повестка',
-            agendaEmpty: 'Нет событий',
-          }}
-        />
+        <I18nProvider locale="ru">
+          <Calendar defaultValue={TODAY} events={SAMPLE_EVENTS} locale="ru-RU" />
+        </I18nProvider>
       </Example>
 
       <Example

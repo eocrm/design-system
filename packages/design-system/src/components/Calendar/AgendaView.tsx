@@ -1,6 +1,7 @@
 import { useMemo, type MouseEvent } from 'react';
 import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
+import { useTranslation } from '../../i18n/useTranslation';
 import { formatDayLong, formatTime } from '../../calendar';
 import { startOfDay } from '../../calendar/dateMath';
 import type { Day } from '../../calendar/types';
@@ -17,8 +18,6 @@ export interface AgendaViewProps {
   events: readonly CalendarEvent[];
   /** Override locale (otherwise reads `useLocale()`). */
   locale?: string;
-  /** Empty-state message shown when no events fall inside the window. Defaults to "No events". */
-  emptyLabel?: string;
   /** Fires when the user clicks an event row. */
   onEventClick?: (event: CalendarEvent) => void;
   /** Optional custom event renderer (see `RenderEvent`). */
@@ -58,19 +57,19 @@ export function AgendaView({
   rangeLabel,
   events,
   locale: localeOverride,
-  emptyLabel = 'No events',
   onEventClick,
   renderEvent,
 }: AgendaViewProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
+  const t = useTranslation();
 
   const groups = useMemo(() => buildDayGroups(days, events), [days, events]);
 
   if (groups.length === 0) {
     return (
       <div className={styles.agenda} role="list" aria-label={rangeLabel}>
-        <p className={styles.empty}>{emptyLabel}</p>
+        <p className={styles.empty}>{t('calendar.agendaEmpty')}</p>
       </div>
     );
   }
@@ -90,6 +89,7 @@ export function AgendaView({
                 key={`${day.key}-${row.event.id}`}
                 row={row}
                 locale={locale}
+                allDayLabel={t('calendar.allDay')}
                 onClick={onEventClick}
                 renderEvent={renderEvent}
               />
@@ -104,11 +104,12 @@ export function AgendaView({
 interface AgendaRowItemProps {
   row: AgendaRow;
   locale: string;
+  allDayLabel: string;
   onClick?: (event: CalendarEvent) => void;
   renderEvent?: RenderEvent;
 }
 
-function AgendaRowItem({ row, locale, onClick, renderEvent }: AgendaRowItemProps) {
+function AgendaRowItem({ row, locale, allDayLabel, onClick, renderEvent }: AgendaRowItemProps) {
   const { event, isAllDay, duration } = row;
   const tone: CalendarEventTone = event.tone ?? 'neutral';
   const startLabel = isAllDay ? undefined : formatTime(event.startsAt, locale);
@@ -133,7 +134,7 @@ function AgendaRowItem({ row, locale, onClick, renderEvent }: AgendaRowItemProps
   return (
     <button type="button" className={clsx(styles.rowButton, styles[tone])} onClick={handleClick}>
       <span className={styles.timeGutter}>
-        {isAllDay ? <em className={styles.allDay}>All day</em> : timeLabel}
+        {isAllDay ? <em className={styles.allDay}>{allDayLabel}</em> : timeLabel}
       </span>
       <span className={styles.toneDot} aria-hidden="true" />
       <span className={styles.body}>

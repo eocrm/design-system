@@ -436,7 +436,6 @@ export type {
 export { Calendar } from './components/Calendar';
 export type {
   CalendarProps,
-  CalendarLabels,
   CalendarEvent,
   CalendarEventTone,
   CalendarView,
