@@ -143,6 +143,7 @@ export const MOCKUPS = [
       'Grid',
       'Link',
       'PageHeader',
+      'PersonDisplay',
       'Stack',
       'Tabs',
       'Text',

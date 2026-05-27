@@ -13,6 +13,7 @@ import {
   Grid,
   Link,
   PageHeader,
+  PersonDisplay,
   Stack,
   Tabs,
   Text,
@@ -158,17 +159,11 @@ export function ContactDetail() {
                 <Title order={2} size="md">
                   Owner
                 </Title>
-                <Cluster gap="sm" align="center">
-                  <Avatar name={contact.owner} size="md" />
-                  <Stack gap="xs">
-                    <Text as="span" weight="medium">
-                      {contact.owner}
-                    </Text>
-                    <Text as="span" size="sm" tone="muted">
-                      Account Executive
-                    </Text>
-                  </Stack>
-                </Cluster>
+                <PersonDisplay size="md">
+                  <PersonDisplay.Avatar name={contact.owner} />
+                  <PersonDisplay.Name>{contact.owner}</PersonDisplay.Name>
+                  <PersonDisplay.Description>Account Executive</PersonDisplay.Description>
+                </PersonDisplay>
               </Stack>
             </Card>
 
@@ -233,20 +228,13 @@ export function ContactDetail() {
 function TimelineItem({ who, when, children }: { who: string; when: string; children: ReactNode }) {
   return (
     <Card.ListRow>
-      <Cluster gap="sm" align="start" wrap={false}>
-        <Avatar name={who} size="sm" />
-        <Stack gap="xs">
-          <Text as="span" size="sm" tone="muted">
-            <Text as="span" weight="semibold">
-              {who}
-            </Text>{' '}
-            {children}
-          </Text>
-          <Text as="span" size="xs" tone="subtle">
-            {when}
-          </Text>
-        </Stack>
-      </Cluster>
+      <PersonDisplay size="sm">
+        <PersonDisplay.Avatar name={who} />
+        <PersonDisplay.Name>{who}</PersonDisplay.Name>
+        <PersonDisplay.Description>
+          {children} · {when}
+        </PersonDisplay.Description>
+      </PersonDisplay>
     </Card.ListRow>
   );
 }
