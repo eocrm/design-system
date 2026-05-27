@@ -110,8 +110,8 @@ export interface DropdownMenuRadioItemProps extends Omit<
  * IS the action," so picking a value closes the menu chain.
  *
  * **Checked-state visual**: when the item's `value` matches the group's value,
- * the row is tinted with the info surface color (`--color-badge-info-bg` /
- * `--color-badge-info-fg`) and gets a 2px left accent (`--color-info`). No
+ * the row is tinted with the info surface color (`--badge-bg-info` /
+ * `--badge-fg-info`) and gets a 2px left accent (`--color-info`). No
  * default glyph is rendered. Provide a `<DropdownMenu.ItemIndicator>` as a
  * direct child if you want an additional indicator glyph alongside the tinted
  * row.

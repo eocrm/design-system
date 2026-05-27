@@ -1,13 +1,13 @@
 // Text.tokens.scss — Component-scoped tokens for <Text>. Base block, the
 // per-size font-size scale (xs/sm/md/lg/xl), per-weight (regular / medium /
-// semibold / bold), and per-tone colors (default / muted / subtle / accent /
-// danger / success / warning). --font-family-sans is not tokenized per
-// migration rules.
+// semibold / bold), and per-tone foregrounds (default / muted / subtle /
+// accent / danger / success / warning). --font-family-sans is not tokenized
+// per migration rules.
 :root {
   // Base
   --text-font-weight: var(--font-weight-regular);
   --text-line-height: var(--line-height-normal);
-  --text-color: var(--color-fg);
+  --text-fg: var(--color-fg);
 
   // Size scale
   --text-font-size-xs: var(--font-size-xs);
@@ -22,12 +22,12 @@
   --text-font-weight-semibold: var(--font-weight-semibold);
   --text-font-weight-bold: var(--font-weight-bold);
 
-  // Tone palette
-  --text-color-default: var(--color-fg);
-  --text-color-muted: var(--color-fg-muted);
-  --text-color-subtle: var(--color-fg-subtle);
-  --text-color-accent: var(--color-accent);
-  --text-color-danger: var(--color-danger);
-  --text-color-success: var(--color-success);
-  --text-color-warning: var(--color-warning);
+  // Tone foregrounds
+  --text-fg-default: var(--color-fg);
+  --text-fg-muted: var(--color-fg-muted);
+  --text-fg-subtle: var(--color-fg-subtle);
+  --text-fg-accent: var(--color-accent);
+  --text-fg-danger: var(--color-danger);
+  --text-fg-success: var(--color-success);
+  --text-fg-warning: var(--color-warning);
 }

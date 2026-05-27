@@ -6,7 +6,7 @@
   font-family: var(--font-family-sans);
   font-weight: var(--title-font-weight);
   line-height: var(--title-line-height);
-  color: var(--title-color);
+  color: var(--title-fg);
 }
 
 .sizeXs {
@@ -54,23 +54,23 @@
 }
 
 .toneDefault {
-  color: var(--title-color-default);
+  color: var(--title-fg-default);
 }
 
 .toneMuted {
-  color: var(--title-color-muted);
+  color: var(--title-fg-muted);
 }
 
 .toneSubtle {
-  color: var(--title-color-subtle);
+  color: var(--title-fg-subtle);
 }
 
 .toneAccent {
-  color: var(--title-color-accent);
+  color: var(--title-fg-accent);
 }
 
 .toneDanger {
-  color: var(--title-color-danger);
+  color: var(--title-fg-danger);
 }
 
 .truncate {

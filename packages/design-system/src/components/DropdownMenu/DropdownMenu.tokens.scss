@@ -32,8 +32,8 @@
   --dropdown-menu-item-bg-danger-hover: var(--color-bg-danger-subtle);
 
   // Item — checked state (info-tinted with left accent)
-  --dropdown-menu-item-bg-checked: var(--color-badge-info-bg);
-  --dropdown-menu-item-fg-checked: var(--color-badge-info-fg);
+  --dropdown-menu-item-bg-checked: var(--badge-bg-info);
+  --dropdown-menu-item-fg-checked: var(--badge-fg-info);
   --dropdown-menu-item-accent-checked: var(--color-info);
   --dropdown-menu-item-accent-width-checked: var(--border-width-emphasis);
 
