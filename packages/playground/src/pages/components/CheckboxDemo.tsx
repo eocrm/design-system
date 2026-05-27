@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Button, Checkbox, Stack } from '@eocrm/design-system';
+import { Button, Checkbox, Stack, Text, type PaletteColor } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -7,6 +7,46 @@ import tsxSource from '@lib-source/components/Checkbox/Checkbox.tsx?raw';
 import scssSource from '@lib-source/components/Checkbox/Checkbox.module.scss?raw';
 
 const TEAM = ['Alex', 'Priya', 'Tom', 'Sara', 'Jaden'];
+
+const TEAM_COLORS: { team: string; color: PaletteColor }[] = [
+  { team: 'Marketing', color: 'violet' },
+  { team: 'Engineering', color: 'teal' },
+  { team: 'Sales', color: 'amber' },
+  { team: 'Support', color: 'rose' },
+  { team: 'Design', color: 'fuchsia' },
+  { team: 'Operations', color: 'slate' },
+];
+
+function ColorDemo() {
+  const [teams, setTeams] = useState<Record<string, boolean>>({
+    Marketing: true,
+    Engineering: true,
+    Sales: false,
+    Support: false,
+    Design: true,
+    Operations: false,
+  });
+  return (
+    <Stack gap="sm" align="start">
+      {TEAM_COLORS.map(({ team, color }) => (
+        <Checkbox
+          key={team}
+          color={color}
+          label={team}
+          checked={teams[team] ?? false}
+          onChange={(next) => setTeams((prev) => ({ ...prev, [team]: next }))}
+        />
+      ))}
+      <Text size="sm" tone="muted">
+        Selected:{' '}
+        {Object.entries(teams)
+          .filter(([, v]) => v)
+          .map(([k]) => k)
+          .join(', ') || 'none'}
+      </Text>
+    </Stack>
+  );
+}
 
 function ControlledDemo() {
   const [agreed, setAgreed] = useState(false);
@@ -193,6 +233,18 @@ export function CheckboxDemo() {
       >
         <InputExample>
           <Checkbox aria-label="Select row" />
+        </InputExample>
+      </Example>
+
+      <Example
+        title='Color tagging (color="palette-name")'
+        description="Optional `color` prop tints the checked / indeterminate fill with a palette color. Use to visually group checkboxes by team / category / status. Focus ring and hover stay accent-colored."
+        code={`<Checkbox color="violet" label="Marketing" />
+<Checkbox color="teal" label="Engineering" />
+<Checkbox color="amber" label="Sales" />`}
+      >
+        <InputExample width={280}>
+          <ColorDemo />
         </InputExample>
       </Example>
 

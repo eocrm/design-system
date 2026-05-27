@@ -39,6 +39,7 @@ export type ComponentName =
   | 'Page'
   | 'PageHeader'
   | 'Pagination'
+  | 'Palette'
   | 'PasswordInput'
   | 'PasswordStrengthMeter'
   | 'PersonDisplay'

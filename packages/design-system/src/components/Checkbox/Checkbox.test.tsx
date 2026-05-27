@@ -124,4 +124,35 @@ describe('Checkbox', () => {
     const fd = new FormData(form);
     expect(fd.get('agree')).toBe('yes');
   });
+
+  it('color="violet" sets --checkbox-color to the violet palette fg token', () => {
+    const { container } = render(<Checkbox color="violet" label="Marketing" />);
+    const label = container.querySelector('label');
+    expect(label).not.toBeNull();
+    expect(label?.style.getPropertyValue('--checkbox-color')).toBe(
+      'var(--color-palette-violet-fg)',
+    );
+  });
+
+  it('no color prop means no --checkbox-color custom property is set', () => {
+    const { container } = render(<Checkbox label="Default" />);
+    const label = container.querySelector('label');
+    expect(label?.style.getPropertyValue('--checkbox-color')).toBe('');
+  });
+
+  it('color="teal" produces the teal token reference', () => {
+    const { container } = render(<Checkbox color="teal" label="Engineering" />);
+    const label = container.querySelector('label');
+    expect(label?.style.getPropertyValue('--checkbox-color')).toBe('var(--color-palette-teal-fg)');
+  });
+
+  it('color does not affect the unchecked checkbox visual (no fill applied)', () => {
+    // Unchecked: --checkbox-color is set on the label but the SCSS only
+    // applies it when :checked / :indeterminate. We assert the input is
+    // unchecked (the visual is verified by the cascade order in the SCSS).
+    const { container } = render(<Checkbox color="amber" label="Sales" />);
+    const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    expect(input.checked).toBe(false);
+    expect(input.indeterminate).toBe(false);
+  });
 });

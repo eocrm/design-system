@@ -54,6 +54,72 @@
   --color-badge-purple-bg: #eae6ff;
   --color-badge-purple-fg: #403294;
 
+  // ─── Categorical palette (consumer-defined mapping) ─────────────────────
+  // 30 named colors with bg + fg pairs. Use for consumer-defined domain →
+  // color mappings (audit event namespaces, tag picker, team-colored
+  // checkboxes, …). NOT semantic — use --color-badge-* for status. See
+  // packages/design-system/src/palette/palette.ts for the TypeScript surface.
+  --color-palette-red-bg: #ffebe6;
+  --color-palette-red-fg: #bf2600;
+  --color-palette-coral-bg: #ffe5dd;
+  --color-palette-coral-fg: #9e3a14;
+  --color-palette-orange-bg: #fff0db;
+  --color-palette-orange-fg: #974f00;
+  --color-palette-amber-bg: #fff7d6;
+  --color-palette-amber-fg: #7a5300;
+  --color-palette-gold-bg: #fff3c0;
+  --color-palette-gold-fg: #806100;
+  --color-palette-yellow-bg: #fffacc;
+  --color-palette-yellow-fg: #6b5f00;
+  --color-palette-olive-bg: #f0f3cc;
+  --color-palette-olive-fg: #4d5a00;
+  --color-palette-lime-bg: #e8f7c8;
+  --color-palette-lime-fg: #3c6900;
+  --color-palette-green-bg: #d4f5dd;
+  --color-palette-green-fg: #006633;
+  --color-palette-emerald-bg: #d2f0e1;
+  --color-palette-emerald-fg: #00714d;
+  --color-palette-mint-bg: #d6f5ec;
+  --color-palette-mint-fg: #00755a;
+  --color-palette-teal-bg: #d6f0f0;
+  --color-palette-teal-fg: #006970;
+  --color-palette-cyan-bg: #dff5f9;
+  --color-palette-cyan-fg: #00657a;
+  --color-palette-sky-bg: #dceefb;
+  --color-palette-sky-fg: #1f5285;
+  --color-palette-blue-bg: #deebff;
+  --color-palette-blue-fg: #0747a6;
+  --color-palette-navy-bg: #d8e0f0;
+  --color-palette-navy-fg: #1a2e63;
+  --color-palette-indigo-bg: #e2e2f7;
+  --color-palette-indigo-fg: #2c2d80;
+  --color-palette-violet-bg: #e3deff;
+  --color-palette-violet-fg: #4030a6;
+  --color-palette-lavender-bg: #ece6ff;
+  --color-palette-lavender-fg: #5d4ba6;
+  --color-palette-purple-bg: #eae6ff;
+  --color-palette-purple-fg: #403294;
+  --color-palette-plum-bg: #efddf0;
+  --color-palette-plum-fg: #6a2b6b;
+  --color-palette-fuchsia-bg: #fbdef5;
+  --color-palette-fuchsia-fg: #7a1c70;
+  --color-palette-magenta-bg: #ffd9f0;
+  --color-palette-magenta-fg: #8c195e;
+  --color-palette-pink-bg: #ffe0eb;
+  --color-palette-pink-fg: #a3174a;
+  --color-palette-rose-bg: #ffe1e1;
+  --color-palette-rose-fg: #a01a35;
+  --color-palette-brown-bg: #f1e3d3;
+  --color-palette-brown-fg: #6b4a1f;
+  --color-palette-taupe-bg: #ece5db;
+  --color-palette-taupe-fg: #5a4a3a;
+  --color-palette-slate-bg: #e2e6ed;
+  --color-palette-slate-fg: #3d4b66;
+  --color-palette-stone-bg: #e9e7e3;
+  --color-palette-stone-fg: #4d4944;
+  --color-palette-charcoal-bg: #d8dadc;
+  --color-palette-charcoal-fg: #2e3338;
+
   // Avatar fallback palette (deterministic based on initials hash). The
   // foreground (initials text) is set separately so consumers theming
   // --color-bg to a non-white don't accidentally invisible-ize the initials.

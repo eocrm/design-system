@@ -88,11 +88,14 @@
   border-color: var(--color-accent);
 }
 
-// Checked + indeterminate share the filled-accent visual.
+// Checked + indeterminate share the filled-accent visual. The
+// --checkbox-color CSS variable is set by the React layer when the
+// `color` prop is passed (palette color); otherwise the fallback
+// keeps the existing accent fill — defaults are byte-identical.
 .input:checked + .box,
 .input:indeterminate + .box {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  background: var(--checkbox-color, var(--color-accent));
+  border-color: var(--checkbox-color, var(--color-accent));
 }
 
 // Focus ring on the box (sibling selector picks up native input focus).
