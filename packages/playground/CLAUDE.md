@@ -50,8 +50,7 @@ Every component demo:
 ```tsx
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
-import tsxSource from '@lib-source/components/<Name>/<Name>.tsx?raw';
-import scssSource from '@lib-source/components/<Name>/<Name>.module.scss?raw';
+import { getComponentFiles } from '../../lib/componentFiles';
 
 export function <Name>Demo() {
   return (
@@ -59,10 +58,7 @@ export function <Name>Demo() {
       name="<Name>"
       componentName="<Name>"
       description="One sentence on what it is and when to use it."
-      tsxSource={tsxSource}
-      scssSource={scssSource}
-      tsxFilename="<Name>.tsx"
-      scssFilename="<Name>.module.scss"
+      files={getComponentFiles('<Name>')}
     >
       <Example title="..." description="..." code={`...`}>
         {/* live preview */}
@@ -72,6 +68,10 @@ export function <Name>Demo() {
   );
 }
 ```
+
+The `files` prop is a build-time scan of the component's directory (`packages/playground/src/lib/componentFiles.ts`). Every `.tsx`, `.scss`, `.ts`, and `.css` file in `packages/design-system/src/components/<Name>/` becomes a tab in the source-view, excluding `.test.tsx`/`.test.ts`. Tab order: primary `<Name>.tsx` → other `.tsx` → `<Name>.module.scss` → `<Name>.tokens.scss` → other `.scss` → `index.ts` last.
+
+If your demo covers a component whose sources live outside `components/` (rare — `PaletteDemo` is the only example today), construct `files` as an inline `[{ filename, code, language }]` literal from explicit `?raw` imports.
 
 ### 4. Wire new demos into four places
 
