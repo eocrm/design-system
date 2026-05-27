@@ -111,7 +111,6 @@ export const MOCKUPS = [
     path: '/mockups/contacts',
     blurb: 'Tabular contact list with status chips and quick filters.',
     usesComponents: [
-      'Avatar',
       'Badge',
       'Button',
       'Card',
@@ -120,6 +119,7 @@ export const MOCKUPS = [
       'DropdownMenu',
       'Input',
       'Link',
+      'PersonDisplay',
       'Stack',
       'Table',
       'Text',

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { Plus, Filter, ChevronDown } from 'lucide-react';
 import {
-  Avatar,
   Badge,
   Button,
   Card,
@@ -11,6 +10,7 @@ import {
   DropdownMenu,
   Input,
   Link,
+  PersonDisplay,
   Stack,
   Table,
   Text,
@@ -109,17 +109,15 @@ export function Contacts() {
                 <Checkbox aria-label={`Select ${c.name}`} />
               </Table.Cell>
               <Table.Cell>
-                <Cluster gap="sm" align="center" wrap={false}>
-                  <Avatar name={c.name} size="sm" />
-                  <Stack gap="xs">
+                <PersonDisplay size="sm">
+                  <PersonDisplay.Avatar name={c.name} />
+                  <PersonDisplay.Name>
                     <Link as={RouterLink} to={`/mockups/contacts/${c.id}`} variant="subtle">
                       {c.name}
                     </Link>
-                    <Text as="span" size="sm" tone="subtle">
-                      {c.title}
-                    </Text>
-                  </Stack>
-                </Cluster>
+                  </PersonDisplay.Name>
+                  <PersonDisplay.Description>{c.title}</PersonDisplay.Description>
+                </PersonDisplay>
               </Table.Cell>
               <Table.Cell>
                 <Stack gap="xs">
@@ -135,10 +133,10 @@ export function Contacts() {
                 <Badge tone={statusTone[c.status]}>{statusLabel[c.status]}</Badge>
               </Table.Cell>
               <Table.Cell>
-                <Cluster gap="sm" align="center" wrap={false}>
-                  <Avatar name={c.owner} size="sm" />
-                  <Text as="span">{c.owner}</Text>
-                </Cluster>
+                <PersonDisplay size="sm">
+                  <PersonDisplay.Avatar name={c.owner} />
+                  <PersonDisplay.Name>{c.owner}</PersonDisplay.Name>
+                </PersonDisplay>
               </Table.Cell>
               <Table.Cell>
                 <Text as="span" size="sm" tone="subtle">
