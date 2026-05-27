@@ -164,7 +164,7 @@ events.map((e) => <CategoryChip color={eventPaletteColor(e)}>{e}</CategoryChip>)
 <Checkbox color="teal" label="Engineering" />
 <Checkbox color="amber" label="Sales" />`}
       >
-        <InputExample width="auto">
+        <InputExample width={280}>
           <Stack gap="sm" align="start">
             {TEAM_COLORS.map(({ team, color }) => (
               <Checkbox
