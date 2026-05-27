@@ -5,6 +5,20 @@
   border: var(--border-width) solid var(--card-border-color);
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
+
+  // Default: clip children to the rounded border so square-cornered content
+  // (Tables with internal scrollWrap, images, full-bleed media) doesn't show
+  // a seam at the Card's rounded corners. Overlay primitives (DropdownMenu,
+  // Tooltip, Popover) portal out via Floating UI and aren't affected. Focus
+  // outlines use CSS `outline`, which isn't clipped by ancestor overflow.
+  // Opt out with `<Card overflow="visible">` when a child genuinely needs to
+  // overhang the card (decorative badges, hover lifts, etc).
+  overflow: hidden;
+}
+
+.overflowVisible {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  overflow: visible;
 }
 
 // Tone-coded left-stripe via inset box-shadow. Drawn inside the card on top

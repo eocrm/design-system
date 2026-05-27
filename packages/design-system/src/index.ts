@@ -22,7 +22,7 @@ export type {
 } from './components/Kanban';
 
 export { Card } from './components/Card';
-export type { CardProps, CardPadding, CardTone } from './components/Card';
+export type { CardProps, CardPadding, CardTone, CardOverflow } from './components/Card';
 export type { CardHeaderProps, CardHeaderLevel } from './components/Card';
 export type { CardListProps } from './components/Card';
 export type { CardListRowProps } from './components/Card';

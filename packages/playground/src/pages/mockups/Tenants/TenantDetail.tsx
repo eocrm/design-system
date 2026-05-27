@@ -222,79 +222,85 @@ function MembersPanel({ tenant }: { tenant: Tenant }) {
 
   if (members.length === 0) {
     return (
-      <EmptyState
-        title="No members yet"
-        description={
-          tenant.state === 'provisioning' || tenant.state === 'queued' || tenant.state === 'pending'
-            ? 'Members will appear here once the tenant is provisioned and someone accepts the owner invitation.'
-            : 'This tenant has no accepted memberships.'
-        }
-      />
+      <Card padding="none">
+        <EmptyState
+          title="No members yet"
+          description={
+            tenant.state === 'provisioning' ||
+            tenant.state === 'queued' ||
+            tenant.state === 'pending'
+              ? 'Members will appear here once the tenant is provisioned and someone accepts the owner invitation.'
+              : 'This tenant has no accepted memberships.'
+          }
+        />
+      </Card>
     );
   }
 
   return (
-    <Table hover>
-      <Table.Header>
-        <Table.Row>
-          <Table.HeaderCell>Member</Table.HeaderCell>
-          <Table.HeaderCell>Role</Table.HeaderCell>
-          <Table.HeaderCell>Last active</Table.HeaderCell>
-          <Table.HeaderCell>Joined</Table.HeaderCell>
-          <Table.HeaderCell align="end" />
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {members.map((m) => (
-          <Table.Row key={m.id}>
-            <Table.Cell>
-              <PersonDisplay size="sm">
-                <PersonDisplay.Avatar name={m.name} />
-                <PersonDisplay.Name>{m.name}</PersonDisplay.Name>
-                <PersonDisplay.Description>{m.email}</PersonDisplay.Description>
-              </PersonDisplay>
-            </Table.Cell>
-            <Table.Cell>
-              <Badge tone={roleTone[m.role]} size="sm">
-                {roleLabel[m.role]}
-              </Badge>
-            </Table.Cell>
-            <Table.Cell>
-              {m.acceptedAt == null ? (
-                <Text as="span" size="sm" tone="muted">
-                  Invitation pending
-                </Text>
-              ) : (
-                <Text as="span" size="sm" tone={m.lastActiveAt ? 'default' : 'muted'}>
-                  {relativeTime(m.lastActiveAt)}
-                </Text>
-              )}
-            </Table.Cell>
-            <Table.Cell>
-              <Text as="span" size="sm" tone={m.acceptedAt ? 'default' : 'muted'}>
-                {m.acceptedAt ? fullDate(m.acceptedAt) : '—'}
-              </Text>
-            </Table.Cell>
-            <Table.Cell align="end">
-              <DropdownMenu>
-                <DropdownMenu.Trigger>
-                  <Button variant="ghost" size="sm" aria-label={`Actions for ${m.name}`}>
-                    <MoreHorizontal size={14} />
-                  </Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content align="end">
-                  <DropdownMenu.Item onSelect={() => {}}>Change role</DropdownMenu.Item>
-                  <DropdownMenu.Item onSelect={() => {}}>Impersonate</DropdownMenu.Item>
-                  <DropdownMenu.Item onSelect={() => {}} tone="danger">
-                    Remove from tenant
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu>
-            </Table.Cell>
+    <Card padding="none">
+      <Table hover>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell>Member</Table.HeaderCell>
+            <Table.HeaderCell>Role</Table.HeaderCell>
+            <Table.HeaderCell>Last active</Table.HeaderCell>
+            <Table.HeaderCell>Joined</Table.HeaderCell>
+            <Table.HeaderCell align="end" />
           </Table.Row>
-        ))}
-      </Table.Body>
-    </Table>
+        </Table.Header>
+        <Table.Body>
+          {members.map((m) => (
+            <Table.Row key={m.id}>
+              <Table.Cell>
+                <PersonDisplay size="sm">
+                  <PersonDisplay.Avatar name={m.name} />
+                  <PersonDisplay.Name>{m.name}</PersonDisplay.Name>
+                  <PersonDisplay.Description>{m.email}</PersonDisplay.Description>
+                </PersonDisplay>
+              </Table.Cell>
+              <Table.Cell>
+                <Badge tone={roleTone[m.role]} size="sm">
+                  {roleLabel[m.role]}
+                </Badge>
+              </Table.Cell>
+              <Table.Cell>
+                {m.acceptedAt == null ? (
+                  <Text as="span" size="sm" tone="muted">
+                    Invitation pending
+                  </Text>
+                ) : (
+                  <Text as="span" size="sm" tone={m.lastActiveAt ? 'default' : 'muted'}>
+                    {relativeTime(m.lastActiveAt)}
+                  </Text>
+                )}
+              </Table.Cell>
+              <Table.Cell>
+                <Text as="span" size="sm" tone={m.acceptedAt ? 'default' : 'muted'}>
+                  {m.acceptedAt ? fullDate(m.acceptedAt) : '—'}
+                </Text>
+              </Table.Cell>
+              <Table.Cell align="end">
+                <DropdownMenu>
+                  <DropdownMenu.Trigger>
+                    <Button variant="ghost" size="sm" aria-label={`Actions for ${m.name}`}>
+                      <MoreHorizontal size={14} />
+                    </Button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content align="end">
+                    <DropdownMenu.Item onSelect={() => {}}>Change role</DropdownMenu.Item>
+                    <DropdownMenu.Item onSelect={() => {}}>Impersonate</DropdownMenu.Item>
+                    <DropdownMenu.Item onSelect={() => {}} tone="danger">
+                      Remove from tenant
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
+    </Card>
   );
 }
 
@@ -303,91 +309,95 @@ function InvitationsPanel({ tenant }: { tenant: Tenant }) {
 
   if (invitations.length === 0) {
     return (
-      <EmptyState
-        title="No pending invitations"
-        description="When someone is invited to this tenant, the invitation will appear here until it's accepted or expires."
-        actions={
-          <Button>
-            <Plus size={14} /> Invite a member
-          </Button>
-        }
-      />
+      <Card padding="none">
+        <EmptyState
+          title="No pending invitations"
+          description="When someone is invited to this tenant, the invitation will appear here until it's accepted or expires."
+          actions={
+            <Button>
+              <Plus size={14} /> Invite a member
+            </Button>
+          }
+        />
+      </Card>
     );
   }
 
   return (
-    <Table hover>
-      <Table.Header>
-        <Table.Row>
-          <Table.HeaderCell>Email</Table.HeaderCell>
-          <Table.HeaderCell>Role</Table.HeaderCell>
-          <Table.HeaderCell>Invited by</Table.HeaderCell>
-          <Table.HeaderCell>Sent</Table.HeaderCell>
-          <Table.HeaderCell>Expires</Table.HeaderCell>
-          <Table.HeaderCell align="end" />
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {invitations.map((inv) => {
-          const expired = invitationState(inv.expiresAt) === 'expired';
-          return (
-            <Table.Row key={inv.id}>
-              <Table.Cell>
-                <Text as="span" size="sm">
-                  {inv.email}
-                </Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Badge tone={roleTone[inv.role]} size="sm">
-                  {roleLabel[inv.role]}
-                </Badge>
-              </Table.Cell>
-              <Table.Cell>
-                <Text as="span" size="sm" tone="muted">
-                  {inv.invitedBy}
-                </Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Text as="span" size="sm">
-                  {relativeTime(inv.sentAt)}
-                </Text>
-              </Table.Cell>
-              <Table.Cell>
-                {expired ? (
-                  <Badge tone="danger" size="sm">
-                    Expired
-                  </Badge>
-                ) : (
+    <Card padding="none">
+      <Table hover>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell>Email</Table.HeaderCell>
+            <Table.HeaderCell>Role</Table.HeaderCell>
+            <Table.HeaderCell>Invited by</Table.HeaderCell>
+            <Table.HeaderCell>Sent</Table.HeaderCell>
+            <Table.HeaderCell>Expires</Table.HeaderCell>
+            <Table.HeaderCell align="end" />
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {invitations.map((inv) => {
+            const expired = invitationState(inv.expiresAt) === 'expired';
+            return (
+              <Table.Row key={inv.id}>
+                <Table.Cell>
                   <Text as="span" size="sm">
-                    {relativeTime(inv.expiresAt)}
+                    {inv.email}
                   </Text>
-                )}
-              </Table.Cell>
-              <Table.Cell align="end">
-                <DropdownMenu>
-                  <DropdownMenu.Trigger>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label={`Actions for invite ${inv.email}`}
-                    >
-                      <MoreHorizontal size={14} />
-                    </Button>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Content align="end">
-                    <DropdownMenu.Item onSelect={() => {}}>Resend invitation</DropdownMenu.Item>
-                    <DropdownMenu.Item onSelect={() => {}}>Copy invite link</DropdownMenu.Item>
-                    <DropdownMenu.Item onSelect={() => {}} tone="danger">
-                      Revoke invitation
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu>
-              </Table.Cell>
-            </Table.Row>
-          );
-        })}
-      </Table.Body>
-    </Table>
+                </Table.Cell>
+                <Table.Cell>
+                  <Badge tone={roleTone[inv.role]} size="sm">
+                    {roleLabel[inv.role]}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text as="span" size="sm" tone="muted">
+                    {inv.invitedBy}
+                  </Text>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text as="span" size="sm">
+                    {relativeTime(inv.sentAt)}
+                  </Text>
+                </Table.Cell>
+                <Table.Cell>
+                  {expired ? (
+                    <Badge tone="danger" size="sm">
+                      Expired
+                    </Badge>
+                  ) : (
+                    <Text as="span" size="sm">
+                      {relativeTime(inv.expiresAt)}
+                    </Text>
+                  )}
+                </Table.Cell>
+                <Table.Cell align="end">
+                  <DropdownMenu>
+                    <DropdownMenu.Trigger>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label={`Actions for invite ${inv.email}`}
+                      >
+                        <MoreHorizontal size={14} />
+                      </Button>
+                    </DropdownMenu.Trigger>
+                    <DropdownMenu.Content align="end">
+                      <DropdownMenu.Item onSelect={() => {}}>Resend invitation</DropdownMenu.Item>
+                      <DropdownMenu.Item onSelect={() => {}}>Copy invite link</DropdownMenu.Item>
+                      <DropdownMenu.Item onSelect={() => {}} tone="danger">
+                        Revoke invitation
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu>
+                </Table.Cell>
+              </Table.Row>
+            );
+          })}
+        </Table.Body>
+      </Table>
+    </Card>
   );
 }
 
