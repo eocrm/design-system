@@ -44,6 +44,7 @@ import { FileUpload } from '@eocrm/design-system';
 import { FilterChip } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
 import { OptionsPicker } from '@eocrm/design-system';
+import { PALETTE_COLORS, paletteTokens } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
 import { PersonDisplay } from '@eocrm/design-system';
 import { Radio, RadioGroup } from '@eocrm/design-system';
@@ -214,6 +215,36 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description:
       'Numbered nav with windowing, plus a cursor variant for streams without total. Both controlled, no built-in page size.',
     preview: <Pagination currentPage={3} pageCount={10} onPageChange={() => {}} size="sm" />,
+  },
+  {
+    to: '/components/palette',
+    name: 'Palette',
+    description: '30 categorical bg + fg color pairs for consumer-defined domain → color mappings.',
+    preview: (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(10, 1fr)',
+          gap: 2,
+          width: '100%',
+        }}
+        aria-hidden
+      >
+        {PALETTE_COLORS.map((color) => {
+          const { bg } = paletteTokens(color);
+          return (
+            <div
+              key={color}
+              style={{
+                background: bg,
+                aspectRatio: '1 / 1',
+                borderRadius: 2,
+              }}
+            />
+          );
+        })}
+      </div>
+    ),
   },
   {
     to: '/components/person-display',
