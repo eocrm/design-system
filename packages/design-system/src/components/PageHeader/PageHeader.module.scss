@@ -1,13 +1,15 @@
 @use '../../styles/mixins' as *;
 
+// Default layout — no Aside. Two columns: title block, actions.
+// Used by list pages (Dashboard, Contacts, Deals, Members, Audit, …).
 .root {
   display: grid;
   grid-template-areas:
-    'breadcrumb breadcrumb breadcrumb'
-    'aside title actions'
-    'aside subtitle actions'
-    'aside meta actions';
-  grid-template-columns: auto 1fr auto;
+    'breadcrumb breadcrumb'
+    'title actions'
+    'subtitle actions'
+    'meta actions';
+  grid-template-columns: 1fr auto;
 
   // Column gap only. Row gap is 0 because Title/Subtitle/Meta have their
   // own line-height which naturally separates them — adding an explicit
@@ -23,6 +25,20 @@
   // stays because it spaces the header content above the border-bottom
   // divider (when borderBottom is enabled).
   padding-block: 0 var(--space-3);
+}
+
+// Layout with Aside — three columns: aside (hero avatar etc.), title
+// block, actions. Used by detail pages (ContactDetail). The modifier is
+// applied by the Root component only when an <Aside> child is present;
+// without this switch, the empty aside column-gap would still apply and
+// push the title 12px right on every consumer that omits Aside.
+.rootWithAside {
+  grid-template-areas:
+    'breadcrumb breadcrumb breadcrumb'
+    'aside title actions'
+    'aside subtitle actions'
+    'aside meta actions';
+  grid-template-columns: auto 1fr auto;
 }
 
 .rootWithBorder {
@@ -119,6 +135,16 @@
 // ─── Responsive: actions wrap below the title on narrow viewports ────────
 @media (max-width: 640px) {
   .root {
+    grid-template-areas:
+      'breadcrumb'
+      'title'
+      'subtitle'
+      'meta'
+      'actions';
+    grid-template-columns: 1fr;
+  }
+
+  .rootWithAside {
     grid-template-areas:
       'breadcrumb breadcrumb'
       'aside title'
