@@ -66,9 +66,7 @@ export function Deals() {
     <Stack gap="lg">
       <PageHeader>
         <PageHeader.Title>Deals</PageHeader.Title>
-        <PageHeader.Subtitle>
-          {totalDeals} active deals across 4 stages
-        </PageHeader.Subtitle>
+        <PageHeader.Subtitle>{totalDeals} active deals across 4 stages</PageHeader.Subtitle>
         <PageHeader.Actions>
           <Cluster gap="sm">
             <Button variant="secondary">

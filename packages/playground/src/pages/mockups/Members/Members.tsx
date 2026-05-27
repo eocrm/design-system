@@ -31,9 +31,7 @@ export function Members() {
     <Stack gap="lg">
       <PageHeader>
         <PageHeader.Title>Members</PageHeader.Title>
-        <PageHeader.Subtitle>
-          People with access to your Orbit CRM workspace.
-        </PageHeader.Subtitle>
+        <PageHeader.Subtitle>People with access to your Orbit CRM workspace.</PageHeader.Subtitle>
         <PageHeader.Actions>
           <Button>
             <UserPlus size={14} /> Invite members
