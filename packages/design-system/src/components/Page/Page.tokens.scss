@@ -1,0 +1,11 @@
+// Page.tokens.scss — Component-scoped tokens for <Page>. Each token
+// defaults to the primitive the SCSS used before this migration.
+:root {
+  // Gap per size variant (vertical rhythm between page sections)
+  --page-gap-xs: var(--space-1);
+  --page-gap-sm: var(--space-2);
+  --page-gap-md: var(--space-3);
+  --page-gap-lg: var(--space-4);
+  --page-gap-xl: var(--space-6);
+  --page-gap-2xl: var(--space-8);
+}

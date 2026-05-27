@@ -1,3 +1,5 @@
+@use './Grid.tokens';
+
 .grid {
   display: grid;
   grid-template-columns: var(--grid-columns, repeat(auto-fit, minmax(240px, 1fr)));
@@ -5,27 +7,27 @@
 
 // Gap presets — mirror Stack/Cluster scale + camelCase naming
 .gapXs {
-  gap: var(--space-1);
+  gap: var(--grid-gap-xs);
 }
 
 .gapSm {
-  gap: var(--space-2);
+  gap: var(--grid-gap-sm);
 }
 
 .gapMd {
-  gap: var(--space-3);
+  gap: var(--grid-gap-md);
 }
 
 .gapLg {
-  gap: var(--space-4);
+  gap: var(--grid-gap-lg);
 }
 
 .gapXl {
-  gap: var(--space-6);
+  gap: var(--grid-gap-xl);
 }
 
 .gap2xl {
-  gap: var(--space-8);
+  gap: var(--grid-gap-2xl);
 }
 
 // Item alignment — cross-axis

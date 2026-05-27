@@ -1,4 +1,5 @@
 @use '../../styles/mixins' as *;
+@use './PageHeader.tokens';
 
 // Default layout — no Aside. Two columns: title block, actions.
 // Used by list pages (Dashboard, Contacts, Deals, Members, Audit, …).
@@ -16,7 +17,7 @@
   // row gap puts a visible empty band between the title and the count
   // beneath it (e.g., "Audit log" + "284+ events"). Consumers wanting more
   // breathing room between rows can compose with Stack outside.
-  gap: 0 var(--space-3);
+  gap: 0 var(--page-header-col-gap);
 
   // No top padding — the page container (AppShell content, modal body,
   // card padding, etc.) provides the top spacing above the header. Adding
@@ -24,7 +25,7 @@
   // the title 40px from the topbar on every consumer page. Bottom padding
   // stays because it spaces the header content above the border-bottom
   // divider (when borderBottom is enabled).
-  padding-block: 0 var(--space-3);
+  padding-block: 0 var(--page-header-padding-block-end);
 }
 
 // Layout with Aside — three columns: aside (hero avatar etc.), title
@@ -42,14 +43,14 @@
 }
 
 .rootWithBorder {
-  border-bottom: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--page-header-border-color);
 }
 
 .breadcrumb {
   grid-area: breadcrumb;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--page-header-breadcrumb-gap);
 }
 
 .breadcrumbInner {
@@ -62,12 +63,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--page-header-back-button-size);
+  height: var(--page-header-back-button-size);
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
-  color: var(--color-fg-muted);
+  border-radius: var(--page-header-back-button-radius);
+  color: var(--page-header-back-button-fg);
 
   // CSS keyword — interactive trigger.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
@@ -79,8 +80,8 @@
 }
 
 .backButton:hover:not(:disabled) {
-  background: var(--color-bg-muted);
-  color: var(--color-fg);
+  background: var(--page-header-back-button-bg-hover);
+  color: var(--page-header-back-button-fg-hover);
 }
 
 .backButton:focus-visible {
@@ -93,7 +94,7 @@
   // CSS keyword — disabled affordance.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: not-allowed;
-  opacity: var(--opacity-disabled);
+  opacity: var(--page-header-back-button-opacity-disabled);
 }
 
 .aside {
@@ -109,9 +110,9 @@
 
 .subtitle {
   grid-area: subtitle;
-  font-size: var(--font-size-md);
-  color: var(--color-fg-muted);
-  line-height: var(--line-height-tight);
+  font-size: var(--page-header-subtitle-font-size);
+  color: var(--page-header-subtitle-fg);
+  line-height: var(--page-header-subtitle-line-height);
 }
 
 .meta {
@@ -119,14 +120,14 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--page-header-meta-gap);
 }
 
 .actions {
   grid-area: actions;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--page-header-actions-gap);
 
   // stylelint-disable-next-line property-disallowed-list -- grid slot needs vertical centering within its cell
   align-self: center;
@@ -158,6 +159,6 @@
     justify-content: flex-start;
 
     // stylelint-disable-next-line property-disallowed-list -- internal responsive spacing in this layout primitive
-    margin-top: var(--space-3);
+    margin-top: var(--page-header-actions-margin-top-narrow);
   }
 }

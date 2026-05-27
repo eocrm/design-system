@@ -1,0 +1,11 @@
+// Stack.tokens.scss — Component-scoped tokens for <Stack>. Each token
+// defaults to the primitive the SCSS used before this migration.
+:root {
+  // Gap per size
+  --stack-gap-xs: var(--space-1);
+  --stack-gap-sm: var(--space-2);
+  --stack-gap-md: var(--space-3);
+  --stack-gap-lg: var(--space-4);
+  --stack-gap-xl: var(--space-6);
+  --stack-gap-2xl: var(--space-8);
+}
