@@ -7,7 +7,7 @@
   // header reorder grip sits in dedicated space without overlapping the column
   // label. Applied uniformly to body cells too so the header label visually
   // aligns with the column's body content.
-  --data-table-cell-padding-inline-start: var(--space-4);
+  --data-table-cell-padding-left: var(--space-4);
 
   // ── Empty state ──────────────────────────────────────────────────────────
   --data-table-empty-padding: var(--space-6) var(--space-4);
