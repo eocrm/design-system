@@ -3,6 +3,7 @@ import { ChevronDown, Download, Bookmark } from 'lucide-react';
 import {
   Badge,
   Button,
+  ButtonGroup,
   Cluster,
   Code,
   DataTable,
@@ -176,25 +177,25 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
           Forensic actions
         </Text>
         {/*
-          Filter-mutation actions ("show me all events by X") are Button
-          variant="ghost", not Link — Link is for navigation. In production
-          these would dispatch a setFilter() call; here they're no-ops.
+          Filter-mutation actions ("show me all events by X") are Buttons,
+          not Links — Link is for navigation. In production these would
+          dispatch a setFilter() call; here they're no-ops.
         */}
-        <Cluster gap="sm" wrap>
-          <Button variant="ghost" size="sm" onClick={() => {}}>
+        <ButtonGroup size="sm" aria-label="Forensic actions">
+          <Button variant="secondary" onClick={() => {}}>
             See all by {actorName}
           </Button>
           {entry.entity_type && (
-            <Button variant="ghost" size="sm" onClick={() => {}}>
+            <Button variant="secondary" onClick={() => {}}>
               See all on {entityType}
             </Button>
           )}
           {entityId && (
-            <Button variant="ghost" size="sm" onClick={() => {}}>
+            <Button variant="secondary" onClick={() => {}}>
               See all on {entityId}
             </Button>
           )}
-        </Cluster>
+        </ButtonGroup>
       </Stack>
     </Stack>
   );
