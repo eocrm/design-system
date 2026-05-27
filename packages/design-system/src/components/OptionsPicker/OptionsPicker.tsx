@@ -565,57 +565,73 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             )}
             {hasAnyVisible &&
               isGrouped(props) &&
-              visibleGroups.map((g) => (
-                <div key={g.id} className={styles.group}>
-                  {ctx.mode === 'multi' ? (
-                    <button
-                      type="button"
-                      className={styles.groupHeader}
-                      aria-pressed={tristate(
-                        g.options.map((o) => o.value),
-                        draft,
-                      )}
-                      aria-label={`Toggle group ${g.label}`}
-                      aria-controls={g.options.map((o) => `${contentId}-opt-${o.value}`).join(' ')}
-                      onClick={() => toggleGroup(g.options)}
-                    >
-                      <GroupDot color={g.color} tone={g.tone} />
-                      <Text size="xs" weight="semibold" className={styles.groupLabel}>
-                        {g.label}
-                      </Text>
-                      {g.hint && (
-                        <Text size="xs" tone="subtle" className={styles.groupHint}>
-                          {g.hint}
+              visibleGroups.map((g) => {
+                // When the group has a palette color, draw a 1px bottom
+                // border on the header in that color — visually carries
+                // the namespace identity from the dot across the full
+                // header width, separating each group's options.
+                const headerClassName = clsx(
+                  styles.groupHeader,
+                  g.color && styles.groupHeaderWithBorder,
+                );
+                const headerStyle = g.color
+                  ? { borderBottomColor: `var(--color-palette-${g.color}-fg)` }
+                  : undefined;
+                return (
+                  <div key={g.id} className={styles.group}>
+                    {ctx.mode === 'multi' ? (
+                      <button
+                        type="button"
+                        className={headerClassName}
+                        style={headerStyle}
+                        aria-pressed={tristate(
+                          g.options.map((o) => o.value),
+                          draft,
+                        )}
+                        aria-label={`Toggle group ${g.label}`}
+                        aria-controls={g.options
+                          .map((o) => `${contentId}-opt-${o.value}`)
+                          .join(' ')}
+                        onClick={() => toggleGroup(g.options)}
+                      >
+                        <GroupDot color={g.color} tone={g.tone} />
+                        <Text size="xs" weight="semibold" className={styles.groupLabel}>
+                          {g.label}
                         </Text>
-                      )}
-                    </button>
-                  ) : (
-                    <div className={styles.groupHeader} role="presentation">
-                      <GroupDot color={g.color} tone={g.tone} />
-                      <Text size="xs" weight="semibold" className={styles.groupLabel}>
-                        {g.label}
-                      </Text>
-                      {g.hint && (
-                        <Text size="xs" tone="subtle" className={styles.groupHint}>
-                          {g.hint}
+                        {g.hint && (
+                          <Text size="xs" tone="subtle" className={styles.groupHint}>
+                            {g.hint}
+                          </Text>
+                        )}
+                      </button>
+                    ) : (
+                      <div className={headerClassName} style={headerStyle} role="presentation">
+                        <GroupDot color={g.color} tone={g.tone} />
+                        <Text size="xs" weight="semibold" className={styles.groupLabel}>
+                          {g.label}
                         </Text>
-                      )}
-                    </div>
-                  )}
-                  {g.visibleOptions.map((opt) => (
-                    <OptionRow
-                      key={opt.value}
-                      option={opt}
-                      checked={draft.includes(opt.value)}
-                      mode={ctx.mode}
-                      rowId={`${contentId}-opt-${opt.value}`}
-                      focused={focusedValue === opt.value}
-                      onToggle={toggle}
-                      color={g.color}
-                    />
-                  ))}
-                </div>
-              ))}
+                        {g.hint && (
+                          <Text size="xs" tone="subtle" className={styles.groupHint}>
+                            {g.hint}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                    {g.visibleOptions.map((opt) => (
+                      <OptionRow
+                        key={opt.value}
+                        option={opt}
+                        checked={draft.includes(opt.value)}
+                        mode={ctx.mode}
+                        rowId={`${contentId}-opt-${opt.value}`}
+                        focused={focusedValue === opt.value}
+                        onToggle={toggle}
+                        color={g.color}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
             {hasAnyVisible &&
               !isGrouped(props) &&
               visibleFlat.map((opt) => (

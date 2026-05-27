@@ -88,6 +88,23 @@
   padding: var(--space-3) var(--space-2);
 }
 
+// Bottom border in the namespace's palette color. The width + style come
+// from these rules; the actual `border-bottom-color` is injected inline
+// from the React layer (using --color-palette-<name>-fg). Applied only
+// when the group has a `color` prop set, so legacy `tone`-only groups
+// stay borderless.
+// The `button.groupHeader { border: none }` rule below (multi-mode
+// button reset) is more specific than `.groupHeaderWithBorder` on its
+// own, so we need separate selectors for the div + button branches
+// that match or beat its specificity.
+.groupHeaderWithBorder {
+  border-bottom: var(--border-width) solid transparent;
+}
+
+button.groupHeader.groupHeaderWithBorder {
+  border-bottom: var(--border-width) solid transparent;
+}
+
 .groupLabel {
   text-transform: uppercase;
   letter-spacing: 0.04em;
