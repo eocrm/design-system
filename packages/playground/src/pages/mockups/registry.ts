@@ -36,6 +36,7 @@ export type ComponentName =
   | 'Link'
   | 'Modal'
   | 'OptionsPicker'
+  | 'Page'
   | 'PageHeader'
   | 'Pagination'
   | 'PasswordInput'
