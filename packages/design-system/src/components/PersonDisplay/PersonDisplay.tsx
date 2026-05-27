@@ -104,7 +104,7 @@ const DESCRIPTION_TEXT_SIZE: Record<PersonDisplaySize, TextSize> = {
 /**
  * Avatar slot — thin wrapper around `<Avatar>` that reads its `size`
  * from the PersonDisplay root context. All other Avatar props (`name`,
- * `src`, `status`, `initialsTone`, etc.) flow through unchanged.
+ * `src`, `status`, `tooltip`) flow through unchanged.
  *
  * @example
  * <PersonDisplay.Avatar name="Priya Mehta" src="/a/priya.png" status="online" />
@@ -259,6 +259,12 @@ const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescri
  *   controls all children — overriding the Avatar size in isolation
  *   makes the proportions wrong. The Avatar's `size` prop is omitted
  *   from `PersonDisplayAvatarProps` by design.
+ * - Wrapping `<PersonDisplay.Avatar>` in a Fragment or a custom
+ *   component. Root identifies the Avatar slot by element-type
+ *   identity, so a wrapped Avatar lands inside the text column
+ *   instead of the dedicated avatar slot. Render the Avatar as a
+ *   direct child; use `{shouldShow ? <PersonDisplay.Avatar … /> : null}`
+ *   for conditional rendering (`null`/`false` are safely ignored).
  */
 const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(
   function PersonDisplayRoot({ size = 'md', className, children, ...rest }, ref) {
@@ -277,12 +283,13 @@ const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(
     });
     return (
       <PersonDisplayContext.Provider value={{ size }}>
-        {/* {...rest} last so consumer overrides win (Pattern A — Root has no locked-in attributes) */}
+        {/* {...rest} first so internally-computed data-size (load-bearing for SCSS gap)
+            can't be stomped by a consumer (Pattern B — data-size is the only locked attr). */}
         <div
           ref={ref}
           className={clsx(styles.root, className)}
-          data-size={size}
           {...rest}
+          data-size={size}
         >
           {avatarChildren}
           {columnChildren.length > 0 && (

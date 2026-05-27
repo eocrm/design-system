@@ -161,6 +161,17 @@ it('Name (no href) forwards ref to its span', () => {
   expect(ref.current).toBeInstanceOf(HTMLSpanElement);
 });
 
+it('Name (with href) forwards ref to its anchor', () => {
+  const ref = createRef<HTMLAnchorElement>();
+  render(
+    <PersonDisplay>
+      <PersonDisplay.Avatar name="Sarah" />
+      <PersonDisplay.Name ref={ref} href="/contacts/sarah">Sarah</PersonDisplay.Name>
+    </PersonDisplay>,
+  );
+  expect(ref.current).toBeInstanceOf(HTMLAnchorElement);
+});
+
 it('spreads arbitrary HTML attributes onto the root div', () => {
   const { container } = render(
     <PersonDisplay data-testid="person-row">

@@ -1020,7 +1020,7 @@ import { Divider } from '@eocrm/design-system';
 - `size`: `'sm'` / `'md'` (default) / `'lg'`. Propagates to Avatar size and Text scales via context. Don't pass `size` to `PersonDisplay.Avatar` directly — Root controls it (the prop is omitted from `PersonDisplayAvatarProps` by type).
 - `<PersonDisplay.Name href="...">` renders the name as a `<Link variant="subtle">` (real `<a>`). Omit `href` for read-only displays (audit actor, activity timeline).
 - `<PersonDisplay.Description>` is muted text; repeat for additional lines. Children can be `ReactNode` — e.g. `admin@acme.com <Badge tone="warning" size="sm">impersonating</Badge>` to inline a marker.
-- All Avatar props (`status`, `src`, `initialsTone`, …) flow through `<PersonDisplay.Avatar>` except `size`.
+- All Avatar props (`name`, `src`, `status`, `tooltip`) flow through `<PersonDisplay.Avatar>` except `size`.
 - **Use for the standard "person row" — Avatar + name + 0–2 muted lines.** Not for Avatar-only badges (use `<Avatar>`), avatar stacks (use `<AvatarGroup>`), or click-anywhere row interactions (wrap PersonDisplay in your own Link).
 
 ### `<Badge>` — status / category pill
