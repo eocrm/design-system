@@ -192,11 +192,11 @@ import type { OptionsPickerGroup, OptionsPickerOption } from '@eocrm/design-syst
  */
 export const EVENT_NAMESPACE_COLOR: Record<string, PaletteColor> = {
   auth: 'blue',
-  role: 'violet',
+  role: 'fuchsia',
   user: 'teal',
   invitation: 'amber',
   contact: 'emerald',
-  deal: 'gold',
+  deal: 'rose',
   system_setting: 'slate',
 };
 
