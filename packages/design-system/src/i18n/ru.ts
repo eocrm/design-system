@@ -9,6 +9,21 @@ export const ru: Messages = {
   alert: {
     dismiss: 'Закрыть',
   },
+  confirmationPopover: {
+    cancel: 'Отмена',
+  },
+  passwordInput: {
+    show: 'Показать пароль',
+    hide: 'Скрыть пароль',
+    capsLockOn: 'Включён Caps Lock',
+    wrongLayoutOn: 'Возможно, неправильная раскладка клавиатуры',
+  },
+  passwordStrengthMeter: {
+    weak: 'Слабый',
+    fair: 'Средний',
+    strong: 'Надёжный',
+    veryStrong: 'Очень надёжный',
+  },
   calendar: {
     today: 'Сегодня',
     agendaEmpty: 'Нет событий',

@@ -10,6 +10,30 @@ export interface Messages {
     /** aria-label on the Alert's dismiss (×) button. */
     dismiss: string;
   };
+  confirmationPopover: {
+    /** Label on the secondary "Cancel" button inside the confirmation popover. */
+    cancel: string;
+  };
+  passwordInput: {
+    /** aria-label on the show-password toggle when the password is hidden. */
+    show: string;
+    /** aria-label on the hide-password toggle when the password is visible. */
+    hide: string;
+    /** Live-region copy announced when caps-lock is detected. */
+    capsLockOn: string;
+    /** Live-region copy announced when a non-ASCII keystroke is detected. */
+    wrongLayoutOn: string;
+  };
+  passwordStrengthMeter: {
+    /** Label rendered when the strength score is "weak". */
+    weak: string;
+    /** Label rendered when the strength score is "fair". */
+    fair: string;
+    /** Label rendered when the strength score is "strong". */
+    strong: string;
+    /** Label rendered when the strength score is "very strong". */
+    veryStrong: string;
+  };
   calendar: {
     /** Label on the "Today" jump button in the header. */
     today: string;

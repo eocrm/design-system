@@ -1,30 +1,10 @@
 import { forwardRef, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './PasswordStrengthMeter.module.scss';
 
 /** Numeric strength score, 0 (empty) – 4 (strong). */
 export type PasswordStrengthScore = 0 | 1 | 2 | 3 | 4;
-
-export interface PasswordStrengthLabels {
-  /** Label when value is empty / score is 0. Default: '' (no label). */
-  empty?: string;
-  /** Default: 'Weak'. */
-  weak?: string;
-  /** Default: 'Fair'. */
-  fair?: string;
-  /** Default: 'Good'. */
-  good?: string;
-  /** Default: 'Strong'. */
-  strong?: string;
-}
-
-const DEFAULT_LABELS: Required<PasswordStrengthLabels> = {
-  empty: '',
-  weak: 'Weak',
-  fair: 'Fair',
-  good: 'Good',
-  strong: 'Strong',
-};
 
 export interface PasswordStrengthMeterProps extends HTMLAttributes<HTMLDivElement> {
   /**
@@ -45,8 +25,6 @@ export interface PasswordStrengthMeterProps extends HTMLAttributes<HTMLDivElemen
   scoreFn?: (value: string) => PasswordStrengthScore;
   /** Render the textual label next to the segments. Defaults to `true`. */
   showLabel?: boolean;
-  /** Localized labels. */
-  labels?: PasswordStrengthLabels;
 }
 
 /**
@@ -68,12 +46,18 @@ function defaultScoreFn(pw: string): PasswordStrengthScore {
   return Math.min(score, 4) as PasswordStrengthScore;
 }
 
-const LABEL_KEY: Record<PasswordStrengthScore, keyof Required<PasswordStrengthLabels>> = {
-  0: 'empty',
-  1: 'weak',
-  2: 'fair',
-  3: 'good',
-  4: 'strong',
+type MessageKeyForScore =
+  | 'passwordStrengthMeter.weak'
+  | 'passwordStrengthMeter.fair'
+  | 'passwordStrengthMeter.strong'
+  | 'passwordStrengthMeter.veryStrong';
+
+/** Maps each non-empty score to its i18n key. Score 0 returns no label. */
+const MESSAGE_KEY_FOR_SCORE: Record<1 | 2 | 3 | 4, MessageKeyForScore> = {
+  1: 'passwordStrengthMeter.weak',
+  2: 'passwordStrengthMeter.fair',
+  3: 'passwordStrengthMeter.strong',
+  4: 'passwordStrengthMeter.veryStrong',
 };
 
 /**
@@ -101,12 +85,12 @@ const LABEL_KEY: Record<PasswordStrengthScore, keyof Required<PasswordStrengthLa
  */
 export const PasswordStrengthMeter = forwardRef<HTMLDivElement, PasswordStrengthMeterProps>(
   function PasswordStrengthMeter(
-    { value, score, scoreFn = defaultScoreFn, showLabel = true, labels, className, ...props },
+    { value, score, scoreFn = defaultScoreFn, showLabel = true, className, ...props },
     ref,
   ) {
+    const t = useTranslation();
     const resolved: PasswordStrengthScore = score ?? (value !== undefined ? scoreFn(value) : 0);
-    const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
-    const labelText = resolvedLabels[LABEL_KEY[resolved]];
+    const labelText = resolved === 0 ? '' : t(MESSAGE_KEY_FOR_SCORE[resolved]);
 
     return (
       <div

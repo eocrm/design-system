@@ -10,28 +10,11 @@ import clsx from 'clsx';
 import { ArrowBigUpDash, Eye, EyeOff, Languages } from 'lucide-react';
 import { Button } from '../Button';
 import { Tooltip } from '../Tooltip';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './PasswordInput.module.scss';
 
 /** Field height + type scale. Same scale as `<Input>`. */
 export type PasswordInputSize = 'sm' | 'md' | 'lg';
-
-export interface PasswordInputLabels {
-  /** aria-label for the toggle when hidden. Default: 'Show password'. */
-  show?: string;
-  /** aria-label for the toggle when revealed. Default: 'Hide password'. */
-  hide?: string;
-  /** Live-region text announced when caps-lock is detected. Default: 'Caps Lock is on'. */
-  capsLockOn?: string;
-  /** Live-region text announced when a non-ASCII keystroke is detected. Default: 'Possible wrong keyboard layout'. */
-  wrongLayoutOn?: string;
-}
-
-const DEFAULT_LABELS: Required<PasswordInputLabels> = {
-  show: 'Show password',
-  hide: 'Hide password',
-  capsLockOn: 'Caps Lock is on',
-  wrongLayoutOn: 'Possible wrong keyboard layout',
-};
 
 const ICON_SIZE_FOR: Record<PasswordInputSize, number> = {
   sm: 14,
@@ -80,8 +63,6 @@ export interface PasswordInputProps extends Omit<
    * Defaults to `false`.
    */
   wrongLayoutWarning?: boolean;
-  /** Localized aria-labels for the toggle + warning live regions. */
-  labels?: PasswordInputLabels;
 }
 
 /**
@@ -129,7 +110,6 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
       revealable = true,
       capsLockWarning = false,
       wrongLayoutWarning = false,
-      labels,
       className,
       disabled,
       onKeyDown,
@@ -138,7 +118,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     },
     ref,
   ) {
-    const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
+    const t = useTranslation();
     const iconSize = ICON_SIZE_FOR[size];
 
     const isControlled = revealed !== undefined;
@@ -214,14 +194,14 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             aria-describedby is intentionally inert for screen readers
             (no double-announcement). */}
         {capsLockWarning && capsOn && (
-          <Tooltip content={resolvedLabels.capsLockOn} open>
+          <Tooltip content={t('passwordInput.capsLockOn')} open>
             <span aria-hidden="true" className={styles.warningIcon}>
               <ArrowBigUpDash size={iconSize} />
             </span>
           </Tooltip>
         )}
         {wrongLayoutWarning && wrongLayout && (
-          <Tooltip content={resolvedLabels.wrongLayoutOn} open>
+          <Tooltip content={t('passwordInput.wrongLayoutOn')} open>
             <span aria-hidden="true" className={styles.warningIcon}>
               <Languages size={iconSize} />
             </span>
@@ -234,7 +214,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             size="xs"
             iconOnly
             aria-pressed={currentRevealed}
-            aria-label={currentRevealed ? resolvedLabels.hide : resolvedLabels.show}
+            aria-label={currentRevealed ? t('passwordInput.hide') : t('passwordInput.show')}
             onClick={handleToggle}
             disabled={disabled}
           >
@@ -246,12 +226,12 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             announce fires only when the textContent changes. */}
         {capsLockWarning && (
           <span role="status" aria-live="polite" className={styles.srOnly}>
-            {capsOn ? resolvedLabels.capsLockOn : ''}
+            {capsOn ? t('passwordInput.capsLockOn') : ''}
           </span>
         )}
         {wrongLayoutWarning && (
           <span role="status" aria-live="polite" className={styles.srOnly}>
-            {wrongLayout ? resolvedLabels.wrongLayoutOn : ''}
+            {wrongLayout ? t('passwordInput.wrongLayoutOn') : ''}
           </span>
         )}
       </div>

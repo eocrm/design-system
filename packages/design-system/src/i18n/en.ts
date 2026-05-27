@@ -9,6 +9,21 @@ export const en: Messages = {
   alert: {
     dismiss: 'Dismiss',
   },
+  confirmationPopover: {
+    cancel: 'Cancel',
+  },
+  passwordInput: {
+    show: 'Show password',
+    hide: 'Hide password',
+    capsLockOn: 'Caps Lock is on',
+    wrongLayoutOn: 'Possible wrong keyboard layout',
+  },
+  passwordStrengthMeter: {
+    weak: 'Weak',
+    fair: 'Fair',
+    strong: 'Strong',
+    veryStrong: 'Very strong',
+  },
   calendar: {
     today: 'Today',
     agendaEmpty: 'No events',
