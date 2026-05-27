@@ -28,4 +28,10 @@
   align-items: center;
   gap: var(--space-1);
   min-width: 0;
+
+  // Each Description is a single metadata line by design — use additional
+  // Descriptions for additional lines. `nowrap` keeps atomic inline children
+  // (e.g., a Badge inside the audit "impersonating Sarah Lin" marker) on the
+  // same row as their surrounding text, even when the cell is narrow.
+  white-space: nowrap;
 }
