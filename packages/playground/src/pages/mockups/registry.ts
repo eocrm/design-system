@@ -40,6 +40,7 @@ export type ComponentName =
   | 'Pagination'
   | 'PasswordInput'
   | 'PasswordStrengthMeter'
+  | 'PersonDisplay'
   | 'Popover'
   | 'Progress'
   | 'Radio'
