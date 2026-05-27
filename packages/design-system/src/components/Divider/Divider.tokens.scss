@@ -2,7 +2,7 @@
 // defaults to the primitive the SCSS used before this migration.
 :root {
   // Line color (and root color inherited by border edges)
-  --divider-color: var(--color-border);
+  --divider-fg: var(--color-border);
 
   // Thickness per size (sm uses the library-default --border-width primitive)
   --divider-thickness-md: var(--border-width-emphasis);

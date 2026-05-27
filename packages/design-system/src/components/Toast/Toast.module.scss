@@ -186,42 +186,42 @@
 @keyframes enter-from-right {
   from {
     transform: translateX(30px);
-    opacity: var(--opacity-hidden);
+    opacity: var(--toast-opacity-enter-exit);
   }
 }
 
 @keyframes enter-from-left {
   from {
     transform: translateX(-30px);
-    opacity: var(--opacity-hidden);
+    opacity: var(--toast-opacity-enter-exit);
   }
 }
 
 @keyframes enter-from-top {
   from {
     transform: translateY(-30px);
-    opacity: var(--opacity-hidden);
+    opacity: var(--toast-opacity-enter-exit);
   }
 }
 
 @keyframes enter-from-bottom {
   from {
     transform: translateY(30px);
-    opacity: var(--opacity-hidden);
+    opacity: var(--toast-opacity-enter-exit);
   }
 }
 
 @keyframes exit-to-right {
   to {
     transform: translateX(30px);
-    opacity: var(--opacity-hidden);
+    opacity: var(--toast-opacity-enter-exit);
   }
 }
 
 @keyframes exit-to-left {
   to {
     transform: translateX(-30px);
-    opacity: var(--opacity-hidden);
+    opacity: var(--toast-opacity-enter-exit);
   }
 }
 
@@ -261,13 +261,13 @@
 // Peek-collapsed toasts (beyond maxVisible). Compressed and dimmed.
 .toast[data-peek='true'] {
   transform: scale(0.95) translateY(8px);
-  opacity: var(--opacity-subtle);
+  opacity: var(--toast-opacity-peek);
   pointer-events: none;
 }
 
 .stack[data-expanded='true'] .toast[data-peek='true'] {
   transform: none;
-  opacity: var(--opacity-visible);
+  opacity: var(--toast-opacity-peek-expanded);
   pointer-events: auto;
 }
 

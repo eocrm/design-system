@@ -52,4 +52,9 @@
   --toast-viewport-inset: var(--space-3);
   --toast-viewport-gap-sm: var(--space-2);
   --toast-viewport-gap-md: var(--space-3);
+
+  // Animation + peek opacity
+  --toast-opacity-enter-exit: var(--opacity-hidden);
+  --toast-opacity-peek: var(--opacity-subtle);
+  --toast-opacity-peek-expanded: var(--opacity-visible);
 }

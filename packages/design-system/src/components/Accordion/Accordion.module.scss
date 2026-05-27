@@ -45,7 +45,7 @@
   width: 100%;
 
   // Default padding belongs to size='md'; the per-size rules below override.
-  padding: var(--space-3) var(--space-4);
+  padding: var(--accordion-trigger-padding-y-md) var(--accordion-trigger-padding-x-md);
   background: transparent;
   border: 0;
   font-family: inherit;
@@ -116,7 +116,7 @@
 .content[data-state='open'] .inner {
   // Default content padding belongs to size='md'; the per-size rules below
   // override.
-  padding: var(--space-3) var(--space-4);
+  padding: var(--accordion-content-padding-y-md) var(--accordion-content-padding-x-md);
 }
 
 // ─── Size variants ─────────────────────────────────────────────────────

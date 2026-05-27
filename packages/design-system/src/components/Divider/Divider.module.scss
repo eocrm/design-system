@@ -2,14 +2,14 @@
 
 .divider {
   border: 0;
-  color: var(--divider-color);
+  color: var(--divider-fg);
 }
 
 // ─── No-label cases: <hr> with a single border edge ─────────────────────
 
 .horizontal {
   width: 100%;
-  border-top: var(--border-width) solid var(--divider-color);
+  border-top: var(--border-width) solid var(--divider-fg);
 }
 
 // Rule 4 exception: vertical separators need parent height. Without
@@ -18,7 +18,7 @@
 .vertical {
   // stylelint-disable-next-line property-disallowed-list -- vertical separator needs parent height
   align-self: stretch;
-  border-left: var(--border-width) solid var(--divider-color);
+  border-left: var(--border-width) solid var(--divider-fg);
   min-height: var(--divider-min-length);
 }
 
@@ -71,7 +71,7 @@
 .line {
   flex: 1;
   border: 0;
-  background: var(--divider-color);
+  background: var(--divider-fg);
   height: var(--border-width);
   border-radius: 0;
 }
@@ -88,13 +88,13 @@
 .dashed .line {
   background: transparent;
   height: 0;
-  border-top: var(--border-width) dashed var(--divider-color);
+  border-top: var(--border-width) dashed var(--divider-fg);
 }
 
 .dashed.vertical .line {
   width: 0;
   border-top: 0;
-  border-left: var(--border-width) dashed var(--divider-color);
+  border-left: var(--border-width) dashed var(--divider-fg);
 }
 
 .sizeMd .line {

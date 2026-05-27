@@ -28,10 +28,10 @@
   --select-trigger-bg-read-only: var(--color-bg-subtle);
 
   // Trigger — chevron / clear icons
-  --select-chevron-color: var(--color-fg-muted);
+  --select-chevron-fg: var(--color-fg-muted);
   --select-chevron-right: var(--space-3);
-  --select-clear-color: var(--color-fg-muted);
-  --select-clear-color-hover: var(--color-fg);
+  --select-clear-fg: var(--color-fg-muted);
+  --select-clear-fg-hover: var(--color-fg);
   --select-clear-bg-hover: var(--color-bg-muted);
   --select-clear-radius: var(--radius-sm);
   --select-clear-right: var(--space-6);
