@@ -1,4 +1,4 @@
-import type { BadgeTone } from '@eocrm/design-system';
+import type { PaletteColor } from '@eocrm/design-system';
 
 export type AuditActorRef = { id: string; name: string; email: string };
 export type AuditTenantRef = { id: string; slug: string; name: string };
@@ -183,11 +183,40 @@ import type { OptionsPickerGroup, OptionsPickerOption } from '@eocrm/design-syst
  * namespaces present in `auditEntries` plus a couple of common siblings to
  * make the picker feel populated.
  */
+/**
+ * Single source of truth: event namespace → palette color. Used in BOTH
+ * the Event-filter OptionsPicker (group header dot + checkbox fills) AND
+ * the DataTable Event-column badges (stripe color), so a given namespace
+ * reads as the same color everywhere on the page. Add a new namespace
+ * here when introducing new events.
+ */
+export const EVENT_NAMESPACE_COLOR: Record<string, PaletteColor> = {
+  auth: 'blue',
+  role: 'fuchsia',
+  user: 'teal',
+  invitation: 'amber',
+  contact: 'emerald',
+  deal: 'rose',
+  system_setting: 'slate',
+};
+
+/**
+ * Looks up the palette color for an event name (`auth.login_succeeded` →
+ * `'blue'`). Falls back to `stone` for unknown namespaces so the badge
+ * still renders something legible. Replaces the older tone-based
+ * `eventTone()` — per-event tone variation traded for cross-page
+ * namespace consistency.
+ */
+export function eventColor(event: string): PaletteColor {
+  const namespace = event.split('.')[0] ?? '';
+  return EVENT_NAMESPACE_COLOR[namespace] ?? 'stone';
+}
+
 export const eventCatalog: OptionsPickerGroup[] = [
   {
     id: 'auth',
     label: 'Authentication',
-    tone: 'success',
+    color: EVENT_NAMESPACE_COLOR.auth,
     hint: 'auth.*',
     options: [
       { value: 'auth.login_succeeded', label: 'login_succeeded' },
@@ -202,7 +231,7 @@ export const eventCatalog: OptionsPickerGroup[] = [
   {
     id: 'role',
     label: 'Roles',
-    tone: 'info',
+    color: EVENT_NAMESPACE_COLOR.role,
     hint: 'role.*',
     options: [
       { value: 'role.assigned', label: 'assigned' },
@@ -213,7 +242,7 @@ export const eventCatalog: OptionsPickerGroup[] = [
   {
     id: 'user',
     label: 'Users',
-    tone: 'info',
+    color: EVENT_NAMESPACE_COLOR.user,
     hint: 'user.*',
     options: [
       { value: 'user.created', label: 'created' },
@@ -224,7 +253,7 @@ export const eventCatalog: OptionsPickerGroup[] = [
   {
     id: 'invitation',
     label: 'Invitations',
-    tone: 'warning',
+    color: EVENT_NAMESPACE_COLOR.invitation,
     hint: 'invitation.*',
     options: [
       { value: 'invitation.sent', label: 'sent' },
@@ -235,7 +264,7 @@ export const eventCatalog: OptionsPickerGroup[] = [
   {
     id: 'contact',
     label: 'Contacts',
-    tone: 'neutral',
+    color: EVENT_NAMESPACE_COLOR.contact,
     hint: 'contact.*',
     options: [
       { value: 'contact.created', label: 'created' },
@@ -246,7 +275,7 @@ export const eventCatalog: OptionsPickerGroup[] = [
   {
     id: 'deal',
     label: 'Deals',
-    tone: 'neutral',
+    color: EVENT_NAMESPACE_COLOR.deal,
     hint: 'deal.*',
     options: [
       { value: 'deal.created', label: 'created' },
@@ -258,7 +287,7 @@ export const eventCatalog: OptionsPickerGroup[] = [
   {
     id: 'system_setting',
     label: 'System settings',
-    tone: 'warning',
+    color: EVENT_NAMESPACE_COLOR.system_setting,
     hint: 'system_setting.*',
     options: [{ value: 'system_setting.updated', label: 'updated' }],
   },
@@ -270,20 +299,3 @@ export const tenantOptions: OptionsPickerOption[] = [
   { value: 'hooli', label: 'hooli' },
   { value: 'stark', label: 'stark' },
 ];
-
-/**
- * Maps an audit event name to a Badge tone. Namespace-driven so new events
- * inherit a sensible default without explicit listing.
- */
-export function eventTone(event: string): BadgeTone {
-  const head = event.split('.')[0] ?? '';
-  if (event.endsWith('.expired') || event.endsWith('.deleted') || event === 'auth.login_failed') {
-    return 'danger';
-  }
-  if (event === 'auth.login_succeeded' || event === 'auth.mfa_enabled' || event === 'deal.won') {
-    return 'success';
-  }
-  if (head === 'role' || head === 'user') return 'info';
-  if (head === 'invitation' || head === 'system_setting') return 'warning';
-  return 'neutral';
-}

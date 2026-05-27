@@ -118,4 +118,40 @@ describe('Badge', () => {
       expect(container.firstElementChild!.className).toMatch(new RegExp(size));
     },
   );
+
+  it('color="amber" sets inline bg + color using palette tokens (filled)', () => {
+    const { container } = render(<Badge color="amber">Tag</Badge>);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.background).toBe('var(--color-palette-amber-bg)');
+    expect(root.style.color).toBe('var(--color-palette-amber-fg)');
+    expect(root.style.borderLeftColor).toBe('');
+  });
+
+  it('color="violet" on stripe variant also sets borderLeftColor', () => {
+    const { container } = render(
+      <Badge variant="stripe" color="violet">
+        Tag
+      </Badge>,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.background).toBe('var(--color-palette-violet-bg)');
+    expect(root.style.color).toBe('var(--color-palette-violet-fg)');
+    expect(root.style.borderLeftColor).toBe('var(--color-palette-violet-fg)');
+  });
+
+  it('no color prop means no palette inline style is set', () => {
+    const { container } = render(<Badge tone="success">Active</Badge>);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.background).toBe('');
+    expect(root.style.color).toBe('');
+  });
+
+  it('consumer style merges on top of palette style (consumer override wins)', () => {
+    const { container } = render(
+      <Badge color="amber" style={{ background: 'red' }}>
+        Tag
+      </Badge>,
+    );
+    expect((container.firstElementChild as HTMLElement).style.background).toBe('red');
+  });
 });

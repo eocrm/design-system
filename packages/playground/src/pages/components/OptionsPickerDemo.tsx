@@ -31,7 +31,7 @@ const groupedOptions = [
   {
     id: 'role',
     label: 'Roles',
-    color: 'violet' as const,
+    color: 'emerald' as const,
     hint: 'role.*',
     options: [
       { value: 'role.assigned', label: 'assigned' },
@@ -42,7 +42,7 @@ const groupedOptions = [
   {
     id: 'invitation',
     label: 'Invitations',
-    color: 'amber' as const,
+    color: 'fuchsia' as const,
     hint: 'invitation.*',
     options: [
       { value: 'invitation.sent', label: 'sent' },

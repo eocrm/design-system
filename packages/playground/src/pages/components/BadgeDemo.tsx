@@ -1,4 +1,4 @@
-import { Badge } from '@eocrm/design-system';
+import { Badge, PALETTE_COLORS } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
@@ -257,6 +257,32 @@ export function BadgeDemo() {
               <Badge tone="danger">Lost</Badge>
             </Cluster>
           </div>
+        </Stack>
+      </Example>
+
+      <Example
+        title="Palette colors (categorical)"
+        description="Optional `color` prop tints the badge with a categorical palette color — 30 named colors that carry no semantic meaning (use `tone` for status; `color` for tag-like categorical labels)."
+        code={`<Badge color="amber">Marketing</Badge>
+<Badge color="teal">Engineering</Badge>
+<Badge color="violet">Design</Badge>
+<Badge color="fuchsia" variant="stripe">Sales</Badge>`}
+      >
+        <Stack gap="sm">
+          <Cluster gap="xs" wrap>
+            {PALETTE_COLORS.map((color) => (
+              <Badge key={color} color={color}>
+                {color}
+              </Badge>
+            ))}
+          </Cluster>
+          <Cluster gap="xs" wrap>
+            {PALETTE_COLORS.slice(0, 10).map((color) => (
+              <Badge key={color} color={color} variant="stripe">
+                {color}
+              </Badge>
+            ))}
+          </Cluster>
         </Stack>
       </Example>
     </DemoLayout>

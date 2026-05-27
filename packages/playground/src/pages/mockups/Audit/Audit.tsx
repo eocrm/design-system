@@ -24,7 +24,7 @@ import {
 import {
   auditEntries,
   eventCatalog,
-  eventTone,
+  eventColor,
   tenantOptions,
   type AuditEntry,
 } from '../../../data/audit';
@@ -219,7 +219,7 @@ export function Audit() {
         header: 'Event',
         size: 200,
         cell: (r) => (
-          <Badge tone={eventTone(r.event)} dot="start">
+          <Badge variant="stripe" size="sm" color={eventColor(r.event)}>
             {r.event}
           </Badge>
         ),
