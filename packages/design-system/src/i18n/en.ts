@@ -9,6 +9,29 @@ export const en: Messages = {
   alert: {
     dismiss: 'Dismiss',
   },
+  dataTable: {
+    selectAll: 'Select all rows on page',
+    rowExpansion: 'Row expansion',
+    pinnedRows: 'Pinned rows',
+    empty: 'No data',
+  },
+  optionsPicker: {
+    filter: 'Filter…',
+    apply: 'Apply',
+    cancel: 'Cancel',
+    noMatches: 'No matches',
+  },
+  pagination: {
+    previous: 'Previous',
+    next: 'Next',
+    previousAriaLabel: 'Previous page',
+    nextAriaLabel: 'Next page',
+  },
+  select: {
+    clear: 'Clear selection',
+    search: 'Search…',
+    noOptions: 'No options',
+  },
   colorPicker: {
     saturationBrightness: 'Saturation and brightness',
     hue: 'Hue',

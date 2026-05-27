@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import { paginationRange } from './paginationRange';
 import styles from './Pagination.module.scss';
 
@@ -131,6 +132,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(function Pagi
   },
   ref,
 ) {
+  const t = useTranslation();
   const clampedCount = clampPageCount(pageCount);
   const clampedCurrent = clampCurrent(currentPage, clampedCount);
   const items = paginationRange(clampedCurrent, clampedCount, clampSiblings(siblingCount));
@@ -150,10 +152,10 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(function Pagi
         className={clsx(styles.button, styles.navButton)}
         onClick={() => onPageChange(clampedCurrent - 1)}
         disabled={disabled || clampedCurrent === 1}
-        aria-label="Previous page"
+        aria-label={t('pagination.previousAriaLabel')}
       >
         <ChevronLeft size={16} aria-hidden />
-        <span>Previous</span>
+        <span>{t('pagination.previous')}</span>
       </button>
 
       {items.map((item) => {
@@ -187,9 +189,9 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(function Pagi
         className={clsx(styles.button, styles.navButton)}
         onClick={() => onPageChange(clampedCurrent + 1)}
         disabled={disabled || clampedCurrent === clampedCount}
-        aria-label="Next page"
+        aria-label={t('pagination.nextAriaLabel')}
       >
-        <span>Next</span>
+        <span>{t('pagination.next')}</span>
         <ChevronRight size={16} aria-hidden />
       </button>
     </nav>

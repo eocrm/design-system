@@ -10,6 +10,44 @@ export interface Messages {
     /** aria-label on the Alert's dismiss (×) button. */
     dismiss: string;
   };
+  dataTable: {
+    /** aria-label for the select-all checkbox in the header. */
+    selectAll: string;
+    /** Accessible label for the row-expansion toggle column header. */
+    rowExpansion: string;
+    /** Accessible label for the pinned-rows section / tbody. */
+    pinnedRows: string;
+    /** Default empty-state copy when no rows are rendered. */
+    empty: string;
+  };
+  optionsPicker: {
+    /** Placeholder and aria-label for the filter (search) input. */
+    filter: string;
+    /** Label for the apply button. */
+    apply: string;
+    /** Label for the cancel button. */
+    cancel: string;
+    /** Copy shown when the filter query has no matches. */
+    noMatches: string;
+  };
+  pagination: {
+    /** Visible label on the previous-page button. */
+    previous: string;
+    /** Visible label on the next-page button. */
+    next: string;
+    /** aria-label on the previous-page button. */
+    previousAriaLabel: string;
+    /** aria-label on the next-page button. */
+    nextAriaLabel: string;
+  };
+  select: {
+    /** aria-label on the clear-selection (×) button inside Select. */
+    clear: string;
+    /** Placeholder for the search input in searchable Selects. */
+    search: string;
+    /** Copy shown when the Select listbox has no options matching the filter. */
+    noOptions: string;
+  };
   colorPicker: {
     /** aria-label for the SV (saturation × brightness) square. */
     saturationBrightness: string;

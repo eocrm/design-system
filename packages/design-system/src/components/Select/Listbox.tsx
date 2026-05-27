@@ -16,6 +16,7 @@ import { isCreateRow } from './utils';
 import { Empty } from './Empty';
 import { Loading } from './Loading';
 import { ErrorRow } from './Error';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Select.module.scss';
 
 /**
@@ -356,6 +357,7 @@ function renderOptionRow<T>(
  */
 function InPanelSearchInput() {
   const ctx = useSelectContext('Listbox.SearchInput');
+  const t = useTranslation();
   const ref = useRef<HTMLInputElement>(null);
 
   // Auto-focus on mount so the user starts typing immediately after
@@ -379,7 +381,7 @@ function InPanelSearchInput() {
       aria-activedescendant={activeOptionId}
       aria-autocomplete="list"
       className={styles.popoverSearch}
-      placeholder="Search…"
+      placeholder={t('select.search')}
       autoComplete="off"
       spellCheck={false}
       value={ctx.query}

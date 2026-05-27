@@ -23,6 +23,7 @@ import { BodyRow } from './BodyRow';
 import { reorderRespectingPins } from './reorderColumns';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './DataTable.module.scss';
 
 export interface DataTableProps<T> {
@@ -134,6 +135,7 @@ function DataTableInner<T>(
   }: DataTableProps<T>,
   ref: Ref<HTMLTableElement>,
 ) {
+  const t = useTranslation();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -228,7 +230,7 @@ function DataTableInner<T>(
                     checked={instance.isAllOnPageSelected()}
                     indeterminate={instance.isSomeOnPageSelected()}
                     onChange={() => instance.toggleAllOnPage()}
-                    aria-label="Select all rows on page"
+                    aria-label={t('dataTable.selectAll')}
                   />
                 </Table.HeaderCell>
               )}
@@ -242,7 +244,7 @@ function DataTableInner<T>(
                     left: instance.enableRowSelection ? AUTO_CELL_WIDTH : 0,
                   }}
                   // Empty header — the expand column has no per-column action.
-                  aria-label="Row expansion"
+                  aria-label={t('dataTable.rowExpansion')}
                 />
               )}
               {renderColumns.map((col) => (
@@ -252,7 +254,7 @@ function DataTableInner<T>(
           </Table.Header>
 
           {instance.pinnedRows.length > 0 && (
-            <Table.Body className={styles.pinnedRowsTbody} aria-label="Pinned rows">
+            <Table.Body className={styles.pinnedRowsTbody} aria-label={t('dataTable.pinnedRows')}>
               {instance.pinnedRows.map((row) => (
                 <BodyRow key={instance.getRowId(row)} row={row} instance={instance} isPinnedRow />
               ))}
@@ -293,10 +295,11 @@ function SkeletonRows({ count, totalColCount }: { count: number; totalColCount: 
 }
 
 function EmptyRow({ totalColCount, content }: { totalColCount: number; content?: ReactNode }) {
+  const t = useTranslation();
   return (
     <Table.Row>
       <Table.Cell colSpan={totalColCount} className={styles.emptyCell}>
-        {content ?? <EmptyState title="No data" />}
+        {content ?? <EmptyState title={t('dataTable.empty')} />}
       </Table.Cell>
     </Table.Row>
   );

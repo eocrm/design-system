@@ -9,6 +9,29 @@ export const ru: Messages = {
   alert: {
     dismiss: 'Закрыть',
   },
+  dataTable: {
+    selectAll: 'Выбрать все строки на странице',
+    rowExpansion: 'Развёртывание строки',
+    pinnedRows: 'Закреплённые строки',
+    empty: 'Нет данных',
+  },
+  optionsPicker: {
+    filter: 'Фильтр…',
+    apply: 'Применить',
+    cancel: 'Отмена',
+    noMatches: 'Совпадений не найдено',
+  },
+  pagination: {
+    previous: 'Назад',
+    next: 'Далее',
+    previousAriaLabel: 'Предыдущая страница',
+    nextAriaLabel: 'Следующая страница',
+  },
+  select: {
+    clear: 'Очистить выбор',
+    search: 'Поиск…',
+    noOptions: 'Нет вариантов',
+  },
   colorPicker: {
     saturationBrightness: 'Насыщенность и яркость',
     hue: 'Оттенок',
