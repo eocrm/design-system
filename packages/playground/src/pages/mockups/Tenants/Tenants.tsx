@@ -117,7 +117,7 @@ export function Tenants() {
                   Sort: {sortKey ? sortLabel[sortKey] : 'None'} <ChevronDown size={12} />
                 </Button>
               </OptionsPicker.Trigger>
-              <OptionsPicker.Content label="Sort by" options={sortOptions} />
+              <OptionsPicker.Content label="Sort by" options={sortOptions} searchable={false} />
             </OptionsPicker>
           </Cluster>
         </Cluster>
