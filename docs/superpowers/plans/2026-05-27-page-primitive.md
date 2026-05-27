@@ -13,6 +13,7 @@
 **Branch:** `feat/page-primitive` (already checked out)
 
 **Confirmed primitive facts (probed before writing this plan):**
+
 - `Stack.tsx` exports `StackGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'`
 - `Stack.module.scss` maps `gapXs=space-1`, `gapSm=space-2`, `gapMd=space-3`, `gapLg=space-4`, `gapXl=space-6`, `gap2xl=space-8` — Page mirrors these tokens
 - `lg` default = `var(--space-4)` = 16px (the canonical CRM page rhythm)
@@ -22,28 +23,28 @@
 
 ## File Structure
 
-| File | Role |
-|---|---|
-| `packages/design-system/src/components/Page/Page.tsx` (NEW) | Component + types + gap lookup |
-| `packages/design-system/src/components/Page/Page.module.scss` (NEW) | Root flex + gap classes |
-| `packages/design-system/src/components/Page/Page.test.tsx` (NEW) | Hard rule 1 + gap propagation |
-| `packages/design-system/src/components/Page/index.ts` (NEW) | Public re-exports |
-| `packages/design-system/src/index.ts` (MODIFY) | Add Page + types |
-| `packages/design-system/src/_meta/manifest.ts` (MODIFY) | Cluster mapping `Page: 'Layout'` |
-| `packages/design-system/scripts/generate-manifest.mjs` (MODIFY) | Same cluster mapping |
-| `packages/design-system/src/components.manifest.json` (REGENERATED) | `npm run build:manifest` |
-| `packages/design-system/AGENTS.md` (MODIFY) | Layout-cluster TL;DR section |
-| `packages/playground/src/pages/components/PageDemo.tsx` (NEW) | DemoLayout + 3 examples |
-| `packages/playground/src/App.tsx` (MODIFY) | Route + import |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY) | Sidebar entry (Layout cluster) |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY) | Overview card |
-| `packages/playground/src/pages/mockups/registry.ts` (MODIFY) | `ComponentName` union + per-mockup `usesComponents` |
-| `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx` (MODIFY) | Outer Stack → Page |
-| `packages/playground/src/pages/mockups/Contacts/Contacts.tsx` (MODIFY) | Same |
-| `packages/playground/src/pages/mockups/Deals/Deals.tsx` (MODIFY) | Same |
-| `packages/playground/src/pages/mockups/Members/Members.tsx` (MODIFY) | Same |
-| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (MODIFY) | Same |
-| `packages/playground/src/pages/mockups/ContactDetail/ContactDetail.tsx` (MODIFY) | Same |
+| File                                                                             | Role                                                |
+| -------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `packages/design-system/src/components/Page/Page.tsx` (NEW)                      | Component + types + gap lookup                      |
+| `packages/design-system/src/components/Page/Page.module.scss` (NEW)              | Root flex + gap classes                             |
+| `packages/design-system/src/components/Page/Page.test.tsx` (NEW)                 | Hard rule 1 + gap propagation                       |
+| `packages/design-system/src/components/Page/index.ts` (NEW)                      | Public re-exports                                   |
+| `packages/design-system/src/index.ts` (MODIFY)                                   | Add Page + types                                    |
+| `packages/design-system/src/_meta/manifest.ts` (MODIFY)                          | Cluster mapping `Page: 'Layout'`                    |
+| `packages/design-system/scripts/generate-manifest.mjs` (MODIFY)                  | Same cluster mapping                                |
+| `packages/design-system/src/components.manifest.json` (REGENERATED)              | `npm run build:manifest`                            |
+| `packages/design-system/AGENTS.md` (MODIFY)                                      | Layout-cluster TL;DR section                        |
+| `packages/playground/src/pages/components/PageDemo.tsx` (NEW)                    | DemoLayout + 3 examples                             |
+| `packages/playground/src/App.tsx` (MODIFY)                                       | Route + import                                      |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)                  | Sidebar entry (Layout cluster)                      |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY)          | Overview card                                       |
+| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)                     | `ComponentName` union + per-mockup `usesComponents` |
+| `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx` (MODIFY)         | Outer Stack → Page                                  |
+| `packages/playground/src/pages/mockups/Contacts/Contacts.tsx` (MODIFY)           | Same                                                |
+| `packages/playground/src/pages/mockups/Deals/Deals.tsx` (MODIFY)                 | Same                                                |
+| `packages/playground/src/pages/mockups/Members/Members.tsx` (MODIFY)             | Same                                                |
+| `packages/playground/src/pages/mockups/Audit/Audit.tsx` (MODIFY)                 | Same                                                |
+| `packages/playground/src/pages/mockups/ContactDetail/ContactDetail.tsx` (MODIFY) | Same                                                |
 
 ---
 
@@ -52,6 +53,7 @@
 The `src/index.ts` re-export and the `_meta/manifest.ts` cluster entry must land together with the component — the structure + manifest meta-tests don't tolerate deferral. This task bundles all of them.
 
 **Files:**
+
 - Create: `packages/design-system/src/components/Page/Page.tsx`
 - Create: `packages/design-system/src/components/Page/Page.module.scss`
 - Create: `packages/design-system/src/components/Page/Page.test.tsx`
@@ -347,9 +349,11 @@ cd /Users/dpws/projects/design-system/packages/design-system && npm run build:ma
 ```
 
 Verify:
+
 ```bash
 cd /Users/dpws/projects/design-system && grep -A 6 '"Page"' packages/design-system/src/components.manifest.json
 ```
+
 Should show `"cluster": "Layout"` and a sensible `"tier"` value.
 
 - [ ] **Step 9: Run tests + gates**
@@ -395,6 +399,7 @@ EOF
 ## Task 2: AGENTS.md TL;DR section
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 
 - [ ] **Step 1: Find the insertion point**
@@ -413,7 +418,6 @@ If the file groups Layout components together more loosely, place Page near them
 The section content (leading blank line is required for markdown spacing):
 
 ````markdown
-
 ### `<Page>` — page-root layout primitive
 
 ```tsx
@@ -472,6 +476,7 @@ EOF
 ## Task 3: Component demo + nav wiring
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/PageDemo.tsx`
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
@@ -660,6 +665,7 @@ EOF
 ## Task 4: Migrate Dashboard mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -733,6 +739,7 @@ EOF
 ## Task 5: Migrate Contacts mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Contacts/Contacts.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -792,6 +799,7 @@ EOF
 ## Task 6: Migrate Deals mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Deals/Deals.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -808,9 +816,11 @@ Replace the outer `<Stack gap="lg">` (around line 66) with `<Page>` and the matc
 - [ ] **Step 3: Imports + grep Stack usage**
 
 Add `Page` alphabetically. Check:
+
 ```bash
 grep -nE "<Stack\b" packages/playground/src/pages/mockups/Deals/Deals.tsx | head -5
 ```
+
 Keep or drop `Stack` accordingly.
 
 - [ ] **Step 4: Update registry**
@@ -839,6 +849,7 @@ EOF
 ## Task 7: Migrate Members mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Members/Members.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -882,6 +893,7 @@ EOF
 ## Task 8: Migrate Audit mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/Audit/Audit.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -925,6 +937,7 @@ EOF
 ## Task 9: Migrate ContactDetail mockup
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/ContactDetail/ContactDetail.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 
@@ -1060,6 +1073,7 @@ EOF
 ## Self-Review
 
 **1. Spec coverage:**
+
 - Page primitive with `gap` prop defaulting to `'lg'` — Task 1 ✓
 - Six gap values (`xs/sm/md/lg/xl/2xl`) using Stack's token scale — Task 1 ✓
 - `PageGap` type re-aliases `StackGap` — Task 1 ✓
@@ -1078,6 +1092,7 @@ EOF
 **2. Placeholder scan:** every step has concrete code or commands. Mockup-migration tasks instruct grep-then-decide for whether `Stack` stays in the import (each mockup may differ); this is an explicit instruction, not a placeholder.
 
 **3. Type consistency:**
+
 - `PageGap`, `PageProps` defined in Task 1 and re-exported identically in Task 1 Step 5.
 - `gap: 'lg'` default consistent across spec, Task 1 implementation, Task 1 tests, Task 2 docs, Task 3 demo.
 - `gapClass` lookup table values match Stack's gap class names 1:1 (gapXs/gapSm/gapMd/gapLg/gapXl/gap2xl).

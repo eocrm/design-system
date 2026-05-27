@@ -17,6 +17,7 @@ Adding a dedicated `<Page>` primitive accomplishes three things:
 Ship `<Page>` — a thin layout primitive in `@eocrm/design-system` that wraps page-root content with the canonical CRM vertical rhythm (`gap="lg"`, i.e. 16px between sections). All six existing mockups adopt it in the same PR.
 
 **Non-goals:**
+
 - Compound API with `Page.Header` / `Page.Footer` subcomponents — flat. PageHeader stays a sibling.
 - Auto-wrapping the playground's `<CrossLinks>` footer — playground concern, stays a sibling at the end of mockup children.
 - Max-width / page-width constraints — out of scope for the initial version; the reserved slot exists but the prop doesn't.
@@ -45,9 +46,7 @@ export function Contacts() {
 
 ```tsx
 // Per-page gap override (rare — only when the default 'lg' doesn't fit)
-<Page gap="md">
-  {/* dense dashboard with tighter section rhythm */}
-</Page>
+<Page gap="md">{/* dense dashboard with tighter section rhythm */}</Page>
 ```
 
 ### Types
@@ -89,19 +88,19 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
 
 ### Gap mapping (mirrors Stack 1:1)
 
-| `gap` value | Token | Pixels |
-|-------------|-------|--------|
-| `xs` | `--space-1` | 4 |
-| `sm` | `--space-2` | 8 |
-| `md` | `--space-3` | 12 |
-| `lg` *(default)* | `--space-4` | 16 |
-| `xl` | `--space-6` | 24 |
-| `2xl` | `--space-8` | 32 |
+| `gap` value      | Token       | Pixels |
+| ---------------- | ----------- | ------ |
+| `xs`             | `--space-1` | 4      |
+| `sm`             | `--space-2` | 8      |
+| `md`             | `--space-3` | 12     |
+| `lg` _(default)_ | `--space-4` | 16     |
+| `xl`             | `--space-6` | 24     |
+| `2xl`            | `--space-8` | 32     |
 
 ### Composition
 
-| Layer | Built from |
-|---|---|
+| Layer          | Built from                                                                                                                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Root container | Hand-rolled `<div>` with own `flex-direction: column` + `gap`. Reuses the same gap class scheme as Stack but stays its own primitive (Page-specific page-level concerns can land here without churning Stack). |
 
 ### Accessibility
@@ -155,14 +154,14 @@ Per Hard rule 1 minimum + behavior:
 
 Replace the outer `<Stack gap="lg">` with `<Page>` in all six mockups. The inner content (PageHeader, body sections, CrossLinks at the end) stays identical.
 
-| Mockup | Outer wrapper before | Outer wrapper after |
-|---|---|---|
-| `Dashboard.tsx` | `<Stack gap="lg">` | `<Page>` |
-| `Contacts.tsx` | `<Stack gap="lg">` | `<Page>` |
-| `Deals.tsx` | `<Stack gap="lg">` | `<Page>` |
-| `Members.tsx` | `<Stack gap="lg">` | `<Page>` |
-| `Audit.tsx` | `<Stack gap="lg">` | `<Page>` |
-| `ContactDetail.tsx` | `<Stack gap="lg">` | `<Page>` |
+| Mockup              | Outer wrapper before | Outer wrapper after |
+| ------------------- | -------------------- | ------------------- |
+| `Dashboard.tsx`     | `<Stack gap="lg">`   | `<Page>`            |
+| `Contacts.tsx`      | `<Stack gap="lg">`   | `<Page>`            |
+| `Deals.tsx`         | `<Stack gap="lg">`   | `<Page>`            |
+| `Members.tsx`       | `<Stack gap="lg">`   | `<Page>`            |
+| `Audit.tsx`         | `<Stack gap="lg">`   | `<Page>`            |
+| `ContactDetail.tsx` | `<Stack gap="lg">`   | `<Page>`            |
 
 Per file:
 
