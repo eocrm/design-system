@@ -58,7 +58,6 @@ export function Tenants() {
       <PageHeader>
         <PageHeader.Breadcrumb>
           <Breadcrumb>
-            <Breadcrumb.Item>Superadmin</Breadcrumb.Item>
             <Breadcrumb.Item current>Tenants</Breadcrumb.Item>
           </Breadcrumb>
         </PageHeader.Breadcrumb>

@@ -85,7 +85,6 @@ export function TenantDetail() {
       <PageHeader>
         <PageHeader.Breadcrumb>
           <Breadcrumb>
-            <Breadcrumb.Item>Superadmin</Breadcrumb.Item>
             <Breadcrumb.Item as={RouterLink} to="/mockups/tenants">
               Tenants
             </Breadcrumb.Item>
