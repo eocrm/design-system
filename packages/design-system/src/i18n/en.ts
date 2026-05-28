@@ -67,6 +67,9 @@ export const en: Messages = {
     rangeStart: 'Start date',
     rangeEnd: 'End date',
     timeLabel: 'Time',
+    timeHoursLabel: 'Hours',
+    timeMinutesLabel: 'Minutes',
+    timeOpenList: 'Open time list',
   },
   dateRangePicker: {
     startTimeLabel: 'Start time',

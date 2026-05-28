@@ -69,6 +69,9 @@ export const ru: Messages = {
     rangeStart: 'Дата начала',
     rangeEnd: 'Дата окончания',
     timeLabel: 'Время',
+    timeHoursLabel: 'Часы',
+    timeMinutesLabel: 'Минуты',
+    timeOpenList: 'Открыть список времени',
   },
   dateRangePicker: {
     startTimeLabel: 'Время начала',

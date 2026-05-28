@@ -107,6 +107,12 @@ export interface Messages {
     rangeEnd: string;
     /** Visible label / aria-label for the time input rendered in `granularity="minute"` mode. */
     timeLabel: string;
+    /** aria-label for the hours listbox column inside the `<TimeField>` popover. */
+    timeHoursLabel: string;
+    /** aria-label for the minutes listbox column inside the `<TimeField>` popover. */
+    timeMinutesLabel: string;
+    /** aria-label for the `<TimeField>` chevron toggle (opens the hour/minute lists). */
+    timeOpenList: string;
   };
   dateRangePicker: {
     /** Visible label / aria-label for the start-time input in `granularity="minute"` mode. */
