@@ -6,6 +6,8 @@ import {
   isDateOutOfRange,
   parseDate,
   parseDateTime,
+  parseTime,
+  roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
   toTimeInputValue,
@@ -198,6 +200,116 @@ describe('DatePicker utils', () => {
     it('formats HH:mm zero-padded', () => {
       expect(toTimeInputValue(new Date(2026, 4, 28, 3, 7))).toBe('03:07');
       expect(toTimeInputValue(new Date(2026, 4, 28, 23, 59))).toBe('23:59');
+    });
+  });
+
+  describe('parseTime', () => {
+    it('returns null for empty / whitespace input', () => {
+      expect(parseTime('')).toBeNull();
+      expect(parseTime('   ')).toBeNull();
+    });
+
+    it('parses HH:mm', () => {
+      expect(parseTime('14:30')).toEqual({ hours: 14, minutes: 30 });
+      expect(parseTime('00:00')).toEqual({ hours: 0, minutes: 0 });
+      expect(parseTime('23:59')).toEqual({ hours: 23, minutes: 59 });
+    });
+
+    it('parses single-digit hours with colon (H:mm)', () => {
+      expect(parseTime('9:05')).toEqual({ hours: 9, minutes: 5 });
+    });
+
+    it('trims surrounding whitespace before parsing', () => {
+      expect(parseTime('  09:15  ')).toEqual({ hours: 9, minutes: 15 });
+    });
+
+    it('parses 4-digit HHmm (no colon)', () => {
+      expect(parseTime('1430')).toEqual({ hours: 14, minutes: 30 });
+      expect(parseTime('0000')).toEqual({ hours: 0, minutes: 0 });
+    });
+
+    it('parses 3-digit Hmm (no colon, single-digit hour)', () => {
+      expect(parseTime('930')).toEqual({ hours: 9, minutes: 30 });
+    });
+
+    it('parses hours-only (HH/H) with minutes defaulted to 0', () => {
+      expect(parseTime('14')).toEqual({ hours: 14, minutes: 0 });
+      expect(parseTime('9')).toEqual({ hours: 9, minutes: 0 });
+      expect(parseTime('0')).toEqual({ hours: 0, minutes: 0 });
+    });
+
+    it('rejects out-of-range hours (>= 24)', () => {
+      expect(parseTime('24:00')).toBeNull();
+      expect(parseTime('99')).toBeNull();
+      expect(parseTime('2400')).toBeNull();
+    });
+
+    it('rejects out-of-range minutes (>= 60)', () => {
+      expect(parseTime('12:60')).toBeNull();
+      expect(parseTime('1299')).toBeNull();
+    });
+
+    it('rejects garbage and partial inputs that match no shape', () => {
+      expect(parseTime('abc')).toBeNull();
+      expect(parseTime('12:3')).toBeNull(); // minutes must be exactly 2 digits with colon
+      expect(parseTime('12:345')).toBeNull();
+      expect(parseTime('1:2:3')).toBeNull();
+      expect(parseTime('12a30')).toBeNull();
+    });
+  });
+
+  describe('roundTimeToStep', () => {
+    it('returns input unchanged when step <= 1 (no-op mode)', () => {
+      expect(roundTimeToStep(9, 27, 1)).toEqual({ hours: 9, minutes: 27 });
+      expect(roundTimeToStep(9, 27, 0)).toEqual({ hours: 9, minutes: 27 });
+    });
+
+    it('rounds down toward the nearest step', () => {
+      expect(roundTimeToStep(14, 22, 15)).toEqual({ hours: 14, minutes: 15 });
+      expect(roundTimeToStep(14, 7, 15)).toEqual({ hours: 14, minutes: 0 });
+    });
+
+    it('rounds up toward the nearest step', () => {
+      expect(roundTimeToStep(14, 23, 15)).toEqual({ hours: 14, minutes: 30 });
+      expect(roundTimeToStep(14, 38, 15)).toEqual({ hours: 14, minutes: 45 });
+    });
+
+    it('ties round UP (Math.round of .5)', () => {
+      // 14:23 with step=15 → halfway from 15→30 is 22.5; 14:23 > 22.5 → up to 30
+      expect(roundTimeToStep(14, 23, 15)).toEqual({ hours: 14, minutes: 30 });
+      // exact tie: 14:22.5 isn't representable in minutes, but 14:30 with step=60
+      // → 14:30 is halfway from 14→15, rounds up to 15:00.
+      expect(roundTimeToStep(14, 30, 60)).toEqual({ hours: 15, minutes: 0 });
+    });
+
+    it('leaves step-aligned values untouched', () => {
+      expect(roundTimeToStep(0, 0, 15)).toEqual({ hours: 0, minutes: 0 });
+      expect(roundTimeToStep(14, 30, 15)).toEqual({ hours: 14, minutes: 30 });
+      expect(roundTimeToStep(23, 45, 15)).toEqual({ hours: 23, minutes: 45 });
+    });
+
+    it('clamps results to 23:59 (no overflow past end-of-day)', () => {
+      // 23:59 with step=30 → rounded ~24:00, clamp to 23:59.
+      expect(roundTimeToStep(23, 59, 30)).toEqual({ hours: 23, minutes: 59 });
+      // 23:45 with step=60 → rounds up to 24:00, clamp to 23:59.
+      expect(roundTimeToStep(23, 45, 60)).toEqual({ hours: 23, minutes: 59 });
+    });
+
+    it('rolls minutes into the next hour when appropriate', () => {
+      expect(roundTimeToStep(9, 58, 5)).toEqual({ hours: 10, minutes: 0 });
+    });
+
+    it('handles uncommon steps (5 / 30 / 60)', () => {
+      expect(roundTimeToStep(9, 17, 5)).toEqual({ hours: 9, minutes: 15 });
+      expect(roundTimeToStep(9, 18, 5)).toEqual({ hours: 9, minutes: 20 });
+      expect(roundTimeToStep(9, 14, 30)).toEqual({ hours: 9, minutes: 0 });
+      expect(roundTimeToStep(9, 16, 30)).toEqual({ hours: 9, minutes: 30 });
+      expect(roundTimeToStep(14, 29, 60)).toEqual({ hours: 14, minutes: 0 });
+      expect(roundTimeToStep(14, 31, 60)).toEqual({ hours: 15, minutes: 0 });
+    });
+
+    it('returns 00:00 when input would round to 00:00', () => {
+      expect(roundTimeToStep(0, 7, 15)).toEqual({ hours: 0, minutes: 0 });
     });
   });
 });
