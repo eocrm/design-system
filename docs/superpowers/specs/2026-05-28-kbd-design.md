@@ -177,28 +177,28 @@ Hard rule 4: the component owns its own inline `padding`, `height`, `min-width` 
 
 ## Files
 
-| File                                                                | Role                                             |
-| ------------------------------------------------------------------- | ------------------------------------------------ |
-| `packages/design-system/src/components/Kbd/Kbd.tsx` (NEW)           | Root component (forwardRef + spread)             |
-| `packages/design-system/src/components/Kbd/Kbd.module.scss` (NEW)   | All visual styles                                |
-| `packages/design-system/src/components/Kbd/Kbd.tokens.scss` (NEW)   | Component tokens                                 |
-| `packages/design-system/src/components/Kbd/Kbd.test.tsx` (NEW)      | Unit tests                                       |
-| `packages/design-system/src/components/Kbd/index.ts` (NEW)          | Public exports                                   |
-| `packages/design-system/src/index.ts` (MODIFY)                      | Re-export Kbd + KbdProps + KbdSize               |
-| `packages/design-system/src/components.manifest.json` (MODIFY)      | Register under Display cluster                   |
-| `packages/design-system/src/_meta/manifest.ts` (MODIFY)             | Mirror manifest entry                            |
-| `packages/design-system/AGENTS.md` (MODIFY)                         | Catalog entry after Code                         |
-| `packages/design-system/src/components/TopBar/TopBarSearch.tsx` (MODIFY) | Replace inline `<kbd>` with `<Kbd>`; hotkey prop type `string \| string[]` |
-| `packages/design-system/src/components/TopBar/TopBar.module.scss` (MODIFY) | Drop `.searchKbd` selector                      |
-| `packages/design-system/src/components/TopBar/TopBar.tokens.scss` (MODIFY) | Drop `--topbar-search-kbd-*` tokens             |
-| `packages/design-system/src/components/TopBar/TopBar.test.tsx` (MODIFY)    | Adjust hotkey test (now `<Kbd>` element)        |
-| `packages/playground/src/pages/components/KbdDemo.tsx` (NEW)        | Demo page                                        |
-| `packages/playground/src/pages/components/TopBarDemo.tsx` (MODIFY)  | `hotkey="⌘K"` → `hotkey={['⌘', 'K']}`            |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)     | Same hotkey-array update                         |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY) | Kbd overview card                            |
-| `packages/playground/src/App.tsx` (MODIFY)                          | Route `/components/kbd`                          |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)     | Sidebar nav entry for `/components/kbd`          |
-| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)        | Add `'Kbd'` to ComponentName union               |
+| File                                                                       | Role                                                                       |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `packages/design-system/src/components/Kbd/Kbd.tsx` (NEW)                  | Root component (forwardRef + spread)                                       |
+| `packages/design-system/src/components/Kbd/Kbd.module.scss` (NEW)          | All visual styles                                                          |
+| `packages/design-system/src/components/Kbd/Kbd.tokens.scss` (NEW)          | Component tokens                                                           |
+| `packages/design-system/src/components/Kbd/Kbd.test.tsx` (NEW)             | Unit tests                                                                 |
+| `packages/design-system/src/components/Kbd/index.ts` (NEW)                 | Public exports                                                             |
+| `packages/design-system/src/index.ts` (MODIFY)                             | Re-export Kbd + KbdProps + KbdSize                                         |
+| `packages/design-system/src/components.manifest.json` (MODIFY)             | Register under Display cluster                                             |
+| `packages/design-system/src/_meta/manifest.ts` (MODIFY)                    | Mirror manifest entry                                                      |
+| `packages/design-system/AGENTS.md` (MODIFY)                                | Catalog entry after Code                                                   |
+| `packages/design-system/src/components/TopBar/TopBarSearch.tsx` (MODIFY)   | Replace inline `<kbd>` with `<Kbd>`; hotkey prop type `string \| string[]` |
+| `packages/design-system/src/components/TopBar/TopBar.module.scss` (MODIFY) | Drop `.searchKbd` selector                                                 |
+| `packages/design-system/src/components/TopBar/TopBar.tokens.scss` (MODIFY) | Drop `--topbar-search-kbd-*` tokens                                        |
+| `packages/design-system/src/components/TopBar/TopBar.test.tsx` (MODIFY)    | Adjust hotkey test (now `<Kbd>` element)                                   |
+| `packages/playground/src/pages/components/KbdDemo.tsx` (NEW)               | Demo page                                                                  |
+| `packages/playground/src/pages/components/TopBarDemo.tsx` (MODIFY)         | `hotkey="⌘K"` → `hotkey={['⌘', 'K']}`                                      |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)            | Same hotkey-array update                                                   |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY)    | Kbd overview card                                                          |
+| `packages/playground/src/App.tsx` (MODIFY)                                 | Route `/components/kbd`                                                    |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)            | Sidebar nav entry for `/components/kbd`                                    |
+| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)               | Add `'Kbd'` to ComponentName union                                         |
 
 ## i18n
 
@@ -216,7 +216,7 @@ No new i18n keys. The component renders consumer-provided strings only. The defa
 - Separator is `aria-hidden="true"`
 - `ref` is forwarded to the wrapper `<span>`
 - `className` merges with `.kbd`
-- Pattern B spread: a consumer-passed `aria-hidden` on the wrapper is ignored (component owns the semantic ARIA)
+- Inner `<kbd>` chips remain `aria-hidden="true"` regardless of consumer-passed wrapper props (already covered by the inner-aria-hidden test above)
 
 ## Demo page outline
 

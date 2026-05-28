@@ -484,9 +484,11 @@ Inline keyboard-shortcut display: one `<kbd>` chip per key, joined with a faint 
 Hard rule 8: before pushing library changes, run the review-fix cycle.
 
 1. Run gates:
+
    ```bash
    cd packages/design-system && npm test && npm run typecheck && npm run lint:css && npm run build && npm pack --dry-run -w @eocrm/design-system
    ```
+
    All must pass before review.
 
 2. Dispatch a fresh-context `general-purpose` reviewer. Prompt:

@@ -2,6 +2,11 @@ import { forwardRef, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import styles from './Kbd.module.scss';
 
+/**
+ * Chip height. See KbdProps#size for when to use each. Intentionally only
+ * two sizes — `'sm'` for inline-chrome (matches TopBar.Search's hotkey hint)
+ * and `'md'` for standalone shortcut UI (command-palette, shortcut sheets).
+ */
 export type KbdSize = 'sm' | 'md';
 
 export interface KbdProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'aria-label'> {
