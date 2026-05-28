@@ -13,10 +13,7 @@ import type { DeepPartial } from './messages';
  * The function is pure: `base` is not mutated. Used by `<I18nProvider>` to
  * combine the locale defaults with the consumer's `overrides` prop.
  */
-export function deepMerge<T extends Record<string, unknown>>(
-  base: T,
-  override: DeepPartial<T>,
-): T {
+export function deepMerge<T extends Record<string, unknown>>(base: T, override: DeepPartial<T>): T {
   const result: Record<string, unknown> = { ...base };
   for (const key in override) {
     const baseV = result[key];

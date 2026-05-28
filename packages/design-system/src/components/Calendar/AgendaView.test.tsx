@@ -39,15 +39,9 @@ const WEEK_DAYS: readonly Day[] = [
 
 describe('AgendaView', () => {
   it('renders the empty-state when no events fall in the visible window', () => {
-    render(
-      <AgendaView
-        days={WEEK_DAYS}
-        rangeLabel="May 18 – 24, 2026"
-        events={[]}
-
-      />,
-      { wrapper: wrap() },
-    );
+    render(<AgendaView days={WEEK_DAYS} rangeLabel="May 18 – 24, 2026" events={[]} />, {
+      wrapper: wrap(),
+    });
     expect(screen.getByText('No events')).toBeInTheDocument();
   });
 
@@ -66,15 +60,9 @@ describe('AgendaView', () => {
         endsAt: new Date(2026, 4, 22, 15, 30),
       },
     ];
-    render(
-      <AgendaView
-        days={WEEK_DAYS}
-        rangeLabel="May 18 – 24, 2026"
-        events={events}
-
-      />,
-      { wrapper: wrap() },
-    );
+    render(<AgendaView days={WEEK_DAYS} rangeLabel="May 18 – 24, 2026" events={events} />, {
+      wrapper: wrap(),
+    });
     // Only two day headers — Wednesday May 20 and Friday May 22.
     const headers = screen.getAllByRole('button').map((b) => b.textContent ?? '');
     expect(headers.some((t) => /Standup/.test(t))).toBe(true);
@@ -93,15 +81,9 @@ describe('AgendaView', () => {
         endsAt: new Date(2026, 4, 20, 9, 30),
       },
     ];
-    render(
-      <AgendaView
-        days={WEEK_DAYS}
-        rangeLabel="May 18 – 24, 2026"
-        events={events}
-
-      />,
-      { wrapper: wrap() },
-    );
+    render(<AgendaView days={WEEK_DAYS} rangeLabel="May 18 – 24, 2026" events={events} />, {
+      wrapper: wrap(),
+    });
     const button = screen.getByRole('button', { name: /Standup/ });
     expect(button.textContent).toMatch(/9:00\s*(AM|am)/);
     // Range form: "9:00 AM – 9:30 AM"
@@ -118,15 +100,9 @@ describe('AgendaView', () => {
         allDay: true,
       },
     ];
-    render(
-      <AgendaView
-        days={WEEK_DAYS}
-        rangeLabel="May 18 – 24, 2026"
-        events={events}
-
-      />,
-      { wrapper: wrap() },
-    );
+    render(<AgendaView days={WEEK_DAYS} rangeLabel="May 18 – 24, 2026" events={events} />, {
+      wrapper: wrap(),
+    });
     expect(screen.getByText('All day')).toBeInTheDocument();
   });
 
@@ -140,15 +116,9 @@ describe('AgendaView', () => {
         allDay: true,
       },
     ];
-    render(
-      <AgendaView
-        days={WEEK_DAYS}
-        rangeLabel="May 18 – 24, 2026"
-        events={events}
-
-      />,
-      { wrapper: wrap() },
-    );
+    render(<AgendaView days={WEEK_DAYS} rangeLabel="May 18 – 24, 2026" events={events} />, {
+      wrapper: wrap(),
+    });
     const conferenceButtons = screen.getAllByRole('button', { name: /Conference/ });
     expect(conferenceButtons).toHaveLength(3); // Tue, Wed, Thu
   });
@@ -169,15 +139,9 @@ describe('AgendaView', () => {
         allDay: true,
       },
     ];
-    render(
-      <AgendaView
-        days={WEEK_DAYS}
-        rangeLabel="May 18 – 24, 2026"
-        events={events}
-
-      />,
-      { wrapper: wrap() },
-    );
+    render(<AgendaView days={WEEK_DAYS} rangeLabel="May 18 – 24, 2026" events={events} />, {
+      wrapper: wrap(),
+    });
     const buttons = screen.getAllByRole('button');
     const allDayIdx = buttons.findIndex((b) => /All-day event/.test(b.textContent ?? ''));
     const timedIdx = buttons.findIndex((b) => /Timed event/.test(b.textContent ?? ''));
@@ -199,7 +163,6 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-
         onEventClick={onEventClick}
       />,
       { wrapper: wrap() },
@@ -231,7 +194,6 @@ describe('AgendaView', () => {
         days={WEEK_DAYS}
         rangeLabel="May 18 – 24, 2026"
         events={events}
-
         renderEvent={(event, ctx) => {
           calls.push({
             id: event.id,
@@ -271,10 +233,9 @@ describe('AgendaView', () => {
         endsAt: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30),
       },
     ];
-    render(
-      <AgendaView days={[todayDay]} rangeLabel="Today" events={events} />,
-      { wrapper: wrap() },
-    );
+    render(<AgendaView days={[todayDay]} rangeLabel="Today" events={events} />, {
+      wrapper: wrap(),
+    });
     const group = screen.getByRole('listitem');
     expect(group.className).toMatch(/todayGroup/);
   });
@@ -287,15 +248,9 @@ describe('AgendaView', () => {
         startsAt: new Date(2026, 4, 20, 9, 0),
       },
     ];
-    render(
-      <AgendaView
-        days={WEEK_DAYS}
-        rangeLabel="May 18 – 24, 2026"
-        events={events}
-
-      />,
-      { wrapper: wrap() },
-    );
+    render(<AgendaView days={WEEK_DAYS} rangeLabel="May 18 – 24, 2026" events={events} />, {
+      wrapper: wrap(),
+    });
     const button = screen.getByRole('button', { name: /Doorbell/ });
     expect(button.textContent).toMatch(/9:00\s*(AM|am)/);
     // No range en-dash — start only.
@@ -311,15 +266,9 @@ describe('AgendaView', () => {
         endsAt: new Date(2026, 4, 20, 9, 30),
       },
     ];
-    render(
-      <AgendaView
-        days={WEEK_DAYS}
-        rangeLabel="May 18 – 24, 2026"
-        events={events}
-
-      />,
-      { wrapper: wrap() },
-    );
+    render(<AgendaView days={WEEK_DAYS} rangeLabel="May 18 – 24, 2026" events={events} />, {
+      wrapper: wrap(),
+    });
     expect(screen.getByRole('list', { name: 'May 18 – 24, 2026' })).toBeInTheDocument();
     expect(screen.getByRole('listitem')).toBeInTheDocument();
     expect(
@@ -337,13 +286,7 @@ describe('AgendaView', () => {
       },
     ];
     render(
-      <AgendaView
-        days={WEEK_DAYS}
-        rangeLabel="May 18 – 24, 2026"
-        events={events}
-
-        locale="ru-RU"
-      />,
+      <AgendaView days={WEEK_DAYS} rangeLabel="May 18 – 24, 2026" events={events} locale="ru-RU" />,
       { wrapper: wrap('ru-RU') },
     );
     const headers = document.body.textContent ?? '';

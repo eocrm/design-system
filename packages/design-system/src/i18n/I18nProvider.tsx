@@ -57,7 +57,10 @@ export function I18nProvider({ locale, overrides, children }: I18nProviderProps)
     // signature; `deepMerge` is typed against `Record<string, unknown>`.
     // Safe at runtime — `Messages` is always a plain nested object literal.
     const messages = overrides
-      ? (deepMerge(base as unknown as Record<string, unknown>, overrides as DeepPartial<Record<string, unknown>>) as unknown as Messages)
+      ? (deepMerge(
+          base as unknown as Record<string, unknown>,
+          overrides as DeepPartial<Record<string, unknown>>,
+        ) as unknown as Messages)
       : base;
     return { locale, messages };
   }, [locale, overrides]);

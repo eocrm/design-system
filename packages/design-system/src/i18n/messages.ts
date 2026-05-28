@@ -240,7 +240,5 @@ type Leaf = string | ((...args: never[]) => string) | readonly string[];
 export type MessageKey<T = Messages> = T extends Leaf
   ? ''
   : {
-      [K in keyof T & string]: T[K] extends Leaf
-        ? K
-        : `${K}.${MessageKey<T[K]>}`;
+      [K in keyof T & string]: T[K] extends Leaf ? K : `${K}.${MessageKey<T[K]>}`;
     }[keyof T & string];

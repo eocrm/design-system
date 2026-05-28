@@ -10,7 +10,6 @@ function wrap(locale = 'en-US') {
   );
 }
 
-
 describe('DatePickerGrid', () => {
   it('renders the cursor month label and 7 weekday headers', () => {
     render(

@@ -27,7 +27,7 @@ import { I18nProvider, useTranslation } from '@eocrm/design-system';
 
 <I18nProvider locale="ru" overrides={{ badge: { modified: 'Изменено!' } }}>
   <App />
-</I18nProvider>
+</I18nProvider>;
 
 // Inside a component:
 function MyComponent() {
@@ -73,7 +73,20 @@ export interface Messages {
   };
   calendar: {
     today: string;
-    months: [string, string, string, string, string, string, string, string, string, string, string, string];
+    months: [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
     weekdaysShort: [string, string, string, string, string, string, string];
     agendaEmpty: string;
     allDay: string;
@@ -230,7 +243,8 @@ Small helper exported from `i18n/format.ts` for the Russian rule:
 
 ```ts
 export function ruPlural(n: number, [one, few, many]: [string, string, string]): string {
-  const m10 = n % 10, m100 = n % 100;
+  const m10 = n % 10,
+    m100 = n % 100;
   if (m10 === 1 && m100 !== 11) return one;
   if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
   return many;
@@ -281,26 +295,27 @@ export type { Locale, Messages, MessageKey, DeepPartial };
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| `packages/design-system/src/i18n/messages.ts` (NEW) | `Messages` interface + `MessageKey` type |
-| `packages/design-system/src/i18n/en.ts` (NEW) | Default English messages |
-| `packages/design-system/src/i18n/ru.ts` (NEW) | Russian messages |
-| `packages/design-system/src/i18n/format.ts` (NEW) | `deepMerge`, `lookupKey`, `ruPlural` helpers |
-| `packages/design-system/src/i18n/I18nProvider.tsx` (NEW) | Context + provider |
-| `packages/design-system/src/i18n/useTranslation.ts` (NEW) | Hook |
-| `packages/design-system/src/i18n/index.ts` (NEW) | Re-exports |
-| `packages/design-system/src/index.ts` (MODIFY) | Public re-export of provider + hook + types |
-| `packages/design-system/src/components/*/*.tsx` (MODIFY) | Replace hard-coded strings + delete `labels` props |
-| `packages/design-system/AGENTS.md` (MODIFY) | Add "Localization" section |
-| `packages/design-system/CLAUDE.md` (MODIFY) | Hard rule about i18n for new components |
-| `packages/playground/src/App.tsx` (MODIFY) | Wrap with `<I18nProvider locale="en">` (demonstrates the API) |
+| File                                                      | Role                                                          |
+| --------------------------------------------------------- | ------------------------------------------------------------- |
+| `packages/design-system/src/i18n/messages.ts` (NEW)       | `Messages` interface + `MessageKey` type                      |
+| `packages/design-system/src/i18n/en.ts` (NEW)             | Default English messages                                      |
+| `packages/design-system/src/i18n/ru.ts` (NEW)             | Russian messages                                              |
+| `packages/design-system/src/i18n/format.ts` (NEW)         | `deepMerge`, `lookupKey`, `ruPlural` helpers                  |
+| `packages/design-system/src/i18n/I18nProvider.tsx` (NEW)  | Context + provider                                            |
+| `packages/design-system/src/i18n/useTranslation.ts` (NEW) | Hook                                                          |
+| `packages/design-system/src/i18n/index.ts` (NEW)          | Re-exports                                                    |
+| `packages/design-system/src/index.ts` (MODIFY)            | Public re-export of provider + hook + types                   |
+| `packages/design-system/src/components/*/*.tsx` (MODIFY)  | Replace hard-coded strings + delete `labels` props            |
+| `packages/design-system/AGENTS.md` (MODIFY)               | Add "Localization" section                                    |
+| `packages/design-system/CLAUDE.md` (MODIFY)               | Hard rule about i18n for new components                       |
+| `packages/playground/src/App.tsx` (MODIFY)                | Wrap with `<I18nProvider locale="en">` (demonstrates the API) |
 
 ## Components to migrate
 
 Verified scan against the codebase finds hard-coded user-facing strings or existing `labels` props in:
 
 **Inline aria-labels / strings:**
+
 - `Alert` — Dismiss
 - `Toast`, `ToastViewport` — Dismiss, Notifications
 - `Modal/Header` — Close dialog
@@ -315,6 +330,7 @@ Verified scan against the codebase finds hard-coded user-facing strings or exist
 - `DataTable` — Select all rows on page, Row expansion, Pinned rows, empty-state default
 
 **Existing `labels` props (delete + move to i18n):**
+
 - `Calendar` (today / months[12] / weekdaysShort[7] / agendaEmpty / allDay)
 - `DatePicker` (today / clear / openCalendar / previousMonth / nextMonth / etc.)
 - `InlineDatePicker`

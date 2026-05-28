@@ -151,7 +151,10 @@ function BreadcrumbRoot({
   const lastIndex = items.length - 1;
 
   return (
-    <nav aria-label={ariaLabel ?? t('breadcrumb.ariaLabel')} className={clsx(styles.nav, className)}>
+    <nav
+      aria-label={ariaLabel ?? t('breadcrumb.ariaLabel')}
+      className={clsx(styles.nav, className)}
+    >
       <ol className={styles.list}>
         {items.map((child, index) => {
           const isLast = index === lastIndex;

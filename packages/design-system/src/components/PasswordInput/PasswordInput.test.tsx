@@ -53,10 +53,7 @@ describe('PasswordInput', () => {
   it('I18nProvider overrides the toggle aria-labels', async () => {
     const user = userEvent.setup();
     render(
-      <I18nProvider
-        locale="en"
-        overrides={{ passwordInput: { show: 'Показать', hide: 'Скрыть' } }}
-      >
+      <I18nProvider locale="en" overrides={{ passwordInput: { show: 'Показать', hide: 'Скрыть' } }}>
         <PasswordInput />
       </I18nProvider>,
     );

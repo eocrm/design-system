@@ -35,10 +35,7 @@ describe('deepMerge', () => {
   });
 
   it('ignores undefined values in the override (does not blank out base keys)', () => {
-    const merged = deepMerge<{ a: string; b?: string }>(
-      { a: 'one', b: 'two' },
-      { b: undefined },
-    );
+    const merged = deepMerge<{ a: string; b?: string }>({ a: 'one', b: 'two' }, { b: undefined });
     expect(merged).toEqual({ a: 'one', b: 'two' });
   });
 

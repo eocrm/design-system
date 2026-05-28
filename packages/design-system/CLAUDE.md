@@ -165,11 +165,15 @@ Each becomes a key in `src/i18n/messages.ts` with values in both `src/i18n/en.ts
 
 ```tsx
 // ❌ Wrong
-<Button aria-label="Close dialog" onClick={onClose}>×</Button>
+<Button aria-label="Close dialog" onClick={onClose}>
+  ×
+</Button>;
 
 // ✅ Right
 const t = useTranslation();
-<Button aria-label={t('modal.close')} onClick={onClose}>×</Button>
+<Button aria-label={t('modal.close')} onClick={onClose}>
+  ×
+</Button>;
 ```
 
 Dynamic per-render strings that mix translation + data are fine to interpolate at the call site:

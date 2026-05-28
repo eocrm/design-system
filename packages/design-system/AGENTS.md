@@ -36,7 +36,7 @@ import { I18nProvider } from '@eocrm/design-system';
 
 <I18nProvider locale="ru">
   <App />
-</I18nProvider>
+</I18nProvider>;
 ```
 
 **Overrides** are a deep-partial of the messages tree:
@@ -1944,8 +1944,8 @@ const [value, setValue] = useState<Date | null>(null);
 - `clearable` (default `true`) shows the ✕ button when a value is set. `name` renders a hidden mirror `<input type="hidden">` with the ISO date so native `<form>` submission works.
 - `invalid` toggles the red border + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`.
 - Sizes: `sm` / `md` (default) / `lg`. Same scale as `<Input>`; affects the trigger row only — the popover month grid stays fixed.
-- Locale-aware via `useLocale()`; override with `locale` prop. `labels` overrides the five hard-coded strings: `previousMonth`, `nextMonth`, `openCalendar`, `clear`, `dialogLabel`.
-- ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `labels.dialogLabel`); the grid inside is `role="grid"` with `role="gridcell"` buttons that carry `aria-selected` / `aria-disabled` as appropriate.
+- Locale-aware via `useLocale()`; override with `locale` prop. UI strings (previousMonth / nextMonth / openCalendar / clear) translate via `datePicker.*` keys — override with `<I18nProvider overrides={{ datePicker: { ... } }}>`.
+- ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); the grid inside is `role="grid"` with `role="gridcell"` buttons that carry `aria-selected` / `aria-disabled` as appropriate.
 - Keyboard inside the grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space selects, Escape closes and returns focus to the input. Tab leaves the grid.
 
 ### `<DateRangePicker>` — date-range input + two-month popover
@@ -1963,7 +1963,7 @@ const [range, setRange] = useState<DateRange | null>(null);
 - `clearable` (default `true`) shows the ✕ when a range is set. `nameStart` / `nameEnd` render two hidden mirror `<input>`s with ISO dates so native `<form>` submission works (post both keys, or just one — caller's choice).
 - `invalid` toggles the red border + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`.
 - Sizes: `sm` / `md` (default) / `lg`. Same scale as `<DatePicker>`; affects the trigger row only — the two-month popover grid stays fixed.
-- ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `labels.dialogLabel`); each grid inside is `role="grid"` with `gridcell` buttons. The range-start and range-end cells (and the live hover end during selection) carry `aria-selected="true"`.
+- ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); each grid inside is `role="grid"` with `gridcell` buttons. The range-start and range-end cells (and the live hover end during selection) carry `aria-selected="true"`.
 - Keyboard inside a grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space drives the same first-click → second-click flow, Escape closes and returns focus to the input. With selection-start set, the focused cell acts as the hover end so the preview range follows arrow keys.
 - Reuses `<DatePickerGrid>` via `selectionMode='range'` + `rangeStart`/`rangeEnd`/`hoverDate`/`onHoverDate` + `chevrons={false}`. The two grids share the same cursor; the picker renders its own prev/next chevrons outside them.
 
