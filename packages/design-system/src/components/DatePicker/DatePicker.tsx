@@ -26,10 +26,12 @@ import {
   isDateOutOfRange,
   parseDate,
   parseDateTime,
+  resolveHourCycle,
   roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
   type DateTimeGranularity,
+  type HourCycle,
 } from './utils';
 import styles from './DatePicker.module.scss';
 
@@ -93,6 +95,19 @@ export interface DatePickerProps extends Omit<
    * Only meaningful when `granularity='minute'`.
    */
   timeStep?: number;
+
+  /**
+   * Display cycle for the embedded `<TimeField>` + the trigger's time tail.
+   *
+   * - `'24'` — `"HH:mm"` in the trigger; 24h hour list in the time popover.
+   * - `'12'` — `"h:mm AM/PM"` in the trigger; 12h hour list + AM/PM column.
+   * - `'auto'` (default) — derives from the active locale via Intl. en-US →
+   *   `'12'`; ru-RU / de-DE / fr-FR → `'24'`.
+   *
+   * Only meaningful when `granularity='minute'`. Typed input is lenient
+   * regardless of cycle — both `"14:30"` and `"2:30 PM"` parse on blur.
+   */
+  hourCycle?: HourCycle;
 }
 
 const ICON_SIZE_FOR: Record<DatePickerSize, number> = {
@@ -156,6 +171,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     size = 'md',
     granularity = 'day',
     timeStep = 15,
+    hourCycle = 'auto',
     name,
     placeholder,
     className,
@@ -170,6 +186,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 ) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
+  const resolvedCycle = resolveHourCycle(hourCycle, locale);
   const t = useTranslation();
   const generatedId = useId();
   const inputId = idProp ?? generatedId;
@@ -186,7 +203,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 
   const formattedValue = value
     ? granularity === 'minute'
-      ? formatDateTime(value, locale)
+      ? formatDateTime(value, locale, resolvedCycle)
       : formatDate(value, locale)
     : '';
   const [draft, setDraft] = useState(formattedValue);
@@ -403,7 +420,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         placeholder={
           placeholder ??
           (granularity === 'minute'
-            ? formatDateTime(new Date(2000, 0, 2, 14, 30), locale)
+            ? formatDateTime(new Date(2000, 0, 2, 14, 30), locale, resolvedCycle)
             : formatDate(new Date(2000, 0, 2), locale))
         }
         autoComplete="off"
@@ -462,13 +479,15 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
                 </label>
                 <TimeField
                   id={`${inputId}-time`}
-                  value={value}
+                  value={value ? { hours: value.getHours(), minutes: value.getMinutes() } : null}
                   step={timeStep}
-                  disabled={disabled}
+                  hourCycle={hourCycle}
+                  locale={locale}
+                  disabled={value == null || disabled}
                   aria-label={t('datePicker.timeLabel')}
-                  onChange={(h, m) => {
+                  onChange={(time) => {
                     if (value == null) return;
-                    setValue(combineDateAndTime(value, h, m));
+                    setValue(combineDateAndTime(value, time.hours, time.minutes));
                   }}
                 />
               </div>
