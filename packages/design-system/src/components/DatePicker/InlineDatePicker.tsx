@@ -11,11 +11,12 @@ import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { DatePickerGrid } from './DatePickerGrid';
+import { TimeField } from './TimeField';
 import {
   combineDateAndTime,
+  roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
-  toTimeInputValue,
   type DateTimeGranularity,
 } from './utils';
 import styles from './InlineDatePicker.module.scss';
@@ -61,6 +62,13 @@ export interface InlineDatePickerProps extends Omit<
    * defaults the time to `00:00`.
    */
   granularity?: DateTimeGranularity;
+
+  /**
+   * Minutes step for the `<TimeField>` popover and for rounding typed
+   * time input on commit. Defaults to `15`. Set `1` to disable rounding.
+   * Only meaningful when `granularity='minute'`.
+   */
+  timeStep?: number;
 }
 
 /**
@@ -114,6 +122,7 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
       name,
       disabled = false,
       granularity = 'day',
+      timeStep = 15,
       className,
       id: idProp,
       ...rest
@@ -153,12 +162,13 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
           if (value != null) {
             withTime = combineDateAndTime(date, value.getHours(), value.getMinutes());
           } else {
-            withTime = combineDateAndTime(date, 0, 0);
+            const rounded = roundTimeToStep(0, 0, timeStep);
+            withTime = combineDateAndTime(date, rounded.hours, rounded.minutes);
           }
         }
         setValue(withTime);
       },
-      [granularity, value, setValue],
+      [granularity, value, setValue, timeStep],
     );
 
     return (
@@ -185,19 +195,15 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
             <label className={styles.timeLabel} htmlFor={`${inlineId}-time`}>
               {t('datePicker.timeLabel')}
             </label>
-            <input
+            <TimeField
               id={`${inlineId}-time`}
-              type="time"
-              step={60}
-              className={styles.timeInput}
-              value={value ? toTimeInputValue(value) : ''}
-              disabled={value == null || disabled}
+              value={value}
+              step={timeStep}
+              disabled={disabled}
               aria-label={t('datePicker.timeLabel')}
-              onChange={(e) => {
+              onChange={(h, m) => {
                 if (value == null) return;
-                const [hh, mm] = e.target.value.split(':').map(Number);
-                if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
-                setValue(combineDateAndTime(value, hh, mm));
+                setValue(combineDateAndTime(value, h, m));
               }}
             />
           </div>

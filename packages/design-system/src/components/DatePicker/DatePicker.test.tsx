@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, useState } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
@@ -254,8 +254,9 @@ describe('DatePicker', () => {
         { wrapper: wrap() },
       );
       await user.click(screen.getByRole('button', { name: 'Open calendar' }));
-      const timeInput = await screen.findByLabelText('Time');
+      const timeInput = await screen.findByRole('textbox', { name: 'Time' });
       expect(timeInput).toHaveValue('14:30');
+      expect(timeInput).toHaveAttribute('type', 'text');
     });
 
     it('granularity="minute" includes HH:mm in trigger text', () => {
@@ -308,7 +309,7 @@ describe('DatePicker', () => {
       expect(got.getMinutes()).toBe(30);
     });
 
-    it('changing the time input updates time only', async () => {
+    it('typing into the time input + blur updates time only', async () => {
       const user = userEvent.setup();
       const onChange = vi.fn<(d: Date | null) => void>();
       render(
@@ -321,10 +322,11 @@ describe('DatePicker', () => {
         { wrapper: wrap() },
       );
       await user.click(screen.getByRole('button', { name: 'Open calendar' }));
-      const timeInput = await screen.findByLabelText('Time');
-      // jsdom's <input type="time"> doesn't accept user.type the way an HTML
-      // time field would in a real browser — fire a synthetic change instead.
+      const timeInput = await screen.findByRole('textbox', { name: 'Time' });
+      // TimeField is now a free-text input. Commit happens on blur/Enter.
       fireEvent.change(timeInput, { target: { value: '09:15' } });
+      fireEvent.blur(timeInput);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
       const got = onChange.mock.calls.at(-1)?.[0] as Date;
       expect(got.getFullYear()).toBe(2026);
       expect(got.getMonth()).toBe(4);
@@ -337,7 +339,53 @@ describe('DatePicker', () => {
       const user = userEvent.setup();
       render(<DatePicker granularity="minute" aria-label="Date" />, { wrapper: wrap() });
       await user.click(screen.getByRole('button', { name: 'Open calendar' }));
-      expect(await screen.findByLabelText('Time')).toBeDisabled();
+      expect(await screen.findByRole('textbox', { name: 'Time' })).toBeDisabled();
+    });
+
+    it('timeStep={30} rounds typed "14:22" to 14:30 on blur', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(
+        <DatePicker
+          granularity="minute"
+          timeStep={30}
+          defaultValue={new Date(2026, 4, 28, 10, 0)}
+          onChange={onChange}
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      const timeInput = await screen.findByRole('textbox', { name: 'Time' });
+      fireEvent.change(timeInput, { target: { value: '14:22' } });
+      fireEvent.blur(timeInput);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const got = onChange.mock.calls.at(-1)?.[0] as Date;
+      expect(got.getHours()).toBe(14);
+      expect(got.getMinutes()).toBe(30);
+    });
+
+    it('picking an hour row in the TimeField popover commits the new hour', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(
+        <DatePicker
+          granularity="minute"
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          onChange={onChange}
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      await user.click(
+        await screen.findByRole('button', { name: /Time, Open time list/i }),
+      );
+      const hoursListbox = await screen.findByRole('listbox', { name: 'Hours' });
+      await user.click(within(hoursListbox).getByRole('option', { name: '09' }));
+      const got = onChange.mock.calls.at(-1)?.[0] as Date;
+      expect(got.getHours()).toBe(9);
+      expect(got.getMinutes()).toBe(30);
     });
 
     it('hidden form mirror emits ISO datetime when granularity="minute"', () => {

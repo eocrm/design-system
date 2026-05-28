@@ -352,8 +352,10 @@ describe('DateRangePicker', () => {
       expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 — 06/04/2026');
       await user.click(screen.getByRole('textbox'));
       expect(await screen.findByRole('dialog')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Start time')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('End time')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('textbox', { name: 'Start time' }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'End time' })).not.toBeInTheDocument();
     });
 
     it('granularity="minute" renders both time inputs in the popover', async () => {
@@ -368,9 +370,13 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      await user.click(screen.getByRole('textbox'));
-      expect(await screen.findByLabelText('Start time')).toHaveValue('09:00');
-      expect(await screen.findByLabelText('End time')).toHaveValue('17:30');
+      await user.click(screen.getByRole('textbox', { name: 'Range' }));
+      expect(
+        await screen.findByRole('textbox', { name: 'Start time' }),
+      ).toHaveValue('09:00');
+      expect(
+        await screen.findByRole('textbox', { name: 'End time' }),
+      ).toHaveValue('17:30');
     });
 
     it('granularity="minute" includes HH:mm for both halves in trigger text', () => {
@@ -435,7 +441,7 @@ describe('DateRangePicker', () => {
       expect(r.end.getMinutes()).toBe(30);
     });
 
-    it('changing the start-time input updates start only', async () => {
+    it('typing into the start-time input + blur updates start only', async () => {
       const onChange = vi.fn<(r: DateRange | null) => void>();
       const user = userEvent.setup();
       render(
@@ -450,9 +456,11 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      await user.click(screen.getByRole('textbox'));
-      const startTime = await screen.findByLabelText('Start time');
+      await user.click(screen.getByRole('textbox', { name: 'Range' }));
+      const startTime = await screen.findByRole('textbox', { name: 'Start time' });
       fireEvent.change(startTime, { target: { value: '10:15' } });
+      fireEvent.blur(startTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
       const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
       expect(r.start.getHours()).toBe(10);
       expect(r.start.getMinutes()).toBe(15);
@@ -460,7 +468,7 @@ describe('DateRangePicker', () => {
       expect(r.end.getMinutes()).toBe(30);
     });
 
-    it('changing the end-time input updates end only', async () => {
+    it('typing into the end-time input + blur updates end only', async () => {
       const onChange = vi.fn<(r: DateRange | null) => void>();
       const user = userEvent.setup();
       render(
@@ -475,9 +483,11 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      await user.click(screen.getByRole('textbox'));
-      const endTime = await screen.findByLabelText('End time');
+      await user.click(screen.getByRole('textbox', { name: 'Range' }));
+      const endTime = await screen.findByRole('textbox', { name: 'End time' });
       fireEvent.change(endTime, { target: { value: '20:45' } });
+      fireEvent.blur(endTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
       const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
       expect(r.start.getHours()).toBe(9);
       expect(r.start.getMinutes()).toBe(0);
@@ -500,10 +510,12 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      await user.click(screen.getByRole('textbox'));
-      const endTime = await screen.findByLabelText('End time');
+      await user.click(screen.getByRole('textbox', { name: 'Range' }));
+      const endTime = await screen.findByRole('textbox', { name: 'End time' });
       // Try to set end earlier than start on the same day → clamp.
       fireEvent.change(endTime, { target: { value: '10:00' } });
+      fireEvent.blur(endTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
       const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
       expect(r.end.getHours()).toBe(14);
       expect(r.end.getMinutes()).toBe(0);
@@ -524,13 +536,41 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      await user.click(screen.getByRole('textbox'));
-      const endTime = await screen.findByLabelText('End time');
+      await user.click(screen.getByRole('textbox', { name: 'Range' }));
+      const endTime = await screen.findByRole('textbox', { name: 'End time' });
       fireEvent.change(endTime, { target: { value: '08:00' } });
+      fireEvent.blur(endTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
       const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
       // Different day — clamp is a no-op; end stays at 08:00.
       expect(r.end.getHours()).toBe(8);
       expect(r.end.getMinutes()).toBe(0);
+    });
+
+    it('timeStep={30} rounds typed "10:22" to 10:30 on blur', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker
+          granularity="minute"
+          timeStep={30}
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox', { name: 'Range' }));
+      const startTime = await screen.findByRole('textbox', { name: 'Start time' });
+      fireEvent.change(startTime, { target: { value: '10:22' } });
+      fireEvent.blur(startTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.start.getHours()).toBe(10);
+      expect(r.start.getMinutes()).toBe(30);
     });
 
     it('hidden form mirrors emit ISO datetime when granularity="minute"', () => {

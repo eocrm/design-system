@@ -13,11 +13,12 @@ import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
+import { TimeField } from '../DatePicker/TimeField';
 import {
   combineDateAndTime,
+  roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
-  toTimeInputValue,
   type DateTimeGranularity,
 } from '../DatePicker/utils';
 import { autoSwapRange, clampRangeEndAfterStart, type DateRange } from './utils';
@@ -69,6 +70,13 @@ export interface InlineDateRangePickerProps extends Omit<
    * start-time.
    */
   granularity?: DateTimeGranularity;
+
+  /**
+   * Minutes step for the start + end `<TimeField>` popovers and for
+   * rounding typed time input on commit. Defaults to `15`. Set `1` to
+   * disable rounding. Only meaningful when `granularity='minute'`.
+   */
+  timeStep?: number;
 }
 
 /**
@@ -126,6 +134,7 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
       nameEnd,
       disabled = false,
       granularity = 'day',
+      timeStep = 15,
       className,
       id: idProp,
       ...rest
@@ -170,20 +179,23 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
           let withTime: DateRange = range;
           if (granularity === 'minute') {
             // Preserve existing times if value exists; otherwise default
-            // start=00:00, end=23:59. Then clamp same-day end ≥ start.
+            // start=00:00, end=23:59. Round through `timeStep` to keep
+            // the step-aligned invariant. Then clamp same-day end ≥ start.
             const startSource = value?.start ?? null;
             const endSource = value?.end ?? null;
+            const startRounded = roundTimeToStep(
+              startSource?.getHours() ?? 0,
+              startSource?.getMinutes() ?? 0,
+              timeStep,
+            );
+            const endRounded = roundTimeToStep(
+              endSource?.getHours() ?? 23,
+              endSource?.getMinutes() ?? 59,
+              timeStep,
+            );
             withTime = {
-              start: combineDateAndTime(
-                range.start,
-                startSource?.getHours() ?? 0,
-                startSource?.getMinutes() ?? 0,
-              ),
-              end: combineDateAndTime(
-                range.end,
-                endSource?.getHours() ?? 23,
-                endSource?.getMinutes() ?? 59,
-              ),
+              start: combineDateAndTime(range.start, startRounded.hours, startRounded.minutes),
+              end: combineDateAndTime(range.end, endRounded.hours, endRounded.minutes),
             };
             withTime = clampRangeEndAfterStart(withTime);
           }
@@ -192,7 +204,7 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
           setValue(withTime);
         }
       },
-      [granularity, selectionStart, value, setValue],
+      [granularity, selectionStart, value, setValue, timeStep],
     );
 
     // Per-grid cursor-change callbacks — same translation as the popover
@@ -286,19 +298,15 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
               >
                 {t('dateRangePicker.startTimeLabel')}
               </label>
-              <input
+              <TimeField
                 id={`${inlineId}-start-time`}
-                type="time"
-                step={60}
-                className={styles.timeInput}
-                value={toTimeInputValue(value.start)}
+                value={value.start}
+                step={timeStep}
                 disabled={disabled}
                 aria-label={t('dateRangePicker.startTimeLabel')}
-                onChange={(e) => {
-                  const [hh, mm] = e.target.value.split(':').map(Number);
-                  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+                onChange={(h, m) => {
                   const next: DateRange = {
-                    start: combineDateAndTime(value.start, hh, mm),
+                    start: combineDateAndTime(value.start, h, m),
                     end: value.end,
                   };
                   setValue(clampRangeEndAfterStart(next));
@@ -312,20 +320,16 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
               >
                 {t('dateRangePicker.endTimeLabel')}
               </label>
-              <input
+              <TimeField
                 id={`${inlineId}-end-time`}
-                type="time"
-                step={60}
-                className={styles.timeInput}
-                value={toTimeInputValue(value.end)}
+                value={value.end}
+                step={timeStep}
                 disabled={disabled}
                 aria-label={t('dateRangePicker.endTimeLabel')}
-                onChange={(e) => {
-                  const [hh, mm] = e.target.value.split(':').map(Number);
-                  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+                onChange={(h, m) => {
                   const next: DateRange = {
                     start: value.start,
-                    end: combineDateAndTime(value.end, hh, mm),
+                    end: combineDateAndTime(value.end, h, m),
                   };
                   setValue(clampRangeEndAfterStart(next));
                 }}

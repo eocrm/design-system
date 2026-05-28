@@ -24,24 +24,3 @@
   color: var(--color-fg-muted);
   font-size: var(--font-size-sm);
 }
-
-.timeInput {
-  width: var(--date-picker-time-input-width);
-  height: var(--date-picker-input-height-sm);
-  padding: 0 var(--space-2);
-  font: inherit;
-  color: var(--color-fg);
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.timeInput:focus-visible {
-  outline: var(--ring-width) solid var(--ring-accent);
-  outline-offset: 0;
-}
-
-.timeInput:disabled {
-  opacity: var(--opacity-disabled);
-  cursor: not-allowed;
-}

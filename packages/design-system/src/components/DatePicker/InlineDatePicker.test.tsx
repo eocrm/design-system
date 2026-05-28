@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, useState } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
@@ -204,7 +204,9 @@ describe('InlineDatePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      expect(screen.getByLabelText('Time')).toHaveValue('14:30');
+      const timeInput = screen.getByRole('textbox', { name: 'Time' });
+      expect(timeInput).toHaveValue('14:30');
+      expect(timeInput).toHaveAttribute('type', 'text');
     });
 
     it('picking a date from null defaults time to 00:00', async () => {
@@ -242,7 +244,7 @@ describe('InlineDatePicker', () => {
       expect(got.getMinutes()).toBe(30);
     });
 
-    it('changing the time input updates time only', () => {
+    it('typing into the time input + blur updates time only', async () => {
       const onChange = vi.fn<(d: Date | null) => void>();
       render(
         <InlineDatePicker
@@ -253,8 +255,10 @@ describe('InlineDatePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      const timeInput = screen.getByLabelText('Time');
+      const timeInput = screen.getByRole('textbox', { name: 'Time' });
       fireEvent.change(timeInput, { target: { value: '09:15' } });
+      fireEvent.blur(timeInput);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
       const got = onChange.mock.calls.at(-1)?.[0] as Date;
       expect(got.getFullYear()).toBe(2026);
       expect(got.getMonth()).toBe(4);
@@ -265,7 +269,28 @@ describe('InlineDatePicker', () => {
 
     it('time input is disabled when value is null', () => {
       render(<InlineDatePicker granularity="minute" aria-label="Date" />, { wrapper: wrap() });
-      expect(screen.getByLabelText('Time')).toBeDisabled();
+      expect(screen.getByRole('textbox', { name: 'Time' })).toBeDisabled();
+    });
+
+    it('timeStep={30} rounds typed "14:22" to 14:30 on blur', async () => {
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(
+        <InlineDatePicker
+          granularity="minute"
+          timeStep={30}
+          defaultValue={new Date(2026, 4, 28, 10, 0)}
+          onChange={onChange}
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      const timeInput = screen.getByRole('textbox', { name: 'Time' });
+      fireEvent.change(timeInput, { target: { value: '14:22' } });
+      fireEvent.blur(timeInput);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const got = onChange.mock.calls.at(-1)?.[0] as Date;
+      expect(got.getHours()).toBe(14);
+      expect(got.getMinutes()).toBe(30);
     });
 
     it('hidden form mirror emits ISO datetime when granularity="minute"', () => {

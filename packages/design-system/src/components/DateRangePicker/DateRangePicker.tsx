@@ -19,14 +19,15 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
+import { TimeField } from '../DatePicker/TimeField';
 import {
   combineDateAndTime,
   formatDate,
   formatDateTime,
   isDateOutOfRange,
+  roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
-  toTimeInputValue,
   type DateTimeGranularity,
 } from '../DatePicker/utils';
 import {
@@ -98,6 +99,13 @@ export interface DateRangePickerProps extends Omit<
    * start-time.
    */
   granularity?: DateTimeGranularity;
+
+  /**
+   * Minutes step for the start + end `<TimeField>` popovers and for
+   * rounding typed time input on commit. Defaults to `15`. Set `1` to
+   * disable rounding. Only meaningful when `granularity='minute'`.
+   */
+  timeStep?: number;
 }
 
 const ICON_SIZE_FOR: Record<DateRangePickerSize, number> = {
@@ -158,6 +166,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       disabled = false,
       size = 'md',
       granularity = 'day',
+      timeStep = 15,
       nameStart,
       nameEnd,
       placeholder,
@@ -346,20 +355,24 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           let withTime: DateRange = range;
           if (granularity === 'minute') {
             // Preserve existing times if value exists; otherwise default
-            // start=00:00, end=23:59. Then clamp same-day end ≥ start.
+            // start=00:00, end=23:59. Then round to step (no-op for
+            // 00:00 / 23:59 with any sensible step, but keeps the
+            // invariant explicit). Then clamp same-day end ≥ start.
             const startSource = value?.start ?? null;
             const endSource = value?.end ?? null;
+            const startRounded = roundTimeToStep(
+              startSource?.getHours() ?? 0,
+              startSource?.getMinutes() ?? 0,
+              timeStep,
+            );
+            const endRounded = roundTimeToStep(
+              endSource?.getHours() ?? 23,
+              endSource?.getMinutes() ?? 59,
+              timeStep,
+            );
             withTime = {
-              start: combineDateAndTime(
-                range.start,
-                startSource?.getHours() ?? 0,
-                startSource?.getMinutes() ?? 0,
-              ),
-              end: combineDateAndTime(
-                range.end,
-                endSource?.getHours() ?? 23,
-                endSource?.getMinutes() ?? 59,
-              ),
+              start: combineDateAndTime(range.start, startRounded.hours, startRounded.minutes),
+              end: combineDateAndTime(range.end, endRounded.hours, endRounded.minutes),
             };
             withTime = clampRangeEndAfterStart(withTime);
           }
@@ -370,7 +383,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           inputRef.current?.focus();
         }
       },
-      [granularity, selectionStart, value, setValue],
+      [granularity, selectionStart, value, setValue, timeStep],
     );
 
     const handleClear = useCallback(
@@ -423,13 +436,22 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       if (!open) return;
       const handler = (e: PointerEvent) => {
         const target = e.target as Node | null;
+        if (!target) return;
         const floating = refs.floating.current;
-        if (target && !wrapperRef.current?.contains(target) && !floating?.contains(target)) {
-          commit(draft);
-          setOpen(false);
-          setSelectionStart(null);
-          setHoverDate(null);
+        if (wrapperRef.current?.contains(target) || floating?.contains(target)) return;
+        // The embedded <TimeField>s render their popovers into document.body
+        // (sibling portals). Treat any click inside them as "inside" so
+        // this popover doesn't auto-close mid-time-pick.
+        if (
+          target instanceof Element &&
+          target.closest('[data-timefield-popover="true"]')
+        ) {
+          return;
         }
+        commit(draft);
+        setOpen(false);
+        setSelectionStart(null);
+        setHoverDate(null);
       };
       document.addEventListener('pointerdown', handler, true);
       return () => document.removeEventListener('pointerdown', handler, true);
@@ -599,19 +621,15 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                     >
                       {t('dateRangePicker.startTimeLabel')}
                     </label>
-                    <input
+                    <TimeField
                       id={`${inputId}-start-time`}
-                      type="time"
-                      step={60}
-                      className={styles.timeInput}
-                      value={toTimeInputValue(value.start)}
+                      value={value.start}
+                      step={timeStep}
                       disabled={disabled}
                       aria-label={t('dateRangePicker.startTimeLabel')}
-                      onChange={(e) => {
-                        const [hh, mm] = e.target.value.split(':').map(Number);
-                        if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+                      onChange={(h, m) => {
                         const next: DateRange = {
-                          start: combineDateAndTime(value.start, hh, mm),
+                          start: combineDateAndTime(value.start, h, m),
                           end: value.end,
                         };
                         setValue(clampRangeEndAfterStart(next));
@@ -625,20 +643,16 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                     >
                       {t('dateRangePicker.endTimeLabel')}
                     </label>
-                    <input
+                    <TimeField
                       id={`${inputId}-end-time`}
-                      type="time"
-                      step={60}
-                      className={styles.timeInput}
-                      value={toTimeInputValue(value.end)}
+                      value={value.end}
+                      step={timeStep}
                       disabled={disabled}
                       aria-label={t('dateRangePicker.endTimeLabel')}
-                      onChange={(e) => {
-                        const [hh, mm] = e.target.value.split(':').map(Number);
-                        if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+                      onChange={(h, m) => {
                         const next: DateRange = {
                           start: value.start,
-                          end: combineDateAndTime(value.end, hh, mm),
+                          end: combineDateAndTime(value.end, h, m),
                         };
                         setValue(clampRangeEndAfterStart(next));
                       }}

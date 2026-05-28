@@ -18,6 +18,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { DatePickerGrid } from './DatePickerGrid';
+import { TimeField } from './TimeField';
 import {
   combineDateAndTime,
   formatDate,
@@ -25,9 +26,9 @@ import {
   isDateOutOfRange,
   parseDate,
   parseDateTime,
+  roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
-  toTimeInputValue,
   type DateTimeGranularity,
 } from './utils';
 import styles from './DatePicker.module.scss';
@@ -85,6 +86,13 @@ export interface DatePickerProps extends Omit<
    * defaults the time to `00:00`.
    */
   granularity?: DateTimeGranularity;
+
+  /**
+   * Minutes step for the `<TimeField>` popover and for rounding typed
+   * time input on commit. Defaults to `15`. Set `1` to disable rounding.
+   * Only meaningful when `granularity='minute'`.
+   */
+  timeStep?: number;
 }
 
 const ICON_SIZE_FOR: Record<DatePickerSize, number> = {
@@ -147,6 +155,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     disabled = false,
     size = 'md',
     granularity = 'day',
+    timeStep = 15,
     name,
     placeholder,
     className,
@@ -298,14 +307,17 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         if (value != null) {
           withTime = combineDateAndTime(next, value.getHours(), value.getMinutes());
         } else {
-          withTime = combineDateAndTime(next, 0, 0);
+          // Default time = 00:00, rounded to keep step-aligned invariant
+          // (no-op for any sensible step; explicit for clarity).
+          const rounded = roundTimeToStep(0, 0, timeStep);
+          withTime = combineDateAndTime(next, rounded.hours, rounded.minutes);
         }
       }
       setValue(withTime);
       setOpen(false);
       inputRef.current?.focus();
     },
-    [granularity, value, setValue],
+    [granularity, value, setValue, timeStep],
   );
 
   const handleClear = useCallback(
@@ -336,11 +348,20 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     if (!open) return;
     const handler = (e: PointerEvent) => {
       const target = e.target as Node | null;
+      if (!target) return;
       const floating = refs.floating.current;
-      if (target && !wrapperRef.current?.contains(target) && !floating?.contains(target)) {
-        commit(draft);
-        setOpen(false);
+      if (wrapperRef.current?.contains(target) || floating?.contains(target)) return;
+      // The embedded <TimeField> renders its popover into document.body
+      // (sibling portal). Treat any click inside it as "inside" so this
+      // popover doesn't auto-close mid-time-pick.
+      if (
+        target instanceof Element &&
+        target.closest('[data-timefield-popover="true"]')
+      ) {
+        return;
       }
+      commit(draft);
+      setOpen(false);
     };
     document.addEventListener('pointerdown', handler, true);
     return () => document.removeEventListener('pointerdown', handler, true);
@@ -451,19 +472,15 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
                 <label className={styles.timeLabel} htmlFor={`${inputId}-time`}>
                   {t('datePicker.timeLabel')}
                 </label>
-                <input
+                <TimeField
                   id={`${inputId}-time`}
-                  type="time"
-                  step={60}
-                  className={styles.timeInput}
-                  value={value ? toTimeInputValue(value) : ''}
-                  disabled={value == null || disabled}
+                  value={value}
+                  step={timeStep}
+                  disabled={disabled}
                   aria-label={t('datePicker.timeLabel')}
-                  onChange={(e) => {
+                  onChange={(h, m) => {
                     if (value == null) return;
-                    const [hh, mm] = e.target.value.split(':').map(Number);
-                    if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
-                    setValue(combineDateAndTime(value, hh, mm));
+                    setValue(combineDateAndTime(value, h, m));
                   }}
                 />
               </div>
