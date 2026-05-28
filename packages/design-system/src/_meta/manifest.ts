@@ -101,6 +101,7 @@ const CLUSTERS: Record<string, string> = {
   Link: 'Navigation',
   Rail: 'Navigation',
   Tabs: 'Navigation',
+  TopBar: 'Navigation',
 
   // Overlays
   ConfirmationPopover: 'Overlays',

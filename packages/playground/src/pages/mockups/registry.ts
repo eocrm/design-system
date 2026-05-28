@@ -60,7 +60,8 @@ export type ComponentName =
   | 'Textarea'
   | 'Title'
   | 'Toast'
-  | 'Tooltip';
+  | 'Tooltip'
+  | 'TopBar';
 
 export interface MockupEntry {
   slug: string;

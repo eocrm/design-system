@@ -56,7 +56,8 @@
       "OptionsPicker",
       "PasswordInput",
       "Rail",
-      "Toast"
+      "Toast",
+      "TopBar"
     ]
   },
   "ButtonGroup": {
@@ -480,5 +481,13 @@
       "PasswordInput",
       "Rail"
     ]
+  },
+  "TopBar": {
+    "tier": "composition",
+    "cluster": "Navigation",
+    "composes": [
+      "Button"
+    ],
+    "composedBy": []
   }
 }

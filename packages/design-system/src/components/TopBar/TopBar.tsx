@@ -3,6 +3,8 @@ import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { TopBarStart } from './TopBarStart';
 import { TopBarEnd } from './TopBarEnd';
+import { TopBarSearch } from './TopBarSearch';
+import { TopBarIconButton } from './TopBarIconButton';
 import styles from './TopBar.module.scss';
 
 /**
@@ -142,9 +144,9 @@ const TopBarRoot = forwardRef<HTMLElement, TopBarProps>(function TopBar(
  * attached to the root via `Object.assign` (the canonical compound pattern
  * used by `<Card>`, `<Rail>`, `<DropdownMenu>`, etc.).
  */
-// NOTE: Search and IconButton are attached in Task 5 once their modules
-// exist. This file's compose is updated then.
 export const TopBar = Object.assign(TopBarRoot, {
   Start: TopBarStart,
   End: TopBarEnd,
+  Search: TopBarSearch,
+  IconButton: TopBarIconButton,
 });
