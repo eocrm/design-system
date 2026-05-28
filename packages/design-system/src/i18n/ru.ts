@@ -134,4 +134,9 @@ export const ru: Messages = {
   pageHeader: {
     back: 'Назад',
   },
+  rail: {
+    expand: 'Развернуть навигацию',
+    collapse: 'Свернуть навигацию',
+    navigation: 'Главная навигация',
+  },
 };
