@@ -13,6 +13,7 @@
 ## Task 1: Tokens + i18n keys
 
 **Files:**
+
 - Create: `packages/design-system/src/components/Rail/Rail.tokens.scss`
 - Modify: `packages/design-system/src/i18n/messages.ts` — add `rail` namespace
 - Modify: `packages/design-system/src/i18n/en.ts` — `rail.expand`, `rail.collapse`, `rail.navigation`
@@ -21,6 +22,7 @@
 Token values are in the spec's "Tokens" section — copy verbatim.
 
 i18n mapping:
+
 - `rail.expand`: `Expand navigation` / `Развернуть навигацию`
 - `rail.collapse`: `Collapse navigation` / `Свернуть навигацию`
 - `rail.navigation`: `Main navigation` / `Главная навигация`
@@ -34,6 +36,7 @@ i18n mapping:
 ## Task 2: Root + Header + Footer + Spacer + CollapseToggle
 
 **Files (create):**
+
 - `packages/design-system/src/components/Rail/Rail.tsx`
 - `packages/design-system/src/components/Rail/RailHeader.tsx`
 - `packages/design-system/src/components/Rail/RailFooter.tsx`
@@ -45,7 +48,15 @@ i18n mapping:
 ### Rail.tsx (root)
 
 ```tsx
-import { createContext, forwardRef, useState, useMemo, useCallback, type HTMLAttributes, type ReactNode } from 'react';
+import {
+  createContext,
+  forwardRef,
+  useState,
+  useMemo,
+  useCallback,
+  type HTMLAttributes,
+  type ReactNode,
+} from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { useControllableState } from '../../hooks/useControllableState'; // existing helper — verify path
@@ -75,7 +86,15 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
 }
 
 export const Rail = forwardRef<HTMLElement, RailProps>(function Rail(
-  { collapsed: collapsedProp, defaultCollapsed = false, onCollapsedChange, 'aria-label': ariaLabel, className, children, ...props },
+  {
+    collapsed: collapsedProp,
+    defaultCollapsed = false,
+    onCollapsedChange,
+    'aria-label': ariaLabel,
+    className,
+    children,
+    ...props
+  },
   ref,
 ) {
   const t = useTranslation();
@@ -109,9 +128,11 @@ Verify `useControllableState` exists in `hooks/` — if not, use a small local `
 Trivial pass-through wrappers. Header gets `overflow: hidden` for collapsed mode; Footer is just a div; Spacer is a flex-grow div.
 
 ```tsx
-export const RailHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(function RailHeader({ className, ...props }, ref) {
-  return <div ref={ref} className={clsx(styles.header, className)} {...props} />;
-});
+export const RailHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  function RailHeader({ className, ...props }, ref) {
+    return <div ref={ref} className={clsx(styles.header, className)} {...props} />;
+  },
+);
 
 // Same shape for RailFooter, RailSpacer.
 ```
@@ -130,23 +151,29 @@ export interface RailCollapseToggleProps {
   className?: string;
 }
 
-export const RailCollapseToggle = forwardRef<HTMLButtonElement, RailCollapseToggleProps>(function RailCollapseToggle({ className }, ref) {
-  const t = useTranslation();
-  const { collapsed, setCollapsed } = useRail();
-  return (
-    <Button
-      ref={ref}
-      variant="ghost"
-      size="sm"
-      iconOnly
-      aria-label={collapsed ? t('rail.expand') : t('rail.collapse')}
-      onClick={() => setCollapsed((prev) => !prev)}
-      className={clsx(styles.collapseToggle, collapsed && styles.collapseToggleRotated, className)}
-    >
-      <ChevronsLeft size={14} aria-hidden />
-    </Button>
-  );
-});
+export const RailCollapseToggle = forwardRef<HTMLButtonElement, RailCollapseToggleProps>(
+  function RailCollapseToggle({ className }, ref) {
+    const t = useTranslation();
+    const { collapsed, setCollapsed } = useRail();
+    return (
+      <Button
+        ref={ref}
+        variant="ghost"
+        size="sm"
+        iconOnly
+        aria-label={collapsed ? t('rail.expand') : t('rail.collapse')}
+        onClick={() => setCollapsed((prev) => !prev)}
+        className={clsx(
+          styles.collapseToggle,
+          collapsed && styles.collapseToggleRotated,
+          className,
+        )}
+      >
+        <ChevronsLeft size={14} aria-hidden />
+      </Button>
+    );
+  },
+);
 ```
 
 The chevron rotates 180° when collapsed (CSS transform on `.collapseToggleRotated`).
@@ -224,6 +251,7 @@ But the convention in this repo is to attach subcomponents to the root in the RO
 ## Task 3: RailSection + RailItem (no nesting yet)
 
 **Files (create):**
+
 - `packages/design-system/src/components/Rail/RailSection.tsx`
 - `packages/design-system/src/components/Rail/RailItem.tsx`
 
@@ -237,9 +265,18 @@ export interface RailSectionProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
-export const RailSection = forwardRef<HTMLDivElement, RailSectionProps>(function RailSection({ title, className, children, ...props }, ref) {
+export const RailSection = forwardRef<HTMLDivElement, RailSectionProps>(function RailSection(
+  { title, className, children, ...props },
+  ref,
+) {
   return (
-    <div ref={ref} role="group" aria-label={title} className={clsx(styles.section, className)} {...props}>
+    <div
+      ref={ref}
+      role="group"
+      aria-label={title}
+      className={clsx(styles.section, className)}
+      {...props}
+    >
       {title && <div className={styles.sectionTitle}>{title}</div>}
       {children}
     </div>
@@ -294,7 +331,9 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
     return <Tooltip content={children}>{inner}</Tooltip>;
   }
   return inner;
-}) as <C extends ElementType = 'a'>(props: RailItemProps<C> & { ref?: React.Ref<HTMLElement> }) => JSX.Element;
+}) as <C extends ElementType = 'a'>(
+  props: RailItemProps<C> & { ref?: React.Ref<HTMLElement> },
+) => JSX.Element;
 ```
 
 Active-state styling is purely CSS via `[aria-current="page"]` selector — see Rail.module.scss below.
@@ -395,11 +434,9 @@ This is the biggest single subcomponent. Two distinct behaviors:
 `RailGroup` renders as a button + chevron. Clicking toggles `open` state. When open, the subitems render INLINE underneath (just below the group button).
 
 ```tsx
-{open && (
-  <div className={styles.subitems}>
-    {children}
-  </div>
-)}
+{
+  open && <div className={styles.subitems}>{children}</div>;
+}
 ```
 
 Subitems get extra left-padding via `.subitems .item { padding-left: var(--rail-subitem-padding-left); }` so they visually nest under the group icon.
@@ -415,20 +452,28 @@ import { Popover } from '../Popover';
 
 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
   <Popover.Trigger>
-    <button className={styles.groupTrigger} onMouseEnter={openWithDelay} onMouseLeave={closeWithGrace}>
+    <button
+      className={styles.groupTrigger}
+      onMouseEnter={openWithDelay}
+      onMouseLeave={closeWithGrace}
+    >
       {icon}
     </button>
   </Popover.Trigger>
-  <Popover.Content placement="right-start" offset={8} onMouseEnter={cancelClose} onMouseLeave={closeWithGrace}>
+  <Popover.Content
+    placement="right-start"
+    offset={8}
+    onMouseEnter={cancelClose}
+    onMouseLeave={closeWithGrace}
+  >
     <div className={styles.flyoutHeader}>{label}</div>
-    <div className={styles.flyoutBody}>
-      {children}
-    </div>
+    <div className={styles.flyoutBody}>{children}</div>
   </Popover.Content>
-</Popover>
+</Popover>;
 ```
 
 Hover-open timing:
+
 - `openWithDelay`: `setTimeout(() => setPopoverOpen(true), 80)`. If the cursor leaves before the timeout fires, clear it.
 - `closeWithGrace`: `setTimeout(() => setPopoverOpen(false), 200)`. If the cursor enters the trigger OR popover within that window, clear it.
 
@@ -591,6 +636,7 @@ Tests enumerated in the spec's "Tests" section. Use the existing test pattern (v
 ## Task 7: Demo + playground wire-up
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/RailDemo.tsx`
 - Modify: `packages/playground/src/App.tsx` — route `/components/rail`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx` — add nav entry for Rail demo

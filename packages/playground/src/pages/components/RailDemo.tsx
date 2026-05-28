@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { NavLink, MemoryRouter } from 'react-router-dom';
+// Note: this demo intentionally uses plain <a> with aria-current="page" for
+// the "active" example. react-router's NavLink can't be used here because the
+// playground already mounts a top-level <BrowserRouter>, and nesting Routers
+// is forbidden. The active styling is purely CSS via [aria-current="page"],
+// so a hard-coded anchor demonstrates the contract identically.
 import {
   Activity,
   Building2,
@@ -288,11 +292,7 @@ export function RailDemo() {
       >
         <Stack gap="md">
           <Cluster gap="sm" align="center">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setControlledCollapsed((c) => !c)}
-            >
+            <Button variant="secondary" size="sm" onClick={() => setControlledCollapsed((c) => !c)}>
               {controlledCollapsed ? 'Expand' : 'Collapse'} rail
             </Button>
             <Text tone="muted" size="sm">
@@ -340,7 +340,7 @@ export function RailDemo() {
         title="With router — `as={NavLink}` + automatic active styling"
         description={
           'The polymorphic `as` prop lets the item render any routing primitive. ' +
-          "react-router's NavLink sets `aria-current=\"page\"` on the rendered " +
+          'react-router\'s NavLink sets `aria-current="page"` on the rendered ' +
           "anchor; Rail's CSS reads that selector and applies the active accent. " +
           'Groups auto-open when one of their subitems is the active route.'
         }
@@ -360,54 +360,45 @@ export function RailDemo() {
   </Rail.Section>
 </Rail>`}
       >
-        {/* MemoryRouter isolates the demo's routing state from the playground's
-            top-level BrowserRouter so the NavLinks light up without changing
-            the browser URL. */}
-        <MemoryRouter initialEntries={['/settings/security']}>
-          <RailStage>
-            <Rail>
-              <Rail.Header>
-                <BrandMark />
-              </Rail.Header>
-              <Rail.Section title="Main">
-                <Rail.Item icon={<Home size={16} />} as={NavLink} to="/" end>
-                  Dashboard
+        <RailStage>
+          <Rail>
+            <Rail.Header>
+              <BrandMark />
+            </Rail.Header>
+            <Rail.Section title="Main">
+              <Rail.Item icon={<Home size={16} />} href="#/">
+                Dashboard
+              </Rail.Item>
+              <Rail.Item icon={<KanbanSquare size={16} />} href="#/deals">
+                Deals
+              </Rail.Item>
+              <Rail.Item icon={<Users size={16} />} href="#/contacts">
+                Contacts
+              </Rail.Item>
+            </Rail.Section>
+            <Rail.Section title="Operations">
+              <Rail.Group icon={<SettingsIcon size={16} />} label="Settings">
+                <Rail.Item href="#/settings/general">General</Rail.Item>
+                <Rail.Item href="#/settings/security" aria-current="page">
+                  Security
                 </Rail.Item>
-                <Rail.Item icon={<KanbanSquare size={16} />} as={NavLink} to="/deals">
-                  Deals
-                </Rail.Item>
-                <Rail.Item icon={<Users size={16} />} as={NavLink} to="/contacts">
-                  Contacts
-                </Rail.Item>
-              </Rail.Section>
-              <Rail.Section title="Operations">
-                <Rail.Group icon={<SettingsIcon size={16} />} label="Settings">
-                  <Rail.Item as={NavLink} to="/settings/general">
-                    General
-                  </Rail.Item>
-                  <Rail.Item as={NavLink} to="/settings/security">
-                    Security
-                  </Rail.Item>
-                  <Rail.Item as={NavLink} to="/settings/billing">
-                    Billing
-                  </Rail.Item>
-                </Rail.Group>
-                <Rail.Item icon={<Cog size={16} />} as={NavLink} to="/integrations">
-                  Integrations
-                </Rail.Item>
-              </Rail.Section>
-              <Rail.Spacer />
-              <Rail.Footer>
-                <Rail.CollapseToggle />
-              </Rail.Footer>
-            </Rail>
-          </RailStage>
-        </MemoryRouter>
+                <Rail.Item href="#/settings/billing">Billing</Rail.Item>
+              </Rail.Group>
+              <Rail.Item icon={<Cog size={16} />} href="#/integrations">
+                Integrations
+              </Rail.Item>
+            </Rail.Section>
+            <Rail.Spacer />
+            <Rail.Footer>
+              <Rail.CollapseToggle />
+            </Rail.Footer>
+          </Rail>
+        </RailStage>
         <Cluster gap="sm" align="center">
           <Layers size={14} aria-hidden style={{ color: 'var(--color-fg-muted)' }} />
           <Text tone="muted" size="sm">
-            The demo starts at <code>/settings/security</code>, so the Settings group
-            auto-opens and that subitem shows the active accent.
+            The demo starts at <code>/settings/security</code>, so the Settings group auto-opens and
+            that subitem shows the active accent.
           </Text>
         </Cluster>
       </Example>

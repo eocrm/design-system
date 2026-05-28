@@ -274,7 +274,7 @@ describe('Rail', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('Group collapsed-mode trigger sets aria-haspopup="menu" and omits aria-expanded', () => {
+  it('Group collapsed-mode trigger sets aria-haspopup="dialog" and omits aria-expanded', () => {
     render(
       <Rail defaultCollapsed>
         <Rail.Section title="Ops">
@@ -285,7 +285,7 @@ describe('Rail', () => {
       </Rail>,
     );
     const trigger = screen.getByRole('button', { name: /Settings/ });
-    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
     expect(trigger.getAttribute('aria-expanded')).toBeNull();
   });
 
@@ -369,17 +369,17 @@ describe('Rail', () => {
       );
       const trigger = screen.getByRole('button', { name: /Settings/ });
       // Pre-hover: no popover dialog yet.
-      expect(screen.queryByRole('menu', { name: 'Settings' })).toBeNull();
+      expect(screen.queryByRole('dialog', { name: 'Settings' })).toBeNull();
       act(() => {
         fireEvent.pointerEnter(trigger);
       });
       // Before the open-delay elapses, still no popover.
-      expect(screen.queryByRole('menu', { name: 'Settings' })).toBeNull();
+      expect(screen.queryByRole('dialog', { name: 'Settings' })).toBeNull();
       act(() => {
         vi.advanceTimersByTime(100);
       });
       // After delay, the flyout is mounted.
-      expect(screen.getByRole('menu', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'Settings' })).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

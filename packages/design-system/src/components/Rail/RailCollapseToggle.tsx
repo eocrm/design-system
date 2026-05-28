@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { ChevronsLeft } from 'lucide-react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
@@ -6,9 +6,15 @@ import { useRail } from './Rail';
 import { Button } from '../Button';
 import styles from './Rail.module.scss';
 
-export interface RailCollapseToggleProps {
-  /** Forwarded to the underlying `<button>`. Composed with the toggle's own classes. */
-  className?: string;
+export interface RailCollapseToggleProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'aria-label' | 'children'
+> {
+  /**
+   * Override the auto-generated aria-label (defaults to `t('rail.expand')` /
+   * `t('rail.collapse')` depending on the current state).
+   */
+  'aria-label'?: string;
 }
 
 /**
@@ -28,7 +34,7 @@ export interface RailCollapseToggleProps {
  * </Rail.Footer>
  */
 export const RailCollapseToggle = forwardRef<HTMLButtonElement, RailCollapseToggleProps>(
-  function RailCollapseToggle({ className }, ref) {
+  function RailCollapseToggle({ className, onClick, 'aria-label': ariaLabel, ...rest }, ref) {
     const t = useTranslation();
     const { collapsed, setCollapsed } = useRail();
     return (
@@ -37,13 +43,17 @@ export const RailCollapseToggle = forwardRef<HTMLButtonElement, RailCollapseTogg
         variant="ghost"
         size="sm"
         iconOnly
-        aria-label={collapsed ? t('rail.expand') : t('rail.collapse')}
-        onClick={() => setCollapsed((prev) => !prev)}
+        aria-label={ariaLabel ?? (collapsed ? t('rail.expand') : t('rail.collapse'))}
+        onClick={(e) => {
+          onClick?.(e);
+          if (!e.defaultPrevented) setCollapsed((prev) => !prev);
+        }}
         className={clsx(
           styles.collapseToggle,
           collapsed && styles.collapseToggleRotated,
           className,
         )}
+        {...rest}
       >
         <ChevronsLeft size={14} aria-hidden />
       </Button>

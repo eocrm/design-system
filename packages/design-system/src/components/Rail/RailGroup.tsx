@@ -5,6 +5,7 @@ import {
   useId,
   useRef,
   useState,
+  type HTMLAttributes,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
@@ -28,7 +29,7 @@ const OPEN_DELAY_MS = 80;
 /** Close-grace so the cursor has time to traverse from trigger to flyout. */
 const CLOSE_GRACE_MS = 200;
 
-export interface RailGroupProps {
+export interface RailGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /**
    * Required leading icon — the only thing visible when the rail is collapsed.
    * Groups always have an icon; subitems don't need one.
@@ -51,8 +52,6 @@ export interface RailGroupProps {
   onOpenChange?: (open: boolean) => void;
   /** Subitems — typically a list of `<Rail.Item>` without icons. */
   children: ReactNode;
-  /** Forwarded to the group's outermost `<div>` wrapper. */
-  className?: string;
 }
 
 /**
@@ -98,6 +97,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
     onOpenChange,
     children,
     className,
+    ...rest
   },
   forwardedRef,
 ) {
@@ -315,7 +315,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
   };
 
   return (
-    <div ref={setGroupRef} className={clsx(styles.group, className)}>
+    <div ref={setGroupRef} className={clsx(styles.group, className)} {...rest}>
       <button
         ref={setTriggerRef}
         type="button"
@@ -325,7 +325,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
         // dialog-shaped panel).
         aria-expanded={collapsed ? undefined : open}
         aria-controls={collapsed ? undefined : subitemsId}
-        aria-haspopup={collapsed ? 'menu' : undefined}
+        aria-haspopup={collapsed ? 'dialog' : undefined}
         onClick={handleTriggerClick}
         onKeyDown={handleTriggerKeyDown}
         onPointerEnter={handlePointerEnter}
@@ -370,13 +370,24 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
         createPortal(
           <div
             ref={refs.setFloating}
-            role="menu"
+            role="dialog"
             aria-label={label}
             style={floatingStyles}
             className={styles.flyout}
             onPointerEnter={handleFlyoutPointerEnter}
             onPointerLeave={handleFlyoutPointerLeave}
             onClick={handleFlyoutClick}
+            // Keyboard-tab traversal from the trigger into a subitem fires the
+            // trigger's onBlur. Without these handlers, the 200ms close timer
+            // would fire and unmount the flyout mid-tab. onFocus on the panel
+            // (capturing focus via descendant) cancels any pending close;
+            // onBlur re-schedules only when focus leaves the panel entirely.
+            onFocus={clearCloseTimer}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                scheduleClose();
+              }
+            }}
           >
             <div className={styles.flyoutHeader}>{label}</div>
             <div className={styles.flyoutBody}>{children}</div>

@@ -31,7 +31,9 @@ import { Rail } from '@eocrm/design-system';
   </Rail.Header>
 
   <Rail.Section title="Main">
-    <Rail.Item icon={<Home />} as={NavLink} to="/">Dashboard</Rail.Item>
+    <Rail.Item icon={<Home />} as={NavLink} to="/">
+      Dashboard
+    </Rail.Item>
     <Rail.Item icon={<Building />} as={NavLink} to="/tenants" badge="12">
       Tenants
     </Rail.Item>
@@ -39,9 +41,15 @@ import { Rail } from '@eocrm/design-system';
 
   <Rail.Section title="Operations">
     <Rail.Group icon={<Settings />} label="Settings" defaultOpen>
-      <Rail.Item as={NavLink} to="/settings/general">General</Rail.Item>
-      <Rail.Item as={NavLink} to="/settings/security">Security</Rail.Item>
-      <Rail.Item as={NavLink} to="/settings/billing">Billing</Rail.Item>
+      <Rail.Item as={NavLink} to="/settings/general">
+        General
+      </Rail.Item>
+      <Rail.Item as={NavLink} to="/settings/security">
+        Security
+      </Rail.Item>
+      <Rail.Item as={NavLink} to="/settings/billing">
+        Billing
+      </Rail.Item>
     </Rail.Group>
   </Rail.Section>
 
@@ -51,7 +59,7 @@ import { Rail } from '@eocrm/design-system';
     <Rail.CollapseToggle />
     <UserChip />
   </Rail.Footer>
-</Rail>
+</Rail>;
 ```
 
 ## Files
@@ -77,6 +85,7 @@ packages/design-system/src/components/Rail/
 ### `<Rail>` (root)
 
 Props:
+
 - `collapsed?: boolean` (controlled)
 - `defaultCollapsed?: boolean` (uncontrolled; default `false`)
 - `onCollapsedChange?: (collapsed: boolean) => void`
@@ -93,6 +102,7 @@ A slot at the top of the rail. Consumer renders a logo, brand, or workspace swit
 ### `<Rail.Section>`
 
 Props:
+
 - `title?: string` — section heading. Hidden when collapsed.
 - `children`: items / groups.
 
@@ -101,12 +111,14 @@ Renders the title in small-caps muted style when expanded; hides it when collaps
 ### `<Rail.Item>`
 
 Props (extends `HTMLAttributes` of the rendered element):
+
 - `as?: ElementType` — default `'a'`. Most consumers pass a router's `NavLink` here.
 - `icon?: ReactNode` — required for top-level items; optional for items nested inside a `<Rail.Group>` (Jira shows subitems without icons).
 - `badge?: ReactNode` — optional. Right-aligned when expanded; small dot at the icon's top-right when collapsed.
 - `children`: the label text.
 
 Behavior:
+
 - Expanded: renders icon + label, with badge at the right.
 - Collapsed (top-level): renders icon only, wrapped in `<Tooltip content={children}>` so hover reveals the label as a tooltip.
 - Active styling: applied via CSS `[aria-current="page"]` selector. NavLink sets this automatically; consumers using a different routing lib can pass `aria-current` themselves.
@@ -115,6 +127,7 @@ Behavior:
 ### `<Rail.Group>`
 
 Props:
+
 - `icon: ReactNode` — required (groups always have a leading icon).
 - `label: string` — visible when expanded; used as the popover header when collapsed.
 - `open?: boolean` (controlled)
@@ -123,10 +136,12 @@ Props:
 - `children`: `<Rail.Item>` children only (subitems).
 
 Behavior when expanded:
+
 - Renders icon + label + chevron. Clicking toggles open/closed.
 - When open, subitems render inline below, with extra left-padding indicating nesting.
 
 Behavior when collapsed:
+
 - Renders icon only.
 - Hovering the icon opens a popover anchored to the right of the rail. The popover contains the `label` as a header + the subitems as a vertical list. Built on Floating UI (existing infrastructure).
 - The popover stays open while the cursor is within the icon's bounding box OR within the popover itself, with a small grace period (~100ms) when transitioning between them.
@@ -188,19 +203,19 @@ Added to `Messages`:
 
 ```ts
 rail: {
-  expand: string;       // "Expand navigation"
-  collapse: string;     // "Collapse navigation"
-  navigation: string;   // default aria-label for the <nav>
-};
+  expand: string; // "Expand navigation"
+  collapse: string; // "Collapse navigation"
+  navigation: string; // default aria-label for the <nav>
+}
 ```
 
 Mapping:
 
-| Key | en | ru |
-| --- | --- | --- |
-| `rail.expand` | `Expand navigation` | `Развернуть навигацию` |
-| `rail.collapse` | `Collapse navigation` | `Свернуть навигацию` |
-| `rail.navigation` | `Main navigation` | `Главная навигация` |
+| Key               | en                    | ru                     |
+| ----------------- | --------------------- | ---------------------- |
+| `rail.expand`     | `Expand navigation`   | `Развернуть навигацию` |
+| `rail.collapse`   | `Collapse navigation` | `Свернуть навигацию`   |
+| `rail.navigation` | `Main navigation`     | `Главная навигация`    |
 
 ## Behavior details
 
@@ -237,6 +252,7 @@ For simplicity in v1, this auto-open is enforced on initial mount only — subse
 ### Popover-on-hover (collapsed groups)
 
 When the rail is collapsed, `Rail.Group`'s icon button has:
+
 - `onMouseEnter` → open the popover (with 80ms delay to prevent accidental triggering during cursor traversal)
 - `onMouseLeave` → close the popover (with 200ms grace period so the user can move into the popover)
 - The popover itself also tracks mouse-enter/leave with the same grace
@@ -244,6 +260,7 @@ When the rail is collapsed, `Rail.Group`'s icon button has:
 Built on `<Popover>` (existing primitive) with `placement="right-start"` and `offset={8}`.
 
 The popover's content area:
+
 - Header: the group's `label` (always visible)
 - Body: the group's subitems rendered as `<Rail.Item>` lookalikes (they ARE Rail.Item children, just rendered in the popover context)
 
@@ -272,6 +289,7 @@ Arrow-key navigation between items is NOT implemented in v1 — relying on nativ
 ## Tests
 
 Per Hard rule 1, `Rail.test.tsx` covers:
+
 - Renders all subcomponents without crashing.
 - `defaultCollapsed` initial state; collapsed class applied to root.
 - `collapsed` (controlled) overrides default; `onCollapsedChange` fires on toggle.

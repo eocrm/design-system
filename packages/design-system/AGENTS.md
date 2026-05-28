@@ -1309,10 +1309,14 @@ import { NavLink } from 'react-router-dom';
 import { Home, Users, Settings } from 'lucide-react';
 
 <Rail defaultCollapsed={false} aria-label="Main navigation">
-  <Rail.Header><BrandLogo /></Rail.Header>
+  <Rail.Header>
+    <BrandLogo />
+  </Rail.Header>
 
   <Rail.Section title="Main">
-    <Rail.Item icon={<Home />} as={NavLink} to="/" end>Dashboard</Rail.Item>
+    <Rail.Item icon={<Home />} as={NavLink} to="/" end>
+      Dashboard
+    </Rail.Item>
     <Rail.Item icon={<Users />} as={NavLink} to="/contacts" badge="12">
       Contacts
     </Rail.Item>
@@ -1320,8 +1324,12 @@ import { Home, Users, Settings } from 'lucide-react';
 
   <Rail.Section title="Operations">
     <Rail.Group icon={<Settings />} label="Settings">
-      <Rail.Item as={NavLink} to="/settings/general">General</Rail.Item>
-      <Rail.Item as={NavLink} to="/settings/security">Security</Rail.Item>
+      <Rail.Item as={NavLink} to="/settings/general">
+        General
+      </Rail.Item>
+      <Rail.Item as={NavLink} to="/settings/security">
+        Security
+      </Rail.Item>
     </Rail.Group>
   </Rail.Section>
 
@@ -1330,7 +1338,7 @@ import { Home, Users, Settings } from 'lucide-react';
   <Rail.Footer>
     <Rail.CollapseToggle />
   </Rail.Footer>
-</Rail>
+</Rail>;
 ```
 
 - **Compound API** — `Rail.Header` / `Rail.Section` / `Rail.Item` / `Rail.Group` / `Rail.Spacer` / `Rail.Footer` / `Rail.CollapseToggle`.
