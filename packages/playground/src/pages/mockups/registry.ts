@@ -33,6 +33,7 @@ export type ComponentName =
   | 'InlineDateRangePicker'
   | 'Input'
   | 'Kanban'
+  | 'Kbd'
   | 'Link'
   | 'Modal'
   | 'OptionsPicker'

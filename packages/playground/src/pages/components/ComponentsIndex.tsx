@@ -20,6 +20,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
+import { Kbd } from '@eocrm/design-system';
 import { PasswordInput } from '@eocrm/design-system';
 import { PasswordStrengthMeter } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
@@ -209,6 +210,18 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <div style={{ width: 200 }}>
         <Input placeholder="Type here…" />
       </div>
+    ),
+  },
+  {
+    to: '/components/kbd',
+    name: 'Kbd',
+    description:
+      'Inline keyboard-shortcut chip: one <kbd> per key joined by a faint + separator. Two sizes (sm matches TopBar, md for command palettes).',
+    preview: (
+      <Cluster gap="sm" justify="center">
+        <Kbd keys={['⌘', 'K']} />
+        <Kbd keys={['Ctrl', 'Shift', 'P']} size="md" />
+      </Cluster>
     ),
   },
   {
