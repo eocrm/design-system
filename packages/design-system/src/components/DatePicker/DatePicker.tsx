@@ -267,7 +267,18 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         const active = document.activeElement;
         const insideWrapper = wrapperRef.current?.contains(active);
         const insideFloating = refs.floating.current?.contains(active);
-        if (!insideWrapper && !insideFloating) {
+        // The embedded <TimeField> renders its popover into document.body
+        // (a SIBLING portal — not a descendant of refs.floating). When the
+        // user clicks the time chevron, focus moves through the TimeField
+        // input and on into one of the listbox rows via the auto-focus rAF
+        // effect; that row lives inside the sibling portal. Without this
+        // exemption the deferred blur check would see "outside floating"
+        // and close the calendar mid-interaction. Mirrors the same
+        // [data-timefield-popover] exemption used by the click-outside
+        // handler below.
+        const insideTimeFieldPopover =
+          active instanceof Element && active.closest('[data-timefield-popover="true"]') != null;
+        if (!insideWrapper && !insideFloating && !insideTimeFieldPopover) {
           commit(draft);
           setOpen(false);
         }
