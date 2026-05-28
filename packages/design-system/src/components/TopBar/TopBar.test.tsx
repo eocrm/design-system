@@ -103,7 +103,7 @@ describe('TopBar', () => {
       expect(screen.getByRole('searchbox', { name: 'Find' })).toBeInTheDocument();
     });
 
-    it('renders the optional <kbd> hotkey hint when `hotkey` is provided', () => {
+    it('renders a single-chip Kbd when `hotkey` is a string', () => {
       render(
         <TopBar aria-label="bar">
           <TopBar.Start>
@@ -111,11 +111,31 @@ describe('TopBar', () => {
           </TopBar.Start>
         </TopBar>,
       );
-      // The kbd is aria-hidden, so we query the DOM directly.
-      const kbd = document.querySelector('kbd');
-      expect(kbd).not.toBeNull();
-      expect(kbd?.textContent).toBe('⌘K');
-      expect(kbd?.getAttribute('aria-hidden')).toBe('true');
+      // String form: one chip, aria-label equals the literal string.
+      const wrapper = screen.getByLabelText('⌘K');
+      expect(wrapper).toBeInTheDocument();
+      const kbds = wrapper.querySelectorAll('kbd');
+      expect(kbds).toHaveLength(1);
+      expect(kbds[0].textContent).toBe('⌘K');
+      expect(kbds[0].getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('renders a multi-chip Kbd when `hotkey` is an array', () => {
+      render(
+        <TopBar aria-label="bar">
+          <TopBar.Start>
+            <TopBar.Search placeholder="search" hotkey={['⌘', 'K']} />
+          </TopBar.Start>
+        </TopBar>,
+      );
+      // Array form: aria-label is the keys joined by " + ", one kbd per key.
+      const wrapper = screen.getByLabelText('⌘ + K');
+      expect(wrapper).toBeInTheDocument();
+      const kbds = wrapper.querySelectorAll('kbd');
+      expect(kbds).toHaveLength(2);
+      expect(kbds[0].textContent).toBe('⌘');
+      expect(kbds[1].textContent).toBe('K');
+      kbds.forEach((kbd) => expect(kbd.getAttribute('aria-hidden')).toBe('true'));
     });
 
     it('omits the kbd hint when `hotkey` is not provided', () => {

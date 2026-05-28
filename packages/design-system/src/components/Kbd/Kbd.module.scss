@@ -1,0 +1,47 @@
+@use './Kbd.tokens';
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kbd-separator-gap);
+  vertical-align: baseline;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--kbd-padding-x-current);
+  height: var(--kbd-height-current);
+  min-width: var(--kbd-min-width-current);
+  font-family: var(--kbd-font-family);
+  font-size: var(--kbd-font-size-current);
+  font-weight: var(--kbd-font-weight);
+  color: var(--kbd-fg);
+  background: var(--kbd-bg);
+  border: var(--kbd-border-width) solid var(--kbd-border-color);
+  border-radius: var(--kbd-radius);
+  line-height: var(--line-height-none);
+}
+
+.separator {
+  color: var(--kbd-separator-fg);
+  font-size: var(--kbd-font-size-current);
+  user-select: none;
+}
+
+// Size variants set the per-size token bindings ONCE on the wrapper so the
+// .key + .separator children resolve via cascading `--kbd-*-current`.
+.kbdSizeSm {
+  --kbd-height-current: var(--kbd-height-sm);
+  --kbd-padding-x-current: var(--kbd-padding-x-sm);
+  --kbd-font-size-current: var(--kbd-font-size-sm);
+  --kbd-min-width-current: var(--kbd-min-width-sm);
+}
+
+.kbdSizeMd {
+  --kbd-height-current: var(--kbd-height-md);
+  --kbd-padding-x-current: var(--kbd-padding-x-md);
+  --kbd-font-size-current: var(--kbd-font-size-md);
+  --kbd-min-width-current: var(--kbd-min-width-md);
+}

@@ -260,6 +260,14 @@
     ],
     "composedBy": []
   },
+  "Kbd": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": [
+      "TopBar"
+    ]
+  },
   "Link": {
     "tier": "primitive",
     "cluster": "Navigation",
@@ -486,7 +494,8 @@
     "tier": "composition",
     "cluster": "Navigation",
     "composes": [
-      "Button"
+      "Button",
+      "Kbd"
     ],
     "composedBy": []
   }
