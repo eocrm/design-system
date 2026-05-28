@@ -161,3 +161,44 @@
 .timeRowCheck {
   flex-shrink: 0;
 }
+
+// Narrow column for the AM/PM listbox (12-hour cycle only) — two rows,
+// no scrolling, slimmer than the hours/minutes columns to keep the
+// popover compact.
+.timeColumnPeriod {
+  width: var(--date-picker-time-period-column-width);
+}
+
+// Footer row below the listbox columns — hosts the "Now" quick-pick
+// button. Border-top to visually separate from the rows above.
+.timeFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--date-picker-time-popover-footer-padding);
+  border-top: var(--border-width) solid var(--date-picker-time-popover-footer-border-color);
+}
+
+// Text button with accent color — sits in the popover footer. Outside
+// the roving-tabindex listbox set; reachable via natural Tab order.
+.timeNowButton {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- button reset
+  background: transparent;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- button reset
+  border: 0;
+  color: var(--date-picker-time-now-button-fg);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+}
+
+.timeNowButton:hover,
+.timeNowButton:focus-visible {
+  background: var(--date-picker-time-now-button-bg-hover);
+}
+
+.timeNowButton:focus-visible {
+  outline: var(--ring-width) solid var(--ring-accent);
+  outline-offset: 1px;
+}
