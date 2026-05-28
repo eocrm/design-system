@@ -1,0 +1,26 @@
+:root {
+  // ─── Chip surface ──────────────────────────────────────────────────────
+  --kbd-bg: var(--color-bg-muted);
+  --kbd-fg: var(--color-fg-muted);
+  --kbd-border-color: var(--color-border);
+  --kbd-border-width: var(--border-width);
+  --kbd-radius: var(--radius-sm);
+  --kbd-font-family: var(--font-family-sans);
+  --kbd-font-weight: var(--font-weight-medium);
+
+  // ─── Separator (+ between keys) ────────────────────────────────────────
+  --kbd-separator-fg: var(--color-fg-muted);
+  --kbd-separator-gap: var(--space-1);
+
+  // ─── Size: sm (matches TopBar chrome) ──────────────────────────────────
+  --kbd-height-sm: 18px;
+  --kbd-padding-x-sm: var(--space-1);
+  --kbd-font-size-sm: var(--font-size-xs);
+  --kbd-min-width-sm: 18px; // single-char keys ('K') stay square
+
+  // ─── Size: md (command-palette feel) ───────────────────────────────────
+  --kbd-height-md: 24px;
+  --kbd-padding-x-md: var(--space-2);
+  --kbd-font-size-md: var(--font-size-sm);
+  --kbd-min-width-md: 24px;
+}
