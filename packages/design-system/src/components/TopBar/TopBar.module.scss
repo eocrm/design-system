@@ -111,3 +111,46 @@
   font-family: var(--font-family-sans);
   flex-shrink: 0;
 }
+
+// ─── IconButton + notification indicator ────────────────────────────────
+// stylelint-disable property-disallowed-list -- icon button needs an
+// explicit width + position:relative so the indicator dot (absolute-
+// positioned in its upper-right) has an anchor. The dot itself is
+// absolutely positioned, which Rule 4 normally bans on components — but
+// it's a topbar-scoped visual marker, not a layout container, so the
+// exception is justified inline.
+.iconButton {
+  width: var(--topbar-icon-button-size);
+  height: var(--topbar-icon-button-size);
+  border-radius: var(--topbar-icon-button-radius);
+  position: relative;
+}
+
+.indicator {
+  position: absolute;
+  top: var(--topbar-indicator-offset-top);
+  right: var(--topbar-indicator-offset-right);
+  width: var(--topbar-indicator-size);
+  height: var(--topbar-indicator-size);
+  border-radius: var(--radius-full);
+  border: var(--topbar-indicator-border-width) solid var(--topbar-indicator-border-color);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- the dot is decorative; clicks pass through to the button beneath
+  pointer-events: none;
+}
+// stylelint-enable property-disallowed-list
+
+.indicatorDanger {
+  background: var(--topbar-indicator-bg-danger);
+}
+
+.indicatorWarning {
+  background: var(--topbar-indicator-bg-warning);
+}
+
+.indicatorInfo {
+  background: var(--topbar-indicator-bg-info);
+}
+
+.indicatorAccent {
+  background: var(--topbar-indicator-bg-accent);
+}
