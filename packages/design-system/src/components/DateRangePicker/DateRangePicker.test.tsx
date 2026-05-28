@@ -215,7 +215,7 @@ describe('DateRangePicker', () => {
     render(<DateRangePicker defaultValue={SAMPLE_RANGE} onChange={onChange} aria-label="Range" />, {
       wrapper: wrap(),
     });
-    await user.click(screen.getByRole('button', { name: 'Clear range' }));
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
     expect(onChange).toHaveBeenCalledWith(null);
     expect(document.activeElement).toBe(screen.getByRole('textbox'));
   });

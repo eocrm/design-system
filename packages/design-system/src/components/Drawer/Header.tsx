@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useId, useRef, type HTMLAttributes } from 'react
 import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { Button } from '../Button';
+import { useTranslation } from '../../i18n/useTranslation';
 import { useDrawerContext } from './context';
 import { sanitizeId, mergeRefs } from '../_internal/refs';
 import { useDragToClose } from './useDragToClose';
@@ -22,6 +23,7 @@ export const Header = forwardRef<HTMLDivElement, DrawerHeaderProps>(function Hea
   { closeButton = true, className, children, ...rest },
   ref,
 ) {
+  const t = useTranslation();
   const ctx = useDrawerContext('Header');
   const rawId = useId();
   const headingId = `drawer-heading-${sanitizeId(rawId)}`;
@@ -53,7 +55,7 @@ export const Header = forwardRef<HTMLDivElement, DrawerHeaderProps>(function Hea
           variant="ghost"
           size="xs"
           iconOnly
-          aria-label="Close dialog"
+          aria-label={t('drawer.close')}
           onClick={() => ctx.setOpen(false)}
         >
           <X size={16} aria-hidden="true" />

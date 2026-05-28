@@ -10,6 +10,7 @@ import {
 import { ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 import { Link } from '../Link';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Breadcrumb.module.scss';
 
 /**
@@ -56,8 +57,9 @@ export interface BreadcrumbProps {
    */
   separator?: ReactNode;
   /**
-   * Visible label for the `<nav>` element. Defaults to `'Breadcrumb'`.
-   * Localize or override when multiple breadcrumb instances coexist.
+   * Visible label for the `<nav>` element. Defaults to the i18n value at
+   * `breadcrumb.ariaLabel` (`'Breadcrumb'` in English). Override when
+   * multiple breadcrumb instances coexist on the same page.
    */
   ariaLabel?: string;
   /** Pass-through className applied to the `<nav>` wrapper. */
@@ -139,16 +141,20 @@ const DEFAULT_SEPARATOR = <ChevronRight size={14} />;
 function BreadcrumbRoot({
   children,
   separator = DEFAULT_SEPARATOR,
-  ariaLabel = 'Breadcrumb',
+  ariaLabel,
   className,
 }: BreadcrumbProps) {
+  const t = useTranslation();
   const items = Children.toArray(children).filter(isValidElement) as ReactElement<{
     current?: boolean;
   }>[];
   const lastIndex = items.length - 1;
 
   return (
-    <nav aria-label={ariaLabel} className={clsx(styles.nav, className)}>
+    <nav
+      aria-label={ariaLabel ?? t('breadcrumb.ariaLabel')}
+      className={clsx(styles.nav, className)}
+    >
       <ol className={styles.list}>
         {items.map((child, index) => {
           const isLast = index === lastIndex;

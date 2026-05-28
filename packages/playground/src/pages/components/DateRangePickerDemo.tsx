@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Button, DateRangePicker, Stack, toDateKey, type DateRange } from '@eocrm/design-system';
+import {
+  Button,
+  DateRangePicker,
+  I18nProvider,
+  Stack,
+  toDateKey,
+  type DateRange,
+} from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -215,35 +222,22 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
 
       <Example
         title="ru-RU locale"
-        description="Input parses and formats as DD.MM.YYYY — DD.MM.YYYY. UI labels (button tooltips, dialog name) are the consumer's responsibility — pass localized strings via the labels prop."
-        code={`const today = new Date();
-const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);
-
-<DateRangePicker
-  defaultValue={{ start: today, end: in14 }}
-  locale="ru-RU"
-  labels={{
-    previousMonth: 'Предыдущий месяц',
-    nextMonth: 'Следующий месяц',
-    openCalendar: 'Открыть календарь',
-    clear: 'Очистить диапазон',
-    dialogLabel: 'Выберите диапазон дат',
-  }}
-/>`}
+        description="Input parses and formats as DD.MM.YYYY — DD.MM.YYYY. UI labels (button tooltips) come from <I18nProvider locale='ru'>."
+        code={`<I18nProvider locale="ru">
+  <DateRangePicker
+    defaultValue={{ start: today, end: in14 }}
+    locale="ru-RU"
+  />
+</I18nProvider>`}
       >
         <InputExample>
-          <DateRangePicker
-            defaultValue={{ start: TODAY, end: IN_14 }}
-            locale="ru-RU"
-            aria-label="Диапазон дат"
-            labels={{
-              previousMonth: 'Предыдущий месяц',
-              nextMonth: 'Следующий месяц',
-              openCalendar: 'Открыть календарь',
-              clear: 'Очистить диапазон',
-              dialogLabel: 'Выберите диапазон дат',
-            }}
-          />
+          <I18nProvider locale="ru">
+            <DateRangePicker
+              defaultValue={{ start: TODAY, end: IN_14 }}
+              locale="ru-RU"
+              aria-label="Диапазон дат"
+            />
+          </I18nProvider>
         </InputExample>
       </Example>
     </DemoBody>

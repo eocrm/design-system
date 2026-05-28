@@ -1,6 +1,7 @@
 import { act, configure, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfirmationPopover } from './ConfirmationPopover';
+import { I18nProvider } from '../../i18n/I18nProvider';
 
 describe('ConfirmationPopover — initial render', () => {
   it('renders only the trigger when closed', () => {
@@ -42,17 +43,14 @@ describe('ConfirmationPopover — content rendering (sync)', () => {
     expect(screen.getByRole('button', { name: 'Confirm' })).toBeInTheDocument();
   });
 
-  it('respects custom confirmLabel and cancelLabel', async () => {
+  it('respects custom confirmLabel and i18n override for cancel', async () => {
     const user = userEvent.setup();
     render(
-      <ConfirmationPopover
-        title="Archive?"
-        confirmLabel="Archive"
-        cancelLabel="Keep"
-        onConfirm={() => {}}
-      >
-        <button type="button">Archive…</button>
-      </ConfirmationPopover>,
+      <I18nProvider locale="en" overrides={{ confirmationPopover: { cancel: 'Keep' } }}>
+        <ConfirmationPopover title="Archive?" confirmLabel="Archive" onConfirm={() => {}}>
+          <button type="button">Archive…</button>
+        </ConfirmationPopover>
+      </I18nProvider>,
     );
     await user.click(screen.getByRole('button', { name: 'Archive…' }));
     expect(screen.getByRole('button', { name: 'Keep' })).toBeInTheDocument();

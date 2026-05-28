@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'r
 import clsx from 'clsx';
 import type { MonthGrid } from '../../calendar/types';
 import { addDays, addMonths, isSameDay, startOfWeek } from '../../calendar/dateMath';
+import { useTranslation } from '../../i18n/useTranslation';
 import type { CalendarEvent, EventBar, RenderEvent } from './types';
 import { layoutEventsForMonth } from './utils';
 import { DayCell } from './DayCell';
@@ -39,8 +40,6 @@ export interface MonthViewProps {
   onDayClick?: (date: Date) => void;
   /** Fires when an event chip is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
-  /** Localizable formatter for the "+N more" `aria-label`. */
-  moreEventsLabel?: (count: number) => string;
   /** Optional custom event renderer. See `RenderEvent` in `types.ts`. */
   renderEvent?: RenderEvent;
 }
@@ -80,9 +79,10 @@ export function MonthView({
   onChange,
   onDayClick,
   onEventClick,
-  moreEventsLabel = (n) => `${n} more events`,
   renderEvent,
 }: MonthViewProps) {
+  const t = useTranslation();
+  const moreEventsLabel = (count: number) => t('calendar.moreEvents', { count });
   const layout = useMemo(
     () => layoutEventsForMonth(events, grid.weeks, maxLanesPerWeek),
     [events, grid.weeks, maxLanesPerWeek],

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  I18nProvider,
   PasswordInput,
   PasswordStrengthMeter,
   Stack,
@@ -92,61 +93,20 @@ export function PasswordStrengthMeterDemo() {
 
       <Example
         title="Localized labels (ru-RU)"
-        description="Override the default English labels with a `labels` object for non-English interfaces."
-        code={`<PasswordStrengthMeter
-  value="Hunter2!@#"
-  labels={{
-    empty: '',
-    weak: 'Слабый',
-    fair: 'Средний',
-    good: 'Хороший',
-    strong: 'Надёжный',
-  }}
-/>`}
+        description="Wrap in <I18nProvider locale='ru'> to swap the labels. The default Russian translations come from the library; consumers may further override individual keys via `overrides`."
+        code={`<I18nProvider locale="ru">
+  <PasswordStrengthMeter value="Hunter2!@#" />
+</I18nProvider>`}
       >
         <InputExample>
-          <Stack gap="sm">
-            <PasswordStrengthMeter
-              value=""
-              labels={{
-                empty: '',
-                weak: 'Слабый',
-                fair: 'Средний',
-                good: 'Хороший',
-                strong: 'Надёжный',
-              }}
-            />
-            <PasswordStrengthMeter
-              value="abc"
-              labels={{
-                empty: '',
-                weak: 'Слабый',
-                fair: 'Средний',
-                good: 'Хороший',
-                strong: 'Надёжный',
-              }}
-            />
-            <PasswordStrengthMeter
-              value="AbcDef12"
-              labels={{
-                empty: '',
-                weak: 'Слабый',
-                fair: 'Средний',
-                good: 'Хороший',
-                strong: 'Надёжный',
-              }}
-            />
-            <PasswordStrengthMeter
-              value="Hunter2!@#"
-              labels={{
-                empty: '',
-                weak: 'Слабый',
-                fair: 'Средний',
-                good: 'Хороший',
-                strong: 'Надёжный',
-              }}
-            />
-          </Stack>
+          <I18nProvider locale="ru">
+            <Stack gap="sm">
+              <PasswordStrengthMeter value="" />
+              <PasswordStrengthMeter value="abc" />
+              <PasswordStrengthMeter value="AbcDef12" />
+              <PasswordStrengthMeter value="Hunter2!@#" />
+            </Stack>
+          </I18nProvider>
         </InputExample>
       </Example>
     </DemoLayout>

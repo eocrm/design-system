@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { Button, PasswordInput, PasswordStrengthMeter, Stack } from '@eocrm/design-system';
+import {
+  Button,
+  I18nProvider,
+  PasswordInput,
+  PasswordStrengthMeter,
+  Stack,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -193,31 +199,15 @@ export function PasswordInputDemo() {
 
       <Example
         title="Localized labels (ru-RU)"
-        description="Pass a `labels` object to override all aria-labels and live-region strings for non-English interfaces."
-        code={`<PasswordInput
-  capsLockWarning
-  wrongLayoutWarning
-  labels={{
-    show: 'Показать пароль',
-    hide: 'Скрыть пароль',
-    capsLockOn: 'Caps Lock включён',
-    wrongLayoutOn: 'Возможно, неверная раскладка',
-  }}
-  placeholder="Пароль"
-/>`}
+        description="Wrap in <I18nProvider locale='ru'> to translate all aria-labels and live-region strings."
+        code={`<I18nProvider locale="ru">
+  <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Пароль" />
+</I18nProvider>`}
       >
         <InputExample>
-          <PasswordInput
-            capsLockWarning
-            wrongLayoutWarning
-            labels={{
-              show: 'Показать пароль',
-              hide: 'Скрыть пароль',
-              capsLockOn: 'Caps Lock включён',
-              wrongLayoutOn: 'Возможно, неверная раскладка',
-            }}
-            placeholder="Пароль"
-          />
+          <I18nProvider locale="ru">
+            <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Пароль" />
+          </I18nProvider>
         </InputExample>
       </Example>
 

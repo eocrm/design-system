@@ -38,6 +38,7 @@ import {
   SortableItemContext,
   type SortableItemContextValue,
 } from '../Sortable/Sortable';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Kanban.module.scss';
 
 // ---------------------------------------------------------------------------
@@ -355,6 +356,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   { onMove, className, children, ...rest },
   ref,
 ) {
+  const t = useTranslation();
   // ------------------------------------------------------------------
   // Parse children: extract column order, initial items, card elements,
   // and the before/after non-card slices for each column.
@@ -662,7 +664,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       */}
       <div
         ref={ref}
-        aria-label="Kanban board"
+        aria-label={t('kanban.board')}
         className={clsx(styles.board, className)}
         {...rest}
         role="region"

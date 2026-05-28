@@ -206,17 +206,12 @@ export type {
 } from './components/Radio';
 
 export { PasswordInput } from './components/PasswordInput';
-export type {
-  PasswordInputProps,
-  PasswordInputSize,
-  PasswordInputLabels,
-} from './components/PasswordInput';
+export type { PasswordInputProps, PasswordInputSize } from './components/PasswordInput';
 
 export { PasswordStrengthMeter } from './components/PasswordStrengthMeter';
 export type {
   PasswordStrengthMeterProps,
   PasswordStrengthScore,
-  PasswordStrengthLabels,
 } from './components/PasswordStrengthMeter';
 
 export { Select } from './components/Select';
@@ -379,9 +374,13 @@ export type {
 export { Title } from './components/Title';
 export type { TitleProps, TitleOrder, TitleSize, TitleTone, TitleWeight } from './components/Title';
 
-// i18n
+// i18n — BCP-47 locale tagging (Intl-facing).
 export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';
+
+// i18n — translated UI strings.
+export { I18nProvider, useTranslation, useTranslationArray, ruPlural } from './i18n';
+export type { I18nProviderProps, Locale, Messages, MessageKey, DeepPartial } from './i18n';
 
 // Calendar primitives (hooks + date math + Intl formatters + locale week info).
 // The Calendar UI components below and a future DatePicker compose against
@@ -432,7 +431,6 @@ export type {
 export { Calendar } from './components/Calendar';
 export type {
   CalendarProps,
-  CalendarLabels,
   CalendarEvent,
   CalendarEventTone,
   CalendarView,
@@ -443,24 +441,20 @@ export type {
 } from './components/Calendar';
 
 export { DatePicker } from './components/DatePicker';
-export type { DatePickerProps, DatePickerLabels, DatePickerSize } from './components/DatePicker';
+export type { DatePickerProps, DatePickerSize } from './components/DatePicker';
 
 export { DateRangePicker } from './components/DateRangePicker';
 export type {
   DateRangePickerProps,
-  DateRangePickerLabels,
   DateRangePickerSize,
   DateRange,
 } from './components/DateRangePicker';
 
 export { InlineDatePicker } from './components/DatePicker';
-export type { InlineDatePickerProps, InlineDatePickerLabels } from './components/DatePicker';
+export type { InlineDatePickerProps } from './components/DatePicker';
 
 export { InlineDateRangePicker } from './components/DateRangePicker';
-export type {
-  InlineDateRangePickerProps,
-  InlineDateRangePickerLabels,
-} from './components/DateRangePicker';
+export type { InlineDateRangePickerProps } from './components/DateRangePicker';
 
 // ─── Palette (categorical color set) ──────────────────────────────────────
 export type { PaletteColor } from './palette';

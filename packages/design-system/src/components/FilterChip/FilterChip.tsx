@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { Text } from '../Text';
 import { type BadgeTone } from '../Badge';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './FilterChip.module.scss';
 
 // ----------------------------------------------------------------------------
@@ -19,10 +20,11 @@ export interface FilterChipProps extends Omit<HTMLAttributes<HTMLDivElement>, 'r
   onDismiss?: () => void;
 
   /**
-   * Override the dismiss button's `aria-label`. Defaults to
-   * `'Remove filter'`. Pass a contextual label (e.g.,
-   * `'Remove Event: auth.* filter'`) when the chip's filter category
-   * isn't obvious from the surrounding screen-reader context.
+   * Override the dismiss button's `aria-label`. Defaults to the i18n value
+   * at `filterChip.dismiss` (`'Remove filter'` in English). Pass a
+   * contextual label (e.g., `'Remove Event: auth.* filter'`) when the
+   * chip's filter category isn't obvious from the surrounding
+   * screen-reader context.
    */
   dismissLabel?: string;
 
@@ -117,9 +119,10 @@ export interface FilterChipValueProps extends HTMLAttributes<HTMLSpanElement> {
  *   Wrap the chip in your own transition if you need one.
  */
 const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function FilterChipRoot(
-  { onDismiss, dismissLabel = 'Remove filter', className, children, ...rest },
+  { onDismiss, dismissLabel, className, children, ...rest },
   ref,
 ) {
+  const t = useTranslation();
   return (
     <div
       ref={ref}
@@ -134,7 +137,7 @@ const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function Filt
           type="button"
           className={styles.dismiss}
           onClick={onDismiss}
-          aria-label={dismissLabel}
+          aria-label={dismissLabel ?? t('filterChip.dismiss')}
         >
           <X size={12} aria-hidden="true" />
         </button>

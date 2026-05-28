@@ -12,6 +12,7 @@ import clsx from 'clsx';
 import { useSelectContext } from './context';
 import { Chip } from './Chip';
 import type { SelectOption } from './Select';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Select.module.scss';
 
 export interface TriggerProps {
@@ -44,12 +45,13 @@ export interface TriggerProps {
 // ────────────────────────────────────────────────────────────────────────────
 function ClearButton({ variant }: { variant: 'overlay' | 'inline' }) {
   const ctx = useSelectContext('Trigger.ClearButton');
+  const t = useTranslation();
   return (
     <button
       type="button"
       tabIndex={0}
       className={clsx(styles.clearButton, variant === 'inline' && styles.clearButtonInline)}
-      aria-label="Clear selection"
+      aria-label={t('select.clear')}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => {

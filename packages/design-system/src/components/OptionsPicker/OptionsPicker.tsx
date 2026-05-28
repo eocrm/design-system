@@ -28,6 +28,7 @@ import { Input } from '../Input';
 import { Badge, type BadgeTone } from '../Badge';
 import { type PaletteColor } from '../../palette';
 import { Text } from '../Text';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './OptionsPicker.module.scss';
 
 // ----------------------------------------------------------------------------
@@ -98,13 +99,10 @@ type GroupedContentProps = {
 type SharedContentProps = {
   /** Accessible label on the panel (the dialog's `aria-label`). */
   label: string;
-  /** Search input placeholder. Default `'Filter…'`. */
-  searchPlaceholder?: string;
-  /** Footer Apply button text (multi only). Default `'Apply'`. */
-  applyLabel?: string;
-  /** Footer Cancel button text (multi only). Default `'Cancel'`. */
-  cancelLabel?: string;
-  /** Rendered when search produces zero matches. Default `'No matches'`. */
+  /**
+   * Rendered when search produces zero matches. Defaults to the
+   * `optionsPicker.noMatches` i18n string (en: `'No matches'`).
+   */
   emptyState?: ReactNode;
   /** Footer count formatter (multi only). Default `'${selected} of ${total}'`. */
   footerCount?: (selected: number, total: number) => ReactNode;
@@ -390,7 +388,9 @@ function tristate(groupOptionValues: string[], draft: string[]): TriState {
  */
 const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProps>(
   function OptionsPickerContent(props, ref) {
-    const { label, className, searchPlaceholder = 'Filter…', searchable = true } = props;
+    const { label, className, searchable = true } = props;
+    const t = useTranslation();
+    const searchPlaceholder = t('optionsPicker.filter');
     const ctx = usePickerContext('Content');
 
     const contentId = ctx.contentId;
@@ -560,7 +560,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           >
             {!hasAnyVisible && (
               <Text size="sm" tone="muted" className={styles.empty}>
-                {props.emptyState ?? 'No matches'}
+                {props.emptyState ?? t('optionsPicker.noMatches')}
               </Text>
             )}
             {hasAnyVisible &&
@@ -661,10 +661,10 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                     ctx.cancel();
                   }}
                 >
-                  {props.cancelLabel ?? 'Cancel'}
+                  {t('optionsPicker.cancel')}
                 </Button>
                 <Button variant="primary" size="sm" onClick={() => ctx.commit(draft)}>
-                  {props.applyLabel ?? 'Apply'}
+                  {t('optionsPicker.apply')}
                 </Button>
               </Cluster>
             </div>

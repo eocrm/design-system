@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { createRef } from 'react';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
+import { I18nProvider } from '../../i18n/I18nProvider';
 
 describe('PasswordStrengthMeter', () => {
   it('renders 4 segments', () => {
@@ -40,7 +41,7 @@ describe('PasswordStrengthMeter', () => {
   it('default heuristic — 12+ chars + mixed case + digit + special → 4', () => {
     const { container } = render(<PasswordStrengthMeter value="Hunter2!@#xyz" />);
     expect(container.querySelectorAll('[class*="filled"]')).toHaveLength(4);
-    expect(container.querySelector('span[class*="label"]')?.textContent).toBe('Strong');
+    expect(container.querySelector('span[class*="label"]')?.textContent).toBe('Very strong');
   });
 
   it('score prop wins over value + scoreFn', () => {
@@ -48,7 +49,7 @@ describe('PasswordStrengthMeter', () => {
       <PasswordStrengthMeter value="weak" score={4} scoreFn={() => 0 as const} />,
     );
     expect(container.querySelectorAll('[class*="filled"]')).toHaveLength(4);
-    expect(container.querySelector('span[class*="label"]')?.textContent).toBe('Strong');
+    expect(container.querySelector('span[class*="label"]')?.textContent).toBe('Very strong');
   });
 
   it('custom scoreFn is called with the value', () => {
@@ -66,19 +67,28 @@ describe('PasswordStrengthMeter', () => {
     expect(container.querySelector('[role="status"]')).not.toBeNull();
   });
 
-  it('labels override the default strings', () => {
+  it('I18nProvider overrides the default strings', () => {
     const { container } = render(
-      <PasswordStrengthMeter
-        value="hunter22"
-        labels={{ weak: 'Слабый', fair: 'Норм', good: 'Хорошо', strong: 'Сильный' }}
-      />,
+      <I18nProvider
+        locale="en"
+        overrides={{
+          passwordStrengthMeter: {
+            weak: 'Слабый',
+            fair: 'Норм',
+            strong: 'Хорошо',
+            veryStrong: 'Сильный',
+          },
+        }}
+      >
+        <PasswordStrengthMeter value="hunter22" />
+      </I18nProvider>,
     );
     expect(container.querySelector('span[class*="label"]')?.textContent).toBe('Слабый');
   });
 
   it('live region announces the label', () => {
     const { container } = render(<PasswordStrengthMeter value="Hunter2!@#xyz" />);
-    expect(container.querySelector('[role="status"]')).toHaveTextContent('Strong');
+    expect(container.querySelector('[role="status"]')).toHaveTextContent('Very strong');
   });
 
   it('forwards ref to the root div', () => {

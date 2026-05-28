@@ -14,6 +14,7 @@ import {
 import clsx from 'clsx';
 import { Slider } from '../Slider';
 import { Skeleton } from '../Skeleton';
+import { useTranslation } from '../../i18n/useTranslation';
 import type { CropArea } from './extractCropBlob';
 import styles from './ImageCrop.module.scss';
 
@@ -218,6 +219,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   },
   ref,
 ) {
+  const t = useTranslation();
   const viewportRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -550,7 +552,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
           max={maxZoom}
           step={0.01}
           disabled={disabled || loadState !== 'loaded'}
-          aria-label="Zoom"
+          aria-label={t('imageCrop.zoom')}
         />
       )}
     </div>

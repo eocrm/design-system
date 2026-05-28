@@ -12,6 +12,7 @@ import { Slider } from '../Slider';
 import { Input } from '../Input';
 import { SVSquare } from './SVSquare';
 import { hexToHsv, hsvToHex, normalizeHex, type HSV } from './colorMath';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './ColorPicker.module.scss';
 
 export interface ColorPickerPanelProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
@@ -73,6 +74,7 @@ export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps
     { value, onChange, onChangeEnd, presets, disabled = false, className, ...rest },
     ref,
   ) {
+    const t = useTranslation();
     // Local HSV state-of-truth. See class JSDoc above for the rationale.
     const [localHsv, setLocalHsv] = useState<HSV>(() => hexToHsv(value) ?? FALLBACK_HSV);
 
@@ -228,7 +230,7 @@ export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps
             max={360}
             step={1}
             disabled={disabled}
-            aria-label="Hue"
+            aria-label={t('colorPicker.hue')}
           />
         </div>
         <Input
@@ -239,14 +241,14 @@ export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps
           onKeyDown={handleHexKeyDown}
           invalid={!draftIsValid && draft !== ''}
           disabled={disabled}
-          aria-label="Hex color value"
+          aria-label={t('colorPicker.hexValue')}
           className={styles.hexInput}
           spellCheck={false}
           autoCapitalize="none"
           autoComplete="off"
         />
         {presets && presets.length > 0 && (
-          <div className={styles.presets} role="group" aria-label="Preset colors">
+          <div className={styles.presets} role="group" aria-label={t('colorPicker.presetColors')}>
             {presets.map((preset, idx) => {
               const normalized = normalizeHex(preset);
               if (!normalized) return null;

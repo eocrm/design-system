@@ -67,89 +67,91 @@ import { DrawerDemo } from './pages/components/DrawerDemo';
 import { GridDemo } from './pages/components/GridDemo';
 import { LinkDemo } from './pages/components/LinkDemo';
 import { ToastDemo } from './pages/components/ToastDemo';
-import { ToastViewport } from '@eocrm/design-system';
+import { I18nProvider, ToastViewport } from '@eocrm/design-system';
 
 export default function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <AppShell>
-        <Routes>
-          <Route path="/" element={<Navigate to="/mockups" replace />} />
+    <I18nProvider locale="en">
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <AppShell>
+          <Routes>
+            <Route path="/" element={<Navigate to="/mockups" replace />} />
 
-          <Route path="/mockups" element={<MockupsIndex />} />
-          <Route path="/mockups/dashboard" element={<Dashboard />} />
-          <Route path="/mockups/deals" element={<Deals />} />
-          <Route path="/mockups/contacts" element={<Contacts />} />
-          <Route path="/mockups/contacts/:id" element={<ContactDetail />} />
-          <Route path="/mockups/members" element={<Members />} />
-          <Route path="/mockups/tenants" element={<Tenants />} />
-          <Route path="/mockups/tenants/:slug" element={<TenantDetail />} />
-          <Route path="/mockups/system-settings" element={<Settings />} />
-          <Route path="/mockups/audit" element={<Audit />} />
+            <Route path="/mockups" element={<MockupsIndex />} />
+            <Route path="/mockups/dashboard" element={<Dashboard />} />
+            <Route path="/mockups/deals" element={<Deals />} />
+            <Route path="/mockups/contacts" element={<Contacts />} />
+            <Route path="/mockups/contacts/:id" element={<ContactDetail />} />
+            <Route path="/mockups/members" element={<Members />} />
+            <Route path="/mockups/tenants" element={<Tenants />} />
+            <Route path="/mockups/tenants/:slug" element={<TenantDetail />} />
+            <Route path="/mockups/system-settings" element={<Settings />} />
+            <Route path="/mockups/audit" element={<Audit />} />
 
-          <Route path="/components" element={<ComponentsIndex />} />
-          <Route path="/components/tokens" element={<TokensPage />} />
-          <Route path="/components/architecture" element={<ArchitecturePage />} />
-          <Route path="/components/accordion" element={<AccordionDemo />} />
-          <Route path="/components/alert" element={<AlertDemo />} />
-          <Route path="/components/breadcrumb" element={<BreadcrumbDemo />} />
-          <Route path="/components/button" element={<ButtonDemo />} />
-          <Route path="/components/button-group" element={<ButtonGroupDemo />} />
-          <Route path="/components/datepickers" element={<DatePickersDemo />} />
-          <Route path="/components/input" element={<InputDemo />} />
-          <Route path="/components/kanban" element={<KanbanDemo />} />
-          <Route path="/components/pagination" element={<PaginationDemo />} />
-          <Route path="/components/person-display" element={<PersonDisplayDemo />} />
-          <Route path="/components/progress" element={<ProgressDemo />} />
-          <Route path="/components/circular-progress" element={<CircularProgressDemo />} />
-          <Route path="/components/password-input" element={<PasswordInputDemo />} />
-          <Route
-            path="/components/password-strength-meter"
-            element={<PasswordStrengthMeterDemo />}
-          />
-          <Route path="/components/select" element={<SelectDemo />} />
-          <Route path="/components/skeleton" element={<SkeletonDemo />} />
-          <Route path="/components/slider" element={<SliderDemo />} />
-          <Route path="/components/sortable" element={<SortableDemo />} />
-          <Route path="/components/switch" element={<SwitchDemo />} />
-          <Route path="/components/table" element={<TableDemo />} />
-          <Route path="/components/card" element={<CardDemo />} />
-          <Route path="/components/code" element={<CodeDemo />} />
-          <Route path="/components/text" element={<TextDemo />} />
-          <Route path="/components/title" element={<TitleDemo />} />
-          <Route path="/components/checkbox" element={<CheckboxDemo />} />
-          <Route path="/components/color-picker" element={<ColorPickerDemo />} />
-          <Route path="/components/stack" element={<StackDemo />} />
-          <Route path="/components/cluster" element={<ClusterDemo />} />
-          <Route path="/components/avatar" element={<AvatarDemo />} />
-          <Route path="/components/badge" element={<BadgeDemo />} />
-          <Route path="/components/tabs" element={<TabsDemo />} />
-          <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
-          <Route path="/components/tooltip" element={<TooltipDemo />} />
-          <Route path="/components/modal" element={<ModalDemo />} />
-          <Route path="/components/options-picker" element={<OptionsPickerDemo />} />
-          <Route path="/components/page" element={<PageDemo />} />
-          <Route path="/components/palette" element={<PaletteDemo />} />
-          <Route path="/components/page-header" element={<PageHeaderDemo />} />
-          <Route path="/components/popover" element={<PopoverDemo />} />
-          <Route path="/components/radio" element={<RadioDemo />} />
-          <Route path="/components/calendar" element={<CalendarDemo />} />
-          <Route path="/components/confirmation-popover" element={<ConfirmationPopoverDemo />} />
-          <Route path="/components/datatable" element={<DataTableDemo />} />
-          <Route path="/components/definition-list" element={<DefinitionListDemo />} />
-          <Route path="/components/empty-state" element={<EmptyStateDemo />} />
-          <Route path="/components/file-upload" element={<FileUploadDemo />} />
-          <Route path="/components/filter-chip" element={<FilterChipDemo />} />
-          <Route path="/components/image-crop" element={<ImageCropDemo />} />
-          <Route path="/components/divider" element={<DividerDemo />} />
-          <Route path="/components/drawer" element={<DrawerDemo />} />
-          <Route path="/components/grid" element={<GridDemo />} />
-          <Route path="/components/link" element={<LinkDemo />} />
-          <Route path="/components/textarea" element={<TextareaDemo />} />
-          <Route path="/components/toast" element={<ToastDemo />} />
-        </Routes>
-      </AppShell>
-      <ToastViewport position="bottom-right" />
-    </BrowserRouter>
+            <Route path="/components" element={<ComponentsIndex />} />
+            <Route path="/components/tokens" element={<TokensPage />} />
+            <Route path="/components/architecture" element={<ArchitecturePage />} />
+            <Route path="/components/accordion" element={<AccordionDemo />} />
+            <Route path="/components/alert" element={<AlertDemo />} />
+            <Route path="/components/breadcrumb" element={<BreadcrumbDemo />} />
+            <Route path="/components/button" element={<ButtonDemo />} />
+            <Route path="/components/button-group" element={<ButtonGroupDemo />} />
+            <Route path="/components/datepickers" element={<DatePickersDemo />} />
+            <Route path="/components/input" element={<InputDemo />} />
+            <Route path="/components/kanban" element={<KanbanDemo />} />
+            <Route path="/components/pagination" element={<PaginationDemo />} />
+            <Route path="/components/person-display" element={<PersonDisplayDemo />} />
+            <Route path="/components/progress" element={<ProgressDemo />} />
+            <Route path="/components/circular-progress" element={<CircularProgressDemo />} />
+            <Route path="/components/password-input" element={<PasswordInputDemo />} />
+            <Route
+              path="/components/password-strength-meter"
+              element={<PasswordStrengthMeterDemo />}
+            />
+            <Route path="/components/select" element={<SelectDemo />} />
+            <Route path="/components/skeleton" element={<SkeletonDemo />} />
+            <Route path="/components/slider" element={<SliderDemo />} />
+            <Route path="/components/sortable" element={<SortableDemo />} />
+            <Route path="/components/switch" element={<SwitchDemo />} />
+            <Route path="/components/table" element={<TableDemo />} />
+            <Route path="/components/card" element={<CardDemo />} />
+            <Route path="/components/code" element={<CodeDemo />} />
+            <Route path="/components/text" element={<TextDemo />} />
+            <Route path="/components/title" element={<TitleDemo />} />
+            <Route path="/components/checkbox" element={<CheckboxDemo />} />
+            <Route path="/components/color-picker" element={<ColorPickerDemo />} />
+            <Route path="/components/stack" element={<StackDemo />} />
+            <Route path="/components/cluster" element={<ClusterDemo />} />
+            <Route path="/components/avatar" element={<AvatarDemo />} />
+            <Route path="/components/badge" element={<BadgeDemo />} />
+            <Route path="/components/tabs" element={<TabsDemo />} />
+            <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
+            <Route path="/components/tooltip" element={<TooltipDemo />} />
+            <Route path="/components/modal" element={<ModalDemo />} />
+            <Route path="/components/options-picker" element={<OptionsPickerDemo />} />
+            <Route path="/components/page" element={<PageDemo />} />
+            <Route path="/components/palette" element={<PaletteDemo />} />
+            <Route path="/components/page-header" element={<PageHeaderDemo />} />
+            <Route path="/components/popover" element={<PopoverDemo />} />
+            <Route path="/components/radio" element={<RadioDemo />} />
+            <Route path="/components/calendar" element={<CalendarDemo />} />
+            <Route path="/components/confirmation-popover" element={<ConfirmationPopoverDemo />} />
+            <Route path="/components/datatable" element={<DataTableDemo />} />
+            <Route path="/components/definition-list" element={<DefinitionListDemo />} />
+            <Route path="/components/empty-state" element={<EmptyStateDemo />} />
+            <Route path="/components/file-upload" element={<FileUploadDemo />} />
+            <Route path="/components/filter-chip" element={<FilterChipDemo />} />
+            <Route path="/components/image-crop" element={<ImageCropDemo />} />
+            <Route path="/components/divider" element={<DividerDemo />} />
+            <Route path="/components/drawer" element={<DrawerDemo />} />
+            <Route path="/components/grid" element={<GridDemo />} />
+            <Route path="/components/link" element={<LinkDemo />} />
+            <Route path="/components/textarea" element={<TextareaDemo />} />
+            <Route path="/components/toast" element={<ToastDemo />} />
+          </Routes>
+        </AppShell>
+        <ToastViewport position="bottom-right" />
+      </BrowserRouter>
+    </I18nProvider>
   );
 }

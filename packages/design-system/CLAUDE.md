@@ -152,6 +152,43 @@ Before pushing changes that touch `packages/design-system/**`, run the review-fi
 
 **Trivial-change escape hatch**: a one-line doc typo or comment tweak doesn't need a full review loop. Use judgment — if the change couldn't plausibly introduce a regression, push without the cycle. When unsure, run the cycle.
 
+### 9. Every user-facing string goes through i18n
+
+Library components must NEVER inline an English string for any user-visible surface. This includes:
+
+- `aria-label="…"` on interactive elements
+- `placeholder="…"` on inputs and selects
+- Visible `>Text<` inside JSX (button labels, empty-state copy, headings)
+- Default messages for "loading" / "empty" / "no matches" states
+
+Each becomes a key in `src/i18n/messages.ts` with values in both `src/i18n/en.ts` AND `src/i18n/ru.ts`, consumed via `useTranslation()`.
+
+```tsx
+// ❌ Wrong
+<Button aria-label="Close dialog" onClick={onClose}>
+  ×
+</Button>;
+
+// ✅ Right
+const t = useTranslation();
+<Button aria-label={t('modal.close')} onClick={onClose}>
+  ×
+</Button>;
+```
+
+Dynamic per-render strings that mix translation + data are fine to interpolate at the call site:
+
+```tsx
+// ✅ OK — the dynamic name comes from props, not i18n.
+<Button aria-label={`${t('tenant.actionsFor')} ${tenant.name}`}>⋯</Button>
+```
+
+But if the WHOLE string is a fixed English phrase, it goes through `t()`.
+
+The `labels?: Foo` / `cancelLabel?: string` per-component prop pattern is DELETED. The provider is the single override surface — don't reintroduce per-component label props on new components. If a new component needs translation, add to `Messages` instead.
+
+See `AGENTS.md` "Localization (i18n)" section for the consumer-facing API and how to add a new string.
+
 ## What does NOT belong here
 
 - Pages, layouts (`AppShell`, etc.), mock data — playground only

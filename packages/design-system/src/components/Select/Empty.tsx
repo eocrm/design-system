@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Select.module.scss';
 
 /**
@@ -25,9 +26,10 @@ export interface EmptyProps {
  * state when it appears mid-session.
  */
 export function Empty({ query }: EmptyProps) {
+  const t = useTranslation();
   return (
     <li className={styles.stateRow} role="presentation" aria-live="polite">
-      {query && query.trim() !== '' ? `No results for "${query}".` : 'No options.'}
+      {query && query.trim() !== '' ? `No results for "${query}".` : `${t('select.noOptions')}.`}
     </li>
   );
 }

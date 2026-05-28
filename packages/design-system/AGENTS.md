@@ -27,6 +27,58 @@ That import wires up tokens, the modern reset, and base typography. Everything e
 
 ---
 
+## Localization (i18n)
+
+Every user-facing string the library renders — visible text, aria-labels, placeholders, default empty/loading copy — flows through a single React Context. Wrap your app once; every component picks up the right copy. There are NO `labels` / `cancelLabel` / `searchPlaceholder` props on any component.
+
+```tsx
+import { I18nProvider } from '@eocrm/design-system';
+
+<I18nProvider locale="ru">
+  <App />
+</I18nProvider>;
+```
+
+**Overrides** are a deep-partial of the messages tree:
+
+```tsx
+<I18nProvider
+  locale="ru"
+  overrides={{
+    pagination: { next: 'Дальше' },
+    badge: { modified: 'Изменено!' },
+  }}
+>
+  <App />
+</I18nProvider>
+```
+
+- Missing override keys fall back to the locale defaults.
+- Missing locale keys fall back to `en` (safety net for v2-and-beyond).
+- No provider at all = `en` defaults.
+
+**Available locales:** `'en'` (default), `'ru'`. v1.
+
+**`I18nProvider` vs `LocaleProvider` — pair them.** `I18nProvider` carries the message catalog (translated strings). `LocaleProvider` carries the BCP-47 tag used by `Intl.*` formatters inside Calendar / DatePicker / DateRangePicker (month names, weekday order, date-range formatting). They are independent — a Russian app should wrap with BOTH so visible strings AND Intl-rendered dates speak the right language:
+
+```tsx
+<I18nProvider locale="ru">
+  <LocaleProvider locale="ru-RU">
+    <App />
+  </LocaleProvider>
+</I18nProvider>
+```
+
+**Adding a new string in a library component**:
+
+1. Add the key to `src/i18n/messages.ts` (`Messages` interface).
+2. Add the English value to `src/i18n/en.ts`.
+3. Add the Russian value to `src/i18n/ru.ts` (use `ruPlural()` from `i18n/format.ts` for count-varying strings).
+4. In the component, `const t = useTranslation();` then `aria-label={t('component.key')}`. For array messages (months / weekdays), use `useTranslationArray()`.
+5. Never inline an English string — `aria-label="Close"` is a Hard rule 9 violation.
+
+---
+
 ## Components — TL;DR
 
 Each component is fully JSDoc'd. Hover any usage in your editor for inline docs including `@example` blocks, `@remarks` "When NOT to use" and "Anti-patterns" sections. The summaries below are for orientation only — the **JSDoc is the contract**.
@@ -254,10 +306,10 @@ import { Textarea } from '@eocrm/design-system';
 ```
 
 - Renders a real `<input type='password' | 'text'>` underneath — full autofill, RHF/Zod, form-submission integration.
-- Eye toggle (`Eye` / `EyeOff`) flips `type`; `aria-pressed` exposes the state to AT. `labels.show` / `labels.hide` for i18n.
+- Eye toggle (`Eye` / `EyeOff`) flips `type`; `aria-pressed` exposes the state to AT. Toggle aria-labels come from `passwordInput.show` / `passwordInput.hide` in the i18n catalog.
 - `revealed` / `defaultRevealed` / `onRevealChange` for controlled / uncontrolled toggle state.
 - `revealable={false}` removes the toggle entirely (compliance / kiosk screens).
-- `capsLockWarning?: boolean` (default `false`) — opt-in caps-lock detection. When active, `ArrowBigUpDash` icon appears + a polite `aria-live` region announces `labels.capsLockOn`. Cleared on blur.
+- `capsLockWarning?: boolean` (default `false`) — opt-in caps-lock detection. When active, `ArrowBigUpDash` icon appears + a polite `aria-live` region announces `passwordInput.capsLockOn` from the i18n catalog. Cleared on blur.
 - `wrongLayoutWarning?: boolean` (default `false`) — opt-in non-ASCII-keystroke detection. Catches "typing Cyrillic on a Russian layout when you meant Latin." Heuristic: any single non-ASCII char triggers. DO NOT enable on systems that allow non-Latin passwords. Cleared on blur.
 - Both warnings can stack — they render in separate slots with separate live regions.
 - Sizes: `sm` / `md` (default) / `lg`. Same scale as `<Input>`.
@@ -1892,8 +1944,8 @@ const [value, setValue] = useState<Date | null>(null);
 - `clearable` (default `true`) shows the ✕ button when a value is set. `name` renders a hidden mirror `<input type="hidden">` with the ISO date so native `<form>` submission works.
 - `invalid` toggles the red border + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`.
 - Sizes: `sm` / `md` (default) / `lg`. Same scale as `<Input>`; affects the trigger row only — the popover month grid stays fixed.
-- Locale-aware via `useLocale()`; override with `locale` prop. `labels` overrides the five hard-coded strings: `previousMonth`, `nextMonth`, `openCalendar`, `clear`, `dialogLabel`.
-- ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `labels.dialogLabel`); the grid inside is `role="grid"` with `role="gridcell"` buttons that carry `aria-selected` / `aria-disabled` as appropriate.
+- Locale-aware via `useLocale()`; override with `locale` prop. UI strings (previousMonth / nextMonth / openCalendar / clear) translate via `datePicker.*` keys — override with `<I18nProvider overrides={{ datePicker: { ... } }}>`.
+- ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); the grid inside is `role="grid"` with `role="gridcell"` buttons that carry `aria-selected` / `aria-disabled` as appropriate.
 - Keyboard inside the grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space selects, Escape closes and returns focus to the input. Tab leaves the grid.
 
 ### `<DateRangePicker>` — date-range input + two-month popover
@@ -1911,7 +1963,7 @@ const [range, setRange] = useState<DateRange | null>(null);
 - `clearable` (default `true`) shows the ✕ when a range is set. `nameStart` / `nameEnd` render two hidden mirror `<input>`s with ISO dates so native `<form>` submission works (post both keys, or just one — caller's choice).
 - `invalid` toggles the red border + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`.
 - Sizes: `sm` / `md` (default) / `lg`. Same scale as `<DatePicker>`; affects the trigger row only — the two-month popover grid stays fixed.
-- ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `labels.dialogLabel`); each grid inside is `role="grid"` with `gridcell` buttons. The range-start and range-end cells (and the live hover end during selection) carry `aria-selected="true"`.
+- ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); each grid inside is `role="grid"` with `gridcell` buttons. The range-start and range-end cells (and the live hover end during selection) carry `aria-selected="true"`.
 - Keyboard inside a grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space drives the same first-click → second-click flow, Escape closes and returns focus to the input. With selection-start set, the focused cell acts as the hover end so the preview range follows arrow keys.
 - Reuses `<DatePickerGrid>` via `selectionMode='range'` + `rangeStart`/`rangeEnd`/`hoverDate`/`onHoverDate` + `chevrons={false}`. The two grids share the same cursor; the picker renders its own prev/next chevrons outside them.
 

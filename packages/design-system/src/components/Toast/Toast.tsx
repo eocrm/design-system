@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, Info, Loader2, X, XCircle } from 'lucide-react';
 import clsx from 'clsx';
 import { Button } from '../Button';
+import { useTranslation } from '../../i18n/useTranslation';
 import { store, type ToastEntry } from './store';
 import { useToastTimer } from './useToastTimer';
 import styles from './Toast.module.scss';
@@ -30,6 +31,7 @@ const DEFAULT_ICONS: Record<ToastEntry['tone'], typeof Info> = {
  * data-* cannot be overridden by consumer props).
  */
 export function Toast({ entry, isPeek }: ToastProps) {
+  const t = useTranslation();
   // Local "should the timer run" — flips when the user hovers OR a child has focus.
   const [paused, setPaused] = useState(false);
 
@@ -108,7 +110,7 @@ export function Toast({ entry, isPeek }: ToastProps) {
             variant="ghost"
             size="xs"
             iconOnly
-            aria-label="Dismiss"
+            aria-label={t('toast.dismiss')}
             onClick={() => store.dismiss(entry.id)}
           >
             <X size={14} aria-hidden="true" />

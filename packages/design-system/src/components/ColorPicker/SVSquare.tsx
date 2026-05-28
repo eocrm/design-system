@@ -8,6 +8,7 @@ import {
   type HTMLAttributes,
 } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './ColorPicker.module.scss';
 
 export interface SVSquareProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
@@ -44,6 +45,7 @@ export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSqu
   { hue, s, v, onChange, onChangeEnd, disabled = false, className, ...rest },
   ref,
 ) {
+  const t = useTranslation();
   const padRef = useRef<HTMLDivElement | null>(null);
   const isDraggingRef = useRef(false);
 
@@ -167,7 +169,7 @@ export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSqu
     <div
       ref={setRef}
       role="application"
-      aria-label="Saturation and brightness"
+      aria-label={t('colorPicker.saturationBrightness')}
       aria-valuetext={`saturation ${Math.round(s)} percent, brightness ${Math.round(v)} percent`}
       aria-disabled={disabled || undefined}
       tabIndex={disabled ? -1 : 0}

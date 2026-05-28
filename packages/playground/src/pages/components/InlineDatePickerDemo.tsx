@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, InlineDatePicker, Stack, toDateKey } from '@eocrm/design-system';
+import { Button, I18nProvider, InlineDatePicker, Stack, toDateKey } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -127,26 +127,15 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
 
       <Example
         title="ru-RU locale"
-        description="Locale-aware month + weekday labels."
-        code={`<InlineDatePicker
-  defaultValue={new Date()}
-  locale="ru-RU"
-  labels={{
-    previousMonth: 'Предыдущий месяц',
-    nextMonth: 'Следующий месяц',
-  }}
-/>`}
+        description="Locale-aware month + weekday labels. UI labels (chevrons) come from <I18nProvider locale='ru'>."
+        code={`<I18nProvider locale="ru">
+  <InlineDatePicker defaultValue={new Date()} locale="ru-RU" />
+</I18nProvider>`}
       >
         <InputExample width="auto">
-          <InlineDatePicker
-            defaultValue={TODAY}
-            locale="ru-RU"
-            aria-label="Дата"
-            labels={{
-              previousMonth: 'Предыдущий месяц',
-              nextMonth: 'Следующий месяц',
-            }}
-          />
+          <I18nProvider locale="ru">
+            <InlineDatePicker defaultValue={TODAY} locale="ru-RU" aria-label="Дата" />
+          </I18nProvider>
         </InputExample>
       </Example>
     </DemoBody>

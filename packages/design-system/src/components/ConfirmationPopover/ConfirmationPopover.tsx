@@ -12,6 +12,7 @@ import { Cluster } from '../Cluster';
 import { Stack } from '../Stack';
 import { Popover } from '../Popover';
 import { sanitizeId } from '../_internal/refs';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './ConfirmationPopover.module.scss';
 
 /** `'danger'` swaps Confirm to a danger-variant button; `'default'` uses primary. */
@@ -37,11 +38,11 @@ export interface ConfirmationPopoverProps {
    */
   description?: ReactNode;
 
-  /** Confirm button label. Defaults to `'Confirm'`. */
+  /**
+   * Confirm button label. Defaults to the i18n value at
+   * `confirmationPopover.confirm` (`'Confirm'` in English).
+   */
   confirmLabel?: string;
-
-  /** Cancel button label. Defaults to `'Cancel'`. */
-  cancelLabel?: string;
 
   /** `'danger'` makes Confirm a danger-variant button. Defaults to `'default'` (primary). */
   variant?: ConfirmationVariant;
@@ -142,8 +143,7 @@ export function ConfirmationPopover({
   children,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
   variant = 'default',
   onConfirm,
   onCancel,
@@ -154,6 +154,7 @@ export function ConfirmationPopover({
   onOpenChange,
   defaultOpen = false,
 }: ConfirmationPopoverProps) {
+  const t = useTranslation();
   // Hoist open state into ConfirmationPopover so we can close after a
   // successful sync/async onConfirm without going through the consumer.
   const isConsumerControlled = controlledOpen !== undefined;
@@ -245,7 +246,7 @@ export function ConfirmationPopover({
               disabled={pending}
               onClick={handleCancel}
             >
-              {cancelLabel}
+              {t('confirmationPopover.cancel')}
             </Button>
             <Button
               variant={variant === 'danger' ? 'danger' : 'primary'}
@@ -254,7 +255,7 @@ export function ConfirmationPopover({
               onClick={handleConfirm}
             >
               {pending && <span className={styles.spinner} aria-hidden="true" />}
-              {confirmLabel}
+              {confirmLabel ?? t('confirmationPopover.confirm')}
             </Button>
           </Cluster>
         </Stack>

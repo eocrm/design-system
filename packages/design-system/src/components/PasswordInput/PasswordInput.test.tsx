@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { PasswordInput } from './PasswordInput';
+import { I18nProvider } from '../../i18n/I18nProvider';
 
 describe('PasswordInput', () => {
   it('renders type="password" by default', () => {
@@ -49,9 +50,13 @@ describe('PasswordInput', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('labels overrides the toggle aria-labels', async () => {
+  it('I18nProvider overrides the toggle aria-labels', async () => {
     const user = userEvent.setup();
-    render(<PasswordInput labels={{ show: 'Показать', hide: 'Скрыть' }} />);
+    render(
+      <I18nProvider locale="en" overrides={{ passwordInput: { show: 'Показать', hide: 'Скрыть' } }}>
+        <PasswordInput />
+      </I18nProvider>,
+    );
     const button = screen.getByRole('button', { name: 'Показать' });
     await user.click(button);
     expect(screen.getByRole('button', { name: 'Скрыть' })).toBe(button);
