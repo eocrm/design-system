@@ -1,8 +1,23 @@
-import { forwardRef, useCallback, useEffect, useRef, useState, type HTMLAttributes } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type HTMLAttributes,
+} from 'react';
 import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
+import { useTranslation } from '../../i18n/useTranslation';
 import { DatePickerGrid } from './DatePickerGrid';
-import { toIsoDate } from './utils';
+import {
+  combineDateAndTime,
+  toIsoDate,
+  toIsoDateTime,
+  toTimeInputValue,
+  type DateTimeGranularity,
+} from './utils';
 import styles from './InlineDatePicker.module.scss';
 
 export interface InlineDatePickerProps extends Omit<
@@ -33,6 +48,19 @@ export interface InlineDatePickerProps extends Omit<
 
   /** Disables interaction — cells / chevrons / keyboard nav all blocked. Defaults to `false`. */
   disabled?: boolean;
+
+  /**
+   * Picker precision.
+   *
+   * - `'day'` (default) — date only; behavior unchanged from prior releases.
+   * - `'minute'` — adds a manual-entry time input below the calendar grid.
+   *   The hidden form mirror (when `name` is set) emits ISO local datetime
+   *   (`2026-05-28T14:30`).
+   *
+   * Time is preserved across date re-picks. Picking from a `null` value
+   * defaults the time to `00:00`.
+   */
+  granularity?: DateTimeGranularity;
 }
 
 /**
@@ -63,7 +91,8 @@ export interface InlineDatePickerProps extends Omit<
  * @remarks When NOT to use
  * - Compact form field → use `<DatePicker>` (the popover variant).
  * - Choosing a range → use `<InlineDateRangePicker>`.
- * - Datetime selection → not supported in v1.
+ * - Seconds-precision tracking → only `granularity='minute'` is supported.
+ * - Time-only fields (no date) → out of scope.
  *
  * @remarks Anti-patterns
  * - ❌ Rendering multiple `<InlineDatePicker>`s in the same flex row
@@ -84,13 +113,18 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
       isDateDisabled,
       name,
       disabled = false,
+      granularity = 'day',
       className,
+      id: idProp,
       ...rest
     },
     ref,
   ) {
     const contextLocale = useLocale();
     const locale = localeOverride ?? contextLocale;
+    const t = useTranslation();
+    const generatedId = useId();
+    const inlineId = idProp ?? generatedId;
 
     const [uncontrolled, setUncontrolled] = useState<Date | null>(defaultValue);
     const value = valueProp !== undefined ? valueProp : uncontrolled;
@@ -114,14 +148,27 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
 
     const handleSelect = useCallback(
       (date: Date) => {
-        setValue(date);
+        let withTime = date;
+        if (granularity === 'minute') {
+          if (value != null) {
+            withTime = combineDateAndTime(date, value.getHours(), value.getMinutes());
+          } else {
+            withTime = combineDateAndTime(date, 0, 0);
+          }
+        }
+        setValue(withTime);
       },
-      [setValue],
+      [granularity, value, setValue],
     );
 
     return (
       // {...rest} last so consumer overrides win (Pattern A).
-      <div ref={ref} className={clsx(styles.inline, className)} {...rest}>
+      <div
+        ref={ref}
+        id={idProp}
+        className={clsx(styles.inline, className)}
+        {...rest}
+      >
         <DatePickerGrid
           cursor={cursor}
           value={value}
@@ -133,7 +180,41 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
           locale={locale}
           disabled={disabled}
         />
-        {name && <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />}
+        {granularity === 'minute' && (
+          <div className={styles.timeRow}>
+            <label className={styles.timeLabel} htmlFor={`${inlineId}-time`}>
+              {t('datePicker.timeLabel')}
+            </label>
+            <input
+              id={`${inlineId}-time`}
+              type="time"
+              step={60}
+              className={styles.timeInput}
+              value={value ? toTimeInputValue(value) : ''}
+              disabled={value == null || disabled}
+              aria-label={t('datePicker.timeLabel')}
+              onChange={(e) => {
+                if (value == null) return;
+                const [hh, mm] = e.target.value.split(':').map(Number);
+                if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+                setValue(combineDateAndTime(value, hh, mm));
+              }}
+            />
+          </div>
+        )}
+        {name && (
+          <input
+            type="hidden"
+            name={name}
+            value={
+              value
+                ? granularity === 'minute'
+                  ? toIsoDateTime(value)
+                  : toIsoDate(value)
+                : ''
+            }
+          />
+        )}
       </div>
     );
   },
