@@ -16,8 +16,15 @@
   background: var(--rail-bg);
   border-right: var(--rail-border-width) solid var(--rail-border-color);
   transition: var(--rail-collapse-transition);
-  // stylelint-disable-next-line declaration-property-value-disallowed-list -- horizontal label clip during animation is the whole point
-  overflow: hidden;
+
+  // Horizontal: clip labels during the width transition (the whole point).
+  // Vertical: scroll when content is taller than the rail so the Footer
+  // (which is `position: sticky; bottom: 0`) stays glued to the bottom edge
+  // instead of overflowing under it.
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- horizontal label clip during animation
+  overflow-x: hidden;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- scroll long item lists
+  overflow-y: auto;
 }
 
 .collapsed {
@@ -32,8 +39,28 @@
   overflow: hidden;
 }
 
+// Footer is anchored to the bottom of the rail via position: sticky so it
+// stays visible even when the item list overflows the rail's height.
+// Its inner items use the same X positioning as Rail.Items so the
+// CollapseToggle's icon sits in the same column as item icons.
 .footer {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  // stylelint-disable-next-line property-disallowed-list -- pin to bottom of the rail's scroll viewport (Rule 4 exception: layout-owning primitive)
+  position: sticky;
+  // stylelint-disable-next-line property-disallowed-list -- sticky anchor
+  bottom: 0;
+
+  // Solid background so scrolled-under content doesn't show through.
+  background: var(--rail-bg);
+
+  // Sit flush against the rail's bottom padding; without this, the gap
+  // shorthand from .rail would visually float the footer above the bottom.
+  // stylelint-disable-next-line property-disallowed-list -- negative pull into bottom padding (Rule 4 exception: layout-owning primitive)
+  margin-bottom: calc(var(--rail-padding-y) * -1);
+  padding-bottom: var(--rail-padding-y);
 }
 
 .spacer {
@@ -42,7 +69,16 @@
 }
 
 // ─── Collapse toggle ────────────────────────────────────────────────────
+// Renders the toggle as a row matching Rail.Item's geometry so the chevron
+// icon aligns with the column of item icons regardless of collapse state.
 .collapseToggle {
+  // Override the default <Button iconOnly> centering: stretch to fill the
+  // footer row and left-align the icon at the same X as item icons.
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- match item row width
+  width: 100%;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- align with item icons
+  justify-content: flex-start;
+  padding: var(--rail-item-padding-y) var(--rail-item-padding-x);
   transition: var(--rail-chevron-transition);
 }
 
@@ -102,6 +138,12 @@
 
 .item:hover {
   background: var(--rail-item-bg-hover);
+
+  // Some consumer global styles (and the modern reset) add `text-decoration:
+  // underline` on `<a>:hover`. The rail's items are nav buttons styled as
+  // pill rows — they shouldn't underline like body links.
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- anchor underline reset on hover
+  text-decoration: none;
 }
 
 .item:focus-visible {
@@ -237,6 +279,14 @@
   display: flex;
   flex-direction: column;
   min-width: var(--rail-flyout-min-width);
+  background: var(--rail-flyout-bg);
+  border: var(--rail-flyout-border-width) solid var(--rail-flyout-border-color);
+  border-radius: var(--rail-flyout-radius);
+  box-shadow: var(--rail-flyout-shadow);
+
+  // Clip child rounded corners (subitems with hover backgrounds) to the
+  // flyout's rounded outer edge.
+  overflow: hidden;
 }
 
 .flyoutHeader {

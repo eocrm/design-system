@@ -18,7 +18,7 @@ import {
   ShieldCheck,
   Users,
 } from 'lucide-react';
-import { Badge, Button, Cluster, Rail, Stack, Text } from '@eocrm/design-system';
+import { Badge, Button, Cluster, Rail, Stack, Text, useRail } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -55,8 +55,12 @@ function RailStage({ children }: { children: React.ReactNode }) {
 }
 
 function BrandMark() {
+  // Read the rail's collapsed state so the wordmark "Railside" hides when
+  // the rail narrows — leaving only the centered "R" logo, mirroring the
+  // Atlassian / Jira behavior where the brand collapses to a glyph.
+  const { collapsed } = useRail();
   return (
-    <Cluster gap="sm" align="center" wrap={false}>
+    <Cluster gap="sm" align="center" wrap={false} justify={collapsed ? 'center' : 'start'}>
       <div
         aria-hidden
         style={{
@@ -74,7 +78,7 @@ function BrandMark() {
       >
         R
       </div>
-      <Text weight="semibold">Railside</Text>
+      {!collapsed && <Text weight="semibold">Railside</Text>}
     </Cluster>
   );
 }
