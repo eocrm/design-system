@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, useState } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
@@ -232,5 +232,162 @@ describe('DatePicker', () => {
   it('defaults to size="md" when no size prop is passed', () => {
     const { container } = render(<DatePicker aria-label="Default" />, { wrapper: wrap() });
     expect(container.querySelector('[class*="size-md"]')).not.toBeNull();
+  });
+
+  describe('granularity', () => {
+    it('granularity defaults to "day" — no time input, no HH:mm in trigger', () => {
+      render(<DatePicker defaultValue={new Date(2026, 4, 28, 14, 30)} aria-label="Date" />, {
+        wrapper: wrap(),
+      });
+      expect(screen.queryByLabelText('Time')).not.toBeInTheDocument();
+      expect(screen.getByRole('textbox')).toHaveValue('05/28/2026');
+    });
+
+    it('granularity="minute" renders the time input inside the popover', async () => {
+      const user = userEvent.setup();
+      render(
+        <DatePicker
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          granularity="minute"
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      const timeInput = await screen.findByLabelText('Time');
+      expect(timeInput).toHaveValue('14:30');
+    });
+
+    it('granularity="minute" includes HH:mm in trigger text', () => {
+      render(
+        <DatePicker
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          granularity="minute"
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      expect(screen.getByRole('textbox')).toHaveValue('05/28/2026 14:30');
+    });
+
+    it('picking a date from null defaults time to 00:00', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(<DatePicker granularity="minute" onChange={onChange} aria-label="Date" />, {
+        wrapper: wrap(),
+      });
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      // The grid renders an in-month "15" and possibly an outside overflow
+      // "15" from the adjacent month. Click the first match — the in-month one.
+      const [cell15] = screen.getAllByRole('gridcell', { name: /^15$/ });
+      await user.click(cell15);
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const got = onChange.mock.calls[0][0] as Date;
+      expect(got.getHours()).toBe(0);
+      expect(got.getMinutes()).toBe(0);
+    });
+
+    it('picking a different date preserves existing time-of-day', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(
+        <DatePicker
+          granularity="minute"
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          onChange={onChange}
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      const [cell15] = screen.getAllByRole('gridcell', { name: /^15$/ });
+      await user.click(cell15);
+      const got = onChange.mock.calls[0][0] as Date;
+      expect(got.getDate()).toBe(15);
+      expect(got.getHours()).toBe(14);
+      expect(got.getMinutes()).toBe(30);
+    });
+
+    it('changing the time input updates time only', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(
+        <DatePicker
+          granularity="minute"
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          onChange={onChange}
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      const timeInput = await screen.findByLabelText('Time');
+      // jsdom's <input type="time"> doesn't accept user.type the way an HTML
+      // time field would in a real browser — fire a synthetic change instead.
+      fireEvent.change(timeInput, { target: { value: '09:15' } });
+      const got = onChange.mock.calls.at(-1)?.[0] as Date;
+      expect(got.getFullYear()).toBe(2026);
+      expect(got.getMonth()).toBe(4);
+      expect(got.getDate()).toBe(28);
+      expect(got.getHours()).toBe(9);
+      expect(got.getMinutes()).toBe(15);
+    });
+
+    it('time input is disabled when value is null', async () => {
+      const user = userEvent.setup();
+      render(<DatePicker granularity="minute" aria-label="Date" />, { wrapper: wrap() });
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      expect(await screen.findByLabelText('Time')).toBeDisabled();
+    });
+
+    it('hidden form mirror emits ISO datetime when granularity="minute"', () => {
+      const { container } = render(
+        <DatePicker
+          granularity="minute"
+          name="when"
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      const hidden = container.querySelector<HTMLInputElement>(
+        'input[type="hidden"][name="when"]',
+      );
+      expect(hidden?.value).toBe('2026-05-28T14:30');
+    });
+
+    it('hidden form mirror still emits ISO date when granularity="day"', () => {
+      const { container } = render(
+        <DatePicker
+          name="when"
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      const hidden = container.querySelector<HTMLInputElement>(
+        'input[type="hidden"][name="when"]',
+      );
+      expect(hidden?.value).toBe('2026-05-28');
+    });
+
+    it('typed input parses date+time on blur', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(<DatePicker granularity="minute" onChange={onChange} aria-label="Date" />, {
+        wrapper: wrap(),
+      });
+      const input = screen.getByRole('textbox');
+      await user.click(input);
+      await user.type(input, '05/28/2026 14:30');
+      input.blur();
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const got = onChange.mock.calls.at(-1)?.[0] as Date;
+      expect(got.getFullYear()).toBe(2026);
+      expect(got.getMonth()).toBe(4);
+      expect(got.getDate()).toBe(28);
+      expect(got.getHours()).toBe(14);
+      expect(got.getMinutes()).toBe(30);
+    });
   });
 });
