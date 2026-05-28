@@ -483,17 +483,27 @@ export type { InlineDatePickerProps } from './components/DatePicker';
 export { InlineDateRangePicker } from './components/DateRangePicker';
 export type { InlineDateRangePickerProps } from './components/DateRangePicker';
 
+// TimeField — standalone time-of-day input, also embedded by the four
+// DatePicker variants. Public so consumers needing a time input without a
+// date can use the same primitive the pickers use internally.
+export { TimeField } from './components/DatePicker/TimeField';
+export type { TimeFieldProps } from './components/DatePicker/TimeField';
+
 // DatePicker family — date+time granularity helpers. Exposed so consumers can
 // (a) integrate the hidden form mirror's ISO local datetime with form layers
-// without re-implementing the format, and (b) parse user-typed datetime input
-// outside the picker (e.g., URL params, hydrated state).
-export type { DateTimeGranularity } from './components/DatePicker/utils';
+// without re-implementing the format, (b) parse user-typed datetime input
+// outside the picker (e.g., URL params, hydrated state), and (c) resolve
+// hourCycle / round-to-step in their own time UI built on top of TimeField.
+export type { DateTimeGranularity, TimeValue, HourCycle } from './components/DatePicker/utils';
 export {
   formatDateTime,
   parseDateTime,
   toIsoDateTime,
   combineDateAndTime,
   toTimeInputValue,
+  resolveHourCycle,
+  getLocaleHourCycle,
+  roundTimeToStep,
 } from './components/DatePicker/utils';
 export {
   formatDateTimeRange,
