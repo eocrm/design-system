@@ -1,4 +1,15 @@
-import { formatDate, getLocaleDateOrder, isDateOutOfRange, parseDate, toIsoDate } from './utils';
+import {
+  combineDateAndTime,
+  formatDate,
+  formatDateTime,
+  getLocaleDateOrder,
+  isDateOutOfRange,
+  parseDate,
+  parseDateTime,
+  toIsoDate,
+  toIsoDateTime,
+  toTimeInputValue,
+} from './utils';
 
 describe('DatePicker utils', () => {
   describe('formatDate', () => {
@@ -114,6 +125,79 @@ describe('DatePicker utils', () => {
       expect(isDateOutOfRange(new Date(2026, 4, 21, 23, 59), new Date(2026, 4, 21, 0, 0))).toBe(
         false,
       );
+    });
+  });
+
+  describe('formatDateTime', () => {
+    it('produces date + zero-padded HH:mm in en-US', () => {
+      expect(formatDateTime(new Date(2026, 4, 28, 14, 30), 'en-US')).toBe('05/28/2026 14:30');
+    });
+    it('uses 24-hour even when locale prefers 12-hour', () => {
+      expect(formatDateTime(new Date(2026, 4, 28, 13, 5), 'en-US')).toBe('05/28/2026 13:05');
+    });
+  });
+
+  describe('parseDateTime', () => {
+    it('parses ISO with T separator', () => {
+      expect(parseDateTime('2026-05-28T14:30', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 14, 30, 0, 0),
+      );
+    });
+    it('parses ISO with space separator', () => {
+      expect(parseDateTime('2026-05-28 14:30', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 14, 30, 0, 0),
+      );
+    });
+    it('parses locale-formatted date with time', () => {
+      expect(parseDateTime('05/28/2026 14:30', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 14, 30, 0, 0),
+      );
+    });
+    it('parses date-only as 00:00 (partial typing)', () => {
+      expect(parseDateTime('05/28/2026', 'en-US')).toEqual(new Date(2026, 4, 28, 0, 0, 0, 0));
+    });
+    it('returns null for empty input', () => {
+      expect(parseDateTime('', 'en-US')).toBeNull();
+      expect(parseDateTime('   ', 'en-US')).toBeNull();
+    });
+    it('returns null for invalid time (25:99)', () => {
+      expect(parseDateTime('05/28/2026 25:99', 'en-US')).toBeNull();
+    });
+    it('returns null for invalid date with valid time', () => {
+      expect(parseDateTime('99/99/9999 14:30', 'en-US')).toBeNull();
+    });
+  });
+
+  describe('toIsoDateTime', () => {
+    it('zero-pads month/day/hour/minute', () => {
+      expect(toIsoDateTime(new Date(2026, 0, 5, 3, 7))).toBe('2026-01-05T03:07');
+    });
+  });
+
+  describe('combineDateAndTime', () => {
+    it('replaces hours/minutes, keeps date components', () => {
+      const base = new Date(2026, 4, 28, 9, 15, 30, 500);
+      const result = combineDateAndTime(base, 14, 0);
+      expect(result.getFullYear()).toBe(2026);
+      expect(result.getMonth()).toBe(4);
+      expect(result.getDate()).toBe(28);
+      expect(result.getHours()).toBe(14);
+      expect(result.getMinutes()).toBe(0);
+      expect(result.getSeconds()).toBe(0);
+      expect(result.getMilliseconds()).toBe(0);
+    });
+    it('returns a new Date — does not mutate input', () => {
+      const base = new Date(2026, 4, 28, 9, 15);
+      const result = combineDateAndTime(base, 14, 0);
+      expect(result).not.toBe(base);
+      expect(base.getHours()).toBe(9);
+    });
+  });
+
+  describe('toTimeInputValue', () => {
+    it('formats HH:mm zero-padded', () => {
+      expect(toTimeInputValue(new Date(2026, 4, 28, 3, 7))).toBe('03:07');
+      expect(toTimeInputValue(new Date(2026, 4, 28, 23, 59))).toBe('23:59');
     });
   });
 });
