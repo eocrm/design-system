@@ -1,6 +1,11 @@
 // App-shell layout values — playground-local, not part of the design system.
 :root {
+  // Two widths the sidebar column expands / collapses to. Match the Rail's
+  // own --rail-width-* tokens so the grid column tracks the Rail's outer
+  // box. The `data-rail-collapsed` attribute on .shell switches between
+  // them with the same easing as the Rail's internal width transition.
   --sidebar-width: 240px;
+  --sidebar-width-collapsed: 56px;
   --topbar-height: 56px;
   --z-sidebar: 100;
   --z-topbar: 200;
@@ -15,19 +20,30 @@
     'sidebar content';
   min-height: 100vh;
   background: var(--color-bg-subtle);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- track the rail's width transition
+  transition: grid-template-columns var(--transition-base);
 }
 
-// Sidebar
-.sidebar {
+.shell[data-rail-collapsed] {
+  grid-template-columns: var(--sidebar-width-collapsed) 1fr;
+}
+
+// Sticky wrapper holds the Rail. The Rail itself has height: 100% so it
+// fills this 100vh wrapper; the wrapper carries the sticky positioning so
+// the rail follows page scroll.
+.sidebarWrap {
   grid-area: sidebar;
-  background: var(--color-bg-muted);
-  border-right: var(--border-width) solid var(--color-border);
-  display: flex;
-  flex-direction: column;
   position: sticky;
   top: 0;
   height: 100vh;
   z-index: var(--z-sidebar);
+}
+
+// The Rail is rendered with default chrome (background / border-right from
+// its tokens). No class-level overrides needed; this hook is here so the
+// Rail can be tweaked at the shell level if desired.
+.appRail {
+  height: 100%;
 }
 
 .brand {

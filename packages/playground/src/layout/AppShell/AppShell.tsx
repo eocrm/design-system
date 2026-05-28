@@ -27,7 +27,6 @@ import {
   PanelTop,
   Layers,
   List,
-  ArrowRight,
   ExternalLink,
   FileText,
   MessageSquare,
@@ -67,9 +66,12 @@ import {
   Settings as SettingsIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { Avatar } from '@eocrm/design-system';
+import { useState, useEffect } from 'react';
+import { Avatar, Rail, useRail } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
+
+const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
 
 const mockupItems = [
   { to: '/mockups', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -213,19 +215,30 @@ interface NavItem {
   end: boolean;
 }
 
-function renderItem({ to, label, icon: Icon, end }: NavItem) {
+/** Renders a `Rail.Item` polymorphic as the NavLink so active styling
+    (aria-current="page") flows through automatically. */
+function renderRailItem({ to, label, icon: Icon, end }: NavItem) {
   return (
-    <NavLink
-      key={to}
-      to={to}
-      end={end}
-      className={({ isActive }) =>
-        isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
-      }
-    >
-      <Icon size={16} />
+    <Rail.Item key={to} as={NavLink} to={to} end={end} icon={<Icon size={16} />}>
       {label}
-    </NavLink>
+    </Rail.Item>
+  );
+}
+
+/** Brand: full "Orbit CRM / Free trial" when expanded, just the "OC" mark
+    when collapsed. Reads collapsed state from RailContext. */
+function BrandMark() {
+  const { collapsed } = useRail();
+  return (
+    <div className={styles.brand} data-collapsed={collapsed || undefined}>
+      <div className={styles.brandMark}>OC</div>
+      {!collapsed && (
+        <div className={styles.brandText}>
+          <div className={styles.brandName}>Orbit CRM</div>
+          <div className={styles.brandPlan}>Free trial</div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -237,46 +250,60 @@ export function AppShell({ children }: { children: ReactNode }) {
     ? { to: '/mockups', label: 'Mockups', icon: Layers }
     : { to: '/components', label: 'Components', icon: Component };
 
-  return (
-    <div className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <div className={styles.brand}>
-          <div className={styles.brandMark}>OC</div>
-          <div className={styles.brandText}>
-            <div className={styles.brandName}>Orbit CRM</div>
-            <div className={styles.brandPlan}>Free trial</div>
-          </div>
-        </div>
+  // Persisted collapsed state — survives reload, syncs across tabs.
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+  }, [collapsed]);
 
-        <nav className={styles.nav}>
+  return (
+    <div className={styles.shell} data-rail-collapsed={collapsed || undefined}>
+      <div className={styles.sidebarWrap}>
+        <Rail
+          collapsed={collapsed}
+          onCollapsedChange={setCollapsed}
+          aria-label={inComponents ? 'Component navigation' : 'Mockup navigation'}
+          className={styles.appRail}
+        >
+          <Rail.Header>
+            <BrandMark />
+          </Rail.Header>
+
           {inComponents ? (
             <>
-              {renderItem(componentOverview)}
-              {renderItem(tokensReference)}
-              {renderItem(architectureReference)}
+              <Rail.Section>
+                {renderRailItem(componentOverview)}
+                {renderRailItem(tokensReference)}
+                {renderRailItem(architectureReference)}
+              </Rail.Section>
               {componentGroups.map(({ heading, items }) => (
-                <div key={heading} className={styles.navGroup}>
-                  <div className={styles.navSection}>{heading}</div>
-                  {items.map(renderItem)}
-                </div>
+                <Rail.Section key={heading} title={heading}>
+                  {items.map(renderRailItem)}
+                </Rail.Section>
               ))}
             </>
           ) : (
-            <>
-              <div className={styles.navSection}>Mockups</div>
-              {mockupItems.map(renderItem)}
-            </>
+            <Rail.Section title="Mockups">{mockupItems.map(renderRailItem)}</Rail.Section>
           )}
-        </nav>
 
-        <div className={styles.navFooter}>
-          <NavLink to={switchLink.to} className={styles.switchLink}>
-            <switchLink.icon size={16} />
-            <span>{switchLink.label}</span>
-            <ArrowRight size={14} className={styles.switchArrow} aria-hidden />
-          </NavLink>
-        </div>
-      </aside>
+          {/* Spacer + Footer pinned to the bottom. Footer is position:sticky
+              so the mode-switch link (Mockups ↔ Components) and the
+              collapse-toggle stay visible even when the section list above
+              overflows and the rail scrolls. */}
+          <Rail.Spacer />
+
+          <Rail.Footer>
+            <Rail.Item as={NavLink} to={switchLink.to} icon={<switchLink.icon size={16} />}>
+              {switchLink.label}
+            </Rail.Item>
+            <Rail.CollapseToggle />
+          </Rail.Footer>
+        </Rail>
+      </div>
 
       <header className={styles.topbar}>
         <Cluster gap="md" align="center" wrap={false}>
