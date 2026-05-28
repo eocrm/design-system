@@ -59,6 +59,16 @@ import { I18nProvider } from '@eocrm/design-system';
 
 **Available locales:** `'en'` (default), `'ru'`. v1.
 
+**`I18nProvider` vs `LocaleProvider` — pair them.** `I18nProvider` carries the message catalog (translated strings). `LocaleProvider` carries the BCP-47 tag used by `Intl.*` formatters inside Calendar / DatePicker / DateRangePicker (month names, weekday order, date-range formatting). They are independent — a Russian app should wrap with BOTH so visible strings AND Intl-rendered dates speak the right language:
+
+```tsx
+<I18nProvider locale="ru">
+  <LocaleProvider locale="ru-RU">
+    <App />
+  </LocaleProvider>
+</I18nProvider>
+```
+
 **Adding a new string in a library component**:
 
 1. Add the key to `src/i18n/messages.ts` (`Messages` interface).
@@ -296,10 +306,10 @@ import { Textarea } from '@eocrm/design-system';
 ```
 
 - Renders a real `<input type='password' | 'text'>` underneath — full autofill, RHF/Zod, form-submission integration.
-- Eye toggle (`Eye` / `EyeOff`) flips `type`; `aria-pressed` exposes the state to AT. `labels.show` / `labels.hide` for i18n.
+- Eye toggle (`Eye` / `EyeOff`) flips `type`; `aria-pressed` exposes the state to AT. Toggle aria-labels come from `passwordInput.show` / `passwordInput.hide` in the i18n catalog.
 - `revealed` / `defaultRevealed` / `onRevealChange` for controlled / uncontrolled toggle state.
 - `revealable={false}` removes the toggle entirely (compliance / kiosk screens).
-- `capsLockWarning?: boolean` (default `false`) — opt-in caps-lock detection. When active, `ArrowBigUpDash` icon appears + a polite `aria-live` region announces `labels.capsLockOn`. Cleared on blur.
+- `capsLockWarning?: boolean` (default `false`) — opt-in caps-lock detection. When active, `ArrowBigUpDash` icon appears + a polite `aria-live` region announces `passwordInput.capsLockOn` from the i18n catalog. Cleared on blur.
 - `wrongLayoutWarning?: boolean` (default `false`) — opt-in non-ASCII-keystroke detection. Catches "typing Cyrillic on a Russian layout when you meant Latin." Heuristic: any single non-ASCII char triggers. DO NOT enable on systems that allow non-Latin passwords. Cleared on blur.
 - Both warnings can stack — they render in separate slots with separate live regions.
 - Sizes: `sm` / `md` (default) / `lg`. Same scale as `<Input>`.
