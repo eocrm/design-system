@@ -1,0 +1,42 @@
+@use './TopBar.tokens';
+
+// ─── Root ───────────────────────────────────────────────────────────────
+// stylelint-disable property-disallowed-list -- TopBar is a layout-owning
+// primitive (Hard rule 4 exception). Like <Modal>, <Drawer>, <Page>, <Rail>,
+// the top bar owns its OWN height + padding + sticky positioning because
+// that IS its job as a top-bar chrome. The consumer chooses WHERE the bar
+// lives (typically a CSS-grid app shell) by styling its parent; the bar
+// itself fills the available inline space.
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: var(--topbar-z-index);
+  height: var(--topbar-height);
+  padding: 0 var(--topbar-padding-x);
+  background: var(--topbar-bg);
+  border-bottom: var(--topbar-border-width) solid var(--topbar-border-color);
+  display: flex;
+  align-items: center;
+  gap: var(--topbar-gap);
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Start / End clusters ───────────────────────────────────────────────
+// stylelint-disable property-disallowed-list -- Start/End are TopBar's
+// internal layout regions: Start flex-grows so End is pushed to the right
+// edge with no spacer. Same rule-4 exception as the bar itself.
+.start {
+  display: flex;
+  align-items: center;
+  gap: var(--topbar-gap);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+// stylelint-enable property-disallowed-list
