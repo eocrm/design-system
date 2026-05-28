@@ -101,5 +101,42 @@
 
   // Time row — date+time picker mode (granularity='minute')
   --date-picker-time-row-gap: var(--space-2); // gap between grid and time row, and between time label + input
-  --date-picker-time-input-width: 7.5rem; // wide enough for "HH:mm", narrow enough to read as separate from the date input
+
+  // TimeField — chrome (wrapper)
+  --date-picker-time-field-width: 9rem; // wider than the legacy input to fit text + chevron
+  --date-picker-time-field-bg: var(--color-bg);
+  --date-picker-time-field-border-color: var(--color-border);
+  --date-picker-time-field-border-color-focus: var(--color-accent);
+  --date-picker-time-field-radius: var(--radius-md);
+  --date-picker-time-field-padding-x: var(--space-2);
+  --date-picker-time-field-gap: var(--space-1);
+
+  // TimeField — chevron toggle
+  --date-picker-time-toggle-fg: var(--color-fg-muted);
+  --date-picker-time-toggle-fg-hover: var(--color-fg);
+  --date-picker-time-toggle-bg-hover: var(--color-bg-subtle);
+  --date-picker-time-toggle-radius: var(--radius-sm);
+  --date-picker-time-toggle-size: var(--space-5);
+
+  // TimeField — popover surface
+  --date-picker-time-popover-z: var(--z-popover);
+  --date-picker-time-popover-bg: var(--color-bg);
+  --date-picker-time-popover-border-color: var(--color-border);
+  --date-picker-time-popover-radius: var(--radius-md);
+  --date-picker-time-popover-shadow: var(--shadow-lg);
+  --date-picker-time-popover-padding: var(--space-1);
+  --date-picker-time-popover-gap: var(--space-1);
+
+  // TimeField — popover columns + rows
+  --date-picker-time-popover-column-width: 4rem;
+  --date-picker-time-popover-max-height: 14rem; // ~7 rows visible at 32px each
+  --date-picker-time-popover-row-height: 32px;
+  --date-picker-time-popover-row-radius: var(--radius-sm);
+  --date-picker-time-popover-row-padding-x: var(--space-2);
+  --date-picker-time-popover-row-font-size: var(--font-size-sm);
+  --date-picker-time-popover-row-fg: var(--color-fg);
+  --date-picker-time-popover-row-hover-bg: var(--color-bg-muted);
+  --date-picker-time-popover-row-current-bg: var(--color-accent-bg-subtle);
+  --date-picker-time-popover-row-current-fg: var(--color-accent);
+  --date-picker-time-popover-divider-color: var(--color-border);
 }
