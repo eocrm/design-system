@@ -1,0 +1,167 @@
+@use '../../styles/mixins' as *;
+@use './DatePicker.tokens';
+
+// TimeField wrapper — text input + chevron toggle laid out in a row, with
+// the same chrome (border, radius) as the library's <Input>. The wrapper
+// IS the public element, so `inline-flex` + intrinsic width here is the
+// component's own surface (not a Rule-4 violation: setting the box-model
+// for an input-shaped field is the component's job, just like <Input>).
+.timeField {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--date-picker-time-field-gap);
+  width: var(--date-picker-time-field-width);
+  height: var(--date-picker-input-height-sm);
+  padding: 0 var(--date-picker-time-field-padding-x);
+  background: var(--date-picker-time-field-bg);
+  border: var(--border-width) solid var(--date-picker-time-field-border-color);
+  border-radius: var(--date-picker-time-field-radius);
+  transition: border-color var(--transition-fast);
+
+  &:focus-within {
+    @include focus-ring;
+
+    border-color: var(--date-picker-time-field-border-color-focus);
+  }
+}
+
+.disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
+
+// Bare input — relies on the wrapper for chrome. `flex: 1` is the same
+// Rule-4 escape hatch used by `<Input>` and `<DatePicker>`: the wrapper
+// IS the public component, and the input must fill the remaining inline
+// space alongside the chevron.
+.timeInputCore {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: var(--date-picker-input-font-size-sm);
+  color: var(--color-fg);
+
+  &::placeholder {
+    color: var(--date-picker-input-placeholder-fg);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+// Chevron toggle — small ghost button matching the picker's clear/open buttons.
+.timeToggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--date-picker-time-toggle-size);
+  height: var(--date-picker-time-toggle-size);
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--date-picker-time-toggle-radius);
+  color: var(--date-picker-time-toggle-fg);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--date-picker-time-toggle-bg-hover);
+    color: var(--date-picker-time-toggle-fg-hover);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+// Portaled popover — same z + shadow as the calendar popover, slightly
+// tighter padding because the rows are small.
+.timePopover {
+  z-index: var(--date-picker-time-popover-z);
+  background: var(--date-picker-time-popover-bg);
+  border: var(--border-width) solid var(--date-picker-time-popover-border-color);
+  border-radius: var(--date-picker-time-popover-radius);
+  box-shadow: var(--date-picker-time-popover-shadow);
+  padding: var(--date-picker-time-popover-padding);
+}
+
+// Two-column layout for the hour + minute lists, with a thin divider.
+.timeColumns {
+  display: flex;
+  align-items: stretch;
+  gap: var(--date-picker-time-popover-gap);
+}
+
+// Reset list defaults. The global reset (`* { margin: 0 }`) zeroes the UA
+// `<ul>` margin so we don't need an explicit `margin` rule here — which is
+// also forbidden by Hard Rule 4.
+.timeColumn {
+  list-style: none;
+  padding: 0;
+  width: var(--date-picker-time-popover-column-width);
+  max-height: var(--date-picker-time-popover-max-height);
+  overflow-y: auto;
+}
+
+.timeColumnDivider {
+  width: var(--border-width);
+  background: var(--date-picker-time-popover-divider-color);
+}
+
+// Each list item — minimal wrapper around the actual row button.
+.timeRow {
+  display: block;
+}
+
+// The row button itself — height-aligned, hover + current-state styled.
+.timeRowButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  width: 100%;
+  height: var(--date-picker-time-popover-row-height);
+  padding: 0 var(--date-picker-time-popover-row-padding-x);
+  background: transparent;
+  border: none;
+  border-radius: var(--date-picker-time-popover-row-radius);
+  color: var(--date-picker-time-popover-row-fg);
+  font: inherit;
+  font-size: var(--date-picker-time-popover-row-font-size);
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: var(--date-picker-time-popover-row-hover-bg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.timeRowCurrent {
+  background: var(--date-picker-time-popover-row-current-bg);
+  color: var(--date-picker-time-popover-row-current-fg);
+
+  &:hover {
+    background: var(--date-picker-time-popover-row-current-bg);
+  }
+}
+
+.timeRowLabel {
+  font-variant-numeric: tabular-nums;
+}
+
+.timeRowCheck {
+  flex-shrink: 0;
+}
