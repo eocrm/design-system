@@ -104,8 +104,14 @@
   grid-template-rows: 1fr;
 }
 
+// The grid track from .content (0fr↔1fr) drives the height. .inner is
+// the grid item — overflow: hidden so the body inside clips during
+// collapse, min-height: 0 so the grid track's 0fr fully collapses (without
+// this, grid item's min-content baseline would keep the row at the
+// body's padding sum even when closed).
 .inner {
   overflow: hidden;
+  min-height: 0;
 
   // Promote to its own compositor layer. Combined with the parent's
   // will-change + contain hints, this keeps the row-resize animation off
@@ -113,9 +119,15 @@
   transform: translateZ(0);
 }
 
-.content[data-state='open'] .inner {
-  // Default content padding belongs to size='md'; the per-size rules below
-  // override.
+// The padded surface where children render. Padding lives HERE — not on
+// .inner — so it persists across the collapse transition. If the padding
+// were on .inner (the grid item), grid auto-sizing would keep the closed
+// row at min-content (padding sum) instead of zero. With padding on a
+// child .body inside .inner, the .inner can collapse to 0 cleanly, and
+// .body's padding only ever clips visually via overflow:hidden, never
+// snaps in or out — which is what causes the "content jumps" feel.
+// Default belongs to size='md'; the per-size rules below override.
+.body {
   padding: var(--accordion-content-padding-y-md) var(--accordion-content-padding-x-md);
 }
 
@@ -133,7 +145,7 @@
   font-size: var(--accordion-trigger-font-size-sm);
 }
 
-.accordion[data-size='sm'] .content[data-state='open'] .inner {
+.accordion[data-size='sm'] .body {
   padding: var(--accordion-content-padding-y-sm) var(--accordion-content-padding-x-sm);
   font-size: var(--accordion-content-font-size-sm);
 }
@@ -147,7 +159,7 @@
   font-size: var(--accordion-trigger-font-size-md);
 }
 
-.accordion[data-size='md'] .content[data-state='open'] .inner {
+.accordion[data-size='md'] .body {
   padding: var(--accordion-content-padding-y-md) var(--accordion-content-padding-x-md);
 }
 
@@ -160,7 +172,7 @@
   font-size: var(--accordion-trigger-font-size-lg);
 }
 
-.accordion[data-size='lg'] .content[data-state='open'] .inner {
+.accordion[data-size='lg'] .body {
   padding: var(--accordion-content-padding-y-lg) var(--accordion-content-padding-x-lg);
   font-size: var(--accordion-content-font-size-lg);
 }

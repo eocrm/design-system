@@ -27,7 +27,9 @@ export const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps
         data-state={isOpen ? 'open' : 'closed'}
         className={clsx(styles.content, className)}
       >
-        <div className={styles.inner}>{children}</div>
+        <div className={styles.inner}>
+          <div className={styles.body}>{children}</div>
+        </div>
       </div>
     );
   },
