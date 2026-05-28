@@ -46,6 +46,14 @@
   // straight at the trigger.
   transform: rotate(45deg);
   pointer-events: none;
+
+  // Sit BEHIND .content's background so the half of the rotated square that
+  // overlaps the tooltip body (the upper half, given `bottom: -4px`-style
+  // positioning) is hidden by the panel bg. Only the corner poking outside
+  // the panel stays visible — which is the arrow we actually want to show.
+  // Without this the arrow peeks up through nearby content (e.g., a Kbd
+  // chip near the tooltip's edge). Standard Floating UI arrow pattern.
+  z-index: -1;
 }
 
 // --- Open-only entrance: per-side origin + starting transform -----------
