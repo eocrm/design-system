@@ -1,5 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
-import { ChevronsLeft } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { useRail } from './Rail';
@@ -48,14 +48,19 @@ export const RailCollapseToggle = forwardRef<HTMLButtonElement, RailCollapseTogg
           onClick?.(e);
           if (!e.defaultPrevented) setCollapsed((prev) => !prev);
         }}
-        className={clsx(
-          styles.collapseToggle,
-          collapsed && styles.collapseToggleRotated,
-          className,
-        )}
+        className={clsx(styles.collapseToggle, className)}
         {...rest}
       >
-        <ChevronsLeft size={14} aria-hidden />
+        {/* Swap the icon instead of rotating the button so the icon's anchor
+            point (left side of the row) stays stable across the collapse. A
+            CSS rotate transform on the button moves the icon visually from
+            row-start to row-end because justify-content: flex-start flips
+            with the rotation — looks like a "jump". */}
+        {collapsed ? (
+          <ChevronsRight size={14} aria-hidden />
+        ) : (
+          <ChevronsLeft size={14} aria-hidden />
+        )}
       </Button>
     );
   },

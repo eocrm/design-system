@@ -71,6 +71,9 @@
 // ─── Collapse toggle ────────────────────────────────────────────────────
 // Renders the toggle as a row matching Rail.Item's geometry so the chevron
 // icon aligns with the column of item icons regardless of collapse state.
+// Icon direction flips via React (ChevronsLeft → ChevronsRight) rather than
+// a CSS transform — rotating the whole button would mirror its content and
+// visually jump the icon from row-start to row-end.
 .collapseToggle {
   // Override the default <Button iconOnly> centering: stretch to fill the
   // footer row and left-align the icon at the same X as item icons.
@@ -79,11 +82,6 @@
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- align with item icons
   justify-content: flex-start;
   padding: var(--rail-item-padding-y) var(--rail-item-padding-x);
-  transition: var(--rail-chevron-transition);
-}
-
-.collapseToggleRotated {
-  transform: rotate(180deg);
 }
 
 // ─── Section ────────────────────────────────────────────────────────────
@@ -261,6 +259,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+}
+
+// The `hidden` HTML attribute is set by RailGroup when the group is closed
+// (and the rail is expanded). The UA stylesheet's `[hidden] { display: none }`
+// loses against `.subitems { display: flex }` because class beats attribute
+// selectors. Re-state it explicitly so the closed state actually hides.
+// stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse closed state
+.subitems[hidden] {
+  display: none;
 }
 
 .subitems .item {
