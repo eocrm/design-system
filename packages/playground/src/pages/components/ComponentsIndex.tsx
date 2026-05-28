@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Inbox } from 'lucide-react';
+import { ArrowRight, Home, Inbox, Settings as SettingsIcon, Users } from 'lucide-react';
 import { Accordion } from '@eocrm/design-system';
 import { Alert } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
@@ -26,6 +26,7 @@ import { Select } from '@eocrm/design-system';
 import { Skeleton } from '@eocrm/design-system';
 import { Slider } from '@eocrm/design-system';
 import { Kanban } from '@eocrm/design-system';
+import { Rail } from '@eocrm/design-system';
 import { Sortable } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Switch } from '@eocrm/design-system';
@@ -601,6 +602,29 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <DSLink href="#" onClick={(e) => e.preventDefault()}>
         View details →
       </DSLink>
+    ),
+  },
+  {
+    to: '/components/rail',
+    name: 'Rail',
+    description:
+      'Collapsible left-side nav with sections, items, groups, and hover-popover for collapsed groups.',
+    preview: (
+      <div style={{ width: 240, height: 180, overflow: 'hidden', pointerEvents: 'none' }}>
+        <Rail>
+          <Rail.Section title="Main">
+            <Rail.Item icon={<Home size={14} />} href="#">
+              Dashboard
+            </Rail.Item>
+            <Rail.Item icon={<Users size={14} />} href="#" aria-current="page">
+              Contacts
+            </Rail.Item>
+            <Rail.Item icon={<SettingsIcon size={14} />} href="#">
+              Settings
+            </Rail.Item>
+          </Rail.Section>
+        </Rail>
+      </div>
     ),
   },
   {
