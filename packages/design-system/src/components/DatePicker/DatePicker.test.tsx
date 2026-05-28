@@ -474,12 +474,7 @@ describe('DatePicker', () => {
       const user = userEvent.setup();
       const onChange = vi.fn<(d: Date | null) => void>();
       render(
-        <DatePicker
-          granularity="minute"
-          hourCycle="12"
-          onChange={onChange}
-          aria-label="Date"
-        />,
+        <DatePicker granularity="minute" hourCycle="12" onChange={onChange} aria-label="Date" />,
         { wrapper: wrap() },
       );
       const input = screen.getByRole('textbox');

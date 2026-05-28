@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Code,
-  LocaleProvider,
-  Stack,
-  Text,
-  TimeField,
-  type TimeValue,
-} from '@eocrm/design-system';
+import { Code, LocaleProvider, Stack, Text, TimeField, type TimeValue } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -24,13 +17,7 @@ function Forced24Example() {
 function Step30Example() {
   const [time, setTime] = useState<TimeValue | null>({ hours: 10, minutes: 0 });
   return (
-    <TimeField
-      value={time}
-      onChange={setTime}
-      step={30}
-      hourCycle="24"
-      aria-label="Slot start"
-    />
+    <TimeField value={time} onChange={setTime} step={30} hourCycle="24" aria-label="Slot start" />
   );
 }
 
@@ -51,12 +38,7 @@ function ControlledExample() {
   const [time, setTime] = useState<TimeValue | null>({ hours: 13, minutes: 45 });
   return (
     <Stack gap="sm">
-      <TimeField
-        value={time}
-        onChange={setTime}
-        hourCycle="auto"
-        aria-label="Meeting start"
-      />
+      <TimeField value={time} onChange={setTime} hourCycle="auto" aria-label="Meeting start" />
       <Text size="sm" tone="muted">
         Committed value: <Code>{JSON.stringify(time)}</Code>
       </Text>

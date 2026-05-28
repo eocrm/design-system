@@ -33,8 +33,10 @@ export type { TimeValue, HourCycle };
  * lists. Used internally by the DatePicker family, exposed publicly for
  * consumers who need a time input without a date.
  */
-export interface TimeFieldProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface TimeFieldProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   /**
    * Selected time. `null` disables the field — the field cannot be
    * activated until the parent supplies a value (used by the picker family
@@ -330,15 +332,14 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
   // Map current internal hour → display hour (used to find the current row
   // in the popover's hours column, and to flag aria-selected / data-current).
   const currentDisplayHour =
-    resolvedCycle === '24'
-      ? currentHour
-      : currentHour % 12 === 0
-        ? 12
-        : currentHour % 12;
+    resolvedCycle === '24' ? currentHour : currentHour % 12 === 0 ? 12 : currentHour % 12;
 
   // ---- Column structure for arrow nav ----
   const columns: readonly FocusColumn[] = useMemo(
-    () => (resolvedCycle === '12' ? (['hours', 'minutes', 'period'] as const) : (['hours', 'minutes'] as const)),
+    () =>
+      resolvedCycle === '12'
+        ? (['hours', 'minutes', 'period'] as const)
+        : (['hours', 'minutes'] as const),
     [resolvedCycle],
   );
 
@@ -380,11 +381,10 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
   // effect can call .focus() on the row that now has tabIndex=0.
   const rowRefs = useRef(new Map<string, HTMLLIElement | null>());
   const setRowRef = useCallback(
-    (key: string) =>
-      (el: HTMLLIElement | null) => {
-        if (el === null) rowRefs.current.delete(key);
-        else rowRefs.current.set(key, el);
-      },
+    (key: string) => (el: HTMLLIElement | null) => {
+      if (el === null) rowRefs.current.delete(key);
+      else rowRefs.current.set(key, el);
+    },
     [],
   );
 
@@ -499,14 +499,11 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
   // 12h hours-column click: map the displayed hour (12, 1..11) to a 24h
   // internal hour given the CURRENT period (so flipping AM ↔ PM is a
   // separate operation on the period column).
-  const display12ToInternal = useCallback(
-    (displayHour: number, isPm: boolean): number => {
-      // 12 AM → 0; 12 PM → 12; 1..11 AM → 1..11; 1..11 PM → 13..23.
-      const base = displayHour === 12 ? 0 : displayHour;
-      return isPm ? base + 12 : base;
-    },
-    [],
-  );
+  const display12ToInternal = useCallback((displayHour: number, isPm: boolean): number => {
+    // 12 AM → 0; 12 PM → 12; 1..11 AM → 1..11; 1..11 PM → 13..23.
+    const base = displayHour === 12 ? 0 : displayHour;
+    return isPm ? base + 12 : base;
+  }, []);
 
   const handleHourPick = useCallback(
     (rowValue: number) => {
@@ -516,15 +513,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
       const rounded = roundTimeToStep(internalHour, currentMinute, step);
       onChange({ hours: rounded.hours, minutes: rounded.minutes });
     },
-    [
-      currentMinute,
-      currentPeriod,
-      display12ToInternal,
-      onChange,
-      resolvedCycle,
-      step,
-      value,
-    ],
+    [currentMinute, currentPeriod, display12ToInternal, onChange, resolvedCycle, step, value],
   );
 
   const handleMinutePick = useCallback(
@@ -644,8 +633,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
                 {hoursRows.map((h, i) => {
                   const isCurrent = h === currentDisplayHour;
                   const isFocused = focused.column === 'hours' && focused.index === i;
-                  const label =
-                    resolvedCycle === '24' ? String(h).padStart(2, '0') : String(h);
+                  const label = resolvedCycle === '24' ? String(h).padStart(2, '0') : String(h);
                   return (
                     <li
                       key={h}
@@ -737,11 +725,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
                         >
                           <span className={styles.timeRowLabel}>{periodLabels[p]}</span>
                           {isCurrent && (
-                            <Check
-                              size={12}
-                              aria-hidden="true"
-                              className={styles.timeRowCheck}
-                            />
+                            <Check size={12} aria-hidden="true" className={styles.timeRowCheck} />
                           )}
                         </li>
                       );

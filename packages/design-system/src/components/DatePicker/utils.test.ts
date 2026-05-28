@@ -187,13 +187,13 @@ describe('DatePicker utils', () => {
   });
 
   describe('formatTime', () => {
-    it("formats 24h as zero-padded HH:mm", () => {
+    it('formats 24h as zero-padded HH:mm', () => {
       expect(formatTime(14, 30, '24')).toBe('14:30');
       expect(formatTime(9, 0, '24')).toBe('09:00');
       expect(formatTime(0, 0, '24')).toBe('00:00');
       expect(formatTime(23, 59, '24')).toBe('23:59');
     });
-    it("formats 12h with AM/PM and one-digit hour when applicable", () => {
+    it('formats 12h with AM/PM and one-digit hour when applicable', () => {
       expect(formatTime(14, 30, '12')).toBe('2:30 PM');
       expect(formatTime(11, 5, '12')).toBe('11:05 AM');
       expect(formatTime(23, 5, '12')).toBe('11:05 PM');
@@ -250,9 +250,7 @@ describe('DatePicker utils', () => {
       );
     });
     it('parses AM/PM with no leading-zero minutes form ("2 PM")', () => {
-      expect(parseDateTime('05/28/2026 2 PM', 'en-US')).toEqual(
-        new Date(2026, 4, 28, 14, 0, 0, 0),
-      );
+      expect(parseDateTime('05/28/2026 2 PM', 'en-US')).toEqual(new Date(2026, 4, 28, 14, 0, 0, 0));
     });
     it('parses lowercase / period-form AM/PM ("p.m.", "am")', () => {
       expect(parseDateTime('05/28/2026 2:30 p.m.', 'en-US')).toEqual(

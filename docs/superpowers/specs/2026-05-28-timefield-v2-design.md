@@ -37,7 +37,10 @@ export type TimeValue = { hours: number; minutes: number };
 /** How the popover hour list + text-input display + placeholder render. */
 export type HourCycle = '12' | '24' | 'auto';
 
-export interface TimeFieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface TimeFieldProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   /** Selected time. `null` disables the field. */
   value: TimeValue | null;
   /** Fired when the user commits a new time (typed blur/Enter, popover row, or Now button). */
@@ -94,22 +97,19 @@ The pickers wire it through to TimeField AND to the trigger text formatter (`for
 export function getLocaleHourCycle(locale: string): '12' | '24';
 
 /** Format hours+minutes per cycle. 24: "HH:mm". 12: "h:mm AM/PM". */
-export function formatTime(
-  hours: number,
-  minutes: number,
-  hourCycle: '12' | '24',
-): string;
+export function formatTime(hours: number, minutes: number, hourCycle: '12' | '24'): string;
 
 // REPLACES the existing toTimeInputValue: same call shape but cycle-aware.
 // The existing toTimeInputValue stays as an alias to `formatTime(h, m, '24')`
 // for the consumers that need the wire-format value (e.g., hidden form mirrors).
-export function toTimeInputValue(date: Date): string;  // still 24h, used for hidden mirror
+export function toTimeInputValue(date: Date): string; // still 24h, used for hidden mirror
 
 /** Resolve hourCycle 'auto' against a locale. */
 export function resolveHourCycle(hourCycle: HourCycle, locale: string): '12' | '24';
 ```
 
 `parseTime(raw)` extends to accept AM/PM input case-insensitively, with or without space, optional period in "P.M.":
+
 - `"2:30 PM"`, `"2:30PM"`, `"2:30 P.M."`, `"230pm"`, `"2pm"`, `"12am"` → 24h-internal
 - `"14:30"`, `"1430"`, etc. → unchanged
 
@@ -176,7 +176,7 @@ Footer integrates into the keyboard nav as a 4th focus target: Tab from the last
   --date-picker-time-popover-footer-padding: var(--space-2);
   --date-picker-time-popover-footer-border-color: var(--color-border);
   --date-picker-time-now-button-fg: var(--color-accent);
-  --date-picker-time-period-column-width: 3.5rem;  // narrower than hours/minutes
+  --date-picker-time-period-column-width: 3.5rem; // narrower than hours/minutes
 }
 ```
 
@@ -199,30 +199,30 @@ en + ru. Russian: "Сейчас" / "Период" / "AM" / "PM" (the AM/PM token
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| `packages/design-system/src/components/DatePicker/utils.ts` | MODIFY — `getLocaleHourCycle`, `resolveHourCycle`, `formatTime`, extend `parseTime` for AM/PM, `formatDateTime` adds cycle arg |
-| `packages/design-system/src/components/DatePicker/utils.test.ts` | MODIFY — tests for new utils + AM/PM parsing |
-| `packages/design-system/src/components/DatePicker/TimeField.tsx` | MAJOR REWRITE — TimeValue shape, hourCycle, AM/PM column, arrow-nav, Now button |
-| `packages/design-system/src/components/DatePicker/TimeField.module.scss` | MODIFY — `.timeColumnPeriod`, `.timeFooter`, `.timeNowButton` |
-| `packages/design-system/src/components/DatePicker/TimeField.test.tsx` | MODIFY — value-shape tests + new feature tests |
-| `packages/design-system/src/components/DatePicker/DatePicker.tokens.scss` | MODIFY — footer + period column tokens |
-| `packages/design-system/src/components/DatePicker/DatePicker.tsx` | MODIFY — hourCycle prop, convert TimeValue at boundary, pass through to TimeField, update trigger format |
-| `packages/design-system/src/components/DatePicker/InlineDatePicker.tsx` | MODIFY — same |
-| `packages/design-system/src/components/DateRangePicker/DateRangePicker.tsx` | MODIFY — hourCycle prop, boundary conversion for 2 TimeFields |
-| `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.tsx` | MODIFY — same |
-| `packages/design-system/src/components/DateRangePicker/utils.ts` | MODIFY — `formatDateTimeRange` accepts hourCycle |
-| All 4 picker test files | MODIFY — adjust to new TimeField shape; add hourCycle / Now-button / arrow-nav tests |
-| `packages/design-system/src/i18n/messages.ts` + en.ts + ru.ts | MODIFY — 4 new keys |
-| `packages/design-system/src/index.ts` | MODIFY — export `TimeField`, `TimeValue`, `HourCycle`, `TimeFieldProps` |
-| `packages/design-system/src/components.manifest.json` + `_meta/manifest.ts` | MODIFY — register TimeField as primitive in Forms cluster |
-| `packages/design-system/AGENTS.md` | MODIFY — TimeField catalog entry + hourCycle blurb on 4 pickers |
-| `packages/playground/src/pages/components/TimeFieldDemo.tsx` | NEW — standalone TimeField examples |
-| `packages/playground/src/App.tsx` | MODIFY — `/components/timefield` route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | MODIFY — sidebar entry under Forms |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` | MODIFY — overview card |
-| `packages/playground/src/pages/mockups/registry.ts` | MODIFY — `'TimeField'` in union |
-| `packages/playground/src/pages/components/DatePickerDemo.tsx` (and 3 siblings) | MODIFY — add 12h-mode + Now-button demo sections |
+| File                                                                              | Role                                                                                                                           |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/design-system/src/components/DatePicker/utils.ts`                       | MODIFY — `getLocaleHourCycle`, `resolveHourCycle`, `formatTime`, extend `parseTime` for AM/PM, `formatDateTime` adds cycle arg |
+| `packages/design-system/src/components/DatePicker/utils.test.ts`                  | MODIFY — tests for new utils + AM/PM parsing                                                                                   |
+| `packages/design-system/src/components/DatePicker/TimeField.tsx`                  | MAJOR REWRITE — TimeValue shape, hourCycle, AM/PM column, arrow-nav, Now button                                                |
+| `packages/design-system/src/components/DatePicker/TimeField.module.scss`          | MODIFY — `.timeColumnPeriod`, `.timeFooter`, `.timeNowButton`                                                                  |
+| `packages/design-system/src/components/DatePicker/TimeField.test.tsx`             | MODIFY — value-shape tests + new feature tests                                                                                 |
+| `packages/design-system/src/components/DatePicker/DatePicker.tokens.scss`         | MODIFY — footer + period column tokens                                                                                         |
+| `packages/design-system/src/components/DatePicker/DatePicker.tsx`                 | MODIFY — hourCycle prop, convert TimeValue at boundary, pass through to TimeField, update trigger format                       |
+| `packages/design-system/src/components/DatePicker/InlineDatePicker.tsx`           | MODIFY — same                                                                                                                  |
+| `packages/design-system/src/components/DateRangePicker/DateRangePicker.tsx`       | MODIFY — hourCycle prop, boundary conversion for 2 TimeFields                                                                  |
+| `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.tsx` | MODIFY — same                                                                                                                  |
+| `packages/design-system/src/components/DateRangePicker/utils.ts`                  | MODIFY — `formatDateTimeRange` accepts hourCycle                                                                               |
+| All 4 picker test files                                                           | MODIFY — adjust to new TimeField shape; add hourCycle / Now-button / arrow-nav tests                                           |
+| `packages/design-system/src/i18n/messages.ts` + en.ts + ru.ts                     | MODIFY — 4 new keys                                                                                                            |
+| `packages/design-system/src/index.ts`                                             | MODIFY — export `TimeField`, `TimeValue`, `HourCycle`, `TimeFieldProps`                                                        |
+| `packages/design-system/src/components.manifest.json` + `_meta/manifest.ts`       | MODIFY — register TimeField as primitive in Forms cluster                                                                      |
+| `packages/design-system/AGENTS.md`                                                | MODIFY — TimeField catalog entry + hourCycle blurb on 4 pickers                                                                |
+| `packages/playground/src/pages/components/TimeFieldDemo.tsx`                      | NEW — standalone TimeField examples                                                                                            |
+| `packages/playground/src/App.tsx`                                                 | MODIFY — `/components/timefield` route                                                                                         |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`                            | MODIFY — sidebar entry under Forms                                                                                             |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx`                    | MODIFY — overview card                                                                                                         |
+| `packages/playground/src/pages/mockups/registry.ts`                               | MODIFY — `'TimeField'` in union                                                                                                |
+| `packages/playground/src/pages/components/DatePickerDemo.tsx` (and 3 siblings)    | MODIFY — add 12h-mode + Now-button demo sections                                                                               |
 
 ## Tests (new)
 

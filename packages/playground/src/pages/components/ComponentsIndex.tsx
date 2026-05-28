@@ -751,11 +751,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       'Standalone time-of-day input — text + popover with hour / minute (+ AM/PM in 12h locales) lists and a Now button. Powers the picker family when granularity="minute".',
     preview: (
       <div style={{ width: 140 }}>
-        <TimeField
-          value={{ hours: 9, minutes: 30 }}
-          onChange={() => {}}
-          aria-label="Preview"
-        />
+        <TimeField value={{ hours: 9, minutes: 30 }} onChange={() => {}} aria-label="Preview" />
       </div>
     ),
   },

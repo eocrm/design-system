@@ -138,7 +138,7 @@ describe('DateRangePicker utils', () => {
         ),
       ).toBe('05/28/2026 09:00 — 05/29/2026 17:30');
     });
-    it("defaults to 24-hour when cycle arg is omitted (back-compat)", () => {
+    it('defaults to 24-hour when cycle arg is omitted (back-compat)', () => {
       expect(
         formatDateTimeRange(
           { start: new Date(2026, 4, 28, 14, 0), end: new Date(2026, 4, 29, 1, 30) },

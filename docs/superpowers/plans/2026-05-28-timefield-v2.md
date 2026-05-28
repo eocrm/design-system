@@ -22,12 +22,12 @@
 
 ### i18n keys
 
-| Key | en | ru |
-| --- | --- | --- |
-| `datePicker.timeNow` | `Now` | `Сейчас` |
+| Key                          | en       | ru       |
+| ---------------------------- | -------- | -------- |
+| `datePicker.timeNow`         | `Now`    | `Сейчас` |
 | `datePicker.timePeriodLabel` | `Period` | `Период` |
-| `datePicker.timePeriodAm` | `AM` | `AM` |
-| `datePicker.timePeriodPm` | `PM` | `PM` |
+| `datePicker.timePeriodAm`    | `AM`     | `AM`     |
+| `datePicker.timePeriodPm`    | `PM`     | `PM`     |
 
 ### Utils additions (`DatePicker/utils.ts`)
 
@@ -40,7 +40,9 @@ export type TimeValue = { hours: number; minutes: number };
 
 /** True 12-hour locale detection via Intl. */
 export function getLocaleHourCycle(locale: string): '12' | '24' {
-  const sample = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).format(new Date(2000, 0, 1, 15));
+  const sample = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).format(
+    new Date(2000, 0, 1, 15),
+  );
   return /am|pm/i.test(sample) ? '12' : '24';
 }
 
@@ -62,11 +64,7 @@ export function formatTime(hours: number, minutes: number, cycle: '12' | '24'): 
 `formatDateTime(date, locale, cycle?: '12' | '24')` — extend with optional third arg. Default behavior (no third arg) → `'24'` (preserves library-internal callers like the hidden form mirror). The pickers pass through their resolved cycle.
 
 ```ts
-export function formatDateTime(
-  date: Date,
-  locale: string,
-  cycle: '12' | '24' = '24',
-): string {
+export function formatDateTime(date: Date, locale: string, cycle: '12' | '24' = '24'): string {
   const datePart = formatDate(date, locale);
   const timePart = formatTime(date.getHours(), date.getMinutes(), cycle);
   return `${datePart} ${timePart}`;
@@ -82,12 +80,14 @@ export function parseTime(raw: string): { hours: number; minutes: number } | nul
   // 24h-style first
   const colon = str.match(/^([0-9]{1,2}):([0-9]{2})$/);
   if (colon) {
-    const h = Number(colon[1]); const m = Number(colon[2]);
+    const h = Number(colon[1]);
+    const m = Number(colon[2]);
     return h <= 23 && m <= 59 ? { hours: h, minutes: m } : null;
   }
   const digits = str.match(/^([0-9]{1,2})([0-9]{2})$/);
   if (digits) {
-    const h = Number(digits[1]); const m = Number(digits[2]);
+    const h = Number(digits[1]);
+    const m = Number(digits[2]);
     return h <= 23 && m <= 59 ? { hours: h, minutes: m } : null;
   }
   const hoursOnly = str.match(/^([0-9]{1,2})$/);
@@ -216,7 +216,10 @@ import type { HourCycle, TimeValue } from './utils';
 
 export type { TimeValue, HourCycle };
 
-export interface TimeFieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface TimeFieldProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   value: TimeValue | null;
   onChange: (value: TimeValue) => void;
   step?: number;
@@ -233,6 +236,7 @@ export interface TimeFieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
 ### Internal logic changes
 
 1. **Resolve cycle:**
+
    ```ts
    const localeFromContext = useLocale();
    const resolvedCycle = resolveHourCycle(hourCycle, locale ?? localeFromContext);
@@ -243,12 +247,14 @@ export interface TimeFieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
 3. **Text input format:** `value ? formatTime(value.hours, value.minutes, resolvedCycle) : ''`. Placeholder: `resolvedCycle === '24' ? 'HH:mm' : 'h:mm AM/PM'`. The `maxLength` should bump to 8 for 12h ("12:00 PM").
 
 4. **Hours row set:**
+
    ```ts
    const hoursRows: readonly number[] =
      resolvedCycle === '24'
        ? Array.from({ length: 24 }, (_, i) => i)
-       : [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];  // internal 0 displays as 12, 1-11 stays
+       : [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]; // internal 0 displays as 12, 1-11 stays
    ```
+
    But internal storage is always 24h. When a 12h row is clicked, convert via period.
 
 5. **Period column** (12h only): `[0, 1]` representing AM/PM. Row labels via `t('datePicker.timePeriodAm')` / `t('datePicker.timePeriodPm')`. Listbox aria-label `t('datePicker.timePeriodLabel')`.
@@ -313,7 +319,8 @@ const handlePopoverKeyDown = (e: ReactKeyboardEvent) => {
 };
 
 const moveColumn = (delta: number) => {
-  const columns: FocusColumn[] = resolvedCycle === '12' ? ['hours', 'minutes', 'period'] : ['hours', 'minutes'];
+  const columns: FocusColumn[] =
+    resolvedCycle === '12' ? ['hours', 'minutes', 'period'] : ['hours', 'minutes'];
   setFocused((f) => {
     const i = columns.indexOf(f.column);
     const next = columns[Math.min(Math.max(0, i + delta), columns.length - 1)];
@@ -374,6 +381,7 @@ fireEvent.keyDown(input, { key: 'ArrowDown' });  // opens popover
 Vitest globals; no imports for describe/it/expect/vi.
 
 Existing tests need updates:
+
 - Replace `value={new Date(...)}` with `value={{ hours, minutes }}`
 - `onChange` signature is `(value: TimeValue)` not `(hours, minutes)` — update assertions
 - Add tests for 12h cycle, AM/PM column, Now button, arrow keys
@@ -407,6 +415,7 @@ For each picker:
 4. **Update placeholder defaults**: include the cycle-formatted hour example (e.g., en-US → `"05/28/2026 2:30 PM"`).
 
 5. **TimeField wiring:**
+
    ```tsx
    <TimeField
      value={value ? { hours: value.getHours(), minutes: value.getMinutes() } : null}
@@ -525,6 +534,7 @@ Update each of the four picker sections to mention `hourCycle`.
 Run: `make build` — green.
 
 Visual smoke (Playwright MCP):
+
 - Navigate to `/components/timefield` — verify all 6 examples
 - Open one popover → confirm 3 columns in 12h mode, 2 columns in 24h
 - Click Now → input updates

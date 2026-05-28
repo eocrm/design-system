@@ -2144,7 +2144,7 @@ const [time, setTime] = useState<TimeValue | null>({ hours: 9, minutes: 0 });
   step={30}
   hideNowButton
   aria-label="Departure time"
-/>;
+/>
 ```
 
 ```tsx
@@ -2156,7 +2156,7 @@ const [time, setTime] = useState<TimeValue | null>({ hours: 9, minutes: 0 });
   step={15}
   aria-label="Meeting time"
   disabled={value == null}
-/>;
+/>
 ```
 
 - Bare text input + chevron toggle that opens a popover with hour / minute (and AM/PM in 12h mode) listbox columns plus a "Now" footer button. The wrapper IS the public element; the input has no border of its own — the wrapper renders the same chrome as `<Input>`.

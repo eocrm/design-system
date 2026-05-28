@@ -208,9 +208,7 @@ export function parseDateTime(raw: string, locale: string): Date | null {
   // Try AM/PM tail first — its shape is unambiguous and we want
   // "05/28/2026 2:30 PM" to bind both digits and the suffix to the time
   // tail (rather than letting the 24h regex below pick off just "2:30").
-  const ampmMatch = str.match(
-    /[T\s]([0-9]{1,2})(?::([0-9]{2}))?\s*(a\.?\s*m\.?|p\.?\s*m\.?)$/i,
-  );
+  const ampmMatch = str.match(/[T\s]([0-9]{1,2})(?::([0-9]{2}))?\s*(a\.?\s*m\.?|p\.?\s*m\.?)$/i);
   if (ampmMatch) {
     const h12 = Number(ampmMatch[1]);
     const m = ampmMatch[2] != null ? Number(ampmMatch[2]) : 0;

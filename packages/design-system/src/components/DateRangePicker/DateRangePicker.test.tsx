@@ -396,9 +396,7 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      expect(screen.getByRole('textbox')).toHaveValue(
-        '05/21/2026 9:00 AM — 06/04/2026 5:30 PM',
-      );
+      expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 9:00 AM — 06/04/2026 5:30 PM');
     });
 
     it('granularity="minute" hourCycle="12" forces AM/PM regardless of locale', () => {
@@ -412,9 +410,7 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap('ru-RU') },
       );
-      expect(screen.getByRole('textbox')).toHaveValue(
-        '21.05.2026 9:00 AM — 04.06.2026 5:30 PM',
-      );
+      expect(screen.getByRole('textbox')).toHaveValue('21.05.2026 9:00 AM — 04.06.2026 5:30 PM');
     });
 
     it('granularity="minute" hourCycle="auto" + ru-RU shows 24h in trigger', () => {
@@ -427,9 +423,7 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap('ru-RU') },
       );
-      expect(screen.getByRole('textbox')).toHaveValue(
-        '21.05.2026 09:00 — 04.06.2026 17:30',
-      );
+      expect(screen.getByRole('textbox')).toHaveValue('21.05.2026 09:00 — 04.06.2026 17:30');
     });
 
     it('picking a fresh range from null defaults start=00:00 / end=23:59', async () => {

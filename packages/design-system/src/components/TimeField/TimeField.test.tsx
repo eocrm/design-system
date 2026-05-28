@@ -128,10 +128,7 @@ describe('TimeField', () => {
   it("hourCycle='24' forced: 24 hour rows, no period column, placeholder HH:mm", async () => {
     const user = userEvent.setup();
     render(<Driver hourCycle="24" />, { wrapper: wrap('en-US') });
-    expect(screen.getByRole('textbox', { name: 'Time' })).toHaveAttribute(
-      'placeholder',
-      'HH:mm',
-    );
+    expect(screen.getByRole('textbox', { name: 'Time' })).toHaveAttribute('placeholder', 'HH:mm');
     await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
     const hours = await screen.findByRole('listbox', { name: 'Hours' });
     expect(within(hours).getAllByRole('option')).toHaveLength(24);
@@ -244,12 +241,7 @@ describe('TimeField', () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
     render(
-      <Driver
-        step={15}
-        initial={{ hours: 9, minutes: 0 }}
-        onChange={onChange}
-        hourCycle="24"
-      />,
+      <Driver step={15} initial={{ hours: 9, minutes: 0 }} onChange={onChange} hourCycle="24" />,
       { wrapper: wrap() },
     );
     const input = screen.getByRole('textbox', { name: 'Time' });
@@ -262,10 +254,9 @@ describe('TimeField', () => {
   it('typing "2:30 PM" commits onChange({ hours: 14, minutes: 30 })', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Driver initial={{ hours: 9, minutes: 0 }} onChange={onChange} hourCycle="12" />,
-      { wrapper: wrap('en-US') },
-    );
+    render(<Driver initial={{ hours: 9, minutes: 0 }} onChange={onChange} hourCycle="12" />, {
+      wrapper: wrap('en-US'),
+    });
     const input = screen.getByRole('textbox', { name: 'Time' });
     await user.clear(input);
     await user.type(input, '2:30 PM');
@@ -276,10 +267,9 @@ describe('TimeField', () => {
   it('typing "230pm" commits onChange({ hours: 14, minutes: 30 })', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Driver initial={{ hours: 9, minutes: 0 }} onChange={onChange} hourCycle="12" />,
-      { wrapper: wrap('en-US') },
-    );
+    render(<Driver initial={{ hours: 9, minutes: 0 }} onChange={onChange} hourCycle="12" />, {
+      wrapper: wrap('en-US'),
+    });
     const input = screen.getByRole('textbox', { name: 'Time' });
     await user.clear(input);
     await user.type(input, '230pm');
@@ -290,10 +280,9 @@ describe('TimeField', () => {
   it('typing "14:30" in 12h mode still parses (lenient)', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Driver initial={{ hours: 9, minutes: 0 }} onChange={onChange} hourCycle="12" />,
-      { wrapper: wrap('en-US') },
-    );
+    render(<Driver initial={{ hours: 9, minutes: 0 }} onChange={onChange} hourCycle="12" />, {
+      wrapper: wrap('en-US'),
+    });
     const input = screen.getByRole('textbox', { name: 'Time' });
     await user.clear(input);
     await user.type(input, '14:30');
@@ -410,14 +399,9 @@ describe('TimeField', () => {
   it('AM click at hours=14 flips to AM (hours=2)', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Driver
-        initial={{ hours: 14, minutes: 30 }}
-        onChange={onChange}
-        hourCycle="12"
-      />,
-      { wrapper: wrap('en-US') },
-    );
+    render(<Driver initial={{ hours: 14, minutes: 30 }} onChange={onChange} hourCycle="12" />, {
+      wrapper: wrap('en-US'),
+    });
     await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
     const period = await screen.findByRole('listbox', { name: 'Period' });
     await user.click(within(period).getByRole('option', { name: 'AM' }));
@@ -427,14 +411,9 @@ describe('TimeField', () => {
   it('PM click at hours=2 flips to PM (hours=14)', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Driver
-        initial={{ hours: 2, minutes: 30 }}
-        onChange={onChange}
-        hourCycle="12"
-      />,
-      { wrapper: wrap('en-US') },
-    );
+    render(<Driver initial={{ hours: 2, minutes: 30 }} onChange={onChange} hourCycle="12" />, {
+      wrapper: wrap('en-US'),
+    });
     await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
     const period = await screen.findByRole('listbox', { name: 'Period' });
     await user.click(within(period).getByRole('option', { name: 'PM' }));
@@ -444,14 +423,9 @@ describe('TimeField', () => {
   it('same-period click is a no-op (no onChange)', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Driver
-        initial={{ hours: 14, minutes: 30 }}
-        onChange={onChange}
-        hourCycle="12"
-      />,
-      { wrapper: wrap('en-US') },
-    );
+    render(<Driver initial={{ hours: 14, minutes: 30 }} onChange={onChange} hourCycle="12" />, {
+      wrapper: wrap('en-US'),
+    });
     await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
     const period = await screen.findByRole('listbox', { name: 'Period' });
     await user.click(within(period).getByRole('option', { name: 'PM' }));
@@ -555,13 +529,7 @@ describe('TimeField', () => {
 
   it('ArrowDown moves focus to next row; clamps at last row (no wrap)', async () => {
     const user = userEvent.setup();
-    render(
-      <Driver
-        initial={{ hours: 22, minutes: 30 }}
-        hourCycle="24"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<Driver initial={{ hours: 22, minutes: 30 }} hourCycle="24" />, { wrapper: wrap() });
     await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
     const hours = await screen.findByRole('listbox', { name: 'Hours' });
     await waitFor(() =>
@@ -581,13 +549,7 @@ describe('TimeField', () => {
 
   it('ArrowUp on first row stays at index 0 (no wrap)', async () => {
     const user = userEvent.setup();
-    render(
-      <Driver
-        initial={{ hours: 0, minutes: 0 }}
-        hourCycle="24"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<Driver initial={{ hours: 0, minutes: 0 }} hourCycle="24" />, { wrapper: wrap() });
     await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
     const hours = await screen.findByRole('listbox', { name: 'Hours' });
     await waitFor(() =>
@@ -661,13 +623,9 @@ describe('TimeField', () => {
 
   it('ArrowRight from Minutes in 12h mode moves to Period (current period focused)', async () => {
     const user = userEvent.setup();
-    render(
-      <Driver
-        initial={{ hours: 14, minutes: 30 }}
-        hourCycle="12"
-      />,
-      { wrapper: wrap('en-US') },
-    );
+    render(<Driver initial={{ hours: 14, minutes: 30 }} hourCycle="12" />, {
+      wrapper: wrap('en-US'),
+    });
     await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
     const hours = await screen.findByRole('listbox', { name: 'Hours' });
     // currentDisplayHour for 14 (PM) is 2.
@@ -689,13 +647,7 @@ describe('TimeField', () => {
 
   it('Home → row 0; End → last row', async () => {
     const user = userEvent.setup();
-    render(
-      <Driver
-        initial={{ hours: 12, minutes: 15 }}
-        hourCycle="24"
-      />,
-      { wrapper: wrap() },
-    );
+    render(<Driver initial={{ hours: 12, minutes: 15 }} hourCycle="24" />, { wrapper: wrap() });
     await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
     const hours = await screen.findByRole('listbox', { name: 'Hours' });
     await waitFor(() =>
@@ -749,10 +701,9 @@ describe('TimeField', () => {
 
   it('value=null disables the input + chevron and prevents the popover from opening', async () => {
     const user = userEvent.setup();
-    render(
-      <TimeField value={null} onChange={() => {}} aria-label="Time" hourCycle="24" />,
-      { wrapper: wrap() },
-    );
+    render(<TimeField value={null} onChange={() => {}} aria-label="Time" hourCycle="24" />, {
+      wrapper: wrap(),
+    });
     const input = screen.getByRole('textbox', { name: 'Time' });
     const chevron = screen.getByRole('button', { name: /Time, Open time list/i });
     expect(input).toBeDisabled();
