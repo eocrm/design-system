@@ -47,6 +47,7 @@ export type ComponentName =
   | 'Progress'
   | 'Radio'
   | 'RadioGroup'
+  | 'Rail'
   | 'Select'
   | 'Skeleton'
   | 'Slider'
