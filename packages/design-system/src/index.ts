@@ -21,6 +21,9 @@ export type {
   KanbanMoveEvent,
 } from './components/Kanban';
 
+export { Kbd } from './components/Kbd';
+export type { KbdProps, KbdSize } from './components/Kbd';
+
 export { Card } from './components/Card';
 export type { CardProps, CardPadding, CardTone, CardOverflow } from './components/Card';
 export type { CardHeaderProps, CardHeaderLevel } from './components/Card';

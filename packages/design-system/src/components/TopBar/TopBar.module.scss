@@ -99,19 +99,6 @@
   color: var(--topbar-search-placeholder-fg);
 }
 
-.searchKbd {
-  display: inline-flex;
-  align-items: center;
-  height: 18px;
-  padding: 0 var(--topbar-search-kbd-padding-x);
-  background: var(--topbar-search-kbd-bg);
-  color: var(--topbar-search-kbd-fg);
-  font-size: var(--topbar-search-kbd-font-size);
-  border-radius: var(--topbar-search-kbd-radius);
-  font-family: var(--font-family-sans);
-  flex-shrink: 0;
-}
-
 // ─── IconButton + notification indicator ────────────────────────────────
 // stylelint-disable property-disallowed-list -- icon button needs an
 // explicit width + position:relative so the indicator dot (absolute-

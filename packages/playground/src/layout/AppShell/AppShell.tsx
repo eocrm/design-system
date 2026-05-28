@@ -33,6 +33,7 @@ import {
   AppWindow,
   Minus,
   MoreHorizontal,
+  Command,
   KeyRound,
   PanelLeft,
   PanelRight,
@@ -160,6 +161,7 @@ const componentGroups = [
       { to: '/components/definition-list', label: 'DefinitionList', icon: List, end: false },
       { to: '/components/empty-state', label: 'EmptyState', icon: Inbox, end: false },
       { to: '/components/filter-chip', label: 'FilterChip', icon: Filter, end: false },
+      { to: '/components/kbd', label: 'Kbd', icon: Command, end: false },
       { to: '/components/pagination', label: 'Pagination', icon: ListOrdered, end: false },
       { to: '/components/palette', label: 'Palette', icon: Palette, end: false },
       { to: '/components/person-display', label: 'PersonDisplay', icon: UserSquare, end: false },
@@ -307,7 +309,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className={styles.topbarWrap}>
         <TopBar>
           <TopBar.Start>
-            <TopBar.Search placeholder="Search contacts, deals…" hotkey="⌘K" />
+            <TopBar.Search placeholder="Search contacts, deals…" hotkey={['⌘', 'K']} />
           </TopBar.Start>
           <TopBar.End>
             <TopBar.IconButton aria-label="Create new">

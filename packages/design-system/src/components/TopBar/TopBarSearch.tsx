@@ -1,12 +1,14 @@
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, type InputHTMLAttributes } from 'react';
 import { Search } from 'lucide-react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
+import { Kbd } from '../Kbd';
 import styles from './TopBar.module.scss';
 
 /**
  * Props for `<TopBar.Search>` — a styled `<input type="search">` with a
- * leading magnifying-glass icon and an optional trailing `<kbd>` hint.
+ * leading magnifying-glass icon and an optional trailing `<Kbd>` hotkey
+ * hint.
  *
  * Inherits the standard `<input>` HTML attribute surface (minus `type`,
  * which is fixed to `'search'`). Spread your `value` / `defaultValue` /
@@ -15,11 +17,16 @@ import styles from './TopBar.module.scss';
  */
 export interface TopBarSearchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   /**
-   * Optional `<kbd>` hint shown after the input — typically a hotkey copy
-   * (e.g. `'⌘K'`, `'Ctrl+K'`). The hint is **visual only**; the library
-   * does not bind any keyboard shortcut to it. Omit for no hint.
+   * Optional hotkey hint shown after the input. Rendered internally via
+   * `<Kbd size="sm">`. Pass an **array** of key labels for a multi-key
+   * combo (`['⌘', 'K']` → two chips joined with `+`) or a single string
+   * for a one-chip hint (`'Esc'` → one chip). Note: `'⌘K'` is treated as
+   * a single chip — use the array form for multi-key combos.
+   *
+   * The hint is **visual only**; the library does not bind any keyboard
+   * shortcut to it. Omit for no hint.
    */
-  hotkey?: ReactNode;
+  hotkey?: string | string[];
   /**
    * `className` for the wrapping `<div>` (the search surface itself).
    * The input's own className lives on the underlying `<input>` via the
@@ -48,7 +55,12 @@ export interface TopBarSearchProps extends Omit<InputHTMLAttributes<HTMLInputEle
  * doesn't dictate which shortcuts a host app uses.
  *
  * @example
- * <TopBar.Search placeholder="Search contacts, deals…" hotkey="⌘K" />
+ * // Multi-key combo — array form renders one chip per key joined by `+`.
+ * <TopBar.Search placeholder="Search contacts, deals…" hotkey={['⌘', 'K']} />
+ *
+ * @example
+ * // Single-key hint — string form renders as one chip via <Kbd size="sm">.
+ * <TopBar.Search placeholder="Filter…" hotkey="/" />
  *
  * @example
  * // Controlled — round-trip value through state.
@@ -102,11 +114,7 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
         // {...inputProps} last so consumer overrides win (Pattern A).
         {...inputProps}
       />
-      {hotkey != null && (
-        <kbd aria-hidden className={styles.searchKbd}>
-          {hotkey}
-        </kbd>
-      )}
+      {hotkey != null && <Kbd keys={Array.isArray(hotkey) ? hotkey : [hotkey]} size="sm" />}
     </div>
   );
 });
