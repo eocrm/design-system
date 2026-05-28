@@ -1,0 +1,156 @@
+@use './TopBar.tokens';
+
+// ─── Root ───────────────────────────────────────────────────────────────
+// stylelint-disable property-disallowed-list -- TopBar is a layout-owning
+// primitive (Hard rule 4 exception). Like <Modal>, <Drawer>, <Page>, <Rail>,
+// the top bar owns its OWN height + padding + sticky positioning because
+// that IS its job as a top-bar chrome. The consumer chooses WHERE the bar
+// lives (typically a CSS-grid app shell) by styling its parent; the bar
+// itself fills the available inline space.
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: var(--topbar-z-index);
+  height: var(--topbar-height);
+  padding: 0 var(--topbar-padding-x);
+  background: var(--topbar-bg);
+  border-bottom: var(--topbar-border-width) solid var(--topbar-border-color);
+  display: flex;
+  align-items: center;
+  gap: var(--topbar-gap);
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Start / End clusters ───────────────────────────────────────────────
+// stylelint-disable property-disallowed-list -- Start/End are TopBar's
+// internal layout regions: Start flex-grows so End is pushed to the right
+// edge with no spacer. Same rule-4 exception as the bar itself.
+.start {
+  display: flex;
+  align-items: center;
+  gap: var(--topbar-gap);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Search ─────────────────────────────────────────────────────────────
+// stylelint-disable property-disallowed-list -- search field needs a max
+// width so it doesn't stretch across an entire wide viewport, and a
+// min-width: 0 so it can shrink inside the Start cluster's flex row.
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--topbar-search-gap);
+  height: var(--topbar-search-height);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- intrinsic 100% of the available column
+  width: 100%;
+  max-width: var(--topbar-search-max-width);
+  min-width: 0;
+  padding: 0 var(--topbar-search-padding-x);
+  background: var(--topbar-search-bg);
+  border-radius: var(--topbar-search-radius);
+}
+// stylelint-enable property-disallowed-list
+
+.search:focus-within {
+  outline: var(--ring-width) solid var(--topbar-search-ring-focus);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- pull the focus ring inward by 1px so it sits ON the surface edge instead of outside it
+  outline-offset: -1px;
+}
+
+.searchIcon {
+  width: var(--topbar-search-icon-size);
+  height: var(--topbar-search-icon-size);
+  color: var(--topbar-search-icon-fg);
+  flex-shrink: 0;
+}
+
+// stylelint-disable property-disallowed-list -- the input needs flex:1 so it
+// fills the remaining width inside the .search wrapper between the icon and
+// the kbd hint. It is NOT a layout-owning region — it is the inner content
+// of the search pill.
+.searchInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- transparent so the wrapper's bg shows through
+  background: transparent;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- native input border reset; the wrapper provides chrome
+  border: 0;
+  color: var(--topbar-search-fg);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- inherit page font sizing
+  font: inherit;
+}
+// stylelint-enable property-disallowed-list
+
+.searchInput:focus {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- the wrapper handles the visible focus ring (focus-within)
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--topbar-search-placeholder-fg);
+}
+
+.searchKbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 var(--topbar-search-kbd-padding-x);
+  background: var(--topbar-search-kbd-bg);
+  color: var(--topbar-search-kbd-fg);
+  font-size: var(--topbar-search-kbd-font-size);
+  border-radius: var(--topbar-search-kbd-radius);
+  font-family: var(--font-family-sans);
+  flex-shrink: 0;
+}
+
+// ─── IconButton + notification indicator ────────────────────────────────
+// stylelint-disable property-disallowed-list -- icon button needs an
+// explicit width + position:relative so the indicator dot (absolute-
+// positioned in its upper-right) has an anchor. The dot itself is
+// absolutely positioned, which Rule 4 normally bans on components — but
+// it's a topbar-scoped visual marker, not a layout container, so the
+// exception is justified inline.
+.iconButton {
+  width: var(--topbar-icon-button-size);
+  height: var(--topbar-icon-button-size);
+  border-radius: var(--topbar-icon-button-radius);
+  position: relative;
+}
+
+.indicator {
+  position: absolute;
+  top: var(--topbar-indicator-offset-top);
+  right: var(--topbar-indicator-offset-right);
+  width: var(--topbar-indicator-size);
+  height: var(--topbar-indicator-size);
+  border-radius: var(--radius-full);
+  border: var(--topbar-indicator-border-width) solid var(--topbar-indicator-border-color);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- the dot is decorative; clicks pass through to the button beneath
+  pointer-events: none;
+}
+// stylelint-enable property-disallowed-list
+
+.indicatorDanger {
+  background: var(--topbar-indicator-bg-danger);
+}
+
+.indicatorWarning {
+  background: var(--topbar-indicator-bg-warning);
+}
+
+.indicatorInfo {
+  background: var(--topbar-indicator-bg-info);
+}
+
+.indicatorAccent {
+  background: var(--topbar-indicator-bg-accent);
+}

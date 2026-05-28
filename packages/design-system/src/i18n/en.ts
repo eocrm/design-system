@@ -137,4 +137,8 @@ export const en: Messages = {
     collapse: 'Collapse navigation',
     navigation: 'Main navigation',
   },
+  topBar: {
+    label: 'Application top bar',
+    search: 'Search',
+  },
 };

@@ -8,7 +8,6 @@ import {
   Users,
   UserCog,
   UserSquare,
-  Search,
   Bell,
   Plus,
   Component,
@@ -67,8 +66,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Avatar, Rail, useRail } from '@eocrm/design-system';
-import { Cluster } from '@eocrm/design-system';
+import { Avatar, Rail, TopBar, useRail } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
@@ -188,6 +186,7 @@ const componentGroups = [
       { to: '/components/link', label: 'Link', icon: ExternalLink, end: false },
       { to: '/components/rail', label: 'Rail', icon: Sidebar, end: false },
       { to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false },
+      { to: '/components/topbar', label: 'TopBar', icon: LayoutPanelTop, end: false },
     ],
   },
   {
@@ -305,37 +304,22 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Rail>
       </div>
 
-      <header className={styles.topbar}>
-        <Cluster gap="md" align="center" wrap={false}>
-          <div className={styles.searchWrap}>
-            <Search size={14} className={styles.searchIcon} aria-hidden />
-            <input
-              type="search"
-              placeholder="Search contacts, deals…"
-              className={styles.search}
-              aria-label="Search"
-              // Tell password managers (1Password, Bitwarden) and browser autofill
-              // to leave this alone — it's a free-text search, not a username field.
-              autoComplete="off"
-              data-1p-ignore
-              data-lpignore="true"
-              data-form-type="other"
-            />
-            <kbd className={styles.searchKbd}>⌘K</kbd>
-          </div>
-        </Cluster>
-
-        <Cluster gap="sm" align="center" wrap={false}>
-          <button className={styles.iconBtn} aria-label="Create new">
-            <Plus size={16} />
-          </button>
-          <button className={styles.iconBtn} aria-label="Notifications">
-            <Bell size={16} />
-            <span className={styles.notifDot} aria-hidden />
-          </button>
-          <Avatar name="Alex Rivera" size="sm" />
-        </Cluster>
-      </header>
+      <div className={styles.topbarWrap}>
+        <TopBar>
+          <TopBar.Start>
+            <TopBar.Search placeholder="Search contacts, deals…" hotkey="⌘K" />
+          </TopBar.Start>
+          <TopBar.End>
+            <TopBar.IconButton aria-label="Create new">
+              <Plus size={16} />
+            </TopBar.IconButton>
+            <TopBar.IconButton aria-label="Notifications" indicator>
+              <Bell size={16} />
+            </TopBar.IconButton>
+            <Avatar name="Alex Rivera" size="sm" />
+          </TopBar.End>
+        </TopBar>
+      </div>
 
       <main className={styles.content}>{children}</main>
     </div>

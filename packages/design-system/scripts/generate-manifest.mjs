@@ -79,6 +79,7 @@ const CLUSTERS = {
   Link: 'Navigation',
   Rail: 'Navigation',
   Tabs: 'Navigation',
+  TopBar: 'Navigation',
 
   // Overlays
   ConfirmationPopover: 'Overlays',

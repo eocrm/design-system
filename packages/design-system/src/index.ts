@@ -371,6 +371,17 @@ export type {
   RailGroupProps,
 } from './components/Rail';
 
+export { TopBar } from './components/TopBar';
+export type {
+  TopBarProps,
+  TopBarElement,
+  TopBarStartProps,
+  TopBarEndProps,
+  TopBarSearchProps,
+  TopBarIconButtonProps,
+  TopBarIndicatorTone,
+} from './components/TopBar';
+
 export { Code } from './components/Code';
 export type { CodeProps, CodeTone } from './components/Code';
 

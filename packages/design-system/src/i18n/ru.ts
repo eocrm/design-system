@@ -139,4 +139,8 @@ export const ru: Messages = {
     collapse: 'Свернуть навигацию',
     navigation: 'Главная навигация',
   },
+  topBar: {
+    label: 'Верхняя панель приложения',
+    search: 'Поиск',
+  },
 };

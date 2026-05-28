@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Home, Inbox, Settings as SettingsIcon, Users } from 'lucide-react';
+import { ArrowRight, Bell, Home, Inbox, Settings as SettingsIcon, Users } from 'lucide-react';
 import { Accordion } from '@eocrm/design-system';
 import { Alert } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
@@ -27,6 +27,7 @@ import { Skeleton } from '@eocrm/design-system';
 import { Slider } from '@eocrm/design-system';
 import { Kanban } from '@eocrm/design-system';
 import { Rail } from '@eocrm/design-system';
+import { TopBar } from '@eocrm/design-system';
 import { Sortable } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Switch } from '@eocrm/design-system';
@@ -624,6 +625,36 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             </Rail.Item>
           </Rail.Section>
         </Rail>
+      </div>
+    ),
+  },
+  {
+    to: '/components/topbar',
+    name: 'TopBar',
+    description:
+      'Sticky application top-bar primitive. Compound API with Start/End clusters, a styled Search input, and an IconButton with optional notification dot.',
+    preview: (
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 360,
+          height: 80,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+          borderRadius: 'var(--radius-md)',
+          border: 'var(--border-width) solid var(--color-border)',
+        }}
+      >
+        <TopBar>
+          <TopBar.Start>
+            <TopBar.Search placeholder="Search…" hotkey="⌘K" />
+          </TopBar.Start>
+          <TopBar.End>
+            <TopBar.IconButton aria-label="Notifications" indicator>
+              <Bell size={14} />
+            </TopBar.IconButton>
+          </TopBar.End>
+        </TopBar>
       </div>
     ),
   },
