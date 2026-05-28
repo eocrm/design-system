@@ -406,6 +406,88 @@ export function RailDemo() {
           </Text>
         </Cluster>
       </Example>
+
+      <Example
+        title="Items pinned to the bottom — Rail.Spacer pushes anything after it down"
+        description="Drop a `<Rail.Spacer />` between the main item list and a secondary section to keep settings / help / sign-out anchored at the rail's bottom edge. The Footer (CollapseToggle, user chip) sits below them and stays sticky when the item list overflows."
+        code={`<Rail>
+  <Rail.Header><BrandMark /></Rail.Header>
+
+  <Rail.Section title="Main">
+    <Rail.Item icon={<Home size={16} />} href="#dashboard">Dashboard</Rail.Item>
+    <Rail.Item icon={<KanbanSquare size={16} />} href="#deals">Deals</Rail.Item>
+    <Rail.Item icon={<Users size={16} />} href="#contacts">Contacts</Rail.Item>
+  </Rail.Section>
+
+  {/* Spacer eats the remaining vertical space, pushing everything below it
+      to the bottom of the rail. */}
+  <Rail.Spacer />
+
+  <Rail.Section>
+    <Rail.Item icon={<SettingsIcon size={16} />} href="#settings">Settings</Rail.Item>
+    <Rail.Item icon={<Search size={16} />} href="#help">Help & feedback</Rail.Item>
+  </Rail.Section>
+
+  <Rail.Footer>
+    <Rail.CollapseToggle />
+  </Rail.Footer>
+</Rail>`}
+      >
+        <RailStage>
+          <Rail>
+            <Rail.Header>
+              <BrandMark />
+            </Rail.Header>
+
+            <Rail.Section title="Main">
+              <Rail.Item
+                icon={<Home size={16} />}
+                href="#dashboard"
+                onClick={(e) => e.preventDefault()}
+              >
+                Dashboard
+              </Rail.Item>
+              <Rail.Item
+                icon={<KanbanSquare size={16} />}
+                href="#deals"
+                onClick={(e) => e.preventDefault()}
+              >
+                Deals
+              </Rail.Item>
+              <Rail.Item
+                icon={<Users size={16} />}
+                href="#contacts"
+                onClick={(e) => e.preventDefault()}
+              >
+                Contacts
+              </Rail.Item>
+            </Rail.Section>
+
+            <Rail.Spacer />
+
+            <Rail.Section>
+              <Rail.Item
+                icon={<SettingsIcon size={16} />}
+                href="#settings"
+                onClick={(e) => e.preventDefault()}
+              >
+                Settings
+              </Rail.Item>
+              <Rail.Item
+                icon={<Search size={16} />}
+                href="#help"
+                onClick={(e) => e.preventDefault()}
+              >
+                Help & feedback
+              </Rail.Item>
+            </Rail.Section>
+
+            <Rail.Footer>
+              <Rail.CollapseToggle />
+            </Rail.Footer>
+          </Rail>
+        </RailStage>
+      </Example>
     </DemoLayout>
   );
 }
