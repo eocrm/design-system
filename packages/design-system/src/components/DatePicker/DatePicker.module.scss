@@ -138,3 +138,42 @@
     height: var(--date-picker-button-size-lg);
   }
 }
+
+// Time row — rendered below the calendar grid when granularity='minute'.
+// Layout exception: the popover surface is already an internal-chrome
+// container (positioning is portal-controlled), so the time row's flex
+// layout lives here rather than at the parent — same pattern as the
+// popover header / nav row above. The time input itself reuses the
+// existing date-input chrome tokens (border, radius, font, fg/bg).
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--date-picker-time-row-gap);
+  padding-top: var(--date-picker-time-row-gap);
+}
+
+.timeLabel {
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
+}
+
+.timeInput {
+  width: var(--date-picker-time-input-width);
+  height: var(--date-picker-input-height-sm);
+  padding: 0 var(--space-2);
+  font: inherit;
+  color: var(--color-fg);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.timeInput:focus-visible {
+  outline: var(--ring-width) solid var(--ring-accent);
+  outline-offset: 0;
+}
+
+.timeInput:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
