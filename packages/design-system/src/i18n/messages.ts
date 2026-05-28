@@ -121,6 +121,10 @@ export interface Messages {
     timePeriodAm: string;
     /** Row label for PM in the `<TimeField>` 12-hour period column. */
     timePeriodPm: string;
+    /** Placeholder for the `<TimeField>` text input in 24-hour cycle (e.g. `HH:mm`). */
+    timePlaceholder24: string;
+    /** Placeholder for the `<TimeField>` text input in 12-hour cycle (e.g. `h:mm AM/PM`). */
+    timePlaceholder12: string;
   };
   dateRangePicker: {
     /** Visible label / aria-label for the start-time input in `granularity="minute"` mode. */

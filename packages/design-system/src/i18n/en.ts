@@ -74,6 +74,8 @@ export const en: Messages = {
     timePeriodLabel: 'Period',
     timePeriodAm: 'AM',
     timePeriodPm: 'PM',
+    timePlaceholder24: 'HH:mm',
+    timePlaceholder12: 'h:mm AM/PM',
   },
   dateRangePicker: {
     startTimeLabel: 'Start time',

@@ -174,7 +174,8 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
   const currentMinute = value?.minutes ?? 0;
   const currentPeriod: 0 | 1 = currentHour >= 12 ? 1 : 0; // 0 = AM, 1 = PM
 
-  const placeholder = resolvedCycle === '24' ? 'HH:mm' : 'h:mm AM/PM';
+  const placeholder =
+    resolvedCycle === '24' ? t('datePicker.timePlaceholder24') : t('datePicker.timePlaceholder12');
   // "12:00 AM" = 8 chars; "HH:mm" = 5. Bump for 12h.
   const inputMaxLength = resolvedCycle === '24' ? 5 : 8;
 
