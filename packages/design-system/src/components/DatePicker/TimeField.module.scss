@@ -117,13 +117,11 @@
   background: var(--date-picker-time-popover-divider-color);
 }
 
-// Each list item — minimal wrapper around the actual row button.
+// Each list item IS the option (WAI-ARIA APG listbox pattern: no nested
+// button). The `<li>` carries the hover / current-state styling, the
+// click handler, and the keyboard handler — same chrome that used to
+// live on the inner `<button>`.
 .timeRow {
-  display: block;
-}
-
-// The row button itself — height-aligned, hover + current-state styled.
-.timeRowButton {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -131,13 +129,11 @@
   width: 100%;
   height: var(--date-picker-time-popover-row-height);
   padding: 0 var(--date-picker-time-popover-row-padding-x);
-  background: transparent;
-  border: none;
   border-radius: var(--date-picker-time-popover-row-radius);
   color: var(--date-picker-time-popover-row-fg);
-  font: inherit;
   font-size: var(--date-picker-time-popover-row-font-size);
   cursor: pointer;
+  user-select: none;
   text-align: left;
 
   &:hover {

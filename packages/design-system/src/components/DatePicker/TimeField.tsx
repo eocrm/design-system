@@ -316,7 +316,13 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
         // Don't steal focus from the input on mousedown — the click handler
         // explicitly focuses the input after toggling.
         onMouseDown={(e) => e.preventDefault()}
-        tabIndex={-1}
+        // Intentionally Tab-reachable (default tabIndex for <button>): the
+        // chevron is the only discoverable affordance for the list-based
+        // picker. Without a Tab stop, keyboard users could not reach the
+        // hour/minute popover at all (the input handles ArrowDown to open,
+        // but only keyboard users who already know the gesture would find
+        // it). The chevron's aria-label includes the field's aria-label so
+        // screen readers get full context.
       >
         <ChevronDown size={14} aria-hidden="true" />
       </button>
@@ -347,29 +353,35 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
                 {HOURS.map((h) => {
                   const isCurrent = h === currentHour;
                   return (
-                    <li key={h} className={styles.timeRow}>
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={isCurrent}
-                        data-current={isCurrent || undefined}
-                        className={clsx(
-                          styles.timeRowButton,
-                          isCurrent && styles.timeRowCurrent,
-                        )}
-                        onClick={() => handleHourPick(h)}
-                      >
-                        <span className={styles.timeRowLabel}>
-                          {String(h).padStart(2, '0')}
-                        </span>
-                        {isCurrent && (
-                          <Check
-                            size={12}
-                            aria-hidden="true"
-                            className={styles.timeRowCheck}
-                          />
-                        )}
-                      </button>
+                    // WAI-ARIA APG listbox pattern: the `<li>` IS the option
+                    // (not a wrapper around an interactive `<button>`). A
+                    // nested button caused screen readers to announce both
+                    // "option" and "button" per row.
+                    <li
+                      key={h}
+                      role="option"
+                      aria-selected={isCurrent}
+                      data-current={isCurrent ? 'true' : undefined}
+                      tabIndex={-1}
+                      className={clsx(styles.timeRow, isCurrent && styles.timeRowCurrent)}
+                      onClick={() => handleHourPick(h)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleHourPick(h);
+                        }
+                      }}
+                    >
+                      <span className={styles.timeRowLabel}>
+                        {String(h).padStart(2, '0')}
+                      </span>
+                      {isCurrent && (
+                        <Check
+                          size={12}
+                          aria-hidden="true"
+                          className={styles.timeRowCheck}
+                        />
+                      )}
                     </li>
                   );
                 })}
@@ -384,29 +396,32 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
                 {minuteRows.map((m) => {
                   const isCurrent = m === currentMinute;
                   return (
-                    <li key={m} className={styles.timeRow}>
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={isCurrent}
-                        data-current={isCurrent || undefined}
-                        className={clsx(
-                          styles.timeRowButton,
-                          isCurrent && styles.timeRowCurrent,
-                        )}
-                        onClick={() => handleMinutePick(m)}
-                      >
-                        <span className={styles.timeRowLabel}>
-                          {String(m).padStart(2, '0')}
-                        </span>
-                        {isCurrent && (
-                          <Check
-                            size={12}
-                            aria-hidden="true"
-                            className={styles.timeRowCheck}
-                          />
-                        )}
-                      </button>
+                    // See Hours column for the listbox-pattern rationale.
+                    <li
+                      key={m}
+                      role="option"
+                      aria-selected={isCurrent}
+                      data-current={isCurrent ? 'true' : undefined}
+                      tabIndex={-1}
+                      className={clsx(styles.timeRow, isCurrent && styles.timeRowCurrent)}
+                      onClick={() => handleMinutePick(m)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleMinutePick(m);
+                        }
+                      }}
+                    >
+                      <span className={styles.timeRowLabel}>
+                        {String(m).padStart(2, '0')}
+                      </span>
+                      {isCurrent && (
+                        <Check
+                          size={12}
+                          aria-hidden="true"
+                          className={styles.timeRowCheck}
+                        />
+                      )}
                     </li>
                   );
                 })}
