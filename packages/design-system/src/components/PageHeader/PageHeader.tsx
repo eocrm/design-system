@@ -13,6 +13,7 @@ import {
 } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import { Title, type TitleSize } from '../Title';
 import styles from './PageHeader.module.scss';
 
@@ -43,7 +44,10 @@ export interface PageHeaderBackButtonProps {
    * Mutually exclusive with `href`.
    */
   onClick?: () => void;
-  /** Accessible label. Default `"Go back"`. */
+  /**
+   * Accessible label. Defaults to the i18n value at `pageHeader.back`
+   * (`'Go back'` in English).
+   */
   'aria-label'?: string;
   /** Icon to render. Default `<ChevronLeft size={16}>` from lucide-react. */
   icon?: ReactNode;
@@ -152,9 +156,11 @@ PageHeaderBreadcrumb.displayName = 'PageHeaderBreadcrumb';
 export function PageHeaderBackButton({
   href,
   onClick,
-  'aria-label': ariaLabel = 'Go back',
+  'aria-label': ariaLabelProp,
   icon = <ChevronLeft size={16} />,
 }: PageHeaderBackButtonProps) {
+  const t = useTranslation();
+  const ariaLabel = ariaLabelProp ?? t('pageHeader.back');
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' && href && onClick) {
       // eslint-disable-next-line no-console

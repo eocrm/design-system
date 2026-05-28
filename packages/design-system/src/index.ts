@@ -379,7 +379,7 @@ export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';
 
 // i18n — translated UI strings.
-export { I18nProvider, useTranslation, useTranslationArray } from './i18n';
+export { I18nProvider, useTranslation, useTranslationArray, ruPlural } from './i18n';
 export type { I18nProviderProps, Locale, Messages, MessageKey, DeepPartial } from './i18n';
 
 // Calendar primitives (hooks + date math + Intl formatters + locale week info).

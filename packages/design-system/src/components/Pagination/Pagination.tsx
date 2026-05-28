@@ -143,7 +143,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(function Pagi
   return (
     <nav
       ref={ref}
-      aria-label={ariaLabel ?? 'Pagination'}
+      aria-label={ariaLabel ?? t('pagination.ariaLabel')}
       className={clsx(styles.pagination, styles[`size-${size}`], className)}
       {...props}
     >
@@ -177,7 +177,11 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(function Pagi
             // the layout AND prevents the no-op same-page click. ARIA APG.
             disabled={disabled || isCurrent}
             aria-current={isCurrent ? 'page' : undefined}
-            aria-label={isCurrent ? `Page ${item}, current page` : `Go to page ${item}`}
+            aria-label={
+              isCurrent
+                ? t('pagination.currentPageAriaLabel', { page: item })
+                : t('pagination.pageAriaLabel', { page: item })
+            }
           >
             {item}
           </button>

@@ -105,16 +105,16 @@ export interface FileUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
    */
   disabled?: boolean;
   /**
-   * Override the dropzone's main label. Default: "Drag files here, or click
-   * to browse". Pass a ReactNode for richer content (e.g. with a `<Code>`
-   * for accepted extensions).
+   * Override the dropzone's main label. Default: the i18n value at
+   * `fileUpload.dragHint`. Pass a ReactNode for richer content (e.g. with a
+   * `<Code>` for accepted extensions).
    *
    * **A11y note:** when `dropzoneLabel` is a plain string, the component
    * uses it as `aria-label` on the dropzone. When it's a ReactNode, the
-   * component falls back to the generic `aria-label="Upload files"` and
-   * the rich content is visible-only. To give screen readers the
-   * equivalent text, pass `aria-label` via the spread (e.g.
-   * `aria-label="Upload CSV or Excel files"`).
+   * component falls back to the i18n value at `fileUpload.upload` and the
+   * rich content is visible-only. To give screen readers the equivalent
+   * text, pass `aria-label` via the spread (e.g. `aria-label="Upload CSV
+   * or Excel files"`).
    */
   dropzoneLabel?: ReactNode;
   /**
@@ -428,7 +428,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
         <div
           role="button"
           tabIndex={disabled ? -1 : 0}
-          aria-label={typeof dropzoneLabel === 'string' ? dropzoneLabel : 'Upload files'}
+          aria-label={typeof dropzoneLabel === 'string' ? dropzoneLabel : t('fileUpload.upload')}
           aria-disabled={disabled || undefined}
           className={clsx(styles.dropzone, isDragOver && styles.dragOver)}
           onDragEnter={handleDragEnter}
@@ -452,13 +452,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
           <span className={styles.dropzoneIcon}>
             {dropzoneIcon ?? <CloudUpload size={32} aria-hidden />}
           </span>
-          <span className={styles.dropzoneLabel}>
-            {dropzoneLabel ?? (
-              <>
-                Drag files here, or <span className={styles.browseLink}>click to browse</span>
-              </>
-            )}
-          </span>
+          <span className={styles.dropzoneLabel}>{dropzoneLabel ?? t('fileUpload.dragHint')}</span>
           {dropzoneHint && <span className={styles.dropzoneHint}>{dropzoneHint}</span>}
         </div>
       )}
@@ -480,7 +474,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
                     <Progress
                       size="sm"
                       value={entry.progress}
-                      aria-label={`Uploading ${entry.file.name}`}
+                      aria-label={t('fileUpload.uploadingAriaLabel', { name: entry.file.name })}
                     />
                   )}
                   {entry.status === 'error' && entry.error && (
@@ -501,7 +495,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
                   iconOnly
                   onClick={() => onFileRemove(entry)}
                   disabled={disabled}
-                  aria-label={`Remove ${entry.file.name}`}
+                  aria-label={t('fileUpload.removeAriaLabel', { name: entry.file.name })}
                 >
                   <X size={16} aria-hidden />
                 </Button>

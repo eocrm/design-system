@@ -11,6 +11,7 @@ export const en: Messages = {
   },
   confirmationPopover: {
     cancel: 'Cancel',
+    confirm: 'Confirm',
   },
   passwordInput: {
     show: 'Show password',
@@ -83,6 +84,9 @@ export const en: Messages = {
     next: 'Next',
     previousAriaLabel: 'Previous page',
     nextAriaLabel: 'Next page',
+    ariaLabel: 'Pagination',
+    pageAriaLabel: ({ page }) => `Go to page ${page as number}`,
+    currentPageAriaLabel: ({ page }) => `Page ${page as number}, current page`,
   },
   select: {
     clear: 'Clear selection',
@@ -94,12 +98,17 @@ export const en: Messages = {
     hue: 'Hue',
     hexValue: 'Hex color value',
     presetColors: 'Preset colors',
+    triggerLabel: 'Pick a color',
   },
   drawer: {
     close: 'Close dialog',
   },
   fileUpload: {
     done: 'Done',
+    upload: 'Upload files',
+    dragHint: 'Drag files here, or click to browse',
+    uploadingAriaLabel: ({ name }) => `Uploading ${name as string}`,
+    removeAriaLabel: ({ name }) => `Remove ${name as string}`,
   },
   imageCrop: {
     zoom: 'Zoom',
@@ -113,5 +122,14 @@ export const en: Messages = {
   toast: {
     dismiss: 'Dismiss',
     notifications: 'Notifications',
+  },
+  breadcrumb: {
+    ariaLabel: 'Breadcrumb',
+  },
+  filterChip: {
+    dismiss: 'Remove filter',
+  },
+  pageHeader: {
+    back: 'Go back',
   },
 };

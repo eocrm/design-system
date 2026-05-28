@@ -13,6 +13,8 @@ export interface Messages {
   confirmationPopover: {
     /** Label on the secondary "Cancel" button inside the confirmation popover. */
     cancel: string;
+    /** Label on the primary "Confirm" button inside the confirmation popover. */
+    confirm: string;
   };
   passwordInput: {
     /** aria-label on the show-password toggle when the password is hidden. */
@@ -133,6 +135,12 @@ export interface Messages {
     previousAriaLabel: string;
     /** aria-label on the next-page button. */
     nextAriaLabel: string;
+    /** aria-label on the wrapping `<nav>` element. */
+    ariaLabel: string;
+    /** Function leaf — aria-label template for a non-current page button. */
+    pageAriaLabel: (params: { page: number }) => string;
+    /** Function leaf — aria-label template for the current-page button. */
+    currentPageAriaLabel: (params: { page: number }) => string;
   };
   select: {
     /** aria-label on the clear-selection (×) button inside Select. */
@@ -151,6 +159,8 @@ export interface Messages {
     hexValue: string;
     /** aria-label for the preset color swatch row. */
     presetColors: string;
+    /** aria-label fallback for the default ColorPicker trigger button. */
+    triggerLabel: string;
   };
   drawer: {
     /** aria-label for the Drawer header's close button. */
@@ -159,6 +169,14 @@ export interface Messages {
   fileUpload: {
     /** aria-label/title on the success Check icon in FileUpload's item list. */
     done: string;
+    /** Fallback aria-label on the dropzone when `dropzoneLabel` is a ReactNode. */
+    upload: string;
+    /** Visible drag-hint copy inside the dropzone. */
+    dragHint: string;
+    /** Function leaf — aria-label template for the per-row uploading `<Progress>`. */
+    uploadingAriaLabel: (params: { name: string }) => string;
+    /** Function leaf — aria-label template for the per-row remove (×) button. */
+    removeAriaLabel: (params: { name: string }) => string;
   };
   imageCrop: {
     /** aria-label for the zoom slider. */
@@ -177,6 +195,18 @@ export interface Messages {
     dismiss: string;
     /** aria-label for the toast region (ToastViewport). */
     notifications: string;
+  };
+  breadcrumb: {
+    /** aria-label fallback for the `<nav>` wrapping a Breadcrumb. */
+    ariaLabel: string;
+  };
+  filterChip: {
+    /** aria-label fallback for the per-chip dismiss (×) button. */
+    dismiss: string;
+  };
+  pageHeader: {
+    /** aria-label fallback for `<PageHeader.BackButton>`. */
+    back: string;
   };
 }
 

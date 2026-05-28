@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import type { PaginationSize } from '../Pagination/Pagination';
 import styles from './CursorPagination.module.scss';
 
@@ -22,13 +23,16 @@ export interface CursorPaginationProps extends HTMLAttributes<HTMLElement> {
   onNext: () => void;
 
   /**
-   * Label for the previous button. Defaults to `'Previous'`. Override for
-   * domain phrasing (`'Newer'` in a reverse-chronological feed,
-   * `'Older'` for the next direction).
+   * Label for the previous button. Defaults to the i18n value at
+   * `pagination.previous` (`'Previous'` in English). Override for domain
+   * phrasing (`'Newer'` in a reverse-chronological feed).
    */
   previousLabel?: ReactNode;
 
-  /** Label for the next button. Defaults to `'Next'`. */
+  /**
+   * Label for the next button. Defaults to the i18n value at
+   * `pagination.next` (`'Next'` in English).
+   */
   nextLabel?: ReactNode;
 
   /**
@@ -42,7 +46,8 @@ export interface CursorPaginationProps extends HTMLAttributes<HTMLElement> {
   disabled?: boolean;
 
   /**
-   * Accessible name for the wrapper `<nav>`. Defaults to `'Pagination'`.
+   * Accessible name for the wrapper `<nav>`. Defaults to the i18n value at
+   * `pagination.ariaLabel` (`'Pagination'` in English).
    */
   'aria-label'?: string;
 }
@@ -91,8 +96,8 @@ export const CursorPagination = forwardRef<HTMLElement, CursorPaginationProps>(
       hasNext,
       onPrevious,
       onNext,
-      previousLabel = 'Previous',
-      nextLabel = 'Next',
+      previousLabel,
+      nextLabel,
       size = 'md',
       disabled = false,
       className,
@@ -101,11 +106,12 @@ export const CursorPagination = forwardRef<HTMLElement, CursorPaginationProps>(
     },
     ref,
   ) {
+    const t = useTranslation();
     // {...props} last so consumer overrides win (Pattern A).
     return (
       <nav
         ref={ref}
-        aria-label={ariaLabel ?? 'Pagination'}
+        aria-label={ariaLabel ?? t('pagination.ariaLabel')}
         className={clsx(styles.cursorPagination, styles[`size-${size}`], className)}
         {...props}
       >
@@ -116,7 +122,7 @@ export const CursorPagination = forwardRef<HTMLElement, CursorPaginationProps>(
           disabled={disabled || !hasPrevious}
         >
           <ChevronLeft size={16} aria-hidden />
-          <span>{previousLabel}</span>
+          <span>{previousLabel ?? t('pagination.previous')}</span>
         </button>
 
         <button
@@ -125,7 +131,7 @@ export const CursorPagination = forwardRef<HTMLElement, CursorPaginationProps>(
           onClick={onNext}
           disabled={disabled || !hasNext}
         >
-          <span>{nextLabel}</span>
+          <span>{nextLabel ?? t('pagination.next')}</span>
           <ChevronRight size={16} aria-hidden />
         </button>
       </nav>

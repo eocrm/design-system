@@ -1,4 +1,5 @@
 import type { Messages } from './messages';
+import { ruPlural } from './format';
 
 /**
  * Russian message defaults. Populated section-by-section as each component
@@ -11,6 +12,7 @@ export const ru: Messages = {
   },
   confirmationPopover: {
     cancel: 'Отмена',
+    confirm: 'Подтвердить',
   },
   passwordInput: {
     show: 'Показать пароль',
@@ -51,7 +53,8 @@ export const ru: Messages = {
     nextDay: 'Следующий день',
     previousAgenda: 'Предыдущая неделя',
     nextAgenda: 'Следующая неделя',
-    moreEvents: ({ count }) => `ещё ${count as number}`,
+    moreEvents: ({ count }) =>
+      `ещё ${count as number} ${ruPlural(count as number, ['событие', 'события', 'событий'])}`,
     viewMonth: 'Месяц',
     viewWeek: 'Неделя',
     viewDay: 'День',
@@ -83,6 +86,9 @@ export const ru: Messages = {
     next: 'Далее',
     previousAriaLabel: 'Предыдущая страница',
     nextAriaLabel: 'Следующая страница',
+    ariaLabel: 'Пагинация',
+    pageAriaLabel: ({ page }) => `Страница ${page as number}`,
+    currentPageAriaLabel: ({ page }) => `Страница ${page as number}, текущая`,
   },
   select: {
     clear: 'Очистить выбор',
@@ -94,12 +100,17 @@ export const ru: Messages = {
     hue: 'Оттенок',
     hexValue: 'Hex-значение цвета',
     presetColors: 'Предустановленные цвета',
+    triggerLabel: 'Выбрать цвет',
   },
   drawer: {
     close: 'Закрыть диалог',
   },
   fileUpload: {
     done: 'Готово',
+    upload: 'Загрузить файлы',
+    dragHint: 'Перетащите файлы сюда или нажмите для выбора',
+    uploadingAriaLabel: ({ name }) => `Загрузка ${name as string}`,
+    removeAriaLabel: ({ name }) => `Удалить ${name as string}`,
   },
   imageCrop: {
     zoom: 'Масштаб',
@@ -113,5 +124,14 @@ export const ru: Messages = {
   toast: {
     dismiss: 'Закрыть',
     notifications: 'Уведомления',
+  },
+  breadcrumb: {
+    ariaLabel: 'Хлебные крошки',
+  },
+  filterChip: {
+    dismiss: 'Удалить фильтр',
+  },
+  pageHeader: {
+    back: 'Назад',
   },
 };

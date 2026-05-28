@@ -38,7 +38,10 @@ export interface ConfirmationPopoverProps {
    */
   description?: ReactNode;
 
-  /** Confirm button label. Defaults to `'Confirm'`. */
+  /**
+   * Confirm button label. Defaults to the i18n value at
+   * `confirmationPopover.confirm` (`'Confirm'` in English).
+   */
   confirmLabel?: string;
 
   /** `'danger'` makes Confirm a danger-variant button. Defaults to `'default'` (primary). */
@@ -140,7 +143,7 @@ export function ConfirmationPopover({
   children,
   title,
   description,
-  confirmLabel = 'Confirm',
+  confirmLabel,
   variant = 'default',
   onConfirm,
   onCancel,
@@ -252,7 +255,7 @@ export function ConfirmationPopover({
               onClick={handleConfirm}
             >
               {pending && <span className={styles.spinner} aria-hidden="true" />}
-              {confirmLabel}
+              {confirmLabel ?? t('confirmationPopover.confirm')}
             </Button>
           </Cluster>
         </Stack>

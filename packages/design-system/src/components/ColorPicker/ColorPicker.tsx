@@ -10,6 +10,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { Popover } from '../Popover';
+import { useTranslation } from '../../i18n/useTranslation';
 import { ColorPickerPanel } from './ColorPickerPanel';
 import { normalizeHex } from './colorMath';
 import styles from './ColorPicker.module.scss';
@@ -86,8 +87,9 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   /** Disable interaction. Trigger doesn't open; panel is non-interactive. */
   disabled?: boolean;
   /**
-   * Accessible label for the default trigger. Default `"Pick a color"`.
-   * Ignored when a custom trigger is provided via `<ColorPicker.Trigger>`.
+   * Accessible label for the default trigger. Defaults to the i18n value at
+   * `colorPicker.triggerLabel` (`'Pick a color'` in English). Ignored when
+   * a custom trigger is provided via `<ColorPicker.Trigger>`.
    */
   triggerLabel?: string;
   /** Popover placement (split internally into side + align). Default `'bottom-start'`. */
@@ -182,7 +184,7 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     onChangeEnd,
     presets,
     disabled = false,
-    triggerLabel = 'Pick a color',
+    triggerLabel,
     popoverPlacement = 'bottom-start',
     children,
     className,
@@ -190,8 +192,10 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
   },
   ref,
 ) {
+  const t = useTranslation();
   const [open, setOpen] = useState(false);
   const { side, align } = PLACEMENT_MAP[popoverPlacement];
+  const resolvedTriggerLabel = triggerLabel ?? t('colorPicker.triggerLabel');
 
   // Find a <ColorPicker.Trigger> marker child if present; extract its
   // children to use as the popover trigger element. Other children types
@@ -208,7 +212,7 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
   ) : (
     <DefaultTrigger
       hex={value}
-      label={triggerLabel}
+      label={resolvedTriggerLabel}
       disabled={disabled}
       open={open}
       // onClick is overridden by Popover.Trigger's cloneElement; we set a
