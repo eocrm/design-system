@@ -400,6 +400,22 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // If the cycle flips 12 → 24 while the popover is open and focus had landed
+  // on the Period column, the Period listbox unmounts and arrow nav would
+  // operate on a zero-row column — user gets stuck. Clamp focus back to the
+  // Minutes column on its current row.
+  useEffect(() => {
+    if (focused.column === 'period' && resolvedCycle === '24') {
+      const i = minuteRows.indexOf(currentMinute);
+      setFocused({ column: 'minutes', index: i === -1 ? 0 : i });
+    }
+    // Narrow deps: this guard only needs to re-evaluate when the cycle or the
+    // currently focused column changes. Tracking minuteRows/currentMinute here
+    // would re-fire whenever the user clicks another minute, which is wrong —
+    // we only want to fire the one-time clamp on cycle shrink.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedCycle, focused.column]);
+
   // Focus the row currently flagged with tabIndex=0. Runs after every
   // focused-state change while the popover is open. The rAF defer mirrors
   // the existing scrollIntoView pattern — the portaled `<li>` may not be

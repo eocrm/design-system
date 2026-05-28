@@ -782,4 +782,112 @@ describe('TimeField', () => {
     );
     expect(screen.getByRole('textbox', { name: 'Time' })).toHaveValue('09:00');
   });
+
+  // ===========================================================================
+  // Now button — wall-clock boundary
+  // ===========================================================================
+
+  it('Now rounds across hour boundary when current minute >= step/2 above the last step', () => {
+    // 14:53 + step=15 → Math.round(893/15)*15 = 900 minutes = 15:00.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 4, 28, 14, 53));
+    const onChange = vi.fn();
+    render(
+      <TimeField
+        value={{ hours: 0, minutes: 0 }}
+        onChange={onChange}
+        aria-label="Time"
+        hourCycle="24"
+        step={15}
+      />,
+      { wrapper: wrap() },
+    );
+    fireEvent.click(screen.getByLabelText(/open time list/i));
+    fireEvent.click(screen.getByText('Now'));
+    expect(onChange).toHaveBeenCalledWith({ hours: 15, minutes: 0 });
+    vi.useRealTimers();
+  });
+
+  // ===========================================================================
+  // Cycle switching mid-render
+  // ===========================================================================
+
+  it('switching hourCycle updates placeholder, input value, and listbox column count', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <TimeField
+        value={{ hours: 14, minutes: 30 }}
+        onChange={onChange}
+        aria-label="Time"
+        hourCycle="24"
+      />,
+      { wrapper: wrap() },
+    );
+    expect(screen.getByPlaceholderText('HH:mm')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('14:30')).toBeInTheDocument();
+    await user.click(screen.getByLabelText(/open time list/i));
+    expect(screen.queryByRole('listbox', { name: 'Period' })).not.toBeInTheDocument();
+
+    rerender(
+      <TimeField
+        value={{ hours: 14, minutes: 30 }}
+        onChange={onChange}
+        aria-label="Time"
+        hourCycle="12"
+      />,
+    );
+    expect(screen.getByPlaceholderText('h:mm AM/PM')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('2:30 PM')).toBeInTheDocument();
+    expect(screen.getByRole('listbox', { name: 'Period' })).toBeInTheDocument();
+  });
+
+  it('cycle shrink (12 → 24) while focused on Period clamps focus to Minutes', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <TimeField
+        value={{ hours: 14, minutes: 30 }}
+        onChange={onChange}
+        aria-label="Time"
+        hourCycle="12"
+      />,
+      { wrapper: wrap('en-US') },
+    );
+    await user.click(screen.getByLabelText(/open time list/i));
+    const hours = await screen.findByRole('listbox', { name: 'Hours' });
+    // Wait for initial focus on the current hour row before navigating columns.
+    await waitFor(() =>
+      expect(document.activeElement).toBe(within(hours).getByRole('option', { name: '2' })),
+    );
+    // Hours → Minutes → Period.
+    await user.keyboard('{ArrowRight}{ArrowRight}');
+    const period = screen.getByRole('listbox', { name: 'Period' });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(within(period).getByRole('option', { name: 'PM' })),
+    );
+
+    // Shrink to 24h — Period column unmounts, focus must move to Minutes.
+    rerender(
+      <TimeField
+        value={{ hours: 14, minutes: 30 }}
+        onChange={onChange}
+        aria-label="Time"
+        hourCycle="24"
+      />,
+    );
+    expect(screen.queryByRole('listbox', { name: 'Period' })).not.toBeInTheDocument();
+    const minutes = screen.getByRole('listbox', { name: 'Minutes' });
+    // The clamp lands on the current-minute row (30), AND focus moves there
+    // via the roving-tabindex rAF — wait for both so the subsequent ArrowDown
+    // dispatches at the right activeElement.
+    await waitFor(() =>
+      expect(document.activeElement).toBe(within(minutes).getByRole('option', { name: '30' })),
+    );
+    // ArrowDown now operates on Minutes (30 → 45 at step=15).
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() =>
+      expect(within(minutes).getByRole('option', { name: '45' })).toHaveAttribute('tabindex', '0'),
+    );
+  });
 });
