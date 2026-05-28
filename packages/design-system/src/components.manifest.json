@@ -260,6 +260,12 @@
     ],
     "composedBy": []
   },
+  "Kbd": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "Link": {
     "tier": "primitive",
     "cluster": "Navigation",
