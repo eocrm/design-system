@@ -378,9 +378,7 @@ describe('DatePicker', () => {
         { wrapper: wrap() },
       );
       await user.click(screen.getByRole('button', { name: 'Open calendar' }));
-      await user.click(
-        await screen.findByRole('button', { name: /Time, Open time list/i }),
-      );
+      await user.click(await screen.findByRole('button', { name: /Time, Open time list/i }));
       const hoursListbox = await screen.findByRole('listbox', { name: 'Hours' });
       await user.click(within(hoursListbox).getByRole('option', { name: '09' }));
       const got = onChange.mock.calls.at(-1)?.[0] as Date;
@@ -398,24 +396,16 @@ describe('DatePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      const hidden = container.querySelector<HTMLInputElement>(
-        'input[type="hidden"][name="when"]',
-      );
+      const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="when"]');
       expect(hidden?.value).toBe('2026-05-28T14:30');
     });
 
     it('hidden form mirror still emits ISO date when granularity="day"', () => {
       const { container } = render(
-        <DatePicker
-          name="when"
-          defaultValue={new Date(2026, 4, 28, 14, 30)}
-          aria-label="Date"
-        />,
+        <DatePicker name="when" defaultValue={new Date(2026, 4, 28, 14, 30)} aria-label="Date" />,
         { wrapper: wrap() },
       );
-      const hidden = container.querySelector<HTMLInputElement>(
-        'input[type="hidden"][name="when"]',
-      );
+      const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="when"]');
       expect(hidden?.value).toBe('2026-05-28');
     });
 

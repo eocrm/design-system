@@ -20,11 +20,11 @@
 
 Keys + values:
 
-| Key                                | en              | ru                |
-| ---------------------------------- | --------------- | ----------------- |
-| `datePicker.timeLabel`             | `Time`          | `Время`           |
-| `dateRangePicker.startTimeLabel`   | `Start time`    | `Время начала`    |
-| `dateRangePicker.endTimeLabel`     | `End time`      | `Время окончания` |
+| Key                              | en           | ru                |
+| -------------------------------- | ------------ | ----------------- |
+| `datePicker.timeLabel`           | `Time`       | `Время`           |
+| `dateRangePicker.startTimeLabel` | `Start time` | `Время начала`    |
+| `dateRangePicker.endTimeLabel`   | `End time`   | `Время окончания` |
 
 Run: `cd packages/design-system && npm run typecheck` — must PASS (catches missing key on either locale via the meta-test).
 
@@ -202,11 +202,7 @@ Run: `cd packages/design-system && npm test -- DatePicker/utils` — all green.
 ### Public exports to add
 
 ```ts
-import {
-  combineDateAndTime,
-  formatDateTime,
-  parseDateTime,
-} from '../DatePicker/utils';
+import { combineDateAndTime, formatDateTime, parseDateTime } from '../DatePicker/utils';
 
 /** Format a DateRange including time: `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm`. */
 export function formatDateTimeRange(range: DateRange, locale: string): string {
@@ -244,7 +240,11 @@ export function clampRangeEndAfterStart(range: DateRange): DateRange {
     range.start.getDate() === range.end.getDate();
   if (!sameDay) return range;
   if (range.end.getTime() >= range.start.getTime()) return range;
-  const clampedEnd = combineDateAndTime(range.end, range.start.getHours(), range.start.getMinutes());
+  const clampedEnd = combineDateAndTime(
+    range.end,
+    range.start.getHours(),
+    range.start.getMinutes(),
+  );
   return { start: range.start, end: clampedEnd };
 }
 ```
@@ -437,6 +437,7 @@ Import `DateTimeGranularity` from `./utils`.
 ### Behavior changes
 
 1. **Format trigger text.** Replace the existing `formattedValue` line:
+
    ```ts
    const formattedValue = value
      ? granularity === 'minute'
@@ -446,12 +447,13 @@ Import `DateTimeGranularity` from `./utils`.
    ```
 
 2. **Parse on commit.** Inside `commit(raw)`:
+
    ```ts
-   const parsed =
-     granularity === 'minute' ? parseDateTime(raw, locale) : parseDate(raw, locale);
+   const parsed = granularity === 'minute' ? parseDateTime(raw, locale) : parseDate(raw, locale);
    ```
 
 3. **Grid pick preserves time.** Replace `handleSelect`:
+
    ```ts
    const handleSelect = useCallback(
      (next: Date) => {
@@ -472,46 +474,46 @@ Import `DateTimeGranularity` from `./utils`.
    ```
 
 4. **Time-input row in the popover.** After `<DatePickerGrid …/>` inside the floating div:
+
    ```tsx
-   {granularity === 'minute' && (
-     <div className={styles.timeRow}>
-       <label className={styles.timeLabel} htmlFor={`${inputId}-time`}>
-         {t('datePicker.timeLabel')}
-       </label>
-       <input
-         id={`${inputId}-time`}
-         type="time"
-         step={60}
-         className={styles.timeInput}
-         value={value ? toTimeInputValue(value) : ''}
-         disabled={value == null || disabled}
-         aria-label={t('datePicker.timeLabel')}
-         onChange={(e) => {
-           if (value == null) return;
-           const [hh, mm] = e.target.value.split(':').map(Number);
-           if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
-           setValue(combineDateAndTime(value, hh, mm));
-         }}
-       />
-     </div>
-   )}
+   {
+     granularity === 'minute' && (
+       <div className={styles.timeRow}>
+         <label className={styles.timeLabel} htmlFor={`${inputId}-time`}>
+           {t('datePicker.timeLabel')}
+         </label>
+         <input
+           id={`${inputId}-time`}
+           type="time"
+           step={60}
+           className={styles.timeInput}
+           value={value ? toTimeInputValue(value) : ''}
+           disabled={value == null || disabled}
+           aria-label={t('datePicker.timeLabel')}
+           onChange={(e) => {
+             if (value == null) return;
+             const [hh, mm] = e.target.value.split(':').map(Number);
+             if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+             setValue(combineDateAndTime(value, hh, mm));
+           }}
+         />
+       </div>
+     );
+   }
    ```
 
 5. **Hidden form mirror.** Replace the `{name && …}` line:
+
    ```tsx
-   {name && (
-     <input
-       type="hidden"
-       name={name}
-       value={
-         value
-           ? granularity === 'minute'
-             ? toIsoDateTime(value)
-             : toIsoDate(value)
-           : ''
-       }
-     />
-   )}
+   {
+     name && (
+       <input
+         type="hidden"
+         name={name}
+         value={value ? (granularity === 'minute' ? toIsoDateTime(value) : toIsoDate(value)) : ''}
+       />
+     );
+   }
    ```
 
 6. **Placeholder.** Update the existing placeholder fallback to include time when minute:
@@ -699,6 +701,7 @@ Same `granularity?: DateTimeGranularity` JSDoc as Task 5.
 ### Behavior
 
 1. **Format trigger text.**
+
    ```ts
    const formatted = value
      ? granularity === 'minute'
@@ -708,12 +711,14 @@ Same `granularity?: DateTimeGranularity` JSDoc as Task 5.
    ```
 
 2. **Typed parse.**
+
    ```ts
    const parsed =
      granularity === 'minute' ? parseDateTimeRange(raw, locale) : parseDateRange(raw, locale);
    ```
 
 3. **Range-grid commit.** When the user completes a range click (second click or hover-locked second click), apply:
+
    ```ts
    const next = autoSwapRange(firstClick, secondClick);
    let withTime = next;
@@ -727,11 +732,7 @@ Same `granularity?: DateTimeGranularity` JSDoc as Task 5.
          startTime?.getHours() ?? 0,
          startTime?.getMinutes() ?? 0,
        ),
-       end: combineDateAndTime(
-         next.end,
-         endTime?.getHours() ?? 23,
-         endTime?.getMinutes() ?? 59,
-       ),
+       end: combineDateAndTime(next.end, endTime?.getHours() ?? 23, endTime?.getMinutes() ?? 59),
      };
      withTime = clampRangeEndAfterStart(withTime);
    }
@@ -739,55 +740,58 @@ Same `granularity?: DateTimeGranularity` JSDoc as Task 5.
    ```
 
 4. **Two time inputs in the popover.** Below the two-month grid:
+
    ```tsx
-   {granularity === 'minute' && value != null && (
-     <div className={styles.timeRowsPair}>
-       <div className={styles.timeRow}>
-         <label className={styles.timeLabel} htmlFor={`${inputId}-start-time`}>
-           {t('dateRangePicker.startTimeLabel')}
-         </label>
-         <input
-           id={`${inputId}-start-time`}
-           type="time"
-           step={60}
-           className={styles.timeInput}
-           value={toTimeInputValue(value.start)}
-           aria-label={t('dateRangePicker.startTimeLabel')}
-           onChange={(e) => {
-             const [hh, mm] = e.target.value.split(':').map(Number);
-             if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
-             const next = {
-               start: combineDateAndTime(value.start, hh, mm),
-               end: value.end,
-             };
-             setValue(clampRangeEndAfterStart(next));
-           }}
-         />
+   {
+     granularity === 'minute' && value != null && (
+       <div className={styles.timeRowsPair}>
+         <div className={styles.timeRow}>
+           <label className={styles.timeLabel} htmlFor={`${inputId}-start-time`}>
+             {t('dateRangePicker.startTimeLabel')}
+           </label>
+           <input
+             id={`${inputId}-start-time`}
+             type="time"
+             step={60}
+             className={styles.timeInput}
+             value={toTimeInputValue(value.start)}
+             aria-label={t('dateRangePicker.startTimeLabel')}
+             onChange={(e) => {
+               const [hh, mm] = e.target.value.split(':').map(Number);
+               if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+               const next = {
+                 start: combineDateAndTime(value.start, hh, mm),
+                 end: value.end,
+               };
+               setValue(clampRangeEndAfterStart(next));
+             }}
+           />
+         </div>
+         <div className={styles.timeRow}>
+           <label className={styles.timeLabel} htmlFor={`${inputId}-end-time`}>
+             {t('dateRangePicker.endTimeLabel')}
+           </label>
+           <input
+             id={`${inputId}-end-time`}
+             type="time"
+             step={60}
+             className={styles.timeInput}
+             value={toTimeInputValue(value.end)}
+             aria-label={t('dateRangePicker.endTimeLabel')}
+             onChange={(e) => {
+               const [hh, mm] = e.target.value.split(':').map(Number);
+               if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+               const next = {
+                 start: value.start,
+                 end: combineDateAndTime(value.end, hh, mm),
+               };
+               setValue(clampRangeEndAfterStart(next));
+             }}
+           />
+         </div>
        </div>
-       <div className={styles.timeRow}>
-         <label className={styles.timeLabel} htmlFor={`${inputId}-end-time`}>
-           {t('dateRangePicker.endTimeLabel')}
-         </label>
-         <input
-           id={`${inputId}-end-time`}
-           type="time"
-           step={60}
-           className={styles.timeInput}
-           value={toTimeInputValue(value.end)}
-           aria-label={t('dateRangePicker.endTimeLabel')}
-           onChange={(e) => {
-             const [hh, mm] = e.target.value.split(':').map(Number);
-             if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
-             const next = {
-               start: value.start,
-               end: combineDateAndTime(value.end, hh, mm),
-             };
-             setValue(clampRangeEndAfterStart(next));
-           }}
-         />
-       </div>
-     </div>
-   )}
+     );
+   }
    ```
 
 5. **Hidden form mirrors.** Use `toIsoDateTime` when granularity='minute', `toIsoDate` otherwise — applied to both `nameStart` and `nameEnd` hidden inputs.
@@ -878,6 +882,7 @@ For each demo, add a new section "Granularity: minute" near the end. Show:
 Run: `make build` — typecheck + bundle green.
 
 Visual smoke (Playwright):
+
 - `/components/datepicker` — open, switch to minute example, change time → trigger updates
 - `/components/daterangepicker` — open, switch to minute example, set same-day range with reversed times → end-time snaps to start-time
 

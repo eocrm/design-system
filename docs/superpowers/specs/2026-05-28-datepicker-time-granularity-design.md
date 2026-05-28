@@ -133,10 +133,10 @@ interface TimeFieldProps {
 
 ### Trigger text format
 
-| Component         | granularity='day' (default) | granularity='minute'                          |
-| ----------------- | --------------------------- | --------------------------------------------- |
-| DatePicker        | `05/28/2026`                | `05/28/2026 14:30`                            |
-| DateRangePicker   | `05/28/2026 — 05/29/2026`   | `05/28/2026 14:30 — 05/29/2026 17:00`         |
+| Component       | granularity='day' (default) | granularity='minute'                  |
+| --------------- | --------------------------- | ------------------------------------- |
+| DatePicker      | `05/28/2026`                | `05/28/2026 14:30`                    |
+| DateRangePicker | `05/28/2026 — 05/29/2026`   | `05/28/2026 14:30 — 05/29/2026 17:00` |
 
 ### Typed parsing (trigger input — date-text input above the popover)
 
@@ -242,9 +242,9 @@ export function clampRangeEndAfterStart(range: DateRange): DateRange;
 :root {
   // …existing tokens
   --date-picker-time-row-gap: var(--space-2);
-  --date-picker-time-field-width: 9rem;       // wider than before to fit input + chevron
+  --date-picker-time-field-width: 9rem; // wider than before to fit input + chevron
   --date-picker-time-popover-column-width: 4rem;
-  --date-picker-time-popover-max-height: 14rem;  // 7 rows visible at 32px each
+  --date-picker-time-popover-max-height: 14rem; // 7 rows visible at 32px each
   --date-picker-time-popover-row-height: 32px;
   --date-picker-time-popover-row-current-bg: var(--color-accent-bg-subtle);
   --date-picker-time-popover-row-current-fg: var(--color-accent);
@@ -283,35 +283,35 @@ Russian values follow the existing translation patterns.
 
 ## Files
 
-| File                                                                                  | Role                                    |
-| ------------------------------------------------------------------------------------- | --------------------------------------- |
-| `packages/design-system/src/components/DatePicker/TimeField.tsx`                      | NEW — combo input + popover-with-lists  |
-| `packages/design-system/src/components/DatePicker/TimeField.module.scss`              | NEW — all TimeField visual styles       |
-| `packages/design-system/src/components/DatePicker/TimeField.test.tsx`                 | NEW — unit tests                        |
-| `packages/design-system/src/components/DatePicker/utils.ts`                           | MODIFY — add `parseTime`, `roundTimeToStep` |
-| `packages/design-system/src/components/DatePicker/utils.test.ts`                      | MODIFY — tests for the two new utils    |
-| `packages/design-system/src/components/DatePicker/DatePicker.tsx`                     | MODIFY — granularity + `<TimeField>`    |
-| `packages/design-system/src/components/DatePicker/DatePicker.tokens.scss`             | MODIFY — TimeField popover tokens       |
-| `packages/design-system/src/components/DatePicker/DatePicker.module.scss`             | MODIFY — `.timeRow`, `.timeLabel`       |
-| `packages/design-system/src/components/DatePicker/DatePicker.test.tsx`                | MODIFY — granularity tests              |
-| `packages/design-system/src/components/DatePicker/InlineDatePicker.tsx`               | MODIFY — granularity + `<TimeField>`    |
-| `packages/design-system/src/components/DatePicker/InlineDatePicker.module.scss`       | MODIFY — `.timeRow`, `.timeLabel`       |
-| `packages/design-system/src/components/DatePicker/InlineDatePicker.test.tsx`          | MODIFY — granularity tests              |
-| `packages/design-system/src/components/DateRangePicker/utils.ts`                      | MODIFY — already done                   |
-| `packages/design-system/src/components/DateRangePicker/utils.test.ts`                 | MODIFY — already done                   |
-| `packages/design-system/src/components/DateRangePicker/DateRangePicker.tsx`           | MODIFY — granularity + 2x `<TimeField>` |
-| `packages/design-system/src/components/DateRangePicker/DateRangePicker.module.scss`   | MODIFY — `.timeRow`, `.timeRowsPair`    |
-| `packages/design-system/src/components/DateRangePicker/DateRangePicker.test.tsx`      | MODIFY — granularity tests              |
-| `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.tsx`     | MODIFY — same                           |
-| `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.module.scss` | MODIFY — same                       |
-| `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.test.tsx`| MODIFY — same                           |
-| `packages/design-system/src/i18n/messages.ts`                                          | MODIFY — already 3 keys done; add 3 more for popover lists |
-| `packages/design-system/src/i18n/en.ts`                                                | MODIFY — same                           |
-| `packages/design-system/src/i18n/ru.ts`                                                | MODIFY — same                           |
-| `packages/design-system/src/index.ts`                                                  | MODIFY — re-export `DateTimeGranularity` + utils |
-| `packages/design-system/AGENTS.md`                                                     | MODIFY — note granularity + timeStep on all 4 |
-| `packages/playground/src/pages/components/DatePickersDemo.tsx`                         | MODIFY (per discovered structure)        |
-| `packages/playground/src/pages/components/DateRangePickersDemo.tsx`                    | MODIFY                                   |
+| File                                                                                      | Role                                                       |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `packages/design-system/src/components/DatePicker/TimeField.tsx`                          | NEW — combo input + popover-with-lists                     |
+| `packages/design-system/src/components/DatePicker/TimeField.module.scss`                  | NEW — all TimeField visual styles                          |
+| `packages/design-system/src/components/DatePicker/TimeField.test.tsx`                     | NEW — unit tests                                           |
+| `packages/design-system/src/components/DatePicker/utils.ts`                               | MODIFY — add `parseTime`, `roundTimeToStep`                |
+| `packages/design-system/src/components/DatePicker/utils.test.ts`                          | MODIFY — tests for the two new utils                       |
+| `packages/design-system/src/components/DatePicker/DatePicker.tsx`                         | MODIFY — granularity + `<TimeField>`                       |
+| `packages/design-system/src/components/DatePicker/DatePicker.tokens.scss`                 | MODIFY — TimeField popover tokens                          |
+| `packages/design-system/src/components/DatePicker/DatePicker.module.scss`                 | MODIFY — `.timeRow`, `.timeLabel`                          |
+| `packages/design-system/src/components/DatePicker/DatePicker.test.tsx`                    | MODIFY — granularity tests                                 |
+| `packages/design-system/src/components/DatePicker/InlineDatePicker.tsx`                   | MODIFY — granularity + `<TimeField>`                       |
+| `packages/design-system/src/components/DatePicker/InlineDatePicker.module.scss`           | MODIFY — `.timeRow`, `.timeLabel`                          |
+| `packages/design-system/src/components/DatePicker/InlineDatePicker.test.tsx`              | MODIFY — granularity tests                                 |
+| `packages/design-system/src/components/DateRangePicker/utils.ts`                          | MODIFY — already done                                      |
+| `packages/design-system/src/components/DateRangePicker/utils.test.ts`                     | MODIFY — already done                                      |
+| `packages/design-system/src/components/DateRangePicker/DateRangePicker.tsx`               | MODIFY — granularity + 2x `<TimeField>`                    |
+| `packages/design-system/src/components/DateRangePicker/DateRangePicker.module.scss`       | MODIFY — `.timeRow`, `.timeRowsPair`                       |
+| `packages/design-system/src/components/DateRangePicker/DateRangePicker.test.tsx`          | MODIFY — granularity tests                                 |
+| `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.tsx`         | MODIFY — same                                              |
+| `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.module.scss` | MODIFY — same                                              |
+| `packages/design-system/src/components/DateRangePicker/InlineDateRangePicker.test.tsx`    | MODIFY — same                                              |
+| `packages/design-system/src/i18n/messages.ts`                                             | MODIFY — already 3 keys done; add 3 more for popover lists |
+| `packages/design-system/src/i18n/en.ts`                                                   | MODIFY — same                                              |
+| `packages/design-system/src/i18n/ru.ts`                                                   | MODIFY — same                                              |
+| `packages/design-system/src/index.ts`                                                     | MODIFY — re-export `DateTimeGranularity` + utils           |
+| `packages/design-system/AGENTS.md`                                                        | MODIFY — note granularity + timeStep on all 4              |
+| `packages/playground/src/pages/components/DatePickersDemo.tsx`                            | MODIFY (per discovered structure)                          |
+| `packages/playground/src/pages/components/DateRangePickersDemo.tsx`                       | MODIFY                                                     |
 
 ## Test surface
 
@@ -351,6 +351,7 @@ Each picker keeps a `timeStep` prop test asserting that the rendered minute list
 ## Demo updates
 
 `DatePickerDemo` + `DateRangePickerDemo` get a Granularity section that demonstrates:
+
 - Typing into the time input
 - Clicking the chevron and picking from the popover
 - A `timeStep={15}` instance vs `timeStep={1}` to show the step effect

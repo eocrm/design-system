@@ -21,8 +21,10 @@ import styles from './TimeField.module.scss';
  * exported from the package barrel — promote to a public primitive only when
  * a consumer needs a standalone time input.
  */
-export interface TimeFieldProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+export interface TimeFieldProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
   /**
    * Current value. `null` means the parent has no date yet (the field is
    * disabled in that case — you can't pick a time without a date).
@@ -372,15 +374,9 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
                         }
                       }}
                     >
-                      <span className={styles.timeRowLabel}>
-                        {String(h).padStart(2, '0')}
-                      </span>
+                      <span className={styles.timeRowLabel}>{String(h).padStart(2, '0')}</span>
                       {isCurrent && (
-                        <Check
-                          size={12}
-                          aria-hidden="true"
-                          className={styles.timeRowCheck}
-                        />
+                        <Check size={12} aria-hidden="true" className={styles.timeRowCheck} />
                       )}
                     </li>
                   );
@@ -412,15 +408,9 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
                         }
                       }}
                     >
-                      <span className={styles.timeRowLabel}>
-                        {String(m).padStart(2, '0')}
-                      </span>
+                      <span className={styles.timeRowLabel}>{String(m).padStart(2, '0')}</span>
                       {isCurrent && (
-                        <Check
-                          size={12}
-                          aria-hidden="true"
-                          className={styles.timeRowCheck}
-                        />
+                        <Check size={12} aria-hidden="true" className={styles.timeRowCheck} />
                       )}
                     </li>
                   );

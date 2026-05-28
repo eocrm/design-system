@@ -352,9 +352,7 @@ describe('DateRangePicker', () => {
       expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 — 06/04/2026');
       await user.click(screen.getByRole('textbox'));
       expect(await screen.findByRole('dialog')).toBeInTheDocument();
-      expect(
-        screen.queryByRole('textbox', { name: 'Start time' }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Start time' })).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: 'End time' })).not.toBeInTheDocument();
     });
 
@@ -371,12 +369,8 @@ describe('DateRangePicker', () => {
         { wrapper: wrap() },
       );
       await user.click(screen.getByRole('textbox', { name: 'Range' }));
-      expect(
-        await screen.findByRole('textbox', { name: 'Start time' }),
-      ).toHaveValue('09:00');
-      expect(
-        await screen.findByRole('textbox', { name: 'End time' }),
-      ).toHaveValue('17:30');
+      expect(await screen.findByRole('textbox', { name: 'Start time' })).toHaveValue('09:00');
+      expect(await screen.findByRole('textbox', { name: 'End time' })).toHaveValue('17:30');
     });
 
     it('granularity="minute" includes HH:mm for both halves in trigger text', () => {
@@ -388,16 +382,19 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      expect(screen.getByRole('textbox')).toHaveValue(
-        '05/21/2026 09:00 — 06/04/2026 17:30',
-      );
+      expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 09:00 — 06/04/2026 17:30');
     });
 
     it('picking a fresh range from null defaults start=00:00 / end=23:59', async () => {
       const onChange = vi.fn<(r: DateRange | null) => void>();
       const user = userEvent.setup();
       render(
-        <DateRangePicker defaultValue={null} granularity="minute" onChange={onChange} aria-label="Range" />,
+        <DateRangePicker
+          defaultValue={null}
+          granularity="minute"
+          onChange={onChange}
+          aria-label="Range"
+        />,
         { wrapper: wrap() },
       );
       await user.click(screen.getByRole('textbox'));
@@ -600,10 +597,9 @@ describe('DateRangePicker', () => {
     it('typed datetime range parses and commits on blur', async () => {
       const onChange = vi.fn<(r: DateRange | null) => void>();
       const user = userEvent.setup();
-      render(
-        <DateRangePicker granularity="minute" onChange={onChange} aria-label="Range" />,
-        { wrapper: wrap() },
-      );
+      render(<DateRangePicker granularity="minute" onChange={onChange} aria-label="Range" />, {
+        wrapper: wrap(),
+      });
       const input = screen.getByRole('textbox');
       await user.click(input);
       await user.type(input, '05/21/2026 09:00 — 06/04/2026 17:30');

@@ -281,9 +281,7 @@ describe('InlineDateRangePicker', () => {
       render(<InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />, {
         wrapper: wrap(),
       });
-      expect(
-        screen.queryByRole('textbox', { name: 'Start time' }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Start time' })).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: 'End time' })).not.toBeInTheDocument();
     });
 
@@ -308,9 +306,7 @@ describe('InlineDateRangePicker', () => {
         <InlineDateRangePicker granularity="minute" defaultValue={null} aria-label="Range" />,
         { wrapper: wrap() },
       );
-      expect(
-        screen.queryByRole('textbox', { name: 'Start time' }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Start time' })).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: 'End time' })).not.toBeInTheDocument();
     });
 

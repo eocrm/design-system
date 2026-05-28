@@ -14,15 +14,7 @@ import { getComponentFiles } from '../../lib/componentFiles';
 
 const TODAY = new Date();
 const IN_90 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 90);
-const TODAY_AT_NINE = new Date(
-  TODAY.getFullYear(),
-  TODAY.getMonth(),
-  TODAY.getDate(),
-  9,
-  0,
-  0,
-  0,
-);
+const TODAY_AT_NINE = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate(), 9, 0, 0, 0);
 
 function GranularityMinuteDemo() {
   const [value, setValue] = useState<Date | null>(TODAY_AT_NINE);

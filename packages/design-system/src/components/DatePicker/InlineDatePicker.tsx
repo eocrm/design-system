@@ -173,12 +173,7 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
 
     return (
       // {...rest} last so consumer overrides win (Pattern A).
-      <div
-        ref={ref}
-        id={idProp}
-        className={clsx(styles.inline, className)}
-        {...rest}
-      >
+      <div ref={ref} id={idProp} className={clsx(styles.inline, className)} {...rest}>
         <DatePickerGrid
           cursor={cursor}
           value={value}
@@ -213,11 +208,7 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
             type="hidden"
             name={name}
             value={
-              value
-                ? granularity === 'minute'
-                  ? toIsoDateTime(value)
-                  : toIsoDate(value)
-                : ''
+              value ? (granularity === 'minute' ? toIsoDateTime(value) : toIsoDate(value)) : ''
             }
           />
         )}

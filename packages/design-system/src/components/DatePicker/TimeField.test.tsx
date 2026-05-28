@@ -152,10 +152,9 @@ describe('TimeField', () => {
   it('step={15} with typed "14:23" rounds UP to 14:30', async () => {
     const onChange = vi.fn<(h: number, m: number) => void>();
     const user = userEvent.setup();
-    render(
-      <Driver step={15} initial={new Date(2026, 4, 28, 9, 0)} onChange={onChange} />,
-      { wrapper: wrap() },
-    );
+    render(<Driver step={15} initial={new Date(2026, 4, 28, 9, 0)} onChange={onChange} />, {
+      wrapper: wrap(),
+    });
     const input = screen.getByRole('textbox', { name: 'Time' });
     await user.clear(input);
     await user.type(input, '14:23');
@@ -278,10 +277,7 @@ describe('TimeField', () => {
 
   it('value=null disables the input + chevron and prevents the popover from opening', async () => {
     const user = userEvent.setup();
-    render(
-      <TimeField value={null} onChange={() => {}} aria-label="Time" />,
-      { wrapper: wrap() },
-    );
+    render(<TimeField value={null} onChange={() => {}} aria-label="Time" />, { wrapper: wrap() });
     const input = screen.getByRole('textbox', { name: 'Time' });
     const chevron = screen.getByRole('button', { name: /Time, Open time list/i });
     expect(input).toBeDisabled();
@@ -292,20 +288,12 @@ describe('TimeField', () => {
 
   it('updates draft when value changes externally (controlled re-sync)', () => {
     const { rerender } = render(
-      <TimeField
-        value={new Date(2026, 4, 28, 14, 30)}
-        onChange={() => {}}
-        aria-label="Time"
-      />,
+      <TimeField value={new Date(2026, 4, 28, 14, 30)} onChange={() => {}} aria-label="Time" />,
       { wrapper: wrap() },
     );
     expect(screen.getByRole('textbox', { name: 'Time' })).toHaveValue('14:30');
     rerender(
-      <TimeField
-        value={new Date(2026, 4, 28, 9, 0)}
-        onChange={() => {}}
-        aria-label="Time"
-      />,
+      <TimeField value={new Date(2026, 4, 28, 9, 0)} onChange={() => {}} aria-label="Time" />,
     );
     expect(screen.getByRole('textbox', { name: 'Time' })).toHaveValue('09:00');
   });

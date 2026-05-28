@@ -212,10 +212,9 @@ describe('InlineDatePicker', () => {
     it('picking a date from null defaults time to 00:00', async () => {
       const user = userEvent.setup();
       const onChange = vi.fn<(d: Date | null) => void>();
-      render(
-        <InlineDatePicker granularity="minute" onChange={onChange} aria-label="Date" />,
-        { wrapper: wrap() },
-      );
+      render(<InlineDatePicker granularity="minute" onChange={onChange} aria-label="Date" />, {
+        wrapper: wrap(),
+      });
       const [cell15] = screen.getAllByRole('gridcell', { name: /^15$/ });
       await user.click(cell15);
       expect(onChange).toHaveBeenCalledTimes(1);
@@ -303,9 +302,7 @@ describe('InlineDatePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      const hidden = container.querySelector<HTMLInputElement>(
-        'input[type="hidden"][name="when"]',
-      );
+      const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="when"]');
       expect(hidden?.value).toBe('2026-05-28T14:30');
     });
 
@@ -318,9 +315,7 @@ describe('InlineDatePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      const hidden = container.querySelector<HTMLInputElement>(
-        'input[type="hidden"][name="when"]',
-      );
+      const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="when"]');
       expect(hidden?.value).toBe('2026-05-28');
     });
   });

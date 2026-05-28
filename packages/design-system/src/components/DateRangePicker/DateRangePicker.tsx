@@ -254,9 +254,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           return;
         }
         const parsed =
-          granularity === 'minute'
-            ? parseDateTimeRange(raw, locale)
-            : parseDateRange(raw, locale);
+          granularity === 'minute' ? parseDateTimeRange(raw, locale) : parseDateRange(raw, locale);
         if (
           parsed != null &&
           !isDateOutOfRange(parsed.start, min, max, isDateDisabled) &&
@@ -442,10 +440,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
         // The embedded <TimeField>s render their popovers into document.body
         // (sibling portals). Treat any click inside them as "inside" so
         // this popover doesn't auto-close mid-time-pick.
-        if (
-          target instanceof Element &&
-          target.closest('[data-timefield-popover="true"]')
-        ) {
+        if (target instanceof Element && target.closest('[data-timefield-popover="true"]')) {
           return;
         }
         commit(draft);
@@ -615,10 +610,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
               {granularity === 'minute' && value != null && (
                 <div className={styles.timeRowsPair}>
                   <div className={styles.timeRow}>
-                    <label
-                      className={styles.timeLabel}
-                      htmlFor={`${inputId}-start-time`}
-                    >
+                    <label className={styles.timeLabel} htmlFor={`${inputId}-start-time`}>
                       {t('dateRangePicker.startTimeLabel')}
                     </label>
                     <TimeField
@@ -637,10 +629,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                     />
                   </div>
                   <div className={styles.timeRow}>
-                    <label
-                      className={styles.timeLabel}
-                      htmlFor={`${inputId}-end-time`}
-                    >
+                    <label className={styles.timeLabel} htmlFor={`${inputId}-end-time`}>
                       {t('dateRangePicker.endTimeLabel')}
                     </label>
                     <TimeField

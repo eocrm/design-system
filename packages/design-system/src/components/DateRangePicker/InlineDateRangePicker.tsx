@@ -292,10 +292,7 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
         {granularity === 'minute' && value != null && (
           <div className={styles.timeRowsPair}>
             <div className={styles.timeRow}>
-              <label
-                className={styles.timeLabel}
-                htmlFor={`${inlineId}-start-time`}
-              >
+              <label className={styles.timeLabel} htmlFor={`${inlineId}-start-time`}>
                 {t('dateRangePicker.startTimeLabel')}
               </label>
               <TimeField
@@ -314,10 +311,7 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
               />
             </div>
             <div className={styles.timeRow}>
-              <label
-                className={styles.timeLabel}
-                htmlFor={`${inlineId}-end-time`}
-              >
+              <label className={styles.timeLabel} htmlFor={`${inlineId}-end-time`}>
                 {t('dateRangePicker.endTimeLabel')}
               </label>
               <TimeField

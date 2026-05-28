@@ -228,10 +228,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         setValue(null);
         return;
       }
-      const parsed =
-        granularity === 'minute'
-          ? parseDateTime(raw, locale)
-          : parseDate(raw, locale);
+      const parsed = granularity === 'minute' ? parseDateTime(raw, locale) : parseDate(raw, locale);
       if (parsed != null && !isDateOutOfRange(parsed, min, max, isDateDisabled)) {
         setValue(parsed);
       } else {
@@ -354,10 +351,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       // The embedded <TimeField> renders its popover into document.body
       // (sibling portal). Treat any click inside it as "inside" so this
       // popover doesn't auto-close mid-time-pick.
-      if (
-        target instanceof Element &&
-        target.closest('[data-timefield-popover="true"]')
-      ) {
+      if (target instanceof Element && target.closest('[data-timefield-popover="true"]')) {
         return;
       }
       commit(draft);
@@ -437,13 +431,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         <input
           type="hidden"
           name={name}
-          value={
-            value
-              ? granularity === 'minute'
-                ? toIsoDateTime(value)
-                : toIsoDate(value)
-              : ''
-          }
+          value={value ? (granularity === 'minute' ? toIsoDateTime(value) : toIsoDate(value)) : ''}
         />
       )}
       {open &&
