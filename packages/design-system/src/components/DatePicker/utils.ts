@@ -193,6 +193,8 @@ export function formatDateTime(date: Date, locale: string, cycle: '12' | '24' = 
  * Accepts:
  * - ISO `YYYY-MM-DDTHH:mm` and `YYYY-MM-DD HH:mm`
  * - Locale-formatted date followed by a space and `HH:mm`
+ * - Locale-formatted date followed by a space and `h:mm AM/PM`
+ *   (case-insensitive, optional period in `P.M.`)
  * - Pure date (no time) → defaults to 00:00 — useful for partial typing
  *
  * Returns `null` for empty input, malformed time (`25:99`, etc.), or
@@ -203,8 +205,26 @@ export function parseDateTime(raw: string, locale: string): Date | null {
   const str = raw.trim();
   if (str === '') return null;
 
-  // Split into date-part + time-part. ISO uses T; otherwise the last space
-  // before HH:mm-shaped token. If no time-shaped tail, fall through to date-only.
+  // Try AM/PM tail first — its shape is unambiguous and we want
+  // "05/28/2026 2:30 PM" to bind both digits and the suffix to the time
+  // tail (rather than letting the 24h regex below pick off just "2:30").
+  const ampmMatch = str.match(
+    /[T\s]([0-9]{1,2})(?::([0-9]{2}))?\s*(a\.?\s*m\.?|p\.?\s*m\.?)$/i,
+  );
+  if (ampmMatch) {
+    const h12 = Number(ampmMatch[1]);
+    const m = ampmMatch[2] != null ? Number(ampmMatch[2]) : 0;
+    const isPm = /p/i.test(ampmMatch[3]);
+    if (h12 < 1 || h12 > 12 || m > 59) return null;
+    const h24 = (h12 % 12) + (isPm ? 12 : 0);
+    const datePart = str.slice(0, str.length - ampmMatch[0].length).trim();
+    const date = parseDate(datePart, locale);
+    if (date == null) return null;
+    return combineDateAndTime(date, h24, m);
+  }
+
+  // 24-hour tail. ISO uses T; otherwise the last space before HH:mm-shaped
+  // token. If no time-shaped tail, fall through to date-only.
   const timeMatch = str.match(/[T\s]([0-9]{1,2}):([0-9]{2})$/);
   if (timeMatch == null) {
     const dateOnly = parseDate(str, locale);

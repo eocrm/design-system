@@ -185,6 +185,16 @@ describe('DateRangePicker utils', () => {
     it('returns null when either half fails to parse', () => {
       expect(parseDateTimeRange('garbage — 05/29/2026 09:00', 'en-US')).toBeNull();
     });
+    it('parses locale-formatted datetime range with AM/PM tails on both halves', () => {
+      const r = parseDateTimeRange('05/28/2026 9:00 AM — 05/29/2026 5:30 PM', 'en-US');
+      expect(r?.start).toEqual(new Date(2026, 4, 28, 9, 0, 0, 0));
+      expect(r?.end).toEqual(new Date(2026, 4, 29, 17, 30, 0, 0));
+    });
+    it('parses mixed 24h + AM/PM tails (lenient)', () => {
+      const r = parseDateTimeRange('05/28/2026 09:00 — 05/29/2026 5:30 PM', 'en-US');
+      expect(r?.start).toEqual(new Date(2026, 4, 28, 9, 0, 0, 0));
+      expect(r?.end).toEqual(new Date(2026, 4, 29, 17, 30, 0, 0));
+    });
   });
 
   describe('clampRangeEndAfterStart', () => {

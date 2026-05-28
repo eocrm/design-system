@@ -233,6 +233,39 @@ describe('DatePicker utils', () => {
     it('returns null for invalid date with valid time', () => {
       expect(parseDateTime('99/99/9999 14:30', 'en-US')).toBeNull();
     });
+    it('parses locale-formatted date with AM/PM tail', () => {
+      expect(parseDateTime('05/28/2026 2:30 PM', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 14, 30, 0, 0),
+      );
+      expect(parseDateTime('05/28/2026 2:30 AM', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 2, 30, 0, 0),
+      );
+    });
+    it('parses 12:00 AM as midnight, 12:00 PM as noon', () => {
+      expect(parseDateTime('05/28/2026 12:00 AM', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 0, 0, 0, 0),
+      );
+      expect(parseDateTime('05/28/2026 12:00 PM', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 12, 0, 0, 0),
+      );
+    });
+    it('parses AM/PM with no leading-zero minutes form ("2 PM")', () => {
+      expect(parseDateTime('05/28/2026 2 PM', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 14, 0, 0, 0),
+      );
+    });
+    it('parses lowercase / period-form AM/PM ("p.m.", "am")', () => {
+      expect(parseDateTime('05/28/2026 2:30 p.m.', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 14, 30, 0, 0),
+      );
+      expect(parseDateTime('05/28/2026 11:05 am', 'en-US')).toEqual(
+        new Date(2026, 4, 28, 11, 5, 0, 0),
+      );
+    });
+    it('rejects out-of-range 12-hour AM/PM ("13:00 PM", "0:30 AM")', () => {
+      expect(parseDateTime('05/28/2026 13:00 PM', 'en-US')).toBeNull();
+      expect(parseDateTime('05/28/2026 0:30 AM', 'en-US')).toBeNull();
+    });
   });
 
   describe('toIsoDateTime', () => {
