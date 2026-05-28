@@ -13,6 +13,7 @@
 ## Task 1: tokens + i18n keys
 
 **Files:**
+
 - Create: `packages/design-system/src/components/TopBar/TopBar.tokens.scss`
 - Modify: `packages/design-system/src/i18n/messages.ts` — add `topBar` namespace
 - Modify: `packages/design-system/src/i18n/en.ts` — `topBar.label`, `topBar.search`
@@ -21,6 +22,7 @@
 Token values: copy verbatim from the spec's "Tokens" section.
 
 i18n mapping:
+
 - `topBar.label`: `Application top bar` / `Верхняя панель приложения`
 - `topBar.search`: `Search` / `Поиск`
 
@@ -31,6 +33,7 @@ i18n mapping:
 ## Task 2: Root + Start + End
 
 **Files:**
+
 - Create: `packages/design-system/src/components/TopBar/TopBar.tsx`
 - Create: `packages/design-system/src/components/TopBar/TopBarStart.tsx`
 - Create: `packages/design-system/src/components/TopBar/TopBarEnd.tsx`
@@ -271,12 +274,14 @@ import styles from './TopBar.module.scss';
 
 export type TopBarIndicatorTone = 'danger' | 'warning' | 'info' | 'accent';
 
-export interface TopBarIconButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+export interface TopBarIconButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'children'
+> {
   children: ReactNode;
   indicator?: boolean;
   indicatorTone?: TopBarIndicatorTone;
-  'aria-label': string;  // REQUIRED for icon-only buttons
+  'aria-label': string; // REQUIRED for icon-only buttons
 }
 
 const TONE_CLASS: Record<TopBarIndicatorTone, string> = {
@@ -301,7 +306,9 @@ export const TopBarIconButton = forwardRef<HTMLButtonElement, TopBarIconButtonPr
         {...props}
       >
         {children}
-        {indicator && <span aria-hidden className={clsx(styles.indicator, TONE_CLASS[indicatorTone])} />}
+        {indicator && (
+          <span aria-hidden className={clsx(styles.indicator, TONE_CLASS[indicatorTone])} />
+        )}
       </Button>
     );
   },
@@ -331,10 +338,18 @@ export const TopBarIconButton = forwardRef<HTMLButtonElement, TopBarIconButtonPr
   pointer-events: none;
 }
 
-.indicatorDanger  { background: var(--topbar-indicator-bg-danger); }
-.indicatorWarning { background: var(--topbar-indicator-bg-warning); }
-.indicatorInfo    { background: var(--topbar-indicator-bg-info); }
-.indicatorAccent  { background: var(--topbar-indicator-bg-accent); }
+.indicatorDanger {
+  background: var(--topbar-indicator-bg-danger);
+}
+.indicatorWarning {
+  background: var(--topbar-indicator-bg-warning);
+}
+.indicatorInfo {
+  background: var(--topbar-indicator-bg-info);
+}
+.indicatorAccent {
+  background: var(--topbar-indicator-bg-accent);
+}
 ```
 
 - [ ] Commit `TopBar: IconButton with notification indicator`.
@@ -365,6 +380,7 @@ Cover the test list from the spec's "Tests" section. Vitest globals, RTL `render
 ## Task 7: Demo page
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/TopBarDemo.tsx`
 - Modify: `packages/playground/src/App.tsx` — route `/components/topbar`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx` — add the nav item

@@ -17,8 +17,10 @@ export type TopBarIndicatorTone = 'danger' | 'warning' | 'info' | 'accent';
  * variant="ghost" size="sm">` sized for the bar with one addition: an
  * optional notification-indicator dot positioned in the upper-right corner.
  */
-export interface TopBarIconButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+export interface TopBarIconButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'children'
+> {
   /**
    * Icon to render inside the button. Typically a single lucide icon
    * (e.g. `<Bell size={16} />`). The wrapping button supplies the

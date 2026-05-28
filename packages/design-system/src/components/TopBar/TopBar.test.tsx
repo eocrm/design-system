@@ -30,9 +30,7 @@ describe('TopBar', () => {
         <TopBar />
       </I18nProvider>,
     );
-    expect(
-      screen.getByRole('banner', { name: 'Верхняя панель приложения' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('banner', { name: 'Верхняя панель приложения' })).toBeInTheDocument();
   });
 
   it('merges consumer className with the internal class instead of replacing it', () => {
@@ -207,9 +205,9 @@ describe('TopBar', () => {
             </TopBar.End>
           </TopBar>,
         );
-        const dot = screen.getByRole('button', { name: `btn-${tone}` }).querySelector(
-          'span[aria-hidden]',
-        );
+        const dot = screen
+          .getByRole('button', { name: `btn-${tone}` })
+          .querySelector('span[aria-hidden]');
         expect(dot).not.toBeNull();
         // The class list should contain something that ends in the tone (the
         // CSS module hashes the class but keeps the readable suffix).

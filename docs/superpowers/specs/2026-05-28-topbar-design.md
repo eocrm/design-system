@@ -93,29 +93,29 @@ Renders the Button with `position: relative` so the dot can absolute-position to
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| `packages/design-system/src/components/TopBar/TopBar.tsx` (NEW) | Root + context (likely no context needed — pure layout) + compose subcomponents |
-| `packages/design-system/src/components/TopBar/TopBarStart.tsx` (NEW) | `<div className="start">` flex region |
-| `packages/design-system/src/components/TopBar/TopBarEnd.tsx` (NEW) | `<div className="end">` flex region |
-| `packages/design-system/src/components/TopBar/TopBarSearch.tsx` (NEW) | Styled search input |
-| `packages/design-system/src/components/TopBar/TopBarIconButton.tsx` (NEW) | Icon button + optional indicator dot |
-| `packages/design-system/src/components/TopBar/TopBar.module.scss` (NEW) | All visual styles |
-| `packages/design-system/src/components/TopBar/TopBar.tokens.scss` (NEW) | Component tokens |
-| `packages/design-system/src/components/TopBar/TopBar.test.tsx` (NEW) | Unit tests |
-| `packages/design-system/src/components/TopBar/index.ts` (NEW) | Public exports |
-| `packages/design-system/src/i18n/messages.ts` (MODIFY) | Add `topBar.label`, `topBar.search` keys |
-| `packages/design-system/src/i18n/en.ts` (MODIFY) | en values |
-| `packages/design-system/src/i18n/ru.ts` (MODIFY) | ru values |
-| `packages/design-system/src/index.ts` (MODIFY) | Re-export |
-| `packages/design-system/AGENTS.md` (MODIFY) | TopBar catalog entry |
-| `packages/playground/src/pages/components/TopBarDemo.tsx` (NEW) | Demo page |
-| `packages/playground/src/App.tsx` (MODIFY) | Route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY) | Adopt the new TopBar; remove hand-rolled markup |
-| `packages/playground/src/layout/AppShell/AppShell.module.scss` (MODIFY) | Remove now-dead `.topbar`/`.searchWrap`/`.iconBtn` etc. styles |
-| `packages/playground/src/pages/mockups/registry.ts` (MODIFY) | Add `TopBar` to the ComponentName union |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY) | Add card |
-| `packages/design-system/src/components.manifest.json` (regen via script) | New component metadata |
+| File                                                                      | Role                                                                            |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `packages/design-system/src/components/TopBar/TopBar.tsx` (NEW)           | Root + context (likely no context needed — pure layout) + compose subcomponents |
+| `packages/design-system/src/components/TopBar/TopBarStart.tsx` (NEW)      | `<div className="start">` flex region                                           |
+| `packages/design-system/src/components/TopBar/TopBarEnd.tsx` (NEW)        | `<div className="end">` flex region                                             |
+| `packages/design-system/src/components/TopBar/TopBarSearch.tsx` (NEW)     | Styled search input                                                             |
+| `packages/design-system/src/components/TopBar/TopBarIconButton.tsx` (NEW) | Icon button + optional indicator dot                                            |
+| `packages/design-system/src/components/TopBar/TopBar.module.scss` (NEW)   | All visual styles                                                               |
+| `packages/design-system/src/components/TopBar/TopBar.tokens.scss` (NEW)   | Component tokens                                                                |
+| `packages/design-system/src/components/TopBar/TopBar.test.tsx` (NEW)      | Unit tests                                                                      |
+| `packages/design-system/src/components/TopBar/index.ts` (NEW)             | Public exports                                                                  |
+| `packages/design-system/src/i18n/messages.ts` (MODIFY)                    | Add `topBar.label`, `topBar.search` keys                                        |
+| `packages/design-system/src/i18n/en.ts` (MODIFY)                          | en values                                                                       |
+| `packages/design-system/src/i18n/ru.ts` (MODIFY)                          | ru values                                                                       |
+| `packages/design-system/src/index.ts` (MODIFY)                            | Re-export                                                                       |
+| `packages/design-system/AGENTS.md` (MODIFY)                               | TopBar catalog entry                                                            |
+| `packages/playground/src/pages/components/TopBarDemo.tsx` (NEW)           | Demo page                                                                       |
+| `packages/playground/src/App.tsx` (MODIFY)                                | Route                                                                           |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` (MODIFY)           | Adopt the new TopBar; remove hand-rolled markup                                 |
+| `packages/playground/src/layout/AppShell/AppShell.module.scss` (MODIFY)   | Remove now-dead `.topbar`/`.searchWrap`/`.iconBtn` etc. styles                  |
+| `packages/playground/src/pages/mockups/registry.ts` (MODIFY)              | Add `TopBar` to the ComponentName union                                         |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx` (MODIFY)   | Add card                                                                        |
+| `packages/design-system/src/components.manifest.json` (regen via script)  | New component metadata                                                          |
 
 ## Tokens
 
@@ -161,7 +161,9 @@ Renders the Button with `position: relative` so the dot can absolute-position to
   --topbar-indicator-bg-warning: var(--color-warning);
   --topbar-indicator-bg-info: var(--color-info);
   --topbar-indicator-bg-accent: var(--color-accent);
-  --topbar-indicator-border-color: var(--topbar-bg); // same as bar bg so the ring around the dot reads as a tiny halo
+  --topbar-indicator-border-color: var(
+    --topbar-bg
+  ); // same as bar bg so the ring around the dot reads as a tiny halo
   --topbar-indicator-border-width: 1.5px;
 }
 ```
@@ -170,15 +172,15 @@ Renders the Button with `position: relative` so the dot can absolute-position to
 
 ```ts
 topBar: {
-  label: string;   // default aria-label for the bar
-  search: string;  // default aria-label for the search input
-};
+  label: string; // default aria-label for the bar
+  search: string; // default aria-label for the search input
+}
 ```
 
-| Key | en | ru |
-| --- | --- | --- |
-| `topBar.label` | `Application top bar` | `Верхняя панель приложения` |
-| `topBar.search` | `Search` | `Поиск` |
+| Key             | en                    | ru                          |
+| --------------- | --------------------- | --------------------------- |
+| `topBar.label`  | `Application top bar` | `Верхняя панель приложения` |
+| `topBar.search` | `Search`              | `Поиск`                     |
 
 ## Accessibility
 
