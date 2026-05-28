@@ -105,6 +105,14 @@ export interface Messages {
     rangeStart: string;
     /** aria-label for the range-end input (DateRangePicker dual-input). */
     rangeEnd: string;
+    /** Visible label / aria-label for the time input rendered in `granularity="minute"` mode. */
+    timeLabel: string;
+  };
+  dateRangePicker: {
+    /** Visible label / aria-label for the start-time input in `granularity="minute"` mode. */
+    startTimeLabel: string;
+    /** Visible label / aria-label for the end-time input in `granularity="minute"` mode. */
+    endTimeLabel: string;
   };
   dataTable: {
     /** aria-label for the select-all checkbox in the header. */

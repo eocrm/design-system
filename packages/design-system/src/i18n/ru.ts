@@ -68,6 +68,11 @@ export const ru: Messages = {
     nextMonth: 'Следующий месяц',
     rangeStart: 'Дата начала',
     rangeEnd: 'Дата окончания',
+    timeLabel: 'Время',
+  },
+  dateRangePicker: {
+    startTimeLabel: 'Время начала',
+    endTimeLabel: 'Время окончания',
   },
   dataTable: {
     selectAll: 'Выбрать все строки на странице',
