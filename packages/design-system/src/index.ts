@@ -368,6 +368,7 @@ export type {
   RailCollapseToggleProps,
   RailSectionProps,
   RailItemProps,
+  RailGroupProps,
 } from './components/Rail';
 
 export { Code } from './components/Code';

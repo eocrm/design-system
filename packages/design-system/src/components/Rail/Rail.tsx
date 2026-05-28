@@ -16,6 +16,7 @@ import { RailSpacer } from './RailSpacer';
 import { RailCollapseToggle } from './RailCollapseToggle';
 import { RailSection } from './RailSection';
 import { RailItem } from './RailItem';
+import { RailGroup } from './RailGroup';
 import styles from './Rail.module.scss';
 
 /**
@@ -219,4 +220,5 @@ export const Rail = Object.assign(RailRoot, {
   CollapseToggle: RailCollapseToggle,
   Section: RailSection,
   Item: RailItem,
+  Group: RailGroup,
 });

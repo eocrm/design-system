@@ -6,4 +6,4 @@ export type { RailSpacerProps } from './RailSpacer';
 export type { RailCollapseToggleProps } from './RailCollapseToggle';
 export type { RailSectionProps } from './RailSection';
 export type { RailItemProps } from './RailItem';
-// RailGroup added in a subsequent commit.
+export type { RailGroupProps } from './RailGroup';
