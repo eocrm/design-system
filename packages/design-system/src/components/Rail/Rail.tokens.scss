@@ -46,6 +46,11 @@
   --rail-flyout-header-font-weight: var(--font-weight-semibold);
   --rail-flyout-header-border: var(--color-border);
 
+  // Label / title fade opacities. Bound to the global --opacity-* scale so
+  // a theme can retune visibility crossover without forking this file.
+  --rail-label-opacity-visible: var(--opacity-visible);
+  --rail-label-opacity-hidden: var(--opacity-hidden);
+
   // Transitions
   --rail-collapse-transition: width var(--transition-base);
   --rail-label-transition: opacity var(--transition-fast);

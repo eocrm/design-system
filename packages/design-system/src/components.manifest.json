@@ -55,6 +55,7 @@
       "Modal",
       "OptionsPicker",
       "PasswordInput",
+      "Rail",
       "Toast"
     ]
   },
@@ -364,6 +365,14 @@
     "composedBy": [
       "OptionsPicker"
     ]
+  },
+  "Rail": {
+    "tier": "composition",
+    "cluster": "Navigation",
+    "composes": [
+      "Button"
+    ],
+    "composedBy": []
   },
   "Select": {
     "tier": "primitive",

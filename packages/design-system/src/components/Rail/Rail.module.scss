@@ -1,0 +1,244 @@
+@use './Rail.tokens';
+
+// ─── Root ───────────────────────────────────────────────────────────────
+// stylelint-disable property-disallowed-list -- Rail is a layout-owning
+// primitive (Hard rule 4 exception). Like <Modal>, <Drawer>, <Page>, the
+// rail owns its OWN width and height: that IS its job as a left-nav layout
+// container. The consumer chooses where to place the rail by styling its
+// parent; the rail itself is a flex column with animated width.
+.rail {
+  width: var(--rail-width-expanded);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rail-section-gap);
+  padding: var(--rail-padding-y) var(--rail-padding-x);
+  background: var(--rail-bg);
+  border-right: var(--rail-border-width) solid var(--rail-border-color);
+  transition: var(--rail-collapse-transition);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- horizontal label clip during animation is the whole point
+  overflow: hidden;
+}
+
+.collapsed {
+  width: var(--rail-width-collapsed);
+}
+// stylelint-enable property-disallowed-list
+
+// ─── Header / Footer / Spacer ───────────────────────────────────────────
+.header {
+  flex-shrink: 0;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse-mode clip per spec
+  overflow: hidden;
+}
+
+.footer {
+  flex-shrink: 0;
+}
+
+.spacer {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+// ─── Collapse toggle ────────────────────────────────────────────────────
+.collapseToggle {
+  transition: var(--rail-chevron-transition);
+}
+
+.collapseToggleRotated {
+  transform: rotate(180deg);
+}
+
+// ─── Section ────────────────────────────────────────────────────────────
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sectionTitle {
+  padding: var(--rail-section-title-padding);
+  font-size: var(--rail-section-title-font-size);
+  font-weight: var(--rail-section-title-font-weight);
+  letter-spacing: var(--rail-section-title-letter-spacing);
+  text-transform: uppercase;
+  color: var(--rail-section-title-fg);
+  opacity: var(--rail-label-opacity-visible);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- multi-prop shorthand for two transitioned props
+  transition:
+    opacity var(--transition-fast),
+    height var(--transition-fast);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- nowrap clip during collapse
+  white-space: nowrap;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse clip
+  overflow: hidden;
+}
+
+.collapsed .sectionTitle {
+  opacity: var(--rail-label-opacity-hidden);
+  pointer-events: none;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse-time height zero is intentional
+  height: 0;
+  padding: 0;
+}
+
+// ─── Item ───────────────────────────────────────────────────────────────
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--rail-item-gap);
+  padding: var(--rail-item-padding-y) var(--rail-item-padding-x);
+  color: var(--rail-item-fg);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- anchor reset
+  text-decoration: none;
+  border-radius: var(--rail-item-radius);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- nowrap clip during collapse
+  white-space: nowrap;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse clip
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--rail-item-bg-hover);
+}
+
+// Active-state styling. Two selectors so we catch both shapes:
+// (1) the `.item` element itself carries `aria-current="page"` (e.g. user
+//     passed it directly via the polymorphic `as` element).
+// (2) the `.item` wrapper has a descendant with `aria-current="page"` —
+//     this is the NavLink case, where the rendered anchor IS the wrapper
+//     and react-router sets aria-current on the rendered element directly.
+.item[aria-current='page'],
+.item:has([aria-current='page']) {
+  background: var(--rail-item-bg-active);
+  color: var(--rail-item-fg-active);
+}
+
+.itemIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--rail-item-icon-size);
+  height: var(--rail-item-icon-size);
+  flex-shrink: 0;
+}
+
+.itemLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse clip
+  overflow: hidden;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- truncation marker
+  text-overflow: ellipsis;
+  transition: var(--rail-label-transition);
+}
+
+.collapsed .itemLabel,
+.collapsed .itemBadge {
+  opacity: var(--rail-label-opacity-hidden);
+  pointer-events: none;
+}
+
+.itemBadge {
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  transition: var(--rail-label-transition);
+}
+
+// ─── Group ──────────────────────────────────────────────────────────────
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+// Same shape as .item but rendered as a <button>, so we reset native button
+// chrome (border, background, font inheritance).
+.groupTrigger {
+  display: flex;
+  align-items: center;
+  gap: var(--rail-item-gap);
+  padding: var(--rail-item-padding-y) var(--rail-item-padding-x);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- button-reset, layout fills the rail width
+  width: 100%;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- native button border reset
+  border: 0;
+  background: transparent;
+  border-radius: var(--rail-item-radius);
+  color: var(--rail-item-fg);
+  cursor: pointer;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- inherit page font
+  font: inherit;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- match left-anchored items
+  text-align: start;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- nowrap clip during collapse
+  white-space: nowrap;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse clip
+  overflow: hidden;
+}
+
+.groupTrigger:hover {
+  background: var(--rail-item-bg-hover);
+}
+
+.groupTrigger:focus-visible {
+  outline: var(--ring-width) solid var(--ring-accent);
+  outline-offset: 2px;
+}
+
+// Parent-active styling: the group's trigger picks up the active accent
+// when any descendant subitem is current. `:has()` walks the .group block,
+// not the trigger, so both inline subitems and popover subitems light up
+// their parent.
+.group:has([aria-current='page']) .groupTrigger {
+  color: var(--rail-item-fg-active);
+}
+
+.groupChevron {
+  flex-shrink: 0;
+  transition: var(--rail-chevron-transition);
+}
+
+.groupChevronOpen {
+  transform: rotate(90deg);
+}
+
+.subitems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.subitems .item {
+  padding-left: var(--rail-subitem-padding-left);
+}
+
+// When the rail is collapsed, inline subitems disappear (they live in the
+// flyout popover instead).
+.collapsed .subitems {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapsed mode hides inline subitems
+  display: none;
+}
+
+// ─── Collapsed-mode flyout (Popover content) ────────────────────────────
+.flyout {
+  display: flex;
+  flex-direction: column;
+  min-width: var(--rail-flyout-min-width);
+}
+
+.flyoutHeader {
+  padding: var(--rail-flyout-header-padding);
+  font-weight: var(--rail-flyout-header-font-weight);
+  color: var(--rail-flyout-header-fg);
+  border-bottom: var(--border-width) solid var(--rail-flyout-header-border);
+}
+
+.flyoutBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rail-flyout-body-gap);
+  padding: var(--rail-flyout-body-padding);
+}
