@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, useState } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
@@ -341,6 +341,241 @@ describe('DateRangePicker', () => {
   it('defaults to size="md" when no size prop is passed', () => {
     const { container } = render(<DateRangePicker aria-label="Default" />, { wrapper: wrap() });
     expect(container.querySelector('[class*="size-md"]')).not.toBeNull();
+  });
+
+  describe('granularity', () => {
+    it('defaults to "day" — no time inputs, no HH:mm in trigger', async () => {
+      const user = userEvent.setup();
+      render(<DateRangePicker defaultValue={SAMPLE_RANGE} aria-label="Range" />, {
+        wrapper: wrap(),
+      });
+      expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 — 06/04/2026');
+      await user.click(screen.getByRole('textbox'));
+      expect(await screen.findByRole('dialog')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Start time')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('End time')).not.toBeInTheDocument();
+    });
+
+    it('granularity="minute" renders both time inputs in the popover', async () => {
+      const user = userEvent.setup();
+      const startDate = new Date(2026, 4, 21, 9, 0);
+      const endDate = new Date(2026, 5, 4, 17, 30);
+      render(
+        <DateRangePicker
+          defaultValue={{ start: startDate, end: endDate }}
+          granularity="minute"
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox'));
+      expect(await screen.findByLabelText('Start time')).toHaveValue('09:00');
+      expect(await screen.findByLabelText('End time')).toHaveValue('17:30');
+    });
+
+    it('granularity="minute" includes HH:mm for both halves in trigger text', () => {
+      render(
+        <DateRangePicker
+          defaultValue={{ start: new Date(2026, 4, 21, 9, 0), end: new Date(2026, 5, 4, 17, 30) }}
+          granularity="minute"
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      expect(screen.getByRole('textbox')).toHaveValue(
+        '05/21/2026 09:00 — 06/04/2026 17:30',
+      );
+    });
+
+    it('picking a fresh range from null defaults start=00:00 / end=23:59', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker defaultValue={null} granularity="minute" onChange={onChange} aria-label="Range" />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox'));
+      const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+      await user.click(fives[0]);
+      const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
+      await user.click(tens[0]);
+      await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+      const r = onChange.mock.calls[0][0]!;
+      expect(r.start.getHours()).toBe(0);
+      expect(r.start.getMinutes()).toBe(0);
+      expect(r.end.getHours()).toBe(23);
+      expect(r.end.getMinutes()).toBe(59);
+    });
+
+    it('picking a subsequent range preserves both existing times', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox'));
+      const fifteens = screen.getAllByRole('gridcell', { name: /^15$/ });
+      await user.click(fifteens[0]);
+      const twenties = screen.getAllByRole('gridcell', { name: /^20$/ });
+      await user.click(twenties[0]);
+      await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+      const r = onChange.mock.calls[0][0]!;
+      expect(r.start.getHours()).toBe(9);
+      expect(r.start.getMinutes()).toBe(0);
+      expect(r.end.getHours()).toBe(17);
+      expect(r.end.getMinutes()).toBe(30);
+    });
+
+    it('changing the start-time input updates start only', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox'));
+      const startTime = await screen.findByLabelText('Start time');
+      fireEvent.change(startTime, { target: { value: '10:15' } });
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.start.getHours()).toBe(10);
+      expect(r.start.getMinutes()).toBe(15);
+      expect(r.end.getHours()).toBe(17);
+      expect(r.end.getMinutes()).toBe(30);
+    });
+
+    it('changing the end-time input updates end only', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox'));
+      const endTime = await screen.findByLabelText('End time');
+      fireEvent.change(endTime, { target: { value: '20:45' } });
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.start.getHours()).toBe(9);
+      expect(r.start.getMinutes()).toBe(0);
+      expect(r.end.getHours()).toBe(20);
+      expect(r.end.getMinutes()).toBe(45);
+    });
+
+    it('same-day end-time < start-time clamps end-time to start-time', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 14, 0),
+            end: new Date(2026, 4, 21, 18, 0),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox'));
+      const endTime = await screen.findByLabelText('End time');
+      // Try to set end earlier than start on the same day → clamp.
+      fireEvent.change(endTime, { target: { value: '10:00' } });
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.end.getHours()).toBe(14);
+      expect(r.end.getMinutes()).toBe(0);
+    });
+
+    it('different-day range with end-time < start-time does NOT clamp', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 14, 0),
+            end: new Date(2026, 4, 22, 18, 0),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox'));
+      const endTime = await screen.findByLabelText('End time');
+      fireEvent.change(endTime, { target: { value: '08:00' } });
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      // Different day — clamp is a no-op; end stays at 08:00.
+      expect(r.end.getHours()).toBe(8);
+      expect(r.end.getMinutes()).toBe(0);
+    });
+
+    it('hidden form mirrors emit ISO datetime when granularity="minute"', () => {
+      const { container } = render(
+        <DateRangePicker
+          granularity="minute"
+          nameStart="bookingStart"
+          nameEnd="bookingEnd"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const start = container.querySelector<HTMLInputElement>(
+        'input[type="hidden"][name="bookingStart"]',
+      );
+      const end = container.querySelector<HTMLInputElement>(
+        'input[type="hidden"][name="bookingEnd"]',
+      );
+      expect(start?.value).toBe('2026-05-21T09:00');
+      expect(end?.value).toBe('2026-06-04T17:30');
+    });
+
+    it('typed datetime range parses and commits on blur', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker granularity="minute" onChange={onChange} aria-label="Range" />,
+        { wrapper: wrap() },
+      );
+      const input = screen.getByRole('textbox');
+      await user.click(input);
+      await user.type(input, '05/21/2026 09:00 — 06/04/2026 17:30');
+      input.blur();
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const r = onChange.mock.calls.at(-1)![0]!;
+      expect(r.start.getFullYear()).toBe(2026);
+      expect(r.start.getHours()).toBe(9);
+      expect(r.start.getMinutes()).toBe(0);
+      expect(r.end.getHours()).toBe(17);
+      expect(r.end.getMinutes()).toBe(30);
+    });
   });
 
   it('keyboard ArrowLeft from a right-grid cell shifts cursor backward and focuses the left side (exercises handleRightGridCursorChange)', async () => {

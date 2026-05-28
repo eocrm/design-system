@@ -19,8 +19,25 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
-import { toIsoDate, isDateOutOfRange, formatDate } from '../DatePicker/utils';
-import { type DateRange, autoSwapRange, formatDateRange, parseDateRange } from './utils';
+import {
+  combineDateAndTime,
+  formatDate,
+  formatDateTime,
+  isDateOutOfRange,
+  toIsoDate,
+  toIsoDateTime,
+  toTimeInputValue,
+  type DateTimeGranularity,
+} from '../DatePicker/utils';
+import {
+  type DateRange,
+  autoSwapRange,
+  clampRangeEndAfterStart,
+  formatDateRange,
+  formatDateTimeRange,
+  parseDateRange,
+  parseDateTimeRange,
+} from './utils';
 import styles from './DateRangePicker.module.scss';
 
 /** Field height + type scale. Pairs with `<Input>`, `<Select>`, and `<DatePicker>`. */
@@ -65,6 +82,22 @@ export interface DateRangePickerProps extends Omit<
   nameStart?: string;
   /** Form name for the END half. */
   nameEnd?: string;
+
+  /**
+   * Picker precision.
+   *
+   * - `'day'` (default) — date only; behavior unchanged from prior releases.
+   * - `'minute'` — adds two manual-entry time inputs (start + end) below
+   *   the two-month grid. The trigger text shows `HH:mm` after each date.
+   *   Hidden form mirrors (when `nameStart` / `nameEnd` are set) emit ISO
+   *   local datetime (`2026-05-28T14:30`).
+   *
+   * Times are preserved across date re-picks. Committing a fresh range
+   * from a `null` value defaults to start `00:00` / end `23:59`. Same-day
+   * ranges with end-time < start-time are silently clamped so end-time ≥
+   * start-time.
+   */
+  granularity?: DateTimeGranularity;
 }
 
 const ICON_SIZE_FOR: Record<DateRangePickerSize, number> = {
@@ -101,7 +134,8 @@ const ICON_SIZE_FOR: Record<DateRangePickerSize, number> = {
  *
  * @remarks When NOT to use
  * - Single date → use `<DatePicker>`.
- * - Datetime (date + time) → not supported.
+ * - Seconds-precision tracking → only `granularity='minute'` is supported.
+ * - Time-only fields (no date) → out of scope.
  * - Multi-date selection (3+ non-contiguous dates) → out of scope.
  *
  * @remarks Anti-patterns
@@ -123,6 +157,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       invalid = false,
       disabled = false,
       size = 'md',
+      granularity = 'day',
       nameStart,
       nameEnd,
       placeholder,
@@ -152,7 +187,11 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       [valueProp, onChange],
     );
 
-    const formattedValue = value ? formatDateRange(value, locale) : '';
+    const formattedValue = value
+      ? granularity === 'minute'
+        ? formatDateTimeRange(value, locale)
+        : formatDateRange(value, locale)
+      : '';
     const [draft, setDraft] = useState(formattedValue);
     useEffect(() => {
       setDraft(formattedValue);
@@ -205,18 +244,21 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           setValue(null);
           return;
         }
-        const parsed = parseDateRange(raw, locale);
+        const parsed =
+          granularity === 'minute'
+            ? parseDateTimeRange(raw, locale)
+            : parseDateRange(raw, locale);
         if (
           parsed != null &&
           !isDateOutOfRange(parsed.start, min, max, isDateDisabled) &&
           !isDateOutOfRange(parsed.end, min, max, isDateDisabled)
         ) {
-          setValue(parsed);
+          setValue(granularity === 'minute' ? clampRangeEndAfterStart(parsed) : parsed);
         } else {
           setDraft(formattedValue);
         }
       },
-      [locale, min, max, isDateDisabled, setValue, formattedValue],
+      [granularity, locale, min, max, isDateDisabled, setValue, formattedValue],
     );
 
     const handleInputBlur = useCallback(
@@ -301,14 +343,34 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
         } else {
           // Second click — commit.
           const range = autoSwapRange(selectionStart, date);
+          let withTime: DateRange = range;
+          if (granularity === 'minute') {
+            // Preserve existing times if value exists; otherwise default
+            // start=00:00, end=23:59. Then clamp same-day end ≥ start.
+            const startSource = value?.start ?? null;
+            const endSource = value?.end ?? null;
+            withTime = {
+              start: combineDateAndTime(
+                range.start,
+                startSource?.getHours() ?? 0,
+                startSource?.getMinutes() ?? 0,
+              ),
+              end: combineDateAndTime(
+                range.end,
+                endSource?.getHours() ?? 23,
+                endSource?.getMinutes() ?? 59,
+              ),
+            };
+            withTime = clampRangeEndAfterStart(withTime);
+          }
           setSelectionStart(null);
           setHoverDate(null);
-          setValue(range);
+          setValue(withTime);
           setOpen(false);
           inputRef.current?.focus();
         }
       },
-      [selectionStart, setValue],
+      [granularity, selectionStart, value, setValue],
     );
 
     const handleClear = useCallback(
@@ -413,7 +475,9 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           aria-expanded={open}
           placeholder={
             placeholder ??
-            `${formatDate(new Date(2000, 0, 2), locale)} — ${formatDate(new Date(2000, 0, 9), locale)}`
+            (granularity === 'minute'
+              ? `${formatDateTime(new Date(2000, 0, 2, 9, 0), locale)} — ${formatDateTime(new Date(2000, 0, 9, 17, 30), locale)}`
+              : `${formatDate(new Date(2000, 0, 2), locale)} — ${formatDate(new Date(2000, 0, 9), locale)}`)
           }
           autoComplete="off"
         />
@@ -437,10 +501,30 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           <CalendarIcon size={ICON_SIZE_FOR[size]} />
         </button>
         {nameStart && (
-          <input type="hidden" name={nameStart} value={value ? toIsoDate(value.start) : ''} />
+          <input
+            type="hidden"
+            name={nameStart}
+            value={
+              value
+                ? granularity === 'minute'
+                  ? toIsoDateTime(value.start)
+                  : toIsoDate(value.start)
+                : ''
+            }
+          />
         )}
         {nameEnd && (
-          <input type="hidden" name={nameEnd} value={value ? toIsoDate(value.end) : ''} />
+          <input
+            type="hidden"
+            name={nameEnd}
+            value={
+              value
+                ? granularity === 'minute'
+                  ? toIsoDateTime(value.end)
+                  : toIsoDate(value.end)
+                : ''
+            }
+          />
         )}
         {open &&
           createPortal(
@@ -506,6 +590,62 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                   chevrons={false}
                 />
               </div>
+              {granularity === 'minute' && value != null && (
+                <div className={styles.timeRowsPair}>
+                  <div className={styles.timeRow}>
+                    <label
+                      className={styles.timeLabel}
+                      htmlFor={`${inputId}-start-time`}
+                    >
+                      {t('dateRangePicker.startTimeLabel')}
+                    </label>
+                    <input
+                      id={`${inputId}-start-time`}
+                      type="time"
+                      step={60}
+                      className={styles.timeInput}
+                      value={toTimeInputValue(value.start)}
+                      disabled={disabled}
+                      aria-label={t('dateRangePicker.startTimeLabel')}
+                      onChange={(e) => {
+                        const [hh, mm] = e.target.value.split(':').map(Number);
+                        if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+                        const next: DateRange = {
+                          start: combineDateAndTime(value.start, hh, mm),
+                          end: value.end,
+                        };
+                        setValue(clampRangeEndAfterStart(next));
+                      }}
+                    />
+                  </div>
+                  <div className={styles.timeRow}>
+                    <label
+                      className={styles.timeLabel}
+                      htmlFor={`${inputId}-end-time`}
+                    >
+                      {t('dateRangePicker.endTimeLabel')}
+                    </label>
+                    <input
+                      id={`${inputId}-end-time`}
+                      type="time"
+                      step={60}
+                      className={styles.timeInput}
+                      value={toTimeInputValue(value.end)}
+                      disabled={disabled}
+                      aria-label={t('dateRangePicker.endTimeLabel')}
+                      onChange={(e) => {
+                        const [hh, mm] = e.target.value.split(':').map(Number);
+                        if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+                        const next: DateRange = {
+                          start: value.start,
+                          end: combineDateAndTime(value.end, hh, mm),
+                        };
+                        setValue(clampRangeEndAfterStart(next));
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>,
             document.body,
           )}
