@@ -27,6 +27,48 @@ That import wires up tokens, the modern reset, and base typography. Everything e
 
 ---
 
+## Localization (i18n)
+
+Every user-facing string the library renders — visible text, aria-labels, placeholders, default empty/loading copy — flows through a single React Context. Wrap your app once; every component picks up the right copy. There are NO `labels` / `cancelLabel` / `searchPlaceholder` props on any component.
+
+```tsx
+import { I18nProvider } from '@eocrm/design-system';
+
+<I18nProvider locale="ru">
+  <App />
+</I18nProvider>
+```
+
+**Overrides** are a deep-partial of the messages tree:
+
+```tsx
+<I18nProvider
+  locale="ru"
+  overrides={{
+    pagination: { next: 'Дальше' },
+    badge: { modified: 'Изменено!' },
+  }}
+>
+  <App />
+</I18nProvider>
+```
+
+- Missing override keys fall back to the locale defaults.
+- Missing locale keys fall back to `en` (safety net for v2-and-beyond).
+- No provider at all = `en` defaults.
+
+**Available locales:** `'en'` (default), `'ru'`. v1.
+
+**Adding a new string in a library component**:
+
+1. Add the key to `src/i18n/messages.ts` (`Messages` interface).
+2. Add the English value to `src/i18n/en.ts`.
+3. Add the Russian value to `src/i18n/ru.ts` (use `ruPlural()` from `i18n/format.ts` for count-varying strings).
+4. In the component, `const t = useTranslation();` then `aria-label={t('component.key')}`. For array messages (months / weekdays), use `useTranslationArray()`.
+5. Never inline an English string — `aria-label="Close"` is a Hard rule 9 violation.
+
+---
+
 ## Components — TL;DR
 
 Each component is fully JSDoc'd. Hover any usage in your editor for inline docs including `@example` blocks, `@remarks` "When NOT to use" and "Anti-patterns" sections. The summaries below are for orientation only — the **JSDoc is the contract**.
