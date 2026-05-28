@@ -188,6 +188,7 @@ const componentGroups = [
       { to: '/components/link', label: 'Link', icon: ExternalLink, end: false },
       { to: '/components/rail', label: 'Rail', icon: Sidebar, end: false },
       { to: '/components/tabs', label: 'Tabs', icon: PanelTop, end: false },
+      { to: '/components/topbar', label: 'TopBar', icon: LayoutPanelTop, end: false },
     ],
   },
   {
