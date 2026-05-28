@@ -113,6 +113,14 @@ export interface Messages {
     timeMinutesLabel: string;
     /** aria-label for the `<TimeField>` chevron toggle (opens the hour/minute lists). */
     timeOpenList: string;
+    /** Visible label on the "Now" quick-pick button in the `<TimeField>` popover footer. */
+    timeNow: string;
+    /** aria-label for the AM/PM listbox column (12-hour cycle only). */
+    timePeriodLabel: string;
+    /** Row label for AM in the `<TimeField>` 12-hour period column. */
+    timePeriodAm: string;
+    /** Row label for PM in the `<TimeField>` 12-hour period column. */
+    timePeriodPm: string;
   };
   dateRangePicker: {
     /** Visible label / aria-label for the start-time input in `granularity="minute"` mode. */

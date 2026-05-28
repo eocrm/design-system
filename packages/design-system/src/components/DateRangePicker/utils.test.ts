@@ -138,6 +138,32 @@ describe('DateRangePicker utils', () => {
         ),
       ).toBe('05/28/2026 09:00 — 05/29/2026 17:30');
     });
+    it("defaults to 24-hour when cycle arg is omitted (back-compat)", () => {
+      expect(
+        formatDateTimeRange(
+          { start: new Date(2026, 4, 28, 14, 0), end: new Date(2026, 4, 29, 1, 30) },
+          'en-US',
+        ),
+      ).toBe('05/28/2026 14:00 — 05/29/2026 01:30');
+    });
+    it("renders AM/PM on both halves when cycle='12'", () => {
+      expect(
+        formatDateTimeRange(
+          { start: new Date(2026, 4, 28, 9, 0), end: new Date(2026, 4, 29, 17, 30) },
+          'en-US',
+          '12',
+        ),
+      ).toBe('05/28/2026 9:00 AM — 05/29/2026 5:30 PM');
+    });
+    it("preserves 24-hour output when cycle='24' is explicit", () => {
+      expect(
+        formatDateTimeRange(
+          { start: new Date(2026, 4, 28, 9, 0), end: new Date(2026, 4, 29, 17, 30) },
+          'en-US',
+          '24',
+        ),
+      ).toBe('05/28/2026 09:00 — 05/29/2026 17:30');
+    });
   });
 
   describe('parseDateTimeRange', () => {

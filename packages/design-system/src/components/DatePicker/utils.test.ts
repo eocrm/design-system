@@ -2,11 +2,14 @@ import {
   combineDateAndTime,
   formatDate,
   formatDateTime,
+  formatTime,
   getLocaleDateOrder,
+  getLocaleHourCycle,
   isDateOutOfRange,
   parseDate,
   parseDateTime,
   parseTime,
+  resolveHourCycle,
   roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
@@ -134,8 +137,70 @@ describe('DatePicker utils', () => {
     it('produces date + zero-padded HH:mm in en-US', () => {
       expect(formatDateTime(new Date(2026, 4, 28, 14, 30), 'en-US')).toBe('05/28/2026 14:30');
     });
-    it('uses 24-hour even when locale prefers 12-hour', () => {
+    it('defaults to 24-hour when cycle arg is omitted (back-compat)', () => {
       expect(formatDateTime(new Date(2026, 4, 28, 13, 5), 'en-US')).toBe('05/28/2026 13:05');
+    });
+    it('renders AM/PM when cycle="12"', () => {
+      expect(formatDateTime(new Date(2026, 4, 28, 14, 30), 'en-US', '12')).toBe(
+        '05/28/2026 2:30 PM',
+      );
+      expect(formatDateTime(new Date(2026, 4, 28, 0, 0), 'en-US', '12')).toBe(
+        '05/28/2026 12:00 AM',
+      );
+      expect(formatDateTime(new Date(2026, 4, 28, 12, 0), 'en-US', '12')).toBe(
+        '05/28/2026 12:00 PM',
+      );
+    });
+    it('preserves 24-hour output when cycle="24" is explicit', () => {
+      expect(formatDateTime(new Date(2026, 4, 28, 9, 0), 'en-US', '24')).toBe('05/28/2026 09:00');
+    });
+  });
+
+  describe('getLocaleHourCycle', () => {
+    it('detects 12-hour locales (en-US)', () => {
+      expect(getLocaleHourCycle('en-US')).toBe('12');
+    });
+    it('detects 24-hour locales (ru-RU)', () => {
+      expect(getLocaleHourCycle('ru-RU')).toBe('24');
+    });
+    it('detects 24-hour locales (de-DE)', () => {
+      expect(getLocaleHourCycle('de-DE')).toBe('24');
+    });
+    it('detects 24-hour locales (ja-JP)', () => {
+      expect(getLocaleHourCycle('ja-JP')).toBe('24');
+    });
+  });
+
+  describe('resolveHourCycle', () => {
+    it("resolves 'auto' against the locale (en-US → '12')", () => {
+      expect(resolveHourCycle('auto', 'en-US')).toBe('12');
+    });
+    it("resolves 'auto' against the locale (ru-RU → '24')", () => {
+      expect(resolveHourCycle('auto', 'ru-RU')).toBe('24');
+    });
+    it("passes through explicit '12'", () => {
+      expect(resolveHourCycle('12', 'ru-RU')).toBe('12');
+    });
+    it("passes through explicit '24'", () => {
+      expect(resolveHourCycle('24', 'en-US')).toBe('24');
+    });
+  });
+
+  describe('formatTime', () => {
+    it("formats 24h as zero-padded HH:mm", () => {
+      expect(formatTime(14, 30, '24')).toBe('14:30');
+      expect(formatTime(9, 0, '24')).toBe('09:00');
+      expect(formatTime(0, 0, '24')).toBe('00:00');
+      expect(formatTime(23, 59, '24')).toBe('23:59');
+    });
+    it("formats 12h with AM/PM and one-digit hour when applicable", () => {
+      expect(formatTime(14, 30, '12')).toBe('2:30 PM');
+      expect(formatTime(11, 5, '12')).toBe('11:05 AM');
+      expect(formatTime(23, 5, '12')).toBe('11:05 PM');
+    });
+    it("maps internal hour 0 to '12 AM' and 12 to '12 PM'", () => {
+      expect(formatTime(0, 0, '12')).toBe('12:00 AM');
+      expect(formatTime(12, 0, '12')).toBe('12:00 PM');
     });
   });
 
@@ -255,6 +320,41 @@ describe('DatePicker utils', () => {
       expect(parseTime('12:345')).toBeNull();
       expect(parseTime('1:2:3')).toBeNull();
       expect(parseTime('12a30')).toBeNull();
+    });
+
+    it('parses AM/PM colon form to 24h internal', () => {
+      expect(parseTime('2:30 PM')).toEqual({ hours: 14, minutes: 30 });
+      expect(parseTime('2:30 AM')).toEqual({ hours: 2, minutes: 30 });
+      expect(parseTime('12:00 AM')).toEqual({ hours: 0, minutes: 0 });
+      expect(parseTime('12:30 PM')).toEqual({ hours: 12, minutes: 30 });
+      expect(parseTime('11:59 PM')).toEqual({ hours: 23, minutes: 59 });
+    });
+
+    it('parses AM/PM digits form ("230pm")', () => {
+      expect(parseTime('230pm')).toEqual({ hours: 14, minutes: 30 });
+      expect(parseTime('1230 a.m.')).toEqual({ hours: 0, minutes: 30 });
+    });
+
+    it('parses AM/PM hours-only form ("2pm" / "2 PM" / "12am")', () => {
+      expect(parseTime('2 PM')).toEqual({ hours: 14, minutes: 0 });
+      expect(parseTime('2pm')).toEqual({ hours: 14, minutes: 0 });
+      expect(parseTime('12am')).toEqual({ hours: 0, minutes: 0 });
+    });
+
+    it('is case-insensitive and tolerates periods in "P.M."', () => {
+      expect(parseTime('2:30 pm')).toEqual({ hours: 14, minutes: 30 });
+      expect(parseTime('2:30 P.M.')).toEqual({ hours: 14, minutes: 30 });
+      expect(parseTime('2:30P.M.')).toEqual({ hours: 14, minutes: 30 });
+    });
+
+    it('rejects invalid 12-hour hours (0 / 13) with AM/PM suffix', () => {
+      expect(parseTime('0:30 PM')).toBeNull();
+      expect(parseTime('13:00 PM')).toBeNull();
+    });
+
+    it('rejects bare AM/PM with no hour digits', () => {
+      expect(parseTime('P.M.')).toBeNull();
+      expect(parseTime('pm')).toBeNull();
     });
   });
 

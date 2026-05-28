@@ -3,6 +3,69 @@ import { startOfDay, toDateKey } from '../../calendar/dateMath';
 /** Picker precision. `'day'` (default) is date-only; `'minute'` adds HH:mm. */
 export type DateTimeGranularity = 'day' | 'minute';
 
+/**
+ * Display + parse cycle for hour values.
+ *
+ * - `'12'` — 12-hour clock with AM/PM (en-US, en-CA, …)
+ * - `'24'` — 24-hour clock (ru-RU, de-DE, fr-FR, …)
+ * - `'auto'` — derived from the locale via `Intl.DateTimeFormat`
+ */
+export type HourCycle = '12' | '24' | 'auto';
+
+/**
+ * Wall-clock time of day, 24-hour internal representation.
+ *
+ * `hours` is always 0–23 regardless of the chosen display cycle; the
+ * 12-hour display in `<TimeField hourCycle="12">` is a presentation
+ * concern that flips 0 ↔ 12 / 12 ↔ 12 at the boundary.
+ */
+export type TimeValue = { hours: number; minutes: number };
+
+/**
+ * Detect whether a locale prefers 12-hour or 24-hour time-of-day display.
+ *
+ * Samples `Intl.DateTimeFormat(locale, { hour: 'numeric' })` against an
+ * afternoon hour — if the formatted result contains "am" / "pm" (case
+ * insensitive), the locale is 12-hour; otherwise 24-hour.
+ *
+ * @example
+ * getLocaleHourCycle('en-US'); // '12'
+ * getLocaleHourCycle('ru-RU'); // '24'
+ */
+export function getLocaleHourCycle(locale: string): '12' | '24' {
+  const sample = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).format(
+    new Date(2000, 0, 1, 15),
+  );
+  return /am|pm/i.test(sample) ? '12' : '24';
+}
+
+/**
+ * Resolve a {@link HourCycle} prop value to a concrete `'12'` / `'24'`.
+ *
+ * `'auto'` is resolved against the supplied locale; explicit `'12'` /
+ * `'24'` pass through unchanged.
+ */
+export function resolveHourCycle(cycle: HourCycle, locale: string): '12' | '24' {
+  return cycle === 'auto' ? getLocaleHourCycle(locale) : cycle;
+}
+
+/**
+ * Format an hours + minutes pair for display.
+ *
+ * - `'24'` → zero-padded `HH:mm` (e.g. `09:00`, `14:30`)
+ * - `'12'` → `h:mm AM/PM` with a one-digit hour when applicable and a
+ *   zero-padded minute (e.g. `2:30 PM`, `12:00 AM`, `11:05 PM`)
+ *
+ * Internal hour `0` maps to `12 AM`, `12` to `12 PM`.
+ */
+export function formatTime(hours: number, minutes: number, cycle: '12' | '24'): string {
+  const mm = String(minutes).padStart(2, '0');
+  if (cycle === '24') return `${String(hours).padStart(2, '0')}:${mm}`;
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const h12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${h12}:${mm} ${period}`;
+}
+
 /** Format a `Date` for display in the input, locale-aware. */
 export function formatDate(date: Date, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
@@ -108,17 +171,19 @@ function makeDate(year: number, month: number, day: number): Date | null {
 }
 
 /**
- * Format a Date with date + HH:mm (locale-aware). Uses 24-hour because the
- * native `<input type="time">` reads/writes 24-hour wire format; the picker
- * trigger matches that contract.
+ * Format a Date with date + time (locale-aware).
+ *
+ * The third arg controls the time portion:
+ * - `'24'` (default, back-compat) → `HH:mm` zero-padded.
+ * - `'12'` → `h:mm AM/PM` for en-US-style display.
+ *
+ * Callers omitting `cycle` preserve the pre-v2 24-hour output (matches
+ * the native `<input type="time">` wire format used by hidden form
+ * mirrors). The four pickers pass through their resolved {@link HourCycle}.
  */
-export function formatDateTime(date: Date, locale: string): string {
+export function formatDateTime(date: Date, locale: string, cycle: '12' | '24' = '24'): string {
   const datePart = formatDate(date, locale);
-  const timePart = new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(date);
+  const timePart = formatTime(date.getHours(), date.getMinutes(), cycle);
   return `${datePart} ${timePart}`;
 }
 
@@ -182,21 +247,30 @@ export function toTimeInputValue(date: Date): string {
 /**
  * Parse a user-typed time string into `{ hours, minutes }`.
  *
- * Lenient — accepts:
+ * Lenient — accepts both 24-hour and 12-hour AM/PM shapes:
  * - `"HH:mm"` / `"H:mm"` (colon-separated; minutes must be exactly 2 digits)
  * - `"HHmm"` / `"Hmm"` (digits only — auto-segments the trailing two as minutes)
  * - `"HH"` / `"H"` (hours-only; minutes default to `00`)
+ * - `"h:mm AM/PM"` / `"h AM/PM"` / `"hmm AM/PM"` (12-hour with suffix —
+ *   case-insensitive, optional space, optional periods in `"P.M."`)
+ *
+ * The 24-hour shapes are tried first; AM/PM matching is a fallback.
+ * Internal output is always 24-hour. `12 AM` → `0`, `12 PM` → `12`.
  *
  * Leading and trailing whitespace are trimmed. Returns `null` for empty
- * input, out-of-range values (`24:00`, `12:60`), or strings that don't
- * match any of the shapes above.
+ * input, out-of-range values (`24:00`, `12:60`, `13:00 PM`), or strings
+ * that don't match any supported shape.
  *
  * @example
- * parseTime('14:30');  // { hours: 14, minutes: 30 }
- * parseTime('1430');   // { hours: 14, minutes: 30 }
- * parseTime('9');      // { hours: 9, minutes: 0 }
- * parseTime('abc');    // null
- * parseTime('24:00');  // null
+ * parseTime('14:30');    // { hours: 14, minutes: 30 }
+ * parseTime('1430');     // { hours: 14, minutes: 30 }
+ * parseTime('9');        // { hours: 9, minutes: 0 }
+ * parseTime('2:30 PM');  // { hours: 14, minutes: 30 }
+ * parseTime('230pm');    // { hours: 14, minutes: 30 }
+ * parseTime('12am');     // { hours: 0, minutes: 0 }
+ * parseTime('abc');      // null
+ * parseTime('24:00');    // null
+ * parseTime('13:00 PM'); // null
  */
 export function parseTime(raw: string): { hours: number; minutes: number } | null {
   const str = raw.trim();
@@ -220,6 +294,27 @@ export function parseTime(raw: string): { hours: number; minutes: number } | nul
   if (m) {
     const h = Number(m[1]);
     return h <= 23 ? { hours: h, minutes: 0 } : null;
+  }
+  // AM/PM with optional ":mm". Accepts "2:30 PM", "2:30PM", "2:30 P.M.",
+  // "2 PM", "2pm", "12am", case-insensitive, optional period in "P.M.".
+  m = str.match(/^([0-9]{1,2})(?::([0-9]{2}))?\s*(a\.?\s*m\.?|p\.?\s*m\.?)$/i);
+  if (m) {
+    const h12 = Number(m[1]);
+    const mm = m[2] != null ? Number(m[2]) : 0;
+    const isPm = /p/i.test(m[3]);
+    if (h12 < 1 || h12 > 12 || mm > 59) return null;
+    const h24 = (h12 % 12) + (isPm ? 12 : 0);
+    return { hours: h24, minutes: mm };
+  }
+  // AM/PM with a digits-only hour+minute clump, e.g. "230pm" / "1230 a.m.".
+  m = str.match(/^([0-9]{1,2})([0-9]{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?)$/i);
+  if (m) {
+    const h12 = Number(m[1]);
+    const mm = Number(m[2]);
+    const isPm = /p/i.test(m[3]);
+    if (h12 < 1 || h12 > 12 || mm > 59) return null;
+    const h24 = (h12 % 12) + (isPm ? 12 : 0);
+    return { hours: h24, minutes: mm };
   }
   return null;
 }

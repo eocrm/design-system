@@ -70,6 +70,10 @@ export const en: Messages = {
     timeHoursLabel: 'Hours',
     timeMinutesLabel: 'Minutes',
     timeOpenList: 'Open time list',
+    timeNow: 'Now',
+    timePeriodLabel: 'Period',
+    timePeriodAm: 'AM',
+    timePeriodPm: 'PM',
   },
   dateRangePicker: {
     startTimeLabel: 'Start time',
