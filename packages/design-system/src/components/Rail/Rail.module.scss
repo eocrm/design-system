@@ -11,18 +11,28 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--rail-section-gap);
   padding: var(--rail-padding-y) var(--rail-padding-x);
   background: var(--rail-bg);
   border-right: var(--rail-border-width) solid var(--rail-border-color);
   transition: var(--rail-collapse-transition);
 
-  // Horizontal: clip labels during the width transition (the whole point).
-  // Vertical: scroll when content is taller than the rail so the Footer
-  // (which is `position: sticky; bottom: 0`) stays glued to the bottom edge
-  // instead of overflowing under it.
+  // Horizontal-only clip — labels disappear during the width transition.
+  // The Y-axis scroll lives on .body, not here.
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- horizontal label clip during animation
   overflow-x: hidden;
+}
+
+// Scrollable body — holds Header + Sections + Spacer. The .footerWrap is
+// a separate flex child OUTSIDE the scroll area so it always pins at the
+// bottom of the rail without sticky-positioning quirks. With overflow-y
+// here (not on .rail), items below the visible window scroll within this
+// box; the footer sees no scroll and stays put.
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rail-section-gap);
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- scroll long item lists
   overflow-y: auto;
 }
@@ -39,28 +49,26 @@
   overflow: hidden;
 }
 
-// Footer is anchored to the bottom of the rail via position: sticky so it
-// stays visible even when the item list overflows the rail's height.
-// Its inner items use the same X positioning as Rail.Items so the
-// CollapseToggle's icon sits in the same column as item icons.
-.footer {
+// Wrapper around any <Rail.Footer> children — sits as a flex item BELOW
+// the scrollable .body. Because it's outside the scroll container, it
+// always stays visible at the bottom of the rail without sticky tricks.
+.footerWrap {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  // stylelint-disable-next-line property-disallowed-list -- pin to bottom of the rail's scroll viewport (Rule 4 exception: layout-owning primitive)
-  position: sticky;
-  // stylelint-disable-next-line property-disallowed-list -- sticky anchor
-  bottom: 0;
 
-  // Solid background so scrolled-under content doesn't show through.
-  background: var(--rail-bg);
+  // Small top spacing so the footer area visually separates from the last
+  // scrolled item without needing a divider.
+  padding-top: var(--space-2);
+}
 
-  // Sit flush against the rail's bottom padding; without this, the gap
-  // shorthand from .rail would visually float the footer above the bottom.
-  // stylelint-disable-next-line property-disallowed-list -- negative pull into bottom padding (Rule 4 exception: layout-owning primitive)
-  margin-bottom: calc(var(--rail-padding-y) * -1);
-  padding-bottom: var(--rail-padding-y);
+// Direct <Rail.Footer> — visual styling only (no sticky now that the
+// .footerWrap is structurally separated from the scroll body).
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .spacer {

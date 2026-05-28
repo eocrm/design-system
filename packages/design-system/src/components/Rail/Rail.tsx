@@ -1,6 +1,9 @@
 import {
+  Children,
+  Fragment,
   createContext,
   forwardRef,
+  isValidElement,
   useCallback,
   useContext,
   useMemo,
@@ -191,6 +194,41 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
     [collapsed, setCollapsed],
   );
 
+  // Split children: anything before the FIRST <Rail.Footer> goes into the
+  // scrollable body; the Footer itself (and anything after it, if a
+  // consumer puts trailing content) stays OUTSIDE the scroll region so
+  // the bottom area is always visible regardless of how tall the item
+  // list grows.
+  //
+  // This replaces the earlier `position: sticky; bottom: 0` approach —
+  // sticky pinned the Footer visually but items continued to render in
+  // the scrollable flow BEHIND the sticky footer, and the painting order
+  // surprises (items appearing through the footer's background) made it
+  // hard to keep reliable. Structural separation = no z-index gymnastics.
+  const { body, footer } = useMemo(() => {
+    const bodyChildren: ReactNode[] = [];
+    const footerChildren: ReactNode[] = [];
+    const arr = Children.toArray(children);
+    const flatten = (nodes: ReactNode[]): ReactNode[] =>
+      nodes.flatMap((node) =>
+        isValidElement(node) && node.type === Fragment
+          ? Children.toArray((node.props as { children?: ReactNode }).children)
+          : [node],
+      );
+    let seenFooter = false;
+    for (const child of flatten(arr)) {
+      if (isValidElement(child) && child.type === RailFooter) {
+        seenFooter = true;
+        footerChildren.push(child);
+      } else if (seenFooter) {
+        footerChildren.push(child);
+      } else {
+        bodyChildren.push(child);
+      }
+    }
+    return { body: bodyChildren, footer: footerChildren };
+  }, [children]);
+
   return (
     <RailContext.Provider value={ctx}>
       <nav
@@ -201,7 +239,8 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
         // {...props} last so consumer overrides win (Pattern A).
         {...props}
       >
-        {children}
+        <div className={styles.body}>{body}</div>
+        {footer.length > 0 && <div className={styles.footerWrap}>{footer}</div>}
       </nav>
     </RailContext.Provider>
   );
