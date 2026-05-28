@@ -5,6 +5,7 @@ import {
   I18nProvider,
   Stack,
   toDateKey,
+  toIsoDateTime,
   type DateRange,
 } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
@@ -15,6 +16,25 @@ import { getComponentFiles } from '../../lib/componentFiles';
 const TODAY = new Date();
 const IN_14 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 14);
 const IN_90 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 90);
+const TODAY_9AM = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate(), 9, 0, 0, 0);
+const TODAY_5PM = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate(), 17, 0, 0, 0);
+
+function GranularityMinuteDemo() {
+  const [value, setValue] = useState<DateRange | null>({ start: TODAY_9AM, end: TODAY_5PM });
+  return (
+    <Stack gap="xs">
+      <DateRangePicker
+        granularity="minute"
+        value={value}
+        onChange={setValue}
+        aria-label="Meeting window"
+      />
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        {value ? `${toIsoDateTime(value.start)} → ${toIsoDateTime(value.end)}` : 'null'}
+      </code>
+    </Stack>
+  );
+}
 
 function ControlledDemo() {
   const [value, setValue] = useState<DateRange | null>({
@@ -238,6 +258,26 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
               aria-label="Диапазон дат"
             />
           </I18nProvider>
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Granularity: minute"
+        description="`granularity='minute'` adds dual start-time / end-time inputs below the two-month grid; the trigger text becomes `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm` and the hidden form mirrors emit ISO local datetime. Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. On a same-day range, the end-time silently clamps to ≥ the start-time on every commit (try setting end-time earlier than start-time — it snaps back)."
+        code={`const [value, setValue] = useState<DateRange | null>({
+  start: new Date(2026, 4, 28, 9, 0),
+  end: new Date(2026, 4, 28, 17, 0),
+});
+
+<DateRangePicker
+  granularity="minute"
+  value={value}
+  onChange={setValue}
+/>
+// hidden form mirrors: 2026-05-28T09:00, 2026-05-28T17:00`}
+      >
+        <InputExample>
+          <GranularityMinuteDemo />
         </InputExample>
       </Example>
     </DemoBody>
