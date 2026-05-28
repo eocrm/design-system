@@ -370,7 +370,8 @@
     "tier": "composition",
     "cluster": "Navigation",
     "composes": [
-      "Button"
+      "Button",
+      "Tooltip"
     ],
     "composedBy": []
   },
@@ -476,7 +477,8 @@
     "composedBy": [
       "Avatar",
       "Calendar",
-      "PasswordInput"
+      "PasswordInput",
+      "Rail"
     ]
   }
 }

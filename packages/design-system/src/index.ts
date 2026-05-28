@@ -366,6 +366,8 @@ export type {
   RailFooterProps,
   RailSpacerProps,
   RailCollapseToggleProps,
+  RailSectionProps,
+  RailItemProps,
 } from './components/Rail';
 
 export { Code } from './components/Code';
