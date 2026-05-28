@@ -309,7 +309,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className={styles.topbarWrap}>
         <TopBar>
           <TopBar.Start>
-            <TopBar.Search placeholder="Search contacts, deals…" hotkey="⌘K" />
+            <TopBar.Search placeholder="Search contacts, deals…" hotkey={['⌘', 'K']} />
           </TopBar.Start>
           <TopBar.End>
             <TopBar.IconButton aria-label="Create new">

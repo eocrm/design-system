@@ -85,7 +85,7 @@ export function TopBarDemo() {
   <TopBar.Start>
     <TopBar.Search
       placeholder="Search contacts, deals…"
-      hotkey="⌘K"
+      hotkey={['⌘', 'K']}
       value={query}
       onChange={(e) => setQuery(e.target.value)}
     />
@@ -106,7 +106,7 @@ export function TopBarDemo() {
             <TopBar.Start>
               <TopBar.Search
                 placeholder="Search contacts, deals…"
-                hotkey="⌘K"
+                hotkey={['⌘', 'K']}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />

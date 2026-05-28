@@ -660,7 +660,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       >
         <TopBar>
           <TopBar.Start>
-            <TopBar.Search placeholder="Search…" hotkey="⌘K" />
+            <TopBar.Search placeholder="Search…" hotkey={['⌘', 'K']} />
           </TopBar.Start>
           <TopBar.End>
             <TopBar.IconButton aria-label="Notifications" indicator>
