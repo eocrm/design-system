@@ -1,0 +1,52 @@
+// TopBar.tokens.scss — Component-scoped tokens for <TopBar>. Each token
+// defaults to the primitive that the SCSS would otherwise use directly.
+// Consumers can rebind any of these at a higher level
+// (`.theme-foo :root { --topbar-bg: … }`) to retheme the bar without
+// forking its module.scss.
+:root {
+  // ─── Bar chrome ───────────────────────────────────────────────────────
+  --topbar-height: 56px;
+  --topbar-bg: var(--color-bg);
+  --topbar-border-color: var(--color-border);
+  --topbar-border-width: var(--border-width);
+  --topbar-padding-x: var(--space-4);
+  --topbar-gap: var(--space-3);
+  --topbar-z-index: 5;
+
+  // ─── Search ───────────────────────────────────────────────────────────
+  --topbar-search-min-width: 280px;
+  --topbar-search-max-width: 420px;
+  --topbar-search-height: 32px;
+  --topbar-search-bg: var(--color-bg-subtle);
+  --topbar-search-fg: var(--color-fg);
+  --topbar-search-placeholder-fg: var(--color-fg-muted);
+  --topbar-search-radius: var(--radius-md);
+  --topbar-search-padding-x: var(--space-3);
+  --topbar-search-gap: var(--space-2);
+  --topbar-search-icon-fg: var(--color-fg-muted);
+  --topbar-search-icon-size: 14px;
+  --topbar-search-kbd-bg: var(--color-bg-muted);
+  --topbar-search-kbd-fg: var(--color-fg-muted);
+  --topbar-search-kbd-radius: var(--radius-sm);
+  --topbar-search-kbd-padding-x: var(--space-1);
+  --topbar-search-kbd-font-size: var(--font-size-xs);
+  --topbar-search-ring-focus: var(--ring-accent);
+
+  // ─── Icon button ──────────────────────────────────────────────────────
+  --topbar-icon-button-size: 32px;
+  --topbar-icon-button-radius: var(--radius-md);
+
+  // ─── Notification dot ─────────────────────────────────────────────────
+  --topbar-indicator-size: 8px;
+  --topbar-indicator-offset-top: 6px;
+  --topbar-indicator-offset-right: 6px;
+  --topbar-indicator-bg-danger: var(--color-danger);
+  --topbar-indicator-bg-warning: var(--color-warning);
+  --topbar-indicator-bg-info: var(--color-info);
+  --topbar-indicator-bg-accent: var(--color-accent);
+
+  // Same as bar bg so the ring around the dot reads as a tiny halo
+  // separating it from the icon underneath.
+  --topbar-indicator-border-color: var(--topbar-bg);
+  --topbar-indicator-border-width: 1.5px;
+}

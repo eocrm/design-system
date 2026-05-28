@@ -216,6 +216,12 @@ export interface Messages {
     /** Default aria-label on the rail's wrapping `<nav>` landmark. */
     navigation: string;
   };
+  topBar: {
+    /** Default aria-label on the wrapping `<header>` landmark. */
+    label: string;
+    /** Default aria-label on the `<TopBar.Search>` input when neither `aria-label` nor `placeholder` is set. */
+    search: string;
+  };
 }
 
 /** Supported locale codes. v1 ships English and Russian. */
