@@ -40,3 +40,74 @@
   flex-shrink: 0;
 }
 // stylelint-enable property-disallowed-list
+
+// ─── Search ─────────────────────────────────────────────────────────────
+// stylelint-disable property-disallowed-list -- search field needs a max
+// width so it doesn't stretch across an entire wide viewport, and a
+// min-width: 0 so it can shrink inside the Start cluster's flex row.
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--topbar-search-gap);
+  height: var(--topbar-search-height);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- intrinsic 100% of the available column
+  width: 100%;
+  max-width: var(--topbar-search-max-width);
+  min-width: 0;
+  padding: 0 var(--topbar-search-padding-x);
+  background: var(--topbar-search-bg);
+  border-radius: var(--topbar-search-radius);
+}
+// stylelint-enable property-disallowed-list
+
+.search:focus-within {
+  outline: var(--ring-width) solid var(--topbar-search-ring-focus);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- pull the focus ring inward by 1px so it sits ON the surface edge instead of outside it
+  outline-offset: -1px;
+}
+
+.searchIcon {
+  width: var(--topbar-search-icon-size);
+  height: var(--topbar-search-icon-size);
+  color: var(--topbar-search-icon-fg);
+  flex-shrink: 0;
+}
+
+// stylelint-disable property-disallowed-list -- the input needs flex:1 so it
+// fills the remaining width inside the .search wrapper between the icon and
+// the kbd hint. It is NOT a layout-owning region — it is the inner content
+// of the search pill.
+.searchInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- transparent so the wrapper's bg shows through
+  background: transparent;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- native input border reset; the wrapper provides chrome
+  border: 0;
+  color: var(--topbar-search-fg);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- inherit page font sizing
+  font: inherit;
+}
+// stylelint-enable property-disallowed-list
+
+.searchInput:focus {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- the wrapper handles the visible focus ring (focus-within)
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--topbar-search-placeholder-fg);
+}
+
+.searchKbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 var(--topbar-search-kbd-padding-x);
+  background: var(--topbar-search-kbd-bg);
+  color: var(--topbar-search-kbd-fg);
+  font-size: var(--topbar-search-kbd-font-size);
+  border-radius: var(--topbar-search-kbd-radius);
+  font-family: var(--font-family-sans);
+  flex-shrink: 0;
+}
