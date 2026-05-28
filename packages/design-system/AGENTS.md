@@ -1299,6 +1299,69 @@ import { Link as RouterLink } from 'react-router-dom';
 - ❌ Long trails (5+ levels) — wrap and become illegible.
 - ❌ Building your own `<nav>` + chevron pattern. Use Breadcrumb.
 
+### `<Rail>` — collapsible left-side navigation
+
+Vertical nav anchored to one side of a page. Switches between a wide labelled mode (240px) and a narrow icon-only mode (56px) via a CSS width transition. Sections of items, parent groups with subitems, and a hover-popover that surfaces a collapsed group's subitems without expanding the rail.
+
+```tsx
+import { Rail } from '@eocrm/design-system';
+import { NavLink } from 'react-router-dom';
+import { Home, Users, Settings } from 'lucide-react';
+
+<Rail defaultCollapsed={false} aria-label="Main navigation">
+  <Rail.Header>
+    <BrandLogo />
+  </Rail.Header>
+
+  <Rail.Section title="Main">
+    <Rail.Item icon={<Home />} as={NavLink} to="/" end>
+      Dashboard
+    </Rail.Item>
+    <Rail.Item icon={<Users />} as={NavLink} to="/contacts" badge="12">
+      Contacts
+    </Rail.Item>
+  </Rail.Section>
+
+  <Rail.Section title="Operations">
+    <Rail.Group icon={<Settings />} label="Settings">
+      <Rail.Item as={NavLink} to="/settings/general">
+        General
+      </Rail.Item>
+      <Rail.Item as={NavLink} to="/settings/security">
+        Security
+      </Rail.Item>
+    </Rail.Group>
+  </Rail.Section>
+
+  <Rail.Spacer />
+
+  <Rail.Footer>
+    <Rail.CollapseToggle />
+  </Rail.Footer>
+</Rail>;
+```
+
+- **Compound API** — `Rail.Header` / `Rail.Section` / `Rail.Item` / `Rail.Group` / `Rail.Spacer` / `Rail.Footer` / `Rail.CollapseToggle`.
+- **Layout-owning primitive (Hard rule 4 exception)** — like `<Modal>`, `<Drawer>`, `<Page>`, the rail owns its own width and height because that IS its job. Place the rail inside whatever container shape your page needs (sticky aside, fixed sidebar, in-flow column).
+- **Collapse state**: controlled (`collapsed` + `onCollapsedChange`) or uncontrolled (`defaultCollapsed`). The `<Rail.CollapseToggle>` button reads context and flips the state without prop drilling.
+- **`Rail.Item` is polymorphic** — `as={NavLink}` (or any router primitive) sets `aria-current="page"` on the rendered anchor; Rail's CSS applies the active accent via `[aria-current="page"]` and `:has([aria-current="page"])` selectors. No router dependency in the library.
+- **`Rail.Group`** — renders inline-expanding subitems when the rail is expanded, and a hover-popover (`right-start` placement, 80ms open delay, 200ms close grace) when collapsed. Auto-opens on mount when any subitem is the active route.
+- **`Rail.Spacer`** — `flex-grow: 1` filler; place it before `Rail.Footer` to anchor the footer to the bottom.
+- **i18n**: `rail.expand` / `rail.collapse` (toggle aria-label), `rail.navigation` (default `<nav>` aria-label).
+
+#### When NOT to use
+
+- ❌ Top-bar / horizontal nav — use a `<Cluster>` + `<Link>` row.
+- ❌ A value picker (status, country) — use `<Select>`.
+- ❌ A focus-locked dialog navigation — use `<Modal>` / `<Drawer>`.
+
+#### Anti-patterns
+
+- ❌ Forking width via inline style — rebind the `--rail-width-*` tokens in a parent stylesheet.
+- ❌ Hand-rolling active-state styling. Set `aria-current="page"` on the rendered element (NavLink does this for you) and the CSS handles it.
+- ❌ Multi-level group nesting (groups inside groups). v1 supports one level only.
+- ❌ Putting an icon-less top-level item directly inside a section — when the rail collapses there's nothing visible. Items without icons belong inside a `<Rail.Group>`.
+
 ### `<DropdownMenu>` — action menus from a trigger
 
 ```tsx

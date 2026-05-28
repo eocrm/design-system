@@ -77,6 +77,7 @@ const CLUSTERS = {
   Accordion: 'Navigation',
   Breadcrumb: 'Navigation',
   Link: 'Navigation',
+  Rail: 'Navigation',
   Tabs: 'Navigation',
 
   // Overlays

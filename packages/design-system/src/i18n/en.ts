@@ -132,4 +132,9 @@ export const en: Messages = {
   pageHeader: {
     back: 'Go back',
   },
+  rail: {
+    expand: 'Expand navigation',
+    collapse: 'Collapse navigation',
+    navigation: 'Main navigation',
+  },
 };

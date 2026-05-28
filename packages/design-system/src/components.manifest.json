@@ -55,6 +55,7 @@
       "Modal",
       "OptionsPicker",
       "PasswordInput",
+      "Rail",
       "Toast"
     ]
   },
@@ -365,6 +366,15 @@
       "OptionsPicker"
     ]
   },
+  "Rail": {
+    "tier": "composition",
+    "cluster": "Navigation",
+    "composes": [
+      "Button",
+      "Tooltip"
+    ],
+    "composedBy": []
+  },
   "Select": {
     "tier": "primitive",
     "cluster": "Forms",
@@ -467,7 +477,8 @@
     "composedBy": [
       "Avatar",
       "Calendar",
-      "PasswordInput"
+      "PasswordInput",
+      "Rail"
     ]
   }
 }

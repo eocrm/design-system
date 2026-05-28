@@ -358,6 +358,19 @@ export type {
 export { Breadcrumb } from './components/Breadcrumb';
 export type { BreadcrumbProps, BreadcrumbItemProps } from './components/Breadcrumb';
 
+export { Rail, useRail, RailContext } from './components/Rail';
+export type {
+  RailProps,
+  RailContextValue,
+  RailHeaderProps,
+  RailFooterProps,
+  RailSpacerProps,
+  RailCollapseToggleProps,
+  RailSectionProps,
+  RailItemProps,
+  RailGroupProps,
+} from './components/Rail';
+
 export { Code } from './components/Code';
 export type { CodeProps, CodeTone } from './components/Code';
 

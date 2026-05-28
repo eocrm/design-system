@@ -1,0 +1,63 @@
+// Rail.tokens.scss — Component-scoped tokens for <Rail>. Each token defaults
+// to the primitive that the SCSS would otherwise use directly. Consumers can
+// rebind any of these at a higher level (`.theme-foo :root { --rail-bg: … }`)
+// to retheme the rail without forking its module.scss.
+:root {
+  // Width — the rail switches between two fixed widths via `[data-collapsed]`.
+  --rail-width-expanded: 240px;
+  --rail-width-collapsed: 56px;
+
+  // Outer chrome
+  --rail-padding-y: var(--space-2);
+  --rail-padding-x: var(--space-2);
+  --rail-bg: var(--color-bg);
+  --rail-border-color: var(--color-border);
+  --rail-border-width: var(--border-width);
+
+  // Section grouping
+  --rail-section-gap: var(--space-3);
+  --rail-section-title-fg: var(--color-fg-muted);
+  --rail-section-title-font-size: var(--font-size-xs);
+  --rail-section-title-font-weight: var(--font-weight-semibold);
+  --rail-section-title-letter-spacing: var(--letter-spacing-caps);
+  --rail-section-title-padding: var(--space-2) var(--space-3);
+
+  // Item visuals
+  --rail-item-padding-x: var(--space-3);
+  --rail-item-padding-y: var(--space-2);
+  --rail-item-gap: var(--space-2);
+  --rail-item-radius: var(--radius-sm);
+  --rail-item-bg-hover: var(--color-bg-muted);
+  --rail-item-fg: var(--color-fg);
+  --rail-item-bg-active: var(--color-accent-subtle-bg);
+  --rail-item-fg-active: var(--color-accent);
+  --rail-item-icon-size: 18px;
+
+  // Sub-item indent (extra left padding so subitems visually nest under
+  // their group icon). No --space-7 (28px) exists, so we use --space-6 (24px).
+  --rail-subitem-padding-left: var(--space-6);
+
+  // Collapsed flyout (the hover popover surface for collapsed groups)
+  --rail-flyout-min-width: 200px;
+  --rail-flyout-bg: var(--color-bg);
+  --rail-flyout-border-color: var(--color-border);
+  --rail-flyout-border-width: var(--border-width);
+  --rail-flyout-radius: var(--radius-md);
+  --rail-flyout-shadow: var(--shadow-md);
+  --rail-flyout-header-padding: var(--space-2) var(--space-3);
+  --rail-flyout-body-padding: var(--space-2);
+  --rail-flyout-body-gap: var(--space-1);
+  --rail-flyout-header-fg: var(--color-fg);
+  --rail-flyout-header-font-weight: var(--font-weight-semibold);
+  --rail-flyout-header-border: var(--color-border);
+
+  // Label / title fade opacities. Bound to the global --opacity-* scale so
+  // a theme can retune visibility crossover without forking this file.
+  --rail-label-opacity-visible: var(--opacity-visible);
+  --rail-label-opacity-hidden: var(--opacity-hidden);
+
+  // Transitions
+  --rail-collapse-transition: width var(--transition-base);
+  --rail-label-transition: opacity var(--transition-fast);
+  --rail-chevron-transition: transform var(--transition-fast);
+}

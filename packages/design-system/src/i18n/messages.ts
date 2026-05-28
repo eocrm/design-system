@@ -208,6 +208,14 @@ export interface Messages {
     /** aria-label fallback for `<PageHeader.BackButton>`. */
     back: string;
   };
+  rail: {
+    /** aria-label on the CollapseToggle button when the rail is collapsed (pressing it expands). */
+    expand: string;
+    /** aria-label on the CollapseToggle button when the rail is expanded (pressing it collapses). */
+    collapse: string;
+    /** Default aria-label on the rail's wrapping `<nav>` landmark. */
+    navigation: string;
+  };
 }
 
 /** Supported locale codes. v1 ships English and Russian. */
