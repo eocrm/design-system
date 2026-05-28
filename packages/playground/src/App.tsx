@@ -34,6 +34,7 @@ import { SortableDemo } from './pages/components/SortableDemo';
 import { SwitchDemo } from './pages/components/SwitchDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { TextareaDemo } from './pages/components/TextareaDemo';
+import { TimeFieldDemo } from './pages/components/TimeFieldDemo';
 import { CardDemo } from './pages/components/CardDemo';
 import { CodeDemo } from './pages/components/CodeDemo';
 import { TextDemo } from './pages/components/TextDemo';
@@ -153,6 +154,7 @@ export default function App() {
             <Route path="/components/rail" element={<RailDemo />} />
             <Route path="/components/topbar" element={<TopBarDemo />} />
             <Route path="/components/textarea" element={<TextareaDemo />} />
+            <Route path="/components/timefield" element={<TimeFieldDemo />} />
             <Route path="/components/toast" element={<ToastDemo />} />
           </Routes>
         </AppShell>

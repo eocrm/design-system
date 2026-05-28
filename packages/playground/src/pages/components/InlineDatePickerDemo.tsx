@@ -33,6 +33,39 @@ function GranularityMinuteDemo() {
   );
 }
 
+function HourCycleDemo() {
+  const [v12, setV12] = useState<Date | null>(TODAY_AT_NINE);
+  const [v24, setV24] = useState<Date | null>(TODAY_AT_NINE);
+  return (
+    <Stack gap="lg">
+      <Stack gap="xs">
+        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+          hourCycle=&quot;12&quot;
+        </code>
+        <InlineDatePicker
+          granularity="minute"
+          hourCycle="12"
+          value={v12}
+          onChange={setV12}
+          aria-label="12-hour datetime"
+        />
+      </Stack>
+      <Stack gap="xs">
+        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+          hourCycle=&quot;24&quot;
+        </code>
+        <InlineDatePicker
+          granularity="minute"
+          hourCycle="24"
+          value={v24}
+          onChange={setV24}
+          aria-label="24-hour datetime"
+        />
+      </Stack>
+    </Stack>
+  );
+}
+
 function ControlledDemo() {
   const [value, setValue] = useState<Date | null>(TODAY);
   return (
@@ -166,7 +199,7 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
 
       <Example
         title="Granularity: minute"
-        description="`granularity='minute'` renders a manual-entry time input below the grid (always visible — there's no popover to gate it on). Picking a different date preserves the existing time-of-day; the time input is disabled until a date is set. The hidden form mirror emits ISO local datetime (`2026-05-28T09:00`)."
+        description="`granularity='minute'` renders a manual-entry time input below the grid (always visible — there's no popover to gate it on). Picking a different date preserves the existing time-of-day; the time input is disabled until a date is set. The hidden form mirror emits ISO local datetime (`2026-05-28T09:00`). The embedded `<TimeField>` exposes a Now button in its popover."
         code={`const [value, setValue] = useState<Date | null>(new Date(2026, 4, 28, 9, 0));
 
 <InlineDatePicker
@@ -177,6 +210,17 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
       >
         <InputExample width="auto">
           <GranularityMinuteDemo />
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Hour cycle (12h vs 24h)"
+        description="`hourCycle` forwards to the embedded TimeField. `'12'` shows a 12-hour AM/PM popover; `'24'` shows hours 00–23. Default `'auto'` derives from the active locale."
+        code={`<InlineDatePicker granularity="minute" hourCycle="12" value={v12} onChange={setV12} />
+<InlineDatePicker granularity="minute" hourCycle="24" value={v24} onChange={setV24} />`}
+      >
+        <InputExample width="auto">
+          <HourCycleDemo />
         </InputExample>
       </Example>
     </DemoBody>

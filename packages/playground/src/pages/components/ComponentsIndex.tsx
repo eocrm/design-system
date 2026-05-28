@@ -35,6 +35,7 @@ import { Switch } from '@eocrm/design-system';
 import { Table } from '@eocrm/design-system';
 import { Tabs } from '@eocrm/design-system';
 import { Textarea } from '@eocrm/design-system';
+import { TimeField } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
 import { Tooltip } from '@eocrm/design-system';
 import { Calendar } from '@eocrm/design-system';
@@ -741,6 +742,21 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description: 'Multi-line text with auto-grow + character counter.',
     preview: (
       <Textarea minRows={2} autoGrow={false} defaultValue="Multi-line text…" aria-label="Preview" />
+    ),
+  },
+  {
+    to: '/components/timefield',
+    name: 'TimeField',
+    description:
+      'Standalone time-of-day input — text + popover with hour / minute (+ AM/PM in 12h locales) lists and a Now button. Powers the picker family when granularity="minute".',
+    preview: (
+      <div style={{ width: 140 }}>
+        <TimeField
+          value={{ hours: 9, minutes: 30 }}
+          onChange={() => {}}
+          aria-label="Preview"
+        />
+      </div>
     ),
   },
   {

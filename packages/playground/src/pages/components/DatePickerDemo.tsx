@@ -33,6 +33,39 @@ function GranularityMinuteDemo() {
   );
 }
 
+function HourCycleDemo() {
+  const [v12, setV12] = useState<Date | null>(TODAY_AT_NINE);
+  const [v24, setV24] = useState<Date | null>(TODAY_AT_NINE);
+  return (
+    <Stack gap="md">
+      <Stack gap="xs">
+        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+          hourCycle=&quot;12&quot;
+        </code>
+        <DatePicker
+          granularity="minute"
+          hourCycle="12"
+          value={v12}
+          onChange={setV12}
+          aria-label="12-hour datetime"
+        />
+      </Stack>
+      <Stack gap="xs">
+        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+          hourCycle=&quot;24&quot;
+        </code>
+        <DatePicker
+          granularity="minute"
+          hourCycle="24"
+          value={v24}
+          onChange={setV24}
+          aria-label="24-hour datetime"
+        />
+      </Stack>
+    </Stack>
+  );
+}
+
 function ControlledDemo() {
   const [value, setValue] = useState<Date | null>(TODAY);
   return (
@@ -204,7 +237,7 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
 
       <Example
         title="Granularity: minute"
-        description="`granularity='minute'` adds a manual-entry time input below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Picking a different date preserves the existing time-of-day; picking from `null` defaults to `00:00`."
+        description="`granularity='minute'` adds a manual-entry time input below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` (or `MM/DD/YYYY h:mm AM/PM` in 12h locales) and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Picking a different date preserves the existing time-of-day; picking from `null` defaults to `00:00`. The embedded `<TimeField>` also exposes a Now button in its popover footer."
         code={`const [value, setValue] = useState<Date | null>(new Date(2026, 4, 28, 9, 0));
 
 <DatePicker
@@ -216,6 +249,20 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       >
         <InputExample>
           <GranularityMinuteDemo />
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Hour cycle (12h vs 24h)"
+        description="`hourCycle` controls both the trigger text and the embedded TimeField popover. `'12'` forces a 12-hour AM/PM display; `'24'` forces 00–23. The default `'auto'` derives from locale via `Intl.DateTimeFormat` — en-US → 12h, ru-RU → 24h."
+        code={`// Forced 12-hour
+<DatePicker granularity="minute" hourCycle="12" value={v12} onChange={setV12} />
+
+// Forced 24-hour
+<DatePicker granularity="minute" hourCycle="24" value={v24} onChange={setV24} />`}
+      >
+        <InputExample>
+          <HourCycleDemo />
         </InputExample>
       </Example>
     </DemoBody>

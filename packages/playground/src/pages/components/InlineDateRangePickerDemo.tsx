@@ -36,6 +36,39 @@ function GranularityMinuteDemo() {
   );
 }
 
+function HourCycleDemo() {
+  const [v12, setV12] = useState<DateRange | null>({ start: TODAY_9AM, end: TODAY_5PM });
+  const [v24, setV24] = useState<DateRange | null>({ start: TODAY_9AM, end: TODAY_5PM });
+  return (
+    <Stack gap="lg">
+      <Stack gap="xs">
+        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+          hourCycle=&quot;12&quot;
+        </code>
+        <InlineDateRangePicker
+          granularity="minute"
+          hourCycle="12"
+          value={v12}
+          onChange={setV12}
+          aria-label="12-hour range"
+        />
+      </Stack>
+      <Stack gap="xs">
+        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+          hourCycle=&quot;24&quot;
+        </code>
+        <InlineDateRangePicker
+          granularity="minute"
+          hourCycle="24"
+          value={v24}
+          onChange={setV24}
+          aria-label="24-hour range"
+        />
+      </Stack>
+    </Stack>
+  );
+}
+
 function ControlledDemo() {
   const [value, setValue] = useState<DateRange | null>({ start: TODAY, end: IN_14 });
   return (
@@ -201,7 +234,7 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
 
       <Example
         title="Granularity: minute"
-        description="`granularity='minute'` renders dual start-time / end-time inputs below the two-month grid. Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. On a same-day range, the end-time silently clamps to ≥ the start-time on every commit (try setting end-time earlier than start-time — it snaps back)."
+        description="`granularity='minute'` renders dual start-time / end-time inputs below the two-month grid. Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. On a same-day range, the end-time silently clamps to ≥ the start-time on every commit (try setting end-time earlier than start-time — it snaps back). Each embedded `<TimeField>` exposes a Now button."
         code={`const [value, setValue] = useState<DateRange | null>({
   start: new Date(2026, 4, 28, 9, 0),
   end: new Date(2026, 4, 28, 17, 0),
@@ -215,6 +248,17 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
       >
         <InputExample width="auto">
           <GranularityMinuteDemo />
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Hour cycle (12h vs 24h)"
+        description="`hourCycle` propagates to both the start and end TimeFields. Default `'auto'` derives from locale."
+        code={`<InlineDateRangePicker granularity="minute" hourCycle="12" value={v12} onChange={setV12} />
+<InlineDateRangePicker granularity="minute" hourCycle="24" value={v24} onChange={setV24} />`}
+      >
+        <InputExample width="auto">
+          <HourCycleDemo />
         </InputExample>
       </Example>
     </DemoBody>
