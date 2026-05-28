@@ -11,7 +11,7 @@ import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { DatePickerGrid } from './DatePickerGrid';
-import { TimeField } from './TimeField';
+import { TimeField } from '../TimeField';
 import {
   combineDateAndTime,
   roundTimeToStep,

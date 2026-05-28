@@ -486,8 +486,8 @@ export type { InlineDateRangePickerProps } from './components/DateRangePicker';
 // TimeField — standalone time-of-day input, also embedded by the four
 // DatePicker variants. Public so consumers needing a time input without a
 // date can use the same primitive the pickers use internally.
-export { TimeField } from './components/DatePicker/TimeField';
-export type { TimeFieldProps } from './components/DatePicker/TimeField';
+export { TimeField } from './components/TimeField';
+export type { TimeFieldProps } from './components/TimeField';
 
 // DatePicker family — date+time granularity helpers. Exposed so consumers can
 // (a) integrate the hidden form mirror's ISO local datetime with form layers

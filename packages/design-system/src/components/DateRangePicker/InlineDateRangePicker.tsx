@@ -13,7 +13,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
-import { TimeField } from '../DatePicker/TimeField';
+import { TimeField } from '../TimeField';
 import {
   combineDateAndTime,
   roundTimeToStep,

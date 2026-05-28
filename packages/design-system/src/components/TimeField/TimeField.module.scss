@@ -1,5 +1,5 @@
 @use '../../styles/mixins' as *;
-@use './DatePicker.tokens';
+@use '../DatePicker/DatePicker.tokens';
 
 // TimeField wrapper — text input + chevron toggle laid out in a row, with
 // the same chrome (border, radius) as the library's <Input>. The wrapper

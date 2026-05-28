@@ -18,7 +18,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { DatePickerGrid } from './DatePickerGrid';
-import { TimeField } from './TimeField';
+import { TimeField } from '../TimeField';
 import {
   combineDateAndTime,
   formatDate,

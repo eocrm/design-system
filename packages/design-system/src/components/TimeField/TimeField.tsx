@@ -22,7 +22,7 @@ import {
   roundTimeToStep,
   type HourCycle,
   type TimeValue,
-} from './utils';
+} from '../_internal/timeUtils';
 import styles from './TimeField.module.scss';
 
 export type { TimeValue, HourCycle };

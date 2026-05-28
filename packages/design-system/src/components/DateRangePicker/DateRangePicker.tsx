@@ -19,7 +19,7 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
-import { TimeField } from '../DatePicker/TimeField';
+import { TimeField } from '../TimeField';
 import {
   combineDateAndTime,
   formatDate,
