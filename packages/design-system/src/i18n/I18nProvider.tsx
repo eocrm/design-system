@@ -53,9 +53,9 @@ export interface I18nProviderProps {
 export function I18nProvider({ locale, overrides, children }: I18nProviderProps) {
   const value = useMemo<I18nContextValue>(() => {
     const base = LOCALE_MAP[locale];
-    // `Messages` starts as an empty interface (no index signature) but
-    // `deepMerge` is typed against `Record<string, unknown>`. The cast is
-    // safe at runtime — the interface is always a plain nested object.
+    // The cast is needed because TS `interface` declarations lack an index
+    // signature; `deepMerge` is typed against `Record<string, unknown>`.
+    // Safe at runtime — `Messages` is always a plain nested object literal.
     const messages = overrides
       ? (deepMerge(base as unknown as Record<string, unknown>, overrides as DeepPartial<Record<string, unknown>>) as unknown as Messages)
       : base;

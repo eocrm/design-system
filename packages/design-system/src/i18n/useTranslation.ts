@@ -25,7 +25,9 @@ export function useTranslation() {
     return function t<K extends MessageKey>(key: K, params?: Record<string, unknown>): string {
       const leaf = lookupKey(messages as unknown as Record<string, unknown>, key as string);
       if (leaf == null) {
-        if (typeof console !== 'undefined') console.warn('[i18n] missing key:', key);
+        if (process.env.NODE_ENV !== 'production' && typeof console !== 'undefined') {
+          console.warn('[i18n] missing key:', key);
+        }
         return key as string;
       }
       if (typeof leaf === 'function') {
