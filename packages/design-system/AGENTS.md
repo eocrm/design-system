@@ -2063,7 +2063,7 @@ const [value, setValue] = useState<Date | null>(null);
 <DatePicker value={value} onChange={setValue} min={new Date()} />;
 ```
 
-- Single-date selection. Range, datetime, year-picker — out of scope for v1.
+- Single-date selection (date-only by default; opt into date+time with `granularity="minute"`). Range → `<DateRangePicker>`. Year-picker — out of scope for v1.
 - Looks like an `<Input>`. Click the input or press ArrowDown to open the popover. The 📅 button toggles, the ✕ button clears.
 - Typed input parses on blur / Enter using the active locale: en-US `M/D/YYYY`, ru-RU `D.M.YYYY`, ja-JP `Y/M/D`. ISO `YYYY-MM-DD` is always accepted as a paste fallback. Unparseable / out-of-range / disabled input reverts to the last committed value.
 - `min` / `max` (inclusive, day-granular) gate both the grid and typed input. `isDateDisabled(date) => boolean` is per-cell + per-parsed-input.
@@ -2073,6 +2073,7 @@ const [value, setValue] = useState<Date | null>(null);
 - Locale-aware via `useLocale()`; override with `locale` prop. UI strings (previousMonth / nextMonth / openCalendar / clear) translate via `datePicker.*` keys — override with `<I18nProvider overrides={{ datePicker: { ... } }}>`.
 - ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); the grid inside is `role="grid"` with `role="gridcell"` buttons that carry `aria-selected` / `aria-disabled` as appropriate.
 - Keyboard inside the grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space selects, Escape closes and returns focus to the input. Tab leaves the grid.
+- **Granularity.** Pass `granularity="minute"` to add a manual-entry time input below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Defaults to `'day'` (backward compat — date-only). Picking a different date re-uses the existing time-of-day, so the grid feels like it "just changes the date"; picking from `null` defaults to `00:00`.
 
 ### `<DateRangePicker>` — date-range input + two-month popover
 
@@ -2081,7 +2082,7 @@ const [range, setRange] = useState<DateRange | null>(null);
 <DateRangePicker value={range} onChange={setRange} min={new Date()} />;
 ```
 
-- Date-range selection only. Single-date → `<DatePicker>`. Datetime / multi-date / preset ranges (Today, Last 7 days) — out of scope for v1.
+- Date-range selection (date-only by default; opt into date+time on each side with `granularity="minute"`). Single-date → `<DatePicker>`. Multi-date / preset ranges (Today, Last 7 days) — out of scope for v1.
 - Looks like an `<Input>`. Click the input or press ArrowDown to open; the popover shows two months side-by-side. The 📅 button toggles, the ✕ button clears the whole range.
 - Selection flow: first click sets the start; hover (or keyboard-focus) another cell to preview the range; second click commits and closes. If the second pick is earlier than the start, the range is auto-swapped to `[earlier, later]`. A third click in a reopened popover restarts selection.
 - Typed input parses on blur / Enter using the active locale. Accepts `—` (em dash), `–` (en dash), `-` (hyphen with spaces), or `to` (case-insensitive word) as the separator. ISO `YYYY-MM-DD` works for each half too. Out-of-order typed input is auto-swapped. Anything unparseable / out-of-range / disabled reverts to the last committed value.
@@ -2092,6 +2093,7 @@ const [range, setRange] = useState<DateRange | null>(null);
 - ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); each grid inside is `role="grid"` with `gridcell` buttons. The range-start and range-end cells (and the live hover end during selection) carry `aria-selected="true"`.
 - Keyboard inside a grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space drives the same first-click → second-click flow, Escape closes and returns focus to the input. With selection-start set, the focused cell acts as the hover end so the preview range follows arrow keys.
 - Reuses `<DatePickerGrid>` via `selectionMode='range'` + `rangeStart`/`rangeEnd`/`hoverDate`/`onHoverDate` + `chevrons={false}`. The two grids share the same cursor; the picker renders its own prev/next chevrons outside them.
+- **Granularity.** Pass `granularity="minute"` to add manual-entry start-time and end-time inputs below the two-month grid; the trigger text becomes `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm` and the hidden form mirrors emit ISO local datetime. Defaults to `'day'` (backward compat). Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. Same-day ranges silently clamp end-time to ≥ start-time on every commit; different-day ranges are not clamped.
 
 ### `<InlineDatePicker>` — single-date calendar in flow
 
@@ -2107,6 +2109,7 @@ const [date, setDate] = useState<Date | null>(null);
 - `disabled` mutes the entire grid (chevrons disabled, cells get `tabIndex=-1`, clicks no-op).
 - `forwardRef` points at the outer wrapper `<div>` (no input to forward to).
 - ARIA: same `role="grid"` + `role="gridcell"` cells from `DatePickerGrid`. No dialog role — the picker is in flow.
+- **Granularity.** Pass `granularity="minute"` to render a manual-entry time input below the grid (always visible — there's no popover to gate it on); the hidden form mirror emits ISO local datetime. Defaults to `'day'`. Time is preserved across date re-picks; the time input is disabled until a date is set. Same trigger-text contract is not applicable (no trigger).
 
 ### `<InlineDateRangePicker>` — date-range calendar in flow
 
@@ -2122,6 +2125,7 @@ const [range, setRange] = useState<DateRange | null>(null);
 - `nameStart` / `nameEnd` render independent hidden form mirrors (post both, only one, or neither — caller's choice).
 - `disabled` mutes everything; ref forwards to the outer wrapper.
 - Use when the consumer wants the calendar permanently visible. For a compact form field with the same selection model, use `<DateRangePicker>`. Don't render inside containers narrower than ~32rem — the two grids need side-by-side room.
+- **Granularity.** Pass `granularity="minute"` to render dual start-time / end-time inputs below the two-month grid; the hidden form mirrors emit ISO local datetime. Defaults to `'day'`. Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. Same-day end-time silently clamps to ≥ start-time on every commit; different-day ranges are not clamped.
 
 ### Calendar primitives — `useMonth`, `useWeek`, `useDay`, `useAgenda`
 
