@@ -1,5 +1,6 @@
 @use '../../styles/mixins' as *;
 @use './DateRangePicker.tokens';
+@use '../DatePicker/DatePicker.tokens';
 
 // Wrapper mimics <Input> exactly — same as DatePicker.module.scss. The
 // wrapper IS the public component box; the popover is portaled so it
@@ -189,4 +190,30 @@
     width: var(--date-range-picker-button-size-lg);
     height: var(--date-range-picker-button-size-lg);
   }
+}
+
+// Time row(s) — rendered below the calendar pair when granularity='minute'.
+// Two side-by-side rows, one per calendar. Same chrome as DatePicker's
+// time row; the gap mirrors the calendar-pair gutter so the time inputs
+// line up under their respective grids. Internal popover chrome — the
+// Rule-4 popover exception applies here as it does for `.grids`.
+.timeRowsPair {
+  display: flex;
+  gap: var(--date-range-picker-grids-gap);
+}
+
+.timeRowsPair > * {
+  flex: 1 1 0;
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--date-picker-time-row-gap);
+  padding-top: var(--date-picker-time-row-gap);
+}
+
+.timeLabel {
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
 }

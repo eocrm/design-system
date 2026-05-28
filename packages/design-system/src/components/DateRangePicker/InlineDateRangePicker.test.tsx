@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
@@ -274,5 +274,247 @@ describe('InlineDateRangePicker', () => {
       wrapper: wrap('ru-RU'),
     });
     expect(document.body.textContent).toMatch(/[Ѐ-ӿ]/);
+  });
+
+  describe('granularity', () => {
+    it('defaults to "day" — no time inputs rendered', () => {
+      render(<InlineDateRangePicker defaultValue={SAMPLE} aria-label="Range" />, {
+        wrapper: wrap(),
+      });
+      expect(screen.queryByRole('textbox', { name: 'Start time' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'End time' })).not.toBeInTheDocument();
+    });
+
+    it('granularity="minute" renders both time inputs when value is set', () => {
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      expect(screen.getByRole('textbox', { name: 'Start time' })).toHaveValue('09:00');
+      expect(screen.getByRole('textbox', { name: 'End time' })).toHaveValue('17:30');
+    });
+
+    it('granularity="minute" with null value renders no time inputs (gated)', () => {
+      render(
+        <InlineDateRangePicker granularity="minute" defaultValue={null} aria-label="Range" />,
+        { wrapper: wrap() },
+      );
+      expect(screen.queryByRole('textbox', { name: 'Start time' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'End time' })).not.toBeInTheDocument();
+    });
+
+    it('picking a fresh range from null defaults start=00:00 / end=23:59', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          defaultValue={null}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+      await user.click(fives[0]);
+      const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
+      await user.click(tens[0]);
+      await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+      const r = onChange.mock.calls[0][0]!;
+      expect(r.start.getHours()).toBe(0);
+      expect(r.start.getMinutes()).toBe(0);
+      expect(r.end.getHours()).toBe(23);
+      expect(r.end.getMinutes()).toBe(59);
+    });
+
+    it('picking a subsequent range preserves both existing times', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const fifteens = screen.getAllByRole('gridcell', { name: /^15$/ });
+      await user.click(fifteens[0]);
+      const twenties = screen.getAllByRole('gridcell', { name: /^20$/ });
+      await user.click(twenties[0]);
+      await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+      const r = onChange.mock.calls[0][0]!;
+      expect(r.start.getHours()).toBe(9);
+      expect(r.start.getMinutes()).toBe(0);
+      expect(r.end.getHours()).toBe(17);
+      expect(r.end.getMinutes()).toBe(30);
+    });
+
+    it('typing into the start-time input + blur updates start only', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const startTime = screen.getByRole('textbox', { name: 'Start time' });
+      fireEvent.change(startTime, { target: { value: '10:15' } });
+      fireEvent.blur(startTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.start.getHours()).toBe(10);
+      expect(r.start.getMinutes()).toBe(15);
+      expect(r.end.getHours()).toBe(17);
+      expect(r.end.getMinutes()).toBe(30);
+    });
+
+    it('typing into the end-time input + blur updates end only', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const endTime = screen.getByRole('textbox', { name: 'End time' });
+      fireEvent.change(endTime, { target: { value: '20:45' } });
+      fireEvent.blur(endTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.start.getHours()).toBe(9);
+      expect(r.start.getMinutes()).toBe(0);
+      expect(r.end.getHours()).toBe(20);
+      expect(r.end.getMinutes()).toBe(45);
+    });
+
+    it('same-day end-time < start-time clamps end-time to start-time', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 14, 0),
+            end: new Date(2026, 4, 21, 18, 0),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const endTime = screen.getByRole('textbox', { name: 'End time' });
+      fireEvent.change(endTime, { target: { value: '10:00' } });
+      fireEvent.blur(endTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.end.getHours()).toBe(14);
+      expect(r.end.getMinutes()).toBe(0);
+    });
+
+    it('different-day range with end-time < start-time does NOT clamp', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 14, 0),
+            end: new Date(2026, 4, 22, 18, 0),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const endTime = screen.getByRole('textbox', { name: 'End time' });
+      fireEvent.change(endTime, { target: { value: '08:00' } });
+      fireEvent.blur(endTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.end.getHours()).toBe(8);
+      expect(r.end.getMinutes()).toBe(0);
+    });
+
+    it('timeStep={30} rounds typed "10:22" to 10:30 on blur', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          timeStep={30}
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const startTime = screen.getByRole('textbox', { name: 'Start time' });
+      fireEvent.change(startTime, { target: { value: '10:22' } });
+      fireEvent.blur(startTime);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.start.getHours()).toBe(10);
+      expect(r.start.getMinutes()).toBe(30);
+    });
+
+    it('hidden form mirrors emit ISO datetime when granularity="minute"', () => {
+      const { container } = render(
+        <InlineDateRangePicker
+          granularity="minute"
+          nameStart="from"
+          nameEnd="to"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const start = container.querySelector<HTMLInputElement>('input[name="from"]');
+      const end = container.querySelector<HTMLInputElement>('input[name="to"]');
+      expect(start?.value).toBe('2026-05-21T09:00');
+      expect(end?.value).toBe('2026-06-04T17:30');
+    });
+
+    it('hidden form mirrors still emit ISO date when granularity="day"', () => {
+      const { container } = render(
+        <InlineDateRangePicker
+          nameStart="from"
+          nameEnd="to"
+          defaultValue={SAMPLE}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const start = container.querySelector<HTMLInputElement>('input[name="from"]');
+      const end = container.querySelector<HTMLInputElement>('input[name="to"]');
+      expect(start?.value).toBe('2026-05-21');
+      expect(end?.value).toBe('2026-06-04');
+    });
   });
 });

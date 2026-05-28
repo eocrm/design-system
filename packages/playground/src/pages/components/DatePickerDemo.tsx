@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Button, DatePicker, I18nProvider, Stack, toDateKey } from '@eocrm/design-system';
+import {
+  Button,
+  DatePicker,
+  I18nProvider,
+  Stack,
+  toDateKey,
+  toIsoDateTime,
+} from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -7,6 +14,24 @@ import { getComponentFiles } from '../../lib/componentFiles';
 
 const TODAY = new Date();
 const IN_90_DAYS = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 90);
+const TODAY_AT_NINE = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate(), 9, 0, 0, 0);
+
+function GranularityMinuteDemo() {
+  const [value, setValue] = useState<Date | null>(TODAY_AT_NINE);
+  return (
+    <Stack gap="xs">
+      <DatePicker
+        granularity="minute"
+        value={value}
+        onChange={setValue}
+        aria-label="Meeting start"
+      />
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        {value ? toIsoDateTime(value) : 'null'}
+      </code>
+    </Stack>
+  );
+}
 
 function ControlledDemo() {
   const [value, setValue] = useState<Date | null>(TODAY);
@@ -174,6 +199,23 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
           <I18nProvider locale="ru">
             <DatePicker defaultValue={TODAY} locale="ru-RU" aria-label="Дата" />
           </I18nProvider>
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Granularity: minute"
+        description="`granularity='minute'` adds a manual-entry time input below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Picking a different date preserves the existing time-of-day; picking from `null` defaults to `00:00`."
+        code={`const [value, setValue] = useState<Date | null>(new Date(2026, 4, 28, 9, 0));
+
+<DatePicker
+  granularity="minute"
+  value={value}
+  onChange={setValue}
+/>
+// hidden form mirror: 2026-05-28T09:00`}
+      >
+        <InputExample>
+          <GranularityMinuteDemo />
         </InputExample>
       </Example>
     </DemoBody>

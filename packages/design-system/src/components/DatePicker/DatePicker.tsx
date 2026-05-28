@@ -18,7 +18,19 @@ import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { DatePickerGrid } from './DatePickerGrid';
-import { formatDate, parseDate, toIsoDate, isDateOutOfRange } from './utils';
+import { TimeField } from './TimeField';
+import {
+  combineDateAndTime,
+  formatDate,
+  formatDateTime,
+  isDateOutOfRange,
+  parseDate,
+  parseDateTime,
+  roundTimeToStep,
+  toIsoDate,
+  toIsoDateTime,
+  type DateTimeGranularity,
+} from './utils';
 import styles from './DatePicker.module.scss';
 
 /** Field height + type scale. Pairs with `<Input>` and `<Select>`. */
@@ -61,6 +73,26 @@ export interface DatePickerProps extends Omit<
    * - `'lg'` — 40px tall.
    */
   size?: DatePickerSize;
+
+  /**
+   * Picker precision.
+   *
+   * - `'day'` (default) — date only; behavior unchanged from prior releases.
+   * - `'minute'` — adds a manual-entry time input below the calendar grid.
+   *   The trigger text shows `HH:mm` after the date. The hidden form mirror
+   *   (when `name` is set) emits ISO local datetime (`2026-05-28T14:30`).
+   *
+   * Time is preserved across date re-picks. Picking from a `null` value
+   * defaults the time to `00:00`.
+   */
+  granularity?: DateTimeGranularity;
+
+  /**
+   * Minutes step for the `<TimeField>` popover and for rounding typed
+   * time input on commit. Defaults to `15`. Set `1` to disable rounding.
+   * Only meaningful when `granularity='minute'`.
+   */
+  timeStep?: number;
 }
 
 const ICON_SIZE_FOR: Record<DatePickerSize, number> = {
@@ -98,7 +130,9 @@ const ICON_SIZE_FOR: Record<DatePickerSize, number> = {
  *
  * @remarks When NOT to use
  * - Range selection → not supported in v1; ships in a follow-up PR.
- * - Datetime (date + time) → not supported in v1.
+ * - Datetime with seconds precision → only `granularity='minute'` is
+ *   supported. For finer precision, compose with a separate input.
+ * - Time-only fields (no date) → out of scope.
  * - Free-form date strings without a clear locale → use a plain `<Input>`.
  *
  * @remarks Anti-patterns
@@ -120,6 +154,8 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     invalid = false,
     disabled = false,
     size = 'md',
+    granularity = 'day',
+    timeStep = 15,
     name,
     placeholder,
     className,
@@ -148,7 +184,11 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     [valueProp, onChange],
   );
 
-  const formattedValue = value ? formatDate(value, locale) : '';
+  const formattedValue = value
+    ? granularity === 'minute'
+      ? formatDateTime(value, locale)
+      : formatDate(value, locale)
+    : '';
   const [draft, setDraft] = useState(formattedValue);
   useEffect(() => {
     setDraft(formattedValue);
@@ -188,14 +228,14 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         setValue(null);
         return;
       }
-      const parsed = parseDate(raw, locale);
+      const parsed = granularity === 'minute' ? parseDateTime(raw, locale) : parseDate(raw, locale);
       if (parsed != null && !isDateOutOfRange(parsed, min, max, isDateDisabled)) {
         setValue(parsed);
       } else {
         setDraft(formattedValue); // revert
       }
     },
-    [locale, min, max, isDateDisabled, setValue, formattedValue],
+    [granularity, locale, min, max, isDateDisabled, setValue, formattedValue],
   );
 
   const handleInputBlur = useCallback(
@@ -259,11 +299,22 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 
   const handleSelect = useCallback(
     (next: Date) => {
-      setValue(next);
+      let withTime = next;
+      if (granularity === 'minute') {
+        if (value != null) {
+          withTime = combineDateAndTime(next, value.getHours(), value.getMinutes());
+        } else {
+          // Default time = 00:00, rounded to keep step-aligned invariant
+          // (no-op for any sensible step; explicit for clarity).
+          const rounded = roundTimeToStep(0, 0, timeStep);
+          withTime = combineDateAndTime(next, rounded.hours, rounded.minutes);
+        }
+      }
+      setValue(withTime);
       setOpen(false);
       inputRef.current?.focus();
     },
-    [setValue],
+    [granularity, value, setValue, timeStep],
   );
 
   const handleClear = useCallback(
@@ -294,11 +345,17 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     if (!open) return;
     const handler = (e: PointerEvent) => {
       const target = e.target as Node | null;
+      if (!target) return;
       const floating = refs.floating.current;
-      if (target && !wrapperRef.current?.contains(target) && !floating?.contains(target)) {
-        commit(draft);
-        setOpen(false);
+      if (wrapperRef.current?.contains(target) || floating?.contains(target)) return;
+      // The embedded <TimeField> renders its popover into document.body
+      // (sibling portal). Treat any click inside it as "inside" so this
+      // popover doesn't auto-close mid-time-pick.
+      if (target instanceof Element && target.closest('[data-timefield-popover="true"]')) {
+        return;
       }
+      commit(draft);
+      setOpen(false);
     };
     document.addEventListener('pointerdown', handler, true);
     return () => document.removeEventListener('pointerdown', handler, true);
@@ -343,7 +400,12 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         aria-describedby={ariaDescribedBy}
         aria-haspopup="dialog"
         aria-expanded={open}
-        placeholder={placeholder ?? formatDate(new Date(2000, 0, 2), locale)}
+        placeholder={
+          placeholder ??
+          (granularity === 'minute'
+            ? formatDateTime(new Date(2000, 0, 2, 14, 30), locale)
+            : formatDate(new Date(2000, 0, 2), locale))
+        }
         autoComplete="off"
       />
       {showClear && (
@@ -365,7 +427,13 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       >
         <CalendarIcon size={ICON_SIZE_FOR[size]} />
       </button>
-      {name && <input type="hidden" name={name} value={value ? toIsoDate(value) : ''} />}
+      {name && (
+        <input
+          type="hidden"
+          name={name}
+          value={value ? (granularity === 'minute' ? toIsoDateTime(value) : toIsoDate(value)) : ''}
+        />
+      )}
       {open &&
         createPortal(
           <div
@@ -387,6 +455,24 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
               isDateDisabled={isDateDisabled}
               locale={locale}
             />
+            {granularity === 'minute' && (
+              <div className={styles.timeRow}>
+                <label className={styles.timeLabel} htmlFor={`${inputId}-time`}>
+                  {t('datePicker.timeLabel')}
+                </label>
+                <TimeField
+                  id={`${inputId}-time`}
+                  value={value}
+                  step={timeStep}
+                  disabled={disabled}
+                  aria-label={t('datePicker.timeLabel')}
+                  onChange={(h, m) => {
+                    if (value == null) return;
+                    setValue(combineDateAndTime(value, h, m));
+                  }}
+                />
+              </div>
+            )}
           </div>,
           document.body,
         )}

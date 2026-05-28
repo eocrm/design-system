@@ -1,7 +1,26 @@
+@use './DatePicker.tokens';
+
 // Inline picker wrapper — the calendar lives in flow (no popover, no
 // portal). The wrapper carries no Rule-4 layout properties of its own;
 // width is intrinsic to the underlying `<DatePickerGrid>` (~15rem) and
 // the consumer's container controls overall placement.
 .inline {
   display: inline-block;
+}
+
+// Time row — rendered below the grid when granularity='minute'. Mirrors
+// the popover variant so consumers get identical chrome inline or
+// floating. The inline wrapper is already an internal-chrome container,
+// so the time row's flex layout lives here (Rule 4 popover/internal
+// exception).
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--date-picker-time-row-gap);
+  padding-top: var(--date-picker-time-row-gap);
+}
+
+.timeLabel {
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
 }

@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Button, I18nProvider, InlineDatePicker, Stack, toDateKey } from '@eocrm/design-system';
+import {
+  Button,
+  I18nProvider,
+  InlineDatePicker,
+  Stack,
+  toDateKey,
+  toIsoDateTime,
+} from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -7,6 +14,24 @@ import { getComponentFiles } from '../../lib/componentFiles';
 
 const TODAY = new Date();
 const IN_90 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 90);
+const TODAY_AT_NINE = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate(), 9, 0, 0, 0);
+
+function GranularityMinuteDemo() {
+  const [value, setValue] = useState<Date | null>(TODAY_AT_NINE);
+  return (
+    <Stack gap="xs">
+      <InlineDatePicker
+        granularity="minute"
+        value={value}
+        onChange={setValue}
+        aria-label="Meeting start"
+      />
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        {value ? toIsoDateTime(value) : 'null'}
+      </code>
+    </Stack>
+  );
+}
 
 function ControlledDemo() {
   const [value, setValue] = useState<Date | null>(TODAY);
@@ -136,6 +161,22 @@ const in90 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 9
           <I18nProvider locale="ru">
             <InlineDatePicker defaultValue={TODAY} locale="ru-RU" aria-label="Дата" />
           </I18nProvider>
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Granularity: minute"
+        description="`granularity='minute'` renders a manual-entry time input below the grid (always visible — there's no popover to gate it on). Picking a different date preserves the existing time-of-day; the time input is disabled until a date is set. The hidden form mirror emits ISO local datetime (`2026-05-28T09:00`)."
+        code={`const [value, setValue] = useState<Date | null>(new Date(2026, 4, 28, 9, 0));
+
+<InlineDatePicker
+  granularity="minute"
+  value={value}
+  onChange={setValue}
+/>`}
+      >
+        <InputExample width="auto">
+          <GranularityMinuteDemo />
         </InputExample>
       </Example>
     </DemoBody>

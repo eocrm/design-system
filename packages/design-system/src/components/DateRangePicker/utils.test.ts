@@ -1,4 +1,11 @@
-import { autoSwapRange, formatDateRange, parseDateRange } from './utils';
+import {
+  autoSwapRange,
+  clampRangeEndAfterStart,
+  formatDateRange,
+  formatDateTimeRange,
+  parseDateRange,
+  parseDateTimeRange,
+} from './utils';
 
 describe('DateRangePicker utils', () => {
   describe('autoSwapRange', () => {
@@ -119,6 +126,64 @@ describe('DateRangePicker utils', () => {
       // three elements, not two. length === 2 check fails, no separator
       // matches, function returns null.
       expect(parseDateRange('5/21/2026 — 6/4/2026 — 7/1/2026', 'en-US')).toBeNull();
+    });
+  });
+
+  describe('formatDateTimeRange', () => {
+    it('joins start/end with em dash', () => {
+      expect(
+        formatDateTimeRange(
+          { start: new Date(2026, 4, 28, 9, 0), end: new Date(2026, 4, 29, 17, 30) },
+          'en-US',
+        ),
+      ).toBe('05/28/2026 09:00 — 05/29/2026 17:30');
+    });
+  });
+
+  describe('parseDateTimeRange', () => {
+    it('parses ISO datetime range with em dash', () => {
+      const r = parseDateTimeRange('2026-05-28T09:00 — 2026-05-29T17:30', 'en-US');
+      expect(r?.start).toEqual(new Date(2026, 4, 28, 9, 0, 0, 0));
+      expect(r?.end).toEqual(new Date(2026, 4, 29, 17, 30, 0, 0));
+    });
+    it('parses locale-formatted datetime range with em dash', () => {
+      const r = parseDateTimeRange('05/28/2026 09:00 — 05/29/2026 17:30', 'en-US');
+      expect(r?.start).toEqual(new Date(2026, 4, 28, 9, 0, 0, 0));
+      expect(r?.end).toEqual(new Date(2026, 4, 29, 17, 30, 0, 0));
+    });
+    it('auto-swaps out-of-order pairs', () => {
+      const r = parseDateTimeRange('05/29/2026 17:30 — 05/28/2026 09:00', 'en-US');
+      expect(r?.start).toEqual(new Date(2026, 4, 28, 9, 0, 0, 0));
+      expect(r?.end).toEqual(new Date(2026, 4, 29, 17, 30, 0, 0));
+    });
+    it('returns null when either half fails to parse', () => {
+      expect(parseDateTimeRange('garbage — 05/29/2026 09:00', 'en-US')).toBeNull();
+    });
+  });
+
+  describe('clampRangeEndAfterStart', () => {
+    it('clamps end-time to start-time when same day end < start', () => {
+      const range = {
+        start: new Date(2026, 4, 28, 14, 0),
+        end: new Date(2026, 4, 28, 10, 0),
+      };
+      const out = clampRangeEndAfterStart(range);
+      expect(out.end.getHours()).toBe(14);
+      expect(out.end.getMinutes()).toBe(0);
+    });
+    it('no-op when same day end >= start', () => {
+      const range = {
+        start: new Date(2026, 4, 28, 9, 0),
+        end: new Date(2026, 4, 28, 17, 0),
+      };
+      expect(clampRangeEndAfterStart(range)).toBe(range);
+    });
+    it('no-op when different days', () => {
+      const range = {
+        start: new Date(2026, 4, 28, 14, 0),
+        end: new Date(2026, 4, 29, 10, 0),
+      };
+      expect(clampRangeEndAfterStart(range)).toBe(range);
     });
   });
 });

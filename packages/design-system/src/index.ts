@@ -483,6 +483,24 @@ export type { InlineDatePickerProps } from './components/DatePicker';
 export { InlineDateRangePicker } from './components/DateRangePicker';
 export type { InlineDateRangePickerProps } from './components/DateRangePicker';
 
+// DatePicker family — date+time granularity helpers. Exposed so consumers can
+// (a) integrate the hidden form mirror's ISO local datetime with form layers
+// without re-implementing the format, and (b) parse user-typed datetime input
+// outside the picker (e.g., URL params, hydrated state).
+export type { DateTimeGranularity } from './components/DatePicker/utils';
+export {
+  formatDateTime,
+  parseDateTime,
+  toIsoDateTime,
+  combineDateAndTime,
+  toTimeInputValue,
+} from './components/DatePicker/utils';
+export {
+  formatDateTimeRange,
+  parseDateTimeRange,
+  clampRangeEndAfterStart,
+} from './components/DateRangePicker/utils';
+
 // ─── Palette (categorical color set) ──────────────────────────────────────
 export type { PaletteColor } from './palette';
 export { PALETTE_COLORS, paletteTokens } from './palette';

@@ -66,6 +66,14 @@ export const en: Messages = {
     nextMonth: 'Next month',
     rangeStart: 'Start date',
     rangeEnd: 'End date',
+    timeLabel: 'Time',
+    timeHoursLabel: 'Hours',
+    timeMinutesLabel: 'Minutes',
+    timeOpenList: 'Open time list',
+  },
+  dateRangePicker: {
+    startTimeLabel: 'Start time',
+    endTimeLabel: 'End time',
   },
   dataTable: {
     selectAll: 'Select all rows on page',

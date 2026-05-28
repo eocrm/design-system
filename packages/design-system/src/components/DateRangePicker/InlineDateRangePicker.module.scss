@@ -1,5 +1,6 @@
 @use '../../styles/mixins' as *;
 @use './DateRangePicker.tokens';
+@use '../DatePicker/DatePicker.tokens';
 
 // Inline range picker — mirrors the DateRangePicker popover content but
 // lives in flow (no popover, no portal). Wrapper carries no Rule-4
@@ -62,4 +63,28 @@
 .grids {
   display: flex;
   gap: var(--date-range-picker-grids-gap);
+}
+
+// Time row(s) — rendered below the calendar pair when granularity='minute'.
+// Mirrors DateRangePicker.module.scss; layout exception same as `.grids`
+// (this wrapper is the internal-chrome container, not a layout primitive).
+.timeRowsPair {
+  display: flex;
+  gap: var(--date-range-picker-grids-gap);
+}
+
+.timeRowsPair > * {
+  flex: 1 1 0;
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--date-picker-time-row-gap);
+  padding-top: var(--date-picker-time-row-gap);
+}
+
+.timeLabel {
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
 }
