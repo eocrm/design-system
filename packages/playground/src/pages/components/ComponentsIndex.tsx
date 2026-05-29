@@ -19,6 +19,7 @@ import { ColorPicker } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
+import { Masonry } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Kbd } from '@eocrm/design-system';
 import { PasswordInput } from '@eocrm/design-system';
@@ -583,6 +584,27 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <div className={styles.tile} />
         <div className={styles.tile} />
       </Grid>
+    ),
+  },
+  {
+    to: '/components/masonry',
+    name: 'Masonry',
+    description: 'Height-balanced columns for variable-height items.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: '260px' }}>
+        <Masonry columns={3} gap="sm">
+          {[40, 64, 28, 52, 36, 48].map((h, i) => (
+            <div
+              key={i}
+              style={{
+                height: h,
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--color-accent-subtle-bg)',
+              }}
+            />
+          ))}
+        </Masonry>
+      </div>
     ),
   },
   {

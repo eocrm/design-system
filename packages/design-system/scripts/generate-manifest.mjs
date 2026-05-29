@@ -24,6 +24,7 @@ const CLUSTERS = {
   Cluster: 'Layout',
   Divider: 'Layout',
   Grid: 'Layout',
+  Masonry: 'Layout',
   Card: 'Layout',
   Page: 'Layout',
   PageHeader: 'Layout',

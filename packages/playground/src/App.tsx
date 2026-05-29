@@ -69,6 +69,7 @@ import { ImageCropDemo } from './pages/components/ImageCropDemo';
 import { DividerDemo } from './pages/components/DividerDemo';
 import { DrawerDemo } from './pages/components/DrawerDemo';
 import { GridDemo } from './pages/components/GridDemo';
+import { MasonryDemo } from './pages/components/MasonryDemo';
 import { LinkDemo } from './pages/components/LinkDemo';
 import { RailDemo } from './pages/components/RailDemo';
 import { ToastDemo } from './pages/components/ToastDemo';
@@ -154,6 +155,7 @@ export default function App() {
             <Route path="/components/divider" element={<DividerDemo />} />
             <Route path="/components/drawer" element={<DrawerDemo />} />
             <Route path="/components/grid" element={<GridDemo />} />
+            <Route path="/components/masonry" element={<MasonryDemo />} />
             <Route path="/components/link" element={<LinkDemo />} />
             <Route path="/components/rail" element={<RailDemo />} />
             <Route path="/components/topbar" element={<TopBarDemo />} />

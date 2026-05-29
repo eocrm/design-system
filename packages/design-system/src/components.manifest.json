@@ -290,6 +290,12 @@
       "PersonDisplay"
     ]
   },
+  "Masonry": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": []
+  },
   "Modal": {
     "tier": "composition",
     "cluster": "Overlays",

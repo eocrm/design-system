@@ -1,0 +1,42 @@
+@use './Masonry.tokens';
+
+.masonry {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.cell {
+  width: 100%;
+}
+
+.gapXs {
+  gap: var(--masonry-gap-xs);
+}
+
+.gapSm {
+  gap: var(--masonry-gap-sm);
+}
+
+.gapMd {
+  gap: var(--masonry-gap-md);
+}
+
+.gapLg {
+  gap: var(--masonry-gap-lg);
+}
+
+.gapXl {
+  gap: var(--masonry-gap-xl);
+}
+
+.gap2xl {
+  gap: var(--masonry-gap-2xl);
+}
