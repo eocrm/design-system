@@ -64,6 +64,7 @@ import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
 import { FileUploadDemo } from './pages/components/FileUploadDemo';
 import { FilterChipDemo } from './pages/components/FilterChipDemo';
 import { PersonDisplayDemo } from './pages/components/PersonDisplayDemo';
+import { ImageDemo } from './pages/components/ImageDemo';
 import { ImageCropDemo } from './pages/components/ImageCropDemo';
 import { DividerDemo } from './pages/components/DividerDemo';
 import { DrawerDemo } from './pages/components/DrawerDemo';
@@ -148,6 +149,7 @@ export default function App() {
             <Route path="/components/empty-state" element={<EmptyStateDemo />} />
             <Route path="/components/file-upload" element={<FileUploadDemo />} />
             <Route path="/components/filter-chip" element={<FilterChipDemo />} />
+            <Route path="/components/image" element={<ImageDemo />} />
             <Route path="/components/image-crop" element={<ImageCropDemo />} />
             <Route path="/components/divider" element={<DividerDemo />} />
             <Route path="/components/drawer" element={<DrawerDemo />} />

@@ -52,6 +52,7 @@
       "DataTable",
       "Drawer",
       "FileUpload",
+      "Image",
       "Modal",
       "OptionsPicker",
       "PasswordInput",
@@ -237,6 +238,15 @@
     "composes": [],
     "composedBy": []
   },
+  "Image": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Button",
+      "Skeleton"
+    ],
+    "composedBy": []
+  },
   "ImageCrop": {
     "tier": "composition",
     "cluster": "Forms",
@@ -399,6 +409,7 @@
     "composes": [],
     "composedBy": [
       "DataTable",
+      "Image",
       "ImageCrop"
     ]
   },

@@ -1,0 +1,15 @@
+:root {
+  --image-radius-none: 0;
+  --image-radius-sm: var(--radius-sm);
+  --image-radius-md: var(--radius-md);
+  --image-radius-lg: var(--radius-lg);
+  --image-radius-full: var(--radius-full);
+
+  --image-bg: var(--color-bg-muted);
+  --image-transition: var(--transition-base);
+
+  --image-error-bg: var(--color-bg-muted);
+  --image-error-fg: var(--color-fg-muted);
+  --image-error-gap: var(--space-2);
+  --image-error-font-size: var(--font-size-sm);
+}

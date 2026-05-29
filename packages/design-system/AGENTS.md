@@ -1919,6 +1919,25 @@ or single boolean toggles (use `<Checkbox>` or `<Switch>`).
 - Composes — for a list-row placeholder, render `<Skeleton variant='circular' />` + 2–3 text skeletons + a button-shaped rectangular in a Cluster.
 - Use `<EmptyState>` for "nothing here yet" — Skeleton implies "loading," not "empty."
 
+### `<Image>` — image with loading + error states
+
+```tsx
+<Image src={url} alt="Quarterly revenue chart" aspectRatio="16 / 9" />
+```
+
+Robust `<img>`: `Skeleton` while loading, fade-in on load, compact `ImageOff` error
+placeholder with a retry button on failure.
+
+- `src` / `alt` — required (`alt=""` for decorative).
+- `objectFit`: `cover` (default) | `contain` | `fill` | `none` | `scale-down`.
+- `aspectRatio`: number (`1.5`) or string (`'16 / 9'`) — reserves the box, no layout shift.
+- `radius`: `none` | `sm` | `md` (default) | `lg` | `full`.
+- `fallback` — custom node shown on error instead of the default placeholder.
+- `loading` defaults to `'lazy'`; `ref` → the `<img>`; `className`/`style` → the wrapper box.
+
+**When NOT to use:** circular avatars → `<Avatar>`; crop/zoom UI → `<ImageCrop>`; CSS
+backgrounds → `background-image`; icons → lucide / inline SVG.
+
 ### `<Table>` — tabular data primitive
 
 ```tsx
