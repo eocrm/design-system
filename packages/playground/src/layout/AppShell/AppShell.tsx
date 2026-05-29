@@ -59,6 +59,7 @@ import {
   Type,
   Code as CodeIcon,
   Activity,
+  LogIn,
   LoaderCircle,
   UploadCloud,
   SlidersHorizontal,
@@ -82,6 +83,7 @@ const mockupItems = [
   { to: '/mockups/tenants', label: 'Tenants', icon: Building2, end: false },
   { to: '/mockups/audit', label: 'Audit log', icon: Activity, end: false },
   { to: '/mockups/system-settings', label: 'System settings', icon: SettingsIcon, end: false },
+  { to: '/mockups/login', label: 'Login', icon: LogIn, end: false },
 ];
 
 const componentOverview = {
@@ -247,11 +249,6 @@ function BrandMark() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
-  const inComponents = pathname.startsWith('/components');
-
-  const switchLink = inComponents
-    ? { to: '/mockups', label: 'Mockups', icon: Layers }
-    : { to: '/components', label: 'Components', icon: Component };
 
   // Persisted collapsed state — survives reload, syncs across tabs.
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -262,6 +259,18 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
   }, [collapsed]);
+
+  // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so a
+  // login screen reads like a real auth page, not a page inside the CRM.
+  if (pathname === '/mockups/login') {
+    return <>{children}</>;
+  }
+
+  const inComponents = pathname.startsWith('/components');
+
+  const switchLink = inComponents
+    ? { to: '/mockups', label: 'Mockups', icon: Layers }
+    : { to: '/components', label: 'Components', icon: Component };
 
   return (
     <div className={styles.shell} data-rail-collapsed={collapsed || undefined}>

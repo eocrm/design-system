@@ -290,6 +290,26 @@ export const MOCKUPS = [
       'Tooltip',
     ],
   },
+  {
+    slug: 'login',
+    title: 'Login',
+    path: '/mockups/login',
+    blurb: 'Full-screen eocrm sign-in — branded card, email/password, Google SSO, error states.',
+    usesComponents: [
+      'Alert',
+      'Button',
+      'Card',
+      'Checkbox',
+      'Cluster',
+      'Divider',
+      'Input',
+      'Link',
+      'PasswordInput',
+      'Stack',
+      'Text',
+      'Title',
+    ],
+  },
 ] as const satisfies readonly MockupEntry[];
 
 export type MockupSlug = (typeof MOCKUPS)[number]['slug'];
