@@ -99,7 +99,8 @@ export const Masonry = forwardRef<HTMLDivElement, MasonryProps>(function Masonry
   const rootRef = useRef<HTMLDivElement | null>(null);
   const cellRefs = useRef<Array<HTMLDivElement | null>>([]);
 
-  const minColPx = minColumnWidth ? parseFloat(minColumnWidth) : 240;
+  const parsedMinCol = minColumnWidth != null ? parseFloat(minColumnWidth) : NaN;
+  const minColPx = Number.isFinite(parsedMinCol) && parsedMinCol > 0 ? parsedMinCol : 240;
   const fixedColumnCount = columns != null ? Math.max(1, Math.floor(columns)) : null;
   const initialCount = fixedColumnCount ?? 1;
 
@@ -113,7 +114,12 @@ export const Masonry = forwardRef<HTMLDivElement, MasonryProps>(function Masonry
       { length: itemCount },
       (_, i) => cellRefs.current[i]?.getBoundingClientRect().height ?? 0,
     );
-    const next = balanceColumns(heights, nextCount);
+    // Before any real measurement (all heights 0 — e.g. unsized images mid-load),
+    // keep the round-robin distribution instead of collapsing into column 0.
+    const next =
+      itemCount > 0 && heights.every((h) => h === 0)
+        ? roundRobinColumns(itemCount, nextCount)
+        : balanceColumns(heights, nextCount);
     setColumnCount((prev) => (prev === nextCount ? prev : nextCount));
     setCols((prev) => (distributionsEqual(prev, next) ? prev : next));
   }, [fixedColumnCount, minColPx, gap, itemCount]);

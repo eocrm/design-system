@@ -145,12 +145,24 @@ with the forwarded ref (the `mergeRefs` helper Checkbox already uses).
   width: 100%;
 }
 
-.gapXs { gap: var(--masonry-gap-xs); }
-.gapSm { gap: var(--masonry-gap-sm); }
-.gapMd { gap: var(--masonry-gap-md); }
-.gapLg { gap: var(--masonry-gap-lg); }
-.gapXl { gap: var(--masonry-gap-xl); }
-.gap2xl { gap: var(--masonry-gap-2xl); }
+.gapXs {
+  gap: var(--masonry-gap-xs);
+}
+.gapSm {
+  gap: var(--masonry-gap-sm);
+}
+.gapMd {
+  gap: var(--masonry-gap-md);
+}
+.gapLg {
+  gap: var(--masonry-gap-lg);
+}
+.gapXl {
+  gap: var(--masonry-gap-xl);
+}
+.gap2xl {
+  gap: var(--masonry-gap-2xl);
+}
 ```
 
 The gap class is applied to BOTH the root (column gap) and each `.column` (row gap) so a single
@@ -160,27 +172,28 @@ structure and `width: 100%`; no `margin`/positioning.
 
 ## Files
 
-| File | Change |
-| --- | --- |
-| `packages/design-system/src/components/Masonry/Masonry.tsx` | NEW — component |
-| `packages/design-system/src/components/Masonry/Masonry.module.scss` | NEW — styles |
-| `packages/design-system/src/components/Masonry/Masonry.tokens.scss` | NEW — `--masonry-*` tokens |
-| `packages/design-system/src/components/Masonry/masonryUtils.ts` | NEW — `balanceColumns` + `columnsForWidth` (pure) |
-| `packages/design-system/src/components/Masonry/Masonry.test.tsx` | NEW — unit tests (utils + component) |
-| `packages/design-system/src/components/Masonry/index.ts` | NEW — `export { Masonry }` + `export type { MasonryProps, MasonryGap }` |
-| `packages/design-system/src/index.ts` | MODIFY — re-export Masonry + types |
-| `packages/design-system/src/_meta/manifest.ts` | MODIFY — `Masonry: 'Layout'` in `CLUSTERS` |
-| `packages/design-system/scripts/generate-manifest.mjs` | MODIFY — `Masonry: 'Layout'` in its CLUSTERS copy (the `.mjs` is what `npm run build:manifest` runs — keep both in sync) |
-| `packages/design-system/src/components.manifest.json` | REGEN — `npm run build:manifest` |
-| `packages/design-system/AGENTS.md` | MODIFY — `<Masonry>` TL;DR (Layout section) |
-| `packages/playground/src/pages/components/MasonryDemo.tsx` | NEW — demo page |
-| `packages/playground/src/App.tsx` | MODIFY — `/components/masonry` route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | MODIFY — Layout-group nav entry, after `Grid`. Use a masonry-ish lucide icon (`GalleryVerticalEnd`); the plan confirms it isn't already imported and picks another layout glyph if so. |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` | MODIFY — overview card (matches the file's real `items[]` entry shape) |
+| File                                                                | Change                                                                                                                                                                                 |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/design-system/src/components/Masonry/Masonry.tsx`         | NEW — component                                                                                                                                                                        |
+| `packages/design-system/src/components/Masonry/Masonry.module.scss` | NEW — styles                                                                                                                                                                           |
+| `packages/design-system/src/components/Masonry/Masonry.tokens.scss` | NEW — `--masonry-*` tokens                                                                                                                                                             |
+| `packages/design-system/src/components/Masonry/masonryUtils.ts`     | NEW — `balanceColumns` + `columnsForWidth` (pure)                                                                                                                                      |
+| `packages/design-system/src/components/Masonry/Masonry.test.tsx`    | NEW — unit tests (utils + component)                                                                                                                                                   |
+| `packages/design-system/src/components/Masonry/index.ts`            | NEW — `export { Masonry }` + `export type { MasonryProps, MasonryGap }`                                                                                                                |
+| `packages/design-system/src/index.ts`                               | MODIFY — re-export Masonry + types                                                                                                                                                     |
+| `packages/design-system/src/_meta/manifest.ts`                      | MODIFY — `Masonry: 'Layout'` in `CLUSTERS`                                                                                                                                             |
+| `packages/design-system/scripts/generate-manifest.mjs`              | MODIFY — `Masonry: 'Layout'` in its CLUSTERS copy (the `.mjs` is what `npm run build:manifest` runs — keep both in sync)                                                               |
+| `packages/design-system/src/components.manifest.json`               | REGEN — `npm run build:manifest`                                                                                                                                                       |
+| `packages/design-system/AGENTS.md`                                  | MODIFY — `<Masonry>` TL;DR (Layout section)                                                                                                                                            |
+| `packages/playground/src/pages/components/MasonryDemo.tsx`          | NEW — demo page                                                                                                                                                                        |
+| `packages/playground/src/App.tsx`                                   | MODIFY — `/components/masonry` route                                                                                                                                                   |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`              | MODIFY — Layout-group nav entry, after `Grid`. Use a masonry-ish lucide icon (`GalleryVerticalEnd`); the plan confirms it isn't already imported and picks another layout glyph if so. |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx`      | MODIFY — overview card (matches the file's real `items[]` entry shape)                                                                                                                 |
 
 ## Tests (`Masonry.test.tsx` minimum)
 
 **Pure helpers (the real algorithm coverage — jsdom has no layout):**
+
 - `balanceColumns([10,10,10,10], 2)` → `[[0,2],[1,3]]` (round-robin when equal).
 - `balanceColumns([100,10,10,10], 2)` → tall item alone: `[[0],[1,2,3]]` (shortest-column packs).
 - `balanceColumns([], 3)` → `[[],[],[]]`.
@@ -189,6 +202,7 @@ structure and `width: 100%`; no `margin`/positioning.
 - `columnsForWidth(1000, 240, 16)` → 3; `columnsForWidth(100, 240, 16)` → 1 (min); `columnsForWidth(0, …)` → 1.
 
 **Component (structure, not layout — jsdom heights are 0):**
+
 - Renders all children (all present in the DOM).
 - `columns={3}` → renders 3 column containers.
 - default gap `md` applies `gapMd`; `gap="lg"` applies `gapLg` (on root + columns).
@@ -213,7 +227,7 @@ structure and `width: 100%`; no `margin`/positioning.
 - A single vertical column → use `<Stack>`.
 - Wrapping rows of unequal items (toolbars, tag lists) → use `<Cluster>`.
 - Anti-pattern: ❌ interactive/stateful children (videos, focus-holding forms) — rebalancing
-  re-parents items between columns and React **remounts** them. Masonry is for *display* content.
+  re-parents items between columns and React **remounts** them. Masonry is for _display_ content.
 - Anti-pattern: ❌ expecting strict source order top-to-bottom in a single column — items are
   distributed across columns; order is left→right by placement, not a single reading column.
 

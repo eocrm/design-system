@@ -14,23 +14,23 @@
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/design-system/src/components/Masonry/masonryUtils.ts` | NEW — pure helpers (`balanceColumns`, `columnsForWidth`, `roundRobinColumns`, `distributionsEqual`) |
-| `packages/design-system/src/components/Masonry/Masonry.tokens.scss` | NEW — `--masonry-gap-*` tokens |
-| `packages/design-system/src/components/Masonry/Masonry.module.scss` | NEW — flex/column styles + gap classes |
-| `packages/design-system/src/components/Masonry/Masonry.tsx` | NEW — component (forwardRef + measure/rebalance) |
-| `packages/design-system/src/components/Masonry/Masonry.test.tsx` | NEW — unit tests (helpers + component) |
-| `packages/design-system/src/components/Masonry/index.ts` | NEW — exports |
-| `packages/design-system/src/index.ts` | MODIFY — re-export Masonry + types |
-| `packages/design-system/src/_meta/manifest.ts` | MODIFY — `Masonry: 'Layout'` in `CLUSTERS` |
-| `packages/design-system/scripts/generate-manifest.mjs` | MODIFY — `Masonry: 'Layout'` in its CLUSTERS copy |
-| `packages/design-system/src/components.manifest.json` | REGEN — `npm run build:manifest` |
-| `packages/design-system/AGENTS.md` | MODIFY — `<Masonry>` TL;DR (Layout section) |
-| `packages/playground/src/pages/components/MasonryDemo.tsx` | NEW — demo |
-| `packages/playground/src/App.tsx` | MODIFY — `/components/masonry` route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | MODIFY — Layout nav entry + `GalleryVerticalEnd` import |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` | MODIFY — overview card |
+| File                                                                | Responsibility                                                                                      |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `packages/design-system/src/components/Masonry/masonryUtils.ts`     | NEW — pure helpers (`balanceColumns`, `columnsForWidth`, `roundRobinColumns`, `distributionsEqual`) |
+| `packages/design-system/src/components/Masonry/Masonry.tokens.scss` | NEW — `--masonry-gap-*` tokens                                                                      |
+| `packages/design-system/src/components/Masonry/Masonry.module.scss` | NEW — flex/column styles + gap classes                                                              |
+| `packages/design-system/src/components/Masonry/Masonry.tsx`         | NEW — component (forwardRef + measure/rebalance)                                                    |
+| `packages/design-system/src/components/Masonry/Masonry.test.tsx`    | NEW — unit tests (helpers + component)                                                              |
+| `packages/design-system/src/components/Masonry/index.ts`            | NEW — exports                                                                                       |
+| `packages/design-system/src/index.ts`                               | MODIFY — re-export Masonry + types                                                                  |
+| `packages/design-system/src/_meta/manifest.ts`                      | MODIFY — `Masonry: 'Layout'` in `CLUSTERS`                                                          |
+| `packages/design-system/scripts/generate-manifest.mjs`              | MODIFY — `Masonry: 'Layout'` in its CLUSTERS copy                                                   |
+| `packages/design-system/src/components.manifest.json`               | REGEN — `npm run build:manifest`                                                                    |
+| `packages/design-system/AGENTS.md`                                  | MODIFY — `<Masonry>` TL;DR (Layout section)                                                         |
+| `packages/playground/src/pages/components/MasonryDemo.tsx`          | NEW — demo                                                                                          |
+| `packages/playground/src/App.tsx`                                   | MODIFY — `/components/masonry` route                                                                |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`              | MODIFY — Layout nav entry + `GalleryVerticalEnd` import                                             |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx`      | MODIFY — overview card                                                                              |
 
 ---
 
@@ -662,7 +662,7 @@ import { MasonryDemo } from './pages/components/MasonryDemo';
 Add the route in the `/components/*` block (e.g. right after the `/components/grid` route):
 
 ```tsx
-            <Route path="/components/masonry" element={<MasonryDemo />} />
+<Route path="/components/masonry" element={<MasonryDemo />} />
 ```
 
 - [ ] **Step 3: Add the sidebar nav entry in `AppShell.tsx`**
@@ -724,6 +724,7 @@ make lint
 make build
 npm pack --dry-run -w @eocrm/design-system    # no test files in the tarball
 ```
+
 All must pass.
 
 - [ ] **Step 2: Spawn a fresh-context reviewer** (`general-purpose`) on `git diff main..HEAD`. Have it read `packages/design-system/CLAUDE.md` + the spec, then review the 10 Rule-8 categories. Specifically verify:
@@ -731,7 +732,7 @@ All must pass.
   - Rule 4 (Masonry is a documented layout-owning exception — flex/`width:100%` only, no margins/positioning), Rule 5 (export + types), Rule 6 (forwardRef + spread + mergeRefs), Rule 7 (JSDoc + examples + @remarks), Rule 1 (tests meaningful — pure algorithm covered directly since jsdom lacks layout).
   - Manifest correctly regenerated (Masonry: primitive/Layout) in BOTH `manifest.ts` and `generate-manifest.mjs`.
   - The remount-on-rebalance tradeoff is documented, not a silent surprise.
-  Ask for Critical/Important/Nice-to-have/Regression-watch + verdict (`clean enough to stop` / `keep iterating`).
+    Ask for Critical/Important/Nice-to-have/Regression-watch + verdict (`clean enough to stop` / `keep iterating`).
 
 - [ ] **Step 3: Fix every Critical + Important.** Document deliberate skips.
 - [ ] **Step 4: Re-run gates.**

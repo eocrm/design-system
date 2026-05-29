@@ -596,7 +596,11 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           {[40, 64, 28, 52, 36, 48].map((h, i) => (
             <div
               key={i}
-              style={{ height: h, borderRadius: 'var(--radius-sm)', background: 'var(--color-accent-subtle-bg)' }}
+              style={{
+                height: h,
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--color-accent-subtle-bg)',
+              }}
             />
           ))}
         </Masonry>

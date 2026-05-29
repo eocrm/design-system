@@ -38,6 +38,10 @@ describe('masonryUtils', () => {
       expect(columnsForWidth(100, 240, 16)).toBe(1);
       expect(columnsForWidth(0, 240, 16)).toBe(1);
     });
+    it('returns 1 for non-finite inputs', () => {
+      expect(columnsForWidth(NaN, 240, 16)).toBe(1);
+      expect(columnsForWidth(500, NaN, 16)).toBe(1);
+    });
   });
 
   describe('roundRobinColumns', () => {
@@ -129,5 +133,16 @@ describe('Masonry', () => {
         </Masonry>,
       ),
     ).not.toThrow();
+  });
+
+  it('falls back to a default column width for a non-px minColumnWidth (no blank render)', () => {
+    render(
+      <Masonry minColumnWidth="auto">
+        <div>a</div>
+        <div>b</div>
+      </Masonry>,
+    );
+    expect(screen.getByText('a')).toBeInTheDocument();
+    expect(screen.getByText('b')).toBeInTheDocument();
   });
 });

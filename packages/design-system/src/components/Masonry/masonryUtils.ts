@@ -16,7 +16,8 @@ export function balanceColumns(heights: number[], columnCount: number): number[]
 
 /** How many columns of `minColumnPx` (+ `gapPx` between) fit in `width`. Never < 1. */
 export function columnsForWidth(width: number, minColumnPx: number, gapPx: number): number {
-  if (width <= 0 || minColumnPx <= 0) return 1;
+  if (!Number.isFinite(width) || !Number.isFinite(minColumnPx) || width <= 0 || minColumnPx <= 0)
+    return 1;
   return Math.max(1, Math.floor((width + gapPx) / (minColumnPx + gapPx)));
 }
 
