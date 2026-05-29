@@ -86,11 +86,19 @@ export function parseDateRange(raw: string, locale: string): DateRange | null {
 
 /**
  * Format a `DateRange` including time:
- * `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm` (locale-aware, 24-hour to match the
- * native `<input type="time">` wire format).
+ * `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm` (locale-aware).
+ *
+ * The optional `cycle` arg controls the time portion: `'24'` (default,
+ * back-compat) yields zero-padded `HH:mm`; `'12'` yields `h:mm AM/PM`.
+ * Pickers pass through their resolved
+ * {@link import('../DatePicker/utils').HourCycle}.
  */
-export function formatDateTimeRange(range: DateRange, locale: string): string {
-  return `${formatDateTime(range.start, locale)} — ${formatDateTime(range.end, locale)}`;
+export function formatDateTimeRange(
+  range: DateRange,
+  locale: string,
+  cycle: '12' | '24' = '24',
+): string {
+  return `${formatDateTime(range.start, locale, cycle)} — ${formatDateTime(range.end, locale, cycle)}`;
 }
 
 /**

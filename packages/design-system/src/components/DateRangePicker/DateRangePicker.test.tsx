@@ -356,7 +356,7 @@ describe('DateRangePicker', () => {
       expect(screen.queryByRole('textbox', { name: 'End time' })).not.toBeInTheDocument();
     });
 
-    it('granularity="minute" renders both time inputs in the popover', async () => {
+    it('granularity="minute" renders both time inputs in the popover (hourCycle="24")', async () => {
       const user = userEvent.setup();
       const startDate = new Date(2026, 4, 21, 9, 0);
       const endDate = new Date(2026, 5, 4, 17, 30);
@@ -364,6 +364,7 @@ describe('DateRangePicker', () => {
         <DateRangePicker
           defaultValue={{ start: startDate, end: endDate }}
           granularity="minute"
+          hourCycle="24"
           aria-label="Range"
         />,
         { wrapper: wrap() },
@@ -373,7 +374,20 @@ describe('DateRangePicker', () => {
       expect(await screen.findByRole('textbox', { name: 'End time' })).toHaveValue('17:30');
     });
 
-    it('granularity="minute" includes HH:mm for both halves in trigger text', () => {
+    it('granularity="minute" includes HH:mm for both halves in trigger text (hourCycle="24")', () => {
+      render(
+        <DateRangePicker
+          defaultValue={{ start: new Date(2026, 4, 21, 9, 0), end: new Date(2026, 5, 4, 17, 30) }}
+          granularity="minute"
+          hourCycle="24"
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 09:00 — 06/04/2026 17:30');
+    });
+
+    it('granularity="minute" defaults to AM/PM in trigger for en-US (hourCycle="auto")', () => {
       render(
         <DateRangePicker
           defaultValue={{ start: new Date(2026, 4, 21, 9, 0), end: new Date(2026, 5, 4, 17, 30) }}
@@ -382,7 +396,34 @@ describe('DateRangePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 09:00 — 06/04/2026 17:30');
+      expect(screen.getByRole('textbox')).toHaveValue('05/21/2026 9:00 AM — 06/04/2026 5:30 PM');
+    });
+
+    it('granularity="minute" hourCycle="12" forces AM/PM regardless of locale', () => {
+      render(
+        <DateRangePicker
+          defaultValue={{ start: new Date(2026, 4, 21, 9, 0), end: new Date(2026, 5, 4, 17, 30) }}
+          granularity="minute"
+          hourCycle="12"
+          locale="ru-RU"
+          aria-label="Range"
+        />,
+        { wrapper: wrap('ru-RU') },
+      );
+      expect(screen.getByRole('textbox')).toHaveValue('21.05.2026 9:00 AM — 04.06.2026 5:30 PM');
+    });
+
+    it('granularity="minute" hourCycle="auto" + ru-RU shows 24h in trigger', () => {
+      render(
+        <DateRangePicker
+          defaultValue={{ start: new Date(2026, 4, 21, 9, 0), end: new Date(2026, 5, 4, 17, 30) }}
+          granularity="minute"
+          locale="ru-RU"
+          aria-label="Range"
+        />,
+        { wrapper: wrap('ru-RU') },
+      );
+      expect(screen.getByRole('textbox')).toHaveValue('21.05.2026 09:00 — 04.06.2026 17:30');
     });
 
     it('picking a fresh range from null defaults start=00:00 / end=23:59', async () => {

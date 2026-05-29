@@ -193,10 +193,12 @@
 }
 
 // Time row(s) — rendered below the calendar pair when granularity='minute'.
-// Two side-by-side rows, one per calendar. Same chrome as DatePicker's
-// time row; the gap mirrors the calendar-pair gutter so the time inputs
-// line up under their respective grids. Internal popover chrome — the
-// Rule-4 popover exception applies here as it does for `.grids`.
+// Two side-by-side rows, one per calendar. Each row sits in its OWN
+// bordered surface matching the calendar grid's chrome so the time
+// fields line up visually under their respective grids and read as
+// distinct sections — not floating chrome at the bottom of the popover.
+// Internal popover chrome — the Rule-4 popover exception applies here
+// as it does for `.grids`.
 .timeRowsPair {
   display: flex;
   gap: var(--date-range-picker-grids-gap);
@@ -210,7 +212,11 @@
   display: flex;
   align-items: center;
   gap: var(--date-picker-time-row-gap);
-  padding-top: var(--date-picker-time-row-gap);
+  padding: var(--date-picker-grid-padding);
+  background: var(--date-picker-grid-bg);
+  border: var(--border-width) solid var(--date-picker-grid-border-color);
+  border-radius: var(--date-picker-grid-radius);
+  box-shadow: var(--date-picker-grid-shadow);
 }
 
 .timeLabel {

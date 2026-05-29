@@ -59,6 +59,7 @@ export type ComponentName =
   | 'Tabs'
   | 'Text'
   | 'Textarea'
+  | 'TimeField'
   | 'Title'
   | 'Toast'
   | 'Tooltip'

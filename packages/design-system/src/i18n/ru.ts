@@ -72,6 +72,12 @@ export const ru: Messages = {
     timeHoursLabel: 'Часы',
     timeMinutesLabel: 'Минуты',
     timeOpenList: 'Открыть список времени',
+    timeNow: 'Сейчас',
+    timePeriodLabel: 'Период',
+    timePeriodAm: 'AM',
+    timePeriodPm: 'PM',
+    timePlaceholder24: 'ЧЧ:мм',
+    timePlaceholder12: 'ч:мм AM/PM',
   },
   dateRangePicker: {
     startTimeLabel: 'Время начала',

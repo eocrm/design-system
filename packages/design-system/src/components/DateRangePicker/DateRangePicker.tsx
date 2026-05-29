@@ -19,16 +19,18 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
-import { TimeField } from '../DatePicker/TimeField';
+import { TimeField } from '../TimeField';
 import {
   combineDateAndTime,
   formatDate,
   formatDateTime,
   isDateOutOfRange,
+  resolveHourCycle,
   roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
   type DateTimeGranularity,
+  type HourCycle,
 } from '../DatePicker/utils';
 import {
   type DateRange,
@@ -106,6 +108,20 @@ export interface DateRangePickerProps extends Omit<
    * disable rounding. Only meaningful when `granularity='minute'`.
    */
   timeStep?: number;
+
+  /**
+   * Display cycle for the two embedded `<TimeField>`s + the trigger's
+   * time tails.
+   *
+   * - `'24'` — `"HH:mm"` in trigger + 24h hour lists in popovers.
+   * - `'12'` — `"h:mm AM/PM"` in trigger + 12h hour lists + AM/PM column.
+   * - `'auto'` (default) — derives from the active locale via Intl. en-US →
+   *   `'12'`; ru-RU → `'24'`.
+   *
+   * Only meaningful when `granularity='minute'`. Typed input is lenient
+   * regardless of cycle — both `"14:30"` and `"2:30 PM"` parse on blur.
+   */
+  hourCycle?: HourCycle;
 }
 
 const ICON_SIZE_FOR: Record<DateRangePickerSize, number> = {
@@ -167,6 +183,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       size = 'md',
       granularity = 'day',
       timeStep = 15,
+      hourCycle = 'auto',
       nameStart,
       nameEnd,
       placeholder,
@@ -182,6 +199,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
   ) {
     const contextLocale = useLocale();
     const locale = localeOverride ?? contextLocale;
+    const resolvedCycle = resolveHourCycle(hourCycle, locale);
     const t = useTranslation();
     const generatedId = useId();
     const inputId = idProp ?? generatedId;
@@ -198,7 +216,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
 
     const formattedValue = value
       ? granularity === 'minute'
-        ? formatDateTimeRange(value, locale)
+        ? formatDateTimeRange(value, locale, resolvedCycle)
         : formatDateRange(value, locale)
       : '';
     const [draft, setDraft] = useState(formattedValue);
@@ -279,7 +297,16 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           const active = document.activeElement;
           const insideWrapper = wrapperRef.current?.contains(active);
           const insideFloating = refs.floating.current?.contains(active);
-          if (!insideWrapper && !insideFloating) {
+          // The embedded <TimeField> renders its popover into document.body
+          // (sibling portal). When the user clicks the time chevron, focus
+          // ends up in a listbox row inside that portal — not a descendant
+          // of refs.floating. Without this exemption the deferred blur
+          // check sees "outside floating" and closes the calendar
+          // mid-interaction. Mirrors the [data-timefield-popover]
+          // exemption in the click-outside handler below.
+          const insideTimeFieldPopover =
+            active instanceof Element && active.closest('[data-timefield-popover="true"]') != null;
+          if (!insideWrapper && !insideFloating && !insideTimeFieldPopover) {
             commit(draft);
             setOpen(false);
             setSelectionStart(null);
@@ -493,7 +520,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           placeholder={
             placeholder ??
             (granularity === 'minute'
-              ? `${formatDateTime(new Date(2000, 0, 2, 9, 0), locale)} — ${formatDateTime(new Date(2000, 0, 9, 17, 30), locale)}`
+              ? `${formatDateTime(new Date(2000, 0, 2, 9, 0), locale, resolvedCycle)} — ${formatDateTime(new Date(2000, 0, 9, 17, 30), locale, resolvedCycle)}`
               : `${formatDate(new Date(2000, 0, 2), locale)} — ${formatDate(new Date(2000, 0, 9), locale)}`)
           }
           autoComplete="off"
@@ -615,13 +642,18 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                     </label>
                     <TimeField
                       id={`${inputId}-start-time`}
-                      value={value.start}
+                      value={{
+                        hours: value.start.getHours(),
+                        minutes: value.start.getMinutes(),
+                      }}
                       step={timeStep}
+                      hourCycle={hourCycle}
+                      locale={locale}
                       disabled={disabled}
                       aria-label={t('dateRangePicker.startTimeLabel')}
-                      onChange={(h, m) => {
+                      onChange={(time) => {
                         const next: DateRange = {
-                          start: combineDateAndTime(value.start, h, m),
+                          start: combineDateAndTime(value.start, time.hours, time.minutes),
                           end: value.end,
                         };
                         setValue(clampRangeEndAfterStart(next));
@@ -634,14 +666,19 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                     </label>
                     <TimeField
                       id={`${inputId}-end-time`}
-                      value={value.end}
+                      value={{
+                        hours: value.end.getHours(),
+                        minutes: value.end.getMinutes(),
+                      }}
                       step={timeStep}
+                      hourCycle={hourCycle}
+                      locale={locale}
                       disabled={disabled}
                       aria-label={t('dateRangePicker.endTimeLabel')}
-                      onChange={(h, m) => {
+                      onChange={(time) => {
                         const next: DateRange = {
                           start: value.start,
-                          end: combineDateAndTime(value.end, h, m),
+                          end: combineDateAndTime(value.end, time.hours, time.minutes),
                         };
                         setValue(clampRangeEndAfterStart(next));
                       }}

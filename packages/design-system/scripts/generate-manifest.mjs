@@ -49,6 +49,7 @@ const CLUSTERS = {
   Sortable: 'Forms',
   Switch: 'Forms',
   Textarea: 'Forms',
+  TimeField: 'Forms',
 
   // Display
   Avatar: 'Display',

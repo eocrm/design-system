@@ -70,6 +70,12 @@ export const en: Messages = {
     timeHoursLabel: 'Hours',
     timeMinutesLabel: 'Minutes',
     timeOpenList: 'Open time list',
+    timeNow: 'Now',
+    timePeriodLabel: 'Period',
+    timePeriodAm: 'AM',
+    timePeriodPm: 'PM',
+    timePlaceholder24: 'HH:mm',
+    timePlaceholder12: 'h:mm AM/PM',
   },
   dateRangePicker: {
     startTimeLabel: 'Start time',

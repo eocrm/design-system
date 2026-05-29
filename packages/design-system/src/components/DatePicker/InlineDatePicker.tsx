@@ -11,13 +11,14 @@ import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { DatePickerGrid } from './DatePickerGrid';
-import { TimeField } from './TimeField';
+import { TimeField } from '../TimeField';
 import {
   combineDateAndTime,
   roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
   type DateTimeGranularity,
+  type HourCycle,
 } from './utils';
 import styles from './InlineDatePicker.module.scss';
 
@@ -69,6 +70,18 @@ export interface InlineDatePickerProps extends Omit<
    * Only meaningful when `granularity='minute'`.
    */
   timeStep?: number;
+
+  /**
+   * Display cycle for the embedded `<TimeField>`.
+   *
+   * - `'24'` — `"HH:mm"` text input; 24h hour list in the popover.
+   * - `'12'` — `"h:mm AM/PM"` text input; 12h hour list + AM/PM column.
+   * - `'auto'` (default) — derives from the active locale via Intl. en-US →
+   *   `'12'`; ru-RU → `'24'`.
+   *
+   * Only meaningful when `granularity='minute'`.
+   */
+  hourCycle?: HourCycle;
 }
 
 /**
@@ -123,6 +136,7 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
       disabled = false,
       granularity = 'day',
       timeStep = 15,
+      hourCycle = 'auto',
       className,
       id: idProp,
       ...rest
@@ -192,13 +206,15 @@ export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps
             </label>
             <TimeField
               id={`${inlineId}-time`}
-              value={value}
+              value={value ? { hours: value.getHours(), minutes: value.getMinutes() } : null}
               step={timeStep}
-              disabled={disabled}
+              hourCycle={hourCycle}
+              locale={locale}
+              disabled={value == null || disabled}
               aria-label={t('datePicker.timeLabel')}
-              onChange={(h, m) => {
+              onChange={(time) => {
                 if (value == null) return;
-                setValue(combineDateAndTime(value, h, m));
+                setValue(combineDateAndTime(value, time.hours, time.minutes));
               }}
             />
           </div>

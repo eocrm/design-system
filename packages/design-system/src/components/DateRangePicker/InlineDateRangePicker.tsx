@@ -13,13 +13,14 @@ import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { addMonths } from '../../calendar/dateMath';
 import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
-import { TimeField } from '../DatePicker/TimeField';
+import { TimeField } from '../TimeField';
 import {
   combineDateAndTime,
   roundTimeToStep,
   toIsoDate,
   toIsoDateTime,
   type DateTimeGranularity,
+  type HourCycle,
 } from '../DatePicker/utils';
 import { autoSwapRange, clampRangeEndAfterStart, type DateRange } from './utils';
 import styles from './InlineDateRangePicker.module.scss';
@@ -77,6 +78,18 @@ export interface InlineDateRangePickerProps extends Omit<
    * disable rounding. Only meaningful when `granularity='minute'`.
    */
   timeStep?: number;
+
+  /**
+   * Display cycle for the two embedded `<TimeField>`s.
+   *
+   * - `'24'` — `"HH:mm"` text inputs; 24h hour list in popovers.
+   * - `'12'` — `"h:mm AM/PM"` text inputs; 12h hour list + AM/PM column.
+   * - `'auto'` (default) — derives from the active locale via Intl. en-US →
+   *   `'12'`; ru-RU → `'24'`.
+   *
+   * Only meaningful when `granularity='minute'`.
+   */
+  hourCycle?: HourCycle;
 }
 
 /**
@@ -135,6 +148,7 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
       disabled = false,
       granularity = 'day',
       timeStep = 15,
+      hourCycle = 'auto',
       className,
       id: idProp,
       ...rest
@@ -297,13 +311,18 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
               </label>
               <TimeField
                 id={`${inlineId}-start-time`}
-                value={value.start}
+                value={{
+                  hours: value.start.getHours(),
+                  minutes: value.start.getMinutes(),
+                }}
                 step={timeStep}
+                hourCycle={hourCycle}
+                locale={locale}
                 disabled={disabled}
                 aria-label={t('dateRangePicker.startTimeLabel')}
-                onChange={(h, m) => {
+                onChange={(time) => {
                   const next: DateRange = {
-                    start: combineDateAndTime(value.start, h, m),
+                    start: combineDateAndTime(value.start, time.hours, time.minutes),
                     end: value.end,
                   };
                   setValue(clampRangeEndAfterStart(next));
@@ -316,14 +335,19 @@ export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangeP
               </label>
               <TimeField
                 id={`${inlineId}-end-time`}
-                value={value.end}
+                value={{
+                  hours: value.end.getHours(),
+                  minutes: value.end.getMinutes(),
+                }}
                 step={timeStep}
+                hourCycle={hourCycle}
+                locale={locale}
                 disabled={disabled}
                 aria-label={t('dateRangePicker.endTimeLabel')}
-                onChange={(h, m) => {
+                onChange={(time) => {
                   const next: DateRange = {
                     start: value.start,
-                    end: combineDateAndTime(value.end, h, m),
+                    end: combineDateAndTime(value.end, time.hours, time.minutes),
                   };
                   setValue(clampRangeEndAfterStart(next));
                 }}

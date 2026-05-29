@@ -249,6 +249,7 @@ describe('DatePicker', () => {
         <DatePicker
           defaultValue={new Date(2026, 4, 28, 14, 30)}
           granularity="minute"
+          hourCycle="24"
           aria-label="Date"
         />,
         { wrapper: wrap() },
@@ -259,7 +260,20 @@ describe('DatePicker', () => {
       expect(timeInput).toHaveAttribute('type', 'text');
     });
 
-    it('granularity="minute" includes HH:mm in trigger text', () => {
+    it('granularity="minute" includes HH:mm in trigger text (hourCycle="24")', () => {
+      render(
+        <DatePicker
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          granularity="minute"
+          hourCycle="24"
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      expect(screen.getByRole('textbox')).toHaveValue('05/28/2026 14:30');
+    });
+
+    it('granularity="minute" defaults to AM/PM in trigger for en-US (hourCycle="auto")', () => {
       render(
         <DatePicker
           defaultValue={new Date(2026, 4, 28, 14, 30)}
@@ -268,7 +282,34 @@ describe('DatePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      expect(screen.getByRole('textbox')).toHaveValue('05/28/2026 14:30');
+      expect(screen.getByRole('textbox')).toHaveValue('05/28/2026 2:30 PM');
+    });
+
+    it('granularity="minute" hourCycle="12" forces AM/PM in trigger regardless of locale', () => {
+      render(
+        <DatePicker
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          granularity="minute"
+          hourCycle="12"
+          locale="ru-RU"
+          aria-label="Date"
+        />,
+        { wrapper: wrap('ru-RU') },
+      );
+      expect(screen.getByRole('textbox')).toHaveValue('28.05.2026 2:30 PM');
+    });
+
+    it('granularity="minute" hourCycle="auto" + ru-RU shows 24h in trigger', () => {
+      render(
+        <DatePicker
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          granularity="minute"
+          locale="ru-RU"
+          aria-label="Date"
+        />,
+        { wrapper: wrap('ru-RU') },
+      );
+      expect(screen.getByRole('textbox')).toHaveValue('28.05.2026 14:30');
     });
 
     it('picking a date from null defaults time to 00:00', async () => {
@@ -365,12 +406,13 @@ describe('DatePicker', () => {
       expect(got.getMinutes()).toBe(30);
     });
 
-    it('picking an hour row in the TimeField popover commits the new hour', async () => {
+    it('picking an hour row in the TimeField popover commits the new hour (24h)', async () => {
       const user = userEvent.setup();
       const onChange = vi.fn<(d: Date | null) => void>();
       render(
         <DatePicker
           granularity="minute"
+          hourCycle="24"
           defaultValue={new Date(2026, 4, 28, 14, 30)}
           onChange={onChange}
           aria-label="Date"
@@ -426,6 +468,41 @@ describe('DatePicker', () => {
       expect(got.getDate()).toBe(28);
       expect(got.getHours()).toBe(14);
       expect(got.getMinutes()).toBe(30);
+    });
+
+    it('typed AM/PM input parses date+time on blur (hourCycle="12")', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(
+        <DatePicker granularity="minute" hourCycle="12" onChange={onChange} aria-label="Date" />,
+        { wrapper: wrap() },
+      );
+      const input = screen.getByRole('textbox');
+      await user.click(input);
+      await user.type(input, '05/28/2026 2:30 PM');
+      input.blur();
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const got = onChange.mock.calls.at(-1)?.[0] as Date;
+      expect(got.getHours()).toBe(14);
+      expect(got.getMinutes()).toBe(30);
+    });
+
+    it('hourCycle="12" embedded TimeField shows AM/PM column in popover', async () => {
+      const user = userEvent.setup();
+      render(
+        <DatePicker
+          granularity="minute"
+          hourCycle="12"
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      const timeInput = await screen.findByRole('textbox', { name: 'Time' });
+      expect(timeInput).toHaveValue('2:30 PM');
+      await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
+      expect(await screen.findByRole('listbox', { name: 'Period' })).toBeInTheDocument();
     });
   });
 });

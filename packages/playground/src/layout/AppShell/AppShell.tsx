@@ -39,6 +39,7 @@ import {
   PanelRight,
   ShieldCheck,
   CalendarDays,
+  Clock,
   Inbox,
   Square,
   Table as TableIcon,
@@ -143,6 +144,7 @@ const componentGroups = [
       { to: '/components/sortable', label: 'Sortable', icon: GripVertical, end: false },
       { to: '/components/switch', label: 'Switch', icon: ToggleRight, end: false },
       { to: '/components/textarea', label: 'Textarea', icon: MessageSquareText, end: false },
+      { to: '/components/timefield', label: 'TimeField', icon: Clock, end: false },
     ],
   },
   {

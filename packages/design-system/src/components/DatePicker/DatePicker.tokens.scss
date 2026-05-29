@@ -141,4 +141,11 @@
   --date-picker-time-popover-row-current-bg: var(--color-accent-bg-subtle);
   --date-picker-time-popover-row-current-fg: var(--color-accent);
   --date-picker-time-popover-divider-color: var(--color-border);
+
+  // TimeField — period (AM/PM) column + popover footer ("Now" button)
+  --date-picker-time-popover-footer-padding: var(--space-2);
+  --date-picker-time-popover-footer-border-color: var(--color-border);
+  --date-picker-time-now-button-fg: var(--color-accent);
+  --date-picker-time-now-button-bg-hover: var(--color-bg-muted);
+  --date-picker-time-period-column-width: 3.5rem;
 }

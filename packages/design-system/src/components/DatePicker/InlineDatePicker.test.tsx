@@ -195,7 +195,22 @@ describe('InlineDatePicker', () => {
       expect(screen.queryByLabelText('Time')).not.toBeInTheDocument();
     });
 
-    it('granularity="minute" renders the time input inline', () => {
+    it('granularity="minute" renders the time input inline (hourCycle="24")', () => {
+      render(
+        <InlineDatePicker
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          granularity="minute"
+          hourCycle="24"
+          aria-label="Date"
+        />,
+        { wrapper: wrap() },
+      );
+      const timeInput = screen.getByRole('textbox', { name: 'Time' });
+      expect(timeInput).toHaveValue('14:30');
+      expect(timeInput).toHaveAttribute('type', 'text');
+    });
+
+    it('granularity="minute" hourCycle="auto" + en-US shows AM/PM in time input', () => {
       render(
         <InlineDatePicker
           defaultValue={new Date(2026, 4, 28, 14, 30)}
@@ -204,9 +219,21 @@ describe('InlineDatePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      const timeInput = screen.getByRole('textbox', { name: 'Time' });
-      expect(timeInput).toHaveValue('14:30');
-      expect(timeInput).toHaveAttribute('type', 'text');
+      expect(screen.getByRole('textbox', { name: 'Time' })).toHaveValue('2:30 PM');
+    });
+
+    it('granularity="minute" hourCycle="12" forces AM/PM time input regardless of locale', () => {
+      render(
+        <InlineDatePicker
+          defaultValue={new Date(2026, 4, 28, 14, 30)}
+          granularity="minute"
+          hourCycle="12"
+          locale="ru-RU"
+          aria-label="Date"
+        />,
+        { wrapper: wrap('ru-RU') },
+      );
+      expect(screen.getByRole('textbox', { name: 'Time' })).toHaveValue('2:30 PM');
     });
 
     it('picking a date from null defaults time to 00:00', async () => {

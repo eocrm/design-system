@@ -159,9 +159,11 @@
     "composedBy": []
   },
   "DatePicker": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Forms",
-    "composes": [],
+    "composes": [
+      "TimeField"
+    ],
     "composedBy": [
       "DateRangePicker"
     ]
@@ -170,7 +172,8 @@
     "tier": "composition",
     "cluster": "Forms",
     "composes": [
-      "DatePicker"
+      "DatePicker",
+      "TimeField"
     ],
     "composedBy": []
   },
@@ -462,6 +465,15 @@
     "cluster": "Forms",
     "composes": [],
     "composedBy": []
+  },
+  "TimeField": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": [
+      "DatePicker",
+      "DateRangePicker"
+    ]
   },
   "Title": {
     "tier": "primitive",

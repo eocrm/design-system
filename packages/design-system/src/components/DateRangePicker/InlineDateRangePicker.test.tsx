@@ -285,7 +285,24 @@ describe('InlineDateRangePicker', () => {
       expect(screen.queryByRole('textbox', { name: 'End time' })).not.toBeInTheDocument();
     });
 
-    it('granularity="minute" renders both time inputs when value is set', () => {
+    it('granularity="minute" renders both time inputs when value is set (hourCycle="24")', () => {
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          hourCycle="24"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      expect(screen.getByRole('textbox', { name: 'Start time' })).toHaveValue('09:00');
+      expect(screen.getByRole('textbox', { name: 'End time' })).toHaveValue('17:30');
+    });
+
+    it('granularity="minute" hourCycle="auto" + en-US shows AM/PM in time inputs', () => {
       render(
         <InlineDateRangePicker
           granularity="minute"
@@ -297,8 +314,26 @@ describe('InlineDateRangePicker', () => {
         />,
         { wrapper: wrap() },
       );
-      expect(screen.getByRole('textbox', { name: 'Start time' })).toHaveValue('09:00');
-      expect(screen.getByRole('textbox', { name: 'End time' })).toHaveValue('17:30');
+      expect(screen.getByRole('textbox', { name: 'Start time' })).toHaveValue('9:00 AM');
+      expect(screen.getByRole('textbox', { name: 'End time' })).toHaveValue('5:30 PM');
+    });
+
+    it('granularity="minute" hourCycle="12" forces AM/PM in time inputs regardless of locale', () => {
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          hourCycle="12"
+          locale="ru-RU"
+          defaultValue={{
+            start: new Date(2026, 4, 21, 9, 0),
+            end: new Date(2026, 5, 4, 17, 30),
+          }}
+          aria-label="Range"
+        />,
+        { wrapper: wrap('ru-RU') },
+      );
+      expect(screen.getByRole('textbox', { name: 'Start time' })).toHaveValue('9:00 AM');
+      expect(screen.getByRole('textbox', { name: 'End time' })).toHaveValue('5:30 PM');
     });
 
     it('granularity="minute" with null value renders no time inputs (gated)', () => {

@@ -2073,7 +2073,7 @@ const [value, setValue] = useState<Date | null>(null);
 - Locale-aware via `useLocale()`; override with `locale` prop. UI strings (previousMonth / nextMonth / openCalendar / clear) translate via `datePicker.*` keys — override with `<I18nProvider overrides={{ datePicker: { ... } }}>`.
 - ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); the grid inside is `role="grid"` with `role="gridcell"` buttons that carry `aria-selected` / `aria-disabled` as appropriate.
 - Keyboard inside the grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space selects, Escape closes and returns focus to the input. Tab leaves the grid.
-- **Granularity.** Pass `granularity="minute"` to add a `<TimeField>` below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Defaults to `'day'` (backward compat — date-only). Picking a different date re-uses the existing time-of-day, so the grid feels like it "just changes the date"; picking from `null` defaults to `00:00`. The `<TimeField>` accepts free text (parsed on blur / Enter via `parseTime`) AND a chevron-toggled popover with hour + minute lists. `timeStep` (default `15`, in minutes) controls the minute-list row count AND rounds typed input in the time field on commit; set `timeStep={1}` to disable rounding. The trigger text-input parses exactly as typed — `timeStep` does not round trigger input.
+- **Granularity.** Pass `granularity="minute"` to add a `<TimeField>` below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` (24h locales) or `MM/DD/YYYY h:mm AM/PM` (12h locales) and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Defaults to `'day'` (backward compat — date-only). Picking a different date re-uses the existing time-of-day, so the grid feels like it "just changes the date"; picking from `null` defaults to `00:00`. The `<TimeField>` accepts free text (parsed on blur / Enter via `parseTime` — both 24h and AM/PM shapes) AND a chevron-toggled popover with hour + minute (+ AM/PM in 12h mode) lists, plus a "Now" footer button. `timeStep` (default `15`, in minutes) controls the minute-list row count AND rounds typed input in the time field on commit; set `timeStep={1}` to disable rounding. The trigger text-input parses exactly as typed — `timeStep` does not round trigger input. `hourCycle` (default `'auto'`) forwards to the embedded TimeField and controls the trigger text — `'12'` / `'24'` force a cycle, `'auto'` derives from locale (en-US → 12h, ru-RU → 24h).
 
 ### `<DateRangePicker>` — date-range input + two-month popover
 
@@ -2093,7 +2093,7 @@ const [range, setRange] = useState<DateRange | null>(null);
 - ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); each grid inside is `role="grid"` with `gridcell` buttons. The range-start and range-end cells (and the live hover end during selection) carry `aria-selected="true"`.
 - Keyboard inside a grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space drives the same first-click → second-click flow, Escape closes and returns focus to the input. With selection-start set, the focused cell acts as the hover end so the preview range follows arrow keys.
 - Reuses `<DatePickerGrid>` via `selectionMode='range'` + `rangeStart`/`rangeEnd`/`hoverDate`/`onHoverDate` + `chevrons={false}`. The two grids share the same cursor; the picker renders its own prev/next chevrons outside them.
-- **Granularity.** Pass `granularity="minute"` to add dual `<TimeField>`s (start + end) below the two-month grid; the trigger text becomes `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm` and the hidden form mirrors emit ISO local datetime. Defaults to `'day'` (backward compat). Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. Same-day ranges silently clamp end-time to ≥ start-time on every commit; different-day ranges are not clamped. `timeStep` (default `15`, in minutes) applies to BOTH TimeFields, controlling each minute-list row count AND rounding typed input in the time fields on commit; set `timeStep={1}` to disable rounding. The trigger text-input parses exactly as typed — `timeStep` does not round trigger input.
+- **Granularity.** Pass `granularity="minute"` to add dual `<TimeField>`s (start + end) below the two-month grid; the trigger text becomes `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm` (24h locales) or `MM/DD/YYYY h:mm AM/PM — MM/DD/YYYY h:mm AM/PM` (12h locales) and the hidden form mirrors emit ISO local datetime. Defaults to `'day'` (backward compat). Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. Same-day ranges silently clamp end-time to ≥ start-time on every commit; different-day ranges are not clamped. `timeStep` (default `15`, in minutes) applies to BOTH TimeFields, controlling each minute-list row count AND rounding typed input in the time fields on commit; set `timeStep={1}` to disable rounding. The trigger text-input parses exactly as typed — `timeStep` does not round trigger input. `hourCycle` (default `'auto'`) forwards to both embedded TimeFields and controls the trigger text — `'12'` / `'24'` force a cycle, `'auto'` derives from locale.
 
 ### `<InlineDatePicker>` — single-date calendar in flow
 
@@ -2109,7 +2109,7 @@ const [date, setDate] = useState<Date | null>(null);
 - `disabled` mutes the entire grid (chevrons disabled, cells get `tabIndex=-1`, clicks no-op).
 - `forwardRef` points at the outer wrapper `<div>` (no input to forward to).
 - ARIA: same `role="grid"` + `role="gridcell"` cells from `DatePickerGrid`. No dialog role — the picker is in flow.
-- **Granularity.** Pass `granularity="minute"` to render a `<TimeField>` below the grid (always visible — there's no popover to gate it on); the hidden form mirror emits ISO local datetime. Defaults to `'day'`. Time is preserved across date re-picks; the field is disabled until a date is set. Same trigger-text contract is not applicable (no trigger). `timeStep` (default `15`, in minutes) controls the TimeField's minute-list row count AND rounds typed input in the time field on commit; set `timeStep={1}` to disable rounding.
+- **Granularity.** Pass `granularity="minute"` to render a `<TimeField>` below the grid (always visible — there's no popover to gate it on); the hidden form mirror emits ISO local datetime. Defaults to `'day'`. Time is preserved across date re-picks; the field is disabled until a date is set. Same trigger-text contract is not applicable (no trigger). `timeStep` (default `15`, in minutes) controls the TimeField's minute-list row count AND rounds typed input in the time field on commit; set `timeStep={1}` to disable rounding. `hourCycle` (default `'auto'`) forwards to the embedded TimeField — `'12'` / `'24'` force a cycle, `'auto'` derives from locale.
 
 ### `<InlineDateRangePicker>` — date-range calendar in flow
 
@@ -2125,7 +2125,64 @@ const [range, setRange] = useState<DateRange | null>(null);
 - `nameStart` / `nameEnd` render independent hidden form mirrors (post both, only one, or neither — caller's choice).
 - `disabled` mutes everything; ref forwards to the outer wrapper.
 - Use when the consumer wants the calendar permanently visible. For a compact form field with the same selection model, use `<DateRangePicker>`. Don't render inside containers narrower than ~32rem — the two grids need side-by-side room.
-- **Granularity.** Pass `granularity="minute"` to render dual `<TimeField>`s (start + end) below the two-month grid; the hidden form mirrors emit ISO local datetime. Defaults to `'day'`. Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. Same-day end-time silently clamps to ≥ start-time on every commit; different-day ranges are not clamped. `timeStep` (default `15`, in minutes) applies to BOTH TimeFields, controlling each minute-list row count AND rounding typed input in the time fields on commit; set `timeStep={1}` to disable rounding.
+- **Granularity.** Pass `granularity="minute"` to render dual `<TimeField>`s (start + end) below the two-month grid; the hidden form mirrors emit ISO local datetime. Defaults to `'day'`. Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. Same-day end-time silently clamps to ≥ start-time on every commit; different-day ranges are not clamped. `timeStep` (default `15`, in minutes) applies to BOTH TimeFields, controlling each minute-list row count AND rounding typed input in the time fields on commit; set `timeStep={1}` to disable rounding. `hourCycle` (default `'auto'`) forwards to both embedded TimeFields — `'12'` / `'24'` force a cycle, `'auto'` derives from locale.
+
+### `<TimeField>` — standalone time-of-day input
+
+```tsx
+import { TimeField, type TimeValue } from '@eocrm/design-system';
+const [time, setTime] = useState<TimeValue | null>({ hours: 9, minutes: 0 });
+<TimeField value={time} onChange={setTime} aria-label="Start time" />;
+```
+
+```tsx
+// Forced 24-hour cycle, 30-minute step, no Now button.
+<TimeField
+  value={time}
+  onChange={setTime}
+  hourCycle="24"
+  step={30}
+  hideNowButton
+  aria-label="Departure time"
+/>
+```
+
+```tsx
+// Controlled inside a custom widget — the boundary conversion the picker
+// family uses internally.
+<TimeField
+  value={value ? { hours: value.getHours(), minutes: value.getMinutes() } : null}
+  onChange={(t) => setValue(combineDateAndTime(value, t.hours, t.minutes))}
+  step={15}
+  aria-label="Meeting time"
+  disabled={value == null}
+/>
+```
+
+- Bare text input + chevron toggle that opens a popover with hour / minute (and AM/PM in 12h mode) listbox columns plus a "Now" footer button. The wrapper IS the public element; the input has no border of its own — the wrapper renders the same chrome as `<Input>`.
+- Used internally by `<DatePicker>` / `<DateRangePicker>` / `<InlineDatePicker>` / `<InlineDateRangePicker>` when `granularity="minute"`; public for consumers who need a time input without a date.
+- **Props (canonical):**
+  - `value: TimeValue | null` — `{ hours: 0-23, minutes: 0-59 }` (internal storage is always 24-hour). `null` disables the field — the pickers use this to gate time selection on a date being chosen first.
+  - `onChange: (value: TimeValue) => void` — fires on typed-input commit (blur / Enter), popover row click, AM/PM column click, or Now-button click.
+  - `step?: number` — minutes step. Default `15`. Controls the minute-column row count (15 → 4 rows: 00/15/30/45) AND rounds typed input on commit. Set `1` to disable rounding.
+  - `hourCycle?: '12' | '24' | 'auto'` — default `'auto'` (derived from locale via `Intl.DateTimeFormat`). en-US → 12h with AM/PM column; ru-RU → 24h with 00–23 hours.
+  - `locale?: string` — override for `hourCycle='auto'` detection + text formatting; defaults to `useLocale()`.
+  - `hideNowButton?: boolean` — default `false`. Hide the footer "Now" quick-pick button.
+  - `'aria-label': string` — **required**. TimeField is a primitive with no implicit default.
+  - `disabled?: boolean` — disables the input + popover trigger.
+  - `id?: string` — stable id for the input so an external `<label htmlFor>` can target it.
+- Typed input is lenient regardless of cycle — both `"14:30"` (24h) and `"2:30 PM"` / `"230pm"` (AM/PM) parse in either mode. Internal storage stays 24-hour.
+- Keyboard inside the popover (WAI-ARIA APG listbox pattern with roving tabIndex per column):
+  - `ArrowDown` on the input opens the popover and focuses the current hour row.
+  - `ArrowUp` / `ArrowDown` move within the focused column (no wrap).
+  - `ArrowLeft` / `ArrowRight` switch columns (Hours ↔ Minutes ↔ AM/PM in 12h mode).
+  - `Home` / `End` jump to first / last row in the focused column.
+  - `Enter` / `Space` commit the focused row.
+  - `Escape` closes and returns focus to the input.
+  - Tab from the last row reaches the Now button (it's outside the roving set, in natural Tab order).
+- Now button reads `new Date()`, applies `roundTimeToStep(step)`, fires `onChange`, and leaves the popover open so the user can fine-tune.
+- Re-exports of the underlying utils are available for consumers building their own time UI on top of TimeField: `resolveHourCycle`, `getLocaleHourCycle`, `roundTimeToStep`, types `TimeValue` / `HourCycle`.
+- **When NOT to use.** For datetime (date + time-of-day), use `<DatePicker>` / `<DateRangePicker>` / `<InlineDatePicker>` / `<InlineDateRangePicker>` with `granularity="minute"` — those wire the boundary `Date ↔ TimeValue` conversion plus the hidden form mirror for you. For elapsed-duration inputs (e.g. "3h 15m" meeting length), TimeField is wrong semantics — it clamps to 23:59 and parses AM/PM; use a numeric input pair. Time zones are out of scope — the value contract is wall-clock.
 
 ### Calendar primitives — `useMonth`, `useWeek`, `useDay`, `useAgenda`
 
