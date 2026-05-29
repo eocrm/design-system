@@ -81,7 +81,11 @@
   display: flex;
   align-items: center;
   gap: var(--date-picker-time-row-gap);
-  padding-top: var(--date-picker-time-row-gap);
+  padding: var(--date-picker-grid-padding);
+  background: var(--date-picker-grid-bg);
+  border: var(--border-width) solid var(--date-picker-grid-border-color);
+  border-radius: var(--date-picker-grid-radius);
+  box-shadow: var(--date-picker-grid-shadow);
 }
 
 .timeLabel {

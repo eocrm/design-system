@@ -140,16 +140,26 @@
 }
 
 // Time row — rendered below the calendar grid when granularity='minute'.
-// Layout exception: the popover surface is already an internal-chrome
-// container (positioning is portal-controlled), so the time row's flex
-// layout lives here rather than at the parent — same pattern as the
-// popover header / nav row above. The time input itself reuses the
-// existing date-input chrome tokens (border, radius, font, fg/bg).
+// Sits in its OWN bordered surface matching the calendar grid's chrome so
+// the time field reads as a distinct, visually-contained section rather
+// than floating chrome below the calendar. Same Rule-4 popover-surface
+// exception as `.grid` in `DatePickerGrid.module.scss`. The chrome tokens
+// alias the grid's so the two panels stay visually paired.
 .timeRow {
   display: flex;
   align-items: center;
   gap: var(--date-picker-time-row-gap);
-  padding-top: var(--date-picker-time-row-gap);
+  padding: var(--date-picker-grid-padding);
+  background: var(--date-picker-grid-bg);
+  border: var(--border-width) solid var(--date-picker-grid-border-color);
+  border-radius: var(--date-picker-grid-radius);
+  box-shadow: var(--date-picker-grid-shadow);
+
+  // Gap below the calendar grid above. Margin is the parent's job per
+  // Rule 4, but the popover IS the parent here — same internal-chrome
+  // exception used by the grid's box-shadow + the popover header above.
+  // stylelint-disable-next-line property-disallowed-list -- internal popover stack spacing
+  margin-top: var(--date-picker-time-row-gap);
 }
 
 .timeLabel {
