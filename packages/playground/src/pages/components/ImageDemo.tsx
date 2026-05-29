@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Image, Stack, Cluster, Grid, Text, Button, EmptyState } from '@eocrm/design-system';
+import {
+  Image,
+  Skeleton,
+  Stack,
+  Cluster,
+  Grid,
+  Text,
+  Button,
+  EmptyState,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -7,8 +16,6 @@ import { getComponentFiles } from '../../lib/componentFiles';
 const PHOTO = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80';
 const PORTRAIT = 'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=500&q=80';
 const BROKEN = 'https://example.com/does-not-exist.jpg';
-// delay proxy so the loading Skeleton is visible in the demo
-const SLOW = `https://deelay.me/3500/${encodeURIComponent(PHOTO)}`;
 
 const GALLERY = [
   'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&q=80',
@@ -43,34 +50,44 @@ export function ImageDemo() {
 
       <Example
         title="The three states"
-        description="Loading shows a Skeleton; it fades in on load; a failed load shows the broken-image placeholder."
+        description="Loading renders the Skeleton placeholder (shown here directly); it fades in on load; a failed load shows the broken-image placeholder."
         code={`// Loaded
 <Image src={url} alt="Mountain lake at dawn" aspectRatio="16 / 9" />
 
 // Error — shows the ImageOff placeholder
 <Image src={brokenUrl} alt="Broken image" aspectRatio="16 / 9" />
 
-// Loading — skeleton visible while the image fetches
-<Image src={slowUrl} alt="Slow image" aspectRatio="16 / 9" />`}
+// Loading — the Skeleton Image renders while the image fetches
+<div style={{ aspectRatio: '16 / 9' }}>
+  <Skeleton variant="rectangular" style={{ width: '100%', height: '100%' }} />
+</div>`}
       >
         <Cluster gap="md">
           <Stack gap="xs" align="center">
             <div style={{ width: 200 }}>
               <Image src={PHOTO} alt="Mountain lake at dawn" aspectRatio="16 / 9" />
             </div>
-            <Text size="xs" tone="muted">Loaded</Text>
+            <Text size="xs" tone="muted">
+              Loaded
+            </Text>
           </Stack>
           <Stack gap="xs" align="center">
             <div style={{ width: 200 }}>
               <Image src={BROKEN} alt="Broken image" aspectRatio="16 / 9" />
             </div>
-            <Text size="xs" tone="muted">Error</Text>
+            <Text size="xs" tone="muted">
+              Error
+            </Text>
           </Stack>
           <Stack gap="xs" align="center">
             <div style={{ width: 200 }}>
-              <Image src={SLOW} alt="Slow image" aspectRatio="16 / 9" />
+              <div style={{ aspectRatio: '16 / 9' }}>
+                <Skeleton variant="rectangular" style={{ width: '100%', height: '100%' }} />
+              </div>
             </div>
-            <Text size="xs" tone="muted">Loading</Text>
+            <Text size="xs" tone="muted">
+              Loading
+            </Text>
           </Stack>
         </Cluster>
       </Example>
@@ -83,10 +100,18 @@ export function ImageDemo() {
       >
         <Stack gap="sm">
           <Cluster gap="sm">
-            <Button variant={fit === 'cover' ? 'primary' : 'secondary'} size="sm" onClick={() => setFit('cover')}>
+            <Button
+              variant={fit === 'cover' ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={() => setFit('cover')}
+            >
               cover
             </Button>
-            <Button variant={fit === 'contain' ? 'primary' : 'secondary'} size="sm" onClick={() => setFit('contain')}>
+            <Button
+              variant={fit === 'contain' ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={() => setFit('contain')}
+            >
               contain
             </Button>
           </Cluster>
@@ -108,19 +133,25 @@ export function ImageDemo() {
             <div style={{ width: 220 }}>
               <Image src={PHOTO} alt="16 / 9 ratio" aspectRatio="16 / 9" />
             </div>
-            <Text size="xs" tone="muted">16 / 9</Text>
+            <Text size="xs" tone="muted">
+              16 / 9
+            </Text>
           </Stack>
           <Stack gap="xs" align="center">
             <div style={{ width: 220 }}>
               <Image src={PHOTO} alt="1:1 ratio" aspectRatio={1} />
             </div>
-            <Text size="xs" tone="muted">1</Text>
+            <Text size="xs" tone="muted">
+              1
+            </Text>
           </Stack>
           <Stack gap="xs" align="center">
             <div style={{ width: 220 }}>
               <Image src={PHOTO} alt="4 / 3 ratio" aspectRatio="4 / 3" />
             </div>
-            <Text size="xs" tone="muted">4 / 3</Text>
+            <Text size="xs" tone="muted">
+              4 / 3
+            </Text>
           </Stack>
         </Cluster>
       </Example>
@@ -136,7 +167,9 @@ export function ImageDemo() {
               <div style={{ width: 80 }}>
                 <Image src={PHOTO} alt="" radius={r} aspectRatio="1" />
               </div>
-              <Text size="xs" tone="muted">{r}</Text>
+              <Text size="xs" tone="muted">
+                {r}
+              </Text>
             </Stack>
           ))}
         </Cluster>

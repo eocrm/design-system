@@ -19,8 +19,10 @@ export type ImageObjectFit = 'cover' | 'contain' | 'fill' | 'none' | 'scale-down
 /** Corner rounding. Maps to the radius token scale. */
 export type ImageRadius = 'none' | 'sm' | 'md' | 'lg' | 'full';
 
-export interface ImageProps
-  extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'children' | 'src' | 'loading'> {
+export interface ImageProps extends Omit<
+  ImgHTMLAttributes<HTMLImageElement>,
+  'alt' | 'children' | 'src' | 'loading'
+> {
   /** Image URL. Changing it resets the component to the loading state. */
   src: string;
   /**
@@ -76,7 +78,10 @@ const RADIUS_CLASS: Record<ImageRadius, string> = {
  *
  * The wrapper fills its container's width — give it an `aspectRatio` (or a
  * height) so the box is reserved before the image arrives. `className` / `style`
- * apply to the wrapper box; `ref` forwards to the underlying `<img>`.
+ * apply to the wrapper box; `ref` forwards to the underlying `<img>`. The wrapper
+ * owns sizing: rendered height comes from `aspectRatio` (or the container), and
+ * native `width`/`height` attrs on the `<img>` are intrinsic-ratio hints only,
+ * not the rendered size.
  *
  * @example
  * // Responsive 16:9 thumbnail
