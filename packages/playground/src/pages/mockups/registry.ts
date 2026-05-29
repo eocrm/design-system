@@ -27,6 +27,7 @@ export type ComponentName =
   | 'EmptyState'
   | 'FilterChip'
   | 'FileUpload'
+  | 'Image'
   | 'ImageCrop'
   | 'Grid'
   | 'InlineDatePicker'

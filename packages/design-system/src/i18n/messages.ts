@@ -16,6 +16,12 @@ export interface Messages {
     /** Label on the primary "Confirm" button inside the confirmation popover. */
     confirm: string;
   };
+  image: {
+    /** Visible text + aria-label fallback shown when an image fails to load. */
+    loadError: string;
+    /** Label on the retry button in the broken-image placeholder. */
+    retry: string;
+  };
   passwordInput: {
     /** aria-label on the show-password toggle when the password is hidden. */
     show: string;

@@ -14,6 +14,10 @@ export const ru: Messages = {
     cancel: 'Отмена',
     confirm: 'Подтвердить',
   },
+  image: {
+    loadError: 'Не удалось загрузить изображение',
+    retry: 'Повторить',
+  },
   passwordInput: {
     show: 'Показать пароль',
     hide: 'Скрыть пароль',
