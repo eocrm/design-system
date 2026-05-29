@@ -46,6 +46,7 @@ import { DefinitionList } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
 import { FileUpload } from '@eocrm/design-system';
 import { FilterChip } from '@eocrm/design-system';
+import { Image } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
 import { OptionsPicker } from '@eocrm/design-system';
 import { PALETTE_COLORS, paletteTokens } from '@eocrm/design-system';
@@ -199,6 +200,20 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           aspectRatio={1}
           showZoomControl={false}
           style={{ pointerEvents: 'none' }}
+        />
+      </div>
+    ),
+  },
+  {
+    to: '/components/image',
+    name: 'Image',
+    description: 'Remote image with Skeleton loading state, fade-in on load, and an accessible broken-image placeholder with retry.',
+    preview: (
+      <div style={{ maxWidth: 220, width: '100%' }}>
+        <Image
+          src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=80"
+          alt=""
+          aspectRatio="16 / 9"
         />
       </div>
     ),
