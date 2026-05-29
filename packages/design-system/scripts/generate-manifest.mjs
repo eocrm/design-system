@@ -53,6 +53,7 @@ const CLUSTERS = {
 
   // Display
   Avatar: 'Display',
+  Image: 'Display',
   Badge: 'Display',
   Calendar: 'Display',
   DefinitionList: 'Display',

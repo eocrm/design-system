@@ -75,6 +75,7 @@ const CLUSTERS: Record<string, string> = {
 
   // Display
   Avatar: 'Display',
+  Image: 'Display',
   Badge: 'Display',
   DefinitionList: 'Display',
   Calendar: 'Display',
