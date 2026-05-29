@@ -1,14 +1,5 @@
 import { useState } from 'react';
-import {
-  Image,
-  Skeleton,
-  Stack,
-  Cluster,
-  Grid,
-  Text,
-  Button,
-  EmptyState,
-} from '@eocrm/design-system';
+import { Image, Stack, Cluster, Grid, Text, Button, EmptyState } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -23,6 +14,50 @@ const GALLERY = [
   'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=400&q=80',
   'https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=400&q=80',
 ];
+
+function ThreeStates() {
+  const [reload, setReload] = useState(0);
+  return (
+    <Stack gap="sm">
+      <Cluster gap="md" align="start">
+        <Stack gap="xs" align="center">
+          <div style={{ width: 200 }}>
+            <Image src={PHOTO} alt="Mountain lake at dawn" aspectRatio="16 / 9" />
+          </div>
+          <Text size="xs" tone="muted">
+            Loaded
+          </Text>
+        </Stack>
+        <Stack gap="xs" align="center">
+          <div style={{ width: 200 }}>
+            <Image
+              key={reload}
+              src={`${PHOTO}&reload=${reload}`}
+              alt="Reloads to show the loading skeleton"
+              aspectRatio="16 / 9"
+            />
+          </div>
+          <Text size="xs" tone="muted">
+            Loading → loaded
+          </Text>
+        </Stack>
+        <Stack gap="xs" align="center">
+          <div style={{ width: 200 }}>
+            <Image src={BROKEN} alt="A photo that fails to load" aspectRatio="16 / 9" />
+          </div>
+          <Text size="xs" tone="muted">
+            Error
+          </Text>
+        </Stack>
+      </Cluster>
+      <Cluster>
+        <Button variant="secondary" size="sm" onClick={() => setReload((n) => n + 1)}>
+          Reload the middle image
+        </Button>
+      </Cluster>
+    </Stack>
+  );
+}
 
 function RetryDemo() {
   // Force the error state by pointing at a broken URL; retry is built in.
@@ -50,46 +85,10 @@ export function ImageDemo() {
 
       <Example
         title="The three states"
-        description="Loading renders the Skeleton placeholder (shown here directly); it fades in on load; a failed load shows the broken-image placeholder."
-        code={`// Loaded
-<Image src={url} alt="Mountain lake at dawn" aspectRatio="16 / 9" />
-
-// Error — shows the ImageOff placeholder
-<Image src={brokenUrl} alt="Broken image" aspectRatio="16 / 9" />
-
-// Loading — the Skeleton Image renders while the image fetches
-<div style={{ aspectRatio: '16 / 9' }}>
-  <Skeleton variant="rectangular" style={{ width: '100%', height: '100%' }} />
-</div>`}
+        description="Loading and error are handled inside `<Image>`. Reload the middle image to watch its own Skeleton placeholder fade into the loaded image; the third points at a broken URL to show the error placeholder + retry."
+        code={`<Image src={url} alt="…" aspectRatio="16 / 9" />`}
       >
-        <Cluster gap="md">
-          <Stack gap="xs" align="center">
-            <div style={{ width: 200 }}>
-              <Image src={PHOTO} alt="Mountain lake at dawn" aspectRatio="16 / 9" />
-            </div>
-            <Text size="xs" tone="muted">
-              Loaded
-            </Text>
-          </Stack>
-          <Stack gap="xs" align="center">
-            <div style={{ width: 200 }}>
-              <Image src={BROKEN} alt="Broken image" aspectRatio="16 / 9" />
-            </div>
-            <Text size="xs" tone="muted">
-              Error
-            </Text>
-          </Stack>
-          <Stack gap="xs" align="center">
-            <div style={{ width: 200 }}>
-              <div style={{ aspectRatio: '16 / 9' }}>
-                <Skeleton variant="rectangular" style={{ width: '100%', height: '100%' }} />
-              </div>
-            </div>
-            <Text size="xs" tone="muted">
-              Loading
-            </Text>
-          </Stack>
-        </Cluster>
+        <ThreeStates />
       </Example>
 
       <Example
