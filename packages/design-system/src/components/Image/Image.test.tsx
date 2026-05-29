@@ -113,4 +113,11 @@ describe('Image', () => {
     expect(img.getAttribute('data-testid')).toBe('pic');
     expect(img.getAttribute('sizes')).toBe('50vw');
   });
+
+  it('renders a decorative image with an empty alt without error', () => {
+    const { container } = render(<Image src={SRC} alt="" />);
+    const img = getImg(container);
+    expect(img.getAttribute('alt')).toBe('');
+    expect(container.querySelector('[data-state="loading"]')).not.toBeNull();
+  });
 });
