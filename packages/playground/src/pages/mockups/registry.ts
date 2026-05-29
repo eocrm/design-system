@@ -30,6 +30,7 @@ export type ComponentName =
   | 'Image'
   | 'ImageCrop'
   | 'Grid'
+  | 'Masonry'
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'
   | 'Input'

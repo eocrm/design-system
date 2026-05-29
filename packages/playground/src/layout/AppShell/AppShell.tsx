@@ -66,6 +66,7 @@ import {
   Crop,
   Image as ImageIcon,
   Palette,
+  GalleryVerticalEnd,
   Settings as SettingsIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -116,6 +117,7 @@ const componentGroups = [
       { to: '/components/cluster', label: 'Cluster', icon: Columns3, end: false },
       { to: '/components/divider', label: 'Divider', icon: Minus, end: false },
       { to: '/components/grid', label: 'Grid', icon: LayoutGrid, end: false },
+      { to: '/components/masonry', label: 'Masonry', icon: GalleryVerticalEnd, end: false },
       { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
       { to: '/components/page-header', label: 'PageHeader', icon: LayoutPanelTop, end: false },
       { to: '/components/page', label: 'Page', icon: FileText, end: false },
