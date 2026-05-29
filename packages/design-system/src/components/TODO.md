@@ -27,6 +27,36 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
+### [ ] `<AuthScreen>` (or `<AuthLayout>`) — full-viewport centered surface with a tinted backdrop for auth pages
+
+**Filed:** 2026-05-29
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/Login/Login.tsx` — the outer page wrapper (full-bleed gradient backdrop, vertical layout) and the inner region that centers the card in the remaining viewport height.
+
+**What's needed:**
+A page-level layout primitive for sign-in / forgot-password / accept-invite screens: takes over the full viewport (`min-height: 100vh`), paints a subtle token-based backdrop (default a soft accent wash), and lays out three slots — an optional top bar (back-link / brand), a vertically + horizontally centered main slot (the auth card), and an optional footer (legal links). Props sketch: `backdrop?: 'plain' | 'tinted'`, plus `header` / `footer` slots and `children` (the centered content). No interactive state. The real eocrm app has an `AuthCardLayout` serving exactly this role, so the CRM will want it too.
+
+**Current workaround:**
+Two raw `<div style={{…}}>` at the exact mock site, token-only values: the outer wrapper (`min-height: 100vh; display: flex; flex-direction: column; padding: var(--space-6); background: radial-gradient(120% 90% at 50% -8%, var(--color-accent-subtle-bg) 0%, var(--color-bg-subtle) 52%)`) and the centering region (`flex: 1; display: grid; place-items: center`). Marked with the standard TODO comment.
+
+**When this ships:** refactor the Login mockup's two wrapper `<div>`s to use the primitive, then tick this checkbox.
+
+### [ ] `<BrandIcon>` / social-login icon set — multi-color brand marks (Google, Microsoft, Apple…)
+
+**Filed:** 2026-05-29
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/Login/Login.tsx` — the Google "G" inside the "Continue with Google" SSO button.
+
+**What's needed:**
+A small set of brand / social-provider marks for SSO buttons. These are multi-color, fixed-brand-color assets (Google's 4-color "G", etc.) that intentionally do **not** map to design tokens — brand guidelines mandate the exact colors. `lucide-react` (the demo icon set) has no brand logos. Could ship as a tiny `<GoogleIcon>` / `<BrandIcon name="google">` component or an assets module.
+
+**Current workaround:**
+A hand-authored inline `<svg viewBox="0 0 48 48">` with four `<path fill="#…">` brand-hex colors at the exact mock site, `aria-hidden="true"`. Marked with the standard TODO comment. (Note: brand hex is correct here — this is the documented exception to token-only color.)
+
+**When this ships:** refactor the Login SSO button to use the brand icon, then tick this checkbox.
+
 ### [ ] `<StatTile>` (or `<IconTile>`) — tinted square (or circle) containing a centered icon
 
 **Filed:** 2026-05-25
