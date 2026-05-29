@@ -329,6 +329,41 @@ describe('Rail', () => {
     expect(Array.from(nav.classList).some((c) => /rail/i.test(c))).toBe(true);
   });
 
+  it('keeps keys unique (no warning, no dropped sections) when children include a Fragment', () => {
+    // Mirrors AppShell's components view: a conditional renders a Fragment
+    // wrapping multiple Sections as a single Rail child. Rail's body/footer
+    // split flattens fragments — it must NOT re-key them into a collision with
+    // the other top-level children (the classic duplicate ".0" key bug).
+    const errors: string[] = [];
+    const err = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+      errors.push(args.map(String).join(' '));
+    });
+    render(
+      <Rail aria-label="nav">
+        <Rail.Header>Brand</Rail.Header>
+        <>
+          <Rail.Section title="Group A">
+            <Rail.Item href="/a">Alpha</Rail.Item>
+          </Rail.Section>
+          <Rail.Section title="Group B">
+            <Rail.Item href="/b">Bravo</Rail.Item>
+          </Rail.Section>
+        </>
+        <Rail.Spacer />
+        <Rail.Footer>
+          <Rail.CollapseToggle />
+        </Rail.Footer>
+      </Rail>,
+    );
+    err.mockRestore();
+    expect(errors.some((e) => /same key/i.test(e))).toBe(false);
+    // Sanity-check both sections still render (a key collision can, in some
+    // trees, make React drop a child). The console.error assertion above is the
+    // load-bearing regression check.
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(screen.getByText('Bravo')).toBeInTheDocument();
+  });
+
   it('useRail throws when a subcomponent is rendered outside <Rail>', () => {
     // Suppress React's error-boundary noise in jsdom — the throw is the
     // assertion path; we just don't want a stack-trace dump in test output.
