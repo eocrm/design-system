@@ -77,7 +77,7 @@ Card (padding="lg")
   Verify visually in the playground; if a Button caps its own width, that's a contained tweak
   inside the auth-screen escape hatch, **not** a new one.
 - **Icons:** `lucide-react` is a demo-only dep already used by mockups (Dashboard). The
-  Google brand "G" is *not* in lucide and is multi-color → Gap 3.
+  Google brand "G" is _not_ in lucide and is multi-color → Gap 3.
 
 ## Escape-hatch gaps (each gets a TODO.md entry + inline `{/* TODO… */}` comment)
 
@@ -136,15 +136,15 @@ warning, checkbox toggles).
 
 ## Files
 
-| File | Change |
-| --- | --- |
-| `packages/playground/src/pages/mockups/Login/Login.tsx` | **NEW** — the mockup |
-| `packages/playground/src/App.tsx` | MODIFY — add `/mockups/login` route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | MODIFY — full-bleed guard for login + Mockups sidebar nav entry |
-| `packages/playground/src/pages/mockups/registry.ts` | MODIFY — add `login` entry (all `usesComponents` already in the `ComponentName` union) |
-| `packages/playground/src/pages/mockups/MockupsIndex.tsx` | VERIFY — auto-renders from registry; edit only if it does not |
-| `packages/design-system/src/components/TODO.md` | MODIFY — add Gap 1/2/3 entries |
-| `docs/superpowers/specs/2026-05-29-login-mockup-design.md` | this spec |
+| File                                                       | Change                                                                                 |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `packages/playground/src/pages/mockups/Login/Login.tsx`    | **NEW** — the mockup                                                                   |
+| `packages/playground/src/App.tsx`                          | MODIFY — add `/mockups/login` route                                                    |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`     | MODIFY — full-bleed guard for login + Mockups sidebar nav entry                        |
+| `packages/playground/src/pages/mockups/registry.ts`        | MODIFY — add `login` entry (all `usesComponents` already in the `ComponentName` union) |
+| `packages/playground/src/pages/mockups/MockupsIndex.tsx`   | VERIFY — auto-renders from registry; edit only if it does not                          |
+| `packages/design-system/src/components/TODO.md`            | MODIFY — add Gap 1/2/3 entries                                                         |
+| `docs/superpowers/specs/2026-05-29-login-mockup-design.md` | this spec                                                                              |
 
 `registry.ts` entry:
 

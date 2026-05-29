@@ -16,13 +16,13 @@
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
+| File                                                    | Responsibility                                                                                                |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `packages/playground/src/pages/mockups/Login/Login.tsx` | **NEW** — the entire mockup: composition + interactive validation/error behavior + the two escape-hatch mocks |
-| `packages/playground/src/App.tsx` | MODIFY — import `Login`, add `/mockups/login` route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | MODIFY — full-bleed guard for the login route + a "Login" entry in `mockupItems` + `LogIn` icon import |
-| `packages/playground/src/pages/mockups/registry.ts` | MODIFY — add the `login` mockup entry (no `ComponentName` union change needed) |
-| `packages/design-system/src/components/TODO.md` | MODIFY — add `<AuthScreen>` and brand-icon gap entries |
+| `packages/playground/src/App.tsx`                       | MODIFY — import `Login`, add `/mockups/login` route                                                           |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`  | MODIFY — full-bleed guard for the login route + a "Login" entry in `mockupItems` + `LogIn` icon import        |
+| `packages/playground/src/pages/mockups/registry.ts`     | MODIFY — add the `login` mockup entry (no `ComponentName` union change needed)                                |
+| `packages/design-system/src/components/TODO.md`         | MODIFY — add `<AuthScreen>` and brand-icon gap entries                                                        |
 
 `MockupsIndex.tsx` is **not** edited — it renders every non-parameterized `registry.ts` entry automatically (verified: `MOCKUPS.filter((m) => !m.path.includes(':'))`).
 
@@ -33,13 +33,14 @@
 Do this first so the inline-mock `{/* TODO… */}` comments in `Login.tsx` reference real entries.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/TODO.md`
 
 - [ ] **Step 1: Add both entries under the `## Open` section**
 
 Insert these two entries immediately after the `## Open` line (before the existing `<StatTile>` entry), matching the file's existing entry format:
 
-````markdown
+```markdown
 ### [ ] `<AuthScreen>` (or `<AuthLayout>`) — full-viewport centered surface with a tinted backdrop for auth pages
 
 **Filed:** 2026-05-29
@@ -69,7 +70,7 @@ A small set of brand / social-provider marks for SSO buttons. These are multi-co
 A hand-authored inline `<svg viewBox="0 0 48 48">` with four `<path fill="#…">` brand-hex colors at the exact mock site, `aria-hidden="true"`. Marked with the standard TODO comment. (Note: brand hex is correct here — this is the documented exception to token-only color.)
 
 **When this ships:** refactor the Login SSO button to use the brand icon, then tick this checkbox.
-````
+```
 
 - [ ] **Step 2: Verify the file still reads cleanly**
 
@@ -88,6 +89,7 @@ git commit -m "docs(todo): file <AuthScreen> + brand-icon gaps for login mockup"
 ## Task 2: Build the Login mockup
 
 **Files:**
+
 - Create: `packages/playground/src/pages/mockups/Login/Login.tsx`
 
 - [ ] **Step 1: Create `Login.tsx` with the full implementation**
@@ -296,6 +298,7 @@ export function Login() {
 ```
 
 Notes for the implementer (do not add as code comments beyond those already shown):
+
 - **No `<form>`** (Hard rule 6 forbids raw `<form>`). Submit fires via the primary Button's `onClick` and an Enter-key handler on both inputs.
 - **Buttons full-width:** they sit in a `Stack`, whose default `align="stretch"` stretches children to the card width. Confirm visually in Task 4; if a Button caps its own width, that is a contained tweak inside the AuthScreen escape hatch, not a new one.
 - **Inert links:** `Forgot?` / footer links use plausible `href` paths (not `href="#"`, which the Link JSDoc flags as an anti-pattern). They don't resolve inside the playground SPA — that's acceptable for a static mockup; note it for the reviewer.
@@ -313,6 +316,7 @@ git commit -m "feat(mockup): add eocrm full-screen login screen"
 ## Task 3: Wire the mockup (route + shell guard + nav + registry)
 
 **Files:**
+
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
@@ -428,6 +432,7 @@ Expected: passes. (Stylelint targets `.scss`; `Login.tsx` ships no SCSS, so this
 
 Run: `make dev` (starts the playground on http://localhost:8080 without opening a browser; run in the background).
 Then drive a browser (Playwright MCP `browser_navigate` → `browser_take_screenshot`, or open it yourself) to `http://localhost:8080/mockups/login` and confirm:
+
 1. **No sidebar / topbar** — the login owns the full viewport.
 2. Tinted radial backdrop (light blue at top fading to near-white), `eocrm` wordmark centered above a white elevated card.
 3. Card: "Sign in" + subtitle, full-width "Continue with Google" (with the 4-color G), an "OR" divider, Email + Password (with "Forgot?" on the label row + reveal eye), "Keep me signed in" (checked), full-width primary "Sign in".
@@ -441,6 +446,7 @@ Then drive a browser (Playwright MCP `browser_navigate` → `browser_take_screen
 git add -A
 git commit -m "fix(mockup): login visual + typecheck fixes"
 ```
+
 (Skip if Steps 1–3 needed no changes.)
 
 ---
@@ -479,6 +485,7 @@ This is **mandatory** — the change touches `packages/playground/src/pages/mock
 git add -A
 git commit -m "fix(mockup): address login review findings"
 ```
+
 (Skip if no changes.)
 
 ---
