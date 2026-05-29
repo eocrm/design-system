@@ -250,6 +250,16 @@ function BrandMark() {
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
 
+  // Persisted collapsed state — survives reload, syncs across tabs.
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+  }, [collapsed]);
+
   // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so a
   // login screen reads like a real auth page, not a page inside the CRM.
   if (pathname === '/mockups/login') {
@@ -261,16 +271,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const switchLink = inComponents
     ? { to: '/mockups', label: 'Mockups', icon: Layers }
     : { to: '/components', label: 'Components', icon: Component };
-
-  // Persisted collapsed state — survives reload, syncs across tabs.
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
-  }, [collapsed]);
 
   return (
     <div className={styles.shell} data-rail-collapsed={collapsed || undefined}>
