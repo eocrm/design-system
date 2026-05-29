@@ -129,6 +129,7 @@ export function Login() {
                     onChange={(e) => {
                       setEmail(e.target.value);
                       if (emailError) setEmailError(null);
+                      if (formError) setFormError(null);
                     }}
                     onKeyDown={onEnter}
                     invalid={!!emailError}
@@ -159,6 +160,7 @@ export function Login() {
                     onChange={(e) => {
                       setPassword(e.target.value);
                       if (passwordError) setPasswordError(null);
+                      if (formError) setFormError(null);
                     }}
                     onKeyDown={onEnter}
                     invalid={!!passwordError}
