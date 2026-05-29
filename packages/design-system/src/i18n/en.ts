@@ -13,6 +13,10 @@ export const en: Messages = {
     cancel: 'Cancel',
     confirm: 'Confirm',
   },
+  image: {
+    loadError: 'Image failed to load',
+    retry: 'Retry',
+  },
   passwordInput: {
     show: 'Show password',
     hide: 'Hide password',
