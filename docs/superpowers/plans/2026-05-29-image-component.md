@@ -14,24 +14,24 @@
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/design-system/src/i18n/messages.ts` | MODIFY — `image` namespace in `Messages` |
-| `packages/design-system/src/i18n/en.ts` | MODIFY — English `image` strings |
-| `packages/design-system/src/i18n/ru.ts` | MODIFY — Russian `image` strings |
-| `packages/design-system/src/components/Image/Image.tokens.scss` | NEW — `--image-*` tokens |
-| `packages/design-system/src/components/Image/Image.module.scss` | NEW — styles (tokens only, no layout) |
-| `packages/design-system/src/components/Image/Image.tsx` | NEW — component |
-| `packages/design-system/src/components/Image/Image.test.tsx` | NEW — unit tests |
-| `packages/design-system/src/components/Image/index.ts` | NEW — exports |
-| `packages/design-system/src/index.ts` | MODIFY — re-export Image + types |
-| `packages/design-system/src/_meta/manifest.ts` | MODIFY — `Image: 'Display'` in `CLUSTERS` |
-| `packages/design-system/src/components.manifest.json` | REGEN — `npm run build:manifest` |
-| `packages/design-system/AGENTS.md` | MODIFY — `<Image>` TL;DR (Display) |
-| `packages/playground/src/pages/components/ImageDemo.tsx` | NEW — demo page |
-| `packages/playground/src/App.tsx` | MODIFY — `/components/image` route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | MODIFY — Display nav entry + `Image as ImageIcon` import |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` | MODIFY — overview card |
+| File                                                            | Responsibility                                           |
+| --------------------------------------------------------------- | -------------------------------------------------------- |
+| `packages/design-system/src/i18n/messages.ts`                   | MODIFY — `image` namespace in `Messages`                 |
+| `packages/design-system/src/i18n/en.ts`                         | MODIFY — English `image` strings                         |
+| `packages/design-system/src/i18n/ru.ts`                         | MODIFY — Russian `image` strings                         |
+| `packages/design-system/src/components/Image/Image.tokens.scss` | NEW — `--image-*` tokens                                 |
+| `packages/design-system/src/components/Image/Image.module.scss` | NEW — styles (tokens only, no layout)                    |
+| `packages/design-system/src/components/Image/Image.tsx`         | NEW — component                                          |
+| `packages/design-system/src/components/Image/Image.test.tsx`    | NEW — unit tests                                         |
+| `packages/design-system/src/components/Image/index.ts`          | NEW — exports                                            |
+| `packages/design-system/src/index.ts`                           | MODIFY — re-export Image + types                         |
+| `packages/design-system/src/_meta/manifest.ts`                  | MODIFY — `Image: 'Display'` in `CLUSTERS`                |
+| `packages/design-system/src/components.manifest.json`           | REGEN — `npm run build:manifest`                         |
+| `packages/design-system/AGENTS.md`                              | MODIFY — `<Image>` TL;DR (Display)                       |
+| `packages/playground/src/pages/components/ImageDemo.tsx`        | NEW — demo page                                          |
+| `packages/playground/src/App.tsx`                               | MODIFY — `/components/image` route                       |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`          | MODIFY — Display nav entry + `Image as ImageIcon` import |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx`  | MODIFY — overview card                                   |
 
 ---
 
@@ -40,6 +40,7 @@
 The component imports these keys, so add them first.
 
 **Files:**
+
 - Modify: `packages/design-system/src/i18n/messages.ts`
 - Modify: `packages/design-system/src/i18n/en.ts`
 - Modify: `packages/design-system/src/i18n/ru.ts`
@@ -49,12 +50,12 @@ The component imports these keys, so add them first.
 In `messages.ts`, add this block to the `Messages` interface (e.g. right after the `confirmationPopover` block, ~line 18):
 
 ```ts
-  image: {
-    /** Visible text + aria-label fallback shown when an image fails to load. */
-    loadError: string;
-    /** Label on the retry button in the broken-image placeholder. */
-    retry: string;
-  };
+image: {
+  /** Visible text + aria-label fallback shown when an image fails to load. */
+  loadError: string;
+  /** Label on the retry button in the broken-image placeholder. */
+  retry: string;
+}
 ```
 
 - [ ] **Step 2: Add the English strings**
@@ -96,6 +97,7 @@ git commit -m "feat(i18n): add image namespace (loadError, retry)"
 ## Task 2: The `<Image>` component (TDD)
 
 **Files:**
+
 - Create: `packages/design-system/src/components/Image/Image.tokens.scss`
 - Create: `packages/design-system/src/components/Image/Image.module.scss`
 - Create: `packages/design-system/src/components/Image/Image.test.tsx`
@@ -338,8 +340,10 @@ export type ImageObjectFit = 'cover' | 'contain' | 'fill' | 'none' | 'scale-down
 /** Corner rounding. Maps to the radius token scale. */
 export type ImageRadius = 'none' | 'sm' | 'md' | 'lg' | 'full';
 
-export interface ImageProps
-  extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'children' | 'src' | 'loading'> {
+export interface ImageProps extends Omit<
+  ImgHTMLAttributes<HTMLImageElement>,
+  'alt' | 'children' | 'src' | 'loading'
+> {
   /** Image URL. Changing it resets the component to the loading state. */
   src: string;
   /**
@@ -527,6 +531,7 @@ git commit -m "feat(Image): image primitive with loading/error states, objectFit
 ## Task 3: Library wiring (export + manifest + AGENTS)
 
 **Files:**
+
 - Modify: `packages/design-system/src/index.ts`
 - Modify: `packages/design-system/src/_meta/manifest.ts`
 - Regen: `packages/design-system/src/components.manifest.json`
@@ -596,6 +601,7 @@ git commit -m "feat(Image): export + manifest classification + AGENTS entry"
 ## Task 4: Playground demo + nav wiring
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/ImageDemo.tsx`
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
@@ -653,10 +659,18 @@ export function ImageDemo() {
       >
         <Stack gap="sm">
           <Cluster gap="sm">
-            <Button variant={fit === 'cover' ? 'primary' : 'secondary'} size="sm" onClick={() => setFit('cover')}>
+            <Button
+              variant={fit === 'cover' ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={() => setFit('cover')}
+            >
               cover
             </Button>
-            <Button variant={fit === 'contain' ? 'primary' : 'secondary'} size="sm" onClick={() => setFit('contain')}>
+            <Button
+              variant={fit === 'contain' ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={() => setFit('contain')}
+            >
               contain
             </Button>
           </Cluster>
@@ -677,7 +691,9 @@ export function ImageDemo() {
               <div style={{ width: 80 }}>
                 <Image src={PHOTO} alt="" radius={r} aspectRatio="1" />
               </div>
-              <Text size="xs" tone="muted">{r}</Text>
+              <Text size="xs" tone="muted">
+                {r}
+              </Text>
             </Stack>
           ))}
         </Cluster>
@@ -737,7 +753,7 @@ import { ImageDemo } from './pages/components/ImageDemo';
 Add the route among the `/components/*` routes (e.g. after the `/components/image-crop` or near the `i` entries):
 
 ```tsx
-            <Route path="/components/image" element={<ImageDemo />} />
+<Route path="/components/image" element={<ImageDemo />} />
 ```
 
 - [ ] **Step 3: Add the sidebar nav entry in `AppShell.tsx`**
@@ -759,21 +775,25 @@ Add the item to the `Display` group in `componentGroups` (alpha order, near `ima
 Add an entry to the index grid matching the existing card shape, with a small live preview:
 
 ```tsx
-        <Link to="/components/image" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Card padding="md">
-            <Stack gap="sm">
-              <div style={{ maxWidth: 220 }}>
-                <Image
-                  src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=80"
-                  alt=""
-                  aspectRatio="16 / 9"
-                />
-              </div>
-              <Text size="lg" weight="semibold">Image</Text>
-              <Text size="sm" tone="muted">Loading + error states, objectFit, aspectRatio, radius.</Text>
-            </Stack>
-          </Card>
-        </Link>
+<Link to="/components/image" style={{ textDecoration: 'none', color: 'inherit' }}>
+  <Card padding="md">
+    <Stack gap="sm">
+      <div style={{ maxWidth: 220 }}>
+        <Image
+          src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=80"
+          alt=""
+          aspectRatio="16 / 9"
+        />
+      </div>
+      <Text size="lg" weight="semibold">
+        Image
+      </Text>
+      <Text size="sm" tone="muted">
+        Loading + error states, objectFit, aspectRatio, radius.
+      </Text>
+    </Stack>
+  </Card>
+</Link>
 ```
 
 Add `Image` to the `@eocrm/design-system` import in `ComponentsIndex.tsx` if not already imported. (Match the exact card/link markup already used in that file — the snippet above mirrors its pattern; adjust to the real wrapper if it differs.)
@@ -805,13 +825,14 @@ make lint          # stylelint (both packages)
 make build         # typecheck + bundle playground
 npm pack --dry-run -w @eocrm/design-system   # no test files / internal paths in the tarball
 ```
+
 All must pass before review.
 
 - [ ] **Step 2: Spawn a fresh-context reviewer** (`general-purpose`) on the diff (`git diff main..HEAD`). Tell it to read `packages/design-system/CLAUDE.md`, `AGENTS.md`, the spec, then review against the 10 Rule-8 categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Specifically verify:
   - Rule 1 (tests cover states/variants/ref/className), Rule 4 (no margin/fixed-width/positioning beyond the relative-anchor + intrinsic object-fit/aspect-ratio), Rule 5 (Image + 3 types exported), Rule 6 (forwardRef + spread), Rule 7 (full JSDoc + spread-order comment), Rule 9 (no inline English — `loadError`/`retry` via `t()`).
   - The `loading`/`loaded`/`error` machine + retry re-fetch + `src`-reset are correct; `--image-object-fit` consumed in SCSS; tokens resolve.
   - lucide-react used as a peer import (consistent with Alert/PasswordInput).
-  Ask for Critical/Important/Nice-to-have/Regression-watch + verdict (`clean enough to stop` / `keep iterating`).
+    Ask for Critical/Important/Nice-to-have/Regression-watch + verdict (`clean enough to stop` / `keep iterating`).
 
 - [ ] **Step 3: Fix every Critical + Important.** Document any deliberate skip in one line.
 

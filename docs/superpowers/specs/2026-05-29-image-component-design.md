@@ -81,8 +81,7 @@ export type ImageObjectFit = 'cover' | 'contain' | 'fill' | 'none' | 'scale-down
 /** Corner rounding. Maps to the radius token scale. */
 export type ImageRadius = 'none' | 'sm' | 'md' | 'lg' | 'full';
 
-export interface ImageProps
-  extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'children'> {
+export interface ImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'children'> {
   /** Image URL. Changing it resets the component to the loading state. */
   src: string;
   /**
@@ -138,8 +137,8 @@ size/position); all other native `<img>` attributes (`srcSet`, `sizes`, `width`,
   --image-radius-lg: var(--radius-lg);
   --image-radius-full: var(--radius-full);
 
-  --image-bg: var(--color-bg-muted);          // box bg behind contain/letterbox + error
-  --image-transition: var(--transition-base);  // fade-in
+  --image-bg: var(--color-bg-muted); // box bg behind contain/letterbox + error
+  --image-transition: var(--transition-base); // fade-in
 
   // Error placeholder
   --image-error-bg: var(--color-bg-muted);
@@ -160,29 +159,44 @@ The `ImageOff` icon size is passed via lucide's numeric `size` prop in TSX (e.g.
 
 .wrapper {
   display: block;
-  position: relative;        // internal anchor for overlays (Rule 4: relative-for-child OK)
-  width: 100%;               // fills container (Rule 4: 100% allowed)
-  overflow: hidden;          // clip to radius
+  position: relative; // internal anchor for overlays (Rule 4: relative-for-child OK)
+  width: 100%; // fills container (Rule 4: 100% allowed)
+  overflow: hidden; // clip to radius
   background: var(--image-bg);
   border-radius: var(--image-radius-none);
 }
-.radiusSm { border-radius: var(--image-radius-sm); }
-.radiusMd { border-radius: var(--image-radius-md); }
-.radiusLg { border-radius: var(--image-radius-lg); }
-.radiusFull { border-radius: var(--image-radius-full); }
+.radiusSm {
+  border-radius: var(--image-radius-sm);
+}
+.radiusMd {
+  border-radius: var(--image-radius-md);
+}
+.radiusLg {
+  border-radius: var(--image-radius-lg);
+}
+.radiusFull {
+  border-radius: var(--image-radius-full);
+}
 
 .img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: var(--image-object-fit, cover);  // intrinsic (Rule 4: object-fit OK; Avatar precedent)
+  object-fit: var(--image-object-fit, cover); // intrinsic (Rule 4: object-fit OK; Avatar precedent)
   opacity: 0;
   transition: opacity var(--image-transition);
 }
-.wrapper[data-state='loaded'] .img { opacity: 1; }
-.wrapper[data-state='error'] .img { display: none; }
+.wrapper[data-state='loaded'] .img {
+  opacity: 1;
+}
+.wrapper[data-state='error'] .img {
+  display: none;
+}
 
-.overlay { position: absolute; inset: 0; }     // Skeleton fill
+.overlay {
+  position: absolute;
+  inset: 0;
+} // Skeleton fill
 
 .error {
   position: absolute;
@@ -195,7 +209,9 @@ The `ImageOff` icon size is passed via lucide's numeric `size` prop in TSX (e.g.
   background: var(--image-error-bg);
   color: var(--image-error-fg);
 }
-.errorText { font-size: var(--image-error-font-size); }
+.errorText {
+  font-size: var(--image-error-font-size);
+}
 ```
 
 `position: absolute` + `inset` on `.overlay`/`.error` are internal-anchor layering (the wrapper is
@@ -216,24 +232,24 @@ consumer `alt`.
 
 ## Files
 
-| File | Change |
-| --- | --- |
-| `packages/design-system/src/components/Image/Image.tsx` | NEW — component (forwardRef + state machine + JSDoc) |
-| `packages/design-system/src/components/Image/Image.module.scss` | NEW — styles (tokens only, no layout) |
-| `packages/design-system/src/components/Image/Image.tokens.scss` | NEW — `--image-*` tokens |
-| `packages/design-system/src/components/Image/Image.test.tsx` | NEW — unit tests |
-| `packages/design-system/src/components/Image/index.ts` | NEW — `export { Image }` + `export type { ImageProps, ImageObjectFit, ImageRadius }` |
-| `packages/design-system/src/index.ts` | MODIFY — re-export Image + its types |
-| `packages/design-system/src/i18n/messages.ts` | MODIFY — `image` namespace in `Messages` |
-| `packages/design-system/src/i18n/en.ts` | MODIFY — `image` strings |
-| `packages/design-system/src/i18n/ru.ts` | MODIFY — `image` strings |
-| `packages/design-system/src/_meta/manifest.ts` | MODIFY — add `Image: 'Display'` to the `CLUSTERS` map |
-| `packages/design-system/src/components.manifest.json` | REGEN — run the manifest generator (exact command confirmed in planning) |
-| `packages/design-system/AGENTS.md` | MODIFY — `<Image>` TL;DR entry (Display section) |
-| `packages/playground/src/pages/components/ImageDemo.tsx` | NEW — demo (DemoLayout + Example) |
-| `packages/playground/src/App.tsx` | MODIFY — `/components/image` route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | MODIFY — Display group nav entry (`ImageIcon`) |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` | MODIFY — overview card w/ live preview |
+| File                                                            | Change                                                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `packages/design-system/src/components/Image/Image.tsx`         | NEW — component (forwardRef + state machine + JSDoc)                                 |
+| `packages/design-system/src/components/Image/Image.module.scss` | NEW — styles (tokens only, no layout)                                                |
+| `packages/design-system/src/components/Image/Image.tokens.scss` | NEW — `--image-*` tokens                                                             |
+| `packages/design-system/src/components/Image/Image.test.tsx`    | NEW — unit tests                                                                     |
+| `packages/design-system/src/components/Image/index.ts`          | NEW — `export { Image }` + `export type { ImageProps, ImageObjectFit, ImageRadius }` |
+| `packages/design-system/src/index.ts`                           | MODIFY — re-export Image + its types                                                 |
+| `packages/design-system/src/i18n/messages.ts`                   | MODIFY — `image` namespace in `Messages`                                             |
+| `packages/design-system/src/i18n/en.ts`                         | MODIFY — `image` strings                                                             |
+| `packages/design-system/src/i18n/ru.ts`                         | MODIFY — `image` strings                                                             |
+| `packages/design-system/src/_meta/manifest.ts`                  | MODIFY — add `Image: 'Display'` to the `CLUSTERS` map                                |
+| `packages/design-system/src/components.manifest.json`           | REGEN — run the manifest generator (exact command confirmed in planning)             |
+| `packages/design-system/AGENTS.md`                              | MODIFY — `<Image>` TL;DR entry (Display section)                                     |
+| `packages/playground/src/pages/components/ImageDemo.tsx`        | NEW — demo (DemoLayout + Example)                                                    |
+| `packages/playground/src/App.tsx`                               | MODIFY — `/components/image` route                                                   |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`          | MODIFY — Display group nav entry (`ImageIcon`)                                       |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx`  | MODIFY — overview card w/ live preview                                               |
 
 `structure.test.ts` and the manifest meta-test enforce the 4 required files + `index.ts`
 export + manifest presence — they pass automatically once the files above exist and the

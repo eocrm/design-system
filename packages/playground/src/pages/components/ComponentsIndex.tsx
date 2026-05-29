@@ -207,7 +207,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/image',
     name: 'Image',
-    description: 'Remote image with Skeleton loading state, fade-in on load, and an accessible broken-image placeholder with retry.',
+    description:
+      'Remote image with Skeleton loading state, fade-in on load, and an accessible broken-image placeholder with retry.',
     preview: (
       <div style={{ maxWidth: 220, width: '100%' }}>
         <Image
