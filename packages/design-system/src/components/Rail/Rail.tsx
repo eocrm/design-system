@@ -1,6 +1,7 @@
 import {
   Children,
   Fragment,
+  cloneElement,
   createContext,
   forwardRef,
   isValidElement,
@@ -226,7 +227,18 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
         bodyChildren.push(child);
       }
     }
-    return { body: bodyChildren, footer: footerChildren };
+    // Re-key the flattened children before render. `Children.toArray` restarts
+    // its synthetic keys at ".0" on every call — including the inner call in
+    // `flatten` for a Fragment's children — so a Fragment child's first element
+    // would otherwise share key ".0" with the first top-level child and React
+    // would warn ("two children with the same key") and could drop one. A fresh
+    // per-array index key guarantees uniqueness within each rendered list (body
+    // and footer render into separate parents, so per-array indices suffice).
+    const reKey = (nodes: ReactNode[], prefix: string): ReactNode[] =>
+      nodes.map((node, i) =>
+        isValidElement(node) ? cloneElement(node, { key: `${prefix}-${i}` }) : node,
+      );
+    return { body: reKey(bodyChildren, 'rail-body'), footer: reKey(footerChildren, 'rail-footer') };
   }, [children]);
 
   return (
