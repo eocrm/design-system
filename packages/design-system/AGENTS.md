@@ -966,6 +966,26 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - ❌ `<Grid columns="auto 1fr">` strings — not supported in v1. For asymmetric / named tracks, use raw CSS Grid via className.
 - ❌ `<Grid as="ul">` with non-`<li>` children. The component doesn't enforce list semantics; consumers must.
 
+### `<Masonry>` — height-balanced masonry layout
+
+```tsx
+<Masonry minColumnWidth="220px" gap="md">
+  {photos.map((p) => (
+    <Image key={p.id} src={p.src} alt={p.alt} aspectRatio={p.ratio} />
+  ))}
+</Masonry>
+```
+
+Packs variable-height children into columns (greedy shortest-column-first) →
+left→right reading order, balanced heights. Measures on the client + rebalances
+via `ResizeObserver`.
+
+- `columns: number` **xor** `minColumnWidth: string` (default `'240px'`, px).
+- `gap`: `xs`|`sm`|`md` (default)|`lg`|`xl`|`2xl`.
+
+**When NOT to use:** equal-height tiles → `<Grid>`; one column → `<Stack>`;
+wrapping rows → `<Cluster>`. Display content only — rebalancing remounts children.
+
 ### `<Divider>` — separator primitive
 
 Thin rule between content sections. Horizontal (default) or vertical. Optional centered label slot. Three size tiers + solid/dashed variants.

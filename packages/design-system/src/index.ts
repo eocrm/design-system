@@ -66,6 +66,9 @@ export type {
   GridAs,
 } from './components/Grid';
 
+export { Masonry } from './components/Masonry';
+export type { MasonryProps, MasonryGap } from './components/Masonry';
+
 export { Divider } from './components/Divider';
 export type {
   DividerProps,
