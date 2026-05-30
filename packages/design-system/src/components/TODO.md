@@ -30,6 +30,7 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 ### [ ] `<AuthScreen>` (or `<AuthLayout>`) — full-viewport centered surface with a tinted backdrop for auth pages
 
 **Filed:** 2026-05-29
+**Deferred:** 2026-05-30 — the login screen is a single playground mockup; a reusable auth-layout primitive is YAGNI for one screen. The Login wrapper escape hatches stay as a contained one-off. Revisit only if a second auth screen appears.
 **Mocked in:**
 
 - `packages/playground/src/pages/mockups/Login/Login.tsx:51` — outer full-bleed wrapper (gradient backdrop, flex column, full viewport height)
@@ -43,9 +44,10 @@ Two raw `<div style={{…}}>` at the exact mock site, token-only values: the out
 
 **When this ships:** refactor the Login mockup's two wrapper `<div>`s to use the primitive, then tick this checkbox.
 
-### [ ] `<BrandIcon>` / social-login icon set — multi-color brand marks (Google, Microsoft, Apple…)
+### [x] `<BrandIcon>` / social-login icon set — multi-color brand marks (Google, Microsoft, Apple…)
 
 **Filed:** 2026-05-29
+**Shipped:** 2026-05-30 — `packages/design-system/src/components/BrandIcon/`. The Login mockup's inline Google `<svg>` now uses `<BrandIcon name="google" size={16} />`. Ships `google` + `yandex`; extend the `BrandName` union + `ICONS` registry for more.
 **Mocked in:**
 
 - `packages/playground/src/pages/mockups/Login/Login.tsx:89` — the Google "G" inside the "Continue with Google" SSO button.
