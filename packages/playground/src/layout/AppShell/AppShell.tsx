@@ -70,6 +70,7 @@ import {
   Settings as SettingsIcon,
   Fingerprint,
   TriangleAlert,
+  Compass,
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -77,6 +78,10 @@ import { Avatar, Rail, TopBar, useRail } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
+
+// Routes that render OUTSIDE the shell chrome (no Rail / TopBar) so they read
+// like real standalone screens — login + the standalone 404 / error variants.
+const FULL_BLEED_PATHS = new Set(['/mockups/login', '/mockups/404-standalone']);
 
 const mockupItems = [
   { to: '/mockups', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -88,6 +93,7 @@ const mockupItems = [
   { to: '/mockups/audit', label: 'Audit log', icon: Activity, end: false },
   { to: '/mockups/system-settings', label: 'System settings', icon: SettingsIcon, end: false },
   { to: '/mockups/login', label: 'Login', icon: LogIn, end: false },
+  { to: '/mockups/404', label: 'Not found', icon: Compass, end: false },
 ];
 
 const componentOverview = {
@@ -269,9 +275,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
   }, [collapsed]);
 
-  // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so a
-  // login screen reads like a real auth page, not a page inside the CRM.
-  if (pathname === '/mockups/login') {
+  // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so they
+  // read like real standalone screens, not pages inside the CRM.
+  if (FULL_BLEED_PATHS.has(pathname)) {
     return <>{children}</>;
   }
 

@@ -316,6 +316,13 @@ export const MOCKUPS = [
       'Title',
     ],
   },
+  {
+    slug: '404',
+    title: 'Not found',
+    path: '/mockups/404',
+    blurb: '404 page — the not-found state, shown in-app and as a standalone full-bleed page.',
+    usesComponents: ['Button', 'Cluster', 'ErrorState', 'Link', 'Screen', 'Stack', 'Text'],
+  },
 ] as const satisfies readonly MockupEntry[];
 
 export type MockupSlug = (typeof MOCKUPS)[number]['slug'];
