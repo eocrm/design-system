@@ -62,6 +62,8 @@ import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverD
 import { DataTableDemo } from './pages/components/DataTableDemo';
 import { DefinitionListDemo } from './pages/components/DefinitionListDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
+import { ErrorStateDemo } from './pages/components/ErrorStateDemo';
+import { ScreenDemo } from './pages/components/ScreenDemo';
 import { FileUploadDemo } from './pages/components/FileUploadDemo';
 import { FilterChipDemo } from './pages/components/FilterChipDemo';
 import { PersonDisplayDemo } from './pages/components/PersonDisplayDemo';
@@ -150,6 +152,8 @@ export default function App() {
             <Route path="/components/datatable" element={<DataTableDemo />} />
             <Route path="/components/definition-list" element={<DefinitionListDemo />} />
             <Route path="/components/empty-state" element={<EmptyStateDemo />} />
+            <Route path="/components/error-state" element={<ErrorStateDemo />} />
+            <Route path="/components/screen" element={<ScreenDemo />} />
             <Route path="/components/file-upload" element={<FileUploadDemo />} />
             <Route path="/components/filter-chip" element={<FilterChipDemo />} />
             <Route path="/components/image" element={<ImageDemo />} />

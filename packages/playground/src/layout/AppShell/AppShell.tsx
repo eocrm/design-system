@@ -69,6 +69,7 @@ import {
   GalleryVerticalEnd,
   Settings as SettingsIcon,
   Fingerprint,
+  TriangleAlert,
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -122,6 +123,7 @@ const componentGroups = [
       { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
       { to: '/components/page-header', label: 'PageHeader', icon: LayoutPanelTop, end: false },
       { to: '/components/page', label: 'Page', icon: FileText, end: false },
+      { to: '/components/screen', label: 'Screen', icon: AppWindow, end: false },
     ],
   },
   {
@@ -169,6 +171,7 @@ const componentGroups = [
       { to: '/components/code', label: 'Code', icon: CodeIcon, end: false },
       { to: '/components/definition-list', label: 'DefinitionList', icon: List, end: false },
       { to: '/components/empty-state', label: 'EmptyState', icon: Inbox, end: false },
+      { to: '/components/error-state', label: 'ErrorState', icon: TriangleAlert, end: false },
       { to: '/components/filter-chip', label: 'FilterChip', icon: Filter, end: false },
       { to: '/components/image', label: 'Image', icon: ImageIcon, end: false },
       { to: '/components/kbd', label: 'Kbd', icon: Command, end: false },

@@ -46,6 +46,9 @@ import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import { DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
 import { DefinitionList } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
+import { ErrorState } from '@eocrm/design-system';
+import { Screen } from '@eocrm/design-system';
+import { Compass } from 'lucide-react';
 import { FileUpload } from '@eocrm/design-system';
 import { FilterChip } from '@eocrm/design-system';
 import { Image } from '@eocrm/design-system';
@@ -162,6 +165,30 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         title="No results"
         description="Try clearing filters."
       />
+    ),
+  },
+  {
+    to: '/components/error-state',
+    name: 'ErrorState',
+    description: 'Page-level 404 / error status block — icon, title, actions, error ID.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: '260px' }}>
+        <ErrorState size="sm" icon={<Compass size={24} aria-hidden="true" />} title="Page not found" />
+      </div>
+    ),
+  },
+  {
+    to: '/components/screen',
+    name: 'Screen',
+    description: 'Full-bleed / centered screen layout for auth, 404, and error pages.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: '260px', height: '96px' }}>
+        <Screen fill="block" backdrop="accent">
+          <Text size="sm" tone="muted">
+            Full-bleed screen
+          </Text>
+        </Screen>
+      </div>
     ),
   },
   {
