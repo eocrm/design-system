@@ -8,8 +8,9 @@ name: Release
 # - publish runs ONLY if the library actually changed (packages/design-system
 #   or one of the release-related workflow files). Playground-only changes
 #   skip the publish step → no version bump just because a demo page tweaked.
-# - deploy-playground runs whenever quality passed and publish either
-#   succeeded or was skipped — so playground changes still go live.
+# - deploy-playground runs whenever quality passed (regardless of the publish
+#   result) — so the live demo always reflects main, even on playground-only
+#   changes.
 #
 # To force a major/minor bump, edit BUMP below on a branch and merge — there
 # is no manual UI by design.
@@ -132,9 +133,25 @@ jobs:
 
       - name: Publish to GitHub Packages
         working-directory: packages/design-system
-        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          # Tolerate a 409 "already published": a prior run may have published
+          # this version but then failed to push its git tag, leaving the
+          # registry ahead of the tags. Because the next version is derived from
+          # tags, every later run otherwise recomputes the SAME version and 409s
+          # forever. Treat 409 as success and proceed to the tag step so the tags
+          # catch up to the registry and the version can advance again.
+          npm publish 2>&1 | tee publish.out
+          status=${PIPESTATUS[0]}
+          if [ "$status" -eq 0 ]; then
+            echo "Published."
+          elif grep -qiE 'E409|cannot publish over existing version|409 Conflict' publish.out; then
+            echo "::warning::Version already published (409) — proceeding to tag so the tags catch up."
+          else
+            exit "$status"
+          fi
 
       - name: Tag and push
         run: |
@@ -155,16 +172,13 @@ jobs:
             echo "- Registry: https://npm.pkg.github.com"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # Re-deploy the playground so the live site reflects the just-released code.
-  # Runs whenever quality passed and publish either succeeded or was skipped
-  # (skipped = no library change, but a playground-only change still needs to
-  # go live). Doesn't run if publish failed.
+  # Re-deploy the playground so the live site always reflects main. Runs whenever
+  # quality passed — regardless of the publish result (success / skipped /
+  # failure) — so the demo stays current even on playground-only changes and
+  # even if a publish hiccups.
   deploy-playground:
     needs: [quality, publish]
-    if: |
-      always() &&
-      needs.quality.result == 'success' &&
-      (needs.publish.result == 'success' || needs.publish.result == 'skipped')
+    if: always() && needs.quality.result == 'success'
     uses: ./.github/workflows/deploy-playground.yml
     permissions:
       contents: read
