@@ -86,6 +86,9 @@ export type { AvatarProps, AvatarSize, AvatarStatus, AvatarGroupProps } from './
 export { Badge } from './components/Badge';
 export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot, BadgeVariant } from './components/Badge';
 
+export { BrandIcon } from './components/BrandIcon';
+export type { BrandIconProps, BrandName } from './components/BrandIcon';
+
 export { FilterChip } from './components/FilterChip';
 export type {
   FilterChipProps,

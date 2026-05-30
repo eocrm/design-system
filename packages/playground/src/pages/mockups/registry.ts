@@ -5,6 +5,7 @@ export type ComponentName =
   | 'Alert'
   | 'Avatar'
   | 'Badge'
+  | 'BrandIcon'
   | 'Breadcrumb'
   | 'Button'
   | 'ButtonGroup'
@@ -299,6 +300,7 @@ export const MOCKUPS = [
     blurb: 'Full-screen eocrm sign-in — branded card, email/password, Google SSO, error states.',
     usesComponents: [
       'Alert',
+      'BrandIcon',
       'Button',
       'Card',
       'Checkbox',

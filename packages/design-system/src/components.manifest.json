@@ -32,6 +32,12 @@
       "OptionsPicker"
     ]
   },
+  "BrandIcon": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "Breadcrumb": {
     "tier": "composition",
     "cluster": "Navigation",
