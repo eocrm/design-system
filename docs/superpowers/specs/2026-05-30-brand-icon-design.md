@@ -73,23 +73,23 @@ export interface BrandIconProps extends Omit<SVGAttributes<SVGSVGElement>, 'chil
 
 ## Files
 
-| File | Change |
-| --- | --- |
-| `packages/design-system/src/components/BrandIcon/BrandIcon.tsx` | NEW — component + `ICONS` registry |
-| `packages/design-system/src/components/BrandIcon/BrandIcon.module.scss` | NEW — minimal `.icon` class |
-| `packages/design-system/src/components/BrandIcon/BrandIcon.test.tsx` | NEW — unit tests |
-| `packages/design-system/src/components/BrandIcon/index.ts` | NEW — `export { BrandIcon }` + `export type { BrandIconProps, BrandName }` |
-| `packages/design-system/src/index.ts` | MODIFY — re-export |
-| `packages/design-system/src/_meta/manifest.ts` | MODIFY — `BrandIcon: 'Display'` in `CLUSTERS` |
-| `packages/design-system/scripts/generate-manifest.mjs` | MODIFY — same `BrandIcon: 'Display'` (kept in sync) |
-| `packages/design-system/src/components.manifest.json` | REGEN — `npm run build:manifest` |
-| `packages/design-system/src/components/TODO.md` | MODIFY — tick `<BrandIcon>`; mark `<AuthScreen>` deferred |
-| `packages/design-system/AGENTS.md` | MODIFY — `<BrandIcon>` TL;DR (Display) |
-| `packages/playground/src/pages/mockups/Login/Login.tsx` | MODIFY — inline Google `<svg>` → `<BrandIcon name="google" size={16} />`; drop the escape-hatch TODO comment |
-| `packages/playground/src/pages/components/BrandIconDemo.tsx` | NEW — demo |
-| `packages/playground/src/App.tsx` | MODIFY — `/components/brand-icon` route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | MODIFY — Display nav entry (a lucide icon, e.g. `Fingerprint` or `BadgeCheck`; plan picks one not already imported) |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` | MODIFY — overview card |
+| File                                                                    | Change                                                                                                              |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `packages/design-system/src/components/BrandIcon/BrandIcon.tsx`         | NEW — component + `ICONS` registry                                                                                  |
+| `packages/design-system/src/components/BrandIcon/BrandIcon.module.scss` | NEW — minimal `.icon` class                                                                                         |
+| `packages/design-system/src/components/BrandIcon/BrandIcon.test.tsx`    | NEW — unit tests                                                                                                    |
+| `packages/design-system/src/components/BrandIcon/index.ts`              | NEW — `export { BrandIcon }` + `export type { BrandIconProps, BrandName }`                                          |
+| `packages/design-system/src/index.ts`                                   | MODIFY — re-export                                                                                                  |
+| `packages/design-system/src/_meta/manifest.ts`                          | MODIFY — `BrandIcon: 'Display'` in `CLUSTERS`                                                                       |
+| `packages/design-system/scripts/generate-manifest.mjs`                  | MODIFY — same `BrandIcon: 'Display'` (kept in sync)                                                                 |
+| `packages/design-system/src/components.manifest.json`                   | REGEN — `npm run build:manifest`                                                                                    |
+| `packages/design-system/src/components/TODO.md`                         | MODIFY — tick `<BrandIcon>`; mark `<AuthScreen>` deferred                                                           |
+| `packages/design-system/AGENTS.md`                                      | MODIFY — `<BrandIcon>` TL;DR (Display)                                                                              |
+| `packages/playground/src/pages/mockups/Login/Login.tsx`                 | MODIFY — inline Google `<svg>` → `<BrandIcon name="google" size={16} />`; drop the escape-hatch TODO comment        |
+| `packages/playground/src/pages/components/BrandIconDemo.tsx`            | NEW — demo                                                                                                          |
+| `packages/playground/src/App.tsx`                                       | MODIFY — `/components/brand-icon` route                                                                             |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`                  | MODIFY — Display nav entry (a lucide icon, e.g. `Fingerprint` or `BadgeCheck`; plan picks one not already imported) |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx`          | MODIFY — overview card                                                                                              |
 
 **`BrandIcon.module.scss`:** `structure.test.ts` requires a `<Name>.module.scss` for every
 component, so `BrandIcon` ships one with a single `.icon` class applied to the `<svg>` —

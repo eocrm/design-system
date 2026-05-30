@@ -14,23 +14,23 @@
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/design-system/src/components/BrandIcon/BrandIcon.tsx` | NEW — component + `ICONS` registry |
-| `packages/design-system/src/components/BrandIcon/BrandIcon.module.scss` | NEW — `.icon` class |
-| `packages/design-system/src/components/BrandIcon/BrandIcon.test.tsx` | NEW — unit tests |
-| `packages/design-system/src/components/BrandIcon/index.ts` | NEW — exports |
-| `packages/design-system/src/index.ts` | MODIFY — re-export (after the Badge block) |
-| `packages/design-system/src/_meta/manifest.ts` | MODIFY — `BrandIcon: 'Display'` |
-| `packages/design-system/scripts/generate-manifest.mjs` | MODIFY — `BrandIcon: 'Display'` (kept in sync) |
-| `packages/design-system/src/components.manifest.json` | REGEN — `npm run build:manifest` |
-| `packages/design-system/src/components/TODO.md` | MODIFY — tick `<BrandIcon>`; annotate `<AuthScreen>` deferred |
-| `packages/design-system/AGENTS.md` | MODIFY — `<BrandIcon>` TL;DR (Display) |
-| `packages/playground/src/pages/mockups/Login/Login.tsx` | MODIFY — inline Google `<svg>` → `<BrandIcon>` |
-| `packages/playground/src/pages/components/BrandIconDemo.tsx` | NEW — demo |
-| `packages/playground/src/App.tsx` | MODIFY — `/components/brand-icon` route |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | MODIFY — Display nav entry + `Fingerprint` import |
-| `packages/playground/src/pages/components/ComponentsIndex.tsx` | MODIFY — overview card |
+| File                                                                    | Responsibility                                                |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `packages/design-system/src/components/BrandIcon/BrandIcon.tsx`         | NEW — component + `ICONS` registry                            |
+| `packages/design-system/src/components/BrandIcon/BrandIcon.module.scss` | NEW — `.icon` class                                           |
+| `packages/design-system/src/components/BrandIcon/BrandIcon.test.tsx`    | NEW — unit tests                                              |
+| `packages/design-system/src/components/BrandIcon/index.ts`              | NEW — exports                                                 |
+| `packages/design-system/src/index.ts`                                   | MODIFY — re-export (after the Badge block)                    |
+| `packages/design-system/src/_meta/manifest.ts`                          | MODIFY — `BrandIcon: 'Display'`                               |
+| `packages/design-system/scripts/generate-manifest.mjs`                  | MODIFY — `BrandIcon: 'Display'` (kept in sync)                |
+| `packages/design-system/src/components.manifest.json`                   | REGEN — `npm run build:manifest`                              |
+| `packages/design-system/src/components/TODO.md`                         | MODIFY — tick `<BrandIcon>`; annotate `<AuthScreen>` deferred |
+| `packages/design-system/AGENTS.md`                                      | MODIFY — `<BrandIcon>` TL;DR (Display)                        |
+| `packages/playground/src/pages/mockups/Login/Login.tsx`                 | MODIFY — inline Google `<svg>` → `<BrandIcon>`                |
+| `packages/playground/src/pages/components/BrandIconDemo.tsx`            | NEW — demo                                                    |
+| `packages/playground/src/App.tsx`                                       | MODIFY — `/components/brand-icon` route                       |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`                  | MODIFY — Display nav entry + `Fingerprint` import             |
+| `packages/playground/src/pages/components/ComponentsIndex.tsx`          | MODIFY — overview card                                        |
 
 ---
 
@@ -348,38 +348,38 @@ Add `BrandIcon` to the `@eocrm/design-system` import (alphabetically, after `Ale
 Replace the SSO button's inline-svg escape hatch. Change:
 
 ```tsx
-              <Button variant="secondary">
-                {/* TODO: replace when a brand/social icon set ships — see components/TODO.md.
+<Button variant="secondary">
+  {/* TODO: replace when a brand/social icon set ships — see components/TODO.md.
                     Multi-color Google "G"; not in lucide. Brand hex is intentional. */}
-                <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
-                  <path
-                    fill="#EA4335"
-                    d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.4 30.1 0 24 0 14.6 0 6.4 5.4 2.6 13.2l7.8 6.1C12.2 13.3 17.6 9.5 24 9.5z"
-                  />
-                  <path
-                    fill="#4285F4"
-                    d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.1 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.5z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M10.4 28.3c-.5-1.4-.8-3-.8-4.3s.3-2.9.8-4.3l-7.8-6.1C1 16.8 0 20.3 0 24s1 7.2 2.6 10.4l7.8-6.1z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.3-4.5 2.1-8.8 2.1-6.4 0-11.8-3.8-13.6-9.1l-7.8 6.1C6.4 42.6 14.6 48 24 48z"
-                  />
-                </svg>
-                Continue with Google
-              </Button>
+  <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+    <path
+      fill="#EA4335"
+      d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.4 30.1 0 24 0 14.6 0 6.4 5.4 2.6 13.2l7.8 6.1C12.2 13.3 17.6 9.5 24 9.5z"
+    />
+    <path
+      fill="#4285F4"
+      d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.1 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.5z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M10.4 28.3c-.5-1.4-.8-3-.8-4.3s.3-2.9.8-4.3l-7.8-6.1C1 16.8 0 20.3 0 24s1 7.2 2.6 10.4l7.8-6.1z"
+    />
+    <path
+      fill="#34A853"
+      d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.3-4.5 2.1-8.8 2.1-6.4 0-11.8-3.8-13.6-9.1l-7.8 6.1C6.4 42.6 14.6 48 24 48z"
+    />
+  </svg>
+  Continue with Google
+</Button>
 ```
 
 to:
 
 ```tsx
-              <Button variant="secondary">
-                <BrandIcon name="google" size={16} />
-                Continue with Google
-              </Button>
+<Button variant="secondary">
+  <BrandIcon name="google" size={16} />
+  Continue with Google
+</Button>
 ```
 
 (This deletes a Hard-rule-6 escape hatch + its TODO comment — a net improvement to the mockup.)
@@ -454,8 +454,9 @@ export function BrandIconDemo() {
 ```tsx
 import { BrandIconDemo } from './pages/components/BrandIconDemo';
 ```
+
 ```tsx
-            <Route path="/components/brand-icon" element={<BrandIconDemo />} />
+<Route path="/components/brand-icon" element={<BrandIconDemo />} />
 ```
 
 - [ ] **Step 4: Add the nav entry in `AppShell.tsx`** — add `Fingerprint` to the `lucide-react` import (confirm it isn't already imported; if unavailable, use `BadgeCheck`), then add to the `Display` group after the Badge item:
@@ -509,13 +510,14 @@ make lint
 make build
 npm pack --dry-run -w @eocrm/design-system   # ships BrandIcon source, excludes the test
 ```
+
 All must pass.
 
 - [ ] **Step 2: Spawn a fresh-context reviewer** (`general-purpose`) on `git diff main..HEAD`. Brief it on:
   - **Rule-8 (library):** bugs, a11y (decorative default vs `title` → role=img + `<title>`; spread-last lets consumer override), API/types (`Record<BrandName>` completeness; `Omit<SVGAttributes,'children'>`), Rules 1/4/5/6/7 (tests; `.icon` class is Rule-4-clean — only `display`/`vertical-align`; export; forwardRef + spread; JSDoc), token discipline (brand hex is the documented inline exception; `.module.scss` token-free is fine), manifest in both files, `npm pack` excludes the test.
   - **Rule-7 (Login mockup):** the inline-svg escape hatch is fully removed (no leftover raw `<svg>`/`style`), the `{/* TODO: replace when a brand/social icon set ships */}` comment is gone, the `<BrandIcon>` TODO entry is ticked, and no new Hard-rule-6 violations were introduced. The two remaining `<AuthScreen>` escape hatches in Login are intentionally kept (deferred).
   - Confirm the Yandex `<text>`-based "Я" is acceptable as a documented v1 representation (vs official path art).
-  Ask for Critical/Important/Nice-to-have/Regression-watch + verdict.
+    Ask for Critical/Important/Nice-to-have/Regression-watch + verdict.
 
 - [ ] **Step 3: Fix every Critical + Important.** Re-run gates. Re-review. Repeat until `clean enough to stop` (0 Critical / 0 Important).
 
