@@ -4,6 +4,7 @@ import { Accordion } from '@eocrm/design-system';
 import { Alert } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { BrandIcon } from '@eocrm/design-system';
 import { Breadcrumb } from '@eocrm/design-system';
 import { Link as DSLink } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
@@ -628,6 +629,17 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Badge tone="info">New</Badge>
         <Badge tone="success">Active</Badge>
         <Badge tone="warning">Pending</Badge>
+      </Cluster>
+    ),
+  },
+  {
+    to: '/components/brand-icon',
+    name: 'BrandIcon',
+    description: 'Full-color brand marks (Google, Yandex) for SSO buttons.',
+    preview: (
+      <Cluster gap="md" justify="center">
+        <BrandIcon name="google" size={28} />
+        <BrandIcon name="yandex" size={28} />
       </Cluster>
     ),
   },
