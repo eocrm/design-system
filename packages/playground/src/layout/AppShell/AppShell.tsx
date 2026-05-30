@@ -81,7 +81,11 @@ const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
 
 // Routes that render OUTSIDE the shell chrome (no Rail / TopBar) so they read
 // like real standalone screens — login + the standalone 404 / error variants.
-const FULL_BLEED_PATHS = new Set(['/mockups/login', '/mockups/404-standalone']);
+const FULL_BLEED_PATHS = new Set([
+  '/mockups/login',
+  '/mockups/404-standalone',
+  '/mockups/error-standalone',
+]);
 
 const mockupItems = [
   { to: '/mockups', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -94,6 +98,7 @@ const mockupItems = [
   { to: '/mockups/system-settings', label: 'System settings', icon: SettingsIcon, end: false },
   { to: '/mockups/login', label: 'Login', icon: LogIn, end: false },
   { to: '/mockups/404', label: 'Not found', icon: Compass, end: false },
+  { to: '/mockups/error', label: 'Error', icon: TriangleAlert, end: false },
 ];
 
 const componentOverview = {

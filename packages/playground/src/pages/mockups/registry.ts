@@ -323,6 +323,13 @@ export const MOCKUPS = [
     blurb: '404 page — the not-found state, shown in-app and as a standalone full-bleed page.',
     usesComponents: ['Button', 'Cluster', 'ErrorState', 'Link', 'Screen', 'Stack', 'Text'],
   },
+  {
+    slug: 'error',
+    title: 'Error',
+    path: '/mockups/error',
+    blurb: 'Error-boundary fallback — "something went wrong", shown in-app and as a standalone page.',
+    usesComponents: ['Button', 'Cluster', 'ErrorState', 'Link', 'Screen', 'Stack', 'Text'],
+  },
 ] as const satisfies readonly MockupEntry[];
 
 export type MockupSlug = (typeof MOCKUPS)[number]['slug'];
