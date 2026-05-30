@@ -137,6 +137,15 @@ export type {
   EmptyStateHeadingLevel,
 } from './components/EmptyState';
 
+export { ErrorState } from './components/ErrorState';
+export type {
+  ErrorStateProps,
+  ErrorStateSize,
+  ErrorStateAlign,
+  ErrorStateTone,
+  ErrorStateHeadingLevel,
+} from './components/ErrorState';
+
 export { toast, ToastViewport } from './components/Toast';
 export type {
   ToastOptions,

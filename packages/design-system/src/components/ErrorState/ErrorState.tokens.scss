@@ -1,0 +1,32 @@
+// ErrorState.tokens.scss — Component-scoped tokens for <ErrorState>. Mirrors the
+// EmptyState scale (gap + padding + type) and adds per-tone icon colors. The
+// internal 48ch description max-width literal lives in the .module.scss and
+// stays a raw value (readable-width cap, not a token).
+:root {
+  // Size — outer gap + padding
+  --error-state-gap-sm: var(--space-2);
+  --error-state-gap-md: var(--space-3);
+  --error-state-gap-lg: var(--space-4);
+  --error-state-padding-sm: var(--space-3);
+  --error-state-padding-md: var(--space-6);
+  --error-state-padding-lg: var(--space-10);
+
+  // Icon — tinted per tone
+  --error-state-icon-fg-neutral: var(--color-fg-muted);
+  --error-state-icon-fg-danger: var(--color-danger);
+  --error-state-icon-line-height: var(--line-height-none);
+
+  // Title
+  --error-state-title-fg: var(--color-fg);
+  --error-state-title-font-weight: var(--font-weight-semibold);
+  --error-state-title-line-height: var(--line-height-tight);
+  --error-state-title-font-size-sm: var(--font-size-sm);
+  --error-state-title-font-size-md: var(--font-size-md);
+  --error-state-title-font-size-lg: var(--font-size-xl);
+
+  // Description
+  --error-state-description-fg: var(--color-fg-subtle);
+  --error-state-description-line-height: var(--line-height-normal);
+  --error-state-description-font-size-sm: var(--font-size-sm);
+  --error-state-description-font-size-md: var(--font-size-md);
+}

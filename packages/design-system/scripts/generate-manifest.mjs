@@ -64,6 +64,7 @@ const CLUSTERS = {
   CursorPagination: 'Display',
   DataTable: 'Display',
   EmptyState: 'Display',
+  ErrorState: 'Display',
   FilterChip: 'Display',
   Kbd: 'Display',
   Pagination: 'Display',
