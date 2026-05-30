@@ -27,14 +27,14 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
-### [ ] `<AuthScreen>` (or `<AuthLayout>`) — full-viewport centered surface with a tinted backdrop for auth pages
+### [x] `<AuthScreen>` (or `<AuthLayout>`) — full-viewport centered surface with a tinted backdrop for auth pages
 
 **Filed:** 2026-05-29
-**Deferred:** 2026-05-30 — the login screen is a single playground mockup; a reusable auth-layout primitive is YAGNI for one screen. The Login wrapper escape hatches stay as a contained one-off. Revisit only if a second auth screen appears.
+**Superseded:** 2026-05-30 — shipped as the general `<Screen>` layout primitive (`packages/design-system/src/components/Screen/`), not a single-purpose `<AuthScreen>`. `<Screen>` provides `header` / centered-main / `footer` slots, a `fill` (viewport / block) and a tinted `backdrop` (none / plain / accent / danger). The Login mockup's two wrapper `<div>`s were refactored onto `<Screen backdrop="accent">`, and the standalone 404 / error mockups use it too.
 **Mocked in:**
 
-- `packages/playground/src/pages/mockups/Login/Login.tsx:51` — outer full-bleed wrapper (gradient backdrop, flex column, full viewport height)
-- `packages/playground/src/pages/mockups/Login/Login.tsx:69` — card-centering region (flex: 1, grid place-items center)
+- `packages/playground/src/pages/mockups/Login/Login.tsx` — outer full-bleed wrapper (gradient backdrop, flex column, full viewport height) — removed in the `<Screen>` refactor (8b7e5b9)
+- `packages/playground/src/pages/mockups/Login/Login.tsx` — card-centering region (flex: 1, grid place-items center) — removed in the `<Screen>` refactor (8b7e5b9)
 
 **What's needed:**
 A page-level layout primitive for sign-in / forgot-password / accept-invite screens: takes over the full viewport (`min-height: 100vh`), paints a subtle token-based backdrop (default a soft accent wash), and lays out three slots — an optional top bar (back-link / brand), a vertically + horizontally centered main slot (the auth card), and an optional footer (legal links). Props sketch: `backdrop?: 'plain' | 'tinted'`, plus `header` / `footer` slots and `children` (the centered content). No interactive state. The real eocrm app has an `AuthCardLayout` serving exactly this role, so the CRM will want it too.

@@ -311,6 +311,7 @@ export const MOCKUPS = [
       'Input',
       'Link',
       'PasswordInput',
+      'Screen',
       'Stack',
       'Text',
       'Title',
