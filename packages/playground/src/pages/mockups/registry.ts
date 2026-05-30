@@ -328,7 +328,8 @@ export const MOCKUPS = [
     slug: 'error',
     title: 'Error',
     path: '/mockups/error',
-    blurb: 'Error-boundary fallback — "something went wrong", shown in-app and as a standalone page.',
+    blurb:
+      'Error-boundary fallback — "something went wrong", shown in-app and as a standalone page.',
     usesComponents: ['Button', 'Cluster', 'ErrorState', 'Link', 'Screen', 'Stack', 'Text'],
   },
 ] as const satisfies readonly MockupEntry[];

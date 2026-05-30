@@ -173,7 +173,11 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description: 'Page-level 404 / error status block — icon, title, actions, error ID.',
     preview: (
       <div style={{ width: '100%', maxWidth: '260px' }}>
-        <ErrorState size="sm" icon={<Compass size={24} aria-hidden="true" />} title="Page not found" />
+        <ErrorState
+          size="sm"
+          icon={<Compass size={24} aria-hidden="true" />}
+          title="Page not found"
+        />
       </div>
     ),
   },
