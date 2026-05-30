@@ -415,6 +415,12 @@
     ],
     "composedBy": []
   },
+  "Screen": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": []
+  },
   "Select": {
     "tier": "primitive",
     "cluster": "Forms",

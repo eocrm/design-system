@@ -190,6 +190,9 @@ export type {
 export { Page } from './components/Page';
 export type { PageProps, PageGap } from './components/Page';
 
+export { Screen } from './components/Screen';
+export type { ScreenProps, ScreenFill, ScreenBackdrop, ScreenAlign } from './components/Screen';
+
 export { PageHeader } from './components/PageHeader';
 export type {
   PageHeaderProps,

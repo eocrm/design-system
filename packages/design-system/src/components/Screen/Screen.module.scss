@@ -1,0 +1,46 @@
+@use './Screen.tokens';
+
+// Screen is a layout-owning primitive — the documented exception to the
+// "no layout properties on components" rule (like Page / Rail). It takes over
+// the viewport (min-height) and grows its main slot (flex) because laying out a
+// full-bleed screen is its entire job. (stylelint's property-disallowed-list
+// blocks flex-grow / flex-basis but not the `flex` shorthand or min-height, so
+// no disable is needed here.)
+.root {
+  display: flex;
+  flex-direction: column;
+  padding: var(--screen-padding);
+}
+
+.fillViewport {
+  min-height: 100vh;
+}
+
+.fillBlock {
+  min-height: var(--screen-block-min-height);
+}
+
+.main {
+  flex: 1;
+  display: grid;
+}
+
+.alignCenter {
+  place-items: center;
+}
+
+.alignStart {
+  place-items: start center;
+}
+
+.backdropPlain {
+  background: var(--screen-backdrop-plain);
+}
+
+.backdropAccent {
+  background: var(--screen-backdrop-accent);
+}
+
+.backdropDanger {
+  background: var(--screen-backdrop-danger);
+}
