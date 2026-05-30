@@ -34,6 +34,11 @@ export function AppErrorStandalone() {
         </Text>
         <ErrorState
           tone="danger"
+          // Standalone full-page error: opt out of ErrorState's danger-tone
+          // role="alert" so a screen reader doesn't announce the whole screen
+          // assertively on load (per ErrorState's a11y guidance). The in-app
+          // boundary variant keeps role="alert" — it mounts on a live error.
+          role={undefined}
           icon={<TriangleAlert size={48} aria-hidden="true" />}
           title="Something went wrong"
           description="The app hit an unexpected error. Reloading usually fixes it."
