@@ -938,6 +938,30 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - `align`: `start` / `center` (default) / `end` / `baseline`
 - `wrap`: `true` (default). Set `false` only for narrow table cells where overflow is preferable to wrapping.
 
+### `<Screen>` — full-bleed / centered screen layout
+
+```tsx
+// Standalone (full viewport) — auth / 404 / error
+<Screen
+  backdrop="accent"
+  header={<Link to="/">← Home</Link>}
+  footer={<Cluster gap="lg"><Link>Privacy</Link><Link>Terms</Link></Cluster>}
+>
+  <ErrorState title="Page not found" actions={<Button>Go home</Button>} />
+</Screen>
+
+// In-app variant — fills the shell content area instead of the viewport
+<Screen fill="block">
+  <ErrorState title="Page not found" />
+</Screen>
+```
+
+- Page-root layout for **chromeless** screens that render outside the app shell (sign-in, 404, error, onboarding). Three slots: pinned `header`, centered `children` (main), pinned `footer`.
+- `fill`: `'viewport'` (**default**, `min-height:100vh`) / `'block'` (fills its container — use inside the shell content area).
+- `backdrop`: `'none'` (**default**, transparent) / `'plain'` (subtle solid) / `'accent'` (soft accent wash — the login backdrop) / `'danger'` (danger wash — standalone error).
+- `align`: `'center'` (default) / `'start'` — vertical placement of the main slot.
+- Layout-owning primitive (the `<Page>` / `<Rail>` exception to "no layout properties"). Don't nest inside `<Page>` or another `<Screen>`. For a normal in-shell page use `<Page>`; to center a small element use `<Cluster>` / `<Stack>`.
+
 ### `<Grid>` — 2D layout primitive
 
 ```tsx
@@ -1895,6 +1919,36 @@ or single boolean toggles (use `<Checkbox>` or `<Switch>`).
 - No `variant="error"` — error treatments need different a11y (live regions, retry actions). Use a future `<Alert>` or render a danger-tinted EmptyState with your own error message.
 - No automatic `aria-hidden` on the icon — consumer's icon may be semantic (e.g., a country-flag icon in a "No results for this region" state). If the icon is purely decorative, the consumer should pass `aria-hidden`.
 - The wrapper `<section>` only becomes a screen-reader landmark when it has an accessible name — pass `aria-label` (or `aria-labelledby`) when the empty state should be navigable as a region (typically when it IS the page's primary content with `headingLevel={1 | 2}`).
+
+### `<ErrorState>` — page-level status / result screen
+
+```tsx
+// 404 — neutral
+<ErrorState
+  icon={<Compass size={48} aria-hidden="true" />}
+  title="Page not found"
+  description="The page you're looking for doesn't exist or has been moved."
+  actions={<Button>Go to homepage</Button>}
+/>
+
+// Error-boundary fallback — danger tone → role="alert"
+<ErrorState
+  tone="danger"
+  icon={<TriangleAlert size={48} aria-hidden="true" />}
+  title="Something went wrong"
+  actions={<Button>Try again</Button>}
+  extra={<Text size="sm" tone="muted">Error ID: a1b2-c3d4</Text>}
+/>
+```
+
+- Page-level sibling of `<EmptyState>` — the component EmptyState's docs point to for "page-level 404 / 500" and danger-tinted error states. Use `<EmptyState>` for "nothing here" inside a surface; use `<Alert tone="error">` for an in-flow banner.
+- Slots: `icon`, `title` (required, semantic heading), `description`, `actions`, and `extra` (below the actions — error ID, status link).
+- `tone`: `'neutral'` (default — 404; muted icon) / `'danger'` (error; red icon + `role="alert"` on the wrapper so a boundary fallback announces on mount, overridable via `role`).
+- `size`: `sm` / `md` / `lg` (**default** — full-page hero). `align`: `'center'` (default) / `'start'`.
+- `headingLevel` defaults to `1` (the page h1); lower it when nested. Values outside 1–6 clamp to 1.
+- `tone="danger"` makes the wrapper `role="alert"` (announces the whole subtree assertively on mount — ideal for an error-boundary fallback). For a _standalone_ error page, pass `role={undefined}` so it isn't read as a wall of text on load. Override via `role`.
+- For `tone="neutral"`, the `<section>` is not a screen-reader landmark unless it has an accessible name — pass `aria-label` / `aria-labelledby` when it IS the page's primary region (typical for a full-page 404).
+- No automatic `aria-hidden` on the icon — pass `aria-hidden="true"` for a decorative icon. No i18n — all copy is consumer-supplied.
 
 ### `<Progress>` — linear progress bar
 

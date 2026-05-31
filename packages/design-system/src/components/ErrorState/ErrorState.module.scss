@@ -1,0 +1,105 @@
+@use './ErrorState.tokens';
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.align-center {
+  align-items: center;
+  text-align: center;
+}
+
+.align-start {
+  align-items: flex-start;
+  text-align: start;
+}
+
+// Size modifiers — gap between stacked children + outer padding.
+.size-sm {
+  gap: var(--error-state-gap-sm);
+  padding: var(--error-state-padding-sm);
+}
+
+.size-md {
+  gap: var(--error-state-gap-md);
+  padding: var(--error-state-padding-md);
+}
+
+.size-lg {
+  gap: var(--error-state-gap-lg);
+  padding: var(--error-state-padding-lg);
+}
+
+// Icon — color comes from the tone modifier below. Consumer-supplied SVG
+// inherits via currentColor (lucide convention).
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: var(--error-state-icon-line-height);
+}
+
+.tone-neutral .icon {
+  color: var(--error-state-icon-fg-neutral);
+}
+
+.tone-danger .icon {
+  color: var(--error-state-icon-fg-danger);
+}
+
+// stylelint-disable property-disallowed-list -- defensive reset of user-agent <h*> margins; not a layout property on the component box.
+.title {
+  margin: 0;
+  color: var(--error-state-title-fg);
+  font-weight: var(--error-state-title-font-weight);
+  line-height: var(--error-state-title-line-height);
+}
+// stylelint-enable property-disallowed-list
+
+.size-sm .title {
+  font-size: var(--error-state-title-font-size-sm);
+}
+
+.size-md .title {
+  font-size: var(--error-state-title-font-size-md);
+}
+
+.size-lg .title {
+  font-size: var(--error-state-title-font-size-lg);
+}
+
+// stylelint-disable property-disallowed-list -- `margin: 0` resets the user-agent
+// <p> margin (the only property flagged by property-disallowed-list here).
+// `max-width: 48ch` is an internal readable-width cap, not a layout property on
+// the component box, and is not the reason for this disable.
+.description {
+  margin: 0;
+  color: var(--error-state-description-fg);
+  line-height: var(--error-state-description-line-height);
+  max-width: 48ch;
+}
+// stylelint-enable property-disallowed-list
+
+.size-sm .description {
+  font-size: var(--error-state-description-font-size-sm);
+}
+
+.size-md .description,
+.size-lg .description {
+  font-size: var(--error-state-description-font-size-md);
+}
+
+// Shrink-to-fit wrappers around the consumer's slots. inline-flex keeps a lone
+// child from stretching the column when align="start". Spacing above comes from
+// .errorState's gap, not padding here.
+.actions {
+  display: inline-flex;
+  align-items: center;
+}
+
+.extra {
+  display: inline-flex;
+  align-items: center;
+}

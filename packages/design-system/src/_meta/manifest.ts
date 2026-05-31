@@ -49,6 +49,7 @@ const CLUSTERS: Record<string, string> = {
   Masonry: 'Layout',
   Card: 'Layout',
   Page: 'Layout',
+  Screen: 'Layout',
   PageHeader: 'Layout',
 
   // Forms
@@ -86,6 +87,7 @@ const CLUSTERS: Record<string, string> = {
   CursorPagination: 'Display',
   DataTable: 'Display',
   EmptyState: 'Display',
+  ErrorState: 'Display',
   FilterChip: 'Display',
   Kbd: 'Display',
   Pagination: 'Display',

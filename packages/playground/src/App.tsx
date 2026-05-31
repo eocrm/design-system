@@ -11,6 +11,10 @@ import { Tenants } from './pages/mockups/Tenants/Tenants';
 import { TenantDetail } from './pages/mockups/Tenants/TenantDetail';
 import { Settings } from './pages/mockups/Settings/Settings';
 import { Login } from './pages/mockups/Login/Login';
+import { NotFound } from './pages/mockups/NotFound/NotFound';
+import { NotFoundStandalone } from './pages/mockups/NotFound/NotFoundStandalone';
+import { AppError } from './pages/mockups/AppError/AppError';
+import { AppErrorStandalone } from './pages/mockups/AppError/AppErrorStandalone';
 import { ComponentsIndex } from './pages/components/ComponentsIndex';
 import { TokensPage } from './pages/Tokens/TokensPage';
 import { ArchitecturePage } from './pages/Architecture/ArchitecturePage';
@@ -62,6 +66,8 @@ import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverD
 import { DataTableDemo } from './pages/components/DataTableDemo';
 import { DefinitionListDemo } from './pages/components/DefinitionListDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
+import { ErrorStateDemo } from './pages/components/ErrorStateDemo';
+import { ScreenDemo } from './pages/components/ScreenDemo';
 import { FileUploadDemo } from './pages/components/FileUploadDemo';
 import { FilterChipDemo } from './pages/components/FilterChipDemo';
 import { PersonDisplayDemo } from './pages/components/PersonDisplayDemo';
@@ -96,6 +102,10 @@ export default function App() {
             <Route path="/mockups/system-settings" element={<Settings />} />
             <Route path="/mockups/audit" element={<Audit />} />
             <Route path="/mockups/login" element={<Login />} />
+            <Route path="/mockups/404" element={<NotFound />} />
+            <Route path="/mockups/404-standalone" element={<NotFoundStandalone />} />
+            <Route path="/mockups/error" element={<AppError />} />
+            <Route path="/mockups/error-standalone" element={<AppErrorStandalone />} />
 
             <Route path="/components" element={<ComponentsIndex />} />
             <Route path="/components/tokens" element={<TokensPage />} />
@@ -150,6 +160,8 @@ export default function App() {
             <Route path="/components/datatable" element={<DataTableDemo />} />
             <Route path="/components/definition-list" element={<DefinitionListDemo />} />
             <Route path="/components/empty-state" element={<EmptyStateDemo />} />
+            <Route path="/components/error-state" element={<ErrorStateDemo />} />
+            <Route path="/components/screen" element={<ScreenDemo />} />
             <Route path="/components/file-upload" element={<FileUploadDemo />} />
             <Route path="/components/filter-chip" element={<FilterChipDemo />} />
             <Route path="/components/image" element={<ImageDemo />} />

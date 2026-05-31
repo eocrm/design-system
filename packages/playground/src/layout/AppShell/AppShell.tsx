@@ -69,6 +69,8 @@ import {
   GalleryVerticalEnd,
   Settings as SettingsIcon,
   Fingerprint,
+  TriangleAlert,
+  Compass,
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -76,6 +78,14 @@ import { Avatar, Rail, TopBar, useRail } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
+
+// Routes that render OUTSIDE the shell chrome (no Rail / TopBar) so they read
+// like real standalone screens — login + the standalone 404 / error variants.
+const FULL_BLEED_PATHS = new Set([
+  '/mockups/login',
+  '/mockups/404-standalone',
+  '/mockups/error-standalone',
+]);
 
 const mockupItems = [
   { to: '/mockups', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -87,6 +97,8 @@ const mockupItems = [
   { to: '/mockups/audit', label: 'Audit log', icon: Activity, end: false },
   { to: '/mockups/system-settings', label: 'System settings', icon: SettingsIcon, end: false },
   { to: '/mockups/login', label: 'Login', icon: LogIn, end: false },
+  { to: '/mockups/404', label: 'Not found', icon: Compass, end: false },
+  { to: '/mockups/error', label: 'Error', icon: TriangleAlert, end: false },
 ];
 
 const componentOverview = {
@@ -122,6 +134,7 @@ const componentGroups = [
       { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
       { to: '/components/page-header', label: 'PageHeader', icon: LayoutPanelTop, end: false },
       { to: '/components/page', label: 'Page', icon: FileText, end: false },
+      { to: '/components/screen', label: 'Screen', icon: AppWindow, end: false },
     ],
   },
   {
@@ -169,6 +182,7 @@ const componentGroups = [
       { to: '/components/code', label: 'Code', icon: CodeIcon, end: false },
       { to: '/components/definition-list', label: 'DefinitionList', icon: List, end: false },
       { to: '/components/empty-state', label: 'EmptyState', icon: Inbox, end: false },
+      { to: '/components/error-state', label: 'ErrorState', icon: TriangleAlert, end: false },
       { to: '/components/filter-chip', label: 'FilterChip', icon: Filter, end: false },
       { to: '/components/image', label: 'Image', icon: ImageIcon, end: false },
       { to: '/components/kbd', label: 'Kbd', icon: Command, end: false },
@@ -266,9 +280,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
   }, [collapsed]);
 
-  // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so a
-  // login screen reads like a real auth page, not a page inside the CRM.
-  if (pathname === '/mockups/login') {
+  // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so they
+  // read like real standalone screens, not pages inside the CRM.
+  if (FULL_BLEED_PATHS.has(pathname)) {
     return <>{children}</>;
   }
 

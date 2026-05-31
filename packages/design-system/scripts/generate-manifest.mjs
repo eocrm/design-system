@@ -27,6 +27,7 @@ const CLUSTERS = {
   Masonry: 'Layout',
   Card: 'Layout',
   Page: 'Layout',
+  Screen: 'Layout',
   PageHeader: 'Layout',
 
   // Forms
@@ -64,6 +65,7 @@ const CLUSTERS = {
   CursorPagination: 'Display',
   DataTable: 'Display',
   EmptyState: 'Display',
+  ErrorState: 'Display',
   FilterChip: 'Display',
   Kbd: 'Display',
   Pagination: 'Display',

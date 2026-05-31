@@ -137,6 +137,15 @@ export type {
   EmptyStateHeadingLevel,
 } from './components/EmptyState';
 
+export { ErrorState } from './components/ErrorState';
+export type {
+  ErrorStateProps,
+  ErrorStateSize,
+  ErrorStateAlign,
+  ErrorStateTone,
+  ErrorStateHeadingLevel,
+} from './components/ErrorState';
+
 export { toast, ToastViewport } from './components/Toast';
 export type {
   ToastOptions,
@@ -180,6 +189,9 @@ export type {
 
 export { Page } from './components/Page';
 export type { PageProps, PageGap } from './components/Page';
+
+export { Screen } from './components/Screen';
+export type { ScreenProps, ScreenFill, ScreenBackdrop, ScreenAlign } from './components/Screen';
 
 export { PageHeader } from './components/PageHeader';
 export type {

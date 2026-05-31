@@ -220,6 +220,12 @@
       "DataTable"
     ]
   },
+  "ErrorState": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "FileUpload": {
     "tier": "composition",
     "cluster": "Forms",
@@ -407,6 +413,12 @@
       "Button",
       "Tooltip"
     ],
+    "composedBy": []
+  },
+  "Screen": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
     "composedBy": []
   },
   "Select": {

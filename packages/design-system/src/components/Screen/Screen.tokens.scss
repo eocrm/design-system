@@ -1,0 +1,20 @@
+// Screen.tokens.scss — Component-scoped tokens for <Screen>. Padding, the
+// block-fill min-height, and the three backdrops. Backdrop gradients reference
+// color primitives for their stops (geometry percentages are not tokenized
+// values); custom-property declarations are exempt from declaration-strict-value.
+:root {
+  --screen-padding: var(--space-6);
+  --screen-block-min-height: 60vh;
+
+  --screen-backdrop-plain: var(--color-bg-subtle);
+  --screen-backdrop-accent: radial-gradient(
+    120% 90% at 50% -8%,
+    var(--color-accent-subtle-bg) 0%,
+    var(--color-bg-subtle) 52%
+  );
+  --screen-backdrop-danger: radial-gradient(
+    120% 90% at 50% -8%,
+    var(--color-danger-bg-subtle) 0%,
+    var(--color-bg-subtle) 55%
+  );
+}

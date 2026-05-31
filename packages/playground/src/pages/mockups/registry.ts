@@ -26,6 +26,7 @@ export type ComponentName =
   | 'Drawer'
   | 'DropdownMenu'
   | 'EmptyState'
+  | 'ErrorState'
   | 'FilterChip'
   | 'FileUpload'
   | 'Image'
@@ -52,6 +53,7 @@ export type ComponentName =
   | 'Radio'
   | 'RadioGroup'
   | 'Rail'
+  | 'Screen'
   | 'Select'
   | 'Skeleton'
   | 'Slider'
@@ -309,10 +311,26 @@ export const MOCKUPS = [
       'Input',
       'Link',
       'PasswordInput',
+      'Screen',
       'Stack',
       'Text',
       'Title',
     ],
+  },
+  {
+    slug: '404',
+    title: 'Not found',
+    path: '/mockups/404',
+    blurb: '404 page — the not-found state, shown in-app and as a standalone full-bleed page.',
+    usesComponents: ['Button', 'Cluster', 'ErrorState', 'Link', 'Screen', 'Stack', 'Text'],
+  },
+  {
+    slug: 'error',
+    title: 'Error',
+    path: '/mockups/error',
+    blurb:
+      'Error-boundary fallback — "something went wrong", shown in-app and as a standalone page.',
+    usesComponents: ['Button', 'Cluster', 'ErrorState', 'Link', 'Screen', 'Stack', 'Text'],
   },
 ] as const satisfies readonly MockupEntry[];
 
