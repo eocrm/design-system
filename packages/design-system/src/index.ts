@@ -554,3 +554,6 @@ export type { FieldProps, FieldOrientation, FieldSize, FieldRenderProps } from '
 
 export { FormSection } from './components/FormSection';
 export type { FormSectionProps } from './components/FormSection';
+
+export { FormRow } from './components/FormRow';
+export type { FormRowProps } from './components/FormRow';

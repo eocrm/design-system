@@ -24,6 +24,7 @@ import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
 import { Masonry } from '@eocrm/design-system';
 import { Field } from '@eocrm/design-system';
+import { FormRow } from '@eocrm/design-system';
 import { FormSection } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Kbd } from '@eocrm/design-system';
@@ -560,6 +561,21 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <Field label="Email" description="We only use this for sign-in.">
         <Input placeholder="you@company.com" />
       </Field>
+    ),
+  },
+  {
+    to: '/components/form-row',
+    name: 'FormRow',
+    description: 'Fields side by side; reflows to stacked when narrow.',
+    preview: (
+      <FormRow>
+        <Field label="First">
+          <Input placeholder="Ada" />
+        </Field>
+        <Field label="Last">
+          <Input placeholder="Lovelace" />
+        </Field>
+      </FormRow>
     ),
   },
   {
