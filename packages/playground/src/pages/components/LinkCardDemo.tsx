@@ -8,7 +8,7 @@ export function LinkCardDemo() {
     <DemoLayout
       name="LinkCard"
       componentName="LinkCard"
-      description="A clickable Card whose whole surface navigates or acts. Polymorphic like Link (as defaults to <a>; pass as={RouterLink} or as=&quot;button&quot;). Hover lift + focus ring."
+      description='A clickable Card whose whole surface navigates or acts. Polymorphic like Link (as defaults to <a>; pass as={RouterLink} or as="button"). Hover lift + focus ring.'
       files={getComponentFiles('LinkCard')}
     >
       <Example

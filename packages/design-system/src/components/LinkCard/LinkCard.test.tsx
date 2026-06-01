@@ -50,7 +50,11 @@ describe('LinkCard', () => {
   });
 
   it('as="button" type default can be overridden by consumer', () => {
-    render(<LinkCard as="button" type="submit">S</LinkCard>);
+    render(
+      <LinkCard as="button" type="submit">
+        S
+      </LinkCard>,
+    );
     expect(screen.getByRole('button', { name: 'S' })).toHaveAttribute('type', 'submit');
   });
 
