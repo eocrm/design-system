@@ -430,6 +430,10 @@ export type { LocaleProviderProps } from './i18n';
 export { I18nProvider, useTranslation, useTranslationArray, ruPlural } from './i18n';
 export type { I18nProviderProps, Locale, Messages, MessageKey, DeepPartial } from './i18n';
 
+// App root — bundles the locale + i18n + toast contexts for a consuming app.
+export { AppProvider } from './app';
+export type { AppProviderProps } from './app';
+
 // Calendar primitives (hooks + date math + Intl formatters + locale week info).
 // The Calendar UI components below and a future DatePicker compose against
 // these — use them directly when you need date math without the UI.

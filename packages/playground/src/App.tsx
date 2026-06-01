@@ -81,11 +81,11 @@ import { LinkDemo } from './pages/components/LinkDemo';
 import { RailDemo } from './pages/components/RailDemo';
 import { ToastDemo } from './pages/components/ToastDemo';
 import { TopBarDemo } from './pages/components/TopBarDemo';
-import { I18nProvider, ToastViewport } from '@eocrm/design-system';
+import { AppProvider } from '@eocrm/design-system';
 
 export default function App() {
   return (
-    <I18nProvider locale="en">
+    <AppProvider locale="en" intlLocale="en-US" toast={{ position: 'bottom-right' }}>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AppShell>
           <Routes>
@@ -178,8 +178,7 @@ export default function App() {
             <Route path="/components/toast" element={<ToastDemo />} />
           </Routes>
         </AppShell>
-        <ToastViewport position="bottom-right" />
       </BrowserRouter>
-    </I18nProvider>
+    </AppProvider>
   );
 }
