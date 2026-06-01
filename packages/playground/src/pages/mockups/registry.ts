@@ -41,6 +41,7 @@ export type ComponentName =
   | 'Kanban'
   | 'Kbd'
   | 'Link'
+  | 'LinkCard'
   | 'Modal'
   | 'OptionsPicker'
   | 'Page'

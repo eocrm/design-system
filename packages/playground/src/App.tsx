@@ -80,6 +80,7 @@ import { DrawerDemo } from './pages/components/DrawerDemo';
 import { GridDemo } from './pages/components/GridDemo';
 import { MasonryDemo } from './pages/components/MasonryDemo';
 import { LinkDemo } from './pages/components/LinkDemo';
+import { LinkCardDemo } from './pages/components/LinkCardDemo';
 import { RailDemo } from './pages/components/RailDemo';
 import { ToastDemo } from './pages/components/ToastDemo';
 import { TopBarDemo } from './pages/components/TopBarDemo';
@@ -175,6 +176,7 @@ export default function App() {
             <Route path="/components/grid" element={<GridDemo />} />
             <Route path="/components/masonry" element={<MasonryDemo />} />
             <Route path="/components/link" element={<LinkDemo />} />
+            <Route path="/components/link-card" element={<LinkCardDemo />} />
             <Route path="/components/rail" element={<RailDemo />} />
             <Route path="/components/topbar" element={<TopBarDemo />} />
             <Route path="/components/textarea" element={<TextareaDemo />} />
