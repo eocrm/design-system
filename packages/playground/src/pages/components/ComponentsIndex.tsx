@@ -24,6 +24,7 @@ import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
 import { Masonry } from '@eocrm/design-system';
 import { Field } from '@eocrm/design-system';
+import { FormSection } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Kbd } from '@eocrm/design-system';
 import { PasswordInput } from '@eocrm/design-system';
@@ -559,6 +560,18 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <Field label="Email" description="We only use this for sign-in.">
         <Input placeholder="you@company.com" />
       </Field>
+    ),
+  },
+  {
+    to: '/components/form-section',
+    name: 'FormSection',
+    description: 'Titled group of fields with heading + description.',
+    preview: (
+      <FormSection title="Profile" description="Public details">
+        <Field label="Name">
+          <Input placeholder="Ada Lovelace" />
+        </Field>
+      </FormSection>
     ),
   },
   {

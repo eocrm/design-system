@@ -260,6 +260,15 @@
     ],
     "composedBy": []
   },
+  "FormSection": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Text",
+      "Title"
+    ],
+    "composedBy": []
+  },
   "Grid": {
     "tier": "primitive",
     "cluster": "Layout",
@@ -522,6 +531,7 @@
     "composedBy": [
       "Field",
       "FilterChip",
+      "FormSection",
       "OptionsPicker",
       "PersonDisplay"
     ]
@@ -546,6 +556,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "FormSection",
       "PageHeader"
     ]
   },

@@ -551,3 +551,6 @@ export { PALETTE_COLORS, paletteTokens } from './palette';
 
 export { Field } from './components/Field';
 export type { FieldProps, FieldOrientation, FieldSize, FieldRenderProps } from './components/Field';
+
+export { FormSection } from './components/FormSection';
+export type { FormSectionProps } from './components/FormSection';
