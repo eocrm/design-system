@@ -18,12 +18,28 @@ Read this first. The authoritative per-component contracts live in **JSDoc on ea
 
 ## Setup (once per consuming app)
 
-```ts
-// In your app root (e.g. main.tsx):
+Two steps at your app root:
+
+```tsx
+// 1. Import the stylesheet once (tokens, modern reset, base typography).
 import '@eocrm/design-system/styles/global.scss';
+
+// 2. Wrap your tree in <AppProvider>.
+import { AppProvider } from '@eocrm/design-system';
+
+<AppProvider locale="en" intlLocale="en-US">
+  <App />
+</AppProvider>;
 ```
 
-That import wires up tokens, the modern reset, and base typography. Everything else flows from it.
+`<AppProvider>` bundles the app-level contexts so you don't wire them by hand:
+
+- `locale` (`'en' | 'ru'`) — selects the built-in UI-string bundle.
+- `intlLocale?` (BCP-47, e.g. `'en-US'`) — locale for Intl formatting (Calendar, dates, numbers). Defaults to `locale`.
+- `translations?` — deep-partial overrides merged over the built-in strings (rebrand a few keys; memoize the object).
+- `toast?` — `<ToastViewport>` config, or `false` to mount it yourself. Omitted ⇒ mounted with defaults.
+
+It composes `LocaleProvider` + `I18nProvider` and mounts the toast viewport. **Routing is yours** (`<AppProvider>` ships no router), and the stylesheet import above is still required. The individual providers (`LocaleProvider`, `I18nProvider`, `ToastViewport`) remain exported for advanced cases like pinning a subtree to a different locale.
 
 ---
 
