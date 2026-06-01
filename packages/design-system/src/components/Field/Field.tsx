@@ -9,6 +9,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { Text, type TextSize } from '../Text';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Field.module.scss';
 
 /** Label placement relative to the control. */
@@ -43,7 +44,7 @@ export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childr
   optional?: boolean;
   /** Label placement. Default `'vertical'`. `'horizontal'` puts the label beside the control. */
   orientation?: FieldOrientation;
-  /** Label/message type scale. Default `'md'`. */
+  /** Label/message type scale. Default `'md'`. Size primarily scales the label; the help/error message uses a compact fixed scale (`md` and `lg` both render the message at `sm`). */
   size?: FieldSize;
   /** Explicit control id. Field owns the id by default (auto-generated) so the label always matches. */
   id?: string;
@@ -117,6 +118,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   },
   ref,
 ) {
+  const t = useTranslation();
   const reactId = useId();
   const controlId = id ?? reactId;
   const labelId = `${controlId}-label`;
@@ -143,7 +145,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
     const child = children as ReactElement<Record<string, unknown>>;
     const childProps = child.props;
     const injected: Record<string, unknown> = asGroup
-      ? { invalid: childProps.invalid ?? invalid }
+      ? { invalid: childProps.invalid ?? invalid, required: childProps.required ?? requiredBool }
       : {
           id: controlId,
           'aria-describedby': childProps['aria-describedby'] ?? describedBy,
@@ -166,7 +168,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
       {required && (
         <span aria-hidden="true" className={styles.required}> *</span>
       )}
-      {optional && <span className={styles.optional}> (optional)</span>}
+      {optional && <span className={styles.optional}> {t('field.optional')}</span>}
     </>
   );
 

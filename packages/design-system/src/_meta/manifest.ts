@@ -61,6 +61,7 @@ const CLUSTERS: Record<string, string> = {
   DatePicker: 'Forms',
   DatePickers: 'Forms',
   DateRangePicker: 'Forms',
+  Field: 'Forms',
   FileUpload: 'Forms',
   ImageCrop: 'Forms',
   Input: 'Forms',

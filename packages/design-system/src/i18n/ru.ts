@@ -161,4 +161,7 @@ export const ru: Messages = {
     label: 'Верхняя панель приложения',
     search: 'Поиск',
   },
+  field: {
+    optional: '(необязательно)',
+  },
 };

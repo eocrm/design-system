@@ -234,6 +234,14 @@
     "composes": [],
     "composedBy": []
   },
+  "Field": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Text"
+    ],
+    "composedBy": []
+  },
   "FileUpload": {
     "tier": "composition",
     "cluster": "Forms",
@@ -512,6 +520,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "Field",
       "FilterChip",
       "OptionsPicker",
       "PersonDisplay"

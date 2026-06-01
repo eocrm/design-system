@@ -141,4 +141,37 @@ describe('Field', () => {
     expect(root.className).toMatch(/my-cls/);
     expect(root).toHaveAttribute('data-foo', 'bar');
   });
+
+  it("owns the control id — a child's own id is overridden", () => {
+    const { container } = render(
+      <Field label="Email">
+        <StubControl id="ignored" />
+      </Field>,
+    );
+    const input = screen.getByTestId('control');
+    expect(input.id).not.toBe('ignored');
+    expect(input.id).toBeTruthy();
+    expect(container.querySelector(`label[for="${input.id}"]`)).toBeInTheDocument();
+  });
+
+  it('auto-clone injects `invalid` but not `aria-invalid` (control maps it)', () => {
+    function RawControl(props: { invalid?: boolean; 'aria-invalid'?: boolean }) {
+      return (
+        <input
+          data-testid="raw"
+          data-invalid={String(Boolean(props.invalid))}
+          aria-invalid={props['aria-invalid']}
+        />
+      );
+    }
+
+    render(
+      <Field label="Email" error="bad">
+        <RawControl />
+      </Field>,
+    );
+    const raw = screen.getByTestId('raw');
+    expect(raw).toHaveAttribute('data-invalid', 'true');
+    expect(raw).not.toHaveAttribute('aria-invalid');
+  });
 });
