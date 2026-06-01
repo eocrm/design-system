@@ -63,6 +63,7 @@ import { PopoverDemo } from './pages/components/PopoverDemo';
 import { RadioDemo } from './pages/components/RadioDemo';
 import { CalendarDemo } from './pages/components/CalendarDemo';
 import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverDemo';
+import { ConstrainDemo } from './pages/components/ConstrainDemo';
 import { DataTableDemo } from './pages/components/DataTableDemo';
 import { DefinitionListDemo } from './pages/components/DefinitionListDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
@@ -158,6 +159,7 @@ export default function App() {
             <Route path="/components/radio" element={<RadioDemo />} />
             <Route path="/components/calendar" element={<CalendarDemo />} />
             <Route path="/components/confirmation-popover" element={<ConfirmationPopoverDemo />} />
+            <Route path="/components/constrain" element={<ConstrainDemo />} />
             <Route path="/components/datatable" element={<DataTableDemo />} />
             <Route path="/components/definition-list" element={<DefinitionListDemo />} />
             <Route path="/components/empty-state" element={<EmptyStateDemo />} />

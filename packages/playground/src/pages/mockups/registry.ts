@@ -17,6 +17,7 @@ export type ComponentName =
   | 'Code'
   | 'ColorPicker'
   | 'ConfirmationPopover'
+  | 'Constrain'
   | 'CursorPagination'
   | 'DataTable'
   | 'DatePicker'
