@@ -23,6 +23,7 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
    * - `'none'` — fixed, never grow/shrink (`flex: 0 0 auto`).
    */
   flex?: ConstrainFlex;
+  /** The content to size. Required — a Constrain with nothing inside has nothing to constrain. */
   children: ReactNode;
 }
 
