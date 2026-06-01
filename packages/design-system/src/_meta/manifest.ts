@@ -88,6 +88,7 @@ const CLUSTERS: Record<string, string> = {
   DataTable: 'Display',
   EmptyState: 'Display',
   ErrorState: 'Display',
+  IconTile: 'Display',
   FilterChip: 'Display',
   Kbd: 'Display',
   Pagination: 'Display',

@@ -51,6 +51,8 @@ import { Screen } from '@eocrm/design-system';
 import { Compass } from 'lucide-react';
 import { FileUpload } from '@eocrm/design-system';
 import { FilterChip } from '@eocrm/design-system';
+import { IconTile } from '@eocrm/design-system';
+import { Shapes } from 'lucide-react';
 import { Image } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
 import { OptionsPicker } from '@eocrm/design-system';
@@ -235,6 +237,18 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           style={{ pointerEvents: 'none' }}
         />
       </div>
+    ),
+  },
+  {
+    to: '/components/icon-tile',
+    name: 'IconTile',
+    description: 'Decorative tile framing an icon, tinted by a Palette color.',
+    preview: (
+      <Cluster gap="sm">
+        <IconTile color="blue" icon={<Shapes size={16} />} />
+        <IconTile color="amber" shape="circle" icon={<Shapes size={16} />} />
+        <IconTile color="green" icon={<Shapes size={16} />} />
+      </Cluster>
     ),
   },
   {

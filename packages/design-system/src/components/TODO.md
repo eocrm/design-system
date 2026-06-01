@@ -60,9 +60,10 @@ A hand-authored inline `<svg viewBox="0 0 48 48">` with four `<path fill="#…">
 
 **When this ships:** refactor the Login SSO button to use the brand icon, then tick this checkbox.
 
-### [ ] `<StatTile>` (or `<IconTile>`) — tinted square (or circle) containing a centered icon
+### [x] `<StatTile>` (or `<IconTile>`) — tinted square (or circle) containing a centered icon
 
 **Filed:** 2026-05-25
+**Shipped:** 2026-06-01 — shipped as `<IconTile>` (`packages/design-system/src/components/IconTile/`), renamed from StatTile and colored by a **Palette** `color` (one of the 30) rather than a semantic tone. Props: `icon`, `color?` (default `'slate'`), `size?` (`sm`/`md`/`lg`), `shape?` (`square`/`circle`), `label?` (decorative by default → `role="img"` when set). The Dashboard stat tiles (now `color="blue"`) and the Members invite tile (now `color="amber"` circle) were refactored onto it.
 **Mocked in:**
 
 - `packages/playground/src/pages/mockups/Dashboard/Dashboard.tsx` — used as the trailing element inside each stat Card (label / value / Badge column on the left, tile on the right). Rounded-square shape.

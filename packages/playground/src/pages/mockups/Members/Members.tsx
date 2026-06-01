@@ -6,6 +6,7 @@ import {
   Card,
   Cluster,
   DropdownMenu,
+  IconTile,
   Input,
   Page,
   PageHeader,
@@ -171,22 +172,7 @@ export function Members() {
                 <Table.Row key={inv.id}>
                   <Table.Cell>
                     <Cluster gap="sm" align="center" wrap={false}>
-                      {/* TODO: replace when <StatTile> ships (circular variant) — see components/TODO.md */}
-                      <span
-                        aria-hidden
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 'var(--size-md)',
-                          height: 'var(--size-md)',
-                          borderRadius: 'var(--radius-full)',
-                          background: 'var(--color-badge-warning-bg)',
-                          color: 'var(--color-badge-warning-fg)',
-                        }}
-                      >
-                        <MailPlus size={14} />
-                      </span>
+                      <IconTile color="amber" shape="circle" icon={<MailPlus size={14} />} />
                       <Text as="span" weight="medium">
                         {inv.email}
                       </Text>

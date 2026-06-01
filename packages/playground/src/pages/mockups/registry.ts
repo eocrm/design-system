@@ -29,6 +29,7 @@ export type ComponentName =
   | 'ErrorState'
   | 'FilterChip'
   | 'FileUpload'
+  | 'IconTile'
   | 'Image'
   | 'ImageCrop'
   | 'Grid'
@@ -91,6 +92,7 @@ export const MOCKUPS = [
       'Card',
       'Cluster',
       'Grid',
+      'IconTile',
       'Link',
       'Page',
       'PageHeader',
@@ -179,6 +181,7 @@ export const MOCKUPS = [
       'Card',
       'Cluster',
       'DropdownMenu',
+      'IconTile',
       'Input',
       'Page',
       'PageHeader',
