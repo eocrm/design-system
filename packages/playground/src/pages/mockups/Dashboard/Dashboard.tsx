@@ -8,6 +8,7 @@ import {
   Avatar,
   Badge,
   Button,
+  IconTile,
   Link,
   Page,
   PageHeader,
@@ -92,20 +93,7 @@ export function Dashboard() {
                   <ArrowUpRight size={10} /> {delta}
                 </Badge>
               </Stack>
-              {/* TODO: replace when <StatTile> ships — see components/TODO.md */}
-              <div
-                style={{
-                  display: 'grid',
-                  placeItems: 'center',
-                  width: 'var(--size-md)',
-                  height: 'var(--size-md)',
-                  borderRadius: 'var(--radius-md)',
-                  background: 'var(--color-accent-subtle-bg)',
-                  color: 'var(--color-accent)',
-                }}
-              >
-                <Icon size={16} />
-              </div>
+              <IconTile color="blue" icon={<Icon size={16} />} />
             </Cluster>
           </Card>
         ))}
