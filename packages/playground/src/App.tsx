@@ -71,6 +71,7 @@ import { ScreenDemo } from './pages/components/ScreenDemo';
 import { FileUploadDemo } from './pages/components/FileUploadDemo';
 import { FilterChipDemo } from './pages/components/FilterChipDemo';
 import { PersonDisplayDemo } from './pages/components/PersonDisplayDemo';
+import { IconTileDemo } from './pages/components/IconTileDemo';
 import { ImageDemo } from './pages/components/ImageDemo';
 import { ImageCropDemo } from './pages/components/ImageCropDemo';
 import { DividerDemo } from './pages/components/DividerDemo';
@@ -164,6 +165,7 @@ export default function App() {
             <Route path="/components/screen" element={<ScreenDemo />} />
             <Route path="/components/file-upload" element={<FileUploadDemo />} />
             <Route path="/components/filter-chip" element={<FilterChipDemo />} />
+            <Route path="/components/icon-tile" element={<IconTileDemo />} />
             <Route path="/components/image" element={<ImageDemo />} />
             <Route path="/components/image-crop" element={<ImageCropDemo />} />
             <Route path="/components/divider" element={<DividerDemo />} />

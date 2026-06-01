@@ -71,6 +71,7 @@ import {
   Fingerprint,
   TriangleAlert,
   Compass,
+  Shapes,
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -184,6 +185,7 @@ const componentGroups = [
       { to: '/components/empty-state', label: 'EmptyState', icon: Inbox, end: false },
       { to: '/components/error-state', label: 'ErrorState', icon: TriangleAlert, end: false },
       { to: '/components/filter-chip', label: 'FilterChip', icon: Filter, end: false },
+      { to: '/components/icon-tile', label: 'IconTile', icon: Shapes, end: false },
       { to: '/components/image', label: 'Image', icon: ImageIcon, end: false },
       { to: '/components/kbd', label: 'Kbd', icon: Command, end: false },
       { to: '/components/pagination', label: 'Pagination', icon: ListOrdered, end: false },

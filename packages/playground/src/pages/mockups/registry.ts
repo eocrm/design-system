@@ -29,6 +29,7 @@ export type ComponentName =
   | 'ErrorState'
   | 'FilterChip'
   | 'FileUpload'
+  | 'IconTile'
   | 'Image'
   | 'ImageCrop'
   | 'Grid'
