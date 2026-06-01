@@ -108,6 +108,7 @@ const CLUSTERS: Record<string, string> = {
   Accordion: 'Navigation',
   Breadcrumb: 'Navigation',
   Link: 'Navigation',
+  LinkCard: 'Navigation',
   Rail: 'Navigation',
   Tabs: 'Navigation',
   TopBar: 'Navigation',

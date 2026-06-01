@@ -86,6 +86,7 @@ const CLUSTERS = {
   Accordion: 'Navigation',
   Breadcrumb: 'Navigation',
   Link: 'Navigation',
+  LinkCard: 'Navigation',
   Rail: 'Navigation',
   Tabs: 'Navigation',
   TopBar: 'Navigation',
