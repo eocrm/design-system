@@ -66,6 +66,7 @@ const CLUSTERS = {
   DataTable: 'Display',
   EmptyState: 'Display',
   ErrorState: 'Display',
+  IconTile: 'Display',
   FilterChip: 'Display',
   Kbd: 'Display',
   Pagination: 'Display',

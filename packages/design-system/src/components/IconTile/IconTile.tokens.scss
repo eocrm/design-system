@@ -1,0 +1,11 @@
+// IconTile.tokens.scss — Component tokens for <IconTile>. Box size per `size`
+// and corner radius per `shape`; default to primitives. The bg/fg tint is set
+// at runtime via the --icon-tile-bg / --icon-tile-fg custom properties (from a
+// PaletteColor), so it is not declared here.
+:root {
+  --icon-tile-size-sm: var(--size-sm); // 24px
+  --icon-tile-size-md: var(--size-md); // 32px
+  --icon-tile-size-lg: var(--size-lg); // 40px
+  --icon-tile-radius-square: var(--radius-md);
+  --icon-tile-radius-circle: var(--radius-full);
+}

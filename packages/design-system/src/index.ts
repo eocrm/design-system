@@ -146,6 +146,9 @@ export type {
   ErrorStateHeadingLevel,
 } from './components/ErrorState';
 
+export { IconTile } from './components/IconTile';
+export type { IconTileProps, IconTileSize, IconTileShape } from './components/IconTile';
+
 export { toast, ToastViewport } from './components/Toast';
 export type {
   ToastOptions,

@@ -250,6 +250,12 @@
     "composes": [],
     "composedBy": []
   },
+  "IconTile": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "Image": {
     "tier": "composition",
     "cluster": "Display",

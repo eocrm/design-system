@@ -1,0 +1,31 @@
+@use './IconTile.tokens';
+
+.tile {
+  display: inline-grid;
+  place-items: center;
+  background: var(--icon-tile-bg);
+  color: var(--icon-tile-fg);
+}
+
+.size-sm {
+  width: var(--icon-tile-size-sm);
+  height: var(--icon-tile-size-sm);
+}
+
+.size-md {
+  width: var(--icon-tile-size-md);
+  height: var(--icon-tile-size-md);
+}
+
+.size-lg {
+  width: var(--icon-tile-size-lg);
+  height: var(--icon-tile-size-lg);
+}
+
+.shape-square {
+  border-radius: var(--icon-tile-radius-square);
+}
+
+.shape-circle {
+  border-radius: var(--icon-tile-radius-circle);
+}

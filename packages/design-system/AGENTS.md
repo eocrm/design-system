@@ -1966,6 +1966,19 @@ or single boolean toggles (use `<Checkbox>` or `<Switch>`).
 - For `tone="neutral"`, the `<section>` is not a screen-reader landmark unless it has an accessible name — pass `aria-label` / `aria-labelledby` when it IS the page's primary region (typical for a full-page 404).
 - No automatic `aria-hidden` on the icon — pass `aria-hidden="true"` for a decorative icon. No i18n — all copy is consumer-supplied.
 
+### `<IconTile>` — palette-colored icon frame
+
+```tsx
+<IconTile color="blue" icon={<Zap size={16} />} />
+<IconTile color="amber" shape="circle" icon={<MailPlus size={14} />} />
+<IconTile color="green" label="Verified" icon={<Check size={16} />} />
+```
+
+- A small decorative tile framing one icon, tinted by a **Palette** `color` (one of the 30 categorical colors; default `'slate'`). For a person use `<Avatar>`; for text/status use `<Badge>`.
+- `icon` (required ReactNode — you size it). `size`: `sm` 24 / `md` 32 (default) / `lg` 40 px (sizes the tile, not the icon). `shape`: `square` (default) / `circle`.
+- Color is categorical (visual identity), **not** semantic — use `<Badge tone>` for status.
+- A11y: decorative by default (`aria-hidden`); pass `label` to make it `role="img"` + `aria-label` when the icon is the only indicator.
+
 ### `<Progress>` — linear progress bar
 
 ```tsx
