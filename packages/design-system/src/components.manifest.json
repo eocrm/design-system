@@ -90,7 +90,9 @@
     "tier": "primitive",
     "cluster": "Layout",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "LinkCard"
+    ]
   },
   "Checkbox": {
     "tier": "primitive",
@@ -313,6 +315,14 @@
       "Breadcrumb",
       "PersonDisplay"
     ]
+  },
+  "LinkCard": {
+    "tier": "composition",
+    "cluster": "Navigation",
+    "composes": [
+      "Card"
+    ],
+    "composedBy": []
   },
   "Masonry": {
     "tier": "primitive",

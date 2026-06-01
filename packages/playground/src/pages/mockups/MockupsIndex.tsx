@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { Badge, Card, Cluster, Code, Grid, Stack, Text, Title } from '@eocrm/design-system';
+import { Link as RouterLink } from 'react-router-dom';
+import { Badge, Cluster, Code, Grid, LinkCard, Stack, Text, Title } from '@eocrm/design-system';
 import { MOCKUPS } from './registry';
 
 export function MockupsIndex() {
@@ -18,32 +18,23 @@ export function MockupsIndex() {
 
       <Grid minColumnWidth="280px" gap="md">
         {indexMockups.map((m) => (
-          /* TODO: replace when <NavCard> ships — see components/TODO.md.
-             Wrapping Card in a router Link to get nav; the inline style is the
-             escape hatch to suppress default <a> underline + color. */
-          <Link
-            key={m.slug}
-            to={m.path}
-            style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-          >
-            <Card padding="md">
-              <Stack gap="sm">
-                <Text size="lg" weight="semibold">
-                  {m.title}
-                </Text>
-                <Text size="sm" tone="muted">
-                  {m.blurb}
-                </Text>
-                <Cluster gap="xs">
-                  {m.usesComponents.map((name) => (
-                    <Badge key={name} tone="info">
-                      {name}
-                    </Badge>
-                  ))}
-                </Cluster>
-              </Stack>
-            </Card>
-          </Link>
+          <LinkCard as={RouterLink} key={m.slug} to={m.path} padding="md">
+            <Stack gap="sm">
+              <Text size="lg" weight="semibold">
+                {m.title}
+              </Text>
+              <Text size="sm" tone="muted">
+                {m.blurb}
+              </Text>
+              <Cluster gap="xs">
+                {m.usesComponents.map((name) => (
+                  <Badge key={name} tone="info">
+                    {name}
+                  </Badge>
+                ))}
+              </Cluster>
+            </Stack>
+          </LinkCard>
         ))}
       </Grid>
     </Stack>

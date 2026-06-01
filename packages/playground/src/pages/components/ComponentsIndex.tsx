@@ -7,6 +7,7 @@ import { Badge } from '@eocrm/design-system';
 import { BrandIcon } from '@eocrm/design-system';
 import { Breadcrumb } from '@eocrm/design-system';
 import { Link as DSLink } from '@eocrm/design-system';
+import { LinkCard } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { ButtonGroup } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
@@ -728,6 +729,20 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <DSLink href="#" onClick={(e) => e.preventDefault()}>
         View details →
       </DSLink>
+    ),
+  },
+  {
+    to: '/components/link-card',
+    name: 'LinkCard',
+    description: 'A clickable Card — the whole surface navigates or acts.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: '220px' }}>
+        <LinkCard as="div" padding="sm">
+          <Text size="sm" weight="semibold">
+            Dashboard
+          </Text>
+        </LinkCard>
+      </div>
     ),
   },
   {

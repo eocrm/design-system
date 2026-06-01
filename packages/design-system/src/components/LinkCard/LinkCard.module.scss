@@ -1,0 +1,85 @@
+@use './LinkCard.tokens';
+
+.linkCard {
+  --link-card-elevation: var(--link-card-shadow);
+
+  display: block;
+  background: var(--card-bg);
+  border: var(--border-width) solid var(--card-border-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--link-card-elevation);
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--link-card-transition);
+}
+
+.linkCard:hover {
+  --link-card-elevation: var(--link-card-hover-shadow);
+
+  border-color: var(--link-card-hover-border-color);
+
+  // Re-assert no underline on hover: the global `a:hover { text-decoration:
+  // underline }` (typography.scss) out-specifies `.linkCard`'s rest rule, so
+  // without this the whole-card link underlines on hover. `.linkCard:hover`
+  // (0,2,0) beats `a:hover` (0,1,1). A LinkCard is a surface, never text.
+  text-decoration: none;
+}
+
+.linkCard:focus-visible {
+  outline: var(--ring-width) solid var(--ring-accent);
+  outline-offset: var(--link-card-focus-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .linkCard {
+    transition: none;
+  }
+}
+
+.linkCard[data-tone='accent'] {
+  box-shadow:
+    inset var(--card-stripe-width) 0 0 var(--card-stripe-color-accent),
+    var(--link-card-elevation);
+}
+
+.linkCard[data-tone='info'] {
+  box-shadow:
+    inset var(--card-stripe-width) 0 0 var(--card-stripe-color-info),
+    var(--link-card-elevation);
+}
+
+.linkCard[data-tone='success'] {
+  box-shadow:
+    inset var(--card-stripe-width) 0 0 var(--card-stripe-color-success),
+    var(--link-card-elevation);
+}
+
+.linkCard[data-tone='warning'] {
+  box-shadow:
+    inset var(--card-stripe-width) 0 0 var(--card-stripe-color-warning),
+    var(--link-card-elevation);
+}
+
+.linkCard[data-tone='danger'] {
+  box-shadow:
+    inset var(--card-stripe-width) 0 0 var(--card-stripe-color-danger),
+    var(--link-card-elevation);
+}
+
+.paddingNone {
+  padding: 0;
+}
+
+.paddingSm {
+  padding: var(--card-padding-sm);
+}
+
+.paddingMd {
+  padding: var(--card-padding-md);
+}
+
+.paddingLg {
+  padding: var(--card-padding-lg);
+}

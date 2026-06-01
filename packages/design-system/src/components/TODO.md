@@ -79,9 +79,10 @@ Inline `style={...}` on a `<div>` (or `<span>`) with `display: grid; place-items
 
 **When this ships:** refactor the Dashboard and Members mocks in the files above, then tick this checkbox.
 
-### [ ] `<NavCard>` — clickable Card with router/href navigation, hover affordance, full-area click target
+### [x] `<NavCard>` — clickable Card with router/href navigation, hover affordance, full-area click target
 
 **Filed:** 2026-05-25
+**Shipped:** 2026-06-01 — shipped as `<LinkCard>` (`packages/design-system/src/components/LinkCard/`), the name `Card`'s JSDoc already referenced. Polymorphic `as` (default `<a>`, `as={RouterLink}` / `as="button"`), reuses Card's `--card-*` surface + `padding`/`tone`, adds a hover lift + `:focus-visible` ring. The MockupsIndex grid was refactored onto it (dropping the router-Link-wrapping-Card + inline-style escape hatch). ComponentsIndex keeps its own `.card` style (legit playground CSS with hover-driven child effects, not an escape hatch).
 **Mocked in:**
 
 - `packages/playground/src/pages/mockups/MockupsIndex.tsx` — grid of cards linking to each mockup page.

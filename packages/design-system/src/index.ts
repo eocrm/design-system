@@ -373,6 +373,9 @@ export type {
 export { Link } from './components/Link';
 export type { LinkProps, LinkVariant } from './components/Link';
 
+export { LinkCard } from './components/LinkCard';
+export type { LinkCardProps } from './components/LinkCard';
+
 export { Accordion } from './components/Accordion';
 export type {
   AccordionProps,
