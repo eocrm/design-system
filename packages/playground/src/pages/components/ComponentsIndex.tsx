@@ -18,6 +18,7 @@ import { Title } from '@eocrm/design-system';
 import { Checkbox } from '@eocrm/design-system';
 import { ColorPicker } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
+import { Constrain } from '@eocrm/design-system';
 import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
 import { Masonry } from '@eocrm/design-system';
@@ -594,6 +595,21 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <div className={styles.tile} />
         <div className={styles.tile} />
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/constrain',
+    name: 'Constrain',
+    description: 'Width / flex constraint — cap a width or fill a flex row.',
+    preview: (
+      <Stack gap="xs">
+        <Constrain maxWidth="xs">
+          <div className={styles.bar} />
+        </Constrain>
+        <Constrain maxWidth="sm">
+          <div className={styles.bar} />
+        </Constrain>
+      </Stack>
     ),
   },
   {

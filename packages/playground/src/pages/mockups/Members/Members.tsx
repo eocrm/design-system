@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   Cluster,
+  Constrain,
   DropdownMenu,
   IconTile,
   Input,
@@ -57,23 +58,14 @@ export function Members() {
               {seatLimit - seatsUsed} seats remaining on your current plan.
             </Text>
           </Stack>
-          {/* TODO: replace when <Box width> ships — see components/TODO.md.
-              Progress is width:100% of parent; inside a Cluster (no defined
-              width) it collapses to 0, so the bar wrapper needs explicit
-              min-width to render at the original 320px target. */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-3)',
-              minWidth: '320px',
-            }}
-          >
-            <Progress value={seatsUsed} max={seatLimit} size="sm" />
+          <Cluster wrap={false} gap="sm">
+            <Constrain flex="grow">
+              <Progress value={seatsUsed} max={seatLimit} size="sm" />
+            </Constrain>
             <Button variant="secondary" size="sm">
               Upgrade plan
             </Button>
-          </div>
+          </Cluster>
         </Cluster>
       </Card>
 
@@ -81,7 +73,9 @@ export function Members() {
 
       {activeTab === 'active' && (
         <Stack gap="md">
-          <Input placeholder="Search members by name or email…" />
+          <Constrain maxWidth="sm">
+            <Input placeholder="Search members by name or email…" />
+          </Constrain>
           <Card padding="none">
             <Table hover>
               <Table.Header>

@@ -96,9 +96,10 @@ Distinct from `<Button>` (text + icon, not a layout container) and plain `<Card>
 
 **When this ships:** refactor the MockupsIndex mock in the file above (and any other mockup-index pages that follow the same grid-of-clickable-cards pattern), then tick this checkbox.
 
-### [ ] `<Box>` (or `<Constrain>`) — width-constrained container for flex children
+### [x] `<Box>` (or `<Constrain>`) — width-constrained container for flex children
 
 **Filed:** 2026-05-25
+**Shipped:** 2026-06-01 — shipped as `<Constrain>` (`packages/design-system/src/components/Constrain/`), a width/flex primitive with a named `--measure-*` width scale (`xs`–`xl` + `full`) and a `flex` prop (`grow`/`shrink`/`auto`/`none`). The Members seats card now uses `<Cluster wrap={false}>` + `<Constrain flex="grow">` around the Progress, and the Contacts + Members search inputs use `<Constrain maxWidth="sm">`.
 **Mocked in:**
 
 - `packages/playground/src/pages/mockups/Members/Members.tsx` — the Progress + Upgrade-button cluster on the seats card. Progress is `width: 100%` of its parent; inside a `<Cluster>` (flex row, no explicit width) it collapses to 0. The original mockup gave that wrapper `min-width: 320px`.

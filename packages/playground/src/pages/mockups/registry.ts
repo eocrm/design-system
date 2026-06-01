@@ -17,6 +17,7 @@ export type ComponentName =
   | 'Code'
   | 'ColorPicker'
   | 'ConfirmationPopover'
+  | 'Constrain'
   | 'CursorPagination'
   | 'DataTable'
   | 'DatePicker'
@@ -134,6 +135,7 @@ export const MOCKUPS = [
       'Card',
       'Checkbox',
       'Cluster',
+      'Constrain',
       'DropdownMenu',
       'Input',
       'Link',
@@ -180,6 +182,7 @@ export const MOCKUPS = [
       'Button',
       'Card',
       'Cluster',
+      'Constrain',
       'DropdownMenu',
       'IconTile',
       'Input',

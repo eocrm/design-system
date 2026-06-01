@@ -7,6 +7,7 @@ import {
   Card,
   Checkbox,
   Cluster,
+  Constrain,
   DropdownMenu,
   Input,
   Link,
@@ -56,7 +57,9 @@ export function Contacts() {
 
       <Card padding="sm">
         <Cluster justify="between" align="center" gap="md" wrap={false}>
-          <Input placeholder="Search by name, email, or company…" />
+          <Constrain maxWidth="sm">
+            <Input placeholder="Search by name, email, or company…" />
+          </Constrain>
           <Cluster gap="sm" wrap={false}>
             <DropdownMenu>
               <DropdownMenu.Trigger>

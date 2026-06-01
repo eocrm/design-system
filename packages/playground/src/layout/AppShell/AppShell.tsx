@@ -20,6 +20,7 @@ import {
   RectangleHorizontal,
   Rows3,
   Columns3,
+  Ruler,
   LayoutGrid,
   CircleUser,
   Tag,
@@ -129,6 +130,7 @@ const componentGroups = [
     items: [
       { to: '/components/stack', label: 'Stack', icon: Rows3, end: false },
       { to: '/components/cluster', label: 'Cluster', icon: Columns3, end: false },
+      { to: '/components/constrain', label: 'Constrain', icon: Ruler, end: false },
       { to: '/components/divider', label: 'Divider', icon: Minus, end: false },
       { to: '/components/grid', label: 'Grid', icon: LayoutGrid, end: false },
       { to: '/components/masonry', label: 'Masonry', icon: GalleryVerticalEnd, end: false },

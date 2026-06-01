@@ -165,6 +165,14 @@
   --line-height-tight: 1.2;
   --line-height-normal: 1.42857;
 
+  // Content widths (measure) — named caps for <Constrain> (search inputs,
+  // constrained columns). Distinct from --size-* (control sizes) and --space-*.
+  --measure-xs: 200px;
+  --measure-sm: 320px;
+  --measure-md: 448px;
+  --measure-lg: 640px;
+  --measure-xl: 800px;
+
   // Control sizes
   --size-xs: 20px;
   --size-sm: 24px;

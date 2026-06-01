@@ -144,6 +144,12 @@
     ],
     "composedBy": []
   },
+  "Constrain": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": []
+  },
   "CursorPagination": {
     "tier": "composition",
     "cluster": "Display",
