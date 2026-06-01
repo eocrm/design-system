@@ -45,6 +45,7 @@ import { CodeDemo } from './pages/components/CodeDemo';
 import { TextDemo } from './pages/components/TextDemo';
 import { TitleDemo } from './pages/components/TitleDemo';
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
+import { FieldDemo } from './pages/components/FieldDemo';
 import { ColorPickerDemo } from './pages/components/ColorPickerDemo';
 import { StackDemo } from './pages/components/StackDemo';
 import { ClusterDemo } from './pages/components/ClusterDemo';
@@ -142,6 +143,7 @@ export default function App() {
             <Route path="/components/text" element={<TextDemo />} />
             <Route path="/components/title" element={<TitleDemo />} />
             <Route path="/components/checkbox" element={<CheckboxDemo />} />
+            <Route path="/components/field" element={<FieldDemo />} />
             <Route path="/components/color-picker" element={<ColorPickerDemo />} />
             <Route path="/components/stack" element={<StackDemo />} />
             <Route path="/components/cluster" element={<ClusterDemo />} />

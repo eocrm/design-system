@@ -23,6 +23,7 @@ import { Constrain } from '@eocrm/design-system';
 import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
 import { Masonry } from '@eocrm/design-system';
+import { Field } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Kbd } from '@eocrm/design-system';
 import { PasswordInput } from '@eocrm/design-system';
@@ -548,6 +549,16 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Checkbox indeterminate label="Indeterminate" />
         <Checkbox label="Unchecked" />
       </Stack>
+    ),
+  },
+  {
+    to: '/components/field',
+    name: 'Field',
+    description: 'Labeled-control unit — label, help, error, required, a11y wiring.',
+    preview: (
+      <Field label="Email" description="We only use this for sign-in.">
+        <Input placeholder="you@company.com" />
+      </Field>
     ),
   },
   {

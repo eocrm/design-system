@@ -542,6 +542,27 @@ import { Switch } from '@eocrm/design-system';
 - The group's `value` drives each child's `checked` — don't set `checked` per-child inside a group (the group already does it).
 - Per-child `onChange` fires BEFORE the group's `onChange` (both run on every selection — `preventDefault` does NOT gate the group's state update). Use per-child handlers for side-effects scoped to one option; the group's handler is the single source of truth for the selected value.
 
+### `<Field>` — labeled-control unit
+
+```tsx
+<Field label="Work email" error={errors.email} required>
+  <Input type="email" />
+</Field>
+
+// wrapped / native control → render-prop, spread `field`:
+<Field label="Email" error={errors.email}>
+  {(field) => <input type="email" {...field} />}
+</Field>
+```
+
+- Wraps ONE control with its label + help/error + required marker, and auto-wires
+  `id` / `aria-describedby` / `invalid` (controls map `invalid → aria-invalid`).
+- `error` replaces `description` and flips the control invalid. `required` shows `*`;
+  `optional` shows `(optional)`. `orientation="horizontal"` = label beside control.
+- Field owns the control `id` — to set one, use `<Field id>`, not the control.
+- Groups: `<Field asGroup>` around `<RadioGroup>` → label becomes a `role="group"` caption.
+- ❌ Don't wrap a single `<Checkbox>`/`<Switch>` (they self-label). ❌ No validation/state — pass `error` from your form layer.
+
 ### `<FileUpload>` — controlled file picker with dropzone
 
 ```tsx
