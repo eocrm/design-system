@@ -1,0 +1,43 @@
+// No base class — a Constrain with no props is a plain <div>; all styling comes
+// from the width/flex modifier classes below. Mirrors how Stack/Cluster carry
+// their scale in modifier classes.
+
+@each $name in xs, sm, md, lg, xl {
+  .w-#{$name} {
+    width: var(--measure-#{$name});
+  }
+  .minW-#{$name} {
+    min-width: var(--measure-#{$name});
+  }
+  .maxW-#{$name} {
+    max-width: var(--measure-#{$name});
+  }
+}
+
+.w-full {
+  width: 100%;
+}
+
+.minW-full {
+  min-width: 100%;
+}
+
+.maxW-full {
+  max-width: 100%;
+}
+
+.flex-grow {
+  flex: 1 1 0;
+}
+
+.flex-auto {
+  flex: 1 1 auto;
+}
+
+.flex-shrink {
+  flex: 0 1 auto;
+}
+
+.flex-none {
+  flex: 0 0 auto;
+}
