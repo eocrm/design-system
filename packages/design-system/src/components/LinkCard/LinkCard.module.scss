@@ -19,6 +19,12 @@
   --link-card-elevation: var(--link-card-hover-shadow);
 
   border-color: var(--link-card-hover-border-color);
+
+  // Re-assert no underline on hover: the global `a:hover { text-decoration:
+  // underline }` (typography.scss) out-specifies `.linkCard`'s rest rule, so
+  // without this the whole-card link underlines on hover. `.linkCard:hover`
+  // (0,2,0) beats `a:hover` (0,1,1). A LinkCard is a surface, never text.
+  text-decoration: none;
 }
 
 .linkCard:focus-visible {
