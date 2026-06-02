@@ -75,8 +75,8 @@ const seed = (): ProfileData => {
     lastName: rest.join(' '),
     jobTitle: m.jobTitle,
     bio: 'Closes mid-market deals across EMEA. Joined eocrm in 2024.',
-    email: m.email,
-    phone: '+1 555 0142',
+    email: `${first}.${rest.join('')}@eocrm.app`.toLowerCase(),
+    phone: '+44 20 7946 0142',
     timezone: 'europe-london',
     language: 'en',
     role: m.role,
@@ -110,7 +110,14 @@ export function MemberProfile() {
 
   const set = <K extends keyof ProfileData>(key: K, value: ProfileData[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
-    if (key in errors) setErrors((e) => ({ ...e, [key]: undefined }));
+    // Clear this field's error if one is showing. Return the same object when
+    // there's nothing to clear so React skips a redundant re-render.
+    setErrors((e) => {
+      if (!(key in e)) return e;
+      const next = { ...e };
+      delete next[key as keyof ProfileErrors];
+      return next;
+    });
   };
 
   const save = () => {
