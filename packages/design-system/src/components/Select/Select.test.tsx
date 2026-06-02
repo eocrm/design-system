@@ -2,6 +2,7 @@ import { act, configure, fireEvent, render, screen, waitFor } from '@testing-lib
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Select, type SelectOption } from './Select';
+import { Field } from '../Field';
 import styles from './Select.module.scss';
 
 const STATUSES: SelectOption[] = [
@@ -1230,5 +1231,21 @@ describe('Select — overlay elevation', () => {
     render(<Select options={STATUSES} aria-label="Status" />);
     await user.click(screen.getByRole('button'));
     expect(screen.getByRole('listbox')).not.toHaveAttribute('data-in-overlay');
+  });
+});
+
+describe('Select — Field label integration', () => {
+  it('a Field label names the combobox (auto-clone)', () => {
+    render(
+      <Field label="Status">
+        <Select
+          options={[
+            { value: 'a', label: 'Active' },
+            { value: 'b', label: 'Archived' },
+          ]}
+        />
+      </Field>,
+    );
+    expect(screen.getByRole('button', { name: 'Status' })).toBeInTheDocument();
   });
 });

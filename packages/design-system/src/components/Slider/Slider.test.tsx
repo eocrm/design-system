@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { createRef } from 'react';
 import { Slider, type SliderOrientation, type SliderSize, type SliderTone } from './Slider';
+import { Field } from '../Field';
 
 // jsdom doesn't implement setPointerCapture; stub it on HTMLElement so the
 // component's try/catch fast-path is exercised (and we still get pointer
@@ -487,5 +488,16 @@ describe('Slider', () => {
       const inputs = container.querySelectorAll('input[type="hidden"]');
       expect(inputs).toHaveLength(0);
     });
+  });
+});
+
+describe('Slider — Field label integration', () => {
+  it('a Field label names the slider thumb (auto-clone)', () => {
+    render(
+      <Field label="Volume">
+        <Slider value={40} onChange={() => {}} />
+      </Field>,
+    );
+    expect(screen.getByRole('slider', { name: 'Volume' })).toBeInTheDocument();
   });
 });
