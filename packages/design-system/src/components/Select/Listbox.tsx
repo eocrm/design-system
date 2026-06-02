@@ -11,6 +11,7 @@ import {
 import clsx from 'clsx';
 import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
+import { useInOverlay } from '../_internal/overlay';
 import type { SelectOption } from './utils-types';
 import { isCreateRow } from './utils';
 import { Empty } from './Empty';
@@ -31,6 +32,7 @@ import styles from './Select.module.scss';
  */
 export function Listbox() {
   const ctx = useSelectContext('Listbox');
+  const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
 
   const { refs, floatingStyles } = useFloating({
     open: ctx.open,
@@ -136,6 +138,7 @@ export function Listbox() {
       aria-multiselectable={ctx.multiple || undefined}
       aria-labelledby={ctx.triggerId}
       tabIndex={-1}
+      data-in-overlay={inOverlay ? '' : undefined}
       className={clsx(styles.listbox)}
       style={floatingStyles}
     >

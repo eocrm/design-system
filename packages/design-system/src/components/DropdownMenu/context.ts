@@ -24,6 +24,8 @@ export interface DropdownMenuContextValue {
   closeAll: () => void;
   /** 0 = root menu, 1 = first-level submenu, etc. */
   depth: number;
+  /** True when the menu tree is opened inside a Modal/Drawer overlay. Computed at the root from the root trigger, inherited by submenus. */
+  inOverlay: boolean;
 }
 
 export const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(null);

@@ -35,6 +35,10 @@
   }
 }
 
+.content[data-in-overlay] {
+  z-index: var(--z-overlay-floating);
+}
+
 .item {
   display: flex;
   align-items: center;

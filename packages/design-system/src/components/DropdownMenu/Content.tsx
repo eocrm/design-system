@@ -57,6 +57,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
   forwardedRef,
 ) {
   const ctx = useDropdownMenuContext('Content');
+  const inOverlay = ctx.inOverlay;
 
   const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;
 
@@ -355,6 +356,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       data-align={resolvedAlign}
       data-dropdown-menu-content=""
       data-dropdown-depth={ctx.depth}
+      data-in-overlay={inOverlay ? '' : undefined}
       style={floatingStyles}
       className={clsx(styles.content, className)}
       onKeyDown={handleKeyDown}

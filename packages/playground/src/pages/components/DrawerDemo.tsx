@@ -1,5 +1,15 @@
 import { useRef, useState } from 'react';
-import { Button, Cluster, Drawer, Input, Modal, Stack } from '@eocrm/design-system';
+import {
+  Button,
+  Cluster,
+  Drawer,
+  DropdownMenu,
+  Input,
+  Modal,
+  Select,
+  Stack,
+  Text,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -21,6 +31,7 @@ export function DrawerDemo() {
       <StackedExample />
       <ModalInteropExample />
       <NoHeaderExample />
+      <FloatingContentExample />
     </DemoLayout>
   );
 }
@@ -340,6 +351,80 @@ function NoHeaderExample() {
             <Button variant="secondary">Cancel</Button>
           </Drawer.Close>
           <Button onClick={() => setOpen(false)}>Continue</Button>
+        </Drawer.Footer>
+      </Drawer>
+    </Example>
+  );
+}
+
+function FloatingContentExample() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Example
+      title="Floating content inside a drawer"
+      description="Selects, dropdown menus, and popovers opened inside a Drawer now render above it (they used to appear behind the panel)."
+      code={`<Drawer open={open} onOpenChange={setOpen}>
+  <Drawer.Header>Role settings</Drawer.Header>
+  <Drawer.Body>
+    <Stack gap="md">
+      <Text>Selects and menus opened in here now layer above the drawer.</Text>
+      <Select
+        options={[
+          { value: 'admin', label: 'Admin' },
+          { value: 'member', label: 'Member' },
+          { value: 'guest', label: 'Guest' },
+        ]}
+        placeholder="Pick a role"
+      />
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="secondary">Actions</Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Rename</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </Stack>
+  </Drawer.Body>
+  <Drawer.Footer>
+    <Drawer.Close>
+      <Button variant="secondary">Close</Button>
+    </Drawer.Close>
+  </Drawer.Footer>
+</Drawer>`}
+    >
+      <Cluster>
+        <Button onClick={() => setOpen(true)}>Open drawer</Button>
+      </Cluster>
+      <Drawer open={open} onOpenChange={setOpen}>
+        <Drawer.Header>Role settings</Drawer.Header>
+        <Drawer.Body>
+          <Stack gap="md">
+            <Text>Selects and menus opened in here now layer above the drawer.</Text>
+            <Select
+              options={[
+                { value: 'admin', label: 'Admin' },
+                { value: 'member', label: 'Member' },
+                { value: 'guest', label: 'Guest' },
+              ]}
+              placeholder="Pick a role"
+            />
+            <DropdownMenu>
+              <DropdownMenu.Trigger>
+                <Button variant="secondary">Actions</Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content>
+                <DropdownMenu.Item onSelect={() => {}}>Rename</DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu>
+          </Stack>
+        </Drawer.Body>
+        <Drawer.Footer>
+          <Drawer.Close>
+            <Button variant="secondary">Close</Button>
+          </Drawer.Close>
         </Drawer.Footer>
       </Drawer>
     </Example>
