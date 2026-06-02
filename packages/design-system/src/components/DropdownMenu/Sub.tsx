@@ -160,6 +160,7 @@ export function Sub({
     setActiveIndex,
     closeAll,
     depth: parentCtx.depth + 1,
+    inOverlay: parentCtx.inOverlay,
   };
 
   return (

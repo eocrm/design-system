@@ -1859,4 +1859,38 @@ describe('DropdownMenu — overlay elevation', () => {
       'data-in-overlay',
     );
   });
+
+  it('elevates BOTH root and submenu content when opened inside an overlay', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-drawer-portal-root="">
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button">Open</button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+              <DropdownMenu.SubContent>
+                <DropdownMenu.Item onSelect={() => {}}>CSV</DropdownMenu.Item>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Sub>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+      </div>,
+    );
+    // Open root menu.
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    // Open submenu via click on SubTrigger.
+    await user.click(screen.getByRole('menuitem', { name: /Export/ }));
+    // Both panels must be in the DOM.
+    const panels = document.querySelectorAll('[data-dropdown-menu-content]');
+    expect(panels).toHaveLength(2);
+    // Every panel must carry data-in-overlay="" — including the submenu whose
+    // trigger lives inside the body-portaled root menu (not inside the overlay
+    // element directly).
+    for (const panel of panels) {
+      expect(panel).toHaveAttribute('data-in-overlay', '');
+    }
+  });
 });
