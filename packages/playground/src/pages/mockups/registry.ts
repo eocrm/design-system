@@ -80,6 +80,8 @@ export interface MockupEntry {
   slug: string;
   title: string;
   path: string;
+  /** Concrete href for cross-links when `path` is parameterized (e.g. has `:id`). */
+  examplePath?: string;
   blurb: string;
   usesComponents: ComponentName[];
 }
@@ -205,6 +207,7 @@ export const MOCKUPS = [
     slug: 'member-profile',
     title: 'Member profile',
     path: '/mockups/members/:id',
+    examplePath: '/mockups/members/u-1',
     blurb: 'Member profile with a drawer-based edit form (Field / FormRow / FormSection).',
     usesComponents: [
       'Avatar',

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { UserPlus, MoreHorizontal, MailPlus, Trash2 } from 'lucide-react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Badge,
   Button,
@@ -24,6 +24,7 @@ import { members, pendingInvites, roleTone, roleLabel, seatLimit } from '../../.
 import { CrossLinks } from '../../shared/CrossLinks';
 
 export function Members() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('active');
   const seatsUsed = members.length;
 
@@ -99,7 +100,7 @@ export function Members() {
                           status={m.online ? 'online' : undefined}
                         />
                         <PersonDisplay.Name>
-                          <Link as={RouterLink} to={`/mockups/members/${m.id}`}>
+                          <Link as={RouterLink} variant="subtle" to={`/mockups/members/${m.id}`}>
                             {m.name}
                           </Link>
                         </PersonDisplay.Name>
@@ -127,7 +128,9 @@ export function Members() {
                           </Button>
                         </DropdownMenu.Trigger>
                         <DropdownMenu.Content align="end">
-                          <DropdownMenu.Item onSelect={() => {}}>View profile</DropdownMenu.Item>
+                          <DropdownMenu.Item onSelect={() => navigate(`/mockups/members/${m.id}`)}>
+                            View profile
+                          </DropdownMenu.Item>
                           <DropdownMenu.Sub>
                             <DropdownMenu.SubTrigger>Change role</DropdownMenu.SubTrigger>
                             <DropdownMenu.SubContent>
