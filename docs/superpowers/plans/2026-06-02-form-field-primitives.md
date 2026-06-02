@@ -13,6 +13,7 @@
 ## File map
 
 **Create (library):**
+
 - `packages/design-system/src/components/Field/Field.tsx`
 - `packages/design-system/src/components/Field/Field.module.scss`
 - `packages/design-system/src/components/Field/Field.test.tsx`
@@ -23,14 +24,16 @@
 - `packages/design-system/src/components/FormSection/index.ts`
 - `packages/design-system/src/components/FormRow/FormRow.tsx`
 - `packages/design-system/src/components/FormRow/FormRow.test.tsx`
-- `packages/design-system/src/components/FormRow/index.ts`  *(no `.module.scss` — FormRow delegates all styling to `<Grid>`)*
+- `packages/design-system/src/components/FormRow/index.ts` _(no `.module.scss` — FormRow delegates all styling to `<Grid>`)_
 
 **Create (playground):**
+
 - `packages/playground/src/pages/components/FieldDemo.tsx`
 - `packages/playground/src/pages/components/FormSectionDemo.tsx`
 - `packages/playground/src/pages/components/FormRowDemo.tsx`
 
 **Modify:**
+
 - `packages/design-system/src/index.ts` — re-export the three components + types
 - `packages/design-system/AGENTS.md` — three TL;DR sections
 - `packages/playground/src/App.tsx` — imports + routes
@@ -46,20 +49,24 @@
 - [ ] **Step 1: Verify hooks are installed (repo invariant)**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 git config --get core.hooksPath   # must print: .husky/_
 test -x .husky/pre-push && echo "pre-push OK"
 ```
+
 Expected: prints `.husky/_` and `pre-push OK`. If not, run `npm install` and re-check before proceeding.
 
 - [ ] **Step 2: Branch off main**
 
 Run:
+
 ```bash
 git checkout main && git pull --ff-only
 git checkout -b feat/form-field-primitives
 ```
+
 Expected: on branch `feat/form-field-primitives`.
 
 ---
@@ -67,6 +74,7 @@ Expected: on branch `feat/form-field-primitives`.
 ## Task 1: `<Field>` — labeled-control unit
 
 **Files:**
+
 - Create: `packages/design-system/src/components/Field/Field.tsx`
 - Create: `packages/design-system/src/components/Field/Field.module.scss`
 - Test: `packages/design-system/src/components/Field/Field.test.tsx`
@@ -456,7 +464,10 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const markers = (
     <>
       {required && (
-        <span aria-hidden="true" className={styles.required}> *</span>
+        <span aria-hidden="true" className={styles.required}>
+          {' '}
+          *
+        </span>
       )}
       {optional && <span className={styles.optional}> (optional)</span>}
     </>
@@ -656,6 +667,7 @@ export function FieldDemo() {
 - [ ] **Step 10: Wire the route in App.tsx**
 
 In `packages/playground/src/App.tsx`:
+
 1. Add the import alongside the other `pages/components/*Demo` imports:
    ```tsx
    import { FieldDemo } from './pages/components/FieldDemo';
@@ -668,6 +680,7 @@ In `packages/playground/src/App.tsx`:
 - [ ] **Step 11: Wire the sidebar nav in AppShell.tsx**
 
 In `packages/playground/src/layout/AppShell/AppShell.tsx`:
+
 1. Add `FormInput` to the existing `lucide-react` import block.
 2. In the `heading: 'Forms'` group's `items` array, add (immediately after the Checkbox entry):
    ```tsx
@@ -677,6 +690,7 @@ In `packages/playground/src/layout/AppShell/AppShell.tsx`:
 - [ ] **Step 12: Wire the overview grid in ComponentsIndex.tsx**
 
 In `packages/playground/src/pages/components/ComponentsIndex.tsx`:
+
 1. Add the import near the other `@eocrm/design-system` imports:
    ```tsx
    import { Field } from '@eocrm/design-system';
@@ -699,12 +713,14 @@ In `packages/playground/src/pages/components/ComponentsIndex.tsx`:
 - [ ] **Step 13: Typecheck, lint, and run the Field tests**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 make build-lib                 # tsc over the library
 make lint                      # stylelint both packages
 cd packages/design-system && npx vitest run src/components/Field
 ```
+
 Expected: typecheck clean, stylelint clean, all Field tests PASS.
 
 - [ ] **Step 14: Commit**
@@ -735,6 +751,7 @@ EOF
 ## Task 2: `<FormSection>` — titled group
 
 **Files:**
+
 - Create: `packages/design-system/src/components/FormSection/FormSection.tsx`
 - Create: `packages/design-system/src/components/FormSection/FormSection.module.scss`
 - Test: `packages/design-system/src/components/FormSection/FormSection.test.tsx`
@@ -945,10 +962,16 @@ In `packages/design-system/AGENTS.md`, add:
 ```tsx
 <FormSection title="Profile" description="Basic contact details.">
   <FormRow>
-    <Field label="First name" required><Input /></Field>
-    <Field label="Last name" required><Input /></Field>
+    <Field label="First name" required>
+      <Input />
+    </Field>
+    <Field label="Last name" required>
+      <Input />
+    </Field>
   </FormRow>
-  <Field label="Work email" required><Input type="email" /></Field>
+  <Field label="Work email" required>
+    <Input type="email" />
+  </Field>
 </FormSection>
 ```
 
@@ -1051,11 +1074,13 @@ export function FormSectionDemo() {
 - [ ] **Step 11: Typecheck, lint, test**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 make build-lib && make lint
 cd packages/design-system && npx vitest run src/components/FormSection
 ```
+
 Expected: clean typecheck/lint, all FormSection tests PASS.
 
 - [ ] **Step 12: Commit**
@@ -1085,6 +1110,7 @@ EOF
 ## Task 3: `<FormRow>` — responsive side-by-side fields
 
 **Files:**
+
 - Create: `packages/design-system/src/components/FormRow/FormRow.tsx`
 - Test: `packages/design-system/src/components/FormRow/FormRow.test.tsx`
 - Create: `packages/design-system/src/components/FormRow/index.ts`
@@ -1357,11 +1383,13 @@ export function FormRowDemo() {
 - [ ] **Step 10: Typecheck, lint, test**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 make build-lib && make lint
 cd packages/design-system && npx vitest run src/components/FormRow
 ```
+
 Expected: clean typecheck/lint, all FormRow tests PASS.
 
 - [ ] **Step 11: Commit**
@@ -1417,6 +1445,7 @@ FormRow reflows when the window narrows; consecutive FormSections show a divider
 - [ ] **Step 5: Push and open the PR**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 git push -u origin feat/form-field-primitives
@@ -1439,6 +1468,7 @@ index.ts exports, JSDoc anti-patterns, and an AGENTS.md TL;DR.
 EOF
 )"
 ```
+
 Expected: PR created. Wait for the `Quality / check` status check to pass before merging.
 
 ---

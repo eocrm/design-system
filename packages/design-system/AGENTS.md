@@ -568,10 +568,16 @@ import { Switch } from '@eocrm/design-system';
 ```tsx
 <FormSection title="Profile" description="Basic contact details.">
   <FormRow>
-    <Field label="First name" required><Input /></Field>
-    <Field label="Last name" required><Input /></Field>
+    <Field label="First name" required>
+      <Input />
+    </Field>
+    <Field label="Last name" required>
+      <Input />
+    </Field>
   </FormRow>
-  <Field label="Work email" required><Input type="email" /></Field>
+  <Field label="Work email" required>
+    <Input type="email" />
+  </Field>
 </FormSection>
 ```
 

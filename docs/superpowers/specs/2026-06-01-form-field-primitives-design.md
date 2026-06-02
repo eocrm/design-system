@@ -8,8 +8,8 @@
 
 The design system ships ~20 form **controls** (`Input`, `Select`, `Checkbox`, `Radio`,
 `Switch`, `Textarea`, `DatePicker`, `Slider`, `FileUpload`, `PasswordInput`, …), all
-deliberately "dumb" — `Input`'s own JSDoc states *"validation logic lives in your form
-layer."* What's missing is the unit **one level up**: the label + control + help + error +
+deliberately "dumb" — `Input`'s own JSDoc states _"validation logic lives in your form
+layer."_ What's missing is the unit **one level up**: the label + control + help + error +
 required-marker pairing, with the `id ↔ htmlFor`, `aria-describedby`, and invalid wiring
 done correctly by construction.
 
@@ -18,10 +18,19 @@ repeated per field (~10 lines each):
 
 ```tsx
 <Stack gap="xs">
-  <Text as="label" htmlFor="login-email" weight="medium" size="sm">Email</Text>
-  <Input id="login-email" invalid={!!emailError}
-         aria-describedby={emailError ? 'login-email-error' : undefined} />
-  {emailError && <Text id="login-email-error" size="sm" tone="danger">{emailError}</Text>}
+  <Text as="label" htmlFor="login-email" weight="medium" size="sm">
+    Email
+  </Text>
+  <Input
+    id="login-email"
+    invalid={!!emailError}
+    aria-describedby={emailError ? 'login-email-error' : undefined}
+  />
+  {emailError && (
+    <Text id="login-email-error" size="sm" tone="danger">
+      {emailError}
+    </Text>
+  )}
 </Stack>
 ```
 
@@ -43,7 +52,7 @@ this unit; `<Field>` is the **editable** sibling.
   in the consumer's form layer — consistent with the repo philosophy.
 - **No `<Form>` element wrapper.** A plain `<form onSubmit>` remains the consumer's; we are
   not owning submit/busy state. (Considered and dropped during brainstorm.)
-- No new control types. These three primitives only *arrange and label* existing controls.
+- No new control types. These three primitives only _arrange and label_ existing controls.
 
 ## Components
 
@@ -57,16 +66,16 @@ this unit; `<Field>` is the **editable** sibling.
 
 **Props**
 
-| prop | type | behavior |
-|---|---|---|
-| `label` | `ReactNode` | renders `<label htmlFor={id}>`; generates an `id` if the control has none |
-| `error` | `ReactNode` | red message; sets `invalid` on the control; `aria-describedby` → message id |
-| `description` / `help` | `ReactNode` | hint text; **error replaces it** when present (single message slot) |
-| `required` | `boolean` | shows `*` marker; injects `required` onto the control |
-| `optional` | `boolean` | shows `(optional)` marker (mutually exclusive with `required`) |
-| `orientation` | `'vertical' \| 'horizontal'` | default `'vertical'`; `'horizontal'` = label beside control (Settings rows) |
-| `id` | `string` | optional explicit id override |
-| `size` | `'sm' \| 'md' \| 'lg'` | label/message type scale, pairs with the control's `size` |
+| prop                   | type                         | behavior                                                                    |
+| ---------------------- | ---------------------------- | --------------------------------------------------------------------------- |
+| `label`                | `ReactNode`                  | renders `<label htmlFor={id}>`; generates an `id` if the control has none   |
+| `error`                | `ReactNode`                  | red message; sets `invalid` on the control; `aria-describedby` → message id |
+| `description` / `help` | `ReactNode`                  | hint text; **error replaces it** when present (single message slot)         |
+| `required`             | `boolean`                    | shows `*` marker; injects `required` onto the control                       |
+| `optional`             | `boolean`                    | shows `(optional)` marker (mutually exclusive with `required`)              |
+| `orientation`          | `'vertical' \| 'horizontal'` | default `'vertical'`; `'horizontal'` = label beside control (Settings rows) |
+| `id`                   | `string`                     | optional explicit id override                                               |
+| `size`                 | `'sm' \| 'md' \| 'lg'`       | label/message type scale, pairs with the control's `size`                   |
 
 **Wiring contract.** Field computes a `field` object:
 
@@ -84,10 +93,10 @@ this unit; `<Field>` is the **editable** sibling.
   native `<input>` (no `invalid` prop) is still correct.
 
 **Decision — invalid signal:** Field injects the DS `invalid` boolean (universal across the
-control set), *not* raw `aria-invalid`, so the control's red-border visual fires. The
+control set), _not_ raw `aria-invalid`, so the control's red-border visual fires. The
 render-prop variant adds `aria-invalid` for native targets.
 
-**Groups (Radio / Checkbox sets).** A radio/checkbox *group* has no single focusable target
+**Groups (Radio / Checkbox sets).** A radio/checkbox _group_ has no single focusable target
 for `htmlFor`. In group mode (`as="group"` or detected when wrapping `RadioGroup`), Field:
 
 - renders the label as a `role="group"` caption (no `htmlFor`),
@@ -101,15 +110,19 @@ A **single** `Checkbox` / `Switch` keeps its own inline `label` prop and is **no
 not both. Matches the Login/Settings mockups.
 
 **Marker convention (decision):** nothing shown by default; `*` only when `required` is set,
-`(optional)` only when `optional` is set. (Marking optional instead of required is *available*
+`(optional)` only when `optional` is set. (Marking optional instead of required is _available_
 but opt-in, not the default.)
 
 ### `<FormRow>` — fields side by side
 
 ```tsx
 <FormRow>
-  <Field label="First name" required><Input /></Field>
-  <Field label="Last name" required><Input /></Field>
+  <Field label="First name" required>
+    <Input />
+  </Field>
+  <Field label="Last name" required>
+    <Input />
+  </Field>
 </FormRow>
 ```
 
@@ -161,6 +174,7 @@ packages/design-system/src/components/FormSection/  (same shape)
 ## Testing plan (characterization — `*.test.tsx` alongside each)
 
 `<Field>`:
+
 - label renders `<label htmlFor>` matching the control's `id` (generated and explicit).
 - `aria-describedby` points at the help id; at the error id when `error` is set.
 - `error` injects `invalid` onto the child and renders the message with danger tone.

@@ -166,7 +166,10 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const markers = (
     <>
       {required && (
-        <span aria-hidden="true" className={styles.required}> *</span>
+        <span aria-hidden="true" className={styles.required}>
+          {' '}
+          *
+        </span>
       )}
       {optional && <span className={styles.optional}> {t('field.optional')}</span>}
     </>
