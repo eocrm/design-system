@@ -254,6 +254,10 @@ export interface Messages {
     /** Default aria-label on the `<TopBar.Search>` input when neither `aria-label` nor `placeholder` is set. */
     search: string;
   };
+  field: {
+    /** Marker appended to a Field's label when the field is optional. */
+    optional: string;
+  };
 }
 
 /** Supported locale codes. v1 ships English and Russian. */

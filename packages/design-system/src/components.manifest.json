@@ -234,6 +234,14 @@
     "composes": [],
     "composedBy": []
   },
+  "Field": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Text"
+    ],
+    "composedBy": []
+  },
   "FileUpload": {
     "tier": "composition",
     "cluster": "Forms",
@@ -252,11 +260,30 @@
     ],
     "composedBy": []
   },
+  "FormRow": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Grid"
+    ],
+    "composedBy": []
+  },
+  "FormSection": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Text",
+      "Title"
+    ],
+    "composedBy": []
+  },
   "Grid": {
     "tier": "primitive",
     "cluster": "Layout",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "FormRow"
+    ]
   },
   "IconTile": {
     "tier": "primitive",
@@ -512,7 +539,9 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "Field",
       "FilterChip",
+      "FormSection",
       "OptionsPicker",
       "PersonDisplay"
     ]
@@ -537,6 +566,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "FormSection",
       "PageHeader"
     ]
   },

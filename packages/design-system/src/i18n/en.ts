@@ -159,4 +159,7 @@ export const en: Messages = {
     label: 'Application top bar',
     search: 'Search',
   },
+  field: {
+    optional: '(optional)',
+  },
 };
