@@ -28,8 +28,11 @@ export type ComponentName =
   | 'DropdownMenu'
   | 'EmptyState'
   | 'ErrorState'
-  | 'FilterChip'
+  | 'Field'
   | 'FileUpload'
+  | 'FilterChip'
+  | 'FormRow'
+  | 'FormSection'
   | 'IconTile'
   | 'Image'
   | 'ImageCrop'
@@ -77,6 +80,8 @@ export interface MockupEntry {
   slug: string;
   title: string;
   path: string;
+  /** Concrete href for cross-links when `path` is parameterized (e.g. has `:id`). */
+  examplePath?: string;
   blurb: string;
   usesComponents: ComponentName[];
 }
@@ -187,6 +192,7 @@ export const MOCKUPS = [
       'DropdownMenu',
       'IconTile',
       'Input',
+      'Link',
       'Page',
       'PageHeader',
       'PersonDisplay',
@@ -195,6 +201,34 @@ export const MOCKUPS = [
       'Table',
       'Tabs',
       'Text',
+    ],
+  },
+  {
+    slug: 'member-profile',
+    title: 'Member profile',
+    path: '/mockups/members/:id',
+    examplePath: '/mockups/members/u-1',
+    blurb: 'Member profile with a drawer-based edit form (Field / FormRow / FormSection).',
+    usesComponents: [
+      'Avatar',
+      'Badge',
+      'Breadcrumb',
+      'Button',
+      'Card',
+      'Cluster',
+      'DefinitionList',
+      'Drawer',
+      'Field',
+      'FormRow',
+      'FormSection',
+      'Input',
+      'Page',
+      'PageHeader',
+      'Select',
+      'Stack',
+      'Switch',
+      'Text',
+      'Textarea',
     ],
   },
   {

@@ -57,7 +57,7 @@ export function CrossLinks(props: Props) {
         {seenIn.map((m, i) => (
           <Fragment key={m.slug}>
             {i > 0 && <span className={styles.sep}>·</span>}
-            <Link to={m.path.replace(':id', 'c-1001')} className={styles.link}>
+            <Link to={m.examplePath ?? m.path.replace(':id', 'c-1001')} className={styles.link}>
               {m.title}
             </Link>
           </Fragment>

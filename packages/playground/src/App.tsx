@@ -7,6 +7,7 @@ import { Deals } from './pages/mockups/Deals/Deals';
 import { Contacts } from './pages/mockups/Contacts/Contacts';
 import { ContactDetail } from './pages/mockups/ContactDetail/ContactDetail';
 import { Members } from './pages/mockups/Members/Members';
+import { MemberProfile } from './pages/mockups/MemberProfile/MemberProfile';
 import { Tenants } from './pages/mockups/Tenants/Tenants';
 import { TenantDetail } from './pages/mockups/Tenants/TenantDetail';
 import { Settings } from './pages/mockups/Settings/Settings';
@@ -103,6 +104,7 @@ export default function App() {
             <Route path="/mockups/contacts" element={<Contacts />} />
             <Route path="/mockups/contacts/:id" element={<ContactDetail />} />
             <Route path="/mockups/members" element={<Members />} />
+            <Route path="/mockups/members/:id" element={<MemberProfile />} />
             <Route path="/mockups/tenants" element={<Tenants />} />
             <Route path="/mockups/tenants/:slug" element={<TenantDetail />} />
             <Route path="/mockups/system-settings" element={<Settings />} />
