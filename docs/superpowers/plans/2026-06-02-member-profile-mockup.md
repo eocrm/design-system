@@ -15,9 +15,11 @@
 ## File map
 
 **Create:**
+
 - `packages/playground/src/pages/mockups/MemberProfile/MemberProfile.tsx` — the whole mockup (read view + edit `Drawer` + local state/validation). One file, mirroring the single-file convention of `ContactDetail.tsx` / `Members.tsx`.
 
 **Modify:**
+
 - `packages/playground/src/pages/mockups/registry.ts` — add `'Field' | 'FormRow' | 'FormSection'` to the `ComponentName` union, and a `MOCKUPS` entry for `member-profile` (this auto-feeds `MockupsIndex`, which maps over `MOCKUPS`, and `CrossLinks`).
 - `packages/playground/src/App.tsx` — import + `<Route path="/mockups/member-profile" …>`.
 - `packages/playground/src/layout/AppShell/AppShell.tsx` — a `mockupItems` nav entry + a lucide icon import.
@@ -33,11 +35,13 @@
 - [ ] **Step 1: Confirm branch + hooks**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 git branch --show-current     # expect: mockup/member-profile
 git config --get core.hooksPath   # expect: .husky/_
 ```
+
 Expected: on `mockup/member-profile` (it branched off `feat/form-field-primitives`, so `Field`/`FormRow`/`FormSection` are available), hooks installed. If not on the branch, `git checkout mockup/member-profile`.
 
 ---
@@ -45,6 +49,7 @@ Expected: on `mockup/member-profile` (it branched off `feat/form-field-primitive
 ## Task 1: Create the MemberProfile mockup
 
 **Files:**
+
 - Create: `packages/playground/src/pages/mockups/MemberProfile/MemberProfile.tsx`
 
 - [ ] **Step 1: Write the full component**
@@ -147,7 +152,8 @@ const validate = (d: ProfileData): ProfileErrors => {
   if (!d.firstName.trim()) errors.firstName = 'First name is required.';
   if (!d.lastName.trim()) errors.lastName = 'Last name is required.';
   if (!d.email.trim()) errors.email = 'Email is required.';
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) errors.email = 'Enter a valid email address.';
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email))
+    errors.email = 'Enter a valid email address.';
   return errors;
 };
 
@@ -273,7 +279,9 @@ export function MemberProfile() {
             </DefinitionList.Item>
             <DefinitionList.Item>
               <DefinitionList.Term>Email notifications</DefinitionList.Term>
-              <DefinitionList.Description>{profile.notifications ? 'On' : 'Off'}</DefinitionList.Description>
+              <DefinitionList.Description>
+                {profile.notifications ? 'On' : 'Off'}
+              </DefinitionList.Description>
             </DefinitionList.Item>
           </DefinitionList>
         </Card>
@@ -299,10 +307,16 @@ export function MemberProfile() {
               </Stack>
             </Cluster>
 
-            <FormSection title="Profile" description="Name and how this person appears across eocrm.">
+            <FormSection
+              title="Profile"
+              description="Name and how this person appears across eocrm."
+            >
               <FormRow columns={2}>
                 <Field label="First name" required error={errors.firstName}>
-                  <Input value={draft.firstName} onChange={(e) => set('firstName', e.target.value)} />
+                  <Input
+                    value={draft.firstName}
+                    onChange={(e) => set('firstName', e.target.value)}
+                  />
                 </Field>
                 <Field label="Last name" required error={errors.lastName}>
                   <Input value={draft.lastName} onChange={(e) => set('lastName', e.target.value)} />
@@ -326,7 +340,11 @@ export function MemberProfile() {
               </Field>
               <FormRow columns={2}>
                 <Field label="Phone" optional>
-                  <Input type="tel" value={draft.phone} onChange={(e) => set('phone', e.target.value)} />
+                  <Input
+                    type="tel"
+                    value={draft.phone}
+                    onChange={(e) => set('phone', e.target.value)}
+                  />
                 </Field>
                 <Field label="Timezone">
                   <Select
@@ -421,6 +439,7 @@ EOF
 ## Task 2: Wire the mockup (registry + route + nav)
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/mockups/registry.ts`
 - Modify: `packages/playground/src/App.tsx`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
@@ -474,6 +493,7 @@ In the same file, add to the `MOCKUPS` array (e.g. right after the `members` ent
 - [ ] **Step 3: Add the route in App.tsx**
 
 In `packages/playground/src/App.tsx`:
+
 1. Add the import alongside the other mockup imports:
    ```tsx
    import { MemberProfile } from './pages/mockups/MemberProfile/MemberProfile';
@@ -486,6 +506,7 @@ In `packages/playground/src/App.tsx`:
 - [ ] **Step 4: Add the sidebar nav entry in AppShell.tsx**
 
 In `packages/playground/src/layout/AppShell/AppShell.tsx`:
+
 1. Add `IdCard` to the existing `lucide-react` import.
 2. In the `mockupItems` array, add (right after the Members entry):
    ```tsx
@@ -495,11 +516,13 @@ In `packages/playground/src/layout/AppShell/AppShell.tsx`:
 - [ ] **Step 5: Typecheck + build**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 cd packages/playground && npm run typecheck
 cd /Users/dpws/projects/design-system && make build
 ```
+
 Expected: typecheck clean; `make build` bundles the playground with no errors. The mockup is now reachable at `/mockups/member-profile`, listed on the Mockups overview (registry-driven), and cross-linked.
 
 - [ ] **Step 6: Commit**
@@ -530,12 +553,14 @@ EOF
 - [ ] **Step 1: Run all gates**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 make test     # full vitest suite (library) — must stay green
 make build    # typecheck + bundle playground
 make lint     # stylelint
 ```
+
 Expected: all green.
 
 - [ ] **Step 2: Playground Hard rule 7 — mockup review-fix loop**
@@ -545,6 +570,7 @@ This change touches `packages/playground/src/pages/mockups/**` + `registry.ts`, 
 - [ ] **Step 3: Manual smoke (optional but recommended)**
 
 Run `make dev`, visit `http://localhost:8080/mockups/member-profile`:
+
 - Read view shows the profile (header avatar/name/role badge + three Cards).
 - "Edit profile" opens the drawer; the three FormSections render with the seeded values.
 - Type an invalid email (`alex@@x`) → "Save changes" shows the `Field` error and the drawer stays open; the email control shows the invalid state.
@@ -590,6 +616,10 @@ EOF
 **Type consistency:** `ProfileData` field names are used consistently across `seed`/`validate`/`set`/read-view/drawer. `set<K>` keyed by `keyof ProfileData`. `Select onChange` value cast to `string`/`MemberRole` to match `ProfileData`. `errors` keys (`firstName`/`lastName`/`email`) match `validate` + the `Field error` props. `usesComponents` (Task 2) matches the Task 1 import block.
 
 ## Follow-ups (out of scope)
+
 - Link the Members table rows → `/mockups/member-profile`.
 - Real avatar upload/crop via `ImageCrop` + `FileUpload` in the photo row.
+
+```
+
 ```

@@ -92,7 +92,8 @@ const validate = (d: ProfileData): ProfileErrors => {
   if (!d.firstName.trim()) errors.firstName = 'First name is required.';
   if (!d.lastName.trim()) errors.lastName = 'Last name is required.';
   if (!d.email.trim()) errors.email = 'Email is required.';
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) errors.email = 'Enter a valid email address.';
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email))
+    errors.email = 'Enter a valid email address.';
   return errors;
 };
 
@@ -229,7 +230,9 @@ export function MemberProfile() {
             </DefinitionList.Item>
             <DefinitionList.Item>
               <DefinitionList.Term>Email notifications</DefinitionList.Term>
-              <DefinitionList.Description>{profile.notifications ? 'On' : 'Off'}</DefinitionList.Description>
+              <DefinitionList.Description>
+                {profile.notifications ? 'On' : 'Off'}
+              </DefinitionList.Description>
             </DefinitionList.Item>
           </DefinitionList>
         </Card>
@@ -255,10 +258,16 @@ export function MemberProfile() {
               </Stack>
             </Cluster>
 
-            <FormSection title="Profile" description="Name and how this person appears across eocrm.">
+            <FormSection
+              title="Profile"
+              description="Name and how this person appears across eocrm."
+            >
               <FormRow columns={2}>
                 <Field label="First name" required error={errors.firstName}>
-                  <Input value={draft.firstName} onChange={(e) => set('firstName', e.target.value)} />
+                  <Input
+                    value={draft.firstName}
+                    onChange={(e) => set('firstName', e.target.value)}
+                  />
                 </Field>
                 <Field label="Last name" required error={errors.lastName}>
                   <Input value={draft.lastName} onChange={(e) => set('lastName', e.target.value)} />
@@ -268,7 +277,11 @@ export function MemberProfile() {
                 <Input value={draft.jobTitle} onChange={(e) => set('jobTitle', e.target.value)} />
               </Field>
               <Field label="Bio" optional>
-                <Textarea value={draft.bio} onChange={(e) => set('bio', e.target.value)} minRows={3} />
+                <Textarea
+                  value={draft.bio}
+                  onChange={(e) => set('bio', e.target.value)}
+                  minRows={3}
+                />
               </Field>
             </FormSection>
 
@@ -282,7 +295,11 @@ export function MemberProfile() {
               </Field>
               <FormRow columns={2}>
                 <Field label="Phone" optional>
-                  <Input type="tel" value={draft.phone} onChange={(e) => set('phone', e.target.value)} />
+                  <Input
+                    type="tel"
+                    value={draft.phone}
+                    onChange={(e) => set('phone', e.target.value)}
+                  />
                 </Field>
                 <Field label="Timezone">
                   <Select
