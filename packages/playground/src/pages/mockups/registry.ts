@@ -28,7 +28,10 @@ export type ComponentName =
   | 'DropdownMenu'
   | 'EmptyState'
   | 'ErrorState'
+  | 'Field'
   | 'FilterChip'
+  | 'FormRow'
+  | 'FormSection'
   | 'FileUpload'
   | 'IconTile'
   | 'Image'
@@ -195,6 +198,33 @@ export const MOCKUPS = [
       'Table',
       'Tabs',
       'Text',
+    ],
+  },
+  {
+    slug: 'member-profile',
+    title: 'Member profile',
+    path: '/mockups/member-profile',
+    blurb: 'Member profile with a drawer-based edit form (Field / FormRow / FormSection).',
+    usesComponents: [
+      'Avatar',
+      'Badge',
+      'Breadcrumb',
+      'Button',
+      'Card',
+      'Cluster',
+      'DefinitionList',
+      'Drawer',
+      'Field',
+      'FormRow',
+      'FormSection',
+      'Input',
+      'Page',
+      'PageHeader',
+      'Select',
+      'Stack',
+      'Switch',
+      'Text',
+      'Textarea',
     ],
   },
   {

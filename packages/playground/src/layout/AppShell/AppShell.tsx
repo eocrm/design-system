@@ -77,6 +77,7 @@ import {
   SquareMousePointer,
   Group,
   Columns2,
+  IdCard,
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -99,6 +100,7 @@ const mockupItems = [
   { to: '/mockups/deals', label: 'Deals', icon: KanbanSquare, end: false },
   { to: '/mockups/contacts', label: 'Contacts', icon: Users, end: false },
   { to: '/mockups/members', label: 'Members', icon: UserCog, end: false },
+  { to: '/mockups/member-profile', label: 'Member profile', icon: IdCard, end: false },
   { to: '/mockups/tenants', label: 'Tenants', icon: Building2, end: false },
   { to: '/mockups/audit', label: 'Audit log', icon: Activity, end: false },
   { to: '/mockups/system-settings', label: 'System settings', icon: SettingsIcon, end: false },

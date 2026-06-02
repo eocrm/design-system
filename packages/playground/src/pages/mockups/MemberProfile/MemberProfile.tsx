@@ -24,6 +24,7 @@ import {
   toast,
 } from '@eocrm/design-system';
 import { members, roleLabel, roleTone, type MemberRole } from '../../../data/mock';
+import { CrossLinks } from '../../shared/CrossLinks';
 
 // The editable profile shape. Richer than the shared `Member` type (which we do
 // NOT modify) — the extra fields live only in this mockup's local state.
@@ -332,6 +333,8 @@ export function MemberProfile() {
           <Button onClick={save}>Save changes</Button>
         </Drawer.Footer>
       </Drawer>
+
+      <CrossLinks kind="mockup" slug="member-profile" />
     </Page>
   );
 }
