@@ -2,6 +2,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
 import { ColorPicker, hexToHsv, hsvToHex } from './index';
+import { Field } from '../Field';
 
 // jsdom doesn't implement setPointerCapture / releasePointerCapture; stub.
 function ensurePointerCaptureShim() {
@@ -431,6 +432,52 @@ describe('ColorPicker — misc', () => {
       fireEvent.blur(input);
     });
     expect(input.value).toBe('#AABBCC');
+  });
+});
+
+describe('ColorPicker — labelledby / describedby forwarding', () => {
+  it('a Field label names the trigger button (auto-clone)', () => {
+    render(
+      <Field label="Brand color">
+        <ColorPicker value="#4F46E5" onChange={() => {}} />
+      </Field>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Brand color' });
+    expect(trigger.tagName).toBe('BUTTON');
+    expect(trigger).toHaveAttribute('aria-labelledby');
+    expect(trigger).not.toHaveAttribute('aria-label');
+  });
+
+  it('forwards aria-labelledby / aria-describedby to the trigger, not the root', () => {
+    const { container } = render(
+      <>
+        <span id="lbl">Pick brand color</span>
+        <span id="desc">Used across the app</span>
+        <ColorPicker
+          value="#FF0000"
+          onChange={() => {}}
+          aria-labelledby="lbl"
+          aria-describedby="desc"
+        />
+      </>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Pick brand color' });
+    expect(trigger).toHaveAttribute('aria-labelledby', 'lbl');
+    expect(trigger).toHaveAttribute('aria-describedby', 'desc');
+    expect(container.querySelector('div')).not.toHaveAttribute('aria-labelledby');
+  });
+
+  it('a Field label names a custom trigger (cloneElement branch)', () => {
+    render(
+      <Field label="Brand color">
+        <ColorPicker value="#000000" onChange={() => {}}>
+          <ColorPicker.Trigger asChild>
+            <button type="button">Pick</button>
+          </ColorPicker.Trigger>
+        </ColorPicker>
+      </Field>,
+    );
+    expect(screen.getByRole('button', { name: 'Brand color' })).toBeInTheDocument();
   });
 });
 
