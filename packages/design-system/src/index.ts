@@ -548,3 +548,13 @@ export {
 // ─── Palette (categorical color set) ──────────────────────────────────────
 export type { PaletteColor } from './palette';
 export { PALETTE_COLORS, paletteTokens } from './palette';
+
+// ─── Form field primitives (label/control wrapper + form layout) ──────────
+export { Field } from './components/Field';
+export type { FieldProps, FieldOrientation, FieldSize, FieldRenderProps } from './components/Field';
+
+export { FormSection } from './components/FormSection';
+export type { FormSectionProps } from './components/FormSection';
+
+export { FormRow } from './components/FormRow';
+export type { FormRowProps } from './components/FormRow';
