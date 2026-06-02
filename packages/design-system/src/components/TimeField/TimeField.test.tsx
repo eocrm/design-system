@@ -873,4 +873,44 @@ describe('TimeField — labelling', () => {
     expect(screen.getByRole('textbox', { name: 'Departure time' })).toHaveValue('14:30');
     expect(screen.getByRole('group', { name: 'Departure time' })).toBeInTheDocument();
   });
+
+  it('a Field error description reaches the inner input (not the group wrapper)', () => {
+    function ErrorDriver() {
+      const [v, setV] = useState<TimeValue | null>({ hours: 9, minutes: 0 });
+      return (
+        <Field label="Start time" error="Required field">
+          <TimeField value={v} hourCycle="24" onChange={setV} />
+        </Field>
+      );
+    }
+    render(<ErrorDriver />, { wrapper: wrap() });
+    // The accessible description must land on the focusable input, so a screen
+    // reader announces the error when the input has focus.
+    const input = screen.getByRole('textbox', { name: 'Start time' });
+    expect(input).toHaveAccessibleDescription('Required field');
+    // …and not on the role="group" wrapper (where {...rest} used to dump it).
+    expect(screen.getByRole('group', { name: 'Start time' })).not.toHaveAttribute(
+      'aria-describedby',
+    );
+  });
+
+  it('forwards aria-describedby onto the input directly', () => {
+    render(
+      <>
+        <span id="tf-desc">Use 24-hour format</span>
+        <TimeField
+          value={{ hours: 14, minutes: 30 }}
+          hourCycle="24"
+          aria-label="Departure time"
+          aria-describedby="tf-desc"
+          onChange={() => {}}
+        />
+      </>,
+      { wrapper: wrap() },
+    );
+    expect(screen.getByRole('textbox', { name: 'Departure time' })).toHaveAttribute(
+      'aria-describedby',
+      'tf-desc',
+    );
+  });
 });

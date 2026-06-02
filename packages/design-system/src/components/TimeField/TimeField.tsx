@@ -88,6 +88,12 @@ export interface TimeFieldProps extends Omit<
    * `<input>` so a `<Field label>` names it. Takes precedence over `aria-label`.
    */
   'aria-labelledby'?: string;
+  /**
+   * Id(s) of element(s) that describe this control (e.g. a `<Field>` error or
+   * helper message) — forwarded onto the inner `<input>`, not the wrapper, so
+   * the description is announced when the input is focused.
+   */
+  'aria-describedby'?: string;
   /** Disables the input + popover trigger. */
   disabled?: boolean;
   /** Stable id for the input (so an external `<label htmlFor>` can target it). */
@@ -163,6 +169,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     hideNowButton = false,
     'aria-label': ariaLabel,
     'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
     disabled = false,
     id: idProp,
     className,
@@ -595,6 +602,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
         autoComplete="off"
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}

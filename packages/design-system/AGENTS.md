@@ -556,7 +556,11 @@ import { Switch } from '@eocrm/design-system';
 ```
 
 - Wraps ONE control with its label + help/error + required marker, and auto-wires
-  `id` / `aria-describedby` / `invalid` (controls map `invalid → aria-invalid`).
+  `id` / `aria-labelledby` / `aria-describedby` / `invalid` (controls map `invalid → aria-invalid`).
+- When a `label` is present, Field injects `aria-labelledby` onto the cloned child, so
+  composite controls that forward ARIA props (`Select`, `Slider`, `ColorPicker`,
+  `FileUpload`, `TimeField`) get an accessible name for free. The render-prop `field`
+  object also carries `aria-labelledby` for wrapped/nested DOM.
 - `error` replaces `description` and flips the control invalid. `required` shows `*`;
   `optional` shows `(optional)`. `orientation="horizontal"` = label beside control.
 - Field owns the control `id` — to set one, use `<Field id>`, not the control.
