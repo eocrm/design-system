@@ -22,7 +22,10 @@ const OVERLAY_PORTAL_SELECTOR = '[data-drawer-portal-root], [data-modal-portal-r
  * // `[data-in-overlay]` selector and the `data-*-content=""` convention:
  * // <ul data-in-overlay={inOverlay ? '' : undefined} ...>
  */
-export function useInOverlay(referenceRef: RefObject<HTMLElement | null>, active: boolean): boolean {
+export function useInOverlay(
+  referenceRef: RefObject<HTMLElement | null>,
+  active: boolean,
+): boolean {
   const [inOverlay, setInOverlay] = useState(false);
   useLayoutEffect(() => {
     if (!active) {
