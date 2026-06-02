@@ -11,6 +11,7 @@ import { MemberProfile } from './pages/mockups/MemberProfile/MemberProfile';
 import { Tenants } from './pages/mockups/Tenants/Tenants';
 import { TenantDetail } from './pages/mockups/Tenants/TenantDetail';
 import { Settings } from './pages/mockups/Settings/Settings';
+import { CustomFields } from './pages/mockups/CustomFields/CustomFields';
 import { Login } from './pages/mockups/Login/Login';
 import { NotFound } from './pages/mockups/NotFound/NotFound';
 import { NotFoundStandalone } from './pages/mockups/NotFound/NotFoundStandalone';
@@ -108,6 +109,7 @@ export default function App() {
             <Route path="/mockups/tenants" element={<Tenants />} />
             <Route path="/mockups/tenants/:slug" element={<TenantDetail />} />
             <Route path="/mockups/system-settings" element={<Settings />} />
+            <Route path="/mockups/custom-fields" element={<CustomFields />} />
             <Route path="/mockups/audit" element={<Audit />} />
             <Route path="/mockups/login" element={<Login />} />
             <Route path="/mockups/404" element={<NotFound />} />
