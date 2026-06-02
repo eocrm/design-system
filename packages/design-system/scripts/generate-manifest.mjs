@@ -23,6 +23,7 @@ const CLUSTERS = {
   Stack: 'Layout',
   Cluster: 'Layout',
   Constrain: 'Layout',
+  AppLayout: 'Layout',
   Divider: 'Layout',
   Grid: 'Layout',
   Masonry: 'Layout',

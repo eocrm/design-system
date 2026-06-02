@@ -639,6 +639,23 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
+    to: '/components/app-layout',
+    name: 'AppLayout',
+    description: 'Viewport-filling app shell — topBar + sidebar + content.',
+    preview: (
+      <Stack gap="xs">
+        <div className={styles.bar} />
+        <Cluster gap="xs" wrap={false}>
+          <div className={styles.tile} />
+          <Stack gap="xs">
+            <div className={styles.bar} />
+            <div className={styles.bar} />
+          </Stack>
+        </Cluster>
+      </Stack>
+    ),
+  },
+  {
     to: '/components/constrain',
     name: 'Constrain',
     description: 'Width / flex constraint — cap a width or fill a flex row.',
