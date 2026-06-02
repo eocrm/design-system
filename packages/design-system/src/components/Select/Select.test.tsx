@@ -1212,3 +1212,23 @@ describe('Select — render escape hatches', () => {
     expect(screen.getByText('Nothing for "zzz"')).toBeInTheDocument();
   });
 });
+
+describe('Select — overlay elevation', () => {
+  it('elevates the listbox (data-in-overlay) when opened inside an overlay', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-drawer-portal-root="">
+        <Select options={STATUSES} aria-label="Status" />
+      </div>,
+    );
+    await user.click(screen.getByRole('button'));
+    expect(screen.getByRole('listbox')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('does not elevate the listbox at page level', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} aria-label="Status" />);
+    await user.click(screen.getByRole('button'));
+    expect(screen.getByRole('listbox')).not.toHaveAttribute('data-in-overlay');
+  });
+});

@@ -12,6 +12,7 @@ import {
 import clsx from 'clsx';
 import { usePopoverContext } from './context';
 import { mergeRefs } from '../_internal/refs';
+import { useInOverlay } from '../_internal/overlay';
 import styles from './Popover.module.scss';
 
 /** Which side of the trigger the popover prefers. Floating UI auto-flips if it doesn't fit. */
@@ -45,6 +46,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
   forwardedRef,
 ) {
   const ctx = usePopoverContext('Content');
+  const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
   const arrowRef = useRef<HTMLSpanElement | null>(null);
 
   const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;
@@ -125,6 +127,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
       tabIndex={-1}
       data-side={resolvedSide}
       data-popover-content=""
+      data-in-overlay={inOverlay ? '' : undefined}
       style={{ ...floatingStyles, minWidth: minWidthStyle }}
       className={clsx(styles.content, className)}
     >

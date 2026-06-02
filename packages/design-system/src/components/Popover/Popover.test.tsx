@@ -509,3 +509,35 @@ describe('Popover — cleanup + Tab traversal', () => {
     expect(ancestorClick).not.toHaveBeenCalled();
   });
 });
+
+describe('Popover — overlay elevation', () => {
+  it('elevates the content (data-in-overlay) when opened inside an overlay', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-drawer-portal-root="">
+        <Popover>
+          <Popover.Trigger>
+            <button type="button">Open</button>
+          </Popover.Trigger>
+          <Popover.Content>Panel</Popover.Content>
+        </Popover>
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(document.querySelector('[data-popover-content]')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('does not elevate the popover content at page level', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>Panel</Popover.Content>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(document.querySelector('[data-popover-content]')).not.toHaveAttribute('data-in-overlay');
+  });
+});

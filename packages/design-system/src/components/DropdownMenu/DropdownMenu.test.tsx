@@ -1819,3 +1819,44 @@ describe('DropdownMenu — cross-feature integration', () => {
     expect(screen.queryAllByRole('menu')).toHaveLength(0);
   });
 });
+
+describe('DropdownMenu — overlay elevation', () => {
+  it('elevates the menu content (data-in-overlay) when opened inside an overlay', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-drawer-portal-root="">
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button">Open</button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Item onSelect={() => {}}>Item</DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(document.querySelector('[data-dropdown-menu-content]')).toHaveAttribute(
+      'data-in-overlay',
+      '',
+    );
+  });
+
+  it('does not elevate the menu content at page level', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Item</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(document.querySelector('[data-dropdown-menu-content]')).not.toHaveAttribute(
+      'data-in-overlay',
+    );
+  });
+});

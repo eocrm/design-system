@@ -29,6 +29,10 @@
   }
 }
 
+.content[data-in-overlay] {
+  z-index: var(--z-overlay-floating);
+}
+
 .arrow {
   position: absolute;
   width: var(--popover-arrow-size);

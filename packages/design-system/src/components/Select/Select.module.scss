@@ -159,6 +159,10 @@
   transform-origin: top;
 }
 
+.listbox[data-in-overlay] {
+  z-index: var(--z-overlay-floating);
+}
+
 @keyframes select-open {
   from {
     opacity: var(--select-listbox-anim-opacity-from);

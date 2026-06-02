@@ -19,6 +19,7 @@ import {
 import clsx from 'clsx';
 import { useDropdownMenuContext } from './context';
 import { mergeRefs } from '../_internal/refs';
+import { useInOverlay } from '../_internal/overlay';
 import styles from './DropdownMenu.module.scss';
 
 /** Which side of the trigger the menu prefers. Floating UI auto-flips if it doesn't fit. */
@@ -57,6 +58,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
   forwardedRef,
 ) {
   const ctx = useDropdownMenuContext('Content');
+  const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
 
   const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;
 
@@ -355,6 +357,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       data-align={resolvedAlign}
       data-dropdown-menu-content=""
       data-dropdown-depth={ctx.depth}
+      data-in-overlay={inOverlay ? '' : undefined}
       style={floatingStyles}
       className={clsx(styles.content, className)}
       onKeyDown={handleKeyDown}
