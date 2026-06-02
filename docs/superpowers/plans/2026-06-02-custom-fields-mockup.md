@@ -15,11 +15,13 @@
 ## File map
 
 **Create:**
+
 - `packages/playground/src/pages/mockups/CustomFields/fields.ts` — `EntityKey`/`FieldType`/`CustomField`/`FieldOption` types; `ENTITIES`, `FIELD_TYPE_LABEL`, `FIELD_TYPE_TONE`, `TYPE_OPTIONS`; `isChoiceType`, `uid`, `slugify`, `blankField`, `SEED`.
 - `packages/playground/src/pages/mockups/CustomFields/FieldDrawer.tsx` — the Add/Edit field `Drawer` (draft + validation + options editor).
 - `packages/playground/src/pages/mockups/CustomFields/CustomFields.tsx` — the page (tabs, Sortable field list, EmptyState, state, mounts `FieldDrawer`).
 
 **Modify (Rule 4 wiring):**
+
 - `packages/playground/src/App.tsx` — import + `<Route path="/mockups/custom-fields" …>`
 - `packages/playground/src/layout/AppShell/AppShell.tsx` — `SquarePen` lucide import + a `mockupItems` entry
 - `packages/playground/src/pages/mockups/registry.ts` — a `MOCKUPS` entry (auto-feeds `MockupsIndex` + `CrossLinks`; no `ComponentName` additions — all used names already in the union)
@@ -33,12 +35,14 @@
 - [ ] **Step 1: Confirm branch + hooks + merged deps**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 git branch --show-current        # expect: mockup/custom-fields
 git config --get core.hooksPath  # expect: .husky/_
 test -f packages/design-system/src/components/_internal/overlay/useInOverlay.ts && echo "overlay fix present ✓"
 ```
+
 Expect the branch + hooks + the overlay fix (so the in-drawer Type Select renders above the drawer). If not on the branch, `git checkout mockup/custom-fields` (branched off `main`).
 
 ---
@@ -46,6 +50,7 @@ Expect the branch + hooks + the overlay fix (so the in-drawer Type Select render
 ## Task 1: `fields.ts` — types, constants, helpers
 
 **Files:**
+
 - Create: `packages/playground/src/pages/mockups/CustomFields/fields.ts`
 
 - [ ] **Step 1: Write the module**
@@ -273,6 +278,7 @@ EOF
 ## Task 2: `FieldDrawer.tsx` — the Add/Edit field drawer
 
 **Files:**
+
 - Create: `packages/playground/src/pages/mockups/CustomFields/FieldDrawer.tsx`
 
 - [ ] **Step 1: Write the component**
@@ -361,10 +367,12 @@ export function FieldDrawer({
       ...d,
       type: value,
       // Give choice types a first empty option row to edit.
-      options: isChoiceType(value) && d.options.length === 0 ? [{ id: uid('o'), label: '' }] : d.options,
+      options:
+        isChoiceType(value) && d.options.length === 0 ? [{ id: uid('o'), label: '' }] : d.options,
     }));
 
-  const addOption = () => setDraft((d) => ({ ...d, options: [...d.options, { id: uid('o'), label: '' }] }));
+  const addOption = () =>
+    setDraft((d) => ({ ...d, options: [...d.options, { id: uid('o'), label: '' }] }));
   const setOption = (id: string, label: string) =>
     setDraft((d) => ({ ...d, options: d.options.map((o) => (o.id === id ? { ...o, label } : o)) }));
   const removeOption = (id: string) =>
@@ -404,7 +412,10 @@ export function FieldDrawer({
       <Drawer.Header>{`${field ? 'Edit field' : 'Add field'} · ${entityLabel}`}</Drawer.Header>
       <Drawer.Body>
         <Stack gap="xl">
-          <FormSection title="Field" description="What this field is called and how it stores data.">
+          <FormSection
+            title="Field"
+            description="What this field is called and how it stores data."
+          >
             <Field label="Label" required error={errors.label}>
               <Input
                 value={draft.label}
@@ -417,7 +428,11 @@ export function FieldDrawer({
               error={errors.key}
               description="Used in the API and imports. Auto-generated from the label."
             >
-              <Input value={draft.key} onChange={(e) => onKey(e.target.value)} placeholder="industry" />
+              <Input
+                value={draft.key}
+                onChange={(e) => onKey(e.target.value)}
+                placeholder="industry"
+              />
             </Field>
             <Field label="Type" required>
               <Select
@@ -535,6 +550,7 @@ EOF
 ## Task 3: `CustomFields.tsx` page + wiring
 
 **Files:**
+
 - Create: `packages/playground/src/pages/mockups/CustomFields/CustomFields.tsx`
 - Modify: `packages/playground/src/App.tsx`, `.../layout/AppShell/AppShell.tsx`, `.../pages/mockups/registry.ts`
 
@@ -639,7 +655,11 @@ export function CustomFields() {
         </PageHeader.Actions>
       </PageHeader>
 
-      <Tabs items={tabs} activeId={activeEntity} onChange={(id) => setActiveEntity(id as EntityKey)} />
+      <Tabs
+        items={tabs}
+        activeId={activeEntity}
+        onChange={(id) => setActiveEntity(id as EntityKey)}
+      />
 
       {fields.length === 0 ? (
         <EmptyState
@@ -674,7 +694,12 @@ export function CustomFields() {
                     )}
                     <DropdownMenu>
                       <DropdownMenu.Trigger>
-                        <Button variant="ghost" size="sm" iconOnly aria-label={`Actions for ${f.label}`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          iconOnly
+                          aria-label={`Actions for ${f.label}`}
+                        >
                           <MoreHorizontal size={16} />
                         </Button>
                       </DropdownMenu.Trigger>
@@ -688,7 +713,11 @@ export function CustomFields() {
                           confirmLabel="Delete field"
                           onConfirm={() => deleteField(f.id)}
                         >
-                          <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}} tone="danger">
+                          <DropdownMenu.Item
+                            closeOnSelect={false}
+                            onSelect={() => {}}
+                            tone="danger"
+                          >
                             Delete field
                           </DropdownMenu.Item>
                         </ConfirmationPopover>
@@ -720,6 +749,7 @@ export function CustomFields() {
 - [ ] **Step 2: Wire the route (App.tsx)**
 
 In `packages/playground/src/App.tsx`:
+
 1. Add the import next to the other mockup imports (after the `Settings` mockup import):
    ```tsx
    import { CustomFields } from './pages/mockups/CustomFields/CustomFields';
@@ -732,6 +762,7 @@ In `packages/playground/src/App.tsx`:
 - [ ] **Step 3: Wire the nav (AppShell.tsx)**
 
 In `packages/playground/src/layout/AppShell/AppShell.tsx`:
+
 1. Add `SquarePen` to the existing `from 'lucide-react'` import block (it isn't imported yet and isn't used by any other `mockupItems` entry).
 2. Add to the `mockupItems` array, right after the System settings entry:
    ```tsx
@@ -741,6 +772,7 @@ In `packages/playground/src/layout/AppShell/AppShell.tsx`:
 - [ ] **Step 4: Wire the registry (registry.ts)**
 
 In `packages/playground/src/pages/mockups/registry.ts`, add to the `MOCKUPS` array right after the `system-settings` entry (no `ComponentName` additions needed — all used names are already in the union):
+
 ```ts
   {
     slug: 'custom-fields',
@@ -772,16 +804,19 @@ In `packages/playground/src/pages/mockups/registry.ts`, add to the `MOCKUPS` arr
     ],
   },
 ```
+
 > This 21-item array is the exact union of `@eocrm/design-system` imports across `CustomFields.tsx` + `FieldDrawer.tsx` (Rule 7's registry-sync check requires an exact match — `Cluster` and `Constrain` are included). `toast` and the type-only imports (`TabItem`, `BadgeTone`) are not components and are correctly excluded. Paste as-is.
 
 - [ ] **Step 5: Typecheck + build + lint**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 cd packages/playground && npm run typecheck
 cd /Users/dpws/projects/design-system && make build && make lint
 ```
+
 Expected: clean typecheck, clean playground bundle, clean stylelint. The page is now reachable at `/mockups/custom-fields`, listed on the Mockups overview (registry-driven), and cross-linked.
 
 - [ ] **Step 6: Commit**
@@ -813,6 +848,7 @@ EOF
 - [ ] **Step 1: Full gates**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 make test          # full vitest suite (library) — no regression
@@ -820,6 +856,7 @@ make build         # typecheck + bundle playground
 make lint          # stylelint
 npm run format:check
 ```
+
 Expected: all green. If `prettier --check` flags the new files, run `npx prettier --write` on them and amend/commit.
 
 - [ ] **Step 2: Playground Hard rule 7 — mockup review-fix loop**
@@ -829,6 +866,7 @@ This touches `pages/mockups/**` + `registry.ts`, so run the mockup pre-push revi
 - [ ] **Step 3: Manual smoke (recommended)**
 
 `make dev`, visit `http://localhost:8080/mockups/custom-fields`:
+
 - Switch entity tabs; counts match; **Tickets** shows the `EmptyState`.
 - "Add field" → drawer opens; type a Label → the Key auto-fills (snake_case); pick **Dropdown** → the **Options** editor appears and the **Type Select opens ABOVE the drawer** (overlay z-fix); add/reorder/remove options.
 - Save with an empty label, or a dropdown with no options → `Field` errors block save and keep the drawer open.
@@ -858,6 +896,7 @@ Exercises the merged overlay z-fix — the in-drawer Type `Select` renders above
 EOF
 )"
 ```
+
 Expected: PR created; wait for `Quality / check`.
 
 ---
@@ -875,7 +914,11 @@ Expected: PR created; wait for `Quality / check`.
 **Type consistency:** `CustomField`/`FieldOption`/`FieldType`/`EntityKey` used consistently across `fields.ts`, `FieldDrawer.tsx`, `CustomFields.tsx`. `FieldDrawer` props (`open`/`onOpenChange`/`entityLabel`/`field`/`existingKeys`/`onSave`) match the page's call site. `Sortable` `onReorder({from,to})` + plain-splice reorder used identically in both the field list and the options editor. `Select onChange(value)` cast to `FieldType`. `Switch onChange(checked)`. `Tabs onChange(id)` cast to `EntityKey`.
 
 ## Follow-ups (out of scope)
+
 - Live preview of how a field renders on an entity form; default value & placeholder per field.
 - Import/export field definitions.
 - A reusable `Sortable`-backed data-list / sortable-table primitive in the library (would replace the hand-laid `Card`+`Cluster` rows).
+
+```
+
 ```

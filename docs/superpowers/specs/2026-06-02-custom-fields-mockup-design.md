@@ -8,7 +8,7 @@
 
 A believable CRM **admin screen for defining custom fields per entity** (Contacts, Deals, Companies, Tickets). It showcases the form primitives (`Field`/`FormRow`/`FormSection`) in a real configuration workflow and exercises the recently-fixed Select-in-`Drawer` behavior. This is a **mockup** — built exclusively from `@eocrm/design-system` components (playground Hard rule 6); lucide icons + the `toast` helper are allowed.
 
-The reference repo has no custom-fields concept to mirror, so the model is designed fresh. Field *definitions* are mockup-local state — there are no real entity records.
+The reference repo has no custom-fields concept to mirror, so the model is designed fresh. Field _definitions_ are mockup-local state — there are no real entity records.
 
 ## The page
 
@@ -39,7 +39,7 @@ Reordering calls `onReorder(({from,to}) => arrayMove(...))`. When an entity has 
 `Drawer.Header` "Add field · {Entity}" / "Edit field · {Entity}". `Drawer.Body` = three `FormSection`s; `Drawer.Footer` = Cancel (`Drawer.Close`) + "Save field".
 
 1. **Field** — Label (`Field` required + `Input`); Field key (`Field` + `Input`, `Code`-styled, auto-derived from the label, editable; hint: "Used in the API & imports"); Type (`Field` required + **`Select`** — this Select is inside the Drawer, exercising the #112 elevation fix).
-2. **Options** *(conditional — only when Type is `dropdown` or `multiselect`)* — a `Sortable` list of option rows, each a `Field`-less `Input` + a remove action, plus an "+ Add option" `Button`. Drag to reorder.
+2. **Options** _(conditional — only when Type is `dropdown` or `multiselect`)_ — a `Sortable` list of option rows, each a `Field`-less `Input` + a remove action, plus an "+ Add option" `Button`. Drag to reorder.
 3. **Behavior** — Help text (`Field` optional + `Input`); Required (`Field` horizontal + `Switch`); Show in table (`Field` horizontal + `Switch`, "Add a column on the {Entity} list").
 
 **Field types** (the Type `Select` options): Text, Text area, Number, Date, Checkbox (yes/no), Dropdown, Multi-select, Email, URL, Phone.
@@ -66,9 +66,20 @@ On Save: **Label** required; **Key** required, matches `^[a-z][a-z0-9_]*$`, and 
 ```ts
 type EntityKey = 'contacts' | 'deals' | 'companies' | 'tickets';
 type FieldType =
-  | 'text' | 'textarea' | 'number' | 'date' | 'checkbox'
-  | 'dropdown' | 'multiselect' | 'email' | 'url' | 'phone';
-interface FieldOption { id: string; label: string; }
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'date'
+  | 'checkbox'
+  | 'dropdown'
+  | 'multiselect'
+  | 'email'
+  | 'url'
+  | 'phone';
+interface FieldOption {
+  id: string;
+  label: string;
+}
 interface CustomField {
   id: string;
   label: string;
