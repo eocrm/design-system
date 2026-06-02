@@ -147,16 +147,11 @@ export function FieldDrawer({
               />
             </Field>
             <Field label="Type" required>
-              {(field) => (
-                <Select
-                  options={TYPE_OPTIONS}
-                  value={draft.type}
-                  onChange={(value) => onType(value as FieldType)}
-                  aria-labelledby={field.labelId}
-                  aria-describedby={field['aria-describedby']}
-                  invalid={field.invalid}
-                />
-              )}
+              <Select
+                options={TYPE_OPTIONS}
+                value={draft.type}
+                onChange={(value) => onType(value as FieldType)}
+              />
             </Field>
           </FormSection>
 
