@@ -190,6 +190,7 @@ export const MOCKUPS = [
       'DropdownMenu',
       'IconTile',
       'Input',
+      'Link',
       'Page',
       'PageHeader',
       'PersonDisplay',
@@ -203,7 +204,7 @@ export const MOCKUPS = [
   {
     slug: 'member-profile',
     title: 'Member profile',
-    path: '/mockups/member-profile',
+    path: '/mockups/members/:id',
     blurb: 'Member profile with a drawer-based edit form (Field / FormRow / FormSection).',
     usesComponents: [
       'Avatar',

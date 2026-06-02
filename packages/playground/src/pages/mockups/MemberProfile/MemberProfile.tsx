@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useParams } from 'react-router-dom';
 import { Mail, Phone, Clock, Languages, Camera } from 'lucide-react';
 import {
   Avatar,
@@ -23,7 +23,7 @@ import {
   Textarea,
   toast,
 } from '@eocrm/design-system';
-import { members, roleLabel, roleTone, type MemberRole } from '../../../data/mock';
+import { members, roleLabel, roleTone, type Member, type MemberRole } from '../../../data/mock';
 import { CrossLinks } from '../../shared/CrossLinks';
 
 // The editable profile shape. Richer than the shared `Member` type (which we do
@@ -67,9 +67,8 @@ const LANGUAGE_OPTIONS = [
 const labelOf = (opts: { value: string; label: string }[], value: string) =>
   opts.find((o) => o.value === value)?.label ?? value;
 
-// Seed from a representative member; split the single `name` into first/last.
-const seed = (): ProfileData => {
-  const m = members[0];
+// Seed the editable profile from a member; split the single `name` into first/last.
+const seed = (m: Member): ProfileData => {
   const [first, ...rest] = m.name.split(' ');
   return {
     firstName: first,
@@ -98,10 +97,14 @@ const validate = (d: ProfileData): ProfileErrors => {
 };
 
 export function MemberProfile() {
-  const [profile, setProfile] = useState<ProfileData>(seed);
+  const { id } = useParams<{ id: string }>();
+  const member = members.find((m) => m.id === id);
+  const [profile, setProfile] = useState<ProfileData>(() => seed(member ?? members[0]));
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<ProfileData>(profile);
   const [errors, setErrors] = useState<ProfileErrors>({});
+
+  if (!member) return <Navigate to="/mockups/members" replace />;
 
   const openEdit = () => {
     setDraft(profile);

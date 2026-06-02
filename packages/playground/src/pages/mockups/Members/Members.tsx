@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { UserPlus, MoreHorizontal, MailPlus, Trash2 } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Badge,
   Button,
@@ -9,6 +10,7 @@ import {
   DropdownMenu,
   IconTile,
   Input,
+  Link,
   Page,
   PageHeader,
   PersonDisplay,
@@ -96,7 +98,11 @@ export function Members() {
                           name={m.name}
                           status={m.online ? 'online' : undefined}
                         />
-                        <PersonDisplay.Name>{m.name}</PersonDisplay.Name>
+                        <PersonDisplay.Name>
+                          <Link as={RouterLink} to={`/mockups/members/${m.id}`}>
+                            {m.name}
+                          </Link>
+                        </PersonDisplay.Name>
                         <PersonDisplay.Description>{m.email}</PersonDisplay.Description>
                       </PersonDisplay>
                     </Table.Cell>
