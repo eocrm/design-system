@@ -35,9 +35,13 @@ A floating surface elevates its own z-index **only when** its trigger lives insi
    - `reference` is the floating surface's trigger/reference element — each component already has it (Floating UI's `refs.reference`, or the trigger ref in component context).
 
 3. **Each floating Content** calls the hook and, when `true`, sets a `data-in-overlay=""` attribute on its portaled root (alongside the existing `data-*-content` / `role="listbox"` attribute). Its SCSS adds an elevation rule:
+
    ```scss
-   &[data-in-overlay] { z-index: var(--z-overlay-floating); }
+   &[data-in-overlay] {
+     z-index: var(--z-overlay-floating);
+   }
    ```
+
    - `Select` → `Select.module.scss` `.listbox[data-in-overlay]`
    - `Popover` → `Popover.module.scss` `.content[data-in-overlay]`
    - `DropdownMenu` → `DropdownMenu.module.scss` `.content[data-in-overlay]`

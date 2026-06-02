@@ -13,10 +13,12 @@
 ## File map
 
 **Create:**
+
 - `packages/design-system/src/components/_internal/overlay/useInOverlay.ts`
 - `packages/design-system/src/components/_internal/overlay/useInOverlay.test.ts`
 
 **Modify:**
+
 - `packages/design-system/src/components/_internal/overlay/index.ts` — export `useInOverlay`
 - `packages/design-system/src/styles/tokens.scss` — add `--z-overlay-floating`
 - `packages/design-system/src/components/Select/Listbox.tsx` + `Select/Select.module.scss`
@@ -34,11 +36,13 @@
 - [ ] **Step 1: Confirm branch + hooks**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 git branch --show-current        # expect: fix/overlay-floating-z
 git config --get core.hooksPath  # expect: .husky/_
 ```
+
 If not on the branch: `git checkout fix/overlay-floating-z` (it was branched off `main`).
 
 ---
@@ -46,6 +50,7 @@ If not on the branch: `git checkout fix/overlay-floating-z` (it was branched off
 ## Task 1: `useInOverlay` hook + `--z-overlay-floating` token
 
 **Files:**
+
 - Create: `packages/design-system/src/components/_internal/overlay/useInOverlay.ts`
 - Test: `packages/design-system/src/components/_internal/overlay/useInOverlay.test.ts`
 - Modify: `packages/design-system/src/components/_internal/overlay/index.ts`
@@ -137,7 +142,10 @@ const OVERLAY_PORTAL_SELECTOR = '[data-drawer-portal-root], [data-modal-portal-r
  * const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
  * // <ul data-in-overlay={inOverlay || undefined} ...>
  */
-export function useInOverlay(referenceRef: RefObject<HTMLElement | null>, active: boolean): boolean {
+export function useInOverlay(
+  referenceRef: RefObject<HTMLElement | null>,
+  active: boolean,
+): boolean {
   const [inOverlay, setInOverlay] = useState(false);
   useLayoutEffect(() => {
     if (!active) {
@@ -168,9 +176,9 @@ Expected: PASS — all 4 tests green.
 In `packages/design-system/src/styles/tokens.scss`, add a line directly after the `--z-modal` declaration:
 
 ```scss
-  --z-modal: 1100;
-  --z-overlay-floating: 1190; // floating content (Select/Popover/DropdownMenu) opened INSIDE a modal/drawer
-  --z-toast: 1200;
+--z-modal: 1100;
+--z-overlay-floating: 1190; // floating content (Select/Popover/DropdownMenu) opened INSIDE a modal/drawer
+--z-toast: 1200;
 ```
 
 - [ ] **Step 7: Commit**
@@ -198,6 +206,7 @@ EOF
 ## Task 2: Elevate Select / Popover / DropdownMenu when nested
 
 **Files:**
+
 - Modify: `Select/Listbox.tsx`, `Select/Select.module.scss`, `Select/Select.test.tsx`
 - Modify: `Popover/Content.tsx`, `Popover/Popover.module.scss`, `Popover/Popover.test.tsx`
 - Modify: `DropdownMenu/Content.tsx`, `DropdownMenu/DropdownMenu.module.scss`, `DropdownMenu/DropdownMenu.test.tsx`
@@ -313,6 +322,7 @@ Expected: FAIL — the four new cases fail (`data-in-overlay` attribute absent) 
 - [ ] **Step 3: Implement — Select**
 
 In `packages/design-system/src/components/Select/Listbox.tsx`:
+
 1. Add `useInOverlay` to the existing `'../_internal/overlay'` import (the file already imports from there for the overlay stack; if not, add `import { useInOverlay } from '../_internal/overlay';`).
 2. Inside `Listbox()`, after `const ctx = useSelectContext('Listbox');`, add:
    ```tsx
@@ -324,6 +334,7 @@ In `packages/design-system/src/components/Select/Listbox.tsx`:
    ```
 
 In `packages/design-system/src/components/Select/Select.module.scss`, directly after the `.listbox { … }` rule, add:
+
 ```scss
 .listbox[data-in-overlay] {
   z-index: var(--z-overlay-floating);
@@ -333,6 +344,7 @@ In `packages/design-system/src/components/Select/Select.module.scss`, directly a
 - [ ] **Step 4: Implement — Popover**
 
 In `packages/design-system/src/components/Popover/Content.tsx`:
+
 1. Add `import { useInOverlay } from '../_internal/overlay';` (or extend the existing overlay import).
 2. After the component reads its context (the `ctx` with `triggerRef`/`open`), add:
    ```tsx
@@ -344,6 +356,7 @@ In `packages/design-system/src/components/Popover/Content.tsx`:
    ```
 
 In `packages/design-system/src/components/Popover/Popover.module.scss`, directly after the `.content { … }` rule, add:
+
 ```scss
 .content[data-in-overlay] {
   z-index: var(--z-overlay-floating);
@@ -353,6 +366,7 @@ In `packages/design-system/src/components/Popover/Popover.module.scss`, directly
 - [ ] **Step 5: Implement — DropdownMenu**
 
 In `packages/design-system/src/components/DropdownMenu/Content.tsx`:
+
 1. Add `import { useInOverlay } from '../_internal/overlay';` (or extend the existing overlay import).
 2. After the component reads its context (`ctx` with `triggerRef`/`open`), add:
    ```tsx
@@ -365,6 +379,7 @@ In `packages/design-system/src/components/DropdownMenu/Content.tsx`:
    (This covers submenus too — `Sub.tsx` renders through this same `Content`, each instance with its own `ctx.triggerRef`/`ctx.open`.)
 
 In `packages/design-system/src/components/DropdownMenu/DropdownMenu.module.scss`, directly after the `.content { … }` rule, add:
+
 ```scss
 .content[data-in-overlay] {
   z-index: var(--z-overlay-floating);
@@ -379,11 +394,13 @@ Expected: PASS — the new cases pass and all existing Select/Popover/DropdownMe
 - [ ] **Step 7: Typecheck + lint**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 make build-lib
 make lint
 ```
+
 Expected: both clean.
 
 - [ ] **Step 8: Commit**
@@ -417,6 +434,7 @@ EOF
 ## Task 3: Demo + full verification + Rule 8 loop + PR
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/DrawerDemo.tsx`
 
 - [ ] **Step 1: Add a "floating content inside a drawer" demo example**
@@ -451,6 +469,7 @@ Use a `title` like `"Floating content inside a drawer"` and a `description` noti
 - [ ] **Step 2: Full library gates**
 
 Run:
+
 ```bash
 cd /Users/dpws/projects/design-system
 make test            # full vitest suite — all green
@@ -459,6 +478,7 @@ make build           # typecheck + bundle playground (smoke-tests library)
 make lint            # stylelint
 npm pack --dry-run -w @eocrm/design-system 2>&1 | grep -ciE '\.test\.|\.spec\.'   # expect: 0
 ```
+
 Expected: all green; `0` test files in the tarball.
 
 - [ ] **Step 3: Library Rule 8 review-fix loop**
@@ -503,6 +523,7 @@ gh pr create --base main --head fix/overlay-floating-z \
 EOF
 )"
 ```
+
 Expected: PR created. Wait for `Quality / check` before merge.
 
 ---
@@ -516,4 +537,5 @@ Expected: PR created. Wait for `Quality / check` before merge.
 **Type consistency:** `useInOverlay(referenceRef: RefObject<HTMLElement | null>, active: boolean): boolean` — called identically in all three components as `useInOverlay(ctx.triggerRef, ctx.open)` (every Content already exposes `ctx.triggerRef` and `ctx.open`). The `data-in-overlay={inOverlay || undefined}` attribute name matches the SCSS selector `[data-in-overlay]` and the test assertions in every task.
 
 ## Follow-ups (out of scope)
+
 - Audit `OptionsPicker` and any Calendar/DatePicker popovers for the same z issue.
