@@ -19,12 +19,16 @@ component, a docs change.
   the design system; this is NOT a separate consumer app).
 - **Issues** live in `eocrm/design-system` on GitHub and are the unit of work.
 - **Publishing is automatic on merge to `main`.** `.github/workflows/release.yml`
-  runs on any push to `main` touching `packages/**`: it patch-bumps from the
-  newest `v*` git tag, `npm publish`es to GitHub Packages, pushes the new tag, and
-  redeploys the playground. **There is no manual publish step — merging the PR IS
-  releasing.** The shipped version is the new `v*` tag. The `publish` job is
-  **skipped** when the merge didn't touch `packages/design-system/**` (e.g. a
-  root-docs-only change) — then there is no new version to report.
+  runs only on a push to `main` touching `packages/**` or `.github/workflows/**`:
+  it patch-bumps from the newest `v*` git tag, `npm publish`es to GitHub Packages,
+  pushes the new tag, and redeploys the playground. **There is no manual publish
+  step — merging the PR IS releasing.** The shipped version is the new `v*` tag.
+  Two no-version-bump cases to expect: **(a)** the merge touched **neither**
+  `packages/**` nor `.github/workflows/**` (e.g. a `.claude/`- or root-docs-only
+  change) → **no Release run is created at all**; **(b)** a Release run runs but its
+  `publish` job is **skipped** because the diff matched neither
+  `^packages/design-system/` nor the `release`/`quality`/`deploy-playground`
+  workflow files (e.g. a `packages/playground`-only change).
 - **Gates:** `make test`, `make build-lib`, `make lint` (root Makefile);
   `npm run format:check` (root). A Husky pre-push hook runs prettier + stylelint +
   typecheck. The required PR status check is **`Quality / check`**.
@@ -72,12 +76,19 @@ Exactly ONE issue per invocation.
    package Hard rules in `packages/design-system/CLAUDE.md` — read both now, don't
    rely on memory. That checklist covers: tests beside the component, a playground
    demo page + wiring (route + sidebar nav + overview grid), the `src/index.ts`
-   re-export, JSDoc `@remarks` anti-patterns, and an `AGENTS.md` TL;DR. **Plus one
-   step not in CLAUDE.md:** add a CLUSTERS entry in
-   `packages/design-system/scripts/generate-manifest.mjs`, then regenerate:
+   re-export, JSDoc `@remarks` anti-patterns, and an `AGENTS.md` TL;DR. (The
+   playground demo lives at
+   `packages/playground/src/pages/components/<Name>Demo.tsx` and the overview grid
+   is `ComponentsIndex.tsx` — the root CLAUDE.md's `pages/demo/` + `DemoIndex.tsx`
+   names are stale; trust the actual tree.) **Plus one step not in CLAUDE.md:** add
+   a CLUSTERS entry in **both** parallel maps (they are kept in sync) —
+   `packages/design-system/src/_meta/manifest.ts` **and**
+   `packages/design-system/scripts/generate-manifest.mjs` — then regenerate:
    ```bash
    cd /Users/dpws/projects/design-system/packages/design-system && npm run build:manifest
    ```
+   (Editing only the `.mjs` leaves `_meta/manifest.ts` stale and fails the manifest
+   drift test inside `make test`.)
    For a pure bug fix, scope to the fix plus a regression test. Honor the Hard
    rules: tokens-only SCSS, components don't own layout, `forwardRef` + prop
    spread, i18n via `useTranslation`.
@@ -94,7 +105,8 @@ Exactly ONE issue per invocation.
    ```bash
    cd /Users/dpws/projects/design-system
    make test && make build-lib && make lint && npm run format:check
-   npm pack --workspace @eocrm/design-system --dry-run 2>&1 | grep -c '\.test\.'   # expect 0
+   npm pack --workspace @eocrm/design-system --dry-run 2>&1 \
+     | grep -cE '\.test\.(t|j)sx?|\.spec\.|/types/|CLAUDE\.md|tsconfig'   # expect 0 (mirrors the CI tarball gate)
    ```
    (The manifest meta-test runs inside `make test`; if it complains, re-run
    `npm run build:manifest` and commit the regenerated JSON.)
@@ -130,7 +142,9 @@ Exactly ONE issue per invocation.
    Use "Addresses #N", never "Closes/Fixes #N" (a closing keyword would auto-close
    the issue at merge, before we have the version).
 
-3. **Wait for the gate**; never merge on red (iterate Phase 2 instead):
+3. **Wait for the gate**; never merge on red (iterate Phase 2 instead). Treat a
+   non-zero exit as "do not merge" — `gh pr checks` exits `0` only when every check
+   passed (`8` while still pending, `1` on failure):
    ```bash
    gh pr checks <pr> --repo eocrm/design-system --watch
    ```
@@ -138,31 +152,49 @@ Exactly ONE issue per invocation.
    ```bash
    gh pr merge <pr> --repo eocrm/design-system --squash --delete-branch
    ```
-5. **Watch the Release run** on the merge commit and read the `publish` outcome:
+5. **Find the Release run for the merge commit.** It takes a few seconds to
+   register after the merge, so poll by the exact commit — never eyeball-match a
+   list:
+
    ```bash
    git -C /Users/dpws/projects/design-system fetch origin main -q
    MERGE_SHA=$(git -C /Users/dpws/projects/design-system rev-parse origin/main)
-   # find the Release run whose headSha == MERGE_SHA, then:
-   gh run list --repo eocrm/design-system --workflow=Release --branch=main \
-     --limit 8 --json databaseId,headSha,status
-   gh run watch <run-id> --repo eocrm/design-system
-   gh run view <run-id> --repo eocrm/design-system --json jobs \
-     --jq '.jobs[] | "\(.name): \(.conclusion)"'
+   RUN_ID=""
+   for _ in $(seq 1 12); do
+     RUN_ID=$(gh run list --repo eocrm/design-system --workflow=Release \
+       --commit "$MERGE_SHA" --json databaseId --jq '.[0].databaseId // empty')
+     [ -n "$RUN_ID" ] && break
+     sleep 5
+   done
    ```
-6. **Resolve the version from the publish outcome:**
+
+   - **`RUN_ID` empty after the poll** → no Release run was created. If the merge
+     touched neither `packages/**` nor `.github/workflows/**`, this is expected →
+     go to Phase 4 on the **"no version bump"** path. (If it _did_ touch those
+     paths yet no run appeared, STOP and investigate.)
+   - **`RUN_ID` set** → watch it and read the `publish` job outcome:
+     ```bash
+     gh run watch "$RUN_ID" --repo eocrm/design-system
+     gh run view "$RUN_ID" --repo eocrm/design-system --json jobs \
+       --jq '.jobs[] | "\(.name): \(.conclusion)"'
+     ```
+
+6. **Resolve the version from the publish outcome.** Fetch tags only AFTER
+   `gh run watch` returns — the `publish` job pushes the tag, so an earlier fetch
+   would read `NEW == PREV` and misreport "no bump":
 
    ```bash
    git -C /Users/dpws/projects/design-system fetch --tags --force origin -q
    NEW=$(git -C /Users/dpws/projects/design-system tag --list 'v*' --sort=-v:refname | head -1)
    ```
 
-   - `publish: success` and `NEW != PREV` → shipped version is `NEW` without the
+   - **No Release run** (step 5) or **`publish: skipped`** → no new version; carry
+     a "merged, no version bump" note into Phase 4.
+   - **`publish: success`** and `NEW != PREV` → shipped version is `NEW` without the
      leading `v` (e.g. `v0.1.11` → `0.1.11`). Cross-check against the run's
      `## Published` summary.
-   - `publish: skipped` (the change didn't touch the publishable library) → there
-     is NO new version; carry a "merged, no version bump" note into Phase 4.
-   - `publish: failure`, or `NEW == PREV` when a bump was expected → STOP, report
-     the run URL, and do NOT close the issue.
+   - **`publish: failure`**, or `NEW == PREV` when a bump was expected → STOP,
+     report the run URL, and do NOT close the issue.
 
 ## Phase 4 — Comment the version and close the issue
 

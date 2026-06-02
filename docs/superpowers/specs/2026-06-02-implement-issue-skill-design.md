@@ -37,12 +37,16 @@ are the sole source of work.)
   Packages, pushes the new tag, and chains the playground deploy. There is **no**
   manual publish step — **merging the PR is releasing.** The shipped version = the
   new `v*` tag. Run jobs: `quality`, `detect-library-changes`, `publish`,
-  `deploy-playground`. The `publish` job is **skipped** when the merge didn't
-  touch `packages/design-system/**` (e.g. a root-docs-only change) → no new
-  version. The required PR status check is `Quality / check`.
+  `deploy-playground`. Two no-version-bump cases: the merge touched **neither**
+  `packages/**` nor `.github/workflows/**` → **no Release run is created at all**;
+  or a run is created but `publish` is **skipped** because the diff matched neither
+  `^packages/design-system/` nor the `release`/`quality`/`deploy-playground`
+  workflow files (e.g. a `packages/playground`-only change). The required PR status
+  check is `Quality / check`.
 - **Gates:** `make test`, `make build-lib`, `make lint` (root Makefile);
   `npm run format:check` (root); a Husky pre-push hook runs prettier + stylelint +
-  typecheck. Manifest: `packages/design-system/scripts/generate-manifest.mjs` →
+  typecheck. Manifest: CLUSTERS maps in **both** `packages/design-system/src/_meta/manifest.ts`
+  and `packages/design-system/scripts/generate-manifest.mjs` (kept in sync) →
   `components.manifest.json` via `npm run build:manifest`. Demos live at
   `packages/playground/src/pages/components/<Name>Demo.tsx` + `ComponentsIndex.tsx`
   (the root CLAUDE.md's `pages/demo/`+`DemoIndex.tsx` names are stale — the skill
@@ -79,9 +83,9 @@ are the sole source of work.)
 create` with **"Addresses #N"** (never a closing keyword — the skill closes the
   issue itself once it has the version); wait for `Quality / check`; squash-merge;
   watch the `Release` run; read the `publish` job conclusion; capture the new tag
-  (`NEW`). `publish: success` + `NEW != PREV` → version `NEW` sans `v`;
-  `publish: skipped` → no version bump; `publish: failure` or `NEW == PREV` →
-  stop, report, don't close.
+  (`NEW`). `publish: success` + `NEW != PREV` → version `NEW` sans `v`; no Release
+  run or `publish: skipped` → no version bump; `publish: failure` or `NEW == PREV`
+  when a bump was expected → stop, report, don't close.
 - **Phase 4 — Comment + close.** `gh issue comment <N>` with the published version
   (or a "merged, no version bump" note), then `gh issue close <N> --reason
 completed`. Only after the merge.
