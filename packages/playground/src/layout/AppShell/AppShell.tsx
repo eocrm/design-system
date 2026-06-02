@@ -26,6 +26,7 @@ import {
   CircleUser,
   Tag,
   PanelTop,
+  PanelsTopLeft,
   Layers,
   List,
   ExternalLink,
@@ -134,6 +135,7 @@ const componentGroups = [
   {
     heading: 'Layout',
     items: [
+      { to: '/components/app-layout', label: 'AppLayout', icon: PanelsTopLeft, end: false },
       { to: '/components/stack', label: 'Stack', icon: Rows3, end: false },
       { to: '/components/cluster', label: 'Cluster', icon: Columns3, end: false },
       { to: '/components/constrain', label: 'Constrain', icon: Ruler, end: false },
