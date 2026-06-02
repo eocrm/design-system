@@ -292,7 +292,7 @@ git commit -m "feat(AppLayout): viewport-filling app shell primitive (#117)"
 - [ ] **Step 1: `AppLayoutDemo.tsx`** — write exactly (demos are playground tooling, NOT mockups, so a bounded raw-`div` preview frame with inline style is allowed here):
 
 ```tsx
-import { AppLayout, Cluster, Page, Stack, Text, Title } from '@eocrm/design-system';
+import { AppLayout, Page, Stack, Text, Title } from '@eocrm/design-system';
 import type { ReactNode } from 'react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -354,7 +354,6 @@ export function AppLayoutDemo() {
   return (
     <DemoLayout
       name="AppLayout"
-      componentName="AppLayout"
       description="Viewport-filling application shell: an optional topBar across the top, then a row of an optional sidebar (left) and the main content. The top-level layout primitive, mounted once at the app root."
       files={getComponentFiles('AppLayout')}
     >
@@ -369,7 +368,7 @@ export function AppLayoutDemo() {
           <AppLayout topBar={<Bar label="eocrm" />} sidebar={<Side />}>
             <Page>
               <Stack gap="sm">
-                <Title>Dashboard</Title>
+                <Title order={3}>Dashboard</Title>
                 <Text tone="muted">Main content fills the remaining space.</Text>
               </Stack>
             </Page>

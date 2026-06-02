@@ -49,6 +49,13 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * - ❌ For a chromeless full-bleed page (sign-in / 404 / error) — use `<Screen>`.
  * - ❌ Don't nest AppLayout inside another AppLayout, `<Page>`, or `<Screen>`.
  *   It's the top-level shell, mounted once at the app root.
+ *
+ * @remarks Scrolling
+ * This is a **page-scroll** shell: `min-height: 100vh` lets it grow with tall
+ * content, so the whole window scrolls and the top bar / sidebar scroll away
+ * with it. For the common "fixed chrome + independently-scrolling content"
+ * layout, override the root to a fixed `height: 100vh` (or `100dvh`) via
+ * `className` — then `<Rail>` / the main region manage their own overflow.
  */
 export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLayout(
   { topBar, sidebar, children, className, ...props },

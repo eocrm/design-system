@@ -1092,6 +1092,7 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - Top-level shell layout, mounted **once** at the app root. Full-height flex column: `topBar` across the top, then a row of `sidebar` (left, intrinsic width) + main `children` (fills the rest). Root is `min-height: 100vh`.
 - `topBar`: optional top region (omit for none). `sidebar`: optional left region (omit for none). `children`: the main content (required).
 - Layout-owning primitive (the `<Page>` / `<Screen>` / `<Rail>` exception to "no layout properties"). Carries no visual styling — slots bring their own surfaces. Don't nest inside another `AppLayout` / `<Page>` / `<Screen>`; for a chromeless page use `<Screen>`, for in-page layout use `<Stack>` / `<Cluster>`.
+- **Page-scroll shell:** `min-height: 100vh` means tall content scrolls the whole window (chrome scrolls away). For fixed chrome + independently-scrolling content, override the root to a fixed `height: 100vh` / `100dvh` via `className`.
 
 ### `<Grid>` — 2D layout primitive
 

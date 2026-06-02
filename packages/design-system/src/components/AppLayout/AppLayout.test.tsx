@@ -58,4 +58,20 @@ describe('AppLayout', () => {
     expect(el.className).toMatch(/my-cls/);
     expect(el).toHaveAttribute('data-foo', 'bar');
   });
+
+  it('applies the structural layout classes (root / topBar / body / sidebar / main)', () => {
+    // Anchors the load-bearing classes — the root carries the min-height:100vh
+    // flex column — so a future SCSS edit can't silently gut the viewport fill.
+    const { container } = render(
+      <AppLayout topBar={<span>t</span>} sidebar={<span>s</span>}>
+        <span>c</span>
+      </AppLayout>,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).toMatch(/root/);
+    expect(root.querySelector('[class*="topBar"]')).toBeInTheDocument();
+    expect(root.querySelector('[class*="body"]')).toBeInTheDocument();
+    expect(root.querySelector('[class*="sidebar"]')).toBeInTheDocument();
+    expect(root.querySelector('[class*="main"]')).toBeInTheDocument();
+  });
 });
