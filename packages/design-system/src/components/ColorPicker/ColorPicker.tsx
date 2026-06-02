@@ -228,10 +228,12 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
   const triggerElement = customTrigger ? (
     // The consumer's child is cloned to inject the label/description ids so a
     // custom trigger is named too; <Popover.Trigger> then clones it again to
-    // inject onClick + aria-* + ref.
+    // inject onClick + aria-* + ref. Only inject keys we actually have — passing
+    // `undefined` through cloneElement would CLOBBER any aria-labelledby /
+    // aria-describedby the consumer already set on their own trigger.
     cloneElement(customTrigger.props.children as ReactElement<Record<string, unknown>>, {
-      'aria-labelledby': ariaLabelledBy,
-      'aria-describedby': ariaDescribedBy,
+      ...(ariaLabelledBy !== undefined && { 'aria-labelledby': ariaLabelledBy }),
+      ...(ariaDescribedBy !== undefined && { 'aria-describedby': ariaDescribedBy }),
     })
   ) : (
     <DefaultTrigger

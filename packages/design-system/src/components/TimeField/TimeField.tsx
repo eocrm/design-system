@@ -614,8 +614,15 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
       <button
         type="button"
         className={styles.timeToggle}
-        aria-label={ariaLabel ? `${ariaLabel}, ${t('datePicker.timeOpenList')}` : undefined}
-        aria-labelledby={ariaLabelledBy}
+        // The toggle needs its OWN distinct name (the open-list action), never
+        // the field label — otherwise the input and toggle would share an
+        // identical accessible name. With a self-label, suffix the action; when
+        // only a Field labels the control (no aria-label), use the action text
+        // alone and DON'T forward aria-labelledby (which would duplicate the
+        // input's name on the toggle).
+        aria-label={
+          ariaLabel ? `${ariaLabel}, ${t('datePicker.timeOpenList')}` : t('datePicker.timeOpenList')
+        }
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}

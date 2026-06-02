@@ -479,6 +479,22 @@ describe('ColorPicker — labelledby / describedby forwarding', () => {
     );
     expect(screen.getByRole('button', { name: 'Brand color' })).toBeInTheDocument();
   });
+
+  it('does NOT clobber a consumer aria-labelledby on a custom trigger when not in a Field', () => {
+    render(
+      <>
+        <span id="ext-cp">My color</span>
+        <ColorPicker value="#000000" onChange={() => {}}>
+          <ColorPicker.Trigger asChild>
+            <button type="button" aria-labelledby="ext-cp" />
+          </ColorPicker.Trigger>
+        </ColorPicker>
+      </>,
+    );
+    // The consumer's own labelling must survive — passing `undefined` through
+    // cloneElement previously stripped it, leaving the trigger nameless.
+    expect(screen.getByRole('button', { name: 'My color' })).toBeInTheDocument();
+  });
 });
 
 describe('round-trip', () => {

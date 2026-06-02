@@ -913,4 +913,21 @@ describe('TimeField — labelling', () => {
       'tf-desc',
     );
   });
+
+  it('the toggle keeps a distinct name (not the field label) when wrapped in a Field', () => {
+    function LabelDriver() {
+      const [v, setV] = useState<TimeValue | null>({ hours: 9, minutes: 0 });
+      return (
+        <Field label="Start time">
+          <TimeField value={v} hourCycle="24" onChange={setV} />
+        </Field>
+      );
+    }
+    render(<LabelDriver />, { wrapper: wrap() });
+    // The input carries the field label…
+    expect(screen.getByRole('textbox', { name: 'Start time' })).toBeInTheDocument();
+    // …but the toggle must NOT duplicate it — it owns the open-list action name.
+    expect(screen.queryByRole('button', { name: 'Start time' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Open time list' })).toBeInTheDocument();
+  });
 });
