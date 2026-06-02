@@ -46,4 +46,19 @@ describe('useInOverlay', () => {
     );
     expect(screen.getByRole('button')).not.toHaveAttribute('data-in-overlay');
   });
+
+  it('resets to false when deactivated after being true', () => {
+    const { rerender } = render(
+      <div data-modal-portal-root="">
+        <Probe active />
+      </div>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
+    rerender(
+      <div data-modal-portal-root="">
+        <Probe active={false} />
+      </div>,
+    );
+    expect(screen.getByRole('button')).not.toHaveAttribute('data-in-overlay');
+  });
 });

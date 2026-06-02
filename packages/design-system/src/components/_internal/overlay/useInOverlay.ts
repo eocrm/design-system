@@ -15,8 +15,12 @@ const OVERLAY_PORTAL_SELECTOR = '[data-drawer-portal-root], [data-modal-portal-r
  * the opened surface (no flash behind the overlay).
  *
  * @example
+ * // `ctx` is the component's own context (e.g. useSelectContext()).
  * const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
- * // <ul data-in-overlay={inOverlay || undefined} ...>
+ * // Empty-string presence idiom — React serializes `{true}` on a data-*
+ * // attribute as "true", so use `? '' : undefined` to match the CSS
+ * // `[data-in-overlay]` selector and the `data-*-content=""` convention:
+ * // <ul data-in-overlay={inOverlay ? '' : undefined} ...>
  */
 export function useInOverlay(referenceRef: RefObject<HTMLElement | null>, active: boolean): boolean {
   const [inOverlay, setInOverlay] = useState(false);

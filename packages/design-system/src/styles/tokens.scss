@@ -339,7 +339,7 @@
   --z-dropdown: 1000;
   --z-popover: 1050; // above dropdown, below modal — popover can open from a menu item
   --z-modal: 1100;
-  --z-overlay-floating: 1190; // floating content (Select/Popover/DropdownMenu) opened INSIDE a modal/drawer
+  --z-overlay-floating: 1190; // floating content (Select/Popover/DropdownMenu) opened INSIDE a Modal or Drawer
   --z-toast: 1200;
   --z-tooltip: 1300; // above modal + toast so tooltips remain visible inside any host UI
 }
