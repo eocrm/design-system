@@ -26,7 +26,7 @@ Discovered during the custom-fields mockup review (worked around there with Fiel
 - `FieldRenderProps` gains `'aria-labelledby': string | undefined` (= `label != null ? labelId : undefined`), so `{...field}` conveys it too.
 - `id` injection stays (native controls still name via `htmlFor`); `asGroup` is unchanged (group naming already lives on the `role="group"` wrapper).
 
-**Why it's safe:** the `*` marker is `aria-hidden` and `(optional)` is already inside the label text, so `aria-labelledby={labelId}` resolves to the *same* accessible name `htmlFor` already produces — no double-announce, no name change for native controls (belt-and-suspenders). `Select` and `Slider` already forward `aria-labelledby` to their focusable element, so they get named **with no control changes**.
+**Why it's safe:** the `*` marker is `aria-hidden` and `(optional)` is already inside the label text, so `aria-labelledby={labelId}` resolves to the _same_ accessible name `htmlFor` already produces — no double-announce, no name change for native controls (belt-and-suspenders). `Select` and `Slider` already forward `aria-labelledby` to their focusable element, so they get named **with no control changes**.
 
 ### Per-control forwarding (the remaining composites)
 

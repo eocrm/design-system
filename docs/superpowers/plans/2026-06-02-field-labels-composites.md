@@ -43,26 +43,26 @@ git config --get core.hooksPath  # expect: .husky/_
 In `Field.tsx`, replace the `const injected … cloneElement(child, injected);` block with an if/else so the conditional `aria-labelledby` can be added only when a label is rendered:
 
 ```tsx
-    const child = children as ReactElement<Record<string, unknown>>;
-    const childProps = child.props;
-    let injected: Record<string, unknown>;
-    if (asGroup) {
-      injected = {
-        invalid: childProps.invalid ?? invalid,
-        required: childProps.required ?? requiredBool,
-      };
-    } else {
-      injected = {
-        id: controlId,
-        'aria-describedby': childProps['aria-describedby'] ?? describedBy,
-        invalid: childProps.invalid ?? invalid,
-        required: childProps.required ?? requiredBool,
-      };
-      if (label != null) {
-        injected['aria-labelledby'] = childProps['aria-labelledby'] ?? labelId;
-      }
-    }
-    control = cloneElement(child, injected);
+const child = children as ReactElement<Record<string, unknown>>;
+const childProps = child.props;
+let injected: Record<string, unknown>;
+if (asGroup) {
+  injected = {
+    invalid: childProps.invalid ?? invalid,
+    required: childProps.required ?? requiredBool,
+  };
+} else {
+  injected = {
+    id: controlId,
+    'aria-describedby': childProps['aria-describedby'] ?? describedBy,
+    invalid: childProps.invalid ?? invalid,
+    required: childProps.required ?? requiredBool,
+  };
+  if (label != null) {
+    injected['aria-labelledby'] = childProps['aria-labelledby'] ?? labelId;
+  }
+}
+control = cloneElement(child, injected);
 ```
 
 - [ ] **Step 2: Add `aria-labelledby` to `FieldRenderProps`**
@@ -84,20 +84,21 @@ export interface FieldRenderProps {
 - [ ] **Step 3: Set it on the `field` object**
 
 ```tsx
-  const field: FieldRenderProps = {
-    id: controlId,
-    'aria-describedby': describedBy,
-    'aria-labelledby': label != null ? labelId : undefined,
-    'aria-invalid': invalid || undefined,
-    invalid,
-    required: requiredBool,
-    labelId,
-  };
+const field: FieldRenderProps = {
+  id: controlId,
+  'aria-describedby': describedBy,
+  'aria-labelledby': label != null ? labelId : undefined,
+  'aria-invalid': invalid || undefined,
+  invalid,
+  required: requiredBool,
+  labelId,
+};
 ```
 
 - [ ] **Step 4: Update Field JSDoc**
 
 In the component description, change the wiring list to include `aria-labelledby` and add a sentence:
+
 > "…wires the `id` / `aria-labelledby` / `aria-describedby` / `aria-invalid` association by construction. When a label is present, Field also injects `aria-labelledby` onto the cloned child, so composite controls that forward unknown ARIA props (Select, Slider, ColorPicker, FileUpload, TimeField) get an accessible name automatically. For wrapped/nested DOM that doesn't forward props, use the render-prop and spread `field` (it carries `aria-labelledby`)."
 
 - [ ] **Step 5: Write the Field tests**
@@ -105,70 +106,73 @@ In the component description, change the wiring list to include `aria-labelledby
 Add to `Field.test.tsx` (these use a local stub that forwards `aria-labelledby`, mirroring the existing `RawControl` pattern):
 
 ```tsx
-  it('auto-clone injects aria-labelledby=labelId when a label is present', () => {
-    function LabelledStub(props: { id?: string; 'aria-labelledby'?: string }) {
-      return <input data-testid="control" id={props.id} aria-labelledby={props['aria-labelledby']} />;
-    }
-    const { container } = render(
-      <Field label="Work email">
-        <LabelledStub />
-      </Field>,
-    );
-    const input = screen.getByTestId('control');
-    const label = container.querySelector(`label[for="${input.id}"]`) as HTMLElement;
-    expect(label.id).toBeTruthy();
-    expect(input).toHaveAttribute('aria-labelledby', label.id);
-  });
+it('auto-clone injects aria-labelledby=labelId when a label is present', () => {
+  function LabelledStub(props: { id?: string; 'aria-labelledby'?: string }) {
+    return <input data-testid="control" id={props.id} aria-labelledby={props['aria-labelledby']} />;
+  }
+  const { container } = render(
+    <Field label="Work email">
+      <LabelledStub />
+    </Field>,
+  );
+  const input = screen.getByTestId('control');
+  const label = container.querySelector(`label[for="${input.id}"]`) as HTMLElement;
+  expect(label.id).toBeTruthy();
+  expect(input).toHaveAttribute('aria-labelledby', label.id);
+});
 
-  it('auto-clone does NOT inject aria-labelledby when there is no label', () => {
-    function LabelledStub(props: { 'aria-labelledby'?: string }) {
-      return <input data-testid="control" aria-labelledby={props['aria-labelledby']} />;
-    }
-    render(
-      <Field>
-        <LabelledStub />
-      </Field>,
-    );
-    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
-  });
+it('auto-clone does NOT inject aria-labelledby when there is no label', () => {
+  function LabelledStub(props: { 'aria-labelledby'?: string }) {
+    return <input data-testid="control" aria-labelledby={props['aria-labelledby']} />;
+  }
+  render(
+    <Field>
+      <LabelledStub />
+    </Field>,
+  );
+  expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+});
 
-  it("the child's explicit aria-labelledby wins over Field's", () => {
-    function LabelledStub(props: { 'aria-labelledby'?: string }) {
-      return <input data-testid="control" aria-labelledby={props['aria-labelledby']} />;
-    }
-    render(
-      <Field label="Email">
-        <LabelledStub aria-labelledby="custom-label" />
-      </Field>,
-    );
-    expect(screen.getByTestId('control')).toHaveAttribute('aria-labelledby', 'custom-label');
-  });
+it("the child's explicit aria-labelledby wins over Field's", () => {
+  function LabelledStub(props: { 'aria-labelledby'?: string }) {
+    return <input data-testid="control" aria-labelledby={props['aria-labelledby']} />;
+  }
+  render(
+    <Field label="Email">
+      <LabelledStub aria-labelledby="custom-label" />
+    </Field>,
+  );
+  expect(screen.getByTestId('control')).toHaveAttribute('aria-labelledby', 'custom-label');
+});
 
-  it('render-prop field object carries aria-labelledby (= labelId when labelled)', () => {
-    let received: Record<string, unknown> = {};
-    render(
-      <Field label="Email">
-        {(field) => {
-          received = field as unknown as Record<string, unknown>;
-          return <input data-testid="control" {...field} />;
-        }}
-      </Field>,
-    );
-    expect(received['aria-labelledby']).toBe(received.labelId);
-    expect(screen.getByTestId('control')).toHaveAttribute('aria-labelledby', received.labelId as string);
-  });
+it('render-prop field object carries aria-labelledby (= labelId when labelled)', () => {
+  let received: Record<string, unknown> = {};
+  render(
+    <Field label="Email">
+      {(field) => {
+        received = field as unknown as Record<string, unknown>;
+        return <input data-testid="control" {...field} />;
+      }}
+    </Field>,
+  );
+  expect(received['aria-labelledby']).toBe(received.labelId);
+  expect(screen.getByTestId('control')).toHaveAttribute(
+    'aria-labelledby',
+    received.labelId as string,
+  );
+});
 
-  it('asGroup does NOT inject aria-labelledby onto the child (it lives on the role=group wrapper)', () => {
-    function LabelledStub(props: { 'aria-labelledby'?: string }) {
-      return <input data-testid="control" aria-labelledby={props['aria-labelledby']} />;
-    }
-    render(
-      <Field asGroup label="Notify me">
-        <LabelledStub />
-      </Field>,
-    );
-    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
-  });
+it('asGroup does NOT inject aria-labelledby onto the child (it lives on the role=group wrapper)', () => {
+  function LabelledStub(props: { 'aria-labelledby'?: string }) {
+    return <input data-testid="control" aria-labelledby={props['aria-labelledby']} />;
+  }
+  render(
+    <Field asGroup label="Notify me">
+      <LabelledStub />
+    </Field>,
+  );
+  expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+});
 ```
 
 - [ ] **Step 6: Run Field tests + typecheck + lint**
@@ -177,7 +181,8 @@ Add to `Field.test.tsx` (these use a local stub that forwards `aria-labelledby`,
 cd /Users/dpws/projects/design-system/packages/design-system && npx vitest run src/components/Field
 cd /Users/dpws/projects/design-system && make build-lib && make lint
 ```
-Expected: all Field tests green (existing 13 + 4 new); typecheck + lint clean. (No existing Field test asserts the *absence* of `aria-labelledby`, so none regress.)
+
+Expected: all Field tests green (existing 13 + 4 new); typecheck + lint clean. (No existing Field test asserts the _absence_ of `aria-labelledby`, so none regress.)
 
 - [ ] **Step 7: Commit**
 
@@ -253,22 +258,22 @@ Change the `DefaultTrigger` destructure to `{ hex, label, disabled, open, onClic
 In `ColorPickerRoot`'s destructure add `'aria-labelledby': ariaLabelledBy,` and `'aria-describedby': ariaDescribedBy,` (before `children`). On the `<DefaultTrigger …>` element add `labelledBy={ariaLabelledBy}` and `describedBy={ariaDescribedBy}`. For the **custom-trigger** branch, clone the consumer child to inject the same so custom triggers are named too:
 
 ```tsx
-    const triggerElement = customTrigger ? (
-      cloneElement(customTrigger.props.children as ReactElement, {
-        'aria-labelledby': ariaLabelledBy,
-        'aria-describedby': ariaDescribedBy,
-      })
-    ) : (
-      <DefaultTrigger
-        hex={value}
-        label={resolvedTriggerLabel}
-        disabled={disabled}
-        open={open}
-        labelledBy={ariaLabelledBy}
-        describedBy={ariaDescribedBy}
-        onClick={() => {}}
-      />
-    );
+const triggerElement = customTrigger ? (
+  cloneElement(customTrigger.props.children as ReactElement, {
+    'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
+  })
+) : (
+  <DefaultTrigger
+    hex={value}
+    label={resolvedTriggerLabel}
+    disabled={disabled}
+    open={open}
+    labelledBy={ariaLabelledBy}
+    describedBy={ariaDescribedBy}
+    onClick={() => {}}
+  />
+);
 ```
 
 Add **only** `cloneElement` to the existing `react` import (it's a value import — put it in the non-type group, e.g. after `Children,`). **`ReactElement` is already imported** (`type ReactElement,` on line ~8) — do NOT re-add it (duplicate import = TS2300). This Step replaces the whole existing `const triggerElement = customTrigger ? (...) : (...)` expression (you may keep or drop its two inline comments). (`...rest` no longer carries the two aria props — they're destructured out — so they stop leaking onto the wrapper `<div>`.)
@@ -294,7 +299,12 @@ describe('ColorPicker — labelledby / describedby forwarding', () => {
       <>
         <span id="lbl">Pick brand color</span>
         <span id="desc">Used across the app</span>
-        <ColorPicker value="#FF0000" onChange={() => {}} aria-labelledby="lbl" aria-describedby="desc" />
+        <ColorPicker
+          value="#FF0000"
+          onChange={() => {}}
+          aria-labelledby="lbl"
+          aria-describedby="desc"
+        />
       </>,
     );
     const trigger = screen.getByRole('button', { name: 'Pick brand color' });
@@ -353,24 +363,29 @@ EOF
 - [ ] **Step 3: Tests** — add to `FileUpload.test.tsx` (`import { Field } from '../Field';`):
 
 ```tsx
-  it('a Field label names the dropzone (auto-clone)', () => {
-    render(
-      <Field label="Attachments">
-        <FileUpload files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />
-      </Field>,
-    );
-    expect(screen.getByRole('button', { name: 'Attachments' })).toBeInTheDocument();
-  });
+it('a Field label names the dropzone (auto-clone)', () => {
+  render(
+    <Field label="Attachments">
+      <FileUpload files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />
+    </Field>,
+  );
+  expect(screen.getByRole('button', { name: 'Attachments' })).toBeInTheDocument();
+});
 
-  it('forwards aria-labelledby onto the dropzone, not the root', () => {
-    render(
-      <>
-        <span id="ext-label">Attachments</span>
-        <FileUpload aria-labelledby="ext-label" files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />
-      </>,
-    );
-    expect(screen.getByRole('button', { name: 'Attachments' })).toBeInTheDocument();
-  });
+it('forwards aria-labelledby onto the dropzone, not the root', () => {
+  render(
+    <>
+      <span id="ext-label">Attachments</span>
+      <FileUpload
+        aria-labelledby="ext-label"
+        files={[]}
+        onFilesAdded={() => {}}
+        onFileRemove={() => {}}
+      />
+    </>,
+  );
+  expect(screen.getByRole('button', { name: 'Attachments' })).toBeInTheDocument();
+});
 ```
 
 - [ ] **Step 4: Verify + commit**
@@ -462,9 +477,17 @@ describe('TimeField — labelling', () => {
   });
 
   it('back-compat: passing only aria-label still names the input + group', () => {
-    render(<TimeField value={{ hours: 14, minutes: 30 }} hourCycle="24" aria-label="Departure time" onChange={() => {}} />, {
-      wrapper: wrap(),
-    });
+    render(
+      <TimeField
+        value={{ hours: 14, minutes: 30 }}
+        hourCycle="24"
+        aria-label="Departure time"
+        onChange={() => {}}
+      />,
+      {
+        wrapper: wrap(),
+      },
+    );
     expect(screen.getByRole('textbox', { name: 'Departure time' })).toHaveValue('14:30');
     expect(screen.getByRole('group', { name: 'Departure time' })).toBeInTheDocument();
   });
@@ -500,34 +523,36 @@ EOF
 - [ ] **Step 1: Select test** — add (`import { Field } from '../Field';`):
 
 ```tsx
-  it('a Field label names the combobox (auto-clone)', async () => {
-    render(
-      <Field label="Status">
-        <Select
-          options={[
-            { value: 'a', label: 'Active' },
-            { value: 'b', label: 'Archived' },
-          ]}
-        />
-      </Field>,
-    );
-    expect(screen.getByRole('button', { name: 'Status' })).toBeInTheDocument();
-  });
+it('a Field label names the combobox (auto-clone)', async () => {
+  render(
+    <Field label="Status">
+      <Select
+        options={[
+          { value: 'a', label: 'Active' },
+          { value: 'b', label: 'Archived' },
+        ]}
+      />
+    </Field>,
+  );
+  expect(screen.getByRole('button', { name: 'Status' })).toBeInTheDocument();
+});
 ```
+
 > The default single, non-searchable Select trigger is a `<button aria-haspopup="listbox">`. If the file's other tests query it as `combobox`, match that role instead — use whatever role the existing "opens the listbox on trigger click" test uses for the trigger.
 
 - [ ] **Step 2: Slider test** — add (`import { Field } from '../Field';`):
 
 ```tsx
-  it('a Field label names the slider thumb (auto-clone)', () => {
-    render(
-      <Field label="Volume">
-        <Slider value={40} onChange={() => {}} />
-      </Field>,
-    );
-    expect(screen.getByRole('slider', { name: 'Volume' })).toBeInTheDocument();
-  });
+it('a Field label names the slider thumb (auto-clone)', () => {
+  render(
+    <Field label="Volume">
+      <Slider value={40} onChange={() => {}} />
+    </Field>,
+  );
+  expect(screen.getByRole('slider', { name: 'Volume' })).toBeInTheDocument();
+});
 ```
+
 > Use the minimal valid Slider props the file's existing tests use (single-value). If Slider is uncontrolled-capable, `defaultValue` is fine.
 
 > **Multi-select Select note:** the multi-select trigger variants emit a fallback `aria-label` (e.g. "Open select" / "Selected: …"). When wrapped in a Field, the trigger carries BOTH that fallback `aria-label` and the injected `aria-labelledby` → per AccName `aria-labelledby` wins, so the name is still the Field label (harmless, intentional). Optionally add a multi-select regression test (`<Field label="Status"><Select multiple .../></Field>` → `getByRole('button', { name: 'Status' })`) — confirm the multi trigger role/props from `Select/Trigger.tsx` first. Select source stays **unchanged** (per spec); suppressing the stale fallback `aria-label` when `aria-labelledby` is present is an optional follow-up.
@@ -564,6 +589,7 @@ make lint          # stylelint
 npm run format:check
 npm pack --dry-run -w @eocrm/design-system 2>&1 | grep -ciE '\.test\.|\.spec\.'   # expect 0
 ```
+
 If `format:check` flags new/changed files, `npx prettier --write` them and amend.
 
 - [ ] **Step 2: Library Rule 8 review-fix loop**
@@ -615,5 +641,6 @@ EOF
 **Type consistency:** `FieldRenderProps` gains `'aria-labelledby': string | undefined`, set on `field` and used by the auto-clone injection. ColorPicker adds `'aria-labelledby'`/`'aria-describedby'` to `ColorPickerProps` + `labelledBy`/`describedBy` to `DefaultTriggerProps`. FileUpload/TimeField rely on existing HTMLAttributes aria keys (TimeField also adds explicit `aria-labelledby` to its props). Test imports use the relative `../Field` path (same-package convention).
 
 ## Follow-ups (out of scope)
+
 - Simplify the custom-fields mockup's Type Select from render-prop to plain auto-clone.
 - The stray consumer-`id`-on-wrapper hygiene in Select/Slider (inert) — optional.
