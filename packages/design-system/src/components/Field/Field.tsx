@@ -22,6 +22,8 @@ export type FieldSize = 'sm' | 'md' | 'lg';
 export interface FieldRenderProps {
   id: string;
   'aria-describedby': string | undefined;
+  /** Id of the label element to name the control — set only when a label is rendered. */
+  'aria-labelledby': string | undefined;
   'aria-invalid': boolean | undefined;
   invalid: boolean;
   required: boolean;
@@ -59,7 +61,12 @@ const MSG_SIZE: Record<FieldSize, TextSize> = { sm: 'xs', md: 'sm', lg: 'sm' };
 /**
  * Labeled-control unit — the editable sibling of `<DefinitionList>`. Wraps a
  * single control with its label, helper/error message, required marker, and the
- * `id` / `aria-describedby` / `aria-invalid` wiring done by construction.
+ * `id` / `aria-labelledby` / `aria-describedby` / `aria-invalid` association by
+ * construction. When a label is present, Field also injects `aria-labelledby`
+ * onto the cloned child, so composite controls that forward unknown ARIA props
+ * (Select, Slider, ColorPicker, FileUpload, TimeField) get an accessible name
+ * automatically. For wrapped/nested DOM that doesn't forward props, use the
+ * render-prop and spread `field` (it carries `aria-labelledby`).
  *
  * The common case auto-wires a single child via `cloneElement`. For wrapped,
  * nested, or native controls, pass a render-prop and spread the `field` object.
@@ -132,6 +139,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const field: FieldRenderProps = {
     id: controlId,
     'aria-describedby': describedBy,
+    'aria-labelledby': label != null ? labelId : undefined,
     'aria-invalid': invalid || undefined,
     invalid,
     required: requiredBool,
@@ -144,14 +152,23 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   } else if (isValidElement(children)) {
     const child = children as ReactElement<Record<string, unknown>>;
     const childProps = child.props;
-    const injected: Record<string, unknown> = asGroup
-      ? { invalid: childProps.invalid ?? invalid, required: childProps.required ?? requiredBool }
-      : {
-          id: controlId,
-          'aria-describedby': childProps['aria-describedby'] ?? describedBy,
-          invalid: childProps.invalid ?? invalid,
-          required: childProps.required ?? requiredBool,
-        };
+    let injected: Record<string, unknown>;
+    if (asGroup) {
+      injected = {
+        invalid: childProps.invalid ?? invalid,
+        required: childProps.required ?? requiredBool,
+      };
+    } else {
+      injected = {
+        id: controlId,
+        'aria-describedby': childProps['aria-describedby'] ?? describedBy,
+        invalid: childProps.invalid ?? invalid,
+        required: childProps.required ?? requiredBool,
+      };
+      if (label != null) {
+        injected['aria-labelledby'] = childProps['aria-labelledby'] ?? labelId;
+      }
+    }
     control = cloneElement(child, injected);
   } else {
     control = children;

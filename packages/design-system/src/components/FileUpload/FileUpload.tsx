@@ -290,6 +290,8 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
     dropzoneLabel,
     dropzoneIcon,
     dropzoneHint,
+    'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
     className,
     ...rest
   },
@@ -428,7 +430,9 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
         <div
           role="button"
           tabIndex={disabled ? -1 : 0}
+          aria-labelledby={ariaLabelledBy}
           aria-label={typeof dropzoneLabel === 'string' ? dropzoneLabel : t('fileUpload.upload')}
+          aria-describedby={ariaDescribedBy}
           aria-disabled={disabled || undefined}
           className={clsx(styles.dropzone, isDragOver && styles.dragOver)}
           onDragEnter={handleDragEnter}

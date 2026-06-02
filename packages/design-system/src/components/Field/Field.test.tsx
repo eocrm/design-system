@@ -174,4 +174,74 @@ describe('Field', () => {
     expect(raw).toHaveAttribute('data-invalid', 'true');
     expect(raw).not.toHaveAttribute('aria-invalid');
   });
+
+  it('auto-clone injects aria-labelledby=labelId when a label is present', () => {
+    function LabelledStub(props: { id?: string; 'aria-labelledby'?: string }) {
+      return (
+        <input data-testid="control" id={props.id} aria-labelledby={props['aria-labelledby']} />
+      );
+    }
+    const { container } = render(
+      <Field label="Work email">
+        <LabelledStub />
+      </Field>,
+    );
+    const input = screen.getByTestId('control');
+    const label = container.querySelector(`label[for="${input.id}"]`) as HTMLElement;
+    expect(label.id).toBeTruthy();
+    expect(input).toHaveAttribute('aria-labelledby', label.id);
+  });
+
+  it('auto-clone does NOT inject aria-labelledby when there is no label', () => {
+    function LabelledStub(props: { 'aria-labelledby'?: string }) {
+      return <input data-testid="control" aria-labelledby={props['aria-labelledby']} />;
+    }
+    render(
+      <Field>
+        <LabelledStub />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+  });
+
+  it("the child's explicit aria-labelledby wins over Field's", () => {
+    function LabelledStub(props: { 'aria-labelledby'?: string }) {
+      return <input data-testid="control" aria-labelledby={props['aria-labelledby']} />;
+    }
+    render(
+      <Field label="Email">
+        <LabelledStub aria-labelledby="custom-label" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAttribute('aria-labelledby', 'custom-label');
+  });
+
+  it('render-prop field object carries aria-labelledby (= labelId when labelled)', () => {
+    let received: Record<string, unknown> = {};
+    render(
+      <Field label="Email">
+        {(field) => {
+          received = field as unknown as Record<string, unknown>;
+          return <input data-testid="control" {...field} />;
+        }}
+      </Field>,
+    );
+    expect(received['aria-labelledby']).toBe(received.labelId);
+    expect(screen.getByTestId('control')).toHaveAttribute(
+      'aria-labelledby',
+      received.labelId as string,
+    );
+  });
+
+  it('asGroup does NOT inject aria-labelledby onto the child (it lives on the role=group wrapper)', () => {
+    function LabelledStub(props: { 'aria-labelledby'?: string }) {
+      return <input data-testid="control" aria-labelledby={props['aria-labelledby']} />;
+    }
+    render(
+      <Field asGroup label="Notify me">
+        <LabelledStub />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+  });
 });

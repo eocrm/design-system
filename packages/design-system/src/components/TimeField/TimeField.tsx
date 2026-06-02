@@ -77,8 +77,23 @@ export interface TimeFieldProps extends Omit<
    * (button shown).
    */
   hideNowButton?: boolean;
-  /** Accessible label. Required — TimeField is a primitive with no implicit default. */
-  'aria-label': string;
+  /**
+   * Accessible label. Optional, but the control MUST be named: pass `aria-label`
+   * for a standalone TimeField, OR `aria-labelledby` when an external element
+   * (e.g. a `<Field>` label) names it. If both are given, `aria-labelledby` wins.
+   */
+  'aria-label'?: string;
+  /**
+   * Id(s) of element(s) that label this control — forwarded onto the inner
+   * `<input>` so a `<Field label>` names it. Takes precedence over `aria-label`.
+   */
+  'aria-labelledby'?: string;
+  /**
+   * Id(s) of element(s) that describe this control (e.g. a `<Field>` error or
+   * helper message) — forwarded onto the inner `<input>`, not the wrapper, so
+   * the description is announced when the input is focused.
+   */
+  'aria-describedby'?: string;
   /** Disables the input + popover trigger. */
   disabled?: boolean;
   /** Stable id for the input (so an external `<label htmlFor>` can target it). */
@@ -153,6 +168,8 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     locale: localeProp,
     hideNowButton = false,
     'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
     disabled = false,
     id: idProp,
     className,
@@ -568,6 +585,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     <div
       role="group"
       aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
       {...rest}
       ref={setWrapperRef}
       className={clsx(styles.timeField, isDisabled && styles.disabled, className)}
@@ -583,6 +601,8 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
         value={draft}
         autoComplete="off"
         aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}
@@ -594,7 +614,15 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
       <button
         type="button"
         className={styles.timeToggle}
-        aria-label={`${ariaLabel}, ${t('datePicker.timeOpenList')}`}
+        // The toggle needs its OWN distinct name (the open-list action), never
+        // the field label — otherwise the input and toggle would share an
+        // identical accessible name. With a self-label, suffix the action; when
+        // only a Field labels the control (no aria-label), use the action text
+        // alone and DON'T forward aria-labelledby (which would duplicate the
+        // input's name on the toggle).
+        aria-label={
+          ariaLabel ? `${ariaLabel}, ${t('datePicker.timeOpenList')}` : t('datePicker.timeOpenList')
+        }
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}

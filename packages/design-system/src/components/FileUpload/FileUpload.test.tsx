@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { FileUpload, type FileEntry } from './FileUpload';
+import { Field } from '../Field';
 
 // Helper — build a File with controllable name + size + MIME for tests.
 function makeFile(name: string, sizeBytes: number, type: string): File {
@@ -418,5 +419,29 @@ describe('FileUpload', () => {
     expect(dropzone.className).toMatch(/dragOver/);
     fireEvent.dragLeave(dropzone);
     expect(dropzone.className).not.toMatch(/dragOver/);
+  });
+
+  it('a Field label names the dropzone (auto-clone)', () => {
+    render(
+      <Field label="Attachments">
+        <FileUpload files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />
+      </Field>,
+    );
+    expect(screen.getByRole('button', { name: 'Attachments' })).toBeInTheDocument();
+  });
+
+  it('forwards aria-labelledby onto the dropzone, not the root', () => {
+    render(
+      <>
+        <span id="ext-label">Attachments</span>
+        <FileUpload
+          aria-labelledby="ext-label"
+          files={[]}
+          onFilesAdded={() => {}}
+          onFileRemove={() => {}}
+        />
+      </>,
+    );
+    expect(screen.getByRole('button', { name: 'Attachments' })).toBeInTheDocument();
   });
 });

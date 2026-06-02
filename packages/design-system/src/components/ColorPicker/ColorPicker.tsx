@@ -4,6 +4,7 @@ import {
   useCallback,
   useState,
   Children,
+  cloneElement,
   type HTMLAttributes,
   type ReactElement,
   type ReactNode,
@@ -92,6 +93,17 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
    * a custom trigger is provided via `<ColorPicker.Trigger>`.
    */
   triggerLabel?: string;
+  /**
+   * Id(s) of element(s) that label the trigger button. Forwarded onto the
+   * focusable trigger (not the root wrapper) and takes precedence over the
+   * generated `aria-label`. Set automatically when wrapped in `<Field label>`.
+   */
+  'aria-labelledby'?: string;
+  /**
+   * Id(s) of element(s) that describe the trigger button (e.g. a Field error or
+   * helper text). Forwarded onto the focusable trigger, not the root wrapper.
+   */
+  'aria-describedby'?: string;
   /** Popover placement (split internally into side + align). Default `'bottom-start'`. */
   popoverPlacement?: PopoverPlacement;
   /** Optional `<ColorPicker.Trigger asChild>` override for custom triggers. */
@@ -103,11 +115,13 @@ interface DefaultTriggerProps {
   label: string;
   disabled: boolean;
   open: boolean;
+  labelledBy?: string;
+  describedBy?: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(function DefaultTrigger(
-  { hex, label, disabled, open, onClick },
+  { hex, label, disabled, open, onClick, labelledBy, describedBy },
   ref,
 ) {
   const display = normalizeHex(hex) ?? FALLBACK_HEX;
@@ -117,7 +131,11 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
       type="button"
       className={styles.trigger}
       disabled={disabled}
-      aria-label={`${label}, current value ${display}`}
+      // An external label (e.g. <Field label>) wins; otherwise fall back to
+      // the self-describing generated label. Never set both.
+      aria-label={labelledBy ? undefined : `${label}, current value ${display}`}
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
       aria-haspopup="true"
       aria-expanded={open}
       onClick={onClick}
@@ -186,6 +204,8 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     disabled = false,
     triggerLabel,
     popoverPlacement = 'bottom-start',
+    'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
     children,
     className,
     ...rest
@@ -206,15 +226,23 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
   );
 
   const triggerElement = customTrigger ? (
-    // The consumer's child is rendered as-is; <Popover.Trigger> clones it
-    // to inject onClick + aria-* + ref.
-    (customTrigger.props.children as ReactElement)
+    // The consumer's child is cloned to inject the label/description ids so a
+    // custom trigger is named too; <Popover.Trigger> then clones it again to
+    // inject onClick + aria-* + ref. Only inject keys we actually have — passing
+    // `undefined` through cloneElement would CLOBBER any aria-labelledby /
+    // aria-describedby the consumer already set on their own trigger.
+    cloneElement(customTrigger.props.children as ReactElement<Record<string, unknown>>, {
+      ...(ariaLabelledBy !== undefined && { 'aria-labelledby': ariaLabelledBy }),
+      ...(ariaDescribedBy !== undefined && { 'aria-describedby': ariaDescribedBy }),
+    })
   ) : (
     <DefaultTrigger
       hex={value}
       label={resolvedTriggerLabel}
       disabled={disabled}
       open={open}
+      labelledBy={ariaLabelledBy}
+      describedBy={ariaDescribedBy}
       // onClick is overridden by Popover.Trigger's cloneElement; we set a
       // no-op here so DefaultTrigger's prop type is satisfied.
       onClick={() => {}}

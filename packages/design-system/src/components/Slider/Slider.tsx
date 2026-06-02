@@ -586,6 +586,13 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
             (rest as { 'aria-label'?: string })['aria-label']
           }
           aria-labelledby={(rest as { 'aria-labelledby'?: string })['aria-labelledby']}
+          aria-describedby={
+            // Forward the root's aria-describedby to each focusable thumb so a
+            // <Field error/description> wrapping a Slider is announced when a
+            // thumb has focus. It also remains on the root via {...rest}, which
+            // is harmless — the root is non-focusable and carries no role.
+            (rest as { 'aria-describedby'?: string })['aria-describedby']
+          }
           className={clsx(styles.thumb, isDragging[index] && styles.thumbDragging)}
           style={thumbStyle(thumbValue)}
           onPointerDown={(e) => handleThumbPointerDown(e, index)}

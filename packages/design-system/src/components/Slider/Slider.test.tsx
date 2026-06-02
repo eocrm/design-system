@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { createRef } from 'react';
 import { Slider, type SliderOrientation, type SliderSize, type SliderTone } from './Slider';
+import { Field } from '../Field';
 
 // jsdom doesn't implement setPointerCapture; stub it on HTMLElement so the
 // component's try/catch fast-path is exercised (and we still get pointer
@@ -210,6 +211,17 @@ describe('Slider', () => {
       );
       const thumb = container.querySelector('[role="slider"]');
       expect(thumb).toHaveAttribute('aria-labelledby', 'vol-label');
+    });
+
+    it('forwards root aria-describedby to the thumb', () => {
+      const { container } = render(
+        <>
+          <span id="vol-desc">0 is muted</span>
+          <Slider value={50} aria-label="Volume" aria-describedby="vol-desc" onChange={() => {}} />
+        </>,
+      );
+      const thumb = container.querySelector('[role="slider"]');
+      expect(thumb).toHaveAttribute('aria-describedby', 'vol-desc');
     });
 
     it('range mode: both thumbs get the forwarded aria-label', () => {
@@ -487,5 +499,29 @@ describe('Slider', () => {
       const inputs = container.querySelectorAll('input[type="hidden"]');
       expect(inputs).toHaveLength(0);
     });
+  });
+});
+
+describe('Slider — Field label integration', () => {
+  it('a Field label names the slider thumb (auto-clone)', () => {
+    render(
+      <Field label="Volume">
+        <Slider value={40} onChange={() => {}} />
+      </Field>,
+    );
+    expect(screen.getByRole('slider', { name: 'Volume' })).toBeInTheDocument();
+  });
+
+  it('a Field error description reaches the focusable thumb (not just the root)', () => {
+    render(
+      <Field label="Volume" error="Out of range">
+        <Slider value={40} onChange={() => {}} />
+      </Field>,
+    );
+    // The accessible description must land on the focusable role="slider" thumb,
+    // so a screen reader announces the error when the thumb has focus — not on
+    // the non-focusable root div where {...rest} also drops it.
+    const thumb = screen.getByRole('slider', { name: 'Volume' });
+    expect(thumb).toHaveAccessibleDescription('Out of range');
   });
 });
