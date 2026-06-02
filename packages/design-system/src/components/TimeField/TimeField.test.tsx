@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, useState } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { TimeField, type TimeValue } from './TimeField';
+import { Field } from '../Field';
 
 function wrap(locale = 'en-US') {
   return ({ children }: { children: ReactNode }) => (
@@ -840,5 +841,36 @@ describe('TimeField', () => {
     await waitFor(() =>
       expect(within(minutes).getByRole('option', { name: '45' })).toHaveAttribute('tabindex', '0'),
     );
+  });
+});
+
+describe('TimeField — labelling', () => {
+  it('a Field label names the inner input (auto-clone)', () => {
+    function LabelDriver() {
+      const [v, setV] = useState<TimeValue | null>({ hours: 9, minutes: 0 });
+      return (
+        <Field label="Start time">
+          <TimeField value={v} hourCycle="24" onChange={setV} />
+        </Field>
+      );
+    }
+    render(<LabelDriver />, { wrapper: wrap() });
+    expect(screen.getByRole('textbox', { name: 'Start time' })).toHaveValue('09:00');
+  });
+
+  it('back-compat: passing only aria-label still names the input + group', () => {
+    render(
+      <TimeField
+        value={{ hours: 14, minutes: 30 }}
+        hourCycle="24"
+        aria-label="Departure time"
+        onChange={() => {}}
+      />,
+      {
+        wrapper: wrap(),
+      },
+    );
+    expect(screen.getByRole('textbox', { name: 'Departure time' })).toHaveValue('14:30');
+    expect(screen.getByRole('group', { name: 'Departure time' })).toBeInTheDocument();
   });
 });
