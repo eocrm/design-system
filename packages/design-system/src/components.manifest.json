@@ -13,6 +13,12 @@
     ],
     "composedBy": []
   },
+  "AppLayout": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": []
+  },
   "Avatar": {
     "tier": "composition",
     "cluster": "Display",

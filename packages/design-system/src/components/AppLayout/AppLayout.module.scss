@@ -1,0 +1,36 @@
+// AppLayout is a layout-owning primitive — the documented exception to the
+// "no layout properties on components" rule (like Page / Screen / Rail). Owning
+// the viewport-filling shell (min-height + flex column + sidebar row) is its
+// whole job. No visual styling — the topBar / sidebar slots bring their own
+// surfaces. (stylelint's property-disallowed-list blocks flex-grow / flex-basis
+// but not the `flex` shorthand, min-height, or min-width, so no disable needed.)
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+// Full-width top bar; natural height.
+.topBar {
+  flex: none;
+}
+
+// The sidebar + content row fills the remaining viewport height.
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  min-height: 0;
+}
+
+// Sidebar sets its own width.
+.sidebar {
+  flex: none;
+}
+
+// Content fills the rest; min-width:0 lets wide content (tables) shrink instead
+// of overflowing the row.
+.main {
+  flex: 1;
+  min-width: 0;
+}

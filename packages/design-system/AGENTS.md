@@ -1081,6 +1081,19 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - `align`: `'center'` (default) / `'start'` — vertical placement of the main slot.
 - Layout-owning primitive (the `<Page>` / `<Rail>` exception to "no layout properties"). Don't nest inside `<Page>` or another `<Screen>`. For a normal in-shell page use `<Page>`; to center a small element use `<Cluster>` / `<Stack>`.
 
+### `<AppLayout>` — viewport-filling app shell
+
+```tsx
+<AppLayout topBar={<TopBar />} sidebar={<Rail>{nav}</Rail>}>
+  <Page>{content}</Page>
+</AppLayout>
+```
+
+- Top-level shell layout, mounted **once** at the app root. Full-height flex column: `topBar` across the top, then a row of `sidebar` (left, intrinsic width) + main `children` (fills the rest). Root is `min-height: 100vh`.
+- `topBar`: optional top region (omit for none). `sidebar`: optional left region (omit for none). `children`: the main content (required).
+- Layout-owning primitive (the `<Page>` / `<Screen>` / `<Rail>` exception to "no layout properties"). Carries no visual styling — slots bring their own surfaces. Don't nest inside another `AppLayout` / `<Page>` / `<Screen>`; for a chromeless page use `<Screen>`, for in-page layout use `<Stack>` / `<Cluster>`.
+- **Page-scroll shell:** `min-height: 100vh` means tall content scrolls the whole window (chrome scrolls away). For fixed chrome + independently-scrolling content, override the root to a fixed `height: 100vh` / `100dvh` via `className`.
+
 ### `<Grid>` — 2D layout primitive
 
 ```tsx
