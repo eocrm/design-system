@@ -148,10 +148,21 @@ Exactly ONE issue per invocation.
    ```bash
    gh pr checks <pr> --repo eocrm/design-system --watch
    ```
-4. **Squash-merge:**
+4. **Squash-merge.** If another PR merged while yours was open, your branch is
+   `BEHIND` and branch protection blocks the merge until it's brought up to date —
+   handle that first, then merge:
    ```bash
+   # If the branch fell behind main (another PR merged), update it and re-wait for
+   # the gate on the new head before merging.
+   if [ "$(gh pr view <pr> --repo eocrm/design-system --json mergeStateStatus --jq .mergeStateStatus)" = "BEHIND" ]; then
+     gh pr update-branch <pr> --repo eocrm/design-system
+     gh pr checks <pr> --repo eocrm/design-system --watch   # re-runs Quality on the updated head
+   fi
    gh pr merge <pr> --repo eocrm/design-system --squash --delete-branch
    ```
+   If `gh pr merge` prints the `--auto` / `--admin` hint instead of merging, the
+   merge requirements still aren't met (e.g. still `BEHIND`, or a required check
+   not green) — STOP and report; never force it with `--admin`.
 5. **Find the Release run for the merge commit.** It takes a few seconds to
    register after the merge, so poll by the exact commit — never eyeball-match a
    list:
