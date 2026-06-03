@@ -2,6 +2,10 @@
 @use './Link.tokens';
 
 .link {
+  // A link-styled control rendered via `as` on a non-anchor (e.g. `as="button"`)
+  // gets no pointer cursor from the UA — only `<a>` does — so set it explicitly.
+  // Makes the affordance element-agnostic (like how Button owns its own cursor).
+  cursor: pointer;
   font-family: inherit;
   font-size: inherit;
   color: inherit;
