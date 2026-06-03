@@ -61,7 +61,8 @@ describe('AppLayout', () => {
 
   it('applies the structural layout classes (root / topBar / body / sidebar / main)', () => {
     // Anchors the load-bearing classes — the root carries the min-height:100vh
-    // flex column — so a future SCSS edit can't silently gut the viewport fill.
+    // flex row (full-height sidebar + content column) — so a future SCSS edit
+    // can't silently gut the shell structure.
     const { container } = render(
       <AppLayout topBar={<span>t</span>} sidebar={<span>s</span>}>
         <span>c</span>

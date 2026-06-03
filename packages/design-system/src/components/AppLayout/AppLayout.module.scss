@@ -1,35 +1,42 @@
 // AppLayout is a layout-owning primitive — the documented exception to the
 // "no layout properties on components" rule (like Page / Screen / Rail). Owning
-// the viewport-filling shell (min-height + flex column + sidebar row) is its
-// whole job. No visual styling — the topBar / sidebar slots bring their own
-// surfaces. (stylelint's property-disallowed-list blocks flex-grow / flex-basis
-// but not the `flex` shorthand, min-height, or min-width, so no disable needed.)
+// the viewport-filling shell is its whole job. No visual styling — the topBar /
+// sidebar slots bring their own surfaces. Matches the CRM shell topology (see the
+// playground AppShell): a full-height sidebar down the left, the top bar over the
+// content column, and the main content below it. (stylelint's property-disallowed-list
+// blocks flex-grow / flex-basis but not the `flex` shorthand, min-height, or
+// min-width, so no disable is needed here.)
 .root {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+
+  // Explicit (it's the default) — the full-height sidebar depends on the row
+  // stretching its items to the row's height; don't change this to center/start.
+  align-items: stretch;
   min-height: 100vh;
 }
 
-// Full-width top bar; natural height.
-.topBar {
-  flex: none;
-}
-
-// The sidebar + content row fills the remaining viewport height.
-.body {
-  display: flex;
-  flex: 1;
-  flex-direction: row;
-  min-height: 0;
-}
-
-// Sidebar sets its own width.
+// Full-height sidebar down the left (stretches to the row height). Sets its own
+// width.
 .sidebar {
   flex: none;
 }
 
-// Content fills the rest; min-width:0 lets wide content (tables) shrink instead
-// of overflowing the row.
+// The top bar + content column to the right of the sidebar. min-width:0 lets the
+// column (and wide content like tables) shrink instead of pushing the sidebar.
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+// Top bar over the content column; natural height.
+.topBar {
+  flex: none;
+}
+
+// Main content fills the rest of the column.
 .main {
   flex: 1;
   min-width: 0;
