@@ -104,6 +104,22 @@ describe('<Link>', () => {
     expect(ref.current?.tagName).toBe('A');
   });
 
+  it('renders a real <button> via as="button" carrying the link classes (pointer affordance)', () => {
+    render(
+      <Link as="button" type="button">
+        Change email
+      </Link>,
+    );
+    const el = screen.getByText('Change email');
+    expect(el.tagName).toBe('BUTTON');
+    // The pointer-cursor affordance lives on the `.link` class (Link.module.scss),
+    // so a non-anchor must still receive it. The cursor *value* is verified
+    // visually / via Playwright (jsdom doesn't apply CSS-module rules); this locks
+    // that as="button" gets the link styling where `cursor: pointer` lives.
+    expect(el.className).toMatch(/link/);
+    expect(el.className).toMatch(/default/);
+  });
+
   it('children renders inside the link', () => {
     render(
       <Link href="/x">

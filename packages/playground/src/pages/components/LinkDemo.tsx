@@ -56,6 +56,26 @@ export function LinkDemo() {
       </Example>
 
       <Example
+        title={'Link-styled action via `as="button"`'}
+        description="An action that must visually match a sibling Link but can't be a real href (a fake href is the Link anti-pattern) → render a real <button>. It inherits the link look AND the pointer cursor."
+        code={`<Cluster gap="md">
+  <Link href="/forgot-password">Forgot?</Link>
+  <Link as="button" type="button" onClick={handleChangeEmail}>
+    Change email
+  </Link>
+</Cluster>`}
+      >
+        <Cluster gap="md">
+          <Link href="#forgot" onClick={(e) => e.preventDefault()}>
+            Forgot?
+          </Link>
+          <Link as="button" type="button" onClick={() => {}}>
+            Change email
+          </Link>
+        </Cluster>
+      </Example>
+
+      <Example
         title="Composed with an icon"
         description="Compose Link with whatever children you want — it's just a styled anchor."
         code={`<Link href="https://docs.example.com" target="_blank" rel="noopener noreferrer">
