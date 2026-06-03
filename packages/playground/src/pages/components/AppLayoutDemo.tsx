@@ -60,12 +60,12 @@ export function AppLayoutDemo() {
   return (
     <DemoLayout
       name="AppLayout"
-      description="Viewport-filling application shell: an optional topBar across the top, then a row of an optional sidebar (left) and the main content. The top-level layout primitive, mounted once at the app root."
+      description="Viewport-filling application shell, matching the CRM shell topology: a full-height sidebar down the left, an optional top bar over the content column, and the main content below it. The top-level layout primitive, mounted once at the app root."
       files={getComponentFiles('AppLayout')}
     >
       <Example
-        title="Full shell (topBar + sidebar + content)"
-        description="The canonical app shell. AppLayout fills the viewport; shown clipped to a bounded frame."
+        title="Full shell (sidebar + topBar + content)"
+        description="The canonical CRM shell — full-height sidebar on the left, top bar over the content column. AppLayout fills the viewport; shown clipped to a bounded frame."
         code={`<AppLayout topBar={<TopBar />} sidebar={<Rail>{nav}</Rail>}>
   <Page>{content}</Page>
 </AppLayout>`}

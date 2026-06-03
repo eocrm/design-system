@@ -4,23 +4,23 @@ import styles from './AppLayout.module.scss';
 
 export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
   /**
-   * Top bar slot — spans the full width above the sidebar + content row.
-   * Omit for a shell with no top bar.
+   * Top bar slot — sits above the main content, spanning the content column to
+   * the right of the sidebar (not the full window width). Omit for no top bar.
    */
   topBar?: ReactNode;
   /**
-   * Sidebar slot — sits to the left of the content, filling the height of the
-   * row below the top bar. Sets its own width (intrinsic). Omit for no sidebar.
+   * Sidebar slot — runs the full height down the left, alongside both the top
+   * bar and the content. Sets its own width (intrinsic). Omit for no sidebar.
    */
   sidebar?: ReactNode;
-  /** Main content slot — fills the remaining space. */
+  /** Main content slot — fills the remaining space below the top bar. */
   children: ReactNode;
 }
 
 /**
- * Viewport-filling application shell layout. A full-height flex column: an
- * optional `topBar` across the top, then a row of an optional `sidebar` (left)
- * and the main `children` (right) that together fill the viewport height
+ * Viewport-filling application shell layout, matching the CRM shell topology: a
+ * full-height `sidebar` down the left, an optional `topBar` over the content
+ * column, and the main `children` below it. Fills the viewport
  * (`min-height: 100vh`).
  *
  * Replaces the ad-hoc `Stack` + `Cluster` shell composition consumers hand-rolled,
@@ -41,8 +41,9 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * @remarks Layout-owning primitive
  * Like `<Page>` / `<Screen>` / `<Rail>`, AppLayout is the documented exception to
  * the "components don't own layout" rule — owning the full-height shell layout
- * (viewport fill + flex column + sidebar row) is its entire job. It carries no
- * visual styling; the `topBar` / `sidebar` slots bring their own surfaces.
+ * (viewport fill + full-height sidebar + top-bar-over-content) is its entire job.
+ * It carries no visual styling; the `topBar` / `sidebar` slots bring their own
+ * surfaces.
  *
  * @remarks When NOT to use
  * - ❌ For in-page content layout — use `<Stack>` / `<Cluster>` / `<Grid>`.
@@ -52,10 +53,10 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  *
  * @remarks Scrolling
  * This is a **page-scroll** shell: `min-height: 100vh` lets it grow with tall
- * content, so the whole window scrolls and the top bar / sidebar scroll away
- * with it. For the common "fixed chrome + independently-scrolling content"
- * layout, override the root to a fixed `height: 100vh` (or `100dvh`) via
- * `className` — then `<Rail>` / the main region manage their own overflow.
+ * content, so the whole window scrolls and the chrome scrolls away with it. For
+ * the common "fixed chrome + independently-scrolling content" layout, override
+ * the root to a fixed `height: 100vh` (or `100dvh`) via `className` — then
+ * `<Rail>` / the main region manage their own overflow.
  */
 export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLayout(
   { topBar, sidebar, children, className, ...props },
@@ -63,11 +64,14 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
 ) {
   // Pattern A — props last: AppLayout is a consumer-overridable layout
   // primitive (like Stack/Card), so {...props} wins over our defaults.
+  // Topology: a row of [full-height sidebar | a column of (topBar, main)] — so
+  // the sidebar spans the whole height and the top bar sits only over the
+  // content column, matching the CRM shell (see playground AppShell).
   return (
     <div ref={ref} className={clsx(styles.root, className)} {...props}>
-      {topBar != null && <div className={styles.topBar}>{topBar}</div>}
+      {sidebar != null && <div className={styles.sidebar}>{sidebar}</div>}
       <div className={styles.body}>
-        {sidebar != null && <div className={styles.sidebar}>{sidebar}</div>}
+        {topBar != null && <div className={styles.topBar}>{topBar}</div>}
         <div className={styles.main}>{children}</div>
       </div>
     </div>
