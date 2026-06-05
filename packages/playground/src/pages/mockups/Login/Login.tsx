@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 import {
   Alert,
   BrandIcon,
@@ -16,34 +17,49 @@ import {
   Text,
   Title,
 } from '@eocrm/design-system';
+import eocrmLogo from '../../../assets/eocrm-logo.svg';
 
 // Loose client-side shape check only — real validation is server-side.
 const EMAIL_RE = /.+@.+\..+/;
 
 export function Login() {
+  const [step, setStep] = useState<'email' | 'password'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  function submit() {
+  function continueToPassword() {
     const nextEmailError = EMAIL_RE.test(email) ? null : 'Enter a valid email address.';
+    setEmailError(nextEmailError);
+    if (nextEmailError) return;
+    setStep('password');
+  }
+
+  // Back to step 1 — keep the typed email, drop the password attempt.
+  function changeEmail() {
+    setStep('email');
+    setPassword('');
+    setPasswordError(null);
+    setFormError(null);
+  }
+
+  function signIn() {
     const nextPasswordError =
       password.length >= 6 ? null : 'Password must be at least 6 characters.';
-    setEmailError(nextEmailError);
     setPasswordError(nextPasswordError);
-    if (nextEmailError || nextPasswordError) {
-      setFormError(null);
-      return;
-    }
+    if (nextPasswordError) return;
     // No backend in a mockup — simulate an auth failure so the error Alert
     // (the "error-state demo") is always reachable for stakeholders.
     setFormError('Invalid email or password.');
   }
 
-  function onEnter(e: KeyboardEvent) {
-    if (e.key === 'Enter') submit();
+  function onEmailKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Enter') continueToPassword();
+  }
+  function onPasswordKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Enter') signIn();
   }
 
   return (
@@ -71,9 +87,15 @@ export function Login() {
       }
     >
       <Stack gap="lg" align="center">
-        <Text as="span" size="xl" weight="bold">
-          eocrm
-        </Text>
+        <Cluster gap="sm" align="center">
+          {/* TODO: replace with a <Logo>/fixed-size image primitive when it ships —
+              see packages/design-system/src/components/TODO.md. Image reserves a
+              full-width box with skeleton/fallback (wrong for a small chrome logo). */}
+          <img src={eocrmLogo} alt="" width={28} height={28} />
+          <Text as="span" size="xl" weight="bold">
+            eocrm
+          </Text>
+        </Cluster>
 
         <Card padding="lg">
           <Stack gap="lg">
@@ -82,87 +104,108 @@ export function Login() {
                 Sign in
               </Title>
               <Text size="sm" tone="muted">
-                Welcome back. Enter your email to continue to your workspace.
+                {step === 'email'
+                  ? 'Welcome back. Enter your email to continue to your workspace.'
+                  : 'Enter your password to continue.'}
               </Text>
             </Stack>
 
-            <Button variant="secondary">
-              <BrandIcon name="google" size={16} />
-              Continue with Google
-            </Button>
+            {step === 'email' ? (
+              <>
+                <Button variant="secondary">
+                  <BrandIcon name="google" size={16} />
+                  Continue with Google
+                </Button>
 
-            <Divider>OR</Divider>
+                <Divider>OR</Divider>
 
-            {formError && (
-              <Alert tone="error" title="Couldn't sign you in">
-                {formError}
-              </Alert>
+                <Stack gap="xs">
+                  <Text as="label" htmlFor="login-email" weight="medium" size="sm">
+                    Email
+                  </Text>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (emailError) setEmailError(null);
+                    }}
+                    onKeyDown={onEmailKeyDown}
+                    invalid={!!emailError}
+                    aria-describedby={emailError ? 'login-email-error' : undefined}
+                  />
+                  {emailError && (
+                    <Text id="login-email-error" size="sm" tone="danger">
+                      {emailError}
+                    </Text>
+                  )}
+                </Stack>
+
+                <Button variant="primary" onClick={continueToPassword}>
+                  Continue
+                </Button>
+              </>
+            ) : (
+              <>
+                <Card padding="sm">
+                  <Cluster justify="between" align="center" wrap={false}>
+                    <Cluster gap="sm" align="center" wrap={false}>
+                      <Mail size={16} />
+                      <Text size="sm">{email}</Text>
+                    </Cluster>
+                    <Link as="button" type="button" variant="default" onClick={changeEmail}>
+                      Change
+                    </Link>
+                  </Cluster>
+                </Card>
+
+                {formError && (
+                  <Alert tone="error" title="Couldn't sign you in">
+                    {formError}
+                  </Alert>
+                )}
+
+                <Stack gap="xs">
+                  <Cluster justify="between" align="baseline">
+                    <Text as="label" htmlFor="login-password" weight="medium" size="sm">
+                      Password
+                    </Text>
+                    <Link href="/forgot-password" variant="default">
+                      Forgot?
+                    </Link>
+                  </Cluster>
+                  <PasswordInput
+                    id="login-password"
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    capsLockWarning
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (passwordError) setPasswordError(null);
+                      if (formError) setFormError(null);
+                    }}
+                    onKeyDown={onPasswordKeyDown}
+                    invalid={!!passwordError}
+                    aria-describedby={passwordError ? 'login-password-error' : undefined}
+                  />
+                  {passwordError && (
+                    <Text id="login-password-error" size="sm" tone="danger">
+                      {passwordError}
+                    </Text>
+                  )}
+                </Stack>
+
+                <Checkbox label="Keep me signed in" defaultChecked />
+
+                <Button variant="primary" onClick={signIn}>
+                  Sign in
+                </Button>
+              </>
             )}
-
-            <Stack gap="md">
-              <Stack gap="xs">
-                <Text as="label" htmlFor="login-email" weight="medium" size="sm">
-                  Email
-                </Text>
-                <Input
-                  id="login-email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (emailError) setEmailError(null);
-                    if (formError) setFormError(null);
-                  }}
-                  onKeyDown={onEnter}
-                  invalid={!!emailError}
-                  aria-describedby={emailError ? 'login-email-error' : undefined}
-                />
-                {emailError && (
-                  <Text id="login-email-error" size="sm" tone="danger">
-                    {emailError}
-                  </Text>
-                )}
-              </Stack>
-
-              <Stack gap="xs">
-                <Cluster justify="between" align="baseline">
-                  <Text as="label" htmlFor="login-password" weight="medium" size="sm">
-                    Password
-                  </Text>
-                  <Link href="/forgot-password" variant="default">
-                    Forgot?
-                  </Link>
-                </Cluster>
-                <PasswordInput
-                  id="login-password"
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  capsLockWarning
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (passwordError) setPasswordError(null);
-                    if (formError) setFormError(null);
-                  }}
-                  onKeyDown={onEnter}
-                  invalid={!!passwordError}
-                  aria-describedby={passwordError ? 'login-password-error' : undefined}
-                />
-                {passwordError && (
-                  <Text id="login-password-error" size="sm" tone="danger">
-                    {passwordError}
-                  </Text>
-                )}
-              </Stack>
-            </Stack>
-
-            <Checkbox label="Keep me signed in" defaultChecked />
-
-            <Button variant="primary" onClick={submit}>
-              Sign in
-            </Button>
           </Stack>
         </Card>
       </Stack>
