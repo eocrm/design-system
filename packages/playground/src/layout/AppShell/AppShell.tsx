@@ -72,6 +72,7 @@ import {
   GalleryVerticalEnd,
   Settings as SettingsIcon,
   Fingerprint,
+  Hexagon,
   TriangleAlert,
   Compass,
   Shapes,
@@ -187,6 +188,7 @@ const componentGroups = [
       { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
       { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
       { to: '/components/brand-icon', label: 'BrandIcon', icon: Fingerprint, end: false },
+      { to: '/components/logo', label: 'Logo', icon: Hexagon, end: false },
       { to: '/components/calendar', label: 'Calendar', icon: CalendarDays, end: false },
       {
         to: '/components/circular-progress',

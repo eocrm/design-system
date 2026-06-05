@@ -45,6 +45,7 @@ export type ComponentName =
   | 'Kbd'
   | 'Link'
   | 'LinkCard'
+  | 'Logo'
   | 'Modal'
   | 'OptionsPicker'
   | 'Page'

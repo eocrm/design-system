@@ -56,6 +56,7 @@ import { ClusterDemo } from './pages/components/ClusterDemo';
 import { AvatarDemo } from './pages/components/AvatarDemo';
 import { BadgeDemo } from './pages/components/BadgeDemo';
 import { BrandIconDemo } from './pages/components/BrandIconDemo';
+import { LogoDemo } from './pages/components/LogoDemo';
 import { TabsDemo } from './pages/components/TabsDemo';
 import { DropdownMenuDemo } from './pages/components/DropdownMenuDemo';
 import { TooltipDemo } from './pages/components/TooltipDemo';
@@ -159,6 +160,7 @@ export default function App() {
             <Route path="/components/avatar" element={<AvatarDemo />} />
             <Route path="/components/badge" element={<BadgeDemo />} />
             <Route path="/components/brand-icon" element={<BrandIconDemo />} />
+            <Route path="/components/logo" element={<LogoDemo />} />
             <Route path="/components/tabs" element={<TabsDemo />} />
             <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
             <Route path="/components/tooltip" element={<TooltipDemo />} />
