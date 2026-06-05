@@ -28,6 +28,11 @@
 
 .flex-grow {
   flex: 1 1 0;
+
+  // Allow shrinking below the content's intrinsic width so a `<Text truncate>`
+  // (or any overflow:hidden child) can actually clip inside a flex row, instead
+  // of forcing the row to overflow. Only matters under overflow — safe otherwise.
+  min-width: 0;
 }
 
 .flex-auto {

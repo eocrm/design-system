@@ -17,7 +17,8 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
   maxWidth?: ConstrainWidth;
   /**
    * Flex behavior as a child of a flex row/column.
-   * - `'grow'` — fill remaining space (`flex: 1 1 0`).
+   * - `'grow'` — fill remaining space (`flex: 1 1 0`) and shrink below content
+   *   width (`min-width: 0`) so a truncating child (`<Text truncate>`) can clip.
    * - `'auto'` — size to content, may grow/shrink (`flex: 1 1 auto`).
    * - `'shrink'` — don't grow, may shrink (`flex: 0 1 auto`, the flex default).
    * - `'none'` — fixed, never grow/shrink (`flex: 0 0 auto`).
