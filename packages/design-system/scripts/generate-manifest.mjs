@@ -34,6 +34,7 @@ const CLUSTERS = {
 
   // Forms
   Button: 'Forms',
+  SocialButton: 'Forms',
   ButtonGroup: 'Forms',
   Checkbox: 'Forms',
   ColorPicker: 'Forms',

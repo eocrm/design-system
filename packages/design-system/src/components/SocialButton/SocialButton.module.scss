@@ -1,0 +1,4 @@
+// SocialButton has no styles of its own — it composes <Button> (the chrome) and
+// <BrandIcon> (the provider mark), each of which brings its own styling. This
+// file exists only to satisfy the four-file component-structure convention; it
+// is intentionally not imported.

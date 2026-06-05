@@ -56,6 +56,7 @@ const CLUSTERS: Record<string, string> = {
 
   // Forms
   Button: 'Forms',
+  SocialButton: 'Forms',
   ButtonGroup: 'Forms',
   Checkbox: 'Forms',
   ColorPicker: 'Forms',
