@@ -11,6 +11,7 @@ import { Breadcrumb } from '@eocrm/design-system';
 import { Link as DSLink } from '@eocrm/design-system';
 import { LinkCard } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
+import { SocialButton } from '@eocrm/design-system';
 import { ButtonGroup } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
 import { CircularProgress } from '@eocrm/design-system';
@@ -129,6 +130,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         </Button>
       </Cluster>
     ),
+  },
+  {
+    to: '/components/social-button',
+    name: 'SocialButton',
+    description: 'Provider sign-in button — brand mark + label.',
+    preview: <SocialButton provider="google" label="Continue with Google" />,
   },
   {
     to: '/components/button-group',

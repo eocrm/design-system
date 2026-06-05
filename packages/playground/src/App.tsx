@@ -24,6 +24,7 @@ import { AccordionDemo } from './pages/components/AccordionDemo';
 import { AlertDemo } from './pages/components/AlertDemo';
 import { BreadcrumbDemo } from './pages/components/BreadcrumbDemo';
 import { ButtonDemo } from './pages/components/ButtonDemo';
+import { SocialButtonDemo } from './pages/components/SocialButtonDemo';
 import { ButtonGroupDemo } from './pages/components/ButtonGroupDemo';
 import { DatePickersDemo } from './pages/components/DatePickersDemo';
 import { InputDemo } from './pages/components/InputDemo';
@@ -126,6 +127,7 @@ export default function App() {
             <Route path="/components/alert" element={<AlertDemo />} />
             <Route path="/components/breadcrumb" element={<BreadcrumbDemo />} />
             <Route path="/components/button" element={<ButtonDemo />} />
+            <Route path="/components/social-button" element={<SocialButtonDemo />} />
             <Route path="/components/button-group" element={<ButtonGroupDemo />} />
             <Route path="/components/datepickers" element={<DatePickersDemo />} />
             <Route path="/components/input" element={<InputDemo />} />

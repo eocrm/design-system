@@ -3,7 +3,6 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Mail } from 'lucide-react';
 import {
   Alert,
-  BrandIcon,
   Button,
   Card,
   Checkbox,
@@ -15,6 +14,7 @@ import {
   Logo,
   PasswordInput,
   Screen,
+  SocialButton,
   Stack,
   Text,
   Title,
@@ -107,10 +107,7 @@ export function Login() {
 
               {step === 'email' ? (
                 <>
-                  <Button variant="secondary">
-                    <BrandIcon name="google" size={16} />
-                    Continue with Google
-                  </Button>
+                  <SocialButton provider="google" label="Continue with Google" />
 
                   <Divider>OR</Divider>
 

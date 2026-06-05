@@ -3,6 +3,9 @@
 export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
+export { SocialButton } from './components/SocialButton';
+export type { SocialButtonProps } from './components/SocialButton';
+
 export { ButtonGroup } from './components/ButtonGroup';
 export type {
   ButtonGroupProps,
