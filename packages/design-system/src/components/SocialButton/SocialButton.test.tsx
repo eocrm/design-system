@@ -43,4 +43,11 @@ describe('SocialButton', () => {
     rerender(<SocialButton provider="yandex" label="y" />);
     expect(container.querySelector('svg')).toBeInTheDocument();
   });
+
+  it('scales the brand mark with the button size (ICON_SIZE)', () => {
+    const { container, rerender } = render(<SocialButton provider="google" label="g" size="sm" />);
+    expect(container.querySelector('svg')).toHaveAttribute('width', '16');
+    rerender(<SocialButton provider="google" label="g" size="lg" />);
+    expect(container.querySelector('svg')).toHaveAttribute('width', '20');
+  });
 });
