@@ -357,6 +357,12 @@
     ],
     "composedBy": []
   },
+  "Logo": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "Masonry": {
     "tier": "primitive",
     "cluster": "Layout",
