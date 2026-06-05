@@ -16,6 +16,10 @@
   --alert-title-font-size: var(--font-size-md);
   --alert-title-font-weight: var(--font-weight-medium);
 
+  // Icon box height = the title's line box (font-size × 1.4 line-height), so the
+  // icon centers with the first text line instead of top-aligning above it.
+  --alert-icon-row-height: calc(var(--alert-title-font-size) * 1.4);
+
   // Description
   --alert-description-fg: var(--color-fg-muted);
   --alert-description-font-size: var(--font-size-sm);
