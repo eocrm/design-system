@@ -54,16 +54,10 @@
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
-.brandMark {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  background: var(--color-accent);
-  color: var(--color-accent-fg);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-sm);
+.brandLogo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .brandText {

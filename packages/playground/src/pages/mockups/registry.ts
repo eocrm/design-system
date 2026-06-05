@@ -369,7 +369,8 @@ export const MOCKUPS = [
     slug: 'login',
     title: 'Login',
     path: '/mockups/login',
-    blurb: 'Full-screen eocrm sign-in — branded card, email/password, Google SSO, error states.',
+    blurb:
+      'Full-screen eocrm sign-in — identifier-first two-step (email → password) morphing card, Google SSO, error states.',
     usesComponents: [
       'Alert',
       'BrandIcon',

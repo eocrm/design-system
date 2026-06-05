@@ -27,6 +27,21 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
+### [ ] `<Logo>` — fixed-size brand-logo / image renderer
+
+**Filed:** 2026-06-05
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/Login/Login.tsx` (brand block above the card)
+
+**What's needed:**
+A way to render a consumer's own brand logo at a small, intrinsic/fixed size (≈24–40px) inline beside a wordmark. `Image` reserves a full-width box with a Skeleton + broken-image fallback (right for content photos, wrong for chrome); `Avatar` is circular (crops a non-round mark); `BrandIcon` is a closed third-party set (`google`/`yandex`). Should take a `src` (or inline SVG) + a fixed size + `alt`, with no skeleton/fallback chrome.
+
+**Current workaround:**
+Raw `<img src={eocrmLogo} alt="" width={28} height={28} />` at the Login brand block (with a TODO comment). AppShell (tooling, not a mockup) uses the same raw `<img>` freely.
+
+**When this ships:** refactor the Login brand block (and consider AppShell) to use the new primitive, then tick this checkbox.
+
 ### [x] `<AuthScreen>` (or `<AuthLayout>`) — full-viewport centered surface with a tinted backdrop for auth pages
 
 **Filed:** 2026-05-29
