@@ -1,0 +1,8 @@
+/* Playground-only brand styling — never shipped. Sets the Logo wordmark to
+   Outfit (a free, Gilroy-like geometric sans, loaded via index.html) at weight
+   600. Loaded after the design system's global.scss so it overrides the Logo's
+   --logo-text-* defaults. Only affects the wordmark `text`, not the subtext. */
+:root {
+  --logo-text-font: 'Outfit', system-ui, sans-serif;
+  --logo-text-font-weight: var(--font-weight-semibold);
+}
