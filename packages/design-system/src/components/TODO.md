@@ -27,7 +27,9 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
-### [ ] `<Logo>` — fixed-size brand-logo / image renderer
+### [x] `<Logo>` — fixed-size brand-logo / image renderer
+
+**Shipped:** 2026-06-05 — `<Logo>` lib component; Login + AppShell refactored to use it; asset deleted.
 
 **Filed:** 2026-06-05
 **Mocked in:**

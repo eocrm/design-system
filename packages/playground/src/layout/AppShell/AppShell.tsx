@@ -83,9 +83,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Avatar, Rail, TopBar, useRail } from '@eocrm/design-system';
+import { Avatar, Logo, Rail, TopBar, useRail } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
-import eocrmLogo from '../../assets/eocrm-logo.svg';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
 
@@ -275,7 +274,7 @@ function BrandMark() {
   const { collapsed } = useRail();
   return (
     <div className={styles.brand} data-collapsed={collapsed || undefined}>
-      <img src={eocrmLogo} className={styles.brandLogo} alt="" />
+      <Logo size="sm" />
       {!collapsed && (
         <div className={styles.brandText}>
           <div className={styles.brandName}>eocrm</div>
