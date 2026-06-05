@@ -8,6 +8,7 @@ export type ComponentName =
   | 'BrandIcon'
   | 'Breadcrumb'
   | 'Button'
+  | 'SocialButton'
   | 'ButtonGroup'
   | 'Calendar'
   | 'Card'
@@ -374,7 +375,6 @@ export const MOCKUPS = [
       'Full-screen eocrm sign-in — identifier-first two-step (email → password) morphing card, Google SSO, error states.',
     usesComponents: [
       'Alert',
-      'BrandIcon',
       'Button',
       'Card',
       'Checkbox',
@@ -386,6 +386,7 @@ export const MOCKUPS = [
       'Logo',
       'PasswordInput',
       'Screen',
+      'SocialButton',
       'Stack',
       'Text',
       'Title',
