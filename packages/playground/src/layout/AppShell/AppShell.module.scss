@@ -54,28 +54,6 @@
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
-.brandLogo {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-}
-
-.brandText {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.brandName {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-fg);
-}
-
-.brandPlan {
-  font-size: var(--font-size-xs);
-  color: var(--color-fg-subtle);
-}
-
 .nav {
   display: flex;
   flex-direction: column;

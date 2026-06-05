@@ -1,0 +1,65 @@
+@use './Logo.tokens';
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--logo-gap);
+}
+
+.bottom {
+  flex-direction: column;
+}
+
+.mark {
+  flex-shrink: 0;
+  color: var(--logo-color);
+}
+
+.text {
+  color: var(--color-fg);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+}
+
+.textBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.subtext {
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.2;
+}
+
+.bottom .textBlock {
+  align-items: center;
+  text-align: center;
+}
+
+.sizeSm .mark {
+  width: var(--size-sm);
+  height: var(--size-sm);
+}
+
+.sizeSm .text {
+  font-size: var(--font-size-lg);
+}
+
+.sizeMd .mark {
+  width: var(--size-md);
+  height: var(--size-md);
+}
+
+.sizeMd .text {
+  font-size: var(--font-size-xl);
+}
+
+.sizeLg .mark {
+  width: var(--size-lg);
+  height: var(--size-lg);
+}
+
+.sizeLg .text {
+  font-size: var(--font-size-2xl);
+}

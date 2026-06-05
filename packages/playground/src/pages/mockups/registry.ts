@@ -45,6 +45,7 @@ export type ComponentName =
   | 'Kbd'
   | 'Link'
   | 'LinkCard'
+  | 'Logo'
   | 'Modal'
   | 'OptionsPicker'
   | 'Page'
@@ -378,9 +379,11 @@ export const MOCKUPS = [
       'Card',
       'Checkbox',
       'Cluster',
+      'Constrain',
       'Divider',
       'Input',
       'Link',
+      'Logo',
       'PasswordInput',
       'Screen',
       'Stack',

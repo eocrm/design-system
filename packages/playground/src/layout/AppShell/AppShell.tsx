@@ -72,6 +72,7 @@ import {
   GalleryVerticalEnd,
   Settings as SettingsIcon,
   Fingerprint,
+  Hexagon,
   TriangleAlert,
   Compass,
   Shapes,
@@ -82,9 +83,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Avatar, Rail, TopBar, useRail } from '@eocrm/design-system';
+import { Avatar, Logo, Rail, TopBar, useRail } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
-import eocrmLogo from '../../assets/eocrm-logo.svg';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
 
@@ -187,6 +187,7 @@ const componentGroups = [
       { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
       { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
       { to: '/components/brand-icon', label: 'BrandIcon', icon: Fingerprint, end: false },
+      { to: '/components/logo', label: 'Logo', icon: Hexagon, end: false },
       { to: '/components/calendar', label: 'Calendar', icon: CalendarDays, end: false },
       {
         to: '/components/circular-progress',
@@ -273,13 +274,7 @@ function BrandMark() {
   const { collapsed } = useRail();
   return (
     <div className={styles.brand} data-collapsed={collapsed || undefined}>
-      <img src={eocrmLogo} className={styles.brandLogo} alt="" />
-      {!collapsed && (
-        <div className={styles.brandText}>
-          <div className={styles.brandName}>eocrm</div>
-          <div className={styles.brandPlan}>Free trial</div>
-        </div>
-      )}
+      {collapsed ? <Logo size="sm" /> : <Logo size="sm" text="eocrm" subtext="Free trial" />}
     </div>
   );
 }

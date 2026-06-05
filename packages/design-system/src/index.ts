@@ -95,6 +95,9 @@ export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot, BadgeVariant } from '.
 export { BrandIcon } from './components/BrandIcon';
 export type { BrandIconProps, BrandName } from './components/BrandIcon';
 
+export { Logo } from './components/Logo';
+export type { LogoProps, LogoSize, LogoTextPlacement } from './components/Logo';
+
 export { FilterChip } from './components/FilterChip';
 export type {
   FilterChipProps,
