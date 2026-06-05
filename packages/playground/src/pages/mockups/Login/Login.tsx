@@ -90,7 +90,7 @@ export function Login() {
       <Stack gap="lg" align="center">
         <Logo text="eocrm" size="lg" />
 
-        <Constrain width="sm">
+        <Constrain width="md">
           <Card padding="lg">
             <Stack gap="lg">
               <Stack gap="xs">
@@ -145,11 +145,13 @@ export function Login() {
               ) : (
                 <>
                   <Card padding="sm">
-                    <Cluster justify="between" align="center" wrap={false}>
-                      <Cluster gap="sm" align="center" wrap={false}>
-                        <Mail size={16} />
-                        <Text size="sm">{email}</Text>
-                      </Cluster>
+                    <Cluster align="center" wrap={false} gap="sm">
+                      <Mail size={16} />
+                      <Constrain flex="grow">
+                        <Text size="sm" truncate>
+                          {email}
+                        </Text>
+                      </Constrain>
                       <Link as="button" type="button" variant="default" onClick={changeEmail}>
                         Change
                       </Link>
