@@ -1337,11 +1337,13 @@ Full-color official brand marks for SSO buttons. Ships `google` + `yandex`.
 <Logo text="eocrm" size="lg" />        // mark + wordmark
 <Logo label="eocrm" />                 // mark only (accessible name)
 <Logo text="eocrm" textPlacement="bottom" />
+<Logo text="eocrm" subtext="Free trial" size="sm" />  // mark + name + muted subline
 ```
 
 - The eocrm layered-hex mark; optional `eocrm` wordmark beside (default) or below (`textPlacement="bottom"`).
 - `size`: `sm` (24) / `md` (32, default) / `lg` (40). Single-color inline SVG; mark color is `--logo-color` (defaults to `--color-accent`) — override that variable to recolor.
 - `text` → wordmark + decorative mark; `label` → accessible name for a mark-only logo (never pass both). For third-party SSO marks use `<BrandIcon>`, not `<Logo>`.
+- `subtext` → a small muted line under the wordmark (e.g. `subtext="Free trial"` — the app-shell brand lockup); only shown when `text` is set.
 
 ### Palette — categorical color set
 

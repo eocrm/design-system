@@ -18,7 +18,23 @@
 .text {
   color: var(--color-fg);
   font-weight: var(--font-weight-bold);
-  line-height: 1;
+  line-height: 1.1;
+}
+
+.textBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.subtext {
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.2;
+}
+
+.bottom .textBlock {
+  align-items: center;
+  text-align: center;
 }
 
 .sizeSm .mark {
@@ -45,5 +61,5 @@
 }
 
 .sizeLg .text {
-  font-size: var(--logo-text-size-lg);
+  font-size: var(--font-size-2xl);
 }

@@ -26,6 +26,11 @@ export interface LogoProps extends HTMLAttributes<HTMLDivElement> {
    * mark (`aria-hidden`) or when `text` is present (the text is the name).
    */
   label?: string;
+  /**
+   * Small, muted secondary line rendered under `text` — e.g. a plan or tagline
+   * (`subtext="Free trial"`). Only shown when `text` is present.
+   */
+  subtext?: ReactNode;
 }
 
 const sizeClass: Record<LogoSize, string> = {
@@ -52,6 +57,10 @@ const sizeClass: Record<LogoSize, string> = {
  * // Wordmark below the mark, centered:
  * <Logo text="eocrm" textPlacement="bottom" />
  *
+ * @example
+ * // With a small muted subline (the app-shell brand lockup):
+ * <Logo text="eocrm" subtext="Free trial" size="sm" />
+ *
  * @remarks When NOT to use
  * - For a third-party brand mark (Google / Yandex SSO) → use `<BrandIcon>`.
  * - For arbitrary content images → `<Image>`; for avatars → `<Avatar>`.
@@ -61,7 +70,7 @@ const sizeClass: Record<LogoSize, string> = {
  *   `text` the mark is already decorative; `label` is only for mark-only logos.
  */
 export const Logo = forwardRef<HTMLDivElement, LogoProps>(function Logo(
-  { text, textPlacement = 'end', size = 'md', label, className, ...props },
+  { text, subtext, textPlacement = 'end', size = 'md', label, className, ...props },
   ref,
 ) {
   const labelled = text == null && label != null && label !== '';
@@ -95,7 +104,12 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(function Logo(
         />
         <path d="M160 40.4706V80L80 39.5294L0 80V40.4706L80 0L160 40.4706Z" fill="currentColor" />
       </svg>
-      {text != null && <span className={styles.text}>{text}</span>}
+      {text != null && (
+        <span className={styles.textBlock}>
+          <span className={styles.text}>{text}</span>
+          {subtext != null && <span className={styles.subtext}>{subtext}</span>}
+        </span>
+      )}
     </div>
   );
 });

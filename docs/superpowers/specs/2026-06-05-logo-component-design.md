@@ -34,6 +34,8 @@ export interface LogoProps extends HTMLAttributes<HTMLDivElement> {
    * mark (aria-hidden) or when `text` is present (the text is the name).
    */
   label?: string;
+  /** Small muted line under `text` (e.g. "Free trial"). Only shown with `text`. */
+  subtext?: ReactNode;
 }
 ```
 
@@ -44,8 +46,9 @@ export interface LogoProps extends HTMLAttributes<HTMLDivElement> {
 
 - Wrapper `.logo`: `inline-flex; align-items: center; gap: var(--logo-gap)`. `textPlacement="bottom"` → `flex-direction: column` (mark above, text centered below).
 - `.mark`: `color: var(--logo-color)`; width/height by size (`--size-sm/md/lg`); paths inherit via `currentColor`. `flex-shrink: 0`.
-- `.text`: `color: var(--color-fg)`; `font-weight: var(--font-weight-bold)`; font-size by size (sm → `--font-size-lg` 16, md → `--font-size-xl` 20, lg → a Logo token ≈ 24 since there's no `--font-size-2xl`). `line-height: 1`.
-- Component tokens in `Logo.tokens.scss`: `--logo-color: var(--color-accent)`, `--logo-gap: var(--space-2)`, `--logo-text-size-lg` (≈24px) — referencing primitives, no raw color.
+- `.text`: `color: var(--color-fg)`; `font-weight: var(--font-weight-bold)`; font-size by size (sm → `--font-size-lg` 16, md → `--font-size-xl` 20, lg → `--font-size-2xl` 24).
+- `.subtext` (under `.text`, inside a `.textBlock` flex-column): `color: var(--color-fg-muted)`; `font-size: var(--font-size-xs)` (11). Centered under the mark when `textPlacement="bottom"`.
+- Component tokens in `Logo.tokens.scss`: `--logo-color: var(--color-accent)`, `--logo-gap: var(--space-2)` — referencing primitives, no raw color. (All font sizes use existing `--font-size-*` primitives directly — no bespoke size token.)
 - Layout-owning is fine here (it's a brand chrome primitive); the SCSS uses only allowed properties (no `margin`/`flex-grow`/`flex-basis`).
 
 ## Components / files (Core invariant)

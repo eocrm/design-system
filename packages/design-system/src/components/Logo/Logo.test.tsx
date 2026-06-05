@@ -56,4 +56,15 @@ describe('Logo', () => {
     expect(el.className).toMatch(/brand/);
     expect(el).toHaveAttribute('data-foo', 'bar');
   });
+
+  it('renders subtext under the wordmark when text is present', () => {
+    render(<Logo text="eocrm" subtext="Free trial" />);
+    expect(screen.getByText('eocrm')).toBeInTheDocument();
+    expect(screen.getByText('Free trial')).toBeInTheDocument();
+  });
+
+  it('ignores subtext when there is no text', () => {
+    render(<Logo subtext="Free trial" />);
+    expect(screen.queryByText('Free trial')).not.toBeInTheDocument();
+  });
 });

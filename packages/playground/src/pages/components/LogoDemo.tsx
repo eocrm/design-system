@@ -36,6 +36,14 @@ export function LogoDemo() {
       </Example>
 
       <Example
+        title="With a muted subline"
+        description="subtext adds a small muted line under the wordmark — the app-shell brand lockup (name + plan)."
+        code={`<Logo text="eocrm" subtext="Free trial" size="sm" />`}
+      >
+        <Logo text="eocrm" subtext="Free trial" size="sm" />
+      </Example>
+
+      <Example
         title="Sizes"
         description="sm (24) / md (32, default) / lg (40)."
         code={`<Logo text="eocrm" size="sm" />

@@ -274,13 +274,7 @@ function BrandMark() {
   const { collapsed } = useRail();
   return (
     <div className={styles.brand} data-collapsed={collapsed || undefined}>
-      <Logo size="sm" />
-      {!collapsed && (
-        <div className={styles.brandText}>
-          <div className={styles.brandName}>eocrm</div>
-          <div className={styles.brandPlan}>Free trial</div>
-        </div>
-      )}
+      {collapsed ? <Logo size="sm" /> : <Logo size="sm" text="eocrm" subtext="Free trial" />}
     </div>
   );
 }
