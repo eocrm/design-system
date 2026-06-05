@@ -36,6 +36,11 @@
 .icon {
   display: grid;
   place-items: center;
+
+  // Match the first text line's box so the icon sits centered with the title
+  // line (the alert grid is align-items:start, which would otherwise top-align
+  // the 16px icon ~2px above the line's optical center).
+  min-height: var(--alert-icon-row-height);
   color: var(--alert-icon);
 }
 
@@ -63,6 +68,9 @@
   display: block;
   font-size: var(--alert-title-font-size);
   font-weight: var(--alert-title-font-weight);
+
+  // Keep this 1.4 in sync with --alert-icon-row-height (the icon centers to this
+  // line box).
   line-height: 1.4;
   color: var(--alert-title-fg);
 }
