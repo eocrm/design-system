@@ -1345,6 +1345,7 @@ import logo from '../assets/eocrm-logo.svg'; // a consumer-owned asset
 - `size`: `sm` (24) / `md` (32, default) / `lg` (40) — the mark box; rendered as `<img object-fit:contain>` (no CSS recolor — the asset carries its own color).
 - `text` → wordmark + decorative mark (`alt=""`); `label` → the image `alt`/accessible name for a mark-only logo (never pass both). For third-party SSO marks use `<BrandIcon>`, not `<Logo>`.
 - `subtext` → a small muted line under the wordmark (e.g. `subtext="Free trial"`); only shown when `text` is set.
+- **Wordmark font:** override `--logo-text-font` / `--logo-text-font-weight` to set the wordmark's font + weight (defaults: inherited sans, bold). Affects only `text`, not the mark or `subtext`; load the font yourself (the DS ships none).
 
 ### Palette — categorical color set
 

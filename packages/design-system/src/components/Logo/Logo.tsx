@@ -51,6 +51,9 @@ const sizeClass: Record<LogoSize, string> = {
  * design system arranges and sizes the lockup; the mark itself is a
  * consumer-owned asset — import an SVG/PNG and pass its URL.
  *
+ * The wordmark's font + weight are themeable via the `--logo-text-font` /
+ * `--logo-text-font-weight` CSS variables (the `subtext` is unaffected).
+ *
  * @example
  * // Mark + wordmark — the common app-header / auth lockup:
  * import logo from '../assets/eocrm-logo.svg';

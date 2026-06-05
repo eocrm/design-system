@@ -17,7 +17,12 @@
 
 .text {
   color: var(--color-fg);
-  font-weight: var(--font-weight-bold);
+
+  // Wordmark font/weight — overridable via --logo-text-font / --logo-text-font-weight.
+  // Read with fallbacks (NOT declared as a :root default) so a consumer's :root
+  // override always wins, regardless of when this component CSS is injected.
+  font-family: var(--logo-text-font, inherit);
+  font-weight: var(--logo-text-font-weight, var(--font-weight-bold));
   line-height: 1.1;
 }
 

@@ -2,3 +2,9 @@
   // Gap between the mark and the wordmark.
   --logo-gap: var(--space-2);
 }
+
+// Wordmark typography is overridable via --logo-text-font / --logo-text-font-weight
+// to set a brand font/weight for the wordmark `text` (the mark is an image; the
+// `subtext` is NOT affected). These are intentionally read with fallbacks in
+// Logo.module.scss rather than declared at :root here — so a consumer's :root
+// override wins regardless of CSS injection order. Defaults: inherited font, bold.
