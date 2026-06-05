@@ -84,6 +84,7 @@ import {
 import { useState, useEffect } from 'react';
 import { Avatar, Rail, TopBar, useRail } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
+import eocrmLogo from '../../assets/eocrm-logo.svg';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
 
@@ -266,16 +267,16 @@ function renderRailItem({ to, label, icon: Icon, end }: NavItem) {
   );
 }
 
-/** Brand: full "Orbit CRM / Free trial" when expanded, just the "OC" mark
-    when collapsed. Reads collapsed state from RailContext. */
+/** Brand: the eocrm logo + wordmark when expanded, just the mark when
+    collapsed. Reads collapsed state from RailContext. */
 function BrandMark() {
   const { collapsed } = useRail();
   return (
     <div className={styles.brand} data-collapsed={collapsed || undefined}>
-      <div className={styles.brandMark}>OC</div>
+      <img src={eocrmLogo} className={styles.brandLogo} alt="" />
       {!collapsed && (
         <div className={styles.brandText}>
-          <div className={styles.brandName}>Orbit CRM</div>
+          <div className={styles.brandName}>eocrm</div>
           <div className={styles.brandPlan}>Free trial</div>
         </div>
       )}
