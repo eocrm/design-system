@@ -17,7 +17,7 @@ This exercises the form primitives and the `Link as="button"` affordance shipped
 
 - Source: `/Users/dpws/projects/eocrm/docs/logo.svg` — a 160×160, 3-path `#0052CC` layered-hex mark.
 - Add it to the playground at **`packages/playground/src/assets/eocrm-logo.svg`** (verbatim copy). Vite (no svgr plugin) resolves `import logo from '…/eocrm-logo.svg'` to a **URL string**, which is base-path-correct for the Pages build.
-- **Login mockup (Rule 6 — library components only):** render via `<Image src={logo} alt="eocrm" objectFit="contain" radius="none" width={36} height={36} />`. `Image` is a library component, so this is compliant (no raw `<img>`/`<svg>`); the imported URL is just data, like the mockups' mock data.
+- **Login mockup:** render a small fixed-size mark. **Note (corrected during planning):** `Image` reserves a full-width box with skeleton/fallback and can't render a small fixed ~28px chrome mark (and `Avatar` is circular, `BrandIcon` a closed third-party set) — so per Rule 6's **escape hatch** the mockup uses a raw `<img src={logo} alt="" width={28} height={28} />` at the brand block with a comment, plus a matching `TODO.md` entry for a future `<Logo>` primitive. See the implementation plan's "Deviation from spec".
 - **AppShell rail (playground tooling — Rule 6 N/A):** a plain `<img src={logo} … />` mark.
 
 ## AppShell brand (tooling — `src/layout/AppShell/AppShell.tsx` + `.module.scss`)
