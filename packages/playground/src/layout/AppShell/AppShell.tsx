@@ -85,6 +85,7 @@ import {
 import { useState, useEffect } from 'react';
 import { Avatar, Logo, Rail, TopBar, useRail } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
+import eocrmLogo from '../../assets/eocrm-logo.svg';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
 
@@ -274,7 +275,11 @@ function BrandMark() {
   const { collapsed } = useRail();
   return (
     <div className={styles.brand} data-collapsed={collapsed || undefined}>
-      {collapsed ? <Logo size="sm" /> : <Logo size="sm" text="eocrm" subtext="Free trial" />}
+      {collapsed ? (
+        <Logo src={eocrmLogo} size="sm" />
+      ) : (
+        <Logo src={eocrmLogo} size="sm" text="eocrm" subtext="Free trial" />
+      )}
     </div>
   );
 }

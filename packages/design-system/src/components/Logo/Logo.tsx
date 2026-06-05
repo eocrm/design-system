@@ -10,6 +10,11 @@ export type LogoTextPlacement = 'end' | 'bottom';
 
 export interface LogoProps extends HTMLAttributes<HTMLDivElement> {
   /**
+   * The brand mark image URL — typically an imported SVG/PNG asset. The mark is
+   * a **consumer-owned asset**; the design system ships no logo of its own.
+   */
+  src: string;
+  /**
    * Wordmark rendered beside (or below) the mark — consumers pass `"eocrm"`.
    * Omit for a mark-only logo.
    */
@@ -22,8 +27,9 @@ export interface LogoProps extends HTMLAttributes<HTMLDivElement> {
   /** Mark size — `'sm'` (24) / `'md'` (32, default) / `'lg'` (40). */
   size?: LogoSize;
   /**
-   * Accessible name for the mark when there's no `text`. Omit for a decorative
-   * mark (`aria-hidden`) or when `text` is present (the text is the name).
+   * Accessible name for the mark when there's no `text` (used as the image
+   * `alt`). Omit for a decorative mark (`alt=""`), or when `text` is present
+   * (the wordmark is the name).
    */
   label?: string;
   /**
@@ -40,40 +46,43 @@ const sizeClass: Record<LogoSize, string> = {
 };
 
 /**
- * The eocrm brand logo: the layered-hex mark, optionally with the `eocrm`
- * wordmark beside it (default) or below. The mark is a single-color inline SVG
- * that inherits `--logo-color` (defaults to `--color-accent`, the brand blue) —
- * override the `--logo-color` CSS variable to recolor it (e.g. on a dark surface).
+ * Brand logo lockup: a consumer-supplied mark image (`src`), optionally with a
+ * wordmark beside it (default) or below, plus an optional muted subline. The
+ * design system arranges and sizes the lockup; the mark itself is a
+ * consumer-owned asset — import an SVG/PNG and pass its URL.
  *
  * @example
  * // Mark + wordmark — the common app-header / auth lockup:
- * <Logo text="eocrm" size="lg" />
+ * import logo from '../assets/eocrm-logo.svg';
+ * <Logo src={logo} text="eocrm" size="lg" />
  *
  * @example
  * // Mark only — give it an accessible name when it stands alone:
- * <Logo label="eocrm" />
+ * <Logo src={logo} label="eocrm" />
  *
  * @example
  * // Wordmark below the mark, centered:
- * <Logo text="eocrm" textPlacement="bottom" />
+ * <Logo src={logo} text="eocrm" textPlacement="bottom" />
  *
  * @example
  * // With a small muted subline (the app-shell brand lockup):
- * <Logo text="eocrm" subtext="Free trial" size="sm" />
+ * <Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />
  *
  * @remarks When NOT to use
  * - For a third-party brand mark (Google / Yandex SSO) → use `<BrandIcon>`.
  * - For arbitrary content images → `<Image>`; for avatars → `<Avatar>`.
  *
  * @remarks Anti-patterns
- * - ❌ Passing both `text` and `label` — double-announces ("eocrm eocrm"). With
- *   `text` the mark is already decorative; `label` is only for mark-only logos.
+ * - ❌ Passing both `text` and `label` — double-announces. With `text` the mark
+ *   is decorative (`alt=""`); `label` is only for a mark-only logo.
  */
 export const Logo = forwardRef<HTMLDivElement, LogoProps>(function Logo(
-  { text, subtext, textPlacement = 'end', size = 'md', label, className, ...props },
+  { src, text, subtext, textPlacement = 'end', size = 'md', label, className, ...props },
   ref,
 ) {
-  const labelled = text == null && label != null && label !== '';
+  // With `text`, the wordmark conveys the name → the mark is decorative (alt="").
+  // Mark-only → `label` is the accessible name; absent → decorative.
+  const alt = text == null && label ? label : '';
   return (
     // Pattern A — props last: Logo is consumer-overridable brand chrome.
     <div
@@ -86,24 +95,7 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(function Logo(
       )}
       {...props}
     >
-      <svg
-        className={styles.mark}
-        viewBox="0 0 160 160"
-        role={labelled ? 'img' : undefined}
-        aria-label={labelled ? label : undefined}
-        aria-hidden={labelled ? undefined : true}
-      >
-        {labelled && <title>{label}</title>}
-        <path
-          d="M127.441 135.999L95.8134 152L80 144L64.1857 152L32.5579 136L80 112L127.441 135.999Z"
-          fill="currentColor"
-        />
-        <path
-          d="M160 96V119.529L143.256 127.999L80 96L16.7436 128L0 119.529V96L80 55.5294L160 96Z"
-          fill="currentColor"
-        />
-        <path d="M160 40.4706V80L80 39.5294L0 80V40.4706L80 0L160 40.4706Z" fill="currentColor" />
-      </svg>
+      <img className={styles.mark} src={src} alt={alt} />
       {text != null && (
         <span className={styles.textBlock}>
           <span className={styles.text}>{text}</span>

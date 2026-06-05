@@ -1331,19 +1331,20 @@ Full-color official brand marks for SSO buttons. Ships `google` + `yandex`.
 
 **When NOT to use:** generic UI glyphs → `lucide-react`. Don't recolor brand marks.
 
-### `<Logo>` — eocrm brand logo
+### `<Logo>` — brand logo lockup
 
 ```tsx
-<Logo text="eocrm" size="lg" />        // mark + wordmark
-<Logo label="eocrm" />                 // mark only (accessible name)
-<Logo text="eocrm" textPlacement="bottom" />
-<Logo text="eocrm" subtext="Free trial" size="sm" />  // mark + name + muted subline
+import logo from '../assets/eocrm-logo.svg'; // a consumer-owned asset
+<Logo src={logo} text="eocrm" size="lg" />                       // mark + wordmark
+<Logo src={logo} label="eocrm" />                                // mark only (accessible name)
+<Logo src={logo} text="eocrm" textPlacement="bottom" />
+<Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />  // mark + name + muted subline
 ```
 
-- The eocrm layered-hex mark; optional `eocrm` wordmark beside (default) or below (`textPlacement="bottom"`).
-- `size`: `sm` (24) / `md` (32, default) / `lg` (40). Single-color inline SVG; mark color is `--logo-color` (defaults to `--color-accent`) — override that variable to recolor.
-- `text` → wordmark + decorative mark; `label` → accessible name for a mark-only logo (never pass both). For third-party SSO marks use `<BrandIcon>`, not `<Logo>`.
-- `subtext` → a small muted line under the wordmark (e.g. `subtext="Free trial"` — the app-shell brand lockup); only shown when `text` is set.
+- Arranges a **consumer-supplied** mark image (`src`, required — import an SVG/PNG) with an optional wordmark beside (default) or below (`textPlacement="bottom"`). The design system ships **no** logo of its own.
+- `size`: `sm` (24) / `md` (32, default) / `lg` (40) — the mark box; rendered as `<img object-fit:contain>` (no CSS recolor — the asset carries its own color).
+- `text` → wordmark + decorative mark (`alt=""`); `label` → the image `alt`/accessible name for a mark-only logo (never pass both). For third-party SSO marks use `<BrandIcon>`, not `<Logo>`.
+- `subtext` → a small muted line under the wordmark (e.g. `subtext="Free trial"`); only shown when `text` is set.
 
 ### Palette — categorical color set
 

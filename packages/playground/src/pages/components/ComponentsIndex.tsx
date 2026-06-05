@@ -6,6 +6,7 @@ import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { BrandIcon } from '@eocrm/design-system';
 import { Logo } from '@eocrm/design-system';
+import eocrmLogo from '../../assets/eocrm-logo.svg';
 import { Breadcrumb } from '@eocrm/design-system';
 import { Link as DSLink } from '@eocrm/design-system';
 import { LinkCard } from '@eocrm/design-system';
@@ -767,7 +768,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     to: '/components/logo',
     name: 'Logo',
     description: 'The eocrm brand logo — mark + optional wordmark.',
-    preview: <Logo text="eocrm" size="md" />,
+    preview: <Logo src={eocrmLogo} text="eocrm" size="md" />,
   },
   {
     to: '/components/breadcrumb',

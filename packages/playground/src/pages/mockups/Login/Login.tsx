@@ -19,6 +19,7 @@ import {
   Text,
   Title,
 } from '@eocrm/design-system';
+import eocrmLogo from '../../../assets/eocrm-logo.svg';
 
 // Loose client-side shape check only — real validation is server-side.
 const EMAIL_RE = /.+@.+\..+/;
@@ -88,7 +89,7 @@ export function Login() {
       }
     >
       <Stack gap="lg" align="center">
-        <Logo text="eocrm" size="lg" />
+        <Logo src={eocrmLogo} text="eocrm" size="lg" />
 
         <Constrain width="md">
           <Card padding="lg">
