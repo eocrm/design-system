@@ -115,7 +115,7 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
  * @example
  * // Uncontrolled — the rail manages its own state.
  * <Rail defaultCollapsed={false} aria-label="Main navigation">
- *   <Rail.Header><Logo /></Rail.Header>
+ *   <Rail.Header><Logo src={logo} text="Acme" /></Rail.Header>
  *
  *   <Rail.Section title="Main">
  *     <Rail.Item icon={<Home />} as={NavLink} to="/">Dashboard</Rail.Item>
