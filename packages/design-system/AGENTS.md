@@ -38,8 +38,23 @@ import { AppProvider } from '@eocrm/design-system';
 - `intlLocale?` (BCP-47, e.g. `'en-US'`) — locale for Intl formatting (Calendar, dates, numbers). Defaults to `locale`.
 - `translations?` — deep-partial overrides merged over the built-in strings (rebrand a few keys; memoize the object).
 - `toast?` — `<ToastViewport>` config, or `false` to mount it yourself. Omitted ⇒ mounted with defaults.
+- `tokens?` — CSS design-token overrides (a flat `{ '--color-accent': '#7c3aed', '--radius-md': '6px' }` map) applied in **both** themes. Rebrands the system globally — including portaled `Modal`/`Tooltip`/`Toast`. Memoize it.
+- `darkTokens?` — token overrides applied **only** in dark (forced + system), merged over `tokens` (e.g. a lighter accent on dark surfaces). Memoize it.
 
 It composes `LocaleProvider` + `I18nProvider` and mounts the toast viewport. **Routing is yours** (`<AppProvider>` ships no router), and the stylesheet import above is still required. The individual providers (`LocaleProvider`, `I18nProvider`, `ToastViewport`) remain exported for advanced cases like pinning a subtree to a different locale.
+
+**Rebranding via tokens:**
+
+```tsx
+const tokens = useMemo(() => ({ '--color-accent': '#7c3aed', '--radius-md': '6px' }), []);
+const darkTokens = useMemo(() => ({ '--color-accent': '#a78bfa' }), []);
+
+<AppProvider locale="en" tokens={tokens} darkTokens={darkTokens}>
+  <App />
+</AppProvider>;
+```
+
+`tokens` apply in light **and** dark; `darkTokens` refine the dark scope only. They're emitted as a single declarative `<style>` that layers over the [dark theme](#dark-theme) correctly. Any design token can be overridden — see `src/styles/tokens.scss` for the full set.
 
 ---
 
@@ -117,7 +132,7 @@ The library ships a full dark palette, driven entirely by CSS. There is **no the
 
 **Your responsibility:**
 
-- **Set the attribute.** The library reads it; it never writes it (no DOM side-effects — see `<AppProvider>`). Persist the user's choice (e.g. `localStorage`) and apply it: `'light'`/`'dark'` → `document.documentElement.dataset.theme = choice`; `'system'` → remove the attribute.
+- **Set the attribute.** The library reads it; it never writes it (it performs no _imperative_ DOM mutation — the one thing `<AppProvider>` injects is a declarative `<style>` for `tokens` overrides, see [Setup](#setup-once-per-consuming-app)). Persist the user's choice (e.g. `localStorage`) and apply it: `'light'`/`'dark'` → `document.documentElement.dataset.theme = choice`; `'system'` → remove the attribute.
 - **Add the no-flash snippet** (below) so a forced light/dark choice doesn't flash the default theme before your bundle boots.
 - **Theme-aware images.** Raw `<img>` assets with baked-in colors (e.g. a logo SVG) can't be recolored by CSS — swap the `src` per theme if it matters. The `<Logo>` wordmark _text_ flips automatically (`--color-fg`); the image mark does not.
 
