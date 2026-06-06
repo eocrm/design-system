@@ -127,4 +127,33 @@ describe('AppProvider', () => {
     const ol = screen.getByText('Positioned toast').closest('ol');
     expect(ol).toHaveAttribute('data-position', 'top-right');
   });
+
+  it('renders a <style> with token overrides across light + dark scopes', () => {
+    const { container } = render(
+      <AppProvider
+        locale="en"
+        tokens={{ '--color-accent': '#7c3aed' }}
+        darkTokens={{ '--color-accent': '#a78bfa' }}
+      >
+        <span />
+      </AppProvider>,
+    );
+    const style = container.querySelector('style[data-eocrm-tokens]');
+    expect(style).not.toBeNull();
+    const css = style?.textContent ?? '';
+    expect(css).toContain(':root {');
+    expect(css).toContain('--color-accent: #7c3aed;');
+    expect(css).toContain("[data-theme='dark']");
+    expect(css).toContain('--color-accent: #a78bfa;');
+    expect(css).toContain('prefers-color-scheme: dark');
+  });
+
+  it('renders no <style> when no token overrides are given', () => {
+    const { container } = render(
+      <AppProvider locale="en">
+        <span />
+      </AppProvider>,
+    );
+    expect(container.querySelector('style[data-eocrm-tokens]')).toBeNull();
+  });
 });

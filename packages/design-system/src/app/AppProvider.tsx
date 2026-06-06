@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import {
   LocaleProvider,
   I18nProvider,
@@ -7,6 +7,7 @@ import {
   type Messages,
 } from '../i18n';
 import { ToastViewport, type ToastViewportProps } from '../components/Toast';
+import { buildThemeTokenCss, type TokenMap } from './themeTokens';
 
 export interface AppProviderProps {
   /**
@@ -34,6 +35,20 @@ export interface AppProviderProps {
    * viewport is mounted with the library defaults.
    */
   toast?: ToastViewportProps | false;
+  /**
+   * CSS design-token overrides applied in BOTH light and dark — a flat map of
+   * token name → value (`{ '--color-accent': '#7c3aed', '--radius-md': '6px' }`).
+   * Rebrands the design system globally (reaches portaled Modal/Tooltip/Toast).
+   * Emitted as a declarative `<style>`; layers over the dark theme correctly.
+   * **Memoize this object** — a fresh literal each render rebuilds the CSS.
+   */
+  tokens?: TokenMap;
+  /**
+   * Token overrides applied ONLY in dark (forced `data-theme="dark"` and system
+   * `prefers-color-scheme: dark`), merged over `tokens` — use it to tune a token
+   * for dark surfaces (e.g. a lighter accent). **Memoize this object.**
+   */
+  darkTokens?: TokenMap;
   children: ReactNode;
 }
 
@@ -66,6 +81,14 @@ export interface AppProviderProps {
  *   <App />
  * </AppProvider>;
  *
+ * @example
+ * // Rebrand: purple accent everywhere, lighter in dark, larger radius.
+ * const tokens = useMemo(() => ({ '--color-accent': '#7c3aed', '--radius-md': '6px' }), []);
+ * const darkTokens = useMemo(() => ({ '--color-accent': '#a78bfa' }), []);
+ * <AppProvider locale="en" tokens={tokens} darkTokens={darkTokens}>
+ *   <App />
+ * </AppProvider>;
+ *
  * @remarks When NOT to use
  * - **Per-subtree locale / i18n override** → nest `LocaleProvider` /
  *   `I18nProvider` directly. `AppProvider` is the single app root; don't nest a
@@ -79,11 +102,15 @@ export function AppProvider({
   intlLocale,
   translations,
   toast,
+  tokens,
+  darkTokens,
   children,
 }: AppProviderProps) {
+  const tokenCss = useMemo(() => buildThemeTokenCss(tokens, darkTokens), [tokens, darkTokens]);
   return (
     <LocaleProvider locale={intlLocale ?? locale}>
       <I18nProvider locale={locale} overrides={translations}>
+        {tokenCss && <style data-eocrm-tokens>{tokenCss}</style>}
         {children}
         {toast !== false && <ToastViewport {...(toast ?? {})} />}
       </I18nProvider>
