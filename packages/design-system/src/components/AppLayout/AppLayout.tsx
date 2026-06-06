@@ -52,6 +52,10 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * main region? Override the token in your scope —
  * `--app-layout-content-padding: 0` — no prop required.
  *
+ * Migration: a consumer that previously added its own gutter (a
+ * `padding: var(--space-6)` wrapper / shim around the routed content) should
+ * remove that shim now, or the gutters double up.
+ *
  * @remarks When NOT to use
  * - ❌ For in-page content layout — use `<Stack>` / `<Cluster>` / `<Grid>`.
  * - ❌ For a chromeless full-bleed page (sign-in / 404 / error) — use `<Screen>`.
