@@ -36,7 +36,11 @@ describe('buildThemeTokenCss', () => {
 
   it('drops entries whose key is not a valid custom property (no -- prefix / bad chars)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const css = buildThemeTokenCss({ 'color-accent': '#7c3aed', '--bad name': 'red', '--ok': 'blue' } as never);
+    const css = buildThemeTokenCss({
+      'color-accent': '#7c3aed',
+      '--bad name': 'red',
+      '--ok': 'blue',
+    } as never);
     expect(css).toContain('--ok: blue;');
     expect(css).not.toContain('color-accent: #7c3aed');
     expect(css).not.toContain('--bad name');

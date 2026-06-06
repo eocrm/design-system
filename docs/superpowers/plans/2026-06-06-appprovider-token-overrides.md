@@ -27,21 +27,22 @@
 
 ## File Structure
 
-| File | Action | Responsibility |
-| --- | --- | --- |
-| `packages/design-system/src/app/themeTokens.ts` | **Create** | `TokenMap` type + pure `buildThemeTokenCss(tokens?, darkTokens?): string \| null` (+ internal sanitize). The whole serialization/precedence logic, unit-testable in isolation. |
-| `packages/design-system/src/app/themeTokens.test.ts` | **Create** | Unit tests for the builder (exact CSS, ordering, null cases, key/value rejection). |
-| `packages/design-system/src/app/AppProvider.tsx` | Modify | Add `tokens?`/`darkTokens?` props (+ JSDoc), `useMemo` the builder, render `<style data-eocrm-tokens>` when non-null. |
-| `packages/design-system/src/app/AppProvider.test.tsx` | Modify | Add cases: renders `<style>` with light+dark scopes when given maps; renders none when omitted. |
-| `packages/design-system/src/app/index.ts` | Modify | Re-export `type TokenMap`. |
-| `packages/design-system/src/index.ts` | Modify | Re-export `type TokenMap` alongside `AppProviderProps`. |
-| `packages/design-system/AGENTS.md` | Modify | Setup section: `tokens`/`darkTokens` example + bullets. Dark theme section: soften the "no DOM side-effects" line + cross-link. |
+| File                                                  | Action     | Responsibility                                                                                                                                                                 |
+| ----------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/design-system/src/app/themeTokens.ts`       | **Create** | `TokenMap` type + pure `buildThemeTokenCss(tokens?, darkTokens?): string \| null` (+ internal sanitize). The whole serialization/precedence logic, unit-testable in isolation. |
+| `packages/design-system/src/app/themeTokens.test.ts`  | **Create** | Unit tests for the builder (exact CSS, ordering, null cases, key/value rejection).                                                                                             |
+| `packages/design-system/src/app/AppProvider.tsx`      | Modify     | Add `tokens?`/`darkTokens?` props (+ JSDoc), `useMemo` the builder, render `<style data-eocrm-tokens>` when non-null.                                                          |
+| `packages/design-system/src/app/AppProvider.test.tsx` | Modify     | Add cases: renders `<style>` with light+dark scopes when given maps; renders none when omitted.                                                                                |
+| `packages/design-system/src/app/index.ts`             | Modify     | Re-export `type TokenMap`.                                                                                                                                                     |
+| `packages/design-system/src/index.ts`                 | Modify     | Re-export `type TokenMap` alongside `AppProviderProps`.                                                                                                                        |
+| `packages/design-system/AGENTS.md`                    | Modify     | Setup section: `tokens`/`darkTokens` example + bullets. Dark theme section: soften the "no DOM side-effects" line + cross-link.                                                |
 
 ---
 
 ## Task 1: Pure builder `themeTokens.ts` (TDD)
 
 **Files:**
+
 - Create: `packages/design-system/src/app/themeTokens.ts`
 - Create: `packages/design-system/src/app/themeTokens.test.ts`
 
@@ -88,7 +89,11 @@ describe('buildThemeTokenCss', () => {
 
   it('drops entries whose key is not a valid custom property (no -- prefix / bad chars)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const css = buildThemeTokenCss({ 'color-accent': '#7c3aed', '--bad name': 'red', '--ok': 'blue' } as never);
+    const css = buildThemeTokenCss({
+      'color-accent': '#7c3aed',
+      '--bad name': 'red',
+      '--ok': 'blue',
+    } as never);
     expect(css).toContain('--ok: blue;');
     expect(css).not.toContain('color-accent: #7c3aed');
     expect(css).not.toContain('--bad name');
@@ -233,6 +238,7 @@ git commit -m "feat(AppProvider): pure buildThemeTokenCss token-override builder
 ## Task 2: Wire `tokens`/`darkTokens` into AppProvider + exports (TDD)
 
 **Files:**
+
 - Modify: `packages/design-system/src/app/AppProvider.tsx`
 - Modify: `packages/design-system/src/app/AppProvider.test.tsx`
 - Modify: `packages/design-system/src/app/index.ts`
@@ -243,34 +249,34 @@ git commit -m "feat(AppProvider): pure buildThemeTokenCss token-override builder
 In `packages/design-system/src/app/AppProvider.test.tsx`, add these two tests inside the `describe('AppProvider', () => { … })` block (e.g. after the `toast config` test, before the closing `});`):
 
 ```tsx
-  it('renders a <style> with token overrides across light + dark scopes', () => {
-    const { container } = render(
-      <AppProvider
-        locale="en"
-        tokens={{ '--color-accent': '#7c3aed' }}
-        darkTokens={{ '--color-accent': '#a78bfa' }}
-      >
-        <span />
-      </AppProvider>,
-    );
-    const style = container.querySelector('style[data-eocrm-tokens]');
-    expect(style).not.toBeNull();
-    const css = style?.textContent ?? '';
-    expect(css).toContain(':root {');
-    expect(css).toContain('--color-accent: #7c3aed;');
-    expect(css).toContain("[data-theme='dark']");
-    expect(css).toContain('--color-accent: #a78bfa;');
-    expect(css).toContain('prefers-color-scheme: dark');
-  });
+it('renders a <style> with token overrides across light + dark scopes', () => {
+  const { container } = render(
+    <AppProvider
+      locale="en"
+      tokens={{ '--color-accent': '#7c3aed' }}
+      darkTokens={{ '--color-accent': '#a78bfa' }}
+    >
+      <span />
+    </AppProvider>,
+  );
+  const style = container.querySelector('style[data-eocrm-tokens]');
+  expect(style).not.toBeNull();
+  const css = style?.textContent ?? '';
+  expect(css).toContain(':root {');
+  expect(css).toContain('--color-accent: #7c3aed;');
+  expect(css).toContain("[data-theme='dark']");
+  expect(css).toContain('--color-accent: #a78bfa;');
+  expect(css).toContain('prefers-color-scheme: dark');
+});
 
-  it('renders no <style> when no token overrides are given', () => {
-    const { container } = render(
-      <AppProvider locale="en">
-        <span />
-      </AppProvider>,
-    );
-    expect(container.querySelector('style[data-eocrm-tokens]')).toBeNull();
-  });
+it('renders no <style> when no token overrides are given', () => {
+  const { container } = render(
+    <AppProvider locale="en">
+      <span />
+    </AppProvider>,
+  );
+  expect(container.querySelector('style[data-eocrm-tokens]')).toBeNull();
+});
 ```
 
 - [ ] **Step 2: Run the tests to verify they fail**
@@ -401,6 +407,7 @@ git commit -m "feat(AppProvider): tokens/darkTokens props emit a declarative <st
 ## Task 3: Docs — AGENTS.md Setup + Dark theme
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 
 - [ ] **Step 1: Extend the Setup section with the token-override example**
@@ -420,7 +427,7 @@ Immediately after that bullet, add two bullets:
 
 Then, after the paragraph that begins "It composes `LocaleProvider` + `I18nProvider` …" (the one ending "different locale."), add this example block:
 
-```markdown
+````markdown
 **Rebranding via tokens:**
 
 ```tsx
@@ -431,9 +438,11 @@ const darkTokens = useMemo(() => ({ '--color-accent': '#a78bfa' }), []);
   <App />
 </AppProvider>;
 ```
+````
 
 `tokens` apply in light **and** dark; `darkTokens` refine the dark scope only. They're emitted as a single declarative `<style>` that layers over the [dark theme](#dark-theme) correctly. Any design token can be overridden — see `src/styles/tokens.scss` for the full set.
-```
+
+````
 
 - [ ] **Step 2: Soften the "no DOM side-effects" line in the Dark theme section**
 
@@ -441,7 +450,7 @@ In `packages/design-system/AGENTS.md`, in the "Dark theme" section's "Your respo
 
 ```markdown
 - **Set the attribute.** The library reads it; it never writes it (no DOM side-effects — see `<AppProvider>`). Persist the user's choice (e.g. `localStorage`) and apply it: `'light'`/`'dark'` → `document.documentElement.dataset.theme = choice`; `'system'` → remove the attribute.
-```
+````
 
 Replace it with:
 
@@ -470,6 +479,7 @@ git commit -m "docs(AppProvider): document tokens/darkTokens overrides + dark-th
 - [ ] **Step 1: Run all gates**
 
 From repo root:
+
 - `make test` → expect PASS (all suites incl. the new builder + AppProvider tests).
 - `make build` → expect PASS (typecheck + bundle).
 - `make build-lib` → expect PASS.
@@ -508,6 +518,7 @@ createRoot(document.getElementById('root')!).render(
 (Note `toast={false}` — the playground may already mount toasts; avoid a duplicate viewport during the check.)
 
 Then via Playwright:
+
 - Navigate to a page with accent-colored UI (e.g. `/mockups/dashboard` — "Add contact" primary button, links).
 - In **light** (`localStorage['eocrm-playground-theme']='light'`, reload): assert `getComputedStyle(documentElement).getPropertyValue('--color-accent').trim()` === `#7c3aed`, and a primary button's `background-color` ≈ `rgb(124, 58, 237)`.
 - In **dark** (`='dark'`, reload): assert `--color-accent` === `#a78bfa`.
@@ -571,6 +582,7 @@ EOF
 PR=$(gh pr view --repo eocrm/design-system --json number -q .number)
 gh pr checks "$PR" --repo eocrm/design-system --watch
 ```
+
 Expected: `Quality / check` passes. If BEHIND, `gh pr update-branch --repo eocrm/design-system "$PR"` then re-watch. Merge:
 
 ```bash
@@ -584,6 +596,7 @@ MERGE_SHA=$(gh pr view "$PR" --repo eocrm/design-system --json mergeCommit -q .m
 gh run list --repo eocrm/design-system --workflow=Release --commit "$MERGE_SHA"
 # gh run watch <id> --repo eocrm/design-system --exit-status
 ```
+
 Expected: the Release run's `publish` job is `success`. Capture the version: `git fetch --tags --force && git describe --tags --abbrev=0`.
 
 - [ ] **Step 4: Realign local main**
@@ -597,6 +610,7 @@ git checkout main && git fetch origin && git reset --hard origin/main
 ## Self-Review (completed by plan author)
 
 **1. Spec coverage:**
+
 - API (`tokens` both themes + optional `darkTokens`, flat `TokenMap`) → Task 2 (props) + Task 1 (`TokenMap`). ✅
 - Mechanism (declarative `<style>` mirroring dark.scss's three scopes; tokens re-emitted into dark; darkTokens layered after; null when empty) → Task 1 builder + Task 2 render. ✅
 - Isolation (pure `buildThemeTokenCss` returning `string|null`) + safety (`^--[\w-]+$` keys, reject `{ } < >` values, dev-warn) → Task 1. ✅
