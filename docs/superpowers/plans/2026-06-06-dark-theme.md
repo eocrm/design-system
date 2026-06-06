@@ -16,30 +16,31 @@
 
 ## Notes for the implementer (read first)
 
-- **This is NOT a new component.** The root CLAUDE.md "Core invariant" (tests + demo + 3-way playground wiring + `index.ts` export + manifest entry) applies to *components*. Dark theme adds no component, no export, no demo page, no manifest entry. Do **not** create a demo page or touch `index.ts` / the manifest. A reviewer expecting "where's the demo?" is mis-applying the invariant — the *whole playground* is the demo surface (verified live under the toggle).
+- **This is NOT a new component.** The root CLAUDE.md "Core invariant" (tests + demo + 3-way playground wiring + `index.ts` export + manifest entry) applies to _components_. Dark theme adds no component, no export, no demo page, no manifest entry. Do **not** create a demo page or touch `index.ts` / the manifest. A reviewer expecting "where's the demo?" is mis-applying the invariant — the _whole playground_ is the demo surface (verified live under the toggle).
 - **No unit tests for token values.** This repo does not unit-test SCSS/CSS token files (`tokens.scss` itself has none, and `structure.test.ts` only checks `components/**`). The verification strategy for this PR is the **gates** (stylelint + build prove the SCSS compiles and resolves) plus an **empirical Playwright dark sweep** (Task 5). Don't fabricate a brittle "does dark.scss contain X" test — follow repo convention.
 - **Stylelint comment rules** bite often here. Every `//` comment (except the first node inside a block) needs a blank line before it (`scss/double-slash-comment-empty-line-before`), and a lone `//` separator line is rejected (`scss/comment-no-empty`). Keep comments attached to content.
-- **stylelint `declaration-strict-value`** only governs properties matching `/color$/` / background / fill / stroke / `border-*-color` / `border-width` / `opacity`. Custom-property *declarations* (`--x: #hex`) and `color-scheme` are NOT matched — so raw hex inside `dark.scss` token declarations is allowed (same as `tokens.scss` and `Badge.tokens.scss`).
+- **stylelint `declaration-strict-value`** only governs properties matching `/color$/` / background / fill / stroke / `border-*-color` / `border-width` / `opacity`. Custom-property _declarations_ (`--x: #hex`) and `color-scheme` are NOT matched — so raw hex inside `dark.scss` token declarations is allowed (same as `tokens.scss` and `Badge.tokens.scss`).
 - **Commit after each task.** Code/config changes here go through a PR (root CLAUDE.md git workflow) — do not push to `main` directly. Pushing happens once, after Task 5, via the PR.
 
 ---
 
 ## File Structure
 
-| File | Action | Responsibility |
-| --- | --- | --- |
-| `packages/design-system/src/styles/dark.scss` | **Create** | The `dark-tokens` mixin (entire dark palette) + the three theme scopes. |
-| `packages/design-system/src/styles/global.scss` | Modify | `@use 'dark';` after `tokens` (dark blocks follow the light `:root` in source order). |
-| `packages/design-system/src/styles/tokens.scss` | Modify | Add `color-scheme: light;` to the base `:root` (explicit default). |
-| `packages/design-system/AGENTS.md` | Modify | New `## Dark theme` section: attribute contract, what flips, consumer responsibility, no-flash snippet. |
-| `packages/playground/index.html` | Modify | No-flash inline `<script>` (sets `data-theme` from `localStorage` before paint). |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | Modify | `theme` state (System/Light/Dark) + persistence/apply effect + Rail.Footer cycle button + `Monitor`/`Sun`/`Moon` imports. |
+| File                                                   | Action     | Responsibility                                                                                                            |
+| ------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `packages/design-system/src/styles/dark.scss`          | **Create** | The `dark-tokens` mixin (entire dark palette) + the three theme scopes.                                                   |
+| `packages/design-system/src/styles/global.scss`        | Modify     | `@use 'dark';` after `tokens` (dark blocks follow the light `:root` in source order).                                     |
+| `packages/design-system/src/styles/tokens.scss`        | Modify     | Add `color-scheme: light;` to the base `:root` (explicit default).                                                        |
+| `packages/design-system/AGENTS.md`                     | Modify     | New `## Dark theme` section: attribute contract, what flips, consumer responsibility, no-flash snippet.                   |
+| `packages/playground/index.html`                       | Modify     | No-flash inline `<script>` (sets `data-theme` from `localStorage` before paint).                                          |
+| `packages/playground/src/layout/AppShell/AppShell.tsx` | Modify     | `theme` state (System/Light/Dark) + persistence/apply effect + Rail.Footer cycle button + `Monitor`/`Sun`/`Moon` imports. |
 
 ---
 
 ## Task 1: Library dark token layer (`dark.scss` + `global.scss` + `tokens.scss`)
 
 **Files:**
+
 - Create: `packages/design-system/src/styles/dark.scss`
 - Modify: `packages/design-system/src/styles/global.scss:4` (add `@use 'dark';` after `@use 'tokens';`)
 - Modify: `packages/design-system/src/styles/tokens.scss:5-6` (add `color-scheme: light;` as the first declaration in the base `:root`)
@@ -232,6 +233,7 @@ git commit -m "feat(theme): dark token layer (dark.scss mixin + data-theme/prefe
 ## Task 2: Library docs — AGENTS.md "Dark theme" section
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md` (insert a `## Dark theme` section after the i18n section, before `## Components — TL;DR`)
 
 Documents the consumer-facing contract: the `<html data-theme>` attribute, automatic `color-scheme`, what flips for free vs. the consumer's job, and the copy-paste no-flash snippet (the library can't inject it — no DOM side-effects, per the AppProvider spec).
@@ -250,7 +252,7 @@ In `packages/design-system/AGENTS.md`, find the boundary between the Localizatio
 
 Insert the new section so it sits BETWEEN the i18n section's `---` and `## Components — TL;DR`. The result must read:
 
-```markdown
+````markdown
 5. Never inline an English string — `aria-label="Close"` is a Hard rule 9 violation.
 
 ---
@@ -259,17 +261,18 @@ Insert the new section so it sits BETWEEN the i18n section's `---` and `## Compo
 
 The library ships a full dark palette, driven entirely by CSS. There is **no theme component, no React context, no JS API** — you control it with one attribute on `<html>`:
 
-| `<html>` attribute  | Result                                                     |
-| ------------------- | ---------------------------------------------------------- |
-| _(none)_            | **System** — follows the OS via `prefers-color-scheme`     |
-| `data-theme="light"`| **Forced light** (wins over a dark OS)                    |
-| `data-theme="dark"` | **Forced dark** (wins over a light OS)                    |
+| `<html>` attribute   | Result                                                 |
+| -------------------- | ------------------------------------------------------ |
+| _(none)_             | **System** — follows the OS via `prefers-color-scheme` |
+| `data-theme="light"` | **Forced light** (wins over a dark OS)                 |
+| `data-theme="dark"`  | **Forced dark** (wins over a light OS)                 |
 
 ```html
 <html data-theme="dark">
   …
 </html>
 ```
+````
 
 `color-scheme` is set automatically for each state, so native form controls, scrollbars, and the browser chrome match the theme.
 
@@ -279,7 +282,7 @@ The library ships a full dark palette, driven entirely by CSS. There is **no the
 
 - **Set the attribute.** The library reads it; it never writes it (no DOM side-effects — see `<AppProvider>`). Persist the user's choice (e.g. `localStorage`) and apply it: `'light'`/`'dark'` → `document.documentElement.dataset.theme = choice`; `'system'` → remove the attribute.
 - **Add the no-flash snippet** (below) so a forced light/dark choice doesn't flash the default theme before your bundle boots.
-- **Theme-aware images.** Raw `<img>` assets with baked-in colors (e.g. a logo SVG) can't be recolored by CSS — swap the `src` per theme if it matters. The `<Logo>` wordmark *text* flips automatically (`--color-fg`); the image mark does not.
+- **Theme-aware images.** Raw `<img>` assets with baked-in colors (e.g. a logo SVG) can't be recolored by CSS — swap the `src` per theme if it matters. The `<Logo>` wordmark _text_ flips automatically (`--color-fg`); the image mark does not.
 
 **Out of scope (theme-independent by design):** the 30-color categorical `--color-palette-*` set (a dark variant is a planned fast-follow), avatar identity colors, and BrandIcon brand marks.
 
@@ -303,7 +306,8 @@ Inline this in your app's `<head>` **before** your bundle loads. It applies the 
 ---
 
 ## Components — TL;DR
-```
+
+````
 
 - [ ] **Step 2: Verify the docs render and the gates are unaffected**
 
@@ -315,13 +319,14 @@ Expected: PASS (or, if prettier reformats markdown tables, run `npm run format` 
 ```bash
 git add packages/design-system/AGENTS.md
 git commit -m "docs(theme): AGENTS.md Dark theme section + no-flash snippet"
-```
+````
 
 ---
 
 ## Task 3: Playground 3-state toggle (`index.html` no-flash + `AppShell` state & footer button)
 
 **Files:**
+
 - Modify: `packages/playground/index.html` (add the no-flash `<script>`)
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx` (theme state + persistence/apply effect + Rail.Footer cycle button + `Monitor`/`Sun`/`Moon` imports)
 
@@ -332,21 +337,21 @@ git commit -m "docs(theme): AGENTS.md Dark theme section + no-flash snippet"
 In `packages/playground/index.html`, add a second `<script>` immediately AFTER the existing SPA-routing `<script>` block (after its closing `</script>` on line 29, still inside `<head>`):
 
 ```html
-    <script>
-      // No-flash theme — applied before first paint so a forced light/dark
-      // choice doesn't flash the default. 'system'/unset writes no attribute →
-      // the CSS prefers-color-scheme media query decides (no flash either way).
-      (function () {
-        try {
-          var t = localStorage.getItem('eocrm-playground-theme');
-          if (t === 'light' || t === 'dark') {
-            document.documentElement.dataset.theme = t;
-          }
-        } catch (e) {
-          /* localStorage unavailable — fall back to system */
-        }
-      })();
-    </script>
+<script>
+  // No-flash theme — applied before first paint so a forced light/dark
+  // choice doesn't flash the default. 'system'/unset writes no attribute →
+  // the CSS prefers-color-scheme media query decides (no flash either way).
+  (function () {
+    try {
+      var t = localStorage.getItem('eocrm-playground-theme');
+      if (t === 'light' || t === 'dark') {
+        document.documentElement.dataset.theme = t;
+      }
+    } catch (e) {
+      /* localStorage unavailable — fall back to system */
+    }
+  })();
+</script>
 ```
 
 - [ ] **Step 2: Add `Monitor`, `Sun`, `Moon` to the lucide-react import in `AppShell.tsx`**
@@ -385,26 +390,26 @@ const THEME_META: Record<Theme, { icon: LucideIcon; label: string }> = {
 In `AppShell.tsx`, the component currently opens with the collapsed-state hooks (lines ~288-299). Add the theme hooks immediately AFTER the collapsed `useEffect` (after line 299, BEFORE the `if (FULL_BLEED_PATHS.has(pathname))` early return — hooks must run unconditionally, and the apply-effect must also run on full-bleed routes like `/mockups/login` so they respect the theme). Insert:
 
 ```tsx
-  // Persisted theme: 'system' (follow OS) | 'light' | 'dark' (forced).
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'system';
-    const stored = window.localStorage.getItem(THEME_KEY);
-    return stored === 'light' || stored === 'dark' ? stored : 'system';
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(THEME_KEY, theme);
-    const root = document.documentElement;
-    if (theme === 'system') {
-      delete root.dataset.theme;
-    } else {
-      root.dataset.theme = theme;
-    }
-  }, [theme]);
+// Persisted theme: 'system' (follow OS) | 'light' | 'dark' (forced).
+const [theme, setTheme] = useState<Theme>(() => {
+  if (typeof window === 'undefined') return 'system';
+  const stored = window.localStorage.getItem(THEME_KEY);
+  return stored === 'light' || stored === 'dark' ? stored : 'system';
+});
+useEffect(() => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(THEME_KEY, theme);
+  const root = document.documentElement;
+  if (theme === 'system') {
+    delete root.dataset.theme;
+  } else {
+    root.dataset.theme = theme;
+  }
+}, [theme]);
 
-  const cycleTheme = () =>
-    setTheme((prev) => THEME_ORDER[(THEME_ORDER.indexOf(prev) + 1) % THEME_ORDER.length]);
-  const ThemeIcon = THEME_META[theme].icon;
+const cycleTheme = () =>
+  setTheme((prev) => THEME_ORDER[(THEME_ORDER.indexOf(prev) + 1) % THEME_ORDER.length]);
+const ThemeIcon = THEME_META[theme].icon;
 ```
 
 - [ ] **Step 5: Add the cycle button to `Rail.Footer`**
@@ -412,20 +417,15 @@ In `AppShell.tsx`, the component currently opens with the collapsed-state hooks 
 In `AppShell.tsx`, the `Rail.Footer` currently holds the switch link + `Rail.CollapseToggle` (lines ~349-354). Add the theme cycle button between the switch link and the collapse toggle. `Rail.Item as="button"` auto-wraps in a Tooltip showing the label when the rail is collapsed (string children), so it works collapsed too. Result:
 
 ```tsx
-          <Rail.Footer>
-            <Rail.Item as={NavLink} to={switchLink.to} icon={<switchLink.icon size={16} />}>
-              {switchLink.label}
-            </Rail.Item>
-            <Rail.Item
-              as="button"
-              type="button"
-              icon={<ThemeIcon size={16} />}
-              onClick={cycleTheme}
-            >
-              {THEME_META[theme].label}
-            </Rail.Item>
-            <Rail.CollapseToggle />
-          </Rail.Footer>
+<Rail.Footer>
+  <Rail.Item as={NavLink} to={switchLink.to} icon={<switchLink.icon size={16} />}>
+    {switchLink.label}
+  </Rail.Item>
+  <Rail.Item as="button" type="button" icon={<ThemeIcon size={16} />} onClick={cycleTheme}>
+    {THEME_META[theme].label}
+  </Rail.Item>
+  <Rail.CollapseToggle />
+</Rail.Footer>
 ```
 
 - [ ] **Step 6: Typecheck + build the playground**
@@ -462,6 +462,7 @@ Expected: playground serves at http://localhost:8080.
 - [ ] **Step 2: Cycle the toggle and confirm behavior**
 
 In the browser:
+
 - The Rail footer shows a theme button (Monitor icon, "Theme: System"). Click it → Sun / "Theme: Light"; click → Moon / "Theme: Dark"; click → back to Monitor / "Theme: System".
 - In **Dark**, the whole app goes dark (surfaces, text, borders, sidebar, top bar). In **Light**, it stays light even if the OS is dark. In **System**, it follows the OS.
 - Reload the page on **Dark** → it loads dark with **no white flash** (the `index.html` script applied `data-theme` pre-paint).
@@ -488,17 +489,19 @@ Run: `make dev` (if not already running). Playwright targets http://localhost:80
 - [ ] **Step 2: Force dark theme via localStorage, then sweep every component demo**
 
 Using Playwright: navigate to the app, `localStorage.setItem('eocrm-playground-theme','dark')`, reload, and confirm `document.documentElement.dataset.theme === 'dark'`. Then visit **every** `/components/*` route (the full list is in `AppShell.tsx`'s `componentGroups` + `componentOverview` + `tokensReference` + `architectureReference`). For each:
+
 - Screenshot.
 - Scan for **light-baked surfaces**: any element rendering a near-white background (`rgb` all channels > ~230) or dark-on-dark / light-on-light text. Use `browser_evaluate` with `getComputedStyle` to spot offenders programmatically where a screenshot is ambiguous.
 - Check shadows/overlays read correctly (open a Modal, Drawer, Tooltip, DropdownMenu, Popover, Select listbox in dark — verify the scrim is a dark scrim and the floating surface is a dark elevated panel, Tooltip arrow matches its panel).
 
 - [ ] **Step 3: Sweep the key mockups in dark**
 
-Visit `/mockups/dashboard`, `/mockups/contacts`, `/mockups/login`, `/mockups/custom-fields`, `/mockups/members` in dark. Confirm they read as a coherent dark CRM (no light-baked panels, readable text, the login screen's `eocrm` wordmark text flips — the logo *image* mark staying blue is expected/acceptable).
+Visit `/mockups/dashboard`, `/mockups/contacts`, `/mockups/login`, `/mockups/custom-fields`, `/mockups/members` in dark. Confirm they read as a coherent dark CRM (no light-baked panels, readable text, the login screen's `eocrm` wordmark text flips — the logo _image_ mark staying blue is expected/acceptable).
 
 - [ ] **Step 4: WCAG-AA contrast spot-checks**
 
 Via `browser_evaluate`, compute contrast ratios for the core dark pairs and assert AA (≥ 4.5:1 for normal text, ≥ 3:1 for large text / UI borders):
+
 - `--color-fg` on `--color-bg`; `--color-fg-muted` on `--color-bg`.
 - `--color-accent-fg` on `--color-accent` (button primary).
 - each semantic `*-fg` on its `*` fill (danger/success/warning/info).
@@ -559,6 +562,7 @@ EOF
 PR=$(gh pr view --repo eocrm/design-system --json number -q .number)
 gh pr checks "$PR" --repo eocrm/design-system --watch
 ```
+
 Expected: `Quality / check` passes. If the branch goes BEHIND (another PR merged first), run `gh pr update-branch --repo eocrm/design-system "$PR"` and re-watch. Then merge:
 
 ```bash
@@ -574,6 +578,7 @@ MERGE_SHA=$(gh pr view "$PR" --repo eocrm/design-system --json mergeCommit -q .m
 gh run list --repo eocrm/design-system --workflow=Release --commit "$MERGE_SHA"
 # then: gh run watch <run-id> --repo eocrm/design-system
 ```
+
 Expected: the Release run's `publish` job is `success`. Capture the new version: `git fetch --tags --force && git describe --tags --abbrev=0`.
 
 - [ ] **Step 4: Realign local main**
@@ -587,6 +592,7 @@ git checkout main && git fetch origin && git reset --hard origin/main
 ## Self-Review (completed by plan author)
 
 **1. Spec coverage:**
+
 - Mechanism (mixin → `:root[data-theme='dark']` + media query + `[data-theme='light']`, `color-scheme`, `global.scss` `@use`, `tokens.scss` `color-scheme: light`) → Task 1. ✅
 - Every concrete dark token value (surfaces, text, accent, semantic, rings, overlays, shadows, Badge tones, Tooltip) → Task 1 Step 1, verbatim from the spec. ✅ Plus `--tooltip-arrow-bg` (required for arrow/panel match — a correctness addition the spec's prose implies via "elevated dark surface").
 - Library docs (attribute contract, `color-scheme` auto, what-flips vs consumer-job, no-flash snippet) → Task 2. ✅
