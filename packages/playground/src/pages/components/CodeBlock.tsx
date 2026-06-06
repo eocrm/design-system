@@ -1,5 +1,5 @@
 import './prismLangs'; // must run first — registers SCSS grammar on prism-react-renderer
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { Check, Copy } from 'lucide-react';
 import clsx from 'clsx';
 import { Highlight, themes } from 'prism-react-renderer';
@@ -12,8 +12,41 @@ export interface CodeBlockProps {
   className?: string;
 }
 
+/**
+ * Resolve whether the playground is currently rendering dark, reactively.
+ * Tracks BOTH the forced `<html data-theme>` (set by the AppShell toggle) and
+ * the OS `prefers-color-scheme` (for the System state) so the Prism theme flips
+ * the instant either changes. Mirrors the library's theme resolution order:
+ * forced attribute wins, else fall back to the media query.
+ */
+function useIsDark(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      const observer = new MutationObserver(onChange);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
+      });
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      mq.addEventListener('change', onChange);
+      return () => {
+        observer.disconnect();
+        mq.removeEventListener('change', onChange);
+      };
+    },
+    () => {
+      const forced = document.documentElement.dataset.theme;
+      if (forced === 'dark') return true;
+      if (forced === 'light') return false;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    },
+    () => false, // SSR / no-window: assume light
+  );
+}
+
 export function CodeBlock({ code, language = 'tsx', filename, className }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
+  const isDark = useIsDark();
 
   const onCopy = async () => {
     try {
@@ -36,7 +69,7 @@ export function CodeBlock({ code, language = 'tsx', filename, className }: CodeB
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <Highlight code={trimmed} language={language} theme={themes.github}>
+      <Highlight code={trimmed} language={language} theme={isDark ? themes.vsDark : themes.github}>
         {({ tokens, getLineProps, getTokenProps }) => (
           <pre className={styles.pre}>
             <code className={styles.code}>

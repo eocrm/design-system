@@ -27,6 +27,21 @@
         }
       })(window.location);
     </script>
+    <script>
+      // No-flash theme — applied before first paint so a forced light/dark
+      // choice doesn't flash the default. 'system'/unset writes no attribute →
+      // the CSS prefers-color-scheme media query decides (no flash either way).
+      (function () {
+        try {
+          var t = localStorage.getItem('eocrm-playground-theme');
+          if (t === 'light' || t === 'dark') {
+            document.documentElement.dataset.theme = t;
+          }
+        } catch (e) {
+          /* localStorage unavailable — fall back to system */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

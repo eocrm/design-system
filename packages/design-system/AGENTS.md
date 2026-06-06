@@ -95,6 +95,53 @@ import { I18nProvider } from '@eocrm/design-system';
 
 ---
 
+## Dark theme
+
+The library ships a full dark palette, driven entirely by CSS. There is **no theme component, no React context, no JS API** — you control it with one attribute on `<html>`:
+
+| `<html>` attribute   | Result                                                 |
+| -------------------- | ------------------------------------------------------ |
+| _(none)_             | **System** — follows the OS via `prefers-color-scheme` |
+| `data-theme="light"` | **Forced light** (wins over a dark OS)                 |
+| `data-theme="dark"`  | **Forced dark** (wins over a light OS)                 |
+
+```html
+<html data-theme="dark">
+  …
+</html>
+```
+
+`color-scheme` is set automatically for each state, so native form controls, scrollbars, and the browser chrome match the theme.
+
+**What flips for free:** every component whose colors resolve through the design tokens — which is all of them. Surfaces, text, borders, the accent and semantic palettes, shadows, overlays, focus rings, Badge tones, and Tooltip all redefine under dark with zero markup changes.
+
+**Your responsibility:**
+
+- **Set the attribute.** The library reads it; it never writes it (no DOM side-effects — see `<AppProvider>`). Persist the user's choice (e.g. `localStorage`) and apply it: `'light'`/`'dark'` → `document.documentElement.dataset.theme = choice`; `'system'` → remove the attribute.
+- **Add the no-flash snippet** (below) so a forced light/dark choice doesn't flash the default theme before your bundle boots.
+- **Theme-aware images.** Raw `<img>` assets with baked-in colors (e.g. a logo SVG) can't be recolored by CSS — swap the `src` per theme if it matters. The `<Logo>` wordmark _text_ flips automatically (`--color-fg`); the image mark does not.
+
+**Out of scope (theme-independent by design):** the 30-color categorical `--color-palette-*` set (a dark variant is a planned fast-follow), avatar identity colors, and BrandIcon brand marks.
+
+### No-flash snippet
+
+Inline this in your app's `<head>` **before** your bundle loads. It applies the persisted choice before first paint. `'system'`/unset writes nothing → the CSS media query handles it with no flash either way.
+
+```html
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('your-theme-key');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    } catch (e) {
+      /* localStorage blocked (private mode) — fall back to System */
+    }
+  })();
+</script>
+```
+
+---
+
 ## Components — TL;DR
 
 Each component is fully JSDoc'd. Hover any usage in your editor for inline docs including `@example` blocks, `@remarks` "When NOT to use" and "Anti-patterns" sections. The summaries below are for orientation only — the **JSDoc is the contract**.
