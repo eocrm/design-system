@@ -86,7 +86,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Avatar, Logo, Rail, TopBar, useRail } from '@eocrm/design-system';
+import { Avatar, Logo, Rail, TopBar, Tooltip, useRail } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
 import eocrmLogo from '../../assets/eocrm-logo.svg';
 
@@ -389,14 +389,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Rail.Item as={NavLink} to={switchLink.to} icon={<switchLink.icon size={16} />}>
               {switchLink.label}
             </Rail.Item>
-            <Rail.Item
-              as="button"
-              type="button"
-              icon={<ThemeIcon size={16} />}
-              onClick={cycleTheme}
-            >
-              {THEME_META[theme].label}
-            </Rail.Item>
             <Rail.CollapseToggle />
           </Rail.Footer>
         </Rail>
@@ -414,6 +406,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <TopBar.IconButton aria-label="Notifications" indicator>
               <Bell size={16} />
             </TopBar.IconButton>
+            <Tooltip content={THEME_META[theme].label} side="bottom">
+              <TopBar.IconButton aria-label={THEME_META[theme].label} onClick={cycleTheme}>
+                <ThemeIcon size={16} />
+              </TopBar.IconButton>
+            </Tooltip>
             <Avatar name="Alex Rivera" size="sm" />
           </TopBar.End>
         </TopBar>
