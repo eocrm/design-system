@@ -42,8 +42,19 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * Like `<Page>` / `<Screen>` / `<Rail>`, AppLayout is the documented exception to
  * the "components don't own layout" rule — owning the full-height shell layout
  * (viewport fill + full-height sidebar + top-bar-over-content) is its entire job.
- * It carries no visual styling; the `topBar` / `sidebar` slots bring their own
- * surfaces.
+ * It carries no visual surface; the `topBar` / `sidebar` slots bring their own.
+ *
+ * @remarks Content padding
+ * The main region ships the canonical shell content gutter by default
+ * (`--app-layout-content-padding`, default `var(--space-6)`) — so a DS-only
+ * consumer gets padded routed content with **no prop and no raw CSS** (routed
+ * pages no longer render flush against the rail / top bar). Need a full-bleed
+ * main region? Override the token in your scope —
+ * `--app-layout-content-padding: 0` — no prop required.
+ *
+ * Migration: a consumer that previously added its own gutter (a
+ * `padding: var(--space-6)` wrapper / shim around the routed content) should
+ * remove that shim now, or the gutters double up.
  *
  * @remarks When NOT to use
  * - ❌ For in-page content layout — use `<Stack>` / `<Cluster>` / `<Grid>`.
