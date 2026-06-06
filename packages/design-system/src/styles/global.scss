@@ -2,5 +2,6 @@
 // Component-specific styles do NOT belong here — they go in *.module.scss next to the component.
 
 @use 'tokens';
+@use 'dark';
 @use 'reset';
 @use 'typography';

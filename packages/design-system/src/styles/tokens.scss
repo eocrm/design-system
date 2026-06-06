@@ -3,6 +3,8 @@
 @use '../components/Badge/Badge.tokens';
 
 :root {
+  color-scheme: light;
+
   // Neutral surfaces & text (Atlassian-inspired N palette)
   --color-bg: #ffffff;
   --color-bg-subtle: #fafbfc;

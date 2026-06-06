@@ -1,0 +1,112 @@
+// dark.scss — Dark theme token overrides.
+// The entire dark palette lives in ONE mixin, emitted into two scopes so
+// forced-dark (:root[data-theme='dark']) and system-dark
+// (prefers-color-scheme: dark) stay in lockstep. Component *.tokens.scss
+// files are var()-aliases over these primitives, so redefining the primitives
+// cascades to nearly every component for free. The only non-primitive
+// overrides are the literal-hex exceptions — Badge filled tones and the
+// inverted Tooltip — kept here so the whole dark palette is one reviewable
+// surface. Values are contrast-targeted for WCAG AA and tunable live via the
+// playground toggle.
+
+@mixin dark-tokens {
+  // Neutral surfaces & text
+  --color-bg: #1d2125;
+  --color-bg-subtle: #22272b;
+  --color-bg-muted: #282e33;
+  --color-bg-sunken: #161a1d;
+  --color-bg-danger-subtle: #42201d;
+  --color-border: #38414a;
+  --color-border-strong: #50585f;
+  --color-fg: #dee4ea;
+  --color-fg-muted: #9aa7b5;
+  --color-fg-subtle: #7e8b9a;
+  --color-fg-disabled: #5a6472;
+
+  // Accent — lightened for dark; the bright fill takes dark text
+  --color-accent: #579dff;
+  --color-accent-hover: #85b8ff;
+  --color-accent-pressed: #cce0ff;
+  --color-accent-fg: #1d2125;
+  --color-accent-subtle-bg: #1c3a5e;
+  --color-accent-bg-subtle: #1c3a5e;
+
+  // Semantic — brightened so they read as text on dark; fills take dark text
+  --color-danger: #f87168;
+  --color-danger-hover: #ff9c8f;
+  --color-danger-fg: #1d2125;
+  --color-danger-bg-subtle: #42201d;
+  --color-success: #4bce97;
+  --color-success-hover: #7ee2b8;
+  --color-success-fg: #1d2125;
+  --color-success-bg-subtle: #1c3d31;
+  --color-warning: #f5cd47;
+  --color-warning-fg: #1d2125;
+  --color-warning-bg-subtle: #3d3216;
+  --color-info: #579dff;
+  --color-info-bg-subtle: #16324f;
+
+  // Focus rings — brighter + stronger alpha for dark
+  --ring-accent: rgb(87 157 255 / 65%);
+  --ring-danger: rgb(248 113 104 / 55%);
+  --ring-success: rgb(75 206 151 / 55%);
+
+  // Overlays — dark scrim; the blur frost flips from white to dark
+  --color-bg-overlay: rgb(0 0 0 / 55%);
+  --color-bg-overlay-blur: rgb(0 0 0 / 45%);
+
+  // Shadows — stronger pure-black so elevation reads on dark
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 40%), 0 0 1px rgb(0 0 0 / 56%);
+  --shadow-lg: 0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%);
+  --shadow-table-pinned-edge: 4px 0 8px -4px rgb(0 0 0 / 50%);
+  --shadow-table-pinned-edge-right: -4px 0 8px -4px rgb(0 0 0 / 50%);
+
+  // Badge filled tones — literal-hex exception (Badge.tokens.scss), dark tint
+  // bg + light fg. The deprecated --color-badge-*-bg aliases reference these,
+  // so they flip automatically.
+  --badge-bg-neutral: #2c333a;
+  --badge-fg-neutral: #c7d1db;
+  --badge-bg-info: #16324f;
+  --badge-fg-info: #9dc3ff;
+  --badge-bg-success: #1c3d31;
+  --badge-fg-success: #7ee2b8;
+  --badge-bg-warning: #3d3216;
+  --badge-fg-warning: #f5cd47;
+  --badge-bg-danger: #42201d;
+  --badge-fg-danger: #ff9c8f;
+  --badge-bg-purple: #2b2c4d;
+  --badge-fg-purple: #b8acf6;
+
+  // Tooltip — inverted-by-design. In light it's var(--color-fg)/var(--color-bg)
+  // which would auto-flip to a glaring light chip in dark, so give it a
+  // dedicated elevated dark surface. --tooltip-arrow-bg ALSO defaults to
+  // var(--color-fg) — override it too or the arrow becomes a light triangle on
+  // the dark panel.
+  --tooltip-bg: #39424b;
+  --tooltip-fg: #f0f3f6;
+  --tooltip-arrow-bg: #39424b;
+}
+
+// Forced dark — :root[data-theme='dark'] (0,1,1) beats bare :root (0,1,0) and
+// beats the system media query below.
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  @include dark-tokens;
+}
+
+// System default — applies when the OS is dark AND the user hasn't forced
+// light. :root:not([data-theme='light']) (0,2,0) beats bare :root (0,1,0).
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    @include dark-tokens;
+  }
+}
+
+// Forced light wins over the media query (0,1,1 > 0,1,0).
+:root[data-theme='light'] {
+  color-scheme: light;
+}
