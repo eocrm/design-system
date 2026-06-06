@@ -1637,6 +1637,7 @@ import { Home, Users, Settings } from 'lucide-react';
 ```
 
 - **Compound API** — `Rail.Header` / `Rail.Section` / `Rail.Item` / `Rail.Group` / `Rail.Spacer` / `Rail.Footer` / `Rail.CollapseToggle`.
+- **`Rail.Header` brand area (default)** — a padded brand block with a header→nav divider out of the box: `--rail-header-padding` (default `var(--space-4)`) + `--rail-header-divider-width` (default `var(--border-width)`, color `--rail-border-color`). Matches the canonical rail brand with **no prop and no raw CSS**. For a bare header, override either token to `0`. _Migration:_ if you previously shimmed your own brand padding/divider on the header, remove it or it doubles.
 - **Layout-owning primitive (Hard rule 4 exception)** — like `<Modal>`, `<Drawer>`, `<Page>`, the rail owns its own width and height because that IS its job. Place the rail inside whatever container shape your page needs (sticky aside, fixed sidebar, in-flow column).
 - **Collapse state**: controlled (`collapsed` + `onCollapsedChange`) or uncontrolled (`defaultCollapsed`). The `<Rail.CollapseToggle>` button reads context and flips the state without prop drilling.
 - **`Rail.Item` is polymorphic** — `as={NavLink}` (or any router primitive) sets `aria-current="page"` on the rendered anchor; Rail's CSS applies the active accent via `[aria-current="page"]` and `:has([aria-current="page"])` selectors. No router dependency in the library.

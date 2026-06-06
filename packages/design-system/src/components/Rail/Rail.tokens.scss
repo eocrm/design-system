@@ -14,6 +14,13 @@
   --rail-border-color: var(--color-border);
   --rail-border-width: var(--border-width);
 
+  // Header (brand area) — padded with a header→nav divider by default, so a
+  // DS-only consumer matches the mockup rail brand (a generous brand block over
+  // a divider) with no raw CSS. Divider color reuses --rail-border-color.
+  // Override either to `0` for a bare header slot.
+  --rail-header-padding: var(--space-4);
+  --rail-header-divider-width: var(--border-width);
+
   // Section grouping
   --rail-section-gap: var(--space-3);
   --rail-section-title-fg: var(--color-fg-muted);

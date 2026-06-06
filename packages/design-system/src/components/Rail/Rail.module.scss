@@ -45,6 +45,12 @@
 // ─── Header / Footer / Spacer ───────────────────────────────────────────
 .header {
   flex-shrink: 0;
+
+  // Padded brand area + a header→nav divider by default (token-driven, override
+  // to 0 for a bare slot) so a DS-only consumer matches the mockup rail brand
+  // without raw CSS. Mirrors .flyoutHeader's border-bottom token pattern.
+  padding: var(--rail-header-padding);
+  border-bottom: var(--rail-header-divider-width) solid var(--rail-border-color);
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse-mode clip per spec
   overflow: hidden;
 }
