@@ -88,7 +88,7 @@
   --tooltip-arrow-bg: #39424b;
 }
 
-// Forced dark — :root[data-theme='dark'] (0,1,1) beats bare :root (0,1,0) and
+// Forced dark — :root[data-theme='dark'] (0,2,0) beats bare :root (0,1,0) and
 // beats the system media query below.
 :root[data-theme='dark'] {
   color-scheme: dark;
@@ -106,7 +106,7 @@
   }
 }
 
-// Forced light wins over the media query (0,1,1 > 0,1,0).
+// Forced light wins over the media query (0,2,0 > 0,1,0).
 :root[data-theme='light'] {
   color-scheme: light;
 }
