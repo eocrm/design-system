@@ -1,0 +1,9 @@
+// AppLayout.tokens.scss — Component-scoped tokens for <AppLayout>.
+:root {
+  // Padding of the main content region — the canonical shell content gutter, so
+  // a DS-only consumer gets the shell padding with no prop and no raw CSS.
+  // Defaults to --space-6 (matches the playground AppShell's .content gutter).
+  // Override to `0` (or another token) in your scope for a full-bleed main
+  // region — no prop needed.
+  --app-layout-content-padding: var(--space-6);
+}
