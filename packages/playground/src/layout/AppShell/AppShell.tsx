@@ -35,6 +35,9 @@ import {
   MessageSquareText,
   AppWindow,
   Minus,
+  Monitor,
+  Sun,
+  Moon,
   MoreHorizontal,
   Command,
   KeyRound,
@@ -88,6 +91,21 @@ import styles from './AppShell.module.scss';
 import eocrmLogo from '../../assets/eocrm-logo.svg';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
+
+const THEME_KEY = 'eocrm-playground-theme';
+
+type Theme = 'system' | 'light' | 'dark';
+
+// Cycle order for the footer toggle: System → Light → Dark → System.
+const THEME_ORDER: Theme[] = ['system', 'light', 'dark'];
+
+// Icon + label per state. Icon doubles as the collapsed-rail tooltip trigger;
+// the label is the accessible name (expanded) and the tooltip text (collapsed).
+const THEME_META: Record<Theme, { icon: LucideIcon; label: string }> = {
+  system: { icon: Monitor, label: 'Theme: System' },
+  light: { icon: Sun, label: 'Theme: Light' },
+  dark: { icon: Moon, label: 'Theme: Dark' },
+};
 
 // Routes that render OUTSIDE the shell chrome (no Rail / TopBar) so they read
 // like real standalone screens — login + the standalone 404 / error variants.
@@ -298,6 +316,27 @@ export function AppShell({ children }: { children: ReactNode }) {
     window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
   }, [collapsed]);
 
+  // Persisted theme: 'system' (follow OS) | 'light' | 'dark' (forced).
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system';
+    const stored = window.localStorage.getItem(THEME_KEY);
+    return stored === 'light' || stored === 'dark' ? stored : 'system';
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(THEME_KEY, theme);
+    const root = document.documentElement;
+    if (theme === 'system') {
+      delete root.dataset.theme;
+    } else {
+      root.dataset.theme = theme;
+    }
+  }, [theme]);
+
+  const cycleTheme = () =>
+    setTheme((prev) => THEME_ORDER[(THEME_ORDER.indexOf(prev) + 1) % THEME_ORDER.length]);
+  const ThemeIcon = THEME_META[theme].icon;
+
   // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so they
   // read like real standalone screens, not pages inside the CRM.
   if (FULL_BLEED_PATHS.has(pathname)) {
@@ -349,6 +388,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Rail.Footer>
             <Rail.Item as={NavLink} to={switchLink.to} icon={<switchLink.icon size={16} />}>
               {switchLink.label}
+            </Rail.Item>
+            <Rail.Item
+              as="button"
+              type="button"
+              icon={<ThemeIcon size={16} />}
+              onClick={cycleTheme}
+            >
+              {THEME_META[theme].label}
             </Rail.Item>
             <Rail.CollapseToggle />
           </Rail.Footer>
