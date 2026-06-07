@@ -27,18 +27,19 @@
 
 ## File Structure
 
-| File | Action | Responsibility |
-| --- | --- | --- |
-| `packages/playground/src/layout/AppShell/navItems.ts` | **Create** | The rail's nav data (moved out of AppShell) + the derived flat `SEARCH_ITEMS`. Pure data, no JSX. |
-| `packages/playground/src/layout/AppShell/CommandSearch.tsx` | **Create** | The combobox: `TopBar.Search`-driven controlled input + anchored results listbox + keyboard nav + `useNavigate`; exposes a `focus()` handle via `ref`. |
-| `packages/playground/src/layout/AppShell/CommandSearch.module.scss` | **Create** | The relative wrapper + absolute results panel + option row styles (tokens for color, raw px for sizing). |
-| `packages/playground/src/layout/AppShell/AppShell.tsx` | Modify | Import nav data from `navItems.ts` (remove inline arrays + their now-unused lucide imports); render `<CommandSearch ref>` in `TopBar.Start`; add the global ⌘K/Ctrl+K keydown effect that focuses it. |
+| File                                                                | Action     | Responsibility                                                                                                                                                                                        |
+| ------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/playground/src/layout/AppShell/navItems.ts`               | **Create** | The rail's nav data (moved out of AppShell) + the derived flat `SEARCH_ITEMS`. Pure data, no JSX.                                                                                                     |
+| `packages/playground/src/layout/AppShell/CommandSearch.tsx`         | **Create** | The combobox: `TopBar.Search`-driven controlled input + anchored results listbox + keyboard nav + `useNavigate`; exposes a `focus()` handle via `ref`.                                                |
+| `packages/playground/src/layout/AppShell/CommandSearch.module.scss` | **Create** | The relative wrapper + absolute results panel + option row styles (tokens for color, raw px for sizing).                                                                                              |
+| `packages/playground/src/layout/AppShell/AppShell.tsx`              | Modify     | Import nav data from `navItems.ts` (remove inline arrays + their now-unused lucide imports); render `<CommandSearch ref>` in `TopBar.Start`; add the global ⌘K/Ctrl+K keydown effect that focuses it. |
 
 ---
 
 ## Task 1: Extract `navItems.ts` (behavior-neutral refactor)
 
 **Files:**
+
 - Create: `packages/playground/src/layout/AppShell/navItems.ts`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
 
@@ -97,6 +98,7 @@ export const SEARCH_ITEMS: SearchItem[] = [
 - [ ] **Step 2: Rewire `AppShell.tsx` to import the data**
 
 In `AppShell.tsx`:
+
 1. Delete the `NavItem` interface and the five moved consts (`mockupItems`, `componentOverview`, `tokensReference`, `architectureReference`, `componentGroups`).
 2. Add an import: `import { type NavItem, mockupItems, componentOverview, tokensReference, architectureReference, componentGroups } from './navItems';`
 3. Remove every lucide icon from AppShell's `lucide-react` import that is now referenced **only** inside `navItems.ts`. AppShell still imports the icons it uses directly: `Layers`, `Component` (switchLink), `Plus`, `Bell` (TopBar), `Monitor`, `Sun`, `Moon` (theme), and the `LucideIcon` type (used by `THEME_META`). `renderRailItem` and the `NavItem`-typed helpers stay in AppShell (they consume the imported `NavItem`).
@@ -127,6 +129,7 @@ git commit -m "refactor(playground): extract AppShell nav data to navItems.ts + 
 ## Task 2: `CommandSearch` component
 
 **Files:**
+
 - Create: `packages/playground/src/layout/AppShell/CommandSearch.tsx`
 - Create: `packages/playground/src/layout/AppShell/CommandSearch.module.scss`
 
@@ -372,6 +375,7 @@ git commit -m "feat(playground): CommandSearch combobox (anchored typeahead over
 ## Task 3: Wire `CommandSearch` + ⌘K into `AppShell`
 
 **Files:**
+
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx`
 
 - [ ] **Step 1: Import CommandSearch + its handle type**
@@ -387,18 +391,18 @@ import { CommandSearch, type CommandSearchHandle } from './CommandSearch';
 Inside `AppShell`, after the theme `useEffect`/`cycleTheme`/`ThemeIcon` block and BEFORE the `if (FULL_BLEED_PATHS.has(pathname))` early return (hooks must run unconditionally), add:
 
 ```tsx
-  // ⌘K / Ctrl+K focuses the component search (the TopBar hotkey hint, made real).
-  const searchRef = useRef<CommandSearchHandle>(null);
-  useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+// ⌘K / Ctrl+K focuses the component search (the TopBar hotkey hint, made real).
+const searchRef = useRef<CommandSearchHandle>(null);
+useEffect(() => {
+  const onKey = (e: globalThis.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      searchRef.current?.focus();
+    }
+  };
+  window.addEventListener('keydown', onKey);
+  return () => window.removeEventListener('keydown', onKey);
+}, []);
 ```
 
 (`useRef` and `useEffect` are already imported in AppShell. The `globalThis.KeyboardEvent` qualifier avoids colliding with the React `KeyboardEvent` type if it's ever imported.)
@@ -408,17 +412,17 @@ Inside `AppShell`, after the theme `useEffect`/`cycleTheme`/`ThemeIcon` block an
 Replace the existing TopBar.Start content:
 
 ```tsx
-          <TopBar.Start>
-            <TopBar.Search placeholder="Search contacts, deals…" hotkey={['⌘', 'K']} />
-          </TopBar.Start>
+<TopBar.Start>
+  <TopBar.Search placeholder="Search contacts, deals…" hotkey={['⌘', 'K']} />
+</TopBar.Start>
 ```
 
 with:
 
 ```tsx
-          <TopBar.Start>
-            <CommandSearch ref={searchRef} />
-          </TopBar.Start>
+<TopBar.Start>
+  <CommandSearch ref={searchRef} />
+</TopBar.Start>
 ```
 
 - [ ] **Step 4: Typecheck + lint + format**
@@ -447,6 +451,7 @@ From repo root: `make build`, `make lint`, `npm run format:check` — all PASS. 
 - [ ] **Step 2: Playwright functional sweep**
 
 Dev server at http://localhost:8080 (`make dev` if needed). Drive:
+
 - Navigate to `/components`. Press **Meta+K** → assert `document.activeElement` is the search input (`input[type="search"]`).
 - Type `tooltip` → assert a panel (`[role="listbox"]`) appears with a `[role="option"]` whose text contains "Tooltip"; assert the panel's top ≈ the input's bottom (anchored under the box: `panel.getBoundingClientRect().top` within ~8px of `input.getBoundingClientRect().bottom`).
 - Press **ArrowDown** then **Enter** → assert URL is `http://localhost:8080/components/tooltip` and the panel is gone, input value cleared.
@@ -504,6 +509,7 @@ RUN_ID=$(gh run list --repo eocrm/design-system --workflow=Release --commit "$ME
 gh run watch "$RUN_ID" --repo eocrm/design-system --exit-status
 gh run view "$RUN_ID" --repo eocrm/design-system --json jobs --jq '.jobs[]|"\(.name): \(.conclusion)"'
 ```
+
 Expected: `publish: skipped` (no `packages/design-system` change), `deploy-playground / deploy: success`. No new `v*` tag.
 
 - [ ] **Step 4: Realign local main**
@@ -517,6 +523,7 @@ git checkout main && git fetch origin && git reset --hard origin/main
 ## Self-Review (completed by plan author)
 
 **1. Spec coverage:**
+
 - Anchored typeahead reusing TopBar.Search → Task 2 (`CommandSearch` drives `TopBar.Search`, panel under it). ✅
 - ⌘K focuses + selects → Task 2 `focus()` handle + Task 3 global listener. ✅
 - Global jump-to contents (components + references + mockups) → Task 1 `SEARCH_ITEMS`. ✅
