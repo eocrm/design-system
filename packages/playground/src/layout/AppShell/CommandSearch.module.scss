@@ -1,0 +1,62 @@
+.wrap {
+  position: relative;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  z-index: var(--z-popover);
+  min-width: 340px;
+  max-width: 460px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.optionActive {
+  background: var(--color-bg-muted);
+}
+
+.optionIcon {
+  flex: none;
+  color: var(--color-fg-muted);
+}
+
+.optionLabel {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.optionSection {
+  flex: none;
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-xs);
+}
+
+.empty {
+  padding: var(--space-2);
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
+}
