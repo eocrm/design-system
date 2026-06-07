@@ -9,7 +9,8 @@ import {
   architectureReference,
   componentGroups,
 } from './navItems';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { CommandSearch, type CommandSearchHandle } from './CommandSearch';
 import { Avatar, Logo, Rail, TopBar, Tooltip, useRail } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
 import eocrmLogo from '../../assets/eocrm-logo.svg';
@@ -98,6 +99,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     setTheme((prev) => THEME_ORDER[(THEME_ORDER.indexOf(prev) + 1) % THEME_ORDER.length]);
   const ThemeIcon = THEME_META[theme].icon;
 
+  // ⌘K / Ctrl+K focuses the component search (the TopBar hotkey hint, made real).
+  const searchRef = useRef<CommandSearchHandle>(null);
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so they
   // read like real standalone screens, not pages inside the CRM.
   if (FULL_BLEED_PATHS.has(pathname)) {
@@ -158,7 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className={styles.topbarWrap}>
         <TopBar>
           <TopBar.Start>
-            <TopBar.Search placeholder="Search contacts, deals…" hotkey={['⌘', 'K']} />
+            <CommandSearch ref={searchRef} />
           </TopBar.Start>
           <TopBar.End>
             <TopBar.IconButton aria-label="Create new">
