@@ -25,16 +25,17 @@
 
 ## File Structure
 
-| File | Action | Responsibility |
-| --- | --- | --- |
+| File                                          | Action | Responsibility                                                                                                                                                                                                               |
+| --------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/design-system/src/styles/dark.scss` | Modify | Add the 60-decl `--color-palette-*` block inside `@mixin dark-tokens` (after the Tooltip block, before the mixin's closing `}`); update the file header comment to include the palette in the "literal-hex exceptions" list. |
-| `packages/design-system/AGENTS.md` | Modify | Dark theme section "Out of scope" line: drop the `--color-palette-*` exclusion (now covered). |
+| `packages/design-system/AGENTS.md`            | Modify | Dark theme section "Out of scope" line: drop the `--color-palette-*` exclusion (now covered).                                                                                                                                |
 
 ---
 
 ## Task 1: Dark palette tokens (`dark.scss`) + docs
 
 **Files:**
+
 - Modify: `packages/design-system/src/styles/dark.scss`
 - Modify: `packages/design-system/AGENTS.md`
 
@@ -206,25 +207,71 @@ Via Playwright: navigate to `http://localhost:8080/components/palette`, set `loc
 
 ```js
 () => {
-  const NAMES = ['red','coral','orange','amber','gold','yellow','olive','lime','green','emerald','mint','teal','cyan','sky','blue','navy','indigo','violet','lavender','purple','plum','fuchsia','magenta','pink','rose','brown','taupe','slate','stone','charcoal'];
+  const NAMES = [
+    'red',
+    'coral',
+    'orange',
+    'amber',
+    'gold',
+    'yellow',
+    'olive',
+    'lime',
+    'green',
+    'emerald',
+    'mint',
+    'teal',
+    'cyan',
+    'sky',
+    'blue',
+    'navy',
+    'indigo',
+    'violet',
+    'lavender',
+    'purple',
+    'plum',
+    'fuchsia',
+    'magenta',
+    'pink',
+    'rose',
+    'brown',
+    'taupe',
+    'slate',
+    'stone',
+    'charcoal',
+  ];
   const cs = getComputedStyle(document.documentElement);
-  const rgb = (c) => { const m = (c||'').match(/[\d.]+/g).map(Number); return [m[0],m[1],m[2]]; };
-  const lin = (v) => { v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4); };
-  const L = ([r,g,b]) => 0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b);
+  const rgb = (c) => {
+    const m = (c || '').match(/[\d.]+/g).map(Number);
+    return [m[0], m[1], m[2]];
+  };
+  const lin = (v) => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  const L = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
   // resolve a hex token to actual rgb via a probe element
-  const probe = document.createElement('span'); document.body.appendChild(probe);
-  const resolve = (varName) => { probe.style.color = `var(${varName})`; return getComputedStyle(probe).color; };
+  const probe = document.createElement('span');
+  document.body.appendChild(probe);
+  const resolve = (varName) => {
+    probe.style.color = `var(${varName})`;
+    return getComputedStyle(probe).color;
+  };
   const out = NAMES.map((n) => {
     const bg = rgb(resolve(`--color-palette-${n}-bg`));
     const fg = rgb(resolve(`--color-palette-${n}-fg`));
-    const hi = Math.max(L(fg),L(bg)), lo = Math.min(L(fg),L(bg));
-    const ratio = (hi+0.05)/(lo+0.05);
-    const nearWhiteBg = bg.every((c)=>c>=200);
-    return { n, bg, fg, ratio: Math.round(ratio*100)/100, passAA: ratio>=4.5, nearWhiteBg };
+    const hi = Math.max(L(fg), L(bg)),
+      lo = Math.min(L(fg), L(bg));
+    const ratio = (hi + 0.05) / (lo + 0.05);
+    const nearWhiteBg = bg.every((c) => c >= 200);
+    return { n, bg, fg, ratio: Math.round(ratio * 100) / 100, passAA: ratio >= 4.5, nearWhiteBg };
   });
   probe.remove();
-  return { theme: document.documentElement.dataset.theme, fails: out.filter(o=>!o.passAA||o.nearWhiteBg), all: out };
-}
+  return {
+    theme: document.documentElement.dataset.theme,
+    fails: out.filter((o) => !o.passAA || o.nearWhiteBg),
+    all: out,
+  };
+};
 ```
 
 Expected: `theme === 'dark'`, `fails` is empty (every pair AA ≥ 4.5 and no near-white bg). Take a screenshot of the palette grid for the visual record.
@@ -296,6 +343,7 @@ gh run watch "$RUN_ID" --repo eocrm/design-system --exit-status
 gh run view "$RUN_ID" --repo eocrm/design-system --json jobs --jq '.jobs[]|"\(.name): \(.conclusion)"'
 git fetch --tags --force origin -q && git describe --tags --abbrev=0   # new version
 ```
+
 Expected: `publish: success`; new `v*` tag (one patch above `PREV`).
 
 - [ ] **Step 4: Realign local main**
@@ -309,6 +357,7 @@ git checkout main && git fetch origin && git reset --hard origin/main
 ## Self-Review (completed by plan author)
 
 **1. Spec coverage:**
+
 - 60 dark `--color-palette-*` overrides (exact hex) → Task 1 Step 1 (verbatim, all 30 pairs from the spec table). ✅
 - Recipe / saturation-preserved values → encoded in the committed hex; comment references the spec. ✅
 - One block in the existing `dark-tokens` mixin (both scopes, components cascade) → Task 1 Step 1. ✅
