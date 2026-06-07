@@ -93,22 +93,19 @@ Every prop and variant is JSDoc'd at the source. For a quick reference + canonic
 
 ---
 
-## Publishing a new version
+## Releasing a new version
 
-The library publishes to GitHub Packages via a manual GitHub Actions workflow (`.github/workflows/publish.yml` at the repo root).
+Releases are **automatic**. Merging to `main` triggers the `Release` workflow (`.github/workflows/release.yml`), which:
 
-1. Push your changes.
-2. **Actions → Publish library → Run workflow**.
-3. Choose a bump (`patch` default) or set an explicit version.
+1. Runs the quality gate (typecheck, test, lint, build, tarball-contents check).
+2. If the library actually changed, computes the next version from the latest `v*` git tag (patch bump by default) and refuses if that tag already exists.
+3. Publishes `@eocrm/design-system` to GitHub Packages with `NODE_AUTH_TOKEN = GITHUB_TOKEN`.
+4. Creates and pushes a `v<version>` git tag.
+5. Re-deploys the playground (see below).
 
-The workflow:
+There is no manual "Run workflow" button — merging to `main` is the only way to release. Playground-only changes skip the publish step (no version bump for a demo tweak) but still redeploy the playground.
 
-- Reads the latest `v*` git tag and computes the next version (or uses your override).
-- Refuses if the tag already exists.
-- Runs `typecheck`, `test`, and a playground smoke build.
-- Publishes to GitHub Packages with `NODE_AUTH_TOKEN = GITHUB_TOKEN`.
-- Creates and pushes a `v<version>` git tag.
-- Chains the playground deploy on success.
+**Forcing a minor/major bump**: edit `BUMP` (`patch` → `minor` / `major`) in `release.yml` on a branch and merge. There is no other override by design.
 
 **One-time repo setup**: Settings → Actions → General → Workflow permissions → "Read and write permissions".
 
@@ -116,18 +113,13 @@ The package name `@eocrm/design-system` must match an organization (or user) you
 
 ---
 
-## Deploying the playground to GitHub Pages
+## Playground deployment
 
-The playground (live component gallery) deploys to GitHub Pages via a separate manual workflow. The site lives at `https://<owner>.github.io/<repo>/`.
+The playground (live component gallery) deploys to GitHub Pages automatically as the final step of the `Release` workflow, so the live site at <https://eocrm.github.io/design-system/> always reflects `main`. It redeploys whenever the quality gate passes — even on playground-only changes, and even if a publish hiccups.
 
-1. **Actions → Deploy playground → Run workflow**.
-2. Builds with `VITE_BASE_PATH=/<repo>/` and deploys via `actions/deploy-pages`.
+**This repo and its Pages site are public.** The playground bakes the library's source into its bundle via `?raw` imports, so the source is world-readable — that's intentional for a source-distributed library.
 
 **One-time setup**: Settings → Pages → Source = "GitHub Actions" (not "Deploy from a branch").
-
-Private Pages requires **GitHub Pro / Team / Enterprise**.
-
-The playground bakes the library's source via `?raw` imports into its bundle. With private Pages this is gated behind GitHub auth. **Never enable public Pages on this repo** unless you're OK with the library source being world-readable.
 
 ---
 

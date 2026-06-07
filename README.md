@@ -90,10 +90,10 @@ eocrm/design-system/
 
 ## CI/CD
 
-| Trigger            | What runs                                                                                                                                                                     |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pull request**   | `quality.yml` — typecheck + test + lint + build + tarball-contents check                                                                                                      |
-| **Push to `main`** | `release.yml` → quality, then auto-bumps patch version, publishes `@eocrm/design-system` to GitHub Packages, creates `vX.Y.Z` git tag, deploys the playground to GitHub Pages |
+| Trigger            | What runs                                                                                                                                                                                                                                                               |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pull request**   | `quality.yml` — typecheck + test + lint + build + tarball-contents check                                                                                                                                                                                                |
+| **Push to `main`** | `release.yml` → quality, then **if the library changed**: auto-bumps patch version, publishes `@eocrm/design-system` to GitHub Packages, creates a `vX.Y.Z` git tag. The playground redeploys to GitHub Pages whenever quality passes — even on playground-only changes |
 
 Every release is gated by quality. There are no manual workflow buttons — the only way to release is to merge to `main`. To force a minor/major bump, edit `BUMP` in `release.yml` on a branch and merge.
 
