@@ -136,7 +136,9 @@ The library ships a full dark palette, driven entirely by CSS. There is **no the
 - **Add the no-flash snippet** (below) so a forced light/dark choice doesn't flash the default theme before your bundle boots.
 - **Theme-aware images.** Raw `<img>` assets with baked-in colors (e.g. a logo SVG) can't be recolored by CSS — swap the `src` per theme if it matters. The `<Logo>` wordmark _text_ flips automatically (`--color-fg`); the image mark does not.
 
-**Out of scope (theme-independent by design):** the 30-color categorical `--color-palette-*` set (a dark variant is a planned fast-follow), avatar identity colors, and BrandIcon brand marks.
+The 30-color categorical `--color-palette-*` set flips in dark too — same hue, dark tinted bg + light fg.
+
+**Out of scope (theme-independent by design):** avatar identity colors and BrandIcon brand marks.
 
 ### No-flash snippet
 
