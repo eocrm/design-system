@@ -218,19 +218,14 @@ Then:
 - Update `AGENTS.md` with a one-section TL;DR + canonical snippet for the new component
 - Per-component "when NOT to use / anti-patterns" goes in the component's JSDoc (`@remarks` blocks), NOT in a separate markdown file
 
-## Components we don't have yet
+## Dependency policy & component gaps
 
-Wishlist for the CRM, in rough priority order. Until each exists, CRM pages should NOT roll their own — use a placeholder + token-correct native HTML, or request the component.
+The CRM should NOT roll its own version of a design-system component. If something is missing, use a placeholder + token-correct native HTML, or request the component.
 
 **Dependency policy:** No UI / component libraries. Two narrow exceptions: (a) `@floating-ui/react-dom` for collision-aware positioning (DropdownMenu and any future popover-shaped component), and (b) `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` for drag-and-drop sortable behavior (used by DataTable's column reorder and by Sortable). Everything else — ARIA, focus, keyboard, dismissal — is hand-rolled per WAI-ARIA APG patterns. When CSS anchor positioning has acceptable browser support, Floating UI can be removed without changing public APIs.
 
-- `Modal` / `Dialog` (hand-roll, no positioning needed; needs focus trap + scroll lock)
-- `Tooltip` (hand-roll on Floating UI; lightweight, no focus trap)
-- `Popover` (hand-roll on Floating UI; generalized non-menu floating panel)
-- `Toast` / notification (hand-roll; no Floating UI — fixed corner placement)
-- `Textarea`
-- `Checkbox`, `Radio`, `Switch`
-- `Skeleton` (loading state)
-- `Breadcrumb`
-- `Link` (router-aware button-like link)
-- `IconButton` (the topbar uses an inline one — extract when reused)
+The original wishlist — `Modal`, `Tooltip`, `Popover`, `Toast`, `Textarea`, `Checkbox`, `Radio`, `Switch`, `Skeleton`, `Breadcrumb`, `Link` — has all shipped. See `AGENTS.md` for the full component roster.
+
+Genuinely still-missing:
+
+- A standalone `IconButton` is **not** planned — use `<Button iconOnly aria-label="…">` for icon-only buttons, or `<TopBar.IconButton>` inside the top bar. Only extract a dedicated component if a third, distinct context appears.

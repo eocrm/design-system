@@ -74,22 +74,115 @@ If TypeScript can't resolve types, set `moduleResolution: "bundler"` (or `"node1
 
 ## Components
 
-| Component               | One-line                                                                                     | Detail                    |
-| ----------------------- | -------------------------------------------------------------------------------------------- | ------------------------- |
-| `<Button>`              | Action triggers                                                                              | Hover in editor for JSDoc |
-| `<Input>`               | Single-line text                                                                             | Hover in editor for JSDoc |
-| `<Card>`                | Bordered content container                                                                   | Hover in editor for JSDoc |
-| `<Stack>`               | Vertical layout primitive                                                                    | Hover in editor for JSDoc |
-| `<Cluster>`             | Horizontal layout (wraps)                                                                    | Hover in editor for JSDoc |
-| `<Avatar>`              | Profile circle                                                                               | Hover in editor for JSDoc |
-| `<Badge>`               | Status / category pill                                                                       | Hover in editor for JSDoc |
-| `<Tabs>`                | Horizontal tab strip                                                                         | Hover in editor for JSDoc |
-| `<DropdownMenu>`        | Action menu from a trigger                                                                   | Hover in editor for JSDoc |
-| `<Tooltip>`             | Supplementary hint on hover/focus                                                            | Hover in editor for JSDoc |
-| `<Popover>`             | Non-modal floating panel for arbitrary small surfaces (filters, mini-forms, quick pickers).  | Hover in editor for JSDoc |
-| `<ConfirmationPopover>` | "Are you sure?" preset on top of Popover, with async-aware Confirm and Cancel-default focus. | Hover in editor for JSDoc |
+Grouped for navigation. Every prop and variant is JSDoc'd at the source — hover any import in your editor. For canonical snippets + tokens table + anti-patterns, see [AGENTS.md](./AGENTS.md), which carries the same roster with usage examples.
 
-Every prop and variant is JSDoc'd at the source. For a quick reference + canonical snippets + tokens table + anti-patterns, see [AGENTS.md](./AGENTS.md).
+**Typography**
+
+- `Title` — semantic heading
+- `Text` — body / inline text
+- `Code` — inline `<code>` chip
+- `Kbd` — keyboard key hint
+
+**Actions**
+
+- `Button` — action triggers
+- `ButtonGroup` — joined Buttons + segmented control
+- `SocialButton` — provider sign-in button
+- `Link` — polymorphic styled anchor
+- `DropdownMenu` — action menu from a trigger
+
+**Form controls**
+
+- `Input` — single-line text
+- `Textarea` — multi-line text
+- `PasswordInput` — password field with eye toggle + optional warnings
+- `PasswordStrengthMeter` — 4-segment strength visualization
+- `Select` — value picker (single, multi, searchable, async, creatable)
+- `OptionsPicker` — filter picker (multi/single, grouped, searchable)
+- `Checkbox` — checkbox with native input + custom paint
+- `Radio` / `RadioGroup` — single radio + fieldset wrapper
+- `Switch` — binary toggle
+- `Slider` — controlled slider (single + range, horizontal + vertical)
+- `ColorPicker` — controlled HEX color picker (popover + inline)
+- `FileUpload` — controlled file picker with dropzone
+- `ImageCrop` — controlled image cropper
+
+**Form layout**
+
+- `Field` — labeled-control unit
+- `FormSection` — titled group of fields
+- `FormRow` — fields side by side
+
+**Date & time**
+
+- `Calendar` — month / week / day / agenda views
+- `DatePicker` / `InlineDatePicker` — single-date input + popover, or in flow
+- `DateRangePicker` / `InlineDateRangePicker` — date-range input + popover, or in flow
+- `TimeField` — standalone time-of-day input
+
+**Layout & structure**
+
+- `Stack` — vertical layout
+- `Cluster` — horizontal layout that wraps
+- `Grid` — 2D layout primitive
+- `Masonry` — height-balanced masonry layout
+- `Constrain` — width / flex constraint
+- `Divider` — separator primitive
+- `Page` — page-root layout primitive
+- `Screen` — full-bleed / centered screen layout
+- `AppLayout` — viewport-filling app shell
+- `PageHeader` — top-of-page heading area
+
+**Navigation & app chrome**
+
+- `Rail` — collapsible left-side navigation
+- `TopBar` — sticky application top bar
+- `Tabs` — horizontal tab strip
+- `Breadcrumb` — navigation trail
+- `Pagination` — numbered nav with windowing
+- `CursorPagination` — prev / next for streams without a total
+
+**Overlays**
+
+- `Modal` — focus-locked dialog
+- `Drawer` — edge-anchored slide-in panel
+- `Popover` — non-modal floating panel for interactive content
+- `ConfirmationPopover` — opinionated "Are you sure?" preset
+- `Tooltip` — small floating label on hover / keyboard focus
+
+**Feedback & status**
+
+- `Alert` — persistent in-flow notification
+- `Toast` (`ToastViewport` + `toast`) — transient notifications
+- `Progress` — linear progress bar
+- `CircularProgress` — circular progress / spinner
+- `Skeleton` — loading placeholder
+- `EmptyState` — "nothing here" container
+- `ErrorState` — page-level status / result screen
+- `Badge` — status / category pill
+- `FilterChip` — dismissible "active filter" pill
+
+**Data display**
+
+- `Card` — bordered container
+- `LinkCard` — clickable, full-surface Card
+- `DefinitionList` — semantic key/value pairs (`dl` / `dt` / `dd`)
+- `Table` — tabular data primitive
+- `DataTable` — server-driven data table with column features
+- `Accordion` — vertically-stacked collapsible panels
+- `Kanban` — multi-column board (drag-to-reorder + cross-column drag)
+- `Sortable` — drag-to-reorder list (single column)
+- `Image` — image with loading + error states
+
+**Identity & media**
+
+- `Avatar` / `AvatarGroup` — profile circle / Slack-style stacked row
+- `PersonDisplay` — Avatar + name (+ optional description lines)
+- `Logo` — brand logo lockup
+- `BrandIcon` — third-party brand marks
+- `IconTile` — palette-colored icon frame
+
+> The library also ships an `AppProvider` (theme + i18n + locale wiring), `LocaleProvider` / `I18nProvider`, the `useTranslation` / `useLocale` hooks, the `palette` helpers, and Calendar primitive hooks (`useMonth`, `useWeek`, `useDay`, `useAgenda`). See [AGENTS.md](./AGENTS.md) for those.
 
 ---
 
