@@ -101,6 +101,6 @@ Every release is gated by quality. There are no manual workflow buttons — the 
 
 ## Components shipped
 
-Avatar · Badge · Button · Card · Cluster · Input · Stack · Tabs. Each one is unit-tested, JSDoc'd with `@example` and `@remarks` blocks, demoed in the playground, and listed in [`AGENTS.md`](./packages/design-system/AGENTS.md).
+70+ components and counting — buttons, the full form set (Input, Select, Checkbox, Radio, Switch, Slider, date/time pickers, …), layout primitives (Stack, Cluster, Grid, AppLayout), overlays (Modal, Drawer, Popover, Tooltip, Toast), and data display (Table, DataTable, Kanban). Each is unit-tested, JSDoc'd with `@example` and `@remarks` blocks, and demoed in the playground.
 
-The "what's next" wishlist (Select, Modal, Toast, DatePicker, Table, etc.) lives in [`packages/design-system/CLAUDE.md`](./packages/design-system/CLAUDE.md#components-we-dont-have-yet).
+The canonical, always-current roster lives in the **[live playground](https://eocrm.github.io/design-system/)** and **[`AGENTS.md`](./packages/design-system/AGENTS.md)** — refer to those rather than a hand-maintained list that drifts out of date.

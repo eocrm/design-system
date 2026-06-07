@@ -78,6 +78,6 @@ If either fails, run `npm install` again — do not proceed with code changes un
 
 ## Publishing
 
-Library publishes to GitHub Packages via the manual `Publish library` workflow (`.github/workflows/publish.yml`). Auto-increments from the latest `v*` tag, refuses to overwrite existing tags. Chains the `Deploy playground` workflow on success.
+Releases are automatic. Merging to `main` triggers the `Release` workflow (`.github/workflows/release.yml`): it runs the quality gate, and **if the library changed** auto-increments from the latest `v*` tag (patch by default), refuses to overwrite existing tags, publishes to GitHub Packages, and pushes a `vX.Y.Z` tag. It then redeploys the playground whenever quality passes (even on playground-only changes). There is no manual workflow button — merge to release. Force a minor/major bump by editing `BUMP` in `release.yml` on a branch and merging.
 
 See `packages/design-system/README.md` for the consumer-side install instructions and `packages/design-system/AGENTS.md` for the agent-facing component primer.
