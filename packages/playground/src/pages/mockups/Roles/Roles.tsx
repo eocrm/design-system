@@ -111,14 +111,16 @@ export function Roles() {
           </Card>
 
           <Card padding="sm">
-            <Stack gap="sm">
-              <Input
-                placeholder="Search permissions"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                aria-label="Search permissions"
-              />
-              <Cluster justify="end" align="center" gap="sm">
+            <Cluster justify="between" align="center" gap="md" wrap={false}>
+              <Constrain flex="grow">
+                <Input
+                  placeholder="Search permissions"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  aria-label="Search permissions"
+                />
+              </Constrain>
+              <Cluster gap="sm" align="center" wrap={false}>
                 <Text tone="muted" size="sm">
                   {selected.size} of {TOTAL_PERMISSIONS} selected
                 </Text>
@@ -131,7 +133,7 @@ export function Roles() {
                   Clear
                 </Button>
               </Cluster>
-            </Stack>
+            </Cluster>
           </Card>
 
           {visibleGroups.length === 0 ? (
