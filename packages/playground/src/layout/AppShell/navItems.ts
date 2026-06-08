@@ -96,6 +96,7 @@ export const mockupItems: NavItem[] = [
   { to: '/mockups/audit', label: 'Audit log', icon: Activity, end: false },
   { to: '/mockups/system-settings', label: 'System settings', icon: SettingsIcon, end: false },
   { to: '/mockups/custom-fields', label: 'Custom fields', icon: SquarePen, end: false },
+  { to: '/mockups/roles', label: 'Roles', icon: ShieldCheck, end: false },
   { to: '/mockups/login', label: 'Login', icon: LogIn, end: false },
   { to: '/mockups/404', label: 'Not found', icon: Compass, end: false },
   { to: '/mockups/error', label: 'Error', icon: TriangleAlert, end: false },
