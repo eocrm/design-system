@@ -1,9 +1,10 @@
 // AppLayout is a layout-owning primitive — the documented exception to the
 // "no layout properties on components" rule (like Page / Screen / Rail). Owning
-// the viewport-filling shell is its whole job. No visual surface — the topBar /
-// sidebar slots bring their own; the one piece of own-styling is the main
-// region's content gutter (--app-layout-content-padding), the canonical shell
-// padding so a DS-only consumer needs no raw CSS. Matches the CRM shell topology
+// the viewport-filling shell is its whole job. The topBar / sidebar slots bring
+// their own surfaces; the main region's only own-styling is its content gutter
+// (--app-layout-content-padding) + subtle canvas (--app-layout-content-background)
+// — the canonical shell look, so a DS-only consumer needs no raw CSS. Matches the
+// CRM shell topology
 // (see the playground AppShell): a full-height sidebar down the left, the top bar
 // over the content column, and the main content below it. (stylelint's
 // property-disallowed-list blocks flex-grow / flex-basis but not the `flex`
