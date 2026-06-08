@@ -6,4 +6,9 @@
   // Override to `0` (or another token) in your scope for a full-bleed main
   // region — no prop needed.
   --app-layout-content-padding: var(--space-6);
+
+  // Background of the main content region — a subtle canvas so page Cards lift
+  // off it (matches every playground mockup). Defaults to --color-bg-subtle.
+  // Override to `transparent` in your scope for a flat content area — no prop.
+  --app-layout-content-background: var(--color-bg-subtle);
 }

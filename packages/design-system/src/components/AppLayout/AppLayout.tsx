@@ -42,7 +42,8 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * Like `<Page>` / `<Screen>` / `<Rail>`, AppLayout is the documented exception to
  * the "components don't own layout" rule — owning the full-height shell layout
  * (viewport fill + full-height sidebar + top-bar-over-content) is its entire job.
- * It carries no visual surface; the `topBar` / `sidebar` slots bring their own.
+ * Its only own-styling is the content region's gutter + subtle canvas (both
+ * token-driven — see below); the `topBar` / `sidebar` slots bring their own surfaces.
  *
  * @remarks Content padding
  * The main region ships the canonical shell content gutter by default
@@ -55,6 +56,13 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * Migration: a consumer that previously added its own gutter (a
  * `padding: var(--space-6)` wrapper / shim around the routed content) should
  * remove that shim now, or the gutters double up.
+ *
+ * @remarks Content canvas
+ * The main region paints a subtle canvas by default
+ * (`--app-layout-content-background`, default `var(--color-bg-subtle)`) so white
+ * `<Card>`s lift off it — matching every shipped mockup, **no prop and no raw
+ * CSS**. Want a flat (transparent) content area? Override the token in your scope
+ * — `--app-layout-content-background: transparent` — no prop required.
  *
  * @remarks When NOT to use
  * - ❌ For in-page content layout — use `<Stack>` / `<Cluster>` / `<Grid>`.

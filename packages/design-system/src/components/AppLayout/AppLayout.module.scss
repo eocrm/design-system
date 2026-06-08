@@ -48,4 +48,8 @@
   flex: 1;
   min-width: 0;
   padding: var(--app-layout-content-padding);
+
+  // Subtle content canvas so page Cards lift off it (default
+  // --color-bg-subtle; override the token to `transparent` for a flat area).
+  background: var(--app-layout-content-background);
 }
