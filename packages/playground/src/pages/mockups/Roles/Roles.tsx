@@ -93,7 +93,7 @@ export function Roles() {
             confirmLabel="Delete role"
             onConfirm={deleteRole}
           >
-            <Button variant="secondary">Delete role</Button>
+            <Button variant="danger">Delete role</Button>
           </ConfirmationPopover>
         </PageHeader.Actions>
       </PageHeader>
@@ -111,16 +111,14 @@ export function Roles() {
           </Card>
 
           <Card padding="sm">
-            <Cluster justify="between" align="center" gap="md">
-              <Constrain flex="grow" maxWidth="md">
-                <Input
-                  placeholder="Search permissions"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  aria-label="Search permissions"
-                />
-              </Constrain>
-              <Cluster gap="sm" align="center" wrap={false}>
+            <Stack gap="sm">
+              <Input
+                placeholder="Search permissions"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search permissions"
+              />
+              <Cluster justify="end" align="center" gap="sm">
                 <Text tone="muted" size="sm">
                   {selected.size} of {TOTAL_PERMISSIONS} selected
                 </Text>
@@ -133,7 +131,7 @@ export function Roles() {
                   Clear
                 </Button>
               </Cluster>
-            </Cluster>
+            </Stack>
           </Card>
 
           {visibleGroups.length === 0 ? (
