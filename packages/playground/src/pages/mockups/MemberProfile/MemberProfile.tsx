@@ -138,14 +138,15 @@ export function MemberProfile() {
 
   return (
     <Page>
-      <Breadcrumb>
-        <Breadcrumb.Item as={RouterLink} to="/mockups/members">
-          Members
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>{fullName(profile)}</Breadcrumb.Item>
-      </Breadcrumb>
-
       <PageHeader borderBottom={false}>
+        <PageHeader.Breadcrumb>
+          <Breadcrumb>
+            <Breadcrumb.Item as={RouterLink} to="/mockups/members">
+              Members
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>{fullName(profile)}</Breadcrumb.Item>
+          </Breadcrumb>
+        </PageHeader.Breadcrumb>
         <PageHeader.Aside>
           <Avatar name={fullName(profile)} size="lg" />
         </PageHeader.Aside>

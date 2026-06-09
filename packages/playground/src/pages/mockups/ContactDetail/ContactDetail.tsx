@@ -39,14 +39,15 @@ export function ContactDetail() {
 
   return (
     <Page>
-      <Breadcrumb>
-        <Breadcrumb.Item as={RouterLink} to="/mockups/contacts">
-          Contacts
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>{contact.name}</Breadcrumb.Item>
-      </Breadcrumb>
-
       <PageHeader borderBottom={false}>
+        <PageHeader.Breadcrumb>
+          <Breadcrumb>
+            <Breadcrumb.Item as={RouterLink} to="/mockups/contacts">
+              Contacts
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>{contact.name}</Breadcrumb.Item>
+          </Breadcrumb>
+        </PageHeader.Breadcrumb>
         <PageHeader.Aside>
           <Avatar name={contact.name} size="lg" />
         </PageHeader.Aside>
