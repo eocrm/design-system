@@ -154,6 +154,15 @@ const SPIN_SIZE: Record<SwitchSize, number> = {
  * // Icon-only.
  * <Switch aria-label="Mute notifications" />
  *
+ * @remarks Hard rule (consumers)
+ * A switch whose toggle triggers an **immediate action** — persisting to a
+ * server or firing any side effect — MUST use the async optimistic-update flow:
+ * flip the state optimistically, set `loading` while the request is in flight,
+ * and roll back on failure (see the async `@example` above). Never fire-and-
+ * forget a side-effecting toggle: the user needs the in-flight (`loading`) and
+ * rollback feedback. A switch over pure local UI state (no side effect) may
+ * toggle synchronously.
+ *
  * @remarks When NOT to use
  * - Mutually-exclusive choice → `<Radio>` / `<RadioGroup>`.
  * - Multi-select list → `<Checkbox>`.

@@ -569,6 +569,10 @@ import { Switch } from '@eocrm/design-system';
 - **`loading={true}`** shows a spinner inside the thumb + disables the input (sets `aria-busy`). Consumer manages the optimistic-update flow.
 - **`onChange(checked, event)`** signature matches Checkbox — first arg is the next boolean, second is the raw event.
 
+#### Hard rule
+
+A switch whose toggle triggers an **immediate action** — persisting to a server or firing any side effect — MUST use the async optimistic-update flow: flip the state optimistically, set `loading` while the request is in flight, and roll back on failure (see the async toggle example above). Never fire-and-forget a side-effecting toggle — the user needs the in-flight (`loading`) and rollback feedback. A switch over pure local UI state (no side effect) may toggle synchronously.
+
 #### When NOT to use
 
 - ❌ Selecting one option from a list of mutually-exclusive choices → `<Radio>` / `<RadioGroup>`.
