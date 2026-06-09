@@ -15,7 +15,7 @@ describe('DefinitionList', () => {
     const dl = container.querySelector('dl');
     expect(dl).not.toBeNull();
     expect(dl!.getAttribute('data-layout')).toBe('horizontal');
-    expect(dl!.getAttribute('data-spacing')).toBe('md');
+    expect(dl!.getAttribute('data-spacing')).toBe('sm');
     expect(dl!.getAttribute('data-dividers')).toBeNull();
   });
 
