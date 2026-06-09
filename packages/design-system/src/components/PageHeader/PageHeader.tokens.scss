@@ -13,8 +13,9 @@
 
   // Vertical separation between header rows. The grid runs row-gap:0 (so the
   // title/subtitle stay tight), so these rows contribute their own block
-  // padding: space below the breadcrumb (before the title) and above the meta
-  // (after the title/subtitle).
+  // padding: space below the breadcrumb (before the title), and above the meta
+  // (after the subtitle — only when a subtitle is present, so a bare count
+  // badge stays tight under the title).
   --page-header-breadcrumb-gap-block: var(--space-2);
   --page-header-meta-gap-block: var(--space-2);
 

@@ -124,8 +124,12 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--page-header-meta-gap);
+}
 
-  // Separate the meta row from the subtitle/title above it (grid row-gap is 0).
+// Separate the meta row from the subtitle above it — ONLY when a subtitle is
+// present, so a bare count badge (meta directly under the title, no subtitle)
+// stays tight (grid row-gap is 0).
+.root:has(.subtitle) .meta {
   padding-block-start: var(--page-header-meta-gap-block);
 }
 
