@@ -23,8 +23,8 @@ export type DefinitionListLayout = 'horizontal' | 'stacked';
 
 /**
  * Vertical padding per item.
- * - `'sm'` — `var(--space-2)` (compact tables / sidebars).
- * - `'md'` — `var(--space-3)` (default; matches Card.ListRow rhythm).
+ * - `'sm'` — `var(--space-2)` (default; compact, dense rhythm).
+ * - `'md'` — `var(--space-3)` (roomier; matches Card.ListRow rhythm).
  * - `'lg'` — `var(--space-4)` (emphasis panels).
  */
 export type DefinitionListSpacing = 'sm' | 'md' | 'lg';
@@ -39,7 +39,7 @@ export interface DefinitionListProps extends HTMLAttributes<HTMLDListElement> {
    * alignment across multiple DefinitionLists on the same screen.
    */
   termWidth?: string;
-  /** Vertical padding per item. See `DefinitionListSpacing`. Default `'md'`. */
+  /** Vertical padding per item. See `DefinitionListSpacing`. Default `'sm'`. */
   spacing?: DefinitionListSpacing;
   /**
    * Render a 1px border between items. Default `false` (clean, dense look).
@@ -141,7 +141,7 @@ const DefinitionListRoot = forwardRef<HTMLDListElement, DefinitionListProps>(
     {
       layout = 'horizontal',
       termWidth,
-      spacing = 'md',
+      spacing = 'sm',
       dividers,
       className,
       style,
