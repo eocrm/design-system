@@ -51,6 +51,9 @@
   display: flex;
   align-items: center;
   gap: var(--page-header-breadcrumb-gap);
+
+  // Separate the breadcrumb from the title row (grid row-gap is 0).
+  padding-block-end: var(--page-header-breadcrumb-gap-block);
 }
 
 .breadcrumbInner {
@@ -121,6 +124,9 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--page-header-meta-gap);
+
+  // Separate the meta row from the subtitle/title above it (grid row-gap is 0).
+  padding-block-start: var(--page-header-meta-gap-block);
 }
 
 .actions {

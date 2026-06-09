@@ -11,6 +11,13 @@
   --page-header-meta-gap: var(--space-2);
   --page-header-actions-gap: var(--space-2);
 
+  // Vertical separation between header rows. The grid runs row-gap:0 (so the
+  // title/subtitle stay tight), so these rows contribute their own block
+  // padding: space below the breadcrumb (before the title) and above the meta
+  // (after the title/subtitle).
+  --page-header-breadcrumb-gap-block: var(--space-2);
+  --page-header-meta-gap-block: var(--space-2);
+
   // Back button
   --page-header-back-button-size: 32px;
   --page-header-back-button-radius: var(--radius-sm);
