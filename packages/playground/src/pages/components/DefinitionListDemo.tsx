@@ -147,6 +147,34 @@ export function DefinitionListDemo() {
       </Example>
 
       <Example
+        title="Spacing variants"
+        description="Vertical density per row. Default is sm (dense); bump to md or lg for roomier panels."
+        code={`<DefinitionList spacing="sm">…</DefinitionList>  {/* default — dense */}
+<DefinitionList spacing="md">…</DefinitionList>
+<DefinitionList spacing="lg">…</DefinitionList>`}
+      >
+        <Stack gap="lg">
+          {(['sm', 'md', 'lg'] as const).map((s) => (
+            <Stack gap="xs" key={s}>
+              <Text size="sm" tone="muted">
+                {`spacing="${s}"${s === 'sm' ? ' (default)' : ''}`}
+              </Text>
+              <DefinitionList spacing={s} dividers>
+                <DefinitionList.Item>
+                  <DefinitionList.Term>Plan</DefinitionList.Term>
+                  <DefinitionList.Description>Enterprise</DefinitionList.Description>
+                </DefinitionList.Item>
+                <DefinitionList.Item>
+                  <DefinitionList.Term>Seats</DefinitionList.Term>
+                  <DefinitionList.Description>120</DefinitionList.Description>
+                </DefinitionList.Item>
+              </DefinitionList>
+            </Stack>
+          ))}
+        </Stack>
+      </Example>
+
+      <Example
         title="Stacked layout"
         description="Stack each term above its description. Useful for settings pages, narrow viewports, or long descriptions that need to breathe."
         code={`<DefinitionList layout="stacked" dividers>
