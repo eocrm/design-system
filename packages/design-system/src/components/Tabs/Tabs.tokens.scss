@@ -21,6 +21,16 @@
   // Indicator
   --tabs-indicator-bg: var(--color-accent);
 
+  // Vertical orientation
+  --tabs-vertical-gap: var(--space-1);
+  --tabs-vertical-tab-padding-y: var(--space-2);
+  --tabs-vertical-tab-padding-x: var(--space-3);
+  --tabs-vertical-tab-radius: var(--radius-sm);
+  --tabs-vertical-tab-bg-hover: var(--color-bg-muted);
+  --tabs-vertical-tab-bg-active: var(--color-accent-subtle-bg);
+  --tabs-vertical-indicator-width: var(--border-width-strong);
+  --tabs-vertical-indicator-radius: var(--radius-sm);
+
   // Count pill
   --tabs-count-bg: var(--color-bg-muted);
   --tabs-count-fg: var(--color-fg-muted);

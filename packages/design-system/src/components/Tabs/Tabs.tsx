@@ -26,6 +26,20 @@ export interface TabItem {
    * `aria-hidden="true"` (decorative — the label carries the accessible name).
    */
   icon?: ReactNode;
+  /**
+   * Optional leading adornment rendered before the icon/label (e.g. a status
+   * dot). Rendered as-is (NOT `aria-hidden`): if purely decorative mark your
+   * node `aria-hidden`; if meaningful, give it accessible text so it joins the
+   * tab's accessible name. Distinct from `icon`, which is always decorative.
+   */
+  leading?: ReactNode;
+  /**
+   * Optional trailing adornment rendered at the end of the tab (e.g. an
+   * unsaved-changes badge or status `Badge`). In `vertical` orientation it is
+   * pinned to the row's far-right edge; in `horizontal` it follows the label/
+   * count. Rendered as-is (NOT `aria-hidden`) — same a11y note as `leading`.
+   */
+  trailing?: ReactNode;
 }
 
 /**
@@ -63,9 +77,11 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    */
   activationMode?: TabsActivationMode;
   /**
-   * `'horizontal'` (default) or `'vertical'`. Passed through as `aria-orientation`
-   * on the tablist. Only affects how AT announces the strip — the layout itself
-   * is up to the consumer's container.
+   * `'horizontal'` (default) — a horizontal strip with a sliding underline.
+   * `'vertical'` — a stacked master–detail rail: full-width rows, a left accent
+   * bar + tinted background on the active row, and ArrowUp/ArrowDown navigation.
+   * Sets `aria-orientation` on the tablist accordingly. Put a vertical strip in a
+   * fixed/`auto`-width column (e.g. a `Cluster` with the panel beside it).
    */
   orientation?: TabsOrientation;
 }
@@ -82,10 +98,11 @@ function sanitizeId(raw: string): string {
 const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
 /**
- * Horizontal tab strip with optional count chips. Controlled by the caller —
- * pass `activeId` and `onChange`. Implements the full WAI-ARIA Tabs pattern:
- * roving `tabIndex`, ArrowLeft/ArrowRight/Home/End navigation, `aria-controls`
- * + `aria-orientation`, and per-tab/per-panel ids.
+ * Tab strip (horizontal or vertical) with optional count chips and leading/
+ * trailing adornments. Controlled by the caller — pass `activeId` and
+ * `onChange`. Implements the full WAI-ARIA Tabs pattern: roving `tabIndex`,
+ * arrow-key navigation (Left/Right when horizontal, Up/Down when vertical) +
+ * Home/End, `aria-controls` + `aria-orientation`, and per-tab/per-panel ids.
  *
  * @example
  * // Basic controlled usage:
@@ -111,6 +128,22 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  * // Lazy-loaded panels — use manual mode so arrows scan without loading:
  * <Tabs items={items} activeId={tab} onChange={setTab} activationMode="manual" />
  *
+ * @example
+ * // Vertical master–detail rail with a trailing unsaved-changes badge:
+ * <Cluster gap="lg" align="start">
+ *   <Tabs
+ *     orientation="vertical"
+ *     items={[
+ *       { id: 'general', label: 'General' },
+ *       { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
+ *       { id: 'billing', label: 'Billing', count: 3 },
+ *     ]}
+ *     activeId={section}
+ *     onChange={setSection}
+ *   />
+ *   <SectionPanel id={section} />
+ * </Cluster>
+ *
  * @remarks When NOT to use
  * - For navigation between pages — use the sidebar or breadcrumbs. Tabs are
  *   for *intra-page* view switching.
@@ -124,6 +157,9 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  *   Either preserve state or warn the user before they lose data.
  * - ❌ Putting the page's primary action inside a tab. The primary action
  *   belongs in the page header.
+ * - ❌ Using `orientation="vertical"` as a page sidebar / primary navigation.
+ *   It is for *intra-page* master–detail section switching, not route changes —
+ *   use the app sidebar for navigation.
  */
 export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   {
@@ -157,10 +193,14 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     }
   }, [items]);
 
-  // Position the shared underline indicator. Reads layout metrics from the
-  // active tab's button and writes them as inline styles on the indicator.
-  // useLayoutEffect (not useEffect) so the bar's new position is committed
-  // before paint — avoids a one-frame flash at the old location.
+  // Position the shared indicator. Reads layout metrics from the active tab's
+  // button and writes them as inline styles on the indicator. In horizontal
+  // mode it's an underline driven by translateX + width; in vertical mode it's
+  // a left accent bar driven by translateY + height. The cross-axis dimension
+  // is cleared each pass so a runtime orientation flip can't leave a stale
+  // width/height behind. useLayoutEffect (not useEffect) so the bar's new
+  // position is committed before paint — avoids a one-frame flash at the old
+  // location.
   useLayoutEffect(() => {
     const indicator = indicatorRef.current;
     if (!indicator) return;
@@ -175,12 +215,24 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     }
     indicator.style.opacity = '1';
 
+    const vertical = orientation === 'vertical';
+    const write = () => {
+      if (vertical) {
+        indicator.style.transform = `translateY(${node.offsetTop}px)`;
+        indicator.style.height = `${node.offsetHeight}px`;
+        indicator.style.width = ''; // CSS owns the bar thickness in vertical
+      } else {
+        indicator.style.transform = `translateX(${node.offsetLeft}px)`;
+        indicator.style.width = `${node.offsetWidth}px`;
+        indicator.style.height = ''; // CSS owns the bar thickness in horizontal
+      }
+    };
+
     if (firstMeasureRef.current) {
       // First paint: disable the transition for one frame so the indicator
       // doesn't slide in from (0, 0) on mount.
       indicator.style.transition = 'none';
-      indicator.style.transform = `translateX(${node.offsetLeft}px)`;
-      indicator.style.width = `${node.offsetWidth}px`;
+      write();
       // Force a reflow before clearing the inline transition override so the
       // first measurement lands without animation.
       void indicator.offsetWidth;
@@ -189,9 +241,8 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
       return;
     }
 
-    indicator.style.transform = `translateX(${node.offsetLeft}px)`;
-    indicator.style.width = `${node.offsetWidth}px`;
-  }, [activeId, items]);
+    write();
+  }, [activeId, items, orientation]);
 
   // Focused tab can drift from activeId in manual activation mode. In auto
   // mode they stay in sync because focusTab also calls onChange.
@@ -217,12 +268,17 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (items.length === 0 || effectiveFocusedId === null) return;
     const currentIndex = items.findIndex((i) => i.id === effectiveFocusedId);
+    // Vertical strips navigate with Up/Down; horizontal with Left/Right. The
+    // matching `case nextKey:` below reads the active axis's keys.
+    const vertical = orientation === 'vertical';
+    const nextKey = vertical ? 'ArrowDown' : 'ArrowRight';
+    const prevKey = vertical ? 'ArrowUp' : 'ArrowLeft';
     let nextIndex = -1;
     switch (event.key) {
-      case 'ArrowRight':
+      case nextKey:
         nextIndex = (currentIndex + 1) % items.length;
         break;
-      case 'ArrowLeft':
+      case prevKey:
         nextIndex = (currentIndex - 1 + items.length) % items.length;
         break;
       case 'Home':
@@ -243,7 +299,9 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     // overflow-visible box — that keeps the indicator span (positioned just
     // below the tablist's baseline) from being clipped by the auto-promoted
     // overflow-y.
-    <div className={styles.scrollWrap}>
+    <div
+      className={clsx(styles.scrollWrap, orientation === 'vertical' && styles.scrollWrapVertical)}
+    >
       <div
         // Consumer-controlled props come first so component-owned attrs below
         // (role, aria-orientation, onKeyDown, className) always win.
@@ -252,7 +310,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
         role="tablist"
         aria-orientation={orientation}
         onKeyDown={onKeyDown}
-        className={clsx(styles.tabs, className)}
+        className={clsx(styles.tabs, orientation === 'vertical' && styles.vertical, className)}
       >
         {items.map((item) => {
           const active = item.id === activeId;
@@ -283,13 +341,17 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
                 if (item.id !== activeId) onChange(item.id);
               }}
             >
-              {item.icon != null && (
-                <span className={styles.icon} aria-hidden="true">
-                  {item.icon}
-                </span>
-              )}
-              <span>{item.label}</span>
-              {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
+              <span className={styles.main}>
+                {item.leading != null && <span className={styles.leading}>{item.leading}</span>}
+                {item.icon != null && (
+                  <span className={styles.icon} aria-hidden="true">
+                    {item.icon}
+                  </span>
+                )}
+                <span className={styles.label}>{item.label}</span>
+                {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
+              </span>
+              {item.trailing != null && <span className={styles.trailing}>{item.trailing}</span>}
             </button>
           );
         })}
