@@ -1,0 +1,139 @@
+import { render, screen } from '@testing-library/react';
+import { createRef } from 'react';
+import { Split } from './Split';
+
+describe('Split', () => {
+  it('renders the aside and the main (children)', () => {
+    render(
+      <Split aside={<span data-testid="aside">rail</span>}>
+        <span data-testid="main">panel</span>
+      </Split>,
+    );
+    expect(screen.getByTestId('aside')).toBeInTheDocument();
+    expect(screen.getByTestId('main')).toBeInTheDocument();
+  });
+
+  it('wraps aside and main in distinct cells inside one container', () => {
+    const { container } = render(
+      <Split aside={<span data-testid="aside" />}>
+        <span data-testid="main" />
+      </Split>,
+    );
+    const root = container.firstElementChild!;
+    const asideCell = root.querySelector('[class*="aside"]');
+    const mainCell = root.querySelector('[class*="main"]');
+    expect(asideCell).not.toBeNull();
+    expect(mainCell).not.toBeNull();
+    expect(asideCell).toContainElement(screen.getByTestId('aside'));
+    expect(mainCell).toContainElement(screen.getByTestId('main'));
+  });
+
+  it('places aside before main in DOM order when side="start" (default)', () => {
+    const { container } = render(
+      <Split aside={<span data-testid="aside" />}>
+        <span data-testid="main" />
+      </Split>,
+    );
+    const aside = container.querySelector('[class*="aside"]')!;
+    const main = container.querySelector('[class*="main"]')!;
+    expect(aside.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('places main before aside in DOM order when side="end"', () => {
+    const { container } = render(
+      <Split side="end" aside={<span data-testid="aside" />}>
+        <span data-testid="main" />
+      </Split>,
+    );
+    const aside = container.querySelector('[class*="aside"]')!;
+    const main = container.querySelector('[class*="main"]')!;
+    expect(main.compareDocumentPosition(aside) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('applies the side modifier class', () => {
+    const { container, rerender } = render(<Split aside={<i />}>x</Split>);
+    expect((container.firstElementChild as HTMLElement).className).toMatch(/sideStart/);
+    rerender(
+      <Split side="end" aside={<i />}>
+        x
+      </Split>,
+    );
+    expect((container.firstElementChild as HTMLElement).className).toMatch(/sideEnd/);
+  });
+
+  it('maps gap to the right class', () => {
+    const { container } = render(
+      <Split gap="xl" aside={<i />}>
+        x
+      </Split>,
+    );
+    expect((container.firstElementChild as HTMLElement).className).toMatch(/gapXl/);
+  });
+
+  it('maps align to the right class (default start)', () => {
+    const { container, rerender } = render(<Split aside={<i />}>x</Split>);
+    expect((container.firstElementChild as HTMLElement).className).toMatch(/alignStart/);
+    rerender(
+      <Split align="stretch" aside={<i />}>
+        x
+      </Split>,
+    );
+    expect((container.firstElementChild as HTMLElement).className).toMatch(/alignStretch/);
+  });
+
+  it('sets the --split-aside-width custom property from asideWidth (default auto)', () => {
+    const { container, rerender } = render(<Split aside={<i />}>x</Split>);
+    expect(
+      (container.firstElementChild as HTMLElement).style.getPropertyValue('--split-aside-width'),
+    ).toBe('auto');
+    rerender(
+      <Split asideWidth="240px" aside={<i />}>
+        x
+      </Split>,
+    );
+    expect(
+      (container.firstElementChild as HTMLElement).style.getPropertyValue('--split-aside-width'),
+    ).toBe('240px');
+  });
+
+  it('merges className on the container', () => {
+    const { container } = render(
+      <Split className="external" aside={<i />}>
+        x
+      </Split>,
+    );
+    expect((container.firstElementChild as HTMLElement).className).toMatch(/external/);
+  });
+
+  it('merges consumer style with the aside-width custom property', () => {
+    const { container } = render(
+      <Split style={{ maxWidth: 500 }} aside={<i />}>
+        x
+      </Split>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.style.maxWidth).toBe('500px');
+    expect(el.style.getPropertyValue('--split-aside-width')).toBe('auto');
+  });
+
+  it('forwards ref to the container div', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Split ref={ref} aside={<i />}>
+        x
+      </Split>,
+    );
+    expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('spreads native HTML attributes onto the container', () => {
+    const { container } = render(
+      <Split aside={<i />} data-testid="sp" aria-label="settings layout">
+        x
+      </Split>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el).toHaveAttribute('data-testid', 'sp');
+    expect(el).toHaveAttribute('aria-label', 'settings layout');
+  });
+});
