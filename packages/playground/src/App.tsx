@@ -87,6 +87,7 @@ import { ImageCropDemo } from './pages/components/ImageCropDemo';
 import { DividerDemo } from './pages/components/DividerDemo';
 import { DrawerDemo } from './pages/components/DrawerDemo';
 import { GridDemo } from './pages/components/GridDemo';
+import { SplitDemo } from './pages/components/SplitDemo';
 import { MasonryDemo } from './pages/components/MasonryDemo';
 import { LinkDemo } from './pages/components/LinkDemo';
 import { LinkCardDemo } from './pages/components/LinkCardDemo';
@@ -192,6 +193,7 @@ export default function App() {
             <Route path="/components/divider" element={<DividerDemo />} />
             <Route path="/components/drawer" element={<DrawerDemo />} />
             <Route path="/components/grid" element={<GridDemo />} />
+            <Route path="/components/split" element={<SplitDemo />} />
             <Route path="/components/masonry" element={<MasonryDemo />} />
             <Route path="/components/link" element={<LinkDemo />} />
             <Route path="/components/link-card" element={<LinkCardDemo />} />
