@@ -26,6 +26,20 @@ export interface TabItem {
    * `aria-hidden="true"` (decorative — the label carries the accessible name).
    */
   icon?: ReactNode;
+  /**
+   * Optional leading adornment rendered before the icon/label (e.g. a status
+   * dot). Rendered as-is (NOT `aria-hidden`): if purely decorative mark your
+   * node `aria-hidden`; if meaningful, give it accessible text so it joins the
+   * tab's accessible name. Distinct from `icon`, which is always decorative.
+   */
+  leading?: ReactNode;
+  /**
+   * Optional trailing adornment rendered at the end of the tab (e.g. an
+   * unsaved-changes badge or status `Badge`). In `vertical` orientation it is
+   * pinned to the row's far-right edge; in `horizontal` it follows the label/
+   * count. Rendered as-is (NOT `aria-hidden`) — same a11y note as `leading`.
+   */
+  trailing?: ReactNode;
 }
 
 /**
@@ -283,13 +297,17 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
                 if (item.id !== activeId) onChange(item.id);
               }}
             >
-              {item.icon != null && (
-                <span className={styles.icon} aria-hidden="true">
-                  {item.icon}
-                </span>
-              )}
-              <span>{item.label}</span>
-              {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
+              <span className={styles.main}>
+                {item.leading != null && <span className={styles.leading}>{item.leading}</span>}
+                {item.icon != null && (
+                  <span className={styles.icon} aria-hidden="true">
+                    {item.icon}
+                  </span>
+                )}
+                <span className={styles.label}>{item.label}</span>
+                {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
+              </span>
+              {item.trailing != null && <span className={styles.trailing}>{item.trailing}</span>}
             </button>
           );
         })}

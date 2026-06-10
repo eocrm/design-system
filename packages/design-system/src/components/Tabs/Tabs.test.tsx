@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useEffect, useState } from 'react';
 import { Tabs, type TabItem } from './Tabs';
@@ -354,19 +354,60 @@ describe('Tabs', () => {
 
     it('icon + count both render together (icon before label, count after)', () => {
       const itemsBoth: TabItem[] = [
+        { id: 'a', label: 'Activity', icon: <svg data-testid="tab-icon" />, count: 12 },
+      ];
+      render(<Tabs items={itemsBoth} activeId="a" onChange={noop} />);
+      // Count text ("12") joins the accessible name, so match the label as a
+      // substring rather than asserting an exact name.
+      const tab = screen.getByRole('tab', { name: /Activity/ });
+      const icon = within(tab).getByTestId('tab-icon');
+      const count = tab.querySelector('[class*="count"]')!;
+      expect(tab).toContainElement(icon as HTMLElement);
+      expect(count.textContent).toBe('12');
+      expect(icon.compareDocumentPosition(count) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+  });
+
+  describe('leading / trailing adornments', () => {
+    it('renders a leading adornment inside the tab button', () => {
+      const withLead: TabItem[] = [
+        { id: 'a', label: 'Settings', leading: <span data-testid="lead-dot" /> },
+      ];
+      render(<Tabs items={withLead} activeId="a" onChange={noop} />);
+      const tab = screen.getByRole('tab', { name: /Settings/ });
+      expect(tab).toContainElement(within(tab).getByTestId('lead-dot'));
+    });
+
+    it('renders a trailing adornment inside the tab button', () => {
+      const withTrail: TabItem[] = [
+        { id: 'a', label: 'Settings', trailing: <span data-testid="trail-badge" /> },
+      ];
+      render(<Tabs items={withTrail} activeId="a" onChange={noop} />);
+      const tab = screen.getByRole('tab', { name: /Settings/ });
+      expect(tab).toContainElement(within(tab).getByTestId('trail-badge'));
+    });
+
+    it('renders leading before trailing in document order', () => {
+      const both: TabItem[] = [
         {
           id: 'a',
-          label: 'Activity',
-          icon: <svg data-testid="tab-icon" />,
-          count: 12,
+          label: 'Settings',
+          leading: <span data-testid="lead-dot" />,
+          trailing: <span data-testid="trail-badge" />,
         },
       ];
-      const { container } = render(<Tabs items={itemsBoth} activeId="a" onChange={noop} />);
-      const tab = container.querySelector('button[role="tab"]')!;
-      // Order check: first child = icon wrapper, last visible chunk = count.
-      const children = Array.from(tab.children);
-      expect(children[0]?.getAttribute('aria-hidden')).toBe('true');
-      expect(children[children.length - 1]?.textContent).toBe('12');
+      render(<Tabs items={both} activeId="a" onChange={noop} />);
+      const tab = screen.getByRole('tab', { name: /Settings/ });
+      const lead = within(tab).getByTestId('lead-dot');
+      const trail = within(tab).getByTestId('trail-badge');
+      expect(lead.compareDocumentPosition(trail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('does not render leading/trailing wrappers when the props are omitted', () => {
+      render(<Tabs items={items} activeId="a" onChange={noop} />);
+      const tab = screen.getByRole('tab', { name: 'Overview' });
+      expect(tab.querySelector('[class*="leading"]')).toBeNull();
+      expect(tab.querySelector('[class*="trailing"]')).toBeNull();
     });
   });
 });
