@@ -527,6 +527,12 @@
       "Kanban"
     ]
   },
+  "Split": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": []
+  },
   "Stack": {
     "tier": "primitive",
     "cluster": "Layout",
