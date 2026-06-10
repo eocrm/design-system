@@ -98,10 +98,11 @@ function sanitizeId(raw: string): string {
 const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
 /**
- * Horizontal tab strip with optional count chips. Controlled by the caller —
- * pass `activeId` and `onChange`. Implements the full WAI-ARIA Tabs pattern:
- * roving `tabIndex`, ArrowLeft/ArrowRight/Home/End navigation, `aria-controls`
- * + `aria-orientation`, and per-tab/per-panel ids.
+ * Tab strip (horizontal or vertical) with optional count chips and leading/
+ * trailing adornments. Controlled by the caller — pass `activeId` and
+ * `onChange`. Implements the full WAI-ARIA Tabs pattern: roving `tabIndex`,
+ * arrow-key navigation (Left/Right when horizontal, Up/Down when vertical) +
+ * Home/End, `aria-controls` + `aria-orientation`, and per-tab/per-panel ids.
  *
  * @example
  * // Basic controlled usage:

@@ -243,6 +243,8 @@ describe('Tabs', () => {
       await user.keyboard('{ArrowRight}');
       await user.keyboard('{ArrowLeft}');
       expect(onChange).not.toHaveBeenCalled();
+      // Focus must not move either — Left/Right are fully inert in vertical mode.
+      expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Overview' }));
     });
 
     it('writes a translateY transform and a px height on the indicator', () => {

@@ -122,7 +122,7 @@
     transform var(--transition-base),
     width var(--transition-base),
     height var(--transition-base);
-  will-change: transform, width;
+  will-change: transform, width, height;
   pointer-events: none;
 }
 
