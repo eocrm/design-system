@@ -214,6 +214,52 @@ describe('Tabs', () => {
     expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
   });
 
+  describe('vertical orientation', () => {
+    it('moves focus to the next tab on ArrowDown and calls onChange', async () => {
+      const onChange = vi.fn();
+      const user = userEvent.setup();
+      render(<Tabs items={items} activeId="a" onChange={onChange} orientation="vertical" />);
+      screen.getByRole('tab', { name: 'Overview' }).focus();
+      await user.keyboard('{ArrowDown}');
+      expect(onChange).toHaveBeenLastCalledWith('b');
+      expect(document.activeElement).toBe(screen.getByRole('tab', { name: /Activity/ }));
+    });
+
+    it('wraps from the first tab to the last on ArrowUp', async () => {
+      const onChange = vi.fn();
+      const user = userEvent.setup();
+      render(<Tabs items={items} activeId="a" onChange={onChange} orientation="vertical" />);
+      screen.getByRole('tab', { name: 'Overview' }).focus();
+      await user.keyboard('{ArrowUp}');
+      expect(onChange).toHaveBeenLastCalledWith('c');
+      expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Notes' }));
+    });
+
+    it('ignores ArrowLeft / ArrowRight in vertical mode', async () => {
+      const onChange = vi.fn();
+      const user = userEvent.setup();
+      render(<Tabs items={items} activeId="a" onChange={onChange} orientation="vertical" />);
+      screen.getByRole('tab', { name: 'Overview' }).focus();
+      await user.keyboard('{ArrowRight}');
+      await user.keyboard('{ArrowLeft}');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('writes a translateY transform and a px height on the indicator', () => {
+      const { container } = render(
+        <Tabs items={items} activeId="a" onChange={noop} orientation="vertical" />,
+      );
+      const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
+      expect(indicator.style.transform).toMatch(/translateY\(/);
+      expect(indicator.style.height).toMatch(/px$/);
+    });
+
+    it('marks the tablist with the vertical class', () => {
+      render(<Tabs items={items} activeId="a" onChange={noop} orientation="vertical" />);
+      expect(screen.getByRole('tablist').className).toMatch(/vertical/);
+    });
+  });
+
   it('warns in dev when items contains duplicate ids', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {

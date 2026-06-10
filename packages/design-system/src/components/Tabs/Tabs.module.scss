@@ -120,7 +120,8 @@
   transform: translateX(0);
   transition:
     transform var(--transition-base),
-    width var(--transition-base);
+    width var(--transition-base),
+    height var(--transition-base);
   will-change: transform, width;
   pointer-events: none;
 }
@@ -128,5 +129,45 @@
 @media (prefers-reduced-motion: reduce) {
   .indicator {
     transition: none;
+  }
+}
+
+// ---- Vertical orientation ----
+.scrollWrapVertical {
+  overflow-x: visible; // vertical rows are width:100%; no horizontal scroll/clip
+}
+
+.vertical {
+  flex-direction: column;
+  gap: var(--tabs-vertical-gap);
+  border-bottom: none; // no horizontal track in vertical mode
+  min-width: 0;
+
+  .tab {
+    width: 100%;
+    justify-content: space-between; // .main left, .trailing pinned right
+    padding: var(--tabs-vertical-tab-padding-y) var(--tabs-vertical-tab-padding-x);
+    border-radius: var(--tabs-vertical-tab-radius);
+    text-align: left;
+    transition:
+      color var(--transition-fast),
+      background var(--transition-fast);
+
+    &:not(.active):hover {
+      background: var(--tabs-vertical-tab-bg-hover);
+    }
+  }
+
+  .active {
+    background: var(--tabs-vertical-tab-bg-active);
+  }
+
+  .indicator {
+    inset-block-start: 0; // top:0 — JS drives translateY + height
+    inset-inline-start: 0; // left:0 — inside the box so it is never clipped
+    bottom: auto;
+    width: var(--tabs-vertical-indicator-width);
+    height: 0;
+    border-radius: var(--tabs-vertical-indicator-radius);
   }
 }

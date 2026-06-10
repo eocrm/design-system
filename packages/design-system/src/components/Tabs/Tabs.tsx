@@ -171,10 +171,14 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     }
   }, [items]);
 
-  // Position the shared underline indicator. Reads layout metrics from the
-  // active tab's button and writes them as inline styles on the indicator.
-  // useLayoutEffect (not useEffect) so the bar's new position is committed
-  // before paint — avoids a one-frame flash at the old location.
+  // Position the shared indicator. Reads layout metrics from the active tab's
+  // button and writes them as inline styles on the indicator. In horizontal
+  // mode it's an underline driven by translateX + width; in vertical mode it's
+  // a left accent bar driven by translateY + height. The cross-axis dimension
+  // is cleared each pass so a runtime orientation flip can't leave a stale
+  // width/height behind. useLayoutEffect (not useEffect) so the bar's new
+  // position is committed before paint — avoids a one-frame flash at the old
+  // location.
   useLayoutEffect(() => {
     const indicator = indicatorRef.current;
     if (!indicator) return;
@@ -189,12 +193,24 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     }
     indicator.style.opacity = '1';
 
+    const vertical = orientation === 'vertical';
+    const write = () => {
+      if (vertical) {
+        indicator.style.transform = `translateY(${node.offsetTop}px)`;
+        indicator.style.height = `${node.offsetHeight}px`;
+        indicator.style.width = ''; // CSS owns the bar thickness in vertical
+      } else {
+        indicator.style.transform = `translateX(${node.offsetLeft}px)`;
+        indicator.style.width = `${node.offsetWidth}px`;
+        indicator.style.height = ''; // CSS owns the bar thickness in horizontal
+      }
+    };
+
     if (firstMeasureRef.current) {
       // First paint: disable the transition for one frame so the indicator
       // doesn't slide in from (0, 0) on mount.
       indicator.style.transition = 'none';
-      indicator.style.transform = `translateX(${node.offsetLeft}px)`;
-      indicator.style.width = `${node.offsetWidth}px`;
+      write();
       // Force a reflow before clearing the inline transition override so the
       // first measurement lands without animation.
       void indicator.offsetWidth;
@@ -203,9 +219,8 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
       return;
     }
 
-    indicator.style.transform = `translateX(${node.offsetLeft}px)`;
-    indicator.style.width = `${node.offsetWidth}px`;
-  }, [activeId, items]);
+    write();
+  }, [activeId, items, orientation]);
 
   // Focused tab can drift from activeId in manual activation mode. In auto
   // mode they stay in sync because focusTab also calls onChange.
@@ -231,12 +246,17 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (items.length === 0 || effectiveFocusedId === null) return;
     const currentIndex = items.findIndex((i) => i.id === effectiveFocusedId);
+    // Vertical strips navigate with Up/Down; horizontal with Left/Right. The
+    // matching `case nextKey:` below reads the active axis's keys.
+    const vertical = orientation === 'vertical';
+    const nextKey = vertical ? 'ArrowDown' : 'ArrowRight';
+    const prevKey = vertical ? 'ArrowUp' : 'ArrowLeft';
     let nextIndex = -1;
     switch (event.key) {
-      case 'ArrowRight':
+      case nextKey:
         nextIndex = (currentIndex + 1) % items.length;
         break;
-      case 'ArrowLeft':
+      case prevKey:
         nextIndex = (currentIndex - 1 + items.length) % items.length;
         break;
       case 'Home':
@@ -257,7 +277,9 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     // overflow-visible box — that keeps the indicator span (positioned just
     // below the tablist's baseline) from being clipped by the auto-promoted
     // overflow-y.
-    <div className={styles.scrollWrap}>
+    <div
+      className={clsx(styles.scrollWrap, orientation === 'vertical' && styles.scrollWrapVertical)}
+    >
       <div
         // Consumer-controlled props come first so component-owned attrs below
         // (role, aria-orientation, onKeyDown, className) always win.
@@ -266,7 +288,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
         role="tablist"
         aria-orientation={orientation}
         onKeyDown={onKeyDown}
-        className={clsx(styles.tabs, className)}
+        className={clsx(styles.tabs, orientation === 'vertical' && styles.vertical, className)}
       >
         {items.map((item) => {
           const active = item.id === activeId;
