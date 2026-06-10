@@ -81,7 +81,7 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * `'vertical'` — a stacked master–detail rail: full-width rows, a left accent
    * bar + tinted background on the active row, and ArrowUp/ArrowDown navigation.
    * Sets `aria-orientation` on the tablist accordingly. Put a vertical strip in a
-   * fixed/`auto`-width column (e.g. a `Cluster` with the panel beside it).
+   * `Split`'s `aside`, with the detail panel as the `Split`'s children beside it.
    */
   orientation?: TabsOrientation;
 }
@@ -130,19 +130,22 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  *
  * @example
  * // Vertical master–detail rail with a trailing unsaved-changes badge:
- * <Cluster gap="lg" align="start">
- *   <Tabs
- *     orientation="vertical"
- *     items={[
- *       { id: 'general', label: 'General' },
- *       { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
- *       { id: 'billing', label: 'Billing', count: 3 },
- *     ]}
- *     activeId={section}
- *     onChange={setSection}
- *   />
+ * <Split
+ *   aside={
+ *     <Tabs
+ *       orientation="vertical"
+ *       items={[
+ *         { id: 'general', label: 'General' },
+ *         { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
+ *         { id: 'billing', label: 'Billing', count: 3 },
+ *       ]}
+ *       activeId={section}
+ *       onChange={setSection}
+ *     />
+ *   }
+ * >
  *   <SectionPanel id={section} />
- * </Cluster>
+ * </Split>
  *
  * @remarks When NOT to use
  * - For navigation between pages — use the sidebar or breadcrumbs. Tabs are

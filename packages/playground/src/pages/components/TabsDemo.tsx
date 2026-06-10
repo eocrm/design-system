@@ -3,7 +3,7 @@ import { Activity, CreditCard, FileText, Mail, Settings, Shield, User } from 'lu
 import { Tabs } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
-import { Cluster } from '@eocrm/design-system';
+import { Split } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -154,53 +154,61 @@ export function TabsDemo() {
 
       <Example
         title="Vertical (master–detail)"
-        description='orientation="vertical" renders a stacked rail of full-width rows — the active row gets a left accent bar and a subtly tinted background, and ArrowUp/ArrowDown move between rows. Place the rail beside its detail panel (here in a Cluster gap="lg" align="start"). Best for settings / configuration editors, where each row is a section and the panel reflects the selection.'
+        description='orientation="vertical" renders a stacked rail of full-width rows — the active row gets a left accent bar and a subtly tinted background, and ArrowUp/ArrowDown move between rows. Place the rail in a Split beside the detail panel. Best for settings / configuration editors, where each row is a section and the panel reflects the selection.'
         code={`const [section, setSection] = useState('general');
 
-<Cluster gap="lg" align="start">
-  <Tabs
-    orientation="vertical"
-    items={[
-      { id: 'general', label: 'General', icon: <Settings size={14} /> },
-      {
-        id: 'security',
-        label: 'Security',
-        icon: <Shield size={14} />,
-        trailing: <Badge tone="warning">Unsaved</Badge>,
-      },
-      { id: 'activity', label: 'Activity', icon: <Activity size={14} />, count: 14 },
-      { id: 'billing', label: 'Billing', icon: <CreditCard size={14} />, count: 3 },
-    ]}
-    activeId={section}
-    onChange={setSection}
-  />
+<Split
+  gap="lg"
+  aside={
+    <Tabs
+      orientation="vertical"
+      items={[
+        { id: 'general', label: 'General', icon: <Settings size={14} /> },
+        {
+          id: 'security',
+          label: 'Security',
+          icon: <Shield size={14} />,
+          trailing: <Badge tone="warning">Unsaved</Badge>,
+        },
+        { id: 'activity', label: 'Activity', icon: <Activity size={14} />, count: 14 },
+        { id: 'billing', label: 'Billing', icon: <CreditCard size={14} />, count: 3 },
+      ]}
+      activeId={section}
+      onChange={setSection}
+    />
+  }
+>
   <Card padding="md">{/* panel for the active section */}</Card>
-</Cluster>`}
+</Split>`}
       >
-        <Cluster gap="lg" align="start">
-          <Tabs
-            orientation="vertical"
-            items={[
-              { id: 'general', label: 'General', icon: <Settings size={14} /> },
-              {
-                id: 'security',
-                label: 'Security',
-                icon: <Shield size={14} />,
-                trailing: <Badge tone="warning">Unsaved</Badge>,
-              },
-              { id: 'activity', label: 'Activity', icon: <Activity size={14} />, count: 14 },
-              { id: 'billing', label: 'Billing', icon: <CreditCard size={14} />, count: 3 },
-            ]}
-            activeId={vTab}
-            onChange={setVTab}
-          />
+        <Split
+          gap="lg"
+          aside={
+            <Tabs
+              orientation="vertical"
+              items={[
+                { id: 'general', label: 'General', icon: <Settings size={14} /> },
+                {
+                  id: 'security',
+                  label: 'Security',
+                  icon: <Shield size={14} />,
+                  trailing: <Badge tone="warning">Unsaved</Badge>,
+                },
+                { id: 'activity', label: 'Activity', icon: <Activity size={14} />, count: 14 },
+                { id: 'billing', label: 'Billing', icon: <CreditCard size={14} />, count: 3 },
+              ]}
+              activeId={vTab}
+              onChange={setVTab}
+            />
+          }
+        >
           <Card padding="md" style={{ minWidth: 280, color: 'var(--color-fg-muted)' }}>
             <Stack gap="xs">
               <strong style={{ color: 'var(--color-fg)' }}>{active.title}</strong>
               <span>{active.body}</span>
             </Stack>
           </Card>
-        </Cluster>
+        </Split>
       </Example>
 
       <Example

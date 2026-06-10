@@ -1531,24 +1531,27 @@ const [tab, setTab] = useState('overview');
 
 ```tsx
 // Vertical master–detail rail:
-<Cluster gap="lg" align="start">
-  <Tabs
-    orientation="vertical"
-    items={[
-      { id: 'general', label: 'General' },
-      { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
-      { id: 'billing', label: 'Billing', count: 3 },
-    ]}
-    activeId={section}
-    onChange={setSection}
-  />
+<Split
+  aside={
+    <Tabs
+      orientation="vertical"
+      items={[
+        { id: 'general', label: 'General' },
+        { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
+        { id: 'billing', label: 'Billing', count: 3 },
+      ]}
+      activeId={section}
+      onChange={setSection}
+    />
+  }
+>
   <SectionPanel id={section} />
-</Cluster>
+</Split>
 ```
 
 - `items: { id, label, icon?, count?, leading?, trailing? }[]` — `id` must be unique. `icon` is a decorative leading glyph; `count` renders as a chip after the label. `leading`/`trailing` are free-form ReactNode adornments (status dot, unsaved-changes `Badge`); they are NOT `aria-hidden`, so give meaningful ones accessible text. In vertical orientation `trailing` pins to the row's right edge.
 - `activationMode`: `auto` (default — Arrow keys fire onChange) or `manual` (Arrow only focuses; Enter/Space activates). Use `manual` when panels lazy-load expensive content.
-- `orientation`: `horizontal` (default — sliding underline, ArrowLeft/Right) or `vertical` (stacked master–detail rail: full-width rows, left accent bar + tinted active row, ArrowUp/Down). Put a vertical strip in a fixed-width column beside its detail panel.
+- `orientation`: `horizontal` (default — sliding underline, ArrowLeft/Right) or `vertical` (stacked master–detail rail: full-width rows, left accent bar + tinted active row, ArrowUp/Down). Put a vertical strip in a `Split`'s `aside` beside its detail panel.
 - `panelIdPrefix`: optional. When set, each tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link.
 - The active-tab underline slides between tabs when `activeId` changes. Respects `prefers-reduced-motion: reduce`.
 
