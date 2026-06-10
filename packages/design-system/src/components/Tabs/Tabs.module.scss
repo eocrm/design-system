@@ -141,7 +141,15 @@
   flex-direction: column;
   gap: var(--tabs-vertical-gap);
   border-bottom: none; // no horizontal track in vertical mode
-  min-width: 0;
+
+  // Fill the container's inline size (overrides the base inline-flex
+  // shrink-to-content) so rows — and their `trailing` adornments — span the
+  // full rail. This is what makes a vertical rail compose correctly with a
+  // sized column such as `<Split asideWidth="240px">`: without it the tablist
+  // floats at content width inside a wider/pinned column. An explicit 100%
+  // (not min-width: 100%) also constrains long labels so the `.label` ellipsis
+  // engages instead of overflowing the column.
+  width: 100%;
 
   .tab {
     width: 100%;
