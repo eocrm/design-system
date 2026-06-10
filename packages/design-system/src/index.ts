@@ -74,6 +74,8 @@ export type {
   GridJustifyItems,
   GridAs,
 } from './components/Grid';
+export { Split } from './components/Split';
+export type { SplitProps, SplitSide, SplitGap, SplitAlign } from './components/Split';
 
 export { Masonry } from './components/Masonry';
 export type { MasonryProps, MasonryGap } from './components/Masonry';

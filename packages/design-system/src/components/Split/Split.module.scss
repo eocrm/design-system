@@ -1,0 +1,66 @@
+@use './Split.tokens';
+
+.split {
+  display: grid;
+}
+
+// Column templates. The aside track is driven by --split-aside-width (set
+// inline from the asideWidth prop; defaults to `auto` = intrinsic). `1fr` and
+// `auto` are intrinsic grid keywords, not raw lengths (same as Grid).
+.sideStart {
+  grid-template-columns: var(--split-aside-width, auto) 1fr;
+}
+
+.sideEnd {
+  grid-template-columns: 1fr var(--split-aside-width, auto);
+}
+
+// Aside cell — intrinsic width comes from the grid track; min-width:0 lets very
+// long aside content shrink rather than blow out the `auto` track. (Also gives
+// the class a real declaration so CSS Modules emits it for the `.aside` hook.)
+.aside {
+  min-width: 0;
+}
+
+// The main pane shrinks instead of overflowing or pushing the aside wider.
+.main {
+  min-width: 0;
+}
+
+// Gap presets — mirror Stack/Cluster/Grid scale + camelCase naming.
+.gapXs {
+  gap: var(--split-gap-xs);
+}
+
+.gapSm {
+  gap: var(--split-gap-sm);
+}
+
+.gapMd {
+  gap: var(--split-gap-md);
+}
+
+.gapLg {
+  gap: var(--split-gap-lg);
+}
+
+.gapXl {
+  gap: var(--split-gap-xl);
+}
+
+.gap2xl {
+  gap: var(--split-gap-2xl);
+}
+
+// Cross-axis alignment of the two panes.
+.alignStart {
+  align-items: start;
+}
+
+.alignStretch {
+  align-items: stretch;
+}
+
+.alignCenter {
+  align-items: center;
+}

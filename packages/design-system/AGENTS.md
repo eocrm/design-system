@@ -1201,6 +1201,31 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - ❌ `<Grid columns="auto 1fr">` strings — not supported in v1. For asymmetric / named tracks, use raw CSS Grid via className.
 - ❌ `<Grid as="ul">` with non-`<li>` children. The component doesn't enforce list semantics; consumers must.
 
+### `<Split>` — master–detail two-pane layout
+
+Intrinsic-width `aside` pane beside a filling `main` pane (`children`), via CSS
+grid `auto 1fr`. Never wraps. Sibling to Stack/Cluster/Grid; for in-page
+master–detail (a vertical `Tabs` rail beside its detail panel, a filter column
+beside results).
+
+```tsx
+<Split
+  aside={<Tabs orientation="vertical" items={items} activeId={id} onChange={setId} />}
+  gap="lg"
+>
+  <SectionPanel id={id} />
+</Split>
+```
+
+- `aside` (required ReactNode) — the narrow pane; `children` — the filling main pane.
+- `side`: `'start'` (default) or `'end'` — which edge the aside sits on (RTL-aware).
+- `asideWidth`: `'auto'` (default, intrinsic) or a CSS length like `'240px'` to pin the rail.
+- `gap`: `xs`/`sm`/`md` (default)/`lg`/`xl`/`2xl` — same scale as Stack/Cluster/Grid.
+- `align`: `'start'` (default) / `'stretch'` (full-height aside) / `'center'`.
+- `main` has `min-width: 0` — long content shrinks/scrolls instead of overflowing.
+
+When NOT to use: equal columns → `<Grid columns={2}>`; wrapping peer row → `<Cluster>`; app shell sidebar → `<AppLayout>`/`<Rail>`.
+
 ### `<Masonry>` — height-balanced masonry layout
 
 ```tsx
@@ -1506,24 +1531,27 @@ const [tab, setTab] = useState('overview');
 
 ```tsx
 // Vertical master–detail rail:
-<Cluster gap="lg" align="start">
-  <Tabs
-    orientation="vertical"
-    items={[
-      { id: 'general', label: 'General' },
-      { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
-      { id: 'billing', label: 'Billing', count: 3 },
-    ]}
-    activeId={section}
-    onChange={setSection}
-  />
+<Split
+  aside={
+    <Tabs
+      orientation="vertical"
+      items={[
+        { id: 'general', label: 'General' },
+        { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
+        { id: 'billing', label: 'Billing', count: 3 },
+      ]}
+      activeId={section}
+      onChange={setSection}
+    />
+  }
+>
   <SectionPanel id={section} />
-</Cluster>
+</Split>
 ```
 
 - `items: { id, label, icon?, count?, leading?, trailing? }[]` — `id` must be unique. `icon` is a decorative leading glyph; `count` renders as a chip after the label. `leading`/`trailing` are free-form ReactNode adornments (status dot, unsaved-changes `Badge`); they are NOT `aria-hidden`, so give meaningful ones accessible text. In vertical orientation `trailing` pins to the row's right edge.
 - `activationMode`: `auto` (default — Arrow keys fire onChange) or `manual` (Arrow only focuses; Enter/Space activates). Use `manual` when panels lazy-load expensive content.
-- `orientation`: `horizontal` (default — sliding underline, ArrowLeft/Right) or `vertical` (stacked master–detail rail: full-width rows, left accent bar + tinted active row, ArrowUp/Down). Put a vertical strip in a fixed-width column beside its detail panel.
+- `orientation`: `horizontal` (default — sliding underline, ArrowLeft/Right) or `vertical` (stacked master–detail rail: full-width rows, left accent bar + tinted active row, ArrowUp/Down). Put a vertical strip in a `Split`'s `aside` beside its detail panel.
 - `panelIdPrefix`: optional. When set, each tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link.
 - The active-tab underline slides between tabs when `activeId` changes. Respects `prefers-reduced-motion: reduce`.
 

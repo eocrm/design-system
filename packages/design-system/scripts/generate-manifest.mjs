@@ -26,6 +26,7 @@ const CLUSTERS = {
   AppLayout: 'Layout',
   Divider: 'Layout',
   Grid: 'Layout',
+  Split: 'Layout',
   Masonry: 'Layout',
   Card: 'Layout',
   Page: 'Layout',

@@ -25,6 +25,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Constrain } from '@eocrm/design-system';
 import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
+import { Split } from '@eocrm/design-system';
 import { Masonry } from '@eocrm/design-system';
 import { Field } from '@eocrm/design-system';
 import { FormRow } from '@eocrm/design-system';
@@ -713,6 +714,19 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <div className={styles.tile} />
         <div className={styles.tile} />
       </Grid>
+    ),
+  },
+  {
+    to: '/components/split',
+    name: 'Split',
+    description:
+      'Master–detail layout: an intrinsic-width aside beside a filling main pane (CSS grid auto 1fr). For a vertical Tabs rail + detail panel.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 220 }}>
+        <Split gap="sm" aside={<div className={styles.tile} style={{ width: 28 }} />}>
+          <div className={styles.tile} style={{ width: '100%' }} />
+        </Split>
+      </div>
     ),
   },
   {

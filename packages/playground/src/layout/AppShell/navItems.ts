@@ -133,6 +133,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/constrain', label: 'Constrain', icon: Ruler, end: false },
       { to: '/components/divider', label: 'Divider', icon: Minus, end: false },
       { to: '/components/grid', label: 'Grid', icon: LayoutGrid, end: false },
+      { to: '/components/split', label: 'Split', icon: PanelLeft, end: false },
       { to: '/components/masonry', label: 'Masonry', icon: GalleryVerticalEnd, end: false },
       { to: '/components/card', label: 'Card', icon: RectangleHorizontal, end: false },
       { to: '/components/page-header', label: 'PageHeader', icon: LayoutPanelTop, end: false },
