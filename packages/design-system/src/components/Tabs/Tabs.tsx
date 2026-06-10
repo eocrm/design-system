@@ -77,9 +77,11 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    */
   activationMode?: TabsActivationMode;
   /**
-   * `'horizontal'` (default) or `'vertical'`. Passed through as `aria-orientation`
-   * on the tablist. Only affects how AT announces the strip — the layout itself
-   * is up to the consumer's container.
+   * `'horizontal'` (default) — a horizontal strip with a sliding underline.
+   * `'vertical'` — a stacked master–detail rail: full-width rows, a left accent
+   * bar + tinted background on the active row, and ArrowUp/ArrowDown navigation.
+   * Sets `aria-orientation` on the tablist accordingly. Put a vertical strip in a
+   * fixed/`auto`-width column (e.g. a `Cluster` with the panel beside it).
    */
   orientation?: TabsOrientation;
 }
@@ -125,6 +127,22 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  * // Lazy-loaded panels — use manual mode so arrows scan without loading:
  * <Tabs items={items} activeId={tab} onChange={setTab} activationMode="manual" />
  *
+ * @example
+ * // Vertical master–detail rail with a trailing unsaved-changes badge:
+ * <Cluster gap="lg" align="start">
+ *   <Tabs
+ *     orientation="vertical"
+ *     items={[
+ *       { id: 'general', label: 'General' },
+ *       { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
+ *       { id: 'billing', label: 'Billing', count: 3 },
+ *     ]}
+ *     activeId={section}
+ *     onChange={setSection}
+ *   />
+ *   <SectionPanel id={section} />
+ * </Cluster>
+ *
  * @remarks When NOT to use
  * - For navigation between pages — use the sidebar or breadcrumbs. Tabs are
  *   for *intra-page* view switching.
@@ -138,6 +156,9 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  *   Either preserve state or warn the user before they lose data.
  * - ❌ Putting the page's primary action inside a tab. The primary action
  *   belongs in the page header.
+ * - ❌ Using `orientation="vertical"` as a page sidebar / primary navigation.
+ *   It is for *intra-page* master–detail section switching, not route changes —
+ *   use the app sidebar for navigation.
  */
 export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   {
