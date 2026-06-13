@@ -1,14 +1,21 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
 
-// Modal/Drawer portal roots. A floating surface whose trigger lives inside one
-// of these is being opened from within an overlay and must stack above it.
-const OVERLAY_PORTAL_SELECTOR = '[data-drawer-portal-root], [data-modal-portal-root]';
+// Overlay hosts whose descendants' floating surfaces must stack above them.
+// Modal/Drawer portal roots, plus Popover.Content and DropdownMenu content
+// (so a DropdownMenu/Popover/ConfirmationPopover opened from inside a Popover —
+// or from a DropdownMenu item nested in one — elevates above its host instead
+// of rendering behind it). Reuses the existing content markers; no new attrs.
+const OVERLAY_PORTAL_SELECTOR =
+  '[data-drawer-portal-root], [data-modal-portal-root], [data-popover-content], [data-dropdown-menu-content]';
 
 /**
- * True when `referenceRef`'s element is rendered inside a `Modal`/`Drawer`
- * overlay portal. Floating surfaces (`Select` / `Popover` / `DropdownMenu`) use
- * this to elevate their portaled content above the overlay — their default
- * z-index sits below `--z-modal`, so without elevation they render behind it.
+ * True when `referenceRef`'s element is rendered inside an overlay host — a
+ * `Modal`/`Drawer` overlay portal, or a `Popover.Content` / `DropdownMenu`
+ * content panel. Floating surfaces (`Select` / `Popover` / `DropdownMenu`) use
+ * this to elevate their portaled content above the host — their default
+ * z-index sits below `--z-modal` (and at/below an open Popover), so without
+ * elevation they render behind it. Covers a kebab `DropdownMenu`, nested
+ * `Popover`, or `ConfirmationPopover` opened from inside a Popover panel.
  *
  * Recomputed whenever `active` toggles (the trigger is mounted by then). Uses
  * `useLayoutEffect` so the elevation attribute is set before the browser paints

@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Popover } from './Popover';
+import { DropdownMenu } from '../DropdownMenu';
+import { ConfirmationPopover } from '../ConfirmationPopover';
 
 describe('Popover — initial render', () => {
   it('renders nothing portaled on mount when defaultOpen is false', () => {
@@ -601,5 +603,111 @@ describe('Popover — overlay elevation', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Open' }));
     expect(document.querySelector('[data-popover-content]')).not.toHaveAttribute('data-in-overlay');
+  });
+});
+
+describe('Popover — nested floating-surface elevation', () => {
+  beforeEach(() => {
+    window.ResizeObserver = class ResizeObserverMock {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+  });
+
+  it('elevates a DropdownMenu opened from inside a Popover.Content (above the host popover)', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open popover</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <button type="button">Row actions</button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        </Popover.Content>
+      </Popover>,
+    );
+    // The host popover panel is open but NOT elevated (it's at page level).
+    expect(document.querySelector('[data-popover-content]')).not.toHaveAttribute('data-in-overlay');
+    // Open the nested menu. Its trigger lives inside the popover content host,
+    // so the menu content must elevate above the host popover.
+    await user.click(screen.getByRole('button', { name: 'Row actions' }));
+    expect(screen.getByRole('menu')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('elevates an inner Popover opened from inside another Popover.Content (popover → popover)', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Outer</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover>
+            <Popover.Trigger>
+              <button type="button">Open inner</button>
+            </Popover.Trigger>
+            <Popover.Content>Inner panel</Popover.Content>
+          </Popover>
+        </Popover.Content>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open inner' }));
+    // Two dialogs now: the outer (page-level, not elevated) and the inner
+    // (trigger inside the outer's content host → elevated).
+    const dialogs = screen.getAllByRole('dialog');
+    expect(dialogs).toHaveLength(2);
+    const inner = dialogs.find((d) => d.textContent?.includes('Inner panel'));
+    expect(inner).toHaveAttribute('data-in-overlay', '');
+  });
+
+  // Repro chain: Popover → DropdownMenu → ConfirmationPopover. ConfirmationPopover
+  // composes Popover internally, so its content carries [data-popover-content] and
+  // reuses the same elevation hook. We mount it with `defaultOpen` rather than
+  // driving the DropdownMenu.Item → ConfirmationPopover click open: in jsdom the
+  // nested click-outside dismissal handlers race and tear down the whole stack
+  // before the innermost dialog mounts (a jsdom timing artifact, not a product
+  // bug — the live demo in PopoverDemo exercises the real click path). Mounting
+  // it open verifies the load-bearing property directly: a ConfirmationPopover
+  // whose trigger sits inside a DropdownMenu content host (itself inside a
+  // Popover) elevates above its host.
+  it('elevates a ConfirmationPopover whose trigger is inside a DropdownMenu content inside a Popover (repro chain)', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open popover</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <DropdownMenu defaultOpen>
+            <DropdownMenu.Trigger>
+              <button type="button">Row actions</button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <ConfirmationPopover title="Delete record?" onConfirm={() => {}} defaultOpen>
+                <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}}>
+                  Delete
+                </DropdownMenu.Item>
+              </ConfirmationPopover>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        </Popover.Content>
+      </Popover>,
+    );
+    // The dropdown menu (trigger inside the popover content host) is elevated.
+    expect(screen.getByRole('menu')).toHaveAttribute('data-in-overlay', '');
+    // The confirmation popover's trigger lives inside the dropdown content host,
+    // so its dialog elevates too.
+    const confirmDialog = screen
+      .getAllByRole('dialog')
+      .find((d) => d.textContent?.includes('Delete record?'));
+    expect(confirmDialog).toBeTruthy();
+    expect(confirmDialog).toHaveAttribute('data-in-overlay', '');
   });
 });
