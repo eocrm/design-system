@@ -20,7 +20,10 @@ const TODAY_9AM = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate(
 const TODAY_5PM = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate(), 17, 0, 0, 0);
 
 function GranularityMinuteDemo() {
-  const [value, setValue] = useState<DateRange | null>({ start: TODAY_9AM, end: TODAY_5PM });
+  // Starts EMPTY (value === null) so the start/end time inputs are visible
+  // and editable in the popover before any range is picked — set the times
+  // first, then click two days and the pending times carry through.
+  const [value, setValue] = useState<DateRange | null>(null);
   return (
     <Stack gap="xs">
       <DateRangePicker
@@ -296,17 +299,16 @@ const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1
 
       <Example
         title="Granularity: minute"
-        description="`granularity='minute'` adds dual start-time / end-time inputs below the two-month grid; the trigger text becomes `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm` (or `MM/DD/YYYY h:mm AM/PM — …` in 12h locales) and the hidden form mirrors emit ISO local datetime. Fresh picks default to `00:00` start / `23:59` end; subsequent date picks preserve both times. On a same-day range, the end-time silently clamps to ≥ the start-time on every commit (try setting end-time earlier than start-time — it snaps back)."
-        code={`const [value, setValue] = useState<DateRange | null>({
-  start: new Date(2026, 4, 28, 9, 0),
-  end: new Date(2026, 4, 28, 17, 0),
-});
+        description="`granularity='minute'` adds dual start-time / end-time inputs below the two-month grid; the trigger text becomes `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm` (or `MM/DD/YYYY h:mm AM/PM — …` in 12h locales) and the hidden form mirrors emit ISO local datetime. This example starts EMPTY (`value === null`) — open the popover and the start/end time inputs are already there, enabled and defaulting to `00:00` / `23:59`. Set the times first, then click two days: the pending times you entered are applied to the committed range (no need to seed a placeholder range). Existing times are preserved across subsequent date picks. On a same-day range, the end-time silently clamps to ≥ the start-time on every commit (try setting end-time earlier than start-time — it snaps back)."
+        code={`// Starts empty — time inputs are visible + editable before picking dates.
+const [value, setValue] = useState<DateRange | null>(null);
 
 <DateRangePicker
   granularity="minute"
   value={value}
   onChange={setValue}
 />
+// Set start 09:00 / end 17:00, then pick two days →
 // hidden form mirrors: 2026-05-28T09:00, 2026-05-28T17:00`}
       >
         <InputExample>
