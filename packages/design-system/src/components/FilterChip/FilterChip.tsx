@@ -38,6 +38,10 @@ export interface FilterChipProps extends Omit<HTMLAttributes<HTMLDivElement>, 'r
    * The dismiss ✕ stays a separate button whose click stops propagation, so
    * removing the filter never fires `onActivate` (and never bubbles to an
    * ancestor click handler). Omit for a read-only chip (current behavior).
+   *
+   * Controlled-only: FilterChip does NOT consume `Popover.Trigger`'s injected
+   * ref/ARIA, so wrapping it in `<Popover.Trigger>` won't auto-wire it — drive
+   * the popover's `open` yourself from this callback (see the example above).
    */
   onActivate?: () => void;
 
