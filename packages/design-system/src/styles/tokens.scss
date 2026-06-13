@@ -220,6 +220,7 @@
   // trigger-tight clusters.
   --size-dropdown-min-width: 160px;
   --size-popover-min-width: 220px; // slightly wider than dropdown — popovers carry richer content
+  --size-popover-max-width: 360px; // default cap for popover-shaped surfaces; override per-instance via the maxWidth prop
 
   // Width/height of the leading indicator slot in DropdownMenu checkbox/radio items.
   --size-dropdown-indicator: 16px;

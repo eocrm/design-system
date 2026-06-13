@@ -7,7 +7,7 @@
 .content {
   position: relative;
   min-width: var(--popover-min-width);
-  max-width: 360px;
+  max-width: var(--popover-max-width);
   padding: var(--popover-padding);
   background: var(--popover-bg);
   color: var(--popover-fg);
