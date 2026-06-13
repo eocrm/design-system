@@ -32,6 +32,13 @@ export interface PopoverContentProps extends HTMLAttributes<HTMLDivElement> {
    * `--size-popover-min-width` (220px) applied via SCSS.
    */
   minWidth?: number | string;
+  /**
+   * Maximum width in px or any CSS length, overriding the default cap
+   * (`--popover-max-width`, 360px). Use for wide content — calendars, tables —
+   * that would otherwise overflow the panel. Accepts a number (px),
+   * `'fit-content'`, `'none'` to remove the cap, or any CSS length.
+   */
+  maxWidth?: number | string;
 }
 
 /**
@@ -42,7 +49,16 @@ export interface PopoverContentProps extends HTMLAttributes<HTMLDivElement> {
  * the trigger.
  */
 export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function Content(
-  { side = 'bottom', align = 'center', sideOffset = 10, minWidth, className, children, ...rest },
+  {
+    side = 'bottom',
+    align = 'center',
+    sideOffset = 10,
+    minWidth,
+    maxWidth,
+    className,
+    children,
+    ...rest
+  },
   forwardedRef,
 ) {
   const ctx = usePopoverContext('Content');
@@ -115,6 +131,12 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
         ? `${minWidth}px`
         : minWidth
       : undefined;
+  const maxWidthStyle =
+    maxWidth !== undefined
+      ? typeof maxWidth === 'number'
+        ? `${maxWidth}px`
+        : maxWidth
+      : undefined;
 
   return createPortal(
     <div
@@ -128,7 +150,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
       data-side={resolvedSide}
       data-popover-content=""
       data-in-overlay={inOverlay ? '' : undefined}
-      style={{ ...floatingStyles, minWidth: minWidthStyle }}
+      style={{ ...floatingStyles, minWidth: minWidthStyle, maxWidth: maxWidthStyle }}
       className={clsx(styles.content, className)}
     >
       {children}

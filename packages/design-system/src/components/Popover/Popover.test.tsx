@@ -510,6 +510,68 @@ describe('Popover — cleanup + Tab traversal', () => {
   });
 });
 
+describe('Popover.Content — width props', () => {
+  it('applies no inline max-width by default (uses the token cap)', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>panel</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog').style.maxWidth).toBe('');
+  });
+
+  it('applies maxWidth as an inline style (number → px)', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content maxWidth={560}>panel</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog').style.maxWidth).toBe('560px');
+  });
+
+  it('passes a string maxWidth through verbatim', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content maxWidth="fit-content">panel</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog').style.maxWidth).toBe('fit-content');
+  });
+
+  it('passes maxWidth="none" through verbatim (removes the cap — the marquee use case)', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content maxWidth="none">panel</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog').style.maxWidth).toBe('none');
+  });
+
+  it('applies minWidth as an inline style (number → px)', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content minWidth={300}>panel</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog').style.minWidth).toBe('300px');
+  });
+});
+
 describe('Popover — overlay elevation', () => {
   it('elevates the content (data-in-overlay) when opened inside an overlay', async () => {
     const user = userEvent.setup();
