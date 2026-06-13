@@ -29,6 +29,26 @@ export interface FilterChipProps extends Omit<HTMLAttributes<HTMLDivElement>, 'r
   dismissLabel?: string;
 
   /**
+   * Makes the chip BODY interactive: when provided, the Label/Value content is
+   * wrapped in a `<button>` that fires `onActivate` on click and Enter/Space
+   * (native button keyboard). Use for *editable* filters — e.g. a date-range
+   * chip whose body re-opens its range-picker. Wire it to a controlled
+   * `<Popover open onOpenChange>` to open an editor popover.
+   *
+   * The dismiss ✕ stays a separate button whose click stops propagation, so
+   * removing the filter never fires `onActivate` (and never bubbles to an
+   * ancestor click handler). Omit for a read-only chip (current behavior).
+   */
+  onActivate?: () => void;
+
+  /**
+   * Open state of the disclosure the body opens (e.g. the editor popover),
+   * surfaced as `aria-expanded` on the body button. Only meaningful with
+   * `onActivate`. Omit if the body doesn't toggle a disclosure.
+   */
+  expanded?: boolean;
+
+  /**
    * One or two `FilterChip.Label` / `FilterChip.Value` subcomponents.
    * Use both for `Label: Value` chips; pass just a Value for chips
    * where the category is implicit (e.g., a tenant slug).
@@ -99,15 +119,30 @@ export interface FilterChipValueProps extends HTMLAttributes<HTMLSpanElement> {
  *   <FilterChip.Value>Active</FilterChip.Value>
  * </FilterChip>
  *
+ * @example
+ * // Editable chip — body re-opens an editor popover; ✕ removes the filter
+ * const [open, setOpen] = useState(false);
+ * <Popover open={open} onOpenChange={setOpen}>
+ *   <Popover.Trigger>
+ *     <FilterChip onActivate={() => setOpen((o) => !o)} expanded={open} onDismiss={remove}>
+ *       <FilterChip.Label>Range</FilterChip.Label>
+ *       <FilterChip.Value>Jun 1 – Jul 31</FilterChip.Value>
+ *     </FilterChip>
+ *   </Popover.Trigger>
+ *   <Popover.Content maxWidth={520}>{rangePicker}</Popover.Content>
+ * </Popover>
+ *
  * @remarks When NOT to use
  * - Status / category pills with no dismiss UX — use `<Badge>` instead.
  *   FilterChip's white pill + thin border + optional X is purpose-built
  *   for "currently applied filter", not "this contact is a VIP".
  * - Tags on an entity (e.g., deal labels) — `<Badge>` again. Tags don't
  *   carry a `Label: Value` shape.
- * - Clickable filter triggers — that's the role of a `<Button>` or
- *   `<OptionsPicker.Trigger>`. FilterChip's only interactive target
- *   is the dismiss button.
+ * - Clickable filter triggers that navigate or run an action — that's the
+ *   role of a `<Button>` or `<OptionsPicker.Trigger>`. A read-only chip's
+ *   only interactive target is the dismiss ✕. An *editable* chip (one that
+ *   re-opens its own editor) is the exception: pass `onActivate` to make
+ *   the body a `<button>` wired to a controlled `<Popover>`.
  *
  * @remarks Anti-patterns
  * - Putting interactive children inside `<FilterChip.Label>` or
@@ -119,7 +154,7 @@ export interface FilterChipValueProps extends HTMLAttributes<HTMLSpanElement> {
  *   Wrap the chip in your own transition if you need one.
  */
 const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function FilterChipRoot(
-  { onDismiss, dismissLabel, className, children, ...rest },
+  { onDismiss, dismissLabel, onActivate, expanded, className, children, ...rest },
   ref,
 ) {
   const t = useTranslation();
@@ -131,12 +166,29 @@ const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function Filt
       {...rest}
       role="group"
     >
-      {children}
+      {onActivate ? (
+        <button
+          type="button"
+          className={styles.body}
+          onClick={onActivate}
+          aria-haspopup="dialog"
+          aria-expanded={expanded}
+        >
+          {children}
+        </button>
+      ) : (
+        children
+      )}
       {onDismiss && (
         <button
           type="button"
           className={styles.dismiss}
-          onClick={onDismiss}
+          // stopPropagation: removing the filter must not fire the body activate
+          // OR bubble to a wrapping Popover.Trigger / ancestor click handler.
+          onClick={(e) => {
+            e.stopPropagation();
+            onDismiss();
+          }}
           aria-label={dismissLabel ?? t('filterChip.dismiss')}
         >
           <X size={12} aria-hidden="true" />

@@ -11,6 +11,23 @@
   background: var(--filter-chip-bg);
 }
 
+.body {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--filter-chip-gap);
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--filter-chip-radius);
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
 .label {
   display: inline-flex;
   align-items: center;

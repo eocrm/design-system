@@ -171,3 +171,126 @@ it('value-only chip (no label) renders cleanly', () => {
   expect(screen.getByText('Platform only')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Remove filter' })).toBeInTheDocument();
 });
+
+// ----------------------------------------------------------------------------
+// Interactive (editable) body — onActivate
+// ----------------------------------------------------------------------------
+
+it('with onActivate, the body is a button that fires onActivate on click', async () => {
+  const user = userEvent.setup();
+  const onActivate = vi.fn();
+  render(
+    <FilterChip onActivate={onActivate}>
+      <FilterChip.Label>Event</FilterChip.Label>
+      <FilterChip.Value>auth.*</FilterChip.Value>
+    </FilterChip>,
+  );
+  const body = screen.getByRole('button', { name: /Event/ });
+  await user.click(body);
+  expect(onActivate).toHaveBeenCalledTimes(1);
+});
+
+it('clicking the dismiss ✕ fires onDismiss but NOT onActivate', async () => {
+  const user = userEvent.setup();
+  const onActivate = vi.fn();
+  const onDismiss = vi.fn();
+  render(
+    <FilterChip onActivate={onActivate} onDismiss={onDismiss}>
+      <FilterChip.Label>Event</FilterChip.Label>
+      <FilterChip.Value>auth.*</FilterChip.Value>
+    </FilterChip>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Remove filter' }));
+  expect(onDismiss).toHaveBeenCalledTimes(1);
+  expect(onActivate).not.toHaveBeenCalled();
+});
+
+it('dismiss ✕ click stops propagation to an ancestor click handler', async () => {
+  const user = userEvent.setup();
+  const ancestorSpy = vi.fn();
+  const onActivate = vi.fn();
+  render(
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+    <div onClick={ancestorSpy}>
+      <FilterChip onActivate={onActivate} onDismiss={() => {}}>
+        <FilterChip.Label>Event</FilterChip.Label>
+        <FilterChip.Value>auth.*</FilterChip.Value>
+      </FilterChip>
+    </div>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Remove filter' }));
+  expect(ancestorSpy).not.toHaveBeenCalled();
+
+  // The body button still reaches its handler (and bubbles to the ancestor).
+  await user.click(screen.getByRole('button', { name: /Event/ }));
+  expect(onActivate).toHaveBeenCalledTimes(1);
+  expect(ancestorSpy).toHaveBeenCalledTimes(1);
+});
+
+it('body button is keyboard-actionable (Enter, Space)', async () => {
+  const user = userEvent.setup();
+  const onActivate = vi.fn();
+  render(
+    <FilterChip onActivate={onActivate}>
+      <FilterChip.Label>Event</FilterChip.Label>
+      <FilterChip.Value>auth.*</FilterChip.Value>
+    </FilterChip>,
+  );
+  const body = screen.getByRole('button', { name: /Event/ });
+  body.focus();
+  await user.keyboard('{Enter}');
+  expect(onActivate).toHaveBeenCalledTimes(1);
+  await user.keyboard(' ');
+  expect(onActivate).toHaveBeenCalledTimes(2);
+});
+
+it('body button has aria-haspopup="dialog" and reflects expanded via aria-expanded', () => {
+  const { rerender } = render(
+    <FilterChip onActivate={() => {}} expanded>
+      <FilterChip.Label>Range</FilterChip.Label>
+      <FilterChip.Value>Jun 1 – Jul 31</FilterChip.Value>
+    </FilterChip>,
+  );
+  const body = screen.getByRole('button', { name: /Range/ });
+  expect(body).toHaveAttribute('aria-haspopup', 'dialog');
+  expect(body).toHaveAttribute('aria-expanded', 'true');
+
+  rerender(
+    <FilterChip onActivate={() => {}} expanded={false}>
+      <FilterChip.Label>Range</FilterChip.Label>
+      <FilterChip.Value>Jun 1 – Jul 31</FilterChip.Value>
+    </FilterChip>,
+  );
+  expect(screen.getByRole('button', { name: /Range/ })).toHaveAttribute('aria-expanded', 'false');
+
+  // expanded omitted → React drops the attribute entirely.
+  rerender(
+    <FilterChip onActivate={() => {}}>
+      <FilterChip.Label>Range</FilterChip.Label>
+      <FilterChip.Value>Jun 1 – Jul 31</FilterChip.Value>
+    </FilterChip>,
+  );
+  expect(screen.getByRole('button', { name: /Range/ })).not.toHaveAttribute('aria-expanded');
+});
+
+it('without onActivate there is NO body button (backward compat)', () => {
+  const { rerender } = render(
+    <FilterChip>
+      <FilterChip.Label>Event</FilterChip.Label>
+      <FilterChip.Value>auth.*</FilterChip.Value>
+    </FilterChip>,
+  );
+  // Read-only, no dismiss → zero buttons.
+  expect(screen.queryAllByRole('button')).toHaveLength(0);
+
+  rerender(
+    <FilterChip onDismiss={() => {}}>
+      <FilterChip.Label>Event</FilterChip.Label>
+      <FilterChip.Value>auth.*</FilterChip.Value>
+    </FilterChip>,
+  );
+  // Dismiss only → exactly one button (the ✕), no body button.
+  const buttons = screen.getAllByRole('button');
+  expect(buttons).toHaveLength(1);
+  expect(buttons[0]).toHaveAttribute('aria-label', 'Remove filter');
+});
