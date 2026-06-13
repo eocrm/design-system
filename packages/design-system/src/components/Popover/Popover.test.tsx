@@ -547,6 +547,18 @@ describe('Popover.Content — width props', () => {
     expect(screen.getByRole('dialog').style.maxWidth).toBe('fit-content');
   });
 
+  it('passes maxWidth="none" through verbatim (removes the cap — the marquee use case)', () => {
+    render(
+      <Popover defaultOpen>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content maxWidth="none">panel</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog').style.maxWidth).toBe('none');
+  });
+
   it('applies minWidth as an inline style (number → px)', () => {
     render(
       <Popover defaultOpen>
