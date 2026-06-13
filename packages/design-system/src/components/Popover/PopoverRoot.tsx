@@ -4,9 +4,10 @@ import { sanitizeId } from '../_internal/refs';
 
 export interface PopoverProps {
   /**
-   * Must contain exactly one `<Popover.Trigger>` and one `<Popover.Content>`.
-   * `<Popover.Heading>` and `<Popover.Close>` are optional and may appear
-   * anywhere inside `<Popover.Content>`.
+   * Must contain exactly one `<Popover.Trigger>` (or `<Popover.Anchor>` for a
+   * controlled popover whose anchor owns its own toggle + ARIA) and one
+   * `<Popover.Content>`. `<Popover.Heading>` and `<Popover.Close>` are optional
+   * and may appear anywhere inside `<Popover.Content>`.
    */
   children: ReactNode;
   /**
