@@ -451,6 +451,64 @@ describe('DateRangePicker', () => {
       expect(r.end.getMinutes()).toBe(59);
     });
 
+    it('granularity="minute" with null value renders enabled time inputs at defaults', async () => {
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker
+          granularity="minute"
+          hourCycle="24"
+          timeStep={1}
+          defaultValue={null}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox', { name: 'Range' }));
+      const startTime = await screen.findByRole('textbox', { name: 'Start time' });
+      const endTime = await screen.findByRole('textbox', { name: 'End time' });
+      expect(startTime).toBeInTheDocument();
+      expect(endTime).toBeInTheDocument();
+      expect(startTime).not.toBeDisabled();
+      expect(endTime).not.toBeDisabled();
+      expect(startTime).toHaveValue('00:00');
+      expect(endTime).toHaveValue('23:59');
+    });
+
+    it('pending time set in the empty state is applied on range commit', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      const user = userEvent.setup();
+      render(
+        <DateRangePicker
+          granularity="minute"
+          hourCycle="24"
+          timeStep={1}
+          defaultValue={null}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('textbox', { name: 'Range' }));
+      const startTime = await screen.findByRole('textbox', { name: 'Start time' });
+      fireEvent.change(startTime, { target: { value: '09:00' } });
+      fireEvent.blur(startTime);
+      const endTime = await screen.findByRole('textbox', { name: 'End time' });
+      fireEvent.change(endTime, { target: { value: '17:30' } });
+      fireEvent.blur(endTime);
+
+      const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+      await user.click(fives[0]);
+      const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
+      await user.click(tens[0]);
+
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.start.getHours()).toBe(9);
+      expect(r.start.getMinutes()).toBe(0);
+      expect(r.end.getHours()).toBe(17);
+      expect(r.end.getMinutes()).toBe(30);
+    });
+
     it('picking a subsequent range preserves both existing times', async () => {
       const onChange = vi.fn<(r: DateRange | null) => void>();
       const user = userEvent.setup();

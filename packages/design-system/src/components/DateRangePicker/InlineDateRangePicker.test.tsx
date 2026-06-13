@@ -336,13 +336,59 @@ describe('InlineDateRangePicker', () => {
       expect(screen.getByRole('textbox', { name: 'End time' })).toHaveValue('5:30 PM');
     });
 
-    it('granularity="minute" with null value renders no time inputs (gated)', () => {
+    it('granularity="minute" with null value renders enabled time inputs at defaults', () => {
       render(
-        <InlineDateRangePicker granularity="minute" defaultValue={null} aria-label="Range" />,
+        <InlineDateRangePicker
+          granularity="minute"
+          hourCycle="24"
+          timeStep={1}
+          defaultValue={null}
+          aria-label="Range"
+        />,
         { wrapper: wrap() },
       );
-      expect(screen.queryByRole('textbox', { name: 'Start time' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('textbox', { name: 'End time' })).not.toBeInTheDocument();
+      const startTime = screen.getByRole('textbox', { name: 'Start time' });
+      const endTime = screen.getByRole('textbox', { name: 'End time' });
+      expect(startTime).toBeInTheDocument();
+      expect(endTime).toBeInTheDocument();
+      expect(startTime).not.toBeDisabled();
+      expect(endTime).not.toBeDisabled();
+      expect(startTime).toHaveValue('00:00');
+      expect(endTime).toHaveValue('23:59');
+    });
+
+    it('pending time set in the empty state is applied on range commit', async () => {
+      const onChange = vi.fn<(r: DateRange | null) => void>();
+      render(
+        <InlineDateRangePicker
+          granularity="minute"
+          hourCycle="24"
+          timeStep={1}
+          defaultValue={null}
+          onChange={onChange}
+          aria-label="Range"
+        />,
+        { wrapper: wrap() },
+      );
+      const startTime = screen.getByRole('textbox', { name: 'Start time' });
+      fireEvent.change(startTime, { target: { value: '09:00' } });
+      fireEvent.blur(startTime);
+      const endTime = screen.getByRole('textbox', { name: 'End time' });
+      fireEvent.change(endTime, { target: { value: '17:30' } });
+      fireEvent.blur(endTime);
+
+      const user = userEvent.setup();
+      const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+      await user.click(fives[0]);
+      const tens = screen.getAllByRole('gridcell', { name: /^10$/ });
+      await user.click(tens[0]);
+
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const r = onChange.mock.calls.at(-1)?.[0] as DateRange;
+      expect(r.start.getHours()).toBe(9);
+      expect(r.start.getMinutes()).toBe(0);
+      expect(r.end.getHours()).toBe(17);
+      expect(r.end.getMinutes()).toBe(30);
     });
 
     it('picking a fresh range from null defaults start=00:00 / end=23:59', async () => {
