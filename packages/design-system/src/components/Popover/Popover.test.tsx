@@ -333,6 +333,38 @@ describe('Popover — outside click dismissal', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
+  it('does NOT close when pointerdown fires inside a nested floating surface it hosts (portaled DropdownMenu)', async () => {
+    // A DropdownMenu opened from within the popover portals its content to
+    // document.body — not a DOM descendant of the panel. Interacting with it
+    // must not read as an "outside" click and dismiss the host popover.
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <button type="button">Menu</button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onSelect={() => {}}>Rename</DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        </Popover.Content>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    // pointerdown inside the portaled menu content must NOT dismiss the host popover
+    await user.pointer({
+      keys: '[MouseLeft>]',
+      target: screen.getByRole('menuitem', { name: 'Rename' }),
+    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
   it('does NOT close when pointerdown fires on the trigger (trigger toggles it)', async () => {
     const user = userEvent.setup();
     render(

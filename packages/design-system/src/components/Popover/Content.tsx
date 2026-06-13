@@ -116,6 +116,15 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
       const trigger = ctx.triggerRef.current;
       if (panel && panel.contains(target)) return;
       if (trigger && trigger.contains(target)) return;
+      // A floating surface (DropdownMenu / nested Popover / ConfirmationPopover)
+      // opened from WITHIN this popover portals to document.body, so it is not a
+      // DOM descendant of `panel` — without this a pointerdown inside it would
+      // read as "outside" and dismiss this popover before the user can use the
+      // nested surface (e.g. clicking a kebab menu item or its confirm dialog).
+      // Treat clicks inside any dropdown-menu / popover surface as inside, mirroring
+      // DropdownMenu's own outside-click exemption.
+      const el = target instanceof Element ? target : target.parentElement;
+      if (el?.closest('[data-dropdown-menu-content], [data-popover-content]')) return;
       ctx.setOpen(false);
     };
     document.addEventListener('pointerdown', onPointerDown, true);
