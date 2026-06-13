@@ -95,10 +95,12 @@ export interface DateRangePickerProps extends Omit<
    *   Hidden form mirrors (when `nameStart` / `nameEnd` are set) emit ISO
    *   local datetime (`2026-05-28T14:30`).
    *
-   * Times are preserved across date re-picks. Committing a fresh range
-   * from a `null` value defaults to start `00:00` / end `23:59`. Same-day
-   * ranges with end-time < start-time are silently clamped so end-time ≥
-   * start-time.
+   * At `'minute'` the start/end time inputs are shown and editable in the
+   * popover even before a range is picked (defaulting to `00:00` / `23:59`).
+   * Times entered in the empty state are applied when the range is committed
+   * (instead of the bare defaults), and existing times are preserved across
+   * date re-picks. Same-day ranges with end-time < start-time are silently
+   * clamped so end-time ≥ start-time.
    */
   granularity?: DateTimeGranularity;
 
@@ -233,6 +235,17 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
     // In-flight selection state during the click-1 → click-2 dance.
     const [selectionStart, setSelectionStart] = useState<Date | null>(null);
     const [hoverDate, setHoverDate] = useState<Date | null>(null);
+
+    // Editable "pending" times shown by the empty-state time inputs (minute
+    // granularity, value == null). Lazy initializers seed the defaults
+    // rounded to the initial `timeStep` so the displayed empty-state value
+    // matches what gets committed on range pick.
+    const [pendingStartTime, setPendingStartTime] = useState<{ hours: number; minutes: number }>(
+      () => roundTimeToStep(0, 0, timeStep),
+    );
+    const [pendingEndTime, setPendingEndTime] = useState<{ hours: number; minutes: number }>(() =>
+      roundTimeToStep(23, 59, timeStep),
+    );
 
     // Focus-into-grid ticker (same pattern as DatePicker).
     const [focusGridTick, setFocusGridTick] = useState(0);
@@ -379,20 +392,19 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           const range = autoSwapRange(selectionStart, date);
           let withTime: DateRange = range;
           if (granularity === 'minute') {
-            // Preserve existing times if value exists; otherwise default
-            // start=00:00, end=23:59. Then round to step (no-op for
-            // 00:00 / 23:59 with any sensible step, but keeps the
+            // Preserve existing times if value exists; otherwise fall back to
+            // the editable PENDING times (defaulting to 00:00 / 23:59) the
+            // user may have set in the empty state. Then round to step (no-op
+            // for 00:00 / 23:59 with any sensible step, but keeps the
             // invariant explicit). Then clamp same-day end ≥ start.
-            const startSource = value?.start ?? null;
-            const endSource = value?.end ?? null;
             const startRounded = roundTimeToStep(
-              startSource?.getHours() ?? 0,
-              startSource?.getMinutes() ?? 0,
+              value?.start?.getHours() ?? pendingStartTime.hours,
+              value?.start?.getMinutes() ?? pendingStartTime.minutes,
               timeStep,
             );
             const endRounded = roundTimeToStep(
-              endSource?.getHours() ?? 23,
-              endSource?.getMinutes() ?? 59,
+              value?.end?.getHours() ?? pendingEndTime.hours,
+              value?.end?.getMinutes() ?? pendingEndTime.minutes,
               timeStep,
             );
             withTime = {
@@ -408,7 +420,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           inputRef.current?.focus();
         }
       },
-      [granularity, selectionStart, value, setValue, timeStep],
+      [granularity, selectionStart, value, setValue, timeStep, pendingStartTime, pendingEndTime],
     );
 
     const handleClear = useCallback(
@@ -634,7 +646,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                   chevrons={false}
                 />
               </div>
-              {granularity === 'minute' && value != null && (
+              {granularity === 'minute' && (
                 <div className={styles.timeRowsPair}>
                   <div className={styles.timeRow}>
                     <label className={styles.timeLabel} htmlFor={`${inputId}-start-time`}>
@@ -642,21 +654,27 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                     </label>
                     <TimeField
                       id={`${inputId}-start-time`}
-                      value={{
-                        hours: value.start.getHours(),
-                        minutes: value.start.getMinutes(),
-                      }}
+                      value={
+                        value != null
+                          ? { hours: value.start.getHours(), minutes: value.start.getMinutes() }
+                          : pendingStartTime
+                      }
                       step={timeStep}
                       hourCycle={hourCycle}
                       locale={locale}
                       disabled={disabled}
                       aria-label={t('dateRangePicker.startTimeLabel')}
                       onChange={(time) => {
-                        const next: DateRange = {
-                          start: combineDateAndTime(value.start, time.hours, time.minutes),
-                          end: value.end,
-                        };
-                        setValue(clampRangeEndAfterStart(next));
+                        if (value != null) {
+                          setValue(
+                            clampRangeEndAfterStart({
+                              start: combineDateAndTime(value.start, time.hours, time.minutes),
+                              end: value.end,
+                            }),
+                          );
+                        } else {
+                          setPendingStartTime({ hours: time.hours, minutes: time.minutes });
+                        }
                       }}
                     />
                   </div>
@@ -666,21 +684,27 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                     </label>
                     <TimeField
                       id={`${inputId}-end-time`}
-                      value={{
-                        hours: value.end.getHours(),
-                        minutes: value.end.getMinutes(),
-                      }}
+                      value={
+                        value != null
+                          ? { hours: value.end.getHours(), minutes: value.end.getMinutes() }
+                          : pendingEndTime
+                      }
                       step={timeStep}
                       hourCycle={hourCycle}
                       locale={locale}
                       disabled={disabled}
                       aria-label={t('dateRangePicker.endTimeLabel')}
                       onChange={(time) => {
-                        const next: DateRange = {
-                          start: value.start,
-                          end: combineDateAndTime(value.end, time.hours, time.minutes),
-                        };
-                        setValue(clampRangeEndAfterStart(next));
+                        if (value != null) {
+                          setValue(
+                            clampRangeEndAfterStart({
+                              start: value.start,
+                              end: combineDateAndTime(value.end, time.hours, time.minutes),
+                            }),
+                          );
+                        } else {
+                          setPendingEndTime({ hours: time.hours, minutes: time.minutes });
+                        }
                       }}
                     />
                   </div>
