@@ -38,6 +38,24 @@ describe('useInOverlay', () => {
     expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
   });
 
+  it('is true when the reference is inside a Popover.Content host', () => {
+    render(
+      <div data-popover-content="">
+        <Probe active />
+      </div>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('is true when the reference is inside a DropdownMenu content host', () => {
+    render(
+      <div data-dropdown-menu-content="">
+        <Probe active />
+      </div>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
+  });
+
   it('is false when inactive, even if nested', () => {
     render(
       <div data-drawer-portal-root="">

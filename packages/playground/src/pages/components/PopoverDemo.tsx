@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Button, Cluster, DropdownMenu, Popover, Stack } from '@eocrm/design-system';
+import {
+  Button,
+  Cluster,
+  ConfirmationPopover,
+  DropdownMenu,
+  Popover,
+  Stack,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -192,6 +199,84 @@ export function PopoverDemo() {
               </Popover>
             </DropdownMenu.Content>
           </DropdownMenu>
+        </Cluster>
+      </Example>
+
+      <Example
+        title="Nested floating surfaces"
+        description="A Popover panel can host its own floating surfaces — a kebab DropdownMenu, and a ConfirmationPopover opened from a menu item. They now render ABOVE the popover panel (z --z-overlay-floating: 1190) instead of behind it, so the menu and the confirm dialog are fully interactive. Open the panel, then open the kebab menu, then click Delete."
+        code={`<Popover>
+  <Popover.Trigger>
+    <Button variant="secondary">Open panel</Button>
+  </Popover.Trigger>
+  <Popover.Content>
+    <Stack gap="sm">
+      <Cluster justify="between" align="center">
+        <Popover.Heading>Record</Popover.Heading>
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <Button variant="ghost" size="sm" iconOnly aria-label="Record actions">⋯</Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content align="end">
+            <DropdownMenu.Item onSelect={() => {}}>Rename</DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+            <DropdownMenu.Separator />
+            <ConfirmationPopover
+              title="Delete record?"
+              description="This action cannot be undone."
+              variant="danger"
+              confirmLabel="Delete"
+              onConfirm={() => {}}
+            >
+              <DropdownMenu.Item closeOnSelect={false} tone="danger" onSelect={() => {}}>
+                Delete
+              </DropdownMenu.Item>
+            </ConfirmationPopover>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+      </Cluster>
+      <div>The kebab menu and the delete confirmation float above this panel.</div>
+    </Stack>
+  </Popover.Content>
+</Popover>`}
+      >
+        <Cluster gap="md" justify="center">
+          <Popover>
+            <Popover.Trigger>
+              <Button variant="secondary">Open panel</Button>
+            </Popover.Trigger>
+            <Popover.Content>
+              <Stack gap="sm">
+                <Cluster justify="between" align="center">
+                  <Popover.Heading>Record</Popover.Heading>
+                  <DropdownMenu>
+                    <DropdownMenu.Trigger>
+                      <Button variant="ghost" size="sm" iconOnly aria-label="Record actions">
+                        ⋯
+                      </Button>
+                    </DropdownMenu.Trigger>
+                    <DropdownMenu.Content align="end">
+                      <DropdownMenu.Item onSelect={() => {}}>Rename</DropdownMenu.Item>
+                      <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+                      <DropdownMenu.Separator />
+                      <ConfirmationPopover
+                        title="Delete record?"
+                        description="This action cannot be undone."
+                        variant="danger"
+                        confirmLabel="Delete"
+                        onConfirm={() => {}}
+                      >
+                        <DropdownMenu.Item closeOnSelect={false} tone="danger" onSelect={() => {}}>
+                          Delete
+                        </DropdownMenu.Item>
+                      </ConfirmationPopover>
+                    </DropdownMenu.Content>
+                  </DropdownMenu>
+                </Cluster>
+                <div>The kebab menu and the delete confirmation float above this panel.</div>
+              </Stack>
+            </Popover.Content>
+          </Popover>
         </Cluster>
       </Example>
 
