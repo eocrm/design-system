@@ -4,8 +4,10 @@ import {
   Cluster,
   ConfirmationPopover,
   DropdownMenu,
+  FilterChip,
   Popover,
   Stack,
+  Text,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -297,6 +299,42 @@ export function PopoverDemo() {
       </Example>
 
       <Example
+        title="Anchor (controlled, no injected ARIA)"
+        description="Popover.Anchor positions Content against its child but injects ONLY the floating ref — no onClick, no aria-haspopup/aria-expanded/aria-controls. Use it when the anchor already owns its toggle + ARIA. Here an interactive FilterChip (its body <button> carries aria-haspopup/aria-expanded via onActivate/expanded) drives a CONTROLLED popover: clicking the chip body opens/closes the panel, and the chip's role=group root stays free of popover ARIA. (Popover.Trigger would have redundantly stamped that ARIA onto the group root.)"
+        code={`const [open, setOpen] = useState(false);
+<Popover open={open} onOpenChange={setOpen}>
+  <Popover.Anchor>
+    <FilterChip
+      onActivate={() => setOpen((o) => !o)}
+      expanded={open}
+      onDismiss={() => {/* remove the filter */}}
+    >
+      <FilterChip.Label>Date</FilterChip.Label>
+      <FilterChip.Value>Jun 1 – Jun 13</FilterChip.Value>
+    </FilterChip>
+  </Popover.Anchor>
+  <Popover.Content maxWidth={360}>
+    <Stack gap="sm">
+      <Popover.Heading>Audit log date range</Popover.Heading>
+      <Text tone="muted">(date-range picker goes here)</Text>
+      <Cluster justify="end" gap="sm">
+        <Popover.Close>
+          <Button variant="secondary" size="sm">Cancel</Button>
+        </Popover.Close>
+        <Popover.Close>
+          <Button size="sm">Apply</Button>
+        </Popover.Close>
+      </Cluster>
+    </Stack>
+  </Popover.Content>
+</Popover>`}
+      >
+        <Cluster gap="md" justify="center">
+          <AnchorChipExample />
+        </Cluster>
+      </Example>
+
+      <Example
         title="Wide content (maxWidth)"
         description="The panel caps at 360px by default, which clips wide content like a two-column filter or a date-range calendar. Pass maxWidth to let the panel grow — here a 480px two-column layout that would otherwise overflow."
         code={`<Popover>
@@ -373,6 +411,46 @@ function WideRangeBody() {
         </Popover.Close>
       </Cluster>
     </Stack>
+  );
+}
+
+// Popover.Anchor + a controlled popover. The interactive FilterChip owns its
+// own toggle + ARIA (via onActivate/expanded on its body <button>); the Anchor
+// contributes only the positioning ref, so the chip's role="group" root carries
+// no popover ARIA. Realistic surface: an audit-log date-range filter chip.
+function AnchorChipExample() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <Popover.Anchor>
+        <FilterChip
+          onActivate={() => setOpen((o) => !o)}
+          expanded={open}
+          onDismiss={() => {
+            /* a real screen would remove this filter from state */
+          }}
+        >
+          <FilterChip.Label>Date</FilterChip.Label>
+          <FilterChip.Value>Jun 1 – Jun 13</FilterChip.Value>
+        </FilterChip>
+      </Popover.Anchor>
+      <Popover.Content maxWidth={360}>
+        <Stack gap="sm">
+          <Popover.Heading>Audit log date range</Popover.Heading>
+          <Text tone="muted">(a date-range picker would render here)</Text>
+          <Cluster justify="end" gap="sm">
+            <Popover.Close>
+              <Button variant="secondary" size="sm">
+                Cancel
+              </Button>
+            </Popover.Close>
+            <Popover.Close>
+              <Button size="sm">Apply</Button>
+            </Popover.Close>
+          </Cluster>
+        </Stack>
+      </Popover.Content>
+    </Popover>
   );
 }
 

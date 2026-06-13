@@ -1904,6 +1904,7 @@ import { Bell, Plus } from 'lucide-react';
 ```
 
 - Compound API: `<Popover>` is the provider; `<Popover.Trigger>` clones its single child to inject ARIA + click; `<Popover.Content>` portals to `document.body` and positions via Floating UI; `<Popover.Heading>` (optional) wires `aria-labelledby`; `<Popover.Close>` clones its child to inject a close-onClick.
+- `<Popover.Anchor>` positions Content against its child by injecting ONLY the floating ref — no `onClick`, no keyboard handler, and no `aria-haspopup`/`aria-expanded`/`aria-controls`. Use it (instead of `Popover.Trigger`) for a CONTROLLED popover whose anchor already owns its own toggle + ARIA — e.g. an interactive `FilterChip` whose body `<button>` self-manages `aria-haspopup`/`aria-expanded` via `onActivate`/`expanded`; wrapping it in `Popover.Trigger` would redundantly stamp that ARIA onto the chip's `role="group"` root, whereas `Popover.Anchor` leaves the ARIA solely on the body button.
 - Trigger child must accept a ref (`forwardRef`). `<Button>` does.
 - **Non-modal**: focus moves to the panel on open; Tab traverses INTO content, then OUT to the page behind. Click-outside or Escape dismisses. Page is NOT inert.
 - `<Popover.Content>` props: `side` (`'top'` | `'right'` | `'bottom'` | `'left'`, default `'bottom'`), `align` (default `'center'`), `sideOffset` (default `10`), `minWidth`, `maxWidth` (overrides the default 360px cap — pass a px number, a CSS length, `'fit-content'`, or `'none'` for wide content like calendars/tables).
