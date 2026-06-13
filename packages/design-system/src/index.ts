@@ -179,6 +179,7 @@ export { Popover } from './components/Popover';
 export type {
   PopoverProps,
   PopoverTriggerProps,
+  PopoverAnchorProps,
   PopoverContentProps,
   PopoverHeadingProps,
   PopoverCloseProps,

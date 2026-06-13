@@ -11,7 +11,9 @@ export interface PopoverAnchorProps {
    * interactive `FilterChip` whose body `<button>` self-manages
    * `aria-haspopup`/`aria-expanded`), and you drive the popover's open state
    * yourself (controlled `open` + `onOpenChange`). The child must accept a ref
-   * (`forwardRef`); raw DOM elements and this library's components qualify.
+   * (`forwardRef`); raw DOM elements and this library's components qualify, and
+   * it should be focusable (a `<button>` or `tabIndex` host) so Escape can
+   * return focus to it on close.
    */
   children: ReactElement;
 }
