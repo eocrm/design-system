@@ -1,13 +1,31 @@
 import { useState } from 'react';
-import { Cluster, FilterChip } from '@eocrm/design-system';
+import { Cluster, FilterChip, Stack, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
 import { getComponentFiles } from '../../lib/componentFiles';
 
+type EditableFilter = { id: string; label: string; value: string };
+
+const INITIAL_EDITABLE: EditableFilter[] = [
+  { id: 'range', label: 'Range', value: 'Jun 1 – Jul 31' },
+  { id: 'owner', label: 'Owner', value: 'Sarah Chen' },
+  { id: 'event', label: 'Event', value: 'auth.* (3)' },
+];
+
 export function FilterChipDemo() {
   const [chips, setChips] = useState<string[]>(['event', 'tenant']);
   const removeChip = (id: string) => setChips((prev) => prev.filter((c) => c !== id));
+
+  // Interactive (editable) example: clicking a chip body marks it "editing"
+  // (where a real consumer would open a controlled <Popover> editor); the ✕
+  // removes the chip from the list WITHOUT activating the editor.
+  const [editable, setEditable] = useState<EditableFilter[]>(INITIAL_EDITABLE);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const removeEditable = (id: string) => {
+    setEditable((prev) => prev.filter((f) => f.id !== id));
+    setEditingId((cur) => (cur === id ? null : cur));
+  };
 
   return (
     <DemoLayout
@@ -112,6 +130,48 @@ export function FilterChipDemo() {
             <FilterChip.Label>Status</FilterChip.Label>
             <FilterChip.Value>Active</FilterChip.Value>
           </FilterChip>
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Interactive (editable) chip"
+        description="Pass onActivate to make the chip BODY a button — for editable filters whose body re-opens an editor. Click a chip body below to 'edit' it; click the ✕ to remove it. The ✕ stops propagation, so removing never fires onActivate. In a real screen, wire onActivate to a controlled <Popover open onOpenChange> whose content is the editor (e.g. a range-picker)."
+        code={`// Editable chip — body re-opens an editor popover; ✕ removes the filter
+const [open, setOpen] = useState(false);
+<Popover open={open} onOpenChange={setOpen}>
+  <Popover.Trigger>
+    <FilterChip onActivate={() => setOpen((o) => !o)} expanded={open} onDismiss={remove}>
+      <FilterChip.Label>Range</FilterChip.Label>
+      <FilterChip.Value>Jun 1 – Jul 31</FilterChip.Value>
+    </FilterChip>
+  </Popover.Trigger>
+  <Popover.Content maxWidth={520}>{/* range picker */}</Popover.Content>
+</Popover>`}
+      >
+        <InputExample width="auto">
+          <Stack gap="sm">
+            <Cluster gap="sm">
+              {editable.map((f) => (
+                <FilterChip
+                  key={f.id}
+                  onActivate={() => setEditingId((cur) => (cur === f.id ? null : f.id))}
+                  expanded={editingId === f.id}
+                  onDismiss={() => removeEditable(f.id)}
+                  dismissLabel={`Remove ${f.label}: ${f.value} filter`}
+                >
+                  <FilterChip.Label>{f.label}</FilterChip.Label>
+                  <FilterChip.Value>{f.value}</FilterChip.Value>
+                </FilterChip>
+              ))}
+            </Cluster>
+            <Text size="sm" tone="muted">
+              {editable.length === 0
+                ? 'All filters removed.'
+                : editingId
+                  ? `Editing "${editable.find((f) => f.id === editingId)?.label}" — a real consumer would now show a Popover editor here.`
+                  : 'Click a chip body to edit it; click ✕ to remove (✕ never triggers edit).'}
+            </Text>
+          </Stack>
         </InputExample>
       </Example>
     </DemoLayout>
