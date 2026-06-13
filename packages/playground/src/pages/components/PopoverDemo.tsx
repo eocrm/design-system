@@ -210,7 +210,84 @@ export function PopoverDemo() {
           <ControlledExample />
         </Cluster>
       </Example>
+
+      <Example
+        title="Wide content (maxWidth)"
+        description="The panel caps at 360px by default, which clips wide content like a two-column filter or a date-range calendar. Pass maxWidth to let the panel grow — here a 480px two-column layout that would otherwise overflow."
+        code={`<Popover>
+  <Popover.Trigger>
+    <Button variant="secondary">Date range filter</Button>
+  </Popover.Trigger>
+  <Popover.Content maxWidth={520}>
+    <Stack gap="sm">
+      <Popover.Heading>Pick a date range</Popover.Heading>
+      <Cluster gap="md" align="start">
+        {/* two side-by-side month grids ≈ 480px wide */}
+        <div style={{ width: 220 }}>(start month)</div>
+        <div style={{ width: 220 }}>(end month)</div>
+      </Cluster>
+      <Cluster justify="end" gap="sm">
+        <Popover.Close>
+          <Button variant="secondary" size="sm">Cancel</Button>
+        </Popover.Close>
+        <Popover.Close>
+          <Button size="sm">Apply</Button>
+        </Popover.Close>
+      </Cluster>
+    </Stack>
+  </Popover.Content>
+</Popover>`}
+      >
+        <Cluster gap="md" justify="center">
+          <Popover>
+            <Popover.Trigger>
+              <Button variant="secondary">Default cap (clips at 360px)</Button>
+            </Popover.Trigger>
+            <Popover.Content>
+              <WideRangeBody />
+            </Popover.Content>
+          </Popover>
+          <Popover>
+            <Popover.Trigger>
+              <Button variant="secondary">maxWidth=520 (fits)</Button>
+            </Popover.Trigger>
+            <Popover.Content maxWidth={520}>
+              <WideRangeBody />
+            </Popover.Content>
+          </Popover>
+        </Cluster>
+      </Example>
     </DemoLayout>
+  );
+}
+
+// Wide two-column body (~480px) that overflows the 360px default cap.
+// Both popovers share it so the only difference between them is maxWidth.
+function WideRangeBody() {
+  return (
+    <Stack gap="sm">
+      <Popover.Heading>Pick a date range</Popover.Heading>
+      <Cluster gap="md" align="start">
+        <Stack gap="xs" style={{ width: 220 }}>
+          <strong>Start month</strong>
+          <div>A 31-cell month grid would render here (~220px wide).</div>
+        </Stack>
+        <Stack gap="xs" style={{ width: 220 }}>
+          <strong>End month</strong>
+          <div>The second month grid sits beside it (~220px wide).</div>
+        </Stack>
+      </Cluster>
+      <Cluster justify="end" gap="sm">
+        <Popover.Close>
+          <Button variant="secondary" size="sm">
+            Cancel
+          </Button>
+        </Popover.Close>
+        <Popover.Close>
+          <Button size="sm">Apply</Button>
+        </Popover.Close>
+      </Cluster>
+    </Stack>
   );
 }
 
