@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createRef } from 'react';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Popover } from './Popover';
@@ -92,6 +93,93 @@ describe('Popover.Trigger', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Open' }));
     expect(consumer).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Popover.Anchor', () => {
+  it('renders its child unchanged and injects NO aria-haspopup / aria-expanded / aria-controls', () => {
+    render(
+      <Popover open>
+        <Popover.Anchor>
+          <button type="button">Chip</button>
+        </Popover.Anchor>
+        <Popover.Content>panel</Popover.Content>
+      </Popover>,
+    );
+    const anchor = screen.getByRole('button', { name: 'Chip' });
+    expect(anchor).toBeInTheDocument();
+    expect(anchor).not.toHaveAttribute('aria-haspopup');
+    expect(anchor).not.toHaveAttribute('aria-expanded');
+    expect(anchor).not.toHaveAttribute('aria-controls');
+  });
+
+  it('does NOT inject a toggle: clicking the anchor child leaves the controlled popover untouched', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <Popover open onOpenChange={onOpenChange}>
+        <Popover.Anchor>
+          <button type="button">Chip</button>
+        </Popover.Anchor>
+        <Popover.Content>panel</Popover.Content>
+      </Popover>,
+    );
+    // open is controlled; Anchor wires no onClick, so clicking the child must
+    // neither toggle open state nor request a change.
+    await user.click(screen.getByRole('button', { name: 'Chip' }));
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('anchors a CONTROLLED popover: renders the portaled dialog when open, nothing when closed', () => {
+    const { rerender } = render(
+      <Popover open={false}>
+        <Popover.Anchor>
+          <button type="button">Chip</button>
+        </Popover.Anchor>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    rerender(
+      <Popover open>
+        <Popover.Anchor>
+          <button type="button">Chip</button>
+        </Popover.Anchor>
+        <Popover.Content>panel body</Popover.Content>
+      </Popover>,
+    );
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('panel body');
+    expect(document.body.contains(dialog)).toBe(true);
+  });
+
+  it('forwards the ref to the child so positioning has a reference', () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <Popover>
+        <Popover.Anchor>
+          <button type="button" ref={ref}>
+            Chip
+          </button>
+        </Popover.Anchor>
+      </Popover>,
+    );
+    expect(ref.current).toBe(screen.getByRole('button', { name: 'Chip' }));
+  });
+
+  it('throws a clear error when children is not a valid React element', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() =>
+      render(
+        <Popover>
+          {/* @ts-expect-error — intentionally invalid */}
+          <Popover.Anchor>{null}</Popover.Anchor>
+        </Popover>,
+      ),
+    ).toThrow(/exactly one React element/);
+    spy.mockRestore();
   });
 });
 
