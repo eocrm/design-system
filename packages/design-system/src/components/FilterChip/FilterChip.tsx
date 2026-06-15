@@ -3,6 +3,8 @@ import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { Text } from '../Text';
 import { type BadgeTone } from '../Badge';
+import { Dot } from '../Dot';
+import { type PaletteColor } from '../../palette';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './FilterChip.module.scss';
 
@@ -71,19 +73,28 @@ export interface FilterChipLabelProps extends HTMLAttributes<HTMLSpanElement> {
 
 export interface FilterChipValueProps extends HTMLAttributes<HTMLSpanElement> {
   /**
+   * Optional full `PaletteColor` (one of the 30 named categorical colors)
+   * for the leading dot. Use when the 6 semantic tones aren't enough to
+   * distinguish filter categories (e.g., per-tenant or per-tag color
+   * coding that matches an `OptionsPicker` group). Takes precedence over
+   * `tone` when both are set. Renders a bare `<Dot>` in that color.
+   */
+  color?: PaletteColor;
+
+  /**
    * Optional dot tone. When set, prefixes a 6px colored circle before
    * the value text — use to distinguish filter categories that share
    * a screen (e.g., event filters get a tone-matched dot, tenant
    * filters get no dot). Reuses Badge's tone palette: `neutral`,
    * `info`, `success`, `warning`, `danger`, `purple`. Omit for plain
-   * text values.
+   * text values. For a richer categorical color, use `color` instead.
    */
   tone?: BadgeTone;
 
   /**
    * The value text — what the filter is actually filtering by
-   * (`auth.*`, `beta`, `Won`). Pair with an optional `tone` dot to
-   * categorize.
+   * (`auth.*`, `beta`, `Won`). Pair with an optional `tone` / `color`
+   * dot to categorize.
    */
   children: ReactNode;
 }
@@ -240,8 +251,10 @@ const FilterChipLabel = forwardRef<HTMLSpanElement, FilterChipLabelProps>(functi
 /**
  * Value slot for the chip's filter value. Set `tone` to prefix a 6px
  * colored dot before the text — use the same `BadgeTone` palette as
- * `<Badge>` for cross-component consistency. Omit `tone` for plain
- * values (e.g., a tenant slug).
+ * `<Badge>` for cross-component consistency. Or set `color` for a full
+ * `PaletteColor` (30 categorical colors) when the 6 tones aren't enough;
+ * `color` wins over `tone`. Omit both for plain values (e.g., a tenant
+ * slug).
  *
  * @example
  * // Plain value, no dot
@@ -252,18 +265,22 @@ const FilterChipLabel = forwardRef<HTMLSpanElement, FilterChipLabelProps>(functi
  * <FilterChip.Value tone="info">auth.* (3)</FilterChip.Value>
  *
  * @example
+ * // Palette-color dot (categorical) — matches an OptionsPicker group color
+ * <FilterChip.Value color="violet">Design</FilterChip.Value>
+ *
+ * @example
  * // Mixed content — Value accepts any ReactNode
  * <FilterChip.Value tone="success">
  *   <Avatar size="2xs" name="Sarah" /> Sarah
  * </FilterChip.Value>
  */
 const FilterChipValue = forwardRef<HTMLSpanElement, FilterChipValueProps>(function FilterChipValue(
-  { tone, className, children, ...rest },
+  { color, tone, className, children, ...rest },
   ref,
 ) {
   return (
     <span ref={ref} className={clsx(styles.value, className)} {...rest}>
-      {tone && <span className={styles.dot} data-tone={tone} aria-hidden="true" />}
+      {(color || tone) && <Dot color={color} tone={tone} />}
       <Text as="span" size="sm">
         {children}
       </Text>

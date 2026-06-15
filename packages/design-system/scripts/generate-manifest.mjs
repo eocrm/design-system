@@ -64,6 +64,7 @@ const CLUSTERS = {
   Avatar: 'Display',
   Image: 'Display',
   Badge: 'Display',
+  Dot: 'Display',
   BrandIcon: 'Display',
   Logo: 'Display',
   Calendar: 'Display',

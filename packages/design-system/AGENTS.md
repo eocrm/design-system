@@ -1420,6 +1420,22 @@ import { Divider } from '@eocrm/design-system';
 - **Non-interactive.** If it's clickable, use `<Button>` instead.
 - Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced.
 
+### `<Dot>` — bare palette/tone colored circle
+
+```tsx
+// Palette color, paired with a label:
+<Cluster gap="xs"><Dot color="violet" /> Design</Cluster>
+
+// Semantic tone:
+<Dot tone="success" />
+```
+
+- A bare, background-less 6px circle (`--size-badge-dot`) for color-coding affordances — a leading dot on a filter / `FilterChip`, a status indicator, a legend swatch. Unlike `<Badge dot>` it paints NO badge surface; it is just the dot.
+- `color`: optional `PaletteColor` (30 categorical colors) — renders the dot in that color's saturated `--color-palette-<name>-fg` token (the same color OptionsPicker groups / palette Badges use). Takes precedence over `tone`.
+- `tone`: optional `BadgeTone` (`neutral` default / `info` / `success` / `warning` / `danger` / `purple`) — used when `color` is omitted. Neither set → `neutral`.
+- **Decorative**: `aria-hidden` by default (overridable). The dot alone conveys nothing to assistive tech — always pair it with a visible label / accessible text.
+- **When NOT to use**: a status pill WITH text → use `<Badge>` (it owns a surface + label). The sole signal of meaning → color isn't an accessible signal on its own; accompany with text.
+
 ### `<BrandIcon>` — third-party brand marks
 
 ```tsx
@@ -1509,7 +1525,7 @@ function TeamChip({ team }: { team: string }) {
 - `dismissLabel`: overrides the default `'Remove filter'` `aria-label` on the dismiss button. Pass a contextual label (`'Remove Event: auth.* filter'`) for screen-reader clarity.
 - `onActivate`: makes the chip BODY a `<button>` (for _editable_ filters — e.g. a date-range chip whose body re-opens its range-picker). Wire it to a controlled `<Popover open onOpenChange>` to open an editor popover. The dismiss ✕ stays a separate button whose click **stops propagation**, so removing the filter never fires `onActivate` (and never bubbles to a wrapping `Popover.Trigger` / ancestor click handler).
 - `expanded`: surfaced as `aria-expanded` on the body button — pass the open state of the disclosure the body opens. Only meaningful with `onActivate`; omit if the body doesn't toggle a disclosure. The body button also carries `aria-haspopup="dialog"`.
-- `<FilterChip.Value tone={...}>`: optional `tone` (same palette as `<Badge>`) prefixes a colored 6px dot before the value text. Omit `tone` for plain values (e.g., a tenant slug).
+- `<FilterChip.Value tone={...}>`: optional `tone` (same palette as `<Badge>`) prefixes a colored 6px dot (a `<Dot>`) before the value text. Or pass `color` for a full `PaletteColor` (30 categorical colors) when the 6 tones aren't enough — `color` wins over `tone`. Omit both for plain values (e.g., a tenant slug).
 - **Use for active-filter pills, not tags / status badges.** If it's a status or category, use `<Badge>`. If it's a clickable filter trigger that navigates or runs an action, use `<Button>` or `<OptionsPicker.Trigger>`.
 - Root carries `role="group"` so screen readers announce the chip as one unit. A read-only chip's only interactive target is the dismiss ✕; an _editable_ chip adds a body button via `onActivate`.
 

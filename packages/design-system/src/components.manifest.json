@@ -34,6 +34,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "Dot",
       "FilterChip",
       "OptionsPicker"
     ]
@@ -213,6 +214,16 @@
     "composes": [],
     "composedBy": []
   },
+  "Dot": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Badge"
+    ],
+    "composedBy": [
+      "FilterChip"
+    ]
+  },
   "Drawer": {
     "tier": "composition",
     "cluster": "Overlays",
@@ -265,6 +276,7 @@
     "cluster": "Display",
     "composes": [
       "Badge",
+      "Dot",
       "Text"
     ],
     "composedBy": []

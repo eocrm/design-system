@@ -4,6 +4,7 @@ import { Accordion } from '@eocrm/design-system';
 import { Alert } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { Dot } from '@eocrm/design-system';
 import { BrandIcon } from '@eocrm/design-system';
 import { Logo } from '@eocrm/design-system';
 import eocrmLogo from '../../assets/eocrm-logo.svg';
@@ -771,6 +772,19 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Badge tone="info">New</Badge>
         <Badge tone="success">Active</Badge>
         <Badge tone="warning">Pending</Badge>
+      </Cluster>
+    ),
+  },
+  {
+    to: '/components/dot',
+    name: 'Dot',
+    description: 'Bare palette/tone colored circle for color-coding affordances.',
+    preview: (
+      <Cluster gap="sm" align="center">
+        <Dot color="violet" />
+        <Dot color="teal" />
+        <Dot tone="success" />
+        <Dot tone="danger" />
       </Cluster>
     ),
   },

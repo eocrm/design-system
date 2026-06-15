@@ -91,6 +91,19 @@ it('Value renders a tone dot when tone is set', () => {
   expect(dot).not.toBeNull();
 });
 
+it('Value renders a palette-color dot when color is set', () => {
+  const { container } = render(
+    <FilterChip>
+      <FilterChip.Label>Team</FilterChip.Label>
+      <FilterChip.Value color="violet">Design</FilterChip.Value>
+    </FilterChip>,
+  );
+  const dot = container.querySelector('[data-palette="violet"]');
+  expect(dot).not.toBeNull();
+  // color wins over tone — no data-tone on a palette-colored dot.
+  expect(dot).not.toHaveAttribute('data-tone');
+});
+
 it('root has role="group"', () => {
   render(
     <FilterChip>
