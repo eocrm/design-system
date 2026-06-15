@@ -139,6 +139,27 @@ describe('Sortable', () => {
     consoleError.mockRestore();
   });
 
+  it('at rest renders one <li> per item and no DragOverlay clone', () => {
+    // DragOverlay only renders content during an active drag. With no drag in
+    // progress it renders null, so each item's content appears exactly once
+    // (in its <li>) — there is no second, overlay copy in the DOM.
+    const { container } = render(
+      <Sortable>
+        <Sortable.Item id="a">
+          <span data-testid="content">Alpha</span>
+        </Sortable.Item>
+        <Sortable.Item id="b">
+          <span data-testid="content">Beta</span>
+        </Sortable.Item>
+      </Sortable>,
+    );
+    expect(container.querySelectorAll('li')).toHaveLength(2);
+    // No overlay clone at rest — exactly one node per item content.
+    expect(container.querySelectorAll('[data-testid="content"]')).toHaveLength(2);
+    // The lifted-overlay marker is never present without an active drag.
+    expect(container.querySelectorAll('[data-dragging="true"]')).toHaveLength(0);
+  });
+
   it('renders empty list (no items) without crashing', () => {
     const { container } = render(<Sortable>{null}</Sortable>);
     expect(container.querySelector('ol')).not.toBeNull();

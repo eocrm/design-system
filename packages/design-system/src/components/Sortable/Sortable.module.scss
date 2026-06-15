@@ -22,9 +22,14 @@
 }
 
 .item[data-dragging='true'] {
+  // The in-list dragged item is an invisible placeholder (opacity 0, set inline)
+  // — the lifted visual lives on .overlayItem in the DragOverlay (#165).
   cursor: grabbing;
+}
+
+.overlayItem {
   box-shadow: var(--sortable-item-shadow-dragging);
-  z-index: 1;
+  cursor: grabbing;
 }
 
 .handle {
