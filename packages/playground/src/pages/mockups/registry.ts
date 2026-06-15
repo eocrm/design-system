@@ -25,6 +25,7 @@ export type ComponentName =
   | 'DateRangePicker'
   | 'DefinitionList'
   | 'Divider'
+  | 'Dot'
   | 'Drawer'
   | 'DropdownMenu'
   | 'EmptyState'
