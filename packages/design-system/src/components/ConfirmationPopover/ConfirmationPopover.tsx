@@ -6,6 +6,7 @@ import {
   useState,
   type ReactElement,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
@@ -65,6 +66,16 @@ export interface ConfirmationPopoverProps {
   /** Optional. Fires on Cancel click, Escape, or click-outside dismissal. NOT fired if `onConfirm` rejects. */
   onCancel?: () => void;
 
+  /**
+   * Direct initial focus into the panel's content instead of the default
+   * Cancel button — e.g. an `<Input>` rendered in `description` for a rename
+   * flow. When provided and its `.current` is non-null on open, the component
+   * focuses this element after the panel mounts (skipping the Cancel-focus).
+   * Tip: add `onFocus={(e) => e.currentTarget.select()}` to a text input to
+   * select its contents so the user can type/replace immediately.
+   */
+  initialFocusRef?: RefObject<HTMLElement | null>;
+
   /** Preferred side. Default `'top'` — confirmations anchor above the trigger by convention. */
   side?: 'top' | 'right' | 'bottom' | 'left';
 
@@ -92,7 +103,9 @@ export interface ConfirmationPopoverProps {
  *
  * - **Initial focus** lands on Cancel for both variants. Safer default —
  *   keyboard "Enter" never accidentally confirms; the user must Tab once
- *   to Confirm.
+ *   to Confirm. Pass `initialFocusRef` to override this and focus a given
+ *   element instead (e.g. an `<Input>` rendered in `description` for a
+ *   rename flow).
  * - **Async-aware** `onConfirm`. While the returned Promise is in flight,
  *   both buttons disable, the Confirm shows a spinner, and Escape /
  *   click-outside dismissal is blocked.
@@ -147,6 +160,7 @@ export function ConfirmationPopover({
   variant = 'default',
   onConfirm,
   onCancel,
+  initialFocusRef,
   side = 'top',
   align = 'center',
   sideOffset = 10,
@@ -192,11 +206,15 @@ export function ConfirmationPopover({
   // Focus the Cancel button after Popover.Content focuses the panel.
   // queueMicrotask runs after Popover.Content's own focus effect (which also
   // uses queueMicrotask), so by the time this runs, the panel has focus and
-  // we override it with Cancel.
+  // we override it with Cancel. A consumer-supplied initialFocusRef takes
+  // precedence (mirrors Modal) — e.g. an <Input> in the description slot.
   useEffect(() => {
     if (!open) return;
-    queueMicrotask(() => cancelRef.current?.focus({ preventScroll: true }));
-  }, [open]);
+    queueMicrotask(() => {
+      const target = initialFocusRef?.current ?? cancelRef.current;
+      target?.focus({ preventScroll: true });
+    });
+  }, [open, initialFocusRef]);
 
   const handleConfirm = useCallback(() => {
     if (pending) return;
