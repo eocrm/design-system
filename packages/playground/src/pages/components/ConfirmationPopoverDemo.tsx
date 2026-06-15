@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Button, Cluster, ConfirmationPopover, DropdownMenu } from '@eocrm/design-system';
+import { useRef, useState } from 'react';
+import { Button, Cluster, ConfirmationPopover, DropdownMenu, Input } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -9,6 +9,8 @@ const fakeDelay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 export function ConfirmationPopoverDemo() {
   const [archiveCount, setArchiveCount] = useState(0);
   const [deleteCount, setDeleteCount] = useState(0);
+  const [viewName, setViewName] = useState('Untitled view');
+  const renameRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <DemoLayout
@@ -166,6 +168,51 @@ export function ConfirmationPopoverDemo() {
               </ConfirmationPopover>
             </DropdownMenu.Content>
           </DropdownMenu>
+        </Cluster>
+      </Example>
+
+      <Example
+        title="Rename — focus a hosted input"
+        description="Pass initialFocusRef to override the default Cancel focus and land focus on an <Input> rendered inside the description slot. The onFocus select-all means the user can type a replacement immediately — exactly the saved-views Rename flow."
+        code={`const renameRef = useRef<HTMLInputElement | null>(null);
+
+<ConfirmationPopover
+  title="Rename view"
+  description={
+    <Input
+      ref={renameRef}
+      aria-label="View name"
+      value={viewName}
+      onChange={(e) => setViewName(e.target.value)}
+      onFocus={(e) => e.currentTarget.select()}
+    />
+  }
+  initialFocusRef={renameRef}
+  confirmLabel="Rename"
+  onConfirm={() => saveViewName(viewName)}
+>
+  <Button variant="secondary">Rename…</Button>
+</ConfirmationPopover>`}
+      >
+        <Cluster gap="md" justify="center">
+          <ConfirmationPopover
+            title="Rename view"
+            description={
+              <Input
+                ref={renameRef}
+                aria-label="View name"
+                value={viewName}
+                onChange={(e) => setViewName(e.target.value)}
+                onFocus={(e) => e.currentTarget.select()}
+              />
+            }
+            initialFocusRef={renameRef}
+            confirmLabel="Rename"
+            onConfirm={() => {}}
+          >
+            <Button variant="secondary">Rename…</Button>
+          </ConfirmationPopover>
+          <span>Current name: {viewName}</span>
         </Cluster>
       </Example>
     </DemoLayout>

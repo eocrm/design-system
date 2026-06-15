@@ -1,3 +1,4 @@
+import { useRef, useState, type RefObject } from 'react';
 import { act, configure, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfirmationPopover } from './ConfirmationPopover';
@@ -143,6 +144,35 @@ describe('ConfirmationPopover — initial focus', () => {
     // Re-rendering with a new variant keeps the popover open; focus has
     // already moved to Cancel on the original open. Verify it's still there.
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+  });
+
+  it('initialFocusRef receives focus on open (overrides Cancel)', async () => {
+    const user = userEvent.setup();
+    function FocusHarness() {
+      const [open, setOpen] = useState(false);
+      const inputRef = useRef<HTMLInputElement | null>(null);
+      return (
+        <ConfirmationPopover
+          open={open}
+          onOpenChange={setOpen}
+          title="Rename view?"
+          description={<input aria-label="New name" ref={inputRef} />}
+          initialFocusRef={inputRef as RefObject<HTMLElement | null>}
+          confirmLabel="Rename"
+          onConfirm={() => {}}
+        >
+          <button type="button">Open</button>
+        </ConfirmationPopover>
+      );
+    }
+    render(<FocusHarness />);
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    // Drain the microtask queue so both Popover.Content's panel-focus and
+    // ConfirmationPopover's initialFocusRef-focus have run.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(screen.getByLabelText('New name'));
+    // The hosted input — NOT the Cancel button — owns focus.
+    expect(screen.getByRole('button', { name: 'Cancel' })).not.toHaveFocus();
   });
 });
 
