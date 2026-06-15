@@ -1,0 +1,35 @@
+@use './Dot.tokens';
+
+.dot {
+  display: inline-block;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+
+  // Semantic tones (when no palette `color` — palette colors come from the
+  // inline style's `--color-palette-<name>-fg`). Mirrors FilterChip's tone dot.
+  &[data-tone='neutral'] {
+    background: var(--color-fg-subtle);
+  }
+
+  &[data-tone='info'] {
+    background: var(--color-info);
+  }
+
+  &[data-tone='success'] {
+    background: var(--color-success);
+  }
+
+  &[data-tone='warning'] {
+    background: var(--color-warning);
+  }
+
+  &[data-tone='danger'] {
+    background: var(--color-danger);
+  }
+
+  &[data-tone='purple'] {
+    background: var(--badge-fg-purple);
+  }
+}
