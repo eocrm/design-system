@@ -42,6 +42,14 @@ export function SortableDemo() {
     Array.from({ length: 20 }, (_, i) => ({ id: i + 1, label: `Ticket #${1000 + i}` })),
   );
 
+  const [stages, setStages] = useState([
+    { id: 'stage-1', label: 'Lead captured' },
+    { id: 'stage-2', label: 'Qualified' },
+    { id: 'stage-3', label: 'Proposal sent' },
+    { id: 'stage-4', label: 'Negotiation' },
+    { id: 'stage-5', label: 'Closed won' },
+  ]);
+
   return (
     <DemoLayout
       name="Sortable"
@@ -224,6 +232,35 @@ export function SortableDemo() {
             ))}
           </Sortable>
         </div>
+      </Example>
+
+      <Example
+        title="Async / optimistic reorder"
+        description="onReorder applies the new order a tick late — as it would with an optimistic TanStack mutation's onMutate. Before this fix the dropped row kept dnd-kit's stale drag transform and animated in from ~100px off (a 'fly up then settle' glitch). The dragged item now renders in a DragOverlay that owns the drop animation, so the late state update lands smoothly. Drag a stage to feel it."
+        code={`// Order arrives a tick late, like an optimistic mutation's onMutate.
+<Sortable
+  onReorder={({ from, to }) =>
+    setTimeout(() => setStages((curr) => arrayMove(curr, from, to)), 0)
+  }
+>
+  {stages.map((s) => (
+    <Sortable.Item key={s.id} id={s.id}>
+      <Card padding="sm">{s.label}</Card>
+    </Sortable.Item>
+  ))}
+</Sortable>`}
+      >
+        <Sortable
+          onReorder={({ from, to }) =>
+            setTimeout(() => setStages((curr) => arrayMove(curr, from, to)), 0)
+          }
+        >
+          {stages.map((s) => (
+            <Sortable.Item key={s.id} id={s.id}>
+              <Card padding="sm">{s.label}</Card>
+            </Sortable.Item>
+          ))}
+        </Sortable>
       </Example>
 
       <Stack gap="xs">
