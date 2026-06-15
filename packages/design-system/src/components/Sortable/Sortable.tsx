@@ -5,17 +5,20 @@ import {
   isValidElement,
   useContext,
   useMemo,
+  useState,
   type ButtonHTMLAttributes,
   type HTMLAttributes,
   type ReactNode,
 } from 'react';
 import {
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -74,6 +77,14 @@ export interface SortableItemContextValue {
 }
 
 export const SortableItemContext = createContext<SortableItemContextValue | null>(null);
+
+// Inert context for the DragOverlay clone — the overlay is a static visual; its
+// Handle (if any) must render without wiring real drag listeners.
+const OVERLAY_ITEM_CONTEXT: SortableItemContextValue = {
+  listeners: undefined,
+  attributes: {} as SortableItemContextValue['attributes'],
+  setActivatorNodeRef: () => {},
+};
 
 /**
  * Recursively check whether the children subtree contains a `Sortable.Handle`.
@@ -177,6 +188,8 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
   { onReorder, className, children, ...rest },
   ref,
 ) {
+  const [activeId, setActiveId] = useState<string | number | null>(null);
+
   const itemIds = useMemo(() => {
     const ids: (string | number)[] = [];
     Children.forEach(children, (child) => {
@@ -187,12 +200,35 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
     return ids;
   }, [children]);
 
+  // The active item's content, rendered into the DragOverlay clone. Looking it
+  // up by id (rather than capturing a snapshot on drag-start) keeps the overlay
+  // in sync if the consumer's item content re-renders mid-drag.
+  const activeChildren = useMemo<ReactNode>(() => {
+    if (activeId == null) return null;
+    let content: ReactNode = null;
+    Children.forEach(children, (child) => {
+      if (
+        isValidElement(child) &&
+        child.type === SortableItem &&
+        (child.props as SortableItemProps).id === activeId
+      ) {
+        content = (child.props as SortableItemProps).children;
+      }
+    });
+    return content;
+  }, [activeId, children]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string | number);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const from = itemIds.indexOf(active.id as string | number);
@@ -201,13 +237,41 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
     onReorder?.({ from, to, id: active.id as string | number });
   };
 
+  const handleDragCancel = () => {
+    setActiveId(null);
+  };
+
+  // SSR-safe reduced-motion probe; disables the overlay's drop animation.
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
       <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
         <ol ref={ref} className={clsx(styles.list, className)} {...rest}>
           {children}
         </ol>
       </SortableContext>
+      {/* The dragged item lives in a portaled, fixed-position overlay that owns
+          the drag + drop animation. The list <li> becomes an invisible
+          placeholder during drag, so a late/async order update from onReorder
+          can never leave a stale dnd-kit transform on a list <li> (#165). */}
+      <DragOverlay dropAnimation={prefersReducedMotion ? null : undefined}>
+        {activeChildren != null ? (
+          <SortableItemContext.Provider value={OVERLAY_ITEM_CONTEXT}>
+            <div className={clsx(styles.item, styles.overlayItem)} data-dragging="true">
+              {activeChildren}
+            </div>
+          </SortableItemContext.Provider>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 });
@@ -258,6 +322,10 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
         style={{
           transform: CSS.Transform.toString(transform),
           transition,
+          // The DragOverlay renders the dragged item's visual; the in-list copy
+          // is an invisible placeholder so it never carries a stale drag/drop
+          // transform when onReorder commits the new order asynchronously (#165).
+          opacity: isDragging ? 0 : undefined,
         }}
         data-dragging={isDragging ? 'true' : undefined}
         className={clsx(styles.item, className)}
