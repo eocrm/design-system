@@ -109,19 +109,24 @@ export interface LiquidEditorProps {
 ## Behavior
 
 ### Variable-insert menu (toolbar)
+
 A button opening a grouped menu of `variables` (sectioned by `group`, label + `type` tag per row). Selecting one inserts `{{ code }}` at the caret (replacing any selection), moves the caret inside/after the inserted token, and fires `onChange`. Built on the existing `DropdownMenu` primitive.
 
 ### Autocomplete (combobox)
+
 While the caret is inside an output `{{ … }}` or tag `{% … %}`:
+
 - Typing an identifier prefix opens a listbox of matching `variables` (grouped), filtered by prefix on `code`/`label`.
 - Immediately after a `|`, it offers `filters` instead.
 - `↑`/`↓` move the active option, `Enter`/`Tab` accept (insert the completion), `Esc` closes the menu (and is swallowed so it doesn't bubble to a Drawer/Modal close). Typing a non-identifier char or moving the caret out closes it.
 - ARIA combobox wiring: the textarea gets `role`/`aria-expanded`/`aria-controls`/`aria-activedescendant`; the menu is a `listbox` with `option`s. The menu is the only place `Tab` is intercepted — otherwise `Tab` moves focus normally (no focus trap).
 
 ### Preview pane
+
 Renders when `preview` is set or `previewStatus` ≠ `'idle'`. `loading` → a muted "Rendering…" state (optionally over the last preview); `error` → an error-toned pane; otherwise the `preview` node. Collapsible via the toolbar preview toggle. `previewPlacement='right'` splits editor | preview side by side; `'bottom'` stacks (default).
 
 ### States
+
 - `readOnly` — textarea `readOnly`, toolbar insert disabled, autocomplete off, highlighting + preview still render.
 - `disabled` — textarea `disabled`, dimmed, all interaction off.
 - `invalid` — red border + the `error` footer; independent of client unknown-variable flags (both can show).
@@ -165,6 +170,7 @@ packages/design-system/src/components/LiquidEditor/
 ```
 
 Plus the cross-package completion checklist (repo CLAUDE.md "Core invariant"):
+
 - `src/index.ts` re-export (Rule 5)
 - `packages/playground/src/pages/demo/LiquidEditorDemo.tsx` + wire into `App.tsx`, `AppShell.tsx`, `DemoIndex.tsx`
 - `_meta/manifest.ts` CLUSTERS entry + `generate-manifest.mjs`, then `npm run build:manifest`

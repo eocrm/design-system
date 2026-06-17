@@ -883,7 +883,7 @@ const VARS = [
   { code: 'last_name', label: 'Last name', type: 'text', group: 'Built-in' },
 ];
 
-<LiquidEditor value={formula} onChange={setFormula} variables={VARS} />
+<LiquidEditor value={formula} onChange={setFormula} variables={VARS} />;
 ```
 
 When NOT to use: plain prose → `Textarea`; static read-only code → playground `CodeBlock`. Don't expect it to validate syntax (feed `error` from the backend) or to produce its own preview (preview is consumer-rendered).
