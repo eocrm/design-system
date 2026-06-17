@@ -56,8 +56,12 @@ export function AutocompleteMenu({
     elements: { reference: virtualRef },
   });
 
-  // Render grouped: consecutive items sharing a group get one header.
-  let lastGroup: string | undefined;
+  // Precompute group-header flags before render (no mutation during the map —
+  // keeps the render pure under StrictMode double-invocation). A header shows
+  // when an item's group differs from the previous item's.
+  const showGroupAt = items.map(
+    (item, idx) => item.group !== undefined && item.group !== items[idx - 1]?.group,
+  );
 
   return (
     <ul
@@ -69,8 +73,7 @@ export function AutocompleteMenu({
       style={floatingStyles}
     >
       {items.map((item, idx) => {
-        const showGroup = item.group !== undefined && item.group !== lastGroup;
-        lastGroup = item.group;
+        const showGroup = showGroupAt[idx];
         return (
           <li key={`${item.value}-${idx}`} role="presentation">
             {showGroup ? (
