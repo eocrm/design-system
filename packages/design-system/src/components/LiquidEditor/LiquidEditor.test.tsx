@@ -172,6 +172,22 @@ describe('LiquidEditor', () => {
     expect(ta).toHaveValue('{{ last_name');
   });
 
+  it('ArrowDown moves the active suggestion and accepts the navigated one', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    // `{{{{ ` types the literal `{{ ` — empty query opens the full list with the
+    // first option active. ArrowDown must move the active row to the second.
+    await user.type(ta, '{{{{ ');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('{Enter}');
+    // Second option is last_name — accepting must insert THAT, not the first.
+    await screen.findByDisplayValue('{{ last_name');
+    expect(ta).toHaveValue('{{ last_name');
+  });
+
   it('closes autocomplete on Escape without bubbling', async () => {
     const user = userEvent.setup();
     const onParentEscape = vi.fn();

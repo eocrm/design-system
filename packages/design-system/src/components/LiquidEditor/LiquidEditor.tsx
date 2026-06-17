@@ -22,6 +22,10 @@ import { useLiquidAutocomplete, applyCompletion } from './useLiquidAutocomplete'
 import type { LiquidEditorProps } from './types';
 import styles from './LiquidEditor.module.scss';
 
+// Keys the autocomplete menu owns while open — handled in keyDown, so key-up
+// must not recompute (which would reset the active suggestion).
+const MENU_NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape']);
+
 /**
  * Liquid template editor — a code-editor-flavored control for authoring Liquid
  * template strings: syntax highlighting, a line-number gutter, a variable-insert
@@ -240,10 +244,13 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
         const item = ac.items[index ?? ac.activeIndex];
         const ta = textareaRef.current;
         if (!item || !ta) return false;
-        const caret = ta.selectionStart ?? 0;
+        // Replace from the start of the typed token (ctx.wordStart) through the
+        // selection END — so any actively selected range is consumed by the
+        // inserted suggestion, not left dangling after it.
+        const replaceEnd = ta.selectionEnd ?? ta.selectionStart ?? 0;
         const { value: next, caret: nextCaret } = applyCompletion(
           value,
-          caret,
+          replaceEnd,
           ac.context,
           item.value,
         );
@@ -341,7 +348,14 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
                 refresh(next, e.target.selectionStart ?? next.length);
               }}
               onKeyDown={handleKeyDown}
-              onKeyUp={(e) => refresh(e.currentTarget.value, e.currentTarget.selectionStart ?? 0)}
+              onKeyUp={(e) => {
+                // While the menu is open, Arrow/Enter/Tab/Escape are owned by
+                // keyDown. Re-running refresh() here would recompute the
+                // suggestions and reset the active row to 0 — breaking keyboard
+                // navigation. Skip them; other keys still resync on key-up.
+                if (ac.open && MENU_NAV_KEYS.has(e.key)) return;
+                refresh(e.currentTarget.value, e.currentTarget.selectionStart ?? 0);
+              }}
               onClick={(e) => refresh(e.currentTarget.value, e.currentTarget.selectionStart ?? 0)}
               onScroll={syncScroll}
               onBlur={close}
