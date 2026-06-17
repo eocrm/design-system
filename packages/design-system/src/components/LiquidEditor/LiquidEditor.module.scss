@@ -31,6 +31,17 @@
   flex-direction: row;
 }
 
+// In the side-by-side (`previewPlacement="right"`) layout the editor chrome
+// (toolbar + body + footer) is wrapped in this column so the preview pane sits
+// beside it. Rule 4 note: `flex: 1` is INTERNAL layout (this column fills the
+// row next to the preview) — the public component boundary is .root.
+.editorColumn {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
 // ─── Focus ring on the outer shell (drawn on .root so it encloses gutter too) ─
 .root:focus-within {
   border-color: var(--liquid-editor-border-focus);
