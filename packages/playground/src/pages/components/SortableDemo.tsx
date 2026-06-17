@@ -50,6 +50,18 @@ export function SortableDemo() {
     { id: 'stage-5', label: 'Closed won' },
   ]);
 
+  const [contained, setContained] = useState([
+    { id: 'c-1', label: 'Discovery call' },
+    { id: 'c-2', label: 'Demo scheduled' },
+    { id: 'c-3', label: 'Contract draft' },
+  ]);
+
+  const [freeDrag, setFreeDrag] = useState([
+    { id: 'f-1', label: 'Discovery call' },
+    { id: 'f-2', label: 'Demo scheduled' },
+    { id: 'f-3', label: 'Contract draft' },
+  ]);
+
   return (
     <DemoLayout
       name="Sortable"
@@ -261,6 +273,65 @@ export function SortableDemo() {
             </Sortable.Item>
           ))}
         </Sortable>
+      </Example>
+
+      <Example
+        title="Restrict drag to container (default)"
+        description="By default (restrictToContainer) the dragged item is clamped to the list's bounding box — it can't be dragged off over unrelated UI. Pass restrictToContainer={false} for free-drag, where the item follows the cursor anywhere on the page. Drag a row in each list and notice how the left one stays inside its bounds while the right one doesn't."
+        code={`{/* Default: dragged item clamped to the list's bounds. */}
+<Sortable
+  onReorder={({ from, to }) => setContained((curr) => arrayMove(curr, from, to))}
+>
+  {contained.map((s) => (
+    <Sortable.Item key={s.id} id={s.id}>
+      <Card padding="sm">{s.label}</Card>
+    </Sortable.Item>
+  ))}
+</Sortable>
+
+{/* Free drag: item can be dragged anywhere on the page. */}
+<Sortable
+  restrictToContainer={false}
+  onReorder={({ from, to }) => setFreeDrag((curr) => arrayMove(curr, from, to))}
+>
+  {freeDrag.map((s) => (
+    <Sortable.Item key={s.id} id={s.id}>
+      <Card padding="sm">{s.label}</Card>
+    </Sortable.Item>
+  ))}
+</Sortable>`}
+      >
+        <Cluster gap="lg" align="start">
+          <Stack gap="xs">
+            <Text size="sm" weight="medium">
+              Contained (default)
+            </Text>
+            <Sortable
+              onReorder={({ from, to }) => setContained((curr) => arrayMove(curr, from, to))}
+            >
+              {contained.map((s) => (
+                <Sortable.Item key={s.id} id={s.id}>
+                  <Card padding="sm">{s.label}</Card>
+                </Sortable.Item>
+              ))}
+            </Sortable>
+          </Stack>
+          <Stack gap="xs">
+            <Text size="sm" weight="medium">
+              Free drag (restrictToContainer=false)
+            </Text>
+            <Sortable
+              restrictToContainer={false}
+              onReorder={({ from, to }) => setFreeDrag((curr) => arrayMove(curr, from, to))}
+            >
+              {freeDrag.map((s) => (
+                <Sortable.Item key={s.id} id={s.id}>
+                  <Card padding="sm">{s.label}</Card>
+                </Sortable.Item>
+              ))}
+            </Sortable>
+          </Stack>
+        </Cluster>
       </Example>
 
       <Stack gap="xs">
