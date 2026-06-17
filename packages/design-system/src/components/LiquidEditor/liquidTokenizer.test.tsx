@@ -9,7 +9,9 @@ function types(source: string, known?: string[]) {
 describe('tokenize', () => {
   it('reconstructs the source exactly from token values', () => {
     const src = 'Hi {{ first_name }} — {% if active %}yes{% endif %}';
-    const joined = tokenize(src).map((t) => t.value).join('');
+    const joined = tokenize(src)
+      .map((t) => t.value)
+      .join('');
     expect(joined).toBe(src);
   });
 
@@ -92,6 +94,10 @@ describe('tokenize', () => {
 
   it('handles an unterminated tag without throwing', () => {
     expect(() => tokenize('{{ name')).not.toThrow();
-    expect(tokenize('{{ name').map((t) => t.value).join('')).toBe('{{ name');
+    expect(
+      tokenize('{{ name')
+        .map((t) => t.value)
+        .join(''),
+    ).toBe('{{ name');
   });
 });

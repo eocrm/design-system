@@ -26,10 +26,32 @@ export interface LiquidToken {
 }
 
 const KEYWORDS = new Set([
-  'if', 'elsif', 'else', 'endif', 'unless', 'endunless',
-  'case', 'when', 'endcase', 'for', 'endfor', 'in', 'break', 'continue',
-  'and', 'or', 'not', 'contains', 'assign', 'capture', 'endcapture',
-  'true', 'false', 'nil', 'empty', 'null',
+  'if',
+  'elsif',
+  'else',
+  'endif',
+  'unless',
+  'endunless',
+  'case',
+  'when',
+  'endcase',
+  'for',
+  'endfor',
+  'in',
+  'break',
+  'continue',
+  'and',
+  'or',
+  'not',
+  'contains',
+  'assign',
+  'capture',
+  'endcapture',
+  'true',
+  'false',
+  'nil',
+  'empty',
+  'null',
 ]);
 
 const IDENT_START = /[A-Za-z_]/;

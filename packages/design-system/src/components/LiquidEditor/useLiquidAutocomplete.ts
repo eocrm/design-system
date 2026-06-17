@@ -140,8 +140,7 @@ export function useLiquidAutocomplete({ variables, filters, enabled }: UseLiquid
               .filter((f) => f.toLowerCase().startsWith(q))
               .map((f) => ({ value: f, label: f }))
           : variableItems.filter(
-              (it) =>
-                it.value.toLowerCase().startsWith(q) || it.label.toLowerCase().startsWith(q),
+              (it) => it.value.toLowerCase().startsWith(q) || it.label.toLowerCase().startsWith(q),
             );
       setState({ open: items.length > 0, items, activeIndex: 0, context: ctx });
     },
