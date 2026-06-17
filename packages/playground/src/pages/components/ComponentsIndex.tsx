@@ -32,6 +32,7 @@ import { Field } from '@eocrm/design-system';
 import { FormRow } from '@eocrm/design-system';
 import { FormSection } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
+import { LiquidEditor } from '@eocrm/design-system';
 import { Kbd } from '@eocrm/design-system';
 import { PasswordInput } from '@eocrm/design-system';
 import { PasswordStrengthMeter } from '@eocrm/design-system';
@@ -290,6 +291,20 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <div style={{ width: 200 }}>
         <Input placeholder="Type here…" />
       </div>
+    ),
+  },
+  {
+    to: '/components/liquid-editor',
+    name: 'LiquidEditor',
+    description: 'Liquid template editor with highlighting, autocomplete, and a preview pane.',
+    preview: (
+      <LiquidEditor
+        value="{{ first_name }}"
+        onChange={() => {}}
+        showToolbar={false}
+        showLineNumbers={false}
+        minRows={1}
+      />
     ),
   },
   {
