@@ -1,0 +1,265 @@
+@use './LiquidEditor.tokens';
+@use '@styles/mixins' as *;
+
+// ─── Root container ────────────────────────────────────────────────────────────
+// `width: 100%` is the intrinsic-fill pattern permitted by Rule 4.
+// `position` is not set here — the parent owns positioning.
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: var(--border-width) solid var(--liquid-editor-border);
+  border-radius: var(--liquid-editor-radius);
+  background: var(--liquid-editor-bg);
+  overflow: hidden;
+  font-family: var(--liquid-editor-font);
+  font-size: var(--liquid-editor-font-size);
+  color: var(--liquid-editor-fg);
+}
+
+.root.invalid {
+  border-color: var(--color-danger);
+}
+
+.root.disabled {
+  opacity: var(--opacity-disabled);
+  pointer-events: none;
+}
+
+// ─── Layout variant: side-by-side preview ──────────────────────────────────────
+.splitRight {
+  flex-direction: row;
+}
+
+// ─── Focus ring on the outer shell (drawn on .root so it encloses gutter too) ─
+.root:focus-within {
+  border-color: var(--liquid-editor-border-focus);
+  box-shadow: 0 0 0 var(--ring-width) var(--liquid-editor-ring);
+}
+
+// ─── Toolbar ───────────────────────────────────────────────────────────────────
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--liquid-editor-toolbar-bg);
+  border-bottom: var(--border-width) solid var(--liquid-editor-border);
+}
+
+// Rule 4 note: `flex: 1` on .toolbarSpacer is an INTERNAL layout spacer that
+// pushes adjacent toolbar controls apart — this is the component's own internal
+// structure, not a layout property on the component boundary.
+.toolbarSpacer {
+  flex: 1;
+}
+
+// ─── Editor body (gutter + editorStack side by side) ───────────────────────────
+.body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+}
+
+// ─── Line-number gutter ────────────────────────────────────────────────────────
+.gutter {
+  flex: none;
+  padding: var(--space-2);
+  text-align: right;
+  color: var(--liquid-editor-gutter-fg);
+  background: var(--liquid-editor-gutter-bg);
+  border-right: var(--border-width) solid var(--liquid-editor-border);
+  user-select: none;
+  overflow: hidden;
+  white-space: pre;
+  line-height: var(--line-height-normal);
+}
+
+// ─── Editor stack: highlight <pre> underneath, <textarea> on top ──────────────
+// `position: relative` anchors the absolutely-positioned .highlight child.
+// Rule 4 allows `position: relative` when it is anchoring an internal child.
+.editorStack {
+  position: relative;
+
+  // Rule 4 note: `flex: 1` here is an internal-layout property (fill the body
+  // row) — the public component root is .root, not .editorStack.
+  flex: 1;
+  min-width: 0;
+}
+
+// Shared font/padding metrics so that glyphs in the highlight <pre> and the
+// transparent <textarea> align 1:1 at every character position.
+%editor-metrics {
+  /* stylelint-disable-next-line property-disallowed-list -- neutralizing UA <pre> default margin, not component layout */
+  margin: 0;
+  padding: var(--space-2);
+  border: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: var(--line-height-normal);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  tab-size: 2;
+}
+
+// ─── Highlight layer (<pre> underneath, aria-hidden) ──────────────────────────
+.highlight {
+  @extend %editor-metrics;
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--liquid-editor-fg);
+  overflow: auto;
+}
+
+// ─── Transparent textarea overlaid on the highlight <pre> ─────────────────────
+// `color: transparent` makes typed text invisible (the highlight layer shows it).
+// `caret-color` restores the cursor so users know where they are typing.
+.textarea {
+  @extend %editor-metrics;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  resize: none;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--liquid-editor-fg);
+  outline: none;
+}
+
+.textarea::selection {
+  background: var(--liquid-editor-token-variable-bg);
+}
+
+.textarea:focus-visible {
+  // Suppress the native focus ring — .root:focus-within draws the ring instead.
+  outline: none;
+}
+
+// ─── Syntax-highlight token colours ───────────────────────────────────────────
+// These classes are applied to <span> elements inside the .highlight <pre>.
+
+// Delimiter: {{ }} {%  %} — dim so the variable stands out more
+.delimiter {
+  color: var(--liquid-editor-token-tag);
+  opacity: var(--opacity-muted);
+}
+
+.variable {
+  color: var(--liquid-editor-token-variable);
+}
+
+.filter {
+  color: var(--liquid-editor-token-filter);
+}
+
+.string {
+  color: var(--liquid-editor-token-string);
+}
+
+.number {
+  color: var(--liquid-editor-token-number);
+}
+
+.keyword {
+  color: var(--liquid-editor-token-keyword);
+  font-weight: var(--font-weight-medium);
+}
+
+.operator {
+  color: var(--liquid-editor-token-tag);
+}
+
+.unknown {
+  color: var(--liquid-editor-token-unknown);
+  text-decoration: underline wavy var(--liquid-editor-token-unknown-underline);
+}
+
+// ─── Footer (validation / unknown-variable warning bar) ───────────────────────
+.footer {
+  padding: var(--space-1) var(--space-2);
+  background: var(--liquid-editor-footer-bg);
+  color: var(--liquid-editor-footer-fg);
+  border-top: var(--border-width) solid var(--color-danger);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+}
+
+// ─── Preview pane ─────────────────────────────────────────────────────────────
+.preview {
+  background: var(--liquid-editor-preview-bg);
+  color: var(--liquid-editor-preview-fg);
+  border-top: var(--border-width) solid var(--liquid-editor-border);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+}
+
+// When the pane is to the right, flip the border from top to left and let it
+// share the horizontal space via flex.
+.splitRight .preview {
+  border-top: 0;
+  border-left: var(--border-width) solid var(--liquid-editor-border);
+  flex: 1;
+}
+
+.previewLabel {
+  display: block;
+  padding: var(--space-1) var(--space-2) 0;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+  color: var(--liquid-editor-preview-fg);
+}
+
+.previewBody {
+  padding: var(--space-1) var(--space-2) var(--space-2);
+}
+
+.previewLoading {
+  opacity: var(--opacity-muted);
+}
+
+// ─── Autocomplete menu (floating listbox) ─────────────────────────────────────
+.menu {
+  z-index: var(--liquid-editor-menu-z);
+  min-width: var(--liquid-editor-menu-min-width);
+  max-height: var(--liquid-editor-menu-max-height);
+  overflow-y: auto;
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--liquid-editor-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--liquid-editor-menu-shadow);
+  padding: var(--space-1) 0;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+}
+
+.menuGroupLabel {
+  padding: var(--space-1) var(--space-2) 0;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+  color: var(--color-fg-subtle);
+}
+
+.menuItem {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  color: var(--color-fg);
+}
+
+.menuItemActive {
+  background: var(--liquid-editor-token-variable-bg);
+}
+
+.menuItemType {
+  color: var(--color-fg-subtle);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+}

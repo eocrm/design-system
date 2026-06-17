@@ -1,0 +1,47 @@
+// LiquidEditor.tokens.scss — component tokens default to existing primitives so
+// dark theme works with no extra work and consumers can rebrand via AppProvider.
+:root {
+  // Editor surface
+  --liquid-editor-bg: var(--color-bg);
+  --liquid-editor-fg: var(--color-fg);
+  --liquid-editor-border: var(--color-border);
+  --liquid-editor-radius: var(--radius-md);
+  --liquid-editor-font: var(--font-family-mono);
+  --liquid-editor-font-size: var(--font-size-sm);
+
+  // Gutter (line numbers)
+  --liquid-editor-gutter-bg: var(--color-bg-muted);
+  --liquid-editor-gutter-fg: var(--color-fg-subtle);
+
+  // Syntax-highlight token colours
+  --liquid-editor-token-variable: var(--color-accent);
+  --liquid-editor-token-variable-bg: var(--color-accent-bg-subtle);
+  --liquid-editor-token-tag: var(--badge-fg-danger);
+  --liquid-editor-token-filter: var(--badge-fg-info);
+  --liquid-editor-token-string: var(--badge-fg-success);
+  --liquid-editor-token-number: var(--badge-fg-warning);
+  --liquid-editor-token-keyword: var(--badge-fg-danger);
+  --liquid-editor-token-unknown: var(--color-danger);
+  --liquid-editor-token-unknown-underline: var(--color-danger);
+
+  // Toolbar
+  --liquid-editor-toolbar-bg: var(--color-bg-muted);
+
+  // Footer (validation / unknown-variable warning)
+  --liquid-editor-footer-bg: var(--color-bg-danger-subtle);
+  --liquid-editor-footer-fg: var(--badge-fg-danger);
+
+  // Preview pane
+  --liquid-editor-preview-bg: var(--color-success-bg-subtle);
+  --liquid-editor-preview-fg: var(--badge-fg-success);
+
+  // Focus ring (mirrors Textarea / TimeField pattern)
+  --liquid-editor-ring: var(--ring-accent);
+  --liquid-editor-border-focus: var(--color-accent);
+
+  // Autocomplete menu
+  --liquid-editor-menu-min-width: var(--size-dropdown-min-width);
+  --liquid-editor-menu-max-height: 200px;
+  --liquid-editor-menu-shadow: var(--shadow-lg);
+  --liquid-editor-menu-z: var(--z-popover);
+}
