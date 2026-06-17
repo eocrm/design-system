@@ -68,6 +68,7 @@
       "Drawer",
       "FileUpload",
       "Image",
+      "LiquidEditor",
       "Modal",
       "OptionsPicker",
       "PasswordInput",
@@ -237,7 +238,8 @@
     "cluster": "Overlays",
     "composes": [],
     "composedBy": [
-      "DataTable"
+      "DataTable",
+      "LiquidEditor"
     ]
   },
   "EmptyState": {
@@ -369,6 +371,15 @@
     "cluster": "Navigation",
     "composes": [
       "Card"
+    ],
+    "composedBy": []
+  },
+  "LiquidEditor": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Button",
+      "DropdownMenu"
     ],
     "composedBy": []
   },

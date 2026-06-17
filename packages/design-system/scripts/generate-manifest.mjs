@@ -49,6 +49,7 @@ const CLUSTERS = {
   ImageCrop: 'Forms',
   Input: 'Forms',
   Kanban: 'Forms',
+  LiquidEditor: 'Forms',
   PasswordInput: 'Forms',
   PasswordStrengthMeter: 'Forms',
   Radio: 'Forms',
