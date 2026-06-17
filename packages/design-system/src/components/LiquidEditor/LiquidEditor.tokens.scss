@@ -16,11 +16,11 @@
   // Syntax-highlight token colours
   --liquid-editor-token-variable: var(--color-accent);
   --liquid-editor-token-variable-bg: var(--color-accent-bg-subtle);
-  --liquid-editor-token-tag: var(--badge-fg-danger);
-  --liquid-editor-token-filter: var(--badge-fg-info);
-  --liquid-editor-token-string: var(--badge-fg-success);
-  --liquid-editor-token-number: var(--badge-fg-warning);
-  --liquid-editor-token-keyword: var(--badge-fg-danger);
+  --liquid-editor-token-tag: var(--color-danger);
+  --liquid-editor-token-filter: var(--color-info);
+  --liquid-editor-token-string: var(--color-success);
+  --liquid-editor-token-number: var(--color-warning);
+  --liquid-editor-token-keyword: var(--color-danger);
   --liquid-editor-token-unknown: var(--color-danger);
   --liquid-editor-token-unknown-underline: var(--color-danger);
 
@@ -29,11 +29,11 @@
 
   // Footer (validation / unknown-variable warning)
   --liquid-editor-footer-bg: var(--color-bg-danger-subtle);
-  --liquid-editor-footer-fg: var(--badge-fg-danger);
+  --liquid-editor-footer-fg: var(--color-danger-fg);
 
   // Preview pane
   --liquid-editor-preview-bg: var(--color-success-bg-subtle);
-  --liquid-editor-preview-fg: var(--badge-fg-success);
+  --liquid-editor-preview-fg: var(--color-success-fg);
 
   // Focus ring (mirrors Textarea / TimeField pattern)
   --liquid-editor-ring: var(--ring-accent);
