@@ -144,6 +144,12 @@
   background: var(--liquid-editor-token-variable-bg);
 }
 
+// The textarea text is transparent, so the placeholder (which inherits `color`)
+// would be invisible too — restore a muted color explicitly.
+.textarea::placeholder {
+  color: var(--liquid-editor-gutter-fg);
+}
+
 .textarea:focus-visible {
   // Suppress the native focus ring — .root:focus-within draws the ring instead.
   outline: none;

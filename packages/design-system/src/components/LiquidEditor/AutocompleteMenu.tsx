@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useFloating, autoUpdate, flip, shift, offset } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import type { AutocompleteItem } from './useLiquidAutocomplete';
@@ -51,6 +52,10 @@ export function AutocompleteMenu({
 
   const { refs, floatingStyles } = useFloating({
     placement: 'bottom-start',
+    // `fixed` + viewport-coord anchor + portal to <body> so the menu escapes the
+    // editor's `overflow: hidden` and any positioned/scrolled ancestor (Drawer,
+    // Modal). Mirrors how DropdownMenu / Popover / Tooltip position themselves.
+    strategy: 'fixed',
     whileElementsMounted: autoUpdate,
     middleware: [offset(4), flip(), shift({ padding: 4 })],
     elements: { reference: virtualRef },
@@ -63,7 +68,7 @@ export function AutocompleteMenu({
     (item, idx) => item.group !== undefined && item.group !== items[idx - 1]?.group,
   );
 
-  return (
+  return createPortal(
     <ul
       ref={refs.setFloating}
       id={listboxId}
@@ -98,6 +103,7 @@ export function AutocompleteMenu({
           </li>
         );
       })}
-    </ul>
+    </ul>,
+    document.body,
   );
 }

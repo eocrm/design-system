@@ -108,6 +108,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
     const gutterRef = useRef<HTMLDivElement | null>(null);
     const reactId = useId();
     const listboxId = `${reactId}-listbox`;
+    const footerId = `${reactId}-footer`;
 
     // Merge the external ref with the internal one so this component can both
     // expose the textarea to consumers AND drive it (caret restore, autoresize).
@@ -292,6 +293,11 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
     const footer =
       error ??
       (unknowns.length > 0 ? t('liquidEditor.unknownVariable', { name: unknowns[0] }) : null);
+    // Associate the footer description (error / unknown-variable warning) with
+    // the textarea, merged with any consumer-supplied `aria-describedby`.
+    const describedBy =
+      [aria['aria-describedby'], footer != null ? footerId : null].filter(Boolean).join(' ') ||
+      undefined;
 
     const editor = (
       <>
@@ -337,6 +343,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
                 (aria['aria-labelledby'] ? undefined : t('liquidEditor.editorLabel'))
               }
               aria-invalid={invalid || undefined}
+              aria-describedby={describedBy}
               role="combobox"
               aria-expanded={ac.open}
               aria-controls={ac.open ? listboxId : undefined}
@@ -362,7 +369,11 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
             />
           </div>
         </div>
-        {footer ? <div className={styles.footer}>{footer}</div> : null}
+        {footer ? (
+          <div id={footerId} className={styles.footer}>
+            {footer}
+          </div>
+        ) : null}
       </>
     );
 

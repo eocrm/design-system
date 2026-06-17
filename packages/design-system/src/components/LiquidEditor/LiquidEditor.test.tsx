@@ -110,6 +110,29 @@ describe('LiquidEditor', () => {
     expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
   });
 
+  it('associates the error footer with the textarea via aria-describedby', () => {
+    renderEditor(<LiquidEditor value="" onChange={() => {}} invalid error="Liquid syntax error" />);
+    const ta = screen.getByRole('combobox');
+    const describedby = ta.getAttribute('aria-describedby');
+    expect(describedby).toBeTruthy();
+    expect(document.getElementById(describedby!)).toHaveTextContent('Liquid syntax error');
+  });
+
+  it('merges a consumer aria-describedby with the footer description', () => {
+    renderEditor(
+      <LiquidEditor
+        value="{{ nope }}"
+        onChange={() => {}}
+        variables={VARS}
+        aria-describedby="ext-help"
+      />,
+    );
+    const describedby = screen.getByRole('combobox').getAttribute('aria-describedby') ?? '';
+    expect(describedby.split(' ')).toContain('ext-help');
+    // the footer id is also present
+    expect(describedby.split(' ').length).toBeGreaterThan(1);
+  });
+
   it('renders the preview pane with content', () => {
     renderEditor(<LiquidEditor value="" onChange={() => {}} preview="Ada SMITH" />);
     expect(screen.getByText('Preview')).toBeInTheDocument();

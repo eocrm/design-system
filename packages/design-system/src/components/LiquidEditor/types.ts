@@ -61,6 +61,13 @@ export interface LiquidEditorProps {
   'aria-label'?: string;
   /** Id of an external label element. */
   'aria-labelledby'?: string;
+  /**
+   * Id(s) of external description element(s). Merged with the component's own
+   * footer description (the `error` / unknown-variable message), so a screen
+   * reader announces both. You usually don't need this — the footer is wired
+   * automatically; pass it only to add an extra external description.
+   */
+  'aria-describedby'?: string;
   /** Extra class on the root wrapper. */
   className?: string;
 }
