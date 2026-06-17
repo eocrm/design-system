@@ -5,6 +5,7 @@ import {
   isValidElement,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ButtonHTMLAttributes,
   type HTMLAttributes,
@@ -19,6 +20,7 @@ import {
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
+  type Modifier,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -26,8 +28,9 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { CSS, type Transform } from '@dnd-kit/utilities';
 import clsx from 'clsx';
+import { mergeRefs } from '../_internal/refs';
 import styles from './Sortable.module.scss';
 
 /**
@@ -42,6 +45,32 @@ export interface SortableReorderEvent {
   id: string | number;
 }
 
+/**
+ * Clamp a drag `transform` so the dragged node (`nodeRect`) stays within
+ * `boundingRect`. Pure function mirroring dnd-kit's `restrictToBoundingRect`;
+ * exported so the clamp math can be unit-tested without a real DOM / drag.
+ *
+ * `scaleX` / `scaleY` pass through untouched — only the translation is clamped.
+ */
+export function restrictTransformToRect(
+  transform: Transform,
+  nodeRect: { top: number; bottom: number; left: number; right: number },
+  boundingRect: { top: number; left: number; width: number; height: number },
+): Transform {
+  const value = { ...transform };
+  if (nodeRect.top + transform.y <= boundingRect.top) {
+    value.y = boundingRect.top - nodeRect.top;
+  } else if (nodeRect.bottom + transform.y >= boundingRect.top + boundingRect.height) {
+    value.y = boundingRect.top + boundingRect.height - nodeRect.bottom;
+  }
+  if (nodeRect.left + transform.x <= boundingRect.left) {
+    value.x = boundingRect.left - nodeRect.left;
+  } else if (nodeRect.right + transform.x >= boundingRect.left + boundingRect.width) {
+    value.x = boundingRect.left + boundingRect.width - nodeRect.right;
+  }
+  return value;
+}
+
 export interface SortableProps extends HTMLAttributes<HTMLOListElement> {
   /**
    * Fires after a drag or keyboard move with the new position. Consumer
@@ -50,6 +79,13 @@ export interface SortableProps extends HTMLAttributes<HTMLOListElement> {
    * Not fired if the drop position equals the source position (no-op).
    */
   onReorder?: (event: SortableReorderEvent) => void;
+  /**
+   * When `true` (default), the dragged item is clamped to the list's bounding
+   * box — it can't be dragged outside the `<ol>`. Set `false` for free-drag
+   * (the item can be dragged anywhere on the page). For a vertical list this
+   * constrains the drag vertically to the list's extent.
+   */
+  restrictToContainer?: boolean;
 }
 
 export interface SortableItemProps extends Omit<HTMLAttributes<HTMLLIElement>, 'id'> {
@@ -159,6 +195,12 @@ function containsHandle(children: ReactNode): boolean {
  *   ))}
  * </Sortable>
  *
+ * @remarks Drag confinement
+ * - By default (`restrictToContainer`) the dragged item is clamped to the
+ *   list's bounding box and can't be dragged off over unrelated UI. Pass
+ *   `restrictToContainer={false}` for free-drag if you genuinely want the item
+ *   to follow the cursor anywhere on the page.
+ *
  * @remarks When NOT to use
  * - Tabular data — use `<Table>` / `<DataTable>` (DataTable already uses
  *   dnd-kit for column reorder).
@@ -185,10 +227,13 @@ function containsHandle(children: ReactNode): boolean {
  *   render but won't be reorderable.
  */
 const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function SortableRoot(
-  { onReorder, className, children, ...rest },
+  { onReorder, restrictToContainer = true, className, children, ...rest },
   ref,
 ) {
   const [activeId, setActiveId] = useState<string | number | null>(null);
+  // Internal handle on the <ol> so the restrict modifier can read the live
+  // list rect, independent of whether the consumer forwards a ref.
+  const olRef = useRef<HTMLOListElement | null>(null);
 
   const itemIds = useMemo(() => {
     const ids: (string | number)[] = [];
@@ -247,23 +292,42 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Modifier that confines the drag transform to the live <ol> bounding box.
+  // A modifier is a pure `(args) => Transform`; we read the list rect from the
+  // internal ref rather than dnd-kit's `containerNodeRect` (which is unreliable
+  // through the DragOverlay portal). Memoized once — it closes over the ref,
+  // so it always sees the current node.
+  const restrictModifier = useMemo<Modifier>(
+    () =>
+      ({ transform, draggingNodeRect }) => {
+        const container = olRef.current?.getBoundingClientRect();
+        if (!draggingNodeRect || !container) return transform;
+        return restrictTransformToRect(transform, draggingNodeRect, container);
+      },
+    [],
+  );
+  const modifiers = restrictToContainer ? [restrictModifier] : undefined;
+
   return (
     <DndContext
       sensors={sensors}
+      modifiers={modifiers}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
       <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-        <ol ref={ref} className={clsx(styles.list, className)} {...rest}>
+        <ol ref={mergeRefs(olRef, ref)} className={clsx(styles.list, className)} {...rest}>
           {children}
         </ol>
       </SortableContext>
       {/* The dragged item lives in a portaled, fixed-position overlay that owns
           the drag + drop animation. The list <li> becomes an invisible
           placeholder during drag, so a late/async order update from onReorder
-          can never leave a stale dnd-kit transform on a list <li> (#165). */}
-      <DragOverlay dropAnimation={prefersReducedMotion ? null : undefined}>
+          can never leave a stale dnd-kit transform on a list <li> (#165). The
+          overlay is the *visible* drag, so it must carry the restrict modifier
+          too — DndContext alone constrains the underlying item transform. */}
+      <DragOverlay modifiers={modifiers} dropAnimation={prefersReducedMotion ? null : undefined}>
         {activeChildren != null ? (
           <SortableItemContext.Provider value={OVERLAY_ITEM_CONTEXT}>
             <div className={clsx(styles.item, styles.overlayItem)} data-dragging="true">
