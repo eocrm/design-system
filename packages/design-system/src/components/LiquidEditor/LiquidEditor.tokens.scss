@@ -1,0 +1,50 @@
+// LiquidEditor.tokens.scss — component tokens default to existing primitives so
+// dark theme works with no extra work and consumers can rebrand via AppProvider.
+:root {
+  // Editor surface
+  --liquid-editor-bg: var(--color-bg);
+  --liquid-editor-fg: var(--color-fg);
+  --liquid-editor-border: var(--color-border);
+  --liquid-editor-radius: var(--radius-md);
+  --liquid-editor-font: var(--font-family-mono);
+  --liquid-editor-font-size: var(--font-size-sm);
+
+  // Gutter (line numbers)
+  --liquid-editor-gutter-bg: var(--color-bg-muted);
+  --liquid-editor-gutter-fg: var(--color-fg-subtle);
+
+  // Syntax-highlight token colours
+  --liquid-editor-token-variable: var(--color-accent);
+  --liquid-editor-token-variable-bg: var(--color-accent-bg-subtle);
+  --liquid-editor-token-tag: var(--color-danger);
+  --liquid-editor-token-filter: var(--color-info);
+  --liquid-editor-token-string: var(--color-success);
+  --liquid-editor-token-number: var(--color-warning);
+  --liquid-editor-token-keyword: var(--color-danger);
+  --liquid-editor-token-unknown: var(--color-danger);
+  --liquid-editor-token-unknown-underline: var(--color-danger);
+
+  // Toolbar
+  --liquid-editor-toolbar-bg: var(--color-bg-muted);
+
+  // Footer (validation / unknown-variable warning)
+  --liquid-editor-footer-bg: var(--color-bg-danger-subtle);
+
+  // Tonal TEXT on the subtle tonal background — the base tone, not `*-fg`
+  // (which is the on-solid white). Pairs legibly with the subtle bg above.
+  --liquid-editor-footer-fg: var(--color-danger);
+
+  // Preview pane
+  --liquid-editor-preview-bg: var(--color-success-bg-subtle);
+  --liquid-editor-preview-fg: var(--color-success);
+
+  // Focus ring (mirrors Textarea / TimeField pattern)
+  --liquid-editor-ring: var(--ring-accent);
+  --liquid-editor-border-focus: var(--color-accent);
+
+  // Autocomplete menu
+  --liquid-editor-menu-min-width: var(--size-dropdown-min-width);
+  --liquid-editor-menu-max-height: 200px;
+  --liquid-editor-menu-shadow: var(--shadow-lg);
+  --liquid-editor-menu-z: var(--z-popover);
+}

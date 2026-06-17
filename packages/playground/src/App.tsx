@@ -29,6 +29,7 @@ import { SocialButtonDemo } from './pages/components/SocialButtonDemo';
 import { ButtonGroupDemo } from './pages/components/ButtonGroupDemo';
 import { DatePickersDemo } from './pages/components/DatePickersDemo';
 import { InputDemo } from './pages/components/InputDemo';
+import { LiquidEditorDemo } from './pages/components/LiquidEditorDemo';
 import { KanbanDemo } from './pages/components/KanbanDemo';
 import { KbdDemo } from './pages/components/KbdDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
@@ -135,6 +136,7 @@ export default function App() {
             <Route path="/components/button-group" element={<ButtonGroupDemo />} />
             <Route path="/components/datepickers" element={<DatePickersDemo />} />
             <Route path="/components/input" element={<InputDemo />} />
+            <Route path="/components/liquid-editor" element={<LiquidEditorDemo />} />
             <Route path="/components/kanban" element={<KanbanDemo />} />
             <Route path="/components/kbd" element={<KbdDemo />} />
             <Route path="/components/pagination" element={<PaginationDemo />} />

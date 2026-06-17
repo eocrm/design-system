@@ -77,6 +77,7 @@ import {
   Group,
   Columns2,
   Component,
+  Braces,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -157,6 +158,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/file-upload', label: 'FileUpload', icon: UploadCloud, end: false },
       { to: '/components/image-crop', label: 'ImageCrop', icon: Crop, end: false },
       { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
+      { to: '/components/liquid-editor', label: 'LiquidEditor', icon: Braces, end: false },
       { to: '/components/password-input', label: 'PasswordInput', icon: KeyRound, end: false },
       {
         to: '/components/password-strength-meter',

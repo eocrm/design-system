@@ -873,6 +873,21 @@ Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once pe
 - ❌ Non-stable column / card ids (e.g. array indices). Both must persist across reorders.
 - ❌ Mutating board state in place inside `onMove`. Always return a new object/array reference.
 
+### `<LiquidEditor>` — Liquid template editor
+
+Liquid template editor: syntax highlighting, line-number gutter, variable-insert menu, caret autocomplete, client-side unknown-variable flagging, and a controlled preview pane. Controlled only (`value` + `onChange`). It never parses or renders Liquid — backend syntax errors arrive via `invalid`/`error`; the rendered preview arrives via `preview`/`previewStatus`.
+
+```tsx
+const VARS = [
+  { code: 'first_name', label: 'First name', type: 'text', group: 'Built-in' },
+  { code: 'last_name', label: 'Last name', type: 'text', group: 'Built-in' },
+];
+
+<LiquidEditor value={formula} onChange={setFormula} variables={VARS} />;
+```
+
+When NOT to use: plain prose → `Textarea`; static read-only code → playground `CodeBlock`. Don't expect it to validate syntax (feed `error` from the backend) or to produce its own preview (preview is consumer-rendered).
+
 ### `<ImageCrop>` — controlled image cropper
 
 ```tsx

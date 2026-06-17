@@ -162,4 +162,14 @@ export const en: Messages = {
   field: {
     optional: '(optional)',
   },
+  liquidEditor: {
+    insertVariable: 'Insert variable',
+    noVariables: 'No variables available',
+    preview: 'Preview',
+    previewRendering: 'Rendering…',
+    previewError: 'Could not render preview',
+    unknownVariable: ({ name }) => `Unknown variable "${name}"`,
+    editorLabel: 'Liquid template',
+    suggestions: 'Suggestions',
+  },
 };

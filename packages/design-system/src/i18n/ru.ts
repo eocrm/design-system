@@ -164,4 +164,14 @@ export const ru: Messages = {
   field: {
     optional: '(необязательно)',
   },
+  liquidEditor: {
+    insertVariable: 'Вставить переменную',
+    noVariables: 'Нет доступных переменных',
+    preview: 'Предпросмотр',
+    previewRendering: 'Отрисовка…',
+    previewError: 'Не удалось отрисовать предпросмотр',
+    unknownVariable: ({ name }) => `Неизвестная переменная «${name}»`,
+    editorLabel: 'Шаблон Liquid',
+    suggestions: 'Подсказки',
+  },
 };
