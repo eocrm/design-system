@@ -258,6 +258,24 @@ export interface Messages {
     /** Marker appended to a Field's label when the field is optional. */
     optional: string;
   };
+  liquidEditor: {
+    /** Toolbar button label that opens the variable-insert menu. */
+    insertVariable: string;
+    /** Empty-state copy when there are no variables to insert / suggest. */
+    noVariables: string;
+    /** Label for the preview pane + its show/hide toggle. */
+    preview: string;
+    /** Copy shown in the preview pane while the consumer is rendering. */
+    previewRendering: string;
+    /** Copy shown in the preview pane when rendering failed. */
+    previewError: string;
+    /** Function leaf — footer warning naming an unknown variable. */
+    unknownVariable: (params: { name: string }) => string;
+    /** Default aria-label on the editor textarea when none is supplied. */
+    editorLabel: string;
+    /** aria-label on the autocomplete suggestion listbox. */
+    suggestions: string;
+  };
 }
 
 /** Supported locale codes. v1 ships English and Russian. */
