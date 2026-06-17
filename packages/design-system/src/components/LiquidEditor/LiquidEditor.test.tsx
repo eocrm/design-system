@@ -82,9 +82,9 @@ describe('LiquidEditor', () => {
         <LiquidEditor value={'a\nb\nc'} onChange={() => {}} showLineNumbers={false} />
       </I18nProvider>,
     );
-    expect(
-      [...container.querySelectorAll('div')].some((d) => d.textContent === '1\n2\n3'),
-    ).toBe(false);
+    expect([...container.querySelectorAll('div')].some((d) => d.textContent === '1\n2\n3')).toBe(
+      false,
+    );
   });
 
   it('flags an unknown variable in the footer', () => {
@@ -155,6 +155,21 @@ describe('LiquidEditor', () => {
     expect(ta).toHaveValue('{{ first_name');
     // Menu closed after accept.
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('inserts the clicked suggestion, not the keyboard-active one', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    // `{{{{ ` types the literal `{{ ` — an empty query opens the full list,
+    // with the FIRST option keyboard-active.
+    await user.type(ta, '{{{{ ');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    // Click a NON-active option (last_name) — it must win over the active first_name.
+    await user.click(screen.getByRole('option', { name: /Last name/ }));
+    await screen.findByDisplayValue('{{ last_name');
+    expect(ta).toHaveValue('{{ last_name');
   });
 
   it('closes autocomplete on Escape without bubbling', async () => {

@@ -232,25 +232,30 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
       [value, commit],
     );
 
-    const acceptActive = useCallback(() => {
-      if (!ac.open || !ac.context) return false;
-      const item = ac.items[ac.activeIndex];
-      const ta = textareaRef.current;
-      if (!item || !ta) return false;
-      const caret = ta.selectionStart ?? 0;
-      const { value: next, caret: nextCaret } = applyCompletion(
-        value,
-        caret,
-        ac.context,
-        item.value,
-      );
-      close();
-      // A just-completed word still matches its variable; suppress the
-      // immediate reopen at the resulting caret/value until the user types more.
-      dismissAt(next, nextCaret);
-      commit(next, nextCaret);
-      return true;
-    }, [ac, value, close, commit, dismissAt]);
+    // Accept a suggestion. Defaults to the keyboard-active one; pass an explicit
+    // index for mouse-clicks (which target an item regardless of the active row).
+    const acceptActive = useCallback(
+      (index?: number) => {
+        if (!ac.open || !ac.context) return false;
+        const item = ac.items[index ?? ac.activeIndex];
+        const ta = textareaRef.current;
+        if (!item || !ta) return false;
+        const caret = ta.selectionStart ?? 0;
+        const { value: next, caret: nextCaret } = applyCompletion(
+          value,
+          caret,
+          ac.context,
+          item.value,
+        );
+        close();
+        // A just-completed word still matches its variable; suppress the
+        // immediate reopen at the resulting caret/value until the user types more.
+        dismissAt(next, nextCaret);
+        commit(next, nextCaret);
+        return true;
+      },
+      [ac, value, close, commit, dismissAt],
+    );
 
     const handleKeyDown = useCallback(
       (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -374,7 +379,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
             activeIndex={ac.activeIndex}
             anchorRect={anchorRect}
             listboxId={listboxId}
-            onSelect={() => acceptActive()}
+            onSelect={(_item, index) => acceptActive(index)}
           />
         ) : null}
       </div>
