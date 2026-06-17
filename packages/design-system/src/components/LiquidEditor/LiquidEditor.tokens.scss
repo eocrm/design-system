@@ -29,11 +29,14 @@
 
   // Footer (validation / unknown-variable warning)
   --liquid-editor-footer-bg: var(--color-bg-danger-subtle);
-  --liquid-editor-footer-fg: var(--color-danger-fg);
+
+  // Tonal TEXT on the subtle tonal background — the base tone, not `*-fg`
+  // (which is the on-solid white). Pairs legibly with the subtle bg above.
+  --liquid-editor-footer-fg: var(--color-danger);
 
   // Preview pane
   --liquid-editor-preview-bg: var(--color-success-bg-subtle);
-  --liquid-editor-preview-fg: var(--color-success-fg);
+  --liquid-editor-preview-fg: var(--color-success);
 
   // Focus ring (mirrors Textarea / TimeField pattern)
   --liquid-editor-ring: var(--ring-accent);
