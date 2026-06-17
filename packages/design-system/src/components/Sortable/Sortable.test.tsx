@@ -1,6 +1,6 @@
 import { createRef } from 'react';
 import { render } from '@testing-library/react';
-import { Sortable } from './Sortable';
+import { Sortable, restrictTransformToRect } from './Sortable';
 
 describe('Sortable', () => {
   it('renders <ol> with items as <li> elements', () => {
@@ -180,5 +180,96 @@ describe('Sortable', () => {
     expect(consoleWarn).not.toHaveBeenCalled();
     consoleError.mockRestore();
     consoleWarn.mockRestore();
+  });
+
+  it('renders with restrictToContainer={false} (free drag) without crashing', () => {
+    const { container } = render(
+      <Sortable restrictToContainer={false}>
+        <Sortable.Item id="a">A</Sortable.Item>
+        <Sortable.Item id="b">B</Sortable.Item>
+      </Sortable>,
+    );
+    expect(container.querySelector('ol')).not.toBeNull();
+    expect(container.querySelectorAll('li')).toHaveLength(2);
+  });
+
+  it('forwards ref to the <ol> with restrictToContainer enabled (default)', () => {
+    // restrictToContainer merges an internal ref onto the <ol>; the consumer's
+    // ref must still resolve to the same node.
+    const ref = createRef<HTMLOListElement>();
+    render(
+      <Sortable ref={ref}>
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    expect(ref.current?.tagName).toBe('OL');
+  });
+});
+
+describe('restrictTransformToRect', () => {
+  // A 50px-tall, 100px-wide node sitting at (left:10, top:20) inside a
+  // 400x300 bounding box anchored at (left:0, top:0).
+  const nodeRect = { top: 20, bottom: 70, left: 10, right: 110 };
+  const boundingRect = { top: 0, left: 0, width: 400, height: 300 };
+
+  it('returns the transform unchanged when fully within bounds', () => {
+    const transform = { x: 5, y: 5, scaleX: 1, scaleY: 1 };
+    expect(restrictTransformToRect(transform, nodeRect, boundingRect)).toEqual(transform);
+  });
+
+  it('clamps y so the top edge stays at the bound when dragged above', () => {
+    // y = -100 would push top to -80 (above boundingRect.top=0). Clamp to keep
+    // the top edge at the bound: y = boundingRect.top - nodeRect.top = -20.
+    const result = restrictTransformToRect(
+      { x: 0, y: -100, scaleX: 1, scaleY: 1 },
+      nodeRect,
+      boundingRect,
+    );
+    expect(result.y).toBe(-20);
+    expect(result.x).toBe(0);
+  });
+
+  it('clamps y so the bottom edge stays at the bound when dragged below', () => {
+    // y = 1000 would push bottom way past 300. Clamp:
+    // y = boundingRect.top + height - nodeRect.bottom = 0 + 300 - 70 = 230.
+    const result = restrictTransformToRect(
+      { x: 0, y: 1000, scaleX: 1, scaleY: 1 },
+      nodeRect,
+      boundingRect,
+    );
+    expect(result.y).toBe(230);
+  });
+
+  it('clamps x so the left edge stays at the bound when dragged left', () => {
+    // x = -100 would push left to -90 (< boundingRect.left=0). Clamp:
+    // x = boundingRect.left - nodeRect.left = 0 - 10 = -10.
+    const result = restrictTransformToRect(
+      { x: -100, y: 0, scaleX: 1, scaleY: 1 },
+      nodeRect,
+      boundingRect,
+    );
+    expect(result.x).toBe(-10);
+    expect(result.y).toBe(0);
+  });
+
+  it('clamps x so the right edge stays at the bound when dragged right', () => {
+    // x = 1000 would push right past 400. Clamp:
+    // x = boundingRect.left + width - nodeRect.right = 0 + 400 - 110 = 290.
+    const result = restrictTransformToRect(
+      { x: 1000, y: 0, scaleX: 1, scaleY: 1 },
+      nodeRect,
+      boundingRect,
+    );
+    expect(result.x).toBe(290);
+  });
+
+  it('preserves scaleX / scaleY untouched', () => {
+    const result = restrictTransformToRect(
+      { x: 1000, y: 1000, scaleX: 0.5, scaleY: 0.75 },
+      nodeRect,
+      boundingRect,
+    );
+    expect(result.scaleX).toBe(0.5);
+    expect(result.scaleY).toBe(0.75);
   });
 });
