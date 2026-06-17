@@ -335,6 +335,14 @@ export type { CursorPaginationProps } from './components/CursorPagination';
 export { Textarea } from './components/Textarea';
 export type { TextareaProps, TextareaSize, TextareaResize } from './components/Textarea';
 
+export { LiquidEditor } from './components/LiquidEditor';
+export type {
+  LiquidEditorProps,
+  LiquidVariable,
+  LiquidPreviewStatus,
+  LiquidPreviewPlacement,
+} from './components/LiquidEditor';
+
 export { FileUpload } from './components/FileUpload';
 export type {
   FileUploadProps,
