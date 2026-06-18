@@ -46,5 +46,10 @@
   --liquid-editor-menu-min-width: var(--size-dropdown-min-width);
   --liquid-editor-menu-max-height: 200px;
   --liquid-editor-menu-shadow: var(--shadow-lg);
-  --liquid-editor-menu-z: var(--z-popover);
+
+  // The menu is portaled to <body>; it must clear a Drawer/Modal it's hosted
+  // inside (z-modal 1100), so it sits on the overlay-floating layer (1190) like
+  // the editor's own InsertVariableMenu (a DropdownMenu) — not the lower popover
+  // layer. Overridable via :root. (issue #171)
+  --liquid-editor-menu-z: var(--z-overlay-floating);
 }
