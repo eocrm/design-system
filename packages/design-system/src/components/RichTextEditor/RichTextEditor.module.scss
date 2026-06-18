@@ -30,3 +30,38 @@
   cursor: default;
   background: var(--color-bg-muted);
 }
+
+// The component's own internal wrapper when `toolbar` is set: stacks the toolbar
+// above the editable surface as one bordered control.
+.shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-bottom: 0;
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+  background: var(--color-bg-muted);
+}
+
+// A 1px vertical rule between toolbar groups. A fixed height (not `align-self:
+// stretch`, which Rule 4 disallows) sizes it to roughly the small-button height.
+.toolbarSep {
+  width: var(--border-width);
+  height: var(--size-sm);
+  background-color: var(--color-border);
+}
+
+// Square the editable surface's top corners so it tucks under the toolbar.
+.shell .root {
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+}

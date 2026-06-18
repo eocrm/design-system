@@ -3,17 +3,31 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
+  useState,
   type HTMLAttributes,
 } from 'react';
 import clsx from 'clsx';
-import type { RichDoc, Range } from '../RichText/engine/model';
+import type { RichDoc, Range, Mark, MarkType, Point } from '../RichText/engine/model';
 import { renderDoc } from '../RichText/engine/renderDoc';
-import { blockLength } from '../RichText/engine/position';
+import { blockLength, isCollapsed } from '../RichText/engine/position';
+import { insertText } from '../RichText/engine/transforms';
+import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
 import { readSelection, writeSelection } from './selection';
 import { applyInput } from './input';
-import { applyShortcut } from './shortcuts';
+import { shortcutMark } from './shortcuts';
+import {
+  activeMarks as deriveActiveMarks,
+  currentBlock as deriveCurrentBlock,
+  runToggleMark,
+  runSetBlock,
+  runToggleList,
+  runIndent,
+  applyExactMarks,
+} from './commands';
+import { RichTextToolbar, type BlockChoice } from './RichTextToolbar';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextEditorProps extends Omit<
@@ -30,21 +44,55 @@ export interface RichTextEditorProps extends Omit<
   placeholder?: string;
   /** Focus the editor on mount. */
   autoFocus?: boolean;
+  /**
+   * Render the built-in formatting toolbar above the editor — mark toggle
+   * buttons (bold/italic/underline/strike), a block-type dropdown
+   * (paragraph/headings/quote/code), and bullet/numbered list toggles. The
+   * toolbar dispatches through the same commit path the keyboard uses and
+   * reflects the active marks + current block of the live selection. Default
+   * `false` (keyboard-only). When `readOnly`, the toolbar renders disabled.
+   */
+  toolbar?: boolean;
 }
 
 function isEmptyDoc(doc: RichDoc): boolean {
   return doc.blocks.length === 1 && blockLength(doc.blocks[0]) === 0;
 }
 
+/** Toggle `mark` within a `Mark[]` (used to fold a shortcut into pending marks). */
+function toggleInList(marks: Mark[], mark: Mark): Mark[] {
+  return hasMark(marks, mark.type) ? withoutMark(marks, mark.type) : withMark(marks, mark);
+}
+
+/** Marks of the character immediately before the caret (none at a block start). */
+function marksAtCaretMarks(doc: RichDoc, caret: Point): Mark[] {
+  const idx = doc.blocks.findIndex((b) => b.id === caret.blockId);
+  if (idx === -1 || caret.offset <= 0) return [];
+  let pos = 0;
+  for (const run of doc.blocks[idx].inlines) {
+    const end = pos + run.text.length;
+    if (caret.offset - 1 >= pos && caret.offset - 1 < end) return run.marks;
+    pos = end;
+  }
+  return [];
+}
+
 /**
  * Controlled rich-text editor — a contentEditable surface over the in-house
  * engine. Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a
- * selection; Enter splits, Backspace/Delete merge. The model is the source of
- * truth: every input is replayed as an engine transform and the DOM re-rendered.
+ * selection (with a collapsed caret they stage a *pending* mark applied to the
+ * next typed text); Enter splits, Backspace/Delete merge. Pass `toolbar` for the
+ * built-in formatting toolbar. Inside a list, Tab/⇧Tab indent/outdent and Enter
+ * on an empty item exits to a paragraph. The model is the source of truth: every
+ * input is replayed as an engine transform and the DOM re-rendered.
  *
  * @example
  * const [doc, setDoc] = useState(emptyDoc());
  * <RichTextEditor value={doc} onChange={setDoc} placeholder="Write a note…" />
+ *
+ * @example
+ * // With the built-in toolbar (mark buttons, block-type menu, list toggles).
+ * <RichTextEditor value={doc} onChange={setDoc} toolbar />
  *
  * @example
  * // Read-only display of an existing document.
@@ -57,12 +105,23 @@ function isEmptyDoc(doc: RichDoc): boolean {
  * - ❌ Treating it as uncontrolled — you MUST feed `onChange`'s doc back into
  *   `value`, or edits won't stick.
  * - ❌ Mutating `value` in place — pass the new doc the transforms return.
- * - ❌ Expecting a toolbar / lists / links / undo — not in this slice; use the
- *   keyboard shortcuts for marks and Enter/Backspace for structure.
+ * - ❌ Expecting links / undo — not in this slice; use the keyboard shortcuts or
+ *   `toolbar` for marks/blocks/lists and Enter/Backspace for structure.
+ * - ❌ Building your own toolbar by reaching into the DOM — pass `toolbar`, or
+ *   drive marks/blocks through the controlled `value`/`onChange` round-trip.
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(
-    { value, onChange, readOnly = false, placeholder, autoFocus, className, ...rest },
+    {
+      value,
+      onChange,
+      readOnly = false,
+      placeholder,
+      autoFocus,
+      toolbar = false,
+      className,
+      ...rest
+    },
     ref,
   ) {
     const t = useTranslation();
@@ -73,6 +132,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Latest props for the native beforeinput listener (avoids stale closures).
     const latest = useRef({ value, onChange, readOnly });
     latest.current = { value, onChange, readOnly };
+
+    // Toolbar state: the live selection (tracked via `selectionchange`) and any
+    // marks staged at a collapsed caret to apply to the next typed character.
+    const [selection, setSelection] = useState<Range | null>(null);
+    const [pendingMarks, setPendingMarks] = useState<Mark[] | null>(null);
+    // Mirror pending marks into a ref so the native beforeinput listener reads
+    // the current value without re-subscribing.
+    const pendingMarksRef = useRef<Mark[] | null>(null);
+    pendingMarksRef.current = pendingMarks;
 
     const setRefs = useCallback(
       (node: HTMLDivElement | null) => {
@@ -112,6 +180,24 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (ro || isComposingRef.current) return;
         const range = readSelection(root);
         if (!range) return;
+        // Pending marks: a mark toggled at a collapsed caret applies to the next
+        // typed text, then clears. Handle insertText here before generic input.
+        const pend = pendingMarksRef.current;
+        if (pend && e.inputType === 'insertText' && isCollapsed(range)) {
+          const text = e.data ?? '';
+          if (text) {
+            e.preventDefault();
+            const inserted = insertText(doc, range.anchor, text);
+            const span: Range = {
+              anchor: range.anchor,
+              focus: { blockId: range.anchor.blockId, offset: range.anchor.offset + text.length },
+            };
+            const marked = applyExactMarks(inserted.doc, span, pend);
+            setPendingMarks(null);
+            commit({ doc: marked, selection: inserted.selection });
+            return;
+          }
+        }
         const data = e.data ?? e.dataTransfer?.getData('text/plain') ?? null;
         const result = applyInput(doc, range, e.inputType, data);
         if (result === null) {
@@ -131,6 +217,24 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (autoFocus) rootRef.current?.focus();
     }, [autoFocus]);
 
+    // Track the selection so the toolbar can reflect active marks + block type.
+    // Only subscribed when the toolbar needs it (and the editor is editable).
+    useEffect(() => {
+      if (!toolbar || readOnly) return;
+      const root = rootRef.current;
+      if (!root) return;
+      const onSelChange = () => {
+        const sel = readSelection(root);
+        setSelection(sel);
+        // Abandon pending marks if the caret left its collapsed point (the user
+        // moved the caret or made a selection instead of typing).
+        const pend = pendingMarksRef.current;
+        if (pend && (!sel || !isCollapsed(sel))) setPendingMarks(null);
+      };
+      document.addEventListener('selectionchange', onSelChange);
+      return () => document.removeEventListener('selectionchange', onSelChange);
+    }, [toolbar, readOnly]);
+
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLDivElement>) => {
         if (readOnly) return;
@@ -138,10 +242,41 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (!root) return;
         const range = readSelection(root);
         if (!range) return;
-        const result = applyShortcut(value, range, e);
-        if (!result) return;
-        e.preventDefault();
-        commit(result);
+        const blockType = deriveCurrentBlock(value, range)?.type;
+        const inList = blockType === 'bullet_item' || blockType === 'ordered_item';
+
+        // Tab / Shift+Tab indent/outdent — only inside a list, so Tab still
+        // moves focus out of the editor everywhere else (keyboard a11y).
+        if (e.key === 'Tab' && inList) {
+          e.preventDefault();
+          commit(runIndent(value, range, e.shiftKey ? 'out' : 'in'));
+          return;
+        }
+
+        // Enter in an EMPTY list item exits the list (→ paragraph).
+        if (e.key === 'Enter' && inList && isCollapsed(range)) {
+          const idx = value.blocks.findIndex((b) => b.id === range.anchor.blockId);
+          if (idx !== -1 && blockLength(value.blocks[idx]) === 0) {
+            e.preventDefault();
+            commit(runSetBlock(value, range, { type: 'paragraph' }));
+            return;
+          }
+        }
+
+        // Mark shortcut: with a collapsed caret, stage a pending mark for the
+        // next typed text instead of a no-op toggle; with a selection, toggle it.
+        const mark = shortcutMark(e);
+        if (mark) {
+          e.preventDefault();
+          if (isCollapsed(range)) {
+            setPendingMarks((prev) =>
+              toggleInList(prev ?? marksAtCaretMarks(value, range.anchor), mark),
+            );
+          } else {
+            commit(runToggleMark(value, range, mark));
+          }
+          return;
+        }
       },
       [value, readOnly, commit],
     );
@@ -171,7 +306,56 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [value, readOnly, commit],
     );
 
-    return (
+    // Active marks + current block derived from the live selection for the toolbar.
+    const toolbarMarks = useMemo<MarkType[]>(
+      () => (selection ? deriveActiveMarks(value, selection, pendingMarks) : []),
+      [value, selection, pendingMarks],
+    );
+    const toolbarBlock = useMemo<BlockChoice | null>(
+      () => (selection ? deriveCurrentBlock(value, selection) : null),
+      [value, selection],
+    );
+
+    // Toolbar dispatch — read the live selection (falling back to tracked state)
+    // and route through the same commit path the keyboard uses. A mark at a
+    // collapsed caret stages a pending mark, mirroring the keyboard shortcut.
+    const onToolbarMark = useCallback(
+      (type: MarkType) => {
+        // `link` carries an href, so it can't be toggled as a bare flag; the
+        // toolbar never fires it, but narrow defensively rather than cast.
+        if (type === 'link') return;
+        const root = rootRef.current;
+        const range = (root ? readSelection(root) : null) ?? selection;
+        if (!range) return;
+        const mark: Mark = { type };
+        if (isCollapsed(range)) {
+          setPendingMarks((prev) =>
+            toggleInList(prev ?? marksAtCaretMarks(value, range.anchor), mark),
+          );
+        } else {
+          commit(runToggleMark(value, range, mark));
+        }
+      },
+      [value, selection, commit],
+    );
+    const onToolbarSetBlock = useCallback(
+      (choice: BlockChoice) => {
+        const root = rootRef.current;
+        const range = (root ? readSelection(root) : null) ?? selection;
+        if (range) commit(runSetBlock(value, range, choice));
+      },
+      [value, selection, commit],
+    );
+    const onToolbarToggleList = useCallback(
+      (listType: 'bullet_item' | 'ordered_item') => {
+        const root = rootRef.current;
+        const range = (root ? readSelection(root) : null) ?? selection;
+        if (range) commit(runToggleList(value, range, listType));
+      },
+      [value, selection, commit],
+    );
+
+    const editable = (
       <div
         // {...rest} FIRST so the component's own role/aria/contentEditable/handlers
         // below win — the textbox contract must be preserved (Rule 7, Pattern B).
@@ -197,6 +381,21 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onCompositionEnd={onCompositionEnd}
       >
         {renderDoc(value, { editable: true })}
+      </div>
+    );
+
+    if (!toolbar) return editable;
+    return (
+      <div className={styles.shell}>
+        <RichTextToolbar
+          activeMarks={toolbarMarks}
+          block={toolbarBlock}
+          disabled={readOnly}
+          onToggleMark={onToolbarMark}
+          onSetBlock={onToolbarSetBlock}
+          onToggleList={onToolbarToggleList}
+        />
+        {editable}
       </div>
     );
   },
