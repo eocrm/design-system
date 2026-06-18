@@ -5,6 +5,7 @@ import {
   runSetBlock,
   runToggleList,
   runIndent,
+  applyExactMarks,
 } from './commands';
 import { createBlock } from '../RichText/engine/model';
 import type { RichDoc, Range, Inline } from '../RichText/engine/model';
@@ -108,5 +109,23 @@ describe('runners', () => {
     expect(out.doc.blocks[0].depth).toBe(0);
     const clamped = runIndent(out.doc, span(at('a', 0), at('a', 1)), 'out');
     expect(clamped.doc.blocks[0].depth).toBe(0);
+  });
+});
+
+describe('applyExactMarks', () => {
+  it('forces the range marks to exactly the given set (adds missing, removes others)', () => {
+    const doc: RichDoc = {
+      blocks: [para('a', [{ text: 'ab', marks: [{ type: 'italic' }] }])],
+    };
+    const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), [bold]);
+    expect(next.blocks[0].inlines).toEqual([{ text: 'ab', marks: [bold] }]);
+  });
+
+  it('clears all marks when given an empty set', () => {
+    const doc: RichDoc = {
+      blocks: [para('a', [{ text: 'ab', marks: [bold, { type: 'italic' }] }])],
+    };
+    const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), []);
+    expect(next.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
   });
 });
