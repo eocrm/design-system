@@ -80,6 +80,7 @@ const CLUSTERS: Record<string, string> = {
   Slider: 'Forms',
   Sortable: 'Forms',
   Switch: 'Forms',
+  RichTextEditor: 'Forms',
   Textarea: 'Forms',
   TimeField: 'Forms',
 

@@ -245,7 +245,7 @@ const doc = {
 <RichText value={doc} />;
 ```
 
-When NOT to use: plain text → `Text`. Editing isn't here yet — `RichTextEditor` is a later slice. The model is immutable; render the doc returned by a transform, never mutate in place.
+When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The model is immutable; render the doc returned by a transform, never mutate in place.
 
 ### `<Button>` — action triggers
 
@@ -903,6 +903,17 @@ const VARS = [
 ```
 
 When NOT to use: plain prose → `Textarea`; static read-only code → playground `CodeBlock`. Don't expect it to validate syntax (feed `error` from the backend) or to produce its own preview (preview is consumer-rendered).
+
+### `<RichTextEditor>` — controlled rich-text editor (contentEditable)
+
+Controlled WYSIWYG over the in-house engine. `value: RichDoc` + `onChange: (doc) => void` (feed it back into `value`). Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a selection; Enter splits, Backspace/Delete merge.
+
+```tsx
+const [doc, setDoc] = useState(emptyDoc());
+<RichTextEditor value={doc} onChange={setDoc} placeholder="Write a note…" />;
+```
+
+When NOT to use: read-only display → `<RichText>`. This slice has no toolbar/lists-UI/links/undo yet (later slices). It's controlled — render `onChange`'s doc back into `value`, never mutate in place.
 
 ### `<ImageCrop>` — controlled image cropper
 

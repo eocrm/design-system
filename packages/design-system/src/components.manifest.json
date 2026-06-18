@@ -506,6 +506,16 @@
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
+    "composedBy": [
+      "RichTextEditor"
+    ]
+  },
+  "RichTextEditor": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "RichText"
+    ],
     "composedBy": []
   },
   "Screen": {
