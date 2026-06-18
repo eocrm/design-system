@@ -128,7 +128,8 @@
     "composedBy": [
       "Calendar",
       "ConfirmationPopover",
-      "OptionsPicker"
+      "OptionsPicker",
+      "RichTextEditor"
     ]
   },
   "Code": {
@@ -340,7 +341,8 @@
     "composes": [],
     "composedBy": [
       "ColorPicker",
-      "OptionsPicker"
+      "OptionsPicker",
+      "RichTextEditor"
     ]
   },
   "Kanban": {
@@ -517,8 +519,11 @@
     "cluster": "Forms",
     "composes": [
       "Button",
+      "Cluster",
       "DropdownMenu",
-      "RichText"
+      "Input",
+      "RichText",
+      "Stack"
     ],
     "composedBy": []
   },
@@ -582,7 +587,8 @@
     "composes": [],
     "composedBy": [
       "ConfirmationPopover",
-      "Page"
+      "Page",
+      "RichTextEditor"
     ]
   },
   "Switch": {
