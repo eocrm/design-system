@@ -70,3 +70,11 @@ export function OrderedListIcon() {
     </svg>
   );
 }
+export function LinkIcon() {
+  return (
+    <svg {...base}>
+      <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.41 1.41" />
+      <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.41-1.41" />
+    </svg>
+  );
+}

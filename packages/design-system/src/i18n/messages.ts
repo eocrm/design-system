@@ -309,6 +309,18 @@ export interface Messages {
     bulletList: string;
     /** aria-label on the numbered-list toggle button. */
     orderedList: string;
+    /** aria-label on the toolbar Link button. */
+    link: string;
+    /** Label (aria) for the URL field in the link bubble. */
+    linkUrl: string;
+    /** Placeholder for the URL field in the link bubble. */
+    linkUrlPlaceholder: string;
+    /** Apply button in the link bubble. */
+    linkApply: string;
+    /** Remove-link button in the link bubble (shown when editing a link). */
+    linkRemove: string;
+    /** Accessible name for the link bubble's form group. */
+    linkEditorLabel: string;
   };
 }
 

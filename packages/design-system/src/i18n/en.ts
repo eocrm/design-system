@@ -189,5 +189,11 @@ export const en: Messages = {
     strike: 'Strikethrough',
     bulletList: 'Bullet list',
     orderedList: 'Numbered list',
+    link: 'Link',
+    linkUrl: 'Link URL',
+    linkUrlPlaceholder: 'https://… or /path',
+    linkApply: 'Apply',
+    linkRemove: 'Remove link',
+    linkEditorLabel: 'Edit link',
   },
 };
