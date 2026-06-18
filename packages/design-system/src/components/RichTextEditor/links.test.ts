@@ -130,4 +130,10 @@ describe('setLink', () => {
     const r = setLink(doc, span(at('a', 2), at('a', 2)), '');
     expect(r.doc).toBe(doc);
   });
+
+  it('empty href — non-collapsed selection removes the link', () => {
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'hi', marks: [link('/p')] }])] };
+    const r = setLink(doc, span(at('a', 0), at('a', 2)), '');
+    expect(r.doc.blocks[0].inlines).toEqual([{ text: 'hi', marks: [] }]);
+  });
 });

@@ -13,7 +13,7 @@ export interface LinkAtResult {
 }
 
 /**
- * The link at a (collapsed) point: its href and the full contiguous run of
+ * The link at a point: its href and the full contiguous run of
  * characters sharing that exact href, or `null` when the point is not in a link.
  * The owning character is the one at `offset`, or the one before it when the
  * caret sits at the block's end (so a caret just after a link still resolves).
@@ -88,5 +88,7 @@ export function setLink(
     anchor: range.anchor,
     focus: { blockId: range.anchor.blockId, offset: range.anchor.offset + trimmed.length },
   };
+  // Select the inserted link text (not a collapsed caret after it) so the user
+  // sees the link that was just created.
   return applyMark(inserted.doc, linkedSpan, mark);
 }
