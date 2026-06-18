@@ -3,8 +3,10 @@
 import type { RichDoc, Range, Mark } from '../RichText/engine/model';
 import { toggleMark } from '../RichText/engine/transforms';
 
+/** The new document + selection after a shortcut, or `null` if the key isn't one. */
 export type ShortcutResult = { doc: RichDoc; selection: Range } | null;
 
+/** The minimal keyboard-event shape `applyShortcut` reads (matches `KeyboardEvent`). */
 export interface ShortcutKey {
   key: string;
   metaKey: boolean;

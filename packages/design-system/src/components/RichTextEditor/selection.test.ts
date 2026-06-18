@@ -25,6 +25,19 @@ describe('selection mapping', () => {
     root.remove();
   });
 
+  it('pointFromDom: element-node boundaries (child-index offsets) map correctly', () => {
+    // block "a" = "He" + <strong>"ll"</strong> + "o". Browsers produce element
+    // anchors (e.g. caret at an inline edge), not only text-node anchors.
+    const root = buildRoot();
+    const p = root.querySelector('[data-block-id="a"]') as HTMLElement;
+    expect(pointFromDom(root, p, 1)).toEqual({ blockId: 'a', offset: 2 }); // before <strong>
+    expect(pointFromDom(root, p, 2)).toEqual({ blockId: 'a', offset: 4 }); // before "o"
+    const strong = root.querySelector('strong') as HTMLElement;
+    expect(pointFromDom(root, strong, 0)).toEqual({ blockId: 'a', offset: 2 }); // start of "ll"
+    expect(pointFromDom(root, strong, 1)).toEqual({ blockId: 'a', offset: 4 }); // end of "ll"
+    root.remove();
+  });
+
   it('pointToDom: {blockId, offset} → the text node + local offset', () => {
     const root = buildRoot();
     const r = pointToDom(root, { blockId: 'a', offset: 3 })!;

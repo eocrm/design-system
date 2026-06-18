@@ -11,6 +11,7 @@ import {
 import { isCollapsed, blockLength, findBlockIndex } from '../RichText/engine/position';
 import { runsText } from '../RichText/engine/inlines';
 
+/** The new document + caret/selection after an input, or `null` when unsupported. */
 export type InputResult = { doc: RichDoc; selection: Range } | null;
 
 function point(blockId: string, offset: number): Point {

@@ -11,18 +11,24 @@ function blockElementFor(root: HTMLElement, node: Node): HTMLElement | null {
   return null;
 }
 
-/** Character offset within `blockEl` of (node, offset), summing prior text nodes. */
+/**
+ * Character offset within `blockEl` of the DOM position `(node, offset)`. Works
+ * for both text-node boundaries (offset = char index) and element-node
+ * boundaries (offset = child index, e.g. a caret at an inline-element edge,
+ * after a `<br>`, or a word/line selection) — the browser Selection API
+ * produces both. Measured as the length of the text between the block start and
+ * the point via a DOM Range, which counts only character data (so `<br>`,
+ * empty blocks, and nested mark spans are all handled correctly).
+ */
 function offsetWithinBlock(blockEl: HTMLElement, node: Node, offset: number): number {
-  if (node === blockEl) return 0; // structural position (e.g. empty block) → block start
-  const walker = blockEl.ownerDocument.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
-  let total = 0;
-  let n = walker.nextNode();
-  while (n) {
-    if (n === node) return total + offset;
-    total += (n.textContent ?? '').length;
-    n = walker.nextNode();
+  const range = blockEl.ownerDocument.createRange();
+  range.setStart(blockEl, 0);
+  try {
+    range.setEnd(node, offset);
+  } catch {
+    return 0; // node not inside blockEl (shouldn't happen) → block start
   }
-  return total; // node not found among text descendants → block end
+  return range.toString().length;
 }
 
 /**
