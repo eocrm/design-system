@@ -73,6 +73,7 @@
       "OptionsPicker",
       "PasswordInput",
       "Rail",
+      "RichTextEditor",
       "SocialButton",
       "Toast",
       "TopBar"
@@ -239,7 +240,8 @@
     "composes": [],
     "composedBy": [
       "DataTable",
-      "LiquidEditor"
+      "LiquidEditor",
+      "RichTextEditor"
     ]
   },
   "EmptyState": {
@@ -514,6 +516,8 @@
     "tier": "composition",
     "cluster": "Forms",
     "composes": [
+      "Button",
+      "DropdownMenu",
       "RichText"
     ],
     "composedBy": []

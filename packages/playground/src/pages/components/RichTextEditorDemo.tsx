@@ -11,19 +11,19 @@ export function RichTextEditorDemo() {
     <DemoLayout
       name="RichTextEditor"
       componentName="RichTextEditor"
-      description="Controlled contentEditable rich-text editor over the in-house engine. Type, Enter/Backspace for structure, ⌘/Ctrl+B/I/U + ⌘/Ctrl+⇧X for marks. No toolbar yet (later slice)."
+      description="Controlled contentEditable rich-text editor over the in-house engine. Type, Enter/Backspace for structure, ⌘/Ctrl+B/I/U + ⌘/Ctrl+⇧X for marks. Add toolbar for a built-in formatting bar with mark buttons, block-type menu, and list toggles."
       files={getComponentFiles('RichTextEditor')}
     >
       <Example
-        title="Editable"
-        description="Type to edit; select text and use ⌘B / ⌘I / ⌘U / ⌘⇧X to format. Enter splits a block; Backspace at a block start merges."
+        title="Editable with toolbar"
+        description="The toolbar prop adds a formatting bar above the editor. Keyboard shortcuts and toolbar buttons both work — select text to format it, or toggle a mark at a collapsed caret and then type to apply it to new text. Enter on an empty list item exits the list; Tab / Shift+Tab indent and outdent list items."
         code={`const [doc, setDoc] = useState(docFromText('…'));
-<RichTextEditor value={doc} onChange={setDoc} placeholder="Write a note…" />`}
+<RichTextEditor value={doc} onChange={setDoc} toolbar placeholder="Write a note…" />`}
       >
         <Stack gap="sm">
-          <RichTextEditor value={doc} onChange={setDoc} placeholder="Write a note…" />
+          <RichTextEditor value={doc} onChange={setDoc} toolbar placeholder="Write a note…" />
           <Text size="sm" tone="muted">
-            Shortcuts: ⌘/Ctrl+B bold · I italic · U underline · ⇧X strike
+            Toolbar + shortcuts: ⌘/Ctrl+B bold · I italic · U underline · ⇧X strike
           </Text>
         </Stack>
       </Example>

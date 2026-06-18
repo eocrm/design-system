@@ -434,7 +434,7 @@ import { Textarea } from '@eocrm/design-system';
 
 - ❌ Single-line input → `<Input>`.
 - ❌ Choosing from a fixed list → `<Select>`.
-- ❌ Rich text editing (bold, lists, mentions) → no shipped primitive; defer to a `RichTextEditor` when one exists.
+- ❌ Rich text editing (bold, lists, mentions) → use `<RichTextEditor>` (toolbar, list toggles, mark shortcuts shipped).
 - ❌ Password fields → `<PasswordInput>`.
 
 #### Anti-patterns
@@ -910,10 +910,27 @@ Controlled WYSIWYG over the in-house engine. `value: RichDoc` + `onChange: (doc)
 
 ```tsx
 const [doc, setDoc] = useState(emptyDoc());
+// Plain editor (keyboard shortcuts only)
 <RichTextEditor value={doc} onChange={setDoc} placeholder="Write a note…" />;
+
+// With built-in formatting toolbar
+<RichTextEditor value={doc} onChange={setDoc} toolbar placeholder="Write a note…" />;
 ```
 
-When NOT to use: read-only display → `<RichText>`. This slice has no toolbar/lists-UI/links/undo yet (later slices). It's controlled — render `onChange`'s doc back into `value`, never mutate in place.
+**`toolbar` prop** (default `false`): renders a formatting bar above the editor surface. The toolbar contains:
+
+- **Mark buttons** — Bold, Italic, Underline, Strikethrough. Reflect `aria-pressed` based on the current selection (or pending marks at a collapsed caret). Clicking with a selection toggles the mark over it; clicking at a collapsed caret sets a "pending" mark applied to the next typed characters (then clears).
+- **Block-type dropdown** — Paragraph, Heading 1–3, Quote, Code block. Shows the current block type; mixed multi-block selections show "Mixed".
+- **List toggles** — Bullet list, Numbered list. Toggle between the list type and paragraph.
+
+**List keys:**
+
+- `Enter` on an empty list item exits the list (converts to paragraph).
+- `Tab` / `Shift+Tab` indent and outdent list items (clamped at depth 0).
+
+**Pending marks:** toggling a mark at a collapsed caret (via toolbar or ⌘B/I/U/⌘⇧X shortcut) queues it; the next inserted text gets that mark applied, then the queue clears. Moving the caret discards pending marks.
+
+When NOT to use: read-only display → `<RichText>`. No links or undo yet (later slices). It's controlled — render `onChange`'s doc back into `value`, never mutate in place.
 
 ### `<ImageCrop>` — controlled image cropper
 
