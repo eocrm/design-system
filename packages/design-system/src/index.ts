@@ -441,6 +441,32 @@ export type {
 export { Code } from './components/Code';
 export type { CodeProps, CodeTone } from './components/Code';
 
+export { RichText } from './components/RichText';
+export type {
+  RichTextProps,
+  RichDoc,
+  RichBlock,
+  RichBlockType,
+  RichInline,
+  RichMark,
+  RichMarkType,
+  RichPoint,
+  RichRange,
+} from './components/RichText';
+export {
+  emptyDoc,
+  createBlock,
+  docFromText,
+  insertText,
+  deleteRange,
+  splitBlock,
+  mergeBlockBackward,
+  applyMark,
+  removeMark,
+  toggleMark,
+  setBlockType,
+} from './components/RichText';
+
 export { Text } from './components/Text';
 export type {
   TextProps,
