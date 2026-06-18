@@ -1,0 +1,224 @@
+import { render } from '@testing-library/react';
+import { renderDoc } from './renderDoc';
+import { createBlock } from './model';
+import type { RichDoc } from './model';
+
+function html(doc: RichDoc): string {
+  const { container } = render(<>{renderDoc(doc)}</>);
+  return container.innerHTML;
+}
+
+describe('renderDoc', () => {
+  it('renders block types to semantic elements', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('heading', 'H', { level: 2, id: '1' }),
+        createBlock('paragraph', 'P', { id: '2' }),
+        createBlock('blockquote', 'Q', { id: '3' }),
+        createBlock('code_block', 'C', { id: '4' }),
+      ],
+    };
+    const out = html(doc);
+    expect(out).toContain('<h2>H</h2>');
+    expect(out).toContain('<p>P</p>');
+    expect(out).toContain('<blockquote>Q</blockquote>');
+    expect(out).toContain('<pre><code>C</code></pre>');
+  });
+
+  it('nests inline marks deterministically (link outermost, code innermost)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'x', marks: [{ type: 'bold' }, { type: 'italic' }] }],
+        },
+      ],
+    };
+    expect(html(doc)).toContain('<strong><em>x</em></strong>');
+  });
+
+  it('renders a link with href', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'go', marks: [{ type: 'link', href: '/docs' }] }],
+        },
+      ],
+    };
+    expect(html(doc)).toContain('<a href="/docs" rel="noopener noreferrer">go</a>');
+  });
+
+  it('groups consecutive bullet items into one <ul>', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'one', { id: '1' }),
+        createBlock('bullet_item', 'two', { id: '2' }),
+        createBlock('paragraph', 'after', { id: '3' }),
+      ],
+    };
+    const out = html(doc);
+    expect(out).toContain('<ul><li>one</li><li>two</li></ul>');
+    expect(out).toContain('<p>after</p>');
+  });
+
+  it('nests deeper-depth items as a child list', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: '1', depth: 0 }),
+        createBlock('bullet_item', 'b', { id: '2', depth: 1 }),
+      ],
+    };
+    expect(html(doc)).toContain('<ul><li>a<ul><li>b</li></ul></li></ul>');
+  });
+
+  it('renders ordered-list items into an <ol>', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('ordered_item', 'one', { id: '1' }),
+        createBlock('ordered_item', 'two', { id: '2' }),
+      ],
+    };
+    expect(html(doc)).toContain('<ol><li>one</li><li>two</li></ol>');
+  });
+
+  it('renders a nested ordered list inside a bullet list (mixed types by depth)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: '1', depth: 0 }),
+        createBlock('ordered_item', 'b', { id: '2', depth: 1 }),
+      ],
+    };
+    expect(html(doc)).toContain('<ul><li>a<ol><li>b</li></ol></li></ul>');
+  });
+
+  it('renders three depth levels', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: '1', depth: 0 }),
+        createBlock('bullet_item', 'b', { id: '2', depth: 1 }),
+        createBlock('bullet_item', 'c', { id: '3', depth: 2 }),
+      ],
+    };
+    expect(html(doc)).toContain('<ul><li>a<ul><li>b<ul><li>c</li></ul></li></ul></li></ul>');
+  });
+
+  it('does NOT drop items when depth jumps non-monotonically (normalizes gaps)', () => {
+    // depths [0, 2, 1] used to drop "b" (the deeper run was overwritten). The
+    // normalizer clamps to [0, 1, 1], so a is the parent of siblings b and c.
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: '1', depth: 0 }),
+        createBlock('bullet_item', 'b', { id: '2', depth: 2 }),
+        createBlock('bullet_item', 'c', { id: '3', depth: 1 }),
+      ],
+    };
+    const out = html(doc);
+    expect(out).toContain('b');
+    expect(out).toContain('c');
+    expect(out).toBe('<ul><li>a<ul><li>b</li><li>c</li></ul></li></ul>');
+  });
+
+  it('nests multiple marks including a link in deterministic order', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [
+            {
+              text: 'x',
+              marks: [{ type: 'code' }, { type: 'link', href: '/d' }, { type: 'bold' }],
+            },
+          ],
+        },
+      ],
+    };
+    // link outermost, then bold, then code innermost
+    expect(html(doc)).toContain(
+      '<a href="/d" rel="noopener noreferrer"><strong><code>x</code></strong></a>',
+    );
+  });
+
+  it('renders heading levels 1 and 3', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('heading', 'One', { level: 1, id: '1' }),
+        createBlock('heading', 'Three', { level: 3, id: '2' }),
+      ],
+    };
+    const out = html(doc);
+    expect(out).toContain('<h1>One</h1>');
+    expect(out).toContain('<h3>Three</h3>');
+  });
+
+  it('renders an empty doc as nothing', () => {
+    expect(html({ blocks: [] })).toBe('');
+  });
+
+  it('sanitizes unsafe link schemes (no href) and keeps safe ones', () => {
+    const bad: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'x', marks: [{ type: 'link', href: 'javascript:alert(1)' }] }],
+        },
+      ],
+    };
+    const out = html(bad);
+    expect(out).toContain('<a rel="noopener noreferrer">x</a>'); // no href attribute
+    expect(out).not.toContain('javascript:');
+
+    const good: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'x', marks: [{ type: 'link', href: 'https://x.com' }] }],
+        },
+      ],
+    };
+    expect(html(good)).toContain('href="https://x.com"');
+    expect(html(good)).toContain('rel="noopener noreferrer"');
+
+    const rel: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'x', marks: [{ type: 'link', href: '/docs' }] }],
+        },
+      ],
+    };
+    expect(html(rel)).toContain('href="/docs"');
+
+    const protoRel: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'x', marks: [{ type: 'link', href: '//evil.com' }] }],
+        },
+      ],
+    };
+    // protocol-relative URLs are blocked (no href), not treated as relative
+    expect(html(protoRel)).toContain('<a rel="noopener noreferrer">x</a>');
+    expect(html(protoRel)).not.toContain('evil.com');
+  });
+
+  it('renders code_block content as plain text (ignores marks)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'code_block',
+          inlines: [{ text: 'const x = 1', marks: [{ type: 'bold' }] }],
+        },
+      ],
+    };
+    expect(html(doc)).toContain('<pre><code>const x = 1</code></pre>');
+  });
+});

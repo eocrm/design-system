@@ -502,6 +502,12 @@
     ],
     "composedBy": []
   },
+  "RichText": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "Screen": {
     "tier": "primitive",
     "cluster": "Layout",

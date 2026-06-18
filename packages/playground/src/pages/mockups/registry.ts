@@ -63,6 +63,7 @@ export type ComponentName =
   | 'Radio'
   | 'RadioGroup'
   | 'Rail'
+  | 'RichText'
   | 'Screen'
   | 'Select'
   | 'Skeleton'

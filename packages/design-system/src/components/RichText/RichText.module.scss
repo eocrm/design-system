@@ -1,0 +1,65 @@
+// RichText.module.scss — prose styles for the read-only renderer. Tokens only
+// (Rule 3); inter-block spacing via `gap`/`padding`, never `margin` (Rule 4).
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--color-fg);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+}
+
+.root :where(h1, h2, h3) {
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+.root :where(h1) {
+  font-size: var(--font-size-xl);
+}
+
+.root :where(h2) {
+  font-size: var(--font-size-lg);
+}
+
+.root :where(h3) {
+  font-size: var(--font-size-md);
+}
+
+.root :where(ul, ol) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-inline-start: var(--space-5);
+}
+
+.root :where(blockquote) {
+  padding-inline-start: var(--space-3);
+  border-inline-start: var(--border-width-strong) solid var(--color-border);
+  color: var(--color-fg-muted);
+}
+
+.root :where(pre) {
+  padding: var(--space-3);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+}
+
+.root :where(code) {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-code);
+}
+
+.root :where(:not(pre) > code) {
+  padding: 0 var(--space-1);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+}
+
+.root :where(a) {
+  color: var(--color-accent);
+  text-decoration: underline;
+}

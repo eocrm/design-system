@@ -231,6 +231,22 @@ Inline keyboard-shortcut display: one `<kbd>` chip per key, joined with a faint 
 - For semantic emphasis (the bold _is_ the meaning — e.g. a user's name in a notification, an error keyword), use `<strong>` or `<em>` inside `<Text>`. For visual-only weight changes (a medium-weight name in a list because hierarchy says so, not because the name is emphatic), use `<Text weight="medium">`. Pick the one that matches _why_ the text is heavy.
 - If the size / tone / weight you need isn't on `<Title>` or `<Text>`, **that's a token-vocabulary conversation, not a component-skipping conversation.**
 
+### `<RichText>` — read-only rich-text renderer
+
+Renders a `RichDoc` (the in-house rich-text model) read-only: paragraphs, H1–H3, bullet/ordered lists, blockquotes, code blocks, and inline marks (bold/italic/underline/strike/code/link). No editor libraries. Build docs with the exported engine constructors/transforms.
+
+```tsx
+const doc = {
+  blocks: [
+    createBlock('heading', 'Notes', { level: 2 }),
+    createBlock('paragraph', 'See the docs.'),
+  ],
+};
+<RichText value={doc} />;
+```
+
+When NOT to use: plain text → `Text`. Editing isn't here yet — `RichTextEditor` is a later slice. The model is immutable; render the doc returned by a transform, never mutate in place.
+
 ### `<Button>` — action triggers
 
 ```tsx

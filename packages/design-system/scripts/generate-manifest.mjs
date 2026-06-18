@@ -84,6 +84,7 @@ const CLUSTERS = {
   Progress: 'Display',
   Skeleton: 'Display',
   Table: 'Display',
+  RichText: 'Display',
   Text: 'Display',
   Title: 'Display',
 

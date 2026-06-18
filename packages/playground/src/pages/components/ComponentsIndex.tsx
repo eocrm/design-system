@@ -18,6 +18,7 @@ import { Card } from '@eocrm/design-system';
 import { CircularProgress } from '@eocrm/design-system';
 import { Progress } from '@eocrm/design-system';
 import { Code } from '@eocrm/design-system';
+import { RichText, createBlock } from '@eocrm/design-system';
 import { Text } from '@eocrm/design-system';
 import { Title } from '@eocrm/design-system';
 import { Checkbox } from '@eocrm/design-system';
@@ -801,6 +802,21 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Dot tone="success" />
         <Dot tone="danger" />
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/rich-text',
+    name: 'RichText',
+    description: 'Read-only renderer for the in-house rich-text model.',
+    preview: (
+      <RichText
+        value={{
+          blocks: [
+            createBlock('heading', 'Notes', { level: 3, id: 'pi-h' }),
+            createBlock('bullet_item', 'Rich content', { id: 'pi-l' }),
+          ],
+        }}
+      />
     ),
   },
   {
