@@ -58,8 +58,25 @@ describe('RichTextToolbar', () => {
     );
   });
 
-  it('disables all buttons when disabled', () => {
+  it('fires onToggleList on a list-button click', async () => {
+    const user = userEvent.setup();
+    const { onToggleList } = renderTb();
+    await user.click(screen.getByRole('button', { name: 'Numbered list' }));
+    expect(onToggleList).toHaveBeenCalledWith('ordered_item');
+  });
+
+  it('fires onSetBlock when a block-type menu item is chosen', async () => {
+    const user = userEvent.setup();
+    const { onSetBlock } = renderTb();
+    await user.click(screen.getByRole('button', { name: 'Text style' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Heading 2' }));
+    expect(onSetBlock).toHaveBeenCalledWith({ type: 'heading', level: 2 });
+  });
+
+  it('disables every control when disabled', () => {
     renderTb({ disabled: true });
     expect(screen.getByRole('button', { name: 'Bold' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Numbered list' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Text style' })).toBeDisabled();
   });
 });
