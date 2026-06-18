@@ -1,0 +1,65 @@
+// _prose.scss — shared rich-text prose styling. Applied via the `prose()` mixin
+// so <RichText> (read-only) and <RichTextEditor> render identically. Tokens only.
+@mixin prose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--color-fg);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+
+  :where(h1, h2, h3) {
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+  }
+
+  :where(h1) {
+    font-size: var(--font-size-xl);
+  }
+
+  :where(h2) {
+    font-size: var(--font-size-lg);
+  }
+
+  :where(h3) {
+    font-size: var(--font-size-md);
+  }
+
+  :where(ul, ol) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding-inline-start: var(--space-5);
+  }
+
+  :where(blockquote) {
+    padding-inline-start: var(--space-3);
+    border-inline-start: var(--border-width-strong) solid var(--color-border);
+    color: var(--color-fg-muted);
+  }
+
+  :where(pre) {
+    padding: var(--space-3);
+    background: var(--color-bg-muted);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+  }
+
+  :where(code) {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-code);
+  }
+
+  :where(:not(pre) > code) {
+    padding: 0 var(--space-1);
+    background: var(--color-bg-muted);
+    border-radius: var(--radius-sm);
+  }
+
+  :where(a) {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+}
