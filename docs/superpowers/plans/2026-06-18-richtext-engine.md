@@ -1397,15 +1397,19 @@ describe('RichText', () => {
 ```ts
 export { RichText } from './RichText';
 export type { RichTextProps } from './RichText';
+// Model types are exported with a `Rich` prefix so the package's flat namespace
+// doesn't claim generic names — `Block`/`Mark`/`Point`/`Inline` are likely future
+// collisions and `Range` shadows the DOM global. The engine keeps the short names
+// internally; only the public surface is prefixed.
 export type {
   RichDoc,
-  Block,
-  BlockType,
-  Inline,
-  Mark,
-  MarkType,
-  Point,
-  Range,
+  Block as RichBlock,
+  BlockType as RichBlockType,
+  Inline as RichInline,
+  Mark as RichMark,
+  MarkType as RichMarkType,
+  Point as RichPoint,
+  Range as RichRange,
 } from './engine/model';
 export { emptyDoc, createBlock, docFromText } from './engine/model';
 export {
@@ -1419,6 +1423,8 @@ export {
   setBlockType,
 } from './engine/transforms';
 ```
+
+> Internal code (engine modules, `RichText.tsx`, tests, the playground demo) keeps the short names imported directly from `./engine/model`. Only the two public barrels (this file + `src/index.ts`) expose the `Rich`-prefixed aliases. `RichDoc` is already namespaced, so it stays as-is everywhere.
 
 - [ ] **Step 5: Run the component + structure tests**
 
@@ -1454,13 +1460,13 @@ export { RichText } from './components/RichText';
 export type {
   RichTextProps,
   RichDoc,
-  Block,
-  BlockType,
-  Inline,
-  Mark,
-  MarkType,
-  Point,
-  Range,
+  RichBlock,
+  RichBlockType,
+  RichInline,
+  RichMark,
+  RichMarkType,
+  RichPoint,
+  RichRange,
 } from './components/RichText';
 export {
   emptyDoc,
@@ -1477,7 +1483,7 @@ export {
 } from './components/RichText';
 ```
 
-> Check for an existing exported `Range`/`Point`/`Block`/`Mark`/`Inline` type name collision in `src/index.ts` (grep). If any collides with another component's export, alias the RichText one (e.g. `RichDoc`, `RichBlock`, …) consistently in both `index.ts` files and the component's `index.ts`. (`Range` is the most likely collision — if so, export it as `RichRange` from both barrels.)
+> These `Rich`-prefixed names come from the component barrel (Task 7), which aliases the engine's short internal names. (Confirmed during planning: `src/index.ts` currently exports none of `Range`/`Point`/`Block`/`Mark`/`Inline`, so the prefix is about future-proofing + not shadowing the DOM `Range`, not resolving a present collision.)
 
 - [ ] **Step 2: Run the structure + a typecheck**
 
