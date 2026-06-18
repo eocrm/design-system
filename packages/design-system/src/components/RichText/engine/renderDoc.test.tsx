@@ -222,3 +222,33 @@ describe('renderDoc', () => {
     expect(html(doc)).toContain('<pre><code>const x = 1</code></pre>');
   });
 });
+
+describe('renderDoc editable option', () => {
+  it('adds data-block-id to block elements when editable', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'hi', { id: 'b1' })] };
+    const { container } = render(<>{renderDoc(doc, { editable: true })}</>);
+    expect(container.querySelector('[data-block-id="b1"]')?.tagName).toBe('P');
+  });
+
+  it('renders an empty editable block with a <br>', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', '', { id: 'b1' })] };
+    const { container } = render(<>{renderDoc(doc, { editable: true })}</>);
+    expect(container.querySelector('[data-block-id="b1"]')?.innerHTML).toBe('<br>');
+  });
+
+  it('puts data-block-id on each list item when editable', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: 'l1' }),
+        createBlock('bullet_item', 'b', { id: 'l2' }),
+      ],
+    };
+    const { container } = render(<>{renderDoc(doc, { editable: true })}</>);
+    expect(container.querySelectorAll('li[data-block-id]')).toHaveLength(2);
+  });
+
+  it('read-only output is unchanged (no data-block-id)', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'hi', { id: 'b1' })] };
+    expect(html(doc)).toBe('<p>hi</p>');
+  });
+});
