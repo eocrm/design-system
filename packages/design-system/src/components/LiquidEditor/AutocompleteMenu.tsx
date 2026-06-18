@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useFloating, autoUpdate, flip, shift, offset } from '@floating-ui/react-dom';
 import clsx from 'clsx';
@@ -61,6 +61,14 @@ export function AutocompleteMenu({
     elements: { reference: virtualRef },
   });
 
+  // Keep the keyboard-active option scrolled into view inside the menu's
+  // (max-height, overflow-y:auto) box — arrow-key nav must not move the
+  // highlight off-screen. Focus stays on the textarea, so we scroll manually.
+  const activeRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    activeRef.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeIndex]);
+
   // Precompute group-header flags before render (no mutation during the map —
   // keeps the render pure under StrictMode double-invocation). A header shows
   // when an item's group differs from the previous item's.
@@ -88,6 +96,7 @@ export function AutocompleteMenu({
             ) : null}
             <div
               id={`${listboxId}-opt-${idx}`}
+              ref={idx === activeIndex ? activeRef : undefined}
               role="option"
               aria-selected={idx === activeIndex}
               className={clsx(styles.menuItem, idx === activeIndex && styles.menuItemActive)}

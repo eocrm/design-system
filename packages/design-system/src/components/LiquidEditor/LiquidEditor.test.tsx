@@ -211,6 +211,30 @@ describe('LiquidEditor', () => {
     expect(ta).toHaveValue('{{ last_name');
   });
 
+  it('scrolls the active suggestion into view as keyboard nav moves it', async () => {
+    const user = userEvent.setup();
+    // jsdom doesn't implement scrollIntoView at all, so define a spy (the
+    // component calls it optionally). Proves the active option is kept in view
+    // when ArrowDown changes the active row.
+    const scrollSpy = vi.fn();
+    const proto = HTMLElement.prototype as unknown as { scrollIntoView?: () => void };
+    const had = 'scrollIntoView' in proto;
+    proto.scrollIntoView = scrollSpy;
+    try {
+      renderEditor(<Harness />);
+      const ta = screen.getByRole('combobox');
+      await user.click(ta);
+      await user.type(ta, '{{{{ ');
+      expect(await screen.findByRole('listbox')).toBeInTheDocument();
+      scrollSpy.mockClear();
+      await user.keyboard('{ArrowDown}');
+      // The newly-active option scrolled itself into view.
+      expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' });
+    } finally {
+      if (!had) delete proto.scrollIntoView;
+    }
+  });
+
   it('closes autocomplete on Escape without bubbling', async () => {
     const user = userEvent.setup();
     const onParentEscape = vi.fn();
