@@ -172,4 +172,7 @@ export const en: Messages = {
     editorLabel: 'Liquid template',
     suggestions: 'Suggestions',
   },
+  richTextEditor: {
+    editorLabel: 'Rich text editor',
+  },
 };
