@@ -135,6 +135,10 @@ export function RichTextToolbar({
             aria-label={t(`richTextEditor.${key}`)}
             aria-pressed={active}
             disabled={disabled}
+            // Keep the editor focused + its DOM selection live: a mousedown that
+            // moves focus out of the contentEditable would collapse the selection
+            // before the command runs.
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => onToggleMark(type)}
           >
             <Icon />
@@ -151,6 +155,7 @@ export function RichTextToolbar({
         aria-label={t('richTextEditor.bulletList')}
         aria-pressed={isList('bullet_item')}
         disabled={disabled}
+        onMouseDown={(e) => e.preventDefault()}
         onClick={() => onToggleList('bullet_item')}
       >
         <BulletListIcon />
@@ -162,6 +167,7 @@ export function RichTextToolbar({
         aria-label={t('richTextEditor.orderedList')}
         aria-pressed={isList('ordered_item')}
         disabled={disabled}
+        onMouseDown={(e) => e.preventDefault()}
         onClick={() => onToggleList('ordered_item')}
       >
         <OrderedListIcon />

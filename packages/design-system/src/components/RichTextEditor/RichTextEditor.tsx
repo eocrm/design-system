@@ -141,6 +141,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // the current value without re-subscribing.
     const pendingMarksRef = useRef<Mark[] | null>(null);
     pendingMarksRef.current = pendingMarks;
+    // The collapsed caret where pending marks were staged. Used to clear them
+    // when the caret moves to a different spot (vs. typing at the same point).
+    const pendingAtRef = useRef<Point | null>(null);
 
     const setRefs = useCallback(
       (node: HTMLDivElement | null) => {
@@ -159,6 +162,23 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       pendingSelectionRef.current = result.selection;
       latest.current.onChange(result.doc);
     }, []);
+
+    // Shared by the keyboard shortcut and the toolbar: with a collapsed caret,
+    // stage a pending mark for the next typed text (remembering where); with a
+    // selection, toggle the mark over it now.
+    const stageOrToggleMark = useCallback(
+      (range: Range, mark: Mark) => {
+        if (isCollapsed(range)) {
+          pendingAtRef.current = range.anchor;
+          setPendingMarks((prev) =>
+            toggleInList(prev ?? marksAtCaretMarks(latest.current.value, range.anchor), mark),
+          );
+        } else {
+          commit(runToggleMark(latest.current.value, range, mark));
+        }
+      },
+      [commit],
+    );
 
     // Restore the caret/selection after a model-driven re-render.
     useLayoutEffect(() => {
@@ -194,6 +214,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             };
             const marked = applyExactMarks(inserted.doc, span, pend);
             setPendingMarks(null);
+            pendingAtRef.current = null;
             commit({ doc: marked, selection: inserted.selection });
             return;
           }
@@ -226,10 +247,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const onSelChange = () => {
         const sel = readSelection(root);
         setSelection(sel);
-        // Abandon pending marks if the caret left its collapsed point (the user
-        // moved the caret or made a selection instead of typing).
+        // Abandon pending marks if the caret left its staged point (the user
+        // moved the caret or made a selection instead of typing there).
         const pend = pendingMarksRef.current;
-        if (pend && (!sel || !isCollapsed(sel))) setPendingMarks(null);
+        const stagedAt = pendingAtRef.current;
+        const sameSpot =
+          sel != null &&
+          isCollapsed(sel) &&
+          stagedAt != null &&
+          sel.anchor.blockId === stagedAt.blockId &&
+          sel.anchor.offset === stagedAt.offset;
+        if (pend && !sameSpot) {
+          setPendingMarks(null);
+          pendingAtRef.current = null;
+        }
       };
       document.addEventListener('selectionchange', onSelChange);
       return () => document.removeEventListener('selectionchange', onSelChange);
@@ -268,17 +299,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         const mark = shortcutMark(e);
         if (mark) {
           e.preventDefault();
-          if (isCollapsed(range)) {
-            setPendingMarks((prev) =>
-              toggleInList(prev ?? marksAtCaretMarks(value, range.anchor), mark),
-            );
-          } else {
-            commit(runToggleMark(value, range, mark));
-          }
+          stageOrToggleMark(range, mark);
           return;
         }
       },
-      [value, readOnly, commit],
+      [value, readOnly, commit, stageOrToggleMark],
     );
 
     const onCompositionStart = useCallback(() => {
@@ -321,22 +346,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // collapsed caret stages a pending mark, mirroring the keyboard shortcut.
     const onToolbarMark = useCallback(
       (type: MarkType) => {
-        // `link` carries an href, so it can't be toggled as a bare flag; the
-        // toolbar never fires it, but narrow defensively rather than cast.
-        if (type === 'link') return;
+        if (type === 'link') return; // link needs an href; toolbar never fires it
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? selection;
-        if (!range) return;
-        const mark: Mark = { type };
-        if (isCollapsed(range)) {
-          setPendingMarks((prev) =>
-            toggleInList(prev ?? marksAtCaretMarks(value, range.anchor), mark),
-          );
-        } else {
-          commit(runToggleMark(value, range, mark));
-        }
+        if (range) stageOrToggleMark(range, { type });
       },
-      [value, selection, commit],
+      [selection, stageOrToggleMark],
     );
     const onToolbarSetBlock = useCallback(
       (choice: BlockChoice) => {
