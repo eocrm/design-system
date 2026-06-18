@@ -276,6 +276,10 @@ export interface Messages {
     /** aria-label on the autocomplete suggestion listbox. */
     suggestions: string;
   };
+  richTextEditor: {
+    /** Default aria-label for the editable region when none is supplied. */
+    editorLabel: string;
+  };
 }
 
 /** Supported locale codes. v1 ships English and Russian. */

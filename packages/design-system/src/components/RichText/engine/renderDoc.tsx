@@ -2,7 +2,12 @@
 // is flat; this reconstructs list nesting from `depth` at render time.
 import { Fragment, type ReactNode } from 'react';
 import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
-import { runsText } from './inlines';
+import { runsText, runsLength } from './inlines';
+
+export interface RenderDocOptions {
+  /** Editable surface: add `data-block-id` anchors + render empty blocks with a `<br>`. */
+  editable?: boolean;
+}
 
 // Allow relative URLs and a small scheme allowlist; block javascript:/data:/etc.
 function safeHref(href: string): string | undefined {
@@ -60,29 +65,49 @@ function renderInlines(inlines: Inline[]): ReactNode {
   return inlines.map((run, i) => renderRun(run, i));
 }
 
-function renderBlock(block: Block): ReactNode {
-  const content = renderInlines(block.inlines);
+function blockContent(block: Block, editable: boolean): ReactNode {
+  if (editable && runsLength(block.inlines) === 0) return <br />;
+  return renderInlines(block.inlines);
+}
+
+function renderBlock(block: Block, editable: boolean): ReactNode {
+  const anchor = editable ? { 'data-block-id': block.id } : undefined;
   switch (block.type) {
     case 'heading': {
       const Tag = `h${block.level ?? 1}` as 'h1' | 'h2' | 'h3';
-      return <Tag key={block.id}>{content}</Tag>;
+      return (
+        <Tag key={block.id} {...anchor}>
+          {blockContent(block, editable)}
+        </Tag>
+      );
     }
     case 'blockquote':
-      return <blockquote key={block.id}>{content}</blockquote>;
+      return (
+        <blockquote key={block.id} {...anchor}>
+          {blockContent(block, editable)}
+        </blockquote>
+      );
     case 'code_block':
       return (
-        <pre key={block.id}>
-          <code>{runsText(block.inlines)}</code>
+        <pre key={block.id} {...anchor}>
+          <code>
+            {editable && runsLength(block.inlines) === 0 ? <br /> : runsText(block.inlines)}
+          </code>
         </pre>
       );
     case 'paragraph':
     default:
-      return <p key={block.id}>{content}</p>;
+      return (
+        <p key={block.id} {...anchor}>
+          {blockContent(block, editable)}
+        </p>
+      );
   }
 }
 
 interface ListItemNode {
   key: string;
+  blockId: string;
   content: ReactNode;
   child: ReactNode | null;
 }
@@ -123,6 +148,7 @@ function collectList(
   blocks: Block[],
   start: number,
   eff: number[],
+  editable: boolean,
 ): { tag: 'ul' | 'ol'; items: ListItemNode[]; next: number } {
   const baseDepth = eff[start];
   const tag = blocks[start].type === 'ordered_item' ? 'ol' : 'ul';
@@ -132,23 +158,29 @@ function collectList(
     const d = eff[i];
     if (d < baseDepth) break;
     if (d > baseDepth) {
-      const sub = collectList(blocks, i, eff);
-      if (items.length > 0) items[items.length - 1].child = renderListTree(sub.tag, sub.items);
+      const sub = collectList(blocks, i, eff, editable);
+      if (items.length > 0)
+        items[items.length - 1].child = renderListTree(sub.tag, sub.items, editable);
       i = sub.next;
       continue;
     }
-    items.push({ key: blocks[i].id, content: renderInlines(blocks[i].inlines), child: null });
+    items.push({
+      key: blocks[i].id,
+      blockId: blocks[i].id,
+      content: blockContent(blocks[i], editable),
+      child: null,
+    });
     i += 1;
   }
   return { tag, items, next: i };
 }
 
-function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[]): ReactNode {
+function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[], editable: boolean): ReactNode {
   const ListTag = tag;
   return (
     <ListTag>
       {items.map((it) => (
-        <li key={it.key}>
+        <li key={it.key} {...(editable ? { 'data-block-id': it.blockId } : {})}>
           {it.content}
           {it.child}
         </li>
@@ -158,7 +190,7 @@ function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[]): ReactNode {
 }
 
 /**
- * Render a `RichDoc` to read-only React nodes.
+ * Render a `RichDoc` to React nodes.
  *
  * Blocks map to semantic elements (`<p>`, `<h1|h2|h3>`, `<blockquote>`,
  * `<pre><code>`). Consecutive list-item blocks are grouped back into `<ul>`/`<ol>`
@@ -167,19 +199,24 @@ function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[]): ReactNode {
  * never drop items). Inline runs render as nested mark tags in a deterministic
  * order (`link` outermost … `code` innermost). Block `id` is the React key. An
  * empty document renders nothing. `code_block` content is treated as plain text.
+ *
+ * Pass `{ editable: true }` to add `data-block-id` anchors on every block element
+ * and render empty blocks with a `<br>` (required for contentEditable caret placement).
+ * Read-only output (default) is byte-identical to the pre-options behaviour.
  */
-export function renderDoc(doc: RichDoc): ReactNode {
+export function renderDoc(doc: RichDoc, options: RenderDocOptions = {}): ReactNode {
+  const editable = options.editable ?? false;
   const eff = effectiveDepths(doc.blocks);
   const out: ReactNode[] = [];
   let i = 0;
   while (i < doc.blocks.length) {
     if (isListItem(doc.blocks[i])) {
       const startId = doc.blocks[i].id;
-      const { tag, items, next } = collectList(doc.blocks, i, eff);
-      out.push(<Fragment key={`list-${startId}`}>{renderListTree(tag, items)}</Fragment>);
+      const { tag, items, next } = collectList(doc.blocks, i, eff, editable);
+      out.push(<Fragment key={`list-${startId}`}>{renderListTree(tag, items, editable)}</Fragment>);
       i = next;
     } else {
-      out.push(renderBlock(doc.blocks[i]));
+      out.push(renderBlock(doc.blocks[i], editable));
       i += 1;
     }
   }

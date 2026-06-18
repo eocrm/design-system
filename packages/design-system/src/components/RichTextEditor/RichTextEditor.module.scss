@@ -1,0 +1,32 @@
+@use '../RichText/prose';
+
+.root {
+  @include prose.prose;
+
+  position: relative; // anchors the empty-state placeholder ::before
+  min-height: var(--size-lg);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+}
+
+.root:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+}
+
+.root[data-empty]::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  color: var(--color-fg-subtle);
+  pointer-events: none;
+}
+
+.root.readOnly {
+  cursor: default;
+  background: var(--color-bg-muted);
+}

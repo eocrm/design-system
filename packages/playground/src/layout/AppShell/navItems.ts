@@ -75,6 +75,7 @@ import {
   Shapes,
   SquareMousePointer,
   SquarePen,
+  Pencil,
   Group,
   Columns2,
   Component,
@@ -160,6 +161,12 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/image-crop', label: 'ImageCrop', icon: Crop, end: false },
       { to: '/components/input', label: 'Input', icon: TextCursorInput, end: false },
       { to: '/components/liquid-editor', label: 'LiquidEditor', icon: Braces, end: false },
+      {
+        to: '/components/rich-text-editor',
+        label: 'RichTextEditor',
+        icon: Pencil,
+        end: false,
+      },
       { to: '/components/password-input', label: 'PasswordInput', icon: KeyRound, end: false },
       {
         to: '/components/password-strength-meter',

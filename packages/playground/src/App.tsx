@@ -49,6 +49,7 @@ import { CardDemo } from './pages/components/CardDemo';
 import { CodeDemo } from './pages/components/CodeDemo';
 import { TextDemo } from './pages/components/TextDemo';
 import { RichTextDemo } from './pages/components/RichTextDemo';
+import { RichTextEditorDemo } from './pages/components/RichTextEditorDemo';
 import { TitleDemo } from './pages/components/TitleDemo';
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
 import { FieldDemo } from './pages/components/FieldDemo';
@@ -159,6 +160,7 @@ export default function App() {
             <Route path="/components/code" element={<CodeDemo />} />
             <Route path="/components/text" element={<TextDemo />} />
             <Route path="/components/rich-text" element={<RichTextDemo />} />
+            <Route path="/components/rich-text-editor" element={<RichTextEditorDemo />} />
             <Route path="/components/title" element={<TitleDemo />} />
             <Route path="/components/checkbox" element={<CheckboxDemo />} />
             <Route path="/components/field" element={<FieldDemo />} />

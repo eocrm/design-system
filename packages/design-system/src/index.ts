@@ -343,6 +343,9 @@ export type {
   LiquidPreviewPlacement,
 } from './components/LiquidEditor';
 
+export { RichTextEditor } from './components/RichTextEditor';
+export type { RichTextEditorProps } from './components/RichTextEditor';
+
 export { FileUpload } from './components/FileUpload';
 export type {
   FileUploadProps,

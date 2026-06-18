@@ -174,4 +174,7 @@ export const ru: Messages = {
     editorLabel: 'Шаблон Liquid',
     suggestions: 'Подсказки',
   },
+  richTextEditor: {
+    editorLabel: 'Редактор форматированного текста',
+  },
 };
