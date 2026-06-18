@@ -12,6 +12,8 @@ import clsx from 'clsx';
 import type { RichDoc, Range, Mark, MarkType, Point } from '../RichText/engine/model';
 import { renderDoc } from '../RichText/engine/renderDoc';
 import { blockLength, isCollapsed } from '../RichText/engine/position';
+import { linkAt, setLink, removeLink } from './links';
+import { RichTextLinkEditor } from './RichTextLinkEditor';
 import { insertText } from '../RichText/engine/transforms';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
@@ -77,6 +79,25 @@ function marksAtCaretMarks(doc: RichDoc, caret: Point): Mark[] {
   return [];
 }
 
+type Rect = { top: number; left: number; height: number; width: number };
+
+/** The viewport rect of the current DOM selection, falling back to the editor root. */
+function selectionRect(root: HTMLElement): Rect {
+  const sel = typeof window !== 'undefined' ? window.getSelection() : null;
+  if (sel && sel.rangeCount > 0) {
+    try {
+      const r = sel.getRangeAt(0).getBoundingClientRect();
+      if (r.width || r.height || r.top || r.left) {
+        return { top: r.top, left: r.left, width: r.width, height: r.height };
+      }
+    } catch {
+      // jsdom does not implement Range.getBoundingClientRect — fall through
+    }
+  }
+  const rr = root.getBoundingClientRect();
+  return { top: rr.top, left: rr.left, width: 0, height: rr.height };
+}
+
 /**
  * Controlled rich-text editor — a contentEditable surface over the in-house
  * engine. Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a
@@ -133,6 +154,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const latest = useRef({ value, onChange, readOnly });
     latest.current = { value, onChange, readOnly };
 
+    // Link editor state.
+    interface LinkEditorOpen {
+      range: Range;
+      href: string;
+      editing: boolean;
+      anchorRect: Rect;
+      key: number;
+    }
+    const [linkEditor, setLinkEditor] = useState<LinkEditorOpen | null>(null);
+    const linkKeyRef = useRef(0);
+
     // Toolbar state: the live selection (tracked via `selectionchange`) and any
     // marks staged at a collapsed caret to apply to the next typed character.
     const [selection, setSelection] = useState<Range | null>(null);
@@ -179,6 +211,58 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       },
       [commit],
     );
+
+    // Open the link editor for the live selection: edit the link under the caret
+    // if there is one (href pre-filled, Remove available), else create over the
+    // selection (or insert at a collapsed caret on Apply).
+    const openLinkEditor = useCallback(() => {
+      if (latest.current.readOnly) return;
+      const root = rootRef.current;
+      if (!root) return;
+      const range = readSelection(root);
+      if (!range) return;
+      const existing = linkAt(latest.current.value, range.focus);
+      const anchorRect = selectionRect(root);
+      linkKeyRef.current += 1;
+      setLinkEditor(
+        existing
+          ? { range: existing.range, href: existing.href, editing: true, anchorRect, key: linkKeyRef.current }
+          : { range, href: '', editing: false, anchorRect, key: linkKeyRef.current },
+      );
+    }, []);
+
+    const onLinkApply = useCallback(
+      (href: string) => {
+        const le = linkEditor;
+        if (!le) return;
+        const trimmed = href.trim();
+        if (trimmed !== '') {
+          commit(setLink(latest.current.value, le.range, trimmed));
+        } else if (le.editing) {
+          commit(removeLink(latest.current.value, le.range));
+        }
+        // empty href while creating → just close (cancel).
+        setLinkEditor(null);
+        rootRef.current?.focus();
+      },
+      [linkEditor, commit],
+    );
+
+    const onLinkRemove = useCallback(() => {
+      const le = linkEditor;
+      if (!le) return;
+      commit(removeLink(latest.current.value, le.range));
+      setLinkEditor(null);
+      rootRef.current?.focus();
+    }, [linkEditor, commit]);
+
+    const onLinkCancel = useCallback(() => {
+      const le = linkEditor;
+      setLinkEditor(null);
+      const root = rootRef.current;
+      if (root && le) writeSelection(root, le.range);
+      root?.focus();
+    }, [linkEditor]);
 
     // Restore the caret/selection after a model-driven re-render.
     useLayoutEffect(() => {
@@ -273,6 +357,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (!root) return;
         const range = readSelection(root);
         if (!range) return;
+        // ⌘/Ctrl+K opens the link editor (create or edit a link).
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          openLinkEditor();
+          return;
+        }
+
         const blockType = deriveCurrentBlock(value, range)?.type;
         const inList = blockType === 'bullet_item' || blockType === 'ordered_item';
 
@@ -303,7 +394,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           return;
         }
       },
-      [value, readOnly, commit, stageOrToggleMark],
+      [value, readOnly, commit, stageOrToggleMark, openLinkEditor],
     );
 
     const onCompositionStart = useCallback(() => {
@@ -338,6 +429,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
     const toolbarBlock = useMemo<BlockChoice | null>(
       () => (selection ? deriveCurrentBlock(value, selection) : null),
+      [value, selection],
+    );
+    const toolbarLinkActive = useMemo<boolean>(
+      () => (selection ? linkAt(value, selection.focus) != null : false),
       [value, selection],
     );
 
@@ -399,7 +494,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       </div>
     );
 
-    if (!toolbar) return editable;
+    const linkBubble =
+      linkEditor && !readOnly ? (
+        <RichTextLinkEditor
+          key={linkEditor.key}
+          href={linkEditor.href}
+          editing={linkEditor.editing}
+          anchorRect={linkEditor.anchorRect}
+          onApply={onLinkApply}
+          onRemove={onLinkRemove}
+          onCancel={onLinkCancel}
+        />
+      ) : null;
+
+    if (!toolbar) {
+      return (
+        <>
+          {editable}
+          {linkBubble}
+        </>
+      );
+    }
     return (
       <div className={styles.shell}>
         <RichTextToolbar
@@ -409,9 +524,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           onToggleMark={onToolbarMark}
           onSetBlock={onToolbarSetBlock}
           onToggleList={onToolbarToggleList}
-          onOpenLink={() => {}} // wired in Task 7
+          linkActive={toolbarLinkActive}
+          onOpenLink={openLinkEditor}
         />
         {editable}
+        {linkBubble}
       </div>
     );
   },
