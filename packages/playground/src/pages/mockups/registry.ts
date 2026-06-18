@@ -64,6 +64,7 @@ export type ComponentName =
   | 'RadioGroup'
   | 'Rail'
   | 'RichText'
+  | 'RichTextEditor'
   | 'Screen'
   | 'Select'
   | 'Skeleton'

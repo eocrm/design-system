@@ -19,6 +19,7 @@ import { CircularProgress } from '@eocrm/design-system';
 import { Progress } from '@eocrm/design-system';
 import { Code } from '@eocrm/design-system';
 import { RichText, createBlock } from '@eocrm/design-system';
+import { RichTextEditor, docFromText } from '@eocrm/design-system';
 import { Text } from '@eocrm/design-system';
 import { Title } from '@eocrm/design-system';
 import { Checkbox } from '@eocrm/design-system';
@@ -817,6 +818,14 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           ],
         }}
       />
+    ),
+  },
+  {
+    to: '/components/rich-text-editor',
+    name: 'RichTextEditor',
+    description: 'Controlled contentEditable rich-text editor over the in-house engine.',
+    preview: (
+      <RichTextEditor value={docFromText('Editable rich text')} onChange={() => {}} readOnly />
     ),
   },
   {
