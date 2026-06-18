@@ -81,17 +81,26 @@ function marksAtCaretMarks(doc: RichDoc, caret: Point): Mark[] {
 
 type Rect = { top: number; left: number; height: number; width: number };
 
+interface LinkEditorOpen {
+  range: Range;
+  href: string;
+  editing: boolean;
+  anchorRect: Rect;
+  key: number;
+}
+
 /** The viewport rect of the current DOM selection, falling back to the editor root. */
 function selectionRect(root: HTMLElement): Rect {
   const sel = typeof window !== 'undefined' ? window.getSelection() : null;
   if (sel && sel.rangeCount > 0) {
+    let r: DOMRect | null = null;
     try {
-      const r = sel.getRangeAt(0).getBoundingClientRect();
-      if (r.width || r.height || r.top || r.left) {
-        return { top: r.top, left: r.left, width: r.width, height: r.height };
-      }
+      r = sel.getRangeAt(0).getBoundingClientRect();
     } catch {
-      // jsdom does not implement Range.getBoundingClientRect — fall through
+      // jsdom does not implement Range.getBoundingClientRect — fall through.
+    }
+    if (r && (r.width || r.height || r.top || r.left)) {
+      return { top: r.top, left: r.left, width: r.width, height: r.height };
     }
   }
   const rr = root.getBoundingClientRect();
@@ -155,13 +164,6 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     latest.current = { value, onChange, readOnly };
 
     // Link editor state.
-    interface LinkEditorOpen {
-      range: Range;
-      href: string;
-      editing: boolean;
-      anchorRect: Rect;
-      key: number;
-    }
     const [linkEditor, setLinkEditor] = useState<LinkEditorOpen | null>(null);
     const linkKeyRef = useRef(0);
 
