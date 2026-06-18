@@ -369,9 +369,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (!root) return;
         const range = readSelection(root);
         if (!range) return;
-        // ⌘/Ctrl+K opens the link editor (create or edit a link).
+        // ⌘/Ctrl+K opens the link editor (create or edit a link). Stop
+        // propagation so the shortcut doesn't ALSO trigger a host app's global
+        // ⌘K (command palette / search) while the editor is focused.
         if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k') {
           e.preventDefault();
+          e.stopPropagation();
           openLinkEditor();
           return;
         }
