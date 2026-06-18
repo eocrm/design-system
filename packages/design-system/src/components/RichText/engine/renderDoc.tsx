@@ -72,21 +72,48 @@ function isListItem(block: Block): boolean {
   return block.type === 'bullet_item' || block.type === 'ordered_item';
 }
 
-// Collect a list starting at `start`, at its base depth; deeper runs become
-// child lists attached to the preceding item. Returns the items + next index.
+/**
+ * Effective render depth per block. `depth` on the model is a free integer, but
+ * the renderer needs gap-free levels — a jump of +2 (or an outdent below the
+ * list's own base) would otherwise drop items during nesting. Within each run of
+ * consecutive list items we clamp each item to at most one level deeper than the
+ * previous (and never below 0), so the grouping below is lossless for any input.
+ * Non-list blocks get 0 and reset the run.
+ */
+function effectiveDepths(blocks: Block[]): number[] {
+  const eff = new Array<number>(blocks.length).fill(0);
+  let prev = -1; // effective depth of the previous list item in the current run
+  for (let i = 0; i < blocks.length; i += 1) {
+    if (!isListItem(blocks[i])) {
+      prev = -1;
+      continue;
+    }
+    const raw = blocks[i].depth ?? 0;
+    const e = Math.max(0, Math.min(raw, prev + 1));
+    eff[i] = e;
+    prev = e;
+  }
+  return eff;
+}
+
+// Collect a list starting at `start`, at its base (effective) depth; items one
+// level deeper recurse into a child list attached to the preceding item. Because
+// `eff` is gap-free, a deeper run is always exactly base+1, so every item lands
+// in exactly one list — no item is overwritten. Returns the items + next index.
 function collectList(
   blocks: Block[],
   start: number,
+  eff: number[],
 ): { tag: 'ul' | 'ol'; items: ListItemNode[]; next: number } {
-  const baseDepth = blocks[start].depth ?? 0;
+  const baseDepth = eff[start];
   const tag = blocks[start].type === 'ordered_item' ? 'ol' : 'ul';
   const items: ListItemNode[] = [];
   let i = start;
   while (i < blocks.length && isListItem(blocks[i])) {
-    const d = blocks[i].depth ?? 0;
+    const d = eff[i];
     if (d < baseDepth) break;
     if (d > baseDepth) {
-      const sub = collectList(blocks, i);
+      const sub = collectList(blocks, i, eff);
       if (items.length > 0) items[items.length - 1].child = renderListTree(sub.tag, sub.items);
       i = sub.next;
       continue;
@@ -111,14 +138,25 @@ function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[]): ReactNode {
   );
 }
 
-/** Render a document to React. Read-only. */
+/**
+ * Render a `RichDoc` to read-only React nodes.
+ *
+ * Blocks map to semantic elements (`<p>`, `<h1|h2|h3>`, `<blockquote>`,
+ * `<pre><code>`). Consecutive list-item blocks are grouped back into `<ul>`/`<ol>`
+ * trees, with nesting reconstructed from each item's `depth` (the flat model is
+ * lossy-free: depths are normalized gap-free first, so malformed depth jumps
+ * never drop items). Inline runs render as nested mark tags in a deterministic
+ * order (`link` outermost … `code` innermost). Block `id` is the React key. An
+ * empty document renders nothing. `code_block` content is treated as plain text.
+ */
 export function renderDoc(doc: RichDoc): ReactNode {
+  const eff = effectiveDepths(doc.blocks);
   const out: ReactNode[] = [];
   let i = 0;
   while (i < doc.blocks.length) {
     if (isListItem(doc.blocks[i])) {
       const startId = doc.blocks[i].id;
-      const { tag, items, next } = collectList(doc.blocks, i);
+      const { tag, items, next } = collectList(doc.blocks, i, eff);
       out.push(<Fragment key={`list-${startId}`}>{renderListTree(tag, items)}</Fragment>);
       i = next;
     } else {

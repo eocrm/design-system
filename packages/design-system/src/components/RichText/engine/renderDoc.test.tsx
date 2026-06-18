@@ -74,6 +74,84 @@ describe('renderDoc', () => {
     expect(html(doc)).toContain('<ul><li>a<ul><li>b</li></ul></li></ul>');
   });
 
+  it('renders ordered-list items into an <ol>', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('ordered_item', 'one', { id: '1' }),
+        createBlock('ordered_item', 'two', { id: '2' }),
+      ],
+    };
+    expect(html(doc)).toContain('<ol><li>one</li><li>two</li></ol>');
+  });
+
+  it('renders a nested ordered list inside a bullet list (mixed types by depth)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: '1', depth: 0 }),
+        createBlock('ordered_item', 'b', { id: '2', depth: 1 }),
+      ],
+    };
+    expect(html(doc)).toContain('<ul><li>a<ol><li>b</li></ol></li></ul>');
+  });
+
+  it('renders three depth levels', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: '1', depth: 0 }),
+        createBlock('bullet_item', 'b', { id: '2', depth: 1 }),
+        createBlock('bullet_item', 'c', { id: '3', depth: 2 }),
+      ],
+    };
+    expect(html(doc)).toContain('<ul><li>a<ul><li>b<ul><li>c</li></ul></li></ul></li></ul>');
+  });
+
+  it('does NOT drop items when depth jumps non-monotonically (normalizes gaps)', () => {
+    // depths [0, 2, 1] used to drop "b" (the deeper run was overwritten). The
+    // normalizer clamps to [0, 1, 1], so a is the parent of siblings b and c.
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: '1', depth: 0 }),
+        createBlock('bullet_item', 'b', { id: '2', depth: 2 }),
+        createBlock('bullet_item', 'c', { id: '3', depth: 1 }),
+      ],
+    };
+    const out = html(doc);
+    expect(out).toContain('b');
+    expect(out).toContain('c');
+    expect(out).toBe('<ul><li>a<ul><li>b</li><li>c</li></ul></li></ul>');
+  });
+
+  it('nests multiple marks including a link in deterministic order', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [
+            {
+              text: 'x',
+              marks: [{ type: 'code' }, { type: 'link', href: '/d' }, { type: 'bold' }],
+            },
+          ],
+        },
+      ],
+    };
+    // link outermost, then bold, then code innermost
+    expect(html(doc)).toContain('<a href="/d"><strong><code>x</code></strong></a>');
+  });
+
+  it('renders heading levels 1 and 3', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('heading', 'One', { level: 1, id: '1' }),
+        createBlock('heading', 'Three', { level: 3, id: '2' }),
+      ],
+    };
+    const out = html(doc);
+    expect(out).toContain('<h1>One</h1>');
+    expect(out).toContain('<h3>Three</h3>');
+  });
+
   it('renders an empty doc as nothing', () => {
     expect(html({ blocks: [] })).toBe('');
   });
