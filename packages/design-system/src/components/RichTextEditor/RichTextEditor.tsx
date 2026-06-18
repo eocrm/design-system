@@ -84,6 +84,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
 
     const commit = useCallback((result: { doc: RichDoc; selection: Range }) => {
+      // No-op transforms (e.g. Backspace at the very start of the document)
+      // return the SAME doc reference — skip so we don't fire onChange or leave a
+      // stale pending selection that React would never consume (no re-render).
+      if (result.doc === latest.current.value) return;
       pendingSelectionRef.current = result.selection;
       latest.current.onChange(result.doc);
     }, []);
@@ -169,6 +173,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     return (
       <div
+        // {...rest} FIRST so the component's own role/aria/contentEditable/handlers
+        // below win — the textbox contract must be preserved (Rule 7, Pattern B).
+        // A consumer aria-label still flows in via the spread AND is read above to
+        // decide whether to fall back to the i18n default.
         {...rest}
         ref={setRefs}
         className={clsx(styles.root, readOnly && styles.readOnly, className)}
