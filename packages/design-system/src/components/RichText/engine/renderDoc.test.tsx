@@ -194,6 +194,19 @@ describe('renderDoc', () => {
       ],
     };
     expect(html(rel)).toContain('href="/docs"');
+
+    const protoRel: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'x', marks: [{ type: 'link', href: '//evil.com' }] }],
+        },
+      ],
+    };
+    // protocol-relative URLs are blocked (no href), not treated as relative
+    expect(html(protoRel)).toContain('<a rel="noopener noreferrer">x</a>');
+    expect(html(protoRel)).not.toContain('evil.com');
   });
 
   it('renders code_block content as plain text (ignores marks)', () => {
