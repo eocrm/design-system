@@ -279,6 +279,36 @@ export interface Messages {
   richTextEditor: {
     /** Default aria-label for the editable region when none is supplied. */
     editorLabel: string;
+    /** aria-label on the formatting toolbar (`role="toolbar"`). */
+    toolbar: string;
+    /** aria-label on the block-type dropdown trigger. */
+    blockType: string;
+    /** Block-type menu item + trigger label for a normal paragraph. */
+    paragraph: string;
+    /** Block-type menu item + trigger label for a level-1 heading. */
+    heading1: string;
+    /** Block-type menu item + trigger label for a level-2 heading. */
+    heading2: string;
+    /** Block-type menu item + trigger label for a level-3 heading. */
+    heading3: string;
+    /** Block-type menu item + trigger label for a blockquote. */
+    blockquote: string;
+    /** Block-type menu item + trigger label for a code block. */
+    codeBlock: string;
+    /** Block-type trigger label when the selection spans mixed block types. */
+    mixed: string;
+    /** aria-label on the bold mark toggle button. */
+    bold: string;
+    /** aria-label on the italic mark toggle button. */
+    italic: string;
+    /** aria-label on the underline mark toggle button. */
+    underline: string;
+    /** aria-label on the strikethrough mark toggle button. */
+    strike: string;
+    /** aria-label on the bullet-list toggle button. */
+    bulletList: string;
+    /** aria-label on the numbered-list toggle button. */
+    orderedList: string;
   };
 }
 
