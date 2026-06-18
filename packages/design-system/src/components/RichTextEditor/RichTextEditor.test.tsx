@@ -83,3 +83,51 @@ describe('RichTextEditor', () => {
     expect(box.querySelector('strong')?.textContent).toBe('hello');
   });
 });
+
+describe('RichTextEditor toolbar', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+
+  it('renders the toolbar when `toolbar` is set', () => {
+    renderEditor(<RichTextEditor value={docFromText('hi')} onChange={() => {}} toolbar />);
+    expect(screen.getByRole('toolbar')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+  });
+
+  it('a block-type choice updates the doc', async () => {
+    const user = userEvent.setup();
+    // Stub the live selection to a fixed in-block range (jsdom has no caret).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 2 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Text style' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Heading 2' }));
+    expect(screen.getByRole('heading', { level: 2, name: 'hi' })).toBeInTheDocument();
+  });
+
+  it('a bullet-list click converts the block to a list', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 2 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Bullet list' }));
+    expect(screen.getByRole('listitem')).toHaveTextContent('hi');
+  });
+});

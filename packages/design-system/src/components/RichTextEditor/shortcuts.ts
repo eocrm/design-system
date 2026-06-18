@@ -1,12 +1,9 @@
-// shortcuts.ts — map a keydown to an inline-mark toggle. Pure: returns the new
-// { doc, selection } or null (not a shortcut → caller lets the key through).
-import type { RichDoc, Range, Mark } from '../RichText/engine/model';
-import { toggleMark } from '../RichText/engine/transforms';
+// shortcuts.ts — map a keydown to the inline mark it toggles. `shortcutMark` is
+// pure (key + modifiers → Mark | null); the editor reads it for both the
+// selection toggle and the collapsed-caret pending-mark path.
+import type { Mark } from '../RichText/engine/model';
 
-/** The new document + selection after a shortcut, or `null` if the key isn't one. */
-export type ShortcutResult = { doc: RichDoc; selection: Range } | null;
-
-/** The minimal keyboard-event shape `applyShortcut` reads (matches `KeyboardEvent`). */
+/** The minimal keyboard-event shape the shortcut helpers read (matches `KeyboardEvent`). */
 export interface ShortcutKey {
   key: string;
   metaKey: boolean;
@@ -15,8 +12,11 @@ export interface ShortcutKey {
 }
 
 /**
- * Map a keyboard event (key + modifiers) to an inline-mark toggle over `range`.
- * Pure: no DOM access, no side effects.
+ * Map a keyboard event (key + modifiers) to the inline mark it toggles, or
+ * `null` when the combination isn't a formatting shortcut. The single source of
+ * truth for the key→mark mapping — the editor reads it for both the selection
+ * toggle and the collapsed-caret pending-mark path. Pure: no DOM, no side
+ * effects.
  *
  * Handled shortcuts:
  * - ⌘/Ctrl+B → bold
@@ -24,22 +24,17 @@ export interface ShortcutKey {
  * - ⌘/Ctrl+U → underline
  * - ⌘/Ctrl+⇧X → strike
  *
- * @returns `{ doc, selection }` with the mark toggled over `range`, or `null`
- *   when the key combination doesn't match any shortcut (let the event through).
- *
  * @example
- * const result = applyShortcut(doc, range, e);
- * if (result) { e.preventDefault(); commit(result); }
+ * const mark = shortcutMark(e);
+ * if (mark) { e.preventDefault(); commit(toggleMark(doc, range, mark)); }
  */
-export function applyShortcut(doc: RichDoc, range: Range, e: ShortcutKey): ShortcutResult {
+export function shortcutMark(e: ShortcutKey): Mark | null {
   const mod = e.metaKey || e.ctrlKey;
   if (!mod) return null;
   const k = e.key.toLowerCase();
-  let mark: Mark | null = null;
-  if (k === 'b' && !e.shiftKey) mark = { type: 'bold' };
-  else if (k === 'i' && !e.shiftKey) mark = { type: 'italic' };
-  else if (k === 'u' && !e.shiftKey) mark = { type: 'underline' };
-  else if (k === 'x' && e.shiftKey) mark = { type: 'strike' };
-  if (!mark) return null;
-  return toggleMark(doc, range, mark);
+  if (k === 'b' && !e.shiftKey) return { type: 'bold' };
+  if (k === 'i' && !e.shiftKey) return { type: 'italic' };
+  if (k === 'u' && !e.shiftKey) return { type: 'underline' };
+  if (k === 'x' && e.shiftKey) return { type: 'strike' };
+  return null;
 }
