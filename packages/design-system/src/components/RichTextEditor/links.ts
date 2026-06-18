@@ -40,7 +40,10 @@ export function linkAt(doc: RichDoc, point: Point): LinkAtResult | null {
   while (end < len && hrefs[end] === href) end += 1;
   return {
     href,
-    range: { anchor: { blockId: block.id, offset: start }, focus: { blockId: block.id, offset: end } },
+    range: {
+      anchor: { blockId: block.id, offset: start },
+      focus: { blockId: block.id, offset: end },
+    },
   };
 }
 

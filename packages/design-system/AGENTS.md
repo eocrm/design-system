@@ -922,6 +922,7 @@ const [doc, setDoc] = useState(emptyDoc());
 - **Mark buttons** — Bold, Italic, Underline, Strikethrough. Reflect `aria-pressed` based on the current selection (or pending marks at a collapsed caret). Clicking with a selection toggles the mark over it; clicking at a collapsed caret sets a "pending" mark applied to the next typed characters (then clears).
 - **Block-type dropdown** — Paragraph, Heading 1–3, Quote, Code block. Shows the current block type; mixed multi-block selections show "Mixed".
 - **List toggles** — Bullet list, Numbered list. Toggle between the list type and paragraph.
+- **Link button** — add/edit a link on the selection. Reflects `aria-pressed` when the caret is inside a link.
 
 **List keys:**
 
@@ -930,7 +931,9 @@ const [doc, setDoc] = useState(emptyDoc());
 
 **Pending marks:** toggling a mark at a collapsed caret (via toolbar or ⌘B/I/U/⌘⇧X shortcut) queues it; the next inserted text gets that mark applied, then the queue clears. Moving the caret discards pending marks.
 
-When NOT to use: read-only display → `<RichText>`. No links or undo yet (later slices). It's controlled — render `onChange`'s doc back into `value`, never mutate in place.
+**Links:** select text and press ⌘/Ctrl+K (or the toolbar link button) to add or edit a link; with the caret inside a link the URL is pre-filled and a Remove button appears; with no selection the URL is inserted as linked text. Esc / click-outside cancels. Stored hrefs are sanitized at render time (`safeHref` blocks `javascript:`/`data:`/protocol-relative).
+
+When NOT to use: read-only display → `<RichText>`. No undo/redo yet (later slice). It's controlled — render `onChange`'s doc back into `value`, never mutate in place.
 
 ### `<ImageCrop>` — controlled image cropper
 

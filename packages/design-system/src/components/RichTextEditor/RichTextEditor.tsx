@@ -112,9 +112,11 @@ function selectionRect(root: HTMLElement): Rect {
  * engine. Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a
  * selection (with a collapsed caret they stage a *pending* mark applied to the
  * next typed text); Enter splits, Backspace/Delete merge. Pass `toolbar` for the
- * built-in formatting toolbar. Inside a list, Tab/⇧Tab indent/outdent and Enter
- * on an empty item exits to a paragraph. The model is the source of truth: every
- * input is replayed as an engine transform and the DOM re-rendered.
+ * built-in formatting toolbar. ⌘/Ctrl+K (or the toolbar link button) opens a
+ * floating editor to add, edit, or remove a link on the selection. Inside a
+ * list, Tab/⇧Tab indent/outdent and Enter on an empty item exits to a paragraph.
+ * The model is the source of truth: every input is replayed as an engine
+ * transform and the DOM re-rendered.
  *
  * @example
  * const [doc, setDoc] = useState(emptyDoc());
@@ -135,8 +137,10 @@ function selectionRect(root: HTMLElement): Rect {
  * - ❌ Treating it as uncontrolled — you MUST feed `onChange`'s doc back into
  *   `value`, or edits won't stick.
  * - ❌ Mutating `value` in place — pass the new doc the transforms return.
- * - ❌ Expecting links / undo — not in this slice; use the keyboard shortcuts or
- *   `toolbar` for marks/blocks/lists and Enter/Backspace for structure.
+ * - ❌ Expecting undo/redo — not in this slice.
+ * - ❌ Hand-rolling a link UI by reaching into the DOM — press ⌘/Ctrl+K or the
+ *   toolbar link button; both open the built-in editor and route through the
+ *   controlled `value`/`onChange` round-trip.
  * - ❌ Building your own toolbar by reaching into the DOM — pass `toolbar`, or
  *   drive marks/blocks through the controlled `value`/`onChange` round-trip.
  */
@@ -228,7 +232,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       linkKeyRef.current += 1;
       setLinkEditor(
         existing
-          ? { range: existing.range, href: existing.href, editing: true, anchorRect, key: linkKeyRef.current }
+          ? {
+              range: existing.range,
+              href: existing.href,
+              editing: true,
+              anchorRect,
+              key: linkKeyRef.current,
+            }
           : { range, href: '', editing: false, anchorRect, key: linkKeyRef.current },
       );
     }, []);
