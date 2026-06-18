@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RichTextLinkEditor } from './RichTextLinkEditor';
 import { I18nProvider } from '../../i18n';
@@ -61,5 +61,19 @@ describe('RichTextLinkEditor', () => {
   it('the bubble is a labelled group', () => {
     renderBubble();
     expect(screen.getByRole('group', { name: 'Edit link' })).toBeInTheDocument();
+  });
+
+  it('Apply button click applies the URL', async () => {
+    const user = userEvent.setup();
+    const { onApply } = renderBubble();
+    await user.type(screen.getByRole('textbox', { name: 'Link URL' }), 'https://example.com');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(onApply).toHaveBeenCalledWith('https://example.com');
+  });
+
+  it('a pointerdown outside the bubble calls onCancel', () => {
+    const { onCancel } = renderBubble();
+    fireEvent.pointerDown(document.body);
+    expect(onCancel).toHaveBeenCalled();
   });
 });

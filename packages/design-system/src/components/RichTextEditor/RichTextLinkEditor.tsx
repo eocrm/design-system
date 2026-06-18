@@ -4,7 +4,7 @@
 // Floating UI virtual element (the same portal+virtual-anchor pattern as
 // LiquidEditor's AutocompleteMenu, so it escapes the editor's overflow and any
 // Drawer/Modal ancestor). Enter applies, Esc / click-outside cancels.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFloating, autoUpdate, flip, shift, offset } from '@floating-ui/react-dom';
 import { Button } from '../Button';
@@ -90,10 +90,13 @@ export function RichTextLinkEditor({
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
   }, [onCancel]);
 
-  const setRefs = (node: HTMLDivElement | null) => {
-    bubbleRef.current = node;
-    refs.setFloating(node);
-  };
+  const setRefs = useCallback(
+    (node: HTMLDivElement | null) => {
+      bubbleRef.current = node;
+      refs.setFloating(node);
+    },
+    [refs],
+  );
 
   return createPortal(
     <div
@@ -103,6 +106,7 @@ export function RichTextLinkEditor({
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
           e.preventDefault();
+          e.stopPropagation();
           onCancel();
         }
       }}
