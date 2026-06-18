@@ -409,6 +409,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           onToggleMark={onToolbarMark}
           onSetBlock={onToolbarSetBlock}
           onToggleList={onToolbarToggleList}
+          onOpenLink={() => {}} // wired in Task 7
         />
         {editable}
       </div>
