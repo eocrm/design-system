@@ -22,12 +22,18 @@ function marksBefore(block: Block, offset: number): Mark[] {
   let pos = 0;
   for (const run of block.inlines) {
     const runEnd = pos + run.text.length;
-    if (offset - 1 >= pos && offset - 1 < runEnd) return run.marks;
+    if (offset - 1 >= pos && offset - 1 < runEnd) return [...run.marks];
     pos = runEnd;
   }
   return [];
 }
 
+/**
+ * Pure/immutable. Insert `text` at `point`, inheriting the marks of the character
+ * immediately before the cursor. Returns `{ doc, selection }` with the caret
+ * placed after the inserted text. No-op (returns input unchanged) when `text` is
+ * empty or `point.blockId` does not exist in `doc`.
+ */
 export function insertText(
   doc: RichDoc,
   point: Point,
@@ -48,6 +54,12 @@ export function insertText(
   };
 }
 
+/**
+ * Pure/immutable. Delete the content covered by `range`. If `range` is collapsed
+ * (anchor === focus) returns `{ doc, selection }` unchanged — no-op. Cross-block
+ * ranges merge the surviving text of the start and end blocks. Returns `{ doc,
+ * selection }` with the caret at the deletion point.
+ */
 export function deleteRange(doc: RichDoc, range: Range): { doc: RichDoc; selection: Range } {
   const { start, end } = orderedRange(doc, range);
   if (start.blockId === end.blockId && start.offset === end.offset) {
@@ -70,6 +82,11 @@ export function deleteRange(doc: RichDoc, range: Range): { doc: RichDoc; selecti
   };
 }
 
+/**
+ * Pure/immutable. Split the block at `point` into two blocks of the same type,
+ * placing the caret at offset 0 of the new (right) block. Returns `{ doc,
+ * selection }`. No-op (returns input) when `point.blockId` is not found.
+ */
 export function splitBlock(doc: RichDoc, point: Point): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, point.blockId);
   if (idx === -1) return { doc, selection: collapsed(point) };
@@ -90,6 +107,11 @@ export function splitBlock(doc: RichDoc, point: Point): { doc: RichDoc; selectio
   return { doc: { blocks }, selection: collapsed({ blockId: right.id, offset: 0 }) };
 }
 
+/**
+ * Pure/immutable. Merge the block identified by `blockId` into the preceding
+ * block, appending its inlines. Returns `{ doc, selection }` with the caret at the
+ * join point. No-op (returns input) when `blockId` is the first block in the doc.
+ */
 export function mergeBlockBackward(
   doc: RichDoc,
   blockId: string,
@@ -125,6 +147,11 @@ function transformMarksOverRange(
   return { doc: { blocks }, selection: range };
 }
 
+/**
+ * Pure/immutable. Apply `mark` to every character in `range`, splitting inline
+ * runs at the boundaries as needed. Returns `{ doc, selection }` with the
+ * original range preserved.
+ */
 export function applyMark(
   doc: RichDoc,
   range: Range,
@@ -133,6 +160,10 @@ export function applyMark(
   return transformMarksOverRange(doc, range, (m) => withMark(m, mark));
 }
 
+/**
+ * Pure/immutable. Remove the mark of `type` from every character in `range`.
+ * Returns `{ doc, selection }` with the original range preserved.
+ */
 export function removeMark(
   doc: RichDoc,
   range: Range,
@@ -166,6 +197,11 @@ function rangeHasMarkEverywhere(doc: RichDoc, range: Range, type: MarkType): boo
   return true;
 }
 
+/**
+ * Pure/immutable. If every character in `range` already carries `mark.type`,
+ * removes it (via `removeMark`); otherwise applies it (via `applyMark`). Returns
+ * `{ doc, selection }` with the original range preserved.
+ */
 export function toggleMark(
   doc: RichDoc,
   range: Range,
@@ -176,6 +212,12 @@ export function toggleMark(
     : applyMark(doc, range, mark);
 }
 
+/**
+ * Pure/immutable. Patch the `type`, `level`, and/or `depth` of the block
+ * identified by `blockId`. Cleans up irrelevant fields (`level` for non-headings,
+ * `depth` for non-list blocks). Returns `{ doc, selection }` with the caret at
+ * offset 0 of the block. No-op (returns input) when `blockId` is not found.
+ */
 export function setBlockType(
   doc: RichDoc,
   blockId: string,

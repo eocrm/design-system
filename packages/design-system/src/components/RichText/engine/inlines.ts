@@ -2,10 +2,12 @@
 import type { Inline, Mark } from './model';
 import { marksEqual } from './marks';
 
+/** Concatenate the text of all inline runs, discarding mark information. */
 export function runsText(inlines: Inline[]): string {
   return inlines.map((r) => r.text).join('');
 }
 
+/** Total character count across all inline runs (sum of run text lengths). */
 export function runsLength(inlines: Inline[]): number {
   return inlines.reduce((n, r) => n + r.text.length, 0);
 }

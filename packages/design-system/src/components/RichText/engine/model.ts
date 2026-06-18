@@ -1,5 +1,9 @@
 // model.ts — RichText document model types + constructors. Pure data; no DOM.
 
+/**
+ * All supported block-level content types. `heading` requires a `level`; list
+ * types (`bullet_item`, `ordered_item`) accept a `depth` for nesting.
+ */
 export type BlockType =
   | 'paragraph'
   | 'heading'
@@ -8,6 +12,7 @@ export type BlockType =
   | 'blockquote'
   | 'code_block';
 
+/** All supported inline mark types. `link` carries an additional `href` field on the `Mark` union. */
 export type MarkType = 'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'link';
 
 /** A formatting mark. Flags carry no data; `link` carries an href. */
@@ -59,11 +64,23 @@ export interface Range {
 // Module-local monotonic id source. NOT Math.random/Date.now (unavailable in
 // some contexts + non-deterministic). Unique within a session — enough for keys.
 let idCounter = 0;
+/**
+ * Generate a session-unique block id. Ids are monotonically incrementing strings
+ * (`rt1`, `rt2`, …) — deterministic within a session but NOT across page reloads.
+ * Use the `id` field in `CreateBlockAttrs` to pin ids in tests.
+ */
 export function nextId(): string {
   idCounter += 1;
   return `rt${idCounter}`;
 }
 
+/**
+ * Optional attributes for `createBlock`. All fields are optional.
+ * - `level` — heading level (1–3); only meaningful for `type: 'heading'`.
+ * - `depth` — list nesting depth (0-based); only meaningful for list items.
+ * - `marks` — marks applied to the initial text run.
+ * - `id` — pin the block id (useful for tests and deterministic seeding).
+ */
 export interface CreateBlockAttrs {
   level?: 1 | 2 | 3;
   depth?: number;

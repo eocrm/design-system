@@ -48,7 +48,7 @@ describe('renderDoc', () => {
         },
       ],
     };
-    expect(html(doc)).toContain('<a href="/docs">go</a>');
+    expect(html(doc)).toContain('<a href="/docs" rel="noopener noreferrer">go</a>');
   });
 
   it('groups consecutive bullet items into one <ul>', () => {
@@ -137,7 +137,9 @@ describe('renderDoc', () => {
       ],
     };
     // link outermost, then bold, then code innermost
-    expect(html(doc)).toContain('<a href="/d"><strong><code>x</code></strong></a>');
+    expect(html(doc)).toContain(
+      '<a href="/d" rel="noopener noreferrer"><strong><code>x</code></strong></a>',
+    );
   });
 
   it('renders heading levels 1 and 3', () => {
@@ -154,5 +156,56 @@ describe('renderDoc', () => {
 
   it('renders an empty doc as nothing', () => {
     expect(html({ blocks: [] })).toBe('');
+  });
+
+  it('sanitizes unsafe link schemes (no href) and keeps safe ones', () => {
+    const bad: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'x', marks: [{ type: 'link', href: 'javascript:alert(1)' }] }],
+        },
+      ],
+    };
+    const out = html(bad);
+    expect(out).toContain('<a rel="noopener noreferrer">x</a>'); // no href attribute
+    expect(out).not.toContain('javascript:');
+
+    const good: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'x', marks: [{ type: 'link', href: 'https://x.com' }] }],
+        },
+      ],
+    };
+    expect(html(good)).toContain('href="https://x.com"');
+    expect(html(good)).toContain('rel="noopener noreferrer"');
+
+    const rel: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'x', marks: [{ type: 'link', href: '/docs' }] }],
+        },
+      ],
+    };
+    expect(html(rel)).toContain('href="/docs"');
+  });
+
+  it('renders code_block content as plain text (ignores marks)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'code_block',
+          inlines: [{ text: 'const x = 1', marks: [{ type: 'bold' }] }],
+        },
+      ],
+    };
+    expect(html(doc)).toContain('<pre><code>const x = 1</code></pre>');
   });
 });

@@ -2,14 +2,23 @@
 import type { RichDoc, Block, Point, Range } from './model';
 import { runsLength } from './inlines';
 
+/** Total character length of a block (sum of all inline run lengths). */
 export function blockLength(block: Block): number {
   return runsLength(block.inlines);
 }
 
+/**
+ * Returns the index of the block with `blockId` in `doc.blocks`, or `-1` if
+ * not found. Used by transforms to locate blocks before mutation.
+ */
 export function findBlockIndex(doc: RichDoc, blockId: string): number {
   return doc.blocks.findIndex((b) => b.id === blockId);
 }
 
+/**
+ * Clamp `point.offset` to the valid range `[0, blockLength]` for the block.
+ * Returns `point` unchanged if the block is not found in `doc`.
+ */
 export function clampPoint(doc: RichDoc, point: Point): Point {
   const idx = findBlockIndex(doc, point.blockId);
   if (idx === -1) return point;
@@ -27,6 +36,7 @@ export function comparePoints(doc: RichDoc, a: Point, b: Point): -1 | 0 | 1 {
   return ia < ib ? -1 : ia > ib ? 1 : 0;
 }
 
+/** Returns `true` iff `range` is collapsed — anchor and focus point to the same position. */
 export function isCollapsed(range: Range): boolean {
   return range.anchor.blockId === range.focus.blockId && range.anchor.offset === range.focus.offset;
 }

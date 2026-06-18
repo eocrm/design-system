@@ -2,6 +2,18 @@
 // is flat; this reconstructs list nesting from `depth` at render time.
 import { Fragment, type ReactNode } from 'react';
 import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
+import { runsText } from './inlines';
+
+// Allow relative URLs and a small scheme allowlist; block javascript:/data:/etc.
+function safeHref(href: string): string | undefined {
+  const trimmed = href.trim();
+  if (trimmed === '') return undefined;
+  // Has an explicit scheme? Only http(s)/mailto/tel are allowed.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    return /^(https?:|mailto:|tel:)/i.test(trimmed) ? trimmed : undefined;
+  }
+  return trimmed; // relative (/, ./, #, ?, plain path) — safe
+}
 
 // Outer → inner nesting order so output is stable + diff-friendly.
 const MARK_ORDER: MarkType[] = ['link', 'bold', 'italic', 'underline', 'strike', 'code'];
@@ -19,7 +31,11 @@ function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
     case 'code':
       return <code>{child}</code>;
     case 'link':
-      return <a href={mark.type === 'link' ? mark.href : undefined}>{child}</a>;
+      return (
+        <a href={mark.type === 'link' ? safeHref(mark.href) : undefined} rel="noopener noreferrer">
+          {child}
+        </a>
+      );
     default:
       return child;
   }
@@ -53,7 +69,7 @@ function renderBlock(block: Block): ReactNode {
     case 'code_block':
       return (
         <pre key={block.id}>
-          <code>{content}</code>
+          <code>{runsText(block.inlines)}</code>
         </pre>
       );
     case 'paragraph':

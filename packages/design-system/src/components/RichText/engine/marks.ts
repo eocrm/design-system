@@ -14,6 +14,7 @@ export function marksEqual(a: Mark[], b: Mark[]): boolean {
   return ka.every((k, i) => k === kb[i]);
 }
 
+/** Returns `true` iff `marks` contains a mark of the given `type`. */
 export function hasMark(marks: Mark[], type: MarkType): boolean {
   return marks.some((m) => m.type === type);
 }
@@ -23,10 +24,16 @@ export function withMark(marks: Mark[], mark: Mark): Mark[] {
   return [...marks.filter((m) => m.type !== mark.type), mark];
 }
 
+/** Immutable remove; returns a new array with all marks of `type` filtered out. */
 export function withoutMark(marks: Mark[], type: MarkType): Mark[] {
   return marks.filter((m) => m.type !== type);
 }
 
+/**
+ * Immutable toggle: if `marks` already contains `mark.type`, removes it;
+ * otherwise adds `mark` (replacing any existing mark of the same type).
+ * Returns a new array — never mutates the input.
+ */
 export function toggleMark(marks: Mark[], mark: Mark): Mark[] {
   return hasMark(marks, mark.type) ? withoutMark(marks, mark.type) : withMark(marks, mark);
 }
