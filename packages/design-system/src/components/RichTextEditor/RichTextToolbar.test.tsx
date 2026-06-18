@@ -7,6 +7,7 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
   const onToggleMark = vi.fn();
   const onSetBlock = vi.fn();
   const onToggleList = vi.fn();
+  const onOpenLink = vi.fn();
   render(
     <I18nProvider locale="en">
       <RichTextToolbar
@@ -15,11 +16,12 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
         onToggleMark={onToggleMark}
         onSetBlock={onSetBlock}
         onToggleList={onToggleList}
+        onOpenLink={onOpenLink}
         {...props}
       />
     </I18nProvider>,
   );
-  return { onToggleMark, onSetBlock, onToggleList };
+  return { onToggleMark, onSetBlock, onToggleList, onOpenLink };
 }
 
 describe('RichTextToolbar', () => {
@@ -78,5 +80,27 @@ describe('RichTextToolbar', () => {
     expect(screen.getByRole('button', { name: 'Bold' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Numbered list' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Text style' })).toBeDisabled();
+  });
+
+  it('renders a Link button', () => {
+    renderTb();
+    expect(screen.getByRole('button', { name: 'Link' })).toBeInTheDocument();
+  });
+
+  it('reflects linkActive via aria-pressed', () => {
+    renderTb({ linkActive: true });
+    expect(screen.getByRole('button', { name: 'Link' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('fires onOpenLink when the Link button is clicked', async () => {
+    const user = userEvent.setup();
+    const { onOpenLink } = renderTb();
+    await user.click(screen.getByRole('button', { name: 'Link' }));
+    expect(onOpenLink).toHaveBeenCalled();
+  });
+
+  it('disables the Link button when disabled', () => {
+    renderTb({ disabled: true });
+    expect(screen.getByRole('button', { name: 'Link' })).toBeDisabled();
   });
 });

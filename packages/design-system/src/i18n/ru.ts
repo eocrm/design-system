@@ -191,5 +191,11 @@ export const ru: Messages = {
     strike: 'Зачёркнутый',
     bulletList: 'Маркированный список',
     orderedList: 'Нумерованный список',
+    link: 'Ссылка',
+    linkUrl: 'URL ссылки',
+    linkUrlPlaceholder: 'https://… или /path',
+    linkApply: 'Применить',
+    linkRemove: 'Удалить ссылку',
+    linkEditorLabel: 'Редактирование ссылки',
   },
 };

@@ -6,6 +6,7 @@ import { getComponentFiles } from '../../lib/componentFiles';
 
 export function RichTextEditorDemo() {
   const [doc, setDoc] = useState<RichDoc>(docFromText('Type here. Select a word and press ⌘B.'));
+  const [linkDoc, setLinkDoc] = useState<RichDoc>(docFromText('Read the docs and visit our site.'));
 
   return (
     <DemoLayout
@@ -26,6 +27,20 @@ export function RichTextEditorDemo() {
             Toolbar + shortcuts: ⌘/Ctrl+B bold · I italic · U underline · ⇧X strike
           </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title="Links"
+        description="Select text and press ⌘/Ctrl+K (or the toolbar link button) to open the link editor; type a URL and Apply. With the caret inside a link the URL is pre-filled and Remove appears. With no selection, the URL is inserted as linked text. Esc or a click outside cancels."
+        code={`const [doc, setDoc] = useState(docFromText('…'));
+<RichTextEditor value={doc} onChange={setDoc} toolbar />`}
+      >
+        <RichTextEditor
+          value={linkDoc}
+          onChange={setLinkDoc}
+          toolbar
+          placeholder="Select text, then ⌘K…"
+        />
       </Example>
 
       <Example

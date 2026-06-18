@@ -10,6 +10,7 @@ import {
   StrikeIcon,
   BulletListIcon,
   OrderedListIcon,
+  LinkIcon,
 } from './icons';
 import styles from './RichTextEditor.module.scss';
 
@@ -29,6 +30,10 @@ export interface RichTextToolbarProps {
   onSetBlock: (choice: BlockChoice) => void;
   /** Toggle the selected blocks into/out of a bullet or numbered list. */
   onToggleList: (listType: 'bullet_item' | 'ordered_item') => void;
+  /** Whether the current selection sits inside a link (drives the Link button's pressed state). */
+  linkActive?: boolean;
+  /** Open the link editor for the current selection. */
+  onOpenLink: () => void;
 }
 
 const MARKS: {
@@ -65,6 +70,8 @@ export function RichTextToolbar({
   onToggleMark,
   onSetBlock,
   onToggleList,
+  linkActive = false,
+  onOpenLink,
 }: RichTextToolbarProps) {
   const t = useTranslation();
 
@@ -145,6 +152,21 @@ export function RichTextToolbar({
           </Button>
         );
       })}
+
+      <Button
+        size="sm"
+        variant={linkActive ? 'secondary' : 'ghost'}
+        iconOnly
+        aria-label={t('richTextEditor.link')}
+        aria-pressed={linkActive}
+        disabled={disabled}
+        // Preserve the editor's DOM selection (a mousedown that moves focus out
+        // of the contentEditable would collapse it before the bubble opens).
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onOpenLink}
+      >
+        <LinkIcon />
+      </Button>
 
       <span className={styles.toolbarSep} aria-hidden="true" />
 

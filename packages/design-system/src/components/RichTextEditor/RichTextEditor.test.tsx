@@ -130,4 +130,74 @@ describe('RichTextEditor toolbar', () => {
     await user.click(screen.getByRole('button', { name: 'Bullet list' }));
     expect(screen.getByRole('listitem')).toHaveTextContent('hi');
   });
+
+  it('renders the toolbar Link button when the toolbar is on', () => {
+    function Harness() {
+      const [doc, setDoc] = useState(docFromText('hello'));
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button', { name: 'Link' })).toBeInTheDocument();
+  });
+
+  it('opening the link editor from the toolbar shows the link bubble', async () => {
+    const user = userEvent.setup();
+    // Stub readSelection so openLinkEditor gets a valid range (jsdom has no real caret).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hello', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar autoFocus />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Link' }));
+    expect(await screen.findByRole('group', { name: 'Edit link' })).toBeInTheDocument();
+  });
+
+  it('⌘K opens the link editor without leaking the shortcut to a host key handler', async () => {
+    const user = userEvent.setup();
+    // Stub readSelection so the ⌘K handler resolves a range (jsdom has no caret).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    const hostKeyDown = vi.fn();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hello', marks: [] }] }],
+      });
+      // A host wrapper standing in for a CRM's global ⌘K (command palette / search).
+      return (
+        <div onKeyDown={hostKeyDown}>
+          <RichTextEditor value={doc} onChange={setDoc} toolbar autoFocus />
+        </div>
+      );
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    screen.getByRole('textbox', { name: 'Rich text editor' }).focus();
+    await user.keyboard('{Meta>}k{/Meta}');
+    // The editor opened its own link bubble…
+    expect(await screen.findByRole('group', { name: 'Edit link' })).toBeInTheDocument();
+    // …and stopped the ⌘K from bubbling to the host handler.
+    const kReachedHost = hostKeyDown.mock.calls.some(
+      ([ev]) => (ev as React.KeyboardEvent).key.toLowerCase() === 'k',
+    );
+    expect(kReachedHost).toBe(false);
+  });
 });
