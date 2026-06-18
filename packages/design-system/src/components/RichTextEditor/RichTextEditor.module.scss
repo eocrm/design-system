@@ -66,3 +66,18 @@
   border-start-start-radius: 0;
   border-start-end-radius: 0;
 }
+
+// The floating link-edit bubble (RichTextLinkEditor). A portaled overlay
+// positioned by Floating UI's inline `floatingStyles` (so `position`/offsets are
+// NOT set here). `min-width` is the established sizing convention for floating
+// overlays (cf. LiquidEditor's `.menu`), not page layout — Rule 4 targets
+// in-flow component layout, not a portaled popover's intrinsic size.
+.linkBubble {
+  z-index: var(--z-overlay-floating);
+  min-width: var(--size-dropdown-min-width);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+}
