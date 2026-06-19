@@ -111,6 +111,12 @@ export const en: Messages = {
     search: 'Search…',
     noOptions: 'No options',
   },
+  phoneInput: {
+    countryLabel: 'Country',
+    countrySearch: 'Search countries…',
+    numberLabel: 'Phone number',
+    numberPlaceholder: 'Phone number',
+  },
   colorPicker: {
     saturationBrightness: 'Saturation and brightness',
     hue: 'Hue',
