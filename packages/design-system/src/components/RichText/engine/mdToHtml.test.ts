@@ -26,6 +26,13 @@ describe('mdToHtml — inline', () => {
   it('converts bold/italic/strike/code', () => {
     expect(mdToHtml('**b** *i* ~~s~~ `c`')).toBe('<p><strong>b</strong> <em>i</em> <del>s</del> <code>c</code></p>');
   });
+  it('converts triple markers to bold+italic', () => {
+    expect(mdToHtml('***x***')).toBe('<p><strong><em>x</em></strong></p>');
+    expect(mdToHtml('___y___')).toBe('<p><strong><em>y</em></strong></p>');
+  });
+  it('does not wrap whitespace in emphasis (flanking)', () => {
+    expect(mdToHtml('a _ b _ c')).toBe('<p>a _ b _ c</p>');
+  });
   it('converts links but not images', () => {
     expect(mdToHtml('[t](/u)')).toBe('<p><a href="/u">t</a></p>');
     expect(mdToHtml('![alt](/img.png)')).toBe('<p>alt</p>');

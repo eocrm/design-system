@@ -49,6 +49,17 @@ function inline(src: string): string {
         continue;
       }
     }
+    // Triple marker → bold+italic. Checked before the double marker so `***x***`
+    // isn't mis-split into `**` + a stray `*`.
+    if ((c === '*' || c === '_') && src[i + 1] === c && src[i + 2] === c) {
+      const marker = c + c + c;
+      const end = src.indexOf(marker, i + 3);
+      if (end > i + 3) {
+        out += '<strong><em>' + inline(src.slice(i + 3, end)) + '</em></strong>';
+        i = end + 3;
+        continue;
+      }
+    }
     if ((c === '*' || c === '_') && src[i + 1] === c) {
       const marker = c + c;
       const end = src.indexOf(marker, i + 2);
@@ -66,9 +77,12 @@ function inline(src: string): string {
         continue;
       }
     }
-    if (c === '*' || c === '_') {
+    // Emphasis: require non-space immediately inside the markers (a minimal
+    // CommonMark flanking check) so `a _ b _ c` stays literal instead of
+    // wrapping whitespace in <em>.
+    if ((c === '*' || c === '_') && src[i + 1] !== ' ') {
       const end = src.indexOf(c, i + 1);
-      if (end > i + 1) {
+      if (end > i + 1 && src[end - 1] !== ' ') {
         out += '<em>' + inline(src.slice(i + 1, end)) + '</em>';
         i = end + 1;
         continue;
