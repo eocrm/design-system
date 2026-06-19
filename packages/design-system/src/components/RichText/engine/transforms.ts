@@ -1,10 +1,10 @@
 // transforms.ts — Layer D. Document transforms. Pure + immutable; each returns
 // { doc, selection } (the new doc + where the caret/selection should land).
 import type { RichDoc, Block, Point, Range, Mark, MarkType } from './model';
-import { createBlock } from './model';
-import { normalizeInlines, sliceInlines, mapMarksOverRange } from './inlines';
+import { createBlock, nextId } from './model';
+import { normalizeInlines, sliceInlines, mapMarksOverRange, runsLength } from './inlines';
 import { withMark, withoutMark, hasMark } from './marks';
-import { blockLength, findBlockIndex, orderedRange } from './position';
+import { blockLength, findBlockIndex, orderedRange, isCollapsed } from './position';
 
 function collapsed(point: Point): Range {
   return { anchor: point, focus: point };
@@ -229,4 +229,51 @@ export function setBlockType(
   if (next.type !== 'heading') delete next.level;
   if (next.type !== 'bullet_item' && next.type !== 'ordered_item') delete next.depth;
   return { doc: replaceBlock(doc, idx, next), selection: collapsed({ blockId, offset: 0 }) };
+}
+
+/**
+ * Pure/immutable. Insert a multi-block `fragment` at `range`, replacing any
+ * selection, with the conventional paste merge: the fragment's first block
+ * continues the current line and its last block rejoins the trailing text.
+ * Returns `{ doc, selection }` with the caret at the join. An empty fragment is
+ * a no-op (returns the input doc + a collapsed caret).
+ */
+export function insertFragment(
+  doc: RichDoc,
+  range: Range,
+  fragment: RichDoc,
+): { doc: RichDoc; selection: Range } {
+  const frag = fragment.blocks;
+  const fragEmpty = frag.length === 0 || (frag.length === 1 && blockLength(frag[0]) === 0);
+
+  const base = isCollapsed(range) ? { doc, selection: range } : deleteRange(doc, range);
+  const caret = base.selection.anchor;
+  if (fragEmpty) return { doc: base.doc, selection: collapsed(caret) };
+
+  const idx = findBlockIndex(base.doc, caret.blockId);
+  if (idx === -1) return { doc: base.doc, selection: collapsed(caret) };
+  const B = base.doc.blocks[idx];
+  const left = sliceInlines(B.inlines, 0, caret.offset);
+  const right = sliceInlines(B.inlines, caret.offset, blockLength(B));
+
+  if (frag.length === 1) {
+    const merged = normalizeInlines([...left, ...frag[0].inlines, ...right]);
+    const offset = caret.offset + runsLength(frag[0].inlines);
+    return {
+      doc: replaceBlock(base.doc, idx, { ...B, inlines: merged }),
+      selection: collapsed({ blockId: B.id, offset }),
+    };
+  }
+
+  const first = frag[0];
+  const last = frag[frag.length - 1];
+  const middle = frag.slice(1, -1).map((b) => ({ ...b, id: nextId() }));
+  const bleft: Block = { ...B, inlines: normalizeInlines([...left, ...first.inlines]) };
+  const bright: Block = { ...last, id: nextId(), inlines: normalizeInlines([...last.inlines, ...right]) };
+  const blocks = base.doc.blocks.slice();
+  blocks.splice(idx, 1, bleft, ...middle, bright);
+  return {
+    doc: { blocks },
+    selection: collapsed({ blockId: bright.id, offset: runsLength(last.inlines) }),
+  };
 }
