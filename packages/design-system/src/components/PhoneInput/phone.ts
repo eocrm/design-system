@@ -48,7 +48,9 @@ export function getCountryOptions(locale: string, only?: string[]): CountryOptio
 }
 
 /** Parse an E.164 string into its country + national display, or null if unparseable. */
-export function parseE164(value: string): { country: CountryCode | undefined; national: string } | null {
+export function parseE164(
+  value: string,
+): { country: CountryCode | undefined; national: string } | null {
   const parsed = parsePhoneNumberFromString(value);
   if (!parsed) return null;
   return { country: parsed.country, national: parsed.formatNational() };

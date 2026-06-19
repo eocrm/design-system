@@ -1,10 +1,4 @@
-import {
-  getCountryOptions,
-  parseE164,
-  formatNational,
-  toE164,
-  isValidPhone,
-} from './phone';
+import { getCountryOptions, parseE164, formatNational, toE164, isValidPhone } from './phone';
 
 describe('phone engine', () => {
   describe('getCountryOptions', () => {
