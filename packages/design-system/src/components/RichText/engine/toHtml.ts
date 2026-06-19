@@ -1,0 +1,114 @@
+// toHtml.ts — serialize a RichDoc to a compact HTML string. The inverse of
+// fromHtml; mirrors renderDoc's structure (block elements, mark nesting order,
+// list-depth grouping) but emits a string. Text/attributes are escaped and hrefs
+// run through safeHref, so output is injection-safe. Lossless for the model
+// (underline → <u>), so fromHtml(toHtml(doc)) reproduces the document.
+import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
+import { runsText } from './inlines';
+import { escapeHtml, escapeAttr } from './escape';
+import { safeHref } from './safeHref';
+import { isListItem, effectiveDepths } from './listDepths';
+
+// Outer → inner; link outermost, code innermost (matches renderDoc).
+const MARK_ORDER: MarkType[] = ['link', 'bold', 'italic', 'underline', 'strike', 'code'];
+const HEADING_TAG: Record<1 | 2 | 3, string> = { 1: 'h1', 2: 'h2', 3: 'h3' };
+
+/** Wrap an already-escaped HTML string in one mark's tag. */
+function wrapMark(type: MarkType, mark: Mark, inner: string): string {
+  switch (type) {
+    case 'bold':
+      return `<strong>${inner}</strong>`;
+    case 'italic':
+      return `<em>${inner}</em>`;
+    case 'underline':
+      return `<u>${inner}</u>`;
+    case 'strike':
+      return `<s>${inner}</s>`;
+    case 'code':
+      return `<code>${inner}</code>`;
+    case 'link': {
+      const safe = mark.type === 'link' ? safeHref(mark.href) : undefined;
+      if (safe === undefined) return inner; // unsafe href → drop the anchor, keep text
+      return `<a href="${escapeAttr(safe)}" rel="noopener noreferrer">${inner}</a>`;
+    }
+    default:
+      return inner;
+  }
+}
+
+/** Serialize one inline run: escaped text wrapped innermost-first. */
+function inlineRun(run: Inline): string {
+  const present = MARK_ORDER.filter((t) => run.marks.some((m) => m.type === t));
+  let html = escapeHtml(run.text);
+  for (let i = present.length - 1; i >= 0; i -= 1) {
+    const type = present[i];
+    const mark = run.marks.find((m) => m.type === type)!;
+    html = wrapMark(type, mark, html);
+  }
+  return html;
+}
+
+const inlines = (block: Block): string => block.inlines.map(inlineRun).join('');
+
+/** Serialize a contiguous run of list items starting at `start` (its base depth). */
+function listHtml(blocks: Block[], start: number, eff: number[]): [string, number] {
+  const base = eff[start];
+  const tag = blocks[start].type === 'ordered_item' ? 'ol' : 'ul';
+  const items: string[] = [];
+  let i = start;
+  while (i < blocks.length && isListItem(blocks[i])) {
+    const d = eff[i];
+    if (d < base) break;
+    if (d > base) {
+      const [child, next] = listHtml(blocks, i, eff);
+      if (items.length > 0) {
+        items[items.length - 1] = items[items.length - 1].replace(/<\/li>$/, `${child}</li>`);
+      }
+      i = next;
+      continue;
+    }
+    items.push(`<li>${inlines(blocks[i])}</li>`);
+    i += 1;
+  }
+  return [`<${tag}>${items.join('')}</${tag}>`, i];
+}
+
+function blockHtml(block: Block): string {
+  switch (block.type) {
+    case 'heading':
+      return `<${HEADING_TAG[block.level ?? 1]}>${inlines(block)}</${HEADING_TAG[block.level ?? 1]}>`;
+    case 'blockquote':
+      return `<blockquote>${inlines(block)}</blockquote>`;
+    case 'code_block':
+      return `<pre><code>${escapeHtml(runsText(block.inlines))}</code></pre>`;
+    case 'paragraph':
+    default:
+      return `<p>${inlines(block)}</p>`;
+  }
+}
+
+/**
+ * Serialize a `RichDoc` to a compact HTML string (the inverse of `fromHtml`).
+ * Text and attributes are escaped and hrefs run through `safeHref`, so the output
+ * is injection-safe. Lossless for the model — `fromHtml(toHtml(doc))` reproduces
+ * the document structurally.
+ *
+ * @example
+ * const html = toHtml(doc); // '<h2>Title</h2><p>Hello <strong>world</strong></p>'
+ */
+export function toHtml(doc: RichDoc): string {
+  const eff = effectiveDepths(doc.blocks);
+  let out = '';
+  let i = 0;
+  while (i < doc.blocks.length) {
+    if (isListItem(doc.blocks[i])) {
+      const [html, next] = listHtml(doc.blocks, i, eff);
+      out += html;
+      i = next;
+    } else {
+      out += blockHtml(doc.blocks[i]);
+      i += 1;
+    }
+  }
+  return out;
+}
