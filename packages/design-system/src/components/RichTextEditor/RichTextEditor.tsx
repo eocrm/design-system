@@ -126,6 +126,7 @@ function selectionRect(root: HTMLElement): Rect {
  * floating editor to add, edit, or remove a link on the selection. Inside a
  * list, Tab/⇧Tab indent/outdent and Enter on an empty item exits to a paragraph.
  * Pasting rich HTML (web, Word, Google Docs) imports it as formatted content.
+ * ⌘/Ctrl+Z / ⌘/Ctrl+Shift+Z (and the toolbar Undo/Redo buttons) undo and redo.
  * The model is the source of truth: every input is replayed as an engine
  * transform and the DOM re-rendered.
  *

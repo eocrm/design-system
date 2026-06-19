@@ -337,7 +337,9 @@ describe('RichTextEditor undo/redo', () => {
         <div>
           <button
             onClick={() =>
-              setDoc({ blocks: [{ id: 'z', type: 'paragraph', inlines: [{ text: 'new', marks: [] }] }] })
+              setDoc({
+                blocks: [{ id: 'z', type: 'paragraph', inlines: [{ text: 'new', marks: [] }] }],
+              })
             }
           >
             replace
