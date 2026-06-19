@@ -1,4 +1,13 @@
-import { getCountryOptions, parseE164, formatNational, toE164, isValidPhone } from './phone';
+import {
+  getCountryOptions,
+  parseE164,
+  formatNational,
+  toE164,
+  isValidPhone,
+  isoToFlag,
+  countryDisplayLabel,
+} from './phone';
+import type { CountryOption } from './phone';
 
 describe('phone engine', () => {
   describe('getCountryOptions', () => {
@@ -72,6 +81,23 @@ describe('phone engine', () => {
       expect(isValidPhone('+1202')).toBe(false);
       expect(isValidPhone('')).toBe(false);
       expect(isValidPhone(null)).toBe(false);
+    });
+  });
+
+  describe('isoToFlag', () => {
+    it('maps an ISO alpha-2 code to its emoji flag', () => {
+      expect(isoToFlag('US')).toBe('🇺🇸');
+      expect(isoToFlag('gb')).toBe('🇬🇧');
+    });
+  });
+
+  describe('countryDisplayLabel', () => {
+    const us: CountryOption = { iso: 'US', name: 'United States', callingCode: '1' };
+    it('formats each display mode', () => {
+      expect(countryDisplayLabel(us, 'code')).toBe('+1');
+      expect(countryDisplayLabel(us, 'iso')).toBe('US +1');
+      expect(countryDisplayLabel(us, 'name')).toBe('United States +1');
+      expect(countryDisplayLabel(us, 'flag')).toBe('🇺🇸 +1');
     });
   });
 });

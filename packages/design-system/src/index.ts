@@ -262,6 +262,7 @@ export type {
   PhoneInputSize,
   CountryOption,
   CountryCode,
+  CountryDisplay,
 } from './components/PhoneInput';
 
 export { Select } from './components/Select';

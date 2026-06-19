@@ -19,6 +19,43 @@ export interface CountryOption {
   callingCode: string;
 }
 
+/**
+ * How the SELECTED country renders in the picker trigger:
+ * - `'flag'` — emoji flag + calling code (`🇺🇸 +1`)
+ * - `'iso'` — ISO code + calling code (`US +1`)
+ * - `'name'` — full country name + calling code (`United States +1`)
+ * - `'code'` — calling code only (`+1`)
+ */
+export type CountryDisplay = 'flag' | 'iso' | 'name' | 'code';
+
+/**
+ * Emoji flag for an ISO 3166-1 alpha-2 code, built from Unicode regional-
+ * indicator symbols. Note: emoji flags do NOT render on Windows Chrome/Edge —
+ * those show the letters (e.g. "US") instead.
+ */
+export function isoToFlag(iso: string): string {
+  return iso
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '')
+    .replace(/./g, (c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65));
+}
+
+/** The compact trigger label for `country` under the chosen `display` mode. */
+export function countryDisplayLabel(country: CountryOption, display: CountryDisplay): string {
+  const code = `+${country.callingCode}`;
+  switch (display) {
+    case 'flag':
+      return `${isoToFlag(country.iso)} ${code}`;
+    case 'iso':
+      return `${country.iso} ${code}`;
+    case 'code':
+      return code;
+    case 'name':
+    default:
+      return `${country.name} ${code}`;
+  }
+}
+
 function displayNames(locale: string): Intl.DisplayNames {
   try {
     return new Intl.DisplayNames([locale], { type: 'region' });

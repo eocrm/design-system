@@ -16,8 +16,11 @@ import {
   parseE164,
   formatNational,
   toE164,
+  isoToFlag,
+  countryDisplayLabel,
   type CountryCode,
   type CountryOption,
+  type CountryDisplay,
 } from './phone';
 import styles from './PhoneInput.module.scss';
 
@@ -36,6 +39,18 @@ export interface PhoneInputProps extends Omit<
   defaultCountry?: string;
   /** Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries. */
   countries?: string[];
+  /**
+   * How the SELECTED country renders in the picker trigger. Default `"name"`.
+   * - `"flag"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on
+   *   Windows Chrome/Edge (they show the letters), so prefer `"iso"` there.
+   * - `"iso"` — ISO code + code (`US +1`).
+   * - `"name"` — full country name + code (`United States +1`).
+   * - `"code"` — calling code only (`+1`).
+   *
+   * The dropdown rows always show the full country name (plus a flag in `"flag"`
+   * mode) so they stay searchable + identifiable regardless of this setting.
+   */
+  countryDisplay?: CountryDisplay;
   /** Control size, forwarded to the Select + Input. Default `"md"`. */
   size?: PhoneInputSize;
   /** Error chrome on both controls (host/Field-driven). */
@@ -115,6 +130,7 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
     onChange,
     defaultCountry = 'US',
     countries,
+    countryDisplay = 'name',
     size = 'md',
     invalid,
     disabled,
@@ -137,8 +153,18 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
     [resolvedLocale, countries],
   );
   const selectOptions = useMemo<SelectOption<CountryOption>[]>(
-    () => options.map((o) => ({ value: o.iso, label: `${o.name} +${o.callingCode}`, data: o })),
-    [options],
+    () =>
+      options.map((o) => ({
+        value: o.iso,
+        // The combobox trigger shows the option's `label` (renderValue is ignored
+        // for a searchable Select), so the label IS the compact trigger format…
+        label: countryDisplayLabel(o, countryDisplay),
+        // …while `description` carries the full search terms (name + iso + code)
+        // so filtering still matches by name even in `"code"`/`"iso"` modes.
+        description: `${o.name} ${o.iso} +${o.callingCode}`,
+        data: o,
+      })),
+    [options, countryDisplay],
   );
 
   const [country, setCountry] = useState<CountryCode>(() => seedCountry(value, defaultCountry));
@@ -208,12 +234,25 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
         value={country}
         onChange={(v) => onCountryChange(Array.isArray(v) ? v[0] : v)}
         searchable
+        // A phone always has a country — never offer to clear the selection.
+        clearable={false}
         size={size}
         invalid={invalid}
         disabled={disabled}
         aria-label={t('phoneInput.countryLabel')}
         placeholder={t('phoneInput.countrySearch')}
-        renderValue={(opt) => (opt.data ? `${opt.data.iso} +${opt.data.callingCode}` : opt.label)}
+        // Rows always show the full name (+ flag in `flag` mode), single-line.
+        renderOption={(opt) =>
+          opt.data ? (
+            <span className={styles.option}>
+              {countryDisplay === 'flag'
+                ? `${isoToFlag(opt.data.iso)} ${opt.data.name} +${opt.data.callingCode}`
+                : `${opt.data.name} +${opt.data.callingCode}`}
+            </span>
+          ) : (
+            opt.label
+          )
+        }
       />
       <Input
         className={styles.number}

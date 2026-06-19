@@ -13,3 +13,11 @@
 .number {
   width: 100%;
 }
+
+// Dropdown rows: keep "Country name +code" on a single line (no wrapping).
+.option {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
