@@ -58,7 +58,7 @@ export function RichTextEditorDemo() {
       <Example
         title="Import (HTML / Markdown) + rich paste"
         description="Seed the editor from stored HTML or Markdown with fromHtml / fromMarkdown, and paste rich HTML (from the web, Word, Google Docs) straight into the editor — it becomes formatted content, not plain text."
-        code={`import { fromHtml, fromMarkdown } from '@eocrm/design-system';
+        code={`import { fromMarkdown } from '@eocrm/design-system'; // (fromHtml too — same API)
 const [doc, setDoc] = useState(() => fromMarkdown('# Imported\\n\\n- one\\n- two'));
 <RichTextEditor value={doc} onChange={setDoc} toolbar />`}
       >
