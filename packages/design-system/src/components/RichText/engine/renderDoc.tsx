@@ -3,24 +3,11 @@
 import { Fragment, type ReactNode } from 'react';
 import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
 import { runsText, runsLength } from './inlines';
+import { safeHref } from './safeHref';
 
 export interface RenderDocOptions {
   /** Editable surface: add `data-block-id` anchors + render empty blocks with a `<br>`. */
   editable?: boolean;
-}
-
-// Allow relative URLs and a small scheme allowlist; block javascript:/data:/etc.
-function safeHref(href: string): string | undefined {
-  const trimmed = href.trim();
-  if (trimmed === '') return undefined;
-  // Block protocol-relative URLs (`//host`) — they navigate cross-origin and
-  // would otherwise slip through the "relative" branch below.
-  if (trimmed.startsWith('//')) return undefined;
-  // Has an explicit scheme? Only http(s)/mailto/tel are allowed.
-  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
-    return /^(https?:|mailto:|tel:)/i.test(trimmed) ? trimmed : undefined;
-  }
-  return trimmed; // relative (/, ./, #, ?, plain path) — safe
 }
 
 // Outer → inner nesting order so output is stable + diff-friendly.

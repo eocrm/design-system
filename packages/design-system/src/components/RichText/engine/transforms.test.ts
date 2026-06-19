@@ -7,6 +7,7 @@ import {
   removeMark,
   toggleMark,
   setBlockType,
+  insertFragment,
 } from './transforms';
 import { createBlock } from './model';
 import { runsText } from './inlines';
@@ -111,5 +112,58 @@ describe('transforms', () => {
     expect(r.doc.blocks[0].level).toBe(2);
     const back = setBlockType(r.doc, 'a', { type: 'paragraph' });
     expect(back.doc.blocks[0].level).toBeUndefined();
+  });
+});
+
+describe('insertFragment', () => {
+  const fpara = (id: string, text: string) => createBlock('paragraph', text, { id });
+  const fat = (blockId: string, offset: number) => ({ blockId, offset });
+  const fcollapsed = (blockId: string, offset: number) => ({
+    anchor: fat(blockId, offset),
+    focus: fat(blockId, offset),
+  });
+
+  it('single-block fragment → inline splice with caret after it', () => {
+    const doc: RichDoc = { blocks: [fpara('a', 'abcd')] };
+    const frag: RichDoc = { blocks: [createBlock('paragraph', 'XY', { id: 'f' })] };
+    const r = insertFragment(doc, fcollapsed('a', 2), frag);
+    expect(r.doc.blocks.length).toBe(1);
+    expect(r.doc.blocks[0].inlines).toEqual([{ text: 'abXYcd', marks: [] }]);
+    expect(r.selection).toEqual(fcollapsed('a', 4));
+  });
+
+  it('multi-block fragment → split current block and merge ends', () => {
+    const doc: RichDoc = { blocks: [fpara('a', 'abcd')] };
+    const frag: RichDoc = {
+      blocks: [
+        createBlock('paragraph', 'X', { id: 'f0' }),
+        createBlock('heading', 'Y', { id: 'f1', level: 2 }),
+        createBlock('paragraph', 'Z', { id: 'f2' }),
+      ],
+    };
+    const r = insertFragment(doc, fcollapsed('a', 2), frag);
+    expect(r.doc.blocks.map((b) => [b.type, b.inlines.map((i) => i.text).join('')])).toEqual([
+      ['paragraph', 'abX'],
+      ['heading', 'Y'],
+      ['paragraph', 'Zcd'],
+    ]);
+    expect(r.selection.anchor.offset).toBe(1);
+    expect(r.selection.anchor.blockId).toBe(r.doc.blocks[2].id);
+  });
+
+  it('non-collapsed range is deleted first, then the fragment inserted', () => {
+    const doc: RichDoc = { blocks: [fpara('a', 'abcd')] };
+    const frag: RichDoc = { blocks: [createBlock('paragraph', 'X', { id: 'f' })] };
+    const r = insertFragment(doc, { anchor: fat('a', 1), focus: fat('a', 3) }, frag);
+    expect(r.doc.blocks[0].inlines).toEqual([{ text: 'aXd', marks: [] }]);
+  });
+
+  it('an empty fragment is a no-op (collapsed caret returned)', () => {
+    const doc: RichDoc = { blocks: [fpara('a', 'abcd')] };
+    const r = insertFragment(doc, fcollapsed('a', 2), {
+      blocks: [createBlock('paragraph', '', { id: 'e' })],
+    });
+    expect(r.doc).toBe(doc);
+    expect(r.selection).toEqual(fcollapsed('a', 2));
   });
 });

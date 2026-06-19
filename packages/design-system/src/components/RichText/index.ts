@@ -25,3 +25,5 @@ export {
   toggleMark,
   setBlockType,
 } from './engine/transforms';
+export { fromHtml } from './engine/fromHtml';
+export { fromMarkdown } from './engine/fromMarkdown';
