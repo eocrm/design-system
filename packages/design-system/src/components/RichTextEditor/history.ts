@@ -41,6 +41,9 @@ export function record(h: History, next: Snapshot, kind: EditKind, now: number):
   if (next.doc === h.present.doc) return h;
   const coalesce = kind !== 'other' && kind === h.lastKind && now - h.lastAt < COALESCE_MS;
   if (coalesce) {
+    // Extend the current step: keep `past`/`future` (the burst's single boundary
+    // already sits on top of `past`). The new value shares those arrays with `h`
+    // — safe because arrays are never mutated and no caller compares them by ref.
     return { ...h, present: next, lastAt: now };
   }
   return {

@@ -70,12 +70,30 @@ describe('history record', () => {
     expect(record(h, sa, 'type', 1000)).toBe(h);
   });
 
-  it('caps the past length at 200', () => {
+  it('caps the past length at 200, dropping the oldest', () => {
     let h = reset(sa);
     for (let i = 0; i < 250; i += 1) {
       h = record(h, { doc: mkDoc('x' + i), selection: null }, 'other', i * 1000);
     }
     expect(h.past.length).toBe(200);
+    // Pushed-to-past sequence is [sa, x0, x1, …, x248]; slice(-200) drops the
+    // first 50, so the oldest survivor is x49 (guards against slice(0, CAP)).
+    expect(h.past[0].doc).toEqual(mkDoc('x49'));
+  });
+
+  it('coalescing a third same-kind edit still coalesces (lastKind persists)', () => {
+    let h = reset(sa);
+    h = record(h, sb, 'type', 1000);
+    h = record(h, sc, 'type', 1200);
+    h = record(h, { doc: mkDoc('d'), selection: null }, 'type', 1400);
+    expect(h.past).toEqual([sa]);
+  });
+
+  it('does not mutate the input history', () => {
+    const h = reset(sa);
+    record(h, sb, 'other', 1000);
+    expect(h.past).toEqual([]);
+    expect(h.present).toBe(sa);
   });
 });
 
