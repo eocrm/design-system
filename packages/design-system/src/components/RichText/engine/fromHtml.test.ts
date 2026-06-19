@@ -117,6 +117,11 @@ describe('fromHtml — inline marks', () => {
     expect(bad.blocks[0].inlines).toEqual([{ text: 't', marks: [] }]);
   });
 
+  it('drops a tab-obfuscated javascript: href but keeps the text', () => {
+    const d = fromHtml('<p><a href="java\tscript:alert(1)">x</a></p>');
+    expect(d.blocks[0].inlines).toEqual([{ text: 'x', marks: [] }]);
+  });
+
   it('recovers bold/italic/underline/strike from inline CSS (Word/Docs)', () => {
     const d = fromHtml(
       '<p><span style="font-weight:700">b</span><span style="font-style:italic">i</span><span style="text-decoration:underline">u</span><span style="text-decoration:line-through">s</span></p>',

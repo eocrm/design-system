@@ -18,4 +18,14 @@ describe('safeHref', () => {
     expect(safeHref('   ')).toBeUndefined();
     expect(safeHref('')).toBeUndefined();
   });
+
+  it('strips tab/newline/CR and leading control chars before the scheme check', () => {
+    expect(safeHref('java\tscript:alert(1)')).toBeUndefined();
+    expect(safeHref('java\nscript:alert(1)')).toBeUndefined();
+    expect(safeHref('java\rscript:alert(1)')).toBeUndefined();
+    expect(safeHref('\x01javascript:alert(1)')).toBeUndefined();
+    expect(safeHref('  \t javascript:alert(1)')).toBeUndefined();
+    // a legitimate relative path with internal spaces is still preserved
+    expect(safeHref('/a b')).toBe('/a b');
+  });
 });
