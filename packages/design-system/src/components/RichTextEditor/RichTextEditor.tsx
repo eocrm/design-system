@@ -352,14 +352,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const onBeforeInput = (e: InputEvent) => {
         const { value: doc, readOnly: ro } = latest.current;
         if (ro || isComposingRef.current) return;
-        if (e.inputType === 'historyUndo') {
+        // Suppress the browser's native contentEditable undo/redo so it never
+        // mutates the DOM out from under the controlled model. The actual undo/redo
+        // is driven solely by the ⌘Z/⌘⇧Z/⌘Y keydown handler — calling onUndo here
+        // too would double-apply (keydown fires this beforeinput as well).
+        if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
           e.preventDefault();
-          onUndo();
-          return;
-        }
-        if (e.inputType === 'historyRedo') {
-          e.preventDefault();
-          onRedo();
           return;
         }
         const range = readSelection(root);
@@ -404,7 +402,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
       root.addEventListener('beforeinput', onBeforeInput);
       return () => root.removeEventListener('beforeinput', onBeforeInput);
-    }, [commit, onUndo, onRedo]);
+    }, [commit]);
 
     // Rich paste: when the clipboard carries HTML, parse it into the model and
     // splice it at the selection. No HTML → don't preventDefault, so the native
@@ -464,8 +462,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (readOnly) return;
         const root = rootRef.current;
         if (!root) return;
-        const range = readSelection(root);
-        if (!range) return;
+        // Undo/redo don't need a live selection — check them BEFORE the
+        // readSelection guard so ⌘Z still works if the caret was lost. stopPropagation
+        // keeps the shortcut from also triggering a host app's undo. preventDefault
+        // suppresses the browser's native contentEditable undo (and the resulting
+        // historyUndo beforeinput), so the beforeinput net only fires for an
+        // Edit-menu/trackpad undo that emits no keydown.
         const mod = e.metaKey || e.ctrlKey;
         if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) {
           e.preventDefault();
@@ -479,6 +481,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           onRedo();
           return;
         }
+        const range = readSelection(root);
+        if (!range) return;
         // ⌘/Ctrl+K opens the link editor (create or edit a link). Stop
         // propagation so the shortcut doesn't ALSO trigger a host app's global
         // ⌘K (command palette / search) while the editor is focused.
