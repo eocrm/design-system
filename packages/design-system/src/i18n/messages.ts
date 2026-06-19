@@ -182,6 +182,16 @@ export interface Messages {
     /** Copy shown when the Select listbox has no options matching the filter. */
     noOptions: string;
   };
+  phoneInput: {
+    /** aria-label for the country picker Select. */
+    countryLabel: string;
+    /** Search placeholder inside the country picker. */
+    countrySearch: string;
+    /** aria-label for the national-number Input. */
+    numberLabel: string;
+    /** Placeholder in the national-number Input. */
+    numberPlaceholder: string;
+  };
   colorPicker: {
     /** aria-label for the SV (saturation × brightness) square. */
     saturationBrightness: string;

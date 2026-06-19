@@ -38,6 +38,7 @@ import { LiquidEditor } from '@eocrm/design-system';
 import { Kbd } from '@eocrm/design-system';
 import { PasswordInput } from '@eocrm/design-system';
 import { PasswordStrengthMeter } from '@eocrm/design-system';
+import { PhoneInput } from '@eocrm/design-system';
 import { Select } from '@eocrm/design-system';
 import { Skeleton } from '@eocrm/design-system';
 import { Slider } from '@eocrm/design-system';
@@ -390,6 +391,16 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: (
       <div style={{ width: 200 }}>
         <PasswordStrengthMeter value="Hunter2!@#" />
+      </div>
+    ),
+  },
+  {
+    to: '/components/phone-input',
+    name: 'PhoneInput',
+    description: 'International phone field — country picker + national number, emitting E.164.',
+    preview: (
+      <div style={{ width: 240 }}>
+        <PhoneInput value="+12025550123" onChange={() => {}} aria-label="Preview" />
       </div>
     ),
   },

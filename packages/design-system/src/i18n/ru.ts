@@ -113,6 +113,12 @@ export const ru: Messages = {
     search: 'Поиск…',
     noOptions: 'Нет вариантов',
   },
+  phoneInput: {
+    countryLabel: 'Страна',
+    countrySearch: 'Поиск стран…',
+    numberLabel: 'Номер телефона',
+    numberPlaceholder: 'Номер телефона',
+  },
   colorPicker: {
     saturationBrightness: 'Насыщенность и яркость',
     hue: 'Оттенок',

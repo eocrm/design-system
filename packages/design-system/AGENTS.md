@@ -475,6 +475,15 @@ import { Textarea } from '@eocrm/design-system';
 - `showLabel={false}` to hide the textual label (segments only).
 - Use `aria-describedby` on the paired `<PasswordInput>` to associate the meter with the field for AT.
 
+### `<PhoneInput>`
+
+International phone field: searchable country picker (DS `Select`) + national-number `Input`, controlled on a single `value: string | null` (**E.164**), `onChange(e164 | null)`. `defaultCountry` (ISO alpha-2) seeds the picker when empty; `countries` restricts the list; `size`/`invalid`/`disabled` pass through. Country names are localized via `Intl.DisplayNames`; metadata/validation via `libphonenumber-js`. Validate with the exported `isValidPhone(e164)` and drive `invalid` (or wrap in `<Field error>`). Rows show "Country name +code" (no flags). Store the emitted E.164, not the formatted display.
+
+```tsx
+const [phone, setPhone] = useState<string | null>(null);
+<PhoneInput value={phone} onChange={setPhone} defaultCountry="GB" />;
+```
+
 ### `<Checkbox>` — checkbox with native input + custom paint
 
 ```tsx

@@ -252,6 +252,10 @@
   // 15rem grids side-by-side + var(--space-3) gutter + popover padding.
   --size-daterange-popover-width: 32rem;
 
+  // PhoneInput — max-width of the country-picker trigger so the national
+  // number field gets the remaining row width. Fits "US +1 ▾" / "GB +44 ▾".
+  --size-control-country: 8rem;
+
   // Modal — width per size variant
   --size-modal-sm: 400px;
   --size-modal-md: 560px;

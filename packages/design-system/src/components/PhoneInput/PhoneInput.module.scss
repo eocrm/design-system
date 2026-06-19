@@ -1,0 +1,15 @@
+.root {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.country {
+  // keep the country trigger compact so the number field gets the room
+  max-width: var(--size-control-country);
+}
+
+.number {
+  width: 100%;
+}
