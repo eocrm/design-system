@@ -20,6 +20,8 @@ import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
 import { readSelection, writeSelection } from './selection';
 import { applyInput } from './input';
+import { matchBlockRule, applyBlockRule } from './inputRules';
+import { runsText } from '../RichText/engine/inlines';
 import { shortcutMark } from './shortcuts';
 import {
   activeMarks as deriveActiveMarks,
@@ -383,6 +385,23 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         }
         const range = readSelection(root);
         if (!range) return;
+        // Markdown block input rules: a marker + space at the start of a paragraph
+        // converts the block (e.g. "# " → heading, "- " → bullet). The space is
+        // consumed; one commit → one undo step (⌘Z reverts the conversion).
+        if (e.inputType === 'insertText' && e.data === ' ' && isCollapsed(range)) {
+          const block = doc.blocks.find((b) => b.id === range.anchor.blockId);
+          if (block) {
+            const before = runsText(block.inlines).slice(0, range.anchor.offset);
+            const match = matchBlockRule(block.type, before, ' ');
+            if (match) {
+              e.preventDefault();
+              setPendingMarks(null);
+              pendingAtRef.current = null;
+              commit(applyBlockRule(doc, block.id, match), 'other');
+              return;
+            }
+          }
+        }
         // Pending marks: a mark toggled at a collapsed caret applies to the next
         // typed text, then clears. Handle insertText here before generic input.
         const pend = pendingMarksRef.current;
