@@ -259,4 +259,38 @@ describe('LiquidEditor', () => {
     await user.type(ta, 'x');
     expect(ta).toHaveValue('locked');
   });
+
+  it('renders toolbarActions in the toolbar, before the Insert variable button', () => {
+    renderEditor(
+      <LiquidEditor
+        value=""
+        onChange={() => {}}
+        variables={VARS}
+        toolbarActions={<button type="button">Docs</button>}
+      />,
+    );
+    const docs = screen.getByRole('button', { name: 'Docs' });
+    const insert = screen.getByRole('button', { name: 'Insert variable' });
+    expect(docs).toBeInTheDocument();
+    // Docs comes before Insert variable in DOM order (both right-aligned).
+    expect(docs.compareDocumentPosition(insert) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // The spacer is the first toolbar child → actions + Insert are pushed right.
+    const toolbar = docs.parentElement!;
+    expect(toolbar.firstElementChild?.tagName).toBe('SPAN');
+    expect(toolbar.firstElementChild).toBeEmptyDOMElement();
+    // Insert variable is the bordered "secondary" button.
+    expect(insert.className).toMatch(/secondary/);
+  });
+
+  it('does not render toolbarActions when the toolbar is hidden', () => {
+    renderEditor(
+      <LiquidEditor
+        value=""
+        onChange={() => {}}
+        showToolbar={false}
+        toolbarActions={<button type="button">Docs</button>}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Docs' })).not.toBeInTheDocument();
+  });
 });

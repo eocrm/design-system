@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Stack, LiquidEditor, type LiquidVariable } from '@eocrm/design-system';
+import { BookOpen } from 'lucide-react';
+import { Stack, LiquidEditor, Button, type LiquidVariable } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -53,6 +54,34 @@ export function LiquidEditorDemo() {
           onChange={setFormula}
           variables={VARS}
           preview={fakeRender(formula)}
+        />
+      </Example>
+
+      <Example
+        title="Custom toolbar actions"
+        description='Pass toolbarActions to add buttons (e.g. a Docs link) right-aligned in the toolbar, just before the bordered "Insert variable" button.'
+        code={`<LiquidEditor
+  value={formula}
+  onChange={setFormula}
+  variables={VARS}
+  toolbarActions={
+    <Button variant="ghost" size="sm">
+      <BookOpen size={14} />
+      Docs
+    </Button>
+  }
+/>`}
+      >
+        <LiquidEditor
+          value={formula}
+          onChange={setFormula}
+          variables={VARS}
+          toolbarActions={
+            <Button variant="ghost" size="sm">
+              <BookOpen size={14} />
+              Docs
+            </Button>
+          }
         />
       </Example>
 

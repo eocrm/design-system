@@ -911,6 +911,8 @@ const VARS = [
 <LiquidEditor value={formula} onChange={setFormula} variables={VARS} />;
 ```
 
+**Toolbar:** the right-aligned "Insert variable" dropdown is a bordered `secondary` `sm` button. Pass `toolbarActions` (a `ReactNode`, e.g. `<Button variant="ghost" size="sm">…</Button>` for a Docs/Help link) to add extra buttons right-aligned just before it. Hidden when `showToolbar={false}`.
+
 When NOT to use: plain prose → `Textarea`; static read-only code → playground `CodeBlock`. Don't expect it to validate syntax (feed `error` from the backend) or to produce its own preview (preview is consumer-rendered).
 
 ### `<RichTextEditor>` — controlled rich-text editor (contentEditable)

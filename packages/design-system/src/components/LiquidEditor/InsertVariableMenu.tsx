@@ -35,7 +35,7 @@ export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVari
     <DropdownMenu>
       {/* Trigger clones its single child to inject ref + ARIA — no `asChild`. */}
       <DropdownMenu.Trigger>
-        <Button variant="ghost" size="sm" disabled={disabled || variables.length === 0}>
+        <Button variant="secondary" size="sm" disabled={disabled || variables.length === 0}>
           {t('liquidEditor.insertVariable')}
         </Button>
       </DropdownMenu.Trigger>

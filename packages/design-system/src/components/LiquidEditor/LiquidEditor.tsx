@@ -60,6 +60,12 @@ const MENU_NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape']
  *   <LiquidEditor value={formula} onChange={setFormula} variables={VARS} />
  * </Field>
  *
+ * @example
+ * // Extra toolbar buttons (right-aligned, before "Insert variable").
+ * <LiquidEditor value={formula} onChange={setFormula} variables={VARS}
+ *   toolbarActions={<Button variant="ghost" size="sm"><BookOpen size={14} /> Docs</Button>}
+ * />
+ *
  * @remarks When NOT to use
  * - Plain multi-line prose → use `<Textarea>`.
  * - Static, read-only code display → use the playground `CodeBlock` (the library
@@ -87,6 +93,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
       previewPlacement = 'bottom',
       showLineNumbers = true,
       showToolbar = true,
+      toolbarActions,
       filters = DEFAULT_LIQUID_FILTERS as string[],
       minRows = 4,
       maxRows,
@@ -303,12 +310,14 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
       <>
         {showToolbar ? (
           <div className={styles.toolbar}>
+            {/* Spacer first → custom actions + Insert variable are pushed right. */}
+            <span className={styles.toolbarSpacer} />
+            {toolbarActions}
             <InsertVariableMenu
               variables={variables}
               disabled={!interactive}
               onInsert={insertVariable}
             />
-            <span className={styles.toolbarSpacer} />
           </div>
         ) : null}
         <div className={styles.body}>
