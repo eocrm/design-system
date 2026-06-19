@@ -15,7 +15,9 @@ describe('toHtml — blocks', () => {
         createBlock('code_block', 'a < b', { id: 'd' }),
       ],
     };
-    expect(toHtml(doc)).toBe('<h2>H</h2><p>p</p><blockquote>q</blockquote><pre><code>a &lt; b</code></pre>');
+    expect(toHtml(doc)).toBe(
+      '<h2>H</h2><p>p</p><blockquote>q</blockquote><pre><code>a &lt; b</code></pre>',
+    );
   });
 
   it('groups nested list items into ul/ol with nested li', () => {
@@ -30,7 +32,9 @@ describe('toHtml — blocks', () => {
   });
 
   it('uses <ol> for ordered items', () => {
-    expect(toHtml({ blocks: [createBlock('ordered_item', 'a', { id: '1' })] })).toBe('<ol><li>a</li></ol>');
+    expect(toHtml({ blocks: [createBlock('ordered_item', 'a', { id: '1' })] })).toBe(
+      '<ol><li>a</li></ol>',
+    );
   });
 
   it('handles 3-level deep nesting then outdent (depths 0,1,2,1,0)', () => {
@@ -54,24 +58,34 @@ describe('toHtml — inline marks', () => {
     const doc: RichDoc = {
       blocks: [para('a', [{ text: 'x', marks: [link('/u'), { type: 'bold' }, { type: 'code' }] }])],
     };
-    expect(toHtml(doc)).toBe('<p><a href="/u" rel="noopener noreferrer"><strong><code>x</code></strong></a></p>');
+    expect(toHtml(doc)).toBe(
+      '<p><a href="/u" rel="noopener noreferrer"><strong><code>x</code></strong></a></p>',
+    );
   });
 
   it('maps every mark tag including underline', () => {
     const doc: RichDoc = {
-      blocks: [para('a', [
-        { text: 'b', marks: [{ type: 'bold' }] },
-        { text: 'i', marks: [{ type: 'italic' }] },
-        { text: 'u', marks: [{ type: 'underline' }] },
-        { text: 's', marks: [{ type: 'strike' }] },
-      ])],
+      blocks: [
+        para('a', [
+          { text: 'b', marks: [{ type: 'bold' }] },
+          { text: 'i', marks: [{ type: 'italic' }] },
+          { text: 'u', marks: [{ type: 'underline' }] },
+          { text: 's', marks: [{ type: 'strike' }] },
+        ]),
+      ],
     };
     expect(toHtml(doc)).toBe('<p><strong>b</strong><em>i</em><u>u</u><s>s</s></p>');
   });
 
   it('escapes text and the href, and drops an unsafe-href anchor (keeping text)', () => {
-    expect(toHtml({ blocks: [para('a', [{ text: 'a<b>&"', marks: [] }])] })).toBe('<p>a&lt;b&gt;&amp;"</p>');
-    expect(toHtml({ blocks: [para('a', [{ text: 't', marks: [link('javascript:alert(1)')] }])] })).toBe('<p>t</p>');
-    expect(toHtml({ blocks: [para('a', [{ text: 't', marks: [link('/a b')] }])] })).toBe('<p><a href="/a b" rel="noopener noreferrer">t</a></p>');
+    expect(toHtml({ blocks: [para('a', [{ text: 'a<b>&"', marks: [] }])] })).toBe(
+      '<p>a&lt;b&gt;&amp;"</p>',
+    );
+    expect(
+      toHtml({ blocks: [para('a', [{ text: 't', marks: [link('javascript:alert(1)')] }])] }),
+    ).toBe('<p>t</p>');
+    expect(toHtml({ blocks: [para('a', [{ text: 't', marks: [link('/a b')] }])] })).toBe(
+      '<p><a href="/a b" rel="noopener noreferrer">t</a></p>',
+    );
   });
 });
