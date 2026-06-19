@@ -195,5 +195,7 @@ export const en: Messages = {
     linkApply: 'Apply',
     linkRemove: 'Remove link',
     linkEditorLabel: 'Edit link',
+    undo: 'Undo',
+    redo: 'Redo',
   },
 };

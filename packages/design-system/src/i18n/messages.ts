@@ -321,6 +321,10 @@ export interface Messages {
     linkRemove: string;
     /** Accessible name for the link bubble's form group. */
     linkEditorLabel: string;
+    /** aria-label on the toolbar Undo button. */
+    undo: string;
+    /** aria-label on the toolbar Redo button. */
+    redo: string;
   };
 }
 

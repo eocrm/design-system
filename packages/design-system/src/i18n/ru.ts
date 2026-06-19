@@ -197,5 +197,7 @@ export const ru: Messages = {
     linkApply: 'Применить',
     linkRemove: 'Удалить ссылку',
     linkEditorLabel: 'Редактирование ссылки',
+    undo: 'Отменить',
+    redo: 'Повторить',
   },
 };
