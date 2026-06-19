@@ -62,4 +62,13 @@
     color: var(--color-accent);
     text-decoration: underline;
   }
+
+  :where([data-mention]) {
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-bg-subtle);
+    color: var(--color-accent);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+  }
 }
