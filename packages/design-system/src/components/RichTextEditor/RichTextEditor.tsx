@@ -57,8 +57,8 @@ export interface RichTextEditorProps extends Omit<
   /** Focus the editor on mount. */
   autoFocus?: boolean;
   /**
-   * Render the built-in formatting toolbar above the editor — mark toggle
-   * buttons (bold/italic/underline/strike), a block-type dropdown
+   * Render the built-in formatting toolbar above the editor — Undo/Redo buttons,
+   * mark toggle buttons (bold/italic/underline/strike), a block-type dropdown
    * (paragraph/headings/quote/code), and bullet/numbered list toggles. The
    * toolbar dispatches through the same commit path the keyboard uses and
    * reflects the active marks + current block of the live selection. Default
@@ -208,6 +208,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
 
     const historyRef = useRef<History>(historyReset({ doc: value, selection: null }));
+    // Timestamp of the last ⌘Z/⌘⇧Z/⌘Y keydown — lets the beforeinput net skip the
+    // historyUndo/historyRedo event that a keydown ALSO emits (already handled),
+    // while still honoring a menu/trackpad undo that emits no keydown.
+    const historyKeyAtRef = useRef(0);
     const [canUndo, setCanUndo] = useState(false);
     const [canRedo, setCanRedo] = useState(false);
     const syncHistoryFlags = useCallback(() => {
@@ -234,15 +238,23 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [syncHistoryFlags],
     );
 
+    // Drop any caret-staged pending mark — the doc + caret are about to change,
+    // so a mark staged at the old caret must not bleed into the next typed text.
+    const clearPendingMarks = useCallback(() => {
+      setPendingMarks(null);
+      pendingAtRef.current = null;
+    }, []);
+
     const onUndo = useCallback(() => {
       const h = historyRef.current;
       if (!historyCanUndo(h)) return;
       const next = historyUndo(h);
       historyRef.current = next;
       syncHistoryFlags();
+      clearPendingMarks();
       pendingSelectionRef.current = next.present.selection;
       latest.current.onChange(next.present.doc);
-    }, [syncHistoryFlags]);
+    }, [syncHistoryFlags, clearPendingMarks]);
 
     const onRedo = useCallback(() => {
       const h = historyRef.current;
@@ -250,9 +262,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const next = historyRedo(h);
       historyRef.current = next;
       syncHistoryFlags();
+      clearPendingMarks();
       pendingSelectionRef.current = next.present.selection;
       latest.current.onChange(next.present.doc);
-    }, [syncHistoryFlags]);
+    }, [syncHistoryFlags, clearPendingMarks]);
 
     // Shared by the keyboard shortcut and the toolbar: with a collapsed caret,
     // stage a pending mark for the next typed text (remembering where); with a
@@ -353,12 +366,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const onBeforeInput = (e: InputEvent) => {
         const { value: doc, readOnly: ro } = latest.current;
         if (ro || isComposingRef.current) return;
-        // Suppress the browser's native contentEditable undo/redo so it never
-        // mutates the DOM out from under the controlled model. The actual undo/redo
-        // is driven solely by the ⌘Z/⌘⇧Z/⌘Y keydown handler — calling onUndo here
-        // too would double-apply (keydown fires this beforeinput as well).
+        // Undo/redo via beforeinput. Always preventDefault so the browser's native
+        // contentEditable undo never mutates the DOM under the controlled model.
+        // A ⌘Z/⌘⇧Z/⌘Y keydown ALSO emits a paired historyUndo/historyRedo here —
+        // the keydown handler already ran onUndo/onRedo, so skip that one (within a
+        // short window of the keydown). A menu/trackpad undo emits no keydown, so it
+        // falls through and is honored here.
         if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
           e.preventDefault();
+          if (Date.now() - historyKeyAtRef.current < 100) return;
+          if (e.inputType === 'historyUndo') onUndo();
+          else onRedo();
           return;
         }
         const range = readSelection(root);
@@ -403,7 +421,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
       root.addEventListener('beforeinput', onBeforeInput);
       return () => root.removeEventListener('beforeinput', onBeforeInput);
-    }, [commit]);
+    }, [commit, onUndo, onRedo]);
 
     // Rich paste: when the clipboard carries HTML, parse it into the model and
     // splice it at the selection. No HTML → don't preventDefault, so the native
@@ -465,20 +483,22 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (!root) return;
         // Undo/redo don't need a live selection — check them BEFORE the
         // readSelection guard so ⌘Z still works if the caret was lost. stopPropagation
-        // keeps the shortcut from also triggering a host app's undo. preventDefault
-        // suppresses the browser's native contentEditable undo (and the resulting
-        // historyUndo beforeinput), so the beforeinput net only fires for an
-        // Edit-menu/trackpad undo that emits no keydown.
+        // keeps the shortcut from triggering a host app's undo. preventDefault
+        // suppresses the browser's native contentEditable undo. We stamp the time so
+        // the paired historyUndo/historyRedo beforeinput (emitted by this same
+        // keydown) is skipped there rather than double-applied.
         const mod = e.metaKey || e.ctrlKey;
         if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) {
           e.preventDefault();
           e.stopPropagation();
+          historyKeyAtRef.current = Date.now();
           onUndo();
           return;
         }
         if (mod && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
           e.preventDefault();
           e.stopPropagation();
+          historyKeyAtRef.current = Date.now();
           onRedo();
           return;
         }

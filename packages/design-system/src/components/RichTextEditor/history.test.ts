@@ -129,4 +129,12 @@ describe('history undo/redo', () => {
     expect(h.past).toEqual([sa]);
     expect(h.future).toEqual([]);
   });
+
+  it('an edit after redo starts a fresh step (lastKind reset)', () => {
+    let h = reset(sa);
+    h = record(h, sb, 'other', 1000);
+    h = redo(undo(h)); // back to present=sb, past=[sa], lastKind=null
+    h = record(h, sc, 'type', 1100); // lastKind null → new step, not coalesced
+    expect(h.past).toEqual([sa, sb]);
+  });
 });
