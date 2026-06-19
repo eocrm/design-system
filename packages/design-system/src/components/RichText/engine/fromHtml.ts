@@ -113,6 +113,14 @@ function marksFor(el: HTMLElement, parent: Mark[]): Mark[] {
       if (href !== undefined) marks = withMark(marks, { type: 'link', href });
       break;
     }
+    case 'SPAN': {
+      const id = el.getAttribute('data-mention-id');
+      if (id) {
+        const label = el.getAttribute('data-mention-label') ?? el.textContent ?? '';
+        marks = withMark(marks, { type: 'mention', id, label });
+      }
+      break;
+    }
   }
   return applyCssMarks(el, marks);
 }
