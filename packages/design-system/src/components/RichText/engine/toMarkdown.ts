@@ -69,8 +69,11 @@ export function toMarkdown(doc: RichDoc): string {
   for (let i = 0; i < doc.blocks.length; i += 1) {
     const b = doc.blocks[i];
     if (i > 0) {
-      // Consecutive list items stay in one list (single newline); else a blank line.
-      out += isListItem(doc.blocks[i - 1]) && isListItem(b) ? '\n' : '\n\n';
+      // Consecutive SAME-TYPE list items stay in one list (single newline). A
+      // bullet→ordered transition needs a blank line, or the Markdown parser would
+      // read both as one list and coerce the second to the first's type.
+      const prev = doc.blocks[i - 1];
+      out += isListItem(prev) && isListItem(b) && prev.type === b.type ? '\n' : '\n\n';
     }
     out += blockMd(b, isListItem(b) ? eff[i] : 0);
   }

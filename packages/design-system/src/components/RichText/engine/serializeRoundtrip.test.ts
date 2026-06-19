@@ -6,7 +6,8 @@ import { createBlock } from './model';
 import type { RichDoc, Block, Mark } from './model';
 
 // Strip ids (parsers mint fresh ones) and sort marks (order-insensitive equality).
-const sortMarks = (marks: Mark[]): Mark[] => [...marks].sort((a, b) => a.type.localeCompare(b.type));
+const sortMarks = (marks: Mark[]): Mark[] =>
+  [...marks].sort((a, b) => a.type.localeCompare(b.type));
 const shape = (d: RichDoc) =>
   d.blocks.map((b: Block) => ({
     type: b.type,
@@ -38,7 +39,9 @@ const doc: RichDoc = {
 describe('serialize round-trip', () => {
   it('fromHtml(toHtml(doc)) reproduces the document (underline included)', () => {
     const withU: RichDoc = {
-      blocks: [{ id: 'u', type: 'paragraph', inlines: [{ text: 'u', marks: [{ type: 'underline' }] }] }],
+      blocks: [
+        { id: 'u', type: 'paragraph', inlines: [{ text: 'u', marks: [{ type: 'underline' }] }] },
+      ],
     };
     expect(shape(fromHtml(toHtml(withU)))).toEqual(shape(withU));
     expect(shape(fromHtml(toHtml(doc)))).toEqual(shape(doc));
@@ -47,10 +50,35 @@ describe('serialize round-trip', () => {
   it('fromMarkdown(toMarkdown(doc)) reproduces the document except underline', () => {
     expect(shape(fromMarkdown(toMarkdown(doc)))).toEqual(shape(doc));
     const withU: RichDoc = {
-      blocks: [{ id: 'u', type: 'paragraph', inlines: [{ text: 'u', marks: [{ type: 'underline' }] }] }],
+      blocks: [
+        { id: 'u', type: 'paragraph', inlines: [{ text: 'u', marks: [{ type: 'underline' }] }] },
+      ],
     };
     expect(shape(fromMarkdown(toMarkdown(withU)))).toEqual([
       { type: 'paragraph', inlines: [{ text: 'u', marks: [] }] },
     ]);
+  });
+
+  it('Markdown round-trips link text containing a closing bracket', () => {
+    const d: RichDoc = {
+      blocks: [
+        {
+          id: 'a',
+          type: 'paragraph',
+          inlines: [{ text: 'a]b', marks: [{ type: 'link', href: '/u' }] }],
+        },
+      ],
+    };
+    expect(shape(fromMarkdown(toMarkdown(d)))).toEqual(shape(d));
+  });
+
+  it('Markdown round-trips a bullet list immediately followed by an ordered list', () => {
+    const d: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: 'a', depth: 0 }),
+        createBlock('ordered_item', 'b', { id: 'b', depth: 0 }),
+      ],
+    };
+    expect(shape(fromMarkdown(toMarkdown(d)))).toEqual(shape(d));
   });
 });

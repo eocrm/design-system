@@ -35,7 +35,9 @@ function inline(src: string): string {
       }
     }
     if (c === '[') {
-      const m = /^\[([^\]]*)\]\(([^)]*)\)/.exec(src.slice(i));
+      // Allow backslash-escaped `]` inside the link text (toMarkdown escapes a
+      // literal `]` to `\]`); a plain `[^\]]*` would stop at it and lose the link.
+      const m = /^\[((?:[^\]\\]|\\.)*)\]\(([^)]*)\)/.exec(src.slice(i));
       if (m) {
         out += '<a href="' + escapeAttr(m[2].trim()) + '">' + inline(m[1]) + '</a>';
         i += m[0].length;
