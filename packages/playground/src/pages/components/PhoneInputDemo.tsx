@@ -1,0 +1,65 @@
+import { useState } from 'react';
+import { PhoneInput, isValidPhone, Stack, Text, Code, Field } from '@eocrm/design-system';
+import { DemoLayout } from './DemoLayout';
+import { Example } from './Example';
+import { getComponentFiles } from '../../lib/componentFiles';
+
+export function PhoneInputDemo() {
+  const [phone, setPhone] = useState<string | null>(null);
+  const [gb, setGb] = useState<string | null>('+442071838750');
+
+  return (
+    <DemoLayout
+      name="PhoneInput"
+      componentName="PhoneInput"
+      description="International phone field — searchable country picker + national-number input emitting E.164. Country names via Intl.DisplayNames; metadata + validation via libphonenumber-js."
+      files={getComponentFiles('PhoneInput')}
+    >
+      <Example
+        title="Default (US)"
+        description="Pick a country and type a number. The component emits canonical E.164; the display reconstructs from it."
+        code={`const [phone, setPhone] = useState<string | null>(null);
+<PhoneInput value={phone} onChange={setPhone} defaultCountry="US" />`}
+      >
+        <Stack gap="sm">
+          <PhoneInput value={phone} onChange={setPhone} defaultCountry="US" />
+          <Text size="sm" tone="muted">
+            E.164 → <Code>{phone ?? 'null'}</Code> · valid:{' '}
+            <Code>{String(isValidPhone(phone))}</Code>
+          </Text>
+        </Stack>
+      </Example>
+
+      <Example
+        title="Seeded from an existing E.164 value"
+        description="Pass an E.164 string and the picker + number field reconstruct from it (here a UK number)."
+        code={`<PhoneInput value="+442071838750" onChange={setGb} />`}
+      >
+        <PhoneInput value={gb} onChange={setGb} />
+      </Example>
+
+      <Example
+        title="Inside a Field (label + validation)"
+        description="Field injects the label association; drive invalid chrome via isValidPhone."
+        code={`<Field label="Mobile" error={isValidPhone(phone) ? undefined : 'Enter a valid number'}>
+  <PhoneInput value={phone} onChange={setPhone} />
+</Field>`}
+      >
+        <Field
+          label="Mobile"
+          error={phone && !isValidPhone(phone) ? 'Enter a valid number' : undefined}
+        >
+          <PhoneInput value={phone} onChange={setPhone} />
+        </Field>
+      </Example>
+
+      <Example
+        title="Disabled"
+        description="Both controls disabled."
+        code={`<PhoneInput value="+12025550123" onChange={() => {}} disabled />`}
+      >
+        <PhoneInput value="+12025550123" onChange={() => {}} disabled />
+      </Example>
+    </DemoLayout>
+  );
+}

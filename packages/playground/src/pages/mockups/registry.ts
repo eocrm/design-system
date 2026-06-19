@@ -57,6 +57,7 @@ export type ComponentName =
   | 'Palette'
   | 'PasswordInput'
   | 'PasswordStrengthMeter'
+  | 'PhoneInput'
   | 'PersonDisplay'
   | 'Popover'
   | 'Progress'

@@ -34,6 +34,7 @@ import { KanbanDemo } from './pages/components/KanbanDemo';
 import { KbdDemo } from './pages/components/KbdDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
 import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
+import { PhoneInputDemo } from './pages/components/PhoneInputDemo';
 import { PaginationDemo } from './pages/components/PaginationDemo';
 import { ProgressDemo } from './pages/components/ProgressDemo';
 import { CircularProgressDemo } from './pages/components/CircularProgressDemo';
@@ -150,6 +151,7 @@ export default function App() {
               path="/components/password-strength-meter"
               element={<PasswordStrengthMeterDemo />}
             />
+            <Route path="/components/phone-input" element={<PhoneInputDemo />} />
             <Route path="/components/select" element={<SelectDemo />} />
             <Route path="/components/skeleton" element={<SkeletonDemo />} />
             <Route path="/components/slider" element={<SliderDemo />} />
