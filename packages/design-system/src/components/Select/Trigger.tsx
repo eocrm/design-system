@@ -21,6 +21,8 @@ export interface TriggerProps {
   readOnly?: boolean;
   invalid?: boolean;
   clearable?: boolean;
+  /** Select the combobox text on open (single searchable trigger only). */
+  selectOnOpen?: boolean;
   'aria-label'?: string;
   'aria-labelledby'?: string;
   'aria-describedby'?: string;
@@ -536,6 +538,16 @@ function ComboboxInputTrigger(props: TriggerProps) {
   // <button> and <input> are HTMLElement and the callers that read this
   // ref only need `.focus()` / `.contains()` which are on HTMLElement.
   const inputRefHolder = ctx.triggerRef as MutableRefObject<HTMLInputElement | null>;
+
+  // On open, optionally select the visible text so the user can immediately
+  // type to replace the selected label (type-to-search). Gated on an empty
+  // query so opening BY TYPING (handleChange sets the query then opens) doesn't
+  // re-select + clobber that first character — only the label-showing open
+  // (click / keyboard) selects. Runs once per open transition.
+  useEffect(() => {
+    if (ctx.open && props.selectOnOpen && ctx.query === '') inputRefHolder.current?.select();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx.open]);
 
   const showClear = props.clearable && selectHasValue(ctx.value, ctx.multiple);
 

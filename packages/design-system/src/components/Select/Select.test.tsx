@@ -344,6 +344,27 @@ describe('Select — single, searchable (combobox input)', () => {
     expect(input.value).toBe('Pending');
   });
 
+  it('selectOnOpen selects the trigger text on open (type-to-search)', async () => {
+    const user = userEvent.setup();
+    render(<Select searchable selectOnOpen options={STATUSES} value="pending" />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await user.click(input);
+    expect(input.value).toBe('Pending');
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe('Pending'.length);
+  });
+
+  it('selectOnOpen does NOT eat the first character when opening by typing', async () => {
+    const user = userEvent.setup();
+    render(<Select searchable selectOnOpen options={STATUSES} value="pending" />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    input.focus();
+    // type to open (no prior click) — the first char must survive
+    await user.keyboard('ar');
+    expect(input.value).toBe('ar');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
   it('typing replaces the label with the query and opens', async () => {
     const user = userEvent.setup();
     render(<Select searchable options={STATUSES} value="pending" />);

@@ -130,6 +130,12 @@ export interface SelectProps<T = unknown> extends Omit<
    */
   searchable?: boolean;
   /**
+   * When the searchable combobox opens, select the current text so the user
+   * can immediately type to replace it (type-to-search). Default `false`.
+   * Only affects the single searchable trigger.
+   */
+  selectOnOpen?: boolean;
+  /**
    * Adds a "+ Create <query>" row when the trimmed query has no exact
    * label match. Activating it fires `onCreate(label)` and folds the new
    * value into the selection. Requires `searchable` (throws in dev otherwise).
@@ -306,6 +312,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     invalid = false,
     placeholder,
     clearable,
+    selectOnOpen = false,
     disabled = false,
     readOnly = false,
     name,
@@ -561,6 +568,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
           readOnly={readOnly}
           invalid={invalid}
           clearable={effectiveClearable}
+          selectOnOpen={selectOnOpen}
           aria-label={props['aria-label']}
           aria-labelledby={props['aria-labelledby']}
           aria-describedby={props['aria-describedby']}
