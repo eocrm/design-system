@@ -52,6 +52,7 @@ const CLUSTERS = {
   LiquidEditor: 'Forms',
   PasswordInput: 'Forms',
   PasswordStrengthMeter: 'Forms',
+  PhoneInput: 'Forms',
   Radio: 'Forms',
   OptionsPicker: 'Forms',
   Select: 'Forms',

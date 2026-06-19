@@ -256,6 +256,14 @@ export type {
   PasswordStrengthScore,
 } from './components/PasswordStrengthMeter';
 
+export { PhoneInput, isValidPhone } from './components/PhoneInput';
+export type {
+  PhoneInputProps,
+  PhoneInputSize,
+  CountryOption,
+  CountryCode,
+} from './components/PhoneInput';
+
 export { Select } from './components/Select';
 export type {
   SelectProps,
