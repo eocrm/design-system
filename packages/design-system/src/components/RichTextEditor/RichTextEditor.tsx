@@ -567,6 +567,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           onToggleList={onToolbarToggleList}
           linkActive={toolbarLinkActive}
           onOpenLink={openLinkEditor}
+          onUndo={() => {}} // wired in Task 4
+          onRedo={() => {}} // wired in Task 4
         />
         {editable}
         {linkBubble}

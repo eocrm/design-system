@@ -11,6 +11,8 @@ import {
   BulletListIcon,
   OrderedListIcon,
   LinkIcon,
+  UndoIcon,
+  RedoIcon,
 } from './icons';
 import styles from './RichTextEditor.module.scss';
 
@@ -34,6 +36,14 @@ export interface RichTextToolbarProps {
   linkActive?: boolean;
   /** Open the link editor for the current selection. */
   onOpenLink: () => void;
+  /** Whether an undo step is available (drives the Undo button's enabled state). */
+  canUndo?: boolean;
+  /** Whether a redo step is available. */
+  canRedo?: boolean;
+  /** Undo the last change. */
+  onUndo: () => void;
+  /** Redo the last undone change. */
+  onRedo: () => void;
 }
 
 const MARKS: {
@@ -72,6 +82,10 @@ export function RichTextToolbar({
   onToggleList,
   linkActive = false,
   onOpenLink,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
 }: RichTextToolbarProps) {
   const t = useTranslation();
 
@@ -96,6 +110,29 @@ export function RichTextToolbar({
 
   return (
     <div className={styles.toolbar} role="toolbar" aria-label={t('richTextEditor.toolbar')}>
+      <Button
+        size="sm"
+        variant="ghost"
+        iconOnly
+        aria-label={t('richTextEditor.undo')}
+        disabled={disabled || !canUndo}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onUndo}
+      >
+        <UndoIcon />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        iconOnly
+        aria-label={t('richTextEditor.redo')}
+        disabled={disabled || !canRedo}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onRedo}
+      >
+        <RedoIcon />
+      </Button>
+      <span className={styles.toolbarSep} aria-hidden="true" />
       <DropdownMenu>
         <DropdownMenu.Trigger>
           <Button
