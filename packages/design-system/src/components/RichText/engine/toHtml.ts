@@ -93,6 +93,10 @@ function blockHtml(block: Block): string {
  * is injection-safe. Lossless for the model — `fromHtml(toHtml(doc))` reproduces
  * the document structurally.
  *
+ * @remarks An unsafe href (rejected by `safeHref`) drops the `<a>` wrapper and
+ * emits the bare text — unlike `renderDoc`, which keeps a hrefless `<a>`. Both are
+ * safe and `fromHtml(toHtml(doc))` stays consistent (neither yields a link mark).
+ *
  * @example
  * const html = toHtml(doc); // '<h2>Title</h2><p>Hello <strong>world</strong></p>'
  */

@@ -33,6 +33,17 @@ describe('toHtml — blocks', () => {
     expect(toHtml({ blocks: [createBlock('ordered_item', 'a', { id: '1' })] })).toBe('<ol><li>a</li></ol>');
   });
 
+  it('handles 3-level deep nesting then outdent (depths 0,1,2,1,0)', () => {
+    const doc: RichDoc = {
+      blocks: [0, 1, 2, 1, 0].map((depth, n) =>
+        createBlock('bullet_item', String.fromCharCode(97 + n), { id: String(n), depth }),
+      ),
+    };
+    expect(toHtml(doc)).toBe(
+      '<ul><li>a<ul><li>b<ul><li>c</li></ul></li><li>d</li></ul></li><li>e</li></ul>',
+    );
+  });
+
   it('serializes an empty paragraph as <p></p>', () => {
     expect(toHtml({ blocks: [createBlock('paragraph', '', { id: 'a' })] })).toBe('<p></p>');
   });
