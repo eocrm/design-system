@@ -23,6 +23,6 @@ export interface MentionsConfig {
    * slow promise that resolves after the query moved on is ignored.
    */
   onQuery: (query: string) => MentionItem[] | Promise<MentionItem[]>;
-  /** Trigger character that opens the menu. Default `'@'`. */
+  /** Single trigger character that opens the menu. Default `'@'`. Multi-character triggers are not supported. */
   trigger?: string;
 }

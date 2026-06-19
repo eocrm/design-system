@@ -703,8 +703,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         role="textbox"
         aria-multiline="true"
         aria-readonly={readOnly || undefined}
-        aria-haspopup={mentions ? 'listbox' : undefined}
-        aria-expanded={mentions ? mention.open : undefined}
+        // Mentions makes the textbox an editable combobox. role stays "textbox"
+        // (ARIA combobox is single-line only; this editor is multiline), with
+        // aria-autocomplete + aria-controls + aria-activedescendant describing the
+        // popup. Gated so a readOnly or mention-less editor advertises no popup.
+        aria-haspopup={mentions && !readOnly ? 'listbox' : undefined}
+        aria-autocomplete={mentions && !readOnly ? 'list' : undefined}
+        aria-expanded={mentions && !readOnly ? mention.open : undefined}
         aria-controls={mention.open ? mention.listboxId : undefined}
         aria-activedescendant={mention.open ? mention.activeOptionId : undefined}
         aria-label={

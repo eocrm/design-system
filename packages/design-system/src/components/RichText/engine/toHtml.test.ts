@@ -112,7 +112,7 @@ describe('toHtml — inline marks', () => {
         },
       ],
     };
-    expect(toHtml(doc)).toContain('data-mention-id="a&#39;b"'.replace('&#39;', '&quot;'));
+    expect(toHtml(doc)).toContain('data-mention-id="a&quot;b"');
     expect(toHtml(doc)).toContain('data-mention-label="A&quot;B"');
   });
 

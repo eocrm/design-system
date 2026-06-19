@@ -332,15 +332,18 @@ export function insertMention(
 ): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed({ blockId, offset: range.from }) };
+  // Defensive clamp: tolerate an inverted range (from > to). No-op for valid input.
+  const from = Math.min(range.from, range.to);
+  const to = Math.max(range.from, range.to);
   const block = doc.blocks[idx];
   const chipText = `${trigger}${mention.label}`;
   const inlines = normalizeInlines([
-    ...sliceInlines(block.inlines, 0, range.from),
+    ...sliceInlines(block.inlines, 0, from),
     { text: chipText, marks: [{ type: 'mention', id: mention.id, label: mention.label }] },
     { text: ' ', marks: [] },
-    ...sliceInlines(block.inlines, range.to, blockLength(block)),
+    ...sliceInlines(block.inlines, to, blockLength(block)),
   ]);
-  const offset = range.from + chipText.length + 1;
+  const offset = from + chipText.length + 1;
   return {
     doc: replaceBlock(doc, idx, { ...block, inlines }),
     selection: collapsed({ blockId, offset }),

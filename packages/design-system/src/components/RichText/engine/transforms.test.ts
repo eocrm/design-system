@@ -272,4 +272,24 @@ describe('deleteRange — mention snapping', () => {
     });
     expect(runsText(doc.blocks[0].inlines)).toBe(' @Alice ok');
   });
+
+  it('snaps the END endpoint when a cross-block selection ends inside a chip', () => {
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'a', type: 'paragraph', inlines: [{ text: 'hello', marks: [] }] },
+        {
+          id: 'b',
+          type: 'paragraph',
+          inlines: [{ text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] }],
+        },
+      ],
+    };
+    // select from a:2 to b:3 (inside the chip [0,6)) → end snaps to 6 → whole chip gone
+    const { doc: out } = deleteRange(doc, {
+      anchor: { blockId: 'a', offset: 2 },
+      focus: { blockId: 'b', offset: 3 },
+    });
+    expect(out.blocks).toHaveLength(1);
+    expect(runsText(out.blocks[0].inlines)).toBe('he');
+  });
 });

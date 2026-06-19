@@ -548,4 +548,45 @@ describe('RichTextEditor mentions', () => {
       expect(box.querySelector('[data-mention-id="u1"]')?.textContent).toBe('@Alice'),
     );
   });
+
+  it('exposes combobox ARIA on the textbox when the menu is open', async () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 5 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi @a', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} mentions={{ onQuery: usersQuery }} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox');
+    const listbox = await screen.findByRole('listbox');
+    expect(box).toHaveAttribute('aria-expanded', 'true');
+    expect(box).toHaveAttribute('aria-controls', listbox.getAttribute('id')!);
+    expect(box).toHaveAttribute('aria-autocomplete', 'list');
+    await waitFor(() => expect(box.getAttribute('aria-activedescendant')).toBeTruthy());
+  });
+
+  it('Escape closes the menu without inserting', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 5 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi @a', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} mentions={{ onQuery: usersQuery }} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox');
+    await screen.findByRole('listbox');
+    box.focus();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+    expect(box.querySelector('[data-mention-id]')).toBeNull();
+  });
 });
