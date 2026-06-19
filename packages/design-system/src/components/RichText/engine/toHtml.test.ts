@@ -37,6 +37,13 @@ describe('toHtml — blocks', () => {
     );
   });
 
+  it('clamps an out-of-range heading level to a valid tag (never <undefined>)', () => {
+    const doc: RichDoc = {
+      blocks: [{ id: 'a', type: 'heading', level: 6 as 1, inlines: [{ text: 'H', marks: [] }] }],
+    };
+    expect(toHtml(doc)).toBe('<h3>H</h3>');
+  });
+
   it('handles 3-level deep nesting then outdent (depths 0,1,2,1,0)', () => {
     const doc: RichDoc = {
       blocks: [0, 1, 2, 1, 0].map((depth, n) =>

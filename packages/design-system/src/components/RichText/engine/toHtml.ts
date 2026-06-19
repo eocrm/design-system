@@ -11,7 +11,6 @@ import { isListItem, effectiveDepths } from './listDepths';
 
 // Outer → inner; link outermost, code innermost (matches renderDoc).
 const MARK_ORDER: MarkType[] = ['link', 'bold', 'italic', 'underline', 'strike', 'code'];
-const HEADING_TAG: Record<1 | 2 | 3, string> = { 1: 'h1', 2: 'h2', 3: 'h3' };
 
 /** Wrap an already-escaped HTML string in one mark's tag. */
 function wrapMark(type: MarkType, mark: Mark, inner: string): string {
@@ -75,8 +74,12 @@ function listHtml(blocks: Block[], start: number, eff: number[]): [string, numbe
 
 function blockHtml(block: Block): string {
   switch (block.type) {
-    case 'heading':
-      return `<${HEADING_TAG[block.level ?? 1]}>${inlines(block)}</${HEADING_TAG[block.level ?? 1]}>`;
+    case 'heading': {
+      // Clamp to the model's h1–h3 range so a hand-built doc with an out-of-range
+      // level never emits a malformed <undefined>/<h0> tag.
+      const tag = `h${Math.min(3, Math.max(1, block.level ?? 1))}`;
+      return `<${tag}>${inlines(block)}</${tag}>`;
+    }
     case 'blockquote':
       return `<blockquote>${inlines(block)}</blockquote>`;
     case 'code_block':
