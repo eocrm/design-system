@@ -3,6 +3,9 @@ import {
   RichTextEditor,
   docFromText,
   fromMarkdown,
+  toHtml,
+  toMarkdown,
+  Code,
   Text,
   Stack,
   type RichDoc,
@@ -37,6 +40,12 @@ export function RichTextEditorDemo() {
           <RichTextEditor value={doc} onChange={setDoc} toolbar placeholder="Write a note…" />
           <Text size="sm" tone="muted">
             Toolbar + shortcuts: ⌘/Ctrl+B bold · I italic · U underline · ⇧X strike
+          </Text>
+          <Text size="sm" tone="muted">
+            HTML → <Code>{toHtml(doc)}</Code>
+          </Text>
+          <Text size="sm" tone="muted">
+            Markdown → <Code>{toMarkdown(doc).replace(/\n/g, '⏎')}</Code>
           </Text>
         </Stack>
       </Example>

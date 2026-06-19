@@ -158,6 +158,8 @@ function selectionRect(root: HTMLElement): Rect {
  * - ❌ Pre-stripping pasted HTML to plain text — paste rich HTML directly; the
  *   editor parses it (sanitized) into the model. Seed stored content with
  *   `fromHtml` / `fromMarkdown`.
+ * - ❌ Hand-rolling HTML/Markdown from the model — use `toHtml` / `toMarkdown`
+ *   (the inverse of `fromHtml` / `fromMarkdown`).
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(
