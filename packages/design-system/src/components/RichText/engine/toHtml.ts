@@ -10,7 +10,7 @@ import { safeHref } from './safeHref';
 import { isListItem, effectiveDepths } from './listDepths';
 
 // Outer → inner; link outermost, code innermost (matches renderDoc).
-const MARK_ORDER: MarkType[] = ['link', 'bold', 'italic', 'underline', 'strike', 'code'];
+const MARK_ORDER: MarkType[] = ['mention', 'link', 'bold', 'italic', 'underline', 'strike', 'code'];
 
 /** Wrap an already-escaped HTML string in one mark's tag. */
 function wrapMark(type: MarkType, mark: Mark, inner: string): string {
@@ -29,6 +29,10 @@ function wrapMark(type: MarkType, mark: Mark, inner: string): string {
       const safe = mark.type === 'link' ? safeHref(mark.href) : undefined;
       if (safe === undefined) return inner; // unsafe href → drop the anchor, keep text
       return `<a href="${escapeAttr(safe)}" rel="noopener noreferrer">${inner}</a>`;
+    }
+    case 'mention': {
+      if (mark.type !== 'mention') return inner;
+      return `<span data-mention-id="${escapeAttr(mark.id)}" data-mention-label="${escapeAttr(mark.label)}">${inner}</span>`;
     }
     default:
       return inner;
