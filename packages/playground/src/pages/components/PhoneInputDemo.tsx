@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PhoneInput, isValidPhone, Stack, Text, Code, Field } from '@eocrm/design-system';
+import { PhoneInput, isValidPhone, Stack, Cluster, Text, Code, Field } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -7,6 +7,7 @@ import { getComponentFiles } from '../../lib/componentFiles';
 export function PhoneInputDemo() {
   const [phone, setPhone] = useState<string | null>(null);
   const [gb, setGb] = useState<string | null>('+442071838750');
+  const [dv, setDv] = useState<string | null>('+12025550123');
 
   return (
     <DemoLayout
@@ -37,6 +38,33 @@ export function PhoneInputDemo() {
 <PhoneInput value={gb} onChange={setGb} />`}
       >
         <PhoneInput value={gb} onChange={setGb} />
+      </Example>
+
+      <Example
+        title="Country display formats (countryDisplay)"
+        description="Controls how the SELECTED country shows in the trigger — full name+code (default), ISO+code, just the code, or emoji flag+code. The dropdown rows always show the full country name and stay searchable. Note: emoji flags don't render on Windows Chrome/Edge — prefer 'iso' there."
+        code={`<PhoneInput value={v} onChange={setV} countryDisplay="name" /> // United States +1 (default)
+<PhoneInput value={v} onChange={setV} countryDisplay="iso" />  // US +1
+<PhoneInput value={v} onChange={setV} countryDisplay="code" /> // +1
+<PhoneInput value={v} onChange={setV} countryDisplay="flag" /> // 🇺🇸 +1`}
+      >
+        <Stack gap="sm">
+          {(['name', 'iso', 'code', 'flag'] as const).map((mode) => (
+            <Cluster key={mode} gap="sm">
+              <Code>{mode}</Code>
+              <PhoneInput
+                value={dv}
+                onChange={setDv}
+                countryDisplay={mode}
+                aria-label={`${mode} display`}
+              />
+            </Cluster>
+          ))}
+          <Text size="sm" tone="muted">
+            All four share one value — editing any updates the rest, so only the trigger format
+            differs.
+          </Text>
+        </Stack>
       </Example>
 
       <Example

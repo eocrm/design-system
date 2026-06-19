@@ -141,4 +141,47 @@ describe('PhoneInput', () => {
       'Enter a valid number',
     );
   });
+
+  it('does not offer to clear the country selection', () => {
+    renderWith(<PhoneInput value="+12025550123" onChange={() => {}} />);
+    expect(screen.queryByRole('button', { name: /clear/i })).toBeNull();
+  });
+
+  it('defaults to the full country name in the trigger', () => {
+    renderWith(<PhoneInput value="+12025550123" onChange={() => {}} />);
+    const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
+    expect(combo.value).toBe('United States +1');
+  });
+
+  it('countryDisplay="iso" shows the ISO code + calling code in the trigger', () => {
+    renderWith(<PhoneInput value="+12025550123" onChange={() => {}} countryDisplay="iso" />);
+    const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
+    expect(combo.value).toBe('US +1');
+  });
+
+  it('countryDisplay="code" shows only the calling code in the trigger', () => {
+    renderWith(<PhoneInput value="+12025550123" onChange={() => {}} countryDisplay="code" />);
+    const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
+    expect(combo.value).toBe('+1');
+  });
+
+  it('countryDisplay="flag" shows the emoji flag + calling code in the trigger', () => {
+    renderWith(<PhoneInput value="+12025550123" onChange={() => {}} countryDisplay="flag" />);
+    const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
+    expect(combo.value).toBe('🇺🇸 +1');
+  });
+
+  it('keeps the country searchable by name even in a compact display mode', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [v, setV] = useState<string | null>(null);
+      return <PhoneInput value={v} onChange={setV} defaultCountry="US" countryDisplay="code" />;
+    }
+    renderWith(<Harness />);
+    const combo = screen.getByRole('combobox', { name: 'Country' });
+    await user.click(combo);
+    await user.type(combo, 'United Kingdom');
+    // the row is found by its full-name content even though the trigger label is just "+44"
+    expect(await screen.findByRole('option', { name: /United Kingdom/i })).toBeInTheDocument();
+  });
 });
