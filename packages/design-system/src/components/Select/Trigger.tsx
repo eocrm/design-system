@@ -540,10 +540,12 @@ function ComboboxInputTrigger(props: TriggerProps) {
   const inputRefHolder = ctx.triggerRef as MutableRefObject<HTMLInputElement | null>;
 
   // On open, optionally select the visible text so the user can immediately
-  // type to replace the selected label (type-to-search). Runs once per open
-  // transition; the value is already rendered by the time this effect fires.
+  // type to replace the selected label (type-to-search). Gated on an empty
+  // query so opening BY TYPING (handleChange sets the query then opens) doesn't
+  // re-select + clobber that first character — only the label-showing open
+  // (click / keyboard) selects. Runs once per open transition.
   useEffect(() => {
-    if (ctx.open && props.selectOnOpen) inputRefHolder.current?.select();
+    if (ctx.open && props.selectOnOpen && ctx.query === '') inputRefHolder.current?.select();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx.open]);
 

@@ -187,6 +187,15 @@ describe('PhoneInput', () => {
     expect(combo.selectionEnd).toBe(combo.value.length);
   });
 
+  it('typing into the country picker without clicking first keeps the first character', async () => {
+    const user = userEvent.setup();
+    renderWith(<PhoneInput value="+12025550123" onChange={() => {}} />);
+    const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
+    combo.focus();
+    await user.keyboard('germ');
+    expect(combo.value).toBe('germ');
+  });
+
   it('keeps the country searchable by name even in a compact display mode', async () => {
     const user = userEvent.setup();
     function Harness() {
