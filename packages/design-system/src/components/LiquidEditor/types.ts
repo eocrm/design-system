@@ -41,6 +41,13 @@ export interface LiquidEditorProps {
   showLineNumbers?: boolean;
   /** Show the toolbar (variable-insert menu). Default `true`. */
   showToolbar?: boolean;
+  /**
+   * Custom action buttons rendered in the toolbar, right-aligned just before the
+   * "Insert variable" button (e.g. a Docs / Help link). Pass `<Button size="sm">`
+   * elements (or a fragment of them); a `ghost` variant pairs well next to the
+   * bordered "Insert variable" button. Only renders when `showToolbar` is true.
+   */
+  toolbarActions?: ReactNode;
   /** Filter names offered in autocomplete after `|`. Defaults to a common Liquid set. */
   filters?: string[];
   /** Minimum visible rows. Default `4`. */
