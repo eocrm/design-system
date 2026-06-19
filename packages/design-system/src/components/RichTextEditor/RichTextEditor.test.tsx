@@ -201,3 +201,67 @@ describe('RichTextEditor toolbar', () => {
     expect(kReachedHost).toBe(false);
   });
 });
+
+describe('RichTextEditor paste', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+
+  it('rich-HTML paste inserts formatted content', async () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 0 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt: Event & { clipboardData?: unknown } = new Event('paste', {
+      bubbles: true,
+      cancelable: true,
+    });
+    (evt as { clipboardData: unknown }).clipboardData = {
+      getData: (t: string) => (t === 'text/html' ? '<p>a <strong>bold</strong></p>' : ''),
+    };
+    editor.dispatchEvent(evt);
+    expect(await screen.findByText('bold')).toBeInTheDocument();
+    expect(screen.getByText('bold').closest('strong')).not.toBeNull();
+  });
+
+  it('plain-text-only paste does not preventDefault (falls through to beforeinput)', () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 0 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt: Event & { clipboardData?: unknown } = new Event('paste', {
+      bubbles: true,
+      cancelable: true,
+    });
+    (evt as { clipboardData: unknown }).clipboardData = {
+      getData: (t: string) => (t === 'text/plain' ? 'hello' : ''),
+    };
+    editor.dispatchEvent(evt);
+    // No HTML → handler returns without preventing default.
+    expect(evt.defaultPrevented).toBe(false);
+  });
+});

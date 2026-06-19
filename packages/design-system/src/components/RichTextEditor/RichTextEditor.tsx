@@ -14,7 +14,8 @@ import { renderDoc } from '../RichText/engine/renderDoc';
 import { blockLength, isCollapsed } from '../RichText/engine/position';
 import { linkAt, setLink, removeLink } from './links';
 import { RichTextLinkEditor } from './RichTextLinkEditor';
-import { insertText } from '../RichText/engine/transforms';
+import { insertText, insertFragment } from '../RichText/engine/transforms';
+import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
 import { readSelection, writeSelection } from './selection';
@@ -328,6 +329,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
       root.addEventListener('beforeinput', onBeforeInput);
       return () => root.removeEventListener('beforeinput', onBeforeInput);
+    }, [commit]);
+
+    // Rich paste: when the clipboard carries HTML, parse it into the model and
+    // splice it at the selection. No HTML → don't preventDefault, so the native
+    // beforeinput path inserts text/plain (unchanged behavior).
+    useEffect(() => {
+      const root = rootRef.current;
+      if (!root) return;
+      const onPaste = (e: ClipboardEvent) => {
+        if (latest.current.readOnly) return;
+        const html = e.clipboardData?.getData('text/html');
+        if (!html || !html.trim()) return;
+        const range = readSelection(root);
+        if (!range) return;
+        const fragment = fromHtml(html);
+        if (isEmptyDoc(fragment)) return;
+        e.preventDefault();
+        commit(insertFragment(latest.current.value, range, fragment));
+      };
+      root.addEventListener('paste', onPaste);
+      return () => root.removeEventListener('paste', onPaste);
     }, [commit]);
 
     useEffect(() => {
