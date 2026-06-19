@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { vi } from 'vitest';
@@ -231,9 +231,35 @@ describe('RichTextEditor paste', () => {
     (evt as { clipboardData: unknown }).clipboardData = {
       getData: (t: string) => (t === 'text/html' ? '<p>a <strong>bold</strong></p>' : ''),
     };
-    editor.dispatchEvent(evt);
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
     expect(await screen.findByText('bold')).toBeInTheDocument();
     expect(screen.getByText('bold').closest('strong')).not.toBeNull();
+  });
+
+  it('readOnly editor ignores HTML paste (onChange does not fire)', () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 0 },
+    });
+    const onChange = vi.fn();
+    render(
+      <I18nProvider locale="en">
+        <RichTextEditor value={docFromText('x')} onChange={onChange} readOnly />
+      </I18nProvider>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt: Event & { clipboardData?: unknown } = new Event('paste', {
+      bubbles: true,
+      cancelable: true,
+    });
+    (evt as { clipboardData: unknown }).clipboardData = {
+      getData: (t: string) => (t === 'text/html' ? '<p>injected</p>' : ''),
+    };
+    editor.dispatchEvent(evt);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(evt.defaultPrevented).toBe(false);
   });
 
   it('plain-text-only paste does not preventDefault (falls through to beforeinput)', () => {
