@@ -938,6 +938,12 @@ const [doc, setDoc] = useState(emptyDoc());
 
 **Export:** `toHtml(doc)` and `toMarkdown(doc)` serialize a `RichDoc` back to a string (the inverse of `fromHtml`/`fromMarkdown`) — e.g. for storage, email bodies, or display outside the editor. `toHtml` is lossless (`fromHtml(toHtml(doc))` round-trips); `toMarkdown` drops underline (no Markdown syntax — use `toHtml` for full fidelity). Both escape output and run hrefs through `safeHref`.
 
+**Mentions:** pass `mentions={{ onQuery }}` (optional `trigger`, default `@`) to
+enable `@`-autocomplete. `onQuery(query)` returns `MentionItem[]` (`{ id, label,
+description?, avatarUrl? }`), sync or async. Picking a candidate inserts a chip
+carrying the `id`; chips survive `toHtml`/`fromHtml` round-trips but degrade to
+plain `@label` text in `toMarkdown`. Chips are inert references, not links.
+
 **Undo/redo:** built in — ⌘/Ctrl+Z undo, ⌘/Ctrl+Shift+Z (or ⌘/Ctrl+Y) redo, plus the toolbar Undo/Redo buttons. Typing coalesces into one step (short bursts), and replacing `value` from outside the editor clears the history.
 
 **Input rules:** typing a Markdown marker + space at the start of a paragraph auto-converts the block — `# `/`## `/`### ` → headings, `- `/`* `/`+ ` → bullet list, `1. ` → ordered list, `> ` → blockquote, a triple-backtick fence → code block. One Undo reverts the conversion.

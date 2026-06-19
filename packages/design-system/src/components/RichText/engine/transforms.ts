@@ -22,7 +22,8 @@ function marksBefore(block: Block, offset: number): Mark[] {
   let pos = 0;
   for (const run of block.inlines) {
     const runEnd = pos + run.text.length;
-    if (offset - 1 >= pos && offset - 1 < runEnd) return run.marks.filter((m) => m.type !== 'mention');
+    if (offset - 1 >= pos && offset - 1 < runEnd)
+      return run.marks.filter((m) => m.type !== 'mention');
     pos = runEnd;
   }
   return [];

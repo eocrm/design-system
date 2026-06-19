@@ -122,6 +122,8 @@ interface LinkEditorOpen {
  * ⌘/Ctrl+Z / ⌘/Ctrl+Shift+Z (and the toolbar Undo/Redo buttons) undo and redo.
  * Markdown shortcuts auto-format on typing — `# `, `- `, `1. `, `> `, or a code
  * fence at a line start convert the block (Undo reverts the conversion).
+ * Pass `mentions={{ onQuery }}` to enable `@`-mention autocomplete: typing the
+ * trigger opens a combobox of candidates and inserts a chip carrying the id.
  * The model is the source of truth: every input is replayed as an engine
  * transform and the DOM re-rendered.
  *
@@ -132,6 +134,11 @@ interface LinkEditorOpen {
  * @example
  * // With the built-in toolbar (mark buttons, block-type menu, list toggles).
  * <RichTextEditor value={doc} onChange={setDoc} toolbar />
+ *
+ * @example
+ * // @-mentions: resolve candidates from your data (sync or async).
+ * <RichTextEditor value={doc} onChange={setDoc}
+ *   mentions={{ onQuery: (q) => searchUsers(q) }} />
  *
  * @example
  * // Read-only display of an existing document.
@@ -155,6 +162,12 @@ interface LinkEditorOpen {
  *   `fromHtml` / `fromMarkdown`.
  * - ❌ Hand-rolling HTML/Markdown from the model — use `toHtml` / `toMarkdown`
  *   (the inverse of `fromHtml` / `fromMarkdown`).
+ * - ❌ Using mentions to insert plain links — that's the link tool (⌘K). A
+ *   mention chip is an inert reference carrying an `id`, not a navigable anchor.
+ * - ❌ Returning thousands of unfiltered items from `onQuery` — filter server-side
+ *   (or by the `query`); the menu renders what you return.
+ * - ❌ Relying on Markdown to preserve mentions — `toMarkdown` is lossy (plain
+ *   `@label`); use `toHtml`/`fromHtml` to round-trip a mention's id.
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(

@@ -22,6 +22,15 @@ export function RichTextEditorDemo() {
       '# Imported\n\nThis editor was **seeded** from Markdown — paste rich HTML to import more.',
     ),
   );
+  const [mentionDoc, setMentionDoc] = useState<RichDoc>(() => docFromText('Assign this to '));
+  const TEAM = [
+    { id: 'u1', label: 'Alice Nguyen', description: 'alice@eocrm.dev' },
+    { id: 'u2', label: 'Bob Martinez', description: 'bob@eocrm.dev' },
+    { id: 'u3', label: 'Carlos Whitfield', description: 'carlos@eocrm.dev' },
+    { id: 'u4', label: 'Dana Lee', description: 'dana@eocrm.dev' },
+  ];
+  const queryTeam = (q: string) =>
+    Promise.resolve(TEAM.filter((m) => m.label.toLowerCase().includes(q.toLowerCase())));
 
   return (
     <DemoLayout
@@ -76,6 +85,21 @@ const [doc, setDoc] = useState(() => fromMarkdown('# Imported\\n\\n- one\\n- two
           onChange={setImportDoc}
           toolbar
           placeholder="Paste rich HTML here…"
+        />
+      </Example>
+
+      <Example
+        title="Mentions (@-autocomplete)"
+        description='Pass a mentions prop with onQuery to enable @-mentions. Type "@" then a name (e.g. "@al") to open the candidate menu; ↑/↓ to move, Enter/Tab to insert a chip, Esc to dismiss. The chip carries the id; Backspace removes the whole chip.'
+        code={`<RichTextEditor value={doc} onChange={setDoc} toolbar
+  mentions={{ onQuery: (q) => searchUsers(q) }} />`}
+      >
+        <RichTextEditor
+          value={mentionDoc}
+          onChange={setMentionDoc}
+          toolbar
+          placeholder="Type @ to mention someone…"
+          mentions={{ onQuery: queryTeam }}
         />
       </Example>
 
