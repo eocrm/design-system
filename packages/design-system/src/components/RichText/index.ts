@@ -27,3 +27,5 @@ export {
 } from './engine/transforms';
 export { fromHtml } from './engine/fromHtml';
 export { fromMarkdown } from './engine/fromMarkdown';
+export { toHtml } from './engine/toHtml';
+export { toMarkdown } from './engine/toMarkdown';

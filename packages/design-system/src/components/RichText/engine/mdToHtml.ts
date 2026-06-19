@@ -3,14 +3,7 @@
 // inline strong/em/del/code/a), so fromMarkdown = fromHtml(mdToHtml(md)) reuses
 // one mapping. CommonMark + GFM strikethrough subset. Never throws.
 
-const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
-const escapeHtml = (s: string): string => s.replace(/[&<>]/g, (c) => ESC[c]);
-
-// Attribute context also needs the quotes escaped, or a `"` in a link URL would
-// break out of the href and inject attributes. Scheme safety is NOT enforced
-// here — fromHtml runs every href through safeHref (the single sanitizer).
-const ATTR_ESC: Record<string, string> = { ...ESC, '"': '&quot;', "'": '&#39;' };
-const escapeAttr = (s: string): string => s.replace(/["'&<>]/g, (c) => ATTR_ESC[c]);
+import { escapeHtml, escapeAttr } from './escape';
 
 const LIST_RE = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
 
@@ -42,7 +35,9 @@ function inline(src: string): string {
       }
     }
     if (c === '[') {
-      const m = /^\[([^\]]*)\]\(([^)]*)\)/.exec(src.slice(i));
+      // Allow backslash-escaped `]` inside the link text (toMarkdown escapes a
+      // literal `]` to `\]`); a plain `[^\]]*` would stop at it and lose the link.
+      const m = /^\[((?:[^\]\\]|\\.)*)\]\(([^)]*)\)/.exec(src.slice(i));
       if (m) {
         out += '<a href="' + escapeAttr(m[2].trim()) + '">' + inline(m[1]) + '</a>';
         i += m[0].length;

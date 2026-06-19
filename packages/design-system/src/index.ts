@@ -470,6 +470,8 @@ export {
   setBlockType,
   fromHtml,
   fromMarkdown,
+  toHtml,
+  toMarkdown,
 } from './components/RichText';
 
 export { Text } from './components/Text';
