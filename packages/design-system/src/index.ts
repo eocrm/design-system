@@ -468,6 +468,8 @@ export {
   removeMark,
   toggleMark,
   setBlockType,
+  fromHtml,
+  fromMarkdown,
 } from './components/RichText';
 
 export { Text } from './components/Text';
