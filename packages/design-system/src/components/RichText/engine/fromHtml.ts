@@ -7,6 +7,7 @@ import type { RichDoc, Block, Inline, Mark, BlockType } from './model';
 import { nextId, emptyDoc } from './model';
 import { normalizeInlines } from './inlines';
 import { safeHref } from './safeHref';
+import { withMark } from './marks';
 
 const HEADING_LEVEL: Record<string, 1 | 2 | 3> = { H1: 1, H2: 2, H3: 3, H4: 3, H5: 3, H6: 3 };
 
@@ -25,15 +26,14 @@ const DROP_TAGS = new Set([
   'HR', 'FORM', 'INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'LABEL', 'FIGURE',
 ]);
 
-const isElement = (n: Node): n is HTMLElement => n.nodeType === 1;
+const HTML_NS = 'http://www.w3.org/1999/xhtml';
+// Only HTML-namespace elements are walked; SVG/MathML foreign content (which has
+// lowercase tagNames the uppercase allowlists would miss) is dropped entirely.
+const isElement = (n: Node): n is HTMLElement =>
+  n.nodeType === 1 && (n as Element).namespaceURI === HTML_NS;
 const isText = (n: Node): n is Text => n.nodeType === 3;
 
 const collapseWs = (s: string): string => s.replace(/\s+/g, ' ');
-
-/** Replace a same-type mark (e.g. nested links), else append. */
-function addMark(marks: Mark[], mark: Mark): Mark[] {
-  return [...marks.filter((m) => m.type !== mark.type), mark];
-}
 
 /** Marks active for the descendants of `el`: parent ∪ tag mark ∪ link ∪ inline CSS. */
 function marksFor(el: HTMLElement, parent: Mark[]): Mark[] {
@@ -41,26 +41,26 @@ function marksFor(el: HTMLElement, parent: Mark[]): Mark[] {
   switch (el.tagName) {
     case 'STRONG':
     case 'B':
-      marks = addMark(marks, { type: 'bold' });
+      marks = withMark(marks, { type: 'bold' });
       break;
     case 'EM':
     case 'I':
-      marks = addMark(marks, { type: 'italic' });
+      marks = withMark(marks, { type: 'italic' });
       break;
     case 'U':
-      marks = addMark(marks, { type: 'underline' });
+      marks = withMark(marks, { type: 'underline' });
       break;
     case 'S':
     case 'DEL':
     case 'STRIKE':
-      marks = addMark(marks, { type: 'strike' });
+      marks = withMark(marks, { type: 'strike' });
       break;
     case 'CODE':
-      marks = addMark(marks, { type: 'code' });
+      marks = withMark(marks, { type: 'code' });
       break;
     case 'A': {
       const href = safeHref(el.getAttribute('href') ?? '');
-      if (href !== undefined) marks = addMark(marks, { type: 'link', href });
+      if (href !== undefined) marks = withMark(marks, { type: 'link', href });
       break;
     }
   }
@@ -74,13 +74,13 @@ function applyCssMarks(el: HTMLElement, marks: Mark[]): Mark[] {
   const s = style.toLowerCase();
   const weight = /font-weight\s*:\s*(\d+|bold|bolder)/.exec(s);
   if (weight && (weight[1] === 'bold' || weight[1] === 'bolder' || Number(weight[1]) >= 600)) {
-    marks = addMark(marks, { type: 'bold' });
+    marks = withMark(marks, { type: 'bold' });
   }
-  if (/font-style\s*:\s*(italic|oblique)/.test(s)) marks = addMark(marks, { type: 'italic' });
+  if (/font-style\s*:\s*(italic|oblique)/.test(s)) marks = withMark(marks, { type: 'italic' });
   const deco = /text-decoration(?:-line)?\s*:\s*([^;]+)/.exec(s);
   if (deco) {
-    if (deco[1].includes('underline')) marks = addMark(marks, { type: 'underline' });
-    if (deco[1].includes('line-through')) marks = addMark(marks, { type: 'strike' });
+    if (deco[1].includes('underline')) marks = withMark(marks, { type: 'underline' });
+    if (deco[1].includes('line-through')) marks = withMark(marks, { type: 'strike' });
   }
   return marks;
 }
@@ -225,6 +225,9 @@ function collectBlocks(parent: Node, out: Block[], listDepth: number): void {
  */
 export function fromHtml(html: string): RichDoc {
   const parsed = new DOMParser().parseFromString(html, 'text/html');
+  // DOMParser disables scripting, so <noscript> children are promoted into the
+  // tree as real elements — remove them so their content isn't extracted.
+  parsed.body.querySelectorAll('noscript').forEach((el) => el.remove());
   const blocks: Block[] = [];
   collectBlocks(parsed.body, blocks, 0);
   return blocks.length ? { blocks } : emptyDoc();

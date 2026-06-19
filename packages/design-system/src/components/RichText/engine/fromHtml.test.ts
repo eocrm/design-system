@@ -71,6 +71,21 @@ describe('fromHtml — blocks', () => {
     expect(fromHtml('   \n  ').blocks.length).toBe(1);
     expect(runsText(fromHtml('   ').blocks[0].inlines)).toBe('');
   });
+
+  it('drops SVG and MathML foreign content (including embedded script text)', () => {
+    expect(
+      fromHtml('<p>a</p><svg><text>x</text><script>bad()</script></svg><p>b</p>').blocks.map(text),
+    ).toEqual(['a', 'b']);
+    expect(
+      fromHtml('<p>a</p><math><mn>42</mn></math><p>b</p>').blocks.map(text),
+    ).toEqual(['a', 'b']);
+  });
+
+  it('drops <noscript> content', () => {
+    expect(
+      fromHtml('<p>a</p><noscript><p>hidden</p></noscript><p>b</p>').blocks.map(text),
+    ).toEqual(['a', 'b']);
+  });
 });
 
 describe('fromHtml — inline marks', () => {
