@@ -34,4 +34,9 @@ describe('mdToHtml — inline', () => {
     expect(mdToHtml('a \\* b')).toBe('<p>a * b</p>');
     expect(mdToHtml('a < b & c')).toBe('<p>a &lt; b &amp; c</p>');
   });
+  it('escapes quotes in a link href so it cannot break out of the attribute', () => {
+    expect(mdToHtml('[x](https://a" onmouseover="y)')).toBe(
+      '<p><a href="https://a&quot; onmouseover=&quot;y">x</a></p>',
+    );
+  });
 });

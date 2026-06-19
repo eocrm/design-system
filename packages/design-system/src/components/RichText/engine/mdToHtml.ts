@@ -6,6 +6,12 @@
 const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
 const escapeHtml = (s: string): string => s.replace(/[&<>]/g, (c) => ESC[c]);
 
+// Attribute context also needs the quotes escaped, or a `"` in a link URL would
+// break out of the href and inject attributes. Scheme safety is NOT enforced
+// here — fromHtml runs every href through safeHref (the single sanitizer).
+const ATTR_ESC: Record<string, string> = { ...ESC, '"': '&quot;', "'": '&#39;' };
+const escapeAttr = (s: string): string => s.replace(/["'&<>]/g, (c) => ATTR_ESC[c]);
+
 const LIST_RE = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
 
 /** Convert inline Markdown to HTML. Unbalanced markers degrade to literal text. */
@@ -38,7 +44,7 @@ function inline(src: string): string {
     if (c === '[') {
       const m = /^\[([^\]]*)\]\(([^)]*)\)/.exec(src.slice(i));
       if (m) {
-        out += '<a href="' + escapeHtml(m[2].trim()) + '">' + inline(m[1]) + '</a>';
+        out += '<a href="' + escapeAttr(m[2].trim()) + '">' + inline(m[1]) + '</a>';
         i += m[0].length;
         continue;
       }

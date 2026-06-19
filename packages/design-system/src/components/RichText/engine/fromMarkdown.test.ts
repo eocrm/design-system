@@ -29,4 +29,17 @@ describe('fromMarkdown', () => {
     const marks = d.blocks[0].inlines.flatMap((r) => r.marks.map((m) => m.type));
     expect(marks).not.toContain('underline');
   });
+
+  it('neutralizes dangerous link hrefs end-to-end (safeHref drops them)', () => {
+    // javascript: scheme → link mark dropped, text kept.
+    expect(fromMarkdown('[x](javascript:evil)').blocks[0].inlines).toEqual([
+      { text: 'x', marks: [] },
+    ]);
+    // An attribute-breakout attempt never injects a handler: the whole thing is
+    // one (https) href, so only a link mark — and no stray marks/runs — results.
+    const d = fromMarkdown('[x](https://a" onmouseover="y)');
+    expect(d.blocks[0].inlines.length).toBe(1);
+    expect(d.blocks[0].inlines[0].text).toBe('x');
+    expect(d.blocks[0].inlines[0].marks.map((m) => m.type)).toEqual(['link']);
+  });
 });
