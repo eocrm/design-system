@@ -8,6 +8,8 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
   const onSetBlock = vi.fn();
   const onToggleList = vi.fn();
   const onOpenLink = vi.fn();
+  const onUndo = vi.fn();
+  const onRedo = vi.fn();
   render(
     <I18nProvider locale="en">
       <RichTextToolbar
@@ -17,11 +19,13 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
         onSetBlock={onSetBlock}
         onToggleList={onToggleList}
         onOpenLink={onOpenLink}
+        onUndo={onUndo}
+        onRedo={onRedo}
         {...props}
       />
     </I18nProvider>,
   );
-  return { onToggleMark, onSetBlock, onToggleList, onOpenLink };
+  return { onToggleMark, onSetBlock, onToggleList, onOpenLink, onUndo, onRedo };
 }
 
 describe('RichTextToolbar', () => {
@@ -102,5 +106,32 @@ describe('RichTextToolbar', () => {
   it('disables the Link button when disabled', () => {
     renderTb({ disabled: true });
     expect(screen.getByRole('button', { name: 'Link' })).toBeDisabled();
+  });
+
+  it('renders Undo and Redo buttons', () => {
+    renderTb();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Redo' })).toBeInTheDocument();
+  });
+
+  it('disables Undo/Redo when there is nothing to undo/redo', () => {
+    renderTb({ canUndo: false, canRedo: false });
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Redo' })).toBeDisabled();
+  });
+
+  it('enables and fires Undo/Redo when available', async () => {
+    const user = userEvent.setup();
+    const { onUndo, onRedo } = renderTb({ canUndo: true, canRedo: true });
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await user.click(screen.getByRole('button', { name: 'Redo' }));
+    expect(onUndo).toHaveBeenCalled();
+    expect(onRedo).toHaveBeenCalled();
+  });
+
+  it('disables Undo/Redo when the whole toolbar is disabled', () => {
+    renderTb({ canUndo: true, canRedo: true, disabled: true });
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Redo' })).toBeDisabled();
   });
 });

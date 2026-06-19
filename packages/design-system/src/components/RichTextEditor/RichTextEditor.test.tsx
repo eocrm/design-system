@@ -291,3 +291,98 @@ describe('RichTextEditor paste', () => {
     expect(evt.defaultPrevented).toBe(false);
   });
 });
+
+describe('RichTextEditor undo/redo', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+
+  it('records an edit and undoes it via the toolbar', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 2 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Bold' }));
+    expect(screen.getByRole('strong')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.queryByRole('strong')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Redo' })).toBeEnabled();
+  });
+
+  it('clears history when value is replaced externally', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 2 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] }],
+      });
+      return (
+        <div>
+          <button
+            onClick={() =>
+              setDoc({
+                blocks: [{ id: 'z', type: 'paragraph', inlines: [{ text: 'new', marks: [] }] }],
+              })
+            }
+          >
+            replace
+          </button>
+          <RichTextEditor value={doc} onChange={setDoc} toolbar />
+        </div>
+      );
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Bold' }));
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'replace' }));
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+  });
+
+  it('⌘Z undoes even with no live selection (caret lost)', async () => {
+    const user = userEvent.setup();
+    // Build one undo step (the edit needs a range).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 2 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Bold' }));
+    expect(screen.getByRole('strong')).toBeInTheDocument();
+    // Now the caret is gone — undo must still work (it needs no selection).
+    mockReadSelection.mockReturnValue(null);
+    screen.getByRole('textbox', { name: 'Rich text editor' }).focus();
+    await user.keyboard('{Meta>}z{/Meta}');
+    expect(screen.queryByRole('strong')).not.toBeInTheDocument();
+  });
+});

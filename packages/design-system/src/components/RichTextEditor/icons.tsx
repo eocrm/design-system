@@ -78,3 +78,19 @@ export function LinkIcon() {
     </svg>
   );
 }
+export function UndoIcon() {
+  return (
+    <svg {...base}>
+      <path d="M9 14 4 9l5-5" />
+      <path d="M4 9h11a5 5 0 0 1 0 10h-2" />
+    </svg>
+  );
+}
+export function RedoIcon() {
+  return (
+    <svg {...base}>
+      <path d="m15 14 5-5-5-5" />
+      <path d="M20 9H9a5 5 0 0 0 0 10h2" />
+    </svg>
+  );
+}

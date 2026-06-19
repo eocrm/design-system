@@ -31,6 +31,15 @@ import {
   applyExactMarks,
 } from './commands';
 import { RichTextToolbar, type BlockChoice } from './RichTextToolbar';
+import {
+  reset as historyReset,
+  record as historyRecord,
+  undo as historyUndo,
+  redo as historyRedo,
+  canUndo as historyCanUndo,
+  canRedo as historyCanRedo,
+} from './history';
+import type { History, EditKind } from './history';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextEditorProps extends Omit<
@@ -48,8 +57,8 @@ export interface RichTextEditorProps extends Omit<
   /** Focus the editor on mount. */
   autoFocus?: boolean;
   /**
-   * Render the built-in formatting toolbar above the editor — mark toggle
-   * buttons (bold/italic/underline/strike), a block-type dropdown
+   * Render the built-in formatting toolbar above the editor — Undo/Redo buttons,
+   * mark toggle buttons (bold/italic/underline/strike), a block-type dropdown
    * (paragraph/headings/quote/code), and bullet/numbered list toggles. The
    * toolbar dispatches through the same commit path the keyboard uses and
    * reflects the active marks + current block of the live selection. Default
@@ -117,6 +126,7 @@ function selectionRect(root: HTMLElement): Rect {
  * floating editor to add, edit, or remove a link on the selection. Inside a
  * list, Tab/⇧Tab indent/outdent and Enter on an empty item exits to a paragraph.
  * Pasting rich HTML (web, Word, Google Docs) imports it as formatted content.
+ * ⌘/Ctrl+Z / ⌘/Ctrl+Shift+Z (and the toolbar Undo/Redo buttons) undo and redo.
  * The model is the source of truth: every input is replayed as an engine
  * transform and the DOM re-rendered.
  *
@@ -139,7 +149,7 @@ function selectionRect(root: HTMLElement): Rect {
  * - ❌ Treating it as uncontrolled — you MUST feed `onChange`'s doc back into
  *   `value`, or edits won't stick.
  * - ❌ Mutating `value` in place — pass the new doc the transforms return.
- * - ❌ Expecting undo/redo — not in this slice.
+ * - ❌ Implementing your own undo/redo stack — the editor tracks history internally; use ⌘/Ctrl+Z (undo), ⌘/Ctrl+⇧Z or ⌘/Ctrl+Y (redo), or the toolbar Undo/Redo buttons.
  * - ❌ Hand-rolling a link UI by reaching into the DOM — press ⌘/Ctrl+K or the
  *   toolbar link button; both open the built-in editor and route through the
  *   controlled `value`/`onChange` round-trip.
@@ -197,14 +207,65 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [ref],
     );
 
-    const commit = useCallback((result: { doc: RichDoc; selection: Range }) => {
-      // No-op transforms (e.g. Backspace at the very start of the document)
-      // return the SAME doc reference — skip so we don't fire onChange or leave a
-      // stale pending selection that React would never consume (no re-render).
-      if (result.doc === latest.current.value) return;
-      pendingSelectionRef.current = result.selection;
-      latest.current.onChange(result.doc);
+    const historyRef = useRef<History>(historyReset({ doc: value, selection: null }));
+    // Timestamp of the last ⌘Z/⌘⇧Z/⌘Y keydown — lets the beforeinput net skip the
+    // historyUndo/historyRedo event that a keydown ALSO emits (already handled),
+    // while still honoring a menu/trackpad undo that emits no keydown.
+    const historyKeyAtRef = useRef(0);
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
+    const syncHistoryFlags = useCallback(() => {
+      setCanUndo(historyCanUndo(historyRef.current));
+      setCanRedo(historyCanRedo(historyRef.current));
     }, []);
+
+    const commit = useCallback(
+      (result: { doc: RichDoc; selection: Range }, kind: EditKind = 'other') => {
+        // No-op transforms (e.g. Backspace at the very start of the document)
+        // return the SAME doc reference — skip so we don't fire onChange or leave a
+        // stale pending selection that React would never consume (no re-render).
+        if (result.doc === latest.current.value) return;
+        historyRef.current = historyRecord(
+          historyRef.current,
+          { doc: result.doc, selection: result.selection },
+          kind,
+          Date.now(),
+        );
+        syncHistoryFlags();
+        pendingSelectionRef.current = result.selection;
+        latest.current.onChange(result.doc);
+      },
+      [syncHistoryFlags],
+    );
+
+    // Drop any caret-staged pending mark — the doc + caret are about to change,
+    // so a mark staged at the old caret must not bleed into the next typed text.
+    const clearPendingMarks = useCallback(() => {
+      setPendingMarks(null);
+      pendingAtRef.current = null;
+    }, []);
+
+    const onUndo = useCallback(() => {
+      const h = historyRef.current;
+      if (!historyCanUndo(h)) return;
+      const next = historyUndo(h);
+      historyRef.current = next;
+      syncHistoryFlags();
+      clearPendingMarks();
+      pendingSelectionRef.current = next.present.selection;
+      latest.current.onChange(next.present.doc);
+    }, [syncHistoryFlags, clearPendingMarks]);
+
+    const onRedo = useCallback(() => {
+      const h = historyRef.current;
+      if (!historyCanRedo(h)) return;
+      const next = historyRedo(h);
+      historyRef.current = next;
+      syncHistoryFlags();
+      clearPendingMarks();
+      pendingSelectionRef.current = next.present.selection;
+      latest.current.onChange(next.present.doc);
+    }, [syncHistoryFlags, clearPendingMarks]);
 
     // Shared by the keyboard shortcut and the toolbar: with a collapsed caret,
     // stage a pending mark for the next typed text (remembering where); with a
@@ -283,13 +344,19 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     // Restore the caret/selection after a model-driven re-render.
     useLayoutEffect(() => {
+      // External value replacement (parent sets a wholly different doc) — reset
+      // history so Undo can't travel back into the old document's timeline.
+      if (value !== historyRef.current.present.doc) {
+        historyRef.current = historyReset({ doc: value, selection: null });
+        syncHistoryFlags();
+      }
       const root = rootRef.current;
       const pending = pendingSelectionRef.current;
       if (root && pending) {
         writeSelection(root, pending);
         pendingSelectionRef.current = null;
       }
-    }, [value]);
+    }, [value, syncHistoryFlags]);
 
     // Native beforeinput (React's onBeforeInput is NOT the modern beforeinput —
     // it's a legacy textInput polyfill that carries no `inputType`).
@@ -299,6 +366,19 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const onBeforeInput = (e: InputEvent) => {
         const { value: doc, readOnly: ro } = latest.current;
         if (ro || isComposingRef.current) return;
+        // Undo/redo via beforeinput. Always preventDefault so the browser's native
+        // contentEditable undo never mutates the DOM under the controlled model.
+        // A ⌘Z/⌘⇧Z/⌘Y keydown ALSO emits a paired historyUndo/historyRedo here —
+        // the keydown handler already ran onUndo/onRedo, so skip that one (within a
+        // short window of the keydown). A menu/trackpad undo emits no keydown, so it
+        // falls through and is honored here.
+        if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
+          e.preventDefault();
+          if (Date.now() - historyKeyAtRef.current < 100) return;
+          if (e.inputType === 'historyUndo') onUndo();
+          else onRedo();
+          return;
+        }
         const range = readSelection(root);
         if (!range) return;
         // Pending marks: a mark toggled at a collapsed caret applies to the next
@@ -316,7 +396,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             const marked = applyExactMarks(inserted.doc, span, pend);
             setPendingMarks(null);
             pendingAtRef.current = null;
-            commit({ doc: marked, selection: inserted.selection });
+            commit({ doc: marked, selection: inserted.selection }, 'type');
             return;
           }
         }
@@ -329,11 +409,19 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           return;
         }
         e.preventDefault();
-        commit(result);
+        const kind: EditKind =
+          e.inputType === 'insertText' ||
+          e.inputType === 'insertCompositionText' ||
+          e.inputType === 'insertReplacementText'
+            ? 'type'
+            : e.inputType.startsWith('delete')
+              ? 'delete'
+              : 'other';
+        commit(result, kind);
       };
       root.addEventListener('beforeinput', onBeforeInput);
       return () => root.removeEventListener('beforeinput', onBeforeInput);
-    }, [commit]);
+    }, [commit, onUndo, onRedo]);
 
     // Rich paste: when the clipboard carries HTML, parse it into the model and
     // splice it at the selection. No HTML → don't preventDefault, so the native
@@ -393,6 +481,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (readOnly) return;
         const root = rootRef.current;
         if (!root) return;
+        // Undo/redo don't need a live selection — check them BEFORE the
+        // readSelection guard so ⌘Z still works if the caret was lost. stopPropagation
+        // keeps the shortcut from triggering a host app's undo. preventDefault
+        // suppresses the browser's native contentEditable undo. We stamp the time so
+        // the paired historyUndo/historyRedo beforeinput (emitted by this same
+        // keydown) is skipped there rather than double-applied.
+        const mod = e.metaKey || e.ctrlKey;
+        if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          historyKeyAtRef.current = Date.now();
+          onUndo();
+          return;
+        }
+        if (mod && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
+          e.preventDefault();
+          e.stopPropagation();
+          historyKeyAtRef.current = Date.now();
+          onRedo();
+          return;
+        }
         const range = readSelection(root);
         if (!range) return;
         // ⌘/Ctrl+K opens the link editor (create or edit a link). Stop
@@ -435,7 +544,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           return;
         }
       },
-      [value, readOnly, commit, stageOrToggleMark, openLinkEditor],
+      [value, readOnly, commit, stageOrToggleMark, openLinkEditor, onUndo, onRedo],
     );
 
     const onCompositionStart = useCallback(() => {
@@ -458,7 +567,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         const caret = range.focus;
         const start = { blockId: caret.blockId, offset: Math.max(0, caret.offset - text.length) };
         const result = applyInput(value, { anchor: start, focus: caret }, 'insertText', text);
-        if (result) commit(result);
+        if (result) commit(result, 'type');
       },
       [value, readOnly, commit],
     );
@@ -567,6 +676,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           onToggleList={onToolbarToggleList}
           linkActive={toolbarLinkActive}
           onOpenLink={openLinkEditor}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={onUndo}
+          onRedo={onRedo}
         />
         {editable}
         {linkBubble}

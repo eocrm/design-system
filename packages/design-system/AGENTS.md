@@ -923,6 +923,7 @@ const [doc, setDoc] = useState(emptyDoc());
 - **Block-type dropdown** — Paragraph, Heading 1–3, Quote, Code block. Shows the current block type; mixed multi-block selections show "Mixed".
 - **List toggles** — Bullet list, Numbered list. Toggle between the list type and paragraph.
 - **Link button** — add/edit a link on the selection. Reflects `aria-pressed` when the caret is inside a link.
+- **Undo / Redo buttons** — undo/redo the last change; disabled at the ends of the history.
 
 **List keys:**
 
@@ -935,7 +936,9 @@ const [doc, setDoc] = useState(emptyDoc());
 
 **Import:** `fromHtml(html)` and `fromMarkdown(md)` parse a string into a `RichDoc` (e.g. to seed `value` from stored/legacy content). Pasting rich HTML into the editor imports it as formatted content (parsed + sanitized). Markdown import is via `fromMarkdown` only — pasted plain text (incl. Markdown source) inserts literally. Both `from*` functions require a DOM environment (`DOMParser`); Markdown has no underline syntax and images/tables aren't modeled.
 
-When NOT to use: read-only display → `<RichText>`. No undo/redo yet (later slice). It's controlled — render `onChange`'s doc back into `value`, never mutate in place.
+**Undo/redo:** built in — ⌘/Ctrl+Z undo, ⌘/Ctrl+Shift+Z (or ⌘/Ctrl+Y) redo, plus the toolbar Undo/Redo buttons. Typing coalesces into one step (short bursts), and replacing `value` from outside the editor clears the history.
+
+When NOT to use: read-only display → `<RichText>`. It's controlled — render `onChange`'s doc back into `value`, never mutate in place.
 
 ### `<ImageCrop>` — controlled image cropper
 
