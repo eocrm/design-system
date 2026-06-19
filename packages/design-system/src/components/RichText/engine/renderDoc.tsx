@@ -4,6 +4,7 @@ import { Fragment, type ReactNode } from 'react';
 import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
 import { runsText, runsLength } from './inlines';
 import { safeHref } from './safeHref';
+import { isListItem, effectiveDepths } from './listDepths';
 
 export interface RenderDocOptions {
   /** Editable surface: add `data-block-id` anchors + render empty blocks with a `<br>`. */
@@ -97,34 +98,6 @@ interface ListItemNode {
   blockId: string;
   content: ReactNode;
   child: ReactNode | null;
-}
-
-function isListItem(block: Block): boolean {
-  return block.type === 'bullet_item' || block.type === 'ordered_item';
-}
-
-/**
- * Effective render depth per block. `depth` on the model is a free integer, but
- * the renderer needs gap-free levels — a jump of +2 (or an outdent below the
- * list's own base) would otherwise drop items during nesting. Within each run of
- * consecutive list items we clamp each item to at most one level deeper than the
- * previous (and never below 0), so the grouping below is lossless for any input.
- * Non-list blocks get 0 and reset the run.
- */
-function effectiveDepths(blocks: Block[]): number[] {
-  const eff = new Array<number>(blocks.length).fill(0);
-  let prev = -1; // effective depth of the previous list item in the current run
-  for (let i = 0; i < blocks.length; i += 1) {
-    if (!isListItem(blocks[i])) {
-      prev = -1;
-      continue;
-    }
-    const raw = blocks[i].depth ?? 0;
-    const e = Math.max(0, Math.min(raw, prev + 1));
-    eff[i] = e;
-    prev = e;
-  }
-  return eff;
 }
 
 // Collect a list starting at `start`, at its base (effective) depth; items one
