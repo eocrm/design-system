@@ -33,7 +33,8 @@ export function PhoneInputDemo() {
       <Example
         title="Seeded from an existing E.164 value"
         description="Pass an E.164 string and the picker + number field reconstruct from it (here a UK number)."
-        code={`<PhoneInput value="+442071838750" onChange={setGb} />`}
+        code={`const [gb, setGb] = useState<string | null>('+442071838750');
+<PhoneInput value={gb} onChange={setGb} />`}
       >
         <PhoneInput value={gb} onChange={setGb} />
       </Example>

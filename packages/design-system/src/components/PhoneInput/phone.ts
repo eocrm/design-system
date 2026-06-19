@@ -53,7 +53,8 @@ export function parseE164(
 ): { country: CountryCode | undefined; national: string } | null {
   const parsed = parsePhoneNumberFromString(value);
   if (!parsed) return null;
-  return { country: parsed.country, national: parsed.formatNational() };
+  const country = parsed.country ?? parsed.getPossibleCountries()[0];
+  return { country, national: parsed.formatNational() };
 }
 
 /** Format a raw national input for `country` as the user types (idempotent on a formatted string). */
@@ -61,15 +62,25 @@ export function formatNational(input: string, country: CountryCode): string {
   return new AsYouType(country).input(input);
 }
 
-/** Best-effort canonical E.164 from a raw national input + country, or null if not yet a number. */
+/**
+ * Canonical E.164 once the input is a *possible* complete number for `country`;
+ * `null` while still partial or empty.
+ */
 export function toE164(input: string, country: CountryCode): string | null {
   const ayt = new AsYouType(country);
   ayt.input(input);
   const num = ayt.getNumber();
-  return num ? num.number : null;
+  return num && num.isPossible() ? num.number : null;
 }
 
-/** True iff `e164` is a valid phone number. Exported so a host can drive Field `invalid` chrome. */
+/**
+ * True iff `e164` is a valid phone number. Exported so a host can drive Field `invalid` chrome.
+ *
+ * @example
+ * <Field error={isValidPhone(value) ? undefined : 'Enter a valid number'}>
+ *   <PhoneInput value={value} onChange={setValue} />
+ * </Field>
+ */
 export function isValidPhone(e164: string | null | undefined): boolean {
   if (!e164) return false;
   try {

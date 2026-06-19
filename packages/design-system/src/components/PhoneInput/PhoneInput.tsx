@@ -34,7 +34,7 @@ export interface PhoneInputProps extends Omit<
   onChange: (e164: string | null) => void;
   /** ISO 3166-1 alpha-2 country used to seed the picker when `value` is empty. Default `"US"`. */
   defaultCountry?: string;
-  /** Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. */
+  /** Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries. */
   countries?: string[];
   /** Control size, forwarded to the Select + Input. Default `"md"`. */
   size?: PhoneInputSize;
@@ -48,8 +48,16 @@ export interface PhoneInputProps extends Omit<
   locale?: string;
   /** Stable id; placed on the number field so an external `<label htmlFor>` focuses it. */
   id?: string;
+  /**
+   * Accessible name when used STANDALONE (outside `<Field>`). A standalone
+   * PhoneInput MUST be named via `aria-label` or `aria-labelledby`, else the
+   * country/number group is unnamed. Inside `<Field>` the label is wired
+   * automatically via `aria-labelledby`.
+   */
   'aria-label'?: string;
+  /** Ids of elements labelling the group (injected by `<Field>`; takes precedence over `aria-label`). */
   'aria-labelledby'?: string;
+  /** Ids of description/error elements; forwarded to the number field so it is announced on focus (injected by `<Field>`). */
   'aria-describedby'?: string;
 }
 
@@ -95,6 +103,11 @@ function seedNational(value: string | null): string {
  *   display is reconstructed from it.
  * - ❌ Validating by hand — call the exported `isValidPhone(e164)` and pass
  *   `invalid` (or wire it through `<Field error>`).
+ *
+ * @remarks Known limitations
+ * - Format-as-you-type sets the caret to the end of the number field after each
+ *   reformat; editing in the middle of the number bounces the caret to the end.
+ * - `countries={[]}` (empty array) shows ALL countries, not none.
  */
 export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function PhoneInput(
   {
@@ -188,7 +201,6 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
       role="group"
       aria-label={ariaLabelledby ? undefined : ariaLabel}
       aria-labelledby={ariaLabelledby}
-      aria-describedby={ariaDescribedby}
     >
       <Select
         className={styles.country}
@@ -216,6 +228,7 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
         disabled={disabled}
         required={required}
         aria-label={t('phoneInput.numberLabel')}
+        aria-describedby={ariaDescribedby}
         placeholder={t('phoneInput.numberPlaceholder')}
       />
     </div>

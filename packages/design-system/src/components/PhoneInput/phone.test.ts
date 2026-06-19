@@ -36,6 +36,11 @@ describe('phone engine', () => {
     it('returns null for an unparseable string', () => {
       expect(parseE164('not a phone')).toBeNull();
     });
+    it('resolves the country from the calling code when not directly inferable', () => {
+      const r = parseE164('+447700900123');
+      expect(r).not.toBeNull();
+      expect(r!.country).toBe('GB');
+    });
   });
 
   describe('formatNational (as-you-type)', () => {
@@ -50,6 +55,12 @@ describe('phone engine', () => {
     });
     it('returns null for an empty input', () => {
       expect(toE164('', 'US')).toBeNull();
+    });
+    it('returns null for a partial (not-yet-complete) input', () => {
+      expect(toE164('202', 'US')).toBeNull();
+    });
+    it('emits E.164 only once the number is possibly complete', () => {
+      expect(toE164('2025550123', 'US')).toBe('+12025550123');
     });
   });
 
