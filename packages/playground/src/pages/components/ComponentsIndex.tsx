@@ -397,8 +397,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
   {
     to: '/components/phone-input',
     name: 'PhoneInput',
-    description:
-      'International phone field — country picker + national number, emitting E.164.',
+    description: 'International phone field — country picker + national number, emitting E.164.',
     preview: (
       <div style={{ width: 240 }}>
         <PhoneInput value="+12025550123" onChange={() => {}} aria-label="Preview" />
