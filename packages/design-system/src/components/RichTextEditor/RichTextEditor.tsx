@@ -18,7 +18,7 @@ import { insertText, insertFragment } from '../RichText/engine/transforms';
 import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
-import { readSelection, writeSelection } from './selection';
+import { readSelection, writeSelection, selectionRect, type Rect } from './selection';
 import { applyInput } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
 import { runsText } from '../RichText/engine/inlines';
@@ -91,8 +91,6 @@ function marksAtCaretMarks(doc: RichDoc, caret: Point): Mark[] {
   return [];
 }
 
-type Rect = { top: number; left: number; height: number; width: number };
-
 interface LinkEditorOpen {
   range: Range;
   href: string;
@@ -101,23 +99,6 @@ interface LinkEditorOpen {
   key: number;
 }
 
-/** The viewport rect of the current DOM selection, falling back to the editor root. */
-function selectionRect(root: HTMLElement): Rect {
-  const sel = typeof window !== 'undefined' ? window.getSelection() : null;
-  if (sel && sel.rangeCount > 0) {
-    let r: DOMRect | null = null;
-    try {
-      r = sel.getRangeAt(0).getBoundingClientRect();
-    } catch {
-      // jsdom does not implement Range.getBoundingClientRect — fall through.
-    }
-    if (r && (r.width || r.height || r.top || r.left)) {
-      return { top: r.top, left: r.left, width: r.width, height: r.height };
-    }
-  }
-  const rr = root.getBoundingClientRect();
-  return { top: rr.top, left: rr.left, width: 0, height: rr.height };
-}
 
 /**
  * Controlled rich-text editor — a contentEditable surface over the in-house

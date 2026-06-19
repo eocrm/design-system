@@ -116,3 +116,24 @@ export function writeSelection(root: HTMLElement, range: Range): void {
     // some environments (jsdom) have a partial Selection — collapsed caret is fine
   }
 }
+
+/** A viewport rect (subset of DOMRect) used to anchor floating UI to a selection. */
+export type Rect = { top: number; left: number; height: number; width: number };
+
+/** The viewport rect of the current DOM selection, falling back to `root`. */
+export function selectionRect(root: HTMLElement): Rect {
+  const sel = typeof window !== 'undefined' ? window.getSelection() : null;
+  if (sel && sel.rangeCount > 0) {
+    let r: DOMRect | null = null;
+    try {
+      r = sel.getRangeAt(0).getBoundingClientRect();
+    } catch {
+      // jsdom does not implement Range.getBoundingClientRect — fall through.
+    }
+    if (r && (r.width || r.height || r.top || r.left)) {
+      return { top: r.top, left: r.left, width: r.width, height: r.height };
+    }
+  }
+  const rr = root.getBoundingClientRect();
+  return { top: rr.top, left: rr.left, width: 0, height: rr.height };
+}
