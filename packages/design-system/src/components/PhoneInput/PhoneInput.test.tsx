@@ -165,6 +165,12 @@ describe('PhoneInput', () => {
     expect(combo.value).toBe('+1');
   });
 
+  it('countryDisplay="flag" shows the emoji flag + calling code in the trigger', () => {
+    renderWith(<PhoneInput value="+12025550123" onChange={() => {}} countryDisplay="flag" />);
+    const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
+    expect(combo.value).toBe('🇺🇸 +1');
+  });
+
   it('keeps the country searchable by name even in a compact display mode', async () => {
     const user = userEvent.setup();
     function Harness() {

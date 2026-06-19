@@ -89,6 +89,12 @@ describe('phone engine', () => {
       expect(isoToFlag('US')).toBe('🇺🇸');
       expect(isoToFlag('gb')).toBe('🇬🇧');
     });
+    it('strips non-letters and never throws on junk input', () => {
+      expect(isoToFlag('')).toBe('');
+      expect(isoToFlag('1')).toBe('');
+      // junk-in/junk-out but safe: the stray digit is dropped, leaving one indicator
+      expect(isoToFlag('U1')).toBe(String.fromCodePoint(0x1f1fa));
+    });
   });
 
   describe('countryDisplayLabel', () => {

@@ -60,6 +60,10 @@ export function PhoneInputDemo() {
               />
             </Cluster>
           ))}
+          <Text size="sm" tone="muted">
+            All four share one value — editing any updates the rest, so only the trigger format
+            differs.
+          </Text>
         </Stack>
       </Example>
 
