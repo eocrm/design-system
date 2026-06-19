@@ -147,8 +147,14 @@ describe('PhoneInput', () => {
     expect(screen.queryByRole('button', { name: /clear/i })).toBeNull();
   });
 
-  it('defaults to the full country name in the trigger', () => {
+  it('defaults to showing only the calling code in the trigger', () => {
     renderWith(<PhoneInput value="+12025550123" onChange={() => {}} />);
+    const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
+    expect(combo.value).toBe('+1');
+  });
+
+  it('countryDisplay="name" shows the full country name + calling code in the trigger', () => {
+    renderWith(<PhoneInput value="+12025550123" onChange={() => {}} countryDisplay="name" />);
     const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
     expect(combo.value).toBe('United States +1');
   });
@@ -169,6 +175,16 @@ describe('PhoneInput', () => {
     renderWith(<PhoneInput value="+12025550123" onChange={() => {}} countryDisplay="flag" />);
     const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
     expect(combo.value).toBe('🇺🇸 +1');
+  });
+
+  it('selects the country trigger text on open for type-to-search', async () => {
+    const user = userEvent.setup();
+    renderWith(<PhoneInput value="+12025550123" onChange={() => {}} countryDisplay="name" />);
+    const combo = screen.getByRole('combobox', { name: 'Country' }) as HTMLInputElement;
+    await user.click(combo);
+    expect(combo.value).toBe('United States +1');
+    expect(combo.selectionStart).toBe(0);
+    expect(combo.selectionEnd).toBe(combo.value.length);
   });
 
   it('keeps the country searchable by name even in a compact display mode', async () => {

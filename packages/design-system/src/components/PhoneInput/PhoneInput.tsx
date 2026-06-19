@@ -40,15 +40,15 @@ export interface PhoneInputProps extends Omit<
   /** Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries. */
   countries?: string[];
   /**
-   * How the SELECTED country renders in the picker trigger. Default `"name"`.
-   * - `"flag"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on
-   *   Windows Chrome/Edge (they show the letters), so prefer `"iso"` there.
+   * How the SELECTED country renders in the picker trigger. Default `"code"`.
+   * - `"code"` — calling code only (`+1`).
    * - `"iso"` — ISO code + code (`US +1`).
    * - `"name"` — full country name + code (`United States +1`).
-   * - `"code"` — calling code only (`+1`).
+   * - `"flag"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on
+   *   Windows Chrome/Edge (they show the letters), so prefer `"iso"` there.
    *
-   * The dropdown rows always show the full country name (plus a flag in `"flag"`
-   * mode) so they stay searchable + identifiable regardless of this setting.
+   * The dropdown rows always show the full country name + code (plus a flag in
+   * `"flag"` mode) so they stay searchable + identifiable regardless of this.
    */
   countryDisplay?: CountryDisplay;
   /** Control size, forwarded to the Select + Input. Default `"md"`. */
@@ -130,7 +130,7 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
     onChange,
     defaultCountry = 'US',
     countries,
-    countryDisplay = 'name',
+    countryDisplay = 'code',
     size = 'md',
     invalid,
     disabled,
@@ -236,6 +236,8 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
         searchable
         // A phone always has a country — never offer to clear the selection.
         clearable={false}
+        // Highlight the trigger text on open so the user can type to search.
+        selectOnOpen
         size={size}
         invalid={invalid}
         disabled={disabled}

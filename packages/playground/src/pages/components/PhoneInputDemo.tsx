@@ -18,7 +18,7 @@ export function PhoneInputDemo() {
     >
       <Example
         title="Default (US)"
-        description="Pick a country and type a number. The component emits canonical E.164; the display reconstructs from it."
+        description="The trigger shows just the calling code by default (compact); open the country picker — its text auto-selects — and type to search. The component emits canonical E.164; the display reconstructs from it."
         code={`const [phone, setPhone] = useState<string | null>(null);
 <PhoneInput value={phone} onChange={setPhone} defaultCountry="US" />`}
       >
