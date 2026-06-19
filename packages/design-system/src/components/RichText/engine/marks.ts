@@ -1,9 +1,11 @@
 // marks.ts — Layer A. Pure helpers over a Mark[]. Never mutate inputs.
 import type { Mark, MarkType } from './model';
 
-/** Canonical key for set comparison (link distinguished by href). */
+/** Canonical key for set comparison (link by href, mention by id+label). */
 function markKey(m: Mark): string {
-  return m.type === 'link' ? `link:${m.href}` : m.type;
+  if (m.type === 'link') return `link:${m.href}`;
+  if (m.type === 'mention') return `mention:${m.id}:${m.label}`;
+  return m.type;
 }
 
 /** Order-insensitive set equality (link href included). */
