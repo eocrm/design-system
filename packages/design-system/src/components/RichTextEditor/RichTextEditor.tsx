@@ -14,7 +14,10 @@ import { renderDoc } from '../RichText/engine/renderDoc';
 import { blockLength, isCollapsed } from '../RichText/engine/position';
 import { linkAt, setLink, removeLink } from './links';
 import { RichTextLinkEditor } from './RichTextLinkEditor';
-import { insertText, insertFragment } from '../RichText/engine/transforms';
+import { insertText, insertFragment, insertMention } from '../RichText/engine/transforms';
+import { useMention } from './useMention';
+import { RichTextMentionMenu } from './RichTextMentionMenu';
+import type { MentionItem, MentionsConfig } from './mentions';
 import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
@@ -67,6 +70,13 @@ export interface RichTextEditorProps extends Omit<
    * `false` (keyboard-only). When `readOnly`, the toolbar renders disabled.
    */
   toolbar?: boolean;
+  /**
+   * Enable `@`-mention autocomplete. Supply `onQuery` to resolve candidates for
+   * the text typed after the trigger (default `@`); the editor renders a floating
+   * combobox and inserts a styled mention chip carrying the chosen item's `id`.
+   * Omit to disable mentions. See {@link MentionsConfig}.
+   */
+  mentions?: MentionsConfig;
 }
 
 function isEmptyDoc(doc: RichDoc): boolean {
@@ -85,7 +95,8 @@ function marksAtCaretMarks(doc: RichDoc, caret: Point): Mark[] {
   let pos = 0;
   for (const run of doc.blocks[idx].inlines) {
     const end = pos + run.text.length;
-    if (caret.offset - 1 >= pos && caret.offset - 1 < end) return run.marks;
+    if (caret.offset - 1 >= pos && caret.offset - 1 < end)
+      return run.marks.filter((m) => m.type !== 'mention');
     pos = end;
   }
   return [];
@@ -98,7 +109,6 @@ interface LinkEditorOpen {
   anchorRect: Rect;
   key: number;
 }
-
 
 /**
  * Controlled rich-text editor — a contentEditable surface over the in-house
@@ -155,6 +165,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       placeholder,
       autoFocus,
       toolbar = false,
+      mentions,
       className,
       ...rest
     },
@@ -253,6 +264,28 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       pendingSelectionRef.current = next.present.selection;
       latest.current.onChange(next.present.doc);
     }, [syncHistoryFlags, clearPendingMarks]);
+
+    const insertMentionItem = useCallback(
+      (
+        blockId: string,
+        range: { from: number; to: number },
+        trigger: string,
+        item: MentionItem,
+      ) => {
+        commit(insertMention(latest.current.value, blockId, range, trigger, item), 'other');
+        clearPendingMarks();
+      },
+      [commit, clearPendingMarks],
+    );
+
+    const mention = useMention({
+      enabled: !!mentions && !readOnly,
+      rootRef,
+      doc: value,
+      trigger: mentions?.trigger ?? '@',
+      onQuery: mentions?.onQuery,
+      onInsert: insertMentionItem,
+    });
 
     // Shared by the keyboard shortcut and the toolbar: with a collapsed caret,
     // stage a pending mark for the next typed text (remembering where); with a
@@ -508,6 +541,30 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         }
         const range = readSelection(root);
         if (!range) return;
+        // Mention menu navigation takes priority over editor keys when open.
+        if (mention.open && mention.items.length > 0) {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            mention.move(1);
+            return;
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            mention.move(-1);
+            return;
+          }
+          if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            mention.commitActive();
+            return;
+          }
+        }
+        if (mention.open && e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          mention.close();
+          return;
+        }
         // ⌘/Ctrl+K opens the link editor (create or edit a link). Stop
         // propagation so the shortcut doesn't ALSO trigger a host app's global
         // ⌘K (command palette / search) while the editor is focused.
@@ -548,7 +605,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           return;
         }
       },
-      [value, readOnly, commit, stageOrToggleMark, openLinkEditor, onUndo, onRedo],
+      [value, readOnly, commit, stageOrToggleMark, openLinkEditor, onUndo, onRedo, mention],
     );
 
     const onCompositionStart = useCallback(() => {
@@ -595,7 +652,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // collapsed caret stages a pending mark, mirroring the keyboard shortcut.
     const onToolbarMark = useCallback(
       (type: MarkType) => {
-        if (type === 'link') return; // link needs an href; toolbar never fires it
+        if (type === 'link' || type === 'mention') return; // link needs an href; mention needs id+label — toolbar fires neither
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? selection;
         if (range) stageOrToggleMark(range, { type });
@@ -633,6 +690,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         role="textbox"
         aria-multiline="true"
         aria-readonly={readOnly || undefined}
+        aria-haspopup={mentions ? 'listbox' : undefined}
+        aria-expanded={mentions ? mention.open : undefined}
+        aria-controls={mention.open ? mention.listboxId : undefined}
+        aria-activedescendant={mention.open ? mention.activeOptionId : undefined}
         aria-label={
           rest['aria-label'] ??
           (rest['aria-labelledby'] ? undefined : t('richTextEditor.editorLabel'))
@@ -661,11 +722,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         />
       ) : null;
 
+    const mentionMenu =
+      mention.open && !readOnly && mention.anchorRect ? (
+        <RichTextMentionMenu
+          items={mention.items}
+          activeIndex={mention.activeIndex}
+          anchorRect={mention.anchorRect}
+          listboxId={mention.listboxId}
+          getOptionId={mention.getOptionId}
+          label={t('richTextEditor.mentionsLabel')}
+          emptyLabel={t('richTextEditor.mentionsEmpty')}
+          onSelect={mention.selectIndex}
+          onHover={mention.setActiveIndex}
+        />
+      ) : null;
+
     if (!toolbar) {
       return (
         <>
           {editable}
           {linkBubble}
+          {mentionMenu}
         </>
       );
     }
@@ -687,6 +764,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         />
         {editable}
         {linkBubble}
+        {mentionMenu}
       </div>
     );
   },

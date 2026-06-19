@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { vi } from 'vitest';
@@ -496,5 +496,56 @@ describe('RichTextEditor undo/redo', () => {
     screen.getByRole('textbox', { name: 'Rich text editor' }).focus();
     await user.keyboard('{Meta>}z{/Meta}');
     expect(screen.queryByRole('strong')).not.toBeInTheDocument();
+  });
+});
+
+describe('RichTextEditor mentions', () => {
+  beforeEach(() => mockReadSelection.mockReset());
+
+  const usersQuery = (q: string) =>
+    Promise.resolve(
+      [
+        { id: 'u1', label: 'Alice' },
+        { id: 'u2', label: 'Aaron' },
+      ].filter((u) => u.label.toLowerCase().includes(q.toLowerCase())),
+    );
+
+  it('does not open a menu when the mentions prop is absent', () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 3 },
+      focus: { blockId: 'k', offset: 3 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi @', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    renderEditor(<Harness />);
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('opens the menu for a trigger context and inserts a chip on Enter', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 5 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi @a', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} mentions={{ onQuery: usersQuery }} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(await screen.findByText('Alice')).toBeInTheDocument();
+    box.focus();
+    await user.keyboard('{Enter}');
+    // chip inserted: a data-mention span with the active item
+    await waitFor(() =>
+      expect(box.querySelector('[data-mention-id="u1"]')?.textContent).toBe('@Alice'),
+    );
   });
 });
