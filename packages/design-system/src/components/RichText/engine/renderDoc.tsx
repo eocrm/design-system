@@ -12,7 +12,7 @@ export interface RenderDocOptions {
 }
 
 // Outer → inner nesting order so output is stable + diff-friendly.
-const MARK_ORDER: MarkType[] = ['link', 'bold', 'italic', 'underline', 'strike', 'code'];
+const MARK_ORDER: MarkType[] = ['mention', 'link', 'bold', 'italic', 'underline', 'strike', 'code'];
 
 function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
   switch (type) {
@@ -31,6 +31,16 @@ function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
         <a href={mark.type === 'link' ? safeHref(mark.href) : undefined} rel="noopener noreferrer">
           {child}
         </a>
+      );
+    case 'mention':
+      return (
+        <span
+          data-mention
+          data-mention-id={mark.type === 'mention' ? mark.id : undefined}
+          data-mention-label={mark.type === 'mention' ? mark.label : undefined}
+        >
+          {child}
+        </span>
       );
     default:
       return child;

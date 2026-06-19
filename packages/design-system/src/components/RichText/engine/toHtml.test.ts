@@ -84,6 +84,38 @@ describe('toHtml — inline marks', () => {
     expect(toHtml(doc)).toBe('<p><strong>b</strong><em>i</em><u>u</u><s>s</s></p>');
   });
 
+  it('serializes a mention mark to a data-mention span', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: 'b',
+          type: 'paragraph',
+          inlines: [
+            { text: 'cc ', marks: [] },
+            { text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] },
+          ],
+        },
+      ],
+    };
+    expect(toHtml(doc)).toBe(
+      '<p>cc <span data-mention-id="u1" data-mention-label="Alice">@Alice</span></p>',
+    );
+  });
+
+  it('escapes mention id/label attributes', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: 'b',
+          type: 'paragraph',
+          inlines: [{ text: '@A"B', marks: [{ type: 'mention', id: 'a"b', label: 'A"B' }] }],
+        },
+      ],
+    };
+    expect(toHtml(doc)).toContain('data-mention-id="a&quot;b"');
+    expect(toHtml(doc)).toContain('data-mention-label="A&quot;B"');
+  });
+
   it('escapes text and the href, and drops an unsafe-href anchor (keeping text)', () => {
     expect(toHtml({ blocks: [para('a', [{ text: 'a<b>&"', marks: [] }])] })).toBe(
       '<p>a&lt;b&gt;&amp;"</p>',

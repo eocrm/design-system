@@ -12,17 +12,18 @@ export type BlockType =
   | 'blockquote'
   | 'code_block';
 
-/** All supported inline mark types. `link` carries an additional `href` field on the `Mark` union. */
-export type MarkType = 'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'link';
+/** All supported inline mark types. `link` carries `href`; `mention` carries `id` + `label`. */
+export type MarkType = 'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'link' | 'mention';
 
-/** A formatting mark. Flags carry no data; `link` carries an href. */
+/** A formatting mark. Flags carry no data; `link` carries an href; `mention` an id + label. */
 export type Mark =
   | { type: 'bold' }
   | { type: 'italic' }
   | { type: 'underline' }
   | { type: 'strike' }
   | { type: 'code' }
-  | { type: 'link'; href: string };
+  | { type: 'link'; href: string }
+  | { type: 'mention'; id: string; label: string };
 
 /** A run of text sharing exactly one mark set. */
 export interface Inline {

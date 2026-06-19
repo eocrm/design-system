@@ -223,6 +223,28 @@ describe('renderDoc', () => {
   });
 });
 
+it('renders a mention mark as a data-mention span containing the chip text', () => {
+  const doc: RichDoc = {
+    blocks: [
+      {
+        id: 'b',
+        type: 'paragraph',
+        inlines: [
+          { text: 'hi ', marks: [] },
+          { text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] },
+        ],
+      },
+    ],
+  };
+  const { container } = render(<>{renderDoc(doc)}</>);
+  const chip = container.querySelector('[data-mention]') as HTMLElement;
+  expect(chip).not.toBeNull();
+  expect(chip.tagName).toBe('SPAN');
+  expect(chip).toHaveAttribute('data-mention-id', 'u1');
+  expect(chip).toHaveAttribute('data-mention-label', 'Alice');
+  expect(chip.textContent).toBe('@Alice');
+});
+
 describe('renderDoc editable option', () => {
   it('adds data-block-id to block elements when editable', () => {
     const doc: RichDoc = { blocks: [createBlock('paragraph', 'hi', { id: 'b1' })] };

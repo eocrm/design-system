@@ -26,7 +26,8 @@
       "Tooltip"
     ],
     "composedBy": [
-      "PersonDisplay"
+      "PersonDisplay",
+      "RichTextEditor"
     ]
   },
   "Badge": {
@@ -518,12 +519,14 @@
     "tier": "composition",
     "cluster": "Forms",
     "composes": [
+      "Avatar",
       "Button",
       "Cluster",
       "DropdownMenu",
       "Input",
       "RichText",
-      "Stack"
+      "Stack",
+      "Text"
     ],
     "composedBy": []
   },
@@ -622,7 +625,8 @@
       "FilterChip",
       "FormSection",
       "OptionsPicker",
-      "PersonDisplay"
+      "PersonDisplay",
+      "RichTextEditor"
     ]
   },
   "Textarea": {

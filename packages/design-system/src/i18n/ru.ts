@@ -199,5 +199,7 @@ export const ru: Messages = {
     linkEditorLabel: 'Редактирование ссылки',
     undo: 'Отменить',
     redo: 'Повторить',
+    mentionsLabel: 'Упоминания',
+    mentionsEmpty: 'Нет совпадений',
   },
 };

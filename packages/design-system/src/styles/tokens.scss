@@ -222,6 +222,10 @@
   --size-popover-min-width: 220px; // slightly wider than dropdown — popovers carry richer content
   --size-popover-max-width: 360px; // default cap for popover-shaped surfaces; override per-instance via the maxWidth prop
 
+  // Maximum visible height for scrollable listboxes (mention menu, autocomplete
+  // dropdowns). Shows ~6 rows at 36px each before scrolling.
+  --size-listbox-max-height: 240px;
+
   // Width/height of the leading indicator slot in DropdownMenu checkbox/radio items.
   --size-dropdown-indicator: 16px;
 

@@ -325,6 +325,10 @@ export interface Messages {
     undo: string;
     /** aria-label on the toolbar Redo button. */
     redo: string;
+    /** Accessible name for the mentions autocomplete listbox. */
+    mentionsLabel: string;
+    /** Empty-state row when no mention candidates match. */
+    mentionsEmpty: string;
   };
 }
 

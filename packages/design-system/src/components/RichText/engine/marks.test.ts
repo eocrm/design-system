@@ -47,3 +47,23 @@ describe('marks', () => {
     expect(input).toEqual([bold]);
   });
 });
+
+describe('markKey / marksEqual — mentions', () => {
+  it('two mentions with different ids are NOT equal', () => {
+    const a = [{ type: 'mention', id: '1', label: 'Alice' } as const];
+    const b = [{ type: 'mention', id: '2', label: 'Alice' } as const];
+    expect(marksEqual(a, b)).toBe(false);
+  });
+
+  it('two mentions with the same id+label ARE equal', () => {
+    const a = [{ type: 'mention', id: '1', label: 'Alice' } as const];
+    const b = [{ type: 'mention', id: '1', label: 'Alice' } as const];
+    expect(marksEqual(a, b)).toBe(true);
+  });
+
+  it('a mention is not equal to a bare-type mark set of different length', () => {
+    const a = [{ type: 'mention', id: '1', label: 'Alice' } as const];
+    const b = [{ type: 'bold' } as const];
+    expect(marksEqual(a, b)).toBe(false);
+  });
+});

@@ -56,8 +56,10 @@ function blockMd(block: Block, depth: number): string {
 
 /**
  * Serialize a `RichDoc` to Markdown (CommonMark + GFM strikethrough), the inverse
- * of `fromMarkdown`. Lossy: **underline is dropped** (no Markdown syntax — use
- * `toHtml` for full fidelity); images/tables aren't modeled; MD-special escaping
+ * of `fromMarkdown`. Lossy: **underline is dropped** (no Markdown syntax — use `toHtml` for full
+ * fidelity) and **mentions degrade to plain `@label` text** (the id is not
+ * representable in Markdown — `toHtml`/`fromHtml` preserve mentions);
+ * images/tables aren't modeled; MD-special escaping
  * is best-effort.
  *
  * @example

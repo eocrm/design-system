@@ -197,5 +197,7 @@ export const en: Messages = {
     linkEditorLabel: 'Edit link',
     undo: 'Undo',
     redo: 'Redo',
+    mentionsLabel: 'Mentions',
+    mentionsEmpty: 'No matches',
   },
 };

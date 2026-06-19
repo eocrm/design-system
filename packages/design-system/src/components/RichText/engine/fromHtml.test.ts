@@ -1,6 +1,7 @@
 import { fromHtml } from './fromHtml';
+import { toHtml } from './toHtml';
 import { runsText } from './inlines';
-import type { Block } from './model';
+import type { Block, RichDoc } from './model';
 
 const text = (b: Block) => runsText(b.inlines);
 
@@ -138,4 +139,56 @@ describe('fromHtml — inline marks', () => {
     const d = fromHtml('<p>  a   b  </p>');
     expect(text(d.blocks[0])).toBe('a b');
   });
+});
+
+it('parses a data-mention-id span into a mention mark', () => {
+  const doc = fromHtml(
+    '<p>cc <span data-mention-id="u1" data-mention-label="Alice">@Alice</span></p>',
+  );
+  const run = doc.blocks[0].inlines.find((r) => r.text === '@Alice');
+  expect(run?.marks).toEqual([{ type: 'mention', id: 'u1', label: 'Alice' }]);
+});
+
+it('round-trips a mention through toHtml → fromHtml', () => {
+  const doc: RichDoc = {
+    blocks: [
+      {
+        id: 'b',
+        type: 'paragraph',
+        inlines: [
+          { text: 'cc ', marks: [] },
+          { text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] },
+        ],
+      },
+    ],
+  };
+  const back = fromHtml(toHtml(doc));
+  const run = back.blocks[0].inlines.find((r) => r.text === '@Alice');
+  expect(run?.marks).toEqual([{ type: 'mention', id: 'u1', label: 'Alice' }]);
+});
+
+it('round-trips a mention with special chars in id/label through toHtml → fromHtml', () => {
+  const doc: RichDoc = {
+    blocks: [
+      {
+        id: 'b',
+        type: 'paragraph',
+        inlines: [{ text: '@A&<>"B', marks: [{ type: 'mention', id: 'a&b"<', label: 'A&<>"B' }] }],
+      },
+    ],
+  };
+  const back = fromHtml(toHtml(doc));
+  const run = back.blocks[0].inlines.find((r) => r.marks.some((m) => m.type === 'mention'));
+  expect(run?.marks).toEqual([{ type: 'mention', id: 'a&b"<', label: 'A&<>"B' }]);
+  expect(run?.text).toBe('@A&<>"B');
+});
+
+it('a plain span without data-mention-id is not a mention', () => {
+  const doc = fromHtml('<p><span>plain</span></p>');
+  expect(doc.blocks[0].inlines.every((r) => r.marks.every((m) => m.type !== 'mention'))).toBe(true);
+});
+
+it('a span with an empty data-mention-id is treated as plain text', () => {
+  const doc = fromHtml('<p><span data-mention-id="">@x</span></p>');
+  expect(doc.blocks[0].inlines.every((r) => r.marks.every((m) => m.type !== 'mention'))).toBe(true);
 });

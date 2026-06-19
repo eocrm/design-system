@@ -22,10 +22,37 @@ function marksBefore(block: Block, offset: number): Mark[] {
   let pos = 0;
   for (const run of block.inlines) {
     const runEnd = pos + run.text.length;
-    if (offset - 1 >= pos && offset - 1 < runEnd) return [...run.marks];
+    if (offset - 1 >= pos && offset - 1 < runEnd)
+      return run.marks.filter((m) => m.type !== 'mention');
     pos = runEnd;
   }
   return [];
+}
+
+/** Bounds of the mention run strictly containing `offset`, or null. */
+function mentionRunBoundsAt(block: Block, offset: number): { start: number; end: number } | null {
+  let pos = 0;
+  for (const run of block.inlines) {
+    const s = pos;
+    const e = pos + run.text.length;
+    pos = e;
+    if (offset > s && offset < e && run.marks.some((m) => m.type === 'mention')) {
+      return { start: s, end: e };
+    }
+  }
+  return null;
+}
+
+/** Snap a range START leftward out of any mention it bisects. */
+function snapStartOffset(block: Block, offset: number): number {
+  const b = mentionRunBoundsAt(block, offset);
+  return b ? b.start : offset;
+}
+
+/** Snap a range END rightward out of any mention it bisects. */
+function snapEndOffset(block: Block, offset: number): number {
+  const b = mentionRunBoundsAt(block, offset);
+  return b ? b.end : offset;
 }
 
 /**
@@ -61,13 +88,20 @@ export function insertText(
  * selection }` with the caret at the deletion point.
  */
 export function deleteRange(doc: RichDoc, range: Range): { doc: RichDoc; selection: Range } {
-  const { start, end } = orderedRange(doc, range);
+  const ord = orderedRange(doc, range);
+  let start = ord.start;
+  let end = ord.end;
+  // Collapsed input → no-op (never snap a collapsed caret into a deletion).
   if (start.blockId === end.blockId && start.offset === end.offset) {
     return { doc, selection: collapsed(start) };
   }
   const si = findBlockIndex(doc, start.blockId);
   const ei = findBlockIndex(doc, end.blockId);
   if (si === -1 || ei === -1) return { doc, selection: collapsed(start) };
+  // Snap endpoints out of any mention run they bisect, so a partial selection (or
+  // a one-char backspace/forward-delete at a chip edge) removes the whole chip.
+  start = { ...start, offset: snapStartOffset(doc.blocks[si], start.offset) };
+  end = { ...end, offset: snapEndOffset(doc.blocks[ei], end.offset) };
   const startBlock = doc.blocks[si];
   const endBlock = doc.blocks[ei];
   const inlines = normalizeInlines([
@@ -279,5 +313,39 @@ export function insertFragment(
   return {
     doc: { blocks },
     selection: collapsed({ blockId: bright.id, offset: runsLength(last.inlines) }),
+  };
+}
+
+/**
+ * Pure/immutable. Replace the block-relative span `[range.from, range.to)` with a
+ * mention chip run (`text: trigger + mention.label`, mark `{type:'mention', id,
+ * label}`) followed by a single trailing space. Returns `{ doc, selection }` with
+ * the caret after the trailing space. No-op (collapsed caret at `range.from`) when
+ * `blockId` is not found.
+ */
+export function insertMention(
+  doc: RichDoc,
+  blockId: string,
+  range: { from: number; to: number },
+  trigger: string,
+  mention: { id: string; label: string },
+): { doc: RichDoc; selection: Range } {
+  const idx = findBlockIndex(doc, blockId);
+  if (idx === -1) return { doc, selection: collapsed({ blockId, offset: range.from }) };
+  // Defensive clamp: tolerate an inverted range (from > to). No-op for valid input.
+  const from = Math.min(range.from, range.to);
+  const to = Math.max(range.from, range.to);
+  const block = doc.blocks[idx];
+  const chipText = `${trigger}${mention.label}`;
+  const inlines = normalizeInlines([
+    ...sliceInlines(block.inlines, 0, from),
+    { text: chipText, marks: [{ type: 'mention', id: mention.id, label: mention.label }] },
+    { text: ' ', marks: [] },
+    ...sliceInlines(block.inlines, to, blockLength(block)),
+  ]);
+  const offset = from + chipText.length + 1;
+  return {
+    doc: replaceBlock(doc, idx, { ...block, inlines }),
+    selection: collapsed({ blockId, offset }),
   };
 }

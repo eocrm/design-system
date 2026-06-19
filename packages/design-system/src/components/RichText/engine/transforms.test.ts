@@ -8,6 +8,7 @@ import {
   toggleMark,
   setBlockType,
   insertFragment,
+  insertMention,
 } from './transforms';
 import { createBlock } from './model';
 import { runsText } from './inlines';
@@ -165,5 +166,130 @@ describe('insertFragment', () => {
     });
     expect(r.doc).toBe(doc);
     expect(r.selection).toEqual(fcollapsed('a', 2));
+  });
+});
+
+describe('insertMention', () => {
+  const docWith = (text: string): RichDoc => ({
+    blocks: [{ id: 'b', type: 'paragraph', inlines: [{ text, marks: [] }] }],
+  });
+
+  it('replaces the trigger+query with a chip run + trailing space, caret after', () => {
+    // "hi @al" — trigger at offset 3, caret at offset 6
+    const { doc, selection } = insertMention(docWith('hi @al'), 'b', { from: 3, to: 6 }, '@', {
+      id: 'u1',
+      label: 'Alice',
+    });
+    const runs = doc.blocks[0].inlines;
+    expect(runs[0]).toEqual({ text: 'hi ', marks: [] });
+    expect(runs[1]).toEqual({
+      text: '@Alice',
+      marks: [{ type: 'mention', id: 'u1', label: 'Alice' }],
+    });
+    expect(runs[2].text).toBe(' ');
+    // caret after "hi " (3) + "@Alice" (6) + " " (1) = 10
+    expect(selection.anchor).toEqual({ blockId: 'b', offset: 10 });
+    expect(selection.focus).toEqual({ blockId: 'b', offset: 10 });
+  });
+
+  it('handles a bare trigger with no query (from===to-1)', () => {
+    const { doc } = insertMention(docWith('@'), 'b', { from: 0, to: 1 }, '@', {
+      id: 'u1',
+      label: 'Bob',
+    });
+    expect(doc.blocks[0].inlines[0]).toEqual({
+      text: '@Bob',
+      marks: [{ type: 'mention', id: 'u1', label: 'Bob' }],
+    });
+  });
+
+  it('typed text right after a chip does not inherit the mention mark', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: 'b',
+          type: 'paragraph',
+          inlines: [{ text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] }],
+        },
+      ],
+    };
+    const { doc: out } = insertText(doc, { blockId: 'b', offset: 6 }, 'x');
+    const runs = out.blocks[0].inlines;
+    const last = runs[runs.length - 1];
+    expect(last.text).toBe('x');
+    expect(last.marks).toEqual([]);
+  });
+});
+
+describe('deleteRange — mention snapping', () => {
+  const docWithChip = (): RichDoc => ({
+    blocks: [
+      {
+        id: 'b',
+        type: 'paragraph',
+        inlines: [
+          { text: 'hi ', marks: [] },
+          { text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] },
+          { text: ' ok', marks: [] },
+        ],
+      },
+    ],
+  });
+
+  it('a one-char delete at the chip right edge removes the WHOLE chip (backspace)', () => {
+    // chip spans [3,9); caret at 9, backspace deletes [8,9] → snaps to [3,9]
+    const { doc, selection } = deleteRange(docWithChip(), {
+      anchor: { blockId: 'b', offset: 8 },
+      focus: { blockId: 'b', offset: 9 },
+    });
+    expect(runsText(doc.blocks[0].inlines)).toBe('hi  ok');
+    expect(selection.anchor).toEqual({ blockId: 'b', offset: 3 });
+  });
+
+  it('a one-char delete at the chip left edge removes the WHOLE chip (forward delete)', () => {
+    // caret at 3, forward delete [3,4] → snaps to [3,9]
+    const { doc } = deleteRange(docWithChip(), {
+      anchor: { blockId: 'b', offset: 3 },
+      focus: { blockId: 'b', offset: 4 },
+    });
+    expect(runsText(doc.blocks[0].inlines)).toBe('hi  ok');
+  });
+
+  it('a selection that partially overlaps the chip removes the whole chip', () => {
+    // select [5,7] (inside the chip) → snaps to [3,9]
+    const { doc } = deleteRange(docWithChip(), {
+      anchor: { blockId: 'b', offset: 5 },
+      focus: { blockId: 'b', offset: 7 },
+    });
+    expect(runsText(doc.blocks[0].inlines)).toBe('hi  ok');
+  });
+
+  it('a delete entirely outside the chip is unaffected', () => {
+    // delete "hi" [0,2]
+    const { doc } = deleteRange(docWithChip(), {
+      anchor: { blockId: 'b', offset: 0 },
+      focus: { blockId: 'b', offset: 2 },
+    });
+    expect(runsText(doc.blocks[0].inlines)).toBe(' @Alice ok');
+  });
+
+  it('snaps the END endpoint when a cross-block selection ends inside a chip', () => {
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'a', type: 'paragraph', inlines: [{ text: 'hello', marks: [] }] },
+        {
+          id: 'b',
+          type: 'paragraph',
+          inlines: [{ text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] }],
+        },
+      ],
+    };
+    // select from a:2 to b:3 (inside the chip [0,6)) → end snaps to 6 → whole chip gone
+    const { doc: out } = deleteRange(doc, {
+      anchor: { blockId: 'a', offset: 2 },
+      focus: { blockId: 'b', offset: 3 },
+    });
+    expect(out.blocks).toHaveLength(1);
+    expect(runsText(out.blocks[0].inlines)).toBe('he');
   });
 });

@@ -58,6 +58,22 @@ describe('toMarkdown — inline', () => {
     );
   });
 
+  it('serializes a mention as plain text (lossy — id dropped)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: 'b',
+          type: 'paragraph',
+          inlines: [
+            { text: 'cc ', marks: [] },
+            { text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] },
+          ],
+        },
+      ],
+    };
+    expect(toMarkdown(doc)).toBe('cc @Alice');
+  });
+
   it('escapes inline markdown specials and a leading block marker', () => {
     expect(toMarkdown({ blocks: [para('a', [{ text: 'a*b_c', marks: [] }])] })).toBe('a\\*b\\_c');
     expect(toMarkdown({ blocks: [para('a', [{ text: '# not a heading', marks: [] }])] })).toBe(
