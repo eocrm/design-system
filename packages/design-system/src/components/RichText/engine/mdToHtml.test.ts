@@ -24,7 +24,9 @@ describe('mdToHtml — blocks', () => {
 
 describe('mdToHtml — inline', () => {
   it('converts bold/italic/strike/code', () => {
-    expect(mdToHtml('**b** *i* ~~s~~ `c`')).toBe('<p><strong>b</strong> <em>i</em> <del>s</del> <code>c</code></p>');
+    expect(mdToHtml('**b** *i* ~~s~~ `c`')).toBe(
+      '<p><strong>b</strong> <em>i</em> <del>s</del> <code>c</code></p>',
+    );
   });
   it('converts triple markers to bold+italic', () => {
     expect(mdToHtml('***x***')).toBe('<p><strong><em>x</em></strong></p>');

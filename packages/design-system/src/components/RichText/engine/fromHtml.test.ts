@@ -52,7 +52,9 @@ describe('fromHtml — blocks', () => {
   });
 
   it('drops script/style/table/img/hr', () => {
-    const d = fromHtml('<p>a</p><script>bad()</script><style>x{}</style><table><tr><td>t</td></tr></table><img src="x"><hr><p>b</p>');
+    const d = fromHtml(
+      '<p>a</p><script>bad()</script><style>x{}</style><table><tr><td>t</td></tr></table><img src="x"><hr><p>b</p>',
+    );
     expect(d.blocks.map(text)).toEqual(['a', 'b']);
   });
 
@@ -76,15 +78,16 @@ describe('fromHtml — blocks', () => {
     expect(
       fromHtml('<p>a</p><svg><text>x</text><script>bad()</script></svg><p>b</p>').blocks.map(text),
     ).toEqual(['a', 'b']);
-    expect(
-      fromHtml('<p>a</p><math><mn>42</mn></math><p>b</p>').blocks.map(text),
-    ).toEqual(['a', 'b']);
+    expect(fromHtml('<p>a</p><math><mn>42</mn></math><p>b</p>').blocks.map(text)).toEqual([
+      'a',
+      'b',
+    ]);
   });
 
   it('drops <noscript> content', () => {
-    expect(
-      fromHtml('<p>a</p><noscript><p>hidden</p></noscript><p>b</p>').blocks.map(text),
-    ).toEqual(['a', 'b']);
+    expect(fromHtml('<p>a</p><noscript><p>hidden</p></noscript><p>b</p>').blocks.map(text)).toEqual(
+      ['a', 'b'],
+    );
   });
 });
 
@@ -115,7 +118,9 @@ describe('fromHtml — inline marks', () => {
   });
 
   it('recovers bold/italic/underline/strike from inline CSS (Word/Docs)', () => {
-    const d = fromHtml('<p><span style="font-weight:700">b</span><span style="font-style:italic">i</span><span style="text-decoration:underline">u</span><span style="text-decoration:line-through">s</span></p>');
+    const d = fromHtml(
+      '<p><span style="font-weight:700">b</span><span style="font-style:italic">i</span><span style="text-decoration:underline">u</span><span style="text-decoration:line-through">s</span></p>',
+    );
     expect(d.blocks[0].inlines).toEqual([
       { text: 'b', marks: [{ type: 'bold' }] },
       { text: 'i', marks: [{ type: 'italic' }] },

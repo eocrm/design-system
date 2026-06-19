@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { RichTextEditor, docFromText, Text, Stack, type RichDoc } from '@eocrm/design-system';
+import {
+  RichTextEditor,
+  docFromText,
+  fromMarkdown,
+  Text,
+  Stack,
+  type RichDoc,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -7,6 +14,11 @@ import { getComponentFiles } from '../../lib/componentFiles';
 export function RichTextEditorDemo() {
   const [doc, setDoc] = useState<RichDoc>(docFromText('Type here. Select a word and press ⌘B.'));
   const [linkDoc, setLinkDoc] = useState<RichDoc>(docFromText('Read the docs and visit our site.'));
+  const [importDoc, setImportDoc] = useState<RichDoc>(() =>
+    fromMarkdown(
+      '# Imported\n\nThis editor was **seeded** from Markdown — paste rich HTML to import more.',
+    ),
+  );
 
   return (
     <DemoLayout
@@ -40,6 +52,21 @@ export function RichTextEditorDemo() {
           onChange={setLinkDoc}
           toolbar
           placeholder="Select text, then ⌘K…"
+        />
+      </Example>
+
+      <Example
+        title="Import (HTML / Markdown) + rich paste"
+        description="Seed the editor from stored HTML or Markdown with fromHtml / fromMarkdown, and paste rich HTML (from the web, Word, Google Docs) straight into the editor — it becomes formatted content, not plain text."
+        code={`import { fromHtml, fromMarkdown } from '@eocrm/design-system';
+const [doc, setDoc] = useState(() => fromMarkdown('# Imported\\n\\n- one\\n- two'));
+<RichTextEditor value={doc} onChange={setDoc} toolbar />`}
+      >
+        <RichTextEditor
+          value={importDoc}
+          onChange={setImportDoc}
+          toolbar
+          placeholder="Paste rich HTML here…"
         />
       </Example>
 

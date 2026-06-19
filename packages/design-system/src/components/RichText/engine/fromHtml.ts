@@ -13,17 +13,67 @@ const HEADING_LEVEL: Record<string, 1 | 2 | 3> = { H1: 1, H2: 2, H3: 3, H4: 3, H
 
 // Block-level tags that flush the loose-inline buffer and emit their own block(s).
 const BLOCK_TAGS = new Set([
-  'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'PRE', 'BLOCKQUOTE', 'UL', 'OL', 'LI',
-  'DIV', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER', 'ASIDE', 'NAV', 'ADDRESS',
-  'DL', 'DT', 'DD', 'FIGCAPTION',
+  'P',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+  'PRE',
+  'BLOCKQUOTE',
+  'UL',
+  'OL',
+  'LI',
+  'DIV',
+  'SECTION',
+  'ARTICLE',
+  'MAIN',
+  'HEADER',
+  'FOOTER',
+  'ASIDE',
+  'NAV',
+  'ADDRESS',
+  'DL',
+  'DT',
+  'DD',
+  'FIGCAPTION',
 ]);
 
 // Tags whose entire subtree is dropped (no text extracted).
 const DROP_TAGS = new Set([
-  'SCRIPT', 'STYLE', 'HEAD', 'TITLE', 'NOSCRIPT', 'TEMPLATE',
-  'IMG', 'PICTURE', 'SVG', 'VIDEO', 'AUDIO', 'IFRAME', 'OBJECT', 'EMBED', 'CANVAS',
-  'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TD', 'TH', 'COLGROUP', 'COL',
-  'HR', 'FORM', 'INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'LABEL', 'FIGURE',
+  'SCRIPT',
+  'STYLE',
+  'HEAD',
+  'TITLE',
+  'NOSCRIPT',
+  'TEMPLATE',
+  'IMG',
+  'PICTURE',
+  'SVG',
+  'VIDEO',
+  'AUDIO',
+  'IFRAME',
+  'OBJECT',
+  'EMBED',
+  'CANVAS',
+  'TABLE',
+  'THEAD',
+  'TBODY',
+  'TFOOT',
+  'TR',
+  'TD',
+  'TH',
+  'COLGROUP',
+  'COL',
+  'HR',
+  'FORM',
+  'INPUT',
+  'SELECT',
+  'TEXTAREA',
+  'BUTTON',
+  'LABEL',
+  'FIGURE',
 ]);
 
 const HTML_NS = 'http://www.w3.org/1999/xhtml';
@@ -112,7 +162,11 @@ function trimSegment(seg: Inline[]): Inline[] {
   return out;
 }
 
-function blockFrom(type: BlockType, inlines: Inline[], attrs: { level?: 1 | 2 | 3; depth?: number } = {}): Block {
+function blockFrom(
+  type: BlockType,
+  inlines: Inline[],
+  attrs: { level?: 1 | 2 | 3; depth?: number } = {},
+): Block {
   const norm = normalizeInlines(inlines);
   const block: Block = { id: nextId(), type, inlines: norm };
   if (attrs.level !== undefined) block.level = attrs.level;
@@ -123,7 +177,12 @@ function blockFrom(type: BlockType, inlines: Inline[], attrs: { level?: 1 | 2 | 
 const isEmptySeg = (inlines: Inline[]): boolean => inlines.length === 1 && inlines[0].text === '';
 
 /** Emit an inline-only block (paragraph/heading), splitting at <br> into siblings. */
-function pushInlineBlocks(el: HTMLElement, type: BlockType, out: Block[], attrs: { level?: 1 | 2 | 3 }): void {
+function pushInlineBlocks(
+  el: HTMLElement,
+  type: BlockType,
+  out: Block[],
+  attrs: { level?: 1 | 2 | 3 },
+): void {
   const segments: Inline[][] = [[]];
   for (const child of Array.from(el.childNodes)) walkInline(child, [], segments);
   let pushed = false;

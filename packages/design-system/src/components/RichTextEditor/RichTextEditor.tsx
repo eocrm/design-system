@@ -116,6 +116,7 @@ function selectionRect(root: HTMLElement): Rect {
  * built-in formatting toolbar. ⌘/Ctrl+K (or the toolbar link button) opens a
  * floating editor to add, edit, or remove a link on the selection. Inside a
  * list, Tab/⇧Tab indent/outdent and Enter on an empty item exits to a paragraph.
+ * Pasting rich HTML (web, Word, Google Docs) imports it as formatted content.
  * The model is the source of truth: every input is replayed as an engine
  * transform and the DOM re-rendered.
  *
@@ -144,6 +145,9 @@ function selectionRect(root: HTMLElement): Rect {
  *   controlled `value`/`onChange` round-trip.
  * - ❌ Building your own toolbar by reaching into the DOM — pass `toolbar`, or
  *   drive marks/blocks through the controlled `value`/`onChange` round-trip.
+ * - ❌ Pre-stripping pasted HTML to plain text — paste rich HTML directly; the
+ *   editor parses it (sanitized) into the model. Seed stored content with
+ *   `fromHtml` / `fromMarkdown`.
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(

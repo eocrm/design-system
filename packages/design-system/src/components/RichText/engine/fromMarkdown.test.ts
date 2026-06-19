@@ -3,7 +3,8 @@ import { runsText } from './inlines';
 
 describe('fromMarkdown', () => {
   it('parses a representative document end-to-end', () => {
-    const md = '# Title\n\nRead the [docs](/x) and **note** this.\n\n- a\n  - b\n\n> quote\n\n```\ncode\n```';
+    const md =
+      '# Title\n\nRead the [docs](/x) and **note** this.\n\n- a\n  - b\n\n> quote\n\n```\ncode\n```';
     const d = fromMarkdown(md);
     expect(d.blocks.map((b) => [b.type, b.depth, runsText(b.inlines)])).toEqual([
       ['heading', undefined, 'Title'],

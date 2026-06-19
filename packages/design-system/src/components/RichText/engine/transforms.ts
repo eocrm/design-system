@@ -269,7 +269,11 @@ export function insertFragment(
   const last = frag[frag.length - 1];
   const middle = frag.slice(1, -1).map((b) => ({ ...b, id: nextId() }));
   const bleft: Block = { ...B, inlines: normalizeInlines([...left, ...first.inlines]) };
-  const bright: Block = { ...last, id: nextId(), inlines: normalizeInlines([...last.inlines, ...right]) };
+  const bright: Block = {
+    ...last,
+    id: nextId(),
+    inlines: normalizeInlines([...last.inlines, ...right]),
+  };
   const blocks = base.doc.blocks.slice();
   blocks.splice(idx, 1, bleft, ...middle, bright);
   return {

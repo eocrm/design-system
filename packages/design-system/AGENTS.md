@@ -933,6 +933,8 @@ const [doc, setDoc] = useState(emptyDoc());
 
 **Links:** select text and press ⌘/Ctrl+K (or the toolbar link button) to add or edit a link; with the caret inside a link the URL is pre-filled and a Remove button appears; with no selection the URL is inserted as linked text. Esc / click-outside cancels. Stored hrefs are sanitized at render time (`safeHref` blocks `javascript:`/`data:`/protocol-relative).
 
+**Import:** `fromHtml(html)` and `fromMarkdown(md)` parse a string into a `RichDoc` (e.g. to seed `value` from stored/legacy content). Pasting rich HTML into the editor imports it as formatted content (parsed + sanitized). Markdown import is via `fromMarkdown` only — pasted plain text (incl. Markdown source) inserts literally. Both `from*` functions require a DOM environment (`DOMParser`); Markdown has no underline syntax and images/tables aren't modeled.
+
 When NOT to use: read-only display → `<RichText>`. No undo/redo yet (later slice). It's controlled — render `onChange`'s doc back into `value`, never mutate in place.
 
 ### `<ImageCrop>` — controlled image cropper
