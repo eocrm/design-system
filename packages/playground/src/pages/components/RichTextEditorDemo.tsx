@@ -32,7 +32,7 @@ export function RichTextEditorDemo() {
     >
       <Example
         title="Editable with toolbar"
-        description="The toolbar prop adds a formatting bar above the editor. Keyboard shortcuts and toolbar buttons both work — select text to format it, or toggle a mark at a collapsed caret and then type to apply it to new text. Enter on an empty list item exits the list; Tab / Shift+Tab indent and outdent list items. Undo/redo: ⌘/Ctrl+Z and ⌘/Ctrl+Shift+Z (or the toolbar Undo/Redo buttons)."
+        description='The toolbar prop adds a formatting bar above the editor. Keyboard shortcuts and toolbar buttons both work — select text to format it, or toggle a mark at a collapsed caret and then type to apply it to new text. Enter on an empty list item exits the list; Tab / Shift+Tab indent and outdent list items. Undo/redo: ⌘/Ctrl+Z and ⌘/Ctrl+Shift+Z (or the toolbar Undo/Redo buttons). Type "# ", "- ", "1. ", or "> " at the start of a line to auto-format.'
         code={`const [doc, setDoc] = useState(docFromText('…'));
 <RichTextEditor value={doc} onChange={setDoc} toolbar placeholder="Write a note…" />`}
       >

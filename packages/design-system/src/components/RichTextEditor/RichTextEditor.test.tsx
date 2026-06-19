@@ -292,6 +292,118 @@ describe('RichTextEditor paste', () => {
   });
 });
 
+describe('RichTextEditor input rules', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+
+  function typeSpace(editor: HTMLElement) {
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: ' ' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    return evt;
+  }
+
+  function renderWith(text: string) {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: text.length },
+      focus: { blockId: 'k', offset: text.length },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text, marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    return screen.getByRole('textbox', { name: 'Rich text editor' });
+  }
+
+  it('"# " converts the paragraph to a heading (space consumed)', () => {
+    const editor = renderWith('#');
+    const evt = typeSpace(editor);
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    expect(evt.defaultPrevented).toBe(true);
+  });
+
+  it('"- " converts to a bullet list', () => {
+    const editor = renderWith('-');
+    typeSpace(editor);
+    expect(screen.getByRole('listitem')).toBeInTheDocument();
+  });
+
+  it('"> " converts to a blockquote', () => {
+    const editor = renderWith('>');
+    typeSpace(editor);
+    expect(editor.querySelector('blockquote')).not.toBeNull();
+  });
+
+  it('keeps trailing content when converting a marker with text after it', () => {
+    // "#foo" with the caret right after the "#" → heading "foo".
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 1 },
+      focus: { blockId: 'k', offset: 1 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '#foo', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    typeSpace(editor);
+    expect(screen.getByRole('heading', { level: 1, name: 'foo' })).toBeInTheDocument();
+  });
+
+  it('a space after non-marker text does not convert (inserts the space)', () => {
+    const editor = renderWith('x');
+    const evt = typeSpace(editor);
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+    expect(editor.querySelector('blockquote')).toBeNull();
+    expect(evt.defaultPrevented).toBe(true);
+    // textContent (NOT toHaveTextContent, which trims) — the space must survive.
+    expect(editor.textContent).toBe('x ');
+  });
+
+  it('a converted block is a single undo step (⌘Z reverts the conversion)', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 1 },
+      focus: { blockId: 'k', offset: 1 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '#', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    typeSpace(editor);
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+    expect(editor).toHaveTextContent('#');
+  });
+});
+
 describe('RichTextEditor undo/redo', () => {
   beforeEach(() => {
     mockReadSelection.mockReset();

@@ -20,6 +20,8 @@ import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
 import { readSelection, writeSelection } from './selection';
 import { applyInput } from './input';
+import { matchBlockRule, applyBlockRule } from './inputRules';
+import { runsText } from '../RichText/engine/inlines';
 import { shortcutMark } from './shortcuts';
 import {
   activeMarks as deriveActiveMarks,
@@ -127,6 +129,8 @@ function selectionRect(root: HTMLElement): Rect {
  * list, Tab/⇧Tab indent/outdent and Enter on an empty item exits to a paragraph.
  * Pasting rich HTML (web, Word, Google Docs) imports it as formatted content.
  * ⌘/Ctrl+Z / ⌘/Ctrl+Shift+Z (and the toolbar Undo/Redo buttons) undo and redo.
+ * Markdown shortcuts auto-format on typing — `# `, `- `, `1. `, `> `, or a code
+ * fence at a line start convert the block (Undo reverts the conversion).
  * The model is the source of truth: every input is replayed as an engine
  * transform and the DOM re-rendered.
  *
@@ -383,6 +387,23 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         }
         const range = readSelection(root);
         if (!range) return;
+        // Markdown block input rules: a marker + space at the start of a paragraph
+        // converts the block (e.g. "# " → heading, "- " → bullet). The space is
+        // consumed; one commit → one undo step (⌘Z reverts the conversion).
+        if (e.inputType === 'insertText' && e.data === ' ' && isCollapsed(range)) {
+          const block = doc.blocks.find((b) => b.id === range.anchor.blockId);
+          if (block) {
+            const before = runsText(block.inlines).slice(0, range.anchor.offset);
+            const match = matchBlockRule(block.type, before, ' ');
+            if (match) {
+              e.preventDefault();
+              setPendingMarks(null);
+              pendingAtRef.current = null;
+              commit(applyBlockRule(doc, block.id, match), 'other');
+              return;
+            }
+          }
+        }
         // Pending marks: a mark toggled at a collapsed caret applies to the next
         // typed text, then clears. Handle insertText here before generic input.
         const pend = pendingMarksRef.current;
