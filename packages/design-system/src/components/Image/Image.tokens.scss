@@ -5,6 +5,13 @@
   --image-radius-lg: var(--radius-lg);
   --image-radius-full: var(--radius-full);
 
+  // Fixed-square sizes (the `size` prop). Aligned to the shared --size-* scale
+  // so a sized Image lines up with an Avatar / Button of the same size key.
+  --image-size-xs: var(--size-xs);
+  --image-size-sm: var(--size-sm);
+  --image-size-md: var(--size-md);
+  --image-size-lg: var(--size-lg);
+
   --image-bg: var(--color-bg-muted);
   --image-transition: var(--transition-base);
 

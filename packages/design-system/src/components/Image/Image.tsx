@@ -19,6 +19,9 @@ export type ImageObjectFit = 'cover' | 'contain' | 'fill' | 'none' | 'scale-down
 /** Corner rounding. Maps to the radius token scale. */
 export type ImageRadius = 'none' | 'sm' | 'md' | 'lg' | 'full';
 
+/** Fixed square size, aligned to the shared `--size-*` scale (xs 20 / sm 24 / md 32 / lg 40 px). */
+export type ImageSize = 'xs' | 'sm' | 'md' | 'lg';
+
 export interface ImageProps extends Omit<
   ImgHTMLAttributes<HTMLImageElement>,
   'alt' | 'children' | 'src' | 'loading'
@@ -43,6 +46,15 @@ export interface ImageProps extends Omit<
    * Number (`1.5`) or CSS string (`'16 / 9'`).
    */
   aspectRatio?: string | number;
+  /**
+   * Render a fixed **square** box of this size (from the shared `--size-*`
+   * scale: `'xs'` 20 / `'sm'` 24 / `'md'` 32 / `'lg'` 40 px) instead of filling
+   * the container's width. Use for dense thumbnails (e.g. a 40px image cell in a
+   * table row) so you don't need a consumer-owned fixed-width wrapper. Omit for
+   * the default responsive behavior. When set, `aspectRatio` is ignored (the box
+   * is already square); pair with `objectFit="cover"` to crop.
+   */
+  size?: ImageSize;
   /**
    * Corner rounding. Defaults to `'md'`. Pass `'none'` for square corners; for
    * circular profile images use `<Avatar>`.
@@ -70,6 +82,13 @@ const RADIUS_CLASS: Record<ImageRadius, string> = {
   full: styles.radiusFull,
 };
 
+const SIZE_CLASS: Record<ImageSize, string> = {
+  xs: styles.sizeXs,
+  sm: styles.sizeSm,
+  md: styles.sizeMd,
+  lg: styles.sizeLg,
+};
+
 /**
  * Displays a remote image with built-in loading and error states. Reserves its
  * box (no layout shift), shows a `Skeleton` while loading, fades in on load, and
@@ -77,15 +96,20 @@ const RADIUS_CLASS: Record<ImageRadius, string> = {
  * failure.
  *
  * The wrapper fills its container's width — give it an `aspectRatio` (or a
- * height) so the box is reserved before the image arrives. `className` / `style`
- * apply to the wrapper box; `ref` forwards to the underlying `<img>`. The wrapper
- * owns sizing: rendered height comes from `aspectRatio` (or the container), and
- * native `width`/`height` attrs on the `<img>` are intrinsic-ratio hints only,
- * not the rendered size.
+ * height) so the box is reserved before the image arrives — UNLESS you pass
+ * `size`, which renders a fixed square box (e.g. a table-cell thumbnail).
+ * `className` / `style` apply to the wrapper box; `ref` forwards to the
+ * underlying `<img>`. The wrapper owns sizing: rendered height comes from `size`
+ * or `aspectRatio` (or the container), and native `width`/`height` attrs on the
+ * `<img>` are intrinsic-ratio hints only, not the rendered size.
  *
  * @example
  * // Responsive 16:9 thumbnail
  * <Image src={url} alt="Quarterly revenue chart" aspectRatio="16 / 9" />
+ *
+ * @example
+ * // Fixed 40px square thumbnail (e.g. a dense table cell) — no width:100% stretch
+ * <Image src={url} alt="report.pdf preview" size="lg" objectFit="cover" />
  *
  * @example
  * // Contain a logo on its muted box, square corners
@@ -117,6 +141,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
     alt,
     objectFit = 'cover',
     aspectRatio,
+    size,
     radius = 'md',
     fallback,
     loading = 'lazy',
@@ -141,8 +166,9 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
   };
 
   const wrapperStyle = {
+    // A fixed `size` sets an explicit square box, so aspectRatio is moot.
     aspectRatio:
-      aspectRatio === undefined
+      size !== undefined || aspectRatio === undefined
         ? undefined
         : typeof aspectRatio === 'number'
           ? String(aspectRatio)
@@ -153,7 +179,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
 
   return (
     <span
-      className={clsx(styles.wrapper, RADIUS_CLASS[radius], className)}
+      className={clsx(styles.wrapper, RADIUS_CLASS[radius], size && SIZE_CLASS[size], className)}
       style={wrapperStyle}
       data-state={state}
     >

@@ -114,6 +114,33 @@ describe('Image', () => {
     expect(img.getAttribute('sizes')).toBe('50vw');
   });
 
+  it('applies a fixed-square size class only when size is set (default has none)', () => {
+    const { container, rerender } = render(<Image src={SRC} alt="" />);
+    const wrapper = container.querySelector('span') as HTMLElement;
+    expect(wrapper.className).not.toMatch(/size(Xs|Sm|Md|Lg)/);
+    rerender(<Image src={SRC} alt="" size="lg" />);
+    expect(wrapper.className).toMatch(/sizeLg/);
+  });
+
+  it('maps each size value to its class', () => {
+    const { container, rerender } = render(<Image src={SRC} alt="" size="xs" />);
+    const wrapper = container.querySelector('span') as HTMLElement;
+    expect(wrapper.className).toMatch(/sizeXs/);
+    rerender(<Image src={SRC} alt="" size="sm" />);
+    expect(wrapper.className).toMatch(/sizeSm/);
+    rerender(<Image src={SRC} alt="" size="md" />);
+    expect(wrapper.className).toMatch(/sizeMd/);
+    rerender(<Image src={SRC} alt="" size="lg" />);
+    expect(wrapper.className).toMatch(/sizeLg/);
+  });
+
+  it('ignores aspectRatio when size is set (the fixed square wins)', () => {
+    const { container } = render(<Image src={SRC} alt="" size="lg" aspectRatio="16 / 9" />);
+    const wrapper = container.querySelector('span') as HTMLElement;
+    expect(wrapper.style.aspectRatio).toBe('');
+    expect(wrapper.className).toMatch(/sizeLg/);
+  });
+
   it('renders a decorative image with an empty alt without error', () => {
     const { container } = render(<Image src={SRC} alt="" />);
     const img = getImg(container);

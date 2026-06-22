@@ -2432,6 +2432,7 @@ placeholder with a retry button on failure.
 - `src` / `alt` — required (`alt=""` for decorative).
 - `objectFit`: `cover` (default) | `contain` | `fill` | `none` | `scale-down`.
 - `aspectRatio`: number (`1.5`) or string (`'16 / 9'`) — reserves the box, no layout shift.
+- `size`: `xs` (20) | `sm` (24) | `md` (32) | `lg` (40 px) — fixed **square** box from the `--size-*` scale instead of `width:100%` (dense table-cell thumbnails; won't squish in a flex row). Omit for responsive. Overrides `aspectRatio`.
 - `radius`: `none` | `sm` | `md` (default) | `lg` | `full`.
 - `fallback` — custom node shown on error instead of the default placeholder.
 - `loading` defaults to `'lazy'`; `ref` → the `<img>`; `className`/`style` → the wrapper box.

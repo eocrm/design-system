@@ -8,6 +8,34 @@
   background: var(--image-bg);
 }
 
+// Fixed-square `size` variant — opt-in, overrides the default width:100% (the
+// compound `.wrapper.sizeX` selector beats `.wrapper` so order is irrelevant).
+// A component-owned fixed size, mirroring Avatar's size scale; `flex-shrink: 0`
+// keeps the box from squishing in a flex row / table cell.
+.wrapper.sizeXs {
+  width: var(--image-size-xs);
+  height: var(--image-size-xs);
+  flex-shrink: 0;
+}
+
+.wrapper.sizeSm {
+  width: var(--image-size-sm);
+  height: var(--image-size-sm);
+  flex-shrink: 0;
+}
+
+.wrapper.sizeMd {
+  width: var(--image-size-md);
+  height: var(--image-size-md);
+  flex-shrink: 0;
+}
+
+.wrapper.sizeLg {
+  width: var(--image-size-lg);
+  height: var(--image-size-lg);
+  flex-shrink: 0;
+}
+
 .radiusNone {
   border-radius: var(--image-radius-none);
 }
