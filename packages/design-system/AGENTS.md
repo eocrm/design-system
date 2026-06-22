@@ -840,6 +840,29 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 - ❌ Wrapping non-`Sortable.Item` content inside `<Sortable>`. dnd-kit's `SortableContext` only tracks the ids you pass it; arbitrary children render but won't be reorderable.
 - ❌ Relying on whole-item drag (no Handle) for screen-reader-accessible lists. Without a Handle, dnd-kit puts `role="button"` on the `<li>` and the listitem semantics are lost — screen readers stop announcing "item N of M." For accessible lists, always include a `<Sortable.Handle>`.
 
+### `<SortableGroup>` — multi-container sortable (drag between lists)
+
+`<SortableGroup onMove>` + `<SortableGroup.Container id items>` under one shared `DndContext` — drag `<Sortable.Item>`s within a list AND between lists. Controlled + live: `onMove({ id, from:{container,index}, to:{container,index} })` fires on each cross-container handoff during the drag AND on drop; apply it with the exported pure `moveSortableItem(containers, event)` (immutable, generic over item type). For a single list, use `<Sortable>`.
+
+```tsx
+const [groups, setGroups] = useState<Record<string, Field[]>>(initial);
+<SortableGroup onMove={(e) => setGroups((g) => moveSortableItem(g, e))}>
+  {Object.entries(groups).map(([gid, fields]) => (
+    <SortableGroup.Container key={gid} id={gid} items={fields.map((f) => f.id)}>
+      {fields.map((f) => (
+        <Sortable.Item key={f.id} id={f.id}>
+          {f.label}
+        </Sortable.Item>
+      ))}
+    </SortableGroup.Container>
+  ))}
+</SortableGroup>;
+```
+
+- Container ids and item ids share dnd-kit's one id namespace — keep them all unique.
+- Each `Container.items` must match its `<Sortable.Item>` child ids (it's the ordering source of truth).
+- Esc-cancel doesn't revert (moves are applied to your state optimistically) — snapshot before drag to undo.
+
 ### `<Kanban>` — multi-column board (drag-to-reorder + cross-column drag with live reflow)
 
 Trello/Jira-style board UI. Compound: `Kanban`, `Kanban.Column`, `Kanban.Card`, `Kanban.Handle` (re-exported `Sortable.Handle`). Built on the same `@dnd-kit/sortable` plumbing as `<Sortable>` with internal items state that re-arranges cards live as the dragged card crosses column boundaries.
