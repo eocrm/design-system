@@ -365,7 +365,7 @@ export type {
 } from './components/FileUpload';
 
 export { Image } from './components/Image';
-export type { ImageProps, ImageObjectFit, ImageRadius } from './components/Image';
+export type { ImageProps, ImageObjectFit, ImageRadius, ImageSize } from './components/Image';
 
 export { ImageCrop, extractCropBlob, useCropPreview } from './components/ImageCrop';
 export type {

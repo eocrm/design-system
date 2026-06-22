@@ -175,6 +175,23 @@ export function ImageDemo() {
       </Example>
 
       <Example
+        title="Fixed-size thumbnail (size)"
+        description="size renders a fixed square box from the --size-* scale (xs 20 / sm 24 / md 32 / lg 40 px) instead of filling the container width — for dense thumbnails like a table-row image cell. No consumer-owned fixed-width wrapper needed; it won't squish in a flex row."
+        code={`<Image src={url} alt="report.pdf preview" size="lg" objectFit="cover" />`}
+      >
+        <Cluster gap="md" align="center">
+          {(['xs', 'sm', 'md', 'lg'] as const).map((s) => (
+            <Stack key={s} gap="xs" align="center">
+              <Image src={PHOTO} alt="" size={s} objectFit="cover" />
+              <Text size="xs" tone="muted">
+                {s}
+              </Text>
+            </Stack>
+          ))}
+        </Cluster>
+      </Example>
+
+      <Example
         title="Error + retry"
         description="A failed load shows the ImageOff placeholder with a Retry button (re-fetches the source)."
         code={`<Image src={brokenUrl} alt="…" aspectRatio="16 / 9" />`}
