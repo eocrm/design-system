@@ -516,6 +516,27 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
+    to: '/components/sortable-group',
+    name: 'SortableGroup',
+    description:
+      'Drag items between multiple sortable lists (cross-container), with a live handoff.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 220, pointerEvents: 'none', display: 'flex', gap: 8 }}>
+        <Card padding="sm" style={{ flex: 1 }}>
+          <Stack gap="xs">
+            <Text size="sm">First</Text>
+            <Text size="sm">Second</Text>
+          </Stack>
+        </Card>
+        <Card padding="sm" style={{ flex: 1 }}>
+          <Stack gap="xs">
+            <Text size="sm">Third</Text>
+          </Stack>
+        </Card>
+      </div>
+    ),
+  },
+  {
     to: '/components/datatable',
     name: 'DataTable',
     description: 'Tabular data with sortable / resizable / reorderable columns and row selection.',

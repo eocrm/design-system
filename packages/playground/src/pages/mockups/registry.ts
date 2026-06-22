@@ -71,6 +71,7 @@ export type ComponentName =
   | 'Skeleton'
   | 'Slider'
   | 'Sortable'
+  | 'SortableGroup'
   | 'Split'
   | 'Stack'
   | 'Sticky'

@@ -1,0 +1,23 @@
+@use '../Sortable/Sortable.tokens';
+
+.list {
+  // UA reset for <ol> default margin/padding.
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ol> default margin
+  margin: 0;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ol> default padding
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sortable-list-gap);
+}
+
+// Overlay chrome — mirrors <Sortable>'s lifted-item visual (#165).
+.item {
+  position: relative;
+}
+
+.overlayItem {
+  box-shadow: var(--sortable-item-shadow-dragging);
+  cursor: grabbing;
+}
