@@ -587,8 +587,17 @@
     "cluster": "Forms",
     "composes": [],
     "composedBy": [
-      "Kanban"
+      "Kanban",
+      "SortableGroup"
     ]
+  },
+  "SortableGroup": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Sortable"
+    ],
+    "composedBy": []
   },
   "Split": {
     "tier": "primitive",

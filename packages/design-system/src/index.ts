@@ -325,6 +325,13 @@ export type {
   SortableReorderEvent,
 } from './components/Sortable';
 
+export { SortableGroup, moveSortableItem } from './components/SortableGroup';
+export type {
+  SortableGroupProps,
+  SortableGroupContainerProps,
+  SortableMoveEvent,
+} from './components/SortableGroup';
+
 export { Table } from './components/Table';
 export type {
   TableProps,
