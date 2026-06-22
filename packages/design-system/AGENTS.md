@@ -851,6 +851,7 @@ const [groups, setGroups] = useState<Record<string, Field[]>>(initial);
     <SortableGroup.Container key={gid} id={gid} items={fields.map((f) => f.id)}>
       {fields.map((f) => (
         <Sortable.Item key={f.id} id={f.id}>
+          <Sortable.Handle>⋮⋮</Sortable.Handle>
           {f.label}
         </Sortable.Item>
       ))}

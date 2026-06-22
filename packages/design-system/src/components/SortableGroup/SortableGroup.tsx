@@ -131,6 +131,11 @@ function itemContentMap(children: ReactNode): Map<Id, ReactNode> {
  *   `items` array is the source of truth for ordering + index reporting.
  * - ❌ Expecting Esc to revert — moves are applied to YOUR state optimistically;
  *   cancel leaves the item at its last hovered spot. Snapshot before drag to undo.
+ *
+ * @remarks
+ * The root renders no host DOM node (it's a `DndContext` + context provider), so
+ * it intentionally forwards no `ref` — attach refs to `<SortableGroup.Container>`,
+ * which forwards to its `<ol>`.
  */
 const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableGroupProps) {
   const [activeId, setActiveId] = useState<Id | null>(null);
@@ -181,10 +186,14 @@ const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableG
     const overIndex = overItems.indexOf(overId);
     let toIndex: number;
     if (overIndex >= 0) {
+      // Insert after the over item once the dragged item's MIDPOINT passes the
+      // over item's midpoint (matches Kanban's cross-container heuristic).
       const activeRect = active.rect.current.translated;
       const overRect = over.rect;
       const isBelow =
-        activeRect && overRect ? activeRect.top > overRect.top + overRect.height / 2 : false;
+        activeRect != null && overRect != null
+          ? activeRect.top + activeRect.height / 2 > overRect.top + overRect.height / 2
+          : false;
       toIndex = overIndex + (isBelow ? 1 : 0);
     } else {
       toIndex = overItems.length; // hovered the (possibly empty) container itself
