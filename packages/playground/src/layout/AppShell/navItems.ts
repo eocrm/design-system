@@ -184,6 +184,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/slider', label: 'Slider', icon: SlidersHorizontal, end: false },
       { to: '/components/kanban', label: 'Kanban', icon: KanbanSquare, end: false },
       { to: '/components/sortable', label: 'Sortable', icon: GripVertical, end: false },
+      { to: '/components/sortable-group', label: 'SortableGroup', icon: Columns3, end: false },
       { to: '/components/switch', label: 'Switch', icon: ToggleRight, end: false },
       { to: '/components/textarea', label: 'Textarea', icon: MessageSquareText, end: false },
       { to: '/components/timefield', label: 'TimeField', icon: Clock, end: false },
