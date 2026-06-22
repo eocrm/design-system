@@ -1316,6 +1316,32 @@ beside results).
 
 When NOT to use: equal columns → `<Grid columns={2}>`; wrapping peer row → `<Cluster>`; app shell sidebar → `<AppLayout>`/`<Rail>`.
 
+### `<Sticky>` — sticky-positioning primitive
+
+Pins its box to the top of the scroll container while the page scrolls past — for a record/detail-page sidebar (owner, tags, linked records) that stays in view while the wide main column scrolls. Sets `align-self: start` so it also works as a grid/flex item. Positions its OWN box only (put a `Stack`/`Cluster` inside to arrange the pinned content).
+
+```tsx
+// Detail page: main column scrolls, sidebar pins. align="stretch" gives the
+// aside track full height so the Sticky has a tall containing block to pin within.
+<Split
+  side="end"
+  asideWidth="320px"
+  align="stretch"
+  aside={
+    <Sticky top="md">
+      <Stack gap="md">{sidebarCards}</Stack>
+    </Sticky>
+  }
+>
+  <Stack gap="lg">{fields}</Stack>
+</Split>
+```
+
+- `top`: `none` (default, `top:0`) / `xs` / `sm` / `md` / `lg` / `xl` — offset from the top (spacing scale); use a non-zero step to clear a sticky header.
+- Inside a `<Split>` aside, pair with `align="stretch"` (else the content-height aside track gives nowhere to pin).
+
+When NOT to use: arranging children → `<Stack>`/`<Cluster>`; a fixed overlay above content → `position: fixed` chrome (`Popover`/`Modal`/app bar); the split itself → `<Split>`. Note: `position: sticky` breaks if a clipping ancestor (`overflow: hidden/auto`) isn't the intended scroll container.
+
 ### `<Masonry>` — height-balanced masonry layout
 
 ```tsx

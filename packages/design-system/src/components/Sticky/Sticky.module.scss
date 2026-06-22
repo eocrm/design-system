@@ -1,0 +1,40 @@
+@use './Sticky.tokens';
+
+// Rule 4: <Sticky> is a LAYOUT PRIMITIVE — `position: sticky` + `top` are its
+// entire purpose (the same way Stack owns flex/gap and Split owns grid).
+// `align-self: start` keeps it from stretching to the row height when it's a
+// grid/flex item (e.g. a <Split> aside), which would otherwise defeat sticky.
+.sticky {
+  position: sticky;
+
+  // align-self is on the Rule-4 disallow-list (components shouldn't place
+  // themselves in a parent's layout) — but it IS this layout primitive's job:
+  // a grid/flex item stretches to the row height by default, leaving nowhere to
+  // stick, so a sticky primitive MUST opt out of that stretch (see issue #190).
+  // stylelint-disable-next-line property-disallowed-list
+  align-self: start;
+}
+
+.top-none {
+  top: 0;
+}
+
+.top-xs {
+  top: var(--sticky-top-xs);
+}
+
+.top-sm {
+  top: var(--sticky-top-sm);
+}
+
+.top-md {
+  top: var(--sticky-top-md);
+}
+
+.top-lg {
+  top: var(--sticky-top-lg);
+}
+
+.top-xl {
+  top: var(--sticky-top-xl);
+}
