@@ -77,6 +77,9 @@ export type {
 export { Split } from './components/Split';
 export type { SplitProps, SplitSide, SplitGap, SplitAlign } from './components/Split';
 
+export { Sticky } from './components/Sticky';
+export type { StickyProps, StickyTop } from './components/Sticky';
+
 export { Masonry } from './components/Masonry';
 export type { MasonryProps, MasonryGap } from './components/Masonry';
 

@@ -29,6 +29,7 @@ import { Constrain } from '@eocrm/design-system';
 import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
 import { Split } from '@eocrm/design-system';
+import { Sticky } from '@eocrm/design-system';
 import { Masonry } from '@eocrm/design-system';
 import { Field } from '@eocrm/design-system';
 import { FormRow } from '@eocrm/design-system';
@@ -754,6 +755,43 @@ const items: { to: string; name: string; description: string; preview: React.Rea
       <div style={{ width: '100%', maxWidth: 220 }}>
         <Split gap="sm" aside={<div className={styles.tile} style={{ width: 28 }} />}>
           <div className={styles.tile} style={{ width: '100%' }} />
+        </Split>
+      </div>
+    ),
+  },
+  {
+    to: '/components/sticky',
+    name: 'Sticky',
+    description:
+      'Pins its box to the top of the scroll container while the page scrolls — for a record-detail sidebar that stays in view.',
+    preview: (
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 220,
+          maxHeight: 88,
+          overflowY: 'auto',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-sm)',
+          padding: 6,
+        }}
+      >
+        <Split
+          gap="sm"
+          side="end"
+          asideWidth="56px"
+          align="stretch"
+          aside={
+            <Sticky top="none">
+              <div className={styles.tile} style={{ height: 22 }} />
+            </Sticky>
+          }
+        >
+          <div style={{ display: 'grid', gap: 4 }}>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className={styles.tile} style={{ height: 16, width: '100%' }} />
+            ))}
+          </div>
         </Split>
       </div>
     ),
