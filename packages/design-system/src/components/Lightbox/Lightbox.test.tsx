@@ -1,0 +1,123 @@
+import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Lightbox, type LightboxItem, type LightboxProps } from './Lightbox';
+
+const ITEMS: LightboxItem[] = [
+  { src: 'https://x/a.jpg', alt: 'Alpha', caption: 'Cap A' },
+  { src: 'https://x/b.jpg', alt: 'Bravo' },
+  { src: 'https://x/c.jpg', alt: 'Charlie' },
+];
+
+beforeAll(() => {
+  // jsdom has no scrollIntoView
+  Element.prototype.scrollIntoView = vi.fn();
+});
+
+function open(props: Partial<LightboxProps> = {}) {
+  return render(<Lightbox open onOpenChange={() => {}} items={ITEMS} {...props} />);
+}
+
+describe('Lightbox', () => {
+  it('renders nothing when closed', () => {
+    const { container } = render(<Lightbox open={false} onOpenChange={() => {}} items={ITEMS} />);
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('renders nothing with no items', () => {
+    const { container } = render(<Lightbox open onOpenChange={() => {}} items={[]} />);
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('shows the defaultIndex image in a dialog', () => {
+    open({ defaultIndex: 1 });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByAltText('Bravo')).toBeInTheDocument();
+  });
+
+  it('next/prev chevrons change the image and fire onIndexChange', async () => {
+    const onIndexChange = vi.fn();
+    open({ defaultIndex: 0, onIndexChange });
+    await userEvent.click(screen.getByRole('button', { name: 'Next image' }));
+    expect(screen.getByAltText('Bravo')).toBeInTheDocument();
+    expect(onIndexChange).toHaveBeenLastCalledWith(1);
+    await userEvent.click(screen.getByRole('button', { name: 'Previous image' }));
+    expect(screen.getByAltText('Alpha')).toBeInTheDocument();
+  });
+
+  it('arrow keys navigate; Escape closes', async () => {
+    const onOpenChange = vi.fn();
+    open({ defaultIndex: 0, onOpenChange });
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    expect(screen.getByAltText('Bravo')).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('loops by default (next from last → first)', async () => {
+    open({ defaultIndex: 2 });
+    await userEvent.click(screen.getByRole('button', { name: 'Next image' }));
+    expect(screen.getByAltText('Alpha')).toBeInTheDocument();
+  });
+
+  it('loop={false} disables prev at start and next at end', async () => {
+    open({ defaultIndex: 0, loop: false });
+    expect(screen.getByRole('button', { name: 'Previous image' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next image' })).not.toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Next image' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Next image' }));
+    expect(screen.getByAltText('Charlie')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next image' })).toBeDisabled();
+  });
+
+  it('controlled index does not self-advance, but fires onIndexChange', async () => {
+    const onIndexChange = vi.fn();
+    open({ index: 0, onIndexChange });
+    await userEvent.click(screen.getByRole('button', { name: 'Next image' }));
+    expect(onIndexChange).toHaveBeenLastCalledWith(1);
+    expect(screen.getByAltText('Alpha')).toBeInTheDocument();
+  });
+
+  it('shows the caption and counter for a multi-image gallery', () => {
+    open({ defaultIndex: 0 });
+    expect(screen.getByText('Cap A')).toBeInTheDocument();
+    expect(screen.getByText('1 / 3')).toBeInTheDocument();
+  });
+
+  it('hides chevrons, counter, and strip for a single item', () => {
+    render(<Lightbox open onOpenChange={() => {}} items={[ITEMS[0]]} />);
+    expect(screen.queryByRole('button', { name: 'Next image' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Previous image' })).toBeNull();
+    expect(screen.queryByText('1 / 1')).toBeNull();
+  });
+
+  it('thumbnails jump to an index', async () => {
+    const onIndexChange = vi.fn();
+    open({ defaultIndex: 0, onIndexChange });
+    await userEvent.click(screen.getByRole('button', { name: 'Charlie' }));
+    expect(onIndexChange).toHaveBeenLastCalledWith(2);
+    expect(screen.getByAltText('Charlie')).toBeInTheDocument();
+  });
+
+  it('close button and backdrop click close; clicking the image does not', async () => {
+    const onOpenChange = vi.fn();
+    open({ defaultIndex: 0, onOpenChange });
+    await userEvent.click(screen.getByRole('button', { name: 'Close gallery' }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    onOpenChange.mockClear();
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    onOpenChange.mockClear();
+    fireEvent.click(screen.getByAltText('Alpha'));
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('reopening with a new defaultIndex shows that image', () => {
+    const { rerender } = render(
+      <Lightbox open={false} onOpenChange={() => {}} items={ITEMS} defaultIndex={0} />,
+    );
+    rerender(<Lightbox open onOpenChange={() => {}} items={ITEMS} defaultIndex={2} />);
+    expect(screen.getByAltText('Charlie')).toBeInTheDocument();
+  });
+});
