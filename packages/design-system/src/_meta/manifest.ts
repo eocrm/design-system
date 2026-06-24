@@ -45,6 +45,7 @@ const CLUSTERS: Record<string, string> = {
   Stack: 'Layout',
   Cluster: 'Layout',
   Constrain: 'Layout',
+  Indent: 'Layout',
   AppLayout: 'Layout',
   Divider: 'Layout',
   Grid: 'Layout',
