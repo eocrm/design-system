@@ -7,8 +7,7 @@ export type MediaTileReveal = 'hover' | 'focus' | 'visible';
 /** Corner rounding (clips the media). */
 export type MediaTileRadius = 'none' | 'sm' | 'md' | 'lg';
 
-export interface MediaTileProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'title'> {
+export interface MediaTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'title'> {
   /** Tile body — full-bleed media (an `<Image>`, or a centered file-type icon). */
   media: ReactNode;
   /** Top-bar leading content (e.g. the file name). Truncates with an ellipsis. */
