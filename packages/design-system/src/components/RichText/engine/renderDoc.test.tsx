@@ -295,7 +295,10 @@ describe('renderDoc renderLink option', () => {
     };
     const custom = render(
       <div>
-        {renderDoc(doc, { editable: true, renderLink: ({ href }) => <span data-chip>{href}</span> })}
+        {renderDoc(doc, {
+          editable: true,
+          renderLink: ({ href }) => <span data-chip>{href}</span>,
+        })}
       </div>,
     );
     const w = custom.container.querySelector('[data-rich-link]');
