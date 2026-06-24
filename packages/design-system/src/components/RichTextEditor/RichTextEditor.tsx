@@ -10,11 +10,20 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import type { RichDoc, Range, Mark, MarkType, Point } from '../RichText/engine/model';
+import { nextId } from '../RichText/engine/model';
 import { renderDoc } from '../RichText/engine/renderDoc';
+import type { RenderLink } from '../RichText/engine/renderLink';
 import { blockLength, isCollapsed } from '../RichText/engine/position';
 import { linkAt, setLink, removeLink } from './links';
+import { applyTypeAutolink, atomicLinkDeleteRange } from './autolinkInput';
 import { RichTextLinkEditor } from './RichTextLinkEditor';
-import { insertText, insertFragment, insertMention } from '../RichText/engine/transforms';
+import {
+  insertText,
+  insertFragment,
+  insertMention,
+  deleteRange,
+} from '../RichText/engine/transforms';
+import { linkifyRuns, findUrl } from '../RichText/engine/autolink';
 import { useMention } from './useMention';
 import { RichTextMentionMenu } from './RichTextMentionMenu';
 import type { MentionItem, MentionsConfig } from './mentions';
@@ -47,6 +56,13 @@ import {
 import type { History, EditKind } from './history';
 import styles from './RichTextEditor.module.scss';
 
+// Stable sentinel ReactNode passed as `renderLink`'s `defaultNode` when probing
+// whether a link is "resolved" (the consumer returns a custom chip) vs. declined
+// (returns the fallback). A custom return is `!== FALLBACK_SENTINEL` by identity;
+// declining returns the exact sentinel back. A frozen one-off element keeps a
+// stable reference across calls.
+const FALLBACK_SENTINEL: React.ReactNode = Object.freeze(<span key="rt-fallback-sentinel" />);
+
 export interface RichTextEditorProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'children'
@@ -77,6 +93,31 @@ export interface RichTextEditorProps extends Omit<
    * Omit to disable mentions. See {@link MentionsConfig}.
    */
   mentions?: MentionsConfig;
+  /**
+   * Turn typed and pasted URLs into links automatically. While typing, a URL is
+   * linked when you type a space after it; on paste, plain-text URLs are linked
+   * (a single bare URL pasted over a selection links the selection). Default
+   * `true`. Set `false` to disable both the type rule and paste autolinking (the
+   * ⌘/Ctrl+K link tool still works). The href is sanitized — only safe schemes
+   * (http/https/`www.`) become links.
+   */
+  autolink?: boolean;
+  /**
+   * Substitute how a link renders. Called per link with `{ href, text }` and the
+   * default `<a>`; return your own node (e.g. a task/member chip) or the
+   * `defaultNode` to keep the standard anchor. A custom node renders as a
+   * non-editable **atomic chip** — the caret steps over it and a single Backspace/
+   * Delete removes the whole link.
+   *
+   * @remarks Render-time only — the model is unchanged, so `toHtml`/`toMarkdown`
+   * still serialize a plain link. Keep it cheap (it runs on every render): don't
+   * do heavy synchronous work or block on the network inside `renderLink`; return
+   * a component that fetches/caches the lookup itself (falling back to
+   * `defaultNode` while loading). Because the chip is atomic and not editable
+   * text, only links your `renderLink` actually replaces become chips — links you
+   * return `defaultNode` for stay plain, editable anchors.
+   */
+  renderLink?: RenderLink;
 }
 
 function isEmptyDoc(doc: RichDoc): boolean {
@@ -179,6 +220,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       autoFocus,
       toolbar = false,
       mentions,
+      autolink = true,
+      renderLink,
       className,
       ...rest
     },
@@ -190,8 +233,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Selection to restore after the next model-driven re-render.
     const pendingSelectionRef = useRef<Range | null>(null);
     // Latest props for the native beforeinput listener (avoids stale closures).
-    const latest = useRef({ value, onChange, readOnly });
-    latest.current = { value, onChange, readOnly };
+    const latest = useRef({ value, onChange, readOnly, autolink, renderLink });
+    latest.current = { value, onChange, readOnly, autolink, renderLink };
 
     // Link editor state.
     const [linkEditor, setLinkEditor] = useState<LinkEditorOpen | null>(null);
@@ -397,7 +440,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const root = rootRef.current;
       if (!root) return;
       const onBeforeInput = (e: InputEvent) => {
-        const { value: doc, readOnly: ro } = latest.current;
+        const { value: doc, readOnly: ro, autolink: autolinkOn, renderLink: rl } = latest.current;
         if (ro || isComposingRef.current) return;
         // Undo/redo via beforeinput. Always preventDefault so the browser's native
         // contentEditable undo never mutates the DOM under the controlled model.
@@ -429,6 +472,47 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
               commit(applyBlockRule(doc, block.id, match), 'other');
               return;
             }
+          }
+        }
+        // Autolink on type: typing a space after a URL links the URL, then inserts
+        // the space — both in one commit (one undo step). Skips when the caret is
+        // already inside a link (handled by `applyTypeAutolink`).
+        if (
+          autolinkOn !== false &&
+          e.inputType === 'insertText' &&
+          e.data === ' ' &&
+          isCollapsed(range)
+        ) {
+          const linked = applyTypeAutolink(doc, range.anchor, e.data);
+          if (linked) {
+            e.preventDefault();
+            // Link first, then insert the space after it on the linked doc.
+            const inserted = insertText(linked.doc, range.anchor, e.data);
+            setPendingMarks(null);
+            pendingAtRef.current = null;
+            commit({ doc: inserted.doc, selection: inserted.selection }, 'type');
+            return;
+          }
+        }
+        // Atomic delete: a Backspace just after (or Delete just before) a link that
+        // `renderLink` resolves to a custom chip removes the whole link in one step.
+        // `isResolved` probes `renderLink` with a stable fallback sentinel: a custom
+        // return (chip) is `!== FALLBACK_SENTINEL`; declining returns the sentinel.
+        if (
+          rl &&
+          (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') &&
+          isCollapsed(range)
+        ) {
+          const dir = e.inputType === 'deleteContentBackward' ? 'backward' : 'forward';
+          const isResolved = (href: string) =>
+            rl({ href, text: href }, FALLBACK_SENTINEL) !== FALLBACK_SENTINEL;
+          const delRange = atomicLinkDeleteRange(doc, range.anchor, dir, isResolved);
+          if (delRange) {
+            e.preventDefault();
+            setPendingMarks(null);
+            pendingAtRef.current = null;
+            commit(deleteRange(doc, delRange), 'delete');
+            return;
           }
         }
         // Pending marks: a mark toggled at a collapsed caret applies to the next
@@ -474,19 +558,45 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     }, [commit, onUndo, onRedo]);
 
     // Rich paste: when the clipboard carries HTML, parse it into the model and
-    // splice it at the selection. No HTML → don't preventDefault, so the native
-    // beforeinput path inserts text/plain (unchanged behavior).
+    // splice it at the selection. No usable HTML → if autolink is on and the
+    // plain text carries a URL, linkify it; otherwise don't preventDefault, so the
+    // native beforeinput path inserts text/plain (unchanged behavior).
     useEffect(() => {
       const root = rootRef.current;
       if (!root) return;
       const onPaste = (e: ClipboardEvent) => {
         if (latest.current.readOnly) return;
         const html = e.clipboardData?.getData('text/html');
-        if (!html || !html.trim()) return;
+        if (html && html.trim()) {
+          const range = readSelection(root);
+          if (!range) return;
+          const fragment = fromHtml(html);
+          if (isEmptyDoc(fragment)) return;
+          e.preventDefault();
+          commit(insertFragment(latest.current.value, range, fragment));
+          return;
+        }
+        // No usable HTML — autolink plain-text URLs.
+        if (latest.current.autolink === false) return;
+        const plain = e.clipboardData?.getData('text/plain');
+        if (!plain || !plain.trim()) return;
+        const runs = linkifyRuns(plain);
+        const hasLink = runs.some((r) => r.marks.some((m) => m.type === 'link'));
+        if (!hasLink) return; // no URL → let the native path insert the text
         const range = readSelection(root);
         if (!range) return;
-        const fragment = fromHtml(html);
-        if (isEmptyDoc(fragment)) return;
+        const trimmed = plain.trim();
+        const whole = findUrl(trimmed);
+        // A single bare URL pasted over a selection → link the selection in place.
+        if (!isCollapsed(range) && whole && whole.start === 0 && whole.end === trimmed.length) {
+          e.preventDefault();
+          commit(setLink(latest.current.value, range, trimmed));
+          return;
+        }
+        // Otherwise splice a one-paragraph fragment of linkified runs.
+        const fragment: RichDoc = {
+          blocks: [{ id: nextId(), type: 'paragraph', inlines: runs }],
+        };
         e.preventDefault();
         commit(insertFragment(latest.current.value, range, fragment));
       };
@@ -723,7 +833,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
       >
-        {renderDoc(value, { editable: true })}
+        {renderDoc(value, { editable: true, renderLink })}
       </div>
     );
 

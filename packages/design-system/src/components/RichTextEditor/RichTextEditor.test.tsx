@@ -590,3 +590,243 @@ describe('RichTextEditor mentions', () => {
     expect(box.querySelector('[data-mention-id]')).toBeNull();
   });
 });
+
+describe('RichTextEditor autolink', () => {
+  beforeEach(() => mockReadSelection.mockReset());
+
+  function typeSpaceAt(editor: HTMLElement) {
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: ' ' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    return evt;
+  }
+
+  function pasteEvent(data: Record<string, string>) {
+    const evt: Event & { clipboardData?: unknown } = new Event('paste', {
+      bubbles: true,
+      cancelable: true,
+    });
+    (evt as { clipboardData: unknown }).clipboardData = {
+      getData: (t: string) => data[t] ?? '',
+    };
+    return evt;
+  }
+
+  it('typing a space after a URL links it (and inserts the space)', () => {
+    const text = 'see https://a.com';
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: text.length },
+      focus: { blockId: 'k', offset: text.length },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text, marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt = typeSpaceAt(box);
+    expect(evt.defaultPrevented).toBe(true);
+    const a = box.querySelector('a');
+    expect(a).not.toBeNull();
+    expect(a?.getAttribute('href')).toBe('https://a.com');
+    // The space was inserted after the link.
+    expect(box.textContent).toBe('see https://a.com ');
+  });
+
+  it('autolink={false} disables the type rule (no link, space still inserted)', () => {
+    const text = 'see https://a.com';
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: text.length },
+      focus: { blockId: 'k', offset: text.length },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text, marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} autolink={false} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    typeSpaceAt(box);
+    expect(box.querySelector('a')).toBeNull();
+    expect(box.textContent).toBe('see https://a.com ');
+  });
+
+  it('pasting a plain-text URL over a selection links the selection', () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hello', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt = pasteEvent({ 'text/plain': 'https://a.com' });
+    act(() => {
+      box.dispatchEvent(evt);
+    });
+    expect(evt.defaultPrevented).toBe(true);
+    const a = box.querySelector('a');
+    expect(a?.getAttribute('href')).toBe('https://a.com');
+    // The selected text "hello" is preserved as the link's display text.
+    expect(a?.textContent).toBe('hello');
+  });
+
+  it('pasting text containing a URL at a collapsed caret linkifies it', () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 0 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt = pasteEvent({ 'text/plain': 'go https://a.com now' });
+    act(() => {
+      box.dispatchEvent(evt);
+    });
+    expect(evt.defaultPrevented).toBe(true);
+    const a = box.querySelector('a');
+    expect(a?.getAttribute('href')).toBe('https://a.com');
+    expect(box.textContent).toBe('go https://a.com now');
+  });
+
+  it('plain-text paste with NO url does not preventDefault (falls through)', () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 0 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt = pasteEvent({ 'text/plain': 'just words' });
+    act(() => {
+      box.dispatchEvent(evt);
+    });
+    expect(evt.defaultPrevented).toBe(false);
+  });
+
+  it('autolink={false} disables plain-text paste linkifying (falls through)', () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 0 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} autolink={false} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt = pasteEvent({ 'text/plain': 'https://a.com' });
+    act(() => {
+      box.dispatchEvent(evt);
+    });
+    expect(evt.defaultPrevented).toBe(false);
+  });
+});
+
+describe('RichTextEditor renderLink', () => {
+  beforeEach(() => mockReadSelection.mockReset());
+
+  const chip: React.ComponentProps<typeof RichTextEditor>['renderLink'] = ({ href }, fallback) =>
+    href.startsWith('https://chip') ? <span data-chip>{href}</span> : fallback;
+
+  it('renders a resolved link as a non-editable atomic [data-rich-link] chip', () => {
+    mockReadSelection.mockReturnValue(null);
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          {
+            id: 'k',
+            type: 'paragraph',
+            inlines: [{ text: 'task', marks: [{ type: 'link', href: 'https://chip/1' }] }],
+          },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} renderLink={chip} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const widget = box.querySelector('[data-rich-link]');
+    expect(widget).not.toBeNull();
+    expect(widget?.getAttribute('contenteditable')).toBe('false');
+    expect(widget?.querySelector('[data-chip]')).not.toBeNull();
+  });
+
+  it('a declined link (renderLink returns fallback) stays a plain editable anchor', () => {
+    mockReadSelection.mockReturnValue(null);
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          {
+            id: 'k',
+            type: 'paragraph',
+            inlines: [{ text: 'ext', marks: [{ type: 'link', href: 'https://other.com' }] }],
+          },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} renderLink={chip} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    expect(box.querySelector('[data-rich-link]')).toBeNull();
+    expect(box.querySelector('a')).not.toBeNull();
+  });
+
+  it('Backspace just after a resolved chip deletes the whole link atomically', () => {
+    // "go " (3) + linked chip "https://chip/1" (14) → caret at offset 17 (end).
+    const href = 'https://chip/1';
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 3 + href.length },
+      focus: { blockId: 'k', offset: 3 + href.length },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          {
+            id: 'k',
+            type: 'paragraph',
+            inlines: [
+              { text: 'go ', marks: [] },
+              { text: href, marks: [{ type: 'link', href }] },
+            ],
+          },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} renderLink={chip} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    expect(box.querySelector('[data-rich-link]')).not.toBeNull();
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'deleteContentBackward' });
+    Object.defineProperty(evt, 'data', { value: null });
+    act(() => {
+      box.dispatchEvent(evt);
+    });
+    expect(evt.defaultPrevented).toBe(true);
+    // The whole chip is gone; only "go " remains.
+    expect(box.querySelector('[data-rich-link]')).toBeNull();
+    expect(box.textContent).toBe('go ');
+  });
+});
