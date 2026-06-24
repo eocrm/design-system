@@ -303,7 +303,9 @@
 
   // Modal overlay — dimming backdrop behind modal
   --color-bg-overlay: rgb(15 23 42 / 35%); /* solid variant: opaque dim */
-  --color-bg-overlay-strong: rgb(15 23 42 / 92%); /* near-opaque dim for a full-screen image viewer */
+  --color-bg-overlay-strong: rgb(
+    15 23 42 / 92%
+  ); /* near-opaque dim for a full-screen image viewer */
   --color-bg-overlay-blur: rgb(
     255 255 255 / 30%
   ); /* blur variant: frosted-glass tint, paired with backdrop-filter: blur(4px) */
