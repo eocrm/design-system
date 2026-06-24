@@ -1,0 +1,33 @@
+@use './Indent.tokens';
+
+// No base layout of children — Indent only pads its OWN box (mirrors Constrain,
+// which only sizes its own box). `padding-inline-start` is a logical property:
+// left gutter in LTR, right in RTL, for free. padding (not margin) is allowed
+// under Hard rule 4.
+.indent {
+  padding-inline-start: calc(var(--indent-level, 1) * var(--indent-gutter));
+}
+
+.gutter-xs {
+  --indent-gutter: var(--indent-gutter-xs);
+}
+
+.gutter-sm {
+  --indent-gutter: var(--indent-gutter-sm);
+}
+
+.gutter-md {
+  --indent-gutter: var(--indent-gutter-md);
+}
+
+.gutter-lg {
+  --indent-gutter: var(--indent-gutter-lg);
+}
+
+.gutter-xl {
+  --indent-gutter: var(--indent-gutter-xl);
+}
+
+.gutter-2xl {
+  --indent-gutter: var(--indent-gutter-2xl);
+}
