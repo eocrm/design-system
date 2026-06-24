@@ -69,6 +69,7 @@ import { TabsDemo } from './pages/components/TabsDemo';
 import { DropdownMenuDemo } from './pages/components/DropdownMenuDemo';
 import { TooltipDemo } from './pages/components/TooltipDemo';
 import { ModalDemo } from './pages/components/ModalDemo';
+import { LightboxDemo } from './pages/components/LightboxDemo';
 import { OptionsPickerDemo } from './pages/components/OptionsPickerDemo';
 import { PageDemo } from './pages/components/PageDemo';
 import { PaletteDemo } from './pages/components/PaletteDemo';
@@ -184,6 +185,7 @@ export default function App() {
             <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
             <Route path="/components/tooltip" element={<TooltipDemo />} />
             <Route path="/components/modal" element={<ModalDemo />} />
+            <Route path="/components/lightbox" element={<LightboxDemo />} />
             <Route path="/components/options-picker" element={<OptionsPickerDemo />} />
             <Route path="/components/page" element={<PageDemo />} />
             <Route path="/components/palette" element={<PaletteDemo />} />
