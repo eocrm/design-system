@@ -418,6 +418,12 @@
     "composes": [],
     "composedBy": []
   },
+  "MediaTile": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "Modal": {
     "tier": "composition",
     "cluster": "Overlays",
