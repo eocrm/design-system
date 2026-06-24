@@ -70,6 +70,7 @@ import { FilterChip } from '@eocrm/design-system';
 import { IconTile } from '@eocrm/design-system';
 import { Shapes } from 'lucide-react';
 import { Image } from '@eocrm/design-system';
+import { MediaTile } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
 import { OptionsPicker } from '@eocrm/design-system';
 import { PALETTE_COLORS, paletteTokens } from '@eocrm/design-system';
@@ -284,6 +285,28 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=80"
           alt=""
           aspectRatio="16 / 9"
+        />
+      </div>
+    ),
+  },
+  {
+    to: '/components/media-tile',
+    name: 'MediaTile',
+    description: 'Media tile — image/icon body with hover-revealed name/size + controls bars.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 140 }}>
+        <MediaTile
+          revealOn="visible"
+          media={
+            <Image
+              src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=200&q=60"
+              alt=""
+              aspectRatio={1}
+              objectFit="cover"
+            />
+          }
+          title="lake.jpg"
+          meta="2.4 MB"
         />
       </div>
     ),

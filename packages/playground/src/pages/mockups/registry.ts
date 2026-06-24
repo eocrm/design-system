@@ -41,6 +41,7 @@ export type ComponentName =
   | 'Indent'
   | 'Grid'
   | 'Masonry'
+  | 'MediaTile'
   | 'InlineDatePicker'
   | 'InlineDateRangePicker'
   | 'Input'

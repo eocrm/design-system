@@ -91,6 +91,7 @@ import { FilterChipDemo } from './pages/components/FilterChipDemo';
 import { PersonDisplayDemo } from './pages/components/PersonDisplayDemo';
 import { IconTileDemo } from './pages/components/IconTileDemo';
 import { ImageDemo } from './pages/components/ImageDemo';
+import { MediaTileDemo } from './pages/components/MediaTileDemo';
 import { ImageCropDemo } from './pages/components/ImageCropDemo';
 import { DividerDemo } from './pages/components/DividerDemo';
 import { DrawerDemo } from './pages/components/DrawerDemo';
@@ -206,6 +207,7 @@ export default function App() {
             <Route path="/components/filter-chip" element={<FilterChipDemo />} />
             <Route path="/components/icon-tile" element={<IconTileDemo />} />
             <Route path="/components/image" element={<ImageDemo />} />
+            <Route path="/components/media-tile" element={<MediaTileDemo />} />
             <Route path="/components/image-crop" element={<ImageCropDemo />} />
             <Route path="/components/divider" element={<DividerDemo />} />
             <Route path="/components/drawer" element={<DrawerDemo />} />
