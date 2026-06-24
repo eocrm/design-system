@@ -2,11 +2,23 @@ import { forwardRef, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import type { RichDoc } from './engine/model';
 import { renderDoc } from './engine/renderDoc';
+import type { RenderLink } from './engine/renderLink';
 import styles from './RichText.module.scss';
 
 export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
   /** The document to render. Build one with `emptyDoc()` / `createBlock()` or the transforms. */
   value: RichDoc;
+  /**
+   * Substitute how a link renders. Called per link with `{ href, text }` and the
+   * default `<a>` node; return your own node (e.g. a task/member chip) or the
+   * `defaultNode` to keep the standard anchor. Render-time only — the document
+   * model is unchanged, so serialization still emits a plain link.
+   *
+   * @remarks Keep it cheap — it runs on every render. Don't block on a network
+   * call inside `renderLink`; return a component that fetches/caches the lookup
+   * itself (or falls back to `defaultNode` while loading).
+   */
+  renderLink?: RenderLink;
 }
 
 /**
@@ -41,14 +53,14 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
  * - ❌ Hand-writing HTML to display rich content — feed a `RichDoc` to `<RichText>`.
  */
 export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichText(
-  { value, className, ...props },
+  { value, renderLink, className, ...props },
   ref,
 ) {
   // {...props} last so the consumer can override anything except the composed
   // className (Pattern A — consumer wins).
   return (
     <div ref={ref} className={clsx(styles.root, className)} {...props}>
-      {renderDoc(value)}
+      {renderDoc(value, { renderLink })}
     </div>
   );
 });

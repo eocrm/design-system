@@ -6,11 +6,44 @@ import {
   setBlockType,
   Cluster,
   Button,
+  Badge,
   type RichDoc,
+  type RenderLink,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+// A consumer-supplied resolver: links pointing at an in-space task URL render as
+// a task chip; everything else falls back to a normal <a>.
+const TASK_RE = /^https?:\/\/app\.eocrm\/task\/(\d+)/i;
+const renderLink: RenderLink = ({ href }, fallback) => {
+  const m = TASK_RE.exec(href);
+  return m ? <Badge tone="purple">#{m[1]} · Ship the gallery</Badge> : fallback;
+};
+
+// A doc with one resolvable task link (→ chip) and one plain external link (→ <a>).
+const LINK_DOC: RichDoc = {
+  blocks: [
+    {
+      id: 'lr',
+      type: 'paragraph',
+      inlines: [
+        { text: 'Track ', marks: [] },
+        {
+          text: 'https://app.eocrm/task/123',
+          marks: [{ type: 'link', href: 'https://app.eocrm/task/123' }],
+        },
+        { text: ' and read more at ', marks: [] },
+        {
+          text: 'example.com',
+          marks: [{ type: 'link', href: 'https://example.com' }],
+        },
+        { text: '.', marks: [] },
+      ],
+    },
+  ],
+};
 
 const SAMPLE: RichDoc = {
   blocks: [
@@ -83,6 +116,18 @@ setDoc(r.doc);`}
           </Button>
         </Cluster>
         <RichText value={doc} />
+      </Example>
+
+      <Example
+        title="Link substitution (renderLink)"
+        description="Pass renderLink to swap how a link renders. Here a link to an in-space task URL (https://app.eocrm/task/123) becomes a task chip, while a plain external link stays a normal <a>. The model is unchanged — renderLink is render-time only; serialization still emits a link."
+        code={`const renderLink: RenderLink = ({ href }, fallback) => {
+  const m = /^https?:\\/\\/app\\.eocrm\\/task\\/(\\d+)/i.exec(href);
+  return m ? <Badge tone="purple">#{m[1]} · Ship the gallery</Badge> : fallback;
+};
+<RichText value={doc} renderLink={renderLink} />`}
+      >
+        <RichText value={LINK_DOC} renderLink={renderLink} />
       </Example>
     </DemoLayout>
   );

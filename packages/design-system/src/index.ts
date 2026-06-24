@@ -485,6 +485,7 @@ export type {
   RichPoint,
   RichRange,
 } from './components/RichText';
+export type { RichTextLink, RenderLink } from './components/RichText/engine/renderLink';
 export {
   emptyDoc,
   createBlock,

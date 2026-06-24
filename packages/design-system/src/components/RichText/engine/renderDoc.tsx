@@ -5,10 +5,25 @@ import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
 import { runsText, runsLength } from './inlines';
 import { safeHref } from './safeHref';
 import { isListItem, effectiveDepths } from './listDepths';
+import type { RenderLink } from './renderLink';
 
 export interface RenderDocOptions {
   /** Editable surface: add `data-block-id` anchors + render empty blocks with a `<br>`. */
   editable?: boolean;
+  /**
+   * Replace how a link renders (e.g. a task/member chip). In the read-only viewer
+   * the returned node substitutes the `<a>` directly; on an editable surface a
+   * substituted node is wrapped in an atomic, non-editable `[data-rich-link]`
+   * widget so the caret steps over it as a single unit. Return the supplied
+   * default node to keep the standard `<a>`.
+   */
+  renderLink?: RenderLink;
+}
+
+// Resolved options threaded through the render call chain (never module state).
+interface ResolvedOptions {
+  editable: boolean;
+  renderLink?: RenderLink;
 }
 
 // Outer → inner nesting order so output is stable + diff-friendly.
@@ -26,12 +41,17 @@ function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
       return <s>{child}</s>;
     case 'code':
       return <code>{child}</code>;
-    case 'link':
+    case 'link': {
+      // The `renderLink` substitution is handled in `renderInlines` (which coalesces
+      // contiguous same-href runs into one logical link); here we only emit the
+      // default <a> for the unsubstituted path.
+      const href = mark.type === 'link' ? safeHref(mark.href) : undefined;
       return (
-        <a href={mark.type === 'link' ? safeHref(mark.href) : undefined} rel="noopener noreferrer">
+        <a href={href} rel="noopener noreferrer">
           {child}
         </a>
       );
+    }
     case 'mention':
       return (
         <span
@@ -59,37 +79,82 @@ function renderRun(run: Inline, key: number): ReactNode {
   return <Fragment key={key}>{node}</Fragment>;
 }
 
-function renderInlines(inlines: Inline[]): ReactNode {
-  return inlines.map((run, i) => renderRun(run, i));
+function renderInlines(inlines: Inline[], opts: ResolvedOptions): ReactNode {
+  const out: ReactNode[] = [];
+  let i = 0;
+  while (i < inlines.length) {
+    const run = inlines[i];
+    const lm = run.marks.find((m) => m.type === 'link');
+    const linkHref = lm && lm.type === 'link' ? lm.href : null;
+    const safe = opts.renderLink && linkHref != null ? safeHref(linkHref) : undefined;
+    if (safe) {
+      // Coalesce contiguous runs that share this exact link href into ONE logical
+      // link, so a link split across runs (e.g. internal formatting, HTML import)
+      // resolves to a single chip — not one chip per run.
+      let j = i;
+      let text = '';
+      while (j < inlines.length) {
+        const m = inlines[j].marks.find((mm) => mm.type === 'link');
+        if (!m || m.type !== 'link' || m.href !== linkHref) break;
+        text += inlines[j].text;
+        j += 1;
+      }
+      const fallback = (
+        <a href={safe} rel="noopener noreferrer">
+          {text}
+        </a>
+      );
+      const custom = opts.renderLink!({ href: safe, text }, fallback);
+      if (custom !== fallback) {
+        // Substituted: one node for the whole span. In the editor it's an atomic,
+        // non-editable widget tagged with the span's MODEL length (`data-len`).
+        out.push(
+          opts.editable ? (
+            <span key={i} data-rich-link data-len={text.length} contentEditable={false}>
+              {custom}
+            </span>
+          ) : (
+            <Fragment key={i}>{custom}</Fragment>
+          ),
+        );
+        i = j;
+        continue;
+      }
+      // Consumer declined → fall through to normal per-run rendering (default <a>).
+    }
+    out.push(renderRun(run, i));
+    i += 1;
+  }
+  return out;
 }
 
-function blockContent(block: Block, editable: boolean): ReactNode {
-  if (editable && runsLength(block.inlines) === 0) return <br />;
-  return renderInlines(block.inlines);
+function blockContent(block: Block, opts: ResolvedOptions): ReactNode {
+  if (opts.editable && runsLength(block.inlines) === 0) return <br />;
+  return renderInlines(block.inlines, opts);
 }
 
-function renderBlock(block: Block, editable: boolean): ReactNode {
-  const anchor = editable ? { 'data-block-id': block.id } : undefined;
+function renderBlock(block: Block, opts: ResolvedOptions): ReactNode {
+  const anchor = opts.editable ? { 'data-block-id': block.id } : undefined;
   switch (block.type) {
     case 'heading': {
       const Tag = `h${block.level ?? 1}` as 'h1' | 'h2' | 'h3';
       return (
         <Tag key={block.id} {...anchor}>
-          {blockContent(block, editable)}
+          {blockContent(block, opts)}
         </Tag>
       );
     }
     case 'blockquote':
       return (
         <blockquote key={block.id} {...anchor}>
-          {blockContent(block, editable)}
+          {blockContent(block, opts)}
         </blockquote>
       );
     case 'code_block':
       return (
         <pre key={block.id} {...anchor}>
           <code>
-            {editable && runsLength(block.inlines) === 0 ? <br /> : runsText(block.inlines)}
+            {opts.editable && runsLength(block.inlines) === 0 ? <br /> : runsText(block.inlines)}
           </code>
         </pre>
       );
@@ -97,7 +162,7 @@ function renderBlock(block: Block, editable: boolean): ReactNode {
     default:
       return (
         <p key={block.id} {...anchor}>
-          {blockContent(block, editable)}
+          {blockContent(block, opts)}
         </p>
       );
   }
@@ -118,7 +183,7 @@ function collectList(
   blocks: Block[],
   start: number,
   eff: number[],
-  editable: boolean,
+  opts: ResolvedOptions,
 ): { tag: 'ul' | 'ol'; items: ListItemNode[]; next: number } {
   const baseDepth = eff[start];
   const tag = blocks[start].type === 'ordered_item' ? 'ol' : 'ul';
@@ -128,16 +193,16 @@ function collectList(
     const d = eff[i];
     if (d < baseDepth) break;
     if (d > baseDepth) {
-      const sub = collectList(blocks, i, eff, editable);
+      const sub = collectList(blocks, i, eff, opts);
       if (items.length > 0)
-        items[items.length - 1].child = renderListTree(sub.tag, sub.items, editable);
+        items[items.length - 1].child = renderListTree(sub.tag, sub.items, opts);
       i = sub.next;
       continue;
     }
     items.push({
       key: blocks[i].id,
       blockId: blocks[i].id,
-      content: blockContent(blocks[i], editable),
+      content: blockContent(blocks[i], opts),
       child: null,
     });
     i += 1;
@@ -145,12 +210,12 @@ function collectList(
   return { tag, items, next: i };
 }
 
-function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[], editable: boolean): ReactNode {
+function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[], opts: ResolvedOptions): ReactNode {
   const ListTag = tag;
   return (
     <ListTag>
       {items.map((it) => (
-        <li key={it.key} {...(editable ? { 'data-block-id': it.blockId } : {})}>
+        <li key={it.key} {...(opts.editable ? { 'data-block-id': it.blockId } : {})}>
           {it.content}
           {it.child}
         </li>
@@ -175,18 +240,21 @@ function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[], editable: boole
  * Read-only output (default) is byte-identical to the pre-options behaviour.
  */
 export function renderDoc(doc: RichDoc, options: RenderDocOptions = {}): ReactNode {
-  const editable = options.editable ?? false;
+  const opts: ResolvedOptions = {
+    editable: options.editable ?? false,
+    renderLink: options.renderLink,
+  };
   const eff = effectiveDepths(doc.blocks);
   const out: ReactNode[] = [];
   let i = 0;
   while (i < doc.blocks.length) {
     if (isListItem(doc.blocks[i])) {
       const startId = doc.blocks[i].id;
-      const { tag, items, next } = collectList(doc.blocks, i, eff, editable);
-      out.push(<Fragment key={`list-${startId}`}>{renderListTree(tag, items, editable)}</Fragment>);
+      const { tag, items, next } = collectList(doc.blocks, i, eff, opts);
+      out.push(<Fragment key={`list-${startId}`}>{renderListTree(tag, items, opts)}</Fragment>);
       i = next;
     } else {
-      out.push(renderBlock(doc.blocks[i], editable));
+      out.push(renderBlock(doc.blocks[i], opts));
       i += 1;
     }
   }

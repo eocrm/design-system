@@ -5,14 +5,25 @@ import {
   fromMarkdown,
   toHtml,
   toMarkdown,
+  Badge,
   Code,
   Text,
   Stack,
   type RichDoc,
+  type RenderLink,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+// A consumer-supplied resolver: a link to an in-space task URL renders as a task
+// chip; everything else falls back to a normal <a>. Same resolver works in the
+// read-only <RichText> viewer and here in the editor (as an atomic chip).
+const TASK_RE = /^https?:\/\/app\.eocrm\/task\/(\d+)/i;
+const renderLink: RenderLink = ({ href }, fallback) => {
+  const m = TASK_RE.exec(href);
+  return m ? <Badge tone="purple">#{m[1]} · Ship the gallery</Badge> : fallback;
+};
 
 export function RichTextEditorDemo() {
   const [doc, setDoc] = useState<RichDoc>(docFromText('Type here. Select a word and press ⌘B.'));
@@ -23,6 +34,9 @@ export function RichTextEditorDemo() {
     ),
   );
   const [mentionDoc, setMentionDoc] = useState<RichDoc>(() => docFromText('Assign this to '));
+  const [autolinkDoc, setAutolinkDoc] = useState<RichDoc>(() =>
+    docFromText('Type a task URL below to watch it autolink. '),
+  );
   const TEAM = [
     { id: 'u1', label: 'Alice Nguyen', description: 'alice@eocrm.dev' },
     { id: 'u2', label: 'Bob Martinez', description: 'bob@eocrm.dev' },
@@ -101,6 +115,31 @@ const [doc, setDoc] = useState(() => fromMarkdown('# Imported\\n\\n- one\\n- two
           placeholder="Type @ to mention someone…"
           mentions={{ onQuery: queryTeam }}
         />
+      </Example>
+
+      <Example
+        title="Autolink + link previews"
+        description="Autolink is on by default — type or paste a URL like https://app.eocrm/task/123 (add a trailing space) and it becomes a link. With renderLink, a resolvable task URL renders as an atomic task chip: the caret sits before/after it and Backspace deletes the whole chip in one step. It's render-time only — serialization still emits a plain link. A plain external URL stays an editable <a>."
+        code={`const renderLink: RenderLink = ({ href }, fallback) => {
+  const m = /^https?:\\/\\/app\\.eocrm\\/task\\/(\\d+)/i.exec(href);
+  return m ? <Badge tone="purple">#{m[1]} · Ship the gallery</Badge> : fallback;
+};
+// autolink is on by default; pass renderLink to preview resolvable links as chips
+<RichTextEditor value={doc} onChange={setDoc} toolbar renderLink={renderLink} />`}
+      >
+        <Stack gap="sm">
+          <RichTextEditor
+            value={autolinkDoc}
+            onChange={setAutolinkDoc}
+            toolbar
+            renderLink={renderLink}
+            placeholder="Type https://app.eocrm/task/123 then a space…"
+          />
+          <Text size="sm" tone="muted">
+            Try typing or pasting <Code>https://app.eocrm/task/123</Code> (task chip) and{' '}
+            <Code>https://example.com</Code> (plain link).
+          </Text>
+        </Stack>
       </Example>
 
       <Example

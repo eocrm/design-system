@@ -62,3 +62,85 @@ describe('selection mapping', () => {
     root.remove();
   });
 });
+
+// An atomic [data-rich-link] widget renders DISPLAY text ("#1 Task", 7 chars) but
+// represents `data-len` MODEL chars (13, e.g. the URL "https://a/t/1"). The
+// caret can only sit BEFORE or AFTER it (contenteditable=false), never inside.
+//   <p data-block-id="b1">hi <span data-rich-link data-len="13" …>#1 Task</span> end</p>
+//   model: "hi " (3) + widget (13) + " end" (4) = 20 model chars total.
+function buildWidgetRoot(): HTMLElement {
+  const root = document.createElement('div');
+  root.innerHTML =
+    '<p data-block-id="b1">hi <span data-rich-link data-len="13" contenteditable="false">#1 Task</span> end</p>';
+  document.body.appendChild(root);
+  return root;
+}
+
+describe('selection mapping — atomic [data-rich-link] widget', () => {
+  it('pointFromDom: counts the widget as data-len (13), not its 7 display chars', () => {
+    const root = buildWidgetRoot();
+    const p = root.querySelector('[data-block-id="b1"]') as HTMLElement;
+    const lead = p.firstChild as Text; // "hi "
+    const trail = p.lastChild as Text; // " end"
+
+    // caret just before the widget → end of "hi " (3 model chars)
+    expect(pointFromDom(root, lead, 3)).toEqual({ blockId: 'b1', offset: 3 });
+    // element-node boundary: <p> at child index 1 (between "hi " and the widget)
+    expect(pointFromDom(root, p, 1)).toEqual({ blockId: 'b1', offset: 3 });
+
+    // caret just after the widget → 3 + 13 = 16 (NOT 3 + 7 = 10)
+    expect(pointFromDom(root, trail, 0)).toEqual({ blockId: 'b1', offset: 16 });
+    // element-node boundary: <p> at child index 2 (just after the widget)
+    expect(pointFromDom(root, p, 2)).toEqual({ blockId: 'b1', offset: 16 });
+
+    // caret at the very end of " end" → 16 + 4 = 20
+    expect(pointFromDom(root, trail, 4)).toEqual({ blockId: 'b1', offset: 20 });
+    root.remove();
+  });
+
+  it('pointToDom: widget-boundary offsets map adjacent to the widget, never inside', () => {
+    const root = buildWidgetRoot();
+    const p = root.querySelector('[data-block-id="b1"]') as HTMLElement;
+    const lead = p.firstChild as Text; // "hi "
+    const widget = p.querySelector('[data-rich-link]') as HTMLElement;
+    const trail = p.lastChild as Text; // " end"
+    const widgetIndex = Array.prototype.indexOf.call(p.childNodes, widget); // 1
+
+    // offset 3 → before the widget. Either end of "hi " text OR <p> at widget index.
+    const before = pointToDom(root, { blockId: 'b1', offset: 3 })!;
+    if (before.node === lead) {
+      expect(before.offset).toBe(3); // end of "hi "
+    } else {
+      expect(before.node).toBe(p);
+      expect(before.offset).toBe(widgetIndex); // before the widget child
+    }
+    // critically: it does NOT point inside the widget
+    expect(widget.contains(before.node)).toBe(false);
+
+    // offset 16 → after the widget: <p> at the index just past the widget,
+    // or the start of the trailing text node.
+    const after = pointToDom(root, { blockId: 'b1', offset: 16 })!;
+    expect(widget.contains(after.node)).toBe(false);
+    if (after.node === trail) {
+      expect(after.offset).toBe(0); // start of " end"
+    } else {
+      expect(after.node).toBe(p);
+      expect(after.offset).toBe(widgetIndex + 1); // just after the widget child
+    }
+
+    // offset 20 → end of the trailing " end" text node
+    const end = pointToDom(root, { blockId: 'b1', offset: 20 })!;
+    expect(end.node).toBe(trail);
+    expect(end.offset).toBe(4);
+    root.remove();
+  });
+
+  it('pointFromDom/pointToDom round-trip across the widget boundary', () => {
+    const root = buildWidgetRoot();
+    for (const offset of [0, 3, 16, 18, 20]) {
+      const dom = pointToDom(root, { blockId: 'b1', offset })!;
+      expect(pointFromDom(root, dom.node, dom.offset)).toEqual({ blockId: 'b1', offset });
+    }
+    root.remove();
+  });
+});

@@ -2,6 +2,14 @@
 // functions take the editable root element; block elements carry `data-block-id`.
 import type { Point, Range } from '../RichText/engine/model';
 
+/** The MODEL length an atomic `[data-rich-link]` widget represents. Falls back to
+ *  its display-text length if `data-len` is missing/non-numeric (so a malformed
+ *  widget degrades gracefully instead of poisoning the offset math with NaN). */
+function widgetLen(w: HTMLElement): number {
+  const n = Number(w.dataset.len);
+  return Number.isFinite(n) ? n : (w.textContent?.length ?? 0);
+}
+
 function blockElementFor(root: HTMLElement, node: Node): HTMLElement | null {
   let el: Node | null = node.nodeType === Node.TEXT_NODE ? node.parentNode : node;
   while (el && el !== root) {
@@ -19,16 +27,44 @@ function blockElementFor(root: HTMLElement, node: Node): HTMLElement | null {
  * produces both. Measured as the length of the text between the block start and
  * the point via a DOM Range, which counts only character data (so `<br>`,
  * empty blocks, and nested mark spans are all handled correctly).
+ *
+ * Atomic `[data-rich-link]` widgets are corrected for: such a widget renders
+ * DISPLAY text (e.g. "#1 Task") but represents `data-len` MODEL chars (e.g. the
+ * URL it links). `range.toString()` counts the display text, so for every widget
+ * that lies fully before the range end we add `data-len - displayLength`. When a
+ * block contains no `[data-rich-link]` the correction loop runs zero times, so
+ * this is an exact no-op for ordinary content.
  */
 function offsetWithinBlock(blockEl: HTMLElement, node: Node, offset: number): number {
-  const range = blockEl.ownerDocument.createRange();
+  const doc = blockEl.ownerDocument;
+  const range = doc.createRange();
   range.setStart(blockEl, 0);
   try {
     range.setEnd(node, offset);
   } catch {
     return 0; // node not inside blockEl (shouldn't happen) → block start
   }
-  return range.toString().length;
+  let len = range.toString().length;
+  for (const w of blockEl.querySelectorAll<HTMLElement>('[data-rich-link]')) {
+    // The widget's display text is included in `len` iff our range end is at or
+    // past the point immediately AFTER the widget. Compare our range's END
+    // boundary against a collapsed range positioned just after the widget:
+    // compareBoundaryPoints(END_TO_END, afterW) returns where our END sits
+    // relative to afterW's (collapsed) boundary — >= 0 means our end is at/after
+    // the point just past the widget, so the whole widget falls within
+    // [blockStart, (node,offset)] and we replace its display length with data-len.
+    // (END_TO_END, not END_TO_START: the latter compares against afterW's START
+    // and mis-classifies the exact-boundary case in jsdom.)
+    const afterW = doc.createRange();
+    afterW.setStartAfter(w);
+    afterW.collapse(true);
+    if (range.compareBoundaryPoints(Range.END_TO_END, afterW) >= 0) {
+      const declared = widgetLen(w);
+      const shown = w.textContent?.length ?? 0;
+      len += declared - shown;
+    }
+  }
+  return len;
 }
 
 /**
@@ -61,16 +97,57 @@ export function pointFromDom(root: HTMLElement, node: Node, offset: number): Poi
 export function pointToDom(root: HTMLElement, point: Point): { node: Node; offset: number } | null {
   const blockEl = root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(point.blockId)}"]`);
   if (!blockEl) return null;
-  const walker = blockEl.ownerDocument.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
+  // Walk TEXT nodes and atomic `[data-rich-link]` widgets, accumulating model
+  // length: text → its char length, widget → `data-len` (NOT its display text;
+  // we never descend into a widget). A widget is contenteditable=false, so the
+  // caret can only sit adjacent to it — when `remaining` lands at a widget we
+  // return a point in the widget's PARENT at the widget's child index (before)
+  // or +1 (after), never inside it. With no widgets present this behaves exactly
+  // like the previous text-only TreeWalker (FILTER_SKIP descends into mark spans).
+  const walker = blockEl.ownerDocument.createTreeWalker(
+    blockEl,
+    NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+    {
+      acceptNode(n) {
+        if (n instanceof HTMLElement && n.hasAttribute('data-rich-link'))
+          return NodeFilter.FILTER_ACCEPT; // the widget itself, atomic
+        // Reject the widget's contents so the walk treats it as one opaque unit
+        // (a TreeWalker descends into an ACCEPTED element, so we must REJECT its
+        // descendants — REJECT skips the node AND its subtree, unlike SKIP).
+        let p: Node | null = n.parentNode;
+        while (p && p !== blockEl) {
+          if (p instanceof HTMLElement && p.hasAttribute('data-rich-link'))
+            return NodeFilter.FILTER_REJECT;
+          p = p.parentNode;
+        }
+        if (n.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT;
+        return NodeFilter.FILTER_SKIP; // descend into ordinary inline elements
+      },
+    },
+  );
   let remaining = point.offset;
   let last: Text | null = null;
-  let n = walker.nextNode() as Text | null;
+  let n = walker.nextNode();
   while (n) {
-    const len = n.textContent?.length ?? 0;
-    if (remaining <= len) return { node: n, offset: remaining };
-    remaining -= len;
-    last = n;
-    n = walker.nextNode() as Text | null;
+    if (n.nodeType === Node.TEXT_NODE) {
+      const t = n as Text;
+      const len = t.textContent?.length ?? 0;
+      if (remaining <= len) return { node: t, offset: remaining };
+      remaining -= len;
+      last = t;
+    } else {
+      const w = n as HTMLElement;
+      const parent = w.parentNode!;
+      const index = Array.prototype.indexOf.call(parent.childNodes, w);
+      const declared = widgetLen(w);
+      // At the widget's leading edge → caret just before it.
+      if (remaining <= 0) return { node: parent, offset: index };
+      // Inside the widget's model span (incl. its trailing edge) → caret after it.
+      if (remaining <= declared) return { node: parent, offset: index + 1 };
+      remaining -= declared;
+      last = null; // can't anchor a leftover offset to a non-text widget
+    }
+    n = walker.nextNode();
   }
   if (last) return { node: last, offset: last.textContent?.length ?? 0 };
   return { node: blockEl, offset: 0 }; // empty block (only a <br>)
