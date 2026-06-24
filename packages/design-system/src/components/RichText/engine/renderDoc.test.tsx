@@ -274,3 +274,39 @@ describe('renderDoc editable option', () => {
     expect(html(doc)).toBe('<p>hi</p>');
   });
 });
+
+describe('renderDoc renderLink option', () => {
+  it('renderLink substitutes a link node in the viewer', () => {
+    const doc = {
+      blocks: [createBlock('paragraph', 'x', { marks: [{ type: 'link', href: 'https://a.com' }] })],
+    };
+    const { container } = render(
+      <div>{renderDoc(doc, { renderLink: ({ href }) => <span data-chip>{href}</span> })}</div>,
+    );
+    expect(container.querySelector('[data-chip]')).not.toBeNull();
+    expect(container.querySelector('a')).toBeNull();
+  });
+
+  it('editable mode wraps a custom link return in an atomic widget; a fallback return is not wrapped', () => {
+    const doc = {
+      blocks: [
+        createBlock('paragraph', 'abc', { marks: [{ type: 'link', href: 'https://a.com' }] }),
+      ],
+    };
+    const custom = render(
+      <div>
+        {renderDoc(doc, { editable: true, renderLink: ({ href }) => <span data-chip>{href}</span> })}
+      </div>,
+    );
+    const w = custom.container.querySelector('[data-rich-link]');
+    expect(w).not.toBeNull();
+    expect(w!.getAttribute('data-len')).toBe('3'); // model run text length
+    expect(w!.getAttribute('contenteditable')).toBe('false');
+
+    const fb = render(
+      <div>{renderDoc(doc, { editable: true, renderLink: (_l, fallback) => fallback })}</div>,
+    );
+    expect(fb.container.querySelector('[data-rich-link]')).toBeNull(); // plain link stays editable
+    expect(fb.container.querySelector('a')).not.toBeNull();
+  });
+});
