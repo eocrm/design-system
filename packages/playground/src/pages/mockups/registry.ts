@@ -46,6 +46,7 @@ export type ComponentName =
   | 'Input'
   | 'Kanban'
   | 'Kbd'
+  | 'Lightbox'
   | 'LiquidEditor'
   | 'Link'
   | 'LinkCard'

@@ -22,6 +22,16 @@ export interface Messages {
     /** Label on the retry button in the broken-image placeholder. */
     retry: string;
   };
+  lightbox: {
+    /** Default aria-label for the gallery dialog. */
+    label: string;
+    /** aria-label on the previous-image chevron. */
+    previous: string;
+    /** aria-label on the next-image chevron. */
+    next: string;
+    /** aria-label on the close (×) button. */
+    close: string;
+  };
   passwordInput: {
     /** aria-label on the show-password toggle when the password is hidden. */
     show: string;

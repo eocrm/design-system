@@ -17,6 +17,12 @@ export const en: Messages = {
     loadError: 'Image failed to load',
     retry: 'Retry',
   },
+  lightbox: {
+    label: 'Image gallery',
+    previous: 'Previous image',
+    next: 'Next image',
+    close: 'Close gallery',
+  },
   passwordInput: {
     show: 'Show password',
     hide: 'Hide password',

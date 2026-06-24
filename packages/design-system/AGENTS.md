@@ -2240,6 +2240,25 @@ const [open, setOpen] = useState(false);
 
 **See also:** `<Drawer>` for edge-anchored variant.
 
+### `<Lightbox>` — full-screen image gallery overlay
+
+`<Lightbox open onOpenChange items>` shows one large image at a time with prev/next chevrons, ← → keys, a thumbnail strip, a position counter, and an optional caption. Controlled `open` like `<Modal>`; the current index is uncontrolled (`defaultIndex`) unless you pass `index` + `onIndexChange`. `loop` (default true) wraps at the ends. The consumer owns the trigger — typically a row of interactive `<Image>` thumbnails. For a single inline image use `<Image>`.
+
+```tsx
+const [open, setOpen] = useState(false);
+const [start, setStart] = useState(0);
+<Lightbox
+  open={open}
+  onOpenChange={setOpen}
+  defaultIndex={start}
+  items={files.map((f) => ({ src: f.url, alt: f.name, caption: f.name }))}
+/>;
+```
+
+- Each `LightboxItem` is `{ src, alt, caption?, thumbnail? }` — `alt` is required.
+- Single item → chevrons, counter, and strip auto-hide. Empty `items` → renders nothing.
+- Reuses the DS overlay machinery (focus-trap, scroll-lock, Esc, stacking above modals).
+
 ### `<Drawer>` — edge-anchored slide-in panel
 
 ```tsx

@@ -1,0 +1,20 @@
+:root {
+  --lightbox-scrim: var(--color-bg-overlay-strong);
+  --lightbox-z: var(--z-modal);
+
+  --lightbox-control-bg: rgb(255 255 255 / 14%);
+  --lightbox-control-bg-hover: rgb(255 255 255 / 24%);
+  --lightbox-control-fg: var(--color-fg-on-overlay);
+
+  --lightbox-caption-fg: rgb(255 255 255 / 92%);
+  --lightbox-counter-fg: rgb(255 255 255 / 64%);
+
+  --lightbox-thumb-size: 56px;
+  --lightbox-thumb-strip-bg: rgb(0 0 0 / 30%);
+  --lightbox-thumb-active-ring: var(--ring-accent);
+
+  --lightbox-padding: var(--space-4);
+  --lightbox-gap: var(--space-3);
+  --lightbox-control-size: var(--size-lg);
+  --lightbox-radius: var(--radius-md);
+}

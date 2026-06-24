@@ -1191,6 +1191,35 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     ),
   },
   {
+    to: '/components/lightbox',
+    name: 'Lightbox',
+    description: 'Full-screen image gallery overlay — large image, prev/next, thumbnails, caption.',
+    preview: (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 4,
+          width: '100%',
+          maxWidth: 120,
+        }}
+      >
+        <Image
+          src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=120&q=60"
+          alt=""
+          size="md"
+          objectFit="cover"
+        />
+        <Image
+          src="https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=120&q=60"
+          alt=""
+          size="md"
+          objectFit="cover"
+        />
+      </div>
+    ),
+  },
+  {
     to: '/components/filter-chip',
     name: 'FilterChip',
     description:

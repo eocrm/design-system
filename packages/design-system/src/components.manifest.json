@@ -325,7 +325,9 @@
       "Button",
       "Skeleton"
     ],
-    "composedBy": []
+    "composedBy": [
+      "Lightbox"
+    ]
   },
   "ImageCrop": {
     "tier": "composition",
@@ -368,6 +370,15 @@
     "composedBy": [
       "TopBar"
     ]
+  },
+  "Lightbox": {
+    "tier": "composition",
+    "cluster": "Overlays",
+    "composes": [
+      "Image",
+      "Skeleton"
+    ],
+    "composedBy": []
   },
   "Link": {
     "tier": "primitive",
@@ -567,7 +578,8 @@
     "composedBy": [
       "DataTable",
       "Image",
-      "ImageCrop"
+      "ImageCrop",
+      "Lightbox"
     ]
   },
   "Slider": {
