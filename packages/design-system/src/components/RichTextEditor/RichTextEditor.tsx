@@ -474,9 +474,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             }
           }
         }
-        // Autolink on type: typing a space after a URL links the URL, then inserts
-        // the space — both in one commit (one undo step). Skips when the caret is
-        // already inside a link (handled by `applyTypeAutolink`).
+        // Autolink on type: typing a space after a URL links the URL AND inserts the
+        // space — both in one commit (one undo step). `applyTypeAutolink` inserts the
+        // boundary first (so it stays OUTSIDE the link) and links only the URL. Skips
+        // when the caret is already inside a link.
         if (
           autolinkOn !== false &&
           e.inputType === 'insertText' &&
@@ -486,11 +487,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           const linked = applyTypeAutolink(doc, range.anchor, e.data);
           if (linked) {
             e.preventDefault();
-            // Link first, then insert the space after it on the linked doc.
-            const inserted = insertText(linked.doc, range.anchor, e.data);
             setPendingMarks(null);
             pendingAtRef.current = null;
-            commit({ doc: inserted.doc, selection: inserted.selection }, 'type');
+            commit(linked, 'type');
             return;
           }
         }

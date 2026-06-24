@@ -3,21 +3,22 @@
 import type { RichDoc, Range, Point } from '../RichText/engine/model';
 import { findBlockIndex } from '../RichText/engine/position';
 import { runsText } from '../RichText/engine/inlines';
+import { insertText } from '../RichText/engine/transforms';
 import { linkAt, setLink } from './links';
 import { findUrl } from '../RichText/engine/autolink';
 
 /**
  * When typing `boundary` (e.g. `' '`) at a collapsed caret, link the URL that
- * ends at the caret. Returns the linked `{ doc, selection }` with the caret kept
- * at the original position (the caller inserts the boundary char AFTER on the
- * linked doc), or `null` when there's no URL to link or the caret already sits in
- * a link. `_boundary` signals the triggering char (e.g. `' '`); the caller
- * sequences its insertion, so this helper only links.
+ * ends at the caret AND insert the boundary char — returning the combined
+ * `{ doc, selection }` (caret after the boundary), or `null` when there's no URL
+ * to link or the caret already sits in a link. The boundary char is inserted
+ * BEFORE the link is applied, so it is never swept into the `<a>` (the URL run is
+ * linked over `[start, end]`, excluding the boundary at `end`).
  */
 export function applyTypeAutolink(
   doc: RichDoc,
   caret: Point,
-  _boundary: string,
+  boundary: string,
 ): { doc: RichDoc; selection: Range } | null {
   const idx = findBlockIndex(doc, caret.blockId);
   if (idx === -1) return null;
@@ -26,14 +27,15 @@ export function applyTypeAutolink(
   if (!found) return null;
   // Already linked? (caret inside/after an existing link) → skip.
   if (linkAt(doc, caret)) return null;
+  // Insert the boundary first (so it carries no link mark), then link only the URL.
+  const inserted = insertText(doc, caret, boundary);
   const range: Range = {
     anchor: { blockId: caret.blockId, offset: found.start },
     focus: { blockId: caret.blockId, offset: found.end },
   };
-  const linked = setLink(doc, range, found.href);
-  // Caret returns to the original position; the boundary char is inserted by the
-  // caller's normal insertText path AFTER this (the editor sequences them).
-  return { doc: linked.doc, selection: { anchor: caret, focus: caret } };
+  const linked = setLink(inserted.doc, range, found.href);
+  const after: Point = { blockId: caret.blockId, offset: caret.offset + boundary.length };
+  return { doc: linked.doc, selection: { anchor: after, focus: after } };
 }
 
 /**
@@ -48,13 +50,16 @@ export function atomicLinkDeleteRange(
   dir: 'backward' | 'forward',
   isResolved: (href: string) => boolean,
 ): Range | null {
-  const probe: Point =
-    dir === 'backward' ? caret : { blockId: caret.blockId, offset: caret.offset + 1 };
-  const at = linkAt(doc, probe);
-  if (!at || !isResolved(at.href)) return null;
-  // Only when the caret is exactly at the run's edge (after it for backward,
-  // before it for forward).
-  if (dir === 'backward' && caret.offset !== at.range.focus.offset) return null;
-  if (dir === 'forward' && caret.offset !== at.range.anchor.offset) return null;
-  return at.range;
+  if (dir === 'backward') {
+    if (caret.offset <= 0) return null;
+    // Probe the char BEFORE the caret so we pick the link ENDING at the caret
+    // (not a different link starting there, when two are adjacent).
+    const at = linkAt(doc, { blockId: caret.blockId, offset: caret.offset - 1 });
+    if (at && isResolved(at.href) && at.range.focus.offset === caret.offset) return at.range;
+    return null;
+  }
+  // forward: the char AT the caret belongs to the link starting there.
+  const at = linkAt(doc, { blockId: caret.blockId, offset: caret.offset });
+  if (at && isResolved(at.href) && at.range.anchor.offset === caret.offset) return at.range;
+  return null;
 }

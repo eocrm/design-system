@@ -29,13 +29,7 @@ interface ResolvedOptions {
 // Outer → inner nesting order so output is stable + diff-friendly.
 const MARK_ORDER: MarkType[] = ['mention', 'link', 'bold', 'italic', 'underline', 'strike', 'code'];
 
-function wrapMark(
-  type: MarkType,
-  mark: Mark,
-  child: ReactNode,
-  runText: string,
-  opts: ResolvedOptions,
-): ReactNode {
+function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
   switch (type) {
     case 'bold':
       return <strong>{child}</strong>;
@@ -48,20 +42,14 @@ function wrapMark(
     case 'code':
       return <code>{child}</code>;
     case 'link': {
+      // The `renderLink` substitution is handled in `renderInlines` (which coalesces
+      // contiguous same-href runs into one logical link); here we only emit the
+      // default <a> for the unsubstituted path.
       const href = mark.type === 'link' ? safeHref(mark.href) : undefined;
-      const fallback = (
+      return (
         <a href={href} rel="noopener noreferrer">
           {child}
         </a>
-      );
-      if (!opts.renderLink || !href) return fallback;
-      const custom = opts.renderLink({ href, text: runText }, fallback);
-      if (custom === fallback) return fallback; // consumer declined → plain editable link
-      if (!opts.editable) return custom;
-      return (
-        <span data-rich-link data-len={runText.length} contentEditable={false}>
-          {custom}
-        </span>
       );
     }
     case 'mention':
@@ -79,20 +67,65 @@ function wrapMark(
   }
 }
 
-function renderRun(run: Inline, key: number, opts: ResolvedOptions): ReactNode {
+function renderRun(run: Inline, key: number): ReactNode {
   const present = MARK_ORDER.filter((t) => run.marks.some((m) => m.type === t));
   let node: ReactNode = run.text;
   // Wrap innermost-first so present[0] (link) ends up outermost.
   for (let i = present.length - 1; i >= 0; i -= 1) {
     const type = present[i];
     const mark = run.marks.find((m) => m.type === type)!;
-    node = wrapMark(type, mark, node, run.text, opts);
+    node = wrapMark(type, mark, node);
   }
   return <Fragment key={key}>{node}</Fragment>;
 }
 
 function renderInlines(inlines: Inline[], opts: ResolvedOptions): ReactNode {
-  return inlines.map((run, i) => renderRun(run, i, opts));
+  const out: ReactNode[] = [];
+  let i = 0;
+  while (i < inlines.length) {
+    const run = inlines[i];
+    const lm = run.marks.find((m) => m.type === 'link');
+    const linkHref = lm && lm.type === 'link' ? lm.href : null;
+    const safe = opts.renderLink && linkHref != null ? safeHref(linkHref) : undefined;
+    if (safe) {
+      // Coalesce contiguous runs that share this exact link href into ONE logical
+      // link, so a link split across runs (e.g. internal formatting, HTML import)
+      // resolves to a single chip — not one chip per run.
+      let j = i;
+      let text = '';
+      while (j < inlines.length) {
+        const m = inlines[j].marks.find((mm) => mm.type === 'link');
+        if (!m || m.type !== 'link' || m.href !== linkHref) break;
+        text += inlines[j].text;
+        j += 1;
+      }
+      const fallback = (
+        <a href={safe} rel="noopener noreferrer">
+          {text}
+        </a>
+      );
+      const custom = opts.renderLink!({ href: safe, text }, fallback);
+      if (custom !== fallback) {
+        // Substituted: one node for the whole span. In the editor it's an atomic,
+        // non-editable widget tagged with the span's MODEL length (`data-len`).
+        out.push(
+          opts.editable ? (
+            <span key={i} data-rich-link data-len={text.length} contentEditable={false}>
+              {custom}
+            </span>
+          ) : (
+            <Fragment key={i}>{custom}</Fragment>
+          ),
+        );
+        i = j;
+        continue;
+      }
+      // Consumer declined → fall through to normal per-run rendering (default <a>).
+    }
+    out.push(renderRun(run, i));
+    i += 1;
+  }
+  return out;
 }
 
 function blockContent(block: Block, opts: ResolvedOptions): ReactNode {

@@ -2,6 +2,14 @@
 // functions take the editable root element; block elements carry `data-block-id`.
 import type { Point, Range } from '../RichText/engine/model';
 
+/** The MODEL length an atomic `[data-rich-link]` widget represents. Falls back to
+ *  its display-text length if `data-len` is missing/non-numeric (so a malformed
+ *  widget degrades gracefully instead of poisoning the offset math with NaN). */
+function widgetLen(w: HTMLElement): number {
+  const n = Number(w.dataset.len);
+  return Number.isFinite(n) ? n : (w.textContent?.length ?? 0);
+}
+
 function blockElementFor(root: HTMLElement, node: Node): HTMLElement | null {
   let el: Node | null = node.nodeType === Node.TEXT_NODE ? node.parentNode : node;
   while (el && el !== root) {
@@ -51,7 +59,7 @@ function offsetWithinBlock(blockEl: HTMLElement, node: Node, offset: number): nu
     afterW.setStartAfter(w);
     afterW.collapse(true);
     if (range.compareBoundaryPoints(Range.END_TO_END, afterW) >= 0) {
-      const declared = Number(w.dataset.len ?? '0');
+      const declared = widgetLen(w);
       const shown = w.textContent?.length ?? 0;
       len += declared - shown;
     }
@@ -131,7 +139,7 @@ export function pointToDom(root: HTMLElement, point: Point): { node: Node; offse
       const w = n as HTMLElement;
       const parent = w.parentNode!;
       const index = Array.prototype.indexOf.call(parent.childNodes, w);
-      const declared = Number(w.dataset.len ?? '0');
+      const declared = widgetLen(w);
       // At the widget's leading edge → caret just before it.
       if (remaining <= 0) return { node: parent, offset: index };
       // Inside the widget's model span (incl. its trailing edge) → caret after it.

@@ -312,4 +312,55 @@ describe('renderDoc renderLink option', () => {
     expect(fb.container.querySelector('[data-rich-link]')).toBeNull(); // plain link stays editable
     expect(fb.container.querySelector('a')).not.toBeNull();
   });
+
+  it('coalesces a same-href link split across runs into ONE chip', () => {
+    // Two adjacent runs share the same link href (e.g. internal bold, or HTML import).
+    const doc = {
+      blocks: [
+        {
+          id: 'b1',
+          type: 'paragraph' as const,
+          inlines: [
+            { text: 'ab', marks: [{ type: 'link' as const, href: 'https://a.com' }] },
+            {
+              text: 'cd',
+              marks: [{ type: 'link' as const, href: 'https://a.com' }, { type: 'bold' as const }],
+            },
+          ],
+        },
+      ],
+    };
+    let calls = 0;
+    const chips = render(
+      <div>
+        {renderDoc(doc, {
+          renderLink: ({ href, text }) => {
+            calls += 1;
+            return (
+              <span data-chip data-text={text}>
+                {href}
+              </span>
+            );
+          },
+        })}
+      </div>,
+    );
+    // One chip for the whole span, with the concatenated text — not one per run.
+    expect(chips.container.querySelectorAll('[data-chip]')).toHaveLength(1);
+    expect(chips.container.querySelector('[data-chip]')!.getAttribute('data-text')).toBe('abcd');
+    expect(calls).toBe(1);
+
+    // Editable: a single widget whose data-len is the full span length (4).
+    const ed = render(
+      <div>
+        {renderDoc(doc, {
+          editable: true,
+          renderLink: ({ href }) => <span data-chip>{href}</span>,
+        })}
+      </div>,
+    );
+    const widgets = ed.container.querySelectorAll('[data-rich-link]');
+    expect(widgets).toHaveLength(1);
+    expect(widgets[0].getAttribute('data-len')).toBe('4');
+  });
 });
