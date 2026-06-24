@@ -122,6 +122,16 @@ describe('Lightbox', () => {
     expect(screen.getByAltText('Charlie')).toBeInTheDocument();
   });
 
+  it('shows the load-error message and marks the broken img for hiding on error', () => {
+    open({ defaultIndex: 0 });
+    const stageImg = screen.getByAltText('Alpha');
+    fireEvent.error(stageImg);
+    // data-state='error' drives `.image[data-state='error'] { display: none }`;
+    // the role="img" error overlay carries the accessible name instead.
+    expect(stageImg).toHaveAttribute('data-state', 'error');
+    expect(screen.getByText('Image failed to load')).toBeInTheDocument();
+  });
+
   it('restores focus to the trigger on close', async () => {
     function Harness() {
       const [open, setOpen] = useState(false);
