@@ -1,6 +1,8 @@
 @use './MediaTile.tokens';
 
-// stylelint-disable property-disallowed-list -- internal overlay positioning, not consumer layout
+// Rule 4 note: the `position: relative/absolute` + `inset-*` + `flex` below are the
+// component's OWN internal overlay layout (the revealed bars), not consumer-facing
+// layout — the same overlay-child exception Image/Modal use.
 
 .root {
   position: relative;

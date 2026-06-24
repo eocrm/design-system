@@ -18,8 +18,8 @@
   --mediatile-meta-opacity: var(--opacity-muted);
 
   // Opacity states for the reveal animation.
-  --mediatile-opacity-hidden: 0;
-  --mediatile-opacity-shown: 1;
+  --mediatile-opacity-hidden: var(--opacity-hidden);
+  --mediatile-opacity-shown: var(--opacity-visible);
 
   // Gradient scrims for the top and bottom bars.
   --mediatile-scrim-top: linear-gradient(to bottom, var(--mediatile-scrim), transparent);
