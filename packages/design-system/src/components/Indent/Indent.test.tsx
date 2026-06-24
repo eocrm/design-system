@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { createRef } from 'react';
+import { createRef, type CSSProperties } from 'react';
 import { Indent } from './Indent';
 
 describe('Indent', () => {
@@ -77,6 +77,28 @@ describe('Indent', () => {
     const el = screen.getByTestId('ind');
     expect(el.style.background).toBe('red');
     expect(el.style.getPropertyValue('--indent-level')).toBe('2');
+  });
+
+  it('the level prop wins over a conflicting --indent-level in consumer style', () => {
+    render(
+      <Indent
+        data-testid="ind"
+        level={2}
+        style={{ ['--indent-level' as string]: 99 } as CSSProperties}
+      >
+        x
+      </Indent>,
+    );
+    expect(screen.getByTestId('ind').style.getPropertyValue('--indent-level')).toBe('2');
+  });
+
+  it('clamps a non-finite level to 0', () => {
+    render(
+      <Indent data-testid="ind" level={Number.NaN}>
+        x
+      </Indent>,
+    );
+    expect(screen.getByTestId('ind').style.getPropertyValue('--indent-level')).toBe('0');
   });
 
   it('spreads arbitrary HTML attributes', () => {

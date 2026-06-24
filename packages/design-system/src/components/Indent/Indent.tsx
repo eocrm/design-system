@@ -57,17 +57,20 @@ export interface IndentProps extends HTMLAttributes<HTMLDivElement> {
  * - ❌ Expecting it to arrange children — wrap a `<Stack>` inside if the indented
  *   block has multiple rows.
  */
-// {...rest} last so consumer attrs win (Pattern A); `style` is merged explicitly so
-// a consumer `style` can't clobber the internal --indent-level (same as Split/Grid).
+// {...rest} last so consumer attrs win (Pattern A). But `style` is spread FIRST in
+// the merge below so the internal --indent-level wins — depth is set via the `level`
+// prop, not a raw style var (same var-protection as Grid's --grid-columns).
 export const Indent = forwardRef<HTMLDivElement, IndentProps>(function Indent(
   { level = 1, gutter = 'lg', className, style, children, ...rest },
   ref,
 ) {
+  // Clamp to a non-negative, finite depth (a NaN/∞ level would yield an invalid calc()).
+  const indentLevel = Number.isFinite(level) ? Math.max(0, level) : 0;
   return (
     <div
       ref={ref}
       className={clsx(styles.indent, styles[`gutter-${gutter}`], className)}
-      style={{ ['--indent-level' as string]: Math.max(0, level), ...style } as CSSProperties}
+      style={{ ...style, ['--indent-level' as string]: indentLevel } as CSSProperties}
       {...rest}
     >
       {children}
