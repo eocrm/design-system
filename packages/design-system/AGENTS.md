@@ -245,6 +245,16 @@ const doc = {
 <RichText value={doc} />;
 ```
 
+**`renderLink`** (optional) — substitute how a link renders. The consumer checks "is this URL in my space?" and returns its own node (e.g. a task/member chip) or the supplied `fallback` (the standard `<a>`). It's render-time only — the model and `toHtml`/`toMarkdown` still emit a plain link, so serialization is unchanged. Don't do heavy synchronous work or block on the network inside it; return a component that handles its own lookup/cache. The same resolver works in `<RichText>` (viewer) and `<RichTextEditor>` (where a substituted link becomes an atomic chip).
+
+```tsx
+const renderLink: RenderLink = ({ href }, fallback) => {
+  const m = /^https?:\/\/app\.eocrm\/task\/(\d+)/i.exec(href);
+  return m ? <Badge tone="purple">#{m[1]}</Badge> : fallback;
+};
+<RichText value={doc} renderLink={renderLink} />;
+```
+
 When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The model is immutable; render the doc returned by a transform, never mutate in place.
 
 ### `<Button>` — action triggers
@@ -969,7 +979,20 @@ const [doc, setDoc] = useState(emptyDoc());
 
 **Links:** select text and press ⌘/Ctrl+K (or the toolbar link button) to add or edit a link; with the caret inside a link the URL is pre-filled and a Remove button appears; with no selection the URL is inserted as linked text. Esc / click-outside cancels. Stored hrefs are sanitized at render time (`safeHref` blocks `javascript:`/`data:`/protocol-relative).
 
-**Import:** `fromHtml(html)` and `fromMarkdown(md)` parse a string into a `RichDoc` (e.g. to seed `value` from stored/legacy content). Pasting rich HTML into the editor imports it as formatted content (parsed + sanitized). Markdown import is via `fromMarkdown` only — pasted plain text (incl. Markdown source) inserts literally. Both `from*` functions require a DOM environment (`DOMParser`); Markdown has no underline syntax and images/tables aren't modeled.
+**Autolink** (`autolink` prop, default `true`): typing a URL followed by a space, or pasting text containing a URL, turns it into a `link` mark automatically (`http(s)://…` or a bare `www.…` host; unsafe schemes are left as plain text). Set `autolink={false}` to disable both the type rule and paste autolinking.
+
+**`renderLink`** (optional, same `RenderLink` as `<RichText>`): preview links inline — the consumer checks "is this URL in my space?" and returns a chip or the `fallback` `<a>`. In the editor a substituted link becomes an **atomic chip**: the caret sits before/after it (arrow keys step over it, never inside) and Backspace deletes the whole chip in one step. It's render-time only — `toHtml`/`toMarkdown` and the model still emit a plain link, so serialization is unchanged. Don't do heavy synchronous work inside it.
+
+```tsx
+const renderLink: RenderLink = ({ href }, fallback) => {
+  const m = /^https?:\/\/app\.eocrm\/task\/(\d+)/i.exec(href);
+  return m ? <Badge tone="purple">#{m[1]}</Badge> : fallback;
+};
+// autolink is on by default; type/paste a URL to link it
+<RichTextEditor value={doc} onChange={setDoc} toolbar renderLink={renderLink} />;
+```
+
+**Import:** `fromHtml(html)` and `fromMarkdown(md)` parse a string into a `RichDoc` (e.g. to seed `value` from stored/legacy content). Pasting rich HTML into the editor imports it as formatted content (parsed + sanitized). Markdown import is via `fromMarkdown` only — pasted plain text (incl. Markdown source) inserts literally, except that bare URLs in pasted plain text autolink (see Autolink above). Both `from*` functions require a DOM environment (`DOMParser`); Markdown has no underline syntax and images/tables aren't modeled.
 
 **Export:** `toHtml(doc)` and `toMarkdown(doc)` serialize a `RichDoc` back to a string (the inverse of `fromHtml`/`fromMarkdown`) — e.g. for storage, email bodies, or display outside the editor. `toHtml` is lossless (`fromHtml(toHtml(doc))` round-trips); `toMarkdown` drops underline (no Markdown syntax — use `toHtml` for full fidelity). Both escape output and run hrefs through `safeHref`.
 
