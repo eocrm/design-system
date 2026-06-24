@@ -1,4 +1,5 @@
 @use './Image.tokens';
+@use '../../styles/mixins' as *;
 
 .wrapper {
   display: block;
@@ -92,4 +93,29 @@
 
 .errorText {
   font-size: var(--image-error-font-size);
+}
+
+// Interactive trigger — a chromeless <button> wrapping the image (interactive /
+// onClick). No padding/border/background; fills the wrapper box; hugs its corners.
+.trigger {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: inherit;
+  color: inherit;
+}
+
+.trigger:disabled {
+  cursor: default;
+}
+
+// The wrapper has overflow:hidden, which would clip a ring drawn on the inner
+// button — so render the focus ring on the wrapper (its own overflow does not clip
+// its own box-shadow). Follows the wrapper's border-radius.
+.wrapper:has(.trigger:focus-visible) {
+  @include focus-ring;
 }
