@@ -132,6 +132,7 @@ const CLUSTERS: Record<string, string> = {
   ConfirmationPopover: 'Overlays',
   Drawer: 'Overlays',
   DropdownMenu: 'Overlays',
+  Lightbox: 'Overlays',
   Modal: 'Overlays',
   Popover: 'Overlays',
   Tooltip: 'Overlays',

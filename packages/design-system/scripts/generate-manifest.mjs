@@ -110,6 +110,7 @@ const CLUSTERS = {
   ConfirmationPopover: 'Overlays',
   Drawer: 'Overlays',
   DropdownMenu: 'Overlays',
+  Lightbox: 'Overlays',
   Modal: 'Overlays',
   Popover: 'Overlays',
   Tooltip: 'Overlays',

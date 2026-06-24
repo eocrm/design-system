@@ -214,6 +214,9 @@ export type {
   ModalCloseProps,
 } from './components/Modal';
 
+export { Lightbox } from './components/Lightbox';
+export type { LightboxProps, LightboxItem } from './components/Lightbox';
+
 export { Page } from './components/Page';
 export type { PageProps, PageGap } from './components/Page';
 
