@@ -1,0 +1,156 @@
+@use './Lightbox.tokens';
+
+// stylelint-disable property-disallowed-list -- internal overlay positioning, not consumer layout
+
+.root {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- overlay must be fixed to fill the viewport
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: calc(var(--lightbox-z) + var(--lightbox-depth, 0) * 2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--lightbox-gap);
+  padding: var(--lightbox-padding);
+  background: var(--lightbox-scrim);
+}
+
+.close {
+  position: absolute;
+  top: var(--lightbox-padding);
+  right: var(--lightbox-padding);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lightbox-control-size);
+  height: var(--lightbox-control-size);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--lightbox-control-bg);
+  color: var(--lightbox-control-fg);
+  cursor: pointer;
+}
+
+.stage {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.chev {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lightbox-control-size);
+  height: var(--lightbox-control-size);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--lightbox-control-bg);
+  color: var(--lightbox-control-fg);
+  cursor: pointer;
+}
+
+.chev:hover {
+  background: var(--lightbox-control-bg-hover);
+}
+
+.chev:disabled {
+  opacity: var(--opacity-disabled, 0.4);
+  cursor: default;
+}
+
+.chevPrev {
+  left: var(--lightbox-padding);
+}
+
+.chevNext {
+  right: var(--lightbox-padding);
+}
+
+.imageWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.stageOverlay {
+  position: absolute;
+  inset: 0;
+}
+
+.stageError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  color: var(--lightbox-caption-fg);
+  font-size: var(--font-size-sm);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.caption {
+  color: var(--lightbox-caption-fg);
+  font-size: var(--font-size-sm);
+}
+
+.counter {
+  color: var(--lightbox-counter-fg);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.thumbs {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  overflow-x: auto;
+  background: var(--lightbox-thumb-strip-bg);
+  border-radius: var(--lightbox-radius);
+}
+
+.thumb {
+  flex: 0 0 auto;
+  width: var(--lightbox-thumb-size);
+  border-radius: var(--radius-sm);
+  opacity: var(--opacity-thumb-idle);
+  transition: opacity var(--transition-base);
+}
+
+.thumb:hover {
+  opacity: var(--opacity-thumb-hover);
+}
+
+.thumbActive {
+  opacity: var(--opacity-visible);
+  box-shadow: 0 0 0 2px var(--lightbox-thumb-active-ring);
+}
