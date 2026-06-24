@@ -110,15 +110,18 @@ export function Lightbox({
 
   const { depth, isTop } = useOverlayStack(id, open, 'replace');
 
-  // Capture the trigger on open; restore focus to it on close (WCAG 2.4.3, like
-  // Modal/Drawer). Must stay ABOVE useScrollLock so its unlock→scrollTo cleanup
-  // runs before we re-focus the trigger (preventScroll avoids fighting it).
+  // Focus restoration (WCAG 2.4.3, like Modal/Drawer). Split into two effects:
+  //  - CAPTURE is a layout effect so it snapshots the trigger BEFORE focus moves
+  //    into the dialog (the focus-into-dialog effect below is also layout).
+  //  - RESTORE is a PASSIVE effect so it runs AFTER the inert-background cleanup
+  //    (also passive) has removed `inert` from the trigger's subtree — otherwise
+  //    `.focus()` would silently fail on a still-inert element (→ falls to <body>).
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const prevOpenRef = useRef<boolean>(open);
   useLayoutEffect(() => {
-    if (open && !prevOpenRef.current) {
-      previouslyFocusedRef.current = (document.activeElement as HTMLElement | null) ?? null;
-    }
+    if (open) previouslyFocusedRef.current = (document.activeElement as HTMLElement | null) ?? null;
+  }, [open]);
+  useEffect(() => {
     if (!open && prevOpenRef.current) {
       const target = previouslyFocusedRef.current;
       if (target && document.contains(target)) target.focus({ preventScroll: true });
