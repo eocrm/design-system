@@ -26,6 +26,7 @@ import { Checkbox } from '@eocrm/design-system';
 import { ColorPicker } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Constrain } from '@eocrm/design-system';
+import { Indent } from '@eocrm/design-system';
 import { Divider } from '@eocrm/design-system';
 import { Grid } from '@eocrm/design-system';
 import { Split } from '@eocrm/design-system';
@@ -728,6 +729,25 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Constrain maxWidth="sm">
           <div className={styles.bar} />
         </Constrain>
+      </Stack>
+    ),
+  },
+  {
+    to: '/components/indent',
+    name: 'Indent',
+    description:
+      'Indent nested content by level × gutter — token-based, RTL-aware. For tree/thread depth.',
+    preview: (
+      <Stack gap="xs">
+        <Indent level={0}>
+          <div className={styles.bar} />
+        </Indent>
+        <Indent level={1}>
+          <div className={styles.bar} />
+        </Indent>
+        <Indent level={2}>
+          <div className={styles.bar} />
+        </Indent>
       </Stack>
     ),
   },
