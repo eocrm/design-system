@@ -4,6 +4,7 @@ import {
   useState,
   type CSSProperties,
   type ImgHTMLAttributes,
+  type MouseEventHandler,
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
@@ -24,7 +25,7 @@ export type ImageSize = 'xs' | 'sm' | 'md' | 'lg';
 
 export interface ImageProps extends Omit<
   ImgHTMLAttributes<HTMLImageElement>,
-  'alt' | 'children' | 'src' | 'loading'
+  'alt' | 'children' | 'src' | 'loading' | 'onClick'
 > {
   /** Image URL. Changing it resets the component to the loading state. */
   src: string;
@@ -70,6 +71,26 @@ export interface ImageProps extends Omit<
    * above-the-fold / LCP images.
    */
   loading?: 'eager' | 'lazy';
+  /**
+   * Make the image a flush, keyboard-accessible click target — renders the image
+   * inside a chromeless `<button>` (no padding/border/background; DS focus ring on
+   * `:focus-visible`). Implied when `onClick` is set. Use for a thumbnail that opens
+   * a preview/lightbox. The broken-image error state is non-interactive (its retry
+   * control takes over).
+   */
+  interactive?: boolean;
+  /**
+   * Click handler for the interactive trigger. Setting it implies `interactive`.
+   * Fires on click and on Enter/Space (native `<button>` keyboard behavior).
+   */
+  onClick?: MouseEventHandler<HTMLButtonElement>;
+  /**
+   * Accessible label for the interactive trigger — action-oriented, e.g.
+   * `"Preview report.png"`. Defaults to `alt`. Only used when interactive. Note:
+   * a native `aria-label` passed via `{...rest}` lands on the `<img>`, not the
+   * trigger button — use `ariaLabel` to name the trigger.
+   */
+  ariaLabel?: string;
 }
 
 type LoadState = 'loading' | 'loaded' | 'error';
@@ -125,6 +146,17 @@ const SIZE_CLASS: Record<ImageSize, string> = {
  *   fallback={<EmptyState title="Couldn't load the hero image" />}
  * />
  *
+ * @example
+ * // Flush, keyboard-accessible thumbnail that opens a preview (no button chrome):
+ * <Image
+ *   src={att.url}
+ *   alt={att.filename}
+ *   size="lg"
+ *   objectFit="cover"
+ *   onClick={() => openPreview(att)}
+ *   ariaLabel={`Preview ${att.filename}`}
+ * />
+ *
  * @remarks When NOT to use
  * - Circular profile / identity images → use `<Avatar>` (initials fallback).
  * - Cropping / zoom UI → use `<ImageCrop>`.
@@ -134,6 +166,8 @@ const SIZE_CLASS: Record<ImageSize, string> = {
  * @remarks Anti-patterns
  * - ❌ Empty `alt` for a meaningful image — pass a real description.
  * - ❌ No `aspectRatio` / height when you care about layout shift — reserve the box.
+ * - ❌ Wrapping `<Image>` in a `<Button>` / `<Link>` for a clickable thumbnail — that
+ *   paints button/link chrome over it. Use `interactive` / `onClick` for a flush trigger.
  */
 export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
   {
@@ -145,6 +179,9 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
     radius = 'md',
     fallback,
     loading = 'lazy',
+    interactive,
+    onClick,
+    ariaLabel,
     className,
     style,
     ...rest
@@ -177,28 +214,51 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
     ...style,
   } as CSSProperties;
 
+  const isInteractive = interactive || onClick != null;
+
+  const imgNode = (
+    // {...rest} FIRST (Pattern B): the state machine owns src/alt/key/onLoad/onError,
+    // so a careless spread can't break them.
+    <img
+      {...rest}
+      key={reloadNonce}
+      ref={ref}
+      src={src}
+      alt={state === 'error' ? '' : alt}
+      aria-hidden={state === 'error' || undefined}
+      loading={loading}
+      className={styles.img}
+      onLoad={() => setState('loaded')}
+      onError={() => setState('error')}
+    />
+  );
+
+  const loadingOverlay =
+    state === 'loading' ? <Skeleton variant="rectangular" className={styles.overlay} /> : null;
+
   return (
     <span
       className={clsx(styles.wrapper, RADIUS_CLASS[radius], size && SIZE_CLASS[size], className)}
       style={wrapperStyle}
       data-state={state}
     >
-      {/* {...rest} FIRST (Pattern B): the state machine owns
-          src/alt/key/onLoad/onError, so a careless spread can't break them. */}
-      <img
-        {...rest}
-        key={reloadNonce}
-        ref={ref}
-        src={src}
-        alt={state === 'error' ? '' : alt}
-        aria-hidden={state === 'error' || undefined}
-        loading={loading}
-        className={styles.img}
-        onLoad={() => setState('loaded')}
-        onError={() => setState('error')}
-      />
-
-      {state === 'loading' && <Skeleton variant="rectangular" className={styles.overlay} />}
+      {isInteractive ? (
+        <button
+          type="button"
+          className={styles.trigger}
+          onClick={onClick}
+          aria-label={ariaLabel ?? alt}
+          disabled={state === 'error'}
+        >
+          {imgNode}
+          {loadingOverlay}
+        </button>
+      ) : (
+        <>
+          {imgNode}
+          {loadingOverlay}
+        </>
+      )}
 
       {state === 'error' &&
         (fallback ?? (

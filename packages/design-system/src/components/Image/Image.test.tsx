@@ -1,5 +1,6 @@
 import { createRef } from 'react';
 import { fireEvent, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Image } from './Image';
 
 const SRC = 'https://example.com/photo.jpg';
@@ -146,5 +147,70 @@ describe('Image', () => {
     const img = getImg(container);
     expect(img.getAttribute('alt')).toBe('');
     expect(container.querySelector('[data-state="loading"]')).not.toBeNull();
+  });
+
+  it('is not interactive by default (no trigger button in the loaded state)', () => {
+    const { container } = render(<Image src={SRC} alt="A photo" />);
+    fireEvent.load(getImg(container));
+    expect(container.querySelector('button')).toBeNull();
+  });
+
+  it('interactive renders the img inside a trigger <button>', () => {
+    const { container } = render(<Image src={SRC} alt="A photo" interactive />);
+    const button = container.querySelector('button');
+    expect(button).not.toBeNull();
+    expect(button!.querySelector('img')).not.toBeNull();
+  });
+
+  it('onClick implies interactive and fires on click', async () => {
+    const onClick = vi.fn();
+    const { container } = render(<Image src={SRC} alt="A photo" onClick={onClick} />);
+    const button = container.querySelector('button') as HTMLButtonElement;
+    expect(button).not.toBeNull();
+    await userEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('the trigger fires onClick on keyboard activation (Enter)', async () => {
+    const onClick = vi.fn();
+    const { container } = render(<Image src={SRC} alt="A photo" onClick={onClick} />);
+    const button = container.querySelector('button') as HTMLButtonElement;
+    button.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses ariaLabel for the trigger name, falling back to alt', () => {
+    const withLabel = render(
+      <Image src={SRC} alt="report.png" interactive ariaLabel="Preview report.png" />,
+    );
+    expect(withLabel.getByRole('button', { name: 'Preview report.png' })).not.toBeNull();
+
+    const fallback = render(<Image src={SRC} alt="report.png" interactive />);
+    expect(fallback.getByRole('button', { name: 'report.png' })).not.toBeNull();
+  });
+
+  it('disables the trigger in the error state and never nests the retry button inside it', () => {
+    const { container, getByRole } = render(<Image src={SRC} alt="A photo" onClick={() => {}} />);
+    fireEvent.error(getImg(container));
+    const trigger = container.querySelector('button') as HTMLButtonElement; // FIRST button is the trigger
+    expect(trigger.disabled).toBe(true);
+    const retry = getByRole('button', { name: 'Retry' });
+    expect(trigger.contains(retry)).toBe(false); // retry is a sibling, not nested
+  });
+
+  it('forwards ref to the <img> even when interactive', () => {
+    const ref = createRef<HTMLImageElement>();
+    const { container } = render(<Image src={SRC} alt="A photo" interactive ref={ref} />);
+    expect(ref.current).toBe(getImg(container));
+  });
+
+  it('does not remount the <img> across state transitions when interactive (no refetch)', () => {
+    const { container } = render(<Image src={SRC} alt="A photo" interactive />);
+    const imgNode = getImg(container);
+    fireEvent.load(getImg(container));
+    expect(getImg(container)).toBe(imgNode); // loaded: same DOM node
+    fireEvent.error(getImg(container));
+    expect(getImg(container)).toBe(imgNode); // error: still the same node
   });
 });

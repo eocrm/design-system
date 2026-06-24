@@ -2507,6 +2507,19 @@ placeholder with a retry button on failure.
 **When NOT to use:** circular avatars → `<Avatar>`; crop/zoom UI → `<ImageCrop>`; CSS
 backgrounds → `background-image`; icons → lucide / inline SVG.
 
+**Interactive (flush click target):** set `interactive` (or just `onClick`) to render the image inside a chromeless `<button>` (no padding/border/background; DS focus ring on `:focus-visible`) — a thumbnail that opens a preview/lightbox on click/Enter/Space. `ariaLabel` names the trigger (defaults to `alt`). The broken-image error state is non-interactive (its retry control takes over); `ref` still forwards to the `<img>`.
+
+```tsx
+<Image
+  src={att.url}
+  alt={att.filename}
+  size="lg"
+  objectFit="cover"
+  onClick={() => openPreview(att)}
+  ariaLabel={`Preview ${att.filename}`}
+/>
+```
+
 ### `<Table>` — tabular data primitive
 
 ```tsx
