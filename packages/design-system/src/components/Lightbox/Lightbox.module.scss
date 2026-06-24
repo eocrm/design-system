@@ -66,8 +66,16 @@
 }
 
 .chev:disabled {
-  opacity: var(--opacity-disabled, 0.4);
+  opacity: var(--opacity-disabled);
   cursor: default;
+}
+
+// Keyboard focus ring on the dark scrim (Rule 3a) — the chevrons/close are bare
+// <button>s, so the UA default outline is low-contrast here; use the DS ring.
+.close:focus-visible,
+.chev:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring-accent);
 }
 
 .chevPrev {
@@ -92,6 +100,12 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+// Hide the broken <img> in the error state so the .stageError overlay is the only
+// thing shown/announced (no doubled broken-image glyph + a11y dupe).
+.image[data-state='error'] {
+  display: none;
 }
 
 .stageOverlay {

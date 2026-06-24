@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Lightbox, type LightboxItem, type LightboxProps } from './Lightbox';
@@ -119,5 +120,24 @@ describe('Lightbox', () => {
     );
     rerender(<Lightbox open onOpenChange={() => {}} items={ITEMS} defaultIndex={2} />);
     expect(screen.getByAltText('Charlie')).toBeInTheDocument();
+  });
+
+  it('restores focus to the trigger on close', async () => {
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button onClick={() => setOpen(true)}>trigger</button>
+          <Lightbox open={open} onOpenChange={setOpen} items={ITEMS} />
+        </>
+      );
+    }
+    render(<Harness />);
+    const trigger = screen.getByRole('button', { name: 'trigger' });
+    trigger.focus();
+    await userEvent.click(trigger);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Close gallery' }));
+    expect(trigger).toHaveFocus();
   });
 });

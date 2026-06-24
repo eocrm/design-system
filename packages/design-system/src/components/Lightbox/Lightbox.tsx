@@ -109,6 +109,24 @@ export function Lightbox({
   const current = clampIndex(isControlled ? (index as number) : internalIndex, n);
 
   const { depth, isTop } = useOverlayStack(id, open, 'replace');
+
+  // Capture the trigger on open; restore focus to it on close (WCAG 2.4.3, like
+  // Modal/Drawer). Must stay ABOVE useScrollLock so its unlock→scrollTo cleanup
+  // runs before we re-focus the trigger (preventScroll avoids fighting it).
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const prevOpenRef = useRef<boolean>(open);
+  useLayoutEffect(() => {
+    if (open && !prevOpenRef.current) {
+      previouslyFocusedRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    }
+    if (!open && prevOpenRef.current) {
+      const target = previouslyFocusedRef.current;
+      if (target && document.contains(target)) target.focus({ preventScroll: true });
+      previouslyFocusedRef.current = null;
+    }
+    prevOpenRef.current = open;
+  }, [open]);
+
   useScrollLock(open);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   useFocusTrap(dialogRef, open && isTop);
@@ -124,10 +142,11 @@ export function Lightbox({
     (nextIndex: number) => {
       if (n === 0) return;
       const target = loop ? wrapIndex(nextIndex, n) : clampIndex(nextIndex, n);
+      if (target === current) return; // no-op move (e.g. an arrow key at a non-looping end)
       if (!isControlled) setInternalIndex(target);
       onIndexChange?.(target);
     },
-    [n, loop, isControlled, onIndexChange],
+    [n, loop, isControlled, onIndexChange, current],
   );
   const goNext = useCallback(() => goTo(current + 1), [goTo, current]);
   const goPrev = useCallback(() => goTo(current - 1), [goTo, current]);
