@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Stack, Cluster, Grid, Text, Button, EmptyState } from '@eocrm/design-system';
+import { Image, Stack, Cluster, Grid, Text, Button, EmptyState, Modal } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -62,6 +62,33 @@ function ThreeStates() {
 function RetryDemo() {
   // Force the error state by pointing at a broken URL; retry is built in.
   return <Image src={BROKEN} alt="Intentionally broken image" aspectRatio="16 / 9" />;
+}
+
+function InteractiveThumb() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Image
+        src={PHOTO}
+        alt="Mountain lake at dawn"
+        size="lg"
+        objectFit="cover"
+        onClick={() => setOpen(true)}
+        ariaLabel="Preview Mountain lake at dawn"
+      />
+      <Modal open={open} onOpenChange={setOpen}>
+        <Modal.Header>Mountain lake at dawn</Modal.Header>
+        <Modal.Body>
+          <Image src={PHOTO} alt="Mountain lake at dawn" aspectRatio="16 / 9" />
+        </Modal.Body>
+        <Modal.Footer>
+          <Modal.Close>
+            <Button variant="secondary">Close</Button>
+          </Modal.Close>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
 }
 
 export function ImageDemo() {
@@ -189,6 +216,15 @@ export function ImageDemo() {
             </Stack>
           ))}
         </Cluster>
+      </Example>
+
+      <Example
+        title="Interactive thumbnail (click to preview)"
+        description="Set interactive (or onClick) to make the image a flush, keyboard-accessible click target — a chromeless button with a DS focus ring, no inset/border/hover paint. The canonical use is a dense table-cell thumbnail that opens a preview Modal. Tab to it and press Enter/Space."
+        code={`<Image src={url} alt="report.png" size="lg" objectFit="cover"
+  onClick={() => setOpen(true)} ariaLabel="Preview report.png" />`}
+      >
+        <InteractiveThumb />
       </Example>
 
       <Example
