@@ -79,6 +79,7 @@ import { CalendarDemo } from './pages/components/CalendarDemo';
 import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverDemo';
 import { AppLayoutDemo } from './pages/components/AppLayoutDemo';
 import { ConstrainDemo } from './pages/components/ConstrainDemo';
+import { IndentDemo } from './pages/components/IndentDemo';
 import { DataTableDemo } from './pages/components/DataTableDemo';
 import { DefinitionListDemo } from './pages/components/DefinitionListDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
@@ -193,6 +194,7 @@ export default function App() {
             <Route path="/components/confirmation-popover" element={<ConfirmationPopoverDemo />} />
             <Route path="/components/app-layout" element={<AppLayoutDemo />} />
             <Route path="/components/constrain" element={<ConstrainDemo />} />
+            <Route path="/components/indent" element={<IndentDemo />} />
             <Route path="/components/datatable" element={<DataTableDemo />} />
             <Route path="/components/definition-list" element={<DefinitionListDemo />} />
             <Route path="/components/empty-state" element={<EmptyStateDemo />} />

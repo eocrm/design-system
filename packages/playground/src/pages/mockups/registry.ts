@@ -38,6 +38,7 @@ export type ComponentName =
   | 'IconTile'
   | 'Image'
   | 'ImageCrop'
+  | 'Indent'
   | 'Grid'
   | 'Masonry'
   | 'InlineDatePicker'
