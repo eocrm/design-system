@@ -204,4 +204,13 @@ describe('Image', () => {
     const { container } = render(<Image src={SRC} alt="A photo" interactive ref={ref} />);
     expect(ref.current).toBe(getImg(container));
   });
+
+  it('does not remount the <img> across state transitions when interactive (no refetch)', () => {
+    const { container } = render(<Image src={SRC} alt="A photo" interactive />);
+    const imgNode = getImg(container);
+    fireEvent.load(getImg(container));
+    expect(getImg(container)).toBe(imgNode); // loaded: same DOM node
+    fireEvent.error(getImg(container));
+    expect(getImg(container)).toBe(imgNode); // error: still the same node
+  });
 });
