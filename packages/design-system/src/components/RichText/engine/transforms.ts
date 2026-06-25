@@ -5,6 +5,7 @@ import { createBlock, nextId } from './model';
 import { normalizeInlines, sliceInlines, mapMarksOverRange, runsLength } from './inlines';
 import { withMark, withoutMark, hasMark } from './marks';
 import { blockLength, findBlockIndex, orderedRange, isCollapsed } from './position';
+import { isVoidBlock } from './attachment';
 
 function collapsed(point: Point): Range {
   return { anchor: point, focus: point };
@@ -125,6 +126,7 @@ export function splitBlock(doc: RichDoc, point: Point): { doc: RichDoc; selectio
   const idx = findBlockIndex(doc, point.blockId);
   if (idx === -1) return { doc, selection: collapsed(point) };
   const block = doc.blocks[idx];
+  if (isVoidBlock(block)) return { doc, selection: collapsed(point) }; // can't split a void
   const left: Block = {
     ...block,
     inlines: normalizeInlines(sliceInlines(block.inlines, 0, point.offset)),
@@ -154,6 +156,19 @@ export function mergeBlockBackward(
   if (idx <= 0) return { doc, selection: collapsed({ blockId, offset: 0 }) };
   const prev = doc.blocks[idx - 1];
   const cur = doc.blocks[idx];
+  if (isVoidBlock(prev)) {
+    const blocks = doc.blocks.slice();
+    blocks.splice(idx - 1, 1); // drop the preceding void; `cur` shifts up
+    return { doc: { blocks }, selection: collapsed({ blockId: cur.id, offset: 0 }) };
+  }
+  if (isVoidBlock(cur)) {
+    const blocks = doc.blocks.slice();
+    blocks.splice(idx, 1); // drop the void; caret to end of prev
+    return {
+      doc: { blocks },
+      selection: collapsed({ blockId: prev.id, offset: blockLength(prev) }),
+    };
+  }
   const joinOffset = blockLength(prev);
   const inlines = normalizeInlines([...prev.inlines, ...cur.inlines]);
   const blocks = doc.blocks.slice();

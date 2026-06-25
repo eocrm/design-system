@@ -12,7 +12,7 @@ import {
 } from './transforms';
 import { createBlock } from './model';
 import { runsText } from './inlines';
-import type { RichDoc, Range } from './model';
+import type { RichDoc, Range, Block } from './model';
 
 const p = (text: string, id: string) => createBlock('paragraph', text, { id });
 const doc = (...texts: [string, string][]): RichDoc => ({
@@ -291,5 +291,27 @@ describe('deleteRange — mention snapping', () => {
     });
     expect(out.blocks).toHaveLength(1);
     expect(runsText(out.blocks[0].inlines)).toBe('he');
+  });
+});
+
+describe('void-aware merge/split', () => {
+  const att = (id: string): Block => ({
+    id,
+    type: 'attachment',
+    name: 'f',
+    status: 'ready',
+    inlines: [],
+  });
+  it('mergeBlockBackward removes a preceding void instead of concatenating text', () => {
+    const d: RichDoc = {
+      blocks: [att('v'), { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] }],
+    };
+    const r = mergeBlockBackward(d, 'p');
+    expect(r.doc.blocks.map((b) => b.id)).toEqual(['p']);
+    expect(r.doc.blocks[0].inlines[0].text).toBe('hi');
+  });
+  it('splitBlock on a void is a no-op (same ref)', () => {
+    const d: RichDoc = { blocks: [att('v')] };
+    expect(splitBlock(d, { blockId: 'v', offset: 0 }).doc).toBe(d);
   });
 });
