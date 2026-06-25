@@ -46,6 +46,15 @@ import {
 } from './commands';
 import { RichTextToolbar, type BlockChoice } from './RichTextToolbar';
 import {
+  moveBlockUnit,
+  moveBlockUnitToIndex,
+  duplicateBlockUnit,
+  removeBlockUnit,
+  insertEmptyBlockBelow,
+} from '../RichText/engine/blockUnit';
+import { RichTextBlockControls } from './RichTextBlockControls';
+import type { BlockAction } from './RichTextBlockMenu';
+import {
   reset as historyReset,
   record as historyRecord,
   undo as historyUndo,
@@ -118,6 +127,16 @@ export interface RichTextEditorProps extends Omit<
    * return `defaultNode` for stay plain, editable anchors.
    */
   renderLink?: RenderLink;
+  /**
+   * Show Notion-style per-block controls: a left gutter that appears on the
+   * hovered/focused block with an insert button (`＋`, adds an empty paragraph
+   * below) and a drag handle (`⠿`) that opens a block menu (Turn into ▸,
+   * Duplicate, Move up/down, Delete). Reordering is subtree-aware for nested
+   * lists. Keyboard: Shift+F10 / the ContextMenu key opens the focused block's
+   * menu; ⌘/Ctrl+⇧↑ / ⌘/Ctrl+⇧↓ move the block; ⌘/Ctrl+D duplicates. Default
+   * `false`. Ignored when `readOnly`. Independent of `toolbar`.
+   */
+  blockControls?: boolean;
 }
 
 function isEmptyDoc(doc: RichDoc): boolean {
@@ -209,6 +228,11 @@ interface LinkEditorOpen {
  *   (or by the `query`); the menu renders what you return.
  * - ❌ Relying on Markdown to preserve mentions — `toMarkdown` is lossy (plain
  *   `@label`); use `toHtml`/`fromHtml` to round-trip a mention's id.
+ * - ❌ Building a custom block drag/menu by reaching into the DOM — pass
+ *   `blockControls`; insert/move/duplicate/delete route through the controlled
+ *   `value`/`onChange` round-trip and are undoable.
+ * - ❌ Expecting Backspace to delete a whole block — it edits text; use the block
+ *   menu's Delete (or select the block's text and delete) to remove a block.
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(
@@ -219,6 +243,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       placeholder,
       autoFocus,
       toolbar = false,
+      blockControls = false,
       mentions,
       autolink = true,
       renderLink,
@@ -260,6 +285,28 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       },
       [ref],
     );
+
+    const controlsOn = blockControls && !readOnly;
+    const shellRef = useRef<HTMLDivElement | null>(null);
+    const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+    const [blockMenuOpen, setBlockMenuOpen] = useState(false);
+    // Mirror the open state into a ref so the hover listener can read it without
+    // re-subscribing: while the menu is open, hovering another block must NOT move
+    // the active block (the menu's actions are bound to it — moving it would make
+    // a click act on the wrong block).
+    const blockMenuOpenRef = useRef(false);
+    blockMenuOpenRef.current = blockMenuOpen;
+
+    // Resolve the [data-block-id] of the block element containing a DOM node.
+    const blockIdFromNode = useCallback((node: Node | null): string | null => {
+      let el: HTMLElement | null =
+        node instanceof HTMLElement ? node : (node?.parentElement ?? null);
+      while (el && el !== rootRef.current) {
+        if (el.hasAttribute('data-block-id')) return el.getAttribute('data-block-id');
+        el = el.parentElement;
+      }
+      return null; // reached the root (or ran out of ancestors) — no block
+    }, []);
 
     const historyRef = useRef<History>(historyReset({ doc: value, selection: null }));
     // Timestamp of the last ⌘Z/⌘⇧Z/⌘Y keydown — lets the beforeinput net skip the
@@ -635,6 +682,37 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       return () => document.removeEventListener('selectionchange', onSelChange);
     }, [toolbar, readOnly]);
 
+    // Hover tracking (mouse).
+    useEffect(() => {
+      if (!controlsOn) return;
+      const root = rootRef.current;
+      if (!root) return;
+      const onOver = (e: MouseEvent) => {
+        // Don't let hover steal the active block while the menu is open — its
+        // actions are bound to the active block.
+        if (blockMenuOpenRef.current) return;
+        const id = blockIdFromNode(e.target as Node);
+        if (id) setActiveBlockId(id);
+      };
+      root.addEventListener('mouseover', onOver);
+      return () => root.removeEventListener('mouseover', onOver);
+    }, [controlsOn, blockIdFromNode]);
+
+    // Caret tracking → active block (keyboard users get a gutter target too).
+    useEffect(() => {
+      if (!controlsOn) return;
+      const onSel = () => {
+        const root = rootRef.current;
+        const sel = root?.ownerDocument.getSelection();
+        if (sel && root && sel.anchorNode && root.contains(sel.anchorNode)) {
+          const id = blockIdFromNode(sel.anchorNode);
+          if (id) setActiveBlockId(id);
+        }
+      };
+      document.addEventListener('selectionchange', onSel);
+      return () => document.removeEventListener('selectionchange', onSel);
+    }, [controlsOn, blockIdFromNode]);
+
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLDivElement>) => {
         if (readOnly) return;
@@ -663,6 +741,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         }
         const range = readSelection(root);
         if (!range) return;
+        if (controlsOn) {
+          const caretBlock = range.anchor.blockId;
+          if (mod && e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            e.preventDefault();
+            e.stopPropagation();
+            commit(moveBlockUnit(value, caretBlock, e.key === 'ArrowUp' ? -1 : 1), 'other');
+            return;
+          }
+          if (mod && !e.shiftKey && e.key.toLowerCase() === 'd') {
+            e.preventDefault();
+            e.stopPropagation();
+            commit(duplicateBlockUnit(value, caretBlock), 'other');
+            return;
+          }
+          if ((e.shiftKey && e.key === 'F10') || e.key === 'ContextMenu') {
+            e.preventDefault();
+            setActiveBlockId(caretBlock);
+            setBlockMenuOpen(true);
+            return;
+          }
+        }
         // Mention menu navigation takes priority over editor keys when open.
         if (mention.open && mention.items.length > 0) {
           if (e.key === 'ArrowDown') {
@@ -727,7 +826,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           return;
         }
       },
-      [value, readOnly, commit, stageOrToggleMark, openLinkEditor, onUndo, onRedo, mention],
+      [
+        value,
+        readOnly,
+        commit,
+        stageOrToggleMark,
+        openLinkEditor,
+        onUndo,
+        onRedo,
+        mention,
+        controlsOn,
+      ],
     );
 
     const onCompositionStart = useCallback(() => {
@@ -798,6 +907,58 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [value, selection, commit],
     );
 
+    const onBlockInsertBelow = useCallback(
+      (id: string) => commit(insertEmptyBlockBelow(latest.current.value, id), 'other'),
+      [commit],
+    );
+    const onBlockAction = useCallback(
+      (id: string, action: BlockAction) => {
+        const v = latest.current.value;
+        switch (action) {
+          case 'duplicate':
+            commit(duplicateBlockUnit(v, id), 'other');
+            break;
+          case 'moveUp':
+            commit(moveBlockUnit(v, id, -1), 'other');
+            break;
+          case 'moveDown':
+            commit(moveBlockUnit(v, id, 1), 'other');
+            break;
+          case 'delete':
+            commit(removeBlockUnit(v, id), 'other');
+            break;
+          default: {
+            // Exhaustiveness: a new BlockAction must be handled above.
+            const _never: never = action;
+            return _never;
+          }
+        }
+        setBlockMenuOpen(false);
+      },
+      [commit],
+    );
+    const onBlockTurnInto = useCallback(
+      (id: string, choice: BlockChoice) => {
+        const v = latest.current.value;
+        const range = { anchor: { blockId: id, offset: 0 }, focus: { blockId: id, offset: 0 } };
+        // "Turn into X" is an idempotent SET (not a toggle) on the single anchor
+        // block — choosing the block's current type is a no-op, never a revert.
+        // List types carry depth 0; runSetBlock routes both through setBlockType.
+        const patch =
+          choice.type === 'bullet_item' || choice.type === 'ordered_item'
+            ? { type: choice.type, depth: 0 }
+            : choice;
+        commit(runSetBlock(v, range, patch), 'other');
+        setBlockMenuOpen(false);
+      },
+      [commit],
+    );
+    const onBlockReorder = useCallback(
+      (id: string, targetIndex: number) =>
+        commit(moveBlockUnitToIndex(latest.current.value, id, targetIndex), 'other'),
+      [commit],
+    );
+
     const editable = (
       <div
         // {...rest} FIRST so the component's own role/aria/contentEditable/handlers
@@ -806,7 +967,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // decide whether to fall back to the i18n default.
         {...rest}
         ref={setRefs}
-        className={clsx(styles.root, readOnly && styles.readOnly, className)}
+        className={clsx(
+          styles.root,
+          readOnly && styles.readOnly,
+          controlsOn && styles.withGutter,
+          className,
+        )}
         contentEditable={!readOnly}
         suppressContentEditableWarning
         role="textbox"
@@ -865,7 +1031,30 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         />
       ) : null;
 
+    const blockControlsEl = controlsOn ? (
+      <RichTextBlockControls
+        rootRef={shellRef}
+        activeBlockId={activeBlockId}
+        menuOpen={blockMenuOpen}
+        onMenuOpenChange={setBlockMenuOpen}
+        onInsertBelow={onBlockInsertBelow}
+        onAction={onBlockAction}
+        onTurnInto={onBlockTurnInto}
+        onReorder={onBlockReorder}
+      />
+    ) : null;
+
     if (!toolbar) {
+      if (controlsOn) {
+        return (
+          <div className={styles.shell} ref={shellRef}>
+            {editable}
+            {linkBubble}
+            {mentionMenu}
+            {blockControlsEl}
+          </div>
+        );
+      }
       return (
         <>
           {editable}
@@ -875,7 +1064,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       );
     }
     return (
-      <div className={styles.shell}>
+      <div className={styles.shell} ref={shellRef}>
         <RichTextToolbar
           activeMarks={toolbarMarks}
           block={toolbarBlock}
@@ -893,6 +1082,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         {editable}
         {linkBubble}
         {mentionMenu}
+        {blockControlsEl}
       </div>
     );
   },

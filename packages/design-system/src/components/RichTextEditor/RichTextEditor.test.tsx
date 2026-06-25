@@ -830,3 +830,159 @@ describe('RichTextEditor renderLink', () => {
     expect(box.textContent).toBe('go ');
   });
 });
+
+describe('blockControls', () => {
+  function Controlled(props: { blockControls?: boolean; readOnly?: boolean }) {
+    const [doc, setDoc] = useState(docFromText('one\ntwo\nthree'));
+    return <RichTextEditor value={doc} onChange={setDoc} {...props} />;
+  }
+
+  it('is absent by default', () => {
+    render(
+      <I18nProvider locale="en">
+        <Controlled />
+      </I18nProvider>,
+    );
+    expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
+  });
+
+  it('hovering a block reveals its gutter', async () => {
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await userEvent.hover(block);
+    expect(screen.getByRole('button', { name: 'Block actions' })).toBeInTheDocument();
+  });
+
+  it('＋ inserts an empty paragraph below', async () => {
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await userEvent.hover(block);
+    const before = document.querySelectorAll('[data-block-id]').length;
+    await userEvent.click(screen.getByRole('button', { name: 'Insert block below' }));
+    expect(document.querySelectorAll('[data-block-id]').length).toBe(before + 1);
+  });
+
+  it('readOnly suppresses the gutter', async () => {
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls readOnly />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await userEvent.hover(block);
+    expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
+  });
+
+  it('⌘⇧↓ moves the caret block down (subtree-aware, via commit)', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'a', offset: 0 },
+      focus: { blockId: 'a', offset: 0 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 'a', type: 'paragraph', inlines: [{ text: 'AAA', marks: [] }] },
+          { id: 'b', type: 'paragraph', inlines: [{ text: 'BBB', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls />;
+    }
+    renderEditor(<Harness />);
+    screen.getByRole('textbox').focus();
+    await user.keyboard('{Meta>}{Shift>}{ArrowDown}{/Shift}{/Meta}');
+    const order = Array.from(document.querySelectorAll('[data-block-id]')).map((el) =>
+      el.getAttribute('data-block-id'),
+    );
+    expect(order).toEqual(['b', 'a']);
+  });
+
+  it('block menu Turn into a list is idempotent (SET, not toggle)', async () => {
+    const user = userEvent.setup();
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const turnIntoBullet = async (el: HTMLElement) => {
+      await user.hover(el);
+      await user.click(screen.getByRole('button', { name: 'Block actions' }));
+      await user.click(screen.getByRole('menuitem', { name: /turn into/i }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Bullet list' }));
+    };
+    await turnIntoBullet(document.querySelector('[data-block-id]') as HTMLElement);
+    expect(document.querySelector('li[data-block-id]')).toBeTruthy();
+    // Choosing the SAME type again must keep it a list — the old toggle bug
+    // reverted it to a paragraph.
+    await turnIntoBullet(document.querySelector('li[data-block-id]') as HTMLElement);
+    expect(document.querySelector('li[data-block-id]')).toBeTruthy();
+  });
+
+  it('⌘D duplicates the caret block (via commit)', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'a', offset: 0 },
+      focus: { blockId: 'a', offset: 0 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'a', type: 'paragraph', inlines: [{ text: 'AAA', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls />;
+    }
+    renderEditor(<Harness />);
+    screen.getByRole('textbox').focus();
+    await user.keyboard('{Meta>}d{/Meta}');
+    expect(document.querySelectorAll('[data-block-id]').length).toBe(2);
+  });
+
+  it('open menu acts on its block even after hovering another (no hover steal)', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 'a', type: 'paragraph', inlines: [{ text: 'AAA', marks: [] }] },
+          { id: 'b', type: 'paragraph', inlines: [{ text: 'BBB', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls />;
+    }
+    renderEditor(<Harness />);
+    const [blockA, blockB] = Array.from(
+      document.querySelectorAll('[data-block-id]'),
+    ) as HTMLElement[];
+    // Open the menu on block A…
+    await user.hover(blockA);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    // …then hover block B before choosing Delete.
+    await user.hover(blockB);
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
+    // Block A must be the one removed, leaving B.
+    const remaining = Array.from(document.querySelectorAll('[data-block-id]'));
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].textContent).toBe('BBB');
+  });
+
+  it('block menu Duplicate routes through commit (block count grows)', async () => {
+    const user = userEvent.setup();
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await user.hover(block);
+    const before = document.querySelectorAll('[data-block-id]').length;
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: /duplicate/i }));
+    expect(document.querySelectorAll('[data-block-id]').length).toBe(before + 1);
+  });
+});

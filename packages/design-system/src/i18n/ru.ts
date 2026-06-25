@@ -213,5 +213,12 @@ export const ru: Messages = {
     redo: 'Повторить',
     mentionsLabel: 'Упоминания',
     mentionsEmpty: 'Нет совпадений',
+    blockInsert: 'Вставить блок ниже',
+    blockActions: 'Действия с блоком',
+    blockTurnInto: 'Преобразовать в',
+    blockDuplicate: 'Дублировать',
+    blockMoveUp: 'Переместить вверх',
+    blockMoveDown: 'Переместить вниз',
+    blockDelete: 'Удалить',
   },
 };

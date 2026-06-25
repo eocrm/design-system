@@ -211,5 +211,12 @@ export const en: Messages = {
     redo: 'Redo',
     mentionsLabel: 'Mentions',
     mentionsEmpty: 'No matches',
+    blockInsert: 'Insert block below',
+    blockActions: 'Block actions',
+    blockTurnInto: 'Turn into',
+    blockDuplicate: 'Duplicate',
+    blockMoveUp: 'Move up',
+    blockMoveDown: 'Move down',
+    blockDelete: 'Delete',
   },
 };

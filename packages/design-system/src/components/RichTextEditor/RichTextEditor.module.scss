@@ -31,12 +31,64 @@
   background: var(--color-bg-muted);
 }
 
-// The component's own internal wrapper when `toolbar` is set: stacks the toolbar
-// above the editable surface as one bordered control.
+// The component's own internal wrapper when `toolbar` and/or `blockControls` is
+// set: stacks the toolbar above the editable surface as one bordered control and
+// anchors the absolutely-positioned block gutter (`.gutter`).
 .shell {
+  position: relative; // anchor for the block-controls gutter overlay
   display: flex;
   flex-direction: column;
   width: 100%;
+}
+
+// When block controls are on, reserve a left column on the editable so the gutter
+// (＋ / ⠿) sits beside the text instead of overlapping it. The gutter holds two
+// ~24px (--size-sm) icon buttons plus gaps (~52px total), so the reservation must
+// clear that. Only applied via the `withGutter` modifier, so editors without block
+// controls are unaffected.
+.root.withGutter {
+  padding-inline-start: var(--space-16);
+}
+
+// The per-block gutter overlay (RichTextBlockControls). Absolutely positioned
+// inside `.shell`; its vertical `top` is set inline by JS from the active block's
+// measured box. `left`/`position` here are the overlay's own anchoring, not
+// in-flow component layout (cf. the Rule 4 notes on `.linkBubble`/`.mentionMenu`).
+.gutter {
+  position: absolute;
+  inset-inline-start: var(--space-05);
+  display: flex;
+  gap: var(--space-05);
+  align-items: center;
+}
+
+.gutterButton {
+  color: var(--color-fg-muted);
+}
+
+// Thin wrapper around the grip that feeds dnd-kit's PointerSensor. `inline-flex`
+// keeps it shrink-wrapped to the grip button (so it doesn't enlarge the gutter's
+// hit area) and `grab`/`grabbing` cursors signal the drag affordance. No layout
+// props — it's a pass-through around the button.
+.gripDrag {
+  display: inline-flex;
+  cursor: grab;
+}
+
+.gripDrag:active {
+  cursor: grabbing;
+}
+
+// The drop-indicator line shown during a block drag. Absolutely positioned inside
+// `.shell`; its vertical `top` is set inline by JS from the candidate drop gap
+// (cf. the Rule 4 note on `.gutter`/`.linkBubble` — overlay anchoring, not in-flow
+// component layout). A thin accent-colored rule spanning the editable width.
+.dropIndicator {
+  position: absolute;
+  inset-inline: 0;
+  height: var(--border-width);
+  background: var(--color-accent);
+  pointer-events: none;
 }
 
 .toolbar {
