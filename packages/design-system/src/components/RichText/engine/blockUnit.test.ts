@@ -160,4 +160,19 @@ describe('moveBlockUnitToIndex', () => {
     const r = moveBlockUnitToIndex(doc([li('a', 1), p('z')]), 'a', 2);
     expect(r.doc.blocks.find((b) => b.id === 'a')!.depth).toBe(0);
   });
+  it('no-op (same ref) when dropped back onto its own slot', () => {
+    const d = doc([p('a'), p('b')]);
+    expect(moveBlockUnitToIndex(d, 'a', 0).doc).toBe(d);
+  });
+});
+
+describe('unknown blockId', () => {
+  it('every transform is a no-op returning the same doc ref', () => {
+    const d = doc([p('a')]);
+    expect(moveBlockUnit(d, 'nope', 1).doc).toBe(d);
+    expect(duplicateBlockUnit(d, 'nope').doc).toBe(d);
+    expect(removeBlockUnit(d, 'nope').doc).toBe(d);
+    expect(insertEmptyBlockBelow(d, 'nope').doc).toBe(d);
+    expect(moveBlockUnitToIndex(d, 'nope', 0).doc).toBe(d);
+  });
 });

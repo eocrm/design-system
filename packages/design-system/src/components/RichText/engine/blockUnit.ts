@@ -143,11 +143,16 @@ export function moveBlockUnitToIndex(
   const rest = [...blocks.slice(0, u.start), ...blocks.slice(u.end)];
   let insertAt = target > u.start ? target - moving.length : target;
   insertAt = Math.max(0, Math.min(insertAt, rest.length));
+  // No movement (dropped back onto its own slot) → same doc ref, like moveBlockUnit's no-ops.
+  if (insertAt === u.start) return { doc, selection: collapsed(blockId) };
 
   let adjusted = moving;
   if (isListItem(moving[0])) {
     const prev = insertAt - 1;
-    const prevDepth = prev >= 0 && isListItem(rest[prev]) ? (rest[prev].depth ?? 0) : -1;
+    // Clamp against the predecessor's EFFECTIVE depth (what the renderer shows),
+    // consistent with the rest of the engine's depth reasoning.
+    const effRest = effectiveDepths(rest);
+    const prevDepth = prev >= 0 && isListItem(rest[prev]) ? effRest[prev] : -1;
     const maxDepth = prevDepth + 1;
     const topRaw = moving[0].depth ?? 0;
     const newTop = Math.max(0, Math.min(topRaw, maxDepth));
