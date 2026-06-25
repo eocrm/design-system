@@ -855,6 +855,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           items={mention.items}
           activeIndex={mention.activeIndex}
           anchorRect={mention.anchorRect}
+          getAnchorRect={mention.getAnchorRect}
           listboxId={mention.listboxId}
           getOptionId={mention.getOptionId}
           label={t('richTextEditor.mentionsLabel')}
