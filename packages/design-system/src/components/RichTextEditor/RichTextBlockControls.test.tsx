@@ -55,6 +55,20 @@ it('binds the active block id into the menu onTurnInto callback', async () => {
   expect(onTurnInto).toHaveBeenCalledWith('b1', { type: 'heading', level: 1 });
 });
 
+it('hides "Turn into" for an attachment block but keeps the other actions', async () => {
+  render(<Harness menuOpen activeBlockType="attachment" />);
+  await userEvent.click(screen.getByRole('button', { name: 'Block actions' }));
+  expect(screen.queryByRole('menuitem', { name: /turn into/i })).toBeNull();
+  expect(screen.getByRole('menuitem', { name: /duplicate/i })).toBeInTheDocument();
+  expect(screen.getByRole('menuitem', { name: /delete/i })).toBeInTheDocument();
+});
+
+it('shows "Turn into" for a normal (paragraph) block', async () => {
+  render(<Harness menuOpen activeBlockType="paragraph" />);
+  await userEvent.click(screen.getByRole('button', { name: 'Block actions' }));
+  expect(screen.getByRole('menuitem', { name: /turn into/i })).toBeInTheDocument();
+});
+
 it('renders nothing when activeBlockId is null', () => {
   function NullHarness() {
     const rootRef = useRef<HTMLDivElement>(null);

@@ -1118,10 +1118,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         />
       ) : null;
 
+    const activeBlockType = activeBlockId
+      ? value.blocks.find((b) => b.id === activeBlockId)?.type
+      : undefined;
     const blockControlsEl = controlsOn ? (
       <RichTextBlockControls
         rootRef={shellRef}
         activeBlockId={activeBlockId}
+        activeBlockType={activeBlockType}
         menuOpen={blockMenuOpen}
         onMenuOpenChange={setBlockMenuOpen}
         onInsertBelow={onBlockInsertBelow}

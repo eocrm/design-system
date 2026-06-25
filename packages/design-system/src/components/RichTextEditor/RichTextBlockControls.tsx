@@ -15,6 +15,7 @@ import { Button } from '../Button';
 import { useTranslation } from '../../i18n';
 import { RichTextBlockMenu, type BlockAction } from './RichTextBlockMenu';
 import type { BlockChoice } from './RichTextToolbar';
+import type { BlockType } from '../RichText/engine/model';
 import { PlusIcon } from './icons';
 import { gapIndexFromY } from './blockDrop';
 import styles from './RichTextEditor.module.scss';
@@ -24,6 +25,8 @@ export interface RichTextBlockControlsProps {
   rootRef: RefObject<HTMLElement | null>;
   /** Block currently hovered or holding the caret; null hides the gutter. */
   activeBlockId: string | null;
+  /** Type of the active block (gates the menu's "Turn into" — hidden for voids). */
+  activeBlockType?: BlockType;
   /** Controlled open state of the block menu. */
   menuOpen: boolean;
   onMenuOpenChange: (open: boolean) => void;
@@ -87,6 +90,7 @@ function DraggableGrip({ children }: { children: React.ReactNode }) {
 export function RichTextBlockControls({
   rootRef,
   activeBlockId,
+  activeBlockType,
   menuOpen,
   onMenuOpenChange,
   onInsertBelow,
@@ -198,6 +202,7 @@ export function RichTextBlockControls({
             onOpenChange={onMenuOpenChange}
             onAction={(a) => onAction(activeBlockId, a)}
             onTurnInto={(c) => onTurnInto(activeBlockId, c)}
+            blockType={activeBlockType}
           />
         </DraggableGrip>
       </div>
