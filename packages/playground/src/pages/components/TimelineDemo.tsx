@@ -1,5 +1,5 @@
-import { Timeline, Avatar, Dot, Stack, Text, IconTile } from '@eocrm/design-system';
-import { GitCommit, Mail } from 'lucide-react';
+import { Timeline, Avatar, Dot, Stack, Text, IconTile, Button } from '@eocrm/design-system';
+import { GitCommit, Mail, Plus } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -14,8 +14,11 @@ export function TimelineDemo() {
     >
       <Example
         title="Activity feed (avatar / icon nodes)"
-        description="Each item's node is a slot — an Avatar for a person, an IconTile for a system event. The connector links consecutive nodes and stops at the last."
+        description="Each item's node is a slot — an Avatar for a person, an IconTile for a system event, or an action like the “Add activity” composer pinned as the most-recent node at the top. The connector links consecutive nodes and stops at the last."
         code={`<Timeline>
+  <Timeline.Item node={<IconTile icon={<Plus size={16} />} color="blue" size="sm" />}>
+    <Button variant="secondary" size="sm" onClick={addActivity}>Add activity</Button>
+  </Timeline.Item>
   <Timeline.Item node={<Avatar name="Dana Reyes" size="sm" />}>
     <Stack gap="xs">
       <Text size="sm"><strong>Dana Reyes</strong> · note · 2h ago</Text>
@@ -29,6 +32,12 @@ export function TimelineDemo() {
 </Timeline>`}
       >
         <Timeline>
+          {/* Composer entry as the most-recent (top) node — its connector flows into the feed below. */}
+          <Timeline.Item node={<IconTile icon={<Plus size={16} />} color="blue" size="sm" />}>
+            <Button variant="secondary" size="sm" onClick={() => {}}>
+              Add activity
+            </Button>
+          </Timeline.Item>
           <Timeline.Item node={<Avatar name="Dana Reyes" size="sm" />}>
             <Stack gap="xs">
               <Text size="sm">
