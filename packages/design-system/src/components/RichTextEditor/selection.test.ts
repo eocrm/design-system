@@ -144,3 +144,43 @@ describe('selection mapping — atomic [data-rich-link] widget', () => {
     root.remove();
   });
 });
+
+function makeRoot(html: string): HTMLElement {
+  const el = document.createElement('div');
+  el.innerHTML = html;
+  document.body.appendChild(el);
+  return el;
+}
+
+describe('void-block selection', () => {
+  const HTML =
+    '<p data-block-id="p">hi</p><figure data-block-id="v" contenteditable="false"></figure>';
+  it('a selection ON the figure maps to {figureId, 0}', () => {
+    const r = makeRoot(HTML);
+    const fig = r.querySelector('[data-block-id="v"]')!;
+    expect(pointFromDom(r, fig, 0)).toEqual({ blockId: 'v', offset: 0 });
+  });
+  it('a root-level caret at the figure index maps to the void {id,0}', () => {
+    const r = makeRoot(HTML);
+    // child index 1 is the figure; a caret at root offset 1 sits just before it
+    expect(pointFromDom(r, r, 1)).toEqual({ blockId: 'v', offset: 0 });
+  });
+  it('a root-level caret just AFTER the figure also maps to the void {id,0}', () => {
+    const r = makeRoot(HTML);
+    // offset 2 == after the figure (figure is the last child, index 1)
+    expect(pointFromDom(r, r, 2)).toEqual({ blockId: 'v', offset: 0 });
+  });
+  it('pointToDom for a void returns a position just before the figure', () => {
+    const r = makeRoot(HTML);
+    const fig = r.querySelector('[data-block-id="v"]')!;
+    const figIndex = Array.prototype.indexOf.call(r.childNodes, fig);
+    const dom = pointToDom(r, { blockId: 'v', offset: 0 })!;
+    expect(dom.node).toBe(r);
+    expect(dom.offset).toBe(figIndex);
+  });
+  it('still maps a normal text block correctly (no regression)', () => {
+    const r = makeRoot(HTML);
+    const textNode = r.querySelector('[data-block-id="p"]')!.firstChild!;
+    expect(pointFromDom(r, textNode, 1)).toEqual({ blockId: 'p', offset: 1 });
+  });
+});

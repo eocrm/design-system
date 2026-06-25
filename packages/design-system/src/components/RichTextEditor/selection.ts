@@ -78,8 +78,32 @@ function offsetWithinBlock(blockEl: HTMLElement, node: Node, offset: number): nu
  *   element with a `data-block-id` attribute.
  */
 export function pointFromDom(root: HTMLElement, node: Node, offset: number): Point | null {
+  // Root-level caret (between blocks): if it sits at the boundary of a void
+  // figure, resolve to that void's {id, 0}. (A void can't host an interior caret,
+  // so the browser anchors the selection on the root around it.)
+  if (node === root) {
+    const children = root.childNodes;
+    const at = children[offset] as Node | undefined; // node just after the caret
+    const before = children[offset - 1] as Node | undefined; // node just before it
+    const figAt =
+      at instanceof HTMLElement && at.tagName === 'FIGURE' && at.hasAttribute('data-block-id')
+        ? at
+        : null;
+    const figBefore =
+      before instanceof HTMLElement &&
+      before.tagName === 'FIGURE' &&
+      before.hasAttribute('data-block-id')
+        ? before
+        : null;
+    const fig = figAt ?? figBefore;
+    if (fig) return { blockId: fig.getAttribute('data-block-id')!, offset: 0 };
+  }
   const blockEl = blockElementFor(root, node);
   if (!blockEl) return null;
+  // A void figure block has no text — its only position is offset 0.
+  if (blockEl instanceof HTMLElement && blockEl.tagName === 'FIGURE') {
+    return { blockId: blockEl.getAttribute('data-block-id')!, offset: 0 };
+  }
   return {
     blockId: blockEl.getAttribute('data-block-id')!,
     offset: offsetWithinBlock(blockEl, node, offset),
@@ -97,6 +121,13 @@ export function pointFromDom(root: HTMLElement, node: Node, offset: number): Poi
 export function pointToDom(root: HTMLElement, point: Point): { node: Node; offset: number } | null {
   const blockEl = root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(point.blockId)}"]`);
   if (!blockEl) return null;
+  // Void figure: the caret can't go inside — return a position just before it in
+  // its parent (the editable root), so the browser shows an edge caret.
+  if (blockEl.tagName === 'FIGURE') {
+    const parent = blockEl.parentNode!;
+    const index = Array.prototype.indexOf.call(parent.childNodes, blockEl);
+    return { node: parent, offset: index };
+  }
   // Walk TEXT nodes and atomic `[data-rich-link]` widgets, accumulating model
   // length: text → its char length, widget → `data-len` (NOT its display text;
   // we never descend into a widget). A widget is contenteditable=false, so the
