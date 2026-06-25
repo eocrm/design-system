@@ -120,7 +120,9 @@
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "RichTextEditor"
+    ]
   },
   "Cluster": {
     "tier": "primitive",
@@ -326,7 +328,8 @@
       "Skeleton"
     ],
     "composedBy": [
-      "Lightbox"
+      "Lightbox",
+      "RichTextEditor"
     ]
   },
   "ImageCrop": {
@@ -554,8 +557,10 @@
     "composes": [
       "Avatar",
       "Button",
+      "CircularProgress",
       "Cluster",
       "DropdownMenu",
+      "Image",
       "Input",
       "RichText",
       "Stack",

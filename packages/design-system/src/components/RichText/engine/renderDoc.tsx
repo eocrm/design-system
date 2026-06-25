@@ -6,6 +6,7 @@ import { runsText, runsLength } from './inlines';
 import { safeHref } from './safeHref';
 import { isListItem, effectiveDepths } from './listDepths';
 import type { RenderLink } from './renderLink';
+import { RichTextAttachment } from '../../RichTextEditor/RichTextAttachment';
 
 export interface RenderDocOptions {
   /** Editable surface: add `data-block-id` anchors + render empty blocks with a `<br>`. */
@@ -157,6 +158,12 @@ function renderBlock(block: Block, opts: ResolvedOptions): ReactNode {
             {opts.editable && runsLength(block.inlines) === 0 ? <br /> : runsText(block.inlines)}
           </code>
         </pre>
+      );
+    case 'attachment':
+      return (
+        <figure key={block.id} {...anchor} contentEditable={false} data-attachment="">
+          <RichTextAttachment block={block} />
+        </figure>
       );
     case 'paragraph':
     default:

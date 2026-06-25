@@ -220,5 +220,9 @@ export const ru: Messages = {
     blockMoveUp: 'Переместить вверх',
     blockMoveDown: 'Переместить вниз',
     blockDelete: 'Удалить',
+    uploadingFile: 'Загрузка…',
+    uploadFailed: 'Не удалось загрузить',
+    uploadRetry: 'Повторить',
+    uploadRemove: 'Удалить',
   },
 };

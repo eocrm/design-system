@@ -363,6 +363,14 @@ export interface Messages {
     blockMoveDown: string;
     /** "Delete" item in the block menu. */
     blockDelete: string;
+    /** Spinner aria-label while a file uploads. */
+    uploadingFile: string;
+    /** Error-state label when an upload fails. */
+    uploadFailed: string;
+    /** Retry action on a failed upload. */
+    uploadRetry: string;
+    /** Remove action on a failed upload. */
+    uploadRemove: string;
   };
 }
 

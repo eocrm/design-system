@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import { I18nProvider } from '../../../i18n';
 import { renderDoc } from './renderDoc';
 import { createBlock } from './model';
 import type { RichDoc } from './model';
@@ -363,4 +364,26 @@ describe('renderDoc renderLink option', () => {
     expect(widgets).toHaveLength(1);
     expect(widgets[0].getAttribute('data-len')).toBe('4');
   });
+});
+
+it('renders an attachment block as a contenteditable=false figure', () => {
+  const doc = {
+    blocks: [
+      {
+        id: 'a',
+        type: 'attachment' as const,
+        status: 'ready' as const,
+        src: 'http://u/p.png',
+        mime: 'image/png',
+        name: 'p.png',
+        inlines: [],
+      },
+    ],
+  };
+  const { container } = render(
+    <I18nProvider locale="en">{renderDoc(doc, { editable: true })}</I18nProvider>,
+  );
+  const fig = container.querySelector('figure[data-block-id="a"]');
+  expect(fig).toBeTruthy();
+  expect(fig).toHaveAttribute('contenteditable', 'false');
 });
