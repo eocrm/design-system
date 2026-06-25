@@ -323,6 +323,19 @@ export function insertFragment(
   const idx = findBlockIndex(base.doc, caret.blockId);
   if (idx === -1) return { doc: base.doc, selection: collapsed(caret) };
   const B = base.doc.blocks[idx];
+  // Caret resting on a void block (e.g. paste while the caret sits on an
+  // attachment): never merge the fragment's text INTO the void — splice the
+  // fragment's blocks (fresh ids) immediately after it, caret at the last block.
+  if (isVoidBlock(B)) {
+    const inserted = frag.map((b) => ({ ...b, id: nextId() }));
+    const blocks = base.doc.blocks.slice();
+    blocks.splice(idx + 1, 0, ...inserted);
+    const lastInserted = inserted[inserted.length - 1];
+    return {
+      doc: { blocks },
+      selection: collapsed({ blockId: lastInserted.id, offset: blockLength(lastInserted) }),
+    };
+  }
   const left = sliceInlines(B.inlines, 0, caret.offset);
   const right = sliceInlines(B.inlines, caret.offset, blockLength(B));
 
@@ -368,6 +381,10 @@ export function insertMention(
 ): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed({ blockId, offset: range.from }) };
+  // Defense-in-depth: a void block holds no text to replace (no UI path forms a
+  // mention inside one, but keep the engine uniformly void-safe).
+  if (isVoidBlock(doc.blocks[idx]))
+    return { doc, selection: collapsed({ blockId, offset: range.from }) };
   // Defensive clamp: tolerate an inverted range (from > to). No-op for valid input.
   const from = Math.min(range.from, range.to);
   const to = Math.max(range.from, range.to);

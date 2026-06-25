@@ -359,4 +359,19 @@ describe('void-aware merge/split', () => {
     expect(r.doc).toBe(d);
     expect(r.doc.blocks[0].type).toBe('attachment');
   });
+  it('insertFragment with the caret on a void splices AFTER it (no attachment-with-text)', () => {
+    const d: RichDoc = { blocks: [att('v')] };
+    const frag: RichDoc = { blocks: [createBlock('paragraph', 'HELLO', { id: 'f' })] };
+    const r = insertFragment(d, { anchor: at('v', 0), focus: at('v', 0) }, frag);
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['attachment', 'paragraph']);
+    // the void is untouched; the pasted text is its own sibling block
+    expect(r.doc.blocks[0].inlines).toEqual([]);
+    expect(runsText(r.doc.blocks[1].inlines)).toBe('HELLO');
+  });
+  it('insertMention on a void is a no-op', () => {
+    const d: RichDoc = { blocks: [att('v')] };
+    const r = insertMention(d, 'v', { from: 0, to: 0 }, '@', { id: 'u', label: 'A' });
+    expect(r.doc).toBe(d);
+    expect(r.doc.blocks[0].inlines).toEqual([]);
+  });
 });

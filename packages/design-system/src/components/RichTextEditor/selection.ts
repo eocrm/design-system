@@ -22,8 +22,9 @@ function blockElementFor(root: HTMLElement, node: Node): HTMLElement | null {
 /**
  * A void attachment block element (`<figure data-block-id>`), or null. The
  * `data-block-id` guard is load-bearing: callers rely on it to safely read the id.
- * In this engine `<figure>` is emitted ONLY for attachment blocks (renderDoc), and
- * pasted external figures are dropped (fromHtml), so the tag check is sufficient.
+ * In editable mode renderDoc emits `<figure>` ONLY for attachment blocks and always
+ * stamps `data-block-id`, so every `data-block-id` figure in the editor is an
+ * attachment — the tag + attribute check is sufficient.
  */
 function figureBlock(node: Node | null | undefined): HTMLElement | null {
   return node instanceof HTMLElement &&
