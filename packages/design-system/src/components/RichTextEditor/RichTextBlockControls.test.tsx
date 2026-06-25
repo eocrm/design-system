@@ -19,6 +19,7 @@ function Harness(props: Partial<React.ComponentProps<typeof RichTextBlockControl
           onInsertBelow={() => {}}
           onAction={() => {}}
           onTurnInto={() => {}}
+          onReorder={() => {}}
           {...props}
         />
       </div>
@@ -68,6 +69,7 @@ it('renders nothing when activeBlockId is null', () => {
             onInsertBelow={() => {}}
             onAction={() => {}}
             onTurnInto={() => {}}
+            onReorder={() => {}}
           />
         </div>
       </I18nProvider>

@@ -47,6 +47,7 @@ import {
 import { RichTextToolbar, type BlockChoice } from './RichTextToolbar';
 import {
   moveBlockUnit,
+  moveBlockUnitToIndex,
   duplicateBlockUnit,
   removeBlockUnit,
   insertEmptyBlockBelow,
@@ -918,6 +919,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       },
       [commit],
     );
+    const onBlockReorder = useCallback(
+      (id: string, targetIndex: number) =>
+        commit(moveBlockUnitToIndex(latest.current.value, id, targetIndex), 'other'),
+      [commit],
+    );
 
     const editable = (
       <div
@@ -1000,6 +1006,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onInsertBelow={onBlockInsertBelow}
         onAction={onBlockAction}
         onTurnInto={onBlockTurnInto}
+        onReorder={onBlockReorder}
       />
     ) : null;
 
