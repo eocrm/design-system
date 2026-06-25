@@ -85,6 +85,18 @@ describe('updateAttachmentBlock', () => {
     const d = doc([p('a')]);
     expect(updateAttachmentBlock(d, 'nope', { status: 'ready' })).toBe(d);
   });
+  it('does not write undefined keys onto the block', () => {
+    const d = doc([{ id: 'x', type: 'attachment', name: 'f', status: 'uploading', inlines: [] }]);
+    const next = updateAttachmentBlock(d, 'x', {
+      status: 'ready',
+      src: 'http://u/f.png',
+      width: undefined,
+      alt: undefined,
+    });
+    expect(next.blocks[0]).not.toHaveProperty('width');
+    expect(next.blocks[0]).not.toHaveProperty('alt');
+    expect(next.blocks[0].status).toBe('ready');
+  });
   it('no-op (same ref) when the id is not an attachment block', () => {
     const d = doc([p('a')]);
     expect(updateAttachmentBlock(d, 'a', { status: 'ready' })).toBe(d);

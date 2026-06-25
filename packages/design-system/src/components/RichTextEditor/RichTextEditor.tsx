@@ -1041,6 +1041,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // carry data-attachment-action + data-block-id). On the editable so it works
     // in every return branch, including the toolbar-less bare-fragment path.
     const onEditableClick = useCallback((e: React.MouseEvent) => {
+      if (latest.current.readOnly) return; // never mutate a read-only doc
       const el = (e.target as HTMLElement).closest?.('[data-attachment-action]');
       if (!el) return;
       const id = el.getAttribute('data-block-id');

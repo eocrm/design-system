@@ -71,6 +71,9 @@ export function insertText(
   const idx = findBlockIndex(doc, point.blockId);
   if (idx === -1) return { doc, selection: collapsed(point) };
   const block = doc.blocks[idx];
+  // A void block (e.g. an attachment) holds no editable text — never splice the
+  // typed text into it (that would corrupt the block). No-op.
+  if (isVoidBlock(block)) return { doc, selection: collapsed(point) };
   const inlines = normalizeInlines([
     ...sliceInlines(block.inlines, 0, point.offset),
     { text, marks: marksBefore(block, point.offset) },
@@ -105,15 +108,30 @@ export function deleteRange(doc: RichDoc, range: Range): { doc: RichDoc; selecti
   end = { ...end, offset: snapEndOffset(doc.blocks[ei], end.offset) };
   const startBlock = doc.blocks[si];
   const endBlock = doc.blocks[ei];
+  const startVoid = isVoidBlock(startBlock);
+  const endVoid = isVoidBlock(endBlock);
+  // A void block contributes no text to the merge. Crucially, the survivor must be
+  // a TEXT block — never `{...void, inlines: text}` (a model-illegal "attachment
+  // with text" that also drops the text from render/serialize). When the start is
+  // void, base the survivor on the end block (if it's text) else a fresh paragraph,
+  // but keep the start block's id so the caret target stays valid.
   const inlines = normalizeInlines([
-    ...sliceInlines(startBlock.inlines, 0, start.offset),
-    ...sliceInlines(endBlock.inlines, end.offset, blockLength(endBlock)),
+    ...(startVoid ? [] : sliceInlines(startBlock.inlines, 0, start.offset)),
+    ...(endVoid ? [] : sliceInlines(endBlock.inlines, end.offset, blockLength(endBlock))),
   ]);
+  let survivor: Block;
+  if (!startVoid) {
+    survivor = { ...startBlock, inlines };
+  } else if (!endVoid) {
+    survivor = { ...endBlock, id: startBlock.id, inlines };
+  } else {
+    survivor = { ...createBlock('paragraph', '', { id: startBlock.id }), inlines };
+  }
   const blocks = doc.blocks.slice();
-  blocks.splice(si, ei - si + 1, { ...startBlock, inlines });
+  blocks.splice(si, ei - si + 1, survivor);
   return {
     doc: { blocks },
-    selection: collapsed({ blockId: startBlock.id, offset: start.offset }),
+    selection: collapsed({ blockId: startBlock.id, offset: startVoid ? 0 : start.offset }),
   };
 }
 

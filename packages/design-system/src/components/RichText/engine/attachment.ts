@@ -104,7 +104,13 @@ export function insertAttachmentBlock(
 export function updateAttachmentBlock(doc: RichDoc, id: string, patch: AttachmentAttrs): RichDoc {
   const idx = findBlockIndex(doc, id);
   if (idx === -1 || doc.blocks[idx].type !== 'attachment') return doc;
+  // Only write keys that were actually provided, so the block stays canonical
+  // (no `key: undefined` entries) — mirrors how attachmentBlock() builds one.
+  const clean: AttachmentAttrs = {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (v !== undefined) (clean as Record<string, unknown>)[k] = v;
+  }
   const blocks = doc.blocks.slice();
-  blocks[idx] = { ...blocks[idx], ...patch };
+  blocks[idx] = { ...blocks[idx], ...clean };
   return { blocks };
 }
