@@ -67,6 +67,8 @@ it('fires onUploadingChange(true) then (false) around a batch', async () => {
   expect(onUploadingChange).toHaveBeenCalledWith(true);
   await waitFor(() => expect(onUploadingChange).toHaveBeenCalledWith(false));
   expect(onUpload).toHaveBeenCalledTimes(2);
+  // Edge-triggered: fired exactly once each for the whole 2-file batch, not per-file.
+  expect(onUploadingChange).toHaveBeenCalledTimes(2);
 });
 
 it('multi-file keeps file order', () => {
@@ -94,6 +96,41 @@ it('remove deletes the attachment block', () => {
     result.current.remove(id);
   });
   expect(getDoc().blocks.some((b) => b.id === id)).toBe(false);
+});
+
+it('remove leaves one empty paragraph when the attachment was the only block', () => {
+  const onUpload = vi.fn().mockResolvedValue({ url: 'http://u/p.png' });
+  // doc starts with one paragraph 'hi'; replace the whole doc with a lone attachment
+  let doc: RichDoc = docFromText('hi');
+  const getValue = () => doc;
+  const apply = (d: RichDoc) => {
+    doc = d;
+  };
+  const getCaret = () => ({ blockId: doc.blocks[0].id, offset: 0 });
+  const { result } = renderHook(() =>
+    useUpload({ config: { onUpload }, getValue, applyInsert: apply, applySettle: apply, getCaret }),
+  );
+  act(() => {
+    result.current.uploadFiles([file('p.png')]);
+  });
+  const attId = doc.blocks.find((b) => b.type === 'attachment')!.id;
+  // collapse the doc to just the attachment, then remove it
+  doc = { blocks: doc.blocks.filter((b) => b.id === attId) };
+  act(() => {
+    result.current.remove(attId);
+  });
+  expect(doc.blocks).toHaveLength(1);
+  expect(doc.blocks[0].type).toBe('paragraph');
+  expect(doc.blocks[0].id).not.toBe(attId);
+});
+
+it('retry on an unknown id is a no-op (does not call onUpload)', () => {
+  const onUpload = vi.fn().mockResolvedValue({ url: 'http://u/p.png' });
+  const { result } = harness(onUpload);
+  act(() => {
+    result.current.retry('nope');
+  });
+  expect(onUpload).not.toHaveBeenCalled();
 });
 
 it('drops a settle whose block was already removed', async () => {

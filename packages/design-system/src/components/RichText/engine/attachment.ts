@@ -63,22 +63,26 @@ function attachmentBlock(attrs: AttachmentAttrs): Block {
  * Split the block at `point` and insert an attachment block between the halves.
  * Always leaves an editable paragraph AFTER the attachment (the caret's home);
  * the caret lands at offset 0 of that trailing block. If `point` is inside a void
- * block, inserts after it instead of splitting.
+ * block, inserts after it instead of splitting. Returns the new block's
+ * `attachmentId` so callers needn't re-derive it from array position (`null` on
+ * the no-op path when `point.blockId` isn't found).
  */
 export function insertAttachmentBlock(
   doc: RichDoc,
   point: Point,
   attrs: AttachmentAttrs,
-): { doc: RichDoc; selection: Range } {
+): { doc: RichDoc; selection: Range; attachmentId: string | null } {
   const idx = findBlockIndex(doc, point.blockId);
-  if (idx === -1) return { doc, selection: collapsed(point.blockId, point.offset) };
+  if (idx === -1) {
+    return { doc, selection: collapsed(point.blockId, point.offset), attachmentId: null };
+  }
   const block = doc.blocks[idx];
   const att = attachmentBlock(attrs);
 
   if (isVoidBlock(block)) {
     const after = createBlock('paragraph');
     const blocks = [...doc.blocks.slice(0, idx + 1), att, after, ...doc.blocks.slice(idx + 1)];
-    return { doc: { blocks }, selection: collapsed(after.id) };
+    return { doc: { blocks }, selection: collapsed(after.id), attachmentId: att.id };
   }
 
   const left: Block = {
@@ -93,7 +97,7 @@ export function insertAttachmentBlock(
     inlines: rightInlines,
   };
   const blocks = [...doc.blocks.slice(0, idx), left, att, right, ...doc.blocks.slice(idx + 1)];
-  return { doc: { blocks }, selection: collapsed(right.id) };
+  return { doc: { blocks }, selection: collapsed(right.id), attachmentId: att.id };
 }
 
 /** Patch an attachment block's fields by id. Same-ref no-op if absent/not attachment. */

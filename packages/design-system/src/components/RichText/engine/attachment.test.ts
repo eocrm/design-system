@@ -42,6 +42,23 @@ describe('insertAttachmentBlock', () => {
     expect(r.doc.blocks[0].inlines[0].text).toBe('ab');
     expect(r.doc.blocks[2].inlines[0].text).toBe('cd');
   });
+  it('returns the new block id as attachmentId (split path)', () => {
+    const r = insertAttachmentBlock(
+      doc([p('a', 'hello')]),
+      { blockId: 'a', offset: 5 },
+      {
+        name: 'y.png',
+      },
+    );
+    const att = r.doc.blocks.find((b) => b.type === 'attachment')!;
+    expect(r.attachmentId).toBe(att.id);
+  });
+  it('returns attachmentId null when the caret block is absent (no-op)', () => {
+    const d = doc([p('a')]);
+    const r = insertAttachmentBlock(d, { blockId: 'nope', offset: 0 }, { name: 'y' });
+    expect(r.attachmentId).toBeNull();
+    expect(r.doc).toBe(d);
+  });
   it('inserts after a void block instead of splitting it', () => {
     const d = doc([{ id: 'v', type: 'attachment', status: 'ready', name: 'x', inlines: [] }]);
     const r = insertAttachmentBlock(

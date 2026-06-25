@@ -4,6 +4,7 @@
 // unit-testable without a DOM editor.
 import { useCallback, useRef } from 'react';
 import type { RichDoc, Point } from '../RichText/engine/model';
+import { emptyDoc } from '../RichText/engine/model';
 import { insertAttachmentBlock, updateAttachmentBlock } from '../RichText/engine/attachment';
 
 /** What a consumer's upload handler must resolve with. */
@@ -92,23 +93,24 @@ export function useUpload({ config, getValue, applyInsert, applySettle, getCaret
       // Insert all spinner blocks first (in order), then kick off uploads.
       let doc = getValue();
       let caret = getCaret();
-      const ids: string[] = [];
+      const pending: { id: string; file: File }[] = [];
       for (const file of files) {
         const r = insertAttachmentBlock(doc, caret, {
           name: file.name,
           mime: file.type,
           status: 'uploading',
         });
+        // Skip a file whose insert no-op'd (caret block not in the doc) rather
+        // than crashing the whole batch on a stale/invalid caret.
+        if (r.attachmentId === null) continue;
         doc = r.doc;
         caret = r.selection.anchor; // next insert goes after the trailing paragraph
-        // the attachment block is the one immediately before the caret's block
-        const caretIdx = doc.blocks.findIndex((b) => b.id === caret.blockId);
-        const attId = doc.blocks[caretIdx - 1].id;
-        ids.push(attId);
-        filesRef.current.set(attId, file);
+        pending.push({ id: r.attachmentId, file });
+        filesRef.current.set(r.attachmentId, file);
       }
+      if (pending.length === 0) return;
       applyInsert(doc);
-      files.forEach((file, i) => runUpload(ids[i], file));
+      pending.forEach(({ id, file }) => runUpload(id, file));
     },
     [getValue, getCaret, applyInsert, runUpload],
   );
@@ -128,7 +130,9 @@ export function useUpload({ config, getValue, applyInsert, applySettle, getCaret
       filesRef.current.delete(id);
       const doc = getValue();
       const blocks = doc.blocks.filter((b) => b.id !== id);
-      applySettle({ blocks: blocks.length ? blocks : doc.blocks });
+      // If that emptied the doc, leave one empty paragraph (mirrors the engine's
+      // removeBlockUnit) — never silently re-keep the block the user removed.
+      applySettle(blocks.length ? { blocks } : emptyDoc());
     },
     [getValue, applySettle],
   );
