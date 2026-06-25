@@ -39,6 +39,21 @@ it('fires onInsertBelow with the active block id', async () => {
   expect(onInsertBelow).toHaveBeenCalledWith('b1');
 });
 
+it('binds the active block id into the menu onAction callback', async () => {
+  const onAction = vi.fn();
+  render(<Harness menuOpen onAction={onAction} />);
+  await userEvent.click(screen.getByRole('menuitem', { name: /duplicate/i }));
+  expect(onAction).toHaveBeenCalledWith('b1', 'duplicate');
+});
+
+it('binds the active block id into the menu onTurnInto callback', async () => {
+  const onTurnInto = vi.fn();
+  render(<Harness menuOpen onTurnInto={onTurnInto} />);
+  await userEvent.click(screen.getByRole('menuitem', { name: /turn into/i }));
+  await userEvent.click(await screen.findByRole('menuitem', { name: 'Heading 1' }));
+  expect(onTurnInto).toHaveBeenCalledWith('b1', { type: 'heading', level: 1 });
+});
+
 it('renders nothing when activeBlockId is null', () => {
   function NullHarness() {
     const rootRef = useRef<HTMLDivElement>(null);

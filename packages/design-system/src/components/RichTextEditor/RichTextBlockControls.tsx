@@ -48,6 +48,7 @@ export function RichTextBlockControls({
   useLayoutEffect(() => {
     if (!activeBlockId) {
       setTop(null);
+      setRetry(0); // fresh retry budget for the next activation
       return;
     }
     const root = rootRef.current;
