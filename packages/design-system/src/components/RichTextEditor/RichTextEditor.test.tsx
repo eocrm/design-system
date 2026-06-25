@@ -880,4 +880,43 @@ describe('blockControls', () => {
     await userEvent.hover(block);
     expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
   });
+
+  it('⌘⇧↓ moves the caret block down (subtree-aware, via commit)', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'a', offset: 0 },
+      focus: { blockId: 'a', offset: 0 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 'a', type: 'paragraph', inlines: [{ text: 'AAA', marks: [] }] },
+          { id: 'b', type: 'paragraph', inlines: [{ text: 'BBB', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls />;
+    }
+    renderEditor(<Harness />);
+    screen.getByRole('textbox').focus();
+    await user.keyboard('{Meta>}{Shift>}{ArrowDown}{/Shift}{/Meta}');
+    const order = Array.from(document.querySelectorAll('[data-block-id]')).map((el) =>
+      el.getAttribute('data-block-id'),
+    );
+    expect(order).toEqual(['b', 'a']);
+  });
+
+  it('block menu Duplicate routes through commit (block count grows)', async () => {
+    const user = userEvent.setup();
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await user.hover(block);
+    const before = document.querySelectorAll('[data-block-id]').length;
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: /duplicate/i }));
+    expect(document.querySelectorAll('[data-block-id]').length).toBe(before + 1);
+  });
 });
