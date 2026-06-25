@@ -94,3 +94,56 @@ export function RedoIcon() {
     </svg>
   );
 }
+export function PlusIcon() {
+  return (
+    <svg {...base}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+export function GripIcon() {
+  return (
+    <svg {...base}>
+      <circle cx="9" cy="6" r="1" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="18" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="6" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="18" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+export function DuplicateIcon() {
+  return (
+    <svg {...base}>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+    </svg>
+  );
+}
+export function ArrowUpIcon() {
+  return (
+    <svg {...base}>
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <path d="M5 12l7-7 7 7" />
+    </svg>
+  );
+}
+export function ArrowDownIcon() {
+  return (
+    <svg {...base}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <path d="M5 12l7 7 7-7" />
+    </svg>
+  );
+}
+export function TrashIcon() {
+  return (
+    <svg {...base}>
+      <path d="M3 6h18" />
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    </svg>
+  );
+}

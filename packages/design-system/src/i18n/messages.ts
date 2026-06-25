@@ -349,6 +349,20 @@ export interface Messages {
     mentionsLabel: string;
     /** Empty-state row when no mention candidates match. */
     mentionsEmpty: string;
+    /** aria-label on the block "insert below" (＋) gutter button. */
+    blockInsert: string;
+    /** aria-label on the block actions (⠿) gutter handle. */
+    blockActions: string;
+    /** "Turn into" submenu label in the block menu. */
+    blockTurnInto: string;
+    /** "Duplicate" item in the block menu. */
+    blockDuplicate: string;
+    /** "Move up" item in the block menu. */
+    blockMoveUp: string;
+    /** "Move down" item in the block menu. */
+    blockMoveDown: string;
+    /** "Delete" item in the block menu. */
+    blockDelete: string;
   };
 }
 
