@@ -54,6 +54,7 @@ import {
 } from '../RichText/engine/blockUnit';
 import { RichTextBlockControls } from './RichTextBlockControls';
 import type { BlockAction } from './RichTextBlockMenu';
+import { useUpload, type UploadConfig } from './useUpload';
 import {
   reset as historyReset,
   record as historyRecord,
@@ -137,6 +138,16 @@ export interface RichTextEditorProps extends Omit<
    * `false`. Ignored when `readOnly`. Independent of `toolbar`.
    */
   blockControls?: boolean;
+  /**
+   * Enable file upload: a toolbar button (when `toolbar`) and clipboard-file paste.
+   * `onUpload(file)` resolves with where the file landed; images render inline as a
+   * preview, other files as a download chip. Reject `onUpload` to show a retry/remove
+   * error. `onUploadingChange` fires while any upload is in flight — wire it to your
+   * submit button's disabled state. Validation (size/type) belongs in `onUpload`
+   * (`accept` is only a native-picker hint and is bypassed by paste). Omit to
+   * disable. Ignored when `readOnly`.
+   */
+  upload?: UploadConfig;
 }
 
 function isEmptyDoc(doc: RichDoc): boolean {
@@ -247,6 +258,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       mentions,
       autolink = true,
       renderLink,
+      upload,
       className,
       ...rest
     },
@@ -258,8 +270,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Selection to restore after the next model-driven re-render.
     const pendingSelectionRef = useRef<Range | null>(null);
     // Latest props for the native beforeinput listener (avoids stale closures).
-    const latest = useRef({ value, onChange, readOnly, autolink, renderLink });
-    latest.current = { value, onChange, readOnly, autolink, renderLink };
+    const latest = useRef({ value, onChange, readOnly, autolink, renderLink, upload });
+    latest.current = { value, onChange, readOnly, autolink, renderLink, upload };
 
     // Link editor state.
     const [linkEditor, setLinkEditor] = useState<LinkEditorOpen | null>(null);
@@ -338,6 +350,41 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       },
       [syncHistoryFlags],
     );
+
+    // Like commit, but records NO history entry — used for async upload settles so
+    // Undo never steps through an upload resolving. Preserves the caret across the
+    // model-driven re-render by re-pinning the current selection.
+    const commitSilent = useCallback((doc: RichDoc) => {
+      if (doc === latest.current.value) return;
+      const root = rootRef.current;
+      const sel = root ? readSelection(root) : null;
+      if (sel) pendingSelectionRef.current = sel;
+      latest.current.onChange(doc);
+    }, []);
+
+    const uploadOn = !!upload && !readOnly;
+    const uploader = useUpload({
+      config: upload ?? { onUpload: async () => ({ url: '' }) },
+      getValue: () => latest.current.value,
+      applyInsert: (doc) => {
+        const root = rootRef.current;
+        const sel = (root ? readSelection(root) : null) ?? {
+          anchor: { blockId: latest.current.value.blocks[0].id, offset: 0 },
+          focus: { blockId: latest.current.value.blocks[0].id, offset: 0 },
+        };
+        commit({ doc, selection: sel }, 'other');
+      },
+      applySettle: commitSilent,
+      getCaret: () =>
+        (rootRef.current ? readSelection(rootRef.current)?.anchor : undefined) ?? {
+          blockId: latest.current.value.blocks[0].id,
+          offset: 0,
+        },
+    });
+    // The paste/click handlers close over a stale `uploader`; mirror it in a ref so
+    // we read the current one without re-subscribing the native paste listener.
+    const uploaderRef = useRef(uploader);
+    uploaderRef.current = uploader;
 
     // Drop any caret-staged pending mark — the doc + caret are about to change,
     // so a mark staged at the old caret must not bleed into the next typed text.
@@ -612,6 +659,16 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (!root) return;
       const onPaste = (e: ClipboardEvent) => {
         if (latest.current.readOnly) return;
+        // File paste (images/files from the clipboard) → upload. Takes priority
+        // over HTML/URL paste. Gated on `upload` being configured.
+        if (latest.current.upload && !latest.current.readOnly) {
+          const files = Array.from(e.clipboardData?.files ?? []);
+          if (files.length > 0) {
+            e.preventDefault();
+            uploaderRef.current.uploadFiles(files);
+            return;
+          }
+        }
         const html = e.clipboardData?.getData('text/html');
         if (html && html.trim()) {
           const range = readSelection(root);
@@ -959,6 +1016,19 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [commit],
     );
 
+    // Delegate clicks on the error-state attachment Retry/Remove buttons (they
+    // carry data-attachment-action + data-block-id). On the editable so it works
+    // in every return branch, including the toolbar-less bare-fragment path.
+    const onEditableClick = useCallback((e: React.MouseEvent) => {
+      const el = (e.target as HTMLElement).closest?.('[data-attachment-action]');
+      if (!el) return;
+      const id = el.getAttribute('data-block-id');
+      const action = el.getAttribute('data-attachment-action');
+      if (!id) return;
+      if (action === 'retry') uploaderRef.current.retry(id);
+      else if (action === 'remove') uploaderRef.current.remove(id);
+    }, []);
+
     const editable = (
       <div
         // {...rest} FIRST so the component's own role/aria/contentEditable/handlers
@@ -995,6 +1065,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         data-placeholder={placeholder}
         spellCheck
         onKeyDown={onKeyDown}
+        onClick={onEditableClick}
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
       >
@@ -1078,6 +1149,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           canRedo={canRedo}
           onUndo={onUndo}
           onRedo={onRedo}
+          onUpload={uploadOn ? (files) => uploaderRef.current.uploadFiles(files) : undefined}
+          uploadAccept={upload?.accept}
         />
         {editable}
         {linkBubble}
