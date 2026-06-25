@@ -290,6 +290,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const shellRef = useRef<HTMLDivElement | null>(null);
     const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
     const [blockMenuOpen, setBlockMenuOpen] = useState(false);
+    // Mirror the open state into a ref so the hover listener can read it without
+    // re-subscribing: while the menu is open, hovering another block must NOT move
+    // the active block (the menu's actions are bound to it — moving it would make
+    // a click act on the wrong block).
+    const blockMenuOpenRef = useRef(false);
+    blockMenuOpenRef.current = blockMenuOpen;
 
     // Resolve the [data-block-id] of the block element containing a DOM node.
     const blockIdFromNode = useCallback((node: Node | null): string | null => {
@@ -299,7 +305,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (el.hasAttribute('data-block-id')) return el.getAttribute('data-block-id');
         el = el.parentElement;
       }
-      return el?.getAttribute?.('data-block-id') ?? null;
+      return null; // reached the root (or ran out of ancestors) — no block
     }, []);
 
     const historyRef = useRef<History>(historyReset({ doc: value, selection: null }));
@@ -682,6 +688,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const root = rootRef.current;
       if (!root) return;
       const onOver = (e: MouseEvent) => {
+        // Don't let hover steal the active block while the menu is open — its
+        // actions are bound to the active block.
+        if (blockMenuOpenRef.current) return;
         const id = blockIdFromNode(e.target as Node);
         if (id) setActiveBlockId(id);
       };
@@ -736,11 +745,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           const caretBlock = range.anchor.blockId;
           if (mod && e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
             e.preventDefault();
+            e.stopPropagation();
             commit(moveBlockUnit(value, caretBlock, e.key === 'ArrowUp' ? -1 : 1), 'other');
             return;
           }
           if (mod && !e.shiftKey && e.key.toLowerCase() === 'd') {
             e.preventDefault();
+            e.stopPropagation();
             commit(duplicateBlockUnit(value, caretBlock), 'other');
             return;
           }

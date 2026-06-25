@@ -926,6 +926,51 @@ describe('blockControls', () => {
     expect(document.querySelector('li[data-block-id]')).toBeTruthy();
   });
 
+  it('⌘D duplicates the caret block (via commit)', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'a', offset: 0 },
+      focus: { blockId: 'a', offset: 0 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'a', type: 'paragraph', inlines: [{ text: 'AAA', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls />;
+    }
+    renderEditor(<Harness />);
+    screen.getByRole('textbox').focus();
+    await user.keyboard('{Meta>}d{/Meta}');
+    expect(document.querySelectorAll('[data-block-id]').length).toBe(2);
+  });
+
+  it('open menu acts on its block even after hovering another (no hover steal)', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 'a', type: 'paragraph', inlines: [{ text: 'AAA', marks: [] }] },
+          { id: 'b', type: 'paragraph', inlines: [{ text: 'BBB', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls />;
+    }
+    renderEditor(<Harness />);
+    const [blockA, blockB] = Array.from(
+      document.querySelectorAll('[data-block-id]'),
+    ) as HTMLElement[];
+    // Open the menu on block A…
+    await user.hover(blockA);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    // …then hover block B before choosing Delete.
+    await user.hover(blockB);
+    await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
+    // Block A must be the one removed, leaving B.
+    const remaining = Array.from(document.querySelectorAll('[data-block-id]'));
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].textContent).toBe('BBB');
+  });
+
   it('block menu Duplicate routes through commit (block count grows)', async () => {
     const user = userEvent.setup();
     render(
