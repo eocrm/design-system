@@ -272,6 +272,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Latest props for the native beforeinput listener (avoids stale closures).
     const latest = useRef({ value, onChange, readOnly, autolink, renderLink, upload });
     latest.current = { value, onChange, readOnly, autolink, renderLink, upload };
+    // The synchronous "live" doc — kept ahead of `value` between renders by the
+    // commit paths, so several async upload settles in the same tick chain off each
+    // other's result instead of all reading the stale last-rendered `value` (which
+    // would make the last settle clobber the earlier ones). Re-synced to `value`
+    // each render so external replacements flow in.
+    const liveDocRef = useRef(value);
+    liveDocRef.current = value;
 
     // Link editor state.
     const [linkEditor, setLinkEditor] = useState<LinkEditorOpen | null>(null);
@@ -346,6 +353,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         );
         syncHistoryFlags();
         pendingSelectionRef.current = result.selection;
+        liveDocRef.current = result.doc;
         latest.current.onChange(result.doc);
       },
       [syncHistoryFlags],
@@ -353,31 +361,39 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     // Like commit, but records NO history entry — used for async upload settles so
     // Undo never steps through an upload resolving. Preserves the caret across the
-    // model-driven re-render by re-pinning the current selection.
+    // model-driven re-render by re-pinning the current selection, and keeps the
+    // history's `present` snapshot in sync with the new doc (without pushing a
+    // past/future entry) so the layout effect's `value !== present.doc` external-
+    // replacement heuristic doesn't mistake a settle for a doc swap and reset undo.
     const commitSilent = useCallback((doc: RichDoc) => {
       if (doc === latest.current.value) return;
       const root = rootRef.current;
       const sel = root ? readSelection(root) : null;
       if (sel) pendingSelectionRef.current = sel;
+      historyRef.current = {
+        ...historyRef.current,
+        present: { doc, selection: sel ?? historyRef.current.present.selection },
+      };
+      liveDocRef.current = doc;
       latest.current.onChange(doc);
     }, []);
 
     const uploadOn = !!upload && !readOnly;
     const uploader = useUpload({
       config: upload ?? { onUpload: async () => ({ url: '' }) },
-      getValue: () => latest.current.value,
+      getValue: () => liveDocRef.current,
       applyInsert: (doc) => {
         const root = rootRef.current;
         const sel = (root ? readSelection(root) : null) ?? {
-          anchor: { blockId: latest.current.value.blocks[0].id, offset: 0 },
-          focus: { blockId: latest.current.value.blocks[0].id, offset: 0 },
+          anchor: { blockId: liveDocRef.current.blocks[0].id, offset: 0 },
+          focus: { blockId: liveDocRef.current.blocks[0].id, offset: 0 },
         };
         commit({ doc, selection: sel }, 'other');
       },
       applySettle: commitSilent,
       getCaret: () =>
         (rootRef.current ? readSelection(rootRef.current)?.anchor : undefined) ?? {
-          blockId: latest.current.value.blocks[0].id,
+          blockId: liveDocRef.current.blocks[0].id,
           offset: 0,
         },
     });

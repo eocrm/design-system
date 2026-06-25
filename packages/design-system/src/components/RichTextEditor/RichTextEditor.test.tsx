@@ -1070,4 +1070,64 @@ describe('upload', () => {
     pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
     expect(cfg.onUpload).not.toHaveBeenCalled();
   });
+
+  it('an upload settle does NOT wipe the undo stack (history preserved)', async () => {
+    const cfg = up();
+    function Harness() {
+      const [doc, setDoc] = useState(docFromText('hi'));
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar upload={cfg} />;
+    }
+    renderEditor(<Harness />);
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: firstBlockId(), offset: 0 },
+      focus: { blockId: firstBlockId(), offset: 0 },
+    });
+    const box = screen.getByRole('textbox');
+    box.focus();
+    pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
+    // wait for the upload to settle (spinner → ready image)
+    await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(document.querySelector('figure[data-block-id]')).toBeTruthy());
+    // The paste was one undo step; the settle must NOT have reset history.
+    const undoBtn = screen.getByRole('button', { name: 'Undo' });
+    expect(undoBtn).toBeEnabled();
+    await userEvent.click(undoBtn);
+    // Undo removes the attachment, returning to the pre-paste doc.
+    expect(document.querySelector('figure[data-block-id]')).toBeNull();
+  });
+
+  it('concurrent multi-file settles both reach ready (no clobber)', async () => {
+    const cfg = up({
+      onUpload: vi.fn((f: File) =>
+        Promise.resolve({ url: `http://u/${f.name}`, mime: 'image/png' }),
+      ),
+    });
+    function Harness() {
+      const [doc, setDoc] = useState(docFromText('hi'));
+      return <RichTextEditor value={doc} onChange={setDoc} upload={cfg} />;
+    }
+    renderEditor(<Harness />);
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: firstBlockId(), offset: 0 },
+      focus: { blockId: firstBlockId(), offset: 0 },
+    });
+    const box = screen.getByRole('textbox');
+    // Paste two files in one batch (Promise.resolve → both settle in one tick).
+    const ev = new Event('paste', { bubbles: true, cancelable: true }) as unknown as ClipboardEvent;
+    Object.defineProperty(ev, 'clipboardData', {
+      value: {
+        files: [
+          new File(['a'], 'a.png', { type: 'image/png' }),
+          new File(['b'], 'b.png', { type: 'image/png' }),
+        ],
+        getData: () => '',
+      },
+    });
+    box.dispatchEvent(ev);
+    await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(2));
+    // Both images must end up rendered (neither settle clobbered the other).
+    await waitFor(() =>
+      expect(document.querySelectorAll('figure[data-block-id] img')).toHaveLength(2),
+    );
+  });
 });
