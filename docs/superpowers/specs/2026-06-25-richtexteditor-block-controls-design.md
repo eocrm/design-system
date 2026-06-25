@@ -136,16 +136,16 @@ operations are undoable like every other edit).
 
 ### Menu → engine mapping
 
-| Menu item        | Engine call                                              |
-| ---------------- | ------------------------------------------------------- |
-| Turn into: Text  | `setBlockType(doc, id, { type: 'paragraph' })`          |
-| Turn into: H1–3  | `setBlockType(doc, id, { type: 'heading', level })`     |
-| Turn into: lists | existing list toggle (`runToggleList`) semantics        |
-| Turn into: Quote | `setBlockType(doc, id, { type: 'blockquote' })`          |
-| Turn into: Code  | `setBlockType(doc, id, { type: 'code_block' })`          |
-| Duplicate        | `duplicateBlockUnit(doc, id)`                            |
-| Move up / down   | `moveBlockUnit(doc, id, -1 | +1)`                        |
-| Delete           | `removeBlockUnit(doc, id)`                               |
+| Menu item        | Engine call                                         |
+| ---------------- | --------------------------------------------------- | ---- |
+| Turn into: Text  | `setBlockType(doc, id, { type: 'paragraph' })`      |
+| Turn into: H1–3  | `setBlockType(doc, id, { type: 'heading', level })` |
+| Turn into: lists | existing list toggle (`runToggleList`) semantics    |
+| Turn into: Quote | `setBlockType(doc, id, { type: 'blockquote' })`     |
+| Turn into: Code  | `setBlockType(doc, id, { type: 'code_block' })`     |
+| Duplicate        | `duplicateBlockUnit(doc, id)`                       |
+| Move up / down   | `moveBlockUnit(doc, id, -1                          | +1)` |
+| Delete           | `removeBlockUnit(doc, id)`                          |
 
 "Turn into" acts on the single anchor block (matching the existing toolbar
 block-type behavior); it does not rewrite a whole subtree.

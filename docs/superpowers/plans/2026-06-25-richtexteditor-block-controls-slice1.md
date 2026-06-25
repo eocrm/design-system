@@ -25,6 +25,7 @@
 ## File structure
 
 **Create:**
+
 - `…/RichText/engine/blockUnit.ts` — unit range + sibling helper + 5 transforms (pure).
 - `…/RichText/engine/blockUnit.test.ts` — engine tests.
 - `…/RichTextEditor/RichTextBlockMenu.tsx` — `DropdownMenu` wrapper (presentational).
@@ -33,6 +34,7 @@
 - `…/RichTextEditor/RichTextBlockControls.test.tsx`
 
 **Modify:**
+
 - `…/RichTextEditor/icons.tsx` — add `PlusIcon`, `GripIcon`, `DuplicateIcon`, `ArrowUpIcon`, `ArrowDownIcon`, `TrashIcon`.
 - `…/RichTextEditor/RichTextEditor.tsx` — `blockControls` prop, active-block state, keyboard, render `<RichTextBlockControls>`.
 - `…/RichTextEditor/RichTextEditor.module.scss` — gutter styles + left padding + relative anchor.
@@ -64,6 +66,7 @@ Expected: `.husky/_`
 ## Task 1: Engine — `blockUnitRange` + `prevSiblingAnchor`
 
 **Files:**
+
 - Create: `packages/design-system/src/components/RichText/engine/blockUnit.ts`
 - Test: `packages/design-system/src/components/RichText/engine/blockUnit.test.ts`
 
@@ -187,6 +190,7 @@ git commit -m "feat(RichText): blockUnitRange + prevSiblingAnchor unit helpers"
 ## Task 2: Engine — `moveBlockUnit` (sibling swap)
 
 **Files:**
+
 - Modify: `…/engine/blockUnit.ts`
 - Test: `…/engine/blockUnit.test.ts`
 
@@ -245,7 +249,11 @@ Expected: FAIL — `moveBlockUnit` not exported.
  * up / +1 down). Same-depth swap, so depths are preserved. No-op (returns the
  * SAME doc reference) at an edge / when there is no sibling in that direction.
  */
-export function moveBlockUnit(doc: RichDoc, blockId: string, dir: -1 | 1): { doc: RichDoc; selection: Range } {
+export function moveBlockUnit(
+  doc: RichDoc,
+  blockId: string,
+  dir: -1 | 1,
+): { doc: RichDoc; selection: Range } {
   const blocks = doc.blocks;
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed(blockId) };
@@ -307,9 +315,12 @@ describe('duplicateBlockUnit', () => {
     const d = doc([li('a', 0), li('a1', 1), p('z')]);
     const r = duplicateBlockUnit(d, 'a');
     expect(r.doc.blocks.length).toBe(4); // a a1 a' a1' ... wait: a a1 [copy a, copy a1] z
-    expect(r.doc.blocks.map((b) => b.type)).toEqual([
-      'bullet_item', 'bullet_item', 'bullet_item', 'bullet_item', 'paragraph',
-    ].slice(0, r.doc.blocks.length));
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(
+      ['bullet_item', 'bullet_item', 'bullet_item', 'bullet_item', 'paragraph'].slice(
+        0,
+        r.doc.blocks.length,
+      ),
+    );
     expect(r.doc.blocks[2].depth).toBe(0);
     expect(r.doc.blocks[3].depth).toBe(1);
   });
@@ -343,7 +354,10 @@ function cloneBlock(b: Block): Block {
  * Duplicate the unit anchored at `blockId`, inserting the clones immediately
  * after the unit. Fresh ids; depths preserved. Caret lands on the clone's anchor.
  */
-export function duplicateBlockUnit(doc: RichDoc, blockId: string): { doc: RichDoc; selection: Range } {
+export function duplicateBlockUnit(
+  doc: RichDoc,
+  blockId: string,
+): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed(blockId) };
   const u = blockUnitRange(doc.blocks, idx);
@@ -483,7 +497,10 @@ Expected: FAIL.
 
 ```ts
 /** Insert an empty paragraph directly after the block unit anchored at `blockId`. */
-export function insertEmptyBlockBelow(doc: RichDoc, blockId: string): { doc: RichDoc; selection: Range } {
+export function insertEmptyBlockBelow(
+  doc: RichDoc,
+  blockId: string,
+): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed(blockId) };
   const u = blockUnitRange(doc.blocks, idx);
@@ -553,7 +570,11 @@ Expected: FAIL.
  * clamped to a value valid for its new predecessor (`prevListDepth + 1`, else 0);
  * descendants shift by the same delta. No-op when `target` falls inside the unit.
  */
-export function moveBlockUnitToIndex(doc: RichDoc, blockId: string, target: number): { doc: RichDoc; selection: Range } {
+export function moveBlockUnitToIndex(
+  doc: RichDoc,
+  blockId: string,
+  target: number,
+): { doc: RichDoc; selection: Range } {
   const blocks = doc.blocks;
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed(blockId) };
@@ -606,20 +627,20 @@ The "Turn into" submenu reuses the EXISTING labels (`paragraph`, `heading1/2/3`,
 - [ ] **Step 1: Add to `messages.ts`** — inside `richTextEditor: { … }` (after `mentionsEmpty`), before its closing `}`:
 
 ```ts
-    /** aria-label on the block "insert below" (＋) gutter button. */
-    blockInsert: string;
-    /** aria-label on the block actions (⠿) gutter handle. */
-    blockActions: string;
-    /** "Turn into" submenu label in the block menu. */
-    blockTurnInto: string;
-    /** "Duplicate" item in the block menu. */
-    blockDuplicate: string;
-    /** "Move up" item in the block menu. */
-    blockMoveUp: string;
-    /** "Move down" item in the block menu. */
-    blockMoveDown: string;
-    /** "Delete" item in the block menu. */
-    blockDelete: string;
+/** aria-label on the block "insert below" (＋) gutter button. */
+blockInsert: string;
+/** aria-label on the block actions (⠿) gutter handle. */
+blockActions: string;
+/** "Turn into" submenu label in the block menu. */
+blockTurnInto: string;
+/** "Duplicate" item in the block menu. */
+blockDuplicate: string;
+/** "Move up" item in the block menu. */
+blockMoveUp: string;
+/** "Move down" item in the block menu. */
+blockMoveDown: string;
+/** "Delete" item in the block menu. */
+blockDelete: string;
 ```
 
 - [ ] **Step 2: Add to `en.ts`** — inside `richTextEditor`, after `mentionsEmpty: 'No matches',`:
@@ -742,6 +763,7 @@ A presentational wrapper over `DropdownMenu` (controlled open) whose trigger is
 the `⠿` handle. The "Turn into" submenu reuses existing block-type labels.
 
 **Files:**
+
 - Create: `…/RichTextEditor/RichTextBlockMenu.tsx`
 - Test: `…/RichTextEditor/RichTextBlockMenu.test.tsx`
 
@@ -919,6 +941,7 @@ Renders the gutter for the active block, positioned over the active block's box
 inside the editor shell (which is `position: relative`). Owns the menu open state.
 
 **Files:**
+
 - Create: `…/RichTextEditor/RichTextBlockControls.tsx`
 - Test: `…/RichTextEditor/RichTextBlockControls.test.tsx`
 
@@ -1095,6 +1118,7 @@ Add the prop, active-block tracking (hover + caret), the keyboard shortcuts, and
 render the gutter. All mutations go through `commit()`.
 
 **Files:**
+
 - Modify: `…/RichTextEditor/RichTextEditor.tsx`
 - Test: `…/RichTextEditor/RichTextEditor.test.tsx`
 
@@ -1110,7 +1134,11 @@ function renderRTE(extra = {}) {
     const [doc, setDoc] = useState(docFromText('one\ntwo\nthree'));
     return <RichTextEditor value={doc} onChange={setDoc} blockControls {...extra} />;
   }
-  return render(<I18nProvider><C /></I18nProvider>);
+  return render(
+    <I18nProvider>
+      <C />
+    </I18nProvider>,
+  );
 }
 
 it('blockControls: gutter is absent by default', () => {
@@ -1118,7 +1146,11 @@ it('blockControls: gutter is absent by default', () => {
     const [doc, setDoc] = useState(docFromText('x'));
     return <RichTextEditor value={doc} onChange={setDoc} />;
   }
-  render(<I18nProvider><C /></I18nProvider>);
+  render(
+    <I18nProvider>
+      <C />
+    </I18nProvider>,
+  );
   expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
 });
 
@@ -1143,7 +1175,11 @@ it('blockControls: readOnly suppresses the gutter', async () => {
     const [doc, setDoc] = useState(docFromText('x'));
     return <RichTextEditor value={doc} onChange={setDoc} blockControls readOnly />;
   }
-  render(<I18nProvider><C /></I18nProvider>);
+  render(
+    <I18nProvider>
+      <C />
+    </I18nProvider>,
+  );
   const block = document.querySelector('[data-block-id]') as HTMLElement;
   await userEvent.hover(block);
   expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
@@ -1184,67 +1220,76 @@ import type { BlockChoice } from './RichTextToolbar';
 3d. Add state + handlers (inside the component, near the other state):
 
 ```ts
-    const controlsOn = blockControls && !readOnly;
-    const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
-    const [blockMenuOpen, setBlockMenuOpen] = useState(false);
+const controlsOn = blockControls && !readOnly;
+const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+const [blockMenuOpen, setBlockMenuOpen] = useState(false);
 
-    // Resolve the block element under a node to its data-block-id.
-    const blockIdFromNode = useCallback((node: Node | null): string | null => {
-      let el = node instanceof HTMLElement ? node : node?.parentElement ?? null;
-      while (el && el !== rootRef.current) {
-        if (el.hasAttribute?.('data-block-id')) return el.getAttribute('data-block-id');
-        el = el.parentElement;
-      }
-      return null;
-    }, []);
+// Resolve the block element under a node to its data-block-id.
+const blockIdFromNode = useCallback((node: Node | null): string | null => {
+  let el = node instanceof HTMLElement ? node : (node?.parentElement ?? null);
+  while (el && el !== rootRef.current) {
+    if (el.hasAttribute?.('data-block-id')) return el.getAttribute('data-block-id');
+    el = el.parentElement;
+  }
+  return null;
+}, []);
 
-    // Hover tracking (mouse).
-    useEffect(() => {
-      if (!controlsOn) return;
-      const root = rootRef.current;
-      if (!root) return;
-      const onOver = (e: MouseEvent) => setActiveBlockId(blockIdFromNode(e.target as Node));
-      root.addEventListener('mouseover', onOver);
-      return () => root.removeEventListener('mouseover', onOver);
-    }, [controlsOn, blockIdFromNode]);
+// Hover tracking (mouse).
+useEffect(() => {
+  if (!controlsOn) return;
+  const root = rootRef.current;
+  if (!root) return;
+  const onOver = (e: MouseEvent) => setActiveBlockId(blockIdFromNode(e.target as Node));
+  root.addEventListener('mouseover', onOver);
+  return () => root.removeEventListener('mouseover', onOver);
+}, [controlsOn, blockIdFromNode]);
 
-    // Caret tracking → active block (so keyboard users get a gutter target).
-    useEffect(() => {
-      if (!controlsOn) return;
-      const onSel = () => {
-        const root = rootRef.current;
-        const sel = root?.ownerDocument.getSelection();
-        if (sel && root && sel.anchorNode && root.contains(sel.anchorNode)) {
-          setActiveBlockId(blockIdFromNode(sel.anchorNode));
-        }
-      };
-      document.addEventListener('selectionchange', onSel);
-      return () => document.removeEventListener('selectionchange', onSel);
-    }, [controlsOn, blockIdFromNode]);
+// Caret tracking → active block (so keyboard users get a gutter target).
+useEffect(() => {
+  if (!controlsOn) return;
+  const onSel = () => {
+    const root = rootRef.current;
+    const sel = root?.ownerDocument.getSelection();
+    if (sel && root && sel.anchorNode && root.contains(sel.anchorNode)) {
+      setActiveBlockId(blockIdFromNode(sel.anchorNode));
+    }
+  };
+  document.addEventListener('selectionchange', onSel);
+  return () => document.removeEventListener('selectionchange', onSel);
+}, [controlsOn, blockIdFromNode]);
 
-    const onBlockInsertBelow = useCallback((id: string) => {
-      commit(insertEmptyBlockBelow(latest.current.value, id), 'other');
-    }, [commit]);
+const onBlockInsertBelow = useCallback(
+  (id: string) => {
+    commit(insertEmptyBlockBelow(latest.current.value, id), 'other');
+  },
+  [commit],
+);
 
-    const onBlockAction = useCallback((id: string, action: BlockAction) => {
-      const v = latest.current.value;
-      if (action === 'duplicate') commit(duplicateBlockUnit(v, id), 'other');
-      else if (action === 'moveUp') commit(moveBlockUnit(v, id, -1), 'other');
-      else if (action === 'moveDown') commit(moveBlockUnit(v, id, 1), 'other');
-      else if (action === 'delete') commit(removeBlockUnit(v, id), 'other');
-      setBlockMenuOpen(false);
-    }, [commit]);
+const onBlockAction = useCallback(
+  (id: string, action: BlockAction) => {
+    const v = latest.current.value;
+    if (action === 'duplicate') commit(duplicateBlockUnit(v, id), 'other');
+    else if (action === 'moveUp') commit(moveBlockUnit(v, id, -1), 'other');
+    else if (action === 'moveDown') commit(moveBlockUnit(v, id, 1), 'other');
+    else if (action === 'delete') commit(removeBlockUnit(v, id), 'other');
+    setBlockMenuOpen(false);
+  },
+  [commit],
+);
 
-    const onBlockTurnInto = useCallback((id: string, choice: BlockChoice) => {
-      const v = latest.current.value;
-      const range = { anchor: { blockId: id, offset: 0 }, focus: { blockId: id, offset: 0 } };
-      if (choice.type === 'bullet_item' || choice.type === 'ordered_item') {
-        commit(runToggleList(v, range, choice.type), 'other');
-      } else {
-        commit(runSetBlock(v, range, choice), 'other');
-      }
-      setBlockMenuOpen(false);
-    }, [commit]);
+const onBlockTurnInto = useCallback(
+  (id: string, choice: BlockChoice) => {
+    const v = latest.current.value;
+    const range = { anchor: { blockId: id, offset: 0 }, focus: { blockId: id, offset: 0 } };
+    if (choice.type === 'bullet_item' || choice.type === 'ordered_item') {
+      commit(runToggleList(v, range, choice.type), 'other');
+    } else {
+      commit(runSetBlock(v, range, choice), 'other');
+    }
+    setBlockMenuOpen(false);
+  },
+  [commit],
+);
 ```
 
 3e. In `onKeyDown`, add the keyboard shortcuts. Insert this block AFTER the
@@ -1253,32 +1298,32 @@ undo/redo handling but BEFORE the `readSelection` guard's later use — right af
 the caret's block:
 
 ```ts
-        // Block controls keyboard: move/duplicate/menu for the caret's block.
-        if (controlsOn) {
-          const caretBlock = range.anchor.blockId;
-          if (mod && e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-            e.preventDefault();
-            commit(moveBlockUnit(value, caretBlock, e.key === 'ArrowUp' ? -1 : 1), 'other');
-            return;
-          }
-          if (mod && !e.shiftKey && e.key.toLowerCase() === 'd') {
-            e.preventDefault();
-            commit(duplicateBlockUnit(value, caretBlock), 'other');
-            return;
-          }
-          if (e.shiftKey && e.key === 'F10') {
-            e.preventDefault();
-            setActiveBlockId(caretBlock);
-            setBlockMenuOpen(true);
-            return;
-          }
-          if (e.key === 'ContextMenu') {
-            e.preventDefault();
-            setActiveBlockId(caretBlock);
-            setBlockMenuOpen(true);
-            return;
-          }
-        }
+// Block controls keyboard: move/duplicate/menu for the caret's block.
+if (controlsOn) {
+  const caretBlock = range.anchor.blockId;
+  if (mod && e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    e.preventDefault();
+    commit(moveBlockUnit(value, caretBlock, e.key === 'ArrowUp' ? -1 : 1), 'other');
+    return;
+  }
+  if (mod && !e.shiftKey && e.key.toLowerCase() === 'd') {
+    e.preventDefault();
+    commit(duplicateBlockUnit(value, caretBlock), 'other');
+    return;
+  }
+  if (e.shiftKey && e.key === 'F10') {
+    e.preventDefault();
+    setActiveBlockId(caretBlock);
+    setBlockMenuOpen(true);
+    return;
+  }
+  if (e.key === 'ContextMenu') {
+    e.preventDefault();
+    setActiveBlockId(caretBlock);
+    setBlockMenuOpen(true);
+    return;
+  }
+}
 ```
 
 > Add `controlsOn`, `onBlock*` handlers, `moveBlockUnit`, `duplicateBlockUnit` to
@@ -1289,17 +1334,17 @@ toolbar `return`), add `{controlsOn && <RichTextBlockControls … />}` next to
 `{linkBubble}`. Define the element once above the returns:
 
 ```tsx
-    const blockControlsEl = controlsOn ? (
-      <RichTextBlockControls
-        rootRef={rootRef}
-        activeBlockId={activeBlockId}
-        menuOpen={blockMenuOpen}
-        onMenuOpenChange={setBlockMenuOpen}
-        onInsertBelow={onBlockInsertBelow}
-        onAction={onBlockAction}
-        onTurnInto={onBlockTurnInto}
-      />
-    ) : null;
+const blockControlsEl = controlsOn ? (
+  <RichTextBlockControls
+    rootRef={rootRef}
+    activeBlockId={activeBlockId}
+    menuOpen={blockMenuOpen}
+    onMenuOpenChange={setBlockMenuOpen}
+    onInsertBelow={onBlockInsertBelow}
+    onAction={onBlockAction}
+    onTurnInto={onBlockTurnInto}
+  />
+) : null;
 ```
 
 Then add `{blockControlsEl}` after `{mentionMenu}` in both the fragment return and
@@ -1308,16 +1353,16 @@ a fragment with no wrapper that is `position: relative`. Wrap it so the gutter c
 anchor:
 
 ```tsx
-    if (!toolbar) {
-      return (
-        <div className={styles.shell}>
-          {editable}
-          {linkBubble}
-          {mentionMenu}
-          {blockControlsEl}
-        </div>
-      );
-    }
+if (!toolbar) {
+  return (
+    <div className={styles.shell}>
+      {editable}
+      {linkBubble}
+      {mentionMenu}
+      {blockControlsEl}
+    </div>
+  );
+}
 ```
 
 (The `styles.shell` already wraps the toolbar branch; reusing it here is fine and
@@ -1441,6 +1486,7 @@ Add pointer-drag reorder using the `⠿` handle. Drop index is computed from blo
 geometry; the move is committed via `moveBlockUnitToIndex`.
 
 **Files:**
+
 - Modify: `…/RichTextEditor/RichTextBlockControls.tsx` (handle drag via `@dnd-kit/core`)
 - Modify: `…/RichTextEditor/RichTextEditor.tsx` (pass an `onReorder(blockId, targetIndex)` callback)
 - Test: `…/RichTextEditor/RichTextEditor.test.tsx`
@@ -1448,19 +1494,22 @@ geometry; the move is committed via `moveBlockUnitToIndex`.
 - [ ] **Step 1: Add an `onReorder` callback in the editor** that maps to `moveBlockUnitToIndex`:
 
 ```ts
-    const onBlockReorder = useCallback((id: string, targetIndex: number) => {
-      commit(moveBlockUnitToIndex(latest.current.value, id, targetIndex), 'other');
-    }, [commit]);
+const onBlockReorder = useCallback(
+  (id: string, targetIndex: number) => {
+    commit(moveBlockUnitToIndex(latest.current.value, id, targetIndex), 'other');
+  },
+  [commit],
+);
 ```
 
 Pass `onReorder={onBlockReorder}` to `<RichTextBlockControls>`; import
 `moveBlockUnitToIndex` from `blockUnit`.
 
 - [ ] **Step 2: Implement drag in `RichTextBlockControls`** using `@dnd-kit/core`'s
-`DndContext` + `useDraggable` on the `⠿` handle, with a pointer sensor. On drag end,
-compute the target gap index from the pointer's Y against every `[data-block-id]`
-rect (the midpoint rule), then call `onReorder(activeBlockId, targetIndex)`. Render
-a horizontal drop-indicator line at the candidate gap during drag.
+      `DndContext` + `useDraggable` on the `⠿` handle, with a pointer sensor. On drag end,
+      compute the target gap index from the pointer's Y against every `[data-block-id]`
+      rect (the midpoint rule), then call `onReorder(activeBlockId, targetIndex)`. Render
+      a horizontal drop-indicator line at the candidate gap during drag.
 
 ```tsx
 // sketch — wire concretely against @dnd-kit/core during implementation:
@@ -1472,15 +1521,19 @@ a horizontal drop-indicator line at the candidate gap during drag.
 ```
 
 - [ ] **Step 3: Add a test** that exercises the geometry→index mapping by extracting
-`computeGapIndex` as a pure exported helper and unit-testing it with stubbed rects:
+      `computeGapIndex` as a pure exported helper and unit-testing it with stubbed rects:
 
 ```ts
 // in a new file blockDrop.ts: export function gapIndexFromY(rects: {top:number;height:number}[], y: number): number
 import { gapIndexFromY } from './blockDrop';
 it('returns the gap before the first block whose midpoint is below y', () => {
-  const rects = [{ top: 0, height: 20 }, { top: 20, height: 20 }, { top: 40, height: 20 }];
-  expect(gapIndexFromY(rects, 5)).toBe(0);   // above block 0 midpoint (10)
-  expect(gapIndexFromY(rects, 25)).toBe(1);  // below block 0 midpoint, above block 1 midpoint
+  const rects = [
+    { top: 0, height: 20 },
+    { top: 20, height: 20 },
+    { top: 40, height: 20 },
+  ];
+  expect(gapIndexFromY(rects, 5)).toBe(0); // above block 0 midpoint (10)
+  expect(gapIndexFromY(rects, 25)).toBe(1); // below block 0 midpoint, above block 1 midpoint
   expect(gapIndexFromY(rects, 100)).toBe(3); // past everything → end
 });
 ```
@@ -1503,8 +1556,8 @@ Expected: PASS. Then verify the full editor suite still passes:
 Run: `npm test -- src/components/RichTextEditor/`
 
 - [ ] **Step 5: Manual verification in the playground** (jsdom can't test real drag):
-Run `make dev`, open the RichTextEditor demo, drag a block by its `⠿` handle, confirm
-reorder + nested-list subtree move + undo (⌘Z) restores.
+      Run `make dev`, open the RichTextEditor demo, drag a block by its `⠿` handle, confirm
+      reorder + nested-list subtree move + undo (⌘Z) restores.
 
 - [ ] **Step 6: Commit**
 
@@ -1522,22 +1575,24 @@ git commit -m "feat(RichTextEditor): drag-to-reorder blocks (dnd-kit core)"
 - [ ] **Step 1: Add state** near the other `useState` calls:
 
 ```tsx
-  const [blockDoc, setBlockDoc] = useState<RichDoc>(() =>
-    fromMarkdown('# Block controls\n\nHover a line for the ＋/⠿ gutter.\n\n- first\n- second\n\n> Drag, duplicate, or turn into another type.'),
-  );
+const [blockDoc, setBlockDoc] = useState<RichDoc>(() =>
+  fromMarkdown(
+    '# Block controls\n\nHover a line for the ＋/⠿ gutter.\n\n- first\n- second\n\n> Drag, duplicate, or turn into another type.',
+  ),
+);
 ```
 
 - [ ] **Step 2: Add an `<Example>`** (place it after the toolbar example):
 
 ```tsx
-      <Example
-        title="Block controls"
-        description="Set blockControls to show a per-block gutter on hover/focus: ＋ inserts a block, ⠿ drags to reorder and opens a menu (turn into / duplicate / move / delete). Keyboard: Shift+F10 opens the menu, ⌘/Ctrl+⇧↑/↓ move, ⌘/Ctrl+D duplicates. Works with or without the toolbar."
-        code={`const [doc, setDoc] = useState(fromMarkdown('…'));
+<Example
+  title="Block controls"
+  description="Set blockControls to show a per-block gutter on hover/focus: ＋ inserts a block, ⠿ drags to reorder and opens a menu (turn into / duplicate / move / delete). Keyboard: Shift+F10 opens the menu, ⌘/Ctrl+⇧↑/↓ move, ⌘/Ctrl+D duplicates. Works with or without the toolbar."
+  code={`const [doc, setDoc] = useState(fromMarkdown('…'));
 <RichTextEditor value={doc} onChange={setDoc} blockControls />`}
-      >
-        <RichTextEditor value={blockDoc} onChange={setBlockDoc} blockControls placeholder="Write…" />
-      </Example>
+>
+  <RichTextEditor value={blockDoc} onChange={setBlockDoc} blockControls placeholder="Write…" />
+</Example>
 ```
 
 - [ ] **Step 3: Build the playground**
@@ -1596,9 +1651,9 @@ npm pack --dry-run -w @eocrm/design-system
 Expected: all PASS; `npm pack` shows **no** test files / internal-only paths in the tarball.
 
 - [ ] **Step 2: Spawn a fresh-context review agent** targeted at
-`packages/design-system/` per CLAUDE.md Rule 8 (10 categories; Critical/Important/
-Nice-to-have/Regression-watch + verdict). Fix every Critical + Important; note any
-deliberate skips.
+      `packages/design-system/` per CLAUDE.md Rule 8 (10 categories; Critical/Important/
+      Nice-to-have/Regression-watch + verdict). Fix every Critical + Important; note any
+      deliberate skips.
 
 - [ ] **Step 3: Re-run gates; re-review until verdict is "clean enough to stop."**
 
@@ -1616,6 +1671,7 @@ gh pr create --fill --title "feat(RichTextEditor): Notion-style block controls (
 ## Self-review (plan vs spec)
 
 **Spec coverage:**
+
 - `blockControls` opt-in prop → Task 11, 13. ✓
 - Gutter `＋`/`⠿` → Tasks 8, 10. ✓
 - Block menu (turn into / duplicate / move / delete) → Task 9. ✓
@@ -1633,6 +1689,7 @@ gh pr create --fill --title "feat(RichTextEditor): Notion-style block controls (
 - DoD / review loop / pack check → Task 17. ✓
 
 **Open verification points flagged for the implementer (not placeholders — known runtime-only unknowns):**
+
 1. `DropdownMenu.Item` `shortcut` prop existence — Task 9 notes the fallback.
 2. Exact token names in Task 12 — verify against `tokens.scss`.
 3. Gutter `top`/`left` pixel math — Task 10/14 iterate in the playground (jsdom has no layout).
@@ -1641,4 +1698,7 @@ gh pr create --fill --title "feat(RichTextEditor): Notion-style block controls (
 **Type consistency:** `BlockAction` (RichTextBlockMenu) and `BlockChoice`
 (RichTextToolbar) are reused verbatim across Tasks 9–11. Transform names match
 across tasks and the editor wiring. ✓
+
+```
+
 ```
