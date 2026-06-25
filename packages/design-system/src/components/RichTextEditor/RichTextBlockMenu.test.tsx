@@ -42,3 +42,18 @@ it('fires onAction("delete") for the Delete item', async () => {
   await userEvent.click(screen.getByRole('menuitem', { name: /delete/i }));
   expect(onAction).toHaveBeenCalledWith('delete');
 });
+
+it('fires onTurnInto with a BlockChoice from the Turn into submenu', async () => {
+  const { onTurnInto } = setup();
+  // Open the "Turn into" submenu, then pick Heading 1.
+  await userEvent.click(screen.getByRole('menuitem', { name: /turn into/i }));
+  await userEvent.click(await screen.findByRole('menuitem', { name: 'Heading 1' }));
+  expect(onTurnInto).toHaveBeenCalledWith({ type: 'heading', level: 1 });
+});
+
+it('conveys a list turn-into as a list BlockChoice (no depth)', async () => {
+  const { onTurnInto } = setup();
+  await userEvent.click(screen.getByRole('menuitem', { name: /turn into/i }));
+  await userEvent.click(await screen.findByRole('menuitem', { name: 'Bullet list' }));
+  expect(onTurnInto).toHaveBeenCalledWith({ type: 'bullet_item' });
+});
