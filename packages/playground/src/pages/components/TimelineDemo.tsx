@@ -17,7 +17,10 @@ export function TimelineDemo() {
         description="Each item's node is a slot — an Avatar for a person, an IconTile for a system event, or an action like the “Add activity” composer pinned as the most-recent node at the top. The connector links consecutive nodes and stops at the last."
         code={`<Timeline>
   <Timeline.Item node={<IconTile icon={<Plus size={16} />} color="blue" size="sm" />}>
-    <Button variant="secondary" size="sm" onClick={addActivity}>Add activity</Button>
+    {/* center the single control to the node box */}
+    <div style={{ display: 'flex', alignItems: 'center', minHeight: 'var(--size-md)' }}>
+      <Button variant="secondary" size="sm" onClick={addActivity}>Add activity</Button>
+    </div>
   </Timeline.Item>
   <Timeline.Item node={<Avatar name="Dana Reyes" size="sm" />}>
     <Stack gap="xs">
@@ -32,11 +35,14 @@ export function TimelineDemo() {
 </Timeline>`}
       >
         <Timeline>
-          {/* Composer entry as the most-recent (top) node — its connector flows into the feed below. */}
+          {/* Composer entry as the most-recent (top) node — its connector flows into the feed below.
+              The single button is centered to the node box (matches its height) so it lines up with the node. */}
           <Timeline.Item node={<IconTile icon={<Plus size={16} />} color="blue" size="sm" />}>
-            <Button variant="secondary" size="sm" onClick={() => {}}>
-              Add activity
-            </Button>
+            <div style={{ display: 'flex', alignItems: 'center', minHeight: 'var(--size-md)' }}>
+              <Button variant="secondary" size="sm" onClick={() => {}}>
+                Add activity
+              </Button>
+            </div>
           </Timeline.Item>
           <Timeline.Item node={<Avatar name="Dana Reyes" size="sm" />}>
             <Stack gap="xs">
