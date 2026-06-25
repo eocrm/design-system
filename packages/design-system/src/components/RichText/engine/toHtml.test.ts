@@ -128,3 +128,72 @@ describe('toHtml — inline marks', () => {
     );
   });
 });
+
+describe('toHtml — attachments', () => {
+  it('serializes a ready image attachment to <figure><img>', () => {
+    const doc = {
+      blocks: [
+        {
+          id: 'a',
+          type: 'attachment' as const,
+          status: 'ready' as const,
+          src: 'http://u/p.png',
+          mime: 'image/png',
+          alt: 'Chart',
+          name: 'p.png',
+          inlines: [],
+        },
+      ],
+    };
+    expect(toHtml(doc)).toBe('<figure><img src="http://u/p.png" alt="Chart"></figure>');
+  });
+
+  it('serializes a ready file attachment to a download link', () => {
+    const doc = {
+      blocks: [
+        {
+          id: 'a',
+          type: 'attachment' as const,
+          status: 'ready' as const,
+          src: 'http://u/d.pdf',
+          mime: 'application/pdf',
+          name: 'd.pdf',
+          inlines: [],
+        },
+      ],
+    };
+    expect(toHtml(doc)).toBe('<a href="http://u/d.pdf" download>d.pdf</a>');
+  });
+
+  it('skips a non-ready attachment', () => {
+    const doc = {
+      blocks: [
+        {
+          id: 'a',
+          type: 'attachment' as const,
+          status: 'uploading' as const,
+          name: 'p',
+          inlines: [],
+        },
+      ],
+    };
+    expect(toHtml(doc)).toBe('');
+  });
+
+  it('drops an attachment with an unsafe src', () => {
+    const doc = {
+      blocks: [
+        {
+          id: 'a',
+          type: 'attachment' as const,
+          status: 'ready' as const,
+          src: 'javascript:alert(1)',
+          mime: 'image/png',
+          name: 'x',
+          inlines: [],
+        },
+      ],
+    };
+    expect(toHtml(doc)).toBe('');
+  });
+});

@@ -52,9 +52,9 @@ describe('fromHtml — blocks', () => {
     ]);
   });
 
-  it('drops script/style/table/img/hr', () => {
+  it('drops script/style/table/hr', () => {
     const d = fromHtml(
-      '<p>a</p><script>bad()</script><style>x{}</style><table><tr><td>t</td></tr></table><img src="x"><hr><p>b</p>',
+      '<p>a</p><script>bad()</script><style>x{}</style><table><tr><td>t</td></tr></table><hr><p>b</p>',
     );
     expect(d.blocks.map(text)).toEqual(['a', 'b']);
   });
@@ -191,4 +191,28 @@ it('a plain span without data-mention-id is not a mention', () => {
 it('a span with an empty data-mention-id is treated as plain text', () => {
   const doc = fromHtml('<p><span data-mention-id="">@x</span></p>');
   expect(doc.blocks[0].inlines.every((r) => r.marks.every((m) => m.type !== 'mention'))).toBe(true);
+});
+
+describe('fromHtml — attachments', () => {
+  it('parses a block-level <img> into a ready image attachment block', () => {
+    const doc = fromHtml('<p>x</p><img src="http://u/p.png" alt="Chart">');
+    const att = doc.blocks.find((b) => b.type === 'attachment')!;
+    expect(att).toBeTruthy();
+    expect(att.src).toBe('http://u/p.png');
+    expect(att.alt).toBe('Chart');
+    expect(att.mime).toBe('image/*');
+    expect(att.status).toBe('ready');
+  });
+
+  it('parses a <figure><img> into an attachment block', () => {
+    const doc = fromHtml('<figure><img src="http://u/p.png" alt="Pic"></figure>');
+    expect(doc.blocks.some((b) => b.type === 'attachment' && b.src === 'http://u/p.png')).toBe(
+      true,
+    );
+  });
+
+  it('drops an <img> with an unsafe src', () => {
+    const doc = fromHtml('<img src="javascript:alert(1)" alt="x">');
+    expect(doc.blocks.some((b) => b.type === 'attachment')).toBe(false);
+  });
 });

@@ -81,3 +81,53 @@ describe('toMarkdown — inline', () => {
     );
   });
 });
+
+describe('toMarkdown — attachments', () => {
+  it('serializes attachments to markdown image / link', () => {
+    expect(
+      toMarkdown({
+        blocks: [
+          {
+            id: 'a',
+            type: 'attachment' as const,
+            status: 'ready' as const,
+            src: 'http://u/p.png',
+            mime: 'image/png',
+            alt: 'Chart',
+            inlines: [],
+          },
+        ],
+      }),
+    ).toBe('![Chart](http://u/p.png)');
+    expect(
+      toMarkdown({
+        blocks: [
+          {
+            id: 'b',
+            type: 'attachment' as const,
+            status: 'ready' as const,
+            src: 'http://u/d.pdf',
+            name: 'd.pdf',
+            inlines: [],
+          },
+        ],
+      }),
+    ).toBe('[d.pdf](http://u/d.pdf)');
+  });
+
+  it('skips a non-ready attachment in markdown', () => {
+    expect(
+      toMarkdown({
+        blocks: [
+          {
+            id: 'a',
+            type: 'attachment' as const,
+            status: 'error' as const,
+            name: 'x',
+            inlines: [],
+          },
+        ],
+      }),
+    ).toBe('');
+  });
+});

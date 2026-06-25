@@ -12,6 +12,12 @@ import { isListItem, effectiveDepths } from './listDepths';
 // Outer → inner; link outermost, code innermost (matches renderDoc).
 const MARK_ORDER: MarkType[] = ['mention', 'link', 'bold', 'italic', 'underline', 'strike', 'code'];
 
+/** An attachment is an image if its MIME says so, else by the src's file extension. */
+function attachmentIsImage(block: Block): boolean {
+  if (block.mime) return block.mime.startsWith('image/');
+  return /\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(block.src ?? '');
+}
+
 /** Wrap an already-escaped HTML string in one mark's tag. */
 function wrapMark(type: MarkType, mark: Mark, inner: string): string {
   switch (type) {
@@ -88,6 +94,18 @@ function blockHtml(block: Block): string {
       return `<blockquote>${inlines(block)}</blockquote>`;
     case 'code_block':
       return `<pre><code>${escapeHtml(runsText(block.inlines))}</code></pre>`;
+    case 'attachment': {
+      // Only finalized (ready/absent-status) attachments serialize; in-flight or
+      // failed uploads emit nothing.
+      if (block.status && block.status !== 'ready') return '';
+      const safe = safeHref(block.src ?? '');
+      if (safe === undefined) return '';
+      if (attachmentIsImage(block)) {
+        const alt = escapeAttr(block.alt ?? block.name ?? '');
+        return `<figure><img src="${escapeAttr(safe)}" alt="${alt}"></figure>`;
+      }
+      return `<a href="${escapeAttr(safe)}" download>${escapeHtml(block.name ?? safe)}</a>`;
+    }
     case 'paragraph':
     default:
       return `<p>${inlines(block)}</p>`;
