@@ -27,6 +27,17 @@ it('renders a file chip (download link) for a non-image', () => {
   const link = screen.getByRole('link', { name: /d\.pdf/i });
   expect(link).toHaveAttribute('href', 'http://u/d.pdf');
 });
+it('treats a missing mime as an image by URL extension', () => {
+  wrap(att({ status: 'ready', src: 'http://u/photo.PNG', name: 'photo.PNG', alt: 'Pic' }));
+  expect(screen.getByRole('img', { name: 'Pic' })).toBeInTheDocument();
+});
+it('does not render a live image for an unsafe src (degrades to chip)', () => {
+  wrap(att({ status: 'ready', src: 'javascript:alert(1)', mime: 'image/png', name: 'x.png' }));
+  expect(screen.queryByRole('img')).toBeNull();
+  // chip link has no live unsafe href
+  const link = screen.queryByRole('link');
+  expect(link?.getAttribute('href') ?? '').not.toContain('javascript:');
+});
 it('renders a spinner while uploading', () => {
   wrap(att({ status: 'uploading', name: 'p.png' }));
   expect(screen.getByText('p.png')).toBeInTheDocument();

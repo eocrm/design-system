@@ -386,4 +386,5 @@ it('renders an attachment block as a contenteditable=false figure', () => {
   const fig = container.querySelector('figure[data-block-id="a"]');
   expect(fig).toBeTruthy();
   expect(fig).toHaveAttribute('contenteditable', 'false');
+  expect(fig).toHaveAttribute('data-attachment');
 });

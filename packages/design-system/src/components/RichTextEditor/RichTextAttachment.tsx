@@ -33,10 +33,20 @@ export function RichTextAttachment({ block }: { block: Block }) {
       <span className={styles.attachmentError}>
         <span className={styles.attachmentName}>{name}</span>
         <span className={styles.attachmentLabel}>{t('richTextEditor.uploadFailed')}</span>
-        <button type="button" data-attachment-action="retry" data-block-id={block.id}>
+        <button
+          type="button"
+          data-attachment-action="retry"
+          data-block-id={block.id}
+          aria-label={name ? `${t('richTextEditor.uploadRetry')} ${name}` : undefined}
+        >
           {t('richTextEditor.uploadRetry')}
         </button>
-        <button type="button" data-attachment-action="remove" data-block-id={block.id}>
+        <button
+          type="button"
+          data-attachment-action="remove"
+          data-block-id={block.id}
+          aria-label={name ? `${t('richTextEditor.uploadRemove')} ${name}` : undefined}
+        >
           {t('richTextEditor.uploadRemove')}
         </button>
       </span>
