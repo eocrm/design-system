@@ -183,4 +183,30 @@ describe('void-block selection', () => {
     const textNode = r.querySelector('[data-block-id="p"]')!.firstChild!;
     expect(pointFromDom(r, textNode, 1)).toEqual({ blockId: 'p', offset: 1 });
   });
+  it('resolves a figure that is the FIRST child at root offset 0', () => {
+    const r = makeRoot(
+      '<figure data-block-id="v" contenteditable="false"></figure><p data-block-id="p">hi</p>',
+    );
+    // offset 0 → kids[-1] is undefined; figureBlock must fall back to kids[0]
+    expect(pointFromDom(r, r, 0)).toEqual({ blockId: 'v', offset: 0 });
+  });
+  it('prefers the FOLLOWING figure when a caret sits between two voids', () => {
+    const r = makeRoot(
+      '<figure data-block-id="v1" contenteditable="false"></figure><figure data-block-id="v2" contenteditable="false"></figure>',
+    );
+    // root offset 1: kids[1]=v2 (after), kids[0]=v1 (before) → prefer v2
+    expect(pointFromDom(r, r, 1)).toEqual({ blockId: 'v2', offset: 0 });
+  });
+  it('a caret on a figure DESCENDANT ascends to the void {id,0}', () => {
+    const r = makeRoot(
+      '<figure data-block-id="v" contenteditable="false"><span>img</span></figure>',
+    );
+    const inner = r.querySelector('span')!;
+    expect(pointFromDom(r, inner, 0)).toEqual({ blockId: 'v', offset: 0 });
+  });
+  it('pointToDom → pointFromDom round-trips a void point', () => {
+    const r = makeRoot(HTML);
+    const dom = pointToDom(r, { blockId: 'v', offset: 0 })!;
+    expect(pointFromDom(r, dom.node, dom.offset)).toEqual({ blockId: 'v', offset: 0 });
+  });
 });

@@ -20,6 +20,20 @@ function blockElementFor(root: HTMLElement, node: Node): HTMLElement | null {
 }
 
 /**
+ * A void attachment block element (`<figure data-block-id>`), or null. The
+ * `data-block-id` guard is load-bearing: callers rely on it to safely read the id.
+ * In this engine `<figure>` is emitted ONLY for attachment blocks (renderDoc), and
+ * pasted external figures are dropped (fromHtml), so the tag check is sufficient.
+ */
+function figureBlock(node: Node | null | undefined): HTMLElement | null {
+  return node instanceof HTMLElement &&
+    node.tagName === 'FIGURE' &&
+    node.hasAttribute('data-block-id')
+    ? node
+    : null;
+}
+
+/**
  * Character offset within `blockEl` of the DOM position `(node, offset)`. Works
  * for both text-node boundaries (offset = char index) and element-node
  * boundaries (offset = child index, e.g. a caret at an inline-element edge,
@@ -82,26 +96,17 @@ export function pointFromDom(root: HTMLElement, node: Node, offset: number): Poi
   // figure, resolve to that void's {id, 0}. (A void can't host an interior caret,
   // so the browser anchors the selection on the root around it.)
   if (node === root) {
-    const children = root.childNodes;
-    const at = children[offset] as Node | undefined; // node just after the caret
-    const before = children[offset - 1] as Node | undefined; // node just before it
-    const figAt =
-      at instanceof HTMLElement && at.tagName === 'FIGURE' && at.hasAttribute('data-block-id')
-        ? at
-        : null;
-    const figBefore =
-      before instanceof HTMLElement &&
-      before.tagName === 'FIGURE' &&
-      before.hasAttribute('data-block-id')
-        ? before
-        : null;
-    const fig = figAt ?? figBefore;
+    const kids = root.childNodes; // root Selection offsets count ALL child nodes
+    // Prefer the figure just AFTER the caret (caret-before-next-node), else the
+    // one just before it. `kids[-1]` (offset 0) is undefined → figureBlock null.
+    const fig = figureBlock(kids[offset]) ?? figureBlock(kids[offset - 1]);
     if (fig) return { blockId: fig.getAttribute('data-block-id')!, offset: 0 };
   }
   const blockEl = blockElementFor(root, node);
   if (!blockEl) return null;
-  // A void figure block has no text — its only position is offset 0.
-  if (blockEl instanceof HTMLElement && blockEl.tagName === 'FIGURE') {
+  // A void figure block has no text — its only position is offset 0. (A caret on a
+  // figure descendant ascends to the figure via blockElementFor.)
+  if (blockEl.tagName === 'FIGURE') {
     return { blockId: blockEl.getAttribute('data-block-id')!, offset: 0 };
   }
   return {
