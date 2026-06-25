@@ -830,3 +830,54 @@ describe('RichTextEditor renderLink', () => {
     expect(box.textContent).toBe('go ');
   });
 });
+
+describe('blockControls', () => {
+  function Controlled(props: { blockControls?: boolean; readOnly?: boolean }) {
+    const [doc, setDoc] = useState(docFromText('one\ntwo\nthree'));
+    return <RichTextEditor value={doc} onChange={setDoc} {...props} />;
+  }
+
+  it('is absent by default', () => {
+    render(
+      <I18nProvider locale="en">
+        <Controlled />
+      </I18nProvider>,
+    );
+    expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
+  });
+
+  it('hovering a block reveals its gutter', async () => {
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await userEvent.hover(block);
+    expect(screen.getByRole('button', { name: 'Block actions' })).toBeInTheDocument();
+  });
+
+  it('＋ inserts an empty paragraph below', async () => {
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await userEvent.hover(block);
+    const before = document.querySelectorAll('[data-block-id]').length;
+    await userEvent.click(screen.getByRole('button', { name: 'Insert block below' }));
+    expect(document.querySelectorAll('[data-block-id]').length).toBe(before + 1);
+  });
+
+  it('readOnly suppresses the gutter', async () => {
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls readOnly />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await userEvent.hover(block);
+    expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
+  });
+});
