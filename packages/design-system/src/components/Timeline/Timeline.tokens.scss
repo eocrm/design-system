@@ -1,0 +1,13 @@
+:root {
+  --timeline-gutter: var(--size-md); // 32px node column
+  --timeline-node-size: var(--size-md); // 32px fixed node box
+  --timeline-row-gap: var(--space-4); // 16px between items
+  --timeline-content-gap: var(--space-3); // 12px node → content
+  --timeline-line-width: var(--border-width); // hairline connector
+  --timeline-line-color: var(--color-border);
+
+  --timeline-gutter-compact: var(--size-sm); // 24px
+  --timeline-node-size-compact: var(--size-sm); // 24px
+  --timeline-row-gap-compact: var(--space-2); // 8px
+  --timeline-content-gap-compact: var(--space-2); // 8px
+}

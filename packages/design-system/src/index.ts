@@ -106,6 +106,9 @@ export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot, BadgeVariant } from '.
 export { Dot } from './components/Dot';
 export type { DotProps } from './components/Dot';
 
+export { Timeline } from './components/Timeline';
+export type { TimelineProps, TimelineItemProps } from './components/Timeline';
+
 export { BrandIcon } from './components/BrandIcon';
 export type { BrandIconProps, BrandName } from './components/BrandIcon';
 

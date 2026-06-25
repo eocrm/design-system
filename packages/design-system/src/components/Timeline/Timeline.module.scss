@@ -1,0 +1,58 @@
+@use './Timeline.tokens';
+
+.root {
+  // UA <ol> reset.
+  list-style: none;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ol> default margin
+  margin: 0;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ol> default padding
+  padding: 0;
+  display: block;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: var(--timeline-gutter) 1fr;
+  column-gap: var(--timeline-content-gap);
+}
+
+.gutter {
+  position: relative;
+}
+
+.nodeBox {
+  height: var(--timeline-node-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.connector {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: var(--timeline-node-size);
+  bottom: 0;
+  width: var(--timeline-line-width);
+  background: var(--timeline-line-color);
+}
+
+.item:last-child .connector {
+  display: none;
+}
+
+.content {
+  min-width: 0;
+  padding-block-end: var(--timeline-row-gap);
+}
+
+.item:last-child .content {
+  padding-block-end: 0;
+}
+
+.compact {
+  --timeline-gutter: var(--timeline-gutter-compact);
+  --timeline-node-size: var(--timeline-node-size-compact);
+  --timeline-row-gap: var(--timeline-row-gap-compact);
+  --timeline-content-gap: var(--timeline-content-gap-compact);
+}

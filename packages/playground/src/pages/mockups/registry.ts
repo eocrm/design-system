@@ -84,6 +84,7 @@ export type ComponentName =
   | 'Text'
   | 'Textarea'
   | 'TimeField'
+  | 'Timeline'
   | 'Title'
   | 'Toast'
   | 'Tooltip'
