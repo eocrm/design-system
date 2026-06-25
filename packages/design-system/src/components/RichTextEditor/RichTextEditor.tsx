@@ -228,6 +228,11 @@ interface LinkEditorOpen {
  *   (or by the `query`); the menu renders what you return.
  * - ❌ Relying on Markdown to preserve mentions — `toMarkdown` is lossy (plain
  *   `@label`); use `toHtml`/`fromHtml` to round-trip a mention's id.
+ * - ❌ Building a custom block drag/menu by reaching into the DOM — pass
+ *   `blockControls`; insert/move/duplicate/delete route through the controlled
+ *   `value`/`onChange` round-trip and are undoable.
+ * - ❌ Expecting Backspace to delete a whole block — it edits text; use the block
+ *   menu's Delete (or select the block's text and delete) to remove a block.
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(

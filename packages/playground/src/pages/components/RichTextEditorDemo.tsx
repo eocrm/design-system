@@ -33,6 +33,11 @@ export function RichTextEditorDemo() {
       '# Imported\n\nThis editor was **seeded** from Markdown — paste rich HTML to import more.',
     ),
   );
+  const [blockDoc, setBlockDoc] = useState<RichDoc>(() =>
+    fromMarkdown(
+      '# Block controls\n\nHover a line for the ＋ / ⠿ gutter.\n\n- first item\n- second item\n\n> Drag the handle to reorder, or open the menu to turn into / duplicate / delete.',
+    ),
+  );
   const [mentionDoc, setMentionDoc] = useState<RichDoc>(() => docFromText('Assign this to '));
   const [autolinkDoc, setAutolinkDoc] = useState<RichDoc>(() =>
     docFromText('Type a task URL below to watch it autolink. '),
@@ -71,6 +76,20 @@ export function RichTextEditorDemo() {
             Markdown → <Code>{toMarkdown(doc).replace(/\n/g, '⏎')}</Code>
           </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title="Block controls"
+        description="Set blockControls for a per-block gutter on hover/focus: ＋ inserts a block below, ⠿ drags to reorder (subtree-aware for nested lists) and opens a menu (turn into / duplicate / move / delete). Keyboard: Shift+F10 opens the menu, ⌘/Ctrl+⇧↑/↓ move the block, ⌘/Ctrl+D duplicates. Works with or without the toolbar."
+        code={`const [doc, setDoc] = useState(fromMarkdown('…'));
+<RichTextEditor value={doc} onChange={setDoc} blockControls placeholder="Write…" />`}
+      >
+        <RichTextEditor
+          value={blockDoc}
+          onChange={setBlockDoc}
+          blockControls
+          placeholder="Write…"
+        />
       </Example>
 
       <Example
