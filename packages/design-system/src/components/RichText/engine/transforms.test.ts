@@ -353,4 +353,10 @@ describe('void-aware merge/split', () => {
     expect(r.doc.blocks).toHaveLength(1);
     expect(r.doc.blocks[0].type).toBe('paragraph');
   });
+  it('setBlockType on a void is a no-op (never strips the attachment)', () => {
+    const d: RichDoc = { blocks: [att('v')] };
+    const r = setBlockType(d, 'v', { type: 'heading', level: 1 });
+    expect(r.doc).toBe(d);
+    expect(r.doc.blocks[0].type).toBe('attachment');
+  });
 });

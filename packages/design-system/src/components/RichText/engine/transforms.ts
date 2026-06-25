@@ -283,7 +283,9 @@ export function toggleMark(
  * Pure/immutable. Patch the `type`, `level`, and/or `depth` of the block
  * identified by `blockId`. Cleans up irrelevant fields (`level` for non-headings,
  * `depth` for non-list blocks). Returns `{ doc, selection }` with the caret at
- * offset 0 of the block. No-op (returns input) when `blockId` is not found.
+ * offset 0 of the block. No-op (returns input) when `blockId` is not found, or
+ * when the target is a void block (an attachment can't become a heading/list —
+ * converting it would strip the figure rendering and silently lose the file).
  */
 export function setBlockType(
   doc: RichDoc,
@@ -292,6 +294,7 @@ export function setBlockType(
 ): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed({ blockId, offset: 0 }) };
+  if (isVoidBlock(doc.blocks[idx])) return { doc, selection: collapsed({ blockId, offset: 0 }) };
   const next: Block = { ...doc.blocks[idx], ...patch };
   if (next.type !== 'heading') delete next.level;
   if (next.type !== 'bullet_item' && next.type !== 'ordered_item') delete next.depth;

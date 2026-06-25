@@ -91,6 +91,20 @@ describe('runners', () => {
     expect(r.doc.blocks.map((b) => b.level)).toEqual([2, 2]);
   });
 
+  it('runSetBlock over a mixed range converts text blocks but leaves an attachment intact', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('paragraph', 'a', { id: 'a' }),
+        { id: 'v', type: 'attachment', status: 'ready', src: 'http://u/p.png', inlines: [] },
+        createBlock('paragraph', 'b', { id: 'b' }),
+      ],
+    };
+    const r = runSetBlock(doc, span(at('a', 0), at('b', 1)), { type: 'heading', level: 2 });
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['heading', 'attachment', 'heading']);
+    // the attachment keeps its file fields (not corrupted into a heading)
+    expect(r.doc.blocks[1].src).toBe('http://u/p.png');
+  });
+
   it('runToggleList: not-list → list; all-list → paragraph', () => {
     const doc: RichDoc = { blocks: [createBlock('paragraph', 'a', { id: 'a' })] };
     const on = runToggleList(doc, span(at('a', 0), at('a', 1)), 'bullet_item');
