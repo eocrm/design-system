@@ -4,13 +4,24 @@ import { createBlock, nextId } from './model';
 import { findBlockIndex, blockLength } from './position';
 import { sliceInlines, normalizeInlines } from './inlines';
 
+/**
+ * Fields for creating/patching an attachment block. All optional; only the
+ * provided keys are written (so a block stays canonical — no `undefined` keys).
+ * Mirrors the attachment fields on {@link Block}.
+ */
 export interface AttachmentAttrs {
+  /** Display name / chip label (usually the File's name). */
   name?: string;
+  /** MIME type — `image/*` renders an inline preview, else a file chip. */
   mime?: string;
+  /** The uploaded URL. Absent while `status: 'uploading'`. */
   src?: string;
+  /** Natural image dimensions (layout hints). */
   width?: number;
   height?: number;
+  /** Image alt text. */
   alt?: string;
+  /** Upload state. Defaults to `'ready'` when omitted. */
   status?: 'uploading' | 'ready' | 'error';
 }
 

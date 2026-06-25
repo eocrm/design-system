@@ -68,4 +68,8 @@ describe('updateAttachmentBlock', () => {
     const d = doc([p('a')]);
     expect(updateAttachmentBlock(d, 'nope', { status: 'ready' })).toBe(d);
   });
+  it('no-op (same ref) when the id is not an attachment block', () => {
+    const d = doc([p('a')]);
+    expect(updateAttachmentBlock(d, 'a', { status: 'ready' })).toBe(d);
+  });
 });

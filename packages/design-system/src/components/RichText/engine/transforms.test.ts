@@ -310,6 +310,14 @@ describe('void-aware merge/split', () => {
     expect(r.doc.blocks.map((b) => b.id)).toEqual(['p']);
     expect(r.doc.blocks[0].inlines[0].text).toBe('hi');
   });
+  it('mergeBlockBackward removes a following void (cur is void), caret to end of prev', () => {
+    const d: RichDoc = {
+      blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] }, att('v')],
+    };
+    const r = mergeBlockBackward(d, 'v');
+    expect(r.doc.blocks.map((b) => b.id)).toEqual(['p']);
+    expect(r.selection.anchor).toEqual({ blockId: 'p', offset: 2 });
+  });
   it('splitBlock on a void is a no-op (same ref)', () => {
     const d: RichDoc = { blocks: [att('v')] };
     expect(splitBlock(d, { blockId: 'v', offset: 0 }).doc).toBe(d);
