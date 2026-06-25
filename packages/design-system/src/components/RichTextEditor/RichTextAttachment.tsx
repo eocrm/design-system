@@ -8,13 +8,9 @@ import { CircularProgress } from '../CircularProgress';
 import { useTranslation } from '../../i18n';
 import type { Block } from '../RichText/engine/model';
 import { safeHref } from '../RichText/engine/safeHref';
+import { attachmentIsImage } from '../RichText/engine/attachment';
 import { AttachFileIcon } from './icons';
 import styles from './RichTextEditor.module.scss';
-
-function isImage(block: Block): boolean {
-  if (block.mime) return block.mime.startsWith('image/');
-  return /\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(block.src ?? '');
-}
 
 export function RichTextAttachment({ block }: { block: Block }) {
   const t = useTranslation();
@@ -54,7 +50,7 @@ export function RichTextAttachment({ block }: { block: Block }) {
   }
   // ready (or absent status on an imported doc)
   const href = safeHref(block.src ?? '');
-  if (isImage(block) && href) {
+  if (attachmentIsImage(block) && href) {
     return <Image src={href} alt={block.alt ?? name} width={block.width} height={block.height} />;
   }
   return (

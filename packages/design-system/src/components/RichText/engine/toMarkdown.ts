@@ -5,6 +5,7 @@ import type { RichDoc, Block, Inline, MarkType } from './model';
 import { runsText } from './inlines';
 import { safeHref } from './safeHref';
 import { isListItem, effectiveDepths } from './listDepths';
+import { attachmentIsImage } from './attachment';
 
 /** Backslash-escape inline specials so literal chars don't become formatting. */
 function escapeMd(s: string): string {
@@ -41,11 +42,13 @@ function blockMd(block: Block, depth: number): string {
   if (block.type === 'attachment') {
     // Only finalized attachments serialize; in-flight/failed uploads emit nothing.
     if (block.status && block.status !== 'ready') return '';
-    const url = safeHref(block.src ?? '') ?? '';
-    const isImg = block.mime
-      ? block.mime.startsWith('image/')
-      : /\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(block.src ?? '');
-    return isImg ? `![${block.alt ?? block.name ?? ''}](${url})` : `[${block.name ?? url}](${url})`;
+    // An unsafe src drops the whole block (consistent with toHtml) rather than
+    // emitting an empty-URL link.
+    const url = safeHref(block.src ?? '');
+    if (url === undefined) return '';
+    return attachmentIsImage(block)
+      ? `![${block.alt ?? block.name ?? ''}](${url})`
+      : `[${block.name ?? url}](${url})`;
   }
   const inline = escapeLineStart(block.inlines.map(inlineRun).join(''));
   switch (block.type) {

@@ -130,4 +130,21 @@ describe('toMarkdown — attachments', () => {
       }),
     ).toBe('');
   });
+  it('drops an attachment with an unsafe src (consistent with toHtml)', () => {
+    expect(
+      toMarkdown({
+        blocks: [
+          {
+            id: 'a',
+            type: 'attachment' as const,
+            status: 'ready' as const,
+            src: 'javascript:alert(1)',
+            mime: 'image/png',
+            name: 'x',
+            inlines: [],
+          },
+        ],
+      }),
+    ).toBe('');
+  });
 });

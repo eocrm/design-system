@@ -215,4 +215,11 @@ describe('fromHtml — attachments', () => {
     const doc = fromHtml('<img src="javascript:alert(1)" alt="x">');
     expect(doc.blocks.some((b) => b.type === 'attachment')).toBe(false);
   });
+  it('hoists an <img> inside a <blockquote> out as an attachment (not an empty quote)', () => {
+    const doc = fromHtml('<blockquote><img src="http://u/p.png" alt="Pic"></blockquote>');
+    const att = doc.blocks.find((b) => b.type === 'attachment');
+    expect(att?.src).toBe('http://u/p.png');
+    // no text-less blockquote block was emitted
+    expect(doc.blocks.some((b) => b.type === 'blockquote' && b.inlines.length === 0)).toBe(false);
+  });
 });

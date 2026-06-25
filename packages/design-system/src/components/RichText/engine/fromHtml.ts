@@ -235,7 +235,13 @@ function emitBlock(el: HTMLElement, out: Block[], listDepth: number): void {
   if (tag === 'BLOCKQUOTE') {
     const inner: Block[] = [];
     collectBlocks(el, inner, listDepth);
-    for (const b of inner) out.push({ id: nextId(), type: 'blockquote', inlines: b.inlines });
+    // Hoist void blocks (e.g. an inner <img> → attachment) out as their own blocks
+    // rather than coercing them to a text-less `{type:'blockquote', inlines:[]}`,
+    // which would violate the "every text block holds ≥1 run" invariant.
+    for (const b of inner) {
+      if (b.type === 'attachment') out.push(b);
+      else out.push({ id: nextId(), type: 'blockquote', inlines: b.inlines });
+    }
     return;
   }
   if (tag === 'UL' || tag === 'OL') {

@@ -30,6 +30,16 @@ export function isVoidBlock(block: Block): boolean {
   return block.type === 'attachment';
 }
 
+/**
+ * Whether an attachment should render/serialize as an inline image (vs a file
+ * chip). Decided by `mime` (`image/*`), falling back to the URL extension. Shared
+ * by the renderer and the HTML/Markdown serializers so the rule never drifts.
+ */
+export function attachmentIsImage(block: Pick<Block, 'mime' | 'src'>): boolean {
+  if (block.mime) return block.mime.startsWith('image/');
+  return /\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(block.src ?? '');
+}
+
 function collapsed(blockId: string, offset = 0): Range {
   return { anchor: { blockId, offset }, focus: { blockId, offset } };
 }

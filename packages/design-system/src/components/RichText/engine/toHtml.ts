@@ -8,15 +8,10 @@ import { runsText } from './inlines';
 import { escapeHtml, escapeAttr } from './escape';
 import { safeHref } from './safeHref';
 import { isListItem, effectiveDepths } from './listDepths';
+import { attachmentIsImage } from './attachment';
 
 // Outer → inner; link outermost, code innermost (matches renderDoc).
 const MARK_ORDER: MarkType[] = ['mention', 'link', 'bold', 'italic', 'underline', 'strike', 'code'];
-
-/** An attachment is an image if its MIME says so, else by the src's file extension. */
-function attachmentIsImage(block: Block): boolean {
-  if (block.mime) return block.mime.startsWith('image/');
-  return /\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(block.src ?? '');
-}
 
 /** Wrap an already-escaped HTML string in one mark's tag. */
 function wrapMark(type: MarkType, mark: Mark, inner: string): string {
