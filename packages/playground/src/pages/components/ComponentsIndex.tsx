@@ -5,6 +5,7 @@ import { Alert } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Dot } from '@eocrm/design-system';
+import { Timeline } from '@eocrm/design-system';
 import { BrandIcon } from '@eocrm/design-system';
 import { Logo } from '@eocrm/design-system';
 import eocrmLogo from '../../assets/eocrm-logo.svg';
@@ -916,6 +917,24 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         <Dot tone="success" />
         <Dot tone="danger" />
       </Cluster>
+    ),
+  },
+  {
+    to: '/components/timeline',
+    name: 'Timeline',
+    description:
+      'Vertical activity feed — connector line through avatar/dot/icon nodes; compact variant.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 200 }}>
+        <Timeline compact>
+          <Timeline.Item node={<Dot tone="info" />}>
+            <Text size="xs">Renewal confirmed</Text>
+          </Timeline.Item>
+          <Timeline.Item node={<Dot tone="success" />}>
+            <Text size="xs">Moved to Negotiation</Text>
+          </Timeline.Item>
+        </Timeline>
+      </div>
     ),
   },
   {
