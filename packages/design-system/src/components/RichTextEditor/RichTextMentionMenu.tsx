@@ -16,6 +16,11 @@ export interface RichTextMentionMenuProps {
   items: MentionItem[];
   activeIndex: number;
   anchorRect: Rect;
+  /**
+   * Read the caret rect LIVE on each Floating UI `autoUpdate` (scroll/resize) so the
+   * menu tracks the caret. Falls back to the static `anchorRect` when it returns null.
+   */
+  getAnchorRect?: () => Rect | null;
   listboxId: string;
   getOptionId: (index: number) => string;
   /** Accessible name for the listbox. */
@@ -32,6 +37,7 @@ export function RichTextMentionMenu({
   items,
   activeIndex,
   anchorRect,
+  getAnchorRect,
   listboxId,
   getOptionId,
   label,
@@ -41,18 +47,24 @@ export function RichTextMentionMenu({
 }: RichTextMentionMenuProps) {
   const virtualRef = useMemo(
     () => ({
-      getBoundingClientRect: () => ({
-        x: anchorRect.left,
-        y: anchorRect.top,
-        top: anchorRect.top,
-        left: anchorRect.left,
-        right: anchorRect.left + anchorRect.width,
-        bottom: anchorRect.top + anchorRect.height,
-        width: anchorRect.width,
-        height: anchorRect.height,
-      }),
+      // Re-read the caret rect on every call — Floating UI's autoUpdate invokes this
+      // on scroll/resize, so the menu follows the caret (the static `anchorRect` is
+      // the fallback for the initial frame / when no live rect is available).
+      getBoundingClientRect: () => {
+        const r = getAnchorRect?.() ?? anchorRect;
+        return {
+          x: r.left,
+          y: r.top,
+          top: r.top,
+          left: r.left,
+          right: r.left + r.width,
+          bottom: r.top + r.height,
+          width: r.width,
+          height: r.height,
+        };
+      },
     }),
-    [anchorRect],
+    [anchorRect, getAnchorRect],
   );
 
   const { refs, floatingStyles } = useFloating({

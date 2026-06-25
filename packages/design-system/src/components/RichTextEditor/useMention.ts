@@ -30,6 +30,13 @@ export interface UseMentionResult {
   items: MentionItem[];
   activeIndex: number;
   anchorRect: Rect | null;
+  /**
+   * Read the caret rect LIVE (current viewport coords). The menu's Floating UI
+   * virtual anchor calls this on every `autoUpdate` (incl. scroll/resize) so the
+   * menu tracks the caret instead of sticking to the rect captured on open — the
+   * static `anchorRect` only updates on `selectionchange`, which scroll doesn't fire.
+   */
+  getAnchorRect: () => Rect | null;
   listboxId: string;
   activeOptionId: string | undefined;
   getOptionId: (index: number) => string;
@@ -196,11 +203,20 @@ export function useMention(params: UseMentionParams): UseMentionResult {
 
   const commitActive = useCallback(() => selectIndex(activeIndex), [selectIndex, activeIndex]);
 
+  // Live caret rect — read on demand (current viewport coords). Stable identity so
+  // the menu's virtual anchor doesn't churn; Floating UI's autoUpdate calls it on
+  // scroll/resize so the menu follows the caret.
+  const getAnchorRect = useCallback((): Rect | null => {
+    const root = rootRef.current;
+    return root ? selectionRect(root) : null;
+  }, [rootRef]);
+
   return {
     open,
     items,
     activeIndex,
     anchorRect,
+    getAnchorRect,
     listboxId,
     activeOptionId: open && items.length > 0 ? getOptionId(activeIndex) : undefined,
     getOptionId,

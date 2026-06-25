@@ -2,15 +2,20 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import type { RichDoc } from '../RichText/engine/model';
 
-// Mock readSelection (jsdom has no caret); keep the rest of ./selection real.
+// Mock readSelection + selectionRect (jsdom has no caret); keep the rest real.
 vi.mock('./selection', async () => {
   const actual = await vi.importActual<typeof import('./selection')>('./selection');
-  return { ...actual, readSelection: vi.fn(actual.readSelection) };
+  return {
+    ...actual,
+    readSelection: vi.fn(actual.readSelection),
+    selectionRect: vi.fn(actual.selectionRect),
+  };
 });
-import { readSelection } from './selection';
+import { readSelection, selectionRect } from './selection';
 import { useMention } from './useMention';
 
 const mockReadSelection = vi.mocked(readSelection);
+const mockSelectionRect = vi.mocked(selectionRect);
 
 function makeRoot(): HTMLDivElement {
   const root = document.createElement('div');
@@ -22,7 +27,40 @@ const docWith = (text: string): RichDoc => ({
   blocks: [{ id: 'b', type: 'paragraph', inlines: [{ text, marks: [] }] }],
 });
 
-beforeEach(() => mockReadSelection.mockReset());
+beforeEach(() => {
+  mockReadSelection.mockReset();
+  mockSelectionRect.mockReset();
+  // Default to a stable rect; individual tests override with mockReturnValueOnce.
+  mockSelectionRect.mockReturnValue({ top: 0, left: 0, width: 0, height: 0 });
+});
+
+it('exposes getAnchorRect that reads the caret rect LIVE on each call (tracks scroll)', () => {
+  const root = makeRoot();
+  // Two distinct rects simulate the caret moving (e.g. on scroll) between reads.
+  const r1 = { top: 100, left: 10, width: 0, height: 16 };
+  const r2 = { top: 40, left: 10, width: 0, height: 16 };
+  mockSelectionRect.mockReturnValueOnce(r1).mockReturnValueOnce(r2);
+
+  const { result } = renderHook(() =>
+    useMention({
+      enabled: true,
+      rootRef: { current: root },
+      doc: docWith(''),
+      trigger: '@',
+      onQuery: vi.fn().mockResolvedValue([]),
+      onInsert: vi.fn(),
+    }),
+  );
+
+  // Each call re-reads selectionRect (live) rather than returning a cached value.
+  expect(result.current.getAnchorRect()).toEqual(r1);
+  expect(result.current.getAnchorRect()).toEqual(r2);
+
+  // Stable identity (so the menu's virtual anchor doesn't churn every render).
+  const first = result.current.getAnchorRect;
+  act(() => result.current.close());
+  expect(result.current.getAnchorRect).toBe(first);
+});
 
 it('opens and queries with the text after the trigger', async () => {
   const root = makeRoot();
