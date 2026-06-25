@@ -31,12 +31,37 @@
   background: var(--color-bg-muted);
 }
 
-// The component's own internal wrapper when `toolbar` is set: stacks the toolbar
-// above the editable surface as one bordered control.
+// The component's own internal wrapper when `toolbar` and/or `blockControls` is
+// set: stacks the toolbar above the editable surface as one bordered control and
+// anchors the absolutely-positioned block gutter (`.gutter`).
 .shell {
+  position: relative; // anchor for the block-controls gutter overlay
   display: flex;
   flex-direction: column;
   width: 100%;
+}
+
+// When block controls are on, reserve a left column on the editable so the gutter
+// (＋ / ⠿) sits beside the text instead of overlapping it. Only applied via the
+// `withGutter` modifier, so editors without block controls are unaffected.
+.root.withGutter {
+  padding-inline-start: var(--space-6);
+}
+
+// The per-block gutter overlay (RichTextBlockControls). Absolutely positioned
+// inside `.shell`; its vertical `top` is set inline by JS from the active block's
+// measured box. `left`/`position` here are the overlay's own anchoring, not
+// in-flow component layout (cf. the Rule 4 notes on `.linkBubble`/`.mentionMenu`).
+.gutter {
+  position: absolute;
+  inset-inline-start: var(--space-05);
+  display: flex;
+  gap: var(--space-05);
+  align-items: center;
+}
+
+.gutterButton {
+  color: var(--color-fg-muted);
 }
 
 .toolbar {

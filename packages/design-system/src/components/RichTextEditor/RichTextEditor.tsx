@@ -927,7 +927,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // decide whether to fall back to the i18n default.
         {...rest}
         ref={setRefs}
-        className={clsx(styles.root, readOnly && styles.readOnly, className)}
+        className={clsx(
+          styles.root,
+          readOnly && styles.readOnly,
+          controlsOn && styles.withGutter,
+          className,
+        )}
         contentEditable={!readOnly}
         suppressContentEditableWarning
         role="textbox"
