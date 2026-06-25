@@ -244,6 +244,11 @@ interface LinkEditorOpen {
  *   `value`/`onChange` round-trip and are undoable.
  * - ❌ Expecting Backspace to delete a whole block — it edits text; use the block
  *   menu's Delete (or select the block's text and delete) to remove a block.
+ * - ❌ Persisting or submitting the doc while an upload is in flight — gate your
+ *   submit on `upload.onUploadingChange` (transient attachment blocks are skipped
+ *   by `toHtml`/`toMarkdown`, but the model still carries them until they settle).
+ * - ❌ Relying on the picker `accept` for validation — it's only a hint and paste
+ *   bypasses it; enforce size/type inside `onUpload` and reject to show an error.
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(

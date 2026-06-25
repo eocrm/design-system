@@ -42,6 +42,17 @@ export function RichTextEditorDemo() {
   const [autolinkDoc, setAutolinkDoc] = useState<RichDoc>(() =>
     docFromText('Type a task URL below to watch it autolink. '),
   );
+  const [uploadDoc, setUploadDoc] = useState<RichDoc>(() =>
+    docFromText('Paste a screenshot, or use the toolbar button to attach a file. '),
+  );
+  // Mock uploader: resolve to a local object URL after a short delay (demo only).
+  const mockUpload = (file: File) =>
+    new Promise<{ url: string; mime: string; name: string }>((resolve) =>
+      setTimeout(
+        () => resolve({ url: URL.createObjectURL(file), mime: file.type, name: file.name }),
+        600,
+      ),
+    );
   const TEAM = [
     { id: 'u1', label: 'Alice Nguyen', description: 'alice@eocrm.dev' },
     { id: 'u2', label: 'Bob Martinez', description: 'bob@eocrm.dev' },
@@ -88,6 +99,21 @@ export function RichTextEditorDemo() {
           value={blockDoc}
           onChange={setBlockDoc}
           blockControls
+          placeholder="Write…"
+        />
+      </Example>
+
+      <Example
+        title="File upload"
+        description="Provide upload={{ onUpload }} to enable a toolbar attach button and clipboard-file paste. Images render inline; other files as a download chip. Uploading shows a spinner; a rejected onUpload shows Retry/Remove. Wire onUploadingChange to your submit button. (This demo uses a mock uploader that returns a local object URL.)"
+        code={`<RichTextEditor value={doc} onChange={setDoc} toolbar
+  upload={{ onUpload: (file) => uploadToServer(file) }} />`}
+      >
+        <RichTextEditor
+          value={uploadDoc}
+          onChange={setUploadDoc}
+          toolbar
+          upload={{ onUpload: mockUpload, accept: 'image/*,.pdf' }}
           placeholder="Write…"
         />
       </Example>

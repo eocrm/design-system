@@ -176,3 +176,44 @@
 .mentionEmpty {
   padding: var(--space-2);
 }
+
+// Attachment blocks (RichTextAttachment): the void <figure> wrapper + its loading/
+// error/chip bodies. `margin: 0` resets the UA <figure> default (a reset, not
+// component layout). Tokens only.
+.root figure[data-attachment],
+.shell figure[data-attachment] {
+  // stylelint-disable-next-line property-disallowed-list -- reset UA <figure> default margin; internal
+  margin: 0;
+}
+
+.attachmentLoading,
+.attachmentError {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-muted);
+  color: var(--color-fg-muted);
+}
+
+.attachmentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.attachmentName {
+  font-weight: var(--font-weight-medium);
+}
+
+.attachmentLabel {
+  color: var(--color-danger);
+}
