@@ -1,4 +1,5 @@
 import { createBlock, emptyDoc, docFromText, nextId } from './model';
+import type { Block } from './model';
 
 describe('model constructors', () => {
   it('createBlock makes an empty block with a single empty run + generated id', () => {
@@ -38,5 +39,19 @@ describe('model constructors', () => {
     const d = docFromText('a\nb');
     expect(d.blocks.map((b) => b.type)).toEqual(['paragraph', 'paragraph']);
     expect(d.blocks.map((b) => b.inlines[0].text)).toEqual(['a', 'b']);
+  });
+
+  it('an attachment block holds file fields and is void (empty inlines)', () => {
+    const b: Block = {
+      id: 'a1',
+      type: 'attachment',
+      src: 'https://x/y.png',
+      name: 'y.png',
+      mime: 'image/png',
+      status: 'ready',
+      inlines: [],
+    };
+    expect(b.type).toBe('attachment');
+    expect(b.inlines).toEqual([]);
   });
 });

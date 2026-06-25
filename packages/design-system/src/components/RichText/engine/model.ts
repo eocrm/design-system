@@ -10,7 +10,8 @@ export type BlockType =
   | 'bullet_item'
   | 'ordered_item'
   | 'blockquote'
-  | 'code_block';
+  | 'code_block'
+  | 'attachment';
 
 /** All supported inline mark types. `link` carries `href`; `mention` carries `id` + `label`. */
 export type MarkType = 'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'link' | 'mention';
@@ -42,6 +43,19 @@ export interface Block {
   depth?: number;
   /** Inline content. An empty block holds a single empty run. */
   inlines: Inline[];
+  /** Attachment block only (type === 'attachment'). The uploaded URL — absent while uploading. */
+  src?: string;
+  /** Attachment filename / chip label. */
+  name?: string;
+  /** Attachment MIME — `image/*` renders a preview, else a file chip. */
+  mime?: string;
+  /** Natural image dimensions (layout hints). */
+  width?: number;
+  height?: number;
+  /** Image alt text. */
+  alt?: string;
+  /** Attachment upload state. `ready`/absent = final. */
+  status?: 'uploading' | 'ready' | 'error';
 }
 
 /** A rich-text document: an ordered list of blocks. */
