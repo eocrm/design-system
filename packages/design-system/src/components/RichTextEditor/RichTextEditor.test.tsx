@@ -905,6 +905,27 @@ describe('blockControls', () => {
     expect(order).toEqual(['b', 'a']);
   });
 
+  it('block menu Turn into a list is idempotent (SET, not toggle)', async () => {
+    const user = userEvent.setup();
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const turnIntoBullet = async (el: HTMLElement) => {
+      await user.hover(el);
+      await user.click(screen.getByRole('button', { name: 'Block actions' }));
+      await user.click(screen.getByRole('menuitem', { name: /turn into/i }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Bullet list' }));
+    };
+    await turnIntoBullet(document.querySelector('[data-block-id]') as HTMLElement);
+    expect(document.querySelector('li[data-block-id]')).toBeTruthy();
+    // Choosing the SAME type again must keep it a list — the old toggle bug
+    // reverted it to a paragraph.
+    await turnIntoBullet(document.querySelector('li[data-block-id]') as HTMLElement);
+    expect(document.querySelector('li[data-block-id]')).toBeTruthy();
+  });
+
   it('block menu Duplicate routes through commit (block count grows)', async () => {
     const user = userEvent.setup();
     render(

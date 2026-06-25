@@ -977,7 +977,7 @@ const [doc, setDoc] = useState(emptyDoc());
 
 **Pending marks:** toggling a mark at a collapsed caret (via toolbar or ⌘B/I/U/⌘⇧X shortcut) queues it; the next inserted text gets that mark applied, then the queue clears. Moving the caret discards pending marks.
 
-**`blockControls` prop** (opt-in, default off): Notion-style per-block gutter — `＋` insert below, `⠿` drag-to-reorder + a block menu (turn into / duplicate / move up·down / delete). Subtree-aware for nested lists. Keyboard: Shift+F10 opens the menu, ⌘/Ctrl+⇧↑·↓ move, ⌘/Ctrl+D duplicate. Independent of `toolbar`; ignored when `readOnly`. All ops route through `value`/`onChange` and are undoable.
+**`blockControls` prop** (opt-in, default off): Notion-style per-block gutter — `＋` insert below, `⠿` drag-to-reorder + a block menu (turn into / duplicate / move up·down / delete). Reorder/duplicate/delete are subtree-aware for nested lists (a list item carries its nested children); **turn-into acts on the single anchor block only** (idempotent — choosing the current type is a no-op). Keyboard: Shift+F10 opens the menu, ⌘/Ctrl+⇧↑·↓ move, ⌘/Ctrl+D duplicate. Independent of `toolbar`; ignored when `readOnly`. All ops route through `value`/`onChange` and are undoable.
 
 **Links:** select text and press ⌘/Ctrl+K (or the toolbar link button) to add or edit a link; with the caret inside a link the URL is pre-filled and a Remove button appears; with no selection the URL is inserted as linked text. Esc / click-outside cancels. Stored hrefs are sanitized at render time (`safeHref` blocks `javascript:`/`data:`/protocol-relative).
 

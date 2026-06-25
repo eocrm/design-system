@@ -42,10 +42,12 @@
 }
 
 // When block controls are on, reserve a left column on the editable so the gutter
-// (＋ / ⠿) sits beside the text instead of overlapping it. Only applied via the
-// `withGutter` modifier, so editors without block controls are unaffected.
+// (＋ / ⠿) sits beside the text instead of overlapping it. The gutter holds two
+// ~24px (--size-sm) icon buttons plus gaps (~52px total), so the reservation must
+// clear that. Only applied via the `withGutter` modifier, so editors without block
+// controls are unaffected.
 .root.withGutter {
-  padding-inline-start: var(--space-6);
+  padding-inline-start: var(--space-16);
 }
 
 // The per-block gutter overlay (RichTextBlockControls). Absolutely positioned

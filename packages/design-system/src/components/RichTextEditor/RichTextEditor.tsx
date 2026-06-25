@@ -903,10 +903,25 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const onBlockAction = useCallback(
       (id: string, action: BlockAction) => {
         const v = latest.current.value;
-        if (action === 'duplicate') commit(duplicateBlockUnit(v, id), 'other');
-        else if (action === 'moveUp') commit(moveBlockUnit(v, id, -1), 'other');
-        else if (action === 'moveDown') commit(moveBlockUnit(v, id, 1), 'other');
-        else if (action === 'delete') commit(removeBlockUnit(v, id), 'other');
+        switch (action) {
+          case 'duplicate':
+            commit(duplicateBlockUnit(v, id), 'other');
+            break;
+          case 'moveUp':
+            commit(moveBlockUnit(v, id, -1), 'other');
+            break;
+          case 'moveDown':
+            commit(moveBlockUnit(v, id, 1), 'other');
+            break;
+          case 'delete':
+            commit(removeBlockUnit(v, id), 'other');
+            break;
+          default: {
+            // Exhaustiveness: a new BlockAction must be handled above.
+            const _never: never = action;
+            return _never;
+          }
+        }
         setBlockMenuOpen(false);
       },
       [commit],
@@ -915,11 +930,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       (id: string, choice: BlockChoice) => {
         const v = latest.current.value;
         const range = { anchor: { blockId: id, offset: 0 }, focus: { blockId: id, offset: 0 } };
-        if (choice.type === 'bullet_item' || choice.type === 'ordered_item') {
-          commit(runToggleList(v, range, choice.type), 'other');
-        } else {
-          commit(runSetBlock(v, range, choice), 'other');
-        }
+        // "Turn into X" is an idempotent SET (not a toggle) on the single anchor
+        // block — choosing the block's current type is a no-op, never a revert.
+        // List types carry depth 0; runSetBlock routes both through setBlockType.
+        const patch =
+          choice.type === 'bullet_item' || choice.type === 'ordered_item'
+            ? { type: choice.type, depth: 0 }
+            : choice;
+        commit(runSetBlock(v, range, patch), 'other');
         setBlockMenuOpen(false);
       },
       [commit],
