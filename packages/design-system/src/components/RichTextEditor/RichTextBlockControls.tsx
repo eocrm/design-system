@@ -60,13 +60,18 @@ function blockRects(root: HTMLElement): { top: number; height: number }[] {
  * the menu's role/aria/click handling is untouched.
  */
 function DraggableGrip({ children }: { children: React.ReactNode }) {
-  const { setNodeRef, listeners, attributes } = useDraggable({ id: GRIP_DRAGGABLE_ID });
+  // Only the pointer `listeners` — deliberately NOT dnd-kit's `attributes`, which
+  // add role="button" + tabIndex=0 and would (a) make this span a tab stop,
+  // breaking the "gutter is not in the tab order" contract, and (b) nest a button
+  // role around the real grip <button>. Keyboard reorder is the editor's
+  // ⌘/Ctrl+⇧↑/↓ shortcuts, so the drag handle stays pointer-only.
+  const { setNodeRef, listeners } = useDraggable({ id: GRIP_DRAGGABLE_ID });
   return (
     // A thin wrapper whose pointer listeners feed the PointerSensor. The grip
     // button stays the live menu trigger; spreading drag {...listeners} on this
     // span (not the button) means a sub-4px click reaches the button normally
     // while a drag is intercepted by the sensor before it becomes a click.
-    <span ref={setNodeRef} className={styles.gripDrag} {...listeners} {...attributes}>
+    <span ref={setNodeRef} className={styles.gripDrag} {...listeners}>
       {children}
     </span>
   );
