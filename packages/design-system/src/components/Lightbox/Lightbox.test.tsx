@@ -156,7 +156,7 @@ describe('Lightbox', () => {
     expect(dl).toHaveAttribute('download');
   });
 
-  it('blocks an unsafe PDF src (no iframe, shows preview-unavailable)', () => {
+  it('blocks an unsafe PDF src (no iframe, no download, shows preview-unavailable)', () => {
     render(
       <Lightbox
         open
@@ -165,7 +165,44 @@ describe('Lightbox', () => {
       />,
     );
     expect(document.querySelector('iframe')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Download' })).toBeNull(); // no unsafe href
     expect(screen.getByText('Preview unavailable')).toBeInTheDocument();
+  });
+
+  it('blocks data: and blob: PDF srcs too', () => {
+    for (const src of ['data:text/html,<script>1</script>', 'blob:https://x/abc']) {
+      const { unmount } = render(
+        <Lightbox open onOpenChange={() => {}} items={[{ src, alt: 'x', kind: 'pdf' as const }]} />,
+      );
+      expect(document.querySelector('iframe')).toBeNull();
+      unmount();
+    }
+  });
+
+  it('sandboxes the PDF iframe (opaque origin: no allow-same-origin)', () => {
+    render(<Lightbox open onOpenChange={() => {}} items={[pdfItem]} />);
+    const sandbox = document.querySelector('iframe')!.getAttribute('sandbox') ?? '';
+    expect(sandbox).toContain('allow-scripts');
+    expect(sandbox).not.toContain('allow-same-origin');
+  });
+
+  it('the download link opens in a new tab (cross-origin download safety)', () => {
+    render(<Lightbox open onOpenChange={() => {}} items={[pdfItem]} />);
+    const dl = screen.getByRole('link', { name: 'Download' });
+    expect(dl).toHaveAttribute('target', '_blank');
+    expect(dl).toHaveAttribute('rel', expect.stringContaining('noopener'));
+  });
+
+  it('shows a doc-icon placeholder thumbnail for a PDF without a thumbnail', () => {
+    render(
+      <Lightbox
+        open
+        onOpenChange={() => {}}
+        items={[{ src: 'https://f/p.png', alt: 'P' }, pdfItem]}
+      />,
+    );
+    // the pdf thumb is a button (placeholder), labelled by its alt — not an <img>
+    expect(screen.getByRole('button', { name: 'Contract.pdf' })).toBeInTheDocument();
   });
 
   it('an image item still renders an img (no regression)', () => {

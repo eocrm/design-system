@@ -241,6 +241,10 @@ export function Lightbox({
   if (!open || n === 0 || !currentItem) return null;
 
   const currentKind = itemKind(currentItem);
+  // Sanitized document URL (http(s)/relative only) for the current PDF item, or
+  // undefined when the item isn't a PDF or its src is unsafe. Computed once and
+  // reused by the download link, the stage iframe, and the unavailable fallback.
+  const docSrc = currentKind === 'pdf' ? safeDocSrc(currentItem.src) : undefined;
   const multi = n > 1;
   const atStart = current === 0;
   const atEnd = current === n - 1;
@@ -263,11 +267,15 @@ export function Lightbox({
       style={style}
       onClick={closeIfBackdrop}
     >
-      {currentKind === 'pdf' && safeDocSrc(currentItem.src) && (
+      {docSrc && (
         <a
           className={styles.download}
-          href={safeDocSrc(currentItem.src)}
+          href={docSrc}
           download
+          // Open/save in a new tab: a cross-origin `download` is ignored by the
+          // browser, so without target the click would navigate the whole app
+          // away from the gallery. noopener/noreferrer guard the opened context.
+          target="_blank"
           rel="noopener noreferrer"
           aria-label={t('lightbox.download')}
         >
@@ -299,21 +307,28 @@ export function Lightbox({
 
         <div className={styles.imageWrap}>
           {currentKind === 'pdf' ? (
-            (() => {
-              const docSrc = safeDocSrc(currentItem.src);
-              return docSrc ? (
-                <iframe
-                  key={currentItem.src}
-                  src={docSrc}
-                  title={currentItem.alt}
-                  className={styles.doc}
-                />
-              ) : (
-                <div className={styles.stageError} role="img" aria-label={currentItem.alt}>
-                  {t('lightbox.previewUnavailable')}
-                </div>
-              );
-            })()
+            docSrc ? (
+              <iframe
+                key={docSrc}
+                src={docSrc}
+                title={currentItem.alt}
+                className={styles.doc}
+                // Harden against a consumer-supplied URL that resolves to HTML:
+                // omit `allow-same-origin` so framed content runs in an opaque
+                // origin (can't reach the app's DOM/cookies/storage). `allow-scripts`
+                // is needed by Firefox's pdf.js viewer; `allow-downloads` keeps the
+                // in-viewer save button working.
+                sandbox="allow-scripts allow-downloads"
+              />
+            ) : (
+              <div
+                className={styles.stageError}
+                role="img"
+                aria-label={`${currentItem.alt}: ${t('lightbox.previewUnavailable')}`}
+              >
+                {t('lightbox.previewUnavailable')}
+              </div>
+            )
           ) : (
             <>
               <img
