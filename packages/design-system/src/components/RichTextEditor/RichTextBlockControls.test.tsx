@@ -135,6 +135,13 @@ describe('readBlockSnapshot', () => {
   });
 });
 
+it('a plain grip click (no drag) opens the block menu', async () => {
+  const onMenuOpenChange = vi.fn();
+  render(<Harness onMenuOpenChange={onMenuOpenChange} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Block actions' }));
+  expect(onMenuOpenChange).toHaveBeenCalledWith(true);
+});
+
 it('renders no drag-overlay clone and no dimmed block at rest', () => {
   const { container } = render(<Harness />);
   // No drag in progress → DragOverlay renders null; the only [data-block-id] is the

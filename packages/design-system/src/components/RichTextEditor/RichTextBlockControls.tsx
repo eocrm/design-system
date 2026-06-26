@@ -1,15 +1,17 @@
 // RichTextBlockControls.tsx — the per-block gutter overlay. Absolutely positioned
 // inside the editor shell (position: relative), aligned to the active block's box.
 // Lives OUTSIDE the contentEditable so it is never editable content.
-import { useLayoutEffect, useState, type RefObject } from 'react';
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   useDraggable,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragMoveEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import { Button } from '../Button';
 import { useTranslation } from '../../i18n';
@@ -46,6 +48,12 @@ export interface RichTextBlockControlsProps {
    * to the subtree-aware `moveBlockUnitToIndex` engine transform.
    */
   onReorder: (blockId: string, targetIndex: number) => void;
+  /**
+   * Reports grip-drag lifecycle so the editor can suppress hover-driven active-block
+   * changes while a drag is in progress (mirrors how `menuOpen` is mirrored into a
+   * ref). Called `true` on drag start, `false` on drag end/cancel.
+   */
+  onDraggingChange?: (dragging: boolean) => void;
 }
 
 const GUTTER_ROW_HEIGHT = 24;
@@ -122,6 +130,7 @@ export function RichTextBlockControls({
   onTurnInto,
   onConfigure,
   onReorder,
+  onDraggingChange,
 }: RichTextBlockControlsProps) {
   const t = useTranslation();
   const [top, setTop] = useState<number | null>(null);
@@ -133,6 +142,11 @@ export function RichTextBlockControls({
   // not dragging. Drives the absolutely-positioned drop indicator line.
   const [dropGap, setDropGap] = useState<number | null>(null);
   const [dropY, setDropY] = useState<number | null>(null);
+  // DOM snapshot ({ html, width }) of the block being dragged — drives the floating
+  // <DragOverlay> clone. null when not dragging.
+  const [dragSnapshot, setDragSnapshot] = useState<{ html: string; width: number } | null>(null);
+  // The live source element we dimmed, so the dim class can be removed on drop/cancel.
+  const draggedElRef = useRef<HTMLElement | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -187,16 +201,40 @@ export function RichTextBlockControls({
     setDropY(line);
   };
 
+  const handleDragStart = (_event: DragStartEvent) => {
+    if (!activeBlockId) return;
+    onMenuOpenChange(false); // a drag should never leave the block menu open (Notion-style)
+    onDraggingChange?.(true);
+    const snap = readBlockSnapshot(rootRef.current, activeBlockId);
+    setDragSnapshot(snap);
+    const el = rootRef.current?.querySelector<HTMLElement>(
+      `[data-block-id="${CSS.escape(activeBlockId)}"]`,
+    );
+    if (el) {
+      el.classList.add(styles.blockDragging);
+      draggedElRef.current = el;
+    }
+  };
+
+  // Shared teardown for both drop and cancel: undo the source dim, drop the snapshot,
+  // clear the drop indicator, and report drag end.
+  const endDrag = () => {
+    draggedElRef.current?.classList.remove(styles.blockDragging);
+    draggedElRef.current = null;
+    setDragSnapshot(null);
+    setDropGap(null);
+    setDropY(null);
+    onDraggingChange?.(false);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const drop = computeDrop(event);
     if (drop && activeBlockId) onReorder(activeBlockId, drop.gap);
-    setDropGap(null);
-    setDropY(null);
+    endDrag();
   };
 
   const handleDragCancel = () => {
-    setDropGap(null);
-    setDropY(null);
+    endDrag();
   };
 
   if (!activeBlockId || top == null) return null;
@@ -204,6 +242,7 @@ export function RichTextBlockControls({
   return (
     <DndContext
       sensors={sensors}
+      onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
@@ -249,6 +288,20 @@ export function RichTextBlockControls({
       {dropGap != null && dropY != null ? (
         <div className={styles.dropIndicator} style={{ top: dropY }} contentEditable={false} />
       ) : null}
+      <DragOverlay>
+        {dragSnapshot ? (
+          <div
+            className={styles.dragOverlay}
+            style={{ width: dragSnapshot.width }}
+            contentEditable={false}
+            // The dragged block's OWN serialized DOM (already rendered in the live
+            // doc), injected into an inert, non-editable, transient overlay that is
+            // removed on drop. Not external/pasted HTML; no scripts run from an
+            // innerHTML assignment. See the spec's "Snapshot safety".
+            dangerouslySetInnerHTML={{ __html: dragSnapshot.html }}
+          />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }

@@ -286,7 +286,7 @@ figure[data-attachment][data-align='right'] {
   @include prose.prose;
 
   box-sizing: border-box;
-  padding: var(--space-1) var(--space-2);
+  padding-block: var(--space-1);
   border-radius: var(--radius-md);
   background: var(--color-bg);
   box-shadow: var(--shadow-lg);
