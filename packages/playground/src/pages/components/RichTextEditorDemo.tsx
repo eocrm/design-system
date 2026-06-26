@@ -11,6 +11,7 @@ import {
   Stack,
   type RichDoc,
   type RenderLink,
+  type RenderMention,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -24,6 +25,22 @@ const renderLink: RenderLink = ({ href }, fallback) => {
   const m = TASK_RE.exec(href);
   return m ? <Badge tone="purple">#{m[1]} · Ship the gallery</Badge> : fallback;
 };
+
+// A consumer-supplied mention resolver: render each @-mention as an interactive
+// member chip (here a clickable Badge / popover trigger) instead of the default
+// non-interactive span. Composes with renderLink. Render-time only — the model
+// still carries the mention mark, so serialization is unchanged.
+const renderMention: RenderMention = ({ id, label }) => (
+  <Badge
+    tone="info"
+    role="button"
+    tabIndex={0}
+    title={`Open ${label}'s profile`}
+    onClick={() => alert(`Mentioned ${label} (${id})`)}
+  >
+    @{label}
+  </Badge>
+);
 
 export function RichTextEditorDemo() {
   const [doc, setDoc] = useState<RichDoc>(docFromText('Type here. Select a word and press ⌘B.'));
@@ -150,9 +167,15 @@ const [doc, setDoc] = useState(() => fromMarkdown('# Imported\\n\\n- one\\n- two
 
       <Example
         title="Mentions (@-autocomplete)"
-        description='Pass a mentions prop with onQuery to enable @-mentions. Type "@" then a name (e.g. "@al") to open the candidate menu; ↑/↓ to move, Enter/Tab to insert a chip, Esc to dismiss. The chip carries the id; Backspace removes the whole chip.'
-        code={`<RichTextEditor value={doc} onChange={setDoc} toolbar
-  mentions={{ onQuery: (q) => searchUsers(q) }} />`}
+        description='Pass a mentions prop with onQuery to enable @-mentions. Type "@" then a name (e.g. "@al") to open the candidate menu; ↑/↓ to move, Enter/Tab to insert a chip, Esc to dismiss. The chip carries the id; Backspace removes the whole chip. Pass renderMention to swap the default span for an interactive member chip (click one below) — it composes with renderLink and is render-time only, so serialization keeps the mention mark.'
+        code={`const renderMention: RenderMention = ({ id, label }) => (
+  <Badge tone="blue" role="button" tabIndex={0} onClick={() => openProfile(id)}>
+    @{label}
+  </Badge>
+);
+<RichTextEditor value={doc} onChange={setDoc} toolbar
+  mentions={{ onQuery: (q) => searchUsers(q) }}
+  renderMention={renderMention} />`}
       >
         <RichTextEditor
           value={mentionDoc}
@@ -160,6 +183,7 @@ const [doc, setDoc] = useState(() => fromMarkdown('# Imported\\n\\n- one\\n- two
           toolbar
           placeholder="Type @ to mention someone…"
           mentions={{ onQuery: queryTeam }}
+          renderMention={renderMention}
         />
       </Example>
 

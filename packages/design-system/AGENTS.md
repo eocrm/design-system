@@ -255,6 +255,8 @@ const renderLink: RenderLink = ({ href }, fallback) => {
 <RichText value={doc} renderLink={renderLink} />;
 ```
 
+**`renderMention`** (optional) — `(mention: { id, label }, defaultNode) => ReactNode` — same contract as `renderLink` but for `@`-mention marks (render an interactive member chip/popover trigger), or return `defaultNode` for the standard non-interactive mention span. Composes with `renderLink`. Render-time only — `toHtml`/`toMarkdown` and the model still emit the mention mark. Works in both `<RichText>` and `<RichTextEditor>` (where a substituted mention becomes an atomic chip).
+
 When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The model is immutable; render the doc returned by a transform, never mutate in place.
 
 ### `<Button>` — action triggers
@@ -986,6 +988,8 @@ const [doc, setDoc] = useState(emptyDoc());
 **Autolink** (`autolink` prop, default `true`): typing a URL followed by a space, or pasting text containing a URL, turns it into a `link` mark automatically (`http(s)://…` or a bare `www.…` host; unsafe schemes are left as plain text). Set `autolink={false}` to disable both the type rule and paste autolinking.
 
 **`renderLink`** (optional, same `RenderLink` as `<RichText>`): preview links inline — the consumer checks "is this URL in my space?" and returns a chip or the `fallback` `<a>`. In the editor a substituted link becomes an **atomic chip**: the caret sits before/after it (arrow keys step over it, never inside) and Backspace deletes the whole chip in one step. It's render-time only — `toHtml`/`toMarkdown` and the model still emit a plain link, so serialization is unchanged. Don't do heavy synchronous work inside it.
+
+**`renderMention`** (optional, same `RenderMention` as `<RichText>`): `(mention: { id, label }, defaultNode) => ReactNode` — same contract as `renderLink` but for `@`-mention marks (render an interactive member chip/popover trigger); composes with `renderLink`. A substituted mention becomes an **atomic chip** the caret steps over as one unit. Render-time only — `toHtml`/`toMarkdown` and the model still emit the mention mark.
 
 ```tsx
 const renderLink: RenderLink = ({ href }, fallback) => {
