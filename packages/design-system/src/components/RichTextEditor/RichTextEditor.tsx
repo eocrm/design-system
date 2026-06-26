@@ -813,8 +813,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     // Hover tracking (mouse). Listens on the SHELL (which wraps both the editable and
     // the gutter) so reaching from a block onto its controls keeps them alive:
-    // `mouseover` over the gutter resolves to no block id (it's outside the editable
-    // that blockIdFromNode stops at), so hoverBlockId is left unchanged. `mouseleave`
+    // `mouseover` over the gutter finds no `data-block-id` on the walk up (the gutter
+    // isn't inside the editable), so blockIdFromNode returns null and hoverBlockId is
+    // left unchanged — keeping the controls alive as you reach for them. `mouseleave`
     // on the shell fires only when the pointer truly leaves the editor → clear hover.
     useEffect(() => {
       if (!controlsOn) return;
@@ -899,6 +900,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           }
           if ((e.shiftKey && e.key === 'F10') || e.key === 'ContextMenu') {
             e.preventDefault();
+            // Clear hover so the menu binds to the caret block, not a stale hovered one.
             setHoverBlockId(null);
             setCaretBlockId(caretBlock);
             setBlockMenuOpen(true);

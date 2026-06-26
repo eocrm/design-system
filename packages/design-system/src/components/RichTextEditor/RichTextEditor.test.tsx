@@ -997,6 +997,9 @@ describe('blockControls', () => {
     await user.click(screen.getByRole('button', { name: 'Block actions' }));
     // …then hover block B before choosing Delete.
     await user.hover(blockB);
+    // While the menu is open, leaving the editor must NOT clear the active block —
+    // the menu's actions stay bound to block A (onLeave is guarded by blockMenuOpenRef).
+    fireEvent.mouseLeave(screen.getByRole('textbox').parentElement as HTMLElement);
     await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     // Block A must be the one removed, leaving B.
     const remaining = Array.from(document.querySelectorAll('[data-block-id]'));
