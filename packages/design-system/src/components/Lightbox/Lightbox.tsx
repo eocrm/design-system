@@ -313,6 +313,7 @@ export function Lightbox({
                 src={docSrc}
                 title={currentItem.alt}
                 className={styles.doc}
+                referrerPolicy="no-referrer"
                 // Harden against a consumer-supplied URL that resolves to HTML:
                 // omit `allow-same-origin` so framed content runs in an opaque
                 // origin (can't reach the app's DOM/cookies/storage). `allow-scripts`
