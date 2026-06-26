@@ -233,5 +233,6 @@ export const en: Messages = {
     attachmentWidthReset: 'Reset',
     attachmentReplace: 'Replace',
     attachmentOpen: 'Open',
+    attachmentDownload: 'Download',
   },
 };

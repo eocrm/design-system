@@ -235,5 +235,6 @@ export const ru: Messages = {
     attachmentWidthReset: 'Сбросить',
     attachmentReplace: 'Заменить',
     attachmentOpen: 'Открыть',
+    attachmentDownload: 'Скачать',
   },
 };

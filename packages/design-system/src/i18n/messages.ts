@@ -393,6 +393,8 @@ export interface Messages {
     attachmentReplace: string;
     /** Open-in-new-tab button. */
     attachmentOpen: string;
+    /** Download-file link. */
+    attachmentDownload: string;
   };
 }
 
