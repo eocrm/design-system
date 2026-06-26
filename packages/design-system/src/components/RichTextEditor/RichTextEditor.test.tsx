@@ -832,6 +832,38 @@ describe('RichTextEditor renderLink', () => {
   });
 });
 
+describe('RichTextEditor renderMention', () => {
+  beforeEach(() => mockReadSelection.mockReset());
+
+  it('renders a substituted mention as a non-editable atomic [data-rich-mention] chip', () => {
+    mockReadSelection.mockReturnValue(null);
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          {
+            id: 'k',
+            type: 'paragraph',
+            inlines: [{ text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] }],
+          },
+        ],
+      });
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={setDoc}
+          renderMention={({ label }) => <button data-chip>{label}</button>}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const widget = box.querySelector('[data-rich-mention]');
+    expect(widget).not.toBeNull();
+    expect(widget?.getAttribute('contenteditable')).toBe('false');
+    expect(widget?.querySelector('[data-chip]')?.textContent).toBe('Alice');
+  });
+});
+
 describe('blockControls', () => {
   function Controlled(props: { blockControls?: boolean; readOnly?: boolean }) {
     const [doc, setDoc] = useState(docFromText('one\ntwo\nthree'));

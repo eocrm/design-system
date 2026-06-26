@@ -9,6 +9,7 @@ import {
   Badge,
   type RichDoc,
   type RenderLink,
+  type RenderMention,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -20,6 +21,44 @@ const TASK_RE = /^https?:\/\/app\.eocrm\/task\/(\d+)/i;
 const renderLink: RenderLink = ({ href }, fallback) => {
   const m = TASK_RE.exec(href);
   return m ? <Badge tone="purple">#{m[1]} · Ship the gallery</Badge> : fallback;
+};
+
+// A consumer-supplied mention resolver: render each @-mention as an interactive
+// member chip instead of the default non-interactive span. Composes with renderLink.
+const openMention = (id: string, label: string) => alert(`Mentioned ${label} (${id})`);
+const renderMention: RenderMention = ({ id, label }) => (
+  <Badge
+    tone="info"
+    role="button"
+    tabIndex={0}
+    title={`Open ${label}'s profile`}
+    onClick={() => openMention(id, label)}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openMention(id, label);
+      }
+    }}
+  >
+    @{label}
+  </Badge>
+);
+
+// A doc with two @-mentions to show renderMention substitution.
+const MENTION_DOC: RichDoc = {
+  blocks: [
+    {
+      id: 'mr',
+      type: 'paragraph',
+      inlines: [
+        { text: 'Assign this to ', marks: [] },
+        { text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice Nguyen' }] },
+        { text: ' and ', marks: [] },
+        { text: '@Bob', marks: [{ type: 'mention', id: 'u2', label: 'Bob Martinez' }] },
+        { text: '.', marks: [] },
+      ],
+    },
+  ],
 };
 
 // A doc with one resolvable task link (→ chip) and one plain external link (→ <a>).
@@ -128,6 +167,28 @@ setDoc(r.doc);`}
 <RichText value={doc} renderLink={renderLink} />`}
       >
         <RichText value={LINK_DOC} renderLink={renderLink} />
+      </Example>
+
+      <Example
+        title="Mention substitution (renderMention)"
+        description="Pass renderMention to swap how an @-mention renders — same contract as renderLink but for mention marks. Here each mention becomes an interactive member chip (click one). It composes with renderLink and is render-time only; serialization still emits the mention mark."
+        code={`// Render an @-mention as your own interactive, keyboard-accessible chip.
+const renderMention: RenderMention = ({ id, label }) => (
+  <Badge
+    tone="info"
+    role="button"
+    tabIndex={0}
+    onClick={() => openProfile(id)}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfile(id); }
+    }}
+  >
+    @{label}
+  </Badge>
+);
+<RichText value={doc} renderMention={renderMention} />`}
+      >
+        <RichText value={MENTION_DOC} renderMention={renderMention} />
       </Example>
     </DemoLayout>
   );

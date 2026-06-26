@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import type { RichDoc } from './engine/model';
 import { renderDoc } from './engine/renderDoc';
 import type { RenderLink } from './engine/renderLink';
+import type { RenderMention } from './engine/renderMention';
 import styles from './RichText.module.scss';
 
 export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
@@ -19,6 +20,18 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
    * itself (or falls back to `defaultNode` while loading).
    */
   renderLink?: RenderLink;
+  /**
+   * Substitute how an `@`-mention renders. Called per mention with `{ id, label }`
+   * and the default mention span; return your own node (e.g. an interactive member
+   * chip / popover trigger) or the `defaultNode` to keep the standard
+   * non-interactive span. Render-time only — the document model is unchanged, so
+   * serialization still emits the mention mark. Composes with `renderLink`.
+   *
+   * @remarks Keep it cheap — it runs on every render. Don't block on a network
+   * call inside `renderMention`; return a component that fetches/caches the lookup
+   * itself (or falls back to `defaultNode` while loading).
+   */
+  renderMention?: RenderMention;
 }
 
 /**
@@ -53,14 +66,14 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
  * - ❌ Hand-writing HTML to display rich content — feed a `RichDoc` to `<RichText>`.
  */
 export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichText(
-  { value, renderLink, className, ...props },
+  { value, renderLink, renderMention, className, ...props },
   ref,
 ) {
   // {...props} last so the consumer can override anything except the composed
   // className (Pattern A — consumer wins).
   return (
     <div ref={ref} className={clsx(styles.root, className)} {...props}>
-      {renderDoc(value, { renderLink })}
+      {renderDoc(value, { renderLink, renderMention })}
     </div>
   );
 });

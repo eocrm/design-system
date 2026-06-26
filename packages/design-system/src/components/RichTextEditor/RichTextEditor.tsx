@@ -13,6 +13,7 @@ import type { RichDoc, Range, Mark, MarkType, Point } from '../RichText/engine/m
 import { nextId } from '../RichText/engine/model';
 import { renderDoc } from '../RichText/engine/renderDoc';
 import type { RenderLink } from '../RichText/engine/renderLink';
+import type { RenderMention } from '../RichText/engine/renderMention';
 import { blockLength, isCollapsed } from '../RichText/engine/position';
 import { linkAt, setLink, removeLink } from './links';
 import { applyTypeAutolink, atomicLinkDeleteRange } from './autolinkInput';
@@ -131,6 +132,21 @@ export interface RichTextEditorProps extends Omit<
    */
   renderLink?: RenderLink;
   /**
+   * Substitute how an `@`-mention renders. Called per mention with `{ id, label }`
+   * and the default mention span; return your own node (e.g. an interactive member
+   * chip / popover trigger) or the `defaultNode` to keep the standard
+   * non-interactive span. A custom node renders as a non-editable **atomic chip** —
+   * the caret steps over it as a single unit. Composes with `renderLink` (both
+   * usable together).
+   *
+   * @remarks Render-time only — the model is unchanged, so `toHtml`/`toMarkdown`
+   * still serialize the mention mark. Keep it cheap (it runs on every render):
+   * don't do heavy synchronous work or block on the network inside `renderMention`;
+   * return a component that fetches/caches the lookup itself (falling back to
+   * `defaultNode` while loading).
+   */
+  renderMention?: RenderMention;
+  /**
    * Show Notion-style per-block controls: a left gutter that appears on the
    * hovered/focused block with an insert button (`＋`, adds an empty paragraph
    * below) and a drag handle (`⠿`) that opens a block menu (Turn into ▸,
@@ -241,6 +257,8 @@ interface LinkEditorOpen {
  *   (the inverse of `fromHtml` / `fromMarkdown`).
  * - ❌ Using mentions to insert plain links — that's the link tool (⌘K). A
  *   mention chip is an inert reference carrying an `id`, not a navigable anchor.
+ * - ❌ Using `renderMention` for plain links — that's `renderLink`; a mention chip
+ *   is an inert reference carrying an `id`. The two compose; use each for its mark.
  * - ❌ Returning thousands of unfiltered items from `onQuery` — filter server-side
  *   (or by the `query`); the menu renders what you return.
  * - ❌ Relying on Markdown to preserve mentions — `toMarkdown` is lossy (plain
@@ -272,6 +290,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       mentions,
       autolink = true,
       renderLink,
+      renderMention,
       upload,
       className,
       ...rest
@@ -284,8 +303,22 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Selection to restore after the next model-driven re-render.
     const pendingSelectionRef = useRef<Range | null>(null);
     // Latest props for the native beforeinput listener (avoids stale closures).
-    const latest = useRef({ value, onChange, readOnly, autolink, renderLink, upload });
-    latest.current = { value, onChange, readOnly, autolink, renderLink, upload };
+    const latest = useRef({
+      value,
+      onChange,
+      readOnly,
+      autolink,
+      renderLink,
+      upload,
+    });
+    latest.current = {
+      value,
+      onChange,
+      readOnly,
+      autolink,
+      renderLink,
+      upload,
+    };
     // The synchronous "live" doc — kept ahead of `value` between renders by the
     // commit paths, so several async upload settles in the same tick chain off each
     // other's result instead of all reading the stale last-rendered `value` (which
@@ -1166,7 +1199,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
       >
-        {renderDoc(value, { editable: true, renderLink })}
+        {renderDoc(value, { editable: true, renderLink, renderMention })}
       </div>
     );
 
