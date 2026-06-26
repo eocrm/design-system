@@ -142,6 +142,10 @@ it('a plain grip click (no drag) opens the block menu', async () => {
   expect(onMenuOpenChange).toHaveBeenCalledWith(true);
 });
 
+// NOTE: the real grip-drag lifecycle (PointerSensor 4px activation → onDraggingChange,
+// floating clone, source dim, drop/reorder) is covered by Playwright in Task 4. jsdom
+// cannot drive dnd-kit's PointerSensor (no layout / pointer-capture), matching the
+// Sortable precedent of not unit-testing real drags.
 it('renders no drag-overlay clone and no dimmed block at rest', () => {
   const { container } = render(<Harness />);
   // No drag in progress → DragOverlay renders null; the only [data-block-id] is the
