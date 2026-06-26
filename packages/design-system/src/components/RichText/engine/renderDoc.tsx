@@ -6,6 +6,7 @@ import { runsText, runsLength } from './inlines';
 import { safeHref } from './safeHref';
 import { isListItem, effectiveDepths } from './listDepths';
 import type { RenderLink } from './renderLink';
+import type { RenderMention } from './renderMention';
 import { RichTextAttachment } from '../../RichTextEditor/RichTextAttachment';
 
 export interface RenderDocOptions {
@@ -19,12 +20,22 @@ export interface RenderDocOptions {
    * default node to keep the standard `<a>`.
    */
   renderLink?: RenderLink;
+  /**
+   * Replace how a `mention` mark renders (e.g. an interactive member chip /
+   * popover trigger). In the read-only viewer the returned node substitutes the
+   * default mention span directly; on an editable surface a substituted node is
+   * wrapped in an atomic, non-editable `[data-rich-mention]` widget so the caret
+   * steps over it as a single unit. Return the supplied default node to keep the
+   * standard non-interactive mention span. Composes with `renderLink`.
+   */
+  renderMention?: RenderMention;
 }
 
 // Resolved options threaded through the render call chain (never module state).
 interface ResolvedOptions {
   editable: boolean;
   renderLink?: RenderLink;
+  renderMention?: RenderMention;
 }
 
 // Outer → inner nesting order so output is stable + diff-friendly.
@@ -85,6 +96,43 @@ function renderInlines(inlines: Inline[], opts: ResolvedOptions): ReactNode {
   let i = 0;
   while (i < inlines.length) {
     const run = inlines[i];
+    const mm = run.marks.find((m) => m.type === 'mention');
+    const mention = mm && mm.type === 'mention' ? { id: mm.id, label: mm.label } : null;
+    if (opts.renderMention && mention) {
+      // Coalesce contiguous runs that share this exact mention (same id AND label)
+      // into ONE logical mention, so a mention split across runs (e.g. internal
+      // formatting, HTML import) resolves to a single chip — not one per run.
+      let j = i;
+      let text = '';
+      while (j < inlines.length) {
+        const m = inlines[j].marks.find((mk) => mk.type === 'mention');
+        if (!m || m.type !== 'mention' || m.id !== mention.id || m.label !== mention.label) break;
+        text += inlines[j].text;
+        j += 1;
+      }
+      const fallback = (
+        <span data-mention data-mention-id={mention.id} data-mention-label={mention.label}>
+          {text}
+        </span>
+      );
+      const custom = opts.renderMention(mention, fallback);
+      if (custom !== fallback) {
+        // Substituted: one node for the whole span. In the editor it's an atomic,
+        // non-editable widget tagged with the span's MODEL length (`data-len`).
+        out.push(
+          opts.editable ? (
+            <span key={i} data-rich-mention data-len={text.length} contentEditable={false}>
+              {custom}
+            </span>
+          ) : (
+            <Fragment key={i}>{custom}</Fragment>
+          ),
+        );
+        i = j;
+        continue;
+      }
+      // Consumer declined → fall through to the link/default handling below.
+    }
     const lm = run.marks.find((m) => m.type === 'link');
     const linkHref = lm && lm.type === 'link' ? lm.href : null;
     const safe = opts.renderLink && linkHref != null ? safeHref(linkHref) : undefined;
@@ -256,6 +304,7 @@ export function renderDoc(doc: RichDoc, options: RenderDocOptions = {}): ReactNo
   const opts: ResolvedOptions = {
     editable: options.editable ?? false,
     renderLink: options.renderLink,
+    renderMention: options.renderMention,
   };
   const eff = effectiveDepths(doc.blocks);
   const out: ReactNode[] = [];

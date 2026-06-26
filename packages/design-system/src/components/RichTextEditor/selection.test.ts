@@ -145,6 +145,81 @@ describe('selection mapping — atomic [data-rich-link] widget', () => {
   });
 });
 
+// An atomic [data-rich-mention] widget (a `renderMention` substitution) behaves
+// identically to a [data-rich-link] widget: it renders DISPLAY text but represents
+// `data-len` MODEL chars and the caret can only sit BEFORE or AFTER it.
+//   <p data-block-id="b1">hi <span data-rich-mention data-len="6" …>@A</span> end</p>
+//   model: "hi " (3) + widget (6, "@Alice") + " end" (4) = 13 model chars total.
+function buildMentionWidgetRoot(): HTMLElement {
+  const root = document.createElement('div');
+  root.innerHTML =
+    '<p data-block-id="b1">hi <span data-rich-mention data-len="6" contenteditable="false">@A</span> end</p>';
+  document.body.appendChild(root);
+  return root;
+}
+
+describe('selection mapping — atomic [data-rich-mention] widget', () => {
+  it('pointFromDom: counts the widget as data-len (6), not its 2 display chars', () => {
+    const root = buildMentionWidgetRoot();
+    const p = root.querySelector('[data-block-id="b1"]') as HTMLElement;
+    const lead = p.firstChild as Text; // "hi "
+    const trail = p.lastChild as Text; // " end"
+
+    // caret just before the widget → end of "hi " (3 model chars)
+    expect(pointFromDom(root, lead, 3)).toEqual({ blockId: 'b1', offset: 3 });
+    expect(pointFromDom(root, p, 1)).toEqual({ blockId: 'b1', offset: 3 });
+
+    // caret just after the widget → 3 + 6 = 9 (NOT 3 + 2 = 5)
+    expect(pointFromDom(root, trail, 0)).toEqual({ blockId: 'b1', offset: 9 });
+    expect(pointFromDom(root, p, 2)).toEqual({ blockId: 'b1', offset: 9 });
+
+    // caret at the very end of " end" → 9 + 4 = 13
+    expect(pointFromDom(root, trail, 4)).toEqual({ blockId: 'b1', offset: 13 });
+    root.remove();
+  });
+
+  it('pointToDom: widget-boundary offsets map adjacent to the widget, never inside', () => {
+    const root = buildMentionWidgetRoot();
+    const p = root.querySelector('[data-block-id="b1"]') as HTMLElement;
+    const lead = p.firstChild as Text; // "hi "
+    const widget = p.querySelector('[data-rich-mention]') as HTMLElement;
+    const trail = p.lastChild as Text; // " end"
+    const widgetIndex = Array.prototype.indexOf.call(p.childNodes, widget); // 1
+
+    const before = pointToDom(root, { blockId: 'b1', offset: 3 })!;
+    if (before.node === lead) {
+      expect(before.offset).toBe(3);
+    } else {
+      expect(before.node).toBe(p);
+      expect(before.offset).toBe(widgetIndex);
+    }
+    expect(widget.contains(before.node)).toBe(false);
+
+    const after = pointToDom(root, { blockId: 'b1', offset: 9 })!;
+    expect(widget.contains(after.node)).toBe(false);
+    if (after.node === trail) {
+      expect(after.offset).toBe(0);
+    } else {
+      expect(after.node).toBe(p);
+      expect(after.offset).toBe(widgetIndex + 1);
+    }
+
+    const end = pointToDom(root, { blockId: 'b1', offset: 13 })!;
+    expect(end.node).toBe(trail);
+    expect(end.offset).toBe(4);
+    root.remove();
+  });
+
+  it('pointFromDom/pointToDom round-trip across the widget boundary', () => {
+    const root = buildMentionWidgetRoot();
+    for (const offset of [0, 3, 9, 11, 13]) {
+      const dom = pointToDom(root, { blockId: 'b1', offset })!;
+      expect(pointFromDom(root, dom.node, dom.offset)).toEqual({ blockId: 'b1', offset });
+    }
+    root.remove();
+  });
+});
+
 function makeRoot(html: string): HTMLElement {
   const el = document.createElement('div');
   el.innerHTML = html;

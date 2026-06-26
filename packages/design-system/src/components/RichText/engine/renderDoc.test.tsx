@@ -366,6 +366,117 @@ describe('renderDoc renderLink option', () => {
   });
 });
 
+describe('renderDoc renderMention option', () => {
+  // A doc with one mention run ("hi " + "@Alice").
+  const mentionDoc = () => ({
+    blocks: [
+      {
+        id: 'b',
+        type: 'paragraph' as const,
+        inlines: [
+          { text: 'hi ', marks: [] },
+          { text: '@Alice', marks: [{ type: 'mention' as const, id: 'u1', label: 'Alice' }] },
+        ],
+      },
+    ],
+  });
+
+  it('renderMention substitutes a custom node (read-only)', () => {
+    const { container } = render(
+      <>{renderDoc(mentionDoc(), { renderMention: ({ label }) => <button>{label}!</button> })}</>,
+    );
+    expect(container.querySelector('button')?.textContent).toBe('Alice!');
+  });
+
+  it('renderMention declining (returns defaultNode) keeps the default mention span', () => {
+    const { container } = render(
+      <>{renderDoc(mentionDoc(), { renderMention: (_m, def) => def })}</>,
+    );
+    expect(container.querySelector('[data-mention]')).toBeTruthy();
+    expect(container.querySelector('button')).toBeNull();
+  });
+
+  it('on the editable surface a substituted mention is an atomic widget with data-len', () => {
+    const { container } = render(
+      <>
+        {renderDoc(mentionDoc(), {
+          editable: true,
+          renderMention: ({ label }) => <button>{label}</button>,
+        })}
+      </>,
+    );
+    const w = container.querySelector('[data-rich-mention]')!;
+    expect(w).toHaveAttribute('contenteditable', 'false');
+    expect(w).toHaveAttribute('data-len', '6'); // '@Alice'.length
+  });
+
+  it('coalesces a same-id/label mention split across runs into ONE widget', () => {
+    const doc = {
+      blocks: [
+        {
+          id: 'b',
+          type: 'paragraph' as const,
+          inlines: [
+            { text: '@Al', marks: [{ type: 'mention' as const, id: 'u1', label: 'Alice' }] },
+            {
+              text: 'ice',
+              marks: [
+                { type: 'mention' as const, id: 'u1', label: 'Alice' },
+                { type: 'bold' as const },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    let calls = 0;
+    const { container } = render(
+      <>
+        {renderDoc(doc, {
+          renderMention: ({ id }) => {
+            calls += 1;
+            return <button data-id={id}>chip</button>;
+          },
+        })}
+      </>,
+    );
+    expect(container.querySelectorAll('button')).toHaveLength(1);
+    expect(calls).toBe(1);
+
+    const ed = render(
+      <>{renderDoc(doc, { editable: true, renderMention: () => <button>chip</button> })}</>,
+    );
+    const widgets = ed.container.querySelectorAll('[data-rich-mention]');
+    expect(widgets).toHaveLength(1);
+    expect(widgets[0].getAttribute('data-len')).toBe('6'); // "@Alice"
+  });
+
+  it('renderMention composes with renderLink', () => {
+    const doc = {
+      blocks: [
+        {
+          id: 'b',
+          type: 'paragraph' as const,
+          inlines: [
+            { text: 'x', marks: [{ type: 'link' as const, href: 'https://a' }] },
+            { text: '@Bob', marks: [{ type: 'mention' as const, id: 'u2', label: 'Bob' }] },
+          ],
+        },
+      ],
+    };
+    const { container } = render(
+      <>
+        {renderDoc(doc, {
+          renderLink: (_l, def) => def,
+          renderMention: ({ label }) => <button>{label}</button>,
+        })}
+      </>,
+    );
+    expect(container.querySelector('a')).toBeTruthy();
+    expect(container.querySelector('button')?.textContent).toBe('Bob');
+  });
+});
+
 it('renders an attachment block as a contenteditable=false figure', () => {
   const doc = {
     blocks: [

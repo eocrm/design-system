@@ -2,9 +2,18 @@
 // functions take the editable root element; block elements carry `data-block-id`.
 import type { Point, Range } from '../RichText/engine/model';
 
-/** The MODEL length an atomic `[data-rich-link]` widget represents. Falls back to
- *  its display-text length if `data-len` is missing/non-numeric (so a malformed
- *  widget degrades gracefully instead of poisoning the offset math with NaN). */
+/** Selector + predicate for atomic inline widgets (renderLink / renderMention
+ *  substitutions): contentEditable=false nodes whose display text may differ from
+ *  the `data-len` MODEL length they represent. */
+const ATOMIC_WIDGET_SELECTOR = '[data-rich-link],[data-rich-mention]';
+function isAtomicWidget(el: HTMLElement): boolean {
+  return el.hasAttribute('data-rich-link') || el.hasAttribute('data-rich-mention');
+}
+
+/** The MODEL length an atomic widget (`[data-rich-link]` / `[data-rich-mention]`)
+ *  represents. Falls back to its display-text length if `data-len` is
+ *  missing/non-numeric (so a malformed widget degrades gracefully instead of
+ *  poisoning the offset math with NaN). */
 function widgetLen(w: HTMLElement): number {
   const n = Number(w.dataset.len);
   return Number.isFinite(n) ? n : (w.textContent?.length ?? 0);
@@ -43,12 +52,12 @@ function figureBlock(node: Node | null | undefined): HTMLElement | null {
  * the point via a DOM Range, which counts only character data (so `<br>`,
  * empty blocks, and nested mark spans are all handled correctly).
  *
- * Atomic `[data-rich-link]` widgets are corrected for: such a widget renders
- * DISPLAY text (e.g. "#1 Task") but represents `data-len` MODEL chars (e.g. the
- * URL it links). `range.toString()` counts the display text, so for every widget
- * that lies fully before the range end we add `data-len - displayLength`. When a
- * block contains no `[data-rich-link]` the correction loop runs zero times, so
- * this is an exact no-op for ordinary content.
+ * Atomic widgets (`[data-rich-link]` / `[data-rich-mention]`) are corrected for:
+ * such a widget renders DISPLAY text (e.g. "#1 Task") but represents `data-len`
+ * MODEL chars (e.g. the URL it links). `range.toString()` counts the display
+ * text, so for every widget that lies fully before the range end we add
+ * `data-len - displayLength`. When a block contains no atomic widget the
+ * correction loop runs zero times, so this is an exact no-op for ordinary content.
  */
 function offsetWithinBlock(blockEl: HTMLElement, node: Node, offset: number): number {
   const doc = blockEl.ownerDocument;
@@ -60,7 +69,7 @@ function offsetWithinBlock(blockEl: HTMLElement, node: Node, offset: number): nu
     return 0; // node not inside blockEl (shouldn't happen) → block start
   }
   let len = range.toString().length;
-  for (const w of blockEl.querySelectorAll<HTMLElement>('[data-rich-link]')) {
+  for (const w of blockEl.querySelectorAll<HTMLElement>(ATOMIC_WIDGET_SELECTOR)) {
     // The widget's display text is included in `len` iff our range end is at or
     // past the point immediately AFTER the widget. Compare our range's END
     // boundary against a collapsed range positioned just after the widget:
@@ -134,10 +143,10 @@ export function pointToDom(root: HTMLElement, point: Point): { node: Node; offse
     const index = Array.prototype.indexOf.call(parent.childNodes, blockEl);
     return { node: parent, offset: index };
   }
-  // Walk TEXT nodes and atomic `[data-rich-link]` widgets, accumulating model
-  // length: text → its char length, widget → `data-len` (NOT its display text;
-  // we never descend into a widget). A widget is contenteditable=false, so the
-  // caret can only sit adjacent to it — when `remaining` lands at a widget we
+  // Walk TEXT nodes and atomic widgets (`[data-rich-link]` / `[data-rich-mention]`),
+  // accumulating model length: text → its char length, widget → `data-len` (NOT its
+  // display text; we never descend into a widget). A widget is contenteditable=false,
+  // so the caret can only sit adjacent to it — when `remaining` lands at a widget we
   // return a point in the widget's PARENT at the widget's child index (before)
   // or +1 (after), never inside it. With no widgets present this behaves exactly
   // like the previous text-only TreeWalker (FILTER_SKIP descends into mark spans).
@@ -146,15 +155,13 @@ export function pointToDom(root: HTMLElement, point: Point): { node: Node; offse
     NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
     {
       acceptNode(n) {
-        if (n instanceof HTMLElement && n.hasAttribute('data-rich-link'))
-          return NodeFilter.FILTER_ACCEPT; // the widget itself, atomic
+        if (n instanceof HTMLElement && isAtomicWidget(n)) return NodeFilter.FILTER_ACCEPT; // the widget itself, atomic
         // Reject the widget's contents so the walk treats it as one opaque unit
         // (a TreeWalker descends into an ACCEPTED element, so we must REJECT its
         // descendants — REJECT skips the node AND its subtree, unlike SKIP).
         let p: Node | null = n.parentNode;
         while (p && p !== blockEl) {
-          if (p instanceof HTMLElement && p.hasAttribute('data-rich-link'))
-            return NodeFilter.FILTER_REJECT;
+          if (p instanceof HTMLElement && isAtomicWidget(p)) return NodeFilter.FILTER_REJECT;
           p = p.parentNode;
         }
         if (n.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT;
