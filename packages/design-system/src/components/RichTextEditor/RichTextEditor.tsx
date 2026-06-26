@@ -148,6 +148,10 @@ export interface RichTextEditorProps extends Omit<
    * submit button's disabled state. Validation (size/type) belongs in `onUpload`
    * (`accept` is only a native-picker hint and is bypassed by paste). Omit to
    * disable. Ignored when `readOnly`.
+   * When `blockControls` is also on, a ready image attachment can be configured
+   * (alt text, alignment, width, replace, open/download) via a ⚙ in the block
+   * gutter or the block menu's "Configure" — alignment + width round-trip through
+   * HTML but not Markdown.
    */
   upload?: UploadConfig;
 }
@@ -251,6 +255,9 @@ interface LinkEditorOpen {
  *   by `toHtml`/`toMarkdown`, but the model still carries them until they settle).
  * - ❌ Relying on the picker `accept` for validation — it's only a hint and paste
  *   bypasses it; enforce size/type inside `onUpload` and reject to show an error.
+ * - ❌ Expecting image alignment/width to survive a Markdown round-trip — they
+ *   serialize to HTML only (Markdown has no syntax for them); the stored RichDoc
+ *   JSON is lossless.
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(
