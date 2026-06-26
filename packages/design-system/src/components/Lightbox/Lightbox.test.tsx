@@ -179,11 +179,14 @@ describe('Lightbox', () => {
     }
   });
 
-  it('sandboxes the PDF iframe (opaque origin: no allow-same-origin)', () => {
+  it('does not sandbox the PDF iframe (Chrome blocks its PDF viewer in any sandboxed frame), keeps no-referrer', () => {
     render(<Lightbox open onOpenChange={() => {}} items={[pdfItem]} />);
-    const sandbox = document.querySelector('iframe')!.getAttribute('sandbox') ?? '';
-    expect(sandbox).toContain('allow-scripts');
-    expect(sandbox).not.toContain('allow-same-origin');
+    const frame = document.querySelector('iframe')!;
+    // No `sandbox`: Chrome refuses to render PDFs inside ANY sandboxed iframe
+    // (regardless of allow-* tokens), which blocks the viewer entirely. The real
+    // guards stay: no-referrer + the http(s)/relative-only src check (safeDocSrc).
+    expect(frame.hasAttribute('sandbox')).toBe(false);
+    expect(frame.getAttribute('referrerpolicy')).toBe('no-referrer');
   });
 
   it('the download link opens in a new tab (cross-origin download safety)', () => {

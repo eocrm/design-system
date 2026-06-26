@@ -28,7 +28,10 @@ export interface LightboxItem {
   alt: string;
   /** Item kind. Defaults to `'image'`, or `'pdf'` when `src` ends in `.pdf`. A
    *  `pdf` item renders in an `<iframe>` (the browser's PDF viewer) with a download
-   *  action instead of an `<img>`. */
+   *  action instead of an `<img>`. Security: the PDF iframe is NOT sandboxed (Chrome
+   *  blocks its PDF viewer in any sandboxed frame), so a `pdf` `src` MUST be a trusted
+   *  URL — the scheme is restricted to http(s)/relative, but a URL that returns HTML
+   *  instead of a PDF would run with its own origin's privileges. */
   kind?: 'image' | 'pdf';
   /** Optional caption shown below the stage. */
   caption?: ReactNode;
@@ -314,12 +317,16 @@ export function Lightbox({
                 title={currentItem.alt}
                 className={styles.doc}
                 referrerPolicy="no-referrer"
-                // Harden against a consumer-supplied URL that resolves to HTML:
-                // omit `allow-same-origin` so framed content runs in an opaque
-                // origin (can't reach the app's DOM/cookies/storage). `allow-scripts`
-                // is needed by Firefox's pdf.js viewer; `allow-downloads` keeps the
-                // in-viewer save button working.
-                sandbox="allow-scripts allow-downloads"
+                // No `sandbox`: a PDF is rendered by the browser's own PDF engine
+                // (PDFium / pdf.js), which already isolates the PDF's JS from the
+                // page — so a sandbox adds nothing for PDF content while BLOCKING
+                // Chrome's PDF viewer entirely ("This page has been blocked by
+                // Chrome"; Chrome refuses to render PDFs in ANY sandboxed iframe,
+                // regardless of allow-* tokens). `referrerPolicy="no-referrer"` and the
+                // http(s)/relative-only `safeDocSrc` check (blocks javascript:/data:/
+                // blob:) defend against SCHEME attacks; a URL that returns HTML instead
+                // of a PDF would run unsandboxed, so this path relies on the documented
+                // contract that the consumer frames its own trusted file URLs.
               />
             ) : (
               <div
