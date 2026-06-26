@@ -193,3 +193,38 @@ it('renders without crashing when only Avatar + Name are passed (no Description)
   );
   expect(screen.getByText('Avery Liu')).toBeInTheDocument();
 });
+
+it('does not apply the shrink class by default', () => {
+  const { container } = render(
+    <PersonDisplay>
+      <PersonDisplay.Avatar name="Sarah" />
+      <PersonDisplay.Name>Sarah</PersonDisplay.Name>
+    </PersonDisplay>,
+  );
+  // CSS-module hashed class contains the substring "shrink" when applied.
+  expect(container.firstElementChild?.className).not.toMatch(/shrink/);
+});
+
+it('shrink applies the shrink-wrap class on the root', () => {
+  const { container } = render(
+    <PersonDisplay shrink>
+      <PersonDisplay.Avatar name="Sarah" />
+      <PersonDisplay.Name>Sarah</PersonDisplay.Name>
+    </PersonDisplay>,
+  );
+  expect(container.firstElementChild?.className).toMatch(/shrink/);
+  // shrink composes with (does not replace) the root class + data-size.
+  expect(container.firstElementChild?.className).toMatch(/root/);
+  expect(container.firstElementChild).toHaveAttribute('data-size', 'md');
+});
+
+it('shrink composes with a consumer className', () => {
+  const { container } = render(
+    <PersonDisplay shrink className="custom-root">
+      <PersonDisplay.Avatar name="Sarah" />
+      <PersonDisplay.Name>Sarah</PersonDisplay.Name>
+    </PersonDisplay>,
+  );
+  expect(container.firstElementChild).toHaveClass('custom-root');
+  expect(container.firstElementChild?.className).toMatch(/shrink/);
+});

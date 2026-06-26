@@ -12,6 +12,21 @@
   }
 }
 
+// Opt-in shrink-wrap (the `shrink` prop). The root is `inline-flex`, but as a child
+// of a STRETCHING flex/grid container CSS blockifies it and the parent's
+// `align-items: stretch` / `justify-self: stretch` stretches it to the full column
+// width — so a Popover/Tooltip cloned onto it anchors to that wide box and centers on
+// the empty column instead of the avatar+name (issue #219). `width: fit-content`
+// forces the box back to its content width in BOTH flex and grid (an explicit,
+// non-`auto` width opts out of the stretch), re-anchoring the overlay. This sizes the
+// element's OWN box (it doesn't place itself in the parent's layout, so it's not the
+// Rule-4 `align-self`/`justify-self` smell), and is opt-in only. `max-width: 100%`
+// keeps a long name from overflowing a narrow column.
+.shrink {
+  width: fit-content;
+  max-width: 100%;
+}
+
 // The inner column that holds Name + Descriptions stacked vertically.
 .column {
   display: inline-flex;
