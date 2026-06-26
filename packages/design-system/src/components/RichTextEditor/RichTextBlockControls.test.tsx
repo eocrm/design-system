@@ -92,3 +92,22 @@ it('renders nothing when activeBlockId is null', () => {
   render(<NullHarness />);
   expect(screen.queryByRole('button', { name: 'Insert block below' })).toBeNull();
 });
+
+it('shows a Configure (gear) button when onConfigure is provided', async () => {
+  const onConfigure = vi.fn();
+  render(<Harness activeBlockType="attachment" onConfigure={onConfigure} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Configure' }));
+  expect(onConfigure).toHaveBeenCalledWith('b1');
+});
+
+it('no gear when onConfigure is omitted', () => {
+  render(<Harness activeBlockType="attachment" />);
+  expect(screen.queryByRole('button', { name: 'Configure' })).toBeNull();
+});
+
+it('block menu shows a Configure item that fires onConfigure', async () => {
+  const onConfigure = vi.fn();
+  render(<Harness activeBlockType="attachment" menuOpen onConfigure={onConfigure} />);
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Configure' }));
+  expect(onConfigure).toHaveBeenCalledWith('b1');
+});

@@ -21,6 +21,9 @@ export interface RichTextBlockMenuProps {
   onAction: (action: BlockAction) => void;
   /** Fired for a "Turn into" choice. */
   onTurnInto: (choice: BlockChoice) => void;
+  /** When set, a Configure item appears at the top of the menu (e.g. attachment
+   *  settings). Omit for blocks with nothing to configure. */
+  onConfigure?: () => void;
   /** Type of the block the menu targets. "Turn into" is hidden for `attachment`
    *  (a void block — converting an image to a heading is nonsense). */
   blockType?: BlockType;
@@ -33,7 +36,10 @@ export interface RichTextBlockMenuProps {
  * and is omitted for void attachment blocks.
  */
 export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenuProps>(
-  function RichTextBlockMenu({ open, onOpenChange, onAction, onTurnInto, blockType }, ref) {
+  function RichTextBlockMenu(
+    { open, onOpenChange, onAction, onTurnInto, onConfigure, blockType },
+    ref,
+  ) {
     const t = useTranslation();
     return (
       <DropdownMenu open={open} onOpenChange={onOpenChange}>
@@ -52,6 +58,11 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
           </Button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content side="bottom" align="start">
+          {onConfigure && (
+            <DropdownMenu.Item onSelect={onConfigure}>
+              {t('richTextEditor.attachmentConfigure')}
+            </DropdownMenu.Item>
+          )}
           {blockType !== 'attachment' && (
             <DropdownMenu.Sub>
               <DropdownMenu.SubTrigger>{t('richTextEditor.blockTurnInto')}</DropdownMenu.SubTrigger>
