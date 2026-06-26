@@ -373,6 +373,26 @@ export interface Messages {
     uploadRetry: string;
     /** Remove action on a failed upload. */
     uploadRemove: string;
+    /** ⚙ config button + "Configure" menu item label. */
+    attachmentConfigure: string;
+    /** Alt-text field label. */
+    attachmentAlt: string;
+    /** Alignment group label. */
+    attachmentAlign: string;
+    /** Align-left button aria-label. */
+    attachmentAlignLeft: string;
+    /** Align-center button aria-label. */
+    attachmentAlignCenter: string;
+    /** Align-right button aria-label. */
+    attachmentAlignRight: string;
+    /** Width slider label. */
+    attachmentWidth: string;
+    /** Reset-width link. */
+    attachmentWidthReset: string;
+    /** Replace-file button. */
+    attachmentReplace: string;
+    /** Open-in-new-tab button. */
+    attachmentOpen: string;
   };
 }
 
