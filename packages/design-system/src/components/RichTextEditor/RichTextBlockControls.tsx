@@ -163,8 +163,9 @@ export function RichTextBlockControls({
   const onDraggingChangeRef = useRef(onDraggingChange);
   onDraggingChangeRef.current = onDraggingChange;
 
-  // If the controls unmount mid-drag (e.g. the active block clears), dnd-kit fires
-  // neither end nor cancel — undo the source dim and report drag end so nothing leaks.
+  // If the controls unmount mid-drag (e.g. blockControls is turned off, or the
+  // editor unmounts), dnd-kit fires neither end nor cancel — undo the source dim
+  // and report drag end so nothing leaks.
   useEffect(() => {
     return () => {
       draggedElRef.current?.classList.remove(styles.blockDragging);
