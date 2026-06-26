@@ -490,6 +490,7 @@ export type {
   RichRange,
 } from './components/RichText';
 export type { RichTextLink, RenderLink } from './components/RichText/engine/renderLink';
+export type { RichTextMention, RenderMention } from './components/RichText/engine/renderMention';
 export {
   emptyDoc,
   createBlock,

@@ -65,4 +65,21 @@ describe('RichText', () => {
     expect(container.querySelector('[data-chip]')).not.toBeNull();
     expect(container.querySelector('a')).toBeNull();
   });
+
+  it('renderMention substitutes a custom node for a mention', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice' }] }],
+        },
+      ],
+    };
+    const { container } = render(
+      <RichText value={doc} renderMention={({ label }) => <button data-chip>{label}</button>} />,
+    );
+    expect(container.querySelector('[data-chip]')?.textContent).toBe('Alice');
+    expect(container.querySelector('[data-mention]')).toBeNull();
+  });
 });
