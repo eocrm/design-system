@@ -5,6 +5,10 @@ import { getComponentFiles } from '../../lib/componentFiles';
 
 const MAIN_ROWS = Array.from({ length: 14 }, (_, i) => i + 1);
 
+// Deliberately more items than fit on a screen, so scroll-viewport mode has
+// something to scroll internally (the box caps at the viewport height).
+const SIDEBAR_ITEMS = Array.from({ length: 20 }, (_, i) => i + 1);
+
 // A bordered, internally-scrolling box so the sticky behaviour is visible inside
 // the demo (the box is the scroll container the aside pins within).
 const scrollBox: React.CSSProperties = {
@@ -93,6 +97,52 @@ export function StickyDemo() {
             </Stack>
           </Split>
         </div>
+      </Example>
+
+      <Example
+        title="Scroll-viewport mode: a sidebar taller than the screen"
+        description="With scroll, the pinned box is capped at the viewport height (minus the top offset and an equal bottom gap) and scrolls its own content — so a sidebar with more items than fit on screen stays fully reachable instead of running off below the fold. Scroll the page: the sidebar pins, and once it hits the bottom its own scrollbar takes over (overscroll-behavior:contain keeps the page from scroll-chaining). Pair with a non-none top for breathing room."
+        code={`<Split side="end" asideWidth="240px" align="stretch"
+  aside={
+    <Sticky top="lg" scroll>
+      <Stack gap="md">{manyCards}</Stack>
+    </Sticky>
+  }>
+  <Stack gap="md">…long main column…</Stack>
+</Split>`}
+      >
+        <Split
+          side="end"
+          asideWidth="240px"
+          gap="lg"
+          align="stretch"
+          aside={
+            <Sticky top="lg" scroll>
+              <Stack gap="md">
+                {SIDEBAR_ITEMS.map((n) => (
+                  <Card key={n}>
+                    <Stack gap="xs">
+                      <Title order={4} size="sm">
+                        Linked record {n}
+                      </Title>
+                      <Text size="sm" tone="muted">
+                        Account · updated {n} day{n === 1 ? '' : 's'} ago
+                      </Text>
+                    </Stack>
+                  </Card>
+                ))}
+              </Stack>
+            </Sticky>
+          }
+        >
+          <Stack gap="md">
+            {MAIN_ROWS.map((n) => (
+              <Card key={n}>
+                <Text>Main column row {n}</Text>
+              </Card>
+            ))}
+          </Stack>
+        </Split>
       </Example>
     </DemoLayout>
   );
