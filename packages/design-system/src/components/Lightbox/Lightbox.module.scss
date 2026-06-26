@@ -35,6 +35,29 @@
   cursor: pointer;
 }
 
+// Download action for the current document — an <a> styled as an icon control,
+// sitting just left of the close button (overlay chrome, like .close/.chev).
+.download {
+  position: absolute;
+  top: var(--lightbox-padding);
+  right: calc(var(--lightbox-padding) + var(--lightbox-control-size) + var(--space-2));
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lightbox-control-size);
+  height: var(--lightbox-control-size);
+  border-radius: var(--radius-full);
+  background: var(--lightbox-control-bg);
+  color: var(--lightbox-control-fg);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.download:hover {
+  background: var(--lightbox-control-bg-hover);
+}
+
 .stage {
   flex: 1;
   position: relative;
@@ -73,7 +96,9 @@
 // Keyboard focus ring on the dark scrim (Rule 3a) — the chevrons/close are bare
 // <button>s, so the UA default outline is low-contrast here; use the DS ring.
 .close:focus-visible,
-.chev:focus-visible {
+.download:focus-visible,
+.chev:focus-visible,
+.thumbDoc:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--ring-accent);
 }
@@ -106,6 +131,21 @@
 // thing shown/announced (no doubled broken-image glyph + a11y dupe).
 .image[data-state='error'] {
   display: none;
+}
+
+// A document (PDF) has no intrinsic size to be `object-fit: contain`-ed like an
+// <img>, so the wrap is stretched to the stage and the iframe fills it.
+.imageWrap:has(.doc) {
+  width: 100%;
+  height: 100%;
+}
+
+.doc {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: var(--lightbox-radius);
+  background: var(--lightbox-doc-bg);
 }
 
 .stageOverlay {
@@ -167,4 +207,20 @@
 .thumbActive {
   opacity: var(--opacity-visible);
   box-shadow: 0 0 0 2px var(--lightbox-thumb-active-ring);
+}
+
+// Placeholder thumbnail for a document without its own image — centered icon on
+// a muted square, matching the thumbnail box (size/aspect/rounding come from .thumb).
+.thumbDoc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--lightbox-thumb-doc-bg);
+  color: var(--lightbox-thumb-doc-fg);
+  cursor: pointer;
 }

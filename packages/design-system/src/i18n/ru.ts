@@ -23,6 +23,8 @@ export const ru: Messages = {
     previous: 'Предыдущее изображение',
     next: 'Следующее изображение',
     close: 'Закрыть галерею',
+    download: 'Скачать',
+    previewUnavailable: 'Предпросмотр недоступен',
   },
   passwordInput: {
     show: 'Показать пароль',

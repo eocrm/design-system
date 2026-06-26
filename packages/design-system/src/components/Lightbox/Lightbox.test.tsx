@@ -132,6 +132,64 @@ describe('Lightbox', () => {
     expect(screen.getByText('Image failed to load')).toBeInTheDocument();
   });
 
+  const pdfItem = { src: 'https://f/contract.pdf', alt: 'Contract.pdf', kind: 'pdf' as const };
+
+  it('renders a PDF item in an iframe (not an img) with the alt as title', () => {
+    render(<Lightbox open onOpenChange={() => {}} items={[pdfItem]} />);
+    const frame = document.querySelector('iframe');
+    expect(frame).toBeTruthy();
+    expect(frame).toHaveAttribute('src', 'https://f/contract.pdf');
+    expect(frame).toHaveAttribute('title', 'Contract.pdf');
+  });
+
+  it('auto-detects a .pdf src as a document even without kind', () => {
+    render(
+      <Lightbox open onOpenChange={() => {}} items={[{ src: 'https://f/a.pdf', alt: 'A' }]} />,
+    );
+    expect(document.querySelector('iframe')).toBeTruthy();
+  });
+
+  it('shows a download action for a PDF item', () => {
+    render(<Lightbox open onOpenChange={() => {}} items={[pdfItem]} />);
+    const dl = screen.getByRole('link', { name: 'Download' });
+    expect(dl).toHaveAttribute('href', 'https://f/contract.pdf');
+    expect(dl).toHaveAttribute('download');
+  });
+
+  it('blocks an unsafe PDF src (no iframe, shows preview-unavailable)', () => {
+    render(
+      <Lightbox
+        open
+        onOpenChange={() => {}}
+        items={[{ src: 'javascript:alert(1)', alt: 'x', kind: 'pdf' }]}
+      />,
+    );
+    expect(document.querySelector('iframe')).toBeNull();
+    expect(screen.getByText('Preview unavailable')).toBeInTheDocument();
+  });
+
+  it('an image item still renders an img (no regression)', () => {
+    render(
+      <Lightbox open onOpenChange={() => {}} items={[{ src: 'https://f/p.png', alt: 'P' }]} />,
+    );
+    expect(document.querySelector('img')).toBeTruthy();
+    expect(document.querySelector('iframe')).toBeNull();
+  });
+
+  it('a mixed gallery navigates from image to pdf', async () => {
+    const user = userEvent.setup();
+    render(
+      <Lightbox
+        open
+        onOpenChange={() => {}}
+        items={[{ src: 'https://f/p.png', alt: 'P' }, pdfItem]}
+      />,
+    );
+    expect(document.querySelector('img')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Next image' }));
+    expect(document.querySelector('iframe')).toBeTruthy();
+  });
+
   it('restores focus to the trigger on close', async () => {
     function Harness() {
       const [open, setOpen] = useState(false);
