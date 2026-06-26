@@ -1131,3 +1131,76 @@ describe('upload', () => {
     );
   });
 });
+
+describe('attachment config', () => {
+  function up(): UploadConfig {
+    return { onUpload: vi.fn().mockResolvedValue({ url: 'http://u/p.png', mime: 'image/png' }) };
+  }
+  function seeded(): RichDoc {
+    return {
+      blocks: [
+        {
+          id: 'img',
+          type: 'attachment',
+          status: 'ready',
+          src: 'http://u/p.png',
+          mime: 'image/png',
+          name: 'p.png',
+          alt: 'Chart',
+          inlines: [],
+        },
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] },
+      ],
+    };
+  }
+  it('the gutter Configure opens the popover; an alt edit lands in value', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(seeded());
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls upload={up()} />;
+    }
+    renderEditor(<Harness />);
+    const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
+    await user.hover(fig);
+    await user.click(screen.getByRole('button', { name: 'Configure' }));
+    const alt = await screen.findByLabelText('Alt text');
+    await user.clear(alt);
+    await user.type(alt, 'Updated');
+    (alt as HTMLElement).blur();
+    await waitFor(() =>
+      expect(document.querySelector('figure[data-block-id="img"] img')).toHaveAttribute(
+        'alt',
+        'Updated',
+      ),
+    );
+  });
+  it('an alignment change lands in value (data-align on the figure)', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(seeded());
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls upload={up()} />;
+    }
+    renderEditor(<Harness />);
+    const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
+    await user.hover(fig);
+    await user.click(screen.getByRole('button', { name: 'Configure' }));
+    await user.click(await screen.findByRole('button', { name: 'Align center' }));
+    await waitFor(() =>
+      expect(document.querySelector('figure[data-block-id="img"]')).toHaveAttribute(
+        'data-align',
+        'center',
+      ),
+    );
+  });
+  it('readOnly shows no Configure', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(seeded());
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls upload={up()} readOnly />;
+    }
+    renderEditor(<Harness />);
+    const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
+    await user.hover(fig);
+    expect(screen.queryByRole('button', { name: 'Configure' })).toBeNull();
+  });
+});

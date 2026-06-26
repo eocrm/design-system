@@ -563,6 +563,7 @@
       "Image",
       "Input",
       "RichText",
+      "Slider",
       "Stack",
       "Text"
     ],
@@ -599,7 +600,8 @@
     "composes": [],
     "composedBy": [
       "ColorPicker",
-      "ImageCrop"
+      "ImageCrop",
+      "RichTextEditor"
     ]
   },
   "SocialButton": {

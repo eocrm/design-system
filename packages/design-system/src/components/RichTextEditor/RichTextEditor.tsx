@@ -53,6 +53,8 @@ import {
   insertEmptyBlockBelow,
 } from '../RichText/engine/blockUnit';
 import { RichTextBlockControls } from './RichTextBlockControls';
+import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
+import { updateAttachmentBlock, clearAttachmentFields } from '../RichText/engine/attachment';
 import type { BlockAction } from './RichTextBlockMenu';
 import { useUpload, type UploadConfig } from './useUpload';
 import {
@@ -313,6 +315,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const controlsOn = blockControls && !readOnly;
     const shellRef = useRef<HTMLDivElement | null>(null);
     const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+    const [configBlockId, setConfigBlockId] = useState<string | null>(null);
     const [blockMenuOpen, setBlockMenuOpen] = useState(false);
     // Mirror the open state into a ref so the hover listener can read it without
     // re-subscribing: while the menu is open, hovering another block must NOT move
@@ -1037,6 +1040,67 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [commit],
     );
 
+    // Attachment config popover. Config edits don't move the caret meaningfully —
+    // the popover holds focus — so each commit pins a collapsed selection on the
+    // block. Open/close toggle `configBlockId`; close returns focus to the editor.
+    const blockCaret = (id: string): Range => ({
+      anchor: { blockId: id, offset: 0 },
+      focus: { blockId: id, offset: 0 },
+    });
+    const onConfigOpen = useCallback((id: string) => setConfigBlockId(id), []);
+    const onConfigClose = useCallback(() => {
+      setConfigBlockId(null);
+      rootRef.current?.focus();
+    }, []);
+    const onConfigAlt = useCallback(
+      (id: string, alt: string) => {
+        commit(
+          {
+            doc: updateAttachmentBlock(latest.current.value, id, { alt }),
+            selection: blockCaret(id),
+          },
+          'other',
+        );
+      },
+      [commit],
+    );
+    const onConfigAlign = useCallback(
+      (id: string, align: 'left' | 'center' | 'right') => {
+        commit(
+          {
+            doc: updateAttachmentBlock(latest.current.value, id, { align }),
+            selection: blockCaret(id),
+          },
+          'other',
+        );
+      },
+      [commit],
+    );
+    const onConfigWidth = useCallback(
+      (id: string, width: number) => {
+        // store width only; clearing height lets the browser keep the aspect ratio
+        let d = updateAttachmentBlock(latest.current.value, id, { width });
+        d = clearAttachmentFields(d, id, ['height']);
+        commit({ doc: d, selection: blockCaret(id) }, 'other');
+      },
+      [commit],
+    );
+    const onConfigWidthReset = useCallback(
+      (id: string) => {
+        commit(
+          {
+            doc: clearAttachmentFields(latest.current.value, id, ['width', 'height']),
+            selection: blockCaret(id),
+          },
+          'other',
+        );
+      },
+      [commit],
+    );
+    const onConfigReplace = useCallback((id: string, file: File) => {
+      uploaderRef.current.replace(id, file);
+    }, []);
+
     // Delegate clicks on the error-state attachment Retry/Remove buttons (they
     // carry data-attachment-action + data-block-id). On the editable so it works
     // in every return branch, including the toolbar-less bare-fragment path.
@@ -1124,8 +1188,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         />
       ) : null;
 
-    const activeBlockType = activeBlockId
-      ? value.blocks.find((b) => b.id === activeBlockId)?.type
+    const activeBlock = activeBlockId
+      ? value.blocks.find((b) => b.id === activeBlockId)
+      : undefined;
+    const activeBlockType = activeBlock?.type;
+    const canConfigure =
+      uploadOn && activeBlock?.type === 'attachment' && activeBlock.status === 'ready';
+    const configBlock = configBlockId
+      ? value.blocks.find((b) => b.id === configBlockId)
       : undefined;
     const blockControlsEl = controlsOn ? (
       <RichTextBlockControls
@@ -1138,8 +1208,35 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onAction={onBlockAction}
         onTurnInto={onBlockTurnInto}
         onReorder={onBlockReorder}
+        onConfigure={canConfigure ? onConfigOpen : undefined}
       />
     ) : null;
+
+    const configEl =
+      configBlock && configBlock.type === 'attachment' && configBlock.status === 'ready' && uploadOn
+        ? (() => {
+            const figEl = rootRef.current?.querySelector<HTMLElement>(
+              `[data-block-id="${CSS.escape(configBlock.id)}"]`,
+            );
+            const r = figEl?.getBoundingClientRect();
+            if (!r) return null;
+            return (
+              <RichTextAttachmentConfig
+                key={configBlock.id}
+                block={configBlock}
+                anchorRect={{ top: r.top, left: r.left, width: r.width, height: r.height }}
+                maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
+                accept={latest.current.upload?.accept}
+                onAltChange={(alt) => onConfigAlt(configBlock.id, alt)}
+                onAlignChange={(align) => onConfigAlign(configBlock.id, align)}
+                onWidthChange={(w) => onConfigWidth(configBlock.id, w)}
+                onWidthReset={() => onConfigWidthReset(configBlock.id)}
+                onReplace={(file) => onConfigReplace(configBlock.id, file)}
+                onClose={onConfigClose}
+              />
+            );
+          })()
+        : null;
 
     if (!toolbar) {
       if (controlsOn) {
@@ -1149,6 +1246,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             {linkBubble}
             {mentionMenu}
             {blockControlsEl}
+            {configEl}
           </div>
         );
       }
@@ -1182,6 +1280,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         {linkBubble}
         {mentionMenu}
         {blockControlsEl}
+        {configEl}
       </div>
     );
   },
