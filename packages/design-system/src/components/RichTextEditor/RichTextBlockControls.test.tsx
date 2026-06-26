@@ -120,7 +120,17 @@ describe('readBlockSnapshot', () => {
     p.textContent = 'hello';
     root.appendChild(p);
     // jsdom has no layout; stub the measured width.
-    p.getBoundingClientRect = () => ({ width: 240, height: 20, top: 0, left: 0, right: 240, bottom: 20, x: 0, y: 0, toJSON: () => ({}) });
+    p.getBoundingClientRect = () => ({
+      width: 240,
+      height: 20,
+      top: 0,
+      left: 0,
+      right: 240,
+      bottom: 20,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
 
     expect(readBlockSnapshot(root, 'x1')).toEqual({
       html: '<p data-block-id="x1">hello</p>',
