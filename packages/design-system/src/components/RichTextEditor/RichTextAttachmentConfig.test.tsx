@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n';
 import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
@@ -50,6 +50,46 @@ it('renders the alt field seeded from the block and commits on blur', async () =
   await userEvent.type(input, 'New alt');
   input.blur();
   expect(p.onAltChange).toHaveBeenCalledWith('New alt');
+});
+
+it('commits alt on Enter', async () => {
+  const p = setup(imgBlock());
+  const input = screen.getByLabelText('Alt text');
+  await userEvent.clear(input);
+  await userEvent.type(input, 'Edited{Enter}');
+  expect(p.onAltChange).toHaveBeenCalledWith('Edited');
+});
+
+it('does NOT commit alt on a no-op blur (no seeded-name write)', async () => {
+  // An image with no alt seeds the field from `name`; blurring without editing
+  // must not write `name` into alt.
+  const p = setup(imgBlock({ alt: undefined, name: 'photo.png' }));
+  const input = screen.getByLabelText('Alt text') as HTMLInputElement;
+  expect(input.value).toBe('photo.png');
+  input.focus();
+  input.blur();
+  expect(p.onAltChange).not.toHaveBeenCalled();
+});
+
+it('omits Open/Download for an unsafe src', () => {
+  setup(imgBlock({ src: 'javascript:alert(1)' }));
+  expect(screen.queryByRole('link', { name: 'Open' })).toBeNull();
+  expect(screen.queryByRole('link', { name: 'Download' })).toBeNull();
+});
+
+it('a pointerdown outside the popover calls onClose', () => {
+  const p = setup(imgBlock());
+  fireEvent.pointerDown(document.body);
+  expect(p.onClose).toHaveBeenCalled();
+});
+
+it('choosing a file in Replace fires onReplace with the File', async () => {
+  const p = setup(imgBlock());
+  // the hidden input is unlabeled — grab it directly
+  const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+  const file = new File(['x'], 'new.png', { type: 'image/png' });
+  await userEvent.upload(input, file);
+  expect(p.onReplace).toHaveBeenCalledWith(file);
 });
 
 it('fires onAlignChange from the alignment buttons', async () => {

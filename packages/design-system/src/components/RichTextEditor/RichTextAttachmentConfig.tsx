@@ -70,9 +70,18 @@ export function RichTextAttachmentConfig({
   const isImage = attachmentIsImage(block);
   const popRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const [alt, setAlt] = useState(block.alt ?? block.name ?? '');
+  const seededAlt = block.alt ?? block.name ?? '';
+  const [alt, setAlt] = useState(seededAlt);
   const sliderMax = Math.max(MIN_W + 1, Math.round(maxWidth));
-  const [width, setWidth] = useState<number>(Math.min(block.width ?? sliderMax, sliderMax));
+  const [width, setWidth] = useState<number>(
+    Math.max(MIN_W, Math.min(block.width ?? sliderMax, sliderMax)),
+  );
+
+  // Commit alt only when it differs from what was shown on open, so a focus→blur
+  // with no edit doesn't write the seeded `block.name` fallback into `alt`.
+  const commitAlt = useCallback(() => {
+    if (alt !== seededAlt) onAltChange(alt);
+  }, [alt, seededAlt, onAltChange]);
 
   // Floating UI virtual element — only `getBoundingClientRect` is required.
   const virtualRef = useMemo(
@@ -114,8 +123,20 @@ export function RichTextAttachmentConfig({
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
   }, [onClose]);
 
+  // Move focus into the popover on open so the Escape handler (on the container)
+  // works without the trigger keeping focus — mirrors RichTextLinkEditor focusing
+  // its input. Prefer the first focusable control (alt input, else first button).
+  useEffect(() => {
+    const root = popRef.current;
+    if (!root) return;
+    const focusable = root.querySelector<HTMLElement>('input, button, [tabindex]');
+    focusable?.focus();
+  }, []);
+
   const href = safeHref(block.src ?? '');
   const curAlign = block.align ?? 'left';
+  // Slider is single-thumb here, so its value is a number; guard a tuple defensively.
+  const sliderNum = (v: number | [number, number]): number => (Array.isArray(v) ? v[0] : v);
 
   return createPortal(
     <div
@@ -142,11 +163,11 @@ export function RichTextAttachmentConfig({
                 value={alt}
                 aria-label={t('richTextEditor.attachmentAlt')}
                 onChange={(e) => setAlt(e.target.value)}
-                onBlur={() => onAltChange(alt)}
+                onBlur={commitAlt}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    onAltChange(alt);
+                    commitAlt();
                   }
                 }}
               />
@@ -175,10 +196,17 @@ export function RichTextAttachmentConfig({
                 max={sliderMax}
                 step={1}
                 aria-label={t('richTextEditor.attachmentWidth')}
-                onChange={(v) => setWidth(v as number)}
-                onChangeEnd={(v) => onWidthChange(v as number)}
+                onChange={(v) => setWidth(sliderNum(v))}
+                onChangeEnd={(v) => onWidthChange(sliderNum(v))}
               />
-              <Button size="sm" variant="ghost" onClick={onWidthReset}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  onWidthReset();
+                  setWidth(sliderMax); // re-seed the thumb to "natural/full"
+                }}
+              >
                 {t('richTextEditor.attachmentWidthReset')}
               </Button>
             </Cluster>
