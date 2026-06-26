@@ -63,6 +63,23 @@ function blockRects(root: HTMLElement): { top: number; height: number }[] {
 }
 
 /**
+ * Snapshot a block's rendered DOM for the drag preview: its `outerHTML` (so the
+ * floating clone shows the real content — text, marks, mention/link chips, an
+ * attachment image — with no separate render path) and its measured `width` (the
+ * `<DragOverlay>` is anchored to the tiny grip, so the overlay must be sized to the
+ * block explicitly). Returns `null` when the block element is not found. Exported so
+ * it can be unit-tested without a real drag.
+ */
+export function readBlockSnapshot(
+  root: HTMLElement | null,
+  blockId: string,
+): { html: string; width: number } | null {
+  const el = root?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(blockId)}"]`);
+  if (!el) return null;
+  return { html: el.outerHTML, width: el.getBoundingClientRect().width };
+}
+
+/**
  * Wraps the grip (the `⠿` menu trigger) in a dnd-kit draggable. Pointer-move
  * past the activation distance starts a drag; a plain click falls through to the
  * menu trigger underneath (the 4px constraint guarantees a click never becomes a
