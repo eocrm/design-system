@@ -323,6 +323,7 @@ export function RichTextBlockControls({
             className={styles.dragOverlay}
             style={{ width: dragSnapshot.width }}
             contentEditable={false}
+            aria-hidden
             // The dragged block's OWN serialized DOM (already rendered in the live
             // doc), injected into an inert, non-editable, transient overlay that is
             // removed on drop. Not external/pasted HTML; no scripts run from an

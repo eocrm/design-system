@@ -274,8 +274,9 @@ figure[data-attachment][data-align='right'] {
   color: var(--color-accent);
 }
 
-// The floating clone of the block being dragged, shown under the cursor by dnd-kit's
-// <DragOverlay> (portaled to <body>). A "lifted card": surface bg + elevation +
+// The floating clone of the block being dragged, shown under the cursor. Rendered
+// inline inside `.shell` by dnd-kit's <DragOverlay> (NOT portaled — which is why
+// `blockRects` filters the clone out of the drop geometry). A "lifted card": surface bg + elevation +
 // rounded corners + slight transparency so the block reads as picked up. Includes
 // the prose mixin because block typography is scoped to `.root`, and the clone lives
 // outside it. `pointer-events: none` keeps it from blocking the drop target under the
