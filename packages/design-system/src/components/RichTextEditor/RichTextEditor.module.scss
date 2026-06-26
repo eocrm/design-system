@@ -201,14 +201,14 @@ figure[data-attachment][data-align='right'] {
   text-align: right;
 }
 
-// <Image>'s root is `display: block`, which `text-align` can't move — make an
-// ALIGNED figure's child inline-block so the alignment takes effect. Gated on
-// `[data-align]` so it never overrides the non-image states' inline-flex layout
-// (chips/spinners never carry data-align). `max-width: 100%` keeps a wide image
-// from overflowing (Rule 4: 100% allowed).
-figure[data-attachment][data-align] > * {
+// The attachment image preview. `inline-block` lets the figure's `text-align`
+// (data-align) position it (left/center/right); `width` attr + `height: auto`
+// render the configured display size at natural aspect; `max-width: 100%` keeps a
+// wide image from overflowing (Rule 4: 100% allowed).
+.attachmentImg {
   display: inline-block;
   max-width: 100%;
+  height: auto;
 }
 
 .attachmentLoading,

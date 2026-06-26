@@ -328,8 +328,7 @@
       "Skeleton"
     ],
     "composedBy": [
-      "Lightbox",
-      "RichTextEditor"
+      "Lightbox"
     ]
   },
   "ImageCrop": {
@@ -560,7 +559,6 @@
       "CircularProgress",
       "Cluster",
       "DropdownMenu",
-      "Image",
       "Input",
       "RichText",
       "Slider",
