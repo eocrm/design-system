@@ -188,6 +188,11 @@
 
 // Image alignment within the attachment figure. `text-align` aligns the inline
 // <img> child — an allowed property (not the forbidden margin/position/flex/width).
+// These are intentionally GLOBAL (attribute selectors, not CSS-module classes):
+// `data-align` is a DOM attribute set by renderDoc, and the rules must apply in
+// BOTH the editor and the read-only `<RichText>` viewer, which render the same
+// `figure[data-attachment]` markup. Scoped only to aligned figures so the
+// (unaligned) spinner/error/chip states keep their own inline-flex layout.
 figure[data-attachment][data-align='center'] {
   text-align: center;
 }
@@ -196,10 +201,12 @@ figure[data-attachment][data-align='right'] {
   text-align: right;
 }
 
-// <Image>'s root is `display: block`, which `text-align` can't move — make the
-// figure's direct child inline-block so the alignment takes effect. `max-width:
-// 100%` keeps a wide image from overflowing the editor (Rule 4: 100% allowed).
-figure[data-attachment] > * {
+// <Image>'s root is `display: block`, which `text-align` can't move — make an
+// ALIGNED figure's child inline-block so the alignment takes effect. Gated on
+// `[data-align]` so it never overrides the non-image states' inline-flex layout
+// (chips/spinners never carry data-align). `max-width: 100%` keeps a wide image
+// from overflowing (Rule 4: 100% allowed).
+figure[data-attachment][data-align] > * {
   display: inline-block;
   max-width: 100%;
 }
