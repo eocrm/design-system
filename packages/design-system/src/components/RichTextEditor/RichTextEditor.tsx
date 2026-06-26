@@ -309,7 +309,6 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       readOnly,
       autolink,
       renderLink,
-      renderMention,
       upload,
     });
     latest.current = {
@@ -318,7 +317,6 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       readOnly,
       autolink,
       renderLink,
-      renderMention,
       upload,
     };
     // The synchronous "live" doc — kept ahead of `value` between renders by the

@@ -25,13 +25,20 @@ const renderLink: RenderLink = ({ href }, fallback) => {
 
 // A consumer-supplied mention resolver: render each @-mention as an interactive
 // member chip instead of the default non-interactive span. Composes with renderLink.
+const openMention = (id: string, label: string) => alert(`Mentioned ${label} (${id})`);
 const renderMention: RenderMention = ({ id, label }) => (
   <Badge
     tone="info"
     role="button"
     tabIndex={0}
     title={`Open ${label}'s profile`}
-    onClick={() => alert(`Mentioned ${label} (${id})`)}
+    onClick={() => openMention(id, label)}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openMention(id, label);
+      }
+    }}
   >
     @{label}
   </Badge>
@@ -165,8 +172,17 @@ setDoc(r.doc);`}
       <Example
         title="Mention substitution (renderMention)"
         description="Pass renderMention to swap how an @-mention renders — same contract as renderLink but for mention marks. Here each mention becomes an interactive member chip (click one). It composes with renderLink and is render-time only; serialization still emits the mention mark."
-        code={`const renderMention: RenderMention = ({ id, label }) => (
-  <Badge tone="blue" role="button" tabIndex={0} onClick={() => openProfile(id)}>
+        code={`// Render an @-mention as your own interactive, keyboard-accessible chip.
+const renderMention: RenderMention = ({ id, label }) => (
+  <Badge
+    tone="info"
+    role="button"
+    tabIndex={0}
+    onClick={() => openProfile(id)}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfile(id); }
+    }}
+  >
     @{label}
   </Badge>
 );

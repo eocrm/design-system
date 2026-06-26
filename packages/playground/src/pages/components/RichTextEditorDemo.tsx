@@ -30,13 +30,20 @@ const renderLink: RenderLink = ({ href }, fallback) => {
 // member chip (here a clickable Badge / popover trigger) instead of the default
 // non-interactive span. Composes with renderLink. Render-time only — the model
 // still carries the mention mark, so serialization is unchanged.
+const openMention = (id: string, label: string) => alert(`Mentioned ${label} (${id})`);
 const renderMention: RenderMention = ({ id, label }) => (
   <Badge
     tone="info"
     role="button"
     tabIndex={0}
     title={`Open ${label}'s profile`}
-    onClick={() => alert(`Mentioned ${label} (${id})`)}
+    onClick={() => openMention(id, label)}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openMention(id, label);
+      }
+    }}
   >
     @{label}
   </Badge>
@@ -168,8 +175,17 @@ const [doc, setDoc] = useState(() => fromMarkdown('# Imported\\n\\n- one\\n- two
       <Example
         title="Mentions (@-autocomplete)"
         description='Pass a mentions prop with onQuery to enable @-mentions. Type "@" then a name (e.g. "@al") to open the candidate menu; ↑/↓ to move, Enter/Tab to insert a chip, Esc to dismiss. The chip carries the id; Backspace removes the whole chip. Pass renderMention to swap the default span for an interactive member chip (click one below) — it composes with renderLink and is render-time only, so serialization keeps the mention mark.'
-        code={`const renderMention: RenderMention = ({ id, label }) => (
-  <Badge tone="blue" role="button" tabIndex={0} onClick={() => openProfile(id)}>
+        code={`// Render an @-mention as your own interactive, keyboard-accessible chip.
+const renderMention: RenderMention = ({ id, label }) => (
+  <Badge
+    tone="info"
+    role="button"
+    tabIndex={0}
+    onClick={() => openProfile(id)}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfile(id); }
+    }}
+  >
     @{label}
   </Badge>
 );
