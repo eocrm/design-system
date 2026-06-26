@@ -115,7 +115,7 @@ export function RichTextEditorDemo() {
 
       <Example
         title="Block controls"
-        description="Set blockControls for a per-block gutter on hover/focus: ＋ inserts a block below, ⠿ drags to reorder (subtree-aware for nested lists) and opens a menu (turn into / duplicate / move / delete). Keyboard: Shift+F10 opens the menu, ⌘/Ctrl+⇧↑/↓ move the block, ⌘/Ctrl+D duplicates. Works with or without the toolbar. Dragging the handle shows the whole block as a floating preview, and the controls stay reachable as you move onto them."
+        description="Set blockControls for a per-block gutter on hover/focus: ＋ inserts a block below, ⠿ drags to reorder (subtree-aware for nested lists) and opens a menu (turn into / duplicate / move / delete). Keyboard: Shift+F10 opens the menu, ⌘/Ctrl+⇧↑/↓ move the block, ⌘/Ctrl+D duplicates. Works with or without the toolbar. Grab anywhere on the gutter to drag the whole row — it lifts and the other rows slide apart to open its slot (clamped to the editor); text stays selectable."
         code={`const [doc, setDoc] = useState(fromMarkdown('…'));
 <RichTextEditor value={doc} onChange={setDoc} blockControls placeholder="Write…" />`}
       >
