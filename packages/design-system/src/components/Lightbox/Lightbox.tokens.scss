@@ -13,6 +13,11 @@
   --lightbox-thumb-strip-bg: rgb(0 0 0 / 30%);
   --lightbox-thumb-active-ring: var(--ring-accent);
 
+  // Document (PDF) preview surfaces.
+  --lightbox-doc-bg: var(--color-bg);
+  --lightbox-thumb-doc-bg: var(--color-bg-muted);
+  --lightbox-thumb-doc-fg: var(--color-fg-muted);
+
   --lightbox-padding: var(--space-4);
   --lightbox-gap: var(--space-3);
   --lightbox-control-size: var(--size-lg);

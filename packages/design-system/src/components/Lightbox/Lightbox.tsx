@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, FileText, X } from 'lucide-react';
 import { Image } from '../Image';
 import { Skeleton } from '../Skeleton';
 import { useFocusTrap } from '../_internal/overlay/useFocusTrap';
@@ -20,16 +20,36 @@ import { useOverlayStack } from '../_internal/overlay';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Lightbox.module.scss';
 
-/** One image in a `<Lightbox>`. */
+/** One item (image or document) in a `<Lightbox>`. */
 export interface LightboxItem {
-  /** Full-size image URL. */
+  /** Full-size source URL (an image, or a PDF/document when `kind: 'pdf'`). */
   src: string;
-  /** Alt text (required — describes the image, same contract as `<Image>`). */
+  /** Alt text / document name (required — the accessible stage + thumbnail name). */
   alt: string;
-  /** Optional caption shown below the stage when set. */
+  /** Item kind. Defaults to `'image'`, or `'pdf'` when `src` ends in `.pdf`. A
+   *  `pdf` item renders in an `<iframe>` (the browser's PDF viewer) with a download
+   *  action instead of an `<img>`. */
+  kind?: 'image' | 'pdf';
+  /** Optional caption shown below the stage. */
   caption?: ReactNode;
-  /** Optional thumbnail URL for the strip. Defaults to `src`. */
+  /** Optional thumbnail URL for the strip. Images default to `src`; a `pdf` item
+   *  without a thumbnail shows a document-icon placeholder. */
   thumbnail?: string;
+}
+
+const isPdfSrc = (src: string) => /\.pdf($|[?#])/i.test(src);
+const itemKind = (it: LightboxItem): 'image' | 'pdf' =>
+  it.kind ?? (isPdfSrc(it.src) ? 'pdf' : 'image');
+
+/** Allow only http(s) + relative URLs as an iframe/document src (block
+ *  javascript:/data: etc). Returns the original src when safe, else undefined. */
+function safeDocSrc(src: string): string | undefined {
+  try {
+    const u = new URL(src, 'https://_'); // dummy base resolves relative URLs
+    return u.protocol === 'http:' || u.protocol === 'https:' ? src : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export interface LightboxProps {
@@ -62,10 +82,11 @@ const PORTAL_EXEMPT =
   '[data-lightbox-portal-root], [data-modal-portal-root], [data-drawer-portal-root]';
 
 /**
- * Full-screen image gallery overlay — shows one large image at a time, cycles
- * through a set (prev/next chevrons, ← → keys, a thumbnail strip), and shows an
- * optional caption. Controlled `open` like `<Modal>`; the current index is
- * uncontrolled (`defaultIndex`) unless you pass `index` + `onIndexChange`.
+ * Full-screen image & document gallery overlay — shows one large item at a time
+ * (an image, or a PDF previewed in an `<iframe>`), cycles through a set (prev/next
+ * chevrons, ← → keys, a thumbnail strip), and shows an optional caption. Controlled
+ * `open` like `<Modal>`; the current index is uncontrolled (`defaultIndex`) unless
+ * you pass `index` + `onIndexChange`.
  *
  * The consumer owns the trigger and `open` — e.g. a row of interactive
  * `<Image>` thumbnails that set the start index and open the Lightbox.
@@ -80,9 +101,16 @@ const PORTAL_EXEMPT =
  *   items={files.map((f) => ({ src: f.url, alt: f.name, caption: f.name }))}
  * />
  *
+ * @example
+ * // Mixed gallery — images + a PDF (rendered in an iframe with a download action).
+ * <Lightbox open={open} onOpenChange={setOpen} items={[
+ *   { src: shot.url, alt: 'Screenshot' },
+ *   { src: doc.url, alt: 'Contract.pdf', kind: 'pdf' },
+ * ]} />
+ *
  * @remarks When NOT to use
  * - A single, always-visible image → `<Image>` (optionally `interactive`).
- * - A non-image modal dialog → `<Modal>`.
+ * - An arbitrary modal dialog (not an image/PDF preview) → `<Modal>`.
  *
  * @remarks Anti-patterns
  * - ❌ Building your own `Modal` + `Image` + arrows — that's what this is.
@@ -212,6 +240,11 @@ export function Lightbox({
 
   if (!open || n === 0 || !currentItem) return null;
 
+  const currentKind = itemKind(currentItem);
+  // Sanitized document URL (http(s)/relative only) for the current PDF item, or
+  // undefined when the item isn't a PDF or its src is unsafe. Computed once and
+  // reused by the download link, the stage iframe, and the unavailable fallback.
+  const docSrc = currentKind === 'pdf' ? safeDocSrc(currentItem.src) : undefined;
   const multi = n > 1;
   const atStart = current === 0;
   const atEnd = current === n - 1;
@@ -234,6 +267,22 @@ export function Lightbox({
       style={style}
       onClick={closeIfBackdrop}
     >
+      {docSrc && (
+        <a
+          className={styles.download}
+          href={docSrc}
+          download
+          // Open/save in a new tab: a cross-origin `download` is ignored by the
+          // browser, so without target the click would navigate the whole app
+          // away from the gallery. noopener/noreferrer guard the opened context.
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t('lightbox.download')}
+        >
+          <Download size={20} aria-hidden="true" />
+        </a>
+      )}
+
       <button
         type="button"
         className={styles.close}
@@ -257,26 +306,54 @@ export function Lightbox({
         )}
 
         <div className={styles.imageWrap}>
-          <img
-            key={currentItem.src}
-            src={currentItem.src}
-            alt={currentItem.alt}
-            className={styles.image}
-            data-state={stageState}
-            onLoad={() => setStageState('loaded')}
-            onError={() => setStageState('error')}
-          />
-          {stageState === 'loading' && (
-            <Skeleton variant="rectangular" className={styles.stageOverlay} />
-          )}
-          {stageState === 'error' && (
-            <div
-              className={styles.stageError}
-              role="img"
-              aria-label={currentItem.alt || t('image.loadError')}
-            >
-              {t('image.loadError')}
-            </div>
+          {currentKind === 'pdf' ? (
+            docSrc ? (
+              <iframe
+                key={docSrc}
+                src={docSrc}
+                title={currentItem.alt}
+                className={styles.doc}
+                referrerPolicy="no-referrer"
+                // Harden against a consumer-supplied URL that resolves to HTML:
+                // omit `allow-same-origin` so framed content runs in an opaque
+                // origin (can't reach the app's DOM/cookies/storage). `allow-scripts`
+                // is needed by Firefox's pdf.js viewer; `allow-downloads` keeps the
+                // in-viewer save button working.
+                sandbox="allow-scripts allow-downloads"
+              />
+            ) : (
+              <div
+                className={styles.stageError}
+                role="img"
+                aria-label={`${currentItem.alt}: ${t('lightbox.previewUnavailable')}`}
+              >
+                {t('lightbox.previewUnavailable')}
+              </div>
+            )
+          ) : (
+            <>
+              <img
+                key={currentItem.src}
+                src={currentItem.src}
+                alt={currentItem.alt}
+                className={styles.image}
+                data-state={stageState}
+                onLoad={() => setStageState('loaded')}
+                onError={() => setStageState('error')}
+              />
+              {stageState === 'loading' && (
+                <Skeleton variant="rectangular" className={styles.stageOverlay} />
+              )}
+              {stageState === 'error' && (
+                <div
+                  className={styles.stageError}
+                  role="img"
+                  aria-label={currentItem.alt || t('image.loadError')}
+                >
+                  {t('image.loadError')}
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -316,15 +393,26 @@ export function Lightbox({
               }}
               className={clsx(styles.thumb, i === current && styles.thumbActive)}
             >
-              <Image
-                src={it.thumbnail ?? it.src}
-                alt=""
-                aspectRatio={1}
-                objectFit="cover"
-                interactive
-                onClick={() => goTo(i)}
-                ariaLabel={it.alt}
-              />
+              {itemKind(it) === 'pdf' && !it.thumbnail ? (
+                <button
+                  type="button"
+                  className={styles.thumbDoc}
+                  aria-label={it.alt}
+                  onClick={() => goTo(i)}
+                >
+                  <FileText size={20} aria-hidden="true" />
+                </button>
+              ) : (
+                <Image
+                  src={it.thumbnail ?? it.src}
+                  alt=""
+                  aspectRatio={1}
+                  objectFit="cover"
+                  interactive
+                  onClick={() => goTo(i)}
+                  ariaLabel={it.alt}
+                />
+              )}
             </div>
           ))}
         </div>

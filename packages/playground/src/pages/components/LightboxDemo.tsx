@@ -34,6 +34,20 @@ const PHOTOS: LightboxItem[] = [
   },
 ];
 
+// A real-ish CRM attachment set: site photos plus a contract PDF. The PDF renders
+// in an <iframe> with a download action; it has no thumbnail, so the strip shows a
+// document-icon placeholder.
+const ATTACHMENTS: LightboxItem[] = [
+  PHOTOS[0],
+  {
+    src: 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
+    alt: 'Site-survey report.pdf',
+    kind: 'pdf',
+    caption: 'Site-survey report (PDF)',
+  },
+  PHOTOS[2],
+];
+
 function Gallery() {
   const [open, setOpen] = useState(false);
   const [start, setStart] = useState(0);
@@ -60,6 +74,22 @@ function Gallery() {
         Click a thumbnail — arrows / ← → cycle, the strip jumps, Esc closes.
       </Text>
       <Lightbox open={open} onOpenChange={setOpen} items={PHOTOS} defaultIndex={start} />
+    </Stack>
+  );
+}
+
+function MixedGallery() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Stack gap="sm">
+      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
+        Open attachments (images + PDF)
+      </Button>
+      <Text size="sm" tone="muted">
+        Navigate to the PDF — it previews in an iframe with a download action; the strip shows a
+        document-icon placeholder for it.
+      </Text>
+      <Lightbox open={open} onOpenChange={setOpen} items={ATTACHMENTS} />
     </Stack>
   );
 }
@@ -98,6 +128,19 @@ const [start, setStart] = useState(0);
 <Lightbox open={open} onOpenChange={setOpen} items={photos} defaultIndex={start} />`}
       >
         <Gallery />
+      </Example>
+
+      <Example
+        title="Mixed gallery — images + PDF"
+        description="Items can be documents too: pass kind: 'pdf' (or a .pdf src) and the stage renders an iframe with a download action instead of an img. A PDF without a thumbnail gets a document-icon placeholder in the strip. Image and PDF items mix freely in one gallery."
+        code={`const items = [
+  { src: photo.url, alt: 'Site photo' },
+  { src: report.url, alt: 'Site-survey report.pdf', kind: 'pdf', caption: 'Site-survey report (PDF)' },
+  { src: photo2.url, alt: 'Ridge access road' },
+];
+<Lightbox open={open} onOpenChange={setOpen} items={items} />`}
+      >
+        <MixedGallery />
       </Example>
 
       <Example

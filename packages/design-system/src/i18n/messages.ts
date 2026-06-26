@@ -31,6 +31,10 @@ export interface Messages {
     next: string;
     /** aria-label on the close (×) button. */
     close: string;
+    /** aria-label on the download action for a PDF/document item. */
+    download: string;
+    /** Stage message when a document's source can't be safely previewed. */
+    previewUnavailable: string;
   };
   passwordInput: {
     /** aria-label on the show-password toggle when the password is hidden. */

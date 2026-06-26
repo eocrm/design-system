@@ -22,6 +22,8 @@ export const en: Messages = {
     previous: 'Previous image',
     next: 'Next image',
     close: 'Close gallery',
+    download: 'Download',
+    previewUnavailable: 'Preview unavailable',
   },
   passwordInput: {
     show: 'Show password',
