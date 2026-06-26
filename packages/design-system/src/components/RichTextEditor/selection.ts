@@ -20,6 +20,21 @@ function blockElementFor(root: HTMLElement, node: Node): HTMLElement | null {
 }
 
 /**
+ * A void attachment block element (`<figure data-block-id>`), or null. The
+ * `data-block-id` guard is load-bearing: callers rely on it to safely read the id.
+ * In editable mode renderDoc emits `<figure>` ONLY for attachment blocks and always
+ * stamps `data-block-id`, so every `data-block-id` figure in the editor is an
+ * attachment — the tag + attribute check is sufficient.
+ */
+function figureBlock(node: Node | null | undefined): HTMLElement | null {
+  return node instanceof HTMLElement &&
+    node.tagName === 'FIGURE' &&
+    node.hasAttribute('data-block-id')
+    ? node
+    : null;
+}
+
+/**
  * Character offset within `blockEl` of the DOM position `(node, offset)`. Works
  * for both text-node boundaries (offset = char index) and element-node
  * boundaries (offset = child index, e.g. a caret at an inline-element edge,
@@ -78,8 +93,23 @@ function offsetWithinBlock(blockEl: HTMLElement, node: Node, offset: number): nu
  *   element with a `data-block-id` attribute.
  */
 export function pointFromDom(root: HTMLElement, node: Node, offset: number): Point | null {
+  // Root-level caret (between blocks): if it sits at the boundary of a void
+  // figure, resolve to that void's {id, 0}. (A void can't host an interior caret,
+  // so the browser anchors the selection on the root around it.)
+  if (node === root) {
+    const kids = root.childNodes; // root Selection offsets count ALL child nodes
+    // Prefer the figure just AFTER the caret (caret-before-next-node), else the
+    // one just before it. `kids[-1]` (offset 0) is undefined → figureBlock null.
+    const fig = figureBlock(kids[offset]) ?? figureBlock(kids[offset - 1]);
+    if (fig) return { blockId: fig.getAttribute('data-block-id')!, offset: 0 };
+  }
   const blockEl = blockElementFor(root, node);
   if (!blockEl) return null;
+  // A void figure block has no text — its only position is offset 0. (A caret on a
+  // figure descendant ascends to the figure via blockElementFor.)
+  if (blockEl.tagName === 'FIGURE') {
+    return { blockId: blockEl.getAttribute('data-block-id')!, offset: 0 };
+  }
   return {
     blockId: blockEl.getAttribute('data-block-id')!,
     offset: offsetWithinBlock(blockEl, node, offset),
@@ -97,6 +127,13 @@ export function pointFromDom(root: HTMLElement, node: Node, offset: number): Poi
 export function pointToDom(root: HTMLElement, point: Point): { node: Node; offset: number } | null {
   const blockEl = root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(point.blockId)}"]`);
   if (!blockEl) return null;
+  // Void figure: the caret can't go inside — return a position just before it in
+  // its parent (the editable root), so the browser shows an edge caret.
+  if (blockEl.tagName === 'FIGURE') {
+    const parent = blockEl.parentNode!;
+    const index = Array.prototype.indexOf.call(parent.childNodes, blockEl);
+    return { node: parent, offset: index };
+  }
   // Walk TEXT nodes and atomic `[data-rich-link]` widgets, accumulating model
   // length: text → its char length, widget → `data-len` (NOT its display text;
   // we never descend into a widget). A widget is contenteditable=false, so the

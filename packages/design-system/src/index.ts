@@ -374,6 +374,7 @@ export type {
 export { RichTextEditor } from './components/RichTextEditor';
 export type { RichTextEditorProps } from './components/RichTextEditor';
 export type { MentionItem, MentionsConfig } from './components/RichTextEditor';
+export type { UploadConfig, UploadResult } from './components/RichTextEditor';
 
 export { FileUpload } from './components/FileUpload';
 export type {

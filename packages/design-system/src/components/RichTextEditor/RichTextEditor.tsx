@@ -54,6 +54,7 @@ import {
 } from '../RichText/engine/blockUnit';
 import { RichTextBlockControls } from './RichTextBlockControls';
 import type { BlockAction } from './RichTextBlockMenu';
+import { useUpload, type UploadConfig } from './useUpload';
 import {
   reset as historyReset,
   record as historyRecord,
@@ -137,6 +138,16 @@ export interface RichTextEditorProps extends Omit<
    * `false`. Ignored when `readOnly`. Independent of `toolbar`.
    */
   blockControls?: boolean;
+  /**
+   * Enable file upload: a toolbar button (when `toolbar`) and clipboard-file paste.
+   * `onUpload(file)` resolves with where the file landed; images render inline as a
+   * preview, other files as a download chip. Reject `onUpload` to show a retry/remove
+   * error. `onUploadingChange` fires while any upload is in flight — wire it to your
+   * submit button's disabled state. Validation (size/type) belongs in `onUpload`
+   * (`accept` is only a native-picker hint and is bypassed by paste). Omit to
+   * disable. Ignored when `readOnly`.
+   */
+  upload?: UploadConfig;
 }
 
 function isEmptyDoc(doc: RichDoc): boolean {
@@ -233,6 +244,11 @@ interface LinkEditorOpen {
  *   `value`/`onChange` round-trip and are undoable.
  * - ❌ Expecting Backspace to delete a whole block — it edits text; use the block
  *   menu's Delete (or select the block's text and delete) to remove a block.
+ * - ❌ Persisting or submitting the doc while an upload is in flight — gate your
+ *   submit on `upload.onUploadingChange` (transient attachment blocks are skipped
+ *   by `toHtml`/`toMarkdown`, but the model still carries them until they settle).
+ * - ❌ Relying on the picker `accept` for validation — it's only a hint and paste
+ *   bypasses it; enforce size/type inside `onUpload` and reject to show an error.
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(
@@ -247,6 +263,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       mentions,
       autolink = true,
       renderLink,
+      upload,
       className,
       ...rest
     },
@@ -258,8 +275,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Selection to restore after the next model-driven re-render.
     const pendingSelectionRef = useRef<Range | null>(null);
     // Latest props for the native beforeinput listener (avoids stale closures).
-    const latest = useRef({ value, onChange, readOnly, autolink, renderLink });
-    latest.current = { value, onChange, readOnly, autolink, renderLink };
+    const latest = useRef({ value, onChange, readOnly, autolink, renderLink, upload });
+    latest.current = { value, onChange, readOnly, autolink, renderLink, upload };
+    // The synchronous "live" doc — kept ahead of `value` between renders by the
+    // commit paths, so several async upload settles in the same tick chain off each
+    // other's result instead of all reading the stale last-rendered `value` (which
+    // would make the last settle clobber the earlier ones). Re-synced to `value`
+    // each render so external replacements flow in.
+    const liveDocRef = useRef(value);
+    liveDocRef.current = value;
 
     // Link editor state.
     const [linkEditor, setLinkEditor] = useState<LinkEditorOpen | null>(null);
@@ -334,10 +358,54 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         );
         syncHistoryFlags();
         pendingSelectionRef.current = result.selection;
+        liveDocRef.current = result.doc;
         latest.current.onChange(result.doc);
       },
       [syncHistoryFlags],
     );
+
+    // Like commit, but records NO history entry — used for async upload settles so
+    // Undo never steps through an upload resolving. Preserves the caret across the
+    // model-driven re-render by re-pinning the current selection, and keeps the
+    // history's `present` snapshot in sync with the new doc (without pushing a
+    // past/future entry) so the layout effect's `value !== present.doc` external-
+    // replacement heuristic doesn't mistake a settle for a doc swap and reset undo.
+    const commitSilent = useCallback((doc: RichDoc) => {
+      if (doc === latest.current.value) return;
+      const root = rootRef.current;
+      const sel = root ? readSelection(root) : null;
+      if (sel) pendingSelectionRef.current = sel;
+      historyRef.current = {
+        ...historyRef.current,
+        present: { doc, selection: sel ?? historyRef.current.present.selection },
+      };
+      liveDocRef.current = doc;
+      latest.current.onChange(doc);
+    }, []);
+
+    const uploadOn = !!upload && !readOnly;
+    const uploader = useUpload({
+      config: upload ?? { onUpload: async () => ({ url: '' }) },
+      getValue: () => liveDocRef.current,
+      applyInsert: (doc) => {
+        const root = rootRef.current;
+        const sel = (root ? readSelection(root) : null) ?? {
+          anchor: { blockId: liveDocRef.current.blocks[0].id, offset: 0 },
+          focus: { blockId: liveDocRef.current.blocks[0].id, offset: 0 },
+        };
+        commit({ doc, selection: sel }, 'other');
+      },
+      applySettle: commitSilent,
+      getCaret: () =>
+        (rootRef.current ? readSelection(rootRef.current)?.anchor : undefined) ?? {
+          blockId: liveDocRef.current.blocks[0].id,
+          offset: 0,
+        },
+    });
+    // The paste/click handlers close over a stale `uploader`; mirror it in a ref so
+    // we read the current one without re-subscribing the native paste listener.
+    const uploaderRef = useRef(uploader);
+    uploaderRef.current = uploader;
 
     // Drop any caret-staged pending mark — the doc + caret are about to change,
     // so a mark staged at the old caret must not bleed into the next typed text.
@@ -612,6 +680,16 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (!root) return;
       const onPaste = (e: ClipboardEvent) => {
         if (latest.current.readOnly) return;
+        // File paste (images/files from the clipboard) → upload. Takes priority
+        // over HTML/URL paste. Gated on `upload` being configured.
+        if (latest.current.upload && !latest.current.readOnly) {
+          const files = Array.from(e.clipboardData?.files ?? []);
+          if (files.length > 0) {
+            e.preventDefault();
+            uploaderRef.current.uploadFiles(files);
+            return;
+          }
+        }
         const html = e.clipboardData?.getData('text/html');
         if (html && html.trim()) {
           const range = readSelection(root);
@@ -959,6 +1037,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [commit],
     );
 
+    // Delegate clicks on the error-state attachment Retry/Remove buttons (they
+    // carry data-attachment-action + data-block-id). On the editable so it works
+    // in every return branch, including the toolbar-less bare-fragment path.
+    const onEditableClick = useCallback((e: React.MouseEvent) => {
+      if (latest.current.readOnly) return; // never mutate a read-only doc
+      const el = (e.target as HTMLElement).closest?.('[data-attachment-action]');
+      if (!el) return;
+      const id = el.getAttribute('data-block-id');
+      const action = el.getAttribute('data-attachment-action');
+      if (!id) return;
+      if (action === 'retry') uploaderRef.current.retry(id);
+      else if (action === 'remove') uploaderRef.current.remove(id);
+    }, []);
+
     const editable = (
       <div
         // {...rest} FIRST so the component's own role/aria/contentEditable/handlers
@@ -995,6 +1087,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         data-placeholder={placeholder}
         spellCheck
         onKeyDown={onKeyDown}
+        onClick={onEditableClick}
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
       >
@@ -1031,10 +1124,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         />
       ) : null;
 
+    const activeBlockType = activeBlockId
+      ? value.blocks.find((b) => b.id === activeBlockId)?.type
+      : undefined;
     const blockControlsEl = controlsOn ? (
       <RichTextBlockControls
         rootRef={shellRef}
         activeBlockId={activeBlockId}
+        activeBlockType={activeBlockType}
         menuOpen={blockMenuOpen}
         onMenuOpenChange={setBlockMenuOpen}
         onInsertBelow={onBlockInsertBelow}
@@ -1078,6 +1175,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           canRedo={canRedo}
           onUndo={onUndo}
           onRedo={onRedo}
+          onUpload={uploadOn ? (files) => uploaderRef.current.uploadFiles(files) : undefined}
+          uploadAccept={upload?.accept}
         />
         {editable}
         {linkBubble}

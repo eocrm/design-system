@@ -12,7 +12,7 @@ import {
 } from './transforms';
 import { createBlock } from './model';
 import { runsText } from './inlines';
-import type { RichDoc, Range } from './model';
+import type { RichDoc, Range, Block } from './model';
 
 const p = (text: string, id: string) => createBlock('paragraph', text, { id });
 const doc = (...texts: [string, string][]): RichDoc => ({
@@ -291,5 +291,87 @@ describe('deleteRange — mention snapping', () => {
     });
     expect(out.blocks).toHaveLength(1);
     expect(runsText(out.blocks[0].inlines)).toBe('he');
+  });
+});
+
+describe('void-aware merge/split', () => {
+  const att = (id: string): Block => ({
+    id,
+    type: 'attachment',
+    name: 'f',
+    status: 'ready',
+    inlines: [],
+  });
+  it('mergeBlockBackward removes a preceding void instead of concatenating text', () => {
+    const d: RichDoc = {
+      blocks: [att('v'), { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] }],
+    };
+    const r = mergeBlockBackward(d, 'p');
+    expect(r.doc.blocks.map((b) => b.id)).toEqual(['p']);
+    expect(r.doc.blocks[0].inlines[0].text).toBe('hi');
+  });
+  it('mergeBlockBackward removes a following void (cur is void), caret to end of prev', () => {
+    const d: RichDoc = {
+      blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] }, att('v')],
+    };
+    const r = mergeBlockBackward(d, 'v');
+    expect(r.doc.blocks.map((b) => b.id)).toEqual(['p']);
+    expect(r.selection.anchor).toEqual({ blockId: 'p', offset: 2 });
+  });
+  it('splitBlock on a void is a no-op (same ref)', () => {
+    const d: RichDoc = { blocks: [att('v')] };
+    expect(splitBlock(d, { blockId: 'v', offset: 0 }).doc).toBe(d);
+  });
+  it('insertText into a void block is a no-op (never corrupts it with text)', () => {
+    const d: RichDoc = { blocks: [att('v')] };
+    const r = insertText(d, { blockId: 'v', offset: 0 }, 'Z');
+    expect(r.doc).toBe(d);
+    expect(r.doc.blocks[0].inlines).toEqual([]);
+  });
+  it('deleteRange from a void into following text yields a TEXT survivor (no attachment-with-text)', () => {
+    const d: RichDoc = {
+      blocks: [att('v'), { id: 'p', type: 'paragraph', inlines: [{ text: 'hello', marks: [] }] }],
+    };
+    // select from the image (v,0) into the middle of the paragraph (p,3)
+    const r = deleteRange(d, {
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'p', offset: 3 },
+    });
+    expect(r.doc.blocks).toHaveLength(1);
+    const survivor = r.doc.blocks[0];
+    expect(survivor.type).toBe('paragraph'); // NOT 'attachment'
+    expect(survivor.id).toBe('v'); // caret target id preserved
+    expect(survivor.inlines[0].text).toBe('lo'); // 'hello' minus first 3
+    expect(r.selection.anchor).toEqual({ blockId: 'v', offset: 0 });
+  });
+  it('deleteRange across two voids collapses to an empty paragraph', () => {
+    const d: RichDoc = { blocks: [att('v1'), att('v2')] };
+    const r = deleteRange(d, {
+      anchor: { blockId: 'v1', offset: 0 },
+      focus: { blockId: 'v2', offset: 0 },
+    });
+    expect(r.doc.blocks).toHaveLength(1);
+    expect(r.doc.blocks[0].type).toBe('paragraph');
+  });
+  it('setBlockType on a void is a no-op (never strips the attachment)', () => {
+    const d: RichDoc = { blocks: [att('v')] };
+    const r = setBlockType(d, 'v', { type: 'heading', level: 1 });
+    expect(r.doc).toBe(d);
+    expect(r.doc.blocks[0].type).toBe('attachment');
+  });
+  it('insertFragment with the caret on a void splices AFTER it (no attachment-with-text)', () => {
+    const d: RichDoc = { blocks: [att('v')] };
+    const frag: RichDoc = { blocks: [createBlock('paragraph', 'HELLO', { id: 'f' })] };
+    const r = insertFragment(d, { anchor: at('v', 0), focus: at('v', 0) }, frag);
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['attachment', 'paragraph']);
+    // the void is untouched; the pasted text is its own sibling block
+    expect(r.doc.blocks[0].inlines).toEqual([]);
+    expect(runsText(r.doc.blocks[1].inlines)).toBe('HELLO');
+  });
+  it('insertMention on a void is a no-op', () => {
+    const d: RichDoc = { blocks: [att('v')] };
+    const r = insertMention(d, 'v', { from: 0, to: 0 }, '@', { id: 'u', label: 'A' });
+    expect(r.doc).toBe(d);
+    expect(r.doc.blocks[0].inlines).toEqual([]);
   });
 });

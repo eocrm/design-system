@@ -235,7 +235,13 @@ function emitBlock(el: HTMLElement, out: Block[], listDepth: number): void {
   if (tag === 'BLOCKQUOTE') {
     const inner: Block[] = [];
     collectBlocks(el, inner, listDepth);
-    for (const b of inner) out.push({ id: nextId(), type: 'blockquote', inlines: b.inlines });
+    // Hoist void blocks (e.g. an inner <img> → attachment) out as their own blocks
+    // rather than coercing them to a text-less `{type:'blockquote', inlines:[]}`,
+    // which would violate the "every text block holds ≥1 run" invariant.
+    for (const b of inner) {
+      if (b.type === 'attachment') out.push(b);
+      else out.push({ id: nextId(), type: 'blockquote', inlines: b.inlines });
+    }
     return;
   }
   if (tag === 'UL' || tag === 'OL') {
@@ -270,6 +276,29 @@ function collectBlocks(parent: Node, out: Block[], listDepth: number): void {
       continue;
     }
     if (!isElement(child)) continue;
+    // A block-level <img> (or a <figure> wrapping one) becomes a ready image
+    // attachment. Must run before DROP_TAGS, which drops IMG/FIGURE outright.
+    if (child.tagName === 'IMG' || (child.tagName === 'FIGURE' && child.querySelector('img'))) {
+      flush();
+      const img = (
+        child.tagName === 'IMG' ? child : child.querySelector('img')!
+      ) as HTMLImageElement;
+      const src = safeHref(img.getAttribute('src') ?? '');
+      if (src) {
+        const altAttr = img.getAttribute('alt') ?? '';
+        out.push({
+          id: nextId(),
+          type: 'attachment',
+          inlines: [],
+          status: 'ready',
+          src,
+          mime: 'image/*',
+          alt: altAttr,
+          name: altAttr,
+        });
+      }
+      continue;
+    }
     if (DROP_TAGS.has(child.tagName)) continue;
     if (BLOCK_TAGS.has(child.tagName)) {
       flush();

@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import { useRef, type ReactElement } from 'react';
 import type { BlockType, MarkType } from '../RichText/engine/model';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
@@ -13,6 +13,7 @@ import {
   LinkIcon,
   UndoIcon,
   RedoIcon,
+  AttachFileIcon,
 } from './icons';
 import styles from './RichTextEditor.module.scss';
 
@@ -44,6 +45,10 @@ export interface RichTextToolbarProps {
   onUndo: () => void;
   /** Redo the last undone change. */
   onRedo: () => void;
+  /** When set, renders an upload button that opens a file picker. */
+  onUpload?: (files: File[]) => void;
+  /** Native file-picker `accept` filter. */
+  uploadAccept?: string;
 }
 
 const MARKS: {
@@ -86,8 +91,11 @@ export function RichTextToolbar({
   canRedo = false,
   onUndo,
   onRedo,
+  onUpload,
+  uploadAccept,
 }: RichTextToolbarProps) {
   const t = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const blockLabel = (() => {
     if (!block) return t('richTextEditor.mixed');
@@ -231,6 +239,35 @@ export function RichTextToolbar({
       >
         <OrderedListIcon />
       </Button>
+
+      {onUpload && (
+        <>
+          <span className={styles.toolbarSep} aria-hidden="true" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={uploadAccept}
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const files = Array.from(e.target.files ?? []);
+              if (files.length) onUpload(files);
+              e.target.value = ''; // allow re-picking the same file
+            }}
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            iconOnly
+            aria-label={t('richTextEditor.upload')}
+            disabled={disabled}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <AttachFileIcon />
+          </Button>
+        </>
+      )}
     </div>
   );
 }

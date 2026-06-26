@@ -6,6 +6,7 @@ import { RichTextEditor } from './RichTextEditor';
 import { docFromText, emptyDoc } from '../RichText/engine/model';
 import { I18nProvider } from '../../i18n';
 import type { RichDoc, Range } from '../RichText/engine/model';
+import type { UploadConfig } from './useUpload';
 
 // ESM exports are read-only live bindings, so `vi.spyOn(selection, …)` can't
 // replace `readSelection` under Vite. Mock the module with a factory that keeps
@@ -984,5 +985,149 @@ describe('blockControls', () => {
     await user.click(screen.getByRole('button', { name: 'Block actions' }));
     await user.click(await screen.findByRole('menuitem', { name: /duplicate/i }));
     expect(document.querySelectorAll('[data-block-id]').length).toBe(before + 1);
+  });
+});
+
+describe('upload', () => {
+  function up(over: Partial<UploadConfig> = {}): UploadConfig {
+    return {
+      onUpload: vi.fn().mockResolvedValue({ url: 'http://u/p.png', mime: 'image/png' }),
+      ...over,
+    };
+  }
+  function firstBlockId() {
+    return document.querySelector('[data-block-id]')!.getAttribute('data-block-id')!;
+  }
+  // jsdom's DataTransfer/file support is limited — assign a minimal clipboardData
+  // shim directly on the event (files + a no-op getData so the HTML/URL paste
+  // branches see no text and fall through to the file branch).
+  function pasteFile(box: HTMLElement, file: File) {
+    const ev = new Event('paste', { bubbles: true, cancelable: true }) as unknown as ClipboardEvent;
+    Object.defineProperty(ev, 'clipboardData', {
+      value: { files: [file], getData: () => '' },
+    });
+    box.dispatchEvent(ev);
+  }
+
+  it('pasting a file inserts an attachment and calls onUpload', async () => {
+    const cfg = up();
+    function Harness() {
+      const [doc, setDoc] = useState(docFromText('hi'));
+      return <RichTextEditor value={doc} onChange={setDoc} upload={cfg} />;
+    }
+    renderEditor(<Harness />);
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: firstBlockId(), offset: 0 },
+      focus: { blockId: firstBlockId(), offset: 0 },
+    });
+    const box = screen.getByRole('textbox');
+    pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
+    await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(document.querySelector('figure[data-block-id]')).toBeTruthy());
+  });
+
+  it('no upload config → file paste is ignored (no attachment)', () => {
+    function Harness() {
+      const [doc, setDoc] = useState(docFromText('hi'));
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox');
+    pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
+    expect(document.querySelector('figure[data-block-id]')).toBeNull();
+  });
+
+  it('toolbar shows an upload button only when upload is set', () => {
+    function Harness({ withUpload }: { withUpload: boolean }) {
+      const [doc, setDoc] = useState(docFromText('hi'));
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={setDoc}
+          toolbar
+          upload={withUpload ? up() : undefined}
+        />
+      );
+    }
+    const { rerender } = renderEditor(<Harness withUpload={false} />);
+    expect(screen.queryByRole('button', { name: 'Add file' })).toBeNull();
+    rerender(
+      <I18nProvider locale="en">
+        <Harness withUpload />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button', { name: 'Add file' })).toBeInTheDocument();
+  });
+
+  it('readOnly suppresses file-paste upload', () => {
+    const cfg = up();
+    function Harness() {
+      const [doc, setDoc] = useState(docFromText('hi'));
+      return <RichTextEditor value={doc} onChange={setDoc} upload={cfg} readOnly />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox');
+    pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
+    expect(cfg.onUpload).not.toHaveBeenCalled();
+  });
+
+  it('an upload settle does NOT wipe the undo stack (history preserved)', async () => {
+    const cfg = up();
+    function Harness() {
+      const [doc, setDoc] = useState(docFromText('hi'));
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar upload={cfg} />;
+    }
+    renderEditor(<Harness />);
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: firstBlockId(), offset: 0 },
+      focus: { blockId: firstBlockId(), offset: 0 },
+    });
+    const box = screen.getByRole('textbox');
+    box.focus();
+    pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
+    // wait for the upload to settle (spinner → ready image)
+    await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(document.querySelector('figure[data-block-id]')).toBeTruthy());
+    // The paste was one undo step; the settle must NOT have reset history.
+    const undoBtn = screen.getByRole('button', { name: 'Undo' });
+    expect(undoBtn).toBeEnabled();
+    await userEvent.click(undoBtn);
+    // Undo removes the attachment, returning to the pre-paste doc.
+    expect(document.querySelector('figure[data-block-id]')).toBeNull();
+  });
+
+  it('concurrent multi-file settles both reach ready (no clobber)', async () => {
+    const cfg = up({
+      onUpload: vi.fn((f: File) =>
+        Promise.resolve({ url: `http://u/${f.name}`, mime: 'image/png' }),
+      ),
+    });
+    function Harness() {
+      const [doc, setDoc] = useState(docFromText('hi'));
+      return <RichTextEditor value={doc} onChange={setDoc} upload={cfg} />;
+    }
+    renderEditor(<Harness />);
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: firstBlockId(), offset: 0 },
+      focus: { blockId: firstBlockId(), offset: 0 },
+    });
+    const box = screen.getByRole('textbox');
+    // Paste two files in one batch (Promise.resolve → both settle in one tick).
+    const ev = new Event('paste', { bubbles: true, cancelable: true }) as unknown as ClipboardEvent;
+    Object.defineProperty(ev, 'clipboardData', {
+      value: {
+        files: [
+          new File(['a'], 'a.png', { type: 'image/png' }),
+          new File(['b'], 'b.png', { type: 'image/png' }),
+        ],
+        getData: () => '',
+      },
+    });
+    box.dispatchEvent(ev);
+    await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(2));
+    // Both images must end up rendered (neither settle clobbered the other).
+    await waitFor(() =>
+      expect(document.querySelectorAll('figure[data-block-id] img')).toHaveLength(2),
+    );
   });
 });

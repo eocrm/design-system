@@ -5,6 +5,7 @@ import { createBlock, nextId } from './model';
 import { normalizeInlines, sliceInlines, mapMarksOverRange, runsLength } from './inlines';
 import { withMark, withoutMark, hasMark } from './marks';
 import { blockLength, findBlockIndex, orderedRange, isCollapsed } from './position';
+import { isVoidBlock } from './attachment';
 
 function collapsed(point: Point): Range {
   return { anchor: point, focus: point };
@@ -70,6 +71,9 @@ export function insertText(
   const idx = findBlockIndex(doc, point.blockId);
   if (idx === -1) return { doc, selection: collapsed(point) };
   const block = doc.blocks[idx];
+  // A void block (e.g. an attachment) holds no editable text — never splice the
+  // typed text into it (that would corrupt the block). No-op.
+  if (isVoidBlock(block)) return { doc, selection: collapsed(point) };
   const inlines = normalizeInlines([
     ...sliceInlines(block.inlines, 0, point.offset),
     { text, marks: marksBefore(block, point.offset) },
@@ -104,15 +108,30 @@ export function deleteRange(doc: RichDoc, range: Range): { doc: RichDoc; selecti
   end = { ...end, offset: snapEndOffset(doc.blocks[ei], end.offset) };
   const startBlock = doc.blocks[si];
   const endBlock = doc.blocks[ei];
+  const startVoid = isVoidBlock(startBlock);
+  const endVoid = isVoidBlock(endBlock);
+  // A void block contributes no text to the merge. Crucially, the survivor must be
+  // a TEXT block — never `{...void, inlines: text}` (a model-illegal "attachment
+  // with text" that also drops the text from render/serialize). When the start is
+  // void, base the survivor on the end block (if it's text) else a fresh paragraph,
+  // but keep the start block's id so the caret target stays valid.
   const inlines = normalizeInlines([
-    ...sliceInlines(startBlock.inlines, 0, start.offset),
-    ...sliceInlines(endBlock.inlines, end.offset, blockLength(endBlock)),
+    ...(startVoid ? [] : sliceInlines(startBlock.inlines, 0, start.offset)),
+    ...(endVoid ? [] : sliceInlines(endBlock.inlines, end.offset, blockLength(endBlock))),
   ]);
+  let survivor: Block;
+  if (!startVoid) {
+    survivor = { ...startBlock, inlines };
+  } else if (!endVoid) {
+    survivor = { ...endBlock, id: startBlock.id, inlines };
+  } else {
+    survivor = { ...createBlock('paragraph', '', { id: startBlock.id }), inlines };
+  }
   const blocks = doc.blocks.slice();
-  blocks.splice(si, ei - si + 1, { ...startBlock, inlines });
+  blocks.splice(si, ei - si + 1, survivor);
   return {
     doc: { blocks },
-    selection: collapsed({ blockId: startBlock.id, offset: start.offset }),
+    selection: collapsed({ blockId: startBlock.id, offset: startVoid ? 0 : start.offset }),
   };
 }
 
@@ -125,6 +144,7 @@ export function splitBlock(doc: RichDoc, point: Point): { doc: RichDoc; selectio
   const idx = findBlockIndex(doc, point.blockId);
   if (idx === -1) return { doc, selection: collapsed(point) };
   const block = doc.blocks[idx];
+  if (isVoidBlock(block)) return { doc, selection: collapsed(point) }; // can't split a void
   const left: Block = {
     ...block,
     inlines: normalizeInlines(sliceInlines(block.inlines, 0, point.offset)),
@@ -154,6 +174,19 @@ export function mergeBlockBackward(
   if (idx <= 0) return { doc, selection: collapsed({ blockId, offset: 0 }) };
   const prev = doc.blocks[idx - 1];
   const cur = doc.blocks[idx];
+  if (isVoidBlock(prev)) {
+    const blocks = doc.blocks.slice();
+    blocks.splice(idx - 1, 1); // drop the preceding void; `cur` shifts up
+    return { doc: { blocks }, selection: collapsed({ blockId: cur.id, offset: 0 }) };
+  }
+  if (isVoidBlock(cur)) {
+    const blocks = doc.blocks.slice();
+    blocks.splice(idx, 1); // drop the void; caret to end of prev
+    return {
+      doc: { blocks },
+      selection: collapsed({ blockId: prev.id, offset: blockLength(prev) }),
+    };
+  }
   const joinOffset = blockLength(prev);
   const inlines = normalizeInlines([...prev.inlines, ...cur.inlines]);
   const blocks = doc.blocks.slice();
@@ -250,7 +283,9 @@ export function toggleMark(
  * Pure/immutable. Patch the `type`, `level`, and/or `depth` of the block
  * identified by `blockId`. Cleans up irrelevant fields (`level` for non-headings,
  * `depth` for non-list blocks). Returns `{ doc, selection }` with the caret at
- * offset 0 of the block. No-op (returns input) when `blockId` is not found.
+ * offset 0 of the block. No-op (returns input) when `blockId` is not found, or
+ * when the target is a void block (an attachment can't become a heading/list —
+ * converting it would strip the figure rendering and silently lose the file).
  */
 export function setBlockType(
   doc: RichDoc,
@@ -259,6 +294,7 @@ export function setBlockType(
 ): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed({ blockId, offset: 0 }) };
+  if (isVoidBlock(doc.blocks[idx])) return { doc, selection: collapsed({ blockId, offset: 0 }) };
   const next: Block = { ...doc.blocks[idx], ...patch };
   if (next.type !== 'heading') delete next.level;
   if (next.type !== 'bullet_item' && next.type !== 'ordered_item') delete next.depth;
@@ -287,6 +323,19 @@ export function insertFragment(
   const idx = findBlockIndex(base.doc, caret.blockId);
   if (idx === -1) return { doc: base.doc, selection: collapsed(caret) };
   const B = base.doc.blocks[idx];
+  // Caret resting on a void block (e.g. paste while the caret sits on an
+  // attachment): never merge the fragment's text INTO the void — splice the
+  // fragment's blocks (fresh ids) immediately after it, caret at the last block.
+  if (isVoidBlock(B)) {
+    const inserted = frag.map((b) => ({ ...b, id: nextId() }));
+    const blocks = base.doc.blocks.slice();
+    blocks.splice(idx + 1, 0, ...inserted);
+    const lastInserted = inserted[inserted.length - 1];
+    return {
+      doc: { blocks },
+      selection: collapsed({ blockId: lastInserted.id, offset: blockLength(lastInserted) }),
+    };
+  }
   const left = sliceInlines(B.inlines, 0, caret.offset);
   const right = sliceInlines(B.inlines, caret.offset, blockLength(B));
 
@@ -332,6 +381,10 @@ export function insertMention(
 ): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed({ blockId, offset: range.from }) };
+  // Defense-in-depth: a void block holds no text to replace (no UI path forms a
+  // mention inside one, but keep the engine uniformly void-safe).
+  if (isVoidBlock(doc.blocks[idx]))
+    return { doc, selection: collapsed({ blockId, offset: range.from }) };
   // Defensive clamp: tolerate an inverted range (from > to). No-op for valid input.
   const from = Math.min(range.from, range.to);
   const to = Math.max(range.from, range.to);

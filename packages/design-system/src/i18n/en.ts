@@ -218,5 +218,10 @@ export const en: Messages = {
     blockMoveUp: 'Move up',
     blockMoveDown: 'Move down',
     blockDelete: 'Delete',
+    upload: 'Add file',
+    uploadingFile: 'Uploading…',
+    uploadFailed: 'Upload failed',
+    uploadRetry: 'Retry',
+    uploadRemove: 'Remove',
   },
 };

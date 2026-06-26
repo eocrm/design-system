@@ -8,6 +8,7 @@ import { runsText } from './inlines';
 import { escapeHtml, escapeAttr } from './escape';
 import { safeHref } from './safeHref';
 import { isListItem, effectiveDepths } from './listDepths';
+import { attachmentIsImage } from './attachment';
 
 // Outer → inner; link outermost, code innermost (matches renderDoc).
 const MARK_ORDER: MarkType[] = ['mention', 'link', 'bold', 'italic', 'underline', 'strike', 'code'];
@@ -88,6 +89,18 @@ function blockHtml(block: Block): string {
       return `<blockquote>${inlines(block)}</blockquote>`;
     case 'code_block':
       return `<pre><code>${escapeHtml(runsText(block.inlines))}</code></pre>`;
+    case 'attachment': {
+      // Only finalized (ready/absent-status) attachments serialize; in-flight or
+      // failed uploads emit nothing.
+      if (block.status && block.status !== 'ready') return '';
+      const safe = safeHref(block.src ?? '');
+      if (safe === undefined) return '';
+      if (attachmentIsImage(block)) {
+        const alt = escapeAttr(block.alt ?? block.name ?? '');
+        return `<figure><img src="${escapeAttr(safe)}" alt="${alt}"></figure>`;
+      }
+      return `<a href="${escapeAttr(safe)}" download>${escapeHtml(block.name ?? safe)}</a>`;
+    }
     case 'paragraph':
     default:
       return `<p>${inlines(block)}</p>`;

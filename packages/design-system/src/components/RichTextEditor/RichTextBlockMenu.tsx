@@ -6,6 +6,7 @@ import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
 import { useTranslation } from '../../i18n';
 import type { BlockChoice } from './RichTextToolbar';
+import type { BlockType } from '../RichText/engine/model';
 import { GripIcon } from './icons';
 import styles from './RichTextEditor.module.scss';
 
@@ -20,15 +21,19 @@ export interface RichTextBlockMenuProps {
   onAction: (action: BlockAction) => void;
   /** Fired for a "Turn into" choice. */
   onTurnInto: (choice: BlockChoice) => void;
+  /** Type of the block the menu targets. "Turn into" is hidden for `attachment`
+   *  (a void block — converting an image to a heading is nonsense). */
+  blockType?: BlockType;
 }
 
 /**
  * Internal: the `⠿` block-actions handle and its menu. The handle is the
  * DropdownMenu trigger and is `tabIndex={-1}` (not a tab stop — keyboard users
- * open it via Shift+F10 in the editor). "Turn into" reuses the block-type labels.
+ * open it via Shift+F10 in the editor). "Turn into" reuses the block-type labels
+ * and is omitted for void attachment blocks.
  */
 export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenuProps>(
-  function RichTextBlockMenu({ open, onOpenChange, onAction, onTurnInto }, ref) {
+  function RichTextBlockMenu({ open, onOpenChange, onAction, onTurnInto, blockType }, ref) {
     const t = useTranslation();
     return (
       <DropdownMenu open={open} onOpenChange={onOpenChange}>
@@ -47,35 +52,37 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
           </Button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content side="bottom" align="start">
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger>{t('richTextEditor.blockTurnInto')}</DropdownMenu.SubTrigger>
-            <DropdownMenu.SubContent>
-              <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'paragraph' })}>
-                {t('richTextEditor.paragraph')}
-              </DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'heading', level: 1 })}>
-                {t('richTextEditor.heading1')}
-              </DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'heading', level: 2 })}>
-                {t('richTextEditor.heading2')}
-              </DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'heading', level: 3 })}>
-                {t('richTextEditor.heading3')}
-              </DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'bullet_item' })}>
-                {t('richTextEditor.bulletList')}
-              </DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'ordered_item' })}>
-                {t('richTextEditor.orderedList')}
-              </DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'blockquote' })}>
-                {t('richTextEditor.blockquote')}
-              </DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'code_block' })}>
-                {t('richTextEditor.codeBlock')}
-              </DropdownMenu.Item>
-            </DropdownMenu.SubContent>
-          </DropdownMenu.Sub>
+          {blockType !== 'attachment' && (
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger>{t('richTextEditor.blockTurnInto')}</DropdownMenu.SubTrigger>
+              <DropdownMenu.SubContent>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'paragraph' })}>
+                  {t('richTextEditor.paragraph')}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'heading', level: 1 })}>
+                  {t('richTextEditor.heading1')}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'heading', level: 2 })}>
+                  {t('richTextEditor.heading2')}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'heading', level: 3 })}>
+                  {t('richTextEditor.heading3')}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'bullet_item' })}>
+                  {t('richTextEditor.bulletList')}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'ordered_item' })}>
+                  {t('richTextEditor.orderedList')}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'blockquote' })}>
+                  {t('richTextEditor.blockquote')}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'code_block' })}>
+                  {t('richTextEditor.codeBlock')}
+                </DropdownMenu.Item>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Sub>
+          )}
           <DropdownMenu.Separator />
           <DropdownMenu.Item shortcut="⌘D" onSelect={() => onAction('duplicate')}>
             {t('richTextEditor.blockDuplicate')}
