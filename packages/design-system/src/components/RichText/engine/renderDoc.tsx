@@ -161,7 +161,13 @@ function renderBlock(block: Block, opts: ResolvedOptions): ReactNode {
       );
     case 'attachment':
       return (
-        <figure key={block.id} {...anchor} contentEditable={false} data-attachment="">
+        <figure
+          key={block.id}
+          {...anchor}
+          contentEditable={false}
+          data-attachment=""
+          data-align={block.align || undefined}
+        >
           <RichTextAttachment block={block} />
         </figure>
       );
