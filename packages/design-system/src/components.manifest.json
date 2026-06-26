@@ -328,8 +328,7 @@
       "Skeleton"
     ],
     "composedBy": [
-      "Lightbox",
-      "RichTextEditor"
+      "Lightbox"
     ]
   },
   "ImageCrop": {
@@ -560,9 +559,9 @@
       "CircularProgress",
       "Cluster",
       "DropdownMenu",
-      "Image",
       "Input",
       "RichText",
+      "Slider",
       "Stack",
       "Text"
     ],
@@ -599,7 +598,8 @@
     "composes": [],
     "composedBy": [
       "ColorPicker",
-      "ImageCrop"
+      "ImageCrop",
+      "RichTextEditor"
     ]
   },
   "SocialButton": {

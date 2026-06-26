@@ -1,6 +1,11 @@
 import { createBlock } from './model';
 import type { Block, RichDoc } from './model';
-import { insertAttachmentBlock, updateAttachmentBlock, isVoidBlock } from './attachment';
+import {
+  insertAttachmentBlock,
+  updateAttachmentBlock,
+  isVoidBlock,
+  clearAttachmentFields,
+} from './attachment';
 
 const p = (id: string, text = '') => createBlock('paragraph', text, { id });
 const doc = (blocks: Block[]): RichDoc => ({ blocks });
@@ -100,5 +105,45 @@ describe('updateAttachmentBlock', () => {
   it('no-op (same ref) when the id is not an attachment block', () => {
     const d = doc([p('a')]);
     expect(updateAttachmentBlock(d, 'a', { status: 'ready' })).toBe(d);
+  });
+});
+
+describe('align + clearAttachmentFields', () => {
+  it('updateAttachmentBlock patches align', () => {
+    const d: RichDoc = {
+      blocks: [{ id: 'v', type: 'attachment', status: 'ready', src: 'x', inlines: [] }],
+    };
+    const r = updateAttachmentBlock(d, 'v', { align: 'center' });
+    expect(r.blocks[0].align).toBe('center');
+  });
+  it('clearAttachmentFields removes width/height', () => {
+    const d: RichDoc = {
+      blocks: [
+        {
+          id: 'v',
+          type: 'attachment',
+          status: 'ready',
+          src: 'x',
+          width: 300,
+          height: 200,
+          inlines: [],
+        },
+      ],
+    };
+    const r = clearAttachmentFields(d, 'v', ['width', 'height']);
+    expect(r.blocks[0]).not.toHaveProperty('width');
+    expect(r.blocks[0]).not.toHaveProperty('height');
+  });
+  it('clearAttachmentFields is a same-ref no-op when none of the keys are present', () => {
+    const d: RichDoc = {
+      blocks: [{ id: 'v', type: 'attachment', status: 'ready', src: 'x', inlines: [] }],
+    };
+    expect(clearAttachmentFields(d, 'v', ['width', 'height'])).toBe(d);
+  });
+  it('clearAttachmentFields no-op for a non-attachment id', () => {
+    const d: RichDoc = {
+      blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'x', marks: [] }] }],
+    };
+    expect(clearAttachmentFields(d, 'p', ['width'])).toBe(d);
   });
 });

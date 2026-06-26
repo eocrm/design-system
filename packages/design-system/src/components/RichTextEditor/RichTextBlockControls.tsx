@@ -16,7 +16,7 @@ import { useTranslation } from '../../i18n';
 import { RichTextBlockMenu, type BlockAction } from './RichTextBlockMenu';
 import type { BlockChoice } from './RichTextToolbar';
 import type { BlockType } from '../RichText/engine/model';
-import { PlusIcon } from './icons';
+import { GearIcon, PlusIcon } from './icons';
 import { gapIndexFromY } from './blockDrop';
 import styles from './RichTextEditor.module.scss';
 
@@ -33,6 +33,13 @@ export interface RichTextBlockControlsProps {
   onInsertBelow: (blockId: string) => void;
   onAction: (blockId: string, action: BlockAction) => void;
   onTurnInto: (blockId: string, choice: BlockChoice) => void;
+  /**
+   * Open the block's configuration affordance (e.g. attachment settings). When
+   * set, a ⚙ Configure button appears in the gutter and a Configure item is added
+   * to the block menu; both fire with the active block id. Omit for blocks that
+   * have nothing to configure.
+   */
+  onConfigure?: (blockId: string) => void;
   /**
    * Reorder the active block to land at `targetIndex` — a "gap" (0..N) in the
    * CURRENT block array. Fired when a grip drag is dropped. Wired by the editor
@@ -96,6 +103,7 @@ export function RichTextBlockControls({
   onInsertBelow,
   onAction,
   onTurnInto,
+  onConfigure,
   onReorder,
 }: RichTextBlockControlsProps) {
   const t = useTranslation();
@@ -196,6 +204,20 @@ export function RichTextBlockControls({
         >
           <PlusIcon />
         </Button>
+        {onConfigure && (
+          <Button
+            size="sm"
+            variant="ghost"
+            iconOnly
+            tabIndex={-1}
+            aria-label={t('richTextEditor.attachmentConfigure')}
+            className={styles.gutterButton}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onConfigure(activeBlockId)}
+          >
+            <GearIcon />
+          </Button>
+        )}
         <DraggableGrip>
           <RichTextBlockMenu
             open={menuOpen}
@@ -203,6 +225,7 @@ export function RichTextBlockControls({
             onAction={(a) => onAction(activeBlockId, a)}
             onTurnInto={(c) => onTurnInto(activeBlockId, c)}
             blockType={activeBlockType}
+            onConfigure={onConfigure ? () => onConfigure(activeBlockId) : undefined}
           />
         </DraggableGrip>
       </div>

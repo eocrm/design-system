@@ -388,3 +388,27 @@ it('renders an attachment block as a contenteditable=false figure', () => {
   expect(fig).toHaveAttribute('contenteditable', 'false');
   expect(fig).toHaveAttribute('data-attachment');
 });
+
+it('stamps data-align on a centered attachment figure', () => {
+  const doc = {
+    blocks: [
+      {
+        id: 'a',
+        type: 'attachment' as const,
+        status: 'ready' as const,
+        src: 'http://u/p.png',
+        mime: 'image/png',
+        name: 'p',
+        align: 'center' as const,
+        inlines: [],
+      },
+    ],
+  };
+  const { container } = render(
+    <I18nProvider locale="en">{renderDoc(doc, { editable: true })}</I18nProvider>,
+  );
+  expect(container.querySelector('figure[data-block-id="a"]')).toHaveAttribute(
+    'data-align',
+    'center',
+  );
+});

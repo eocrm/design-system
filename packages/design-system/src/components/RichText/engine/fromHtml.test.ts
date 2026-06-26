@@ -222,4 +222,18 @@ describe('fromHtml — attachments', () => {
     // no text-less blockquote block was emitted
     expect(doc.blocks.some((b) => b.type === 'blockquote' && b.inlines.length === 0)).toBe(false);
   });
+  it('parses figure text-align + img width into align/width', () => {
+    const doc = fromHtml(
+      '<figure style="text-align:center"><img src="http://u/p.png" alt="C" width="320"></figure>',
+    );
+    const att = doc.blocks.find((b) => b.type === 'attachment')!;
+    expect(att.align).toBe('center');
+    expect(att.width).toBe(320);
+  });
+  it('ignores an unknown text-align value', () => {
+    const doc = fromHtml(
+      '<figure style="text-align:justify"><img src="http://u/p.png" alt="C"></figure>',
+    );
+    expect(doc.blocks.find((b) => b.type === 'attachment')!.align).toBeUndefined();
+  });
 });

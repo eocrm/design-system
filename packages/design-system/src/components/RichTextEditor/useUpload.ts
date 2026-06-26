@@ -5,7 +5,11 @@
 import { useCallback, useRef } from 'react';
 import type { RichDoc, Point } from '../RichText/engine/model';
 import { emptyDoc } from '../RichText/engine/model';
-import { insertAttachmentBlock, updateAttachmentBlock } from '../RichText/engine/attachment';
+import {
+  insertAttachmentBlock,
+  updateAttachmentBlock,
+  clearAttachmentFields,
+} from '../RichText/engine/attachment';
 
 /** What a consumer's upload handler must resolve with. */
 export interface UploadResult {
@@ -137,5 +141,18 @@ export function useUpload({ config, getValue, applyInsert, applySettle, getCaret
     [getValue, applySettle],
   );
 
-  return { uploadFiles, retry, remove, accept: config.accept };
+  const replace = useCallback(
+    (id: string, file: File) => {
+      filesRef.current.set(id, file);
+      // Keep align/alt; drop the old display size so the new file's natural size
+      // applies. Then run the upload (settles src/name/mime via runUpload).
+      let doc = updateAttachmentBlock(getValue(), id, { status: 'uploading' });
+      doc = clearAttachmentFields(doc, id, ['width', 'height']);
+      applySettle(doc);
+      runUpload(id, file);
+    },
+    [getValue, applySettle, runUpload],
+  );
+
+  return { uploadFiles, retry, remove, replace, accept: config.accept };
 }

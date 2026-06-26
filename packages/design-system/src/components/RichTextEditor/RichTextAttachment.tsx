@@ -3,7 +3,6 @@
 // carry data-attachment-action + data-block-id hooks the editor delegates (so the
 // pure renderDoc stays callback-free). The read-only viewer renders the same markup;
 // its action buttons simply have no editor delegate.
-import { Image } from '../Image';
 import { CircularProgress } from '../CircularProgress';
 import { useTranslation } from '../../i18n';
 import type { Block } from '../RichText/engine/model';
@@ -51,7 +50,19 @@ export function RichTextAttachment({ block }: { block: Block }) {
   // ready (or absent status on an imported doc)
   const href = safeHref(block.src ?? '');
   if (attachmentIsImage(block) && href) {
-    return <Image src={href} alt={block.alt ?? name} width={block.width} height={block.height} />;
+    // A plain <img> (not the DS <Image>, whose wrapper hard-sets width/height:100%
+    // so the rendered size is decoupled from the width attr). Here the width attr +
+    // `height: auto` give the configured display size at natural aspect, and the
+    // `inline-block` lets the figure's `text-align` (data-align) position it.
+    return (
+      <img
+        className={styles.attachmentImg}
+        src={href}
+        alt={block.alt ?? name}
+        width={block.width}
+        height={block.height}
+      />
+    );
   }
   return (
     <a className={styles.attachmentChip} href={href} download rel="noopener noreferrer">

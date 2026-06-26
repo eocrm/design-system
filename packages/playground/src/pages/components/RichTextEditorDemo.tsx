@@ -105,14 +105,15 @@ export function RichTextEditorDemo() {
 
       <Example
         title="File upload"
-        description="Provide upload={{ onUpload }} to enable a toolbar attach button and clipboard-file paste. Images render inline; other files as a download chip. Uploading shows a spinner; a rejected onUpload shows Retry/Remove. Wire onUploadingChange to your submit button. (This demo uses a mock uploader that returns a local object URL.)"
-        code={`<RichTextEditor value={doc} onChange={setDoc} toolbar
+        description="Provide upload={{ onUpload }} to enable a toolbar attach button and clipboard-file paste. Images render inline; other files as a download chip. Uploading shows a spinner; a rejected onUpload shows Retry/Remove. Wire onUploadingChange to your submit button. (This demo uses a mock uploader that returns a local object URL.) Select an uploaded image and click the ⚙ (or the block menu's Configure) to set alt text, alignment, and width, or replace the file."
+        code={`<RichTextEditor value={doc} onChange={setDoc} toolbar blockControls
   upload={{ onUpload: (file) => uploadToServer(file) }} />`}
       >
         <RichTextEditor
           value={uploadDoc}
           onChange={setUploadDoc}
           toolbar
+          blockControls
           upload={{ onUpload: mockUpload, accept: 'image/*,.pdf' }}
           placeholder="Write…"
         />

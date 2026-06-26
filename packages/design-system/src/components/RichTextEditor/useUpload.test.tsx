@@ -133,6 +133,48 @@ it('retry on an unknown id is a no-op (does not call onUpload)', () => {
   expect(onUpload).not.toHaveBeenCalled();
 });
 
+it('replace swaps a ready attachment in place, keeping align/alt', async () => {
+  const onUpload = vi
+    .fn()
+    .mockResolvedValue({ url: 'http://u/new.png', mime: 'image/png', name: 'new.png' });
+  let doc: RichDoc = {
+    blocks: [
+      {
+        id: 'v',
+        type: 'attachment',
+        status: 'ready',
+        src: 'http://u/old.png',
+        mime: 'image/png',
+        name: 'old.png',
+        alt: 'My chart',
+        align: 'center',
+        width: 500,
+        inlines: [],
+      },
+    ],
+  };
+  const getValue = () => doc;
+  const apply = (d: RichDoc) => {
+    doc = d;
+  };
+  const getCaret = () => ({ blockId: 'v', offset: 0 });
+  const { result } = renderHook(() =>
+    useUpload({ config: { onUpload }, getValue, applyInsert: apply, applySettle: apply, getCaret }),
+  );
+  act(() => {
+    result.current.replace('v', new File(['x'], 'new.png', { type: 'image/png' }));
+  });
+  // immediately: uploading + old width cleared, but align/alt preserved
+  expect(doc.blocks[0].status).toBe('uploading');
+  expect(doc.blocks[0]).not.toHaveProperty('width');
+  expect(doc.blocks[0].align).toBe('center');
+  expect(doc.blocks[0].alt).toBe('My chart');
+  await waitFor(() => expect(doc.blocks[0].status).toBe('ready'));
+  expect(doc.blocks[0].src).toBe('http://u/new.png');
+  expect(doc.blocks[0].align).toBe('center'); // preserved through the swap
+  expect(onUpload).toHaveBeenCalledTimes(1);
+});
+
 it('drops a settle whose block was already removed', async () => {
   let resolveUpload: (r: any) => void = () => {};
   const onUpload = vi.fn(

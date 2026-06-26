@@ -186,6 +186,31 @@
   margin: 0;
 }
 
+// Image alignment within the attachment figure. `text-align` aligns the inline
+// <img> child — an allowed property (not the forbidden margin/position/flex/width).
+// These are intentionally GLOBAL (attribute selectors, not CSS-module classes):
+// `data-align` is a DOM attribute set by renderDoc, and the rules must apply in
+// BOTH the editor and the read-only `<RichText>` viewer, which render the same
+// `figure[data-attachment]` markup. Scoped only to aligned figures so the
+// (unaligned) spinner/error/chip states keep their own inline-flex layout.
+figure[data-attachment][data-align='center'] {
+  text-align: center;
+}
+
+figure[data-attachment][data-align='right'] {
+  text-align: right;
+}
+
+// The attachment image preview. `inline-block` lets the figure's `text-align`
+// (data-align) position it (left/center/right); `width` attr + `height: auto`
+// render the configured display size at natural aspect; `max-width: 100%` keeps a
+// wide image from overflowing (Rule 4: 100% allowed).
+.attachmentImg {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+}
+
 .attachmentLoading,
 .attachmentError {
   display: inline-flex;
@@ -216,4 +241,34 @@
 
 .attachmentLabel {
   color: var(--color-danger);
+}
+
+// The floating attachment-config popover (RichTextAttachmentConfig). Portaled to
+// <body> and positioned by Floating UI's inline `floatingStyles` (so
+// `position`/offsets are NOT set here). Same Rule 4 note as `.linkBubble`:
+// `min-width` describes the overlay's intrinsic size, not in-flow page layout.
+.configPopover {
+  z-index: var(--z-overlay-floating);
+  min-width: var(--size-dropdown-min-width);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+}
+
+.configRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.configLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+}
+
+.configLink {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
 }
