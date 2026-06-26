@@ -1227,6 +1227,28 @@ describe('attachment config', () => {
       expect(img).not.toHaveAttribute('height'); // cleared so the browser keeps aspect
     });
   });
+  it('Replace closes the config popover (does not reappear after the swap settles)', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(seeded());
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls upload={up()} />;
+    }
+    renderEditor(<Harness />);
+    const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
+    await user.hover(fig);
+    await user.click(screen.getByRole('button', { name: 'Configure' }));
+    expect(await screen.findByLabelText('Alt text')).toBeInTheDocument();
+    const fileInput = document.querySelector(
+      'input[type="file"]:not([multiple])',
+    ) as HTMLInputElement;
+    await user.upload(fileInput, new File(['x'], 'new.png', { type: 'image/png' }));
+    // popover is gone immediately (block flipped to uploading) and stays gone after settle
+    await waitFor(() => expect(screen.queryByLabelText('Alt text')).toBeNull());
+    await waitFor(() =>
+      expect(document.querySelector('figure[data-block-id="img"] img')).toBeTruthy(),
+    );
+    expect(screen.queryByLabelText('Alt text')).toBeNull();
+  });
   it('readOnly shows no Configure', async () => {
     const user = userEvent.setup();
     function Harness() {

@@ -1106,6 +1106,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
     const onConfigReplace = useCallback((id: string, file: File) => {
       uploaderRef.current.replace(id, file);
+      // The block flips to `status: 'uploading'`, which unmounts the popover (it
+      // only shows for `ready`). Clear config state too so it doesn't spontaneously
+      // reappear when the upload settles back to `ready`.
+      setConfigBlockId(null);
     }, []);
 
     // Delegate clicks on the error-state attachment Retry/Remove buttons (they

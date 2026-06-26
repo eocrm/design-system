@@ -387,11 +387,11 @@ export interface Messages {
     attachmentAlignRight: string;
     /** Width slider label. */
     attachmentWidth: string;
-    /** Reset-width link. */
+    /** Reset-width button. */
     attachmentWidthReset: string;
     /** Replace-file button. */
     attachmentReplace: string;
-    /** Open-in-new-tab button. */
+    /** Open-in-new-tab link. */
     attachmentOpen: string;
     /** Download-file link. */
     attachmentDownload: string;
