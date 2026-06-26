@@ -43,12 +43,12 @@ export interface RichTextBlockControlsProps {
   onConfigure?: (blockId: string) => void;
   /**
    * Reorder the active block to land at `targetIndex` — a "gap" (0..N) in the
-   * CURRENT block array. Fired when a grip drag is dropped. Wired by the editor
+   * CURRENT block array. Fired when a block drag is dropped. Wired by the editor
    * to the subtree-aware `moveBlockUnitToIndex` engine transform.
    */
   onReorder: (blockId: string, targetIndex: number) => void;
   /**
-   * Reports grip-drag lifecycle so the editor can suppress hover-driven active-block
+   * Reports block-drag lifecycle so the editor can suppress hover-driven active-block
    * changes while a drag is in progress (mirrors how `menuOpen` is mirrored into a
    * ref). Called `true` on drag start, `false` on drag end/cancel.
    */
@@ -131,7 +131,12 @@ export function RichTextBlockControls({
   const [retry, setRetry] = useState(0);
   // Drag snapshot, captured once at drag start (measuring transformed DOM would feed
   // back on itself). null when not dragging.
-  const dragRef = useRef<{ rects: BlockRect[]; els: HTMLElement[]; unit: UnitRange } | null>(null);
+  const dragRef = useRef<{
+    rects: BlockRect[];
+    els: HTMLElement[];
+    unit: UnitRange;
+    parentIdx: number[];
+  } | null>(null);
   // Latest drop gap from the most recent reflow, read on drag end.
   const gapRef = useRef(0);
   // Block id captured at drag start — reorder by this, not the live activeBlockId.
@@ -179,9 +184,6 @@ export function RichTextBlockControls({
   const handleDragStart = (_event: DragStartEvent) => {
     const root = rootRef.current;
     if (!activeBlockId || !root) return;
-    draggedIdRef.current = activeBlockId;
-    onMenuOpenChange(false); // a drag should never leave the block menu open
-    onDraggingChange?.(true);
 
     const shellTop = root.getBoundingClientRect().top;
     const nodes = Array.from(root.querySelectorAll<HTMLElement>('[data-block-id]'));
@@ -205,9 +207,21 @@ export function RichTextBlockControls({
     if (idxs.length === 0) return;
     const unit: UnitRange = { u0: idxs[0], u1: idxs[idxs.length - 1] };
 
-    dragRef.current = { rects, els: nodes, unit };
+    // For each box, the index of its nearest [data-block-id] ANCESTOR (or -1). CSS
+    // transforms inherit, so a nested box's own translate is offset against its
+    // ancestor's in handleDragMove to land at exactly the desired shift.
+    const indexOf = new Map<HTMLElement, number>(nodes.map((el, i) => [el, i]));
+    const parentIdx = nodes.map((el) => {
+      const anc = el.parentElement?.closest<HTMLElement>('[data-block-id]') ?? null;
+      return anc && indexOf.has(anc) ? (indexOf.get(anc) as number) : -1;
+    });
+
+    draggedIdRef.current = activeBlockId;
+    onMenuOpenChange(false); // a drag should never leave the block menu open
+    onDraggingChange?.(true);
+    dragRef.current = { rects, els: nodes, unit, parentIdx };
     root.classList.add(styles.reflowing);
-    for (let i = unit.u0; i <= unit.u1; i += 1) nodes[i].classList.add(styles.blockLifted);
+    nodes[unit.u0].classList.add(styles.blockLifted);
   };
 
   const handleDragMove = (event: DragMoveEvent) => {
@@ -220,9 +234,12 @@ export function RichTextBlockControls({
     const pointerY = initialY + event.delta.y - root.getBoundingClientRect().top;
     const reflow = computeReflow(snap.rects, snap.unit, event.delta.y, pointerY);
     gapRef.current = reflow.gap;
+    // Transforms inherit: set each box's OWN transform to the desired shift minus its
+    // ancestor's desired shift, so inheritance composes to exactly shifts[i].
     for (let i = 0; i < snap.els.length; i += 1) {
-      const dy = reflow.shifts[i];
-      snap.els[i].style.transform = dy ? `translateY(${dy}px)` : '';
+      const pid = snap.parentIdx[i];
+      const own = reflow.shifts[i] - (pid >= 0 ? reflow.shifts[pid] : 0);
+      snap.els[i].style.transform = own ? `translateY(${own}px)` : '';
     }
   };
 

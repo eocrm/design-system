@@ -257,7 +257,7 @@ figure[data-attachment][data-align='right'] {
 // a drag; block boxes get a transient inline translateY (set by JS) and slide via
 // this transition to open the dragged row's slot. The lifted row itself follows the
 // pointer 1:1, so it opts out of the transition.
-.reflowing [data-block-id] {
+.reflowing [data-block-id]:not(.blockLifted) {
   transition: transform 160ms ease;
 }
 
