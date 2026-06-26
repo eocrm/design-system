@@ -1,15 +1,17 @@
 // RichTextBlockControls.tsx — the per-block gutter overlay. Absolutely positioned
 // inside the editor shell (position: relative), aligned to the active block's box.
 // Lives OUTSIDE the contentEditable so it is never editable content.
-import { useLayoutEffect, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   useDraggable,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragMoveEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import { Button } from '../Button';
 import { useTranslation } from '../../i18n';
@@ -46,6 +48,12 @@ export interface RichTextBlockControlsProps {
    * to the subtree-aware `moveBlockUnitToIndex` engine transform.
    */
   onReorder: (blockId: string, targetIndex: number) => void;
+  /**
+   * Reports grip-drag lifecycle so the editor can suppress hover-driven active-block
+   * changes while a drag is in progress (mirrors how `menuOpen` is mirrored into a
+   * ref). Called `true` on drag start, `false` on drag end/cancel.
+   */
+  onDraggingChange?: (dragging: boolean) => void;
 }
 
 const GUTTER_ROW_HEIGHT = 24;
@@ -56,10 +64,35 @@ const GRIP_DRAGGABLE_ID = 'rte-block-grip';
 /** Read each block box's vertical geometry, relative to the shell's top edge. */
 function blockRects(root: HTMLElement): { top: number; height: number }[] {
   const shellTop = root.getBoundingClientRect().top;
-  return Array.from(root.querySelectorAll<HTMLElement>('[data-block-id]')).map((el) => {
-    const box = el.getBoundingClientRect();
-    return { top: box.top - shellTop, height: box.height };
-  });
+  return (
+    Array.from(root.querySelectorAll<HTMLElement>('[data-block-id]'))
+      // <DragOverlay> renders INLINE (not portaled to <body>), so the floating clone —
+      // which carries data-block-id, plus nested data-block-id on each cloned <li> —
+      // lives inside this shell. Excluding anything within the overlay keeps it out of
+      // the block count so the drop gap index and indicator line stay correct.
+      .filter((el) => !el.closest(`.${styles.dragOverlay}`))
+      .map((el) => {
+        const box = el.getBoundingClientRect();
+        return { top: box.top - shellTop, height: box.height };
+      })
+  );
+}
+
+/**
+ * Snapshot a block's rendered DOM for the drag preview: its `outerHTML` (so the
+ * floating clone shows the real content — text, marks, mention/link chips, an
+ * attachment image — with no separate render path) and its measured `width` (the
+ * `<DragOverlay>` is anchored to the tiny grip, so the overlay must be sized to the
+ * block explicitly). Returns `null` when the block element is not found. Exported so
+ * it can be unit-tested without a real drag.
+ */
+export function readBlockSnapshot(
+  root: HTMLElement | null,
+  blockId: string,
+): { html: string; width: number } | null {
+  const el = root?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(blockId)}"]`);
+  if (!el) return null;
+  return { html: el.outerHTML, width: el.getBoundingClientRect().width };
 }
 
 /**
@@ -105,6 +138,7 @@ export function RichTextBlockControls({
   onTurnInto,
   onConfigure,
   onReorder,
+  onDraggingChange,
 }: RichTextBlockControlsProps) {
   const t = useTranslation();
   const [top, setTop] = useState<number | null>(null);
@@ -116,6 +150,29 @@ export function RichTextBlockControls({
   // not dragging. Drives the absolutely-positioned drop indicator line.
   const [dropGap, setDropGap] = useState<number | null>(null);
   const [dropY, setDropY] = useState<number | null>(null);
+  // DOM snapshot ({ html, width }) of the block being dragged — drives the floating
+  // <DragOverlay> clone. null when not dragging.
+  const [dragSnapshot, setDragSnapshot] = useState<{ html: string; width: number } | null>(null);
+  // The live source element we dimmed, so the dim class can be removed on drop/cancel.
+  const draggedElRef = useRef<HTMLElement | null>(null);
+  // The block id captured at drag start — reorder by this, not the live activeBlockId,
+  // so a mid-drag active-block change can't reorder the wrong block.
+  const draggedIdRef = useRef<string | null>(null);
+
+  // Latest onDraggingChange, read by the unmount cleanup without re-subscribing.
+  const onDraggingChangeRef = useRef(onDraggingChange);
+  onDraggingChangeRef.current = onDraggingChange;
+
+  // If the controls unmount mid-drag (e.g. blockControls is turned off, or the
+  // editor unmounts), dnd-kit fires neither end nor cancel — undo the source dim
+  // and report drag end so nothing leaks.
+  useEffect(() => {
+    return () => {
+      draggedElRef.current?.classList.remove(styles.blockDragging);
+      draggedElRef.current = null;
+      onDraggingChangeRef.current?.(false);
+    };
+  }, []);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -170,16 +227,43 @@ export function RichTextBlockControls({
     setDropY(line);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const drop = computeDrop(event);
-    if (drop && activeBlockId) onReorder(activeBlockId, drop.gap);
+  const handleDragStart = (_event: DragStartEvent) => {
+    if (!activeBlockId) return;
+    draggedIdRef.current = activeBlockId; // capture now; reorder by this id on drop
+    onMenuOpenChange(false); // a drag should never leave the block menu open (Notion-style)
+    onDraggingChange?.(true);
+    const snap = readBlockSnapshot(rootRef.current, activeBlockId);
+    setDragSnapshot(snap);
+    const el = rootRef.current?.querySelector<HTMLElement>(
+      `[data-block-id="${CSS.escape(activeBlockId)}"]`,
+    );
+    if (el) {
+      el.classList.add(styles.blockDragging);
+      draggedElRef.current = el;
+    }
+  };
+
+  // Shared teardown for both drop and cancel: undo the source dim, drop the snapshot,
+  // clear the drop indicator, and report drag end.
+  const endDrag = () => {
+    draggedElRef.current?.classList.remove(styles.blockDragging);
+    draggedElRef.current = null;
+    draggedIdRef.current = null;
+    setDragSnapshot(null);
     setDropGap(null);
     setDropY(null);
+    onDraggingChange?.(false);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const drop = computeDrop(event);
+    const id = draggedIdRef.current;
+    if (drop && id) onReorder(id, drop.gap);
+    endDrag();
   };
 
   const handleDragCancel = () => {
-    setDropGap(null);
-    setDropY(null);
+    endDrag();
   };
 
   if (!activeBlockId || top == null) return null;
@@ -187,6 +271,7 @@ export function RichTextBlockControls({
   return (
     <DndContext
       sensors={sensors}
+      onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
@@ -232,6 +317,21 @@ export function RichTextBlockControls({
       {dropGap != null && dropY != null ? (
         <div className={styles.dropIndicator} style={{ top: dropY }} contentEditable={false} />
       ) : null}
+      <DragOverlay>
+        {dragSnapshot ? (
+          <div
+            className={styles.dragOverlay}
+            style={{ width: dragSnapshot.width }}
+            contentEditable={false}
+            aria-hidden
+            // The dragged block's OWN serialized DOM (already rendered in the live
+            // doc), injected into an inert, non-editable, transient overlay that is
+            // removed on drop. Not external/pasted HTML; no scripts run from an
+            // innerHTML assignment. See the spec's "Snapshot safety".
+            dangerouslySetInnerHTML={{ __html: dragSnapshot.html }}
+          />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }

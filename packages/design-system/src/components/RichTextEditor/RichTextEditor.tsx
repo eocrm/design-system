@@ -354,7 +354,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     const controlsOn = blockControls && !readOnly;
     const shellRef = useRef<HTMLDivElement | null>(null);
-    const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+    // Active block = hover wins, else the caret block (keyboard / after the mouse
+    // leaves). Split so clearing hover on editor-leave never wipes the caret target.
+    const [hoverBlockId, setHoverBlockId] = useState<string | null>(null);
+    const [caretBlockId, setCaretBlockId] = useState<string | null>(null);
+    const activeBlockId = hoverBlockId ?? caretBlockId;
     const [configBlockId, setConfigBlockId] = useState<string | null>(null);
     const [blockMenuOpen, setBlockMenuOpen] = useState(false);
     // Mirror the open state into a ref so the hover listener can read it without
@@ -363,6 +367,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // a click act on the wrong block).
     const blockMenuOpenRef = useRef(false);
     blockMenuOpenRef.current = blockMenuOpen;
+    // Set by RichTextBlockControls' onDraggingChange. While a grip drag is in
+    // progress the active block must not change (it IS the block being dragged), so
+    // the hover handlers below read this ref and bail — mirroring blockMenuOpenRef.
+    const draggingRef = useRef(false);
 
     // Resolve the [data-block-id] of the block element containing a DOM node.
     const blockIdFromNode = useCallback((node: Node | null): string | null => {
@@ -803,20 +811,34 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       return () => document.removeEventListener('selectionchange', onSelChange);
     }, [toolbar, readOnly]);
 
-    // Hover tracking (mouse).
+    // Hover tracking (mouse). Listens on the SHELL (which wraps both the editable and
+    // the gutter) so reaching from a block onto its controls keeps them alive:
+    // `mouseover` over the gutter finds no `data-block-id` on the walk up (the gutter
+    // isn't inside the editable), so blockIdFromNode returns null and hoverBlockId is
+    // left unchanged — keeping the controls alive as you reach for them. `mouseleave`
+    // on the shell fires only when the pointer truly leaves the editor → clear hover.
     useEffect(() => {
       if (!controlsOn) return;
-      const root = rootRef.current;
-      if (!root) return;
+      const shell = shellRef.current;
+      if (!shell) return;
       const onOver = (e: MouseEvent) => {
-        // Don't let hover steal the active block while the menu is open — its
-        // actions are bound to the active block.
-        if (blockMenuOpenRef.current) return;
+        // Don't let hover steal the active block while the menu is open (its actions
+        // are bound to the active block) or while a drag is in progress.
+        if (blockMenuOpenRef.current || draggingRef.current) return;
         const id = blockIdFromNode(e.target as Node);
-        if (id) setActiveBlockId(id);
+        if (id) setHoverBlockId(id);
       };
-      root.addEventListener('mouseover', onOver);
-      return () => root.removeEventListener('mouseover', onOver);
+      const onLeave = () => {
+        // Keep the active block while the menu is open or a drag is mid-flight.
+        if (blockMenuOpenRef.current || draggingRef.current) return;
+        setHoverBlockId(null);
+      };
+      shell.addEventListener('mouseover', onOver);
+      shell.addEventListener('mouseleave', onLeave);
+      return () => {
+        shell.removeEventListener('mouseover', onOver);
+        shell.removeEventListener('mouseleave', onLeave);
+      };
     }, [controlsOn, blockIdFromNode]);
 
     // Caret tracking → active block (keyboard users get a gutter target too).
@@ -827,7 +849,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         const sel = root?.ownerDocument.getSelection();
         if (sel && root && sel.anchorNode && root.contains(sel.anchorNode)) {
           const id = blockIdFromNode(sel.anchorNode);
-          if (id) setActiveBlockId(id);
+          if (id) setCaretBlockId(id);
         }
       };
       document.addEventListener('selectionchange', onSel);
@@ -878,7 +900,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           }
           if ((e.shiftKey && e.key === 'F10') || e.key === 'ContextMenu') {
             e.preventDefault();
-            setActiveBlockId(caretBlock);
+            // Clear hover so the menu binds to the caret block, not a stale hovered one.
+            setHoverBlockId(null);
+            setCaretBlockId(caretBlock);
             setBlockMenuOpen(true);
             return;
           }
@@ -1253,6 +1277,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onTurnInto={onBlockTurnInto}
         onReorder={onBlockReorder}
         onConfigure={canConfigure ? onConfigOpen : undefined}
+        onDraggingChange={(d) => {
+          draggingRef.current = d;
+        }}
       />
     ) : null;
 

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { vi } from 'vitest';
@@ -997,6 +997,9 @@ describe('blockControls', () => {
     await user.click(screen.getByRole('button', { name: 'Block actions' }));
     // …then hover block B before choosing Delete.
     await user.hover(blockB);
+    // While the menu is open, leaving the editor must NOT clear the active block —
+    // the menu's actions stay bound to block A (onLeave is guarded by blockMenuOpenRef).
+    fireEvent.mouseLeave(screen.getByRole('textbox').parentElement as HTMLElement);
     await user.click(await screen.findByRole('menuitem', { name: /delete/i }));
     // Block A must be the one removed, leaving B.
     const remaining = Array.from(document.querySelectorAll('[data-block-id]'));
@@ -1017,6 +1020,62 @@ describe('blockControls', () => {
     await user.click(screen.getByRole('button', { name: 'Block actions' }));
     await user.click(await screen.findByRole('menuitem', { name: /duplicate/i }));
     expect(document.querySelectorAll('[data-block-id]').length).toBe(before + 1);
+  });
+
+  describe('hover zone', () => {
+    // The shell is the editable's parent when blockControls is on (editable is a
+    // direct child of .shell). mouseleave doesn't bubble, so we dispatch it on the shell.
+    function shellOf(): HTMLElement {
+      return screen.getByRole('textbox').parentElement as HTMLElement;
+    }
+
+    it('keeps the gutter when the pointer moves from the block onto the gutter', async () => {
+      render(
+        <I18nProvider locale="en">
+          <Controlled blockControls />
+        </I18nProvider>,
+      );
+      const block = document.querySelector('[data-block-id]') as HTMLElement;
+      await userEvent.hover(block);
+      const actions = screen.getByRole('button', { name: 'Block actions' });
+      // Moving onto a gutter button (resolves to no block id) must NOT clear the gutter.
+      fireEvent.mouseOver(actions);
+      expect(screen.getByRole('button', { name: 'Block actions' })).toBeInTheDocument();
+    });
+
+    it('hides the gutter when the pointer leaves the editor (no caret)', async () => {
+      render(
+        <I18nProvider locale="en">
+          <Controlled blockControls />
+        </I18nProvider>,
+      );
+      const block = document.querySelector('[data-block-id]') as HTMLElement;
+      await userEvent.hover(block);
+      expect(screen.getByRole('button', { name: 'Block actions' })).toBeInTheDocument();
+      fireEvent.mouseLeave(shellOf());
+      expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
+    });
+
+    it('keeps a caret-driven gutter after the pointer leaves (caret fallback)', async () => {
+      render(
+        <I18nProvider locale="en">
+          <Controlled blockControls />
+        </I18nProvider>,
+      );
+      const block = document.querySelector('[data-block-id]') as HTMLElement;
+      // Put a real caret inside the block, then notify the editor.
+      const sel = document.getSelection()!;
+      const range = document.createRange();
+      range.selectNodeContents(block);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      fireEvent(document, new Event('selectionchange'));
+      // Hover then leave: the gutter must remain, resolved from the caret block.
+      await userEvent.hover(block);
+      fireEvent.mouseLeave(shellOf());
+      expect(screen.getByRole('button', { name: 'Block actions' })).toBeInTheDocument();
+    });
   });
 });
 
