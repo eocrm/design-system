@@ -17,24 +17,44 @@
 
 .top-none {
   top: 0;
+  --sticky-offset: 0px;
 }
 
 .top-xs {
   top: var(--sticky-top-xs);
+  --sticky-offset: var(--sticky-top-xs);
 }
 
 .top-sm {
   top: var(--sticky-top-sm);
+  --sticky-offset: var(--sticky-top-sm);
 }
 
 .top-md {
   top: var(--sticky-top-md);
+  --sticky-offset: var(--sticky-top-md);
 }
 
 .top-lg {
   top: var(--sticky-top-lg);
+  --sticky-offset: var(--sticky-top-lg);
 }
 
 .top-xl {
   top: var(--sticky-top-xl);
+  --sticky-offset: var(--sticky-top-xl);
+}
+
+// Scroll-viewport mode (Rule 4: <Sticky> is a layout primitive — capping its own
+// pinned box + internal overflow is its job, like position:sticky itself). Caps
+// at the dynamic viewport height minus the top offset and an equal bottom gap, so
+// a column taller than the screen scrolls within itself. `overscroll-behavior:
+// contain` stops the page from scroll-chaining when the box hits its end.
+.scroll {
+  // 100vh first as a fallback for browsers without dvh (Safari < 15.4), then the
+  // dynamic-viewport unit — mirrors the Modal/Drawer convention.
+  max-height: calc(100vh - (2 * var(--sticky-offset, 0px)));
+  max-height: calc(100dvh - (2 * var(--sticky-offset, 0px)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }

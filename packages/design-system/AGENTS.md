@@ -1410,6 +1410,7 @@ Pins its box to the top of the scroll container while the page scrolls past — 
 ```
 
 - `top`: `none` (default, `top:0`) / `xs` / `sm` / `md` / `lg` / `xl` — offset from the top (spacing scale); use a non-zero step to clear a sticky header.
+- `scroll`: cap the pinned box at the viewport height with internal `overflow-y:auto` + `overscroll-behavior:contain` — for a sidebar taller than the screen (pair with a non-`none` `top`).
 - Inside a `<Split>` aside, pair with `align="stretch"` (else the content-height aside track gives nowhere to pin).
 
 When NOT to use: arranging children → `<Stack>`/`<Cluster>`; a fixed overlay above content → `position: fixed` chrome (`Popover`/`Modal`/app bar); the split itself → `<Split>`. Note: `position: sticky` breaks if a clipping ancestor (`overflow: hidden/auto`) isn't the intended scroll container.

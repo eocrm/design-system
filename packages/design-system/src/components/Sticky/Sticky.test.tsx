@@ -35,6 +35,18 @@ describe('Sticky', () => {
     },
   );
 
+  it('applies the scroll class only when scroll is set', () => {
+    const { container, rerender } = render(<Sticky top="lg">x</Sticky>);
+    // default: no scroll-viewport class
+    expect((container.firstChild as HTMLElement).className).not.toMatch(/scroll/);
+    rerender(
+      <Sticky top="lg" scroll>
+        x
+      </Sticky>,
+    );
+    expect((container.firstChild as HTMLElement).className).toMatch(/scroll/);
+  });
+
   it('merges className and spreads other attrs', () => {
     const { container } = render(
       <Sticky className="my-cls" data-foo="bar">
