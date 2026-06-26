@@ -1225,6 +1225,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
                 key={configBlock.id}
                 block={configBlock}
                 anchorRect={{ top: r.top, left: r.left, width: r.width, height: r.height }}
+                getAnchorRect={() => {
+                  // Re-query the figure live so the popover tracks it on scroll.
+                  const el = rootRef.current?.querySelector<HTMLElement>(
+                    `[data-block-id="${CSS.escape(configBlock.id)}"]`,
+                  );
+                  if (!el) return null;
+                  const b = el.getBoundingClientRect();
+                  return { top: b.top, left: b.left, width: b.width, height: b.height };
+                }}
                 maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
                 accept={latest.current.upload?.accept}
                 onAltChange={(alt) => onConfigAlt(configBlock.id, alt)}

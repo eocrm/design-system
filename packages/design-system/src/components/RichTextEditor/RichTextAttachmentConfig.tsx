@@ -22,6 +22,12 @@ export interface RichTextAttachmentConfigProps {
   block: Block;
   /** Figure rect (viewport coords) to anchor the popover to. */
   anchorRect: { top: number; left: number; height: number; width: number };
+  /**
+   * Live anchor rect — re-queried by Floating UI on scroll/resize so the popover
+   * tracks the figure (the static `anchorRect` is only the initial position; it
+   * goes stale on a pure scroll). Falls back to `anchorRect` when it returns null.
+   */
+  getAnchorRect?: () => { top: number; left: number; height: number; width: number } | null;
   /** Editor content width (px) — the upper bound for the width slider. */
   maxWidth: number;
   /** Native picker filter for Replace. */
@@ -57,6 +63,7 @@ const ALIGN_LABEL_KEY = {
 export function RichTextAttachmentConfig({
   block,
   anchorRect,
+  getAnchorRect,
   maxWidth,
   accept,
   onAltChange,
@@ -83,21 +90,26 @@ export function RichTextAttachmentConfig({
     if (alt !== seededAlt) onAltChange(alt);
   }, [alt, seededAlt, onAltChange]);
 
-  // Floating UI virtual element — only `getBoundingClientRect` is required.
+  // Floating UI virtual element — only `getBoundingClientRect` is required. Read
+  // the LIVE rect (via getAnchorRect) on every reposition so the popover tracks
+  // the figure on scroll; fall back to the static `anchorRect`.
   const virtualRef = useMemo(
     () => ({
-      getBoundingClientRect: () => ({
-        x: anchorRect.left,
-        y: anchorRect.top,
-        top: anchorRect.top,
-        left: anchorRect.left,
-        right: anchorRect.left + anchorRect.width,
-        bottom: anchorRect.top + anchorRect.height,
-        width: anchorRect.width,
-        height: anchorRect.height,
-      }),
+      getBoundingClientRect: () => {
+        const r = getAnchorRect?.() ?? anchorRect;
+        return {
+          x: r.left,
+          y: r.top,
+          top: r.top,
+          left: r.left,
+          right: r.left + r.width,
+          bottom: r.top + r.height,
+          width: r.width,
+          height: r.height,
+        };
+      },
     }),
-    [anchorRect],
+    [anchorRect, getAnchorRect],
   );
   const { refs, floatingStyles } = useFloating({
     placement: 'bottom-start',
