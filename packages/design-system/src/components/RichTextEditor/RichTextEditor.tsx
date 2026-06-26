@@ -367,7 +367,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // a click act on the wrong block).
     const blockMenuOpenRef = useRef(false);
     blockMenuOpenRef.current = blockMenuOpen;
-    // Set by RichTextBlockControls' onDraggingChange. While a grip drag is in
+    // Set by RichTextBlockControls' onDraggingChange. While a block drag is in
     // progress the active block must not change (it IS the block being dragged), so
     // the hover handlers below read this ref and bail — mirroring blockMenuOpenRef.
     const draggingRef = useRef(false);

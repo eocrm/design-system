@@ -59,36 +59,16 @@
   inset-inline-start: var(--space-05);
   display: flex;
   gap: var(--space-05);
-  align-items: center;
+  align-items: center; // vertically centre the buttons within the full-row-height strip
+  cursor: grab;
+}
+
+.gutter:active {
+  cursor: grabbing;
 }
 
 .gutterButton {
   color: var(--color-fg-muted);
-}
-
-// Thin wrapper around the grip that feeds dnd-kit's PointerSensor. `inline-flex`
-// keeps it shrink-wrapped to the grip button (so it doesn't enlarge the gutter's
-// hit area) and `grab`/`grabbing` cursors signal the drag affordance. No layout
-// props — it's a pass-through around the button.
-.gripDrag {
-  display: inline-flex;
-  cursor: grab;
-}
-
-.gripDrag:active {
-  cursor: grabbing;
-}
-
-// The drop-indicator line shown during a block drag. Absolutely positioned inside
-// `.shell`; its vertical `top` is set inline by JS from the candidate drop gap
-// (cf. the Rule 4 note on `.gutter`/`.linkBubble` — overlay anchoring, not in-flow
-// component layout). A thin accent-colored rule spanning the editable width.
-.dropIndicator {
-  position: absolute;
-  inset-inline: 0;
-  height: var(--border-width);
-  background: var(--color-accent);
-  pointer-events: none;
 }
 
 .toolbar {
@@ -181,8 +161,7 @@
 // error/chip bodies. `margin: 0` resets the UA <figure> default (a reset, not
 // component layout). Tokens only.
 .root figure[data-attachment],
-.shell figure[data-attachment],
-.dragOverlay figure[data-attachment] {
+.shell figure[data-attachment] {
   // stylelint-disable-next-line property-disallowed-list -- reset UA <figure> default margin; internal
   margin: 0;
 }
@@ -274,31 +253,29 @@ figure[data-attachment][data-align='right'] {
   color: var(--color-accent);
 }
 
-// The floating clone of the block being dragged, shown under the cursor. Rendered
-// inline inside `.shell` by dnd-kit's <DragOverlay> (NOT portaled — which is why
-// `blockRects` filters the clone out of the drop geometry). A "lifted card": surface bg + elevation +
-// rounded corners + slight transparency so the block reads as picked up. Includes
-// the prose mixin because block typography is scoped to `.root`, and the clone lives
-// outside it. `pointer-events: none` keeps it from blocking the drop target under the
-// cursor; `box-sizing: border-box` so the inline width (the source block's measured
-// width, set in JS) includes padding. Width/position are the overlay's own anchoring
-// (set inline by dnd-kit / JS), not in-flow component layout (cf. `.gutter`).
-.dragOverlay {
-  @include prose.prose;
-
-  box-sizing: border-box;
-  padding-block: var(--space-1);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  box-shadow: var(--shadow-lg);
-  opacity: var(--opacity-muted);
-  cursor: grabbing;
-  pointer-events: none;
+// In-place sortable reflow (block drag). `.reflowing` is toggled on the shell during
+// a drag; block boxes get a transient inline translateY (set by JS) and slide via
+// this transition to open the dragged row's slot. The lifted row itself follows the
+// pointer 1:1, so it opts out of the transition.
+.reflowing [data-block-id]:not(.blockLifted) {
+  transition: transform var(--transition-base);
 }
 
-// The source block while its clone is being dragged — dimmed so the user sees it has
-// been "lifted" out. Toggled as a transient class on the live block element during
-// the drag (removed on drop/cancel).
-.blockDragging {
-  opacity: var(--opacity-dragging);
+// The grabbed row while dragging: raised above its neighbours with a card elevation
+// so it reads as "lifted". `position: relative` is the stacking context for z-index
+// (Rule 4 allows relative for an internal stacking/anchor purpose), not page layout.
+.blockLifted {
+  position: relative;
+  z-index: 1;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  cursor: grabbing;
+  transition: none; // track the pointer with no lag
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reflowing [data-block-id] {
+    transition: none;
+  }
 }
