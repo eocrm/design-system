@@ -196,4 +196,41 @@ describe('toHtml — attachments', () => {
     };
     expect(toHtml(doc)).toBe('');
   });
+
+  it('serializes a centered, sized image attachment', () => {
+    const doc = {
+      blocks: [
+        {
+          id: 'a',
+          type: 'attachment' as const,
+          status: 'ready' as const,
+          src: 'http://u/p.png',
+          mime: 'image/png',
+          alt: 'C',
+          align: 'center' as const,
+          width: 320,
+          inlines: [],
+        },
+      ],
+    };
+    expect(toHtml(doc)).toBe(
+      '<figure style="text-align:center"><img src="http://u/p.png" alt="C" width="320"></figure>',
+    );
+  });
+  it('omits style/width when align/width are unset', () => {
+    const doc = {
+      blocks: [
+        {
+          id: 'a',
+          type: 'attachment' as const,
+          status: 'ready' as const,
+          src: 'http://u/p.png',
+          mime: 'image/png',
+          alt: 'C',
+          inlines: [],
+        },
+      ],
+    };
+    expect(toHtml(doc)).toBe('<figure><img src="http://u/p.png" alt="C"></figure>');
+  });
 });

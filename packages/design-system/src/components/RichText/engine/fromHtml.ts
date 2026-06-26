@@ -286,7 +286,12 @@ function collectBlocks(parent: Node, out: Block[], listDepth: number): void {
       const src = safeHref(img.getAttribute('src') ?? '');
       if (src) {
         const altAttr = img.getAttribute('alt') ?? '';
-        out.push({
+        const fig = child.tagName === 'FIGURE' ? (child as HTMLElement) : null;
+        const ta = fig?.style.textAlign;
+        const align = ta === 'center' || ta === 'right' || ta === 'left' ? ta : undefined;
+        const w = Number(img.getAttribute('width'));
+        const h = Number(img.getAttribute('height'));
+        const block: Block = {
           id: nextId(),
           type: 'attachment',
           inlines: [],
@@ -295,7 +300,11 @@ function collectBlocks(parent: Node, out: Block[], listDepth: number): void {
           mime: 'image/*',
           alt: altAttr,
           name: altAttr,
-        });
+        };
+        if (align) block.align = align;
+        if (Number.isFinite(w) && w > 0) block.width = w;
+        if (Number.isFinite(h) && h > 0) block.height = h;
+        out.push(block);
       }
       continue;
     }

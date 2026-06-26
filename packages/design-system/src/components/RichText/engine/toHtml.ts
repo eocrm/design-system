@@ -97,7 +97,13 @@ function blockHtml(block: Block): string {
       if (safe === undefined) return '';
       if (attachmentIsImage(block)) {
         const alt = escapeAttr(block.alt ?? block.name ?? '');
-        return `<figure><img src="${escapeAttr(safe)}" alt="${alt}"></figure>`;
+        const widthAttr = typeof block.width === 'number' ? ` width="${block.width}"` : '';
+        const heightAttr = typeof block.height === 'number' ? ` height="${block.height}"` : '';
+        const figStyle =
+          block.align === 'center' || block.align === 'right'
+            ? ` style="text-align:${block.align}"`
+            : '';
+        return `<figure${figStyle}><img src="${escapeAttr(safe)}" alt="${alt}"${widthAttr}${heightAttr}></figure>`;
       }
       return `<a href="${escapeAttr(safe)}" download>${escapeHtml(block.name ?? safe)}</a>`;
     }
