@@ -21,6 +21,8 @@ export interface AttachmentAttrs {
   height?: number;
   /** Image alt text. */
   alt?: string;
+  /** Image alignment. */
+  align?: 'left' | 'center' | 'right';
   /** Upload state. Defaults to `'ready'` when omitted. */
   status?: 'uploading' | 'ready' | 'error';
 }
@@ -56,6 +58,7 @@ function attachmentBlock(attrs: AttachmentAttrs): Block {
     ...(attrs.width !== undefined ? { width: attrs.width } : {}),
     ...(attrs.height !== undefined ? { height: attrs.height } : {}),
     ...(attrs.alt !== undefined ? { alt: attrs.alt } : {}),
+    ...(attrs.align !== undefined ? { align: attrs.align } : {}),
   };
 }
 
@@ -112,5 +115,26 @@ export function updateAttachmentBlock(doc: RichDoc, id: string, patch: Attachmen
   }
   const blocks = doc.blocks.slice();
   blocks[idx] = { ...blocks[idx], ...clean };
+  return { blocks };
+}
+
+/**
+ * Remove the given keys from an attachment block (canonical "unset" — e.g.
+ * resetting width/height to natural size). Same-ref no-op if the id is absent,
+ * not an attachment, or none of the keys are present.
+ */
+export function clearAttachmentFields(
+  doc: RichDoc,
+  id: string,
+  keys: ('width' | 'height' | 'align' | 'alt')[],
+): RichDoc {
+  const idx = findBlockIndex(doc, id);
+  if (idx === -1 || doc.blocks[idx].type !== 'attachment') return doc;
+  const block = doc.blocks[idx];
+  if (!keys.some((k) => k in block)) return doc;
+  const next = { ...block };
+  for (const k of keys) delete next[k as keyof typeof next];
+  const blocks = doc.blocks.slice();
+  blocks[idx] = next;
   return { blocks };
 }

@@ -54,6 +54,8 @@ export interface Block {
   height?: number;
   /** Image alt text. */
   alt?: string;
+  /** Attachment image alignment within the editor width. Absent = left. */
+  align?: 'left' | 'center' | 'right';
   /** Attachment upload state. `ready`/absent = final. */
   status?: 'uploading' | 'ready' | 'error';
 }
