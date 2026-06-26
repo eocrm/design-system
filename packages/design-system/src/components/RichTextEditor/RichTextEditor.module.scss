@@ -242,3 +242,33 @@ figure[data-attachment][data-align] > * {
 .attachmentLabel {
   color: var(--color-danger);
 }
+
+// The floating attachment-config popover (RichTextAttachmentConfig). Portaled to
+// <body> and positioned by Floating UI's inline `floatingStyles` (so
+// `position`/offsets are NOT set here). Same Rule 4 note as `.linkBubble`:
+// `min-width` describes the overlay's intrinsic size, not in-flow page layout.
+.configPopover {
+  z-index: var(--z-overlay-floating);
+  min-width: var(--size-dropdown-min-width);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+}
+
+.configRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.configLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+}
+
+.configLink {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+}
