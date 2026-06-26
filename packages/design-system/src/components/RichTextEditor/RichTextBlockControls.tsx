@@ -19,6 +19,7 @@ import type { BlockChoice } from './RichTextToolbar';
 import type { BlockType } from '../RichText/engine/model';
 import { GearIcon, PlusIcon } from './icons';
 import { computeReflow, type BlockRect, type UnitRange } from './blockReflow';
+import { gapIndexFromY } from './blockDrop';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextBlockControlsProps {
@@ -137,8 +138,6 @@ export function RichTextBlockControls({
     unit: UnitRange;
     parentIdx: number[];
   } | null>(null);
-  // Latest drop gap from the most recent reflow, read on drag end.
-  const gapRef = useRef(0);
   // Block id captured at drag start — reorder by this, not the live activeBlockId.
   const draggedIdRef = useRef<string | null>(null);
 
@@ -233,7 +232,6 @@ export function RichTextBlockControls({
     if (initialY == null) return;
     const pointerY = initialY + event.delta.y - root.getBoundingClientRect().top;
     const reflow = computeReflow(snap.rects, snap.unit, event.delta.y, pointerY);
-    gapRef.current = reflow.gap;
     // Transforms inherit: set each box's OWN transform to the desired shift minus its
     // ancestor's desired shift, so inheritance composes to exactly shifts[i].
     for (let i = 0; i < snap.els.length; i += 1) {
@@ -247,15 +245,24 @@ export function RichTextBlockControls({
     clearReflow(dragRef.current, rootRef.current);
     dragRef.current = null;
     draggedIdRef.current = null;
-    gapRef.current = 0;
     onDraggingChange?.(false);
   };
 
-  const handleDragEnd = (_event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
+    const snap = dragRef.current;
+    const root = rootRef.current;
     const id = draggedIdRef.current;
-    const gap = gapRef.current;
+    let gap: number | null = null;
+    if (snap && root) {
+      const activator = event.activatorEvent as PointerEvent;
+      const initialY = typeof activator?.clientY === 'number' ? activator.clientY : null;
+      if (initialY != null) {
+        const pointerY = initialY + event.delta.y - root.getBoundingClientRect().top;
+        gap = gapIndexFromY(snap.rects, pointerY);
+      }
+    }
     endDrag(); // clear transforms BEFORE the reorder re-render so no inline styles linger
-    if (id != null) onReorder(id, gap);
+    if (id != null && gap != null) onReorder(id, gap);
   };
 
   const handleDragCancel = () => {

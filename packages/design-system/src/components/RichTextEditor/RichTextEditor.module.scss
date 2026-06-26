@@ -258,7 +258,7 @@ figure[data-attachment][data-align='right'] {
 // this transition to open the dragged row's slot. The lifted row itself follows the
 // pointer 1:1, so it opts out of the transition.
 .reflowing [data-block-id]:not(.blockLifted) {
-  transition: transform 160ms ease;
+  transition: transform var(--transition-base);
 }
 
 // The grabbed row while dragging: raised above its neighbours with a card elevation

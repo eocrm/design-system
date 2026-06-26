@@ -119,10 +119,11 @@ it('a plain grip click (no drag) opens the block menu', async () => {
   expect(onMenuOpenChange).toHaveBeenCalledWith(true);
 });
 
-// The full block-drag lifecycle (live reflow transforms, onDraggingChange, drop
-// geometry) can't be driven in jsdom (dnd-kit PointerSensor needs real layout/
-// pointer-capture) — matching the Sortable precedent, it's verified via Playwright;
-// jsdom only covers the at-rest invariant + the pure helper (blockReflow.test).
+// The live drag lifecycle (reflow transforms, drop gap, cleanup) can't be driven in
+// jsdom — dnd-kit's PointerSensor needs real layout/pointer-capture (the Sortable
+// component has the same limitation). The drop-gap math is the pure, tested
+// gapIndexFromY (blockDrop.test.ts) + computeReflow (blockReflow.test.ts); the live
+// behaviour is verified manually in the playground. No in-repo e2e harness yet.
 it('applies no transform or lifted style at rest', () => {
   const { container } = render(<Harness />);
   const block = container.querySelector('[data-block-id="b1"]') as HTMLElement;
