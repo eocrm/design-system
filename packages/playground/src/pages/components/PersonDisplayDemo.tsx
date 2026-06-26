@@ -136,6 +136,36 @@ export function PersonDisplayDemo() {
           </PersonDisplay>
         </InputExample>
       </Example>
+
+      <Example
+        title="Shrink-wrap for overlay triggers"
+        description="Inside a STRETCHING flex/grid column (here a Stack, which stretches its children), a default PersonDisplay blockifies and stretches to the full column width — the dashed outline shows the box reaching the right edge, so a Popover/Tooltip cloned onto it anchors to that wide box and centers far right of the person. With shrink (second row) the box hugs the avatar+name, so overlays anchor to the visible person. The dashed outlines are demo-only, to make each box's width visible."
+        code={`// In a stretching column, keep the overlay trigger content-width so it anchors right
+<PersonDisplay shrink>
+  <PersonDisplay.Avatar name="Sarah Chen" />
+  <PersonDisplay.Name>Sarah Chen</PersonDisplay.Name>
+  <PersonDisplay.Description>sarah@acme.com</PersonDisplay.Description>
+</PersonDisplay>`}
+      >
+        <InputExample>
+          <Stack gap="md">
+            <PersonDisplay style={{ outline: '1px dashed var(--color-border)' }}>
+              <PersonDisplay.Avatar name="Sarah Chen" />
+              <PersonDisplay.Name>Sarah Chen</PersonDisplay.Name>
+              <PersonDisplay.Description>
+                sarah@acme.com (default — stretches)
+              </PersonDisplay.Description>
+            </PersonDisplay>
+            <PersonDisplay shrink style={{ outline: '1px dashed var(--color-border)' }}>
+              <PersonDisplay.Avatar name="Sarah Chen" />
+              <PersonDisplay.Name>Sarah Chen</PersonDisplay.Name>
+              <PersonDisplay.Description>
+                sarah@acme.com (shrink — content-width)
+              </PersonDisplay.Description>
+            </PersonDisplay>
+          </Stack>
+        </InputExample>
+      </Example>
     </DemoLayout>
   );
 }

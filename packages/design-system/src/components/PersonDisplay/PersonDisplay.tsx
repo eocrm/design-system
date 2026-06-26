@@ -34,6 +34,20 @@ export interface PersonDisplayProps extends HTMLAttributes<HTMLDivElement> {
    */
   size?: PersonDisplaySize;
   /**
+   * Force the composition to shrink-wrap to its content (avatar + name) instead of
+   * stretching to fill a parent. Default `false`. The root is `inline-flex` and
+   * shrink-wraps on its own — but as a child of a *stretching* flex/grid container
+   * (a detail/sidebar card column with `align-items: stretch` / `justify-self:
+   * stretch`) CSS blockifies it and the parent stretches it to the full column
+   * width. The avatar+name then sit in the left portion and the trailing empty
+   * space joins the box, so a `Popover.Trigger` / `Tooltip` cloned onto the
+   * PersonDisplay anchors to that wide box and centers far to the right of the
+   * person. Set `shrink` on such an overlay trigger to keep it content-width
+   * (`width: fit-content`) regardless of the parent, so the overlay anchors to the
+   * visible avatar+name.
+   */
+  shrink?: boolean;
+  /**
    * `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` (+ optional repeating
    * `<PersonDisplay.Description>`) subcomponents in any order — Root sorts
    * the Avatar into its own slot.
@@ -267,7 +281,7 @@ const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescri
  *   for conditional rendering (`null`/`false` are safely ignored).
  */
 const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(function PersonDisplayRoot(
-  { size = 'md', className, children, ...rest },
+  { size = 'md', shrink = false, className, children, ...rest },
   ref,
 ) {
   // Sort children into the Avatar (rendered first as a flex sibling)
@@ -287,7 +301,12 @@ const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(functio
     <PersonDisplayContext.Provider value={{ size }}>
       {/* {...rest} first so internally-computed data-size (load-bearing for SCSS gap)
             can't be stomped by a consumer (Pattern B — data-size is the only locked attr). */}
-      <div ref={ref} className={clsx(styles.root, className)} {...rest} data-size={size}>
+      <div
+        ref={ref}
+        className={clsx(styles.root, shrink && styles.shrink, className)}
+        {...rest}
+        data-size={size}
+      >
         {avatarChildren}
         {columnChildren.length > 0 && <div className={styles.column}>{columnChildren}</div>}
       </div>
