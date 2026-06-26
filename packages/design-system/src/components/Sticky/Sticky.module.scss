@@ -51,6 +51,9 @@
 // a column taller than the screen scrolls within itself. `overscroll-behavior:
 // contain` stops the page from scroll-chaining when the box hits its end.
 .scroll {
+  // 100vh first as a fallback for browsers without dvh (Safari < 15.4), then the
+  // dynamic-viewport unit — mirrors the Modal/Drawer convention.
+  max-height: calc(100vh - (2 * var(--sticky-offset, 0px)));
   max-height: calc(100dvh - (2 * var(--sticky-offset, 0px)));
   overflow-y: auto;
   overscroll-behavior: contain;

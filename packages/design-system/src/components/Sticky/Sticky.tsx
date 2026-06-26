@@ -21,7 +21,9 @@ export interface StickyProps extends HTMLAttributes<HTMLDivElement> {
    * within the box instead of below the fold). Sets `max-height` to
    * `calc(100dvh - top offset - an equal bottom gap)`, `overflow-y: auto`, and
    * `overscroll-behavior: contain` (page scroll doesn't chain from the box).
-   * Default `false`. Pair with a non-`none` `top` to leave breathing room.
+   * Default `false`. Pair with a non-`none` `top` to leave breathing room. The cap
+   * is viewport-relative (`dvh`), so this assumes the page (or a viewport-tall
+   * ancestor) is the scroll context — not a short fixed-height scroll container.
    */
   scroll?: boolean;
   /** The content to pin. Required — a `Sticky` with nothing inside pins nothing. */
