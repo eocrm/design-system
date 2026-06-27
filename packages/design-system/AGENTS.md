@@ -964,7 +964,7 @@ const [doc, setDoc] = useState(emptyDoc());
 <RichTextEditor value={doc} onChange={setDoc} toolbar placeholder="Write a note…" />;
 ```
 
-**`toolbar` prop** (default `false`): renders a formatting bar above the editor surface. The toolbar contains:
+**`toolbar` prop** (`boolean | 'auto'`, default `false`): renders a formatting bar above the editor surface. `toolbar="auto"` shows the bar only when the editor is **focused or non-empty**, and keeps it shown while the editor's own overlays (link editor / mention menu) are open — so opening the link editor on a focused-but-empty composer doesn't collapse the bar. The editable is not remounted as the bar appears/hides (no focus/selection loss). Use `'auto'` for a compact, focus-gated composer (e.g. a comment box) instead of hand-rolling show-on-focus + overlay-focus handling. The toolbar contains:
 
 - **Mark buttons** — Bold, Italic, Underline, Strikethrough. Reflect `aria-pressed` based on the current selection (or pending marks at a collapsed caret). Clicking with a selection toggles the mark over it; clicking at a collapsed caret sets a "pending" mark applied to the next typed characters (then clears).
 - **Block-type dropdown** — Paragraph, Heading 1–3, Quote, Code block. Shows the current block type; mixed multi-block selections show "Mixed".

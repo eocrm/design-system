@@ -97,8 +97,16 @@ export interface RichTextEditorProps extends Omit<
    * toolbar dispatches through the same commit path the keyboard uses and
    * reflects the active marks + current block of the live selection. Default
    * `false` (keyboard-only). When `readOnly`, the toolbar renders disabled.
+   *
+   * `'auto'` shows the toolbar only when the editor is **focused or non-empty**,
+   * and keeps it shown while the editor's own overlays (the link editor / mention
+   * menu) are open — so opening the link editor on a focused-but-empty composer
+   * doesn't collapse the bar. The editable is NOT remounted as the bar appears or
+   * hides (the bar toggles in a stable shell), so there's no focus/selection loss.
+   * Use it for a compact, focus-gated composer (e.g. a comment box) instead of
+   * hand-rolling the show-on-focus logic and working around overlay focus theft.
    */
-  toolbar?: boolean;
+  toolbar?: boolean | 'auto';
   /**
    * Enable `@`-mention autocomplete. Supply `onQuery` to resolve candidates for
    * the text typed after the trigger (default `@`); the editor renders a floating
@@ -330,6 +338,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Link editor state.
     const [linkEditor, setLinkEditor] = useState<LinkEditorOpen | null>(null);
     const linkKeyRef = useRef(0);
+
+    // Focus state — only consulted by `toolbar="auto"` to gate the bar's visibility.
+    // Focus moving to an editor overlay (the link editor / mention menu, portaled to
+    // <body>) fires a blur, so `focused` flips false there; the `showToolbar`
+    // formula keeps the bar up via the overlay-open term instead.
+    const [focused, setFocused] = useState(false);
+    const autoToolbar = toolbar === 'auto';
 
     // Toolbar state: the live selection (tracked via `selectionchange`) and any
     // marks staged at a collapsed caret to apply to the next typed character.
@@ -1222,6 +1237,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onClick={onEditableClick}
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
+        // Only tracked for `toolbar="auto"` (gates the bar's visibility); omitted
+        // otherwise so other modes never re-render on focus changes.
+        onFocus={autoToolbar ? () => setFocused(true) : undefined}
+        onBlur={autoToolbar ? () => setFocused(false) : undefined}
       >
         {renderDoc(value, { editable: true, renderLink, renderMention })}
       </div>
@@ -1318,18 +1337,37 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           })()
         : null;
 
-    if (!toolbar) {
-      if (controlsOn) {
-        return (
-          <div className={styles.shell} ref={shellRef}>
-            {editable}
-            {linkBubble}
-            {mentionMenu}
-            {blockControlsEl}
-            {configEl}
-          </div>
-        );
-      }
+    // Toolbar visibility. `true` → always; `'auto'` → focused, non-empty, or while
+    // one of the editor's own overlays is open (so opening the link editor on a
+    // focused-but-empty composer keeps the bar up rather than collapsing it). The
+    // overlay term is what survives the blur caused by the overlay stealing focus.
+    const overlayOpen = linkEditor != null || mention.open;
+    const showToolbar =
+      toolbar === true || (autoToolbar && (focused || !isEmptyDoc(value) || overlayOpen));
+    // Render the stable `.shell` whenever a toolbar mode is active (so the bar can
+    // toggle WITHOUT remounting the editable) or block controls need the anchor.
+    const usesShell = toolbar === true || autoToolbar || controlsOn;
+
+    const toolbarBar = showToolbar ? (
+      <RichTextToolbar
+        activeMarks={toolbarMarks}
+        block={toolbarBlock}
+        disabled={readOnly}
+        onToggleMark={onToolbarMark}
+        onSetBlock={onToolbarSetBlock}
+        onToggleList={onToolbarToggleList}
+        linkActive={toolbarLinkActive}
+        onOpenLink={openLinkEditor}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={onUndo}
+        onRedo={onRedo}
+        onUpload={uploadOn ? (files) => uploaderRef.current.uploadFiles(files) : undefined}
+        uploadAccept={upload?.accept}
+      />
+    ) : null;
+
+    if (!usesShell) {
       return (
         <>
           {editable}
@@ -1340,22 +1378,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     }
     return (
       <div className={styles.shell} ref={shellRef}>
-        <RichTextToolbar
-          activeMarks={toolbarMarks}
-          block={toolbarBlock}
-          disabled={readOnly}
-          onToggleMark={onToolbarMark}
-          onSetBlock={onToolbarSetBlock}
-          onToggleList={onToolbarToggleList}
-          linkActive={toolbarLinkActive}
-          onOpenLink={openLinkEditor}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          onUndo={onUndo}
-          onRedo={onRedo}
-          onUpload={uploadOn ? (files) => uploaderRef.current.uploadFiles(files) : undefined}
-          uploadAccept={upload?.accept}
-        />
+        {toolbarBar}
         {editable}
         {linkBubble}
         {mentionMenu}
