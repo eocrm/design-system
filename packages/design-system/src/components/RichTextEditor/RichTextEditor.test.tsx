@@ -1160,6 +1160,27 @@ describe('blockControls', () => {
     expect(document.querySelector('li[data-block-id]')).toBeTruthy();
   });
 
+  it('block menu Color submenu colors the whole block text', async () => {
+    const user = userEvent.setup();
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await user.hover(block);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Color' }));
+    // Pick the red swatch in the Text (first) row → whole block wrapped red.
+    const reds = await screen.findAllByRole('button', { name: 'Red' });
+    await user.click(reds[0]);
+    await waitFor(() => {
+      const span = (document.querySelector('[data-block-id]') as HTMLElement).querySelector('span');
+      expect(span?.textContent).toBe('one');
+      expect(span?.style.color).toBe('var(--color-danger)');
+    });
+  });
+
   it('⌘D duplicates the caret block (via commit)', async () => {
     const user = userEvent.setup();
     mockReadSelection.mockReturnValue({

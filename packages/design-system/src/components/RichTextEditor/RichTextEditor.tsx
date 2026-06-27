@@ -14,7 +14,7 @@ import { nextId } from '../RichText/engine/model';
 import { renderDoc } from '../RichText/engine/renderDoc';
 import type { RenderLink } from '../RichText/engine/renderLink';
 import type { RenderMention } from '../RichText/engine/renderMention';
-import { blockLength, isCollapsed } from '../RichText/engine/position';
+import { blockLength, isCollapsed, wholeBlockRange } from '../RichText/engine/position';
 import { linkAt, setLink, removeLink } from './links';
 import { applyTypeAutolink, atomicLinkDeleteRange } from './autolinkInput';
 import { RichTextLinkEditor } from './RichTextLinkEditor';
@@ -1235,6 +1235,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         commit(moveBlockUnitToIndex(latest.current.value, id, targetIndex), 'other'),
       [commit],
     );
+    // Whole-block color from the ⠿ menu's Color submenu. Computes the block's full
+    // range and routes through the same setColorMark path the toolbar uses.
+    const onBlockColor = useCallback(
+      (id: string, type: 'textColor' | 'bgColor', key: string | null) => {
+        const r = wholeBlockRange(latest.current.value, id);
+        if (r) commit({ doc: setColorMark(latest.current.value, r, type, key), selection: r });
+      },
+      [commit],
+    );
 
     // Attachment config popover. Config edits don't move the caret meaningfully —
     // the popover holds focus — so each commit pins a collapsed selection on the
@@ -1437,6 +1446,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onTurnInto={onBlockTurnInto}
         onReorder={onBlockReorder}
         onConfigure={canConfigure ? onConfigOpen : undefined}
+        onColor={onBlockColor}
         onDraggingChange={(d) => {
           draggingRef.current = d;
         }}
