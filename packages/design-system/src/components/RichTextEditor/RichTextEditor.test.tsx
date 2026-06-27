@@ -1511,6 +1511,32 @@ describe('attachment config', () => {
     await waitFor(() => expect(screen.queryByTitle('Drag to resize')).toBeNull());
   });
 
+  it('shows no resize handle when blockControls is on but upload is off (no slider fallback)', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          {
+            id: 'img',
+            type: 'attachment',
+            status: 'ready',
+            src: 'http://u/p.png',
+            mime: 'image/png',
+            name: 'p.png',
+            inlines: [],
+          },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls />; // no upload
+    }
+    renderEditor(<Harness />);
+    await user.hover(document.querySelector('figure[data-block-id="img"]') as HTMLElement);
+    // The gutter still shows (blockControls), but without upload there's no accessible
+    // Width slider — so the pointer-only handle must not appear either.
+    await screen.findByRole('button', { name: 'Block actions' });
+    expect(screen.queryByTitle('Drag to resize')).toBeNull();
+  });
+
   it('readOnly shows no Configure (the whole gutter is suppressed)', async () => {
     const user = userEvent.setup();
     function Harness() {

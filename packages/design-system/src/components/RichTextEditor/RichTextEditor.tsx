@@ -1378,12 +1378,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       />
     ) : null;
 
-    // A bottom-right resize handle on the active image — but only when it renders as
-    // a preview (a safe, fetchable src), matching the Width slider's gating. The
-    // layoutKey carries the image's width so the handle re-measures and tracks the
-    // corner as it resizes live.
+    // A bottom-right resize handle on the active image — only when it renders as a
+    // preview (a safe, fetchable src) AND the keyboard-accessible Width slider is
+    // also available (`uploadOn`, same as `canConfigure`), so the pointer-only handle
+    // never appears without its accessible fallback. The layoutKey carries the
+    // image's width so the handle re-measures and tracks the corner as it resizes.
     const activeIsResizableImage =
       controlsOn &&
+      uploadOn &&
       activeBlock?.type === 'attachment' &&
       activeBlock.status === 'ready' &&
       attachmentIsImage(activeBlock) &&

@@ -28,6 +28,32 @@ it('renders nothing when the target image is absent (e.g. a file chip)', () => {
   expect(screen.queryByTitle('Drag to resize')).toBeNull();
 });
 
+it('reports drag end on unmount (so the editor never sticks in a dragging state)', () => {
+  const onDraggingChange = vi.fn();
+  function CleanupHarness() {
+    const rootRef = useRef<HTMLDivElement>(null);
+    return (
+      <I18nProvider locale="en">
+        <div ref={rootRef} style={{ position: 'relative' }}>
+          <figure data-block-id="v" contentEditable={false}>
+            <img alt="x" src="http://u/p.png" />
+          </figure>
+          <RichTextImageResizer
+            rootRef={rootRef}
+            blockId="v"
+            maxWidth={600}
+            onResize={() => {}}
+            onDraggingChange={onDraggingChange}
+          />
+        </div>
+      </I18nProvider>
+    );
+  }
+  const { unmount } = render(<CleanupHarness />);
+  unmount();
+  expect(onDraggingChange).toHaveBeenCalledWith(false);
+});
+
 // The live pointer drag (capture + getBoundingClientRect deltas) needs real layout
 // and pointer-capture, which jsdom lacks — the same constraint as the gutter drag.
 // The clamp math is trivial and the resize round-trip is covered by the editor's

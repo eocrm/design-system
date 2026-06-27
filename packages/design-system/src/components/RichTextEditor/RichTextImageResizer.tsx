@@ -4,7 +4,7 @@
 // model path the Configure → Width slider drives). It is a POINTER affordance only
 // (mirrors the gutter drag handle); keyboard / assistive-tech users resize via the
 // Configure → Width slider, which is the accessible, keyboard-operable control.
-import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from '../../i18n';
 import styles from './RichTextEditor.module.scss';
 
@@ -55,6 +55,20 @@ export function RichTextImageResizer({
   // Drag origin, captured on pointerdown. null when not dragging.
   const dragRef = useRef<{ startX: number; startW: number } | null>(null);
 
+  // Latest onDraggingChange, read by the unmount cleanup without re-subscribing.
+  const onDraggingChangeRef = useRef(onDraggingChange);
+  onDraggingChangeRef.current = onDraggingChange;
+
+  // If the handle unmounts mid-drag (image removed, blockControls/readOnly toggled,
+  // or `value` replaced), no pointerup/cancel fires — report drag end so the editor's
+  // `draggingRef` doesn't stick `true` and freeze hover. Mirrors RichTextBlockControls.
+  useEffect(() => {
+    return () => {
+      dragRef.current = null;
+      onDraggingChangeRef.current?.(false);
+    };
+  }, []);
+
   const imgEl = useCallback(
     () =>
       rootRef.current?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(blockId)}"] img`) ??
@@ -90,7 +104,10 @@ export function RichTextImageResizer({
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
     if (!d) return;
-    const next = clamp(Math.round(d.startW + (e.clientX - d.startX)), MIN_W, Math.round(maxWidth));
+    // max(MIN_W, …) guards a sub-MIN_W editor so the upper clamp never falls below
+    // the lower one (mirrors the slider's sliderMax floor).
+    const hi = Math.max(MIN_W, Math.round(maxWidth));
+    const next = clamp(Math.round(d.startW + (e.clientX - d.startX)), MIN_W, hi);
     onResize(next);
   };
 
