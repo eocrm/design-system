@@ -365,6 +365,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // The collapsed caret where pending marks were staged. Used to clear them
     // when the caret moves to a different spot (vs. typing at the same point).
     const pendingAtRef = useRef<Point | null>(null);
+    // The most recent NON-null editor selection. Survives focus moving into a toolbar
+    // popover (e.g. the emoji/search box), where the live selection reads null. Used by
+    // popover-driven inserts so they target where the caret actually was.
+    const lastSelectionRef = useRef<Range | null>(null);
 
     const setRefs = useCallback(
       (node: HTMLDivElement | null) => {
@@ -835,6 +839,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const onSelChange = () => {
         const sel = readSelection(root);
         setSelection(sel);
+        if (sel != null) lastSelectionRef.current = sel;
         // Abandon pending marks if the caret left its staged point (the user
         // moved the caret or made a selection instead of typing there).
         const pend = pendingMarksRef.current;
@@ -1096,12 +1101,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const onInsertEmoji = useCallback(
       (emoji: string) => {
         const root = rootRef.current;
-        const range = (root ? readSelection(root) : null) ?? selection;
+        const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
         if (!range) return;
         const result = applyInput(latest.current.value, range, 'insertText', emoji);
-        if (result) commit(result);
+        if (result) {
+          commit(result);
+          root?.focus(); // keep the editor focused so typing continues after the pick
+        }
       },
-      [selection, commit],
+      [commit],
     );
 
     const onToolbarMark = useCallback(
