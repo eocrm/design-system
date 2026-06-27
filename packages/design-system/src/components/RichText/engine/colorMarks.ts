@@ -24,7 +24,9 @@ const DEFAULT_BG_VAR: Record<DefaultKey, string> = {
   amber: '--color-warning-bg-subtle',
   blue: '--color-accent-bg-subtle',
 };
-const DEFAULT_OVERLAP = new Set<string>(['red', 'green', 'amber', 'blue']);
+// Derived (not hardcoded) so a change to DEFAULT_KEYS can't silently leave a
+// duplicate swatch: the palette extras are every palette color NOT already a default.
+const DEFAULT_OVERLAP = new Set<string>(DEFAULT_KEYS);
 const PALETTE_EXTRA = PALETTE_COLORS.filter((c) => !DEFAULT_OVERLAP.has(c));
 
 /** A palette key stored by `textColor`/`bgColor` marks (never a raw color). */
@@ -63,7 +65,7 @@ function keyFromVar(css: string, suffix: 'fg' | 'bg'): ColorKey | undefined {
     if (c === (suffix === 'fg' ? DEFAULT_TEXT_VAR[k] : DEFAULT_BG_VAR[k])) return k;
   }
   const m = c.match(/^--color-palette-([a-z]+)-(fg|bg)$/);
-  if (m && m[2] === suffix && isColorKey(m[1]) && !isDefaultKey(m[1])) return m[1] as ColorKey;
+  if (m && m[2] === suffix && isColorKey(m[1]) && !isDefaultKey(m[1])) return m[1];
   return undefined;
 }
 /** Parse a CSS `color` value back to a text key (our var() output), or undefined. */

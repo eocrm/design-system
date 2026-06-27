@@ -192,7 +192,7 @@ export function RichTextEditorDemo() {
 
       <Example
         title="Text & highlight color"
-        description="Select text and use the toolbar Color button to apply a text or highlight color from the curated palette (gray, red, green, amber, blue). Choosing Default clears the color. With blockControls enabled, open the ⠿ block menu and choose Color to color the entire block at once. Colors persist in the document and round-trip through HTML serialization, but are dropped in Markdown (like alignment and width)."
+        description="Select text and use the toolbar Color button to apply a text or highlight color. The picker leads with the default brand colors (gray, red, green, amber, blue), then the rest of the categorical palette. Choosing Default clears the color. With blockControls enabled, open the ⠿ block menu and choose Color to color the entire block at once. Colors persist in the document and round-trip through HTML serialization, but are dropped in Markdown (like alignment and width)."
         code={`const [doc, setDoc] = useState(() => fromHtml('<p>Select a word and color it.</p>'));
 <RichTextEditor value={doc} onChange={setDoc} toolbar blockControls />`}
       >
