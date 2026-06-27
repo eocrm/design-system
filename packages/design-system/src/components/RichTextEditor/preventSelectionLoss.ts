@@ -1,3 +1,5 @@
+// preventSelectionLoss.ts — shared mousedown guard for toolbar/menu controls that
+// act on the editor's current selection (kept in one place to avoid drift).
 import type { MouseEvent } from 'react';
 
 /**
