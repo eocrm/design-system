@@ -32,6 +32,11 @@ describe('colorMarks', () => {
     expect(bgColorKeyFrom('var(--color-palette-green-bg)')).toBe('green');
   });
 
+  it('also parses a bare token (no var() wrapper)', () => {
+    expect(textColorKeyFrom('--color-palette-red-fg')).toBe('red');
+    expect(bgColorKeyFrom('--color-palette-amber-bg')).toBe('amber');
+  });
+
   it('rejects a suffix mismatch (fg-var passed to bgColorKeyFrom)', () => {
     expect(bgColorKeyFrom('var(--color-palette-blue-fg)')).toBeUndefined();
     expect(textColorKeyFrom('var(--color-palette-green-bg)')).toBeUndefined();

@@ -80,6 +80,7 @@ export function RichTextColorMenu({ active, onPick }: RichTextColorMenuProps) {
           type="button"
           className={clsx(styles.swatch, styles.swatchClear)}
           aria-label={t('richTextEditor.colorClear')}
+          title={t('richTextEditor.colorClear')}
           // "Default" is the pressed state when no color of this type is active.
           aria-pressed={!active[type]}
           // Preserve the editor's DOM selection: a mousedown that moves focus
@@ -95,6 +96,9 @@ export function RichTextColorMenu({ active, onPick }: RichTextColorMenuProps) {
             // Dynamic token var() — like renderDoc, the value is theme-backed, not a raw color.
             style={{ background: swatchVar(key) }}
             aria-label={t(SWATCH_LABEL[key])}
+            // Tooltip too: 30 near-shades (coral/rose, slate/stone/taupe) are hard to
+            // tell apart by sight; the name on hover gives mouse users parity with AT.
+            title={t(SWATCH_LABEL[key])}
             aria-pressed={active[type] === key}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => onPick(type, key)}
