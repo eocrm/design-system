@@ -398,6 +398,23 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       return null; // reached the root (or ran out of ancestors) — no block
     }, []);
 
+    // The block whose vertical band contains viewport-y `clientY`, or null. Used to
+    // resolve a hover over the gutter/padding column (where there is no block element
+    // under the pointer) to the row beside it. Block elements are in document order =
+    // top-to-bottom, so we can stop once a block starts below the pointer; among the
+    // blocks that contain the pointer the LAST in document order is the deepest (a
+    // nested list item comes after — and sits inside — its parent), matching how a
+    // direct hover resolves to the innermost block.
+    const blockAtPointerY = useCallback((root: HTMLElement, clientY: number): string | null => {
+      let found: string | null = null;
+      for (const el of root.querySelectorAll<HTMLElement>('[data-block-id]')) {
+        const box = el.getBoundingClientRect();
+        if (box.top > clientY) break;
+        if (clientY <= box.bottom) found = el.getAttribute('data-block-id');
+      }
+      return found;
+    }, []);
+
     const historyRef = useRef<History>(historyReset({ doc: value, selection: null }));
     // Timestamp of the last ⌘Z/⌘⇧Z/⌘Y keydown — lets the beforeinput net skip the
     // historyUndo/historyRedo event that a keydown ALSO emits (already handled),
@@ -843,18 +860,42 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         const id = blockIdFromNode(e.target as Node);
         if (id) setHoverBlockId(id);
       };
+      // The gutter (＋ / ⠿) and the reserved left column are NOT inside the editable,
+      // so `mouseover` there resolves to no block id and would leave the controls
+      // stranded on whichever row was last hovered. Track the pointer's height while
+      // it's over that controls column and activate the row at that height — so
+      // hovering the controls area reveals/follows the adjacent row's controls.
+      // Scoped to the no-block case so block-targeted hovers stay on the cheap
+      // `mouseover` path; `mousemove` (not `mouseover`) is needed because sliding
+      // within the column fires no new `mouseover`.
+      const onMove = (e: MouseEvent) => {
+        if (blockMenuOpenRef.current || draggingRef.current) return;
+        const root = rootRef.current;
+        if (!root) return;
+        // Only the editable's OWN area (its reserved left column / padding). The gutter
+        // overlay is a sibling of the editable, not a descendant, so this skips it —
+        // its buttons stay alive via onOver's leave-unchanged path, and we never fight
+        // the controls the pointer is aiming for.
+        const target = e.target as Node;
+        if (!root.contains(target)) return;
+        if (blockIdFromNode(target)) return; // a real block hover — onOver has it
+        const id = blockAtPointerY(root, e.clientY);
+        if (id) setHoverBlockId(id);
+      };
       const onLeave = () => {
         // Keep the active block while the menu is open or a drag is mid-flight.
         if (blockMenuOpenRef.current || draggingRef.current) return;
         setHoverBlockId(null);
       };
       shell.addEventListener('mouseover', onOver);
+      shell.addEventListener('mousemove', onMove);
       shell.addEventListener('mouseleave', onLeave);
       return () => {
         shell.removeEventListener('mouseover', onOver);
+        shell.removeEventListener('mousemove', onMove);
         shell.removeEventListener('mouseleave', onLeave);
       };
-    }, [controlsOn, blockIdFromNode]);
+    }, [controlsOn, blockIdFromNode, blockAtPointerY]);
 
     // Caret tracking → active block (keyboard users get a gutter target too).
     useEffect(() => {
@@ -1294,6 +1335,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       <RichTextBlockControls
         rootRef={shellRef}
         activeBlockId={activeBlockId}
+        blockOrderKey={value.blocks.map((b) => b.id).join('|')}
         activeBlockType={activeBlockType}
         menuOpen={blockMenuOpen}
         onMenuOpenChange={setBlockMenuOpen}

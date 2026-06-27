@@ -27,6 +27,15 @@ export interface RichTextBlockControlsProps {
   rootRef: RefObject<HTMLElement | null>;
   /** Block currently hovered or holding the caret; null hides the gutter. */
   activeBlockId: string | null;
+  /**
+   * A signature of the current block order (e.g. the ids joined). The gutter's
+   * vertical position is measured from the active block's DOM box; the active
+   * block keeps its id across a reorder, so without an order-derived dependency
+   * the measurement would go stale and the controls would linger at the block's
+   * OLD row after a drop / insert / delete. Pass an order-derived string so the
+   * gutter re-measures whenever the block layout shifts.
+   */
+  blockOrderKey?: string;
   /** Type of the active block (gates the menu's "Turn into" — hidden for voids). */
   activeBlockType?: BlockType;
   /** Controlled open state of the block menu. */
@@ -113,6 +122,7 @@ function DraggableGutter({
 export function RichTextBlockControls({
   rootRef,
   activeBlockId,
+  blockOrderKey,
   activeBlockType,
   menuOpen,
   onMenuOpenChange,
@@ -178,7 +188,10 @@ export function RichTextBlockControls({
     const box = el.getBoundingClientRect();
     setTop(box.top - rootBox.top);
     setHeight(box.height);
-  }, [rootRef, activeBlockId, menuOpen, retry]);
+    // blockOrderKey is a dep so a reorder/insert/delete (which keeps the active
+    // block's id but moves its row) re-measures rather than leaving the gutter
+    // stranded at the old position.
+  }, [rootRef, activeBlockId, blockOrderKey, menuOpen, retry]);
 
   const handleDragStart = (_event: DragStartEvent) => {
     const root = rootRef.current;
