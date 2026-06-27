@@ -970,6 +970,7 @@ const [doc, setDoc] = useState(emptyDoc());
 - **Block-type dropdown** — Paragraph, Heading 1–3, Quote, Code block. Shows the current block type; mixed multi-block selections show "Mixed".
 - **List toggles** — Bullet list, Numbered list. Toggle between the list type and paragraph.
 - **Link button** — add/edit a link on the selection. Reflects `aria-pressed` when the caret is inside a link.
+- **Emoji insert** — opens a searchable `EmojiPickerPopover`; selecting an emoji inserts it at the caret.
 - **Undo / Redo buttons** — undo/redo the last change; disabled at the ends of the history.
 
 **List keys:**

@@ -224,6 +224,7 @@ export const ru: Messages = {
     bulletList: 'Маркированный список',
     orderedList: 'Нумерованный список',
     link: 'Ссылка',
+    emoji: 'Эмодзи',
     linkUrl: 'URL ссылки',
     linkUrlPlaceholder: 'https://… или /path',
     linkApply: 'Применить',

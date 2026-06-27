@@ -368,6 +368,8 @@ export interface Messages {
     orderedList: string;
     /** aria-label on the toolbar Link button. */
     link: string;
+    /** Emoji-insert toolbar button. */
+    emoji: string;
     /** Label (aria) for the URL field in the link bubble. */
     linkUrl: string;
     /** Placeholder for the URL field in the link bubble. */

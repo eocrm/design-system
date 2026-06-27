@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { vi } from 'vitest';
@@ -261,6 +261,121 @@ describe('RichTextEditor toolbar', () => {
       ([ev]) => (ev as React.KeyboardEvent).key.toLowerCase() === 'k',
     );
     expect(kReachedHost).toBe(false);
+  });
+
+  it('Emoji toolbar button inserts the chosen emoji at the caret', async () => {
+    const user = userEvent.setup();
+    // Stub the live selection to a collapsed caret at offset 3 (end of 'hi ').
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 3 },
+      focus: { blockId: 'k', offset: 3 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi ', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    // Click the Emoji toolbar button to open the picker.
+    await user.click(screen.getByRole('button', { name: 'Emoji' }));
+    // The first emoji in the curated set is 'grinning face' (😀).
+    const listbox = await screen.findByRole('listbox');
+    const firstEmoji = within(listbox).getAllByRole('option')[0];
+    const glyph = firstEmoji.textContent!.trim();
+    await user.click(firstEmoji);
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Rich text editor' }).textContent).toContain(
+        glyph,
+      );
+    });
+  });
+
+  it('Emoji toolbar button replaces a non-collapsed selection', async () => {
+    const user = userEvent.setup();
+    // Stub the live selection to a non-collapsed range covering 'world' (offsets 6-11).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 6 },
+      focus: { blockId: 'k', offset: 11 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hello world', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Emoji' }));
+    const listbox = await screen.findByRole('listbox');
+    const firstEmoji = within(listbox).getAllByRole('option')[0];
+    const glyph = firstEmoji.textContent!.trim();
+    await user.click(firstEmoji);
+    await waitFor(() => {
+      const text = screen.getByRole('textbox', { name: 'Rich text editor' }).textContent;
+      expect(text).toContain(glyph);
+      expect(text).not.toContain('world'); // selected text was replaced, not appended
+    });
+  });
+
+  it('Emoji insert uses lastSelectionRef when live selection is null (search-box focus path)', async () => {
+    const user = userEvent.setup();
+    // Start with a valid selection so the selectionchange handler captures it
+    // into lastSelectionRef, then simulate the caret being stolen by the search box.
+    const validRange: Range = {
+      anchor: { blockId: 'k', offset: 3 },
+      focus: { blockId: 'k', offset: 3 },
+    };
+    mockReadSelection.mockReturnValue(validRange);
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi ', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    // Fire a selectionchange so the component's handler runs and captures the
+    // non-null selection into lastSelectionRef.
+    act(() => {
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    // Now simulate focus moving to the emoji search box: live selection becomes null.
+    mockReadSelection.mockReturnValue(null);
+    await user.click(screen.getByRole('button', { name: 'Emoji' }));
+    const listbox = await screen.findByRole('listbox');
+    const firstEmoji = within(listbox).getAllByRole('option')[0];
+    const glyph = firstEmoji.textContent!.trim();
+    await user.click(firstEmoji);
+    // The emoji must still land in the editor even though live readSelection returns null.
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Rich text editor' }).textContent).toContain(
+        glyph,
+      );
+    });
+  });
+
+  it('Emoji insert refocuses the editor after the pick', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 3 },
+      focus: { blockId: 'k', offset: 3 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi ', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Emoji' }));
+    const listbox = await screen.findByRole('listbox');
+    const firstEmoji = within(listbox).getAllByRole('option')[0];
+    await user.click(firstEmoji);
+    // After picking, the editor textbox should have focus so the user can keep typing.
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole('textbox', { name: 'Rich text editor' }),
+      );
+    });
   });
 });
 

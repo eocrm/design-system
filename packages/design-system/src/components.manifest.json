@@ -256,7 +256,9 @@
       "Popover",
       "Text"
     ],
-    "composedBy": []
+    "composedBy": [
+      "RichTextEditor"
+    ]
   },
   "EmptyState": {
     "tier": "primitive",
@@ -571,6 +573,7 @@
       "CircularProgress",
       "Cluster",
       "DropdownMenu",
+      "EmojiPicker",
       "Input",
       "RichText",
       "Slider",

@@ -222,6 +222,7 @@ export const en: Messages = {
     bulletList: 'Bullet list',
     orderedList: 'Numbered list',
     link: 'Link',
+    emoji: 'Emoji',
     linkUrl: 'Link URL',
     linkUrlPlaceholder: 'https://… or /path',
     linkApply: 'Apply',
