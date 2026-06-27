@@ -260,6 +260,7 @@ export const en: Messages = {
     textColor: 'Text',
     highlight: 'Highlight',
     colorClear: 'Default',
+    colorGray: 'Gray',
     colorRed: 'Red',
     colorCoral: 'Coral',
     colorOrange: 'Orange',

@@ -262,6 +262,7 @@ export const ru: Messages = {
     textColor: 'Текст',
     highlight: 'Фон',
     colorClear: 'По умолчанию',
+    colorGray: 'Серый',
     colorRed: 'Красный',
     colorCoral: 'Коралловый',
     colorOrange: 'Оранжевый',

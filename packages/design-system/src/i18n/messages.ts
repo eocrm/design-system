@@ -444,6 +444,8 @@ export interface Messages {
     highlight: string;
     /** aria-label on the ⌀ "clear color" swatch (reset to the default color). */
     colorClear: string;
+    /** aria-label on the gray default color swatch. */
+    colorGray: string;
     /** aria-label on the red palette color swatch. */
     colorRed: string;
     /** aria-label on the coral palette color swatch. */

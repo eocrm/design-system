@@ -14,8 +14,9 @@ export interface RichTextColorMenuProps {
 }
 
 // Palette key → i18n key for the swatch aria-label. Exhaustive over every
-// ColorKey (the full 30-color palette) — TypeScript enforces the Record is total.
+// ColorKey (gray + the 30-color palette) — TypeScript enforces the Record is total.
 const SWATCH_LABEL: Record<ColorKey, MessageKey> = {
+  gray: 'richTextEditor.colorGray',
   red: 'richTextEditor.colorRed',
   coral: 'richTextEditor.colorCoral',
   orange: 'richTextEditor.colorOrange',
