@@ -36,8 +36,8 @@ export interface ThreadProps extends HTMLAttributes<HTMLUListElement> {
    */
   maxDepth?: number;
   /**
-   * Tighter node box and gaps for dense surfaces (sidebars, panels). The remapped tokens
-   * cascade to every nested item via CSS custom properties. Default `false`.
+   * Tighter gaps for dense surfaces (sidebars, panels). The remapped tokens cascade to
+   * every nested item via CSS custom properties. Default `false`.
    */
   compact?: boolean;
   /** The `<Thread.Item>`s. */
@@ -48,7 +48,9 @@ export interface ThreadItemProps extends HTMLAttributes<HTMLLIElement> {
   /**
    * The leading marker the rail connects to — an `<Avatar>`, icon, or `<Dot>`. Centered
    * in a fixed node box so the rail aligns regardless of node content. It's a slot:
-   * there is no built-in avatar.
+   * there is no built-in avatar. Size the node to `--thread-node-size` (default `sm` /
+   * 24px) — e.g. `<Avatar size="sm">` — so the rail/elbow connectors meet it cleanly;
+   * for a larger node, override `--thread-node-size` to match.
    */
   node: ReactNode;
   /**
@@ -131,13 +133,13 @@ ThreadItem.displayName = 'Thread.Item';
  * indent. Use `<Thread compact>` for dense sidebars.
  *
  * @example
- * // Basic nested thread:
+ * // Basic nested thread. Size the Avatar to match `--thread-node-size` (default sm).
  * <Thread>
- *   <Thread.Item node={<Avatar name="Ada" src={ada.url} />}>
- *     <PersonDisplay>…name · time…</PersonDisplay>
- *     <Text>Looks good to me.</Text>
- *     <Thread.Item node={<Avatar name="Linus" src={linus.url} />}>
- *       <Text>Agreed — shipping it.</Text>
+ *   <Thread.Item node={<Avatar name="Ada" src={ada.url} size="sm" />}>
+ *     <Text size="sm"><strong>Ada</strong> · 2h ago</Text>
+ *     <Text size="sm">Looks good to me.</Text>
+ *     <Thread.Item node={<Avatar name="Linus" src={linus.url} size="sm" />}>
+ *       <Text size="sm">Agreed — shipping it.</Text>
  *     </Thread.Item>
  *   </Thread.Item>
  * </Thread>
@@ -147,7 +149,7 @@ ThreadItem.displayName = 'Thread.Item';
  * <Thread maxDepth={2}>{comments.map(renderComment)}</Thread>
  *
  * @example
- * // Compact, for a sidebar activity panel:
+ * // Compact (tighter gaps), for a sidebar activity panel:
  * <Thread compact>
  *   <Thread.Item node={<Avatar name="Grace" size="sm" />}>
  *     <Text size="sm">Renewed the contract.</Text>

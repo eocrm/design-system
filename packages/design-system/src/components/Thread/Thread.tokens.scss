@@ -1,11 +1,21 @@
 :root {
-  --thread-node-size: var(--size-md); // 32px node column / box
-  --thread-content-gap: var(--space-3); // 12px node → content
+  // Node column / box — match it to the avatar size you pass as `node`. Default `sm`
+  // (24px): comment-thread avatars are small, and it keeps the per-level reply indent
+  // (node + content-gap) tight. Override `--thread-node-size` for larger nodes.
+  --thread-node-size: var(--size-sm); // 24px node column / box
+  --thread-content-gap: var(
+    --space-2
+  ); // 8px node → content (also the per-level reply indent: node + gap)
   --thread-row-gap: var(--space-4); // 16px between items
   --thread-rail-width: var(--border-width); // hairline rail
   --thread-rail-color: var(--color-border);
+  --thread-node-gap: 1px; // hairline gap between the connector lines and the node/avatar
+  // Surface the thread sits on; the last-reply trunk mask paints this to hide the
+  // rail's overshoot below the final branch. Override if Thread renders on a
+  // non-default (tinted) surface, else a faint stripe shows below the last reply.
+  --thread-surface: var(--color-bg);
 
   --thread-node-size-compact: var(--size-sm); // 24px
-  --thread-content-gap-compact: var(--space-2); // 8px
+  --thread-content-gap-compact: var(--space-1); // 4px
   --thread-row-gap-compact: var(--space-2); // 8px
 }
