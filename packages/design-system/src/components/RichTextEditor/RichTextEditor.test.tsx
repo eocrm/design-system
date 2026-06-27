@@ -317,6 +317,31 @@ describe('RichTextEditor toolbar', () => {
     });
   });
 
+  it('Color toolbar button wraps the selection in the chosen text color', async () => {
+    const user = userEvent.setup();
+    // Stub a non-collapsed range covering 'hello' (jsdom has no real caret).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hello', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    // Open the color menu, then pick the red swatch in the Text (first) row.
+    await user.click(screen.getByRole('button', { name: 'Color' }));
+    const redSwatches = await screen.findAllByRole('button', { name: 'Red' });
+    await user.click(redSwatches[0]);
+    await waitFor(() => {
+      const span = screen.getByRole('textbox', { name: 'Rich text editor' }).querySelector('span');
+      expect(span?.textContent).toBe('hello');
+      expect(span?.style.color).toBe('var(--color-danger)');
+    });
+  });
+
   it('Emoji insert uses lastSelectionRef when live selection is null (search-box focus path)', async () => {
     const user = userEvent.setup();
     // Start with a valid selection so the selectionchange handler captures it

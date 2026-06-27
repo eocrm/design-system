@@ -3,7 +3,10 @@ import type { BlockType, MarkType } from '../RichText/engine/model';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
 import { EmojiPickerPopover } from '../EmojiPicker';
+import { Popover } from '../Popover';
 import { useTranslation } from '../../i18n';
+import { RichTextColorMenu } from './RichTextColorMenu';
+import type { ActiveColors } from './commands';
 import {
   BoldIcon,
   ItalicIcon,
@@ -16,6 +19,7 @@ import {
   RedoIcon,
   AttachFileIcon,
   SmileIcon,
+  TextColorIcon,
 } from './icons';
 import styles from './RichTextEditor.module.scss';
 
@@ -25,6 +29,10 @@ export type BlockChoice = { type: BlockType; level?: 1 | 2 | 3 };
 export interface RichTextToolbarProps {
   /** Mark types active across the current selection (drives the pressed state). */
   activeMarks: MarkType[];
+  /** Active color key per type, to ring the current swatch in the color menu. */
+  colors: ActiveColors;
+  /** Set a text/highlight color (palette key) — or clear (`null`) — for the selection. */
+  onSetColor: (type: 'textColor' | 'bgColor', key: string | null) => void;
   /** The block type spanning the selection, or `null` when it's mixed. */
   block: BlockChoice | null;
   /** Disable every control (e.g. when the editor is read-only). */
@@ -84,6 +92,8 @@ const MARKS: {
  */
 export function RichTextToolbar({
   activeMarks,
+  colors,
+  onSetColor,
   block,
   disabled,
   onToggleMark,
@@ -235,6 +245,26 @@ export function RichTextToolbar({
         }
         onSelect={onInsertEmoji}
       />
+
+      <Popover>
+        <Popover.Trigger>
+          <Button
+            size="sm"
+            variant="ghost"
+            iconOnly
+            aria-label={t('richTextEditor.color')}
+            disabled={disabled}
+            // Preserve the editor's DOM selection so it's still live when a swatch
+            // is picked and onSetColor reads it (mirrors the emoji/link buttons).
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            <TextColorIcon />
+          </Button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <RichTextColorMenu active={colors} onPick={onSetColor} />
+        </Popover.Content>
+      </Popover>
 
       <span className={styles.toolbarSep} aria-hidden="true" />
 

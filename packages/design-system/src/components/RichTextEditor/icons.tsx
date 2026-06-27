@@ -131,3 +131,13 @@ export function SmileIcon() {
     </svg>
   );
 }
+// An "A" glyph above a solid color bar — the conventional text-color affordance.
+export function TextColorIcon() {
+  return (
+    <svg {...base}>
+      <path d="M5 17 12 5l7 12" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <rect x="4" y="20" width="16" height="2.5" rx="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

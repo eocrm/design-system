@@ -11,10 +11,13 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
   const onUndo = vi.fn();
   const onRedo = vi.fn();
   const onInsertEmoji = vi.fn();
+  const onSetColor = vi.fn();
   render(
     <I18nProvider locale="en">
       <RichTextToolbar
         activeMarks={[]}
+        colors={{}}
+        onSetColor={onSetColor}
         block={{ type: 'paragraph' }}
         onToggleMark={onToggleMark}
         onSetBlock={onSetBlock}
@@ -27,7 +30,16 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
       />
     </I18nProvider>,
   );
-  return { onToggleMark, onSetBlock, onToggleList, onOpenLink, onUndo, onRedo, onInsertEmoji };
+  return {
+    onToggleMark,
+    onSetBlock,
+    onToggleList,
+    onOpenLink,
+    onUndo,
+    onRedo,
+    onInsertEmoji,
+    onSetColor,
+  };
 }
 
 describe('RichTextToolbar', () => {
@@ -49,6 +61,16 @@ describe('RichTextToolbar', () => {
     const { onToggleMark } = renderTb();
     await user.click(screen.getByRole('button', { name: 'Bold' }));
     expect(onToggleMark).toHaveBeenCalledWith('bold');
+  });
+
+  it('renders a Color button that opens the swatch menu and fires onSetColor', async () => {
+    const user = userEvent.setup();
+    const { onSetColor } = renderTb();
+    await user.click(screen.getByRole('button', { name: 'Color' }));
+    // Text + Highlight rows each render a 'Red' swatch; the first is the Text row.
+    const redSwatches = await screen.findAllByRole('button', { name: 'Red' });
+    await user.click(redSwatches[0]);
+    expect(onSetColor).toHaveBeenCalledWith('textColor', 'red');
   });
 
   it('the block-type trigger shows the current block label', () => {

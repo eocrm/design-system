@@ -23,6 +23,7 @@ import {
   insertFragment,
   insertMention,
   deleteRange,
+  setColorMark,
 } from '../RichText/engine/transforms';
 import { linkifyRuns, findUrl } from '../RichText/engine/autolink';
 import { useMention } from './useMention';
@@ -38,6 +39,7 @@ import { runsText } from '../RichText/engine/inlines';
 import { shortcutMark } from './shortcuts';
 import {
   activeMarks as deriveActiveMarks,
+  activeColors as deriveActiveColors,
   currentBlock as deriveCurrentBlock,
   runToggleMark,
   runSetBlock,
@@ -573,6 +575,43 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [commit],
     );
 
+    // Color sibling of stageOrToggleMark: with a collapsed caret, stage the color
+    // as a pending mark for the next typed text (replacing any pending color of the
+    // same type, or clearing it when `key` is null); with a selection, set it now.
+    const stageOrSetColor = useCallback(
+      (range: Range, type: 'textColor' | 'bgColor', key: string | null) => {
+        if (isCollapsed(range)) {
+          pendingAtRef.current = range.anchor;
+          setPendingMarks((prev) => {
+            const base = (prev ?? marksAtCaretMarks(latest.current.value, range.anchor)).filter(
+              (m) => m.type !== type,
+            );
+            return key ? [...base, { type, color: key }] : base;
+          });
+        } else {
+          // setColorMark returns a bare RichDoc (a color change never moves the
+          // caret), so wrap it for commit and keep the existing selection.
+          commit({ doc: setColorMark(latest.current.value, range, type, key), selection: range });
+        }
+      },
+      [commit],
+    );
+
+    // Toolbar color dispatch — read the live selection (falling back to the most
+    // recent one, which survives the Popover stealing focus) and route through the
+    // shared color path, then restore focus so typing continues after the pick.
+    const onSetColor = useCallback(
+      (type: 'textColor' | 'bgColor', key: string | null) => {
+        const root = rootRef.current;
+        const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
+        if (range) {
+          stageOrSetColor(range, type, key);
+          root?.focus();
+        }
+      },
+      [stageOrSetColor],
+    );
+
     // Open the link editor for the live selection: edit the link under the caret
     // if there is one (href pre-filled, Remove available), else create over the
     // selection (or insert at a collapsed caret on Apply).
@@ -1086,6 +1125,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       () => (selection ? deriveActiveMarks(value, selection, pendingMarks) : []),
       [value, selection, pendingMarks],
     );
+    const toolbarColors = useMemo(
+      () => (selection ? deriveActiveColors(value, selection, pendingMarks) : {}),
+      [value, selection, pendingMarks],
+    );
     const toolbarBlock = useMemo<BlockChoice | null>(
       () => (selection ? deriveCurrentBlock(value, selection) : null),
       [value, selection],
@@ -1475,6 +1518,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const toolbarBar = showToolbar ? (
       <RichTextToolbar
         activeMarks={toolbarMarks}
+        colors={toolbarColors}
+        onSetColor={onSetColor}
         block={toolbarBlock}
         disabled={readOnly}
         onToggleMark={onToolbarMark}
