@@ -300,6 +300,15 @@ export type {
   OptionsPickerGroup,
 } from './components/OptionsPicker';
 
+export { EmojiPicker, EmojiPickerPopover } from './components/EmojiPicker';
+export type {
+  EmojiPickerProps,
+  EmojiPickerPopoverProps,
+  EmojiEntry,
+  EmojiCategory,
+  EmojiCategoryId,
+} from './components/EmojiPicker';
+
 export { Progress } from './components/Progress';
 export type {
   ProgressProps,

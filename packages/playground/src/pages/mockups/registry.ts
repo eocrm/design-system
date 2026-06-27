@@ -28,6 +28,7 @@ export type ComponentName =
   | 'Dot'
   | 'Drawer'
   | 'DropdownMenu'
+  | 'EmojiPicker'
   | 'EmptyState'
   | 'ErrorState'
   | 'Field'

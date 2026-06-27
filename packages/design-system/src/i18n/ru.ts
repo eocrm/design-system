@@ -107,6 +107,23 @@ export const ru: Messages = {
     cancel: 'Отмена',
     noMatches: 'Совпадений не найдено',
   },
+  emojiPicker: {
+    search: 'Поиск эмодзи',
+    label: 'Эмодзи',
+    noResults: 'Эмодзи не найдены',
+    category: {
+      smileys: 'Смайлики',
+      gestures: 'Жесты',
+      people: 'Люди',
+      animals: 'Животные и природа',
+      food: 'Еда и напитки',
+      activities: 'Активности',
+      travel: 'Путешествия и места',
+      objects: 'Объекты',
+      symbols: 'Символы',
+      flags: 'Флаги',
+    },
+  },
   pagination: {
     previous: 'Назад',
     next: 'Далее',

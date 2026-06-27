@@ -75,6 +75,7 @@ import { Image } from '@eocrm/design-system';
 import { MediaTile } from '@eocrm/design-system';
 import { ImageCrop } from '@eocrm/design-system';
 import { OptionsPicker } from '@eocrm/design-system';
+import { EmojiPickerPopover } from '@eocrm/design-system';
 import { PALETTE_COLORS, paletteTokens } from '@eocrm/design-system';
 import { Pagination } from '@eocrm/design-system';
 import { PersonDisplay } from '@eocrm/design-system';
@@ -1320,6 +1321,24 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             ]}
           />
         </OptionsPicker>
+      </div>
+    ),
+  },
+  {
+    to: '/components/emoji-picker',
+    name: 'EmojiPicker',
+    description:
+      'Searchable, categorized emoji grid for reactions and everyday input — lives in a Popover, calls onSelect(emoji).',
+    preview: (
+      <div style={{ pointerEvents: 'none' }}>
+        <EmojiPickerPopover
+          trigger={
+            <Button size="sm" variant="secondary">
+              😀 React
+            </Button>
+          }
+          onSelect={() => {}}
+        />
       </div>
     ),
   },

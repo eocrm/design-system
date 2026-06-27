@@ -248,6 +248,16 @@
       "RichTextEditor"
     ]
   },
+  "EmojiPicker": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Input",
+      "Popover",
+      "Text"
+    ],
+    "composedBy": []
+  },
   "EmptyState": {
     "tier": "primitive",
     "cluster": "Display",
@@ -352,6 +362,7 @@
     "composes": [],
     "composedBy": [
       "ColorPicker",
+      "EmojiPicker",
       "OptionsPicker",
       "PhoneInput",
       "RichTextEditor"
@@ -514,6 +525,7 @@
     "composedBy": [
       "ColorPicker",
       "ConfirmationPopover",
+      "EmojiPicker",
       "OptionsPicker"
     ]
   },
@@ -677,6 +689,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "EmojiPicker",
       "Field",
       "FilterChip",
       "FormSection",
