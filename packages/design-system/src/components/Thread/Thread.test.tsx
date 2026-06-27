@@ -63,6 +63,10 @@ describe('Thread', () => {
     );
     expect(container.querySelector('[class*="repliesFlat"]')).not.toBeNull();
     expect(screen.getByTestId('deep')).toHaveTextContent('deep reply');
+    // The over-cap reply (C) sits directly in the FLAT container — its parent <ul>
+    // is `repliesFlat`, not a further-indented `.replies` sub-list (indent stopped).
+    const deepUl = screen.getByTestId('deep').closest('li')?.parentElement;
+    expect(deepUl?.className).toMatch(/repliesFlat/);
   });
 
   it('compact adds the compact class to the root <ul>', () => {

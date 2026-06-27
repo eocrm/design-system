@@ -15,6 +15,11 @@
   display: grid;
   grid-template-columns: var(--thread-node-size) 1fr;
   column-gap: var(--thread-content-gap);
+
+  // Row gap separates the body row from the flat-replies row (past the depth cap),
+  // so the first flat reply isn't flush against the parent body. No-op for the
+  // indented branch (single grid row — its replies nest inside `.content`).
+  row-gap: var(--thread-row-gap);
 }
 
 .gutter {
