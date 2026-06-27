@@ -2,6 +2,7 @@ import { useRef, type ReactElement } from 'react';
 import type { BlockType, MarkType } from '../RichText/engine/model';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
+import { EmojiPickerPopover } from '../EmojiPicker';
 import { useTranslation } from '../../i18n';
 import {
   BoldIcon,
@@ -14,6 +15,7 @@ import {
   UndoIcon,
   RedoIcon,
   AttachFileIcon,
+  SmileIcon,
 } from './icons';
 import styles from './RichTextEditor.module.scss';
 
@@ -49,6 +51,8 @@ export interface RichTextToolbarProps {
   onUpload?: (files: File[]) => void;
   /** Native file-picker `accept` filter. */
   uploadAccept?: string;
+  /** Insert an emoji at the caret. */
+  onInsertEmoji: (emoji: string) => void;
 }
 
 const MARKS: {
@@ -93,6 +97,7 @@ export function RichTextToolbar({
   onRedo,
   onUpload,
   uploadAccept,
+  onInsertEmoji,
 }: RichTextToolbarProps) {
   const t = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -212,6 +217,24 @@ export function RichTextToolbar({
       >
         <LinkIcon />
       </Button>
+
+      <EmojiPickerPopover
+        trigger={
+          <Button
+            size="sm"
+            variant="ghost"
+            iconOnly
+            aria-label={t('richTextEditor.emoji')}
+            disabled={disabled}
+            // Preserve the editor's DOM selection so the caret is still live
+            // when the emoji is chosen and onInsertEmoji reads it.
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            <SmileIcon />
+          </Button>
+        }
+        onSelect={onInsertEmoji}
+      />
 
       <span className={styles.toolbarSep} aria-hidden="true" />
 

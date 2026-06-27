@@ -1093,6 +1093,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Toolbar dispatch — read the live selection (falling back to tracked state)
     // and route through the same commit path the keyboard uses. A mark at a
     // collapsed caret stages a pending mark, mirroring the keyboard shortcut.
+    const onInsertEmoji = useCallback(
+      (emoji: string) => {
+        const root = rootRef.current;
+        const range = (root ? readSelection(root) : null) ?? selection;
+        if (range) commit(insertText(latest.current.value, range.anchor, emoji));
+      },
+      [selection, commit],
+    );
+
     const onToolbarMark = useCallback(
       (type: MarkType) => {
         if (type === 'link' || type === 'mention') return; // link needs an href; mention needs id+label — toolbar fires neither
@@ -1466,6 +1475,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onRedo={onRedo}
         onUpload={uploadOn ? (files) => uploaderRef.current.uploadFiles(files) : undefined}
         uploadAccept={upload?.accept}
+        onInsertEmoji={onInsertEmoji}
       />
     ) : null;
 

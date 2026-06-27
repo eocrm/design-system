@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { vi } from 'vitest';
@@ -261,6 +261,34 @@ describe('RichTextEditor toolbar', () => {
       ([ev]) => (ev as React.KeyboardEvent).key.toLowerCase() === 'k',
     );
     expect(kReachedHost).toBe(false);
+  });
+
+  it('Emoji toolbar button inserts the chosen emoji at the caret', async () => {
+    const user = userEvent.setup();
+    // Stub the live selection to a collapsed caret at offset 3 (end of 'hi ').
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 3 },
+      focus: { blockId: 'k', offset: 3 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi ', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    // Click the Emoji toolbar button to open the picker.
+    await user.click(screen.getByRole('button', { name: 'Emoji' }));
+    // The first emoji in the curated set is 'grinning face' (😀).
+    const listbox = await screen.findByRole('listbox');
+    const firstEmoji = within(listbox).getAllByRole('option')[0];
+    const glyph = firstEmoji.textContent!.trim();
+    await user.click(firstEmoji);
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Rich text editor' }).textContent).toContain(
+        glyph,
+      );
+    });
   });
 });
 

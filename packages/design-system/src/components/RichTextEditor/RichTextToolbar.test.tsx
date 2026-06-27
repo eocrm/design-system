@@ -10,6 +10,7 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
   const onOpenLink = vi.fn();
   const onUndo = vi.fn();
   const onRedo = vi.fn();
+  const onInsertEmoji = vi.fn();
   render(
     <I18nProvider locale="en">
       <RichTextToolbar
@@ -21,11 +22,12 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
         onOpenLink={onOpenLink}
         onUndo={onUndo}
         onRedo={onRedo}
+        onInsertEmoji={onInsertEmoji}
         {...props}
       />
     </I18nProvider>,
   );
-  return { onToggleMark, onSetBlock, onToggleList, onOpenLink, onUndo, onRedo };
+  return { onToggleMark, onSetBlock, onToggleList, onOpenLink, onUndo, onRedo, onInsertEmoji };
 }
 
 describe('RichTextToolbar', () => {
@@ -133,5 +135,15 @@ describe('RichTextToolbar', () => {
     renderTb({ canUndo: true, canRedo: true, disabled: true });
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Redo' })).toBeDisabled();
+  });
+
+  it('renders an Emoji button', () => {
+    renderTb();
+    expect(screen.getByRole('button', { name: 'Emoji' })).toBeInTheDocument();
+  });
+
+  it('disables the Emoji button when disabled', () => {
+    renderTb({ disabled: true });
+    expect(screen.getByRole('button', { name: 'Emoji' })).toBeDisabled();
   });
 });
