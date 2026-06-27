@@ -691,6 +691,12 @@
     "composes": [],
     "composedBy": []
   },
+  "Thread": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "TimeField": {
     "tier": "primitive",
     "cluster": "Forms",

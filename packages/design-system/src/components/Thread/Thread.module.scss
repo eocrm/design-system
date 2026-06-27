@@ -1,0 +1,93 @@
+@use './Thread.tokens';
+
+.root {
+  list-style: none;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ul> default margin
+  margin: 0;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ul> default padding
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--thread-row-gap);
+}
+
+.item {
+  display: grid;
+  grid-template-columns: var(--thread-node-size) 1fr;
+  column-gap: var(--thread-content-gap);
+
+  // Row gap separates the body row from the flat-replies row (past the depth cap),
+  // so the first flat reply isn't flush against the parent body. No-op for the
+  // indented branch (single grid row — its replies nest inside `.content`).
+  row-gap: var(--thread-row-gap);
+}
+
+.gutter {
+  position: relative;
+}
+
+.nodeBox {
+  height: var(--thread-node-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Vertical rail from below the node to the bottom of the item — i.e. down past the
+// item's (indented) replies, so it reads as descending from the avatar. The grid
+// stretches the gutter column to the item's full height (content holds the replies),
+// so inset-block-end:0 reaches the bottom of the reply group. Decorative.
+.rail {
+  position: absolute;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  inset-block-start: var(--thread-node-size);
+  inset-block-end: 0;
+  width: var(--thread-rail-width);
+  background: var(--thread-rail-color);
+}
+
+.content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--thread-row-gap);
+}
+
+.body {
+  min-width: 0;
+}
+
+// Indented replies — nested inside content (so the gutter column stretches and the
+// parent rail spans alongside them). Its own flex-column gap stacks the replies.
+.replies {
+  list-style: none;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ul> default margin
+  margin: 0;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ul> default padding
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--thread-row-gap);
+}
+
+// Flat replies past the cap — a direct grid child spanning both columns so they are
+// NOT indented further (the gutter stops compounding). No parent rail in this mode.
+.repliesFlat {
+  // stylelint-disable-next-line property-disallowed-list -- internal grid placement: flat replies span both columns to stop indent compounding
+  grid-column: 1 / -1;
+  list-style: none;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ul> default margin
+  margin: 0;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ul> default padding
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--thread-row-gap);
+}
+
+.compact {
+  --thread-node-size: var(--thread-node-size-compact);
+  --thread-content-gap: var(--thread-content-gap-compact);
+  --thread-row-gap: var(--thread-row-gap-compact);
+}
