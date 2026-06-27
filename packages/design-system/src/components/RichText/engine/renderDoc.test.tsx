@@ -515,6 +515,36 @@ describe('renderDoc color marks', () => {
     expect(container.querySelector('span')).toBeNull();
     expect(container.textContent).toBe('x');
   });
+
+  it('nests coexisting text+bg colors with textColor OUTSIDE bgColor (MARK_ORDER)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [
+            {
+              text: 'x',
+              marks: [
+                { type: 'textColor', color: 'red' },
+                { type: 'bgColor', color: 'green' },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const { container } = render(<>{renderDoc(doc)}</>);
+    // textColor is the OUTER span (MARK_ORDER: textColor before bgColor)…
+    const outer = container.querySelector('span');
+    expect(outer).not.toBeNull();
+    expect(outer!.style.color).toBe('var(--color-danger)');
+    // …with the bgColor span nested directly inside.
+    const inner = outer!.querySelector('span');
+    expect(inner).not.toBeNull();
+    expect(inner!.style.backgroundColor).toBe('var(--color-success-bg-subtle)');
+    expect(inner!.textContent).toBe('x');
+  });
 });
 
 it('renders an attachment block as a contenteditable=false figure', () => {
