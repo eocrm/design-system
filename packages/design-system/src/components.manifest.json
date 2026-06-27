@@ -528,7 +528,8 @@
       "ColorPicker",
       "ConfirmationPopover",
       "EmojiPicker",
-      "OptionsPicker"
+      "OptionsPicker",
+      "RichTextEditor"
     ]
   },
   "Progress": {
@@ -575,6 +576,7 @@
       "DropdownMenu",
       "EmojiPicker",
       "Input",
+      "Popover",
       "RichText",
       "Slider",
       "Stack",
