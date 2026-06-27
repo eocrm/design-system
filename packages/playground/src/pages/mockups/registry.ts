@@ -83,6 +83,7 @@ export type ComponentName =
   | 'Tabs'
   | 'Text'
   | 'Textarea'
+  | 'Thread'
   | 'TimeField'
   | 'Timeline'
   | 'Title'

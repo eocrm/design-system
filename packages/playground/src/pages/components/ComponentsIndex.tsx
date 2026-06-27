@@ -6,6 +6,7 @@ import { Avatar } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Dot } from '@eocrm/design-system';
 import { Timeline } from '@eocrm/design-system';
+import { Thread } from '@eocrm/design-system';
 import { BrandIcon } from '@eocrm/design-system';
 import { Logo } from '@eocrm/design-system';
 import eocrmLogo from '../../assets/eocrm-logo.svg';
@@ -934,6 +935,24 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             <Text size="xs">Moved to Negotiation</Text>
           </Timeline.Item>
         </Timeline>
+      </div>
+    ),
+  },
+  {
+    to: '/components/thread',
+    name: 'Thread',
+    description:
+      'Nested-reply threading — per-level left rail connecting a comment to its replies; depth-capped.',
+    preview: (
+      <div style={{ width: '100%', maxWidth: 200 }}>
+        <Thread compact>
+          <Thread.Item node={<Avatar name="Maya Chen" size="sm" />}>
+            <Text size="xs">Renewal flagged</Text>
+            <Thread.Item node={<Avatar name="Tom Okafor" size="sm" />}>
+              <Text size="xs">On it</Text>
+            </Thread.Item>
+          </Thread.Item>
+        </Thread>
       </div>
     ),
   },
