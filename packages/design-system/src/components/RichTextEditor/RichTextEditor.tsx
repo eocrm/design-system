@@ -19,6 +19,7 @@ import {
   isCollapsed,
   wholeBlockRange,
   collapsedRange,
+  marksBeforeCaret,
 } from '../RichText/engine/position';
 import { linkAt, setLink, removeLink } from './links';
 import { applyTypeAutolink, atomicLinkDeleteRange } from './autolinkInput';
@@ -204,18 +205,9 @@ function toggleInList(marks: Mark[], mark: Mark): Mark[] {
   return hasMark(marks, mark.type) ? withoutMark(marks, mark.type) : withMark(marks, mark);
 }
 
-/** Marks of the character immediately before the caret (none at a block start). */
+/** Marks inherited by text typed at the caret — the char before it, mention excluded. */
 function marksAtCaretMarks(doc: RichDoc, caret: Point): Mark[] {
-  const idx = doc.blocks.findIndex((b) => b.id === caret.blockId);
-  if (idx === -1 || caret.offset <= 0) return [];
-  let pos = 0;
-  for (const run of doc.blocks[idx].inlines) {
-    const end = pos + run.text.length;
-    if (caret.offset - 1 >= pos && caret.offset - 1 < end)
-      return run.marks.filter((m) => m.type !== 'mention');
-    pos = end;
-  }
-  return [];
+  return marksBeforeCaret(doc, caret).filter((m) => m.type !== 'mention');
 }
 
 interface LinkEditorOpen {

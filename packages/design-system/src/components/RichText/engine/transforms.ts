@@ -4,7 +4,14 @@ import type { RichDoc, Block, Point, Range, Mark, MarkType } from './model';
 import { createBlock, nextId } from './model';
 import { normalizeInlines, sliceInlines, mapMarksOverRange, runsLength } from './inlines';
 import { withMark, withoutMark, hasMark } from './marks';
-import { blockLength, findBlockIndex, orderedRange, isCollapsed, collapsedRange } from './position';
+import {
+  blockLength,
+  findBlockIndex,
+  orderedRange,
+  isCollapsed,
+  collapsedRange,
+  marksBeforeCaret,
+} from './position';
 import { isVoidBlock } from './attachment';
 
 function collapsed(point: Point): Range {
@@ -15,19 +22,6 @@ function replaceBlock(doc: RichDoc, index: number, block: Block): RichDoc {
   const blocks = doc.blocks.slice();
   blocks[index] = block;
   return { blocks };
-}
-
-/** Marks of the character immediately before `offset` (inherited on insert). */
-function marksBefore(block: Block, offset: number): Mark[] {
-  if (offset <= 0) return [];
-  let pos = 0;
-  for (const run of block.inlines) {
-    const runEnd = pos + run.text.length;
-    if (offset - 1 >= pos && offset - 1 < runEnd)
-      return run.marks.filter((m) => m.type !== 'mention');
-    pos = runEnd;
-  }
-  return [];
 }
 
 /** Bounds of the mention run strictly containing `offset`, or null. */
@@ -74,9 +68,11 @@ export function insertText(
   // A void block (e.g. an attachment) holds no editable text — never splice the
   // typed text into it (that would corrupt the block). No-op.
   if (isVoidBlock(block)) return { doc, selection: collapsed(point) };
+  // Inherit the marks of the char before the caret (mention excluded — typed text
+  // never extends a mention chip).
   const inlines = normalizeInlines([
     ...sliceInlines(block.inlines, 0, point.offset),
-    { text, marks: marksBefore(block, point.offset) },
+    { text, marks: marksBeforeCaret(doc, point).filter((m) => m.type !== 'mention') },
     ...sliceInlines(block.inlines, point.offset, blockLength(block)),
   ]);
   return {

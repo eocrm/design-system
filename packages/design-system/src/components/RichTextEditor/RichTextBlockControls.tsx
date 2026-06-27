@@ -1,15 +1,7 @@
 // RichTextBlockControls.tsx — the per-block gutter overlay. Absolutely positioned
 // inside the editor shell (position: relative), aligned to the active block's box.
 // Lives OUTSIDE the contentEditable so it is never editable content.
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type RefObject,
-} from 'react';
+import { memo, useCallback, useEffect, useRef, type RefObject } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -29,6 +21,7 @@ import { PlusIcon } from './icons';
 import { preventSelectionLoss } from './preventSelectionLoss';
 import { computeReflow, type BlockRect, type UnitRange } from './blockReflow';
 import { gapIndexFromY } from './blockDrop';
+import { useShellRelativeRect, useDraggingReporter } from './useOverlayRect';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextBlockControlsProps {
@@ -162,12 +155,6 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
   onDraggingChange,
 }: RichTextBlockControlsProps) {
   const t = useTranslation();
-  const [top, setTop] = useState<number | null>(null);
-  const [height, setHeight] = useState<number | null>(null);
-  // Bumped to re-run measurement when the root ref / block element is not yet
-  // attached on the first layout-effect pass (the parent's element ref can attach
-  // after this child's effect runs on mount).
-  const [retry, setRetry] = useState(0);
   // Drag snapshot, captured once at drag start (measuring transformed DOM would feed
   // back on itself). null when not dragging.
   const dragRef = useRef<{
@@ -181,47 +168,41 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
   // The gutter DOM node, so the drag can translate it in lockstep with the lifted row.
   const gutterElRef = useRef<HTMLDivElement | null>(null);
 
-  // Latest onDraggingChange, read by the unmount cleanup without re-subscribing.
-  const onDraggingChangeRef = useRef(onDraggingChange);
-  onDraggingChangeRef.current = onDraggingChange;
+  // Reports block-drag lifecycle + fires (false) on a mid-drag unmount so nothing
+  // leaks (dnd-kit fires neither end nor cancel when the controls unmount).
+  const reportDragging = useDraggingReporter(onDraggingChange);
 
   // If the controls unmount mid-drag (blockControls turned off, or the editor
-  // unmounts), dnd-kit fires neither end nor cancel — clear any applied transforms
-  // and report drag end so nothing leaks.
+  // unmounts), clear any applied reflow transforms. The dragging-state report is
+  // handled by useDraggingReporter; this effect owns the DOM-style cleanup. Order:
+  // this effect is registered AFTER the reporter, so its cleanup runs FIRST —
+  // clearReflow then onDraggingChange(false), matching the original order.
   useEffect(() => {
     return () => {
       clearReflow(dragRef.current, rootRef.current);
       dragRef.current = null;
-      onDraggingChangeRef.current?.(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  useLayoutEffect(() => {
-    if (!activeBlockId) {
-      setTop(null);
-      setHeight(null);
-      setRetry(0);
-      return;
-    }
-    const root = rootRef.current;
-    const el = root?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(activeBlockId)}"]`);
-    if (!root || !el) {
-      setTop(null);
-      setHeight(null);
-      if (retry < 2) setRetry((n) => n + 1);
-      return;
-    }
-    const rootBox = root.getBoundingClientRect();
-    const box = el.getBoundingClientRect();
-    setTop(box.top - rootBox.top);
-    setHeight(box.height);
-    // blockOrderKey is a dep so a reorder/insert/delete (which keeps the active
-    // block's id but moves its row) re-measures rather than leaving the gutter
-    // stranded at the old position.
-  }, [rootRef, activeBlockId, blockOrderKey, menuOpen, retry]);
+  // Measure the active block's box relative to the shell. getEl folds in
+  // activeBlockId (null → no target); blockOrderKey + menuOpen drive re-measure via
+  // `key` — a reorder/insert/delete keeps the active block's id but moves its row, so
+  // an order-derived key re-measures rather than leaving the gutter stranded.
+  const blockEl = useCallback(
+    () =>
+      activeBlockId
+        ? (rootRef.current?.querySelector<HTMLElement>(
+            `[data-block-id="${CSS.escape(activeBlockId)}"]`,
+          ) ?? null)
+        : null,
+    [rootRef, activeBlockId],
+  );
+  const rect = useShellRelativeRect(rootRef, blockEl, `${blockOrderKey ?? ''}|${menuOpen}`);
+  const top = rect?.top ?? null;
+  const height = rect?.height ?? null;
 
   const handleDragStart = (_event: DragStartEvent) => {
     const root = rootRef.current;
@@ -260,7 +241,7 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
 
     draggedIdRef.current = activeBlockId;
     onMenuOpenChange(false); // a drag should never leave the block menu open
-    onDraggingChange?.(true);
+    reportDragging(true);
     dragRef.current = { rects, els: nodes, unit, parentIdx };
     root.classList.add(styles.reflowing);
     nodes[unit.u0].classList.add(styles.blockLifted);
@@ -295,7 +276,7 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
     if (gutterElRef.current) gutterElRef.current.style.transform = '';
     dragRef.current = null;
     draggedIdRef.current = null;
-    onDraggingChange?.(false);
+    reportDragging(false);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
