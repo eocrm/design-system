@@ -105,9 +105,7 @@ it('roving tabIndex: only the active cell is tabbable', () => {
 
 it('forwards ref to the root div, merges className, and spreads data-* attrs', () => {
   const ref = createRef<HTMLDivElement>();
-  render(
-    <EmojiPicker ref={ref} onSelect={() => {}} className="custom" data-foo="bar" />,
-  );
+  render(<EmojiPicker ref={ref} onSelect={() => {}} className="custom" data-foo="bar" />);
   expect(ref.current).not.toBeNull();
   expect(ref.current?.tagName).toBe('DIV');
   expect(ref.current).toHaveClass('custom');
@@ -120,9 +118,7 @@ it('forwards ref to the root div, merges className, and spreads data-* attrs', (
 
 it('EmojiPickerPopover opens on trigger click and shows the picker', async () => {
   const user = userEvent.setup();
-  render(
-    <EmojiPickerPopover trigger={<button>open</button>} onSelect={() => {}} />,
-  );
+  render(<EmojiPickerPopover trigger={<button>open</button>} onSelect={() => {}} />);
   // Closed initially — no search box.
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'open' }));
@@ -132,9 +128,7 @@ it('EmojiPickerPopover opens on trigger click and shows the picker', async () =>
 it('EmojiPickerPopover fires onSelect and closes when an emoji is chosen', async () => {
   const user = userEvent.setup();
   const onSelect = vi.fn();
-  render(
-    <EmojiPickerPopover trigger={<button>open</button>} onSelect={onSelect} />,
-  );
+  render(<EmojiPickerPopover trigger={<button>open</button>} onSelect={onSelect} />);
   await user.click(screen.getByRole('button', { name: 'open' }));
   await user.click(screen.getByRole('gridcell', { name: 'thumbs up' }));
   expect(onSelect).toHaveBeenCalledWith('👍');

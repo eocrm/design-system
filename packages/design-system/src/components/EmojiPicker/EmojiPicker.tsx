@@ -143,9 +143,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function
   const activeSafe = flat.length === 0 ? -1 : Math.min(activeIndex, flat.length - 1);
 
   const focusCell = (index: number) => {
-    panelRef.current
-      ?.querySelector<HTMLButtonElement>(`[data-emoji-index="${index}"]`)
-      ?.focus();
+    panelRef.current?.querySelector<HTMLButtonElement>(`[data-emoji-index="${index}"]`)?.focus();
   };
 
   const onSearchKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -238,13 +236,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function
             const labelId = `${baseId}-${cat.id}`;
             return (
               <div key={cat.id} className={styles.section}>
-                <Text
-                  as="div"
-                  size="xs"
-                  tone="muted"
-                  id={labelId}
-                  className={styles.sectionLabel}
-                >
+                <Text as="div" size="xs" tone="muted" id={labelId} className={styles.sectionLabel}>
                   {t(`emojiPicker.category.${cat.id}`)}
                 </Text>
                 <div className={styles.grid} role="row" aria-labelledby={labelId}>

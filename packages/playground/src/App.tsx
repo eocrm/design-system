@@ -73,6 +73,7 @@ import { TooltipDemo } from './pages/components/TooltipDemo';
 import { ModalDemo } from './pages/components/ModalDemo';
 import { LightboxDemo } from './pages/components/LightboxDemo';
 import { OptionsPickerDemo } from './pages/components/OptionsPickerDemo';
+import { EmojiPickerDemo } from './pages/components/EmojiPickerDemo';
 import { PageDemo } from './pages/components/PageDemo';
 import { PaletteDemo } from './pages/components/PaletteDemo';
 import { PageHeaderDemo } from './pages/components/PageHeaderDemo';
@@ -192,6 +193,7 @@ export default function App() {
             <Route path="/components/modal" element={<ModalDemo />} />
             <Route path="/components/lightbox" element={<LightboxDemo />} />
             <Route path="/components/options-picker" element={<OptionsPickerDemo />} />
+            <Route path="/components/emoji-picker" element={<EmojiPickerDemo />} />
             <Route path="/components/page" element={<PageDemo />} />
             <Route path="/components/palette" element={<PaletteDemo />} />
             <Route path="/components/page-header" element={<PageHeaderDemo />} />

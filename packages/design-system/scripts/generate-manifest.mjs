@@ -57,6 +57,7 @@ const CLUSTERS = {
   PhoneInput: 'Forms',
   Radio: 'Forms',
   OptionsPicker: 'Forms',
+  EmojiPicker: 'Forms',
   Select: 'Forms',
   Slider: 'Forms',
   Sortable: 'Forms',

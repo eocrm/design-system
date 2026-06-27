@@ -87,6 +87,7 @@ import {
   Columns2,
   Component,
   Braces,
+  Smile,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -185,6 +186,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       },
       { to: '/components/phone-input', label: 'PhoneInput', icon: Phone, end: false },
       { to: '/components/options-picker', label: 'OptionsPicker', icon: ListFilter, end: false },
+      { to: '/components/emoji-picker', label: 'EmojiPicker', icon: Smile, end: false },
       { to: '/components/radio', label: 'Radio', icon: CircleDot, end: false },
       { to: '/components/select', label: 'Select', icon: ChevronsUpDown, end: false },
       { to: '/components/slider', label: 'Slider', icon: SlidersHorizontal, end: false },
