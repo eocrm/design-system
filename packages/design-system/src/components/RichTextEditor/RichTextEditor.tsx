@@ -1097,7 +1097,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       (emoji: string) => {
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? selection;
-        if (range) commit(insertText(latest.current.value, range.anchor, emoji));
+        if (!range) return;
+        const result = applyInput(latest.current.value, range, 'insertText', emoji);
+        if (result) commit(result);
       },
       [selection, commit],
     );

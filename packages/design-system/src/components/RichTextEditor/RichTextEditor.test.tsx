@@ -290,6 +290,32 @@ describe('RichTextEditor toolbar', () => {
       );
     });
   });
+
+  it('Emoji toolbar button replaces a non-collapsed selection', async () => {
+    const user = userEvent.setup();
+    // Stub the live selection to a non-collapsed range covering 'world' (offsets 6-11).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 6 },
+      focus: { blockId: 'k', offset: 11 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hello world', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Emoji' }));
+    const listbox = await screen.findByRole('listbox');
+    const firstEmoji = within(listbox).getAllByRole('option')[0];
+    const glyph = firstEmoji.textContent!.trim();
+    await user.click(firstEmoji);
+    await waitFor(() => {
+      const text = screen.getByRole('textbox', { name: 'Rich text editor' }).textContent;
+      expect(text).toContain(glyph);
+      expect(text).not.toContain('world'); // selected text was replaced, not appended
+    });
+  });
 });
 
 describe('RichTextEditor paste', () => {
