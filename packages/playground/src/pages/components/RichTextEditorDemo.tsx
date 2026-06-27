@@ -75,8 +75,8 @@ export function RichTextEditorDemo() {
   );
   const [colorDoc, setColorDoc] = useState<RichDoc>(() =>
     fromHtml(
-      '<p>Select a word and open the toolbar <strong>Color</strong> button to set text or highlight color from the palette. Choosing Default clears the color.</p>' +
-        '<p>With block controls, open the ⠿ menu → Color to color the whole block at once.</p>',
+      '<p>Select a word and use the toolbar <strong>Text color</strong> or <strong>Highlight</strong> button to pick a color from the palette. Each color is a small named badge; choosing Default clears the color.</p>' +
+        '<p>With block controls, open the ⠿ menu → Text color / Highlight to color the whole block at once.</p>',
     ),
   );
   const [uploadDoc, setUploadDoc] = useState<RichDoc>(() =>
@@ -192,7 +192,7 @@ export function RichTextEditorDemo() {
 
       <Example
         title="Text & highlight color"
-        description="Select text and use the toolbar Color button to apply a text or highlight color. The picker leads with the default brand colors (gray, red, green, amber, blue), then the rest of the categorical palette. Choosing Default clears the color. With blockControls enabled, open the ⠿ block menu and choose Color to color the entire block at once. Colors persist in the document and round-trip through HTML serialization, but are dropped in Markdown (like alignment and width)."
+        description="Select text and use the toolbar's separate Text color and Highlight buttons to apply a color. Each picker is a grid of small named badges that leads with the default brand colors (gray, red, green, amber, blue), then the rest of the categorical palette. Choosing Default clears the color. With blockControls enabled, open the ⠿ block menu and choose Text color or Highlight to color the entire block at once. Colors persist in the document and round-trip through HTML serialization, but are dropped in Markdown (like alignment and width)."
         code={`const [doc, setDoc] = useState(() => fromHtml('<p>Select a word and color it.</p>'));
 <RichTextEditor value={doc} onChange={setDoc} toolbar blockControls />`}
       >
@@ -201,7 +201,7 @@ export function RichTextEditorDemo() {
           onChange={setColorDoc}
           toolbar
           blockControls
-          placeholder="Select text, then use the Color button…"
+          placeholder="Select text, then use the Text color / Highlight buttons…"
         />
       </Example>
 

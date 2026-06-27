@@ -25,7 +25,7 @@ export interface RichTextBlockMenuProps {
   /** When set, a Configure item appears at the top of the menu (e.g. attachment
    *  settings). Omit for blocks with nothing to configure. */
   onConfigure?: () => void;
-  /** When set, a Color submenu (whole-block text/highlight color) is added. */
+  /** When set, two color submenus (Text color + Highlight) for the whole block are added. */
   onColor?: (type: 'textColor' | 'bgColor', key: string | null) => void;
   /** Type of the block the menu targets. "Turn into" is hidden for `attachment`
    *  (a void block — converting an image to a heading is nonsense). */
@@ -73,10 +73,7 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
                 <DropdownMenu.SubContent>
                   {/* The block menu doesn't reflect an active color — omit `active`. The
                       badges are plain buttons (pointer-first), not registered menu items. */}
-                  <RichTextColorMenu
-                    type="textColor"
-                    onPick={(key) => onColor('textColor', key)}
-                  />
+                  <RichTextColorMenu type="textColor" onPick={(key) => onColor('textColor', key)} />
                 </DropdownMenu.SubContent>
               </DropdownMenu.Sub>
               <DropdownMenu.Sub>

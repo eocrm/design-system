@@ -436,11 +436,9 @@ export interface Messages {
     attachmentOpen: string;
     /** Download-file link. */
     attachmentDownload: string;
-    /** aria-label on the toolbar color button + the color menu's group label. */
-    color: string;
-    /** Row label for the text-color swatches in the color menu. */
+    /** aria-label on the Text-color toolbar button / block submenu + the text-color menu's group label. */
     textColor: string;
-    /** Row label for the highlight (background-color) swatches in the color menu. */
+    /** aria-label on the Highlight toolbar button / block submenu + the highlight menu's group label. */
     highlight: string;
     /** aria-label on the ⌀ "clear color" swatch (reset to the default color). */
     colorClear: string;

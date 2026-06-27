@@ -256,7 +256,6 @@ export const en: Messages = {
     attachmentReplace: 'Replace',
     attachmentOpen: 'Open',
     attachmentDownload: 'Download',
-    color: 'Color',
     textColor: 'Text color',
     highlight: 'Highlight',
     colorClear: 'Default',

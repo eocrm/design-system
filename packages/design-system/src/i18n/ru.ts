@@ -258,7 +258,6 @@ export const ru: Messages = {
     attachmentReplace: 'Заменить',
     attachmentOpen: 'Открыть',
     attachmentDownload: 'Скачать',
-    color: 'Цвет',
     textColor: 'Цвет текста',
     highlight: 'Выделение',
     colorClear: 'По умолчанию',
