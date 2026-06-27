@@ -404,7 +404,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // top-to-bottom, so we can stop once a block starts below the pointer; among the
     // blocks that contain the pointer the LAST in document order is the deepest (a
     // nested list item comes after — and sits inside — its parent), matching how a
-    // direct hover resolves to the innermost block.
+    // direct hover resolves to the innermost block. Reads a layout rect per block up
+    // to the pointer's row — an accepted cost: the caller only invokes this for the
+    // narrow no-block-under-pointer case (the gutter/padding column), never the hot
+    // text-hover path, so there's no need to cache rects or rAF-throttle.
     const blockAtPointerY = useCallback((root: HTMLElement, clientY: number): string | null => {
       let found: string | null = null;
       for (const el of root.querySelectorAll<HTMLElement>('[data-block-id]')) {
