@@ -173,8 +173,10 @@ export interface Messages {
     noMatches: string;
   };
   emojiPicker: {
-    /** Placeholder + aria-label for the emoji search input (and the grid's aria-label). */
+    /** Placeholder + aria-label for the emoji search input. */
     search: string;
+    /** Accessible label for the emoji listbox surface. */
+    label: string;
     /** Copy shown when the search query matches no emoji. */
     noResults: string;
     /** Localized section headers, keyed by `EmojiCategoryId`. */

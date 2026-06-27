@@ -88,7 +88,6 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   {
     id: 'people',
     emojis: [
-      { char: '😺', name: 'grinning cat', keywords: ['cat', 'smile'] },
       { char: '🧑', name: 'person', keywords: ['adult', 'someone'] },
       { char: '👩', name: 'woman', keywords: ['female'] },
       { char: '👨', name: 'man', keywords: ['male'] },
@@ -181,7 +180,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
       { char: '🏢', name: 'office building', keywords: ['work', 'company'] },
       { char: '🗺️', name: 'world map', keywords: ['map', 'travel'] },
       { char: '🏖️', name: 'beach with umbrella', keywords: ['vacation', 'holiday'] },
-      { char: '🗻', name: 'mountain', keywords: ['fuji'] },
+      { char: '🗻', name: 'mount fuji', keywords: ['fuji', 'mountain'] },
       { char: '🌍', name: 'globe showing europe-africa', keywords: ['earth', 'world'] },
       { char: '⛰️', name: 'mountain', keywords: ['hill', 'peak'] },
     ],
@@ -230,7 +229,6 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
       { char: '❓', name: 'question mark', keywords: ['help', 'why'] },
       { char: '❗', name: 'exclamation mark', keywords: ['important', 'alert'] },
       { char: '➕', name: 'plus', keywords: ['add', 'new'] },
-      { char: '🚀', name: 'rocket', keywords: ['ship', 'launch', 'fast'] },
       { char: '👀', name: 'eyes', keywords: ['look', 'watching', 'see'] },
     ],
   },

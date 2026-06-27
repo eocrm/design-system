@@ -109,6 +109,7 @@ export const ru: Messages = {
   },
   emojiPicker: {
     search: 'Поиск эмодзи',
+    label: 'Эмодзи',
     noResults: 'Эмодзи не найдены',
     category: {
       smileys: 'Смайлики',

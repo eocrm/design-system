@@ -105,6 +105,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function
 ) {
   const t = useTranslation();
   const baseId = useId();
+  const listboxId = useId();
   const [query, setQuery] = useState('');
   // Roving-tabindex anchor: which flat index is currently the tabbable cell.
   const [activeIndex, setActiveIndex] = useState(0);
@@ -113,7 +114,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Filter + flatten in one pass so each visible emoji carries a stable flat
-  // index (render order) for keyboard navigation. `🚀` appears in two
+  // index (render order) for keyboard navigation. A char can recur across
   // categories, so a char→index map would be ambiguous; a running counter is
   // the correct source of truth.
   const { categories, flat } = useMemo(() => {
@@ -221,12 +222,19 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function
           }}
           placeholder={t('emojiPicker.search')}
           aria-label={t('emojiPicker.search')}
+          aria-controls={listboxId}
           onKeyDown={onSearchKeyDown}
           className={styles.searchInput}
         />
       </div>
 
-      <div ref={panelRef} className={styles.panel} role="grid" aria-label={t('emojiPicker.search')}>
+      <div
+        ref={panelRef}
+        id={listboxId}
+        className={styles.panel}
+        role="listbox"
+        aria-label={t('emojiPicker.label')}
+      >
         {flat.length === 0 ? (
           <Text size="sm" tone="muted" className={styles.noResults}>
             {t('emojiPicker.noResults')}
@@ -235,16 +243,22 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function
           categories.map((cat) => {
             const labelId = `${baseId}-${cat.id}`;
             return (
-              <div key={cat.id} className={styles.section}>
+              <div
+                key={cat.id}
+                className={styles.section}
+                role="group"
+                aria-label={t(`emojiPicker.category.${cat.id}`)}
+              >
                 <Text as="div" size="xs" tone="muted" id={labelId} className={styles.sectionLabel}>
                   {t(`emojiPicker.category.${cat.id}`)}
                 </Text>
-                <div className={styles.grid} role="row" aria-labelledby={labelId}>
+                <div className={styles.grid}>
                   {cat.items.map(({ emoji, index }) => (
                     <button
                       key={emoji.char}
                       type="button"
-                      role="gridcell"
+                      role="option"
+                      aria-selected={false}
                       data-emoji-index={index}
                       className={styles.cell}
                       tabIndex={index === activeSafe ? 0 : -1}
