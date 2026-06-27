@@ -88,14 +88,14 @@ describe('toHtml — inline marks', () => {
     const doc: RichDoc = {
       blocks: [para('a', [{ text: 'x', marks: [{ type: 'textColor', color: 'red' }] }])],
     };
-    expect(toHtml(doc)).toContain('style="color:var(--color-danger)"');
+    expect(toHtml(doc)).toContain('style="color:var(--color-palette-red-fg)"');
   });
 
   it('serializes a bgColor mark to a span with the resolved background var', () => {
     const doc: RichDoc = {
       blocks: [para('a', [{ text: 'x', marks: [{ type: 'bgColor', color: 'blue' }] }])],
     };
-    expect(toHtml(doc)).toContain('style="background-color:var(--color-accent-bg-subtle)"');
+    expect(toHtml(doc)).toContain('style="background-color:var(--color-palette-blue-bg)"');
   });
 
   it('drops a color span when the palette key is unknown (keeps text)', () => {

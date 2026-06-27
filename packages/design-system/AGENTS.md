@@ -971,7 +971,7 @@ const [doc, setDoc] = useState(emptyDoc());
 - **List toggles** — Bullet list, Numbered list. Toggle between the list type and paragraph.
 - **Link button** — add/edit a link on the selection. Reflects `aria-pressed` when the caret is inside a link.
 - **Emoji insert** — opens a searchable `EmojiPickerPopover`; selecting an emoji inserts it at the caret.
-- **Color** — a curated token-backed palette (text + highlight, 5 colors each plus a Default/clear). Applied to the selection from the toolbar, or to a whole block from the ⠿ menu when `blockControls` is enabled. Colors round-trip through HTML and are dropped in Markdown.
+- **Color** — the design system's full 30-color categorical palette (text uses the palette `-fg` token, highlight the `-bg` token), each row plus a Default/clear swatch. Applied to the selection from the toolbar, or to a whole block from the ⠿ menu when `blockControls` is enabled. Colors round-trip through HTML and are dropped in Markdown.
 - **Undo / Redo buttons** — undo/redo the last change; disabled at the ends of the history.
 
 **List keys:**

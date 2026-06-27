@@ -338,7 +338,7 @@ describe('RichTextEditor toolbar', () => {
     await waitFor(() => {
       const span = screen.getByRole('textbox', { name: 'Rich text editor' }).querySelector('span');
       expect(span?.textContent).toBe('hello');
-      expect(span?.style.color).toBe('var(--color-danger)');
+      expect(span?.style.color).toBe('var(--color-palette-red-fg)');
     });
   });
 
@@ -372,7 +372,7 @@ describe('RichTextEditor toolbar', () => {
     await waitFor(() => {
       const span = screen.getByRole('textbox', { name: 'Rich text editor' }).querySelector('span');
       expect(span?.textContent).toBe('x');
-      expect(span?.style.color).toBe('var(--color-danger)');
+      expect(span?.style.color).toBe('var(--color-palette-red-fg)');
     });
   });
 
@@ -1211,7 +1211,7 @@ describe('blockControls', () => {
     await waitFor(() => {
       const span = (document.querySelector('[data-block-id]') as HTMLElement).querySelector('span');
       expect(span?.textContent).toBe('one');
-      expect(span?.style.color).toBe('var(--color-danger)');
+      expect(span?.style.color).toBe('var(--color-palette-red-fg)');
     });
   });
 

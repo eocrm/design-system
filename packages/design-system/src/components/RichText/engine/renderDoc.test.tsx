@@ -486,7 +486,7 @@ describe('renderDoc color marks', () => {
     const { container } = render(<>{renderDoc(colorDoc({ type: 'textColor', color: 'red' }))}</>);
     const span = container.querySelector('span');
     expect(span).not.toBeNull();
-    expect(span!.style.color).toBe('var(--color-danger)');
+    expect(span!.style.color).toBe('var(--color-palette-red-fg)');
     expect(span!.textContent).toBe('x');
   });
 
@@ -494,19 +494,19 @@ describe('renderDoc color marks', () => {
     const { container } = render(<>{renderDoc(colorDoc({ type: 'bgColor', color: 'green' }))}</>);
     const span = container.querySelector('span');
     expect(span).not.toBeNull();
-    expect(span!.style.backgroundColor).toBe('var(--color-success-bg-subtle)');
+    expect(span!.style.backgroundColor).toBe('var(--color-palette-green-bg)');
   });
 
   it('renders color spans on the editable surface too', () => {
     const { container } = render(
       <>{renderDoc(colorDoc({ type: 'textColor', color: 'red' }), { editable: true })}</>,
     );
-    expect(container.querySelector('span')!.style.color).toBe('var(--color-danger)');
+    expect(container.querySelector('span')!.style.color).toBe('var(--color-palette-red-fg)');
     const bg = render(
       <>{renderDoc(colorDoc({ type: 'bgColor', color: 'green' }), { editable: true })}</>,
     );
     expect(bg.container.querySelector('span')!.style.backgroundColor).toBe(
-      'var(--color-success-bg-subtle)',
+      'var(--color-palette-green-bg)',
     );
   });
 
@@ -538,11 +538,11 @@ describe('renderDoc color marks', () => {
     // textColor is the OUTER span (MARK_ORDER: textColor before bgColor)…
     const outer = container.querySelector('span');
     expect(outer).not.toBeNull();
-    expect(outer!.style.color).toBe('var(--color-danger)');
+    expect(outer!.style.color).toBe('var(--color-palette-red-fg)');
     // …with the bgColor span nested directly inside.
     const inner = outer!.querySelector('span');
     expect(inner).not.toBeNull();
-    expect(inner!.style.backgroundColor).toBe('var(--color-success-bg-subtle)');
+    expect(inner!.style.backgroundColor).toBe('var(--color-palette-green-bg)');
     expect(inner!.textContent).toBe('x');
   });
 });
