@@ -111,6 +111,45 @@
   border-inline-start: var(--border-width) solid var(--color-border);
 }
 
+// Color menu (toolbar color Popover + block menu): a small two-row swatch grid.
+// Row stacking + swatch gaps come from the Stack/Cluster it renders into — this
+// only styles the swatch chrome.
+.colorMenu {
+  padding: var(--space-1);
+}
+
+// A fixed square swatch. Sized by height + aspect-ratio (no `width` — Rule 4).
+// Colored swatches get their fill via an inline `style` (a dynamic token var);
+// this is the base chrome.
+.swatch {
+  height: var(--space-4);
+  aspect-ratio: 1;
+  padding: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+// The active swatch gets a ring (same tokens as the editor's focus ring) so the
+// current color reads at a glance.
+.swatchActive {
+  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+}
+
+// The ⌀ clear swatch: a plain surface struck through on the diagonal to read as
+// "no color / default" rather than a real palette color.
+.swatchClear {
+  background-color: var(--color-bg);
+  background-image: linear-gradient(
+    to top right,
+    transparent calc(50% - 0.5px),
+    var(--color-fg-subtle) calc(50% - 0.5px),
+    var(--color-fg-subtle) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+}
+
 // Square the editable surface's top corners so it tucks under the toolbar.
 .shell .root {
   border-start-start-radius: 0;

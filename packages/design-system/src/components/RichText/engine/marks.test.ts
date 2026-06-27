@@ -67,3 +67,29 @@ describe('markKey / marksEqual — mentions', () => {
     expect(marksEqual(a, b)).toBe(false);
   });
 });
+
+describe('markKey / marksEqual — color marks', () => {
+  it('a textColor mark equals an identical one', () => {
+    const a: Mark = { type: 'textColor', color: 'red' };
+    const b: Mark = { type: 'textColor', color: 'red' };
+    expect(marksEqual([a], [b])).toBe(true);
+  });
+
+  it('two textColor marks with different keys are NOT equal', () => {
+    const a: Mark = { type: 'textColor', color: 'red' };
+    const b: Mark = { type: 'textColor', color: 'blue' };
+    expect(marksEqual([a], [b])).toBe(false);
+  });
+
+  it('two bgColor marks with different keys are NOT equal', () => {
+    const a: Mark = { type: 'bgColor', color: 'red' };
+    const b: Mark = { type: 'bgColor', color: 'green' };
+    expect(marksEqual([a], [b])).toBe(false);
+  });
+
+  it('marksEqual handles a list including a color mark (order-insensitive)', () => {
+    const list = [bold, { type: 'textColor', color: 'red' } as const];
+    expect(marksEqual(list, [{ type: 'textColor', color: 'red' }, bold])).toBe(true);
+    expect(marksEqual(list, [bold, { type: 'textColor', color: 'blue' }])).toBe(false);
+  });
+});

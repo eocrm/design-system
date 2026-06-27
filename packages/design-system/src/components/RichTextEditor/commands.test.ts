@@ -1,5 +1,6 @@
 import {
   activeMarks,
+  activeColors,
   currentBlock,
   runToggleMark,
   runSetBlock,
@@ -44,6 +45,60 @@ describe('activeMarks', () => {
   it('collapsed + pending → the pending marks', () => {
     const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [] }])] };
     expect(activeMarks(doc, span(at('a', 0), at('a', 0)), [bold])).toEqual(['bold']);
+  });
+});
+
+describe('activeColors', () => {
+  const red = { type: 'textColor' as const, color: 'red' };
+  const blueBg = { type: 'bgColor' as const, color: 'blue' };
+
+  it('returns the single color present on EVERY char of the selection', () => {
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'abcd', marks: [red] }])] };
+    expect(activeColors(doc, span(at('a', 0), at('a', 4)), null)).toEqual({ textColor: 'red' });
+  });
+
+  it('returns {} when colors are mixed', () => {
+    const doc: RichDoc = {
+      blocks: [
+        para('a', [
+          { text: 'ab', marks: [red] },
+          { text: 'cd', marks: [{ type: 'textColor', color: 'green' }] },
+        ]),
+      ],
+    };
+    expect(activeColors(doc, span(at('a', 0), at('a', 4)), null)).toEqual({});
+  });
+
+  it('returns {} when the color is absent on some char', () => {
+    const doc: RichDoc = {
+      blocks: [
+        para('a', [
+          { text: 'ab', marks: [red] },
+          { text: 'cd', marks: [] },
+        ]),
+      ],
+    };
+    expect(activeColors(doc, span(at('a', 0), at('a', 4)), null)).toEqual({});
+    expect(activeColors(doc, span(at('a', 0), at('a', 2)), null)).toEqual({ textColor: 'red' });
+  });
+
+  it('collapsed → color of the char before the caret', () => {
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [red] }])] };
+    expect(activeColors(doc, span(at('a', 1), at('a', 1)), null)).toEqual({ textColor: 'red' });
+    expect(activeColors(doc, span(at('a', 0), at('a', 0)), null)).toEqual({}); // start → none
+  });
+
+  it('collapsed + pending → reflects the pending color mark', () => {
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [] }])] };
+    expect(activeColors(doc, span(at('a', 1), at('a', 1)), [red])).toEqual({ textColor: 'red' });
+  });
+
+  it('returns both textColor and bgColor when both span the range', () => {
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'abcd', marks: [red, blueBg] }])] };
+    expect(activeColors(doc, span(at('a', 0), at('a', 4)), null)).toEqual({
+      textColor: 'red',
+      bgColor: 'blue',
+    });
   });
 });
 
@@ -138,6 +193,34 @@ describe('applyExactMarks', () => {
   it('clears all marks when given an empty set', () => {
     const doc: RichDoc = {
       blocks: [para('a', [{ text: 'ab', marks: [bold, { type: 'italic' }] }])],
+    };
+    const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), []);
+    expect(next.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
+  });
+
+  it('realizes a pending textColor mark onto the range (value-carrying)', () => {
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [] }])] };
+    const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), [
+      { type: 'textColor', color: 'red' },
+    ]);
+    expect(next.blocks[0].inlines).toEqual([
+      { text: 'ab', marks: [{ type: 'textColor', color: 'red' }] },
+    ]);
+  });
+
+  it('clears any existing color mark when the given set omits it', () => {
+    const doc: RichDoc = {
+      blocks: [
+        para('a', [
+          {
+            text: 'ab',
+            marks: [
+              { type: 'textColor', color: 'red' },
+              { type: 'bgColor', color: 'blue' },
+            ],
+          },
+        ]),
+      ],
     };
     const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), []);
     expect(next.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);

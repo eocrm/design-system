@@ -8,6 +8,7 @@ import { nextId, emptyDoc } from './model';
 import { normalizeInlines } from './inlines';
 import { safeHref } from './safeHref';
 import { withMark } from './marks';
+import { textColorKeyFrom, bgColorKeyFrom } from './colorMarks';
 
 const HEADING_LEVEL: Record<string, 1 | 2 | 3> = { H1: 1, H2: 2, H3: 3, H4: 3, H5: 3, H6: 3 };
 
@@ -139,6 +140,19 @@ function applyCssMarks(el: HTMLElement, marks: Mark[]): Mark[] {
   if (deco) {
     if (deco[1].includes('underline')) marks = withMark(marks, { type: 'underline' });
     if (deco[1].includes('line-through')) marks = withMark(marks, { type: 'strike' });
+  }
+  // Recover text/background color marks. The `color` lookahead `(?:^|;|\s)` keeps it
+  // from matching the `-color` inside `background-color`. Only values that resolve to
+  // a palette key (our var() output or a default-theme hex) become a mark.
+  const color = /(?:^|;|\s)color\s*:\s*([^;]+)/.exec(s);
+  if (color) {
+    const key = textColorKeyFrom(color[1]);
+    if (key) marks = withMark(marks, { type: 'textColor', color: key });
+  }
+  const bg = /background-color\s*:\s*([^;]+)/.exec(s);
+  if (bg) {
+    const key = bgColorKeyFrom(bg[1]);
+    if (key) marks = withMark(marks, { type: 'bgColor', color: key });
   }
   return marks;
 }

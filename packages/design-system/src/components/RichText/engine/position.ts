@@ -8,6 +8,22 @@ export function blockLength(block: Block): number {
 }
 
 /**
+ * The `Range` spanning an entire block — `offset 0` to its full length. Returns
+ * `null` when `blockId` is not found. Used by block-level actions (e.g. coloring
+ * a whole block from the block menu) that target a block rather than an explicit
+ * text selection.
+ */
+export function wholeBlockRange(doc: RichDoc, blockId: string): Range | null {
+  const idx = findBlockIndex(doc, blockId);
+  if (idx === -1) return null;
+  const block = doc.blocks[idx];
+  return {
+    anchor: { blockId, offset: 0 },
+    focus: { blockId, offset: blockLength(block) },
+  };
+}
+
+/**
  * Returns the index of the block with `blockId` in `doc.blocks`, or `-1` if
  * not found. Used by transforms to locate blocks before mutation.
  */

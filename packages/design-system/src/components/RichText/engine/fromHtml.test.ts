@@ -139,6 +139,49 @@ describe('fromHtml — inline marks', () => {
     const d = fromHtml('<p>  a   b  </p>');
     expect(text(d.blocks[0])).toBe('a b');
   });
+
+  it('recovers a textColor mark from an inline color: var() declaration', () => {
+    const d = fromHtml('<p><span style="color: var(--color-danger)">x</span></p>');
+    expect(d.blocks[0].inlines).toEqual([
+      { text: 'x', marks: [{ type: 'textColor', color: 'red' }] },
+    ]);
+  });
+
+  it('recovers a bgColor mark from an inline background-color hex declaration', () => {
+    const d = fromHtml('<p><span style="background-color:#ffebe6">y</span></p>');
+    expect(d.blocks[0].inlines).toEqual([
+      { text: 'y', marks: [{ type: 'bgColor', color: 'red' }] },
+    ]);
+  });
+
+  it('ignores a color outside the palette (no color mark)', () => {
+    const d = fromHtml('<p><span style="color:#123456">z</span></p>');
+    expect(d.blocks[0].inlines).toEqual([{ text: 'z', marks: [] }]);
+  });
+
+  it('recovers BOTH bgColor and textColor from one combined style attr', () => {
+    // Guards the `(?:^|;|\s)color` lookbehind: the `color` regex must match the real
+    // `color:` declaration, not the `-color` inside `background-color`.
+    const d = fromHtml('<p><span style="background-color:#ffebe6;color:#0052cc">x</span></p>');
+    expect(d.blocks[0].inlines).toEqual([
+      {
+        text: 'x',
+        marks: [
+          { type: 'textColor', color: 'blue' },
+          { type: 'bgColor', color: 'red' },
+        ],
+      },
+    ]);
+  });
+
+  it('a danger TEXT hex used as a background never becomes textColor:red', () => {
+    // #de350b is the danger TEXT hex. As a `background-color` it is resolved via the
+    // bg-hex map (where it is NOT a key → no bgColor), and the `color` lookbehind keeps
+    // it from being mis-read as textColor:red inside `background-color`.
+    const d = fromHtml('<p><span style="background-color:#de350b">z</span></p>');
+    expect(d.blocks[0].inlines).toEqual([{ text: 'z', marks: [] }]);
+    expect(d.blocks[0].inlines[0].marks.some((m) => m.type === 'textColor')).toBe(false);
+  });
 });
 
 it('parses a data-mention-id span into a mention mark', () => {

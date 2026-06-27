@@ -436,6 +436,24 @@ export interface Messages {
     attachmentOpen: string;
     /** Download-file link. */
     attachmentDownload: string;
+    /** aria-label on the toolbar color button + the color menu's group label. */
+    color: string;
+    /** Row label for the text-color swatches in the color menu. */
+    textColor: string;
+    /** Row label for the highlight (background-color) swatches in the color menu. */
+    highlight: string;
+    /** aria-label on the ⌀ "clear color" swatch (reset to the default color). */
+    colorClear: string;
+    /** aria-label on the gray color swatch. */
+    colorGray: string;
+    /** aria-label on the red color swatch. */
+    colorRed: string;
+    /** aria-label on the green color swatch. */
+    colorGreen: string;
+    /** aria-label on the amber color swatch. */
+    colorAmber: string;
+    /** aria-label on the blue color swatch. */
+    colorBlue: string;
   };
 }
 

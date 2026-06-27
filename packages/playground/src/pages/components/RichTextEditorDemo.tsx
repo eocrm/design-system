@@ -73,6 +73,12 @@ export function RichTextEditorDemo() {
   const [autolinkDoc, setAutolinkDoc] = useState<RichDoc>(() =>
     docFromText('Type a task URL below to watch it autolink. '),
   );
+  const [colorDoc, setColorDoc] = useState<RichDoc>(() =>
+    fromHtml(
+      '<p>Select a word and open the toolbar <strong>Color</strong> button to set text or highlight color from the palette. Choosing Default clears the color.</p>' +
+        '<p>With block controls, open the ⠿ menu → Color to color the whole block at once.</p>',
+    ),
+  );
   const [uploadDoc, setUploadDoc] = useState<RichDoc>(() =>
     // Seed an EMBEDDED image (real URL + explicit width) so its block-menu
     // "Configure" exposes the width slider. Uploaded files below come in as object
@@ -181,6 +187,21 @@ export function RichTextEditorDemo() {
           onChange={setLinkDoc}
           toolbar
           placeholder="Select text, then ⌘K…"
+        />
+      </Example>
+
+      <Example
+        title="Text & highlight color"
+        description="Select text and use the toolbar Color button to apply a text or highlight color from the curated palette (gray, red, green, amber, blue). Choosing Default clears the color. With blockControls enabled, open the ⠿ block menu and choose Color to color the entire block at once. Colors persist in the document and round-trip through HTML serialization, but are dropped in Markdown (like alignment and width)."
+        code={`const [doc, setDoc] = useState(() => fromHtml('<p>Select a word and color it.</p>'));
+<RichTextEditor value={doc} onChange={setDoc} toolbar blockControls />`}
+      >
+        <RichTextEditor
+          value={colorDoc}
+          onChange={setColorDoc}
+          toolbar
+          blockControls
+          placeholder="Select text, then use the Color button…"
         />
       </Example>
 

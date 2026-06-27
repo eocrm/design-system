@@ -477,6 +477,76 @@ describe('renderDoc renderMention option', () => {
   });
 });
 
+describe('renderDoc color marks', () => {
+  const colorDoc = (mark: { type: 'textColor' | 'bgColor'; color: string }): RichDoc => ({
+    blocks: [{ id: '1', type: 'paragraph', inlines: [{ text: 'x', marks: [mark] }] }],
+  });
+
+  it('renders a textColor mark as a span with the resolved color var (read-only)', () => {
+    const { container } = render(<>{renderDoc(colorDoc({ type: 'textColor', color: 'red' }))}</>);
+    const span = container.querySelector('span');
+    expect(span).not.toBeNull();
+    expect(span!.style.color).toBe('var(--color-danger)');
+    expect(span!.textContent).toBe('x');
+  });
+
+  it('renders a bgColor mark as a span with the resolved background var (read-only)', () => {
+    const { container } = render(<>{renderDoc(colorDoc({ type: 'bgColor', color: 'green' }))}</>);
+    const span = container.querySelector('span');
+    expect(span).not.toBeNull();
+    expect(span!.style.backgroundColor).toBe('var(--color-success-bg-subtle)');
+  });
+
+  it('renders color spans on the editable surface too', () => {
+    const { container } = render(
+      <>{renderDoc(colorDoc({ type: 'textColor', color: 'red' }), { editable: true })}</>,
+    );
+    expect(container.querySelector('span')!.style.color).toBe('var(--color-danger)');
+    const bg = render(
+      <>{renderDoc(colorDoc({ type: 'bgColor', color: 'green' }), { editable: true })}</>,
+    );
+    expect(bg.container.querySelector('span')!.style.backgroundColor).toBe(
+      'var(--color-success-bg-subtle)',
+    );
+  });
+
+  it('an unknown color key renders no wrapper span (no empty style)', () => {
+    const { container } = render(<>{renderDoc(colorDoc({ type: 'textColor', color: 'mauve' }))}</>);
+    expect(container.querySelector('span')).toBeNull();
+    expect(container.textContent).toBe('x');
+  });
+
+  it('nests coexisting text+bg colors with textColor OUTSIDE bgColor (MARK_ORDER)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [
+            {
+              text: 'x',
+              marks: [
+                { type: 'textColor', color: 'red' },
+                { type: 'bgColor', color: 'green' },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const { container } = render(<>{renderDoc(doc)}</>);
+    // textColor is the OUTER span (MARK_ORDER: textColor before bgColor)…
+    const outer = container.querySelector('span');
+    expect(outer).not.toBeNull();
+    expect(outer!.style.color).toBe('var(--color-danger)');
+    // …with the bgColor span nested directly inside.
+    const inner = outer!.querySelector('span');
+    expect(inner).not.toBeNull();
+    expect(inner!.style.backgroundColor).toBe('var(--color-success-bg-subtle)');
+    expect(inner!.textContent).toBe('x');
+  });
+});
+
 it('renders an attachment block as a contenteditable=false figure', () => {
   const doc = {
     blocks: [

@@ -7,6 +7,7 @@ import { DropdownMenu } from '../DropdownMenu';
 import { useTranslation } from '../../i18n';
 import type { BlockChoice } from './RichTextToolbar';
 import type { BlockType } from '../RichText/engine/model';
+import { RichTextColorMenu } from './RichTextColorMenu';
 import { GripIcon } from './icons';
 import styles from './RichTextEditor.module.scss';
 
@@ -24,6 +25,8 @@ export interface RichTextBlockMenuProps {
   /** When set, a Configure item appears at the top of the menu (e.g. attachment
    *  settings). Omit for blocks with nothing to configure. */
   onConfigure?: () => void;
+  /** When set, a Color submenu (whole-block text/highlight color) is added. */
+  onColor?: (type: 'textColor' | 'bgColor', key: string | null) => void;
   /** Type of the block the menu targets. "Turn into" is hidden for `attachment`
    *  (a void block — converting an image to a heading is nonsense). */
   blockType?: BlockType;
@@ -37,7 +40,7 @@ export interface RichTextBlockMenuProps {
  */
 export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenuProps>(
   function RichTextBlockMenu(
-    { open, onOpenChange, onAction, onTurnInto, onConfigure, blockType },
+    { open, onOpenChange, onAction, onTurnInto, onConfigure, onColor, blockType },
     ref,
   ) {
     const t = useTranslation();
@@ -62,6 +65,16 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
             <DropdownMenu.Item onSelect={onConfigure}>
               {t('richTextEditor.attachmentConfigure')}
             </DropdownMenu.Item>
+          )}
+          {onColor && (
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger>{t('richTextEditor.color')}</DropdownMenu.SubTrigger>
+              <DropdownMenu.SubContent>
+                {/* The block menu doesn't reflect an active color — pass {}. The swatches
+                    are plain buttons (pointer-first), not registered menu items. */}
+                <RichTextColorMenu active={{}} onPick={onColor} />
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Sub>
           )}
           {blockType !== 'attachment' && (
             <DropdownMenu.Sub>

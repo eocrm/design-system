@@ -317,6 +317,65 @@ describe('RichTextEditor toolbar', () => {
     });
   });
 
+  it('Color toolbar button wraps the selection in the chosen text color', async () => {
+    const user = userEvent.setup();
+    // Stub a non-collapsed range covering 'hello' (jsdom has no real caret).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hello', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    // Open the color menu, then pick the red swatch in the Text (first) row.
+    await user.click(screen.getByRole('button', { name: 'Color' }));
+    const redSwatches = await screen.findAllByRole('button', { name: 'Red' });
+    await user.click(redSwatches[0]);
+    await waitFor(() => {
+      const span = screen.getByRole('textbox', { name: 'Rich text editor' }).querySelector('span');
+      expect(span?.textContent).toBe('hello');
+      expect(span?.style.color).toBe('var(--color-danger)');
+    });
+  });
+
+  it('staging a color at a collapsed caret colors the next typed character', async () => {
+    const user = userEvent.setup();
+    // Collapsed caret at the end of 'hi ' (offset 3) — no selection, so the pick stages
+    // a PENDING color that the next keystroke must realize.
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 3 },
+      focus: { blockId: 'k', offset: 3 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi ', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    // Open the color menu and pick the red swatch in the Text (first) row.
+    await user.click(screen.getByRole('button', { name: 'Color' }));
+    const redSwatches = await screen.findAllByRole('button', { name: 'Red' });
+    await user.click(redSwatches[0]);
+    // Type a character via the same beforeinput path the editor uses.
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: 'x' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    await waitFor(() => {
+      const span = screen.getByRole('textbox', { name: 'Rich text editor' }).querySelector('span');
+      expect(span?.textContent).toBe('x');
+      expect(span?.style.color).toBe('var(--color-danger)');
+    });
+  });
+
   it('Emoji insert uses lastSelectionRef when live selection is null (search-box focus path)', async () => {
     const user = userEvent.setup();
     // Start with a valid selection so the selectionchange handler captures it
@@ -1133,6 +1192,27 @@ describe('blockControls', () => {
     // reverted it to a paragraph.
     await turnIntoBullet(document.querySelector('li[data-block-id]') as HTMLElement);
     expect(document.querySelector('li[data-block-id]')).toBeTruthy();
+  });
+
+  it('block menu Color submenu colors the whole block text', async () => {
+    const user = userEvent.setup();
+    render(
+      <I18nProvider locale="en">
+        <Controlled blockControls />
+      </I18nProvider>,
+    );
+    const block = document.querySelector('[data-block-id]') as HTMLElement;
+    await user.hover(block);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Color' }));
+    // Pick the red swatch in the Text (first) row → whole block wrapped red.
+    const reds = await screen.findAllByRole('button', { name: 'Red' });
+    await user.click(reds[0]);
+    await waitFor(() => {
+      const span = (document.querySelector('[data-block-id]') as HTMLElement).querySelector('span');
+      expect(span?.textContent).toBe('one');
+      expect(span?.style.color).toBe('var(--color-danger)');
+    });
   });
 
   it('⌘D duplicates the caret block (via commit)', async () => {

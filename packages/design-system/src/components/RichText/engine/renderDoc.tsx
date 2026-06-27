@@ -4,6 +4,7 @@ import { Fragment, type ReactNode } from 'react';
 import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
 import { runsText, runsLength } from './inlines';
 import { safeHref } from './safeHref';
+import { textColorVar, bgColorVar } from './colorMarks';
 import { isListItem, effectiveDepths } from './listDepths';
 import type { RenderLink } from './renderLink';
 import type { RenderMention } from './renderMention';
@@ -38,8 +39,20 @@ interface ResolvedOptions {
   renderMention?: RenderMention;
 }
 
-// Outer → inner nesting order so output is stable + diff-friendly.
-const MARK_ORDER: MarkType[] = ['mention', 'link', 'bold', 'italic', 'underline', 'strike', 'code'];
+// Outer → inner nesting order so output is stable + diff-friendly. Color spans sit
+// just inside link/mention (so a colored link reads `<a><span style>…`) but outside
+// the text-formatting tags.
+const MARK_ORDER: MarkType[] = [
+  'mention',
+  'link',
+  'textColor',
+  'bgColor',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'code',
+];
 
 function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
   switch (type) {
@@ -53,6 +66,16 @@ function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
       return <s>{child}</s>;
     case 'code':
       return <code>{child}</code>;
+    case 'textColor': {
+      // Resolve the palette key to a token-backed var. An unknown key yields no
+      // wrapper (never emit an empty `style`).
+      const value = mark.type === 'textColor' ? textColorVar(mark.color) : undefined;
+      return value ? <span style={{ color: value }}>{child}</span> : child;
+    }
+    case 'bgColor': {
+      const value = mark.type === 'bgColor' ? bgColorVar(mark.color) : undefined;
+      return value ? <span style={{ backgroundColor: value }}>{child}</span> : child;
+    }
     case 'link': {
       // The `renderLink` substitution is handled in `renderInlines` (which coalesces
       // contiguous same-href runs into one logical link); here we only emit the

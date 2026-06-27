@@ -14,7 +14,7 @@ import { nextId } from '../RichText/engine/model';
 import { renderDoc } from '../RichText/engine/renderDoc';
 import type { RenderLink } from '../RichText/engine/renderLink';
 import type { RenderMention } from '../RichText/engine/renderMention';
-import { blockLength, isCollapsed } from '../RichText/engine/position';
+import { blockLength, isCollapsed, wholeBlockRange } from '../RichText/engine/position';
 import { linkAt, setLink, removeLink } from './links';
 import { applyTypeAutolink, atomicLinkDeleteRange } from './autolinkInput';
 import { RichTextLinkEditor } from './RichTextLinkEditor';
@@ -23,6 +23,7 @@ import {
   insertFragment,
   insertMention,
   deleteRange,
+  setColorMark,
 } from '../RichText/engine/transforms';
 import { linkifyRuns, findUrl } from '../RichText/engine/autolink';
 import { useMention } from './useMention';
@@ -38,6 +39,7 @@ import { runsText } from '../RichText/engine/inlines';
 import { shortcutMark } from './shortcuts';
 import {
   activeMarks as deriveActiveMarks,
+  activeColors as deriveActiveColors,
   currentBlock as deriveCurrentBlock,
   runToggleMark,
   runSetBlock,
@@ -224,7 +226,7 @@ interface LinkEditorOpen {
  * engine. Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a
  * selection (with a collapsed caret they stage a *pending* mark applied to the
  * next typed text); Enter splits, Backspace/Delete merge. Pass `toolbar` for the
- * built-in formatting toolbar. ⌘/Ctrl+K (or the toolbar link button) opens a
+ * built-in formatting toolbar (marks, lists, links, emoji insert, and text/highlight color). ⌘/Ctrl+K (or the toolbar link button) opens a
  * floating editor to add, edit, or remove a link on the selection. Inside a
  * list, Tab/⇧Tab indent/outdent and Enter on an empty item exits to a paragraph.
  * Pasting rich HTML (web, Word, Google Docs) imports it as formatted content.
@@ -571,6 +573,43 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         }
       },
       [commit],
+    );
+
+    // Color sibling of stageOrToggleMark: with a collapsed caret, stage the color
+    // as a pending mark for the next typed text (replacing any pending color of the
+    // same type, or clearing it when `key` is null); with a selection, set it now.
+    const stageOrSetColor = useCallback(
+      (range: Range, type: 'textColor' | 'bgColor', key: string | null) => {
+        if (isCollapsed(range)) {
+          pendingAtRef.current = range.anchor;
+          setPendingMarks((prev) => {
+            const base = (prev ?? marksAtCaretMarks(latest.current.value, range.anchor)).filter(
+              (m) => m.type !== type,
+            );
+            return key ? [...base, { type, color: key }] : base;
+          });
+        } else {
+          // setColorMark returns a bare RichDoc (a color change never moves the
+          // caret), so wrap it for commit and keep the existing selection.
+          commit({ doc: setColorMark(latest.current.value, range, type, key), selection: range });
+        }
+      },
+      [commit],
+    );
+
+    // Toolbar color dispatch — read the live selection (falling back to the most
+    // recent one, which survives the Popover stealing focus) and route through the
+    // shared color path, then restore focus so typing continues after the pick.
+    const onSetColor = useCallback(
+      (type: 'textColor' | 'bgColor', key: string | null) => {
+        const root = rootRef.current;
+        const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
+        if (range) {
+          stageOrSetColor(range, type, key);
+          root?.focus();
+        }
+      },
+      [stageOrSetColor],
     );
 
     // Open the link editor for the live selection: edit the link under the caret
@@ -1086,6 +1125,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       () => (selection ? deriveActiveMarks(value, selection, pendingMarks) : []),
       [value, selection, pendingMarks],
     );
+    const toolbarColors = useMemo(
+      () => (selection ? deriveActiveColors(value, selection, pendingMarks) : {}),
+      [value, selection, pendingMarks],
+    );
     const toolbarBlock = useMemo<BlockChoice | null>(
       () => (selection ? deriveCurrentBlock(value, selection) : null),
       [value, selection],
@@ -1114,7 +1157,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     const onToolbarMark = useCallback(
       (type: MarkType) => {
-        if (type === 'link' || type === 'mention') return; // link needs an href; mention needs id+label — toolbar fires neither
+        // Value-carrying marks aren't plain toggles: link needs an href, mention an
+        // id+label, textColor/bgColor a palette key — this toolbar path fires none.
+        if (type === 'link' || type === 'mention' || type === 'textColor' || type === 'bgColor')
+          return;
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? selection;
         if (range) stageOrToggleMark(range, { type });
@@ -1187,6 +1233,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const onBlockReorder = useCallback(
       (id: string, targetIndex: number) =>
         commit(moveBlockUnitToIndex(latest.current.value, id, targetIndex), 'other'),
+      [commit],
+    );
+    // Whole-block color from the ⠿ menu's Color submenu. Computes the block's full
+    // range and routes through the same setColorMark path the toolbar uses.
+    const onBlockColor = useCallback(
+      (id: string, type: 'textColor' | 'bgColor', key: string | null) => {
+        const r = wholeBlockRange(latest.current.value, id);
+        if (r) commit({ doc: setColorMark(latest.current.value, r, type, key), selection: r });
+      },
       [commit],
     );
 
@@ -1391,6 +1446,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onTurnInto={onBlockTurnInto}
         onReorder={onBlockReorder}
         onConfigure={canConfigure ? onConfigOpen : undefined}
+        onColor={onBlockColor}
         onDraggingChange={(d) => {
           draggingRef.current = d;
         }}
@@ -1472,6 +1528,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const toolbarBar = showToolbar ? (
       <RichTextToolbar
         activeMarks={toolbarMarks}
+        colors={toolbarColors}
+        onSetColor={onSetColor}
         block={toolbarBlock}
         disabled={readOnly}
         onToggleMark={onToolbarMark}

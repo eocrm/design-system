@@ -57,3 +57,18 @@ it('conveys a list turn-into as a list BlockChoice (no depth)', async () => {
   await userEvent.click(await screen.findByRole('menuitem', { name: 'Bullet list' }));
   expect(onTurnInto).toHaveBeenCalledWith({ type: 'bullet_item' });
 });
+
+it('omits the Color submenu when onColor is not provided', () => {
+  setup();
+  expect(screen.queryByRole('menuitem', { name: 'Color' })).toBeNull();
+});
+
+it('fires onColor with the picked type + key from the Color submenu', async () => {
+  const onColor = vi.fn();
+  setup({ onColor });
+  // Open the "Color" submenu, then pick the green swatch in the Text (first) row.
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Color' }));
+  const greens = await screen.findAllByRole('button', { name: 'Green' });
+  await userEvent.click(greens[0]);
+  expect(onColor).toHaveBeenCalledWith('textColor', 'green');
+});

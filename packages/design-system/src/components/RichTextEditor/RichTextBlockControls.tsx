@@ -51,6 +51,13 @@ export interface RichTextBlockControlsProps {
    */
   onConfigure?: (blockId: string) => void;
   /**
+   * Set a whole-block color from the ⠿ menu's Color submenu. When set, a Color
+   * submenu is added to the menu and fires with the active block id, the color
+   * type (`textColor`/`bgColor`), and the palette key (`null` clears). Omit to
+   * hide the submenu.
+   */
+  onColor?: (blockId: string, type: 'textColor' | 'bgColor', key: string | null) => void;
+  /**
    * Reorder the active block to land at `targetIndex` — a "gap" (0..N) in the
    * CURRENT block array. Fired when a block drag is dropped. Wired by the editor
    * to the subtree-aware `moveBlockUnitToIndex` engine transform.
@@ -141,6 +148,7 @@ export function RichTextBlockControls({
   onAction,
   onTurnInto,
   onConfigure,
+  onColor,
   onReorder,
   onDraggingChange,
 }: RichTextBlockControlsProps) {
@@ -332,6 +340,7 @@ export function RichTextBlockControls({
           onTurnInto={(c) => onTurnInto(activeBlockId, c)}
           blockType={activeBlockType}
           onConfigure={onConfigure ? () => onConfigure(activeBlockId) : undefined}
+          onColor={onColor ? (type, key) => onColor(activeBlockId, type, key) : undefined}
         />
       </DraggableGutter>
     </DndContext>
