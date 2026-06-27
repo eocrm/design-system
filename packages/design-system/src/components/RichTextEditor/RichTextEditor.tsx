@@ -55,7 +55,13 @@ import {
 } from '../RichText/engine/blockUnit';
 import { RichTextBlockControls } from './RichTextBlockControls';
 import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
-import { updateAttachmentBlock, clearAttachmentFields } from '../RichText/engine/attachment';
+import { RichTextImageResizer } from './RichTextImageResizer';
+import {
+  updateAttachmentBlock,
+  clearAttachmentFields,
+  attachmentIsImage,
+} from '../RichText/engine/attachment';
+import { safeHref } from '../RichText/engine/safeHref';
 import type { BlockAction } from './RichTextBlockMenu';
 import { useUpload, type UploadConfig } from './useUpload';
 import {
@@ -1372,6 +1378,30 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       />
     ) : null;
 
+    // A bottom-right resize handle on the active image — but only when it renders as
+    // a preview (a safe, fetchable src), matching the Width slider's gating. The
+    // layoutKey carries the image's width so the handle re-measures and tracks the
+    // corner as it resizes live.
+    const activeIsResizableImage =
+      controlsOn &&
+      activeBlock?.type === 'attachment' &&
+      activeBlock.status === 'ready' &&
+      attachmentIsImage(activeBlock) &&
+      !!safeHref(activeBlock.src ?? '');
+    const imageResizerEl =
+      activeIsResizableImage && activeBlockId ? (
+        <RichTextImageResizer
+          rootRef={shellRef}
+          blockId={activeBlockId}
+          layoutKey={`${value.blocks.map((b) => b.id).join('|')}:${activeBlock?.width ?? ''}`}
+          maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
+          onResize={(w) => onConfigWidth(activeBlockId, w)}
+          onDraggingChange={(d) => {
+            draggingRef.current = d;
+          }}
+        />
+      ) : null;
+
     const configEl =
       configBlock && configBlock.type === 'attachment' && configBlock.status === 'ready' && uploadOn
         ? (() => {
@@ -1453,6 +1483,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         {linkBubble}
         {mentionMenu}
         {blockControlsEl}
+        {imageResizerEl}
         {configEl}
       </div>
     );

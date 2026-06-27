@@ -1474,6 +1474,43 @@ describe('attachment config', () => {
     );
     expect(screen.queryByLabelText('Alt text')).toBeNull();
   });
+  it('shows an image resize handle for a previewable image, not for a chip', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          // previewable image (safe http src → renders as <img>)
+          {
+            id: 'img',
+            type: 'attachment',
+            status: 'ready',
+            src: 'http://u/p.png',
+            mime: 'image/png',
+            name: 'p.png',
+            inlines: [],
+          },
+          // an object-URL "upload" → blocked by safeHref → renders as a chip
+          {
+            id: 'chip',
+            type: 'attachment',
+            status: 'ready',
+            src: 'blob:http://localhost/abc',
+            mime: 'image/png',
+            name: 'c.png',
+            inlines: [],
+          },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls upload={up()} />;
+    }
+    renderEditor(<Harness />);
+    await user.hover(document.querySelector('figure[data-block-id="img"]') as HTMLElement);
+    expect(await screen.findByTitle('Drag to resize')).toBeInTheDocument();
+    // Hover the chip instead — no resize handle for a non-preview attachment.
+    await user.hover(document.querySelector('figure[data-block-id="chip"]') as HTMLElement);
+    await waitFor(() => expect(screen.queryByTitle('Drag to resize')).toBeNull());
+  });
+
   it('readOnly shows no Configure (the whole gutter is suppressed)', async () => {
     const user = userEvent.setup();
     function Harness() {

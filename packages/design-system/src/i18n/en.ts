@@ -251,6 +251,7 @@ export const en: Messages = {
     attachmentAlignRight: 'Align right',
     attachmentWidth: 'Width',
     attachmentWidthReset: 'Reset',
+    attachmentResize: 'Drag to resize',
     attachmentReplace: 'Replace',
     attachmentOpen: 'Open',
     attachmentDownload: 'Download',

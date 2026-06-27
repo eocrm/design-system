@@ -253,6 +253,7 @@ export const ru: Messages = {
     attachmentAlignRight: 'По правому краю',
     attachmentWidth: 'Ширина',
     attachmentWidthReset: 'Сбросить',
+    attachmentResize: 'Потяните, чтобы изменить размер',
     attachmentReplace: 'Заменить',
     attachmentOpen: 'Открыть',
     attachmentDownload: 'Скачать',
