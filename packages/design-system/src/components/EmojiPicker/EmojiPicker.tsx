@@ -23,6 +23,12 @@ import styles from './EmojiPicker.module.scss';
 // sync with what the user sees.
 const COLUMNS = 8;
 
+// char → dataset entry, for resolving a `recent` char's name (accessible label).
+// A char not in the curated set falls back to the char itself as its name.
+const ENTRY_BY_CHAR = new Map<string, EmojiEntry>(
+  EMOJI_CATEGORIES.flatMap((cat) => cat.emojis.map((e) => [e.char, e] as const)),
+);
+
 // ----------------------------------------------------------------------------
 // EmojiPicker
 // ----------------------------------------------------------------------------
@@ -34,6 +40,15 @@ export interface EmojiPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
    * output — wire it to insert into an editor, set a reaction, etc.
    */
   onSelect: (emoji: string) => void;
+  /**
+   * Recently-used emoji characters (e.g. `['👍', '🎉', '❤️']`), most-recent first.
+   * When provided, a "Recently used" section renders at the top of the grid (only
+   * while not searching). The consumer owns persistence — keep the list yourself
+   * (e.g. in localStorage), update it in `onSelect`, and pass it back. Duplicates
+   * are de-duped; a char outside the curated set still renders (labelled by the
+   * char). Omit or pass `[]` for no recent section.
+   */
+  recent?: string[];
 }
 
 /** One visible emoji plus its flat-array index (for roving keyboard nav). */
@@ -42,9 +57,10 @@ interface IndexedEmoji {
   index: number;
 }
 
-/** A category section after filtering, carrying flat indices for its emojis. */
+/** A section after filtering, carrying flat indices for its emojis. `'recent'` is
+ *  the synthetic recently-used section rendered above the curated categories. */
 interface VisibleCategory {
-  id: EmojiCategoryId;
+  id: EmojiCategoryId | 'recent';
   items: IndexedEmoji[];
 }
 
@@ -100,7 +116,7 @@ interface VisibleCategory {
  *   no notion of which emoji are already selected or how many times.
  */
 export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function EmojiPicker(
-  { onSelect, className, ...rest },
+  { onSelect, recent, className, ...rest },
   ref,
 ) {
   const t = useTranslation();
@@ -126,18 +142,35 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function
 
     const flatList: EmojiEntry[] = [];
     const cats: VisibleCategory[] = [];
-    for (const cat of EMOJI_CATEGORIES) {
-      const filtered = cat.emojis.filter(matches);
-      if (filtered.length === 0) continue;
-      const items = filtered.map<IndexedEmoji>((emoji) => {
+    const pushSection = (id: VisibleCategory['id'], emojis: EmojiEntry[]) => {
+      const items = emojis.map<IndexedEmoji>((emoji) => {
         const index = flatList.length;
         flatList.push(emoji);
         return { emoji, index };
       });
-      cats.push({ id: cat.id, items });
+      cats.push({ id, items });
+    };
+
+    // "Recently used" pins to the top, but only when not searching (search spans
+    // the whole set). De-dupe by char, preserving most-recent-first order; a char
+    // outside the curated set still renders, labelled by the char.
+    if (q === '' && recent && recent.length > 0) {
+      const seen = new Set<string>();
+      const recentEntries: EmojiEntry[] = [];
+      for (const char of recent) {
+        if (seen.has(char)) continue;
+        seen.add(char);
+        recentEntries.push(ENTRY_BY_CHAR.get(char) ?? { char, name: char, keywords: [] });
+      }
+      if (recentEntries.length > 0) pushSection('recent', recentEntries);
+    }
+
+    for (const cat of EMOJI_CATEGORIES) {
+      const filtered = cat.emojis.filter(matches);
+      if (filtered.length > 0) pushSection(cat.id, filtered);
     }
     return { categories: cats, flat: flatList };
-  }, [query]);
+  }, [query, recent]);
 
   // Clamp the active index to the current result set so the tabbable cell is
   // always valid after the filter shrinks the grid.
@@ -242,15 +275,12 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function
         ) : (
           categories.map((cat) => {
             const labelId = `${baseId}-${cat.id}`;
+            const label =
+              cat.id === 'recent' ? t('emojiPicker.recent') : t(`emojiPicker.category.${cat.id}`);
             return (
-              <div
-                key={cat.id}
-                className={styles.section}
-                role="group"
-                aria-label={t(`emojiPicker.category.${cat.id}`)}
-              >
+              <div key={cat.id} className={styles.section} role="group" aria-label={label}>
                 <Text as="div" size="xs" tone="muted" id={labelId} className={styles.sectionLabel}>
-                  {t(`emojiPicker.category.${cat.id}`)}
+                  {label}
                 </Text>
                 <div className={styles.grid}>
                   {cat.items.map(({ emoji, index }) => (
@@ -296,6 +326,8 @@ export interface EmojiPickerPopoverProps {
    * (both controlled and uncontrolled).
    */
   onSelect: (emoji: string) => void;
+  /** Recently-used emoji chars shown in a top "Recently used" section — see `EmojiPicker`. */
+  recent?: string[];
   /**
    * Controlled open state. Provide alongside `onOpenChange` to drive open
    * externally. Omit both to let the wrapper own its state (the common case).
@@ -331,6 +363,7 @@ export interface EmojiPickerPopoverProps {
 export function EmojiPickerPopover({
   trigger,
   onSelect,
+  recent,
   open,
   onOpenChange,
   defaultOpen = false,
@@ -357,7 +390,7 @@ export function EmojiPickerPopover({
           isValidElement and throws on anything else, so the cast is safe. */}
       <Popover.Trigger>{trigger as ReactElement}</Popover.Trigger>
       <Popover.Content>
-        <EmojiPicker onSelect={handleSelect} />
+        <EmojiPicker onSelect={handleSelect} recent={recent} />
       </Popover.Content>
     </Popover>
   );

@@ -177,6 +177,8 @@ export interface Messages {
     search: string;
     /** Accessible label for the emoji listbox surface. */
     label: string;
+    /** Section header for the recently-used emoji (the `recent` prop). */
+    recent: string;
     /** Copy shown when the search query matches no emoji. */
     noResults: string;
     /** Localized section headers, keyed by `EmojiCategoryId`. */
