@@ -129,6 +129,10 @@ it('applies no transform or lifted style at rest', () => {
   const block = container.querySelector('[data-block-id="b1"]') as HTMLElement;
   expect(block.style.transform).toBe('');
   expect(block.className).not.toContain('blockLifted');
+  // The gutter only translates while dragging (it follows the lifted row); at rest
+  // it carries no transform.
+  const gutter = container.querySelector('[contenteditable="false"]') as HTMLElement;
+  expect(gutter.style.transform).toBe('');
 });
 
 it('re-measures the gutter position when blockOrderKey changes (post-drop / insert / delete)', () => {
