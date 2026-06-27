@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   RichTextEditor,
   docFromText,
+  fromHtml,
   fromMarkdown,
   toHtml,
   toMarkdown,
@@ -16,6 +17,11 @@ import {
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+// A public (non-inlined) image served at a stable relative URL — safeHref allows it,
+// so it renders as a real preview. (An imported src/assets SVG would be inlined as a
+// data: URL, which safeHref blocks.) BASE_URL keeps it correct on GitHub Pages.
+const sampleEmbedSrc = `${import.meta.env.BASE_URL}sample-embed.svg`;
 
 // A consumer-supplied resolver: a link to an in-space task URL renders as a task
 // chip; everything else falls back to a normal <a>. Same resolver works in the
@@ -68,7 +74,13 @@ export function RichTextEditorDemo() {
     docFromText('Type a task URL below to watch it autolink. '),
   );
   const [uploadDoc, setUploadDoc] = useState<RichDoc>(() =>
-    docFromText('Paste a screenshot, or use the toolbar button to attach a file. '),
+    // Seed an EMBEDDED image (real URL + explicit width) so its block-menu
+    // "Configure" exposes the width slider. Uploaded files below come in as object
+    // URLs (rendered as chips) with no dimensions, so they get no width control.
+    fromHtml(
+      '<p>Paste a screenshot, or use the toolbar button to attach a file.</p>' +
+        `<img src="${sampleEmbedSrc}" width="320" alt="Embedded sample image" />`,
+    ),
   );
   // Mock uploader: resolve to a local object URL after a short delay (demo only).
   const mockUpload = (file: File) =>
@@ -144,7 +156,7 @@ export function RichTextEditorDemo() {
 
       <Example
         title="File upload"
-        description="Provide upload={{ onUpload }} to enable a toolbar attach button and clipboard-file paste. Images render inline; other files as a download chip. Uploading shows a spinner; a rejected onUpload shows Retry/Remove. Wire onUploadingChange to your submit button. (This demo uses a mock uploader that returns a local object URL.) Select an uploaded image and click the ⚙ (or the block menu's Configure) to set alt text, alignment, and width, or replace the file."
+        description="Provide upload={{ onUpload }} to enable a toolbar attach button and clipboard-file paste. Images served from a real URL render inline; other files (and object-URL uploads) show as a download chip. Uploading shows a spinner; a rejected onUpload shows Retry/Remove. Wire onUploadingChange to your submit button. (This demo uses a mock uploader that returns a local object URL.) Open any attachment's block menu (the ⠿ handle) and choose Configure to set alt text, alignment, replace the file, or open/download. The width slider appears only for an image that renders as a preview (the seeded embedded image above) — an uploaded object-URL image shows as a chip and isn't resizable."
         code={`<RichTextEditor value={doc} onChange={setDoc} toolbar blockControls
   upload={{ onUpload: (file) => uploadToServer(file) }} />`}
       >

@@ -93,16 +93,12 @@ it('renders nothing when activeBlockId is null', () => {
   expect(screen.queryByRole('button', { name: 'Insert block below' })).toBeNull();
 });
 
-it('shows a Configure (gear) button when onConfigure is provided', async () => {
-  const onConfigure = vi.fn();
-  render(<Harness activeBlockType="attachment" onConfigure={onConfigure} />);
-  await userEvent.click(screen.getByRole('button', { name: 'Configure' }));
-  expect(onConfigure).toHaveBeenCalledWith('b1');
-});
-
-it('no gear when onConfigure is omitted', () => {
-  render(<Harness activeBlockType="attachment" />);
+it('offers Configure only via the block menu, not a standalone gutter button', () => {
+  render(<Harness activeBlockType="attachment" onConfigure={vi.fn()} />);
+  // No gear in the gutter — only Insert + Block actions (Configure lives in the menu).
   expect(screen.queryByRole('button', { name: 'Configure' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Insert block below' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Block actions' })).toBeInTheDocument();
 });
 
 it('block menu shows a Configure item that fires onConfigure', async () => {
@@ -110,6 +106,11 @@ it('block menu shows a Configure item that fires onConfigure', async () => {
   render(<Harness activeBlockType="attachment" menuOpen onConfigure={onConfigure} />);
   await userEvent.click(screen.getByRole('menuitem', { name: 'Configure' }));
   expect(onConfigure).toHaveBeenCalledWith('b1');
+});
+
+it('no Configure menu item when onConfigure is omitted', () => {
+  render(<Harness activeBlockType="attachment" menuOpen />);
+  expect(screen.queryByRole('menuitem', { name: 'Configure' })).toBeNull();
 });
 
 it('a plain grip click (no drag) opens the block menu', async () => {

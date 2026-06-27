@@ -17,7 +17,7 @@ import { useTranslation } from '../../i18n';
 import { RichTextBlockMenu, type BlockAction } from './RichTextBlockMenu';
 import type { BlockChoice } from './RichTextToolbar';
 import type { BlockType } from '../RichText/engine/model';
-import { GearIcon, PlusIcon } from './icons';
+import { PlusIcon } from './icons';
 import { computeReflow, type BlockRect, type UnitRange } from './blockReflow';
 import { gapIndexFromY } from './blockDrop';
 import styles from './RichTextEditor.module.scss';
@@ -46,9 +46,8 @@ export interface RichTextBlockControlsProps {
   onTurnInto: (blockId: string, choice: BlockChoice) => void;
   /**
    * Open the block's configuration affordance (e.g. attachment settings). When
-   * set, a ⚙ Configure button appears in the gutter and a Configure item is added
-   * to the block menu; both fire with the active block id. Omit for blocks that
-   * have nothing to configure.
+   * set, a "Configure" item is added to the ⠿ block menu and fires with the
+   * active block id. Omit for blocks that have nothing to configure.
    */
   onConfigure?: (blockId: string) => void;
   /**
@@ -83,9 +82,9 @@ function clearReflow(
 }
 
 /**
- * The gutter strip, wired as the dnd-kit drag handle (the WHOLE strip — ＋ / ⚙ / ⠿
+ * The gutter strip, wired as the dnd-kit drag handle (the WHOLE strip — ＋ / ⠿
  * and the space around them). A sub-4px press still reaches the buttons (insert /
- * configure / open menu); a press-drag past the 4px activation lifts the row.
+ * open menu); a press-drag past the 4px activation lifts the row.
  * Spreads only `listeners` — never dnd-kit's `attributes` — so the gutter stays out
  * of the tab order (keyboard reorder is the editor's ⌘/Ctrl+⇧↑/↓ shortcuts).
  */
@@ -127,7 +126,9 @@ function DraggableGutter({
  * vertical offset within the shell and renders the `＋` insert button + the block
  * menu there. Renders nothing when there is no active block. The whole gutter is
  * the drag handle: dragging it reorders the active block via an in-place reflow,
- * while a plain click on ＋/⚙/⠿ still triggers that button.
+ * while a plain click on ＋/⠿ still triggers that button. Block configuration
+ * (e.g. attachment settings) lives in the ⠿ menu's "Configure" item, not a
+ * separate gutter button.
  */
 export function RichTextBlockControls({
   rootRef,
@@ -264,7 +265,7 @@ export function RichTextBlockControls({
       const own = reflow.shifts[i] - (pid >= 0 ? reflow.shifts[pid] : 0);
       snap.els[i].style.transform = own ? `translateY(${own}px)` : '';
     }
-    // Carry the gutter (＋ / ⚙ / ⠿) along with the lifted row by the same clamped
+    // Carry the gutter (＋ / ⠿) along with the lifted row by the same clamped
     // travel, so the controls feel attached to the row being dragged. The gutter is
     // not nested, so it shifts by the unit's net movement (liftDy) directly.
     if (gutterElRef.current) {
@@ -324,20 +325,6 @@ export function RichTextBlockControls({
         >
           <PlusIcon />
         </Button>
-        {onConfigure && (
-          <Button
-            size="sm"
-            variant="ghost"
-            iconOnly
-            tabIndex={-1}
-            aria-label={t('richTextEditor.attachmentConfigure')}
-            className={styles.gutterButton}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => onConfigure(activeBlockId)}
-          >
-            <GearIcon />
-          </Button>
-        )}
         <RichTextBlockMenu
           open={menuOpen}
           onOpenChange={onMenuOpenChange}

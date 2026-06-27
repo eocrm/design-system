@@ -173,9 +173,11 @@ export interface RichTextEditorProps extends Omit<
    * (`accept` is only a native-picker hint and is bypassed by paste). Omit to
    * disable. Ignored when `readOnly`.
    * When `blockControls` is also on, a ready image attachment can be configured
-   * (alt text, alignment, width, replace, open/download) via a ⚙ in the block
-   * gutter or the block menu's "Configure" — alignment + width round-trip through
-   * HTML but not Markdown.
+   * (alt text, alignment, replace, open/download) via the block menu's
+   * "Configure" item. The width slider appears only for an image that renders as
+   * a preview (a safe, fetchable src — an embed); an uploaded image whose
+   * object-URL src renders as a download chip isn't resizable here. Alignment +
+   * width round-trip through HTML but not Markdown.
    */
   upload?: UploadConfig;
 }

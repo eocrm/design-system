@@ -1347,7 +1347,8 @@ describe('attachment config', () => {
     renderEditor(<Harness />);
     const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
     await user.hover(fig);
-    await user.click(screen.getByRole('button', { name: 'Configure' }));
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Configure' }));
     const alt = await screen.findByLabelText('Alt text');
     await user.clear(alt);
     await user.type(alt, 'Updated');
@@ -1368,7 +1369,8 @@ describe('attachment config', () => {
     renderEditor(<Harness />);
     const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
     await user.hover(fig);
-    await user.click(screen.getByRole('button', { name: 'Configure' }));
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Configure' }));
     await user.click(await screen.findByRole('button', { name: 'Align center' }));
     await waitFor(() =>
       expect(document.querySelector('figure[data-block-id="img"]')).toHaveAttribute(
@@ -1401,7 +1403,8 @@ describe('attachment config', () => {
     renderEditor(<Harness />);
     const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
     await user.hover(fig);
-    await user.click(screen.getByRole('button', { name: 'Configure' }));
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Configure' }));
     const slider = await screen.findByRole('slider', { name: 'Width' });
     slider.focus();
     await user.keyboard('{ArrowLeft}'); // nudge the width down one step
@@ -1421,7 +1424,8 @@ describe('attachment config', () => {
     renderEditor(<Harness />);
     const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
     await user.hover(fig);
-    await user.click(screen.getByRole('button', { name: 'Configure' }));
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Configure' }));
     expect(await screen.findByLabelText('Alt text')).toBeInTheDocument();
     const fileInput = document.querySelector(
       'input[type="file"]:not([multiple])',
@@ -1434,7 +1438,7 @@ describe('attachment config', () => {
     );
     expect(screen.queryByLabelText('Alt text')).toBeNull();
   });
-  it('readOnly shows no Configure', async () => {
+  it('readOnly shows no Configure (the whole gutter is suppressed)', async () => {
     const user = userEvent.setup();
     function Harness() {
       const [doc, setDoc] = useState<RichDoc>(seeded());
@@ -1443,6 +1447,7 @@ describe('attachment config', () => {
     renderEditor(<Harness />);
     const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
     await user.hover(fig);
-    expect(screen.queryByRole('button', { name: 'Configure' })).toBeNull();
+    // readOnly suppresses the gutter entirely → no ⠿ handle, hence no Configure.
+    expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
   });
 });

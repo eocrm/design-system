@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="240" viewBox="0 0 480 240" role="img" aria-label="Embedded sample image">
+  <rect width="480" height="240" rx="12" fill="#4f46e5" />
+  <rect x="16" y="16" width="448" height="208" rx="8" fill="#6366f1" />
+  <text x="40" y="116" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="600" fill="#ffffff">Embedded image</text>
+  <text x="40" y="152" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#c7d2fe">resize me via the ⠿ menu → Configure</text>
+</svg>
