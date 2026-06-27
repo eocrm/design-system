@@ -10,20 +10,7 @@ import { safeHref } from './safeHref';
 import { textColorVar, bgColorVar } from './colorMarks';
 import { isListItem, effectiveDepths } from './listDepths';
 import { attachmentIsImage } from './attachment';
-
-// Outer → inner; link outermost, code innermost (matches renderDoc). Color spans
-// sit just inside link/mention but outside the text-formatting tags.
-const MARK_ORDER: MarkType[] = [
-  'mention',
-  'link',
-  'textColor',
-  'bgColor',
-  'bold',
-  'italic',
-  'underline',
-  'strike',
-  'code',
-];
+import { MARK_ORDER } from './marks';
 
 /** Wrap an already-escaped HTML string in one mark's tag. */
 function wrapMark(type: MarkType, mark: Mark, inner: string): string {

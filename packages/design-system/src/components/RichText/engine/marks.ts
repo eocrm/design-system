@@ -1,6 +1,23 @@
 // marks.ts — Layer A. Pure helpers over a Mark[]. Never mutate inputs.
 import type { Mark, MarkType } from './model';
 
+/**
+ * Inline-mark nesting order, outermost first. Shared by renderDoc + toHtml so
+ * render and serialize nest identically. Color spans sit just inside link/mention
+ * (so a colored link reads `<a><span style>…`) but outside the text-formatting tags.
+ */
+export const MARK_ORDER: MarkType[] = [
+  'mention',
+  'link',
+  'textColor',
+  'bgColor',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'code',
+];
+
 /** Canonical key for set comparison (link by href, mention by id+label, color by key). */
 function markKey(m: Mark): string {
   if (m.type === 'link') return `link:${m.href}`;
@@ -11,7 +28,10 @@ function markKey(m: Mark): string {
 
 /** Order-insensitive set equality (link href included). */
 export function marksEqual(a: Mark[], b: Mark[]): boolean {
+  if (a === b) return true;
   if (a.length !== b.length) return false;
+  if (a.length === 0) return true;
+  if (a.length === 1) return markKey(a[0]) === markKey(b[0]);
   const ka = a.map(markKey).sort();
   const kb = b.map(markKey).sort();
   return ka.every((k, i) => k === kb[i]);

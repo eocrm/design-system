@@ -6,6 +6,7 @@ import { runsText, runsLength } from './inlines';
 import { safeHref } from './safeHref';
 import { textColorVar, bgColorVar } from './colorMarks';
 import { isListItem, effectiveDepths } from './listDepths';
+import { MARK_ORDER } from './marks';
 import type { RenderLink } from './renderLink';
 import type { RenderMention } from './renderMention';
 import { RichTextAttachment } from '../../RichTextEditor/RichTextAttachment';
@@ -38,21 +39,6 @@ interface ResolvedOptions {
   renderLink?: RenderLink;
   renderMention?: RenderMention;
 }
-
-// Outer → inner nesting order so output is stable + diff-friendly. Color spans sit
-// just inside link/mention (so a colored link reads `<a><span style>…`) but outside
-// the text-formatting tags.
-const MARK_ORDER: MarkType[] = [
-  'mention',
-  'link',
-  'textColor',
-  'bgColor',
-  'bold',
-  'italic',
-  'underline',
-  'strike',
-  'code',
-];
 
 function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
   switch (type) {
