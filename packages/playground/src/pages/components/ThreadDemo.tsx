@@ -101,7 +101,8 @@ const headerLine = { lineHeight: 'var(--size-sm)' };
       <Example
         title="Depth cap (maxDepth)"
         description="A deep back-and-forth. With maxDepth={3}, replies stop indenting once the cap is reached — the chain past level 3 renders flat at the same indent so the thread stops marching right off the page."
-        code={`<Thread maxDepth={3}>
+        code={`// headerLine = { lineHeight: 'var(--size-sm)' } — see the first example
+<Thread maxDepth={3}>
   <Thread.Item node={<Avatar name="Dana Reyes" size="sm" />}>
     <Text size="sm" style={headerLine}><strong>Dana Reyes</strong> · who's covering the EU launch demo?</Text>
     <Thread.Item node={<Avatar name="Sam Cole" size="sm" />}>
@@ -152,8 +153,9 @@ const headerLine = { lineHeight: 'var(--size-sm)' };
 
       <Example
         title="Compact (dense sidebar thread)"
-        description="compact tightens the node box and gaps for a narrow panel — a contact-record activity sidebar. The remapped tokens cascade to every nested reply."
-        code={`<Thread compact>
+        description="compact tightens the gaps for a narrow panel — a contact-record activity sidebar. The remapped tokens cascade to every nested reply."
+        code={`// headerLine = { lineHeight: 'var(--size-sm)' } — see the first example
+<Thread compact>
   <Thread.Item node={<Avatar name="Grace Liu" size="sm" />}>
     <Text size="sm" style={headerLine}><strong>Grace Liu</strong> · renewed the contract</Text>
     <Thread.Item node={<Avatar name="Marcus Bell" size="sm" />}>
