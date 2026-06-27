@@ -241,18 +241,35 @@ export function writeSelection(root: HTMLElement, range: Range): void {
 /** A viewport rect (subset of DOMRect) used to anchor floating UI to a selection. */
 export type Rect = { top: number; left: number; height: number; width: number };
 
-/** The viewport rect of the current DOM selection, falling back to `root`. */
+/**
+ * The viewport rect to anchor floating UI (the link editor) to the current DOM
+ * selection. Prefers the selection's own rect; when that's degenerate — a collapsed
+ * caret in an EMPTY block returns an all-zero rect — it falls back to the caret's
+ * BLOCK element (the active line), so an anchored popover opens beside that line.
+ * Only if there's no block (caret directly in root) does it fall back to `root`.
+ * (The old root fallback used the editor's full height, which dropped the link
+ * popover below the whole document — visible via `toolbar="auto"` + Link on an
+ * empty composer.)
+ */
 export function selectionRect(root: HTMLElement): Rect {
   const sel = typeof window !== 'undefined' ? window.getSelection() : null;
   if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
     let r: DOMRect | null = null;
     try {
-      r = sel.getRangeAt(0).getBoundingClientRect();
+      r = range.getBoundingClientRect();
     } catch {
       // jsdom does not implement Range.getBoundingClientRect — fall through.
     }
     if (r && (r.width || r.height || r.top || r.left)) {
       return { top: r.top, left: r.left, width: r.width, height: r.height };
+    }
+    // Degenerate selection rect (e.g. collapsed caret in an empty block). Anchor to
+    // the caret's block element (the active line), not the whole editor.
+    const blockEl = blockElementFor(root, range.startContainer);
+    if (blockEl) {
+      const b = blockEl.getBoundingClientRect();
+      return { top: b.top, left: b.left, width: b.width, height: b.height };
     }
   }
   const rr = root.getBoundingClientRect();

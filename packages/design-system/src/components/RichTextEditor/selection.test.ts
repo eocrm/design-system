@@ -1,4 +1,4 @@
-import { pointFromDom, pointToDom } from './selection';
+import { pointFromDom, pointToDom, selectionRect } from './selection';
 
 // Build: <div root><p data-block-id="a">He<strong>ll</strong>o</p><p data-block-id="b"><br></p></div>
 function buildRoot(): HTMLElement {
@@ -283,5 +283,56 @@ describe('void-block selection', () => {
     const r = makeRoot(HTML);
     const dom = pointToDom(r, { blockId: 'v', offset: 0 })!;
     expect(pointFromDom(r, dom.node, dom.offset)).toEqual({ blockId: 'v', offset: 0 });
+  });
+});
+
+describe('selectionRect — degenerate-selection fallback', () => {
+  const rect = (top: number, left: number, width: number, height: number): DOMRect =>
+    ({
+      top,
+      left,
+      width,
+      height,
+      right: left + width,
+      bottom: top + height,
+      x: left,
+      y: top,
+      toJSON: () => ({}),
+    }) as DOMRect;
+
+  it('anchors to the caret BLOCK element (active line), not the whole editor', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<p data-block-id="b"><br></p>';
+    document.body.appendChild(root);
+    const block = root.querySelector<HTMLElement>('[data-block-id="b"]')!;
+    // Collapsed caret in the empty block → the selection's own rect is degenerate
+    // (jsdom's Range.getBoundingClientRect throws or returns zeros), so it should
+    // fall back to the block's rect rather than the root's full height.
+    const range = document.createRange();
+    range.setStart(block, 0);
+    range.collapse(true);
+    const sel = window.getSelection()!;
+    sel.removeAllRanges();
+    sel.addRange(range);
+    block.getBoundingClientRect = () => rect(120, 24, 200, 18);
+    root.getBoundingClientRect = () => rect(0, 0, 240, 500);
+
+    expect(selectionRect(root)).toEqual({ top: 120, left: 24, width: 200, height: 18 });
+    document.body.removeChild(root);
+  });
+
+  it('falls back to root only when the caret is not inside a block', () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    const range = document.createRange();
+    range.setStart(root, 0);
+    range.collapse(true);
+    const sel = window.getSelection()!;
+    sel.removeAllRanges();
+    sel.addRange(range);
+    root.getBoundingClientRect = () => rect(0, 0, 240, 500);
+
+    expect(selectionRect(root)).toEqual({ top: 0, left: 0, width: 0, height: 500 });
+    document.body.removeChild(root);
   });
 });
