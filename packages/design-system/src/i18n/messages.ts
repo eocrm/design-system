@@ -410,7 +410,7 @@ export interface Messages {
     uploadRetry: string;
     /** Remove action on a failed upload. */
     uploadRemove: string;
-    /** ⚙ config button + "Configure" menu item label. */
+    /** "Configure" block-menu item label + config-popover aria-label. */
     attachmentConfigure: string;
     /** Alt-text field label. */
     attachmentAlt: string;
