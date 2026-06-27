@@ -1,7 +1,9 @@
 // colorMarks.ts — the curated, token-backed palette for textColor/bgColor marks.
 // Marks store a KEY (e.g. 'red'); these resolve a key to a CSS custom property so
 // colors stay theme-able and tokens-only. Shared by the renderer, serializers, and UI.
+/** A curated palette key stored by `textColor`/`bgColor` marks (never a raw color). */
 export type ColorKey = 'gray' | 'red' | 'green' | 'amber' | 'blue';
+/** Every palette key, in swatch-display order. */
 export const COLOR_KEYS: ColorKey[] = ['gray', 'red', 'green', 'amber', 'blue'];
 
 const TEXT_VAR: Record<ColorKey, string> = {
@@ -36,12 +38,15 @@ const BG_HEX: Record<ColorKey, string> = {
   blue: '#deebff',
 };
 
+/** Type guard: is `s` one of the palette keys? */
 export function isColorKey(s: string): s is ColorKey {
   return (COLOR_KEYS as string[]).includes(s);
 }
+/** Resolve a text-color key to its token-backed `var(--…)`, or `undefined` if unknown. */
 export function textColorVar(key: string): string | undefined {
   return isColorKey(key) ? `var(${TEXT_VAR[key]})` : undefined;
 }
+/** Resolve a highlight (bg) key to its token-backed `var(--…)`, or `undefined` if unknown. */
 export function bgColorVar(key: string): string | undefined {
   return isColorKey(key) ? `var(${BG_VAR[key]})` : undefined;
 }
@@ -58,9 +63,11 @@ function keyFrom(
   }
   return undefined;
 }
+/** Parse a CSS `color` value (our var() output or a default-theme hex) back to a text key. */
 export function textColorKeyFrom(css: string): ColorKey | undefined {
   return keyFrom(css, TEXT_VAR, TEXT_HEX);
 }
+/** Parse a CSS `background-color` value (var() output or default-theme hex) back to a bg key. */
 export function bgColorKeyFrom(css: string): ColorKey | undefined {
   return keyFrom(css, BG_VAR, BG_HEX);
 }
