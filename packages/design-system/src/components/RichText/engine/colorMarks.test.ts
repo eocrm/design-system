@@ -6,33 +6,40 @@ import {
   textColorKeyFrom,
   bgColorKeyFrom,
 } from './colorMarks';
+import { PALETTE_COLORS } from '../../../palette';
 
 describe('colorMarks', () => {
-  it('lists keys', () => expect(COLOR_KEYS).toEqual(['gray', 'red', 'green', 'amber', 'blue']));
+  it('lists the full palette in order', () => {
+    expect(COLOR_KEYS).toEqual(PALETTE_COLORS);
+    expect(COLOR_KEYS).toHaveLength(30);
+    expect(COLOR_KEYS[0]).toBe('red');
+    expect(COLOR_KEYS[COLOR_KEYS.length - 1]).toBe('charcoal');
+  });
 
-  it('resolves vars', () => {
-    expect(textColorVar('red')).toBe('var(--color-danger)');
-    expect(bgColorVar('red')).toBe('var(--color-danger-bg-subtle)');
+  it('resolves vars to the palette fg/bg tokens', () => {
+    expect(textColorVar('red')).toBe('var(--color-palette-red-fg)');
+    expect(bgColorVar('red')).toBe('var(--color-palette-red-bg)');
   });
 
   it('unknown → undefined', () => {
     expect(textColorVar('mauve')).toBeUndefined();
     expect(isColorKey('mauve')).toBe(false);
-    expect(isColorKey('blue')).toBe(true);
+    expect(isColorKey('charcoal')).toBe(true);
   });
 
   it('parses our var() output back to a key', () => {
-    expect(textColorKeyFrom('var(--color-danger)')).toBe('red');
-    expect(bgColorKeyFrom('var(--color-success-bg-subtle)')).toBe('green');
+    expect(textColorKeyFrom('var(--color-palette-blue-fg)')).toBe('blue');
+    expect(bgColorKeyFrom('var(--color-palette-green-bg)')).toBe('green');
   });
 
-  it('parses default-theme hex back to a key (case-insensitive)', () => {
-    expect(textColorKeyFrom('#DE350B')).toBe('red');
-    expect(bgColorKeyFrom('#ffebe6')).toBe('red');
+  it('rejects a suffix mismatch (fg-var passed to bgColorKeyFrom)', () => {
+    expect(bgColorKeyFrom('var(--color-palette-blue-fg)')).toBeUndefined();
+    expect(textColorKeyFrom('var(--color-palette-green-bg)')).toBeUndefined();
   });
 
-  it('unknown color string → undefined', () => {
-    expect(textColorKeyFrom('#123456')).toBeUndefined();
+  it('raw hex / unknown color string → undefined', () => {
+    expect(textColorKeyFrom('#de350b')).toBeUndefined();
+    expect(bgColorKeyFrom('#de350b')).toBeUndefined();
     expect(bgColorKeyFrom('rgb(1,2,3)')).toBeUndefined();
   });
 });
