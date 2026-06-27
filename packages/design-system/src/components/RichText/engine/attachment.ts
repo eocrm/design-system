@@ -1,7 +1,7 @@
 // attachment.ts — attachment (void) block helpers + transforms. Pure + immutable.
 import type { RichDoc, Block, Point, Range } from './model';
 import { createBlock, nextId } from './model';
-import { findBlockIndex, blockLength } from './position';
+import { findBlockIndex, blockLength, collapsedRange } from './position';
 import { sliceInlines, normalizeInlines } from './inlines';
 
 /**
@@ -42,10 +42,6 @@ export function attachmentIsImage(block: Pick<Block, 'mime' | 'src'>): boolean {
   return /\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(block.src ?? '');
 }
 
-function collapsed(blockId: string, offset = 0): Range {
-  return { anchor: { blockId, offset }, focus: { blockId, offset } };
-}
-
 function attachmentBlock(attrs: AttachmentAttrs): Block {
   return {
     id: nextId(),
@@ -77,7 +73,7 @@ export function insertAttachmentBlock(
 ): { doc: RichDoc; selection: Range; attachmentId: string | null } {
   const idx = findBlockIndex(doc, point.blockId);
   if (idx === -1) {
-    return { doc, selection: collapsed(point.blockId, point.offset), attachmentId: null };
+    return { doc, selection: collapsedRange(point.blockId, point.offset), attachmentId: null };
   }
   const block = doc.blocks[idx];
   const att = attachmentBlock(attrs);
@@ -85,7 +81,7 @@ export function insertAttachmentBlock(
   if (isVoidBlock(block)) {
     const after = createBlock('paragraph');
     const blocks = [...doc.blocks.slice(0, idx + 1), att, after, ...doc.blocks.slice(idx + 1)];
-    return { doc: { blocks }, selection: collapsed(after.id), attachmentId: att.id };
+    return { doc: { blocks }, selection: collapsedRange(after.id), attachmentId: att.id };
   }
 
   const left: Block = {
@@ -100,7 +96,7 @@ export function insertAttachmentBlock(
     inlines: rightInlines,
   };
   const blocks = [...doc.blocks.slice(0, idx), left, att, right, ...doc.blocks.slice(idx + 1)];
-  return { doc: { blocks }, selection: collapsed(right.id), attachmentId: att.id };
+  return { doc: { blocks }, selection: collapsedRange(right.id), attachmentId: att.id };
 }
 
 /** Patch an attachment block's fields by id. Same-ref no-op if absent/not attachment. */
