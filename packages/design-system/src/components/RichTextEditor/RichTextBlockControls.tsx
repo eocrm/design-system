@@ -1,7 +1,15 @@
 // RichTextBlockControls.tsx — the per-block gutter overlay. Absolutely positioned
 // inside the editor shell (position: relative), aligned to the active block's box.
 // Lives OUTSIDE the contentEditable so it is never editable content.
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -137,7 +145,7 @@ function DraggableGutter({
  * (e.g. attachment settings) lives in the ⠿ menu's "Configure" item, not a
  * separate gutter button.
  */
-export function RichTextBlockControls({
+export const RichTextBlockControls = memo(function RichTextBlockControls({
   rootRef,
   activeBlockId,
   blockOrderKey,
@@ -345,4 +353,4 @@ export function RichTextBlockControls({
       </DraggableGutter>
     </DndContext>
   );
-}
+});

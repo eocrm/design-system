@@ -4,7 +4,15 @@
 // model path the Configure → Width slider drives). It is a POINTER affordance only
 // (mirrors the gutter drag handle); keyboard / assistive-tech users resize via the
 // Configure → Width slider, which is the accessible, keyboard-operable control.
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
 import { useTranslation } from '../../i18n';
 import styles from './RichTextEditor.module.scss';
 
@@ -38,7 +46,7 @@ export interface RichTextImageResizerProps {
  * by `<RichTextEditor>` when the active block is a previewable image; not exported
  * from the package.
  */
-export function RichTextImageResizer({
+export const RichTextImageResizer = memo(function RichTextImageResizer({
   rootRef,
   blockId,
   layoutKey,
@@ -136,4 +144,4 @@ export function RichTextImageResizer({
       onPointerCancel={endDrag}
     />
   );
-}
+});
