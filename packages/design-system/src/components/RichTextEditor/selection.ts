@@ -289,18 +289,23 @@ export function rangeRect(root: HTMLElement, range: Range): Rect | null {
   const a = pointToDom(root, range.anchor);
   const f = pointToDom(root, range.focus);
   if (!a || !f) return null;
+  // Order the two boundary points by document position before building the DOM
+  // range. A backward (right-to-left) model selection has its anchor AFTER its
+  // focus; feeding setStart(anchor)/setEnd(focus) straight through would not throw —
+  // the DOM clamps end-before-start to a COLLAPSED range, which measures as a zero
+  // rect and would wrongly degrade to the block fallback below. Pick start = the
+  // earlier point so the span rect is correct regardless of selection direction.
+  const startFirst =
+    a.node === f.node
+      ? a.offset <= f.offset
+      : !!(a.node.compareDocumentPosition(f.node) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const [s, e] = startFirst ? [a, f] : [f, a];
   const domRange = root.ownerDocument.createRange();
   try {
-    domRange.setStart(a.node, a.offset);
-    domRange.setEnd(f.node, f.offset);
+    domRange.setStart(s.node, s.offset);
+    domRange.setEnd(e.node, e.offset);
   } catch {
-    // Anchor after focus (backward selection) → setEnd-before-start throws; swap.
-    try {
-      domRange.setStart(f.node, f.offset);
-      domRange.setEnd(a.node, a.offset);
-    } catch {
-      return null;
-    }
+    return null;
   }
   let r: DOMRect | null = null;
   try {

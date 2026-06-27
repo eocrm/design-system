@@ -378,4 +378,38 @@ describe('rangeRect — model range → live DOM rect (scroll-tracking anchor)',
     expect(r).toBeNull();
     document.body.removeChild(root);
   });
+
+  it('measures the full span regardless of selection direction (forward === backward)', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<p data-block-id="b">abcdef</p>';
+    document.body.appendChild(root);
+    const block = root.querySelector<HTMLElement>('[data-block-id="b"]')!;
+    // Distinct block-fallback rect: if a reversed range collapsed (the bug), the
+    // zero span rect would degrade to THIS, not the span rect asserted below.
+    block.getBoundingClientRect = () => rect(200, 0, 300, 18);
+    // jsdom doesn't implement Range.getBoundingClientRect; stand in a version keyed
+    // on collapsed-ness — a properly ordered (non-collapsed) range measures the
+    // span, a wrongly-collapsed one measures zero.
+    const proto = Range.prototype as unknown as { getBoundingClientRect?: () => DOMRect };
+    const original = proto.getBoundingClientRect;
+    proto.getBoundingClientRect = function (this: Range) {
+      return this.collapsed ? rect(0, 0, 0, 0) : rect(50, 10, 90, 18);
+    };
+    try {
+      const forward = rangeRect(root, {
+        anchor: { blockId: 'b', offset: 0 },
+        focus: { blockId: 'b', offset: 3 },
+      });
+      const backward = rangeRect(root, {
+        anchor: { blockId: 'b', offset: 3 },
+        focus: { blockId: 'b', offset: 0 },
+      });
+      expect(forward).toEqual({ top: 50, left: 10, width: 90, height: 18 });
+      expect(backward).toEqual(forward);
+    } finally {
+      if (original) proto.getBoundingClientRect = original;
+      else delete proto.getBoundingClientRect;
+    }
+    document.body.removeChild(root);
+  });
 });

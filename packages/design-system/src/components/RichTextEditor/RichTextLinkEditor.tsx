@@ -12,6 +12,7 @@ import { Input } from '../Input';
 import { Stack } from '../Stack';
 import { Cluster } from '../Cluster';
 import { useTranslation } from '../../i18n';
+import type { Rect } from './selection';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextLinkEditorProps {
@@ -20,14 +21,14 @@ export interface RichTextLinkEditorProps {
   /** Whether an existing link is being edited (shows the Remove button). */
   editing: boolean;
   /** Selection rect (viewport coords) the bubble anchors to. */
-  anchorRect: { top: number; left: number; height: number; width: number };
+  anchorRect: Rect;
   /**
    * Live anchor rect, re-read on every Floating UI reposition so the bubble tracks
    * the selection line on scroll (the static `anchorRect` is only the initial
    * position; it goes stale on a pure scroll, which fires no `selectionchange`).
    * Falls back to `anchorRect` when it returns null.
    */
-  getAnchorRect?: () => { top: number; left: number; height: number; width: number } | null;
+  getAnchorRect?: () => Rect | null;
   /** Apply the (trimmed) URL. */
   onApply: (href: string) => void;
   /** Remove the link (only reachable when `editing`). */
