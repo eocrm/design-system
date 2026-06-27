@@ -73,6 +73,44 @@
 
 // Flat replies past the cap — a direct grid child spanning both columns so they are
 // NOT indented further (the gutter stops compounding). No parent rail in this mode.
+// Each indented reply branches off the parent rail with a horizontal elbow that meets
+// the reply's node — so the thread reads as a ├─ / └─ tree, not just a bare vertical
+// line. The parent rail sits at the parent gutter's centre, one indent level (gutter
+// half + content-gap) to the LEFT of this reply, so the elbow starts there and runs
+// to the reply's node centre (its far end tucks behind the avatar). Logical props →
+// RTL-safe. Only indented replies (not the root items or flat past-cap replies) carry
+// an elbow, since only they sit under a rail.
+.replies > .item {
+  position: relative;
+}
+
+.replies > .item::before {
+  content: '';
+  position: absolute;
+  inset-block-start: calc(var(--thread-node-size) / 2);
+  inset-inline-start: calc(-1 * (var(--thread-node-size) / 2 + var(--thread-content-gap)));
+  width: calc(var(--thread-node-size) + var(--thread-content-gap));
+  height: var(--thread-rail-width);
+  background: var(--thread-rail-color);
+  transform: translateY(-50%);
+}
+
+// The parent rail spans to the bottom of the whole reply group; mask its overshoot
+// below the LAST reply's elbow so the trunk ends at the final branch (└─) instead of
+// dangling past it. Painted in the surface colour — Thread renders on the page
+// (`--color-bg`) surface.
+.replies > .item:last-child::after {
+  content: '';
+  position: absolute;
+  inset-block-start: calc(var(--thread-node-size) / 2);
+  inset-block-end: 0;
+  inset-inline-start: calc(
+    -1 * (var(--thread-node-size) / 2 + var(--thread-content-gap)) - var(--thread-rail-width)
+  );
+  width: calc(var(--thread-rail-width) * 3);
+  background: var(--color-bg);
+}
+
 .repliesFlat {
   // stylelint-disable-next-line property-disallowed-list -- internal grid placement: flat replies span both columns to stop indent compounding
   grid-column: 1 / -1;
