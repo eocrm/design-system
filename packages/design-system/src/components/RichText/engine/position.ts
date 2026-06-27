@@ -1,5 +1,5 @@
 // position.ts — Layer C. Point/range helpers over a RichDoc.
-import type { RichDoc, Block, Point, Range } from './model';
+import type { RichDoc, Block, Point, Range, Mark } from './model';
 import { runsLength } from './inlines';
 
 /** Total character length of a block (sum of all inline run lengths). */
@@ -50,6 +50,24 @@ export function comparePoints(doc: RichDoc, a: Point, b: Point): -1 | 0 | 1 {
   const ia = findBlockIndex(doc, a.blockId);
   const ib = findBlockIndex(doc, b.blockId);
   return ia < ib ? -1 : ia > ib ? 1 : 0;
+}
+
+/**
+ * The marks carried by the character immediately before `point` (raw — includes
+ * `mention`). Empty (`[]`) at a block start (`offset <= 0`) or when the block is
+ * not found. Callers that must exclude `mention` (the typing-inheritance paths)
+ * filter it out themselves — this primitive stays mark-agnostic.
+ */
+export function marksBeforeCaret(doc: RichDoc, point: Point): Mark[] {
+  const idx = findBlockIndex(doc, point.blockId);
+  if (idx === -1 || point.offset <= 0) return [];
+  let pos = 0;
+  for (const run of doc.blocks[idx].inlines) {
+    const end = pos + run.text.length;
+    if (point.offset - 1 >= pos && point.offset - 1 < end) return run.marks;
+    pos = end;
+  }
+  return [];
 }
 
 /** A collapsed range at a single point. */

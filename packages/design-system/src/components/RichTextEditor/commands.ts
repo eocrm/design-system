@@ -15,6 +15,7 @@ import {
   findBlockIndex,
   blockLength,
   isCollapsed,
+  marksBeforeCaret,
 } from '../RichText/engine/position';
 import { hasMark } from '../RichText/engine/marks';
 
@@ -33,22 +34,9 @@ function blocksInRange(doc: RichDoc, range: Range): { si: number; ei: number } {
   return { si: findBlockIndex(doc, start.blockId), ei: findBlockIndex(doc, end.blockId) };
 }
 
-/** Full marks of the character immediately before the caret (none at a block start). */
-function marksAtCaretFull(doc: RichDoc, caret: Point): Mark[] {
-  const idx = findBlockIndex(doc, caret.blockId);
-  if (idx === -1 || caret.offset <= 0) return [];
-  let pos = 0;
-  for (const run of doc.blocks[idx].inlines) {
-    const end = pos + run.text.length;
-    if (caret.offset - 1 >= pos && caret.offset - 1 < end) return run.marks;
-    pos = end;
-  }
-  return [];
-}
-
 /** Mark types of the character immediately before the caret (none at a block start). */
 function marksAtCaret(doc: RichDoc, caret: Point): MarkType[] {
-  return marksAtCaretFull(doc, caret).map((m) => m.type);
+  return marksBeforeCaret(doc, caret).map((m) => m.type);
 }
 
 /**
@@ -136,7 +124,7 @@ function colorOf(marks: Mark[], type: 'textColor' | 'bgColor'): string | undefin
  */
 export function activeColors(doc: RichDoc, range: Range, pending: Mark[] | null): ActiveColors {
   if (isCollapsed(range)) {
-    const marks = pending ?? marksAtCaretFull(doc, range.anchor);
+    const marks = pending ?? marksBeforeCaret(doc, range.anchor);
     const out: ActiveColors = {};
     for (const type of COLOR_TYPES) {
       const c = colorOf(marks, type);
