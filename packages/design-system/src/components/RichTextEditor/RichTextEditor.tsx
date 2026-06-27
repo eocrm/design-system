@@ -226,7 +226,7 @@ interface LinkEditorOpen {
  * engine. Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a
  * selection (with a collapsed caret they stage a *pending* mark applied to the
  * next typed text); Enter splits, Backspace/Delete merge. Pass `toolbar` for the
- * built-in formatting toolbar. ⌘/Ctrl+K (or the toolbar link button) opens a
+ * built-in formatting toolbar (marks, lists, links, emoji insert, and text/highlight color). ⌘/Ctrl+K (or the toolbar link button) opens a
  * floating editor to add, edit, or remove a link on the selection. Inside a
  * list, Tab/⇧Tab indent/outdent and Enter on an empty item exits to a paragraph.
  * Pasting rich HTML (web, Word, Google Docs) imports it as formatted content.
