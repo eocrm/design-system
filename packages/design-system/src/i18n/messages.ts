@@ -426,6 +426,8 @@ export interface Messages {
     attachmentWidth: string;
     /** Reset-width button. */
     attachmentWidthReset: string;
+    /** Image resize-handle tooltip. */
+    attachmentResize: string;
     /** Replace-file button. */
     attachmentReplace: string;
     /** Open-in-new-tab link. */

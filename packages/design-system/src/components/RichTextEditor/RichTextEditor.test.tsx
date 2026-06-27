@@ -1415,6 +1415,42 @@ describe('attachment config', () => {
       expect(img).not.toHaveAttribute('height'); // cleared so the browser keeps aspect
     });
   });
+  it('resizes live on a slider MOVE, before the drag ends (no blur)', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          {
+            id: 'img',
+            type: 'attachment',
+            status: 'ready',
+            src: 'http://u/p.png',
+            mime: 'image/png',
+            name: 'p.png',
+            alt: 'Chart',
+            width: 500,
+            height: 300,
+            inlines: [],
+          },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls upload={up()} />;
+    }
+    renderEditor(<Harness />);
+    const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
+    await user.hover(fig);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Configure' }));
+    const slider = await screen.findByRole('slider', { name: 'Width' });
+    slider.focus();
+    await user.keyboard('{ArrowLeft}'); // a single move — deliberately NO blur / drag end
+    // The model (and img) already reflect the move: before this change the width was
+    // committed only on drag end, so the img would still read 500 here.
+    await waitFor(() => {
+      const img = document.querySelector('figure[data-block-id="img"] img');
+      expect(img?.getAttribute('width')).not.toBe('500');
+    });
+  });
   it('Replace closes the config popover (does not reappear after the swap settles)', async () => {
     const user = userEvent.setup();
     function Harness() {
@@ -1438,6 +1474,69 @@ describe('attachment config', () => {
     );
     expect(screen.queryByLabelText('Alt text')).toBeNull();
   });
+  it('shows an image resize handle for a previewable image, not for a chip', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          // previewable image (safe http src → renders as <img>)
+          {
+            id: 'img',
+            type: 'attachment',
+            status: 'ready',
+            src: 'http://u/p.png',
+            mime: 'image/png',
+            name: 'p.png',
+            inlines: [],
+          },
+          // an object-URL "upload" → blocked by safeHref → renders as a chip
+          {
+            id: 'chip',
+            type: 'attachment',
+            status: 'ready',
+            src: 'blob:http://localhost/abc',
+            mime: 'image/png',
+            name: 'c.png',
+            inlines: [],
+          },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls upload={up()} />;
+    }
+    renderEditor(<Harness />);
+    await user.hover(document.querySelector('figure[data-block-id="img"]') as HTMLElement);
+    expect(await screen.findByTitle('Drag to resize')).toBeInTheDocument();
+    // Hover the chip instead — no resize handle for a non-preview attachment.
+    await user.hover(document.querySelector('figure[data-block-id="chip"]') as HTMLElement);
+    await waitFor(() => expect(screen.queryByTitle('Drag to resize')).toBeNull());
+  });
+
+  it('shows no resize handle when blockControls is on but upload is off (no slider fallback)', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          {
+            id: 'img',
+            type: 'attachment',
+            status: 'ready',
+            src: 'http://u/p.png',
+            mime: 'image/png',
+            name: 'p.png',
+            inlines: [],
+          },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls />; // no upload
+    }
+    renderEditor(<Harness />);
+    await user.hover(document.querySelector('figure[data-block-id="img"]') as HTMLElement);
+    // The gutter still shows (blockControls), but without upload there's no accessible
+    // Width slider — so the pointer-only handle must not appear either.
+    await screen.findByRole('button', { name: 'Block actions' });
+    expect(screen.queryByTitle('Drag to resize')).toBeNull();
+  });
+
   it('readOnly shows no Configure (the whole gutter is suppressed)', async () => {
     const user = userEvent.setup();
     function Harness() {

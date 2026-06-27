@@ -71,6 +71,24 @@
   color: var(--color-fg-muted);
 }
 
+// The image resize handle (RichTextImageResizer): a small square on the active
+// image's bottom-right corner. Absolutely positioned in the shell; its top/left are
+// set inline by JS from the image's measured corner, and `transform` centres it on
+// that corner. A fixed-size square via `height` + `aspect-ratio` (so no `width` —
+// Rule 4), the same "overlay's own intrinsic size" carve-out as the popovers.
+.resizeHandle {
+  position: absolute;
+  height: var(--space-3);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: var(--color-accent);
+  border: var(--border-width) solid var(--color-bg);
+  border-radius: var(--radius-sm);
+  cursor: nwse-resize;
+  z-index: 1;
+  touch-action: none; // claim touch drags so the page doesn't scroll instead
+}
+
 .toolbar {
   display: flex;
   align-items: center;

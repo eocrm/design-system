@@ -220,8 +220,12 @@ export function RichTextAttachmentConfig({
                   max={sliderMax}
                   step={1}
                   aria-label={t('richTextEditor.attachmentWidth')}
-                  onChange={(v) => setWidth(sliderNum(v))}
-                  onChangeEnd={(v) => onWidthChange(sliderNum(v))}
+                  onChange={(v) => {
+                    const w = sliderNum(v);
+                    setWidth(w); // drive the thumb
+                    onWidthChange(w); // live: resize the image on every move
+                  }}
+                  onChangeEnd={(v) => onWidthChange(sliderNum(v))} // seal the final value
                 />
                 <Button
                   size="sm"

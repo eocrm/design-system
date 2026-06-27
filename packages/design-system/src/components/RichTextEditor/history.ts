@@ -9,8 +9,13 @@ export interface Snapshot {
   selection: Range | null;
 }
 
-/** The kind of edit that produced a snapshot — drives typing/deleting coalescing. */
-export type EditKind = 'type' | 'delete' | 'other';
+/**
+ * The kind of edit that produced a snapshot — drives coalescing. Same-kind
+ * non-`other` edits within {@link COALESCE_MS} merge into one undo step: `type`
+ * and `delete` for keystroke bursts, `resize` for a continuous image-width drag
+ * (slider or handle) so the whole drag reverts in a single undo.
+ */
+export type EditKind = 'type' | 'delete' | 'resize' | 'other';
 
 export interface History {
   past: Snapshot[];

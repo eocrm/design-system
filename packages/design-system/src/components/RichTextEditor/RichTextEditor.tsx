@@ -55,7 +55,13 @@ import {
 } from '../RichText/engine/blockUnit';
 import { RichTextBlockControls } from './RichTextBlockControls';
 import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
-import { updateAttachmentBlock, clearAttachmentFields } from '../RichText/engine/attachment';
+import { RichTextImageResizer } from './RichTextImageResizer';
+import {
+  updateAttachmentBlock,
+  clearAttachmentFields,
+  attachmentIsImage,
+} from '../RichText/engine/attachment';
+import { safeHref } from '../RichText/engine/safeHref';
 import type { BlockAction } from './RichTextBlockMenu';
 import { useUpload, type UploadConfig } from './useUpload';
 import {
@@ -1203,12 +1209,29 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
     const onConfigWidth = useCallback(
       (id: string, width: number) => {
-        // store width only; clearing height lets the browser keep the aspect ratio
-        let d = updateAttachmentBlock(latest.current.value, id, { width });
+        // Live resize: fires on every slider/handle MOVE (not just the end) so the
+        // image tracks the control. Three deliberate choices vs a plain `commit`:
+        //  • Coalescing 'resize' kind → the whole drag is ONE undo step (reverting
+        //    to the pre-drag width), instead of one per pixel.
+        //  • No `pendingSelectionRef` write → the slider/handle keeps focus; a
+        //    `writeSelection` into the editable would yank focus mid-drag.
+        //  • Reads `liveDocRef` (the synchronously-latest doc) so rapid moves that
+        //    fire before React re-renders still chain off each other.
+        // Width only; clearing height lets the browser keep the aspect ratio.
+        let d = updateAttachmentBlock(liveDocRef.current, id, { width });
         d = clearAttachmentFields(d, id, ['height']);
-        commit({ doc: d, selection: blockCaret(id) }, 'other');
+        if (d === liveDocRef.current) return;
+        historyRef.current = historyRecord(
+          historyRef.current,
+          { doc: d, selection: historyRef.current.present.selection },
+          'resize',
+          Date.now(),
+        );
+        syncHistoryFlags();
+        liveDocRef.current = d;
+        latest.current.onChange(d);
       },
-      [commit],
+      [syncHistoryFlags],
     );
     const onConfigWidthReset = useCallback(
       (id: string) => {
@@ -1355,6 +1378,32 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       />
     ) : null;
 
+    // A bottom-right resize handle on the active image — only when it renders as a
+    // preview (a safe, fetchable src) AND the keyboard-accessible Width slider is
+    // also available (`uploadOn`, same as `canConfigure`), so the pointer-only handle
+    // never appears without its accessible fallback. The layoutKey carries the
+    // image's width so the handle re-measures and tracks the corner as it resizes.
+    const activeIsResizableImage =
+      controlsOn &&
+      uploadOn &&
+      activeBlock?.type === 'attachment' &&
+      activeBlock.status === 'ready' &&
+      attachmentIsImage(activeBlock) &&
+      !!safeHref(activeBlock.src ?? '');
+    const imageResizerEl =
+      activeIsResizableImage && activeBlockId ? (
+        <RichTextImageResizer
+          rootRef={shellRef}
+          blockId={activeBlockId}
+          layoutKey={`${value.blocks.map((b) => b.id).join('|')}:${activeBlock?.width ?? ''}`}
+          maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
+          onResize={(w) => onConfigWidth(activeBlockId, w)}
+          onDraggingChange={(d) => {
+            draggingRef.current = d;
+          }}
+        />
+      ) : null;
+
     const configEl =
       configBlock && configBlock.type === 'attachment' && configBlock.status === 'ready' && uploadOn
         ? (() => {
@@ -1436,6 +1485,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         {linkBubble}
         {mentionMenu}
         {blockControlsEl}
+        {imageResizerEl}
         {configEl}
       </div>
     );
