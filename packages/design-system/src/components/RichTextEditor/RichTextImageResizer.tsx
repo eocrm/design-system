@@ -4,16 +4,9 @@
 // model path the Configure → Width slider drives). It is a POINTER affordance only
 // (mirrors the gutter drag handle); keyboard / assistive-tech users resize via the
 // Configure → Width slider, which is the accessible, keyboard-operable control.
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type RefObject,
-} from 'react';
+import { memo, useCallback, useRef, type RefObject } from 'react';
 import { useTranslation } from '../../i18n';
+import { useShellRelativeRect, useDraggingReporter } from './useOverlayRect';
 import styles from './RichTextEditor.module.scss';
 
 /** Smallest width the handle resizes to (matches RichTextAttachmentConfig's MIN_W). */
@@ -55,27 +48,13 @@ export const RichTextImageResizer = memo(function RichTextImageResizer({
   onDraggingChange,
 }: RichTextImageResizerProps) {
   const t = useTranslation();
-  const [box, setBox] = useState<{ top: number; left: number } | null>(null);
-  // Bumped to re-run measurement when the shell ref / image isn't attached yet on
-  // the first layout-effect pass (the parent's element ref can attach after this
-  // child's effect runs on mount) — mirrors RichTextBlockControls.
-  const [retry, setRetry] = useState(0);
   // Drag origin, captured on pointerdown. null when not dragging.
   const dragRef = useRef<{ startX: number; startW: number } | null>(null);
 
-  // Latest onDraggingChange, read by the unmount cleanup without re-subscribing.
-  const onDraggingChangeRef = useRef(onDraggingChange);
-  onDraggingChangeRef.current = onDraggingChange;
-
-  // If the handle unmounts mid-drag (image removed, blockControls/readOnly toggled,
-  // or `value` replaced), no pointerup/cancel fires — report drag end so the editor's
-  // `draggingRef` doesn't stick `true` and freeze hover. Mirrors RichTextBlockControls.
-  useEffect(() => {
-    return () => {
-      dragRef.current = null;
-      onDraggingChangeRef.current?.(false);
-    };
-  }, []);
+  // Reports drag start/end + fires (false) on a mid-drag unmount (image removed,
+  // blockControls/readOnly toggled, or `value` replaced) so the editor's draggingRef
+  // never sticks `true`. Mirrors RichTextBlockControls.
+  const reportDragging = useDraggingReporter(onDraggingChange);
 
   const imgEl = useCallback(
     () =>
@@ -86,18 +65,8 @@ export const RichTextImageResizer = memo(function RichTextImageResizer({
 
   // Position the handle on the image's bottom-right corner, measured relative to the
   // shell. Re-runs on layoutKey so it tracks the corner as the image resizes.
-  useLayoutEffect(() => {
-    const root = rootRef.current;
-    const img = imgEl();
-    if (!root || !img) {
-      setBox(null);
-      if (retry < 2) setRetry((n) => n + 1);
-      return;
-    }
-    const rb = root.getBoundingClientRect();
-    const b = img.getBoundingClientRect();
-    setBox({ top: b.bottom - rb.top, left: b.right - rb.left });
-  }, [rootRef, imgEl, layoutKey, retry]);
+  const rect = useShellRelativeRect(rootRef, imgEl, layoutKey);
+  const box = rect ? { top: rect.top + rect.height, left: rect.left + rect.width } : null;
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const img = imgEl();
@@ -106,7 +75,7 @@ export const RichTextImageResizer = memo(function RichTextImageResizer({
     e.stopPropagation(); // don't let the gutter dnd-kit sensor see this press
     e.currentTarget.setPointerCapture(e.pointerId);
     dragRef.current = { startX: e.clientX, startW: img.getBoundingClientRect().width };
-    onDraggingChange?.(true);
+    reportDragging(true);
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -127,7 +96,7 @@ export const RichTextImageResizer = memo(function RichTextImageResizer({
     } catch {
       // capture may already be gone (pointercancel) — ignore
     }
-    onDraggingChange?.(false);
+    reportDragging(false);
   };
 
   if (!box) return null;
