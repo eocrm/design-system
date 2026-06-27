@@ -21,6 +21,13 @@ export interface RichTextLinkEditorProps {
   editing: boolean;
   /** Selection rect (viewport coords) the bubble anchors to. */
   anchorRect: { top: number; left: number; height: number; width: number };
+  /**
+   * Live anchor rect, re-read on every Floating UI reposition so the bubble tracks
+   * the selection line on scroll (the static `anchorRect` is only the initial
+   * position; it goes stale on a pure scroll, which fires no `selectionchange`).
+   * Falls back to `anchorRect` when it returns null.
+   */
+  getAnchorRect?: () => { top: number; left: number; height: number; width: number } | null;
   /** Apply the (trimmed) URL. */
   onApply: (href: string) => void;
   /** Remove the link (only reachable when `editing`). */
@@ -38,6 +45,7 @@ export function RichTextLinkEditor({
   href,
   editing,
   anchorRect,
+  getAnchorRect,
   onApply,
   onRemove,
   onCancel,
@@ -47,21 +55,26 @@ export function RichTextLinkEditor({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const bubbleRef = useRef<HTMLDivElement | null>(null);
 
-  // Floating UI virtual element — only `getBoundingClientRect` is required.
+  // Floating UI virtual element — only `getBoundingClientRect` is required. Read the
+  // LIVE rect (via getAnchorRect) on every reposition so the bubble tracks the
+  // selection line on scroll; fall back to the static `anchorRect`.
   const virtualRef = useMemo(
     () => ({
-      getBoundingClientRect: () => ({
-        x: anchorRect.left,
-        y: anchorRect.top,
-        top: anchorRect.top,
-        left: anchorRect.left,
-        right: anchorRect.left + anchorRect.width,
-        bottom: anchorRect.top + anchorRect.height,
-        width: anchorRect.width,
-        height: anchorRect.height,
-      }),
+      getBoundingClientRect: () => {
+        const r = getAnchorRect?.() ?? anchorRect;
+        return {
+          x: r.left,
+          y: r.top,
+          top: r.top,
+          left: r.left,
+          right: r.left + r.width,
+          bottom: r.top + r.height,
+          width: r.width,
+          height: r.height,
+        };
+      },
     }),
-    [anchorRect],
+    [anchorRect, getAnchorRect],
   );
 
   const { refs, floatingStyles } = useFloating({

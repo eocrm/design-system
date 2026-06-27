@@ -275,3 +275,46 @@ export function selectionRect(root: HTMLElement): Rect {
   const rr = root.getBoundingClientRect();
   return { top: rr.top, left: rr.left, width: 0, height: rr.height };
 }
+
+/**
+ * The viewport rect of a MODEL range, re-derived from the DOM live. Unlike
+ * `selectionRect` (which reads the window selection), this is independent of the
+ * current selection — so a popover that has stolen focus (the link editor) can
+ * still track its original anchor line on scroll by re-measuring on each
+ * reposition. Returns null when the range can't be mapped to the DOM. Falls back
+ * to the anchor's block element (the active line) when the range rect is
+ * degenerate (a collapsed caret in an empty block).
+ */
+export function rangeRect(root: HTMLElement, range: Range): Rect | null {
+  const a = pointToDom(root, range.anchor);
+  const f = pointToDom(root, range.focus);
+  if (!a || !f) return null;
+  const domRange = root.ownerDocument.createRange();
+  try {
+    domRange.setStart(a.node, a.offset);
+    domRange.setEnd(f.node, f.offset);
+  } catch {
+    // Anchor after focus (backward selection) → setEnd-before-start throws; swap.
+    try {
+      domRange.setStart(f.node, f.offset);
+      domRange.setEnd(a.node, a.offset);
+    } catch {
+      return null;
+    }
+  }
+  let r: DOMRect | null = null;
+  try {
+    r = domRange.getBoundingClientRect();
+  } catch {
+    // jsdom does not implement Range.getBoundingClientRect — fall through.
+  }
+  if (r && (r.width || r.height || r.top || r.left)) {
+    return { top: r.top, left: r.left, width: r.width, height: r.height };
+  }
+  const blockEl = blockElementFor(root, a.node);
+  if (blockEl) {
+    const b = blockEl.getBoundingClientRect();
+    return { top: b.top, left: b.left, width: b.width, height: b.height };
+  }
+  return null;
+}

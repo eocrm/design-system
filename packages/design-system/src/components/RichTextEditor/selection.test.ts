@@ -1,4 +1,4 @@
-import { pointFromDom, pointToDom, selectionRect } from './selection';
+import { pointFromDom, pointToDom, selectionRect, rangeRect } from './selection';
 
 // Build: <div root><p data-block-id="a">He<strong>ll</strong>o</p><p data-block-id="b"><br></p></div>
 function buildRoot(): HTMLElement {
@@ -333,6 +333,49 @@ describe('selectionRect — degenerate-selection fallback', () => {
     root.getBoundingClientRect = () => rect(0, 0, 240, 500);
 
     expect(selectionRect(root)).toEqual({ top: 0, left: 0, width: 0, height: 500 });
+    document.body.removeChild(root);
+  });
+});
+
+describe('rangeRect — model range → live DOM rect (scroll-tracking anchor)', () => {
+  const rect = (top: number, left: number, width: number, height: number): DOMRect =>
+    ({
+      top,
+      left,
+      width,
+      height,
+      right: left + width,
+      bottom: top + height,
+      x: left,
+      y: top,
+      toJSON: () => ({}),
+    }) as DOMRect;
+
+  it('re-derives a degenerate (empty-block) range to the block (active line) rect', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<p data-block-id="b"><br></p>';
+    document.body.appendChild(root);
+    const block = root.querySelector<HTMLElement>('[data-block-id="b"]')!;
+    block.getBoundingClientRect = () => rect(140, 30, 180, 18);
+    root.getBoundingClientRect = () => rect(0, 0, 240, 500);
+    // A collapsed model range in the empty block (no live window selection needed).
+    const r = rangeRect(root, {
+      anchor: { blockId: 'b', offset: 0 },
+      focus: { blockId: 'b', offset: 0 },
+    });
+    expect(r).toEqual({ top: 140, left: 30, width: 180, height: 18 });
+    document.body.removeChild(root);
+  });
+
+  it('returns null when the range cannot be mapped to the DOM', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<p data-block-id="b"><br></p>';
+    document.body.appendChild(root);
+    const r = rangeRect(root, {
+      anchor: { blockId: 'missing', offset: 0 },
+      focus: { blockId: 'missing', offset: 0 },
+    });
+    expect(r).toBeNull();
     document.body.removeChild(root);
   });
 });

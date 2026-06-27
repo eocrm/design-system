@@ -31,7 +31,7 @@ import type { MentionItem, MentionsConfig } from './mentions';
 import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
-import { readSelection, writeSelection, selectionRect, type Rect } from './selection';
+import { readSelection, writeSelection, selectionRect, rangeRect, type Rect } from './selection';
 import { applyInput } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
 import { runsText } from '../RichText/engine/inlines';
@@ -1253,6 +1253,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           href={linkEditor.href}
           editing={linkEditor.editing}
           anchorRect={linkEditor.anchorRect}
+          // Re-derive the anchor from the captured model range on each reposition so
+          // the bubble tracks the line on scroll (the editor's live selection is
+          // gone once the URL input takes focus, so re-measure the range, not it).
+          getAnchorRect={() =>
+            rootRef.current ? rangeRect(rootRef.current, linkEditor.range) : null
+          }
           onApply={onLinkApply}
           onRemove={onLinkRemove}
           onCancel={onLinkCancel}
