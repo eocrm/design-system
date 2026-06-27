@@ -280,6 +280,27 @@ export function toggleMark(
 }
 
 /**
+ * Pure/immutable. Set (or clear) the single color mark of `type`
+ * (`'textColor'` | `'bgColor'`) over `range`. The run carries at most one color
+ * mark of each type: a non-null `key` REPLACES any existing one (clear-then-apply);
+ * a `null` key CLEARS it. `key` is a palette key (e.g. `'red'`), resolved to a
+ * token at render/serialize time — see `colorMarks.ts`. Returns the new `RichDoc`.
+ *
+ * Note: returns a bare `RichDoc` (not `{ doc, selection }` like the lower-level
+ * `applyMark`/`removeMark`) because a color change never moves the caret — callers
+ * keep their existing selection.
+ */
+export function setColorMark(
+  doc: RichDoc,
+  range: Range,
+  type: 'textColor' | 'bgColor',
+  key: string | null,
+): RichDoc {
+  const cleared = removeMark(doc, range, type).doc;
+  return key ? applyMark(cleared, range, { type, color: key }).doc : cleared;
+}
+
+/**
  * Pure/immutable. Patch the `type`, `level`, and/or `depth` of the block
  * identified by `blockId`. Cleans up irrelevant fields (`level` for non-headings,
  * `depth` for non-list blocks). Returns `{ doc, selection }` with the caret at

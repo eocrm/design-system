@@ -9,6 +9,7 @@ import {
   setBlockType,
   insertFragment,
   insertMention,
+  setColorMark,
 } from './transforms';
 import { createBlock } from './model';
 import { runsText } from './inlines';
@@ -113,6 +114,39 @@ describe('transforms', () => {
     expect(r.doc.blocks[0].level).toBe(2);
     const back = setBlockType(r.doc, 'a', { type: 'paragraph' });
     expect(back.doc.blocks[0].level).toBeUndefined();
+  });
+});
+
+describe('setColorMark', () => {
+  // Marks-reading helper: the textColor/bgColor marks of the first run.
+  const colorMarksOf = (out: RichDoc, type: 'textColor' | 'bgColor') =>
+    out.blocks[0].inlines[0].marks.filter((m) => m.type === type);
+
+  const d = doc(['abcd', 'a']);
+  const full = span(at('a', 0), at('a', 4));
+
+  it('adds a color mark across the range', () => {
+    const r = setColorMark(d, full, 'textColor', 'red');
+    expect(r.blocks[0].inlines).toEqual([
+      { text: 'abcd', marks: [{ type: 'textColor', color: 'red' }] },
+    ]);
+  });
+
+  it('replaces (the run carries exactly one textColor)', () => {
+    const red = setColorMark(d, full, 'textColor', 'red');
+    const blue = setColorMark(red, full, 'textColor', 'blue');
+    expect(colorMarksOf(blue, 'textColor')).toEqual([{ type: 'textColor', color: 'blue' }]);
+  });
+
+  it('clears with a null key', () => {
+    const red = setColorMark(d, full, 'textColor', 'red');
+    const cleared = setColorMark(red, full, 'textColor', null);
+    expect(cleared.blocks[0].inlines).toEqual([{ text: 'abcd', marks: [] }]);
+  });
+
+  it('works the same for bgColor', () => {
+    const r = setColorMark(d, full, 'bgColor', 'green');
+    expect(colorMarksOf(r, 'bgColor')).toEqual([{ type: 'bgColor', color: 'green' }]);
   });
 });
 
