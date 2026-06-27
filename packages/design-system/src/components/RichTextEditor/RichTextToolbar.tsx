@@ -30,7 +30,7 @@ export type BlockChoice = { type: BlockType; level?: 1 | 2 | 3 };
 export interface RichTextToolbarProps {
   /** Mark types active across the current selection (drives the pressed state). */
   activeMarks: MarkType[];
-  /** Active color key per type, to ring the current swatch in the color menu. */
+  /** Active color key per type, to ring the current badge in the color menu. */
   colors: ActiveColors;
   /** Set a text/highlight color (palette key) — or clear (`null`) — for the selection. */
   onSetColor: (type: 'textColor' | 'bgColor', key: string | null) => void;

@@ -16,7 +16,7 @@ export interface RichTextColorMenuProps {
 
 // Palette key → i18n key for the badge label. Exhaustive over every ColorKey
 // (gray + the 30-color palette) — TypeScript enforces the Record is total.
-const SWATCH_LABEL: Record<ColorKey, MessageKey> = {
+const BADGE_LABEL: Record<ColorKey, MessageKey> = {
   gray: 'richTextEditor.colorGray',
   red: 'richTextEditor.colorRed',
   coral: 'richTextEditor.colorCoral',
@@ -91,7 +91,7 @@ export function RichTextColorMenu({ type, active, onPick }: RichTextColorMenuPro
           {clearLabel}
         </button>
         {COLOR_KEYS.map((key) => {
-          const name = t(SWATCH_LABEL[key]);
+          const name = t(BADGE_LABEL[key]);
           return (
             <button
               key={key}

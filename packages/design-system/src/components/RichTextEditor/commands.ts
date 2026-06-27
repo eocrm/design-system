@@ -119,7 +119,7 @@ function colorOf(marks: Mark[], type: 'textColor' | 'bgColor'): string | undefin
 
 /**
  * Derives the single color key active per color type across the selection (drives
- * the active swatch ring in the color menu). For each of `textColor` / `bgColor`,
+ * the active badge ring in the color menu). For each of `textColor` / `bgColor`,
  * returns the key only when EVERY character in the range carries that type with
  * the SAME key — a mixed or partial color is omitted (so the menu shows "none
  * active").
