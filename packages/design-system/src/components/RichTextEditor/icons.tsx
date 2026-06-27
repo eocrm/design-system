@@ -141,3 +141,14 @@ export function TextColorIcon() {
     </svg>
   );
 }
+// A marker/highlighter nib stroking a baseline — the conventional highlight
+// affordance (pairs with the solid color bar at the bottom).
+export function HighlightIcon() {
+  return (
+    <svg {...base}>
+      <path d="M14 4 9 9l-3 6 3 3 6-3 5-5z" />
+      <path d="m9 9 6 6" />
+      <rect x="4" y="20" width="16" height="2.5" rx="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

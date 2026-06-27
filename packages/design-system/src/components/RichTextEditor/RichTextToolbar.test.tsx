@@ -63,14 +63,26 @@ describe('RichTextToolbar', () => {
     expect(onToggleMark).toHaveBeenCalledWith('bold');
   });
 
-  it('renders a Color button that opens the swatch menu and fires onSetColor', async () => {
+  it('renders separate Text color + Highlight buttons', () => {
+    renderTb();
+    expect(screen.getByRole('button', { name: 'Text color' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Highlight' })).toBeInTheDocument();
+  });
+
+  it('the Text color button opens its badge menu and fires onSetColor("textColor", key)', async () => {
     const user = userEvent.setup();
     const { onSetColor } = renderTb();
-    await user.click(screen.getByRole('button', { name: 'Color' }));
-    // Text + Highlight rows each render a 'Red' swatch; the first is the Text row.
-    const redSwatches = await screen.findAllByRole('button', { name: 'Red' });
-    await user.click(redSwatches[0]);
+    await user.click(screen.getByRole('button', { name: 'Text color' }));
+    await user.click(await screen.findByRole('button', { name: 'Red' }));
     expect(onSetColor).toHaveBeenCalledWith('textColor', 'red');
+  });
+
+  it('the Highlight button opens its badge menu and fires onSetColor("bgColor", key)', async () => {
+    const user = userEvent.setup();
+    const { onSetColor } = renderTb();
+    await user.click(screen.getByRole('button', { name: 'Highlight' }));
+    await user.click(await screen.findByRole('button', { name: 'Blue' }));
+    expect(onSetColor).toHaveBeenCalledWith('bgColor', 'blue');
   });
 
   it('the block-type trigger shows the current block label', () => {
