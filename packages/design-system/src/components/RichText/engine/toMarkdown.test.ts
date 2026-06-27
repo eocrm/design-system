@@ -52,6 +52,28 @@ describe('toMarkdown — inline', () => {
     expect(toMarkdown(doc)).toBe('**b** *i* ~~s~~ `c` u');
   });
 
+  it('drops color marks (no Markdown syntax), emitting the text unchanged', () => {
+    const doc: RichDoc = {
+      blocks: [
+        para('a', [
+          { text: 'red', marks: [{ type: 'textColor', color: 'red' }] },
+          { text: ' ', marks: [] },
+          { text: 'bg', marks: [{ type: 'bgColor', color: 'green' }] },
+        ]),
+      ],
+    };
+    expect(toMarkdown(doc)).toBe('red bg');
+  });
+
+  it('keeps other marks while dropping color (color is invisible to Markdown)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        para('a', [{ text: 'hi', marks: [{ type: 'bold' }, { type: 'textColor', color: 'red' }] }]),
+      ],
+    };
+    expect(toMarkdown(doc)).toBe('**hi**');
+  });
+
   it('serializes a link with its (safe) href', () => {
     expect(toMarkdown({ blocks: [para('a', [{ text: 'docs', marks: [link('/u')] }])] })).toBe(
       '[docs](/u)',

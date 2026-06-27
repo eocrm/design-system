@@ -84,6 +84,27 @@ describe('toHtml — inline marks', () => {
     expect(toHtml(doc)).toBe('<p><strong>b</strong><em>i</em><u>u</u><s>s</s></p>');
   });
 
+  it('serializes a textColor mark to a span with the resolved color var', () => {
+    const doc: RichDoc = {
+      blocks: [para('a', [{ text: 'x', marks: [{ type: 'textColor', color: 'red' }] }])],
+    };
+    expect(toHtml(doc)).toContain('style="color:var(--color-danger)"');
+  });
+
+  it('serializes a bgColor mark to a span with the resolved background var', () => {
+    const doc: RichDoc = {
+      blocks: [para('a', [{ text: 'x', marks: [{ type: 'bgColor', color: 'blue' }] }])],
+    };
+    expect(toHtml(doc)).toContain('style="background-color:var(--color-accent-bg-subtle)"');
+  });
+
+  it('drops a color span when the palette key is unknown (keeps text)', () => {
+    const doc: RichDoc = {
+      blocks: [para('a', [{ text: 'x', marks: [{ type: 'textColor', color: 'mauve' }] }])],
+    };
+    expect(toHtml(doc)).toBe('<p>x</p>');
+  });
+
   it('serializes a mention mark to a data-mention span', () => {
     const doc: RichDoc = {
       blocks: [

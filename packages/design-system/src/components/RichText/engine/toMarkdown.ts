@@ -27,7 +27,9 @@ const MARKERS: { type: MarkType; open: string; close: string }[] = [
 
 function inlineRun(run: Inline): string {
   const isCode = run.marks.some((m) => m.type === 'code');
-  // Code content is verbatim; other text is MD-escaped.
+  // Code content is verbatim; other text is MD-escaped. textColor/bgColor marks
+  // have no Markdown representation and are dropped (like underline) — the run's
+  // text passes through unchanged with no color markup.
   let text = isCode ? run.text : escapeMd(run.text);
   for (const m of MARKERS) {
     if (run.marks.some((mk) => mk.type === m.type)) text = `${m.open}${text}${m.close}`;
@@ -68,10 +70,10 @@ function blockMd(block: Block, depth: number): string {
 
 /**
  * Serialize a `RichDoc` to Markdown (CommonMark + GFM strikethrough), the inverse
- * of `fromMarkdown`. Lossy: **underline is dropped** (no Markdown syntax — use `toHtml` for full
- * fidelity) and **mentions degrade to plain `@label` text** (the id is not
- * representable in Markdown — `toHtml`/`fromHtml` preserve mentions);
- * images/tables aren't modeled; MD-special escaping
+ * of `fromMarkdown`. Lossy: **underline and text/background color are dropped** (no
+ * Markdown syntax — use `toHtml` for full fidelity) and **mentions degrade to plain
+ * `@label` text** (the id is not representable in Markdown — `toHtml`/`fromHtml`
+ * preserve mentions); images/tables aren't modeled; MD-special escaping
  * is best-effort.
  *
  * @example

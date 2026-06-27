@@ -1114,7 +1114,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     const onToolbarMark = useCallback(
       (type: MarkType) => {
-        if (type === 'link' || type === 'mention') return; // link needs an href; mention needs id+label — toolbar fires neither
+        // Value-carrying marks aren't plain toggles: link needs an href, mention an
+        // id+label, textColor/bgColor a palette key — this toolbar path fires none.
+        if (type === 'link' || type === 'mention' || type === 'textColor' || type === 'bgColor')
+          return;
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? selection;
         if (range) stageOrToggleMark(range, { type });

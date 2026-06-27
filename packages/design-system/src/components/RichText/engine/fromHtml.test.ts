@@ -139,6 +139,25 @@ describe('fromHtml — inline marks', () => {
     const d = fromHtml('<p>  a   b  </p>');
     expect(text(d.blocks[0])).toBe('a b');
   });
+
+  it('recovers a textColor mark from an inline color: var() declaration', () => {
+    const d = fromHtml('<p><span style="color: var(--color-danger)">x</span></p>');
+    expect(d.blocks[0].inlines).toEqual([
+      { text: 'x', marks: [{ type: 'textColor', color: 'red' }] },
+    ]);
+  });
+
+  it('recovers a bgColor mark from an inline background-color hex declaration', () => {
+    const d = fromHtml('<p><span style="background-color:#ffebe6">y</span></p>');
+    expect(d.blocks[0].inlines).toEqual([
+      { text: 'y', marks: [{ type: 'bgColor', color: 'red' }] },
+    ]);
+  });
+
+  it('ignores a color outside the palette (no color mark)', () => {
+    const d = fromHtml('<p><span style="color:#123456">z</span></p>');
+    expect(d.blocks[0].inlines).toEqual([{ text: 'z', marks: [] }]);
+  });
 });
 
 it('parses a data-mention-id span into a mention mark', () => {

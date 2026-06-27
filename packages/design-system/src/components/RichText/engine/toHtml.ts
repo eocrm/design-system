@@ -7,11 +7,23 @@ import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
 import { runsText } from './inlines';
 import { escapeHtml, escapeAttr } from './escape';
 import { safeHref } from './safeHref';
+import { textColorVar, bgColorVar } from './colorMarks';
 import { isListItem, effectiveDepths } from './listDepths';
 import { attachmentIsImage } from './attachment';
 
-// Outer → inner; link outermost, code innermost (matches renderDoc).
-const MARK_ORDER: MarkType[] = ['mention', 'link', 'bold', 'italic', 'underline', 'strike', 'code'];
+// Outer → inner; link outermost, code innermost (matches renderDoc). Color spans
+// sit just inside link/mention but outside the text-formatting tags.
+const MARK_ORDER: MarkType[] = [
+  'mention',
+  'link',
+  'textColor',
+  'bgColor',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'code',
+];
 
 /** Wrap an already-escaped HTML string in one mark's tag. */
 function wrapMark(type: MarkType, mark: Mark, inner: string): string {
@@ -26,6 +38,17 @@ function wrapMark(type: MarkType, mark: Mark, inner: string): string {
       return `<s>${inner}</s>`;
     case 'code':
       return `<code>${inner}</code>`;
+    case 'textColor': {
+      // Resolve the palette key to a token-backed var; an unknown key drops the
+      // wrapper (never emit an empty/bogus style). The value is from a fixed
+      // allowlist, so it needs no attribute escaping.
+      const value = mark.type === 'textColor' ? textColorVar(mark.color) : undefined;
+      return value ? `<span style="color:${value}">${inner}</span>` : inner;
+    }
+    case 'bgColor': {
+      const value = mark.type === 'bgColor' ? bgColorVar(mark.color) : undefined;
+      return value ? `<span style="background-color:${value}">${inner}</span>` : inner;
+    }
     case 'link': {
       const safe = mark.type === 'link' ? safeHref(mark.href) : undefined;
       if (safe === undefined) return inner; // unsafe href → drop the anchor, keep text
