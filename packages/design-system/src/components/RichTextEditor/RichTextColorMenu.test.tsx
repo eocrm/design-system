@@ -1,91 +1,90 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
+import { I18nProvider } from '../../i18n';
 import { RichTextColorMenu } from './RichTextColorMenu';
 import styles from './RichTextEditor.module.scss';
 
-function setup(active: { textColor?: string; bgColor?: string } = {}) {
+function setup(props: Partial<React.ComponentProps<typeof RichTextColorMenu>> = {}) {
   const onPick = vi.fn();
-  const utils = render(<RichTextColorMenu active={active} onPick={onPick} />);
+  const utils = render(
+    <I18nProvider locale="en">
+      <RichTextColorMenu type="textColor" onPick={onPick} {...props} />
+    </I18nProvider>,
+  );
   return { onPick, ...utils };
 }
 
 describe('RichTextColorMenu', () => {
-  it('renders the Text and Highlight rows', () => {
-    setup();
-    expect(screen.getByText('Text')).toBeInTheDocument();
-    expect(screen.getByText('Highlight')).toBeInTheDocument();
+  it('exposes the menu as a group labelled by its type', () => {
+    setup({ type: 'textColor' });
+    expect(screen.getByRole('group', { name: 'Text color' })).toBeInTheDocument();
   });
 
-  it('renders a clear + per-key swatch in each row with color-name aria-labels', () => {
-    setup();
-    // 2 rows × the full 30-color palette, each name appears once per row.
-    expect(screen.getAllByLabelText('Red')).toHaveLength(2);
-    expect(screen.getAllByLabelText('Green')).toHaveLength(2);
-    expect(screen.getAllByLabelText('Default')).toHaveLength(2); // the ⌀ clear swatch
+  it('labels the bgColor menu as Highlight', () => {
+    setup({ type: 'bgColor' });
+    expect(screen.getByRole('group', { name: 'Highlight' })).toBeInTheDocument();
   });
 
-  it('exposes the full palette, including colors beyond the old curated set', () => {
+  it('renders a Default/clear badge plus one badge per palette key', () => {
     setup();
-    // Coral / Charcoal are new to the full-palette swatch grid.
-    expect(screen.getAllByLabelText('Coral')).toHaveLength(2);
-    expect(screen.getAllByLabelText('Charcoal')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Default' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Red' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Green' })).toBeInTheDocument();
   });
 
-  it('clicking the red text swatch calls onPick("textColor","red")', async () => {
+  it('renders the full palette as named badges, including the new extras', () => {
+    setup();
+    // Each name appears exactly once now (single-type menu, no duplicate rows).
+    expect(screen.getAllByLabelText('Red')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Coral' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Charcoal' })).toBeInTheDocument();
+  });
+
+  it('shows the color name as the badge text', () => {
+    setup();
+    expect(screen.getByRole('button', { name: 'Coral' })).toHaveTextContent('Coral');
+  });
+
+  it('clicking a color badge calls onPick(key)', async () => {
     const user = userEvent.setup();
     const { onPick } = setup();
-    // First row is the Text (textColor) row.
-    await user.click(screen.getAllByLabelText('Red')[0]);
-    expect(onPick).toHaveBeenCalledWith('textColor', 'red');
+    await user.click(screen.getByRole('button', { name: 'Coral' }));
+    expect(onPick).toHaveBeenCalledWith('coral');
   });
 
-  it('clicking a highlight swatch calls onPick("bgColor", key)', async () => {
+  it('clicking the Default badge calls onPick(null)', async () => {
     const user = userEvent.setup();
     const { onPick } = setup();
-    await user.click(screen.getAllByLabelText('Blue')[1]); // second row = Highlight (bgColor)
-    expect(onPick).toHaveBeenCalledWith('bgColor', 'blue');
+    await user.click(screen.getByRole('button', { name: 'Default' }));
+    expect(onPick).toHaveBeenCalledWith(null);
   });
 
-  it('clicking the text Clear swatch calls onPick("textColor", null)', async () => {
-    const user = userEvent.setup();
-    const { onPick } = setup();
-    await user.click(screen.getAllByLabelText('Default')[0]);
-    expect(onPick).toHaveBeenCalledWith('textColor', null);
+  it('rings the active badge with the active class', () => {
+    setup({ active: 'red' });
+    expect(screen.getByRole('button', { name: 'Red' })).toHaveClass(styles.colorBadgeActive);
+    expect(screen.getByRole('button', { name: 'Green' })).not.toHaveClass(styles.colorBadgeActive);
   });
 
-  it('rings the active key swatch with the active class', () => {
-    setup({ textColor: 'red', bgColor: 'blue' });
-    expect(screen.getAllByLabelText('Red')[0]).toHaveClass(styles.swatchActive);
-    expect(screen.getAllByLabelText('Blue')[1]).toHaveClass(styles.swatchActive);
-    // A non-active swatch is not ringed.
-    expect(screen.getAllByLabelText('Green')[0]).not.toHaveClass(styles.swatchActive);
+  it('marks the active badge aria-pressed=true and others false', () => {
+    setup({ active: 'red' });
+    expect(screen.getByRole('button', { name: 'Red' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Green' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('marks the active swatch aria-pressed=true and others false', () => {
-    setup({ textColor: 'red' });
-    // The active text swatch is pressed…
-    expect(screen.getAllByLabelText('Red')[0]).toHaveAttribute('aria-pressed', 'true');
-    // …while non-active swatches in that row are not.
-    expect(screen.getAllByLabelText('Green')[0]).toHaveAttribute('aria-pressed', 'false');
-    // No bgColor active → the highlight Red swatch is not pressed.
-    expect(screen.getAllByLabelText('Red')[1]).toHaveAttribute('aria-pressed', 'false');
-  });
-
-  it('marks the clear swatch aria-pressed=true only when no color is active for its type', () => {
-    setup({ textColor: 'red' });
-    // Text row has a color → its clear swatch is NOT pressed.
-    expect(screen.getAllByLabelText('Default')[0]).toHaveAttribute('aria-pressed', 'false');
-    // Highlight row has no color → its clear swatch IS pressed.
-    expect(screen.getAllByLabelText('Default')[1]).toHaveAttribute('aria-pressed', 'true');
-  });
-
-  it('exposes each row as a labeled group so AT can tell the two "Red" buttons apart', () => {
-    setup();
-    const textGroup = screen.getByRole('group', { name: 'Text' });
-    const highlightGroup = screen.getByRole('group', { name: 'Highlight' });
-    // The Text row's "Red" lives in the Text group; the Highlight row's in the Highlight group.
-    expect(within(textGroup).getByLabelText('Red')).toBe(screen.getAllByLabelText('Red')[0]);
-    expect(within(highlightGroup).getByLabelText('Red')).toBe(screen.getAllByLabelText('Red')[1]);
+  it('marks the Default badge pressed only when no color is active', () => {
+    const { rerender } = setup();
+    // No active color → Default is pressed.
+    expect(screen.getByRole('button', { name: 'Default' })).toHaveAttribute('aria-pressed', 'true');
+    rerender(
+      <I18nProvider locale="en">
+        <RichTextColorMenu type="textColor" active="red" onPick={vi.fn()} />
+      </I18nProvider>,
+    );
+    // A color is active → Default is not pressed.
+    expect(screen.getByRole('button', { name: 'Default' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
   });
 });

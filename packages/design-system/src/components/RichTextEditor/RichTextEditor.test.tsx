@@ -331,10 +331,9 @@ describe('RichTextEditor toolbar', () => {
       return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
     }
     renderEditor(<Harness />);
-    // Open the color menu, then pick the red swatch in the Text (first) row.
-    await user.click(screen.getByRole('button', { name: 'Color' }));
-    const redSwatches = await screen.findAllByRole('button', { name: 'Red' });
-    await user.click(redSwatches[0]);
+    // Open the Text-color menu, then pick the red badge.
+    await user.click(screen.getByRole('button', { name: 'Text color' }));
+    await user.click(await screen.findByRole('button', { name: 'Red' }));
     await waitFor(() => {
       const span = screen.getByRole('textbox', { name: 'Rich text editor' }).querySelector('span');
       expect(span?.textContent).toBe('hello');
@@ -357,10 +356,9 @@ describe('RichTextEditor toolbar', () => {
       return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
     }
     renderEditor(<Harness />);
-    // Open the color menu and pick the red swatch in the Text (first) row.
-    await user.click(screen.getByRole('button', { name: 'Color' }));
-    const redSwatches = await screen.findAllByRole('button', { name: 'Red' });
-    await user.click(redSwatches[0]);
+    // Open the Text-color menu and pick the red badge.
+    await user.click(screen.getByRole('button', { name: 'Text color' }));
+    await user.click(await screen.findByRole('button', { name: 'Red' }));
     // Type a character via the same beforeinput path the editor uses.
     const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
     const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
@@ -1194,7 +1192,7 @@ describe('blockControls', () => {
     expect(document.querySelector('li[data-block-id]')).toBeTruthy();
   });
 
-  it('block menu Color submenu colors the whole block text', async () => {
+  it('block menu Text color submenu colors the whole block text', async () => {
     const user = userEvent.setup();
     render(
       <I18nProvider locale="en">
@@ -1204,10 +1202,9 @@ describe('blockControls', () => {
     const block = document.querySelector('[data-block-id]') as HTMLElement;
     await user.hover(block);
     await user.click(screen.getByRole('button', { name: 'Block actions' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Color' }));
-    // Pick the red swatch in the Text (first) row → whole block wrapped red.
-    const reds = await screen.findAllByRole('button', { name: 'Red' });
-    await user.click(reds[0]);
+    await user.click(screen.getByRole('menuitem', { name: 'Text color' }));
+    // Pick the red badge → whole block wrapped red.
+    await user.click(await screen.findByRole('button', { name: 'Red' }));
     await waitFor(() => {
       const span = (document.querySelector('[data-block-id]') as HTMLElement).querySelector('span');
       expect(span?.textContent).toBe('one');

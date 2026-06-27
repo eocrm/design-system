@@ -436,75 +436,73 @@ export interface Messages {
     attachmentOpen: string;
     /** Download-file link. */
     attachmentDownload: string;
-    /** aria-label on the toolbar color button + the color menu's group label. */
-    color: string;
-    /** Row label for the text-color swatches in the color menu. */
+    /** aria-label on the Text-color toolbar button / block submenu + the text-color menu's group label. */
     textColor: string;
-    /** Row label for the highlight (background-color) swatches in the color menu. */
+    /** aria-label on the Highlight toolbar button / block submenu + the highlight menu's group label. */
     highlight: string;
-    /** aria-label on the ⌀ "clear color" swatch (reset to the default color). */
+    /** aria-label on the Default/clear color badge (resets to the default color). */
     colorClear: string;
-    /** aria-label on the gray default color swatch. */
+    /** aria-label on the gray default color badge. */
     colorGray: string;
-    /** aria-label on the red palette color swatch. */
+    /** aria-label on the red palette color badge. */
     colorRed: string;
-    /** aria-label on the coral palette color swatch. */
+    /** aria-label on the coral palette color badge. */
     colorCoral: string;
-    /** aria-label on the orange palette color swatch. */
+    /** aria-label on the orange palette color badge. */
     colorOrange: string;
-    /** aria-label on the amber palette color swatch. */
+    /** aria-label on the amber palette color badge. */
     colorAmber: string;
-    /** aria-label on the gold palette color swatch. */
+    /** aria-label on the gold palette color badge. */
     colorGold: string;
-    /** aria-label on the yellow palette color swatch. */
+    /** aria-label on the yellow palette color badge. */
     colorYellow: string;
-    /** aria-label on the olive palette color swatch. */
+    /** aria-label on the olive palette color badge. */
     colorOlive: string;
-    /** aria-label on the lime palette color swatch. */
+    /** aria-label on the lime palette color badge. */
     colorLime: string;
-    /** aria-label on the green palette color swatch. */
+    /** aria-label on the green palette color badge. */
     colorGreen: string;
-    /** aria-label on the emerald palette color swatch. */
+    /** aria-label on the emerald palette color badge. */
     colorEmerald: string;
-    /** aria-label on the mint palette color swatch. */
+    /** aria-label on the mint palette color badge. */
     colorMint: string;
-    /** aria-label on the teal palette color swatch. */
+    /** aria-label on the teal palette color badge. */
     colorTeal: string;
-    /** aria-label on the cyan palette color swatch. */
+    /** aria-label on the cyan palette color badge. */
     colorCyan: string;
-    /** aria-label on the sky palette color swatch. */
+    /** aria-label on the sky palette color badge. */
     colorSky: string;
-    /** aria-label on the blue palette color swatch. */
+    /** aria-label on the blue palette color badge. */
     colorBlue: string;
-    /** aria-label on the navy palette color swatch. */
+    /** aria-label on the navy palette color badge. */
     colorNavy: string;
-    /** aria-label on the indigo palette color swatch. */
+    /** aria-label on the indigo palette color badge. */
     colorIndigo: string;
-    /** aria-label on the violet palette color swatch. */
+    /** aria-label on the violet palette color badge. */
     colorViolet: string;
-    /** aria-label on the lavender palette color swatch. */
+    /** aria-label on the lavender palette color badge. */
     colorLavender: string;
-    /** aria-label on the purple palette color swatch. */
+    /** aria-label on the purple palette color badge. */
     colorPurple: string;
-    /** aria-label on the plum palette color swatch. */
+    /** aria-label on the plum palette color badge. */
     colorPlum: string;
-    /** aria-label on the fuchsia palette color swatch. */
+    /** aria-label on the fuchsia palette color badge. */
     colorFuchsia: string;
-    /** aria-label on the magenta palette color swatch. */
+    /** aria-label on the magenta palette color badge. */
     colorMagenta: string;
-    /** aria-label on the pink palette color swatch. */
+    /** aria-label on the pink palette color badge. */
     colorPink: string;
-    /** aria-label on the rose palette color swatch. */
+    /** aria-label on the rose palette color badge. */
     colorRose: string;
-    /** aria-label on the brown palette color swatch. */
+    /** aria-label on the brown palette color badge. */
     colorBrown: string;
-    /** aria-label on the taupe palette color swatch. */
+    /** aria-label on the taupe palette color badge. */
     colorTaupe: string;
-    /** aria-label on the slate palette color swatch. */
+    /** aria-label on the slate palette color badge. */
     colorSlate: string;
-    /** aria-label on the stone palette color swatch. */
+    /** aria-label on the stone palette color badge. */
     colorStone: string;
-    /** aria-label on the charcoal palette color swatch. */
+    /** aria-label on the charcoal palette color badge. */
     colorCharcoal: string;
   };
 }

@@ -58,17 +58,30 @@ it('conveys a list turn-into as a list BlockChoice (no depth)', async () => {
   expect(onTurnInto).toHaveBeenCalledWith({ type: 'bullet_item' });
 });
 
-it('omits the Color submenu when onColor is not provided', () => {
+it('omits both color submenus when onColor is not provided', () => {
   setup();
-  expect(screen.queryByRole('menuitem', { name: 'Color' })).toBeNull();
+  expect(screen.queryByRole('menuitem', { name: 'Text color' })).toBeNull();
+  expect(screen.queryByRole('menuitem', { name: 'Highlight' })).toBeNull();
 });
 
-it('fires onColor with the picked type + key from the Color submenu', async () => {
+it('renders both color submenus when onColor is provided', () => {
+  setup({ onColor: vi.fn() });
+  expect(screen.getByRole('menuitem', { name: 'Text color' })).toBeInTheDocument();
+  expect(screen.getByRole('menuitem', { name: 'Highlight' })).toBeInTheDocument();
+});
+
+it('fires onColor("textColor", key) from the Text color submenu', async () => {
   const onColor = vi.fn();
   setup({ onColor });
-  // Open the "Color" submenu, then pick the green swatch in the Text (first) row.
-  await userEvent.click(screen.getByRole('menuitem', { name: 'Color' }));
-  const greens = await screen.findAllByRole('button', { name: 'Green' });
-  await userEvent.click(greens[0]);
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Text color' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Green' }));
   expect(onColor).toHaveBeenCalledWith('textColor', 'green');
+});
+
+it('fires onColor("bgColor", key) from the Highlight submenu', async () => {
+  const onColor = vi.fn();
+  setup({ onColor });
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Highlight' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Blue' }));
+  expect(onColor).toHaveBeenCalledWith('bgColor', 'blue');
 });

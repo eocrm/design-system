@@ -20,6 +20,7 @@ import {
   AttachFileIcon,
   SmileIcon,
   TextColorIcon,
+  HighlightIcon,
 } from './icons';
 import styles from './RichTextEditor.module.scss';
 
@@ -29,7 +30,7 @@ export type BlockChoice = { type: BlockType; level?: 1 | 2 | 3 };
 export interface RichTextToolbarProps {
   /** Mark types active across the current selection (drives the pressed state). */
   activeMarks: MarkType[];
-  /** Active color key per type, to ring the current swatch in the color menu. */
+  /** Active color key per type, to ring the current badge in the color menu. */
   colors: ActiveColors;
   /** Set a text/highlight color (palette key) — or clear (`null`) — for the selection. */
   onSetColor: (type: 'textColor' | 'bgColor', key: string | null) => void;
@@ -252,9 +253,9 @@ export function RichTextToolbar({
             size="sm"
             variant="ghost"
             iconOnly
-            aria-label={t('richTextEditor.color')}
+            aria-label={t('richTextEditor.textColor')}
             disabled={disabled}
-            // Preserve the editor's DOM selection so it's still live when a swatch
+            // Preserve the editor's DOM selection so it's still live when a badge
             // is picked and onSetColor reads it (mirrors the emoji/link buttons).
             onMouseDown={(e) => e.preventDefault()}
           >
@@ -262,7 +263,34 @@ export function RichTextToolbar({
           </Button>
         </Popover.Trigger>
         <Popover.Content>
-          <RichTextColorMenu active={colors} onPick={onSetColor} />
+          <RichTextColorMenu
+            type="textColor"
+            active={colors.textColor}
+            onPick={(key) => onSetColor('textColor', key)}
+          />
+        </Popover.Content>
+      </Popover>
+
+      <Popover>
+        <Popover.Trigger>
+          <Button
+            size="sm"
+            variant="ghost"
+            iconOnly
+            aria-label={t('richTextEditor.highlight')}
+            disabled={disabled}
+            // Same selection-preservation as the Text-color button above.
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            <HighlightIcon />
+          </Button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <RichTextColorMenu
+            type="bgColor"
+            active={colors.bgColor}
+            onPick={(key) => onSetColor('bgColor', key)}
+          />
         </Popover.Content>
       </Popover>
 

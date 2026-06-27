@@ -971,7 +971,7 @@ const [doc, setDoc] = useState(emptyDoc());
 - **List toggles** — Bullet list, Numbered list. Toggle between the list type and paragraph.
 - **Link button** — add/edit a link on the selection. Reflects `aria-pressed` when the caret is inside a link.
 - **Emoji insert** — opens a searchable `EmojiPickerPopover`; selecting an emoji inserts it at the caret.
-- **Color** — the default brand colors first (gray + semantic red/green/amber/blue, backed by the `--color-fg-muted`/`--color-danger`/`--color-success`/`--color-warning`/`--color-accent` tokens), then the rest of the categorical palette (each palette extra uses its `-fg`/`-bg` token). Each row leads with a Default/clear swatch. Applied to the selection from the toolbar, or to a whole block from the ⠿ menu when `blockControls` is enabled. Colors round-trip through HTML and are dropped in Markdown.
+- **Color** — two separate pickers, **Text color** and **Highlight**, each its own toolbar button (and its own ⠿-menu submenu when `blockControls` is enabled). Each picker is a grid of small **named badges** (the Palette-demo chip look — subtle bg fill + strong fg text): the default brand colors first (gray + semantic red/green/amber/blue, backed by the `--color-fg-muted`/`--color-danger`/`--color-success`/`--color-warning`/`--color-accent` tokens), then the rest of the categorical palette (each palette extra uses its `-fg`/`-bg` token), led by a Default/clear badge. Applied to the selection from the toolbar, or to a whole block from the ⠿ menu. Colors round-trip through HTML and are dropped in Markdown.
 - **Undo / Redo buttons** — undo/redo the last change; disabled at the ends of the history.
 
 **List keys:**
