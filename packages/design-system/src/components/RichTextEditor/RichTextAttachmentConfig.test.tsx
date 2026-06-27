@@ -104,17 +104,20 @@ it('fires onWidthReset from the reset control', async () => {
   expect(p.onWidthReset).toHaveBeenCalled();
 });
 
-it('shows the Width control for an image with explicit dimensions (embed)', () => {
-  setup(imgBlock({ width: 320 }));
+it('shows the Width control for a previewable image (embed), even with no width attr', () => {
+  // imgBlock() has a safe http src and no width — it renders as a preview, so the
+  // slider is offered (gated on preview-ability, not on the presence of a width).
+  setup(imgBlock());
   expect(screen.getByRole('slider', { name: 'Width' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
 });
 
-it('hides the Width control for an image with no dimensions (uploaded), keeping alt/align', () => {
-  setup(imgBlock()); // no width
+it('hides the Width control for an uploaded object-URL image (chip), keeping alt/align', () => {
+  // A blob: src is blocked by safeHref → renders as a download chip → no resize.
+  setup(imgBlock({ src: 'blob:http://localhost/abc123', width: undefined }));
   expect(screen.queryByRole('slider', { name: 'Width' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull();
-  // Alt + alignment are still offered — only Width is gated on known dimensions.
+  // Alt + alignment are still offered — only Width is gated on preview-ability.
   expect(screen.getByLabelText('Alt text')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Align center' })).toBeInTheDocument();
 });

@@ -46,9 +46,8 @@ export interface RichTextBlockControlsProps {
   onTurnInto: (blockId: string, choice: BlockChoice) => void;
   /**
    * Open the block's configuration affordance (e.g. attachment settings). When
-   * set, a ⚙ Configure button appears in the gutter and a Configure item is added
-   * to the block menu; both fire with the active block id. Omit for blocks that
-   * have nothing to configure.
+   * set, a "Configure" item is added to the ⠿ block menu and fires with the
+   * active block id. Omit for blocks that have nothing to configure.
    */
   onConfigure?: (blockId: string) => void;
   /**

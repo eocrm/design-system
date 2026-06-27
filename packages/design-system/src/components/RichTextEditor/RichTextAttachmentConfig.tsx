@@ -2,8 +2,9 @@
 // Internal + presentational: the editor owns the model and passes the block's
 // current values + callbacks. Mirrors RichTextLinkEditor's portal + Floating-UI
 // virtual-anchor + Esc/pointerdown-outside pattern. Image attachments get alt/
-// align/replace/open/download — plus width ONLY when the image carries explicit
-// dimensions (an embed); non-image chips get replace/open/download.
+// align/replace/open/download — plus width ONLY when the image renders as a
+// preview (a safe, fetchable src — an embed); an uploaded object-URL image is a
+// chip, so it gets no width. Non-image chips get replace/open/download.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFloating, autoUpdate, flip, shift, offset } from '@floating-ui/react-dom';
@@ -58,10 +59,10 @@ const ALIGN_LABEL_KEY = {
  * Internal floating config popover for a ready attachment. Rendered by
  * `<RichTextEditor>` when the attachment config is open; not exported from the
  * package. Image attachments get alt / align / replace / open / download — and a
- * width slider ONLY when the image has explicit dimensions (an embedded image);
- * an uploaded image without known dimensions gets no width control. Non-image
- * chips get replace / open / download. Remount it (via `key`) per open so the
- * alt + width fields re-seed from the block.
+ * width slider ONLY when the image renders as a preview (a safe, fetchable src —
+ * an embedded image); an uploaded object-URL image renders as a chip and gets no
+ * width control. Non-image chips get replace / open / download. Remount it (via
+ * `key`) per open so the alt + width fields re-seed from the block.
  */
 export function RichTextAttachmentConfig({
   block,
@@ -203,13 +204,14 @@ export function RichTextAttachmentConfig({
                 </Button>
               ))}
             </Cluster>
-            {/* Width is offered only for images with explicit intrinsic dimensions
-                (an embedded/imported image). An uploaded image without known
-                dimensions renders at its natural size (and, with an object-URL src,
-                as a chip) — resizing it does nothing useful, so the control is hidden.
-                Note: Reset clears width/height back to natural, which removes the
-                dimensions and therefore hides this control afterward. */}
-            {block.width != null && (
+            {/* Width is offered only for an image that actually renders as a
+                preview — i.e. one with a safe, fetchable src (`href`). An uploaded
+                image carries an object-URL src that `safeHref` blocks, so it renders
+                as a download chip (RichTextAttachment uses the same isImage && href
+                test); resizing such a chip does nothing, so the slider is hidden.
+                Gating on the src (not on `block.width`) keeps it available after a
+                Reset and for embeds that arrived without an explicit width attr. */}
+            {href && (
               <Cluster gap="xs">
                 <span className={styles.configLabel}>{t('richTextEditor.attachmentWidth')}</span>
                 <Slider
