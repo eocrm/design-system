@@ -108,6 +108,7 @@ export const en: Messages = {
   emojiPicker: {
     search: 'Search emoji',
     label: 'Emoji',
+    recent: 'Recently used',
     noResults: 'No emoji found',
     category: {
       smileys: 'Smileys',

@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EmojiPicker, EmojiPickerPopover } from './EmojiPicker';
 
@@ -181,4 +181,73 @@ it('EmojiPickerPopover (controlled, open) fires onSelect and requests close on p
   expect(onSelect).toHaveBeenCalledWith('👍');
   // Selecting always requests close, even in controlled mode.
   expect(onOpenChange).toHaveBeenCalledWith(false);
+});
+
+// ---------------------------------------------------------------------------
+// EmojiPicker — recent
+// ---------------------------------------------------------------------------
+
+it('renders a "Recently used" group at the top from the recent prop', () => {
+  render(<EmojiPicker onSelect={() => {}} recent={['🎉', '❤️']} />);
+  // The recent section is a group labelled "Recently used".
+  const recentGroup = screen.getByRole('group', { name: 'Recently used' });
+  expect(recentGroup).toBeInTheDocument();
+  // Its emojis resolve their dataset names for the accessible label.
+  expect(within(recentGroup).getByRole('option', { name: 'party popper' })).toBeInTheDocument();
+  // It is the FIRST group in the listbox (pinned to the top).
+  const groups = screen.getAllByRole('group');
+  expect(groups[0]).toBe(recentGroup);
+});
+
+it('clicking a recent emoji fires onSelect with its char', async () => {
+  const user = userEvent.setup();
+  const onSelect = vi.fn();
+  render(<EmojiPicker onSelect={onSelect} recent={['🎉']} />);
+  const recentGroup = screen.getByRole('group', { name: 'Recently used' });
+  await user.click(within(recentGroup).getByRole('option', { name: 'party popper' }));
+  expect(onSelect).toHaveBeenCalledWith('🎉');
+});
+
+it('de-dupes recent and keeps most-recent-first order', () => {
+  render(<EmojiPicker onSelect={() => {}} recent={['🎉', '🎉', '❤️']} />);
+  const recentGroup = screen.getByRole('group', { name: 'Recently used' });
+  // 🎉 appears once in the recent group despite being passed twice.
+  expect(within(recentGroup).getAllByRole('option', { name: 'party popper' })).toHaveLength(1);
+});
+
+it('hides the recent group while searching', async () => {
+  const user = userEvent.setup();
+  render(<EmojiPicker onSelect={() => {}} recent={['🎉']} />);
+  expect(screen.getByRole('group', { name: 'Recently used' })).toBeInTheDocument();
+  await user.type(screen.getByRole('textbox'), 'pizza');
+  expect(screen.queryByRole('group', { name: 'Recently used' })).toBeNull();
+});
+
+it('no recent group when recent is omitted or empty', () => {
+  const { rerender } = render(<EmojiPicker onSelect={() => {}} />);
+  expect(screen.queryByRole('group', { name: 'Recently used' })).toBeNull();
+  rerender(<EmojiPicker onSelect={() => {}} recent={[]} />);
+  expect(screen.queryByRole('group', { name: 'Recently used' })).toBeNull();
+});
+
+it('EmojiPickerPopover forwards recent to the picker', () => {
+  render(
+    <EmojiPickerPopover trigger={<button>open</button>} onSelect={() => {}} recent={['🎉']} open />,
+  );
+  expect(screen.getByRole('group', { name: 'Recently used' })).toBeInTheDocument();
+});
+
+it('roving keyboard nav crosses from the recent group into the categories', async () => {
+  const user = userEvent.setup();
+  // recent has a single item → flat index 0 is the recent 👍; index 1 is the first
+  // category emoji (grinning face). ArrowRight must cross the section boundary.
+  render(<EmojiPicker onSelect={() => {}} recent={['👍']} />);
+  await user.click(screen.getByRole('textbox'));
+  await user.keyboard('{ArrowDown}'); // into the grid → first cell (recent 👍)
+  const recentGroup = screen.getByRole('group', { name: 'Recently used' });
+  expect(document.activeElement).toBe(
+    within(recentGroup).getByRole('option', { name: 'thumbs up' }),
+  );
+  await user.keyboard('{ArrowRight}'); // cross into the first category
+  expect(document.activeElement).toBe(screen.getByRole('option', { name: 'grinning face' }));
 });

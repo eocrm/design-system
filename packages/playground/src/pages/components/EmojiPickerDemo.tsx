@@ -23,6 +23,10 @@ export function EmojiPickerDemo() {
   const [reactions, setReactions] = useState<Record<string, number>>({ '👍': 2, '🎉': 1 });
   const [draft, setDraft] = useState('Great work shipping the Q3 renewal flow ');
   const [lastInserted, setLastInserted] = useState<string | null>(null);
+  const [recent, setRecent] = useState<string[]>(['👍', '🎉', '❤️', '🔥', '✅']);
+  // Canonical recent pattern: move the pick to the front, de-dupe, cap the list.
+  const addRecent = (emoji: string) =>
+    setRecent((r) => [emoji, ...r.filter((c) => c !== emoji)].slice(0, 16));
 
   return (
     <DemoLayout
@@ -114,6 +118,23 @@ export function EmojiPickerDemo() {
           <EmojiPicker onSelect={setLastInserted} />
           <Text size="sm" tone="muted">
             Last picked: {lastInserted ?? '—'}
+          </Text>
+        </Stack>
+      </Example>
+
+      <Example
+        title="Recently used (recent prop)"
+        description="Pass recent={[...]} to pin a 'Recently used' section at the top (shown only while not searching). The consumer owns persistence — keep the list yourself (e.g. localStorage), update it in onSelect, and pass it back. Here, picking an emoji moves it to the front of the recent row."
+        code={`const [recent, setRecent] = useState<string[]>(['👍', '🎉', '❤️', '🔥', '✅']);
+const addRecent = (emoji: string) =>
+  setRecent((r) => [emoji, ...r.filter((c) => c !== emoji)].slice(0, 16));
+
+<EmojiPicker recent={recent} onSelect={addRecent} />`}
+      >
+        <Stack gap="sm">
+          <EmojiPicker recent={recent} onSelect={addRecent} />
+          <Text size="sm" tone="muted">
+            recent: {recent.join(' ')}
           </Text>
         </Stack>
       </Example>

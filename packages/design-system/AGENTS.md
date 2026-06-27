@@ -2500,6 +2500,10 @@ with a `Popover` (or use `EmojiPickerPopover`).
 `EmojiPickerPopover` takes `trigger` + `onSelect`, plus the standard
 controlled-open contract (`open` / `onOpenChange` / `defaultOpen`).
 
+`recent?: string[]` (on both) pins a "Recently used" section at the top (shown only
+while not searching). The consumer owns persistence — keep the list (e.g.
+localStorage), update it in `onSelect` (move-to-front + de-dupe + cap), pass it back.
+
 **When NOT to use:** a small fixed reaction set (👍 ❤️ 🎉) → render a `Cluster`
 of `Button`s; a searchable grid is overkill for 3-6 choices. Also not for inline
 `:smile`-style autocomplete (the editor's suggestion engine owns that) or for
