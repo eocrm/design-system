@@ -13,10 +13,27 @@ export type BlockType =
   | 'code_block'
   | 'attachment';
 
-/** All supported inline mark types. `link` carries `href`; `mention` carries `id` + `label`. */
-export type MarkType = 'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'link' | 'mention';
+/**
+ * All supported inline mark types. `link` carries `href`; `mention` carries `id` + `label`;
+ * `textColor`/`bgColor` carry a palette `color` KEY (e.g. `'red'`), never a raw hex — see
+ * `colorMarks.ts` for the key → CSS-custom-property resolution.
+ */
+export type MarkType =
+  | 'bold'
+  | 'italic'
+  | 'underline'
+  | 'strike'
+  | 'code'
+  | 'link'
+  | 'mention'
+  | 'textColor'
+  | 'bgColor';
 
-/** A formatting mark. Flags carry no data; `link` carries an href; `mention` an id + label. */
+/**
+ * A formatting mark. Flags carry no data; `link` carries an href; `mention` an id + label.
+ * `textColor`/`bgColor` carry a palette `color` KEY (e.g. `'red'`), not a raw value — the key
+ * resolves to a token-backed CSS custom property via `colorMarks.ts`.
+ */
 export type Mark =
   | { type: 'bold' }
   | { type: 'italic' }
@@ -24,7 +41,9 @@ export type Mark =
   | { type: 'strike' }
   | { type: 'code' }
   | { type: 'link'; href: string }
-  | { type: 'mention'; id: string; label: string };
+  | { type: 'mention'; id: string; label: string }
+  | { type: 'textColor'; color: string }
+  | { type: 'bgColor'; color: string };
 
 /** A run of text sharing exactly one mark set. */
 export interface Inline {
