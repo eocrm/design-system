@@ -13,6 +13,7 @@ import { Cluster } from '../Cluster';
 import { useTranslation } from '../../i18n';
 import type { Rect } from './selection';
 import { useAnchoredFloating } from './useAnchoredFloating';
+import { useDismissOnOutsidePointerDown } from './useDismissOnOutsidePointerDown';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextLinkEditorProps {
@@ -68,13 +69,7 @@ export function RichTextLinkEditor({
   }, [editing]);
 
   // Dismiss on a pointerdown outside the bubble.
-  useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      if (bubbleRef.current && !bubbleRef.current.contains(e.target as Node)) onCancel();
-    };
-    document.addEventListener('pointerdown', onPointerDown, true);
-    return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [onCancel]);
+  useDismissOnOutsidePointerDown(bubbleRef, onCancel);
 
   const setRefs = useCallback(
     (node: HTMLDivElement | null) => {

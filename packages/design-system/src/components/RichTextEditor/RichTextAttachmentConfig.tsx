@@ -18,6 +18,7 @@ import { safeHref } from '../RichText/engine/safeHref';
 import { attachmentIsImage } from '../RichText/engine/attachment';
 import type { Rect } from './selection';
 import { useAnchoredFloating } from './useAnchoredFloating';
+import { useDismissOnOutsidePointerDown } from './useDismissOnOutsidePointerDown';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextAttachmentConfigProps {
@@ -105,13 +106,7 @@ export function RichTextAttachmentConfig({
   );
 
   // Dismiss on a pointerdown outside the popover.
-  useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      if (popRef.current && !popRef.current.contains(e.target as Node)) onClose();
-    };
-    document.addEventListener('pointerdown', onPointerDown, true);
-    return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [onClose]);
+  useDismissOnOutsidePointerDown(popRef, onClose);
 
   // Move focus into the popover on open so the Escape handler (on the container)
   // works without the trigger keeping focus — mirrors RichTextLinkEditor focusing
