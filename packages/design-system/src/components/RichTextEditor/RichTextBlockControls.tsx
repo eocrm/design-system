@@ -26,6 +26,7 @@ import { RichTextBlockMenu, type BlockAction } from './RichTextBlockMenu';
 import type { BlockChoice } from './RichTextToolbar';
 import type { BlockType } from '../RichText/engine/model';
 import { PlusIcon } from './icons';
+import { preventSelectionLoss } from './preventSelectionLoss';
 import { computeReflow, type BlockRect, type UnitRange } from './blockReflow';
 import { gapIndexFromY } from './blockDrop';
 import styles from './RichTextEditor.module.scss';
@@ -336,7 +337,7 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
           tabIndex={-1}
           aria-label={t('richTextEditor.blockInsert')}
           className={styles.gutterButton}
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventSelectionLoss}
           onClick={() => onInsertBelow(activeBlockId)}
         >
           <PlusIcon />

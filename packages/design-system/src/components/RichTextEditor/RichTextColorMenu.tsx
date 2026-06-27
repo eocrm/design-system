@@ -3,6 +3,7 @@ import { Stack } from '../Stack';
 import { Cluster } from '../Cluster';
 import { useTranslation, type MessageKey } from '../../i18n';
 import { COLOR_KEYS, textColorVar, bgColorVar, type ColorKey } from '../RichText/engine/colorMarks';
+import { preventSelectionLoss } from './preventSelectionLoss';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextColorMenuProps {
@@ -83,9 +84,7 @@ export function RichTextColorMenu({ type, active, onPick }: RichTextColorMenuPro
           title={clearLabel}
           // "Default" is the pressed state when no color of this type is active.
           aria-pressed={!active}
-          // Preserve the editor's DOM selection: a mousedown that moves focus
-          // out of the contentEditable would collapse it before the pick runs.
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventSelectionLoss}
           onClick={() => onPick(null)}
         >
           {clearLabel}
@@ -103,7 +102,7 @@ export function RichTextColorMenu({ type, active, onPick }: RichTextColorMenuPro
               aria-label={name}
               title={name}
               aria-pressed={active === key}
-              onMouseDown={(e) => e.preventDefault()}
+              onMouseDown={preventSelectionLoss}
               onClick={() => onPick(key)}
             >
               {name}
