@@ -257,7 +257,7 @@ export const en: Messages = {
     attachmentOpen: 'Open',
     attachmentDownload: 'Download',
     color: 'Color',
-    textColor: 'Text',
+    textColor: 'Text color',
     highlight: 'Highlight',
     colorClear: 'Default',
     colorGray: 'Gray',

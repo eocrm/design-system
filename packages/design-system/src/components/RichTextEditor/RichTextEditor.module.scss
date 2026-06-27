@@ -111,46 +111,40 @@
   border-inline-start: var(--border-width) solid var(--color-border);
 }
 
-// Color menu (toolbar color Popover + block menu): a two-row swatch grid, one
-// row per mark type (Text / Highlight). Row stacking + swatch gaps come from the
-// Stack/Cluster it renders into — this only styles padding + the overall cap.
-// The max-width caps each wrapping swatch row so the full 30-color palette lands
-// on a sensible number of columns instead of one very wide line.
+// Color menu (toolbar Text-color/Highlight popovers + block menu submenus): a
+// single-type badge grid — a leading Default/clear badge then one named chip per
+// palette key. Badge wrapping/gaps come from the Cluster it renders into; this
+// only styles padding + the overall cap. The max-width caps the wrapping grid so
+// the full palette lands on ~4-5 columns instead of one very wide line.
 .colorMenu {
   padding: var(--space-1);
-  max-width: var(--measure-xs);
+  max-width: var(--measure-sm);
 }
 
-// A fixed square swatch. Sized by height + aspect-ratio (no `width` — Rule 4).
-// Colored swatches get their fill via an inline `style` (a dynamic token var);
-// this is the base chrome.
-.swatch {
-  height: var(--space-4);
-  aspect-ratio: 1;
-  padding: 0;
-  border: var(--border-width) solid var(--color-border);
+// A named color chip — the Palette-demo look. The bg fill + fg text come from an
+// inline `style` (dynamic token var()s); this is the base chrome. No `width`
+// (Rule 4) — the chip sizes to its label.
+.colorBadge {
+  padding: var(--space-05) var(--space-1);
+  border: var(--border-width) solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--color-bg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
 }
 
-// The active swatch gets a ring (same tokens as the editor's focus ring) so the
+// The active chip gets a ring (same tokens as the editor's focus ring) so the
 // current color reads at a glance.
-.swatchActive {
+.colorBadgeActive {
   box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
 }
 
-// The ⌀ clear swatch: a plain surface struck through on the diagonal to read as
+// The Default/clear chip: a neutral surface (no palette fill) reading as
 // "no color / default" rather than a real palette color.
-.swatchClear {
-  background-color: var(--color-bg);
-  background-image: linear-gradient(
-    to top right,
-    transparent calc(50% - 0.5px),
-    var(--color-fg-subtle) calc(50% - 0.5px),
-    var(--color-fg-subtle) calc(50% + 0.5px),
-    transparent calc(50% + 0.5px)
-  );
+.colorBadgeClear {
+  background: var(--color-bg);
+  color: var(--color-fg-muted);
+  border-color: var(--color-border);
 }
 
 // Square the editable surface's top corners so it tucks under the toolbar.

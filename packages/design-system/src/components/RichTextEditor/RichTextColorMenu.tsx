@@ -1,20 +1,21 @@
 import clsx from 'clsx';
 import { Stack } from '../Stack';
 import { Cluster } from '../Cluster';
-import { Text } from '../Text';
 import { useTranslation, type MessageKey } from '../../i18n';
 import { COLOR_KEYS, textColorVar, bgColorVar, type ColorKey } from '../RichText/engine/colorMarks';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextColorMenuProps {
-  /** Active color key per type, to ring the current swatch. */
-  active: { textColor?: string; bgColor?: string };
-  /** Pick a color (key) or clear (null) for a type. */
-  onPick: (type: 'textColor' | 'bgColor', key: string | null) => void;
+  /** Which mark this menu sets. */
+  type: 'textColor' | 'bgColor';
+  /** The active color key for this type (rings the current badge). */
+  active?: string;
+  /** Pick a color key, or null to clear. */
+  onPick: (key: string | null) => void;
 }
 
-// Palette key → i18n key for the swatch aria-label. Exhaustive over every
-// ColorKey (gray + the 30-color palette) — TypeScript enforces the Record is total.
+// Palette key → i18n key for the badge label. Exhaustive over every ColorKey
+// (gray + the 30-color palette) — TypeScript enforces the Record is total.
 const SWATCH_LABEL: Record<ColorKey, MessageKey> = {
   gray: 'richTextEditor.colorGray',
   red: 'richTextEditor.colorRed',
@@ -50,69 +51,66 @@ const SWATCH_LABEL: Record<ColorKey, MessageKey> = {
 };
 
 /**
- * Internal, presentational swatch grid for the RichTextEditor color feature. Two
- * rows — "Text" (`textColor`) and "Highlight" (`bgColor`) — each a ⌀ clear swatch
- * followed by one swatch per palette key. Owns no state: the parent passes the
- * `active` key per type (to ring the current swatch) and an `onPick` dispatcher.
+ * Internal, presentational color picker for ONE mark type (`textColor` OR
+ * `bgColor`). Renders a leading Default/clear badge followed by one named badge
+ * per palette key — each badge styled like the Palette demo chip (subtle bg fill
+ * + strong fg text, both dynamic token `var()`s). Owns no state: the parent
+ * passes the `active` key (to ring the current badge) and an `onPick` dispatcher.
  *
- * Every swatch is `onMouseDown`-prevented so picking a color never steals the
+ * Every badge is `onMouseDown`-prevented so picking a color never steals the
  * editor's DOM selection. Not exported from the package index — it's wired into
- * the toolbar color Popover (and, later, the block menu).
+ * the toolbar's Text-color / Highlight popovers and the block menu's submenus.
  *
  * @example
- * <RichTextColorMenu active={{ textColor: 'red' }} onPick={(type, key) => …} />
+ * <RichTextColorMenu type="textColor" active="red" onPick={(key) => …} />
  */
-export function RichTextColorMenu({ active, onPick }: RichTextColorMenuProps) {
+export function RichTextColorMenu({ type, active, onPick }: RichTextColorMenuProps) {
   const t = useTranslation();
+  // The group's accessible name doubles as the menu's heading: textColor → "Text
+  // color", bgColor → "Highlight". Lets AT distinguish the two color menus.
+  const label = t(type === 'textColor' ? 'richTextEditor.textColor' : 'richTextEditor.highlight');
+  const clearLabel = t('richTextEditor.colorClear');
 
-  const renderRow = (
-    type: 'textColor' | 'bgColor',
-    label: string,
-    swatchVar: (key: string) => string | undefined,
-  ) => (
-    // role=group + aria-label so AT can distinguish the two identical "Red"/"Default"
-    // swatches across the Text and Highlight rows. The visible label is kept too.
-    <Stack gap="xs" role="group" aria-label={label}>
-      <Text size="sm" tone="muted">
-        {label}
-      </Text>
+  return (
+    // role=group + aria-label so AT can tell the Text-color menu apart from the
+    // Highlight menu — both render the same "Red"/"Default" badge names.
+    <Stack gap="xs" className={styles.colorMenu} role="group" aria-label={label}>
       <Cluster gap="xs" wrap>
         <button
           type="button"
-          className={clsx(styles.swatch, styles.swatchClear)}
-          aria-label={t('richTextEditor.colorClear')}
-          title={t('richTextEditor.colorClear')}
+          className={clsx(styles.colorBadge, styles.colorBadgeClear)}
+          aria-label={clearLabel}
+          title={clearLabel}
           // "Default" is the pressed state when no color of this type is active.
-          aria-pressed={!active[type]}
+          aria-pressed={!active}
           // Preserve the editor's DOM selection: a mousedown that moves focus
           // out of the contentEditable would collapse it before the pick runs.
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => onPick(type, null)}
-        />
-        {COLOR_KEYS.map((key) => (
-          <button
-            key={key}
-            type="button"
-            className={clsx(styles.swatch, active[type] === key && styles.swatchActive)}
-            // Dynamic token var() — like renderDoc, the value is theme-backed, not a raw color.
-            style={{ background: swatchVar(key) }}
-            aria-label={t(SWATCH_LABEL[key])}
-            // Tooltip too: 30 near-shades (coral/rose, slate/stone/taupe) are hard to
-            // tell apart by sight; the name on hover gives mouse users parity with AT.
-            title={t(SWATCH_LABEL[key])}
-            aria-pressed={active[type] === key}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => onPick(type, key)}
-          />
-        ))}
+          onClick={() => onPick(null)}
+        >
+          {clearLabel}
+        </button>
+        {COLOR_KEYS.map((key) => {
+          const name = t(SWATCH_LABEL[key]);
+          return (
+            <button
+              key={key}
+              type="button"
+              className={clsx(styles.colorBadge, active === key && styles.colorBadgeActive)}
+              // The Palette-demo chip look: subtle bg fill + strong fg text. Both
+              // are dynamic token var()s (like renderDoc), never raw colors.
+              style={{ background: bgColorVar(key), color: textColorVar(key) }}
+              aria-label={name}
+              title={name}
+              aria-pressed={active === key}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onPick(key)}
+            >
+              {name}
+            </button>
+          );
+        })}
       </Cluster>
-    </Stack>
-  );
-
-  return (
-    <Stack gap="sm" className={styles.colorMenu} aria-label={t('richTextEditor.color')}>
-      {renderRow('textColor', t('richTextEditor.textColor'), textColorVar)}
-      {renderRow('bgColor', t('richTextEditor.highlight'), bgColorVar)}
     </Stack>
   );
 }
