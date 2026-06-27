@@ -13,13 +13,39 @@ export interface RichTextColorMenuProps {
   onPick: (type: 'textColor' | 'bgColor', key: string | null) => void;
 }
 
-/** Palette key → i18n key for the swatch aria-label. */
+// Palette key → i18n key for the swatch aria-label. Exhaustive over every
+// ColorKey (the full 30-color palette) — TypeScript enforces the Record is total.
 const SWATCH_LABEL: Record<ColorKey, MessageKey> = {
-  gray: 'richTextEditor.colorGray',
   red: 'richTextEditor.colorRed',
-  green: 'richTextEditor.colorGreen',
+  coral: 'richTextEditor.colorCoral',
+  orange: 'richTextEditor.colorOrange',
   amber: 'richTextEditor.colorAmber',
+  gold: 'richTextEditor.colorGold',
+  yellow: 'richTextEditor.colorYellow',
+  olive: 'richTextEditor.colorOlive',
+  lime: 'richTextEditor.colorLime',
+  green: 'richTextEditor.colorGreen',
+  emerald: 'richTextEditor.colorEmerald',
+  mint: 'richTextEditor.colorMint',
+  teal: 'richTextEditor.colorTeal',
+  cyan: 'richTextEditor.colorCyan',
+  sky: 'richTextEditor.colorSky',
   blue: 'richTextEditor.colorBlue',
+  navy: 'richTextEditor.colorNavy',
+  indigo: 'richTextEditor.colorIndigo',
+  violet: 'richTextEditor.colorViolet',
+  lavender: 'richTextEditor.colorLavender',
+  purple: 'richTextEditor.colorPurple',
+  plum: 'richTextEditor.colorPlum',
+  fuchsia: 'richTextEditor.colorFuchsia',
+  magenta: 'richTextEditor.colorMagenta',
+  pink: 'richTextEditor.colorPink',
+  rose: 'richTextEditor.colorRose',
+  brown: 'richTextEditor.colorBrown',
+  taupe: 'richTextEditor.colorTaupe',
+  slate: 'richTextEditor.colorSlate',
+  stone: 'richTextEditor.colorStone',
+  charcoal: 'richTextEditor.colorCharcoal',
 };
 
 /**
@@ -49,7 +75,7 @@ export function RichTextColorMenu({ active, onPick }: RichTextColorMenuProps) {
       <Text size="sm" tone="muted">
         {label}
       </Text>
-      <Cluster gap="xs">
+      <Cluster gap="xs" wrap>
         <button
           type="button"
           className={clsx(styles.swatch, styles.swatchClear)}

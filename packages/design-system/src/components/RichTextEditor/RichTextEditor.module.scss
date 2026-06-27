@@ -111,11 +111,14 @@
   border-inline-start: var(--border-width) solid var(--color-border);
 }
 
-// Color menu (toolbar color Popover + block menu): a small two-row swatch grid.
-// Row stacking + swatch gaps come from the Stack/Cluster it renders into — this
-// only styles the swatch chrome.
+// Color menu (toolbar color Popover + block menu): a two-row swatch grid, one
+// row per mark type (Text / Highlight). Row stacking + swatch gaps come from the
+// Stack/Cluster it renders into — this only styles padding + the overall cap.
+// The max-width caps each wrapping swatch row so the full 30-color palette lands
+// on a sensible number of columns instead of one very wide line.
 .colorMenu {
   padding: var(--space-1);
+  max-width: var(--measure-xs);
 }
 
 // A fixed square swatch. Sized by height + aspect-ratio (no `width` — Rule 4).

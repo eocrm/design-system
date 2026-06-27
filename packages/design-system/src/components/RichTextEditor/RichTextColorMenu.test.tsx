@@ -19,10 +19,17 @@ describe('RichTextColorMenu', () => {
 
   it('renders a clear + per-key swatch in each row with color-name aria-labels', () => {
     setup();
-    // 2 rows × (5 palette keys), each name appears once per row.
+    // 2 rows × the full 30-color palette, each name appears once per row.
     expect(screen.getAllByLabelText('Red')).toHaveLength(2);
     expect(screen.getAllByLabelText('Green')).toHaveLength(2);
     expect(screen.getAllByLabelText('Default')).toHaveLength(2); // the ⌀ clear swatch
+  });
+
+  it('exposes the full palette, including colors beyond the old curated set', () => {
+    setup();
+    // Coral / Charcoal are new to the full-palette swatch grid.
+    expect(screen.getAllByLabelText('Coral')).toHaveLength(2);
+    expect(screen.getAllByLabelText('Charcoal')).toHaveLength(2);
   });
 
   it('clicking the red text swatch calls onPick("textColor","red")', async () => {
