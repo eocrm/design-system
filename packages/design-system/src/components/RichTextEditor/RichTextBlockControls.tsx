@@ -1,7 +1,7 @@
 // RichTextBlockControls.tsx — the per-block gutter overlay. Absolutely positioned
 // inside the editor shell (position: relative), aligned to the active block's box.
 // Lives OUTSIDE the contentEditable so it is never editable content.
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -92,16 +92,26 @@ function clearReflow(
 function DraggableGutter({
   top,
   height,
+  innerRef,
   children,
 }: {
   top: number;
   height: number | null;
+  /** Captures the gutter DOM node so the drag can translate it with the lifted row. */
+  innerRef: RefObject<HTMLDivElement | null>;
   children: React.ReactNode;
 }) {
   const { setNodeRef, listeners } = useDraggable({ id: GUTTER_DRAGGABLE_ID });
+  const setRefs = useCallback(
+    (node: HTMLDivElement | null) => {
+      setNodeRef(node);
+      innerRef.current = node;
+    },
+    [setNodeRef, innerRef],
+  );
   return (
     <div
-      ref={setNodeRef}
+      ref={setRefs}
       className={styles.gutter}
       style={{ top, height: height ?? undefined }}
       contentEditable={false}
@@ -150,6 +160,8 @@ export function RichTextBlockControls({
   } | null>(null);
   // Block id captured at drag start — reorder by this, not the live activeBlockId.
   const draggedIdRef = useRef<string | null>(null);
+  // The gutter DOM node, so the drag can translate it in lockstep with the lifted row.
+  const gutterElRef = useRef<HTMLDivElement | null>(null);
 
   // Latest onDraggingChange, read by the unmount cleanup without re-subscribing.
   const onDraggingChangeRef = useRef(onDraggingChange);
@@ -252,10 +264,17 @@ export function RichTextBlockControls({
       const own = reflow.shifts[i] - (pid >= 0 ? reflow.shifts[pid] : 0);
       snap.els[i].style.transform = own ? `translateY(${own}px)` : '';
     }
+    // Carry the gutter (＋ / ⚙ / ⠿) along with the lifted row by the same clamped
+    // travel, so the controls feel attached to the row being dragged. The gutter is
+    // not nested, so it shifts by the unit's net movement (liftDy) directly.
+    if (gutterElRef.current) {
+      gutterElRef.current.style.transform = reflow.liftDy ? `translateY(${reflow.liftDy}px)` : '';
+    }
   };
 
   const endDrag = () => {
     clearReflow(dragRef.current, rootRef.current);
+    if (gutterElRef.current) gutterElRef.current.style.transform = '';
     dragRef.current = null;
     draggedIdRef.current = null;
     onDraggingChange?.(false);
@@ -292,7 +311,7 @@ export function RichTextBlockControls({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <DraggableGutter top={top} height={height}>
+      <DraggableGutter top={top} height={height} innerRef={gutterElRef}>
         <Button
           size="sm"
           variant="ghost"
