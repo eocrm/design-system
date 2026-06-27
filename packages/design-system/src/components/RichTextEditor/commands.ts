@@ -28,17 +28,22 @@ function blocksInRange(doc: RichDoc, range: Range): { si: number; ei: number } {
   return { si: findBlockIndex(doc, start.blockId), ei: findBlockIndex(doc, end.blockId) };
 }
 
-/** Marks of the character immediately before the caret (none at a block start). */
-function marksAtCaret(doc: RichDoc, caret: Point): MarkType[] {
+/** Full marks of the character immediately before the caret (none at a block start). */
+function marksAtCaretFull(doc: RichDoc, caret: Point): Mark[] {
   const idx = findBlockIndex(doc, caret.blockId);
   if (idx === -1 || caret.offset <= 0) return [];
   let pos = 0;
   for (const run of doc.blocks[idx].inlines) {
     const end = pos + run.text.length;
-    if (caret.offset - 1 >= pos && caret.offset - 1 < end) return run.marks.map((m) => m.type);
+    if (caret.offset - 1 >= pos && caret.offset - 1 < end) return run.marks;
     pos = end;
   }
   return [];
+}
+
+/** Mark types of the character immediately before the caret (none at a block start). */
+function marksAtCaret(doc: RichDoc, caret: Point): MarkType[] {
+  return marksAtCaretFull(doc, caret).map((m) => m.type);
 }
 
 /**
@@ -87,6 +92,84 @@ export function activeMarks(doc: RichDoc, range: Range, pending: Mark[] | null):
       }
     }
     if (any && all) out.push(type);
+  }
+  return out;
+}
+
+/** The single color KEY active per color type across a selection. */
+export interface ActiveColors {
+  /** Palette key (e.g. `'red'`) shared by every char's `textColor`, else absent. */
+  textColor?: string;
+  /** Palette key shared by every char's `bgColor`, else absent. */
+  bgColor?: string;
+}
+
+const COLOR_TYPES = ['textColor', 'bgColor'] as const;
+
+/** The color KEY of `type` carried by `marks`, if any. */
+function colorOf(marks: Mark[], type: 'textColor' | 'bgColor'): string | undefined {
+  const m = marks.find((x) => x.type === type);
+  return m && 'color' in m ? m.color : undefined;
+}
+
+/**
+ * Derives the single color key active per color type across the selection (drives
+ * the active swatch ring in the color menu). For each of `textColor` / `bgColor`,
+ * returns the key only when EVERY character in the range carries that type with
+ * the SAME key — a mixed or partial color is omitted (so the menu shows "none
+ * active").
+ *
+ * When the range is collapsed the function reads the marks of the character
+ * immediately before the caret. When `pending` marks are supplied they override
+ * the caret look-up — the user has staged a color at a collapsed caret before
+ * typing. Mirrors {@link activeMarks}, but tracks the color value rather than
+ * just mark presence.
+ *
+ * @example
+ * activeColors(doc, range, null); // { textColor: 'red' } when all chars are red
+ * activeColors(doc, range, [{ type: 'bgColor', color: 'blue' }]); // pending override
+ */
+export function activeColors(doc: RichDoc, range: Range, pending: Mark[] | null): ActiveColors {
+  if (isCollapsed(range)) {
+    const marks = pending ?? marksAtCaretFull(doc, range.anchor);
+    const out: ActiveColors = {};
+    for (const type of COLOR_TYPES) {
+      const c = colorOf(marks, type);
+      if (c !== undefined) out[type] = c;
+    }
+    return out;
+  }
+  const { start, end } = orderedRange(doc, range);
+  const { si, ei } = blocksInRange(doc, range);
+  if (si === -1 || ei === -1) return {};
+  const out: ActiveColors = {};
+  for (const type of COLOR_TYPES) {
+    let any = false;
+    let all = true;
+    let color: string | undefined;
+    for (let i = si; i <= ei && all; i += 1) {
+      const block = doc.blocks[i];
+      const from = i === si ? start.offset : 0;
+      const to = i === ei ? end.offset : blockLength(block);
+      let pos = 0;
+      for (const run of block.inlines) {
+        const rs = pos;
+        const re = pos + run.text.length;
+        pos = re;
+        const f = Math.max(from, rs);
+        const t = Math.min(to, re);
+        if (t > f) {
+          any = true;
+          const c = colorOf(run.marks, type);
+          if (c === undefined || (color !== undefined && c !== color)) {
+            all = false;
+            break;
+          }
+          color = c;
+        }
+      }
+    }
+    if (any && all && color !== undefined) out[type] = color;
   }
   return out;
 }

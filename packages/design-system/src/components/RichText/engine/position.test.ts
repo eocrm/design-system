@@ -5,6 +5,7 @@ import {
   comparePoints,
   isCollapsed,
   orderedRange,
+  wholeBlockRange,
 } from './position';
 import { createBlock } from './model';
 import type { RichDoc } from './model';
@@ -52,5 +53,13 @@ describe('position', () => {
       start: { blockId: 'a', offset: 1 },
       end: { blockId: 'b', offset: 1 },
     });
+  });
+
+  it('wholeBlockRange spans the entire block; null for an unknown id', () => {
+    expect(wholeBlockRange(doc, 'b')).toEqual({
+      anchor: { blockId: 'b', offset: 0 },
+      focus: { blockId: 'b', offset: blockLength(doc.blocks[1]) },
+    });
+    expect(wholeBlockRange(doc, 'zzz')).toBeNull();
   });
 });
