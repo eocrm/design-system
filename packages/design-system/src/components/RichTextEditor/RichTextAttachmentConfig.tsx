@@ -5,9 +5,8 @@
 // align/replace/open/download — plus width ONLY when the image renders as a
 // preview (a safe, fetchable src — an embed); an uploaded object-URL image is a
 // chip, so it gets no width. Non-image chips get replace/open/download.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useFloating, autoUpdate, flip, shift, offset } from '@floating-ui/react-dom';
 import { Button } from '../Button';
 import { Input } from '../Input';
 import { Slider } from '../Slider';
@@ -18,6 +17,7 @@ import type { Block } from '../RichText/engine/model';
 import { safeHref } from '../RichText/engine/safeHref';
 import { attachmentIsImage } from '../RichText/engine/attachment';
 import type { Rect } from './selection';
+import { useAnchoredFloating } from './useAnchoredFloating';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextAttachmentConfigProps {
@@ -95,34 +95,7 @@ export function RichTextAttachmentConfig({
     if (alt !== seededAlt) onAltChange(alt);
   }, [alt, seededAlt, onAltChange]);
 
-  // Floating UI virtual element — only `getBoundingClientRect` is required. Read
-  // the LIVE rect (via getAnchorRect) on every reposition so the popover tracks
-  // the figure on scroll; fall back to the static `anchorRect`.
-  const virtualRef = useMemo(
-    () => ({
-      getBoundingClientRect: () => {
-        const r = getAnchorRect?.() ?? anchorRect;
-        return {
-          x: r.left,
-          y: r.top,
-          top: r.top,
-          left: r.left,
-          right: r.left + r.width,
-          bottom: r.top + r.height,
-          width: r.width,
-          height: r.height,
-        };
-      },
-    }),
-    [anchorRect, getAnchorRect],
-  );
-  const { refs, floatingStyles } = useFloating({
-    placement: 'bottom-start',
-    strategy: 'fixed',
-    whileElementsMounted: autoUpdate,
-    middleware: [offset(6), flip(), shift({ padding: 4 })],
-    elements: { reference: virtualRef },
-  });
+  const { refs, floatingStyles } = useAnchoredFloating(anchorRect, getAnchorRect, { offset: 6 });
   const setRefs = useCallback(
     (node: HTMLDivElement | null) => {
       popRef.current = node;

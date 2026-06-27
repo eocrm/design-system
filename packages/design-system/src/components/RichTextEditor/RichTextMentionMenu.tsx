@@ -3,13 +3,12 @@
 // items + active index + anchor rect; this renders a role="listbox" positioned at
 // the caret rect via a Floating UI virtual element (same portal+virtual-anchor
 // pattern as RichTextLinkEditor). Not exported from the package.
-import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { useFloating, autoUpdate, flip, shift, offset } from '@floating-ui/react-dom';
 import { Avatar } from '../Avatar';
 import { Text } from '../Text';
 import type { MentionItem } from './mentions';
 import type { Rect } from './selection';
+import { useAnchoredFloating } from './useAnchoredFloating';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextMentionMenuProps {
@@ -45,35 +44,7 @@ export function RichTextMentionMenu({
   onSelect,
   onHover,
 }: RichTextMentionMenuProps) {
-  const virtualRef = useMemo(
-    () => ({
-      // Re-read the caret rect on every call — Floating UI's autoUpdate invokes this
-      // on scroll/resize, so the menu follows the caret (the static `anchorRect` is
-      // the fallback for the initial frame / when no live rect is available).
-      getBoundingClientRect: () => {
-        const r = getAnchorRect?.() ?? anchorRect;
-        return {
-          x: r.left,
-          y: r.top,
-          top: r.top,
-          left: r.left,
-          right: r.left + r.width,
-          bottom: r.top + r.height,
-          width: r.width,
-          height: r.height,
-        };
-      },
-    }),
-    [anchorRect, getAnchorRect],
-  );
-
-  const { refs, floatingStyles } = useFloating({
-    placement: 'bottom-start',
-    strategy: 'fixed',
-    whileElementsMounted: autoUpdate,
-    middleware: [offset(4), flip(), shift({ padding: 4 })],
-    elements: { reference: virtualRef },
-  });
+  const { refs, floatingStyles } = useAnchoredFloating(anchorRect, getAnchorRect, { offset: 4 });
 
   return createPortal(
     <div
