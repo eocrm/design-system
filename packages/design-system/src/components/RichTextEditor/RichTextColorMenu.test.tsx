@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { RichTextColorMenu } from './RichTextColorMenu';
@@ -53,5 +53,32 @@ describe('RichTextColorMenu', () => {
     expect(screen.getAllByLabelText('Blue')[1]).toHaveClass(styles.swatchActive);
     // A non-active swatch is not ringed.
     expect(screen.getAllByLabelText('Green')[0]).not.toHaveClass(styles.swatchActive);
+  });
+
+  it('marks the active swatch aria-pressed=true and others false', () => {
+    setup({ textColor: 'red' });
+    // The active text swatch is pressed…
+    expect(screen.getAllByLabelText('Red')[0]).toHaveAttribute('aria-pressed', 'true');
+    // …while non-active swatches in that row are not.
+    expect(screen.getAllByLabelText('Green')[0]).toHaveAttribute('aria-pressed', 'false');
+    // No bgColor active → the highlight Red swatch is not pressed.
+    expect(screen.getAllByLabelText('Red')[1]).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('marks the clear swatch aria-pressed=true only when no color is active for its type', () => {
+    setup({ textColor: 'red' });
+    // Text row has a color → its clear swatch is NOT pressed.
+    expect(screen.getAllByLabelText('Default')[0]).toHaveAttribute('aria-pressed', 'false');
+    // Highlight row has no color → its clear swatch IS pressed.
+    expect(screen.getAllByLabelText('Default')[1]).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('exposes each row as a labeled group so AT can tell the two "Red" buttons apart', () => {
+    setup();
+    const textGroup = screen.getByRole('group', { name: 'Text' });
+    const highlightGroup = screen.getByRole('group', { name: 'Highlight' });
+    // The Text row's "Red" lives in the Text group; the Highlight row's in the Highlight group.
+    expect(within(textGroup).getByLabelText('Red')).toBe(screen.getAllByLabelText('Red')[0]);
+    expect(within(highlightGroup).getByLabelText('Red')).toBe(screen.getAllByLabelText('Red')[1]);
   });
 });

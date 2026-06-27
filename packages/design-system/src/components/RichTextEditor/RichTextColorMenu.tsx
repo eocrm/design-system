@@ -43,7 +43,9 @@ export function RichTextColorMenu({ active, onPick }: RichTextColorMenuProps) {
     label: string,
     swatchVar: (key: string) => string | undefined,
   ) => (
-    <Stack gap="xs">
+    // role=group + aria-label so AT can distinguish the two identical "Red"/"Default"
+    // swatches across the Text and Highlight rows. The visible label is kept too.
+    <Stack gap="xs" role="group" aria-label={label}>
       <Text size="sm" tone="muted">
         {label}
       </Text>
@@ -52,6 +54,8 @@ export function RichTextColorMenu({ active, onPick }: RichTextColorMenuProps) {
           type="button"
           className={clsx(styles.swatch, styles.swatchClear)}
           aria-label={t('richTextEditor.colorClear')}
+          // "Default" is the pressed state when no color of this type is active.
+          aria-pressed={!active[type]}
           // Preserve the editor's DOM selection: a mousedown that moves focus
           // out of the contentEditable would collapse it before the pick runs.
           onMouseDown={(e) => e.preventDefault()}
@@ -65,6 +69,7 @@ export function RichTextColorMenu({ active, onPick }: RichTextColorMenuProps) {
             // Dynamic token var() — like renderDoc, the value is theme-backed, not a raw color.
             style={{ background: swatchVar(key) }}
             aria-label={t(SWATCH_LABEL[key])}
+            aria-pressed={active[type] === key}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => onPick(type, key)}
           />
