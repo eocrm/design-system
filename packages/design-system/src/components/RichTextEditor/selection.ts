@@ -241,20 +241,85 @@ export function writeSelection(root: HTMLElement, range: Range): void {
 /** A viewport rect (subset of DOMRect) used to anchor floating UI to a selection. */
 export type Rect = { top: number; left: number; height: number; width: number };
 
-/** The viewport rect of the current DOM selection, falling back to `root`. */
+/**
+ * The viewport rect to anchor floating UI (the link editor) to the current DOM
+ * selection. Prefers the selection's own rect; when that's degenerate — a collapsed
+ * caret in an EMPTY block returns an all-zero rect — it falls back to the caret's
+ * BLOCK element (the active line), so an anchored popover opens beside that line.
+ * Only if there's no block (caret directly in root) does it fall back to `root`.
+ * (The old root fallback used the editor's full height, which dropped the link
+ * popover below the whole document — visible via `toolbar="auto"` + Link on an
+ * empty composer.)
+ */
 export function selectionRect(root: HTMLElement): Rect {
   const sel = typeof window !== 'undefined' ? window.getSelection() : null;
   if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
     let r: DOMRect | null = null;
     try {
-      r = sel.getRangeAt(0).getBoundingClientRect();
+      r = range.getBoundingClientRect();
     } catch {
       // jsdom does not implement Range.getBoundingClientRect — fall through.
     }
     if (r && (r.width || r.height || r.top || r.left)) {
       return { top: r.top, left: r.left, width: r.width, height: r.height };
     }
+    // Degenerate selection rect (e.g. collapsed caret in an empty block). Anchor to
+    // the caret's block element (the active line), not the whole editor.
+    const blockEl = blockElementFor(root, range.startContainer);
+    if (blockEl) {
+      const b = blockEl.getBoundingClientRect();
+      return { top: b.top, left: b.left, width: b.width, height: b.height };
+    }
   }
   const rr = root.getBoundingClientRect();
   return { top: rr.top, left: rr.left, width: 0, height: rr.height };
+}
+
+/**
+ * The viewport rect of a MODEL range, re-derived from the DOM live. Unlike
+ * `selectionRect` (which reads the window selection), this is independent of the
+ * current selection — so a popover that has stolen focus (the link editor) can
+ * still track its original anchor line on scroll by re-measuring on each
+ * reposition. Returns null when the range can't be mapped to the DOM. Falls back
+ * to the anchor's block element (the active line) when the range rect is
+ * degenerate (a collapsed caret in an empty block).
+ */
+export function rangeRect(root: HTMLElement, range: Range): Rect | null {
+  const a = pointToDom(root, range.anchor);
+  const f = pointToDom(root, range.focus);
+  if (!a || !f) return null;
+  // Order the two boundary points by document position before building the DOM
+  // range. A backward (right-to-left) model selection has its anchor AFTER its
+  // focus; feeding setStart(anchor)/setEnd(focus) straight through would not throw —
+  // the DOM clamps end-before-start to a COLLAPSED range, which measures as a zero
+  // rect and would wrongly degrade to the block fallback below. Pick start = the
+  // earlier point so the span rect is correct regardless of selection direction.
+  const startFirst =
+    a.node === f.node
+      ? a.offset <= f.offset
+      : !!(a.node.compareDocumentPosition(f.node) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const [s, e] = startFirst ? [a, f] : [f, a];
+  const domRange = root.ownerDocument.createRange();
+  try {
+    domRange.setStart(s.node, s.offset);
+    domRange.setEnd(e.node, e.offset);
+  } catch {
+    return null;
+  }
+  let r: DOMRect | null = null;
+  try {
+    r = domRange.getBoundingClientRect();
+  } catch {
+    // jsdom does not implement Range.getBoundingClientRect — fall through.
+  }
+  if (r && (r.width || r.height || r.top || r.left)) {
+    return { top: r.top, left: r.left, width: r.width, height: r.height };
+  }
+  const blockEl = blockElementFor(root, a.node);
+  if (blockEl) {
+    const b = blockEl.getBoundingClientRect();
+    return { top: b.top, left: b.left, width: b.width, height: b.height };
+  }
+  return null;
 }
