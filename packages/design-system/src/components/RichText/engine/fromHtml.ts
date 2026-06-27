@@ -143,7 +143,7 @@ function applyCssMarks(el: HTMLElement, marks: Mark[]): Mark[] {
   }
   // Recover text/background color marks. The `color` lookahead `(?:^|;|\s)` keeps it
   // from matching the `-color` inside `background-color`. Only values that resolve to
-  // a palette key (our var() output or a default-theme hex) become a mark.
+  // a palette key (our `var(--color-palette-…)` output) become a mark.
   const color = /(?:^|;|\s)color\s*:\s*([^;]+)/.exec(s);
   if (color) {
     const key = textColorKeyFrom(color[1]);

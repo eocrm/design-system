@@ -140,15 +140,31 @@ describe('fromHtml — inline marks', () => {
     expect(text(d.blocks[0])).toBe('a b');
   });
 
-  it('recovers a textColor mark from an inline color: var() declaration', () => {
+  it('recovers a textColor mark from an inline color: var() declaration (default)', () => {
+    // 'red' is a DEFAULT — round-trips via the semantic danger token.
     const d = fromHtml('<p><span style="color: var(--color-danger)">x</span></p>');
     expect(d.blocks[0].inlines).toEqual([
       { text: 'x', marks: [{ type: 'textColor', color: 'red' }] },
     ]);
   });
 
-  it('recovers a bgColor mark from an inline background-color hex declaration', () => {
-    const d = fromHtml('<p><span style="background-color:#ffebe6">y</span></p>');
+  it('recovers a palette-extra color mark from inline var() declarations', () => {
+    const fg = fromHtml('<p><span style="color: var(--color-palette-coral-fg)">x</span></p>');
+    expect(fg.blocks[0].inlines).toEqual([
+      { text: 'x', marks: [{ type: 'textColor', color: 'coral' }] },
+    ]);
+    const bg = fromHtml(
+      '<p><span style="background-color:var(--color-palette-coral-bg)">y</span></p>',
+    );
+    expect(bg.blocks[0].inlines).toEqual([
+      { text: 'y', marks: [{ type: 'bgColor', color: 'coral' }] },
+    ]);
+  });
+
+  it('recovers a bgColor mark from an inline background-color var() declaration', () => {
+    const d = fromHtml(
+      '<p><span style="background-color:var(--color-danger-bg-subtle)">y</span></p>',
+    );
     expect(d.blocks[0].inlines).toEqual([
       { text: 'y', marks: [{ type: 'bgColor', color: 'red' }] },
     ]);
@@ -162,7 +178,9 @@ describe('fromHtml — inline marks', () => {
   it('recovers BOTH bgColor and textColor from one combined style attr', () => {
     // Guards the `(?:^|;|\s)color` lookbehind: the `color` regex must match the real
     // `color:` declaration, not the `-color` inside `background-color`.
-    const d = fromHtml('<p><span style="background-color:#ffebe6;color:#0052cc">x</span></p>');
+    const d = fromHtml(
+      '<p><span style="background-color:var(--color-danger-bg-subtle);color:var(--color-accent)">x</span></p>',
+    );
     expect(d.blocks[0].inlines).toEqual([
       {
         text: 'x',
@@ -174,11 +192,13 @@ describe('fromHtml — inline marks', () => {
     ]);
   });
 
-  it('a danger TEXT hex used as a background never becomes textColor:red', () => {
-    // #de350b is the danger TEXT hex. As a `background-color` it is resolved via the
-    // bg-hex map (where it is NOT a key → no bgColor), and the `color` lookbehind keeps
-    // it from being mis-read as textColor:red inside `background-color`.
-    const d = fromHtml('<p><span style="background-color:#de350b">z</span></p>');
+  it('a text (fg) palette var used as a background never becomes a color mark', () => {
+    // `--color-palette-coral-fg` is the TEXT token. As a `background-color` it fails the
+    // bg suffix check (fg ≠ bg → no bgColor), and the `color` lookbehind keeps it from
+    // being mis-read as textColor inside `background-color`.
+    const d = fromHtml(
+      '<p><span style="background-color:var(--color-palette-coral-fg)">z</span></p>',
+    );
     expect(d.blocks[0].inlines).toEqual([{ text: 'z', marks: [] }]);
     expect(d.blocks[0].inlines[0].marks.some((m) => m.type === 'textColor')).toBe(false);
   });

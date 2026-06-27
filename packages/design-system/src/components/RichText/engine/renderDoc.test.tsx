@@ -486,8 +486,16 @@ describe('renderDoc color marks', () => {
     const { container } = render(<>{renderDoc(colorDoc({ type: 'textColor', color: 'red' }))}</>);
     const span = container.querySelector('span');
     expect(span).not.toBeNull();
+    // 'red' is a DEFAULT — resolves to the semantic danger token, not the palette.
     expect(span!.style.color).toBe('var(--color-danger)');
     expect(span!.textContent).toBe('x');
+  });
+
+  it('renders a palette-extra textColor mark with the categorical palette var (read-only)', () => {
+    const { container } = render(<>{renderDoc(colorDoc({ type: 'textColor', color: 'coral' }))}</>);
+    const span = container.querySelector('span');
+    expect(span).not.toBeNull();
+    expect(span!.style.color).toBe('var(--color-palette-coral-fg)');
   });
 
   it('renders a bgColor mark as a span with the resolved background var (read-only)', () => {
