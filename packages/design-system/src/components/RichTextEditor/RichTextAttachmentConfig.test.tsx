@@ -104,6 +104,21 @@ it('fires onWidthReset from the reset control', async () => {
   expect(p.onWidthReset).toHaveBeenCalled();
 });
 
+it('shows the Width control for an image with explicit dimensions (embed)', () => {
+  setup(imgBlock({ width: 320 }));
+  expect(screen.getByRole('slider', { name: 'Width' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
+});
+
+it('hides the Width control for an image with no dimensions (uploaded), keeping alt/align', () => {
+  setup(imgBlock()); // no width
+  expect(screen.queryByRole('slider', { name: 'Width' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull();
+  // Alt + alignment are still offered — only Width is gated on known dimensions.
+  expect(screen.getByLabelText('Alt text')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Align center' })).toBeInTheDocument();
+});
+
 it('a non-image attachment shows only Replace/Open/Download (no alt/align/width)', () => {
   setup(
     imgBlock({ mime: 'application/pdf', src: 'http://u/d.pdf', name: 'd.pdf', alt: undefined }),

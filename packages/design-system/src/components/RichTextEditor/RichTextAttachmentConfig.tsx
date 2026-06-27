@@ -2,7 +2,8 @@
 // Internal + presentational: the editor owns the model and passes the block's
 // current values + callbacks. Mirrors RichTextLinkEditor's portal + Floating-UI
 // virtual-anchor + Esc/pointerdown-outside pattern. Image attachments get alt/
-// align/width/replace/open/download; non-image chips get replace/open/download.
+// align/replace/open/download — plus width ONLY when the image carries explicit
+// dimensions (an embed); non-image chips get replace/open/download.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFloating, autoUpdate, flip, shift, offset } from '@floating-ui/react-dom';
@@ -56,9 +57,11 @@ const ALIGN_LABEL_KEY = {
 /**
  * Internal floating config popover for a ready attachment. Rendered by
  * `<RichTextEditor>` when the attachment config is open; not exported from the
- * package. Image attachments get alt / align / width / replace / open / download;
- * non-image chips get replace / open / download. Remount it (via `key`) per open
- * so the alt + width fields re-seed from the block.
+ * package. Image attachments get alt / align / replace / open / download — and a
+ * width slider ONLY when the image has explicit dimensions (an embedded image);
+ * an uploaded image without known dimensions gets no width control. Non-image
+ * chips get replace / open / download. Remount it (via `key`) per open so the
+ * alt + width fields re-seed from the block.
  */
 export function RichTextAttachmentConfig({
   block,
@@ -200,28 +203,36 @@ export function RichTextAttachmentConfig({
                 </Button>
               ))}
             </Cluster>
-            <Cluster gap="xs">
-              <span className={styles.configLabel}>{t('richTextEditor.attachmentWidth')}</span>
-              <Slider
-                value={width}
-                min={MIN_W}
-                max={sliderMax}
-                step={1}
-                aria-label={t('richTextEditor.attachmentWidth')}
-                onChange={(v) => setWidth(sliderNum(v))}
-                onChangeEnd={(v) => onWidthChange(sliderNum(v))}
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  onWidthReset();
-                  setWidth(sliderMax); // re-seed the thumb to "natural/full"
-                }}
-              >
-                {t('richTextEditor.attachmentWidthReset')}
-              </Button>
-            </Cluster>
+            {/* Width is offered only for images with explicit intrinsic dimensions
+                (an embedded/imported image). An uploaded image without known
+                dimensions renders at its natural size (and, with an object-URL src,
+                as a chip) — resizing it does nothing useful, so the control is hidden.
+                Note: Reset clears width/height back to natural, which removes the
+                dimensions and therefore hides this control afterward. */}
+            {block.width != null && (
+              <Cluster gap="xs">
+                <span className={styles.configLabel}>{t('richTextEditor.attachmentWidth')}</span>
+                <Slider
+                  value={width}
+                  min={MIN_W}
+                  max={sliderMax}
+                  step={1}
+                  aria-label={t('richTextEditor.attachmentWidth')}
+                  onChange={(v) => setWidth(sliderNum(v))}
+                  onChangeEnd={(v) => onWidthChange(sliderNum(v))}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    onWidthReset();
+                    setWidth(sliderMax); // re-seed the thumb to "natural/full"
+                  }}
+                >
+                  {t('richTextEditor.attachmentWidthReset')}
+                </Button>
+              </Cluster>
+            )}
           </>
         )}
         <Cluster gap="xs">
