@@ -23,6 +23,11 @@ export type CommandResult = { doc: RichDoc; selection: Range };
 
 const MARK_TYPES: MarkType[] = ['bold', 'italic', 'underline', 'strike', 'code', 'link'];
 
+// Value-carrying color marks. Kept SEPARATE from MARK_TYPES (which drives the
+// toolbar pressed-state path, where color must not appear) but flushed alongside
+// them in applyExactMarks so a pending color survives the next keystroke.
+const COLOR_FLUSH: MarkType[] = ['textColor', 'bgColor'];
+
 function blocksInRange(doc: RichDoc, range: Range): { si: number; ei: number } {
   const { start, end } = orderedRange(doc, range);
   return { si: findBlockIndex(doc, start.blockId), ei: findBlockIndex(doc, end.blockId) };
@@ -278,15 +283,18 @@ export function runIndent(doc: RichDoc, range: Range, dir: 'in' | 'out'): Comman
 
 /**
  * Force the marks of every character in `range` to exactly `marks`, used when
- * flushing pending marks on the next typed character. Each known mark type is
- * applied if present in `marks`, or removed if absent.
+ * flushing pending marks on the next typed character. Each known mark type —
+ * including the value-carrying `textColor`/`bgColor` — is applied if present in
+ * `marks`, or removed if absent.
  *
  * @example
  * const newDoc = applyExactMarks(doc, span, [{ type: 'bold' }]);
+ * // Pending color survives the next keystroke:
+ * const colored = applyExactMarks(doc, span, [{ type: 'textColor', color: 'red' }]);
  */
 export function applyExactMarks(doc: RichDoc, range: Range, marks: Mark[]): RichDoc {
   let d = doc;
-  for (const type of MARK_TYPES) {
+  for (const type of [...MARK_TYPES, ...COLOR_FLUSH]) {
     const mark = marks.find((m) => m.type === type);
     d = mark ? applyMark(d, range, mark).doc : removeMark(d, range, type).doc;
   }

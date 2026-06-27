@@ -342,6 +342,40 @@ describe('RichTextEditor toolbar', () => {
     });
   });
 
+  it('staging a color at a collapsed caret colors the next typed character', async () => {
+    const user = userEvent.setup();
+    // Collapsed caret at the end of 'hi ' (offset 3) — no selection, so the pick stages
+    // a PENDING color that the next keystroke must realize.
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 3 },
+      focus: { blockId: 'k', offset: 3 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hi ', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar />;
+    }
+    renderEditor(<Harness />);
+    // Open the color menu and pick the red swatch in the Text (first) row.
+    await user.click(screen.getByRole('button', { name: 'Color' }));
+    const redSwatches = await screen.findAllByRole('button', { name: 'Red' });
+    await user.click(redSwatches[0]);
+    // Type a character via the same beforeinput path the editor uses.
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: 'x' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    await waitFor(() => {
+      const span = screen.getByRole('textbox', { name: 'Rich text editor' }).querySelector('span');
+      expect(span?.textContent).toBe('x');
+      expect(span?.style.color).toBe('var(--color-danger)');
+    });
+  });
+
   it('Emoji insert uses lastSelectionRef when live selection is null (search-box focus path)', async () => {
     const user = userEvent.setup();
     // Start with a valid selection so the selectionchange handler captures it

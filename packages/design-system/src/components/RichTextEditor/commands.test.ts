@@ -197,4 +197,32 @@ describe('applyExactMarks', () => {
     const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), []);
     expect(next.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
   });
+
+  it('realizes a pending textColor mark onto the range (value-carrying)', () => {
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [] }])] };
+    const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), [
+      { type: 'textColor', color: 'red' },
+    ]);
+    expect(next.blocks[0].inlines).toEqual([
+      { text: 'ab', marks: [{ type: 'textColor', color: 'red' }] },
+    ]);
+  });
+
+  it('clears any existing color mark when the given set omits it', () => {
+    const doc: RichDoc = {
+      blocks: [
+        para('a', [
+          {
+            text: 'ab',
+            marks: [
+              { type: 'textColor', color: 'red' },
+              { type: 'bgColor', color: 'blue' },
+            ],
+          },
+        ]),
+      ],
+    };
+    const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), []);
+    expect(next.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
+  });
 });
