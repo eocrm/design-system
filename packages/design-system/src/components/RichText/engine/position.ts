@@ -52,6 +52,11 @@ export function comparePoints(doc: RichDoc, a: Point, b: Point): -1 | 0 | 1 {
   return ia < ib ? -1 : ia > ib ? 1 : 0;
 }
 
+/** A collapsed range at a single point. */
+export function collapsedRange(blockId: string, offset = 0): Range {
+  return { anchor: { blockId, offset }, focus: { blockId, offset } };
+}
+
 /** Returns `true` iff `range` is collapsed — anchor and focus point to the same position. */
 export function isCollapsed(range: Range): boolean {
   return range.anchor.blockId === range.focus.blockId && range.anchor.offset === range.focus.offset;

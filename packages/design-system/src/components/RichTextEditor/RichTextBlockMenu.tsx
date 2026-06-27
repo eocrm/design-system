@@ -8,6 +8,7 @@ import { useTranslation } from '../../i18n';
 import type { BlockChoice } from './RichTextToolbar';
 import type { BlockType } from '../RichText/engine/model';
 import { RichTextColorMenu } from './RichTextColorMenu';
+import { preventSelectionLoss } from './preventSelectionLoss';
 import { GripIcon } from './icons';
 import styles from './RichTextEditor.module.scss';
 
@@ -55,7 +56,7 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
             tabIndex={-1}
             aria-label={t('richTextEditor.blockActions')}
             className={styles.gutterButton}
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={preventSelectionLoss}
           >
             <GripIcon />
           </Button>

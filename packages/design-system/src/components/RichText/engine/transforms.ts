@@ -4,11 +4,11 @@ import type { RichDoc, Block, Point, Range, Mark, MarkType } from './model';
 import { createBlock, nextId } from './model';
 import { normalizeInlines, sliceInlines, mapMarksOverRange, runsLength } from './inlines';
 import { withMark, withoutMark, hasMark } from './marks';
-import { blockLength, findBlockIndex, orderedRange, isCollapsed } from './position';
+import { blockLength, findBlockIndex, orderedRange, isCollapsed, collapsedRange } from './position';
 import { isVoidBlock } from './attachment';
 
 function collapsed(point: Point): Range {
-  return { anchor: point, focus: point };
+  return collapsedRange(point.blockId, point.offset);
 }
 
 function replaceBlock(doc: RichDoc, index: number, block: Block): RichDoc {

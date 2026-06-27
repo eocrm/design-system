@@ -14,7 +14,12 @@ import { nextId } from '../RichText/engine/model';
 import { renderDoc } from '../RichText/engine/renderDoc';
 import type { RenderLink } from '../RichText/engine/renderLink';
 import type { RenderMention } from '../RichText/engine/renderMention';
-import { blockLength, isCollapsed, wholeBlockRange } from '../RichText/engine/position';
+import {
+  blockLength,
+  isCollapsed,
+  wholeBlockRange,
+  collapsedRange,
+} from '../RichText/engine/position';
 import { linkAt, setLink, removeLink } from './links';
 import { applyTypeAutolink, atomicLinkDeleteRange } from './autolinkInput';
 import { RichTextLinkEditor } from './RichTextLinkEditor';
@@ -400,6 +405,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // progress the active block must not change (it IS the block being dragged), so
     // the hover handlers below read this ref and bail — mirroring blockMenuOpenRef.
     const draggingRef = useRef(false);
+    // Stable setter for draggingRef — passed to both overlays so their memoized
+    // shells don't re-render every keystroke on a fresh inline lambda.
+    const setDragging = useCallback((d: boolean) => {
+      draggingRef.current = d;
+    }, []);
 
     // Resolve the [data-block-id] of the block element containing a DOM node.
     const blockIdFromNode = useCallback((node: Node | null): string | null => {
@@ -1247,11 +1257,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     // Attachment config popover. Config edits don't move the caret meaningfully —
     // the popover holds focus — so each commit pins a collapsed selection on the
-    // block. Open/close toggle `configBlockId`; close returns focus to the editor.
-    const blockCaret = (id: string): Range => ({
-      anchor: { blockId: id, offset: 0 },
-      focus: { blockId: id, offset: 0 },
-    });
+    // block (via `collapsedRange`). Open/close toggle `configBlockId`; close returns
+    // focus to the editor.
     const onConfigOpen = useCallback((id: string) => setConfigBlockId(id), []);
     const onConfigClose = useCallback(() => {
       setConfigBlockId(null);
@@ -1262,7 +1269,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         commit(
           {
             doc: updateAttachmentBlock(latest.current.value, id, { alt }),
-            selection: blockCaret(id),
+            selection: collapsedRange(id),
           },
           'other',
         );
@@ -1274,7 +1281,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         commit(
           {
             doc: updateAttachmentBlock(latest.current.value, id, { align }),
-            selection: blockCaret(id),
+            selection: collapsedRange(id),
           },
           'other',
         );
@@ -1312,7 +1319,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         commit(
           {
             doc: clearAttachmentFields(latest.current.value, id, ['width', 'height']),
-            selection: blockCaret(id),
+            selection: collapsedRange(id),
           },
           'other',
         );
@@ -1326,6 +1333,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       // reappear when the upload settles back to `ready`.
       setConfigBlockId(null);
     }, []);
+    // Stable resize handler for the image resizer — keeps the memoized resizer from
+    // re-rendering every keystroke on a fresh inline lambda. Guards activeBlockId so
+    // a late move after the active block clears is a no-op.
+    const onImageResize = useCallback(
+      (w: number) => {
+        if (activeBlockId) onConfigWidth(activeBlockId, w);
+      },
+      [onConfigWidth, activeBlockId],
+    );
 
     // Delegate clicks on the error-state attachment Retry/Remove buttons (they
     // carry data-attachment-action + data-block-id). On the editable so it works
@@ -1340,6 +1356,18 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (action === 'retry') uploaderRef.current.retry(id);
       else if (action === 'remove') uploaderRef.current.remove(id);
     }, []);
+
+    // The rendered doc tree is a pure fn of (value, renderLink, renderMention) — it
+    // does NOT depend on selection/hover/focus. Memoize so the whole element tree is
+    // not rebuilt on selection/hover/focus re-renders that leave the doc unchanged.
+    const content = useMemo(
+      () => renderDoc(value, { editable: true, renderLink, renderMention }),
+      [value, renderLink, renderMention],
+    );
+    // Stable signature of block order — recomputed only when blocks change, not on
+    // every keystroke. Shared by the gutter (blockOrderKey) and the image resizer's
+    // layoutKey so their memoized shells stay stable while typing within a block.
+    const blockOrderKey = useMemo(() => value.blocks.map((b) => b.id).join('|'), [value.blocks]);
 
     const editable = (
       <div
@@ -1385,7 +1413,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onFocus={autoToolbar ? () => setFocused(true) : undefined}
         onBlur={autoToolbar ? () => setFocused(false) : undefined}
       >
-        {renderDoc(value, { editable: true, renderLink, renderMention })}
+        {content}
       </div>
     );
 
@@ -1437,7 +1465,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       <RichTextBlockControls
         rootRef={shellRef}
         activeBlockId={activeBlockId}
-        blockOrderKey={value.blocks.map((b) => b.id).join('|')}
+        blockOrderKey={blockOrderKey}
         activeBlockType={activeBlockType}
         menuOpen={blockMenuOpen}
         onMenuOpenChange={setBlockMenuOpen}
@@ -1447,9 +1475,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onReorder={onBlockReorder}
         onConfigure={canConfigure ? onConfigOpen : undefined}
         onColor={onBlockColor}
-        onDraggingChange={(d) => {
-          draggingRef.current = d;
-        }}
+        onDraggingChange={setDragging}
       />
     ) : null;
 
@@ -1470,12 +1496,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         <RichTextImageResizer
           rootRef={shellRef}
           blockId={activeBlockId}
-          layoutKey={`${value.blocks.map((b) => b.id).join('|')}:${activeBlock?.width ?? ''}`}
+          layoutKey={`${blockOrderKey}:${activeBlock?.width ?? ''}`}
           maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
-          onResize={(w) => onConfigWidth(activeBlockId, w)}
-          onDraggingChange={(d) => {
-            draggingRef.current = d;
-          }}
+          onResize={onImageResize}
+          onDraggingChange={setDragging}
         />
       ) : null;
 

@@ -1,7 +1,15 @@
 // RichTextBlockControls.tsx — the per-block gutter overlay. Absolutely positioned
 // inside the editor shell (position: relative), aligned to the active block's box.
 // Lives OUTSIDE the contentEditable so it is never editable content.
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -18,6 +26,7 @@ import { RichTextBlockMenu, type BlockAction } from './RichTextBlockMenu';
 import type { BlockChoice } from './RichTextToolbar';
 import type { BlockType } from '../RichText/engine/model';
 import { PlusIcon } from './icons';
+import { preventSelectionLoss } from './preventSelectionLoss';
 import { computeReflow, type BlockRect, type UnitRange } from './blockReflow';
 import { gapIndexFromY } from './blockDrop';
 import styles from './RichTextEditor.module.scss';
@@ -137,7 +146,7 @@ function DraggableGutter({
  * (e.g. attachment settings) lives in the ⠿ menu's "Configure" item, not a
  * separate gutter button.
  */
-export function RichTextBlockControls({
+export const RichTextBlockControls = memo(function RichTextBlockControls({
   rootRef,
   activeBlockId,
   blockOrderKey,
@@ -328,7 +337,7 @@ export function RichTextBlockControls({
           tabIndex={-1}
           aria-label={t('richTextEditor.blockInsert')}
           className={styles.gutterButton}
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventSelectionLoss}
           onClick={() => onInsertBelow(activeBlockId)}
         >
           <PlusIcon />
@@ -345,4 +354,4 @@ export function RichTextBlockControls({
       </DraggableGutter>
     </DndContext>
   );
-}
+});

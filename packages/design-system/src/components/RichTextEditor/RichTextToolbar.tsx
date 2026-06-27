@@ -6,6 +6,7 @@ import { EmojiPickerPopover } from '../EmojiPicker';
 import { Popover } from '../Popover';
 import { useTranslation } from '../../i18n';
 import { RichTextColorMenu } from './RichTextColorMenu';
+import { preventSelectionLoss } from './preventSelectionLoss';
 import type { ActiveColors } from './commands';
 import {
   BoldIcon,
@@ -140,7 +141,9 @@ export function RichTextToolbar({
         iconOnly
         aria-label={t('richTextEditor.undo')}
         disabled={disabled || !canUndo}
-        onMouseDown={(e) => e.preventDefault()}
+        // preventSelectionLoss (see its JSDoc) keeps the editor's DOM selection
+        // live across the click for every toolbar control below.
+        onMouseDown={preventSelectionLoss}
         onClick={onUndo}
       >
         <UndoIcon />
@@ -151,7 +154,7 @@ export function RichTextToolbar({
         iconOnly
         aria-label={t('richTextEditor.redo')}
         disabled={disabled || !canRedo}
-        onMouseDown={(e) => e.preventDefault()}
+        onMouseDown={preventSelectionLoss}
         onClick={onRedo}
       >
         <RedoIcon />
@@ -203,10 +206,7 @@ export function RichTextToolbar({
             aria-label={t(`richTextEditor.${key}`)}
             aria-pressed={active}
             disabled={disabled}
-            // Keep the editor focused + its DOM selection live: a mousedown that
-            // moves focus out of the contentEditable would collapse the selection
-            // before the command runs.
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={preventSelectionLoss}
             onClick={() => onToggleMark(type)}
           >
             <Icon />
@@ -221,9 +221,7 @@ export function RichTextToolbar({
         aria-label={t('richTextEditor.link')}
         aria-pressed={linkActive}
         disabled={disabled}
-        // Preserve the editor's DOM selection (a mousedown that moves focus out
-        // of the contentEditable would collapse it before the bubble opens).
-        onMouseDown={(e) => e.preventDefault()}
+        onMouseDown={preventSelectionLoss}
         onClick={onOpenLink}
       >
         <LinkIcon />
@@ -237,9 +235,7 @@ export function RichTextToolbar({
             iconOnly
             aria-label={t('richTextEditor.emoji')}
             disabled={disabled}
-            // Preserve the editor's DOM selection so the caret is still live
-            // when the emoji is chosen and onInsertEmoji reads it.
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={preventSelectionLoss}
           >
             <SmileIcon />
           </Button>
@@ -255,9 +251,7 @@ export function RichTextToolbar({
             iconOnly
             aria-label={t('richTextEditor.textColor')}
             disabled={disabled}
-            // Preserve the editor's DOM selection so it's still live when a badge
-            // is picked and onSetColor reads it (mirrors the emoji/link buttons).
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={preventSelectionLoss}
           >
             <TextColorIcon />
           </Button>
@@ -279,8 +273,7 @@ export function RichTextToolbar({
             iconOnly
             aria-label={t('richTextEditor.highlight')}
             disabled={disabled}
-            // Same selection-preservation as the Text-color button above.
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={preventSelectionLoss}
           >
             <HighlightIcon />
           </Button>
@@ -303,7 +296,7 @@ export function RichTextToolbar({
         aria-label={t('richTextEditor.bulletList')}
         aria-pressed={isList('bullet_item')}
         disabled={disabled}
-        onMouseDown={(e) => e.preventDefault()}
+        onMouseDown={preventSelectionLoss}
         onClick={() => onToggleList('bullet_item')}
       >
         <BulletListIcon />
@@ -315,7 +308,7 @@ export function RichTextToolbar({
         aria-label={t('richTextEditor.orderedList')}
         aria-pressed={isList('ordered_item')}
         disabled={disabled}
-        onMouseDown={(e) => e.preventDefault()}
+        onMouseDown={preventSelectionLoss}
         onClick={() => onToggleList('ordered_item')}
       >
         <OrderedListIcon />
@@ -342,7 +335,7 @@ export function RichTextToolbar({
             iconOnly
             aria-label={t('richTextEditor.upload')}
             disabled={disabled}
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={preventSelectionLoss}
             onClick={() => fileInputRef.current?.click()}
           >
             <AttachFileIcon />

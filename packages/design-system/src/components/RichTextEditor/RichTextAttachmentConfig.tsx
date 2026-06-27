@@ -17,19 +17,20 @@ import { useTranslation } from '../../i18n';
 import type { Block } from '../RichText/engine/model';
 import { safeHref } from '../RichText/engine/safeHref';
 import { attachmentIsImage } from '../RichText/engine/attachment';
+import type { Rect } from './selection';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextAttachmentConfigProps {
   /** The attachment block being configured (current values). */
   block: Block;
   /** Figure rect (viewport coords) to anchor the popover to. */
-  anchorRect: { top: number; left: number; height: number; width: number };
+  anchorRect: Rect;
   /**
    * Live anchor rect — re-queried by Floating UI on scroll/resize so the popover
    * tracks the figure (the static `anchorRect` is only the initial position; it
    * goes stale on a pure scroll). Falls back to `anchorRect` when it returns null.
    */
-  getAnchorRect?: () => { top: number; left: number; height: number; width: number } | null;
+  getAnchorRect?: () => Rect | null;
   /** Editor content width (px) — the upper bound for the width slider. */
   maxWidth: number;
   /** Native picker filter for Replace. */
