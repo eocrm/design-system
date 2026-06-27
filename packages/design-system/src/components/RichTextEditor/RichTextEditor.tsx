@@ -1203,12 +1203,29 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
     const onConfigWidth = useCallback(
       (id: string, width: number) => {
-        // store width only; clearing height lets the browser keep the aspect ratio
-        let d = updateAttachmentBlock(latest.current.value, id, { width });
+        // Live resize: fires on every slider/handle MOVE (not just the end) so the
+        // image tracks the control. Three deliberate choices vs a plain `commit`:
+        //  • Coalescing 'resize' kind → the whole drag is ONE undo step (reverting
+        //    to the pre-drag width), instead of one per pixel.
+        //  • No `pendingSelectionRef` write → the slider/handle keeps focus; a
+        //    `writeSelection` into the editable would yank focus mid-drag.
+        //  • Reads `liveDocRef` (the synchronously-latest doc) so rapid moves that
+        //    fire before React re-renders still chain off each other.
+        // Width only; clearing height lets the browser keep the aspect ratio.
+        let d = updateAttachmentBlock(liveDocRef.current, id, { width });
         d = clearAttachmentFields(d, id, ['height']);
-        commit({ doc: d, selection: blockCaret(id) }, 'other');
+        if (d === liveDocRef.current) return;
+        historyRef.current = historyRecord(
+          historyRef.current,
+          { doc: d, selection: historyRef.current.present.selection },
+          'resize',
+          Date.now(),
+        );
+        syncHistoryFlags();
+        liveDocRef.current = d;
+        latest.current.onChange(d);
       },
-      [commit],
+      [syncHistoryFlags],
     );
     const onConfigWidthReset = useCallback(
       (id: string) => {

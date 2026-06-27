@@ -1415,6 +1415,42 @@ describe('attachment config', () => {
       expect(img).not.toHaveAttribute('height'); // cleared so the browser keeps aspect
     });
   });
+  it('resizes live on a slider MOVE, before the drag ends (no blur)', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          {
+            id: 'img',
+            type: 'attachment',
+            status: 'ready',
+            src: 'http://u/p.png',
+            mime: 'image/png',
+            name: 'p.png',
+            alt: 'Chart',
+            width: 500,
+            height: 300,
+            inlines: [],
+          },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls upload={up()} />;
+    }
+    renderEditor(<Harness />);
+    const fig = document.querySelector('figure[data-block-id="img"]') as HTMLElement;
+    await user.hover(fig);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Configure' }));
+    const slider = await screen.findByRole('slider', { name: 'Width' });
+    slider.focus();
+    await user.keyboard('{ArrowLeft}'); // a single move — deliberately NO blur / drag end
+    // The model (and img) already reflect the move: before this change the width was
+    // committed only on drag end, so the img would still read 500 here.
+    await waitFor(() => {
+      const img = document.querySelector('figure[data-block-id="img"] img');
+      expect(img?.getAttribute('width')).not.toBe('500');
+    });
+  });
   it('Replace closes the config popover (does not reappear after the swap settles)', async () => {
     const user = userEvent.setup();
     function Harness() {

@@ -35,6 +35,19 @@ describe('history record', () => {
     expect(h.past).toEqual([sa]);
   });
 
+  it('coalesces a resize drag into one step (reverting to pre-drag)', () => {
+    // A continuous image-width drag fires many records; they must collapse to one
+    // undo step whose `past` top is the pre-drag snapshot.
+    const sd: Snapshot = { doc: mkDoc('d'), selection: null };
+    let h = reset(sa);
+    h = record(h, sb, 'resize', 1000);
+    h = record(h, sc, 'resize', 1100);
+    h = record(h, sd, 'resize', 1200);
+    expect(h.past).toEqual([sa]); // single boundary = pre-drag
+    expect(h.present).toBe(sd); // latest width wins
+    expect(undo(h).present).toBe(sa);
+  });
+
   it('breaks coalescing when the window elapses', () => {
     let h = reset(sa);
     h = record(h, sb, 'type', 1000);
