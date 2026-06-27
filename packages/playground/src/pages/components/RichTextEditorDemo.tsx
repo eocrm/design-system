@@ -51,6 +51,7 @@ const renderMention: RenderMention = ({ id, label }) => (
 
 export function RichTextEditorDemo() {
   const [doc, setDoc] = useState<RichDoc>(docFromText('Type here. Select a word and press ⌘B.'));
+  const [autoDoc, setAutoDoc] = useState<RichDoc>(() => docFromText(''));
   const [linkDoc, setLinkDoc] = useState<RichDoc>(docFromText('Read the docs and visit our site.'));
   const [importDoc, setImportDoc] = useState<RichDoc>(() =>
     fromMarkdown(
@@ -111,6 +112,20 @@ export function RichTextEditorDemo() {
             Markdown → <Code>{toMarkdown(doc).replace(/\n/g, '⏎')}</Code>
           </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title='Focus-gated toolbar (toolbar="auto")'
+        description='toolbar="auto" shows the formatting bar only when the editor is focused or non-empty — ideal for a compact comment composer. Click into the empty editor below: the bar appears; click away (while still empty) and it hides. Crucially, the bar stays up while the editor’s own overlays are open — focus the empty editor, click the Link button (or ⌘/Ctrl+K): the link editor opens and the bar does NOT collapse, even though focus moved into the link popover. The editable is never remounted as the bar toggles, so there is no focus/selection loss.'
+        code={`const [doc, setDoc] = useState(docFromText(''));
+<RichTextEditor value={doc} onChange={setDoc} toolbar="auto" placeholder="Add a comment…" />`}
+      >
+        <RichTextEditor
+          value={autoDoc}
+          onChange={setAutoDoc}
+          toolbar="auto"
+          placeholder="Add a comment… (toolbar appears on focus)"
+        />
       </Example>
 
       <Example

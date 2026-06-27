@@ -85,6 +85,67 @@ describe('RichTextEditor', () => {
   });
 });
 
+describe('RichTextEditor toolbar="auto"', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+
+  it('hides the toolbar when the editor is empty and unfocused', () => {
+    renderEditor(<RichTextEditor value={emptyDoc()} onChange={() => {}} toolbar="auto" />);
+    expect(screen.queryByRole('toolbar')).toBeNull();
+  });
+
+  it('shows the toolbar on focus, hides it again on blur (while empty)', () => {
+    renderEditor(<RichTextEditor value={emptyDoc()} onChange={() => {}} toolbar="auto" />);
+    const box = screen.getByRole('textbox');
+    fireEvent.focus(box);
+    expect(screen.getByRole('toolbar')).toBeInTheDocument();
+    fireEvent.blur(box);
+    expect(screen.queryByRole('toolbar')).toBeNull();
+  });
+
+  it('shows the toolbar when non-empty even while unfocused', () => {
+    renderEditor(<RichTextEditor value={docFromText('hi')} onChange={() => {}} toolbar="auto" />);
+    expect(screen.getByRole('toolbar')).toBeInTheDocument();
+  });
+
+  it('keeps the toolbar shown while the link editor is open, even after the editable blurs', async () => {
+    const user = userEvent.setup();
+    // openLinkEditor needs a valid range (jsdom has no real caret).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 0 },
+    });
+    function Harness() {
+      // Empty composer (single empty block) so only focus / overlay keep the bar up.
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar="auto" autoFocus />;
+    }
+    renderEditor(<Harness />);
+    const box = screen.getByRole('textbox');
+    fireEvent.focus(box); // ensure focused → bar visible
+    await user.click(screen.getByRole('button', { name: 'Link' }));
+    expect(await screen.findByRole('group', { name: 'Edit link' })).toBeInTheDocument();
+    // The link editor (portaled to body) stole focus → the editable blurs. The bar
+    // must stay up (overlay-open), not collapse mid-action.
+    fireEvent.blur(box);
+    expect(screen.getByRole('toolbar')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Edit link' })).toBeInTheDocument();
+  });
+
+  it('toolbar={true} always shows; toolbar={false} never (no regression)', () => {
+    const { unmount } = renderEditor(
+      <RichTextEditor value={emptyDoc()} onChange={() => {}} toolbar />,
+    );
+    expect(screen.getByRole('toolbar')).toBeInTheDocument();
+    unmount();
+    renderEditor(<RichTextEditor value={emptyDoc()} onChange={() => {}} toolbar={false} />);
+    expect(screen.queryByRole('toolbar')).toBeNull();
+  });
+});
+
 describe('RichTextEditor toolbar', () => {
   beforeEach(() => {
     mockReadSelection.mockReset();
