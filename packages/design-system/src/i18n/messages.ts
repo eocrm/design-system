@@ -444,16 +444,66 @@ export interface Messages {
     highlight: string;
     /** aria-label on the ⌀ "clear color" swatch (reset to the default color). */
     colorClear: string;
-    /** aria-label on the gray color swatch. */
-    colorGray: string;
-    /** aria-label on the red color swatch. */
+    /** aria-label on the red palette color swatch. */
     colorRed: string;
-    /** aria-label on the green color swatch. */
-    colorGreen: string;
-    /** aria-label on the amber color swatch. */
+    /** aria-label on the coral palette color swatch. */
+    colorCoral: string;
+    /** aria-label on the orange palette color swatch. */
+    colorOrange: string;
+    /** aria-label on the amber palette color swatch. */
     colorAmber: string;
-    /** aria-label on the blue color swatch. */
+    /** aria-label on the gold palette color swatch. */
+    colorGold: string;
+    /** aria-label on the yellow palette color swatch. */
+    colorYellow: string;
+    /** aria-label on the olive palette color swatch. */
+    colorOlive: string;
+    /** aria-label on the lime palette color swatch. */
+    colorLime: string;
+    /** aria-label on the green palette color swatch. */
+    colorGreen: string;
+    /** aria-label on the emerald palette color swatch. */
+    colorEmerald: string;
+    /** aria-label on the mint palette color swatch. */
+    colorMint: string;
+    /** aria-label on the teal palette color swatch. */
+    colorTeal: string;
+    /** aria-label on the cyan palette color swatch. */
+    colorCyan: string;
+    /** aria-label on the sky palette color swatch. */
+    colorSky: string;
+    /** aria-label on the blue palette color swatch. */
     colorBlue: string;
+    /** aria-label on the navy palette color swatch. */
+    colorNavy: string;
+    /** aria-label on the indigo palette color swatch. */
+    colorIndigo: string;
+    /** aria-label on the violet palette color swatch. */
+    colorViolet: string;
+    /** aria-label on the lavender palette color swatch. */
+    colorLavender: string;
+    /** aria-label on the purple palette color swatch. */
+    colorPurple: string;
+    /** aria-label on the plum palette color swatch. */
+    colorPlum: string;
+    /** aria-label on the fuchsia palette color swatch. */
+    colorFuchsia: string;
+    /** aria-label on the magenta palette color swatch. */
+    colorMagenta: string;
+    /** aria-label on the pink palette color swatch. */
+    colorPink: string;
+    /** aria-label on the rose palette color swatch. */
+    colorRose: string;
+    /** aria-label on the brown palette color swatch. */
+    colorBrown: string;
+    /** aria-label on the taupe palette color swatch. */
+    colorTaupe: string;
+    /** aria-label on the slate palette color swatch. */
+    colorSlate: string;
+    /** aria-label on the stone palette color swatch. */
+    colorStone: string;
+    /** aria-label on the charcoal palette color swatch. */
+    colorCharcoal: string;
   };
 }
 
