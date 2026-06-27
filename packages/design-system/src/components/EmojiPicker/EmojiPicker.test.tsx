@@ -236,3 +236,18 @@ it('EmojiPickerPopover forwards recent to the picker', () => {
   );
   expect(screen.getByRole('group', { name: 'Recently used' })).toBeInTheDocument();
 });
+
+it('roving keyboard nav crosses from the recent group into the categories', async () => {
+  const user = userEvent.setup();
+  // recent has a single item → flat index 0 is the recent 👍; index 1 is the first
+  // category emoji (grinning face). ArrowRight must cross the section boundary.
+  render(<EmojiPicker onSelect={() => {}} recent={['👍']} />);
+  await user.click(screen.getByRole('textbox'));
+  await user.keyboard('{ArrowDown}'); // into the grid → first cell (recent 👍)
+  const recentGroup = screen.getByRole('group', { name: 'Recently used' });
+  expect(document.activeElement).toBe(
+    within(recentGroup).getByRole('option', { name: 'thumbs up' }),
+  );
+  await user.keyboard('{ArrowRight}'); // cross into the first category
+  expect(document.activeElement).toBe(screen.getByRole('option', { name: 'grinning face' }));
+});
