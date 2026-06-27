@@ -130,3 +130,41 @@ it('applies no transform or lifted style at rest', () => {
   expect(block.style.transform).toBe('');
   expect(block.className).not.toContain('blockLifted');
 });
+
+it('re-measures the gutter position when blockOrderKey changes (post-drop / insert / delete)', () => {
+  // The active block keeps its id across a reorder, so without an order-derived
+  // dependency the gutter's measured `top` would go stale and the controls would
+  // linger at the block's OLD row. Changing only blockOrderKey must re-measure.
+  function OrderHarness({ orderKey }: { orderKey: string }) {
+    const rootRef = useRef<HTMLDivElement>(null);
+    return (
+      <I18nProvider locale="en">
+        <div ref={rootRef} style={{ position: 'relative' }}>
+          <p data-block-id="b1">hello</p>
+          <RichTextBlockControls
+            rootRef={rootRef}
+            activeBlockId="b1"
+            blockOrderKey={orderKey}
+            menuOpen={false}
+            onMenuOpenChange={() => {}}
+            onInsertBelow={() => {}}
+            onAction={() => {}}
+            onTurnInto={() => {}}
+            onReorder={() => {}}
+          />
+        </div>
+      </I18nProvider>
+    );
+  }
+  const { container, rerender } = render(<OrderHarness orderKey="b1" />);
+  const block = container.querySelector('[data-block-id="b1"]') as HTMLElement;
+  // jsdom has no layout (rect is all-zero); stand in a moved row position.
+  block.getBoundingClientRect = () =>
+    ({ top: 40, left: 0, width: 200, height: 18, right: 200, bottom: 58, x: 0, y: 40 }) as DOMRect;
+  // Same activeBlockId/menuOpen — only the order key changes (as after a drop).
+  rerender(<OrderHarness orderKey="b1|b0" />);
+  const gutter = screen
+    .getByRole('button', { name: 'Insert block below' })
+    .closest('[contenteditable="false"]') as HTMLElement;
+  expect(gutter.style.top).toBe('40px');
+});

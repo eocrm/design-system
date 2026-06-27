@@ -1104,6 +1104,39 @@ describe('blockControls', () => {
       expect(screen.getByRole('button', { name: 'Block actions' })).toBeInTheDocument();
     });
 
+    it('reveals the row controls when hovering the gutter column (resolved by pointer height)', () => {
+      render(
+        <I18nProvider locale="en">
+          <Controlled blockControls />
+        </I18nProvider>,
+      );
+      const textbox = screen.getByRole('textbox');
+      const blocks = Array.from(textbox.querySelectorAll('[data-block-id]')) as HTMLElement[];
+      const stub = (el: HTMLElement, top: number) =>
+        (el.getBoundingClientRect = () =>
+          ({
+            top,
+            bottom: top + 20,
+            left: 0,
+            right: 200,
+            width: 200,
+            height: 20,
+            x: 0,
+            y: top,
+          }) as DOMRect);
+      stub(blocks[0], 0);
+      stub(blocks[1], 100);
+      stub(blocks[2], 200);
+      // Pointer over the gutter/padding column (target is the editable itself — no
+      // block element under it) at the SECOND block's height. The controls should
+      // appear for THAT block, resolved by the pointer's vertical position.
+      fireEvent.mouseMove(textbox, { clientY: 110 });
+      const gutter = screen
+        .getByRole('button', { name: 'Insert block below' })
+        .closest('[contenteditable="false"]') as HTMLElement;
+      expect(gutter.style.top).toBe('100px');
+    });
+
     it('hides the gutter when the pointer leaves the editor (no caret)', async () => {
       render(
         <I18nProvider locale="en">
