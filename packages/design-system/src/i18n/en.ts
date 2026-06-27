@@ -105,6 +105,22 @@ export const en: Messages = {
     cancel: 'Cancel',
     noMatches: 'No matches',
   },
+  emojiPicker: {
+    search: 'Search emoji',
+    noResults: 'No emoji found',
+    category: {
+      smileys: 'Smileys',
+      gestures: 'Gestures',
+      people: 'People',
+      animals: 'Animals & nature',
+      food: 'Food & drink',
+      activities: 'Activities',
+      travel: 'Travel & places',
+      objects: 'Objects',
+      symbols: 'Symbols',
+      flags: 'Flags',
+    },
+  },
   pagination: {
     previous: 'Previous',
     next: 'Next',

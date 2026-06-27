@@ -1,0 +1,84 @@
+@use '../../styles/mixins' as *;
+@use './EmojiPicker.tokens';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--emoji-picker-section-gap);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--emoji-picker-search-icon-fg);
+}
+
+// Rule 4 note: internal flex layout — the public component is the picker
+// panel, not the search input. The picker owns the search row's arrangement
+// (mirrors OptionsPicker's `.searchInput`).
+.searchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+}
+
+// The scrollable grid surface. Width is the picker's own intrinsic size
+// (see EmojiPicker.tokens.scss) — not consumer layout.
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--emoji-picker-section-gap);
+  width: var(--emoji-picker-width);
+  max-height: var(--emoji-picker-max-height);
+  overflow-y: auto;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--emoji-picker-grid-gap);
+}
+
+.sectionLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--emoji-picker-grid-gap);
+}
+
+// Button reset + square-ish cell. Width comes from the grid track (1fr
+// stretch), so no explicit width is set (Rule 4).
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--emoji-picker-cell-size);
+  padding: 0;
+  border: none;
+  border-radius: var(--emoji-picker-radius);
+  background: none;
+  font-size: var(--emoji-picker-emoji-size);
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--emoji-picker-cell-hover-bg);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.noResults {
+  text-align: center;
+}

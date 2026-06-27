@@ -172,6 +172,35 @@ export interface Messages {
     /** Copy shown when the filter query has no matches. */
     noMatches: string;
   };
+  emojiPicker: {
+    /** Placeholder + aria-label for the emoji search input (and the grid's aria-label). */
+    search: string;
+    /** Copy shown when the search query matches no emoji. */
+    noResults: string;
+    /** Localized section headers, keyed by `EmojiCategoryId`. */
+    category: {
+      /** Smileys & emotion section. */
+      smileys: string;
+      /** Hand-gesture section. */
+      gestures: string;
+      /** People & body section. */
+      people: string;
+      /** Animals & nature section. */
+      animals: string;
+      /** Food & drink section. */
+      food: string;
+      /** Activities & events section. */
+      activities: string;
+      /** Travel & places section. */
+      travel: string;
+      /** Objects section. */
+      objects: string;
+      /** Symbols section. */
+      symbols: string;
+      /** Flags section. */
+      flags: string;
+    };
+  };
   pagination: {
     /** Visible label on the previous-page button. */
     previous: string;

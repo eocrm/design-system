@@ -1,0 +1,24 @@
+// EmojiPicker.tokens.scss — component-scoped tokens for <EmojiPicker>.
+:root {
+  // Panel sizing — the picker owns its own intrinsic panel size (mirrors how
+  // OptionsPicker sizes its own panel with literal px). width/max-height are
+  // NOT covered by stylelint's strict-value set, but no existing size token
+  // fits these values, so literals are used deliberately here.
+  --emoji-picker-width: 320px;
+  --emoji-picker-max-height: 280px;
+
+  // Cell (one emoji button) + the emoji glyph inside it
+  --emoji-picker-cell-size: var(--size-md);
+  --emoji-picker-emoji-size: var(--font-size-lg);
+
+  // Spacing
+  --emoji-picker-grid-gap: var(--space-1);
+  --emoji-picker-section-gap: var(--space-3);
+
+  // Cell affordances
+  --emoji-picker-radius: var(--radius-sm);
+  --emoji-picker-cell-hover-bg: var(--color-bg-muted);
+
+  // Search row
+  --emoji-picker-search-icon-fg: var(--color-fg-subtle);
+}
