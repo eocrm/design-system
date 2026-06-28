@@ -676,4 +676,37 @@ describe('renderDoc per-block memoization', () => {
     const b2 = createBlock('bullet_item', 'b', { id: 'l2', depth: 0 });
     expect(html({ blocks: [a, b2, c] })).toBe('<ul><li>a</li><li>b<ul><li>c</li></ul></li></ul>');
   });
+
+  it('inline run keys fold in the mark signature (clean remount on a formatting change)', () => {
+    // Two runs that differ only by formatting. Their React keys must carry the mark
+    // signature, not just the array index — so when a run gains/loses a mark in the
+    // editor, React replaces its subtree instead of re-wrapping a live
+    // contentEditable text node in place (the cause of stray leftover text / colors
+    // resetting on numeric content).
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: 'b1',
+          type: 'paragraph',
+          inlines: [
+            { text: '42', marks: [{ type: 'bold' }] },
+            { text: '43', marks: [] },
+          ],
+        },
+      ],
+    };
+    const out = renderDoc(doc, { editable: true }) as ReactElement<{
+      children: ReactElement[];
+    }>[];
+    const runs = out[0].props.children;
+    expect(runs.map((r) => r.key)).toEqual(['0:bold', '1:']);
+    // Same run text but different marks ⇒ a different key (forces remount).
+    const colored = renderDoc(
+      { blocks: [{ id: 'b1', type: 'paragraph', inlines: [{ text: '42', marks: [] }] }] },
+      { editable: true },
+    ) as ReactElement<{ children: ReactElement[] }>[];
+    const plainKey = colored[0].props.children[0].key;
+    expect(plainKey).toBe('0:');
+    expect(plainKey).not.toBe('0:bold');
+  });
 });
