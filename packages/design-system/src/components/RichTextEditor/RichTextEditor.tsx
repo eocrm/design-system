@@ -21,9 +21,10 @@ import {
   collapsedRange,
   marksBeforeCaret,
 } from '../RichText/engine/position';
-import { linkAt, setLink, removeLink } from './links';
+import { linkAt, setLink } from './links';
 import { applyTypeAutolink, atomicLinkDeleteRange } from './autolinkInput';
 import { RichTextLinkEditor } from './RichTextLinkEditor';
+import { useLinkEditor } from './useLinkEditor';
 import {
   insertText,
   insertFragment,
@@ -38,7 +39,7 @@ import type { MentionItem, MentionsConfig } from './mentions';
 import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
-import { readSelection, writeSelection, selectionRect, rangeRect, type Rect } from './selection';
+import { readSelection, writeSelection, rangeRect } from './selection';
 import { applyInput } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
 import { runsText } from '../RichText/engine/inlines';
@@ -210,14 +211,6 @@ function marksAtCaretMarks(doc: RichDoc, caret: Point): Mark[] {
   return marksBeforeCaret(doc, caret).filter((m) => m.type !== 'mention');
 }
 
-interface LinkEditorOpen {
-  range: Range;
-  href: string;
-  editing: boolean;
-  anchorRect: Rect;
-  key: number;
-}
-
 /**
  * Controlled rich-text editor — a contentEditable surface over the in-house
  * engine. Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a
@@ -342,9 +335,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const liveDocRef = useRef(value);
     liveDocRef.current = value;
 
-    // Link editor state.
-    const [linkEditor, setLinkEditor] = useState<LinkEditorOpen | null>(null);
-    const linkKeyRef = useRef(0);
+    // Stable getters for the synchronously-latest doc/flags — passed to the
+    // feature hooks so their handlers read current values without re-subscribing
+    // or depending on `latest`'s shape (keeps the handlers' identity stable).
+    const getValue = useCallback(() => latest.current.value, []);
+    const getReadOnly = useCallback(() => latest.current.readOnly, []);
 
     // Focus state — only consulted by `toolbar="auto"` to gate the bar's visibility.
     // Focus moving to an editor overlay (the link editor / mention menu, portaled to
@@ -617,63 +612,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [stageOrSetColor],
     );
 
-    // Open the link editor for the live selection: edit the link under the caret
-    // if there is one (href pre-filled, Remove available), else create over the
-    // selection (or insert at a collapsed caret on Apply).
-    const openLinkEditor = useCallback(() => {
-      if (latest.current.readOnly) return;
-      const root = rootRef.current;
-      if (!root) return;
-      const range = readSelection(root);
-      if (!range) return;
-      const existing = linkAt(latest.current.value, range.focus);
-      const anchorRect = selectionRect(root);
-      linkKeyRef.current += 1;
-      setLinkEditor(
-        existing
-          ? {
-              range: existing.range,
-              href: existing.href,
-              editing: true,
-              anchorRect,
-              key: linkKeyRef.current,
-            }
-          : { range, href: '', editing: false, anchorRect, key: linkKeyRef.current },
-      );
-    }, []);
-
-    const onLinkApply = useCallback(
-      (href: string) => {
-        const le = linkEditor;
-        if (!le) return;
-        const trimmed = href.trim();
-        if (trimmed !== '') {
-          commit(setLink(latest.current.value, le.range, trimmed));
-        } else if (le.editing) {
-          commit(removeLink(latest.current.value, le.range));
-        }
-        // empty href while creating → just close (cancel).
-        setLinkEditor(null);
-        rootRef.current?.focus();
-      },
-      [linkEditor, commit],
-    );
-
-    const onLinkRemove = useCallback(() => {
-      const le = linkEditor;
-      if (!le) return;
-      commit(removeLink(latest.current.value, le.range));
-      setLinkEditor(null);
-      rootRef.current?.focus();
-    }, [linkEditor, commit]);
-
-    const onLinkCancel = useCallback(() => {
-      const le = linkEditor;
-      setLinkEditor(null);
-      const root = rootRef.current;
-      if (root && le) writeSelection(root, le.range);
-      root?.focus();
-    }, [linkEditor]);
+    // Link editor: open-state + apply/remove/cancel handlers (see useLinkEditor).
+    // The toolbar's `linkActive` derivation and the `<RichTextLinkEditor>` render
+    // stay in this file — they need the live selection / render scope.
+    const { linkEditor, openLinkEditor, onLinkApply, onLinkRemove, onLinkCancel } = useLinkEditor({
+      rootRef,
+      commit,
+      getValue,
+      getReadOnly,
+    });
 
     // Restore the caret/selection after a model-driven re-render.
     useLayoutEffect(() => {
