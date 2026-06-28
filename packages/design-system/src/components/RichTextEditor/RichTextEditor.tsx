@@ -1164,26 +1164,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (type === 'link' || type === 'mention' || type === 'textColor' || type === 'bgColor')
           return;
         const root = rootRef.current;
-        const range = (root ? readSelection(root) : null) ?? selection;
+        // lastSelectionRef = last non-null selection; survives a toolbar popover taking focus
+        const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
         if (range) stageOrToggleMark(range, { type });
       },
-      [selection, stageOrToggleMark],
+      [stageOrToggleMark],
     );
     const onToolbarSetBlock = useCallback(
       (choice: BlockChoice) => {
         const root = rootRef.current;
-        const range = (root ? readSelection(root) : null) ?? selection;
+        const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
         if (range) commit(runSetBlock(value, range, choice));
       },
-      [value, selection, commit],
+      [value, commit],
     );
     const onToolbarToggleList = useCallback(
       (listType: 'bullet_item' | 'ordered_item') => {
         const root = rootRef.current;
-        const range = (root ? readSelection(root) : null) ?? selection;
+        const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
         if (range) commit(runToggleList(value, range, listType));
       },
-      [value, selection, commit],
+      [value, commit],
     );
 
     const onBlockInsertBelow = useCallback(
