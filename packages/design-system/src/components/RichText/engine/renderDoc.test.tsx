@@ -1,6 +1,8 @@
+import type { ReactElement } from 'react';
 import { render } from '@testing-library/react';
 import { I18nProvider } from '../../../i18n';
 import { renderDoc } from './renderDoc';
+import type { RenderDocOptions } from './renderDoc';
 import { createBlock } from './model';
 import type { RichDoc } from './model';
 
@@ -600,4 +602,78 @@ it('stamps data-align on a centered attachment figure', () => {
     'data-align',
     'center',
   );
+});
+
+describe('renderDoc per-block memoization', () => {
+  // renderDoc returns the array of top-level block elements; cast for ref checks.
+  const blockEls = (doc: RichDoc, opts?: RenderDocOptions): ReactElement[] =>
+    renderDoc(doc, opts) as unknown as ReactElement[];
+
+  it('returns the SAME element reference for an unchanged block across renders (cache hit)', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('paragraph', 'one', { id: 'p1' }),
+        createBlock('heading', 'two', { level: 2, id: 'h1' }),
+      ],
+    };
+    const a = blockEls(doc);
+    const b = blockEls(doc); // same doc → same block refs → same opts → cache hit
+    expect(a[0]).toBe(b[0]);
+    expect(a[1]).toBe(b[1]);
+  });
+
+  it('rebuilds only the changed block; an unchanged sibling keeps its element reference', () => {
+    const p1 = createBlock('paragraph', 'one', { id: 'p1' });
+    const p2 = createBlock('paragraph', 'two', { id: 'p2' });
+    const out1 = blockEls({ blocks: [p1, p2] });
+
+    // Edit p1 → a NEW object; p2 keeps its reference (immutable-engine invariant).
+    const p1b = createBlock('paragraph', 'one-edited', { id: 'p1' });
+    const out2 = blockEls({ blocks: [p1b, p2] });
+
+    expect(out2[0]).not.toBe(out1[0]); // changed block → new element
+    expect(out2[1]).toBe(out1[1]); // unchanged sibling → same element (cache hit)
+  });
+
+  it('caches the COMPLETE top-level element including its React key', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'x', { id: 'pk' })] };
+    const el = blockEls(doc)[0];
+    expect(el.key).toBe('pk'); // the cached element carries its key
+    expect(blockEls(doc)[0]).toBe(el); // and the same keyed instance is reused
+  });
+
+  it('a different renderLink identity invalidates the cache (options are part of the key)', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'x', { id: 'p1' })] };
+    const a = blockEls(doc, { renderLink: (_l, def) => def });
+    const b = blockEls(doc, { renderLink: (_l, def) => def }); // different fn identity
+    expect(a[0]).not.toBe(b[0]);
+  });
+
+  it('a different renderMention identity invalidates the cache', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'x', { id: 'p1' })] };
+    const a = blockEls(doc, { renderMention: (_m, def) => def });
+    const b = blockEls(doc, { renderMention: (_m, def) => def }); // different fn identity
+    expect(a[0]).not.toBe(b[0]);
+  });
+
+  it('the editable flag is part of the cache key', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'x', { id: 'p1' })] };
+    const ro = blockEls(doc);
+    const ed = blockEls(doc, { editable: true });
+    expect(ro[0]).not.toBe(ed[0]);
+  });
+
+  it('does NOT cache list items: a sibling depth change rebuilds the list with correct nesting', () => {
+    // `c` keeps its reference across both docs, but its nesting changes when `b`'s
+    // depth changes — proving the list path is rebuilt every render, never reused.
+    const a = createBlock('bullet_item', 'a', { id: 'l1', depth: 0 });
+    const c = createBlock('bullet_item', 'c', { id: 'l3', depth: 1 });
+
+    const b1 = createBlock('bullet_item', 'b', { id: 'l2', depth: 1 });
+    expect(html({ blocks: [a, b1, c] })).toBe('<ul><li>a<ul><li>b</li><li>c</li></ul></li></ul>');
+
+    // Change ONLY b's depth (new b object); a and c keep their references.
+    const b2 = createBlock('bullet_item', 'b', { id: 'l2', depth: 0 });
+    expect(html({ blocks: [a, b2, c] })).toBe('<ul><li>a</li><li>b<ul><li>c</li></ul></li></ul>');
+  });
 });
