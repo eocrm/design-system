@@ -31,17 +31,6 @@ export function findBlockIndex(doc: RichDoc, blockId: string): number {
   return doc.blocks.findIndex((b) => b.id === blockId);
 }
 
-/**
- * Clamp `point.offset` to the valid range `[0, blockLength]` for the block.
- * Returns `point` unchanged if the block is not found in `doc`.
- */
-export function clampPoint(doc: RichDoc, point: Point): Point {
-  const idx = findBlockIndex(doc, point.blockId);
-  if (idx === -1) return point;
-  const len = blockLength(doc.blocks[idx]);
-  return { blockId: point.blockId, offset: Math.max(0, Math.min(point.offset, len)) };
-}
-
 /** Document order: -1 if a before b, 1 if after, 0 if equal. */
 export function comparePoints(doc: RichDoc, a: Point, b: Point): -1 | 0 | 1 {
   if (a.blockId === b.blockId) {

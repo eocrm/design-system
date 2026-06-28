@@ -925,19 +925,31 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       // Scoped to the no-block case so block-targeted hovers stay on the cheap
       // `mouseover` path; `mousemove` (not `mouseover`) is needed because sliding
       // within the column fires no new `mouseover`.
+      // blockAtPointerY is an O(blocks) getBoundingClientRect scan, so resolve the
+      // gutter-column hover at most once per animation frame: capture the latest move
+      // on every event, but coalesce the actual resolution into a single rAF.
+      let moveRaf = 0;
+      let lastMove: { clientY: number; target: EventTarget | null } | null = null;
       const onMove = (e: MouseEvent) => {
         if (blockMenuOpenRef.current || draggingRef.current) return;
-        const root = rootRef.current;
-        if (!root) return;
-        // Only the editable's OWN area (its reserved left column / padding). The gutter
-        // overlay is a sibling of the editable, not a descendant, so this skips it —
-        // its buttons stay alive via onOver's leave-unchanged path, and we never fight
-        // the controls the pointer is aiming for.
-        const target = e.target as Node;
-        if (!root.contains(target)) return;
-        if (blockIdFromNode(target)) return; // a real block hover — onOver has it
-        const id = blockAtPointerY(root, e.clientY);
-        if (id) setHoverBlockId(id);
+        // capture the latest move; resolve at most once per frame
+        lastMove = { clientY: e.clientY, target: e.target };
+        if (moveRaf) return;
+        moveRaf = requestAnimationFrame(() => {
+          moveRaf = 0;
+          const m = lastMove;
+          if (!m) return;
+          const root = rootRef.current;
+          if (!root) return;
+          // Only the editable's OWN area (its reserved left column / padding). The gutter
+          // overlay is a sibling of the editable, not a descendant, so this skips it —
+          // its buttons stay alive via onOver's leave-unchanged path, and we never fight
+          // the controls the pointer is aiming for.
+          if (!root.contains(m.target as Node)) return;
+          if (blockIdFromNode(m.target as Node)) return; // a real block hover — onOver has it
+          const id = blockAtPointerY(root, m.clientY);
+          if (id) setHoverBlockId(id);
+        });
       };
       const onLeave = () => {
         // Keep the active block while the menu is open or a drag is mid-flight.
@@ -951,6 +963,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         shell.removeEventListener('mouseover', onOver);
         shell.removeEventListener('mousemove', onMove);
         shell.removeEventListener('mouseleave', onLeave);
+        if (moveRaf) cancelAnimationFrame(moveRaf);
       };
     }, [controlsOn, blockIdFromNode, blockAtPointerY]);
 
@@ -1164,26 +1177,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (type === 'link' || type === 'mention' || type === 'textColor' || type === 'bgColor')
           return;
         const root = rootRef.current;
-        const range = (root ? readSelection(root) : null) ?? selection;
+        // lastSelectionRef = last non-null selection; survives a toolbar popover taking focus
+        const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
         if (range) stageOrToggleMark(range, { type });
       },
-      [selection, stageOrToggleMark],
+      [stageOrToggleMark],
     );
     const onToolbarSetBlock = useCallback(
       (choice: BlockChoice) => {
         const root = rootRef.current;
-        const range = (root ? readSelection(root) : null) ?? selection;
+        const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
         if (range) commit(runSetBlock(value, range, choice));
       },
-      [value, selection, commit],
+      [value, commit],
     );
     const onToolbarToggleList = useCallback(
       (listType: 'bullet_item' | 'ordered_item') => {
         const root = rootRef.current;
-        const range = (root ? readSelection(root) : null) ?? selection;
+        const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
         if (range) commit(runToggleList(value, range, listType));
       },
-      [value, selection, commit],
+      [value, commit],
     );
 
     const onBlockInsertBelow = useCallback(
