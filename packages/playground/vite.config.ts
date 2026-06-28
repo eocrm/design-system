@@ -1,9 +1,31 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
+import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+// @ts-expect-error — plain ESM helper, no type declarations needed for config use.
+import { extractProps } from './scripts/extract-props.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Regenerate src/lib/props.manifest.json from the library's TypeScript + JSDoc
+// at the start of every dev server and production build, so the demo "API"
+// tables can never drift from the shipped component props. The committed copy
+// exists only so a fresh checkout type-checks before the first build.
+function propsManifestPlugin(): Plugin {
+  const outPath = path.resolve(__dirname, 'src/lib/props.manifest.json');
+  return {
+    name: 'props-manifest',
+    buildStart() {
+      try {
+        writeFileSync(outPath, JSON.stringify(extractProps(), null, 2) + '\n');
+      } catch (err) {
+        // Non-fatal: fall back to the committed manifest if extraction fails.
+        console.warn('[props-manifest] regeneration failed, using committed copy:', err);
+      }
+    },
+  };
+}
 
 // GitHub Pages serves at /<repo-name>/, not at /. The deploy workflow sets
 // VITE_BASE_PATH to "/<repo-name>/" so asset URLs resolve correctly. Local
@@ -12,7 +34,7 @@ const base = process.env.VITE_BASE_PATH ?? '/';
 
 export default defineConfig({
   base,
-  plugins: [react()],
+  plugins: [propsManifestPlugin(), react()],
   resolve: {
     alias: {
       // Sibling-workspace alias used only by demo pages for `?raw` source-display

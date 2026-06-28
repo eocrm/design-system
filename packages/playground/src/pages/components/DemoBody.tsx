@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { ChevronDown, Code2 } from 'lucide-react';
 import { Card, Tabs } from '@eocrm/design-system';
 import { CodeBlock } from './CodeBlock';
+import { ComponentApi } from './ComponentApi';
 import { CrossLinks } from '../shared/CrossLinks';
 import type { ComponentName } from '../mockups/registry';
 import type { ComponentFile } from '../../lib/componentFiles';
@@ -55,6 +56,7 @@ export function DemoBody({ files, componentName, children }: DemoBodyProps) {
       <h2 className={styles.sectionTitle}>Examples</h2>
       <div className={styles.examplesGrid}>{children}</div>
 
+      {componentName && <ComponentApi name={componentName} />}
       {componentName && <CrossLinks kind="component" name={componentName} />}
     </>
   );

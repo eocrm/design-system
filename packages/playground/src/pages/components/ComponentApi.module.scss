@@ -1,0 +1,66 @@
+.api {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+}
+
+// Horizontal scroll on narrow viewports rather than squashing the columns.
+.tableWrap {
+  overflow-x: auto;
+}
+
+.propName {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.dash {
+  color: var(--color-fg-subtle);
+}
+
+.description {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 60ch;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-fg-muted);
+
+  p {
+    margin: 0;
+  }
+}
+
+.list {
+  margin: 0;
+  padding-left: var(--space-4);
+
+  li {
+    margin: 0;
+  }
+}
+
+.inlineCode {
+  padding: 0 var(--space-1);
+  font-family: var(--font-family-mono);
+  font-size: 0.9em;
+  color: var(--color-fg);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+}

@@ -48,11 +48,19 @@ export function ButtonDemo() {
       <Example
         title="Variants"
         description="Five visual variants. Use primary for the page's main action, secondary for supporting actions, ghost for tertiary actions in dense UIs, danger for destructive operations. The success variant is a transient confirmation state — see the next example."
-        code={`<Button variant="primary">Primary</Button>
-<Button variant="secondary">Secondary</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="danger">Danger</Button>
-<Button variant="success">Success</Button>`}
+        code={`import { Button, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm">
+      <Button variant="primary">Primary</Button>
+      <Button variant="secondary">Secondary</Button>
+      <Button variant="ghost">Ghost</Button>
+      <Button variant="danger">Danger</Button>
+      <Button variant="success">Success</Button>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm">
           <Button variant="primary">Primary</Button>
@@ -66,7 +74,11 @@ export function ButtonDemo() {
       <Example
         title="Success flash (transient confirmation)"
         description="Use the success variant for ~1.5s after an action resolves, then flip back. The timer lives in the consumer, not in Button — this keeps Button stateless and lets you pick any duration. Click Save to try it."
-        code={`function SaveWithSuccessFlash() {
+        code={`import { useEffect, useRef, useState } from 'react';
+import { Check } from 'lucide-react';
+import { Button, Cluster } from '@eocrm/design-system';
+
+export function SaveWithSuccessFlash() {
   const [saved, setSaved] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -86,7 +98,13 @@ export function ButtonDemo() {
   return (
     <Cluster gap="sm">
       <Button variant={saved ? 'success' : 'primary'} onClick={handleClick}>
-        {saved ? <><Check size={14} /> Saved!</> : 'Save'}
+        {saved ? (
+          <>
+            <Check size={14} /> Saved!
+          </>
+        ) : (
+          'Save'
+        )}
       </Button>
     </Cluster>
   );
@@ -98,10 +116,18 @@ export function ButtonDemo() {
       <Example
         title="Sizes"
         description="Four sizes. xs for icon-only or very dense inline actions, sm for dense toolbars/tables, md (default) for most contexts, lg for emphasis."
-        code={`<Button size="xs">Extra small</Button>
-<Button size="sm">Small</Button>
-<Button size="md">Medium</Button>
-<Button size="lg">Large</Button>`}
+        code={`import { Button, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm" align="center">
+      <Button size="xs">Extra small</Button>
+      <Button size="sm">Small</Button>
+      <Button size="md">Medium</Button>
+      <Button size="lg">Large</Button>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm" align="center">
           <Button size="xs">Extra small</Button>
@@ -114,15 +140,24 @@ export function ButtonDemo() {
       <Example
         title="Icon-only (square)"
         description="Pass iconOnly for a square shape that tracks the size's height — 20×20 at xs, 32×32 at md. Always pair iconOnly with aria-label."
-        code={`<Button size="xs" variant="ghost" iconOnly aria-label="Remove">
-  <X size={12} />
-</Button>
-<Button size="xs" variant="secondary" iconOnly aria-label="Edit">
-  <Pencil size={12} />
-</Button>
-<Button size="md" variant="secondary" iconOnly aria-label="Search">
-  <Search size={16} />
-</Button>`}
+        code={`import { Pencil, Search, X } from 'lucide-react';
+import { Button, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm" align="center">
+      <Button size="xs" variant="ghost" iconOnly aria-label="Remove">
+        <X size={12} />
+      </Button>
+      <Button size="xs" variant="secondary" iconOnly aria-label="Edit">
+        <Pencil size={12} />
+      </Button>
+      <Button size="md" variant="secondary" iconOnly aria-label="Search">
+        <Search size={16} />
+      </Button>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm" align="center">
           <Button size="xs" variant="ghost" iconOnly aria-label="Remove">
@@ -140,9 +175,24 @@ export function ButtonDemo() {
       <Example
         title="With icons"
         description="Pass icons (from lucide-react or any source) as children. The button handles spacing via gap."
-        code={`<Button><Plus size={14} /> Add contact</Button>
-<Button variant="secondary"><Search size={14} /> Search</Button>
-<Button variant="danger"><Trash2 size={14} /> Delete</Button>`}
+        code={`import { Plus, Search, Trash2 } from 'lucide-react';
+import { Button, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm">
+      <Button>
+        <Plus size={14} /> Add contact
+      </Button>
+      <Button variant="secondary">
+        <Search size={14} /> Search
+      </Button>
+      <Button variant="danger">
+        <Trash2 size={14} /> Delete
+      </Button>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm">
           <Button>
@@ -160,11 +210,25 @@ export function ButtonDemo() {
       <Example
         title="Disabled"
         description="Native disabled attribute. Visually muted, pointer-events disabled."
-        code={`<Button disabled>Primary</Button>
-<Button variant="secondary" disabled>Secondary</Button>
-<Button size="xs" variant="ghost" iconOnly disabled aria-label="Remove">
-  <X size={12} />
-</Button>`}
+        code={`import { X } from 'lucide-react';
+import { Button, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm" align="center">
+      <Button disabled>Primary</Button>
+      <Button variant="secondary" disabled>
+        Secondary
+      </Button>
+      <Button variant="danger" disabled>
+        Danger
+      </Button>
+      <Button size="xs" variant="ghost" iconOnly disabled aria-label="Remove">
+        <X size={12} />
+      </Button>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm" align="center">
           <Button disabled>Primary</Button>
