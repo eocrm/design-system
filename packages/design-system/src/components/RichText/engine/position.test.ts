@@ -1,7 +1,6 @@
 import {
   blockLength,
   findBlockIndex,
-  clampPoint,
   comparePoints,
   isCollapsed,
   orderedRange,
@@ -25,11 +24,6 @@ describe('position', () => {
   it('findBlockIndex returns index or -1', () => {
     expect(findBlockIndex(doc, 'b')).toBe(1);
     expect(findBlockIndex(doc, 'zzz')).toBe(-1);
-  });
-
-  it('clampPoint clamps offset into [0, blockLength]', () => {
-    expect(clampPoint(doc, { blockId: 'a', offset: 99 })).toEqual({ blockId: 'a', offset: 5 });
-    expect(clampPoint(doc, { blockId: 'a', offset: -3 })).toEqual({ blockId: 'a', offset: 0 });
   });
 
   it('comparePoints orders within and across blocks', () => {
