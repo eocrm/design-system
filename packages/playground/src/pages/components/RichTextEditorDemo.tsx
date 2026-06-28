@@ -60,8 +60,12 @@ export function RichTextEditorDemo() {
   const [autoDoc, setAutoDoc] = useState<RichDoc>(() => docFromText(''));
   const [linkDoc, setLinkDoc] = useState<RichDoc>(docFromText('Read the docs and visit our site.'));
   const [importDoc, setImportDoc] = useState<RichDoc>(() =>
-    fromMarkdown(
-      '# Imported\n\nThis editor was **seeded** from Markdown — paste rich HTML to import more.',
+    // Seeded via fromHtml so it carries an embedded image — this editor has a toolbar
+    // but NO blockControls, demonstrating that a pasted/imported image is still
+    // resizable: hover it and drag the corner handle.
+    fromHtml(
+      '<h1>Imported</h1><p>This editor was <strong>seeded</strong> from HTML — paste rich HTML to import more. Hover the image and drag its corner to resize (no block controls needed).</p>' +
+        `<img src="${sampleEmbedSrc}" width="280" alt="Imported sample image" />`,
     ),
   );
   const [blockDoc, setBlockDoc] = useState<RichDoc>(() =>
@@ -207,7 +211,7 @@ export function RichTextEditorDemo() {
 
       <Example
         title="Import (HTML / Markdown) + rich paste"
-        description="Seed the editor from stored HTML or Markdown with fromHtml / fromMarkdown, and paste rich HTML (from the web, Word, Google Docs) straight into the editor — it becomes formatted content, not plain text."
+        description="Seed the editor from stored HTML or Markdown with fromHtml / fromMarkdown, and paste rich HTML (from the web, Word, Google Docs) straight into the editor — it becomes formatted content, not plain text. This editor has a toolbar but no blockControls, yet the imported image is still resizable: hover it and drag the bottom-right corner handle."
         code={`import { fromMarkdown } from '@eocrm/design-system'; // (fromHtml too — same API)
 const [doc, setDoc] = useState(() => fromMarkdown('# Imported\\n\\n- one\\n- two'));
 <RichTextEditor value={doc} onChange={setDoc} toolbar />`}

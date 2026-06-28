@@ -16,7 +16,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 export interface RichTextImageResizerProps {
   /** The editor shell element ref — to locate the image and anchor the handle. */
   rootRef: RefObject<HTMLElement | null>;
-  /** Id of the active (ready, previewable) image attachment block. */
+  /** Id of the hovered (ready, previewable) image attachment block. */
   blockId: string;
   /**
    * A signature that changes whenever block order or the image's width shifts, so
@@ -32,12 +32,21 @@ export interface RichTextImageResizerProps {
    * changes while resizing (mirrors RichTextBlockControls' onDraggingChange).
    */
   onDraggingChange?: (dragging: boolean) => void;
+  /**
+   * Hide the handle WITHOUT unmounting it — used while a block-controls reorder
+   * drag is in flight (the handle can't track the block's in-place reflow, so it
+   * hides, then reappears at the dropped position). The component stays mounted so
+   * its drag-end unmount cleanup doesn't fire `onDraggingChange(false)` and clobber
+   * the editor's block-drag dragging flag.
+   */
+  hidden?: boolean;
 }
 
 /**
  * Internal: the bottom-right resize handle for a ready image attachment. Rendered
- * by `<RichTextEditor>` when the active block is a previewable image; not exported
- * from the package.
+ * by `<RichTextEditor>` when a previewable image is hovered (independent of
+ * blockControls/upload — see the editor's image-hover tracking); not exported from
+ * the package.
  */
 export const RichTextImageResizer = memo(function RichTextImageResizer({
   rootRef,
@@ -46,6 +55,7 @@ export const RichTextImageResizer = memo(function RichTextImageResizer({
   maxWidth,
   onResize,
   onDraggingChange,
+  hidden,
 }: RichTextImageResizerProps) {
   const t = useTranslation();
   // Drag origin, captured on pointerdown. null when not dragging.
@@ -99,13 +109,18 @@ export const RichTextImageResizer = memo(function RichTextImageResizer({
     reportDragging(false);
   };
 
-  if (!box) return null;
+  // Early return is AFTER every hook above so hook order stays stable when
+  // `hidden` toggles. The component stays MOUNTED while hidden (the editor keeps
+  // rendering the element) — only its render bails — so the unmount cleanup in
+  // useDraggingReporter never fires mid-reorder.
+  if (hidden || !box) return null;
 
   return (
     <div
       className={styles.resizeHandle}
       style={{ top: box.top, left: box.left }}
       contentEditable={false}
+      data-rte-resize-handle=""
       title={t('richTextEditor.attachmentResize')}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
