@@ -379,6 +379,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
 
     const controlsOn = blockControls && !readOnly;
+    // The same gate the mention menu uses — drives both `useMention`'s `enabled`
+    // and the consolidated selectionchange listener's mention fan-out below.
+    const mentionsEnabled = !!mentions && !readOnly;
     const shellRef = useRef<HTMLDivElement | null>(null);
     // Active block = hover wins, else the caret block (keyboard / after the mouse
     // leaves). Split so clearing hover on editor-leave never wipes the caret target.
@@ -552,7 +555,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
 
     const mention = useMention({
-      enabled: !!mentions && !readOnly,
+      enabled: mentionsEnabled,
       rootRef,
       doc: value,
       trigger: mentions?.trigger ?? '@',
@@ -679,6 +682,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (value !== historyRef.current.present.doc) {
         historyRef.current = historyReset({ doc: value, selection: null });
         syncHistoryFlags();
+        // A programmatic value swap fires no user `selectionchange`, so the
+        // consolidated listener below never re-runs the mention menu for it.
+        // Recompute here so an external swap updates/closes the menu. Internal
+        // commits keep `present.doc === value`, so they DON'T reach this branch —
+        // no per-keystroke double-recompute is reintroduced.
+        if (mentionsEnabled) {
+          const r = rootRef.current;
+          mention.recompute(r ? readSelection(r) : null);
+        }
       }
       const root = rootRef.current;
       const pending = pendingSelectionRef.current;
@@ -686,7 +698,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         writeSelection(root, pending);
         pendingSelectionRef.current = null;
       }
-    }, [value, syncHistoryFlags]);
+    }, [value, syncHistoryFlags, mentionsEnabled, mention.recompute]);
 
     // Native beforeinput (React's onBeforeInput is NOT the modern beforeinput —
     // it's a legacy textInput polyfill that carries no `inputType`).
@@ -871,34 +883,63 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (autoFocus) rootRef.current?.focus();
     }, [autoFocus]);
 
-    // Track the selection so the toolbar can reflect active marks + block type.
-    // Only subscribed when the toolbar needs it (and the editor is editable).
+    // ONE selectionchange subscription shared by the toolbar, block-controls caret
+    // tracking, and the mention menu. A caret move (incl. every keystroke, which
+    // moves the caret) reads the model selection ONCE here and fans it out, instead
+    // of three independent listeners each re-walking the DOM via their own
+    // readSelection. Only subscribed when at least one consumer needs it.
     useEffect(() => {
-      if (!toolbar || readOnly) return;
-      const root = rootRef.current;
-      if (!root) return;
+      const toolbarOn = toolbar && !readOnly;
+      if (!toolbarOn && !controlsOn && !mentionsEnabled) return;
       const onSelChange = () => {
-        const sel = readSelection(root);
-        setSelection(sel);
-        if (sel != null) lastSelectionRef.current = sel;
-        // Abandon pending marks if the caret left its staged point (the user
-        // moved the caret or made a selection instead of typing there).
-        const pend = pendingMarksRef.current;
-        const stagedAt = pendingAtRef.current;
-        const sameSpot =
-          sel != null &&
-          isCollapsed(sel) &&
-          stagedAt != null &&
-          sel.anchor.blockId === stagedAt.blockId &&
-          sel.anchor.offset === stagedAt.offset;
-        if (pend && !sameSpot) {
-          setPendingMarks(null);
-          pendingAtRef.current = null;
+        const root = rootRef.current;
+        const sel = root ? readSelection(root) : null;
+        if (toolbarOn) {
+          setSelection(sel);
+          if (sel != null) lastSelectionRef.current = sel;
+          // Abandon pending marks if the caret left its staged point (the user
+          // moved the caret or made a selection instead of typing there).
+          const pend = pendingMarksRef.current;
+          const stagedAt = pendingAtRef.current;
+          const sameSpot =
+            sel != null &&
+            isCollapsed(sel) &&
+            stagedAt != null &&
+            sel.anchor.blockId === stagedAt.blockId &&
+            sel.anchor.offset === stagedAt.offset;
+          if (pend && !sameSpot) {
+            setPendingMarks(null);
+            pendingAtRef.current = null;
+          }
         }
+        if (controlsOn) {
+          // Caret → active block (keyboard users get a gutter target too). Reads the
+          // NATIVE selection's anchorNode directly (not the model `sel` above): a
+          // root-level caret beside a void block resolves to no data-block-id here,
+          // leaving the active block unchanged — the original behavior, preserved.
+          const domSel = root?.ownerDocument.getSelection();
+          if (domSel && root && domSel.anchorNode && root.contains(domSel.anchorNode)) {
+            const id = blockIdFromNode(domSel.anchorNode);
+            if (id) setCaretBlockId(id);
+          }
+        }
+        if (mentionsEnabled) mention.recompute(sel);
       };
       document.addEventListener('selectionchange', onSelChange);
       return () => document.removeEventListener('selectionchange', onSelChange);
-    }, [toolbar, readOnly]);
+    }, [toolbar, readOnly, controlsOn, mentionsEnabled, blockIdFromNode, mention.recompute]);
+
+    // Initial mention computation: on mount, when mentions toggle on, or when the
+    // trigger changes. The selectionchange listener above covers caret moves AND
+    // typing (a typed char commits → writeSelection re-sets the DOM selection →
+    // selectionchange fires), so this deliberately omits `value` from its deps —
+    // depending on it would recompute a second time per keystroke, the very
+    // redundancy this consolidation removes.
+    useEffect(() => {
+      if (!mentionsEnabled) return;
+      const root = rootRef.current;
+      mention.recompute(root ? readSelection(root) : null);
+    }, [mentionsEnabled, mentions?.trigger, mention.recompute]);
 
     // Hover tracking (mouse). Listens on the SHELL (which wraps both the editable and
     // the gutter) so reaching from a block onto its controls keeps them alive:
@@ -966,21 +1007,6 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (moveRaf) cancelAnimationFrame(moveRaf);
       };
     }, [controlsOn, blockIdFromNode, blockAtPointerY]);
-
-    // Caret tracking → active block (keyboard users get a gutter target too).
-    useEffect(() => {
-      if (!controlsOn) return;
-      const onSel = () => {
-        const root = rootRef.current;
-        const sel = root?.ownerDocument.getSelection();
-        if (sel && root && sel.anchorNode && root.contains(sel.anchorNode)) {
-          const id = blockIdFromNode(sel.anchorNode);
-          if (id) setCaretBlockId(id);
-        }
-      };
-      document.addEventListener('selectionchange', onSel);
-      return () => document.removeEventListener('selectionchange', onSel);
-    }, [controlsOn, blockIdFromNode]);
 
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLDivElement>) => {

@@ -2,11 +2,11 @@
 // Owns context detection (driven by the editor's selection/content cycle), async
 // querying with stale-drop, and the active-index for keyboard navigation. DOM
 // glue only; the pure decision lives in mentionContext.ts.
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import type { RichDoc } from '../RichText/engine/model';
+import { useCallback, useId, useRef, useState } from 'react';
+import type { RichDoc, Range } from '../RichText/engine/model';
 import { runsText } from '../RichText/engine/inlines';
 import { isCollapsed } from '../RichText/engine/position';
-import { readSelection, selectionRect, type Rect } from './selection';
+import { selectionRect, type Rect } from './selection';
 import { getMentionContext } from './mentionContext';
 import type { MentionItem } from './mentions';
 
@@ -40,6 +40,13 @@ export interface UseMentionResult {
   listboxId: string;
   activeOptionId: string | undefined;
   getOptionId: (index: number) => string;
+  /**
+   * Recompute the menu from a model selection the EDITOR already read. The hook no
+   * longer owns a `selectionchange` listener — the editor drives this from its
+   * single consolidated subscription, passing the selection it read once. A
+   * `null` / non-collapsed / out-of-trigger-context selection closes the menu.
+   */
+  recompute: (sel: Range | null) => void;
   setActiveIndex: (index: number) => void;
   move: (delta: 1 | -1) => void;
   selectIndex: (index: number) => void;
@@ -116,68 +123,57 @@ export function useMention(params: UseMentionParams): UseMentionResult {
     [], // stable: reads onQueryRef.current
   );
 
-  // Stable recompute — reads all mutable values via refs, never recreated.
-  const recompute = useCallback(() => {
-    const root = rootRef.current;
-    const qFn = onQueryRef.current;
-    if (!enabledRef.current || !root || !qFn) {
-      if (openRef.current) close();
-      return;
-    }
-    const sel = readSelection(root);
-    if (!sel || !isCollapsed(sel)) {
-      if (openRef.current) close();
-      return;
-    }
-    const currentDoc = docRef.current;
-    const block = currentDoc.blocks.find((b) => b.id === sel.anchor.blockId);
-    if (!block) {
-      if (openRef.current) close();
-      return;
-    }
-    const text = runsText(block.inlines);
-    const trig = triggerRef.current;
-    const ctx = getMentionContext(text, sel.anchor.offset, trig);
-    if (!ctx) {
-      if (openRef.current) close();
-      return;
-    }
-    ctxRef.current = {
-      blockId: block.id,
-      from: ctx.triggerOffset,
-      to: ctx.triggerOffset + trig.length + ctx.query.length,
-    };
-    // Only update anchorRect state if the value changed (prevents render loops).
-    const newRect = selectionRect(root);
-    if (!rectEqual(anchorRectRef.current, newRect)) {
-      anchorRectRef.current = newRect;
-      setAnchorRect(newRect);
-    }
-    // Only flip open state if not already open (prevents render loops).
-    if (!openRef.current) {
-      openRef.current = true;
-      setOpen(true);
-    }
-    if (ctx.query !== lastQuery.current) {
-      lastQuery.current = ctx.query;
-      runQuery(ctx.query);
-    }
-  }, [rootRef, close, runQuery]); // stable: reads props via refs
-
-  // Register selectionchange listener; re-register only if enabled changes.
-  useEffect(() => {
-    if (!enabled) return;
-    const handler = () => recompute();
-    document.addEventListener('selectionchange', handler);
-    recompute();
-    return () => document.removeEventListener('selectionchange', handler);
-  }, [enabled, recompute]);
-
-  // Re-run recompute when doc or trigger changes (typing updates the query).
-  useEffect(() => {
-    if (!enabled) return;
-    recompute();
-  }, [enabled, doc, trigger, recompute]);
+  // Stable recompute — reads all mutable values via refs, never recreated. The
+  // editor passes the model selection it already read from its single
+  // `selectionchange` listener, so the menu doesn't re-walk the DOM here.
+  const recompute = useCallback(
+    (sel: Range | null) => {
+      const root = rootRef.current;
+      const qFn = onQueryRef.current;
+      if (!enabledRef.current || !root || !qFn) {
+        if (openRef.current) close();
+        return;
+      }
+      if (!sel || !isCollapsed(sel)) {
+        if (openRef.current) close();
+        return;
+      }
+      const currentDoc = docRef.current;
+      const block = currentDoc.blocks.find((b) => b.id === sel.anchor.blockId);
+      if (!block) {
+        if (openRef.current) close();
+        return;
+      }
+      const text = runsText(block.inlines);
+      const trig = triggerRef.current;
+      const ctx = getMentionContext(text, sel.anchor.offset, trig);
+      if (!ctx) {
+        if (openRef.current) close();
+        return;
+      }
+      ctxRef.current = {
+        blockId: block.id,
+        from: ctx.triggerOffset,
+        to: ctx.triggerOffset + trig.length + ctx.query.length,
+      };
+      // Only update anchorRect state if the value changed (prevents render loops).
+      const newRect = selectionRect(root);
+      if (!rectEqual(anchorRectRef.current, newRect)) {
+        anchorRectRef.current = newRect;
+        setAnchorRect(newRect);
+      }
+      // Only flip open state if not already open (prevents render loops).
+      if (!openRef.current) {
+        openRef.current = true;
+        setOpen(true);
+      }
+      if (ctx.query !== lastQuery.current) {
+        lastQuery.current = ctx.query;
+        runQuery(ctx.query);
+      }
+    },
+    [rootRef, close, runQuery], // stable: reads props via refs
+  );
 
   const move = useCallback(
     (delta: 1 | -1) => {
@@ -220,6 +216,7 @@ export function useMention(params: UseMentionParams): UseMentionResult {
     listboxId,
     activeOptionId: open && items.length > 0 ? getOptionId(activeIndex) : undefined,
     getOptionId,
+    recompute,
     setActiveIndex,
     move,
     selectIndex,
