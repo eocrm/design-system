@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Badge, Code, Table } from '@eocrm/design-system';
 import propsManifest from '../../lib/props.manifest.json';
 import styles from './ComponentApi.module.scss';
@@ -11,7 +11,10 @@ interface PropEntry {
   description: string;
 }
 
-const manifest = propsManifest as Record<string, { props: PropEntry[] }>;
+const manifest = propsManifest as {
+  components: Record<string, { props: PropEntry[] }>;
+  types: Record<string, string>;
+};
 
 /**
  * Auto-generated "API" reference rendered at the bottom of every component demo.
@@ -19,9 +22,23 @@ const manifest = propsManifest as Record<string, { props: PropEntry[] }>;
  * TypeScript + JSDoc by `scripts/extract-props.mjs` and regenerated on every
  * dev/build — so the table is always in sync with the shipped props. Components
  * with no public props (e.g. imperative APIs like Toast) render nothing.
+ *
+ * Type aliases in the Type column (e.g. `DividerOrientation`) are clickable: they
+ * toggle to their expanded definition (`"horizontal" | "vertical"`) and back.
  */
 export function ComponentApi({ name }: { name: string }) {
-  const entry = manifest[name];
+  // Alias names the reader has expanded; clicking any chip toggles every
+  // occurrence of that alias across the table for consistency.
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
+  const toggleType = (alias: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(alias)) next.delete(alias);
+      else next.add(alias);
+      return next;
+    });
+
+  const entry = manifest.components[name];
   if (!entry || entry.props.length === 0) return null;
 
   return (
@@ -57,7 +74,7 @@ export function ComponentApi({ name }: { name: string }) {
                   </span>
                 </Table.Cell>
                 <Table.Cell>
-                  <Code tone="accent">{prop.type}</Code>
+                  <TypeText type={prop.type} expanded={expanded} onToggle={toggleType} />
                 </Table.Cell>
                 <Table.Cell>
                   {prop.default ? (
@@ -75,6 +92,46 @@ export function ComponentApi({ name }: { name: string }) {
         </Table>
       </div>
     </section>
+  );
+}
+
+/**
+ * Renders a prop's type, turning any public type alias (a key in the manifest's
+ * `types` map) into a button that toggles between the alias name and its expanded
+ * definition. Non-alias text (primitives, `|`, generics) renders verbatim.
+ */
+function TypeText({
+  type,
+  expanded,
+  onToggle,
+}: {
+  type: string;
+  expanded: ReadonlySet<string>;
+  onToggle: (alias: string) => void;
+}) {
+  // Split on identifiers so each captured identifier is its own array slot; the
+  // separators (spaces, `|`, `<>`, quotes, …) come through as the in-between slots.
+  const parts = type.split(/([A-Za-z_$][\w$]*)/g);
+  return (
+    <Code tone="accent">
+      {parts.map((part, i) => {
+        const expansion = manifest.types[part];
+        if (!expansion) return <Fragment key={i}>{part}</Fragment>;
+        const isOpen = expanded.has(part);
+        return (
+          <button
+            key={i}
+            type="button"
+            className={styles.typeAlias}
+            onClick={() => onToggle(part)}
+            title={isOpen ? `Collapse ${part}` : `Expand ${part}`}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? expansion : part}
+          </button>
+        );
+      })}
+    </Code>
   );
 }
 
