@@ -371,6 +371,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
 
     const controlsOn = blockControls && !readOnly;
+    // Whether the stable `.shell` wrapper is rendered (a toolbar mode is active or
+    // block controls need the anchor). The image resize handle anchors into the
+    // shell, so its hover tracking + element are gated on this. Declared up here
+    // (vs. near the shell render) so the image-hover effect below can depend on it.
+    const usesShell = toolbar === true || autoToolbar || controlsOn;
     // The same gate the mention menu uses — drives both `useMention`'s `enabled`
     // and the consolidated selectionchange listener's mention fan-out below.
     const mentionsEnabled = !!mentions && !readOnly;
@@ -391,10 +396,26 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // progress the active block must not change (it IS the block being dragged), so
     // the hover handlers below read this ref and bail — mirroring blockMenuOpenRef.
     const draggingRef = useRef(false);
-    // Stable setter for draggingRef — passed to both overlays so their memoized
-    // shells don't re-render every keystroke on a fresh inline lambda.
+    // Stable setter for draggingRef — passed to the image resizer so its memoized
+    // shell doesn't re-render every keystroke on a fresh inline lambda. Used by the
+    // resizer's OWN drag: it sets draggingRef only (NOT blockDragging), so a resize
+    // never hides the handle mid-drag.
     const setDragging = useCallback((d: boolean) => {
       draggingRef.current = d;
+    }, []);
+    // The previewable image currently under the pointer → the resize-handle target.
+    // Tracked independently of blockControls/upload/active-block so the handle shows
+    // for ANY previewable image on hover (see the image-hover effect below).
+    const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
+    // True while a blockControls reorder drag is in flight. Hides the image resize
+    // handle (it can't follow the block's in-place reflow); it reappears at the drop.
+    const [blockDragging, setBlockDragging] = useState(false);
+    // Block-drag report (passed to RichTextBlockControls): set draggingRef so the
+    // hover/caret tracking bails AND set blockDragging so the image handle hides.
+    // Separate from setDragging (which the resizer's own drag uses) on purpose.
+    const onBlockDraggingChange = useCallback((d: boolean) => {
+      draggingRef.current = d;
+      setBlockDragging(d);
     }, []);
 
     // Resolve the [data-block-id] of the block element containing a DOM node.
@@ -406,6 +427,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         el = el.parentElement;
       }
       return null; // reached the root (or ran out of ancestors) — no block
+    }, []);
+
+    // Resolve the [data-block-id] of the previewable-image FIGURE containing a DOM
+    // node, or null. A previewable image renders `<figure data-block-id><img></figure>`;
+    // a non-preview file chip renders `<figure data-block-id><a></figure>` — so a
+    // figure that contains an <img> = a previewable image. DOM-based (no `value`
+    // dep), so it stays stable; the editor re-validates the id against the model.
+    const imageFigureIdAt = useCallback((node: Node | null): string | null => {
+      let el: HTMLElement | null =
+        node instanceof HTMLElement ? node : (node?.parentElement ?? null);
+      while (el && el !== rootRef.current) {
+        if (
+          el.tagName === 'FIGURE' &&
+          el.hasAttribute('data-block-id') &&
+          el.querySelector('img')
+        ) {
+          return el.getAttribute('data-block-id');
+        }
+        el = el.parentElement;
+      }
+      return null;
     }, []);
 
     // The block whose vertical band contains viewport-y `clientY`, or null. Used to
@@ -975,6 +1017,40 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
     }, [controlsOn, blockIdFromNode, blockAtPointerY]);
 
+    // Image-hover tracking (mouse) → drives the resize handle. Independent of the
+    // blockControls hover/caret tracking above so the handle shows for ANY
+    // previewable image, even in a toolbar-only composer (no blockControls/upload).
+    // Gated on `usesShell` because the handle anchors into the shell — without a
+    // shell there's nowhere to position it. Listens on the SHELL so reaching from
+    // the image onto the handle (a shell child, outside the editable) keeps it alive.
+    useEffect(() => {
+      if (readOnly || !usesShell) return;
+      const shell = shellRef.current;
+      if (!shell) return;
+      const onOver = (e: MouseEvent) => {
+        if (draggingRef.current) return; // don't retarget mid-drag (block OR resize)
+        const t = e.target as HTMLElement;
+        const id = imageFigureIdAt(t);
+        if (id) {
+          setHoveredImageId(id);
+          return;
+        }
+        // Over the handle itself → keep it alive (it sits at the image's corner,
+        // just outside the figure, so it wouldn't match imageFigureIdAt).
+        if (t.closest?.('[data-rte-resize-handle]')) return;
+        setHoveredImageId(null); // over text/other content → clear
+      };
+      const onLeave = () => {
+        if (!draggingRef.current) setHoveredImageId(null);
+      };
+      shell.addEventListener('mouseover', onOver);
+      shell.addEventListener('mouseleave', onLeave);
+      return () => {
+        shell.removeEventListener('mouseover', onOver);
+        shell.removeEventListener('mouseleave', onLeave);
+      };
+    }, [readOnly, usesShell, imageFigureIdAt]);
+
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLDivElement>) => {
         if (readOnly) return;
@@ -1276,13 +1352,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       uploaderRef,
     });
     // Stable resize handler for the image resizer — keeps the memoized resizer from
-    // re-rendering every keystroke on a fresh inline lambda. Guards activeBlockId so
-    // a late move after the active block clears is a no-op.
+    // re-rendering every keystroke on a fresh inline lambda. Targets the hovered
+    // image; guards hoveredImageId so a late move after the hover clears is a no-op.
     const onImageResize = useCallback(
       (w: number) => {
-        if (activeBlockId) onConfigWidth(activeBlockId, w);
+        if (hoveredImageId) onConfigWidth(hoveredImageId, w);
       },
-      [onConfigWidth, activeBlockId],
+      [onConfigWidth, hoveredImageId],
     );
 
     // Delegate clicks on the error-state attachment Retry/Remove buttons (they
@@ -1417,31 +1493,39 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onReorder={onBlockReorder}
         onConfigure={canConfigure ? onConfigOpen : undefined}
         onColor={onBlockColor}
-        onDraggingChange={setDragging}
+        onDraggingChange={onBlockDraggingChange}
       />
     ) : null;
 
-    // A bottom-right resize handle on the active image — only when it renders as a
-    // preview (a safe, fetchable src) AND the keyboard-accessible Width slider is
-    // also available (`uploadOn`, same as `canConfigure`), so the pointer-only handle
-    // never appears without its accessible fallback. The layoutKey carries the
-    // image's width so the handle re-measures and tracks the corner as it resizes.
-    const activeIsResizableImage =
-      controlsOn &&
-      uploadOn &&
-      activeBlock?.type === 'attachment' &&
-      activeBlock.status === 'ready' &&
-      attachmentIsImage(activeBlock) &&
-      !!safeHref(activeBlock.src ?? '');
+    // A bottom-right resize handle on the HOVERED previewable image — shown for any
+    // previewable image (a safe, fetchable src that renders as <img>) on hover, as
+    // long as the editor is editable and has a shell to anchor the handle in
+    // (`usesShell`). Independent of blockControls/upload/active-block: a pasted image
+    // in a toolbar-only composer gets a handle too. The keyboard-accessible Width
+    // slider remains the a11y path where blockControls+upload are configured (the
+    // Configure popover). The layoutKey carries the image's width so the handle
+    // re-measures as it resizes; `hidden` hides it during a block reorder (it can't
+    // track the in-place reflow), reappearing at the drop.
+    const resizableImage = hoveredImageId
+      ? value.blocks.find(
+          (b) =>
+            b.id === hoveredImageId &&
+            b.type === 'attachment' &&
+            b.status === 'ready' &&
+            attachmentIsImage(b) &&
+            !!safeHref(b.src ?? ''),
+        )
+      : undefined;
     const imageResizerEl =
-      activeIsResizableImage && activeBlockId ? (
+      !readOnly && usesShell && resizableImage ? (
         <RichTextImageResizer
           rootRef={shellRef}
-          blockId={activeBlockId}
-          layoutKey={`${blockOrderKey}:${activeBlock?.width ?? ''}`}
+          blockId={hoveredImageId!}
+          layoutKey={`${blockOrderKey}:${resizableImage.width ?? ''}`}
           maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
           onResize={onImageResize}
           onDraggingChange={setDragging}
+          hidden={blockDragging}
         />
       ) : null;
 
@@ -1487,9 +1571,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const overlayOpen = linkEditor != null || mention.open;
     const showToolbar =
       toolbar === true || (autoToolbar && (focused || !isEmptyDoc(value) || overlayOpen));
-    // Render the stable `.shell` whenever a toolbar mode is active (so the bar can
-    // toggle WITHOUT remounting the editable) or block controls need the anchor.
-    const usesShell = toolbar === true || autoToolbar || controlsOn;
+    // `usesShell` (the stable `.shell` gate) is declared near the top so the
+    // image-hover effect can depend on it; it's reused here for the shell render.
 
     const toolbarBar = showToolbar ? (
       <RichTextToolbar

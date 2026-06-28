@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { I18nProvider } from '../../i18n';
 import { RichTextImageResizer } from './RichTextImageResizer';
 
-function Harness({ withImg = true }: { withImg?: boolean }) {
+function Harness({ withImg = true, hidden = false }: { withImg?: boolean; hidden?: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   return (
     <I18nProvider locale="en">
@@ -12,7 +12,13 @@ function Harness({ withImg = true }: { withImg?: boolean }) {
         <figure data-block-id="v" contentEditable={false}>
           {withImg ? <img alt="x" src="http://u/p.png" /> : null}
         </figure>
-        <RichTextImageResizer rootRef={rootRef} blockId="v" maxWidth={600} onResize={() => {}} />
+        <RichTextImageResizer
+          rootRef={rootRef}
+          blockId="v"
+          maxWidth={600}
+          onResize={() => {}}
+          hidden={hidden}
+        />
       </div>
     </I18nProvider>
   );
@@ -25,6 +31,13 @@ it('renders a resize handle when the target image is present', () => {
 
 it('renders nothing when the target image is absent (e.g. a file chip)', () => {
   render(<Harness withImg={false} />);
+  expect(screen.queryByTitle('Drag to resize')).toBeNull();
+});
+
+it('hidden → renders nothing but stays mounted (no throw)', () => {
+  // Hidden during a block reorder: the element must still MOUNT (so its drag-end
+  // cleanup doesn't fire and clobber the editor's block-drag flag) but render nothing.
+  expect(() => render(<Harness hidden />)).not.toThrow();
   expect(screen.queryByTitle('Drag to resize')).toBeNull();
 });
 
