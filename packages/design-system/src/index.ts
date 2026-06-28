@@ -110,7 +110,7 @@ export { Timeline } from './components/Timeline';
 export type { TimelineProps, TimelineItemProps } from './components/Timeline';
 
 export { Thread } from './components/Thread';
-export type { ThreadProps, ThreadItemProps } from './components/Thread';
+export type { ThreadProps, ThreadItemProps, ThreadNodeAlign } from './components/Thread';
 
 export { BrandIcon } from './components/BrandIcon';
 export type { BrandIconProps, BrandName } from './components/BrandIcon';

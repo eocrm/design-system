@@ -21,6 +21,9 @@ interface ThreadContextValue {
 
 const ThreadContext = createContext<ThreadContextValue | null>(null);
 
+/** Where the leading `node` sits relative to the comment body. See `ThreadProps#nodeAlign`. */
+export type ThreadNodeAlign = 'header' | 'top';
+
 /**
  * Reads the surrounding thread depth/cap. Falls back to a depth-0 default so a
  * `<Thread.Item>` can render standalone (e.g. in a test) without a provider.
@@ -40,6 +43,17 @@ export interface ThreadProps extends HTMLAttributes<HTMLUListElement> {
    * every nested item via CSS custom properties. Default `false`.
    */
   compact?: boolean;
+  /**
+   * Where the leading `node` sits relative to the comment body.
+   * - `header` (default) — vertically centered on the **first body line** (the author /
+   *   timestamp header), Jira/GitHub style, so a node taller than one line (e.g. a 24px
+   *   `<Avatar>`) reads as centered against the name rather than top-aligned. Assumes the
+   *   header line-box matches `--thread-header-line-height` (defaults to `<Text size="sm">`);
+   *   override that token if your header line differs.
+   * - `top` — top-aligned with the body (the node's top meets the body's top). Use when the
+   *   node is about one line tall, or when you deliberately want top alignment.
+   */
+  nodeAlign?: ThreadNodeAlign;
   /** The `<Thread.Item>`s. */
   children: ReactNode;
 }
@@ -47,9 +61,10 @@ export interface ThreadProps extends HTMLAttributes<HTMLUListElement> {
 export interface ThreadItemProps extends HTMLAttributes<HTMLLIElement> {
   /**
    * The leading marker the rail connects to — an `<Avatar>`, icon, or `<Dot>`. Centered
-   * in a fixed node box so the rail aligns regardless of node content. It's a slot:
-   * there is no built-in avatar. Size the node to `--thread-node-size` (default `sm` /
-   * 24px) — e.g. `<Avatar size="sm">` — so the rail/elbow connectors meet it cleanly;
+   * in its node box so the rail/elbow connectors meet it cleanly regardless of node
+   * content; by default the box centers on the first body line so a taller node aligns to
+   * the header (see `Thread`'s `nodeAlign`). It's a slot: there is no built-in avatar.
+   * Size the node to `--thread-node-size` (default `sm` / 24px) — e.g. `<Avatar size="sm">`;
    * for a larger node, override `--thread-node-size` to match.
    */
   node: ReactNode;
@@ -91,15 +106,17 @@ const ThreadItem = forwardRef<HTMLLIElement, ThreadItemProps>(function ThreadIte
 
   return (
     <li className={clsx(styles.item, className)} {...rest} ref={ref}>
-      <div className={styles.gutter}>
-        <div className={styles.nodeBox}>{node}</div>
-        {hasReplies && indented && <div className={styles.rail} aria-hidden="true" />}
-      </div>
+      <div className={styles.nodeBox}>{node}</div>
       {hasReplies && indented ? (
-        // Indented: replies live inside content so the gutter column stretches to
-        // their full height and the parent rail spans alongside them. Depth +1.
+        // Indented: replies live inside content; the parent rail (anchored to the body
+        // box) bridges down to the first reply, and the per-reply trunk segments carry
+        // it the rest of the way, ending at the last elbow. Depth +1.
         <div className={styles.content}>
-          <div className={styles.body}>{body}</div>
+          <div className={styles.body}>
+            {body}
+            {/* Parent rail trunk above the replies — anchored to the body box. */}
+            <div className={styles.rail} aria-hidden="true" />
+          </div>
           <ThreadContext.Provider value={{ depth: depth + 1, maxDepth }}>
             <ul className={styles.replies}>{replies}</ul>
           </ThreadContext.Provider>
@@ -156,6 +173,11 @@ ThreadItem.displayName = 'Thread.Item';
  *   </Thread.Item>
  * </Thread>
  *
+ * @example
+ * // Node alignment: by default the avatar centers on the first body line (the header).
+ * // Pass nodeAlign="top" to top-align it with the body instead.
+ * <Thread nodeAlign="top">…</Thread>
+ *
  * @remarks When NOT to use
  * - A flat activity feed with no parent/child nesting → `<Timeline>`.
  * - Plain indentation with no connecting line → `<Indent>`.
@@ -171,11 +193,27 @@ ThreadItem.displayName = 'Thread.Item';
  * - ❌ Putting layout margins on items — spacing comes from `compact` / the row-gap token.
  */
 const ThreadRoot = forwardRef<HTMLUListElement, ThreadProps>(function Thread(
-  { maxDepth = DEFAULT_MAX_DEPTH, compact = false, className, children, ...rest },
+  {
+    maxDepth = DEFAULT_MAX_DEPTH,
+    compact = false,
+    nodeAlign = 'header',
+    className,
+    children,
+    ...rest
+  },
   ref,
 ) {
   return (
-    <ul ref={ref} className={clsx(styles.root, compact && styles.compact, className)} {...rest}>
+    <ul
+      ref={ref}
+      className={clsx(
+        styles.root,
+        compact && styles.compact,
+        nodeAlign === 'top' && styles.alignTop,
+        className,
+      )}
+      {...rest}
+    >
       <ThreadContext.Provider value={{ depth: 0, maxDepth }}>{children}</ThreadContext.Provider>
     </ul>
   );

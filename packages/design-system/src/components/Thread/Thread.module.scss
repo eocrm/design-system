@@ -22,31 +22,22 @@
   row-gap: var(--thread-row-gap);
 }
 
-.gutter {
-  position: relative;
-}
-
+// Node box: its height is the alignment target. Default (`nodeAlign="header"`) it's the
+// header line-box, so a node taller than one line centers ON the first body line
+// (overflowing the box symmetrically). `.alignTop` makes it the full node height → the
+// node top-aligns with the body. Either way the node is centered within the box.
 .nodeBox {
-  height: var(--thread-node-size);
+  height: var(--thread-nodebox-height);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-// Vertical rail from below the node to the bottom of the item — i.e. down past the
-// item's (indented) replies, so it reads as descending from the avatar. The grid
-// stretches the gutter column to the item's full height (content holds the replies),
-// so inset-block-end:0 reaches the bottom of the reply group. Decorative.
-.rail {
-  position: absolute;
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
-
-  // Start a hairline below the node so the rail doesn't touch the avatar.
-  inset-block-start: calc(var(--thread-node-size) + var(--thread-node-gap));
-  inset-block-end: 0;
-  width: var(--thread-rail-width);
-  background: var(--thread-rail-color);
+// nodeAlign="top": full-height node box, top-aligned with the body (the pre-header-
+// centering behavior). Overrides the header-centering defaults from the tokens.
+.alignTop {
+  --thread-node-center: calc(var(--thread-node-size) / 2);
+  --thread-nodebox-height: var(--thread-node-size);
 }
 
 .content {
@@ -56,8 +47,32 @@
   gap: var(--thread-row-gap);
 }
 
+// `position: relative` so the parent rail (rendered as a child) anchors to the body box:
+// its bottom edge is the rail's natural terminus, independent of the surface colour or
+// the replies' height.
 .body {
+  position: relative;
   min-width: 0;
+}
+
+// The parent rail's trunk above the replies — from just below the node down to the
+// bottom of the body, extended one row-gap further so it meets the first reply's trunk
+// segment across the body→replies gap. Anchored to `.body` (not a full-height gutter),
+// so there is no overshoot to mask: the per-reply `::after` segments carry the trunk the
+// rest of the way and terminate it exactly at the last elbow. Decorative.
+.rail {
+  position: absolute;
+  inset-inline-start: calc(-1 * (var(--thread-node-size) / 2 + var(--thread-content-gap)));
+  transform: translateX(-50%);
+
+  // Start a hairline below the node (node centre + half the node), so the rail doesn't
+  // touch the avatar.
+  inset-block-start: calc(
+    var(--thread-node-center) + var(--thread-node-size) / 2 + var(--thread-node-gap)
+  );
+  inset-block-end: calc(-1 * var(--thread-row-gap));
+  width: var(--thread-rail-width);
+  background: var(--thread-rail-color);
 }
 
 // Indented replies — nested inside content (so the gutter column stretches and the
@@ -87,7 +102,7 @@
 .replies > .item::before {
   content: '';
   position: absolute;
-  inset-block-start: calc(var(--thread-node-size) / 2);
+  inset-block-start: var(--thread-node-center);
   inset-inline-start: calc(-1 * (var(--thread-node-size) / 2 + var(--thread-content-gap)));
 
   // Run from the parent rail to a hairline short of the node, so it doesn't touch the
@@ -98,20 +113,30 @@
   transform: translateY(-50%);
 }
 
-// The parent rail spans to the bottom of the whole reply group; mask its overshoot
-// below the LAST reply's elbow so the trunk ends at the final branch (└─) instead of
-// dangling past it. Painted in `--thread-surface` (the surface the thread sits on,
-// default `--color-bg`); override the token if Thread renders on a tinted surface.
-.replies > .item:last-child::after {
+// The trunk through the reply group, drawn per reply as a vertical segment so it ends
+// exactly at the last elbow — no full-height rail + surface-coloured mask, so it's
+// independent of the surface the thread sits on. Each segment starts one row-gap above
+// its item (bridging the gap to the previous segment / the body rail), giving a
+// continuous line at the parent gutter's centre.
+.replies > .item::after {
   content: '';
   position: absolute;
-  inset-block-start: calc(var(--thread-node-size) / 2);
+  inset-block-start: calc(-1 * var(--thread-row-gap));
+  inset-inline-start: calc(-1 * (var(--thread-node-size) / 2 + var(--thread-content-gap)));
+  transform: translateX(-50%);
+  width: var(--thread-rail-width);
+  background: var(--thread-rail-color);
+}
+
+// Non-last replies: run the segment to the item's bottom so it joins the next one.
+.replies > .item:not(:last-child)::after {
   inset-block-end: 0;
-  inset-inline-start: calc(
-    -1 * (var(--thread-node-size) / 2 + var(--thread-content-gap)) - var(--thread-rail-width)
-  );
-  width: calc(var(--thread-rail-width) * 3);
-  background: var(--thread-surface);
+}
+
+// Last reply: stop the trunk at this elbow (└─) — node centre + the bridged gap — so it
+// terminates at the final branch with nothing dangling below it.
+.replies > .item:last-child::after {
+  height: calc(var(--thread-row-gap) + var(--thread-node-center));
 }
 
 // Flat replies past the cap — a direct grid child spanning both columns so they are
