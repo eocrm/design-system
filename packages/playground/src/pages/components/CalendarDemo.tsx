@@ -179,7 +179,11 @@ export function CalendarDemo() {
       <Example
         title="Default (empty)"
         description="Bare shell with prev/next/today navigation. No events yet."
-        code={`<Calendar defaultValue={new Date(2026, 4, 15)} />`}
+        code={`import { Calendar } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Calendar defaultValue={new Date(2026, 4, 15)} />;
+}`}
       >
         <Calendar defaultValue={TODAY} />
       </Example>
@@ -187,15 +191,19 @@ export function CalendarDemo() {
       <Example
         title="With events"
         description="Sample CRM-style events showing all 5 tones, an all-day vacation band, and timed meetings."
-        code={`const SAMPLE_EVENTS = [
-  { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 11, 9), tone: 'accent' },
-  { id: '2', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14), endsAt: new Date(2026, 4, 13, 17), tone: 'success' },
-  { id: '3', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11), tone: 'accent' },
-  { id: '4', title: 'Vacation', startsAt: new Date(2026, 4, 18), endsAt: new Date(2026, 4, 22), tone: 'warning', allDay: true },
-  { id: '5', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27), tone: 'danger' },
+        code={`import { Calendar } from '@eocrm/design-system';
+
+const SAMPLE_EVENTS = [
+  { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 12, 9, 30), tone: 'accent' },
+  { id: '2', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14, 0), endsAt: new Date(2026, 4, 13, 17, 0), tone: 'success' },
+  { id: '3', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'accent' },
+  { id: '4', title: 'Vacation', startsAt: new Date(2026, 4, 18), endsAt: new Date(2026, 4, 25), tone: 'warning', allDay: true },
+  { id: '5', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27, 9, 0), tone: 'danger' },
 ];
 
-<Calendar defaultValue={new Date(2026, 4, 15)} events={SAMPLE_EVENTS} />`}
+export function Demo() {
+  return <Calendar defaultValue={new Date(2026, 4, 15)} events={SAMPLE_EVENTS} />;
+}`}
       >
         <Calendar defaultValue={TODAY} events={SAMPLE_EVENTS} />
       </Example>
@@ -203,11 +211,25 @@ export function CalendarDemo() {
       <Example
         title="Overflow (+N more)"
         description="Days with more events than maxLanesPerWeek (default 3) collapse to a +N more chip. Click fires onDayClick."
-        code={`<Calendar
-  defaultValue={new Date(2026, 4, 15)}
-  events={OVERFLOW_EVENTS}
-  onDayClick={(d) => alert('Day clicked: ' + d.toDateString())}
-/>`}
+        code={`import { Calendar } from '@eocrm/design-system';
+
+const OVERFLOW_EVENTS = [
+  { id: 'a', title: 'Standup', startsAt: new Date(2026, 4, 15, 9, 0), tone: 'accent' },
+  { id: 'b', title: '1:1 with Sam', startsAt: new Date(2026, 4, 15, 10, 0), tone: 'neutral' },
+  { id: 'c', title: 'Demo prep', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'success' },
+  { id: 'd', title: 'Lunch', startsAt: new Date(2026, 4, 15, 12, 0), tone: 'neutral' },
+  { id: 'e', title: 'Customer call', startsAt: new Date(2026, 4, 15, 14, 0), tone: 'warning' },
+];
+
+export function Demo() {
+  return (
+    <Calendar
+      defaultValue={new Date(2026, 4, 15)}
+      events={OVERFLOW_EVENTS}
+      onDayClick={(d) => alert('Day clicked: ' + d.toDateString())}
+    />
+  );
+}`}
       >
         <Calendar
           defaultValue={TODAY}
@@ -219,11 +241,15 @@ export function CalendarDemo() {
       <Example
         title="Multi-week event"
         description="A 17-day event spanning three week rows (Wed May 6 → Fri May 22). Bars in middle weeks have both continuation edges flattened."
-        code={`const MULTI_WEEK_EVENTS = [
+        code={`import { Calendar } from '@eocrm/design-system';
+
+const MULTI_WEEK_EVENTS = [
   { id: 'm1', title: 'Conference', startsAt: new Date(2026, 4, 6), endsAt: new Date(2026, 4, 22), tone: 'success', allDay: true },
 ];
 
-<Calendar defaultValue={new Date(2026, 4, 15)} events={MULTI_WEEK_EVENTS} />`}
+export function Demo() {
+  return <Calendar defaultValue={new Date(2026, 4, 15)} events={MULTI_WEEK_EVENTS} />;
+}`}
       >
         <Calendar defaultValue={TODAY} events={MULTI_WEEK_EVENTS} />
       </Example>
@@ -231,13 +257,27 @@ export function CalendarDemo() {
       <Example
         title="ru-RU locale"
         description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings (Today button, prev/next aria-labels, view-switcher) come from the i18n provider — wrap the Calendar in <I18nProvider locale='ru'> to use the built-in Russian translations."
-        code={`<I18nProvider locale="ru">
-  <Calendar
-    defaultValue={new Date(2026, 4, 15)}
-    events={SAMPLE_EVENTS}
-    locale="ru-RU"
-  />
-</I18nProvider>`}
+        code={`import { Calendar, I18nProvider } from '@eocrm/design-system';
+
+const SAMPLE_EVENTS = [
+  { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 12, 9, 30), tone: 'accent' },
+  { id: '2', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14, 0), endsAt: new Date(2026, 4, 13, 17, 0), tone: 'success' },
+  { id: '3', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'accent' },
+  { id: '4', title: 'Vacation', startsAt: new Date(2026, 4, 18), endsAt: new Date(2026, 4, 25), tone: 'warning', allDay: true },
+  { id: '5', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27, 9, 0), tone: 'danger' },
+];
+
+export function Demo() {
+  return (
+    <I18nProvider locale="ru">
+      <Calendar
+        defaultValue={new Date(2026, 4, 15)}
+        events={SAMPLE_EVENTS}
+        locale="ru-RU"
+      />
+    </I18nProvider>
+  );
+}`}
       >
         <I18nProvider locale="ru">
           <Calendar defaultValue={TODAY} events={SAMPLE_EVENTS} locale="ru-RU" />
@@ -247,11 +287,25 @@ export function CalendarDemo() {
       <Example
         title="Week view"
         description="7 columns × hour rows. Timed events position by hour; overlapping events cascade — each lane offset right by a small step, later lanes overlay earlier ones, and hover lifts a block to full width on top. All-day and multi-day events render in the band above the hour grid. A horizontal line marks the current time in today's column."
-        code={`<Calendar
-  defaultValue={new Date()}
-  defaultView="week"
-  events={SAMPLE_EVENTS}
-/>`}
+        code={`import { Calendar } from '@eocrm/design-system';
+
+const SAMPLE_EVENTS = [
+  { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 12, 9, 30), tone: 'accent' },
+  { id: '2', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14, 0), endsAt: new Date(2026, 4, 13, 17, 0), tone: 'success' },
+  { id: '3', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'accent' },
+  { id: '4', title: 'Vacation', startsAt: new Date(2026, 4, 18), endsAt: new Date(2026, 4, 25), tone: 'warning', allDay: true },
+  { id: '5', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27, 9, 0), tone: 'danger' },
+];
+
+export function Demo() {
+  return (
+    <Calendar
+      defaultValue={new Date(2026, 4, 15)}
+      defaultView="week"
+      events={SAMPLE_EVENTS}
+    />
+  );
+}`}
       >
         <Calendar defaultValue={TODAY} defaultView="week" events={SAMPLE_EVENTS} />
       </Example>
@@ -259,12 +313,26 @@ export function CalendarDemo() {
       <Example
         title="Day view"
         description="Single-day hour grid for focused planning. Custom hourRange tightens the visible range to business hours."
-        code={`<Calendar
-  defaultValue={new Date()}
-  defaultView="day"
-  events={SAMPLE_EVENTS}
-  hourRange={[8, 18]}
-/>`}
+        code={`import { Calendar } from '@eocrm/design-system';
+
+const SAMPLE_EVENTS = [
+  { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 12, 9, 30), tone: 'accent' },
+  { id: '2', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14, 0), endsAt: new Date(2026, 4, 13, 17, 0), tone: 'success' },
+  { id: '3', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'accent' },
+  { id: '4', title: 'Vacation', startsAt: new Date(2026, 4, 18), endsAt: new Date(2026, 4, 25), tone: 'warning', allDay: true },
+  { id: '5', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27, 9, 0), tone: 'danger' },
+];
+
+export function Demo() {
+  return (
+    <Calendar
+      defaultValue={new Date(2026, 4, 15)}
+      defaultView="day"
+      events={SAMPLE_EVENTS}
+      hourRange={[8, 18]}
+    />
+  );
+}`}
       >
         <Calendar
           defaultValue={TODAY}
@@ -277,11 +345,25 @@ export function CalendarDemo() {
       <Example
         title="Agenda view"
         description="Chronological list of the cursor's current week, grouped by day. Days without events are hidden so the list stays scannable. Multi-day events appear under every day they span. Prev/next steps a week at a time."
-        code={`<Calendar
-  defaultValue={new Date()}
-  defaultView="agenda"
-  events={SAMPLE_EVENTS}
-/>`}
+        code={`import { Calendar } from '@eocrm/design-system';
+
+const SAMPLE_EVENTS = [
+  { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 12, 9, 30), tone: 'accent' },
+  { id: '2', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14, 0), endsAt: new Date(2026, 4, 13, 17, 0), tone: 'success' },
+  { id: '3', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'accent' },
+  { id: '4', title: 'Vacation', startsAt: new Date(2026, 4, 18), endsAt: new Date(2026, 4, 25), tone: 'warning', allDay: true },
+  { id: '5', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27, 9, 0), tone: 'danger' },
+];
+
+export function Demo() {
+  return (
+    <Calendar
+      defaultValue={new Date(2026, 4, 15)}
+      defaultView="agenda"
+      events={SAMPLE_EVENTS}
+    />
+  );
+}`}
       >
         <Calendar defaultValue={TODAY} defaultView="agenda" events={SAMPLE_EVENTS} />
       </Example>
@@ -289,11 +371,22 @@ export function CalendarDemo() {
       <Example
         title="View switching (controlled)"
         description="Consumer owns the active view via `view` / `onViewChange`. Useful for URL-syncing the current view."
-        code={`function ViewSwitcherDemo() {
+        code={`import { useState } from 'react';
+import { Calendar, type CalendarView } from '@eocrm/design-system';
+
+const SAMPLE_EVENTS = [
+  { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 12, 9, 30), tone: 'accent' },
+  { id: '2', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14, 0), endsAt: new Date(2026, 4, 13, 17, 0), tone: 'success' },
+  { id: '3', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'accent' },
+  { id: '4', title: 'Vacation', startsAt: new Date(2026, 4, 18), endsAt: new Date(2026, 4, 25), tone: 'warning', allDay: true },
+  { id: '5', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27, 9, 0), tone: 'danger' },
+];
+
+export function ViewSwitcherDemo() {
   const [view, setView] = useState<CalendarView>('week');
   return (
     <Calendar
-      defaultValue={new Date()}
+      defaultValue={new Date(2026, 4, 15)}
       view={view}
       onViewChange={setView}
       events={SAMPLE_EVENTS}
@@ -307,7 +400,18 @@ export function CalendarDemo() {
       <Example
         title="Controlled navigation"
         description="Consumer owns the cursor state. Useful for URL-state sync or persisted last-viewed-month."
-        code={`function ControlledCalendarDemo() {
+        code={`import { useState } from 'react';
+import { Calendar } from '@eocrm/design-system';
+
+const SAMPLE_EVENTS = [
+  { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 12, 9, 30), tone: 'accent' },
+  { id: '2', title: 'Quarterly review', startsAt: new Date(2026, 4, 13, 14, 0), endsAt: new Date(2026, 4, 13, 17, 0), tone: 'success' },
+  { id: '3', title: 'Customer call: Acme', startsAt: new Date(2026, 4, 15, 11, 0), tone: 'accent' },
+  { id: '4', title: 'Vacation', startsAt: new Date(2026, 4, 18), endsAt: new Date(2026, 4, 25), tone: 'warning', allDay: true },
+  { id: '5', title: 'Renewal: Beta Co.', startsAt: new Date(2026, 4, 27, 9, 0), tone: 'danger' },
+];
+
+export function ControlledCalendarDemo() {
   const [cursor, setCursor] = useState(new Date(2026, 4, 15));
   return <Calendar value={cursor} onChange={setCursor} events={SAMPLE_EVENTS} />;
 }`}

@@ -132,7 +132,33 @@ export function RichTextDemo() {
       <Example
         title="Rendering a document"
         description="A RichDoc rendered read-only via the engine's renderer."
-        code={`<RichText value={doc} />`}
+        code={`import { RichText, createBlock, type RichDoc } from '@eocrm/design-system';
+
+const doc: RichDoc = {
+  blocks: [
+    createBlock('heading', 'Release notes', { level: 1, id: 'h' }),
+    {
+      id: 'p',
+      type: 'paragraph',
+      inlines: [
+        { text: 'We shipped ', marks: [] },
+        { text: 'bold', marks: [{ type: 'bold' }] },
+        { text: ' and ', marks: [] },
+        { text: 'italic', marks: [{ type: 'italic' }] },
+        { text: ' with a ', marks: [] },
+        { text: 'link', marks: [{ type: 'link', href: '/docs' }] },
+        { text: '.', marks: [] },
+      ],
+    },
+    createBlock('bullet_item', 'First item', { id: 'l1' }),
+    createBlock('bullet_item', 'Second item', { id: 'l2' }),
+    createBlock('blockquote', 'A quote block.', { id: 'q' }),
+  ],
+};
+
+export function Demo() {
+  return <RichText value={doc} />;
+}`}
       >
         <RichText value={SAMPLE} />
       </Example>
@@ -140,8 +166,72 @@ export function RichTextDemo() {
       <Example
         title="The engine is live"
         description="These buttons run pure engine transforms on a doc and re-render it — no editor yet, just the model + render working together."
-        code={`const r = toggleMark(doc, range, { type: 'bold' });
-setDoc(r.doc);`}
+        code={`import { useState } from 'react';
+import {
+  RichText,
+  createBlock,
+  toggleMark,
+  setBlockType,
+  Cluster,
+  Button,
+  type RichDoc,
+} from '@eocrm/design-system';
+
+const SAMPLE: RichDoc = {
+  blocks: [
+    createBlock('heading', 'Release notes', { level: 1, id: 'h' }),
+    {
+      id: 'p',
+      type: 'paragraph',
+      inlines: [
+        { text: 'We shipped ', marks: [] },
+        { text: 'bold', marks: [{ type: 'bold' }] },
+        { text: ' and ', marks: [] },
+        { text: 'italic', marks: [{ type: 'italic' }] },
+        { text: ' with a ', marks: [] },
+        { text: 'link', marks: [{ type: 'link', href: '/docs' }] },
+        { text: '.', marks: [] },
+      ],
+    },
+    createBlock('bullet_item', 'First item', { id: 'l1' }),
+    createBlock('bullet_item', 'Second item', { id: 'l2' }),
+    createBlock('blockquote', 'A quote block.', { id: 'q' }),
+  ],
+};
+
+export function Demo() {
+  const [doc, setDoc] = useState<RichDoc>(SAMPLE);
+
+  const boldHeading = () =>
+    setDoc(
+      (d) =>
+        toggleMark(
+          d,
+          { anchor: { blockId: 'h', offset: 0 }, focus: { blockId: 'h', offset: 13 } },
+          { type: 'bold' },
+        ).doc,
+    );
+  const quoteToParagraph = () =>
+    setDoc((d) => setBlockType(d, 'q', { type: 'paragraph' }).doc);
+  const reset = () => setDoc(SAMPLE);
+
+  return (
+    <>
+      <Cluster gap="sm">
+        <Button size="sm" onClick={boldHeading}>
+          Toggle bold heading
+        </Button>
+        <Button size="sm" onClick={quoteToParagraph}>
+          Quote → paragraph
+        </Button>
+        <Button size="sm" variant="secondary" onClick={reset}>
+          Reset
+        </Button>
+      </Cluster>
+      <RichText value={doc} />
+    </>
+  );
+}`}
       >
         <Cluster gap="sm">
           <Button size="sm" onClick={boldHeading}>
@@ -160,11 +250,39 @@ setDoc(r.doc);`}
       <Example
         title="Link substitution (renderLink)"
         description="Pass renderLink to swap how a link renders. Here a link to an in-space task URL (https://app.eocrm/task/123) becomes a task chip, while a plain external link stays a normal <a>. The model is unchanged — renderLink is render-time only; serialization still emits a link."
-        code={`const renderLink: RenderLink = ({ href }, fallback) => {
-  const m = /^https?:\\/\\/app\\.eocrm\\/task\\/(\\d+)/i.exec(href);
+        code={`import { RichText, Badge, type RichDoc, type RenderLink } from '@eocrm/design-system';
+
+const TASK_RE = /^https?:\\/\\/app\\.eocrm\\/task\\/(\\d+)/i;
+const renderLink: RenderLink = ({ href }, fallback) => {
+  const m = TASK_RE.exec(href);
   return m ? <Badge tone="purple">#{m[1]} · Ship the gallery</Badge> : fallback;
 };
-<RichText value={doc} renderLink={renderLink} />`}
+
+const doc: RichDoc = {
+  blocks: [
+    {
+      id: 'lr',
+      type: 'paragraph',
+      inlines: [
+        { text: 'Track ', marks: [] },
+        {
+          text: 'https://app.eocrm/task/123',
+          marks: [{ type: 'link', href: 'https://app.eocrm/task/123' }],
+        },
+        { text: ' and read more at ', marks: [] },
+        {
+          text: 'example.com',
+          marks: [{ type: 'link', href: 'https://example.com' }],
+        },
+        { text: '.', marks: [] },
+      ],
+    },
+  ],
+};
+
+export function Demo() {
+  return <RichText value={doc} renderLink={renderLink} />;
+}`}
       >
         <RichText value={LINK_DOC} renderLink={renderLink} />
       </Example>
@@ -172,21 +290,46 @@ setDoc(r.doc);`}
       <Example
         title="Mention substitution (renderMention)"
         description="Pass renderMention to swap how an @-mention renders — same contract as renderLink but for mention marks. Here each mention becomes an interactive member chip (click one). It composes with renderLink and is render-time only; serialization still emits the mention mark."
-        code={`// Render an @-mention as your own interactive, keyboard-accessible chip.
+        code={`import { RichText, Badge, type RichDoc, type RenderMention } from '@eocrm/design-system';
+
+const openMention = (id: string, label: string) => alert(\`Mentioned \${label} (\${id})\`);
 const renderMention: RenderMention = ({ id, label }) => (
   <Badge
     tone="info"
     role="button"
     tabIndex={0}
-    onClick={() => openProfile(id)}
+    title={\`Open \${label}'s profile\`}
+    onClick={() => openMention(id, label)}
     onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfile(id); }
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openMention(id, label);
+      }
     }}
   >
     @{label}
   </Badge>
 );
-<RichText value={doc} renderMention={renderMention} />`}
+
+const doc: RichDoc = {
+  blocks: [
+    {
+      id: 'mr',
+      type: 'paragraph',
+      inlines: [
+        { text: 'Assign this to ', marks: [] },
+        { text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice Nguyen' }] },
+        { text: ' and ', marks: [] },
+        { text: '@Bob', marks: [{ type: 'mention', id: 'u2', label: 'Bob Martinez' }] },
+        { text: '.', marks: [] },
+      ],
+    },
+  ],
+};
+
+export function Demo() {
+  return <RichText value={doc} renderMention={renderMention} />;
+}`}
       >
         <RichText value={MENTION_DOC} renderMention={renderMention} />
       </Example>

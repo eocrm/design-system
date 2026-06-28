@@ -18,9 +18,17 @@ export function CircularProgressDemo() {
       <Example
         title="Sizes"
         description="Three diameters with proportional stroke. `sm` is 16px (inline next to a button), `md` is 32px (default), `lg` is 56px (page-level)."
-        code={`<CircularProgress size="sm" value={45} />
-<CircularProgress size="md" value={45} />
-<CircularProgress size="lg" value={45} />`}
+        code={`import { CircularProgress, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" align="center">
+      <CircularProgress size="sm" value={45} />
+      <CircularProgress size="md" value={45} />
+      <CircularProgress size="lg" value={45} />
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" align="center">
           <CircularProgress size="sm" value={45} />
@@ -32,10 +40,18 @@ export function CircularProgressDemo() {
       <Example
         title="Tones"
         description="Same vocabulary as <Progress> — default / success / warning / danger. Stroke color only; the track stays muted."
-        code={`<CircularProgress value={80} />
-<CircularProgress value={80} tone="success" />
-<CircularProgress value={80} tone="warning" />
-<CircularProgress value={80} tone="danger" />`}
+        code={`import { CircularProgress, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" align="center">
+      <CircularProgress value={80} />
+      <CircularProgress value={80} tone="success" />
+      <CircularProgress value={80} tone="warning" />
+      <CircularProgress value={80} tone="danger" />
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" align="center">
           <CircularProgress value={80} />
@@ -48,9 +64,17 @@ export function CircularProgressDemo() {
       <Example
         title="Indeterminate — the spinner use case"
         description="Omit `value` to spin. This is the canonical inline loading affordance — use `size='sm'` next to a button, `size='md'` near a heading, `size='lg'` as a centered page-loader."
-        code={`<CircularProgress size="sm" />
-<CircularProgress size="md" />
-<CircularProgress size="lg" />`}
+        code={`import { CircularProgress, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" align="center">
+      <CircularProgress size="sm" />
+      <CircularProgress size="md" />
+      <CircularProgress size="lg" />
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" align="center">
           <CircularProgress size="sm" />
@@ -62,9 +86,26 @@ export function CircularProgressDemo() {
       <Example
         title="Labels"
         description="`label={true}` shows {n}% centered. Auto-suppressed at `size='sm'` (no room for text) AND when `label=true` on indeterminate. ReactNode labels render in both modes (still suppressed at sm)."
-        code={`<CircularProgress size="md" value={75} label />
-<CircularProgress size="lg" value={75} label />
-<CircularProgress size="sm" value={75} label />  {/* label auto-suppressed */}`}
+        code={`import { CircularProgress, Cluster, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" align="center">
+      <Stack gap="xs" align="center">
+        <CircularProgress size="md" value={75} label />
+        <Text size="xs" tone="muted">md + label</Text>
+      </Stack>
+      <Stack gap="xs" align="center">
+        <CircularProgress size="lg" value={75} label />
+        <Text size="xs" tone="muted">lg + label</Text>
+      </Stack>
+      <Stack gap="xs" align="center">
+        <CircularProgress size="sm" value={75} label />
+        <Text size="xs" tone="muted">sm (label suppressed)</Text>
+      </Stack>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" align="center">
           <Stack gap="xs" align="center">
@@ -91,10 +132,16 @@ export function CircularProgressDemo() {
       <Example
         title="Inline with a button — the canonical 'Saving…' pattern"
         description="A tight loading indicator next to an action trigger. Use `aria-label` to tell SR users what the spinner means."
-        code={`<Cluster gap="sm" align="center">
-  <Button disabled>Save</Button>
-  <CircularProgress size="sm" aria-label="Saving" />
-</Cluster>`}
+        code={`import { Button, CircularProgress, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm" align="center">
+      <Button disabled>Save</Button>
+      <CircularProgress size="sm" aria-label="Saving" />
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm" align="center">
           <Button disabled>Save</Button>

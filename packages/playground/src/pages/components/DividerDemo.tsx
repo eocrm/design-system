@@ -14,7 +14,17 @@ export function DividerDemo() {
       <Example
         title="Horizontal default"
         description="A single thin line between two paragraphs."
-        code={`<Divider />`}
+        code={`import { Divider, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="md">
+      <p style={{ margin: 0 }}>First section content.</p>
+      <Divider />
+      <p style={{ margin: 0 }}>Second section content.</p>
+    </Stack>
+  );
+}`}
       >
         <Stack gap="md">
           <p style={{ margin: 0 }}>First section content.</p>
@@ -26,12 +36,20 @@ export function DividerDemo() {
       <Example
         title="Variants and sizes"
         description="Solid (default) and dashed variants. Three size tiers (sm=1px, md=2px, lg=3px)."
-        code={`<Divider size="sm" />
-<Divider size="md" />
-<Divider size="lg" />
-<Divider variant="dashed" size="sm" />
-<Divider variant="dashed" size="md" />
-<Divider variant="dashed" size="lg" />`}
+        code={`import { Divider, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="md">
+      <Divider size="sm" />
+      <Divider size="md" />
+      <Divider size="lg" />
+      <Divider variant="dashed" size="sm" />
+      <Divider variant="dashed" size="md" />
+      <Divider variant="dashed" size="lg" />
+    </Stack>
+  );
+}`}
       >
         <Stack gap="md">
           <Divider size="sm" />
@@ -46,9 +64,17 @@ export function DividerDemo() {
       <Example
         title="Labeled (auth-form pattern)"
         description="`<Divider>OR</Divider>` between two grouped actions. Switches to <div role='separator'> internally."
-        code={`<Button>Sign in with email</Button>
-<Divider>OR</Divider>
-<Button variant="secondary">Sign in with SSO</Button>`}
+        code={`import { Button, Divider, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="md">
+      <Button>Sign in with email</Button>
+      <Divider>OR</Divider>
+      <Button variant="secondary">Sign in with SSO</Button>
+    </Stack>
+  );
+}`}
       >
         <Stack gap="md">
           <Button>Sign in with email</Button>
@@ -60,13 +86,19 @@ export function DividerDemo() {
       <Example
         title="Vertical inside a Cluster (toolbar)"
         description="Use vertical dividers to separate grouped actions in a horizontal cluster."
-        code={`<Cluster gap="sm" align="center">
-  <Button variant="ghost" size="sm">Edit</Button>
-  <Divider orientation="vertical" />
-  <Button variant="ghost" size="sm">Duplicate</Button>
-  <Divider orientation="vertical" />
-  <Button variant="ghost" size="sm">Archive</Button>
-</Cluster>`}
+        code={`import { Button, Cluster, Divider } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm" align="center">
+      <Button variant="ghost" size="sm">Edit</Button>
+      <Divider orientation="vertical" />
+      <Button variant="ghost" size="sm">Duplicate</Button>
+      <Divider orientation="vertical" />
+      <Button variant="ghost" size="sm">Archive</Button>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm" align="center">
           <Button variant="ghost" size="sm">
@@ -86,13 +118,19 @@ export function DividerDemo() {
       <Example
         title="Inside a Card (section break)"
         description="A header + Divider + body to clearly separate metadata from content."
-        code={`<Card padding="md">
-  <Stack gap="sm">
-    <strong>Card heading</strong>
-    <Divider />
-    <p style={{ margin: 0 }}>Card body content goes here.</p>
-  </Stack>
-</Card>`}
+        code={`import { Card, Divider, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Card padding="md">
+      <Stack gap="sm">
+        <strong>Card heading</strong>
+        <Divider />
+        <p style={{ margin: 0 }}>Card body content goes here.</p>
+      </Stack>
+    </Card>
+  );
+}`}
       >
         <Card padding="md">
           <Stack gap="sm">
@@ -106,7 +144,11 @@ export function DividerDemo() {
       <Example
         title="Dashed labeled"
         description="Combine variant + label for a softer visual break."
-        code={`<Divider variant="dashed">SECTION 2</Divider>`}
+        code={`import { Divider } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Divider variant="dashed">SECTION 2</Divider>;
+}`}
       >
         <Divider variant="dashed">SECTION 2</Divider>
       </Example>

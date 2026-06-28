@@ -87,7 +87,11 @@ export function PasswordInputDemo() {
       <Example
         title="Default"
         description="Uncontrolled, with a placeholder. The eye-toggle button reveals/hides the value."
-        code={`<PasswordInput placeholder="Password" />`}
+        code={`import { PasswordInput } from '@eocrm/design-system';
+
+export function Demo() {
+  return <PasswordInput placeholder="Password" />;
+}`}
       >
         <InputExample>
           <PasswordInput placeholder="Password" />
@@ -97,9 +101,17 @@ export function PasswordInputDemo() {
       <Example
         title="Sizes"
         description="Three sizes — sm / md (default) / lg. Same scale as <Input>."
-        code={`<PasswordInput size="sm" placeholder="Small" />
-<PasswordInput size="md" placeholder="Medium" />
-<PasswordInput size="lg" placeholder="Large" />`}
+        code={`import { PasswordInput, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <PasswordInput size="sm" placeholder="Small" aria-label="Small password" />
+      <PasswordInput size="md" placeholder="Medium" aria-label="Medium password" />
+      <PasswordInput size="lg" placeholder="Large" aria-label="Large password" />
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <Stack gap="sm">
@@ -113,12 +125,25 @@ export function PasswordInputDemo() {
       <Example
         title="Controlled"
         description="Provide `revealed` + `onRevealChange` to control the toggle externally. The handler receives the next boolean."
-        code={`const [revealed, setRevealed] = useState(false);
-<PasswordInput
-  revealed={revealed}
-  onRevealChange={setRevealed}
-  defaultValue="hunter2"
-/>`}
+        code={`import { useState } from 'react';
+import { PasswordInput, Stack } from '@eocrm/design-system';
+
+export function ControlledDemo() {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <Stack gap="xs">
+      <PasswordInput
+        revealed={revealed}
+        onRevealChange={setRevealed}
+        defaultValue="hunter2"
+        aria-label="Password"
+      />
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        revealed = {String(revealed)}
+      </code>
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <ControlledDemo />
@@ -128,7 +153,11 @@ export function PasswordInputDemo() {
       <Example
         title="No toggle"
         description="Set `revealable={false}` to hide the eye button — for compliance or kiosk screens where revealing the password is forbidden."
-        code={`<PasswordInput revealable={false} placeholder="No toggle" />`}
+        code={`import { PasswordInput } from '@eocrm/design-system';
+
+export function Demo() {
+  return <PasswordInput revealable={false} placeholder="No toggle" />;
+}`}
       >
         <InputExample>
           <PasswordInput revealable={false} placeholder="No toggle" />
@@ -138,7 +167,11 @@ export function PasswordInputDemo() {
       <Example
         title="Caps-lock warning"
         description="Opt in with `capsLockWarning`. When Caps Lock is active a warning icon appears and a polite aria-live region announces it. Cleared on blur."
-        code={`<PasswordInput capsLockWarning placeholder="Try with Caps Lock on" />`}
+        code={`import { PasswordInput } from '@eocrm/design-system';
+
+export function Demo() {
+  return <PasswordInput capsLockWarning placeholder="Try with Caps Lock on" />;
+}`}
       >
         <InputExample>
           <PasswordInput capsLockWarning placeholder="Try with Caps Lock on" />
@@ -148,7 +181,16 @@ export function PasswordInputDemo() {
       <Example
         title="Wrong-layout warning"
         description="Opt in with `wrongLayoutWarning`. Detects non-ASCII keystrokes (e.g. Cyrillic from a Russian layout) and shows a warning icon + live region. Only enable when the system expects Latin-only passwords."
-        code={`<PasswordInput wrongLayoutWarning placeholder="Try typing while on a non-Latin keyboard" />`}
+        code={`import { PasswordInput } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <PasswordInput
+      wrongLayoutWarning
+      placeholder="Try typing while on a non-Latin keyboard"
+    />
+  );
+}`}
       >
         <InputExample>
           <PasswordInput
@@ -161,7 +203,11 @@ export function PasswordInputDemo() {
       <Example
         title="Both warnings"
         description="Both warnings can be active at the same time — one icon per active warning."
-        code={`<PasswordInput capsLockWarning wrongLayoutWarning placeholder="Password" />`}
+        code={`import { PasswordInput } from '@eocrm/design-system';
+
+export function Demo() {
+  return <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Password" />;
+}`}
       >
         <InputExample>
           <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Password" />
@@ -171,7 +217,11 @@ export function PasswordInputDemo() {
       <Example
         title="Disabled"
         description="The native `disabled` attribute is forwarded — click is blocked, the eye toggle is also disabled, and the field mutes."
-        code={`<PasswordInput disabled defaultValue="locked" />`}
+        code={`import { PasswordInput } from '@eocrm/design-system';
+
+export function Demo() {
+  return <PasswordInput disabled defaultValue="locked" />;
+}`}
       >
         <InputExample>
           <PasswordInput disabled defaultValue="locked" />
@@ -181,8 +231,21 @@ export function PasswordInputDemo() {
       <Example
         title="Invalid"
         description="`invalid` adds the danger border + sets `aria-invalid='true'`. Pair with a visible error message and `aria-describedby`."
-        code={`<PasswordInput invalid aria-describedby="pw-error" placeholder="Password" />
-<p id="pw-error">Password is required.</p>`}
+        code={`import { PasswordInput, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="xs">
+      <PasswordInput invalid aria-describedby="pw-error-demo" placeholder="Password" />
+      <p
+        id="pw-error-demo"
+        style={{ color: 'var(--color-danger)', fontSize: 'var(--font-size-xs)' }}
+      >
+        Password is required.
+      </p>
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <Stack gap="xs">
@@ -200,9 +263,15 @@ export function PasswordInputDemo() {
       <Example
         title="Localized labels (ru-RU)"
         description="Wrap in <I18nProvider locale='ru'> to translate all aria-labels and live-region strings."
-        code={`<I18nProvider locale="ru">
-  <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Пароль" />
-</I18nProvider>`}
+        code={`import { I18nProvider, PasswordInput } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <I18nProvider locale="ru">
+      <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Пароль" />
+    </I18nProvider>
+  );
+}`}
       >
         <InputExample>
           <I18nProvider locale="ru">
@@ -214,14 +283,39 @@ export function PasswordInputDemo() {
       <Example
         title="Form integration"
         description="`name` + `required` round-trip through native FormData. The capsLockWarning is active so login-form users get a hint if they're about to fail."
-        code={`<form onSubmit={(e) => {
-  e.preventDefault();
-  const fd = new FormData(e.currentTarget);
-  console.log(fd.get('password'));
-}}>
-  <PasswordInput name="password" required capsLockWarning placeholder="Enter password" />
-  <button type="submit">Submit</button>
-</form>`}
+        code={`import { useState } from 'react';
+import { Button, PasswordInput, Stack } from '@eocrm/design-system';
+
+export function FormDemo() {
+  const [submitted, setSubmitted] = useState<string | null>(null);
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        setSubmitted(fd.get('password') ? '(received — not shown)' : '(empty)');
+      }}
+    >
+      <Stack gap="sm">
+        <PasswordInput
+          name="password"
+          required
+          placeholder="Enter password"
+          aria-label="Password"
+          capsLockWarning
+        />
+        <Button type="submit" size="sm">
+          Submit
+        </Button>
+        {submitted !== null && (
+          <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+            password = {submitted}
+          </code>
+        )}
+      </Stack>
+    </form>
+  );
+}`}
       >
         <InputExample>
           <FormDemo />
@@ -231,15 +325,25 @@ export function PasswordInputDemo() {
       <Example
         title="With strength meter (composition)"
         description="Pair with <PasswordStrengthMeter> using shared controlled state and `aria-describedby` for the accessible association."
-        code={`const [pw, setPw] = useState('');
-<PasswordInput
-  value={pw}
-  onChange={(e) => setPw(e.target.value)}
-  capsLockWarning
-  wrongLayoutWarning
-  aria-describedby="strength-meter"
-/>
-<PasswordStrengthMeter id="strength-meter" value={pw} />`}
+        code={`import { useState } from 'react';
+import { PasswordInput, PasswordStrengthMeter, Stack } from '@eocrm/design-system';
+
+export function StrengthDemo() {
+  const [pw, setPw] = useState('');
+  return (
+    <Stack gap="xs">
+      <PasswordInput
+        value={pw}
+        onChange={(e) => setPw(e.target.value)}
+        capsLockWarning
+        wrongLayoutWarning
+        placeholder="Create password"
+        aria-describedby="strength-demo-meter"
+      />
+      <PasswordStrengthMeter id="strength-demo-meter" value={pw} />
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <StrengthDemo />

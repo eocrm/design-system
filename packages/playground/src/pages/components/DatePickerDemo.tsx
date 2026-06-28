@@ -109,7 +109,11 @@ export function DatePickerDemoPanel() {
       <Example
         title="Uncontrolled"
         description="No `value` / `onChange` — the picker owns state. Type a date, click in the grid, or use the clear button."
-        code={`<DatePicker defaultValue={new Date()} />`}
+        code={`import { DatePicker } from '@eocrm/design-system';
+
+export function Demo() {
+  return <DatePicker defaultValue={new Date()} aria-label="Uncontrolled date" />;
+}`}
       >
         <InputExample>
           <DatePicker defaultValue={TODAY} aria-label="Uncontrolled date" />
@@ -119,8 +123,20 @@ export function DatePickerDemoPanel() {
       <Example
         title="Controlled"
         description="Consumer owns the value; useful when the form layer needs to validate or react to changes."
-        code={`const [value, setValue] = useState<Date | null>(new Date());
-<DatePicker value={value} onChange={setValue} />`}
+        code={`import { useState } from 'react';
+import { DatePicker, Stack, toDateKey } from '@eocrm/design-system';
+
+export function ControlledDemo() {
+  const [value, setValue] = useState<Date | null>(new Date());
+  return (
+    <Stack gap="xs">
+      <DatePicker value={value} onChange={setValue} aria-label="Controlled date" />
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        {value ? toDateKey(value) : 'null'}
+      </code>
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <ControlledDemo />
@@ -130,13 +146,21 @@ export function DatePickerDemoPanel() {
       <Example
         title="Min / max"
         description="`min` and `max` disable out-of-range cells in the grid AND reject typed input outside the window."
-        code={`const today = new Date();
+        code={`import { DatePicker } from '@eocrm/design-system';
+
+const today = new Date();
 const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 90);
 
-<DatePicker
-  min={today}
-  max={in90Days}
-/>`}
+export function Demo() {
+  return (
+    <DatePicker
+      defaultValue={today}
+      min={today}
+      max={in90Days}
+      aria-label="Date within 90 days"
+    />
+  );
+}`}
       >
         <InputExample>
           <DatePicker
@@ -151,9 +175,16 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       <Example
         title="Disable weekends"
         description="`isDateDisabled` runs per cell and per typed-input parse. Disabled cells are non-clickable and arrow-key navigation skips them."
-        code={`<DatePicker
-  isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
-/>`}
+        code={`import { DatePicker } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <DatePicker
+      aria-label="Weekday only"
+      isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
+    />
+  );
+}`}
       >
         <InputExample>
           <DatePicker
@@ -166,9 +197,17 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       <Example
         title="Sizes"
         description="Three sizes — sm (24px), md (32px, default), lg (40px). The popover month grid is fixed-size; only the trigger row scales."
-        code={`<DatePicker size="sm" defaultValue={new Date()} />
-<DatePicker size="md" defaultValue={new Date()} />
-<DatePicker size="lg" defaultValue={new Date()} />`}
+        code={`import { DatePicker, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <DatePicker size="sm" defaultValue={new Date()} aria-label="Small date" />
+      <DatePicker size="md" defaultValue={new Date()} aria-label="Medium date" />
+      <DatePicker size="lg" defaultValue={new Date()} aria-label="Large date" />
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <Stack gap="sm">
@@ -182,7 +221,11 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       <Example
         title="Disabled"
         description="Use `disabled` when the field is unavailable in the current context (e.g., read-only stage of a workflow). The clear button is hidden when disabled."
-        code={`<DatePicker disabled defaultValue={new Date()} />`}
+        code={`import { DatePicker } from '@eocrm/design-system';
+
+export function Demo() {
+  return <DatePicker disabled defaultValue={new Date()} aria-label="Disabled date" />;
+}`}
       >
         <InputExample>
           <DatePicker disabled defaultValue={TODAY} aria-label="Disabled date" />
@@ -192,8 +235,18 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       <Example
         title="Invalid"
         description="Pair with a visible error message + aria-describedby."
-        code={`<DatePicker invalid aria-describedby="dob-error" />
-<p id="dob-error">Date is required.</p>`}
+        code={`import { DatePicker, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="xs">
+      <DatePicker invalid aria-label="Date of birth" aria-describedby="dob-error" />
+      <p id="dob-error" style={{ color: 'var(--color-danger)', fontSize: 'var(--font-size-xs)' }}>
+        Date is required.
+      </p>
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <Stack gap="xs">
@@ -211,10 +264,33 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       <Example
         title="Form integration"
         description="When `name` is set, the picker renders a hidden mirror `<input>` with the ISO date so native `<form>` submission works."
-        code={`<form action="/api/dates">
-  <DatePicker name="dob" defaultValue={new Date()} />
-  <button type="submit">Submit</button>
-</form>`}
+        code={`import { useState } from 'react';
+import { Button, DatePicker, Stack } from '@eocrm/design-system';
+
+export function FormDemo() {
+  const [submitted, setSubmitted] = useState<string | null>(null);
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        setSubmitted(String(fd.get('dob') ?? ''));
+      }}
+    >
+      <Stack gap="xs">
+        <DatePicker name="dob" defaultValue={new Date()} aria-label="Date of birth" />
+        <Button type="submit" size="sm">
+          Submit
+        </Button>
+        {submitted !== null && (
+          <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+            dob = {submitted || '(empty)'}
+          </code>
+        )}
+      </Stack>
+    </form>
+  );
+}`}
       >
         <InputExample>
           <FormDemo />
@@ -224,9 +300,15 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       <Example
         title="ru-RU locale"
         description="Input parses and formats as DD.MM.YYYY. UI labels (button tooltips) come from <I18nProvider locale='ru'>."
-        code={`<I18nProvider locale="ru">
-  <DatePicker defaultValue={new Date()} locale="ru-RU" />
-</I18nProvider>`}
+        code={`import { DatePicker, I18nProvider } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <I18nProvider locale="ru">
+      <DatePicker defaultValue={new Date()} locale="ru-RU" aria-label="Дата" />
+    </I18nProvider>
+  );
+}`}
       >
         <InputExample>
           <I18nProvider locale="ru">
@@ -238,14 +320,28 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       <Example
         title="Granularity: minute"
         description="`granularity='minute'` adds a manual-entry time input below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` (or `MM/DD/YYYY h:mm AM/PM` in 12h locales) and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Picking a different date preserves the existing time-of-day; picking from `null` defaults to `00:00`. The embedded `<TimeField>` also exposes a Now button in its popover footer."
-        code={`const [value, setValue] = useState<Date | null>(new Date(2026, 4, 28, 9, 0));
+        code={`import { useState } from 'react';
+import { DatePicker, Stack, toIsoDateTime } from '@eocrm/design-system';
 
-<DatePicker
-  granularity="minute"
-  value={value}
-  onChange={setValue}
-/>
-// hidden form mirror: 2026-05-28T09:00`}
+const today = new Date();
+const todayAtNine = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0, 0);
+
+export function GranularityMinuteDemo() {
+  const [value, setValue] = useState<Date | null>(todayAtNine);
+  return (
+    <Stack gap="xs">
+      <DatePicker
+        granularity="minute"
+        value={value}
+        onChange={setValue}
+        aria-label="Meeting start"
+      />
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        {value ? toIsoDateTime(value) : 'null'}
+      </code>
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <GranularityMinuteDemo />
@@ -255,11 +351,44 @@ const in90Days = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       <Example
         title="Hour cycle (12h vs 24h)"
         description="`hourCycle` controls both the trigger text and the embedded TimeField popover. `'12'` forces a 12-hour AM/PM display; `'24'` forces 00–23. The default `'auto'` derives from locale via `Intl.DateTimeFormat` — en-US → 12h, ru-RU → 24h."
-        code={`// Forced 12-hour
-<DatePicker granularity="minute" hourCycle="12" value={v12} onChange={setV12} />
+        code={`import { useState } from 'react';
+import { DatePicker, Stack } from '@eocrm/design-system';
 
-// Forced 24-hour
-<DatePicker granularity="minute" hourCycle="24" value={v24} onChange={setV24} />`}
+const today = new Date();
+const todayAtNine = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0, 0);
+
+export function HourCycleDemo() {
+  const [v12, setV12] = useState<Date | null>(todayAtNine);
+  const [v24, setV24] = useState<Date | null>(todayAtNine);
+  return (
+    <Stack gap="md">
+      <Stack gap="xs">
+        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+          hourCycle=&quot;12&quot;
+        </code>
+        <DatePicker
+          granularity="minute"
+          hourCycle="12"
+          value={v12}
+          onChange={setV12}
+          aria-label="12-hour datetime"
+        />
+      </Stack>
+      <Stack gap="xs">
+        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+          hourCycle=&quot;24&quot;
+        </code>
+        <DatePicker
+          granularity="minute"
+          hourCycle="24"
+          value={v24}
+          onChange={setV24}
+          aria-label="24-hour datetime"
+        />
+      </Stack>
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <HourCycleDemo />

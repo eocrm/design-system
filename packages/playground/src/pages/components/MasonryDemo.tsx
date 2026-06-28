@@ -47,7 +47,52 @@ export function MasonryDemo() {
       <Example
         title="Responsive"
         description="minColumnWidth sets the target column width; the column count reflows with the container. Numbers read left→right across the top row."
-        code={`<Masonry minColumnWidth="160px" gap="sm">{tiles}</Masonry>`}
+        code={`import { Masonry } from '@eocrm/design-system';
+
+const TILES = [
+  { n: 1, h: 80 },
+  { n: 2, h: 140 },
+  { n: 3, h: 100 },
+  { n: 4, h: 60 },
+  { n: 5, h: 120 },
+  { n: 6, h: 90 },
+  { n: 7, h: 160 },
+  { n: 8, h: 70 },
+  { n: 9, h: 110 },
+  { n: 10, h: 130 },
+  { n: 11, h: 95 },
+  { n: 12, h: 150 },
+];
+
+function Tile({ n, h }: { n: number; h: number }) {
+  return (
+    <div
+      style={{
+        height: h,
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--color-accent-subtle-bg)',
+        color: 'var(--color-accent)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 700,
+        fontSize: 18,
+      }}
+    >
+      {n}
+    </div>
+  );
+}
+
+export function Demo() {
+  return (
+    <Masonry minColumnWidth="160px" gap="sm">
+      {TILES.map((t) => (
+        <Tile key={t.n} n={t.n} h={t.h} />
+      ))}
+    </Masonry>
+  );
+}`}
       >
         <Masonry minColumnWidth="160px" gap="sm">
           {TILES.map((t) => (
@@ -59,7 +104,52 @@ export function MasonryDemo() {
       <Example
         title="Fixed columns"
         description="A fixed number of equal-width columns at any container width."
-        code={`<Masonry columns={3} gap="md">{tiles}</Masonry>`}
+        code={`import { Masonry } from '@eocrm/design-system';
+
+const TILES = [
+  { n: 1, h: 80 },
+  { n: 2, h: 140 },
+  { n: 3, h: 100 },
+  { n: 4, h: 60 },
+  { n: 5, h: 120 },
+  { n: 6, h: 90 },
+  { n: 7, h: 160 },
+  { n: 8, h: 70 },
+  { n: 9, h: 110 },
+  { n: 10, h: 130 },
+  { n: 11, h: 95 },
+  { n: 12, h: 150 },
+];
+
+function Tile({ n, h }: { n: number; h: number }) {
+  return (
+    <div
+      style={{
+        height: h,
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--color-accent-subtle-bg)',
+        color: 'var(--color-accent)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 700,
+        fontSize: 18,
+      }}
+    >
+      {n}
+    </div>
+  );
+}
+
+export function Demo() {
+  return (
+    <Masonry columns={3} gap="md">
+      {TILES.map((t) => (
+        <Tile key={t.n} n={t.n} h={t.h} />
+      ))}
+    </Masonry>
+  );
+}`}
       >
         <Masonry columns={3} gap="md">
           {TILES.map((t) => (
@@ -71,7 +161,26 @@ export function MasonryDemo() {
       <Example
         title="Photo wall"
         description="The canonical use: Image children of varied aspect ratios. Masonry rebalances once the images load."
-        code={`<Masonry minColumnWidth="200px" gap="sm">{photos.map(p => <Image … aspectRatio={p.r} />)}</Masonry>`}
+        code={`import { Image, Masonry } from '@eocrm/design-system';
+
+const PHOTOS = [
+  { src: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=80', r: '4 / 3' },
+  { src: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=400&q=80', r: '3 / 4' },
+  { src: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&q=80', r: '1 / 1' },
+  { src: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80', r: '16 / 9' },
+  { src: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=400&q=80', r: '3 / 4' },
+  { src: 'https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=400&q=80', r: '4 / 3' },
+];
+
+export function Demo() {
+  return (
+    <Masonry minColumnWidth="200px" gap="sm">
+      {PHOTOS.map((p) => (
+        <Image key={p.src} src={p.src} alt="" aspectRatio={p.r} />
+      ))}
+    </Masonry>
+  );
+}`}
       >
         <Masonry minColumnWidth="200px" gap="sm">
           {PHOTOS.map((p) => (
@@ -83,7 +192,26 @@ export function MasonryDemo() {
       <Example
         title="Card wall"
         description="Cards of differing content length pack into balanced columns."
-        code={`<Masonry minColumnWidth="240px" gap="md">{cards}</Masonry>`}
+        code={`import { Card, Masonry, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Masonry minColumnWidth="240px" gap="md">
+      {[
+        'Short note.',
+        'A medium note that runs onto a second line so its card is a bit taller than the others.',
+        'Tiny.',
+        'Another note with enough text to wrap across two or three lines and change the height meaningfully versus its neighbours.',
+        'Mid-length note here.',
+        'One more.',
+      ].map((body, i) => (
+        <Card key={i} padding="md">
+          <Text size="sm">{body}</Text>
+        </Card>
+      ))}
+    </Masonry>
+  );
+}`}
       >
         <Masonry minColumnWidth="240px" gap="md">
           {[

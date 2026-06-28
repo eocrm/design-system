@@ -17,8 +17,20 @@ export function CodeDemo() {
       <Example
         title="Inline inside text"
         description="The default chip — used as part of a sentence."
-        code={`<Text>The variable <Code>userId</Code> is required.</Text>
-<Text>Use <Code>npm install</Code> to add a dependency.</Text>`}
+        code={`import { Code, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="xs">
+      <Text>
+        The variable <Code>userId</Code> is required.
+      </Text>
+      <Text>
+        Use <Code>npm install</Code> to add a dependency.
+      </Text>
+    </Stack>
+  );
+}`}
       >
         <Stack gap="xs">
           <Text>
@@ -33,10 +45,18 @@ export function CodeDemo() {
       <Example
         title="Tones"
         description="Four tones change only the text color — the chip background stays the same."
-        code={`<Code tone="default">default()</Code>
-<Code tone="muted">muted()</Code>
-<Code tone="accent">accent()</Code>
-<Code tone="danger">danger()</Code>`}
+        code={`import { Cluster, Code } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm">
+      <Code tone="default">default()</Code>
+      <Code tone="muted">muted()</Code>
+      <Code tone="accent">accent()</Code>
+      <Code tone="danger">danger()</Code>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm">
           <Code tone="default">default()</Code>
@@ -49,7 +69,11 @@ export function CodeDemo() {
       <Example
         title="Standalone"
         description="A <Code> outside a surrounding <Text>. The chip uses var(--font-size-code), which is 0.92em — so a standalone Code inherits the document's base font-size and scales accordingly."
-        code={`<Code>fetch('/api/users')</Code>`}
+        code={`import { Code } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Code>fetch('/api/users')</Code>;
+}`}
       >
         <Code>fetch('/api/users')</Code>
       </Example>

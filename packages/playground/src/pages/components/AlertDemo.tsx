@@ -18,10 +18,18 @@ export function AlertDemo() {
       <Example
         title="Four tones"
         description="info / success / warning / error. Default icon + accent stripe per tone. Error gets role='alert' (assertive); others use role='status' (polite)."
-        code={`<Alert tone="info" title="Synced 5 minutes ago" />
-<Alert tone="success" title="Changes saved" />
-<Alert tone="warning" title="Storage at 85%" />
-<Alert tone="error" title="Request failed" />`}
+        code={`import { Alert, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <Alert tone="info" title="Synced 5 minutes ago" />
+      <Alert tone="success" title="Changes saved" />
+      <Alert tone="warning" title="Storage at 85%" />
+      <Alert tone="error" title="Request failed" />
+    </Stack>
+  );
+}`}
       >
         <Stack gap="sm">
           <Alert tone="info" title="Synced 5 minutes ago" />
@@ -34,7 +42,11 @@ export function AlertDemo() {
       <Example
         title="Title only"
         description="The simplest form. Useful for short status messages."
-        code={`<Alert tone="info" title="Synced 5 minutes ago" />`}
+        code={`import { Alert } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Alert tone="info" title="Synced 5 minutes ago" />;
+}`}
       >
         <Alert tone="info" title="Synced 5 minutes ago" />
       </Example>
@@ -42,7 +54,11 @@ export function AlertDemo() {
       <Example
         title="Description only (no title)"
         description="Short text body without a heading. Reads as a sentence."
-        code={`<Alert tone="warning">Your storage is at 85% capacity.</Alert>`}
+        code={`import { Alert } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Alert tone="warning">Your storage is at 85% capacity.</Alert>;
+}`}
       >
         <Alert tone="warning">Your storage is at 85% capacity.</Alert>
       </Example>
@@ -50,18 +66,24 @@ export function AlertDemo() {
       <Example
         title="With actions"
         description="Pass a pre-laid-out node as `actions`. Renders below the description."
-        code={`<Alert
-  tone="warning"
-  title="Update available"
-  actions={
-    <Cluster gap="sm">
-      <Button size="sm">Reload</Button>
-      <Button size="sm" variant="ghost">Later</Button>
-    </Cluster>
-  }
->
-  A new version is ready. Reload to apply the latest improvements.
-</Alert>`}
+        code={`import { Alert, Button, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Alert
+      tone="warning"
+      title="Update available"
+      actions={
+        <Cluster gap="sm">
+          <Button size="sm">Reload</Button>
+          <Button size="sm" variant="ghost">Later</Button>
+        </Cluster>
+      }
+    >
+      A new version is ready. Reload to apply the latest improvements.
+    </Alert>
+  );
+}`}
       >
         <Alert
           tone="warning"
@@ -82,13 +104,26 @@ export function AlertDemo() {
       <Example
         title="Dismissible"
         description="onDismiss callback fires when the × is clicked. The component does NOT manage hidden state — the consumer conditionally renders."
-        code={`const [show, setShow] = useState(true);
+        code={`import { useState } from 'react';
+import { Alert, Button, Stack } from '@eocrm/design-system';
 
-{show && (
-  <Alert tone="success" onDismiss={() => setShow(false)}>
-    Changes saved.
-  </Alert>
-)}`}
+export function Demo() {
+  const [show, setShow] = useState(true);
+
+  return (
+    <Stack gap="sm">
+      {show ? (
+        <Alert tone="success" onDismiss={() => setShow(false)}>
+          Changes saved.
+        </Alert>
+      ) : (
+        <Button size="sm" variant="ghost" onClick={() => setShow(true)}>
+          Show again
+        </Button>
+      )}
+    </Stack>
+  );
+}`}
       >
         <Stack gap="sm">
           {showSaved ? (
@@ -106,8 +141,17 @@ export function AlertDemo() {
       <Example
         title="Custom icon + suppressed icon"
         description="Pass any ReactNode to icon for an override. icon={null} hides the icon entirely."
-        code={`<Alert tone="info" icon={<Bell size={16} />} title="New mention" />
-<Alert tone="info" icon={null}>Quietly informative.</Alert>`}
+        code={`import { Bell } from 'lucide-react';
+import { Alert, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <Alert tone="info" icon={<Bell size={16} aria-hidden />} title="New mention" />
+      <Alert tone="info" icon={null}>Quietly informative.</Alert>
+    </Stack>
+  );
+}`}
       >
         <Stack gap="sm">
           <Alert tone="info" icon={<Bell size={16} aria-hidden />} title="New mention" />

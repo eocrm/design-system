@@ -14,10 +14,16 @@ export function SocialButtonDemo() {
       <Example
         title="Providers"
         description="provider picks the brand mark; label is the (consumer-supplied) text. Width comes from the parent."
-        code={`<Stack gap="sm">
-  <SocialButton provider="google" label="Continue with Google" />
-  <SocialButton provider="yandex" label="Continue with Yandex" />
-</Stack>`}
+        code={`import { SocialButton, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <SocialButton provider="google" label="Continue with Google" />
+      <SocialButton provider="yandex" label="Continue with Yandex" />
+    </Stack>
+  );
+}`}
       >
         <Stack gap="sm">
           <SocialButton provider="google" label="Continue with Google" />
@@ -28,7 +34,11 @@ export function SocialButtonDemo() {
       <Example
         title="Disabled"
         description="Spreads Button props (disabled, onClick, size, …)."
-        code={`<SocialButton provider="google" label="Continue with Google" disabled />`}
+        code={`import { SocialButton } from '@eocrm/design-system';
+
+export function Demo() {
+  return <SocialButton provider="google" label="Continue with Google" disabled />;
+}`}
       >
         <SocialButton provider="google" label="Continue with Google" disabled />
       </Example>

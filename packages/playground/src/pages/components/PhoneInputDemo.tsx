@@ -19,8 +19,21 @@ export function PhoneInputDemo() {
       <Example
         title="Default (US)"
         description="The trigger shows just the calling code by default (compact); open the country picker — its text auto-selects — and type to search. The component emits canonical E.164; the display reconstructs from it."
-        code={`const [phone, setPhone] = useState<string | null>(null);
-<PhoneInput value={phone} onChange={setPhone} defaultCountry="US" />`}
+        code={`import { useState } from 'react';
+import { PhoneInput, isValidPhone, Stack, Text, Code } from '@eocrm/design-system';
+
+export function Demo() {
+  const [phone, setPhone] = useState<string | null>(null);
+  return (
+    <Stack gap="sm">
+      <PhoneInput value={phone} onChange={setPhone} defaultCountry="US" />
+      <Text size="sm" tone="muted">
+        E.164 → <Code>{phone ?? 'null'}</Code> · valid:{' '}
+        <Code>{String(isValidPhone(phone))}</Code>
+      </Text>
+    </Stack>
+  );
+}`}
       >
         <Stack gap="sm">
           <PhoneInput value={phone} onChange={setPhone} defaultCountry="US" />
@@ -34,8 +47,13 @@ export function PhoneInputDemo() {
       <Example
         title="Seeded from an existing E.164 value"
         description="Pass an E.164 string and the picker + number field reconstruct from it (here a UK number)."
-        code={`const [gb, setGb] = useState<string | null>('+442071838750');
-<PhoneInput value={gb} onChange={setGb} />`}
+        code={`import { useState } from 'react';
+import { PhoneInput } from '@eocrm/design-system';
+
+export function Demo() {
+  const [gb, setGb] = useState<string | null>('+442071838750');
+  return <PhoneInput value={gb} onChange={setGb} />;
+}`}
       >
         <PhoneInput value={gb} onChange={setGb} />
       </Example>
@@ -43,10 +61,31 @@ export function PhoneInputDemo() {
       <Example
         title="Country display formats (countryDisplay)"
         description="Controls how the SELECTED country shows in the trigger — full name+code (default), ISO+code, just the code, or emoji flag+code. The dropdown rows always show the full country name and stay searchable. Note: emoji flags don't render on Windows Chrome/Edge — prefer 'iso' there."
-        code={`<PhoneInput value={v} onChange={setV} countryDisplay="name" /> // United States +1 (default)
-<PhoneInput value={v} onChange={setV} countryDisplay="iso" />  // US +1
-<PhoneInput value={v} onChange={setV} countryDisplay="code" /> // +1
-<PhoneInput value={v} onChange={setV} countryDisplay="flag" /> // 🇺🇸 +1`}
+        code={`import { useState } from 'react';
+import { PhoneInput, Stack, Cluster, Code, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  const [dv, setDv] = useState<string | null>('+12025550123');
+  return (
+    <Stack gap="sm">
+      {(['name', 'iso', 'code', 'flag'] as const).map((mode) => (
+        <Cluster key={mode} gap="sm">
+          <Code>{mode}</Code>
+          <PhoneInput
+            value={dv}
+            onChange={setDv}
+            countryDisplay={mode}
+            aria-label={\`\${mode} display\`}
+          />
+        </Cluster>
+      ))}
+      <Text size="sm" tone="muted">
+        All four share one value — editing any updates the rest, so only the trigger format
+        differs.
+      </Text>
+    </Stack>
+  );
+}`}
       >
         <Stack gap="sm">
           {(['name', 'iso', 'code', 'flag'] as const).map((mode) => (
@@ -70,9 +109,20 @@ export function PhoneInputDemo() {
       <Example
         title="Inside a Field (label + validation)"
         description="Field injects the label association; drive invalid chrome via isValidPhone."
-        code={`<Field label="Mobile" error={isValidPhone(phone) ? undefined : 'Enter a valid number'}>
-  <PhoneInput value={phone} onChange={setPhone} />
-</Field>`}
+        code={`import { useState } from 'react';
+import { PhoneInput, isValidPhone, Field } from '@eocrm/design-system';
+
+export function Demo() {
+  const [phone, setPhone] = useState<string | null>(null);
+  return (
+    <Field
+      label="Mobile"
+      error={phone && !isValidPhone(phone) ? 'Enter a valid number' : undefined}
+    >
+      <PhoneInput value={phone} onChange={setPhone} />
+    </Field>
+  );
+}`}
       >
         <Field
           label="Mobile"
@@ -85,7 +135,11 @@ export function PhoneInputDemo() {
       <Example
         title="Disabled"
         description="Both controls disabled."
-        code={`<PhoneInput value="+12025550123" onChange={() => {}} disabled />`}
+        code={`import { PhoneInput } from '@eocrm/design-system';
+
+export function Demo() {
+  return <PhoneInput value="+12025550123" onChange={() => {}} disabled />;
+}`}
       >
         <PhoneInput value="+12025550123" onChange={() => {}} disabled />
       </Example>

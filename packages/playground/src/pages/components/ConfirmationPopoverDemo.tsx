@@ -22,13 +22,24 @@ export function ConfirmationPopoverDemo() {
       <Example
         title="Default variant — Archive"
         description="Sync onConfirm. Lighter-weight confirmation for non-destructive actions like archive or publish."
-        code={`<ConfirmationPopover
-  title="Archive this contact?"
-  description="You can unarchive later from the archive view."
-  onConfirm={() => archive(id)}
->
-  <Button variant="secondary">Archive</Button>
-</ConfirmationPopover>`}
+        code={`import { useState } from 'react';
+import { Button, Cluster, ConfirmationPopover } from '@eocrm/design-system';
+
+export function Demo() {
+  const [archiveCount, setArchiveCount] = useState(0);
+  return (
+    <Cluster gap="md" justify="center">
+      <ConfirmationPopover
+        title="Archive this contact?"
+        description="You can unarchive later from the archive view."
+        onConfirm={() => setArchiveCount((n) => n + 1)}
+      >
+        <Button variant="secondary">Archive</Button>
+      </ConfirmationPopover>
+      <span>Archived {archiveCount} time(s)</span>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <ConfirmationPopover
@@ -45,15 +56,26 @@ export function ConfirmationPopoverDemo() {
       <Example
         title="Danger variant — Delete"
         description="variant='danger' makes Confirm a danger button. Initial focus is on Cancel, so keyboard Enter never accidentally deletes."
-        code={`<ConfirmationPopover
-  title="Delete record?"
-  description="This action cannot be undone."
-  confirmLabel="Delete"
-  variant="danger"
-  onConfirm={() => deleteRecord(id)}
->
-  <Button variant="danger">Delete</Button>
-</ConfirmationPopover>`}
+        code={`import { useState } from 'react';
+import { Button, Cluster, ConfirmationPopover } from '@eocrm/design-system';
+
+export function Demo() {
+  const [deleteCount, setDeleteCount] = useState(0);
+  return (
+    <Cluster gap="md" justify="center">
+      <ConfirmationPopover
+        title="Delete record?"
+        description="This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => setDeleteCount((n) => n + 1)}
+      >
+        <Button variant="danger">Delete</Button>
+      </ConfirmationPopover>
+      <span>Deleted {deleteCount} time(s)</span>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <ConfirmationPopover
@@ -72,14 +94,25 @@ export function ConfirmationPopoverDemo() {
       <Example
         title="Async success — pending spinner"
         description="onConfirm returns a Promise that resolves after 1.5s. While pending, both buttons disable, Confirm shows a spinner, and dismissal is blocked. On resolve the popover closes."
-        code={`<ConfirmationPopover
-  title="Submit?"
-  onConfirm={async () => {
-    await submitToServer();   // 1.5s
-  }}
->
-  <Button>Submit</Button>
-</ConfirmationPopover>`}
+        code={`import { Button, Cluster, ConfirmationPopover } from '@eocrm/design-system';
+
+const fakeDelay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+export function Demo() {
+  return (
+    <Cluster gap="md" justify="center">
+      <ConfirmationPopover
+        title="Submit?"
+        description="Simulated 1.5s server round-trip."
+        onConfirm={async () => {
+          await fakeDelay(1500);
+        }}
+      >
+        <Button>Submit</Button>
+      </ConfirmationPopover>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <ConfirmationPopover
@@ -97,15 +130,26 @@ export function ConfirmationPopoverDemo() {
       <Example
         title="Async failure — popover stays open"
         description="onConfirm returns a Promise that rejects after 1s. The popover stays open and buttons re-enable. The consumer is expected to surface the error externally (we just console.log here)."
-        code={`<ConfirmationPopover
-  title="Submit?"
-  onConfirm={async () => {
-    await fakeDelay(1000);
-    throw new Error('network down');
-  }}
->
-  <Button>Submit (will fail)</Button>
-</ConfirmationPopover>`}
+        code={`import { Button, Cluster, ConfirmationPopover } from '@eocrm/design-system';
+
+const fakeDelay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+export function Demo() {
+  return (
+    <Cluster gap="md" justify="center">
+      <ConfirmationPopover
+        title="Submit?"
+        description="Simulated server failure after 1s. Buttons re-enable; popover stays open."
+        onConfirm={async () => {
+          await fakeDelay(1000);
+          throw new Error('demo failure');
+        }}
+      >
+        <Button>Submit (will fail)</Button>
+      </ConfirmationPopover>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <ConfirmationPopover
@@ -124,26 +168,36 @@ export function ConfirmationPopoverDemo() {
       <Example
         title="Inside a DropdownMenu — kebab Delete"
         description="Wrap a <DropdownMenu.Item closeOnSelect={false}> as ConfirmationPopover's trigger. The Item IS the trigger, so the full highlighted row opens the confirmation. The menu stays open until the user dismisses it (Escape, click outside, or pick another item)."
-        code={`<DropdownMenu>
-  <DropdownMenu.Trigger>
-    <Button variant="ghost" aria-label="Row actions">⋯</Button>
-  </DropdownMenu.Trigger>
-  <DropdownMenu.Content align="end">
-    <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
-    <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
-    <ConfirmationPopover
-      title="Delete record?"
-      description="This action cannot be undone."
-      variant="danger"
-      confirmLabel="Delete"
-      onConfirm={remove}
-    >
-      <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}} tone="danger">
-        Delete
-      </DropdownMenu.Item>
-    </ConfirmationPopover>
-  </DropdownMenu.Content>
-</DropdownMenu>`}
+        code={`import { Button, Cluster, ConfirmationPopover, DropdownMenu } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" justify="center">
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="ghost" aria-label="Row actions">
+            ⋯
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+          <ConfirmationPopover
+            title="Delete record?"
+            description="This action cannot be undone."
+            variant="danger"
+            confirmLabel="Delete"
+            onConfirm={() => {}}
+          >
+            <DropdownMenu.Item closeOnSelect={false} onSelect={() => {}} tone="danger">
+              Delete
+            </DropdownMenu.Item>
+          </ConfirmationPopover>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <DropdownMenu>
@@ -174,25 +228,35 @@ export function ConfirmationPopoverDemo() {
       <Example
         title="Rename — focus a hosted input"
         description="Pass initialFocusRef to override the default Cancel focus and land focus on an <Input> rendered inside the description slot. The onFocus select-all means the user can type a replacement immediately — exactly the saved-views Rename flow."
-        code={`const renameRef = useRef<HTMLInputElement | null>(null);
+        code={`import { useRef, useState } from 'react';
+import { Button, Cluster, ConfirmationPopover, Input } from '@eocrm/design-system';
 
-<ConfirmationPopover
-  title="Rename view"
-  description={
-    <Input
-      ref={renameRef}
-      aria-label="View name"
-      value={viewName}
-      onChange={(e) => setViewName(e.target.value)}
-      onFocus={(e) => e.currentTarget.select()}
-    />
-  }
-  initialFocusRef={renameRef}
-  confirmLabel="Rename"
-  onConfirm={() => saveViewName(viewName)}
->
-  <Button variant="secondary">Rename…</Button>
-</ConfirmationPopover>`}
+export function Demo() {
+  const [viewName, setViewName] = useState('Untitled view');
+  const renameRef = useRef<HTMLInputElement | null>(null);
+  return (
+    <Cluster gap="md" justify="center">
+      <ConfirmationPopover
+        title="Rename view"
+        description={
+          <Input
+            ref={renameRef}
+            aria-label="View name"
+            value={viewName}
+            onChange={(e) => setViewName(e.target.value)}
+            onFocus={(e) => e.currentTarget.select()}
+          />
+        }
+        initialFocusRef={renameRef}
+        confirmLabel="Rename"
+        onConfirm={() => {}}
+      >
+        <Button variant="secondary">Rename…</Button>
+      </ConfirmationPopover>
+      <span>Current name: {viewName}</span>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <ConfirmationPopover
