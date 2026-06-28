@@ -21,7 +21,19 @@ internal trade-off / judgment call. The clearly-safe items are already shipped.
 
 ---
 
-## Decision list — trade-offs to weigh (NOT yet implemented)
+## Decision list — ALL IMPLEMENTED (2026-06-28, v0.1.97–v0.1.100)
+
+> Update: the user chose "do all". Every item below shipped across four PRs, each
+> behavior-preserving, Rule-8-reviewed, and live-verified:
+> P-B+S-B+S-C → **v0.1.97** (#241); P-A+P-D → **v0.1.98** (#242);
+> S-A → **v0.1.99** (#243); P-C → **v0.1.100** (#244).
+> (P-C was scoped to caching context-independent leaf blocks only — list items
+> still render fresh — so it's correct-by-construction, not the speculative
+> version the caution below warned against.)
+
+The original trade-off analysis is preserved below for the record.
+
+## Decision list — trade-offs (as originally written)
 
 ### Performance
 
