@@ -1,4 +1,4 @@
-import { marksEqual, hasMark, withMark, withoutMark, toggleMark } from './marks';
+import { marksEqual, hasMark, withMark, withoutMark, toggleMark, marksSignature } from './marks';
 import type { Mark } from './model';
 
 const bold: Mark = { type: 'bold' };
@@ -9,6 +9,21 @@ describe('marks', () => {
     expect(marksEqual([bold, italic], [italic, bold])).toBe(true);
     expect(marksEqual([bold], [bold, italic])).toBe(false);
     expect(marksEqual([], [])).toBe(true);
+  });
+
+  it('marksSignature is order-insensitive, empty for no marks, and distinguishes formatting', () => {
+    expect(marksSignature([])).toBe('');
+    // Same set in any order → same signature.
+    expect(marksSignature([bold, italic])).toBe(marksSignature([italic, bold]));
+    // A structural change (adding a mark) → a different signature, so React keys differ.
+    expect(marksSignature([bold])).not.toBe(marksSignature([bold, italic]));
+    // Color value and link href are part of the signature.
+    expect(marksSignature([{ type: 'textColor', color: 'red' }])).not.toBe(
+      marksSignature([{ type: 'textColor', color: 'blue' }]),
+    );
+    expect(marksSignature([{ type: 'link', href: '/a' }])).not.toBe(
+      marksSignature([{ type: 'link', href: '/b' }]),
+    );
   });
 
   it('marksEqual distinguishes link href', () => {

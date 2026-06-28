@@ -6,7 +6,7 @@ import { runsText, runsLength } from './inlines';
 import { safeHref } from './safeHref';
 import { textColorVar, bgColorVar } from './colorMarks';
 import { isListItem, effectiveDepths } from './listDepths';
-import { MARK_ORDER } from './marks';
+import { MARK_ORDER, marksSignature } from './marks';
 import type { RenderLink } from './renderLink';
 import type { RenderMention } from './renderMention';
 import { RichTextAttachment } from '../../RichTextEditor/RichTextAttachment';
@@ -132,7 +132,7 @@ function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
   }
 }
 
-function renderRun(run: Inline, key: number): ReactNode {
+function renderRun(run: Inline, key: string): ReactNode {
   const present = MARK_ORDER.filter((t) => run.marks.some((m) => m.type === t));
   let node: ReactNode = run.text;
   // Wrap innermost-first so present[0] (link) ends up outermost.
@@ -172,13 +172,14 @@ function renderInlines(inlines: Inline[], opts: ResolvedOptions): ReactNode {
       if (custom !== fallback) {
         // Substituted: one node for the whole span. In the editor it's an atomic,
         // non-editable widget tagged with the span's MODEL length (`data-len`).
+        const mkey = `m${i}:${mention.id}:${mention.label}`;
         out.push(
           opts.editable ? (
-            <span key={i} data-rich-mention data-len={text.length} contentEditable={false}>
+            <span key={mkey} data-rich-mention data-len={text.length} contentEditable={false}>
               {custom}
             </span>
           ) : (
-            <Fragment key={i}>{custom}</Fragment>
+            <Fragment key={mkey}>{custom}</Fragment>
           ),
         );
         i = j;
@@ -210,13 +211,14 @@ function renderInlines(inlines: Inline[], opts: ResolvedOptions): ReactNode {
       if (custom !== fallback) {
         // Substituted: one node for the whole span. In the editor it's an atomic,
         // non-editable widget tagged with the span's MODEL length (`data-len`).
+        const lkey = `l${i}:${linkHref}`;
         out.push(
           opts.editable ? (
-            <span key={i} data-rich-link data-len={text.length} contentEditable={false}>
+            <span key={lkey} data-rich-link data-len={text.length} contentEditable={false}>
               {custom}
             </span>
           ) : (
-            <Fragment key={i}>{custom}</Fragment>
+            <Fragment key={lkey}>{custom}</Fragment>
           ),
         );
         i = j;
@@ -224,7 +226,10 @@ function renderInlines(inlines: Inline[], opts: ResolvedOptions): ReactNode {
       }
       // Consumer declined → fall through to normal per-run rendering (default <a>).
     }
-    out.push(renderRun(run, i));
+    // Key folds in the run's mark signature (not just its index): when a run's
+    // formatting changes, React replaces its subtree cleanly instead of re-wrapping
+    // a live contentEditable text node in place (which orphaned text / reset colors).
+    out.push(renderRun(run, `${i}:${marksSignature(run.marks)}`));
     i += 1;
   }
   return out;

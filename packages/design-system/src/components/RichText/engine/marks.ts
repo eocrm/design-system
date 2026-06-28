@@ -26,6 +26,24 @@ function markKey(m: Mark): string {
   return m.type;
 }
 
+/**
+ * Order-insensitive string signature of a mark SET. Two runs with the same
+ * signature carry identical formatting. Used by the editor's renderer to fold the
+ * run's formatting into its React key, so that when a run's MARK STRUCTURE changes
+ * (e.g. bold/italic/underline added over an already-colored run) React replaces
+ * the run's subtree cleanly instead of surgically re-wrapping an existing
+ * `contentEditable` text node in place — which can orphan the node (stray leftover
+ * text) or re-point its color span.
+ */
+export function marksSignature(marks: Mark[]): string {
+  if (marks.length === 0) return '';
+  // Sorted so order doesn't matter. A theoretical separator collision (a mark key can
+  // embed free-form href/label text) is harmless: this signature is only ever combined
+  // with the run's index in a React key, which already guarantees uniqueness — at worst
+  // a collision would miss a remount (the pre-fix behavior), never break rendering.
+  return marks.map(markKey).sort().join(' ');
+}
+
 /** Order-insensitive set equality (link href included). */
 export function marksEqual(a: Mark[], b: Mark[]): boolean {
   if (a === b) return true;
