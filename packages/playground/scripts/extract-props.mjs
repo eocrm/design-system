@@ -82,13 +82,40 @@ function documentedDefault(symbol, checker, description) {
   return match ? match[1] : '';
 }
 
+/** typeToString that keeps named aliases (`Block[]`, not the expanded blob). */
+function aliasedTypeText(type, checker, node) {
+  return cleanTypeText(
+    checker.typeToString(
+      type,
+      node,
+      ts.TypeFormatFlags.NoTruncation |
+        ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope |
+        ts.TypeFormatFlags.InTypeAlias,
+    ),
+  );
+}
+
+/** `{ a: string; b?: T }` for an interface / object type, one level deep. */
+function objectShape(type, checker) {
+  const props = type.getProperties();
+  if (props.length === 0) return '';
+  const parts = props.map((p) => {
+    const decl = p.valueDeclaration ?? p.declarations?.[0];
+    const pt = decl
+      ? checker.getTypeOfSymbolAtLocation(p, decl)
+      : checker.getDeclaredTypeOfSymbol(p);
+    const optional = p.flags & ts.SymbolFlags.Optional ? '?' : '';
+    return `${p.getName()}${optional}: ${aliasedTypeText(pt, checker, decl)}`;
+  });
+  return `{ ${parts.join('; ')} }`;
+}
+
 /**
- * Map of every public type alias (e.g. `DividerOrientation`) to its expanded
- * definition (`"horizontal" | "vertical"`), read from the package's root barrel.
- * Interfaces (object shapes) print as their own name and are skipped — only
- * aliases whose expansion differs (unions, etc.) are surfaced, so the API table
- * can expand them inline on click. Resolved by `typeToString` WITHOUT the
- * alias-preserving flag, which fully resolves nested aliases to literals.
+ * Map of every public type (e.g. `DividerOrientation`, `RichDoc`) to its expanded
+ * definition, read from the package's root barrel — so the API table can expand it
+ * inline on click. Unions/aliases expand to their members (`"horizontal" | "vertical"`)
+ * via `typeToString` without the alias-preserving flag; interfaces / nominal object
+ * types (which print as their own name) expand to a one-level shape (`{ blocks: Block[] }`).
  */
 function extractTypeAliases(program, checker) {
   const types = {};
@@ -105,7 +132,9 @@ function extractTypeAliases(program, checker) {
         continue;
       }
     }
-    if (!(sym.flags & ts.SymbolFlags.TypeAlias)) continue;
+    if (!(sym.flags & ts.SymbolFlags.TypeAlias) && !(sym.flags & ts.SymbolFlags.Interface)) {
+      continue;
+    }
 
     const name = exp.getName();
     let declared;
@@ -114,13 +143,17 @@ function extractTypeAliases(program, checker) {
     } catch {
       continue;
     }
-    const expansion = cleanTypeText(
+    // Aliases (unions, primitives) expand here; an interface / nominal object prints
+    // as its own name, so fall back to building its shape from its properties.
+    let expansion = cleanTypeText(
       checker.typeToString(
         declared,
         undefined,
         ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.InTypeAlias,
       ),
     );
+    if (expansion === name) expansion = objectShape(declared, checker);
+
     if (expansion && expansion !== name && expansion.length <= MAX_EXPANSION_LENGTH) {
       types[name] = expansion;
     }
