@@ -4179,6 +4179,13 @@
         "description": "Tighter gaps for dense surfaces (sidebars, panels). The remapped tokens cascade to\nevery nested item via CSS custom properties. Default `false`."
       },
       {
+        "name": "nodeAlign",
+        "type": "ThreadNodeAlign",
+        "required": false,
+        "default": "header",
+        "description": "Where the leading `node` sits relative to the comment body.\n- `header` (default) — vertically centered on the **first body line** (the author /\n  timestamp header), Jira/GitHub style, so a node taller than one line (e.g. a 24px\n  `<Avatar>`) reads as centered against the name rather than top-aligned. Assumes the\n  header line-box matches `--thread-header-line-height` (defaults to `<Text size=\"sm\">`);\n  override that token if your header line differs.\n- `top` — top-aligned with the body (the node's top meets the body's top). Use when the\n  node is about one line tall, or when you deliberately want top alignment."
+      },
+      {
         "name": "children",
         "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
         "required": true,

@@ -10,10 +10,21 @@
   --thread-rail-width: var(--border-width); // hairline rail
   --thread-rail-color: var(--color-border);
   --thread-node-gap: 1px; // hairline gap between the connector lines and the node/avatar
-  // Surface the thread sits on; the last-reply trunk mask paints this to hide the
-  // rail's overshoot below the final branch. Override if Thread renders on a
-  // non-default (tinted) surface, else a faint stripe shows below the last reply.
-  --thread-surface: var(--color-bg);
+
+  // Height of the first body line (the "header" — author + timestamp). With the
+  // default `nodeAlign="header"`, the node is vertically centered against THIS line, so
+  // it should match your header text's line-box. Defaults to the line-box of
+  // `<Text size="sm">` (the canonical header) via the global primitives — if you rebrand
+  // Text's own tokens (`--text-font-size-sm`/`--text-line-height`) so they diverge, or
+  // your header line differs, override this token to match.
+  --thread-header-line-height: calc(var(--font-size-sm) * var(--line-height-normal));
+
+  // Node vertical centre (from the item top) and node-box height. Defaults center the
+  // node on the header line; the `.alignTop` class (`nodeAlign="top"`) overrides both to
+  // top-align the node with the body instead. The rail/elbow connectors derive their
+  // Y from `--thread-node-center`, so they track whichever alignment is active.
+  --thread-node-center: calc(var(--thread-header-line-height) / 2);
+  --thread-nodebox-height: var(--thread-header-line-height);
 
   --thread-node-size-compact: var(--size-sm); // 24px
   --thread-content-gap-compact: var(--space-1); // 4px

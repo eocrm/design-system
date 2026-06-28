@@ -78,6 +78,24 @@ describe('Thread', () => {
     expect((container.querySelector('ul') as HTMLElement).className).toMatch(/compact/);
   });
 
+  it('defaults to header alignment (no alignTop class on the root)', () => {
+    const { container } = render(
+      <Thread>
+        <Thread.Item node={<span>A</span>}>x</Thread.Item>
+      </Thread>,
+    );
+    expect((container.querySelector('ul') as HTMLElement).className).not.toMatch(/alignTop/);
+  });
+
+  it('nodeAlign="top" adds the alignTop class to the root <ul>', () => {
+    const { container } = render(
+      <Thread nodeAlign="top">
+        <Thread.Item node={<span>A</span>}>x</Thread.Item>
+      </Thread>,
+    );
+    expect((container.querySelector('ul') as HTMLElement).className).toMatch(/alignTop/);
+  });
+
   it('forwards refs to the root <ul> and item <li>', () => {
     const ulRef = createRef<HTMLUListElement>();
     const liRef = createRef<HTMLLIElement>();
