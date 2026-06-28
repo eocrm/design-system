@@ -18,7 +18,6 @@ import {
   blockLength,
   isCollapsed,
   wholeBlockRange,
-  collapsedRange,
   marksBeforeCaret,
 } from '../RichText/engine/position';
 import { linkAt, setLink } from './links';
@@ -64,12 +63,9 @@ import {
 } from '../RichText/engine/blockUnit';
 import { RichTextBlockControls } from './RichTextBlockControls';
 import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
+import { useAttachmentConfig } from './useAttachmentConfig';
 import { RichTextImageResizer } from './RichTextImageResizer';
-import {
-  updateAttachmentBlock,
-  clearAttachmentFields,
-  attachmentIsImage,
-} from '../RichText/engine/attachment';
+import { attachmentIsImage } from '../RichText/engine/attachment';
 import { safeHref } from '../RichText/engine/safeHref';
 import type { BlockAction } from './RichTextBlockMenu';
 import { useUpload, type UploadConfig } from './useUpload';
@@ -339,6 +335,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // feature hooks so their handlers read current values without re-subscribing
     // or depending on `latest`'s shape (keeps the handlers' identity stable).
     const getValue = useCallback(() => latest.current.value, []);
+    const getLiveDoc = useCallback(() => liveDocRef.current, []);
     const getReadOnly = useCallback(() => latest.current.readOnly, []);
 
     // Focus state — only consulted by `toolbar="auto"` to gate the bar's visibility.
@@ -383,7 +380,6 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const [hoverBlockId, setHoverBlockId] = useState<string | null>(null);
     const [caretBlockId, setCaretBlockId] = useState<string | null>(null);
     const activeBlockId = hoverBlockId ?? caretBlockId;
-    const [configBlockId, setConfigBlockId] = useState<string | null>(null);
     const [blockMenuOpen, setBlockMenuOpen] = useState(false);
     // Mirror the open state into a ref so the hover listener can read it without
     // re-subscribing: while the menu is open, hovering another block must NOT move
@@ -460,6 +456,30 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         pendingSelectionRef.current = result.selection;
         liveDocRef.current = result.doc;
         latest.current.onChange(result.doc);
+      },
+      [syncHistoryFlags],
+    );
+
+    // Live-resize commit path for attachment width drags (used by
+    // useAttachmentConfig's onConfigWidth and the image resizer). Records ONE
+    // coalescing 'resize' history entry per drag (whole drag = one undo step),
+    // writes NO pending selection (the slider/handle keeps focus mid-drag — a
+    // writeSelection into the editable would yank focus), and chains off
+    // `liveDocRef` so rapid moves before a re-render stack on each other. The
+    // no-op guard skips an unchanged doc (same width). This stays in the editor
+    // so the history coupling is isolated from the hook.
+    const commitResizeLive = useCallback(
+      (doc: RichDoc) => {
+        if (doc === liveDocRef.current) return;
+        historyRef.current = historyRecord(
+          historyRef.current,
+          { doc, selection: historyRef.current.present.selection },
+          'resize',
+          Date.now(),
+        );
+        syncHistoryFlags();
+        liveDocRef.current = doc;
+        latest.current.onChange(doc);
       },
       [syncHistoryFlags],
     );
@@ -1234,84 +1254,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [commit],
     );
 
-    // Attachment config popover. Config edits don't move the caret meaningfully —
-    // the popover holds focus — so each commit pins a collapsed selection on the
-    // block (via `collapsedRange`). Open/close toggle `configBlockId`; close returns
-    // focus to the editor.
-    const onConfigOpen = useCallback((id: string) => setConfigBlockId(id), []);
-    const onConfigClose = useCallback(() => {
-      setConfigBlockId(null);
-      rootRef.current?.focus();
-    }, []);
-    const onConfigAlt = useCallback(
-      (id: string, alt: string) => {
-        commit(
-          {
-            doc: updateAttachmentBlock(latest.current.value, id, { alt }),
-            selection: collapsedRange(id),
-          },
-          'other',
-        );
-      },
-      [commit],
-    );
-    const onConfigAlign = useCallback(
-      (id: string, align: 'left' | 'center' | 'right') => {
-        commit(
-          {
-            doc: updateAttachmentBlock(latest.current.value, id, { align }),
-            selection: collapsedRange(id),
-          },
-          'other',
-        );
-      },
-      [commit],
-    );
-    const onConfigWidth = useCallback(
-      (id: string, width: number) => {
-        // Live resize: fires on every slider/handle MOVE (not just the end) so the
-        // image tracks the control. Three deliberate choices vs a plain `commit`:
-        //  • Coalescing 'resize' kind → the whole drag is ONE undo step (reverting
-        //    to the pre-drag width), instead of one per pixel.
-        //  • No `pendingSelectionRef` write → the slider/handle keeps focus; a
-        //    `writeSelection` into the editable would yank focus mid-drag.
-        //  • Reads `liveDocRef` (the synchronously-latest doc) so rapid moves that
-        //    fire before React re-renders still chain off each other.
-        // Width only; clearing height lets the browser keep the aspect ratio.
-        let d = updateAttachmentBlock(liveDocRef.current, id, { width });
-        d = clearAttachmentFields(d, id, ['height']);
-        if (d === liveDocRef.current) return;
-        historyRef.current = historyRecord(
-          historyRef.current,
-          { doc: d, selection: historyRef.current.present.selection },
-          'resize',
-          Date.now(),
-        );
-        syncHistoryFlags();
-        liveDocRef.current = d;
-        latest.current.onChange(d);
-      },
-      [syncHistoryFlags],
-    );
-    const onConfigWidthReset = useCallback(
-      (id: string) => {
-        commit(
-          {
-            doc: clearAttachmentFields(latest.current.value, id, ['width', 'height']),
-            selection: collapsedRange(id),
-          },
-          'other',
-        );
-      },
-      [commit],
-    );
-    const onConfigReplace = useCallback((id: string, file: File) => {
-      uploaderRef.current.replace(id, file);
-      // The block flips to `status: 'uploading'`, which unmounts the popover (it
-      // only shows for `ready`). Clear config state too so it doesn't spontaneously
-      // reappear when the upload settles back to `ready`.
-      setConfigBlockId(null);
-    }, []);
+    // Attachment config popover: open-state + alt/align/width/reset/replace
+    // handlers (see useAttachmentConfig). The live-resize history coupling stays
+    // in this file via `commitResizeLive`; the popover JSX (which derives the
+    // configured block + anchor from render scope) is rendered below.
+    const {
+      configBlockId,
+      onConfigOpen,
+      onConfigClose,
+      onConfigAlt,
+      onConfigAlign,
+      onConfigWidth,
+      onConfigWidthReset,
+      onConfigReplace,
+    } = useAttachmentConfig({
+      rootRef,
+      commit,
+      commitResizeLive,
+      getValue,
+      getLiveDoc,
+      uploaderRef,
+    });
     // Stable resize handler for the image resizer — keeps the memoized resizer from
     // re-rendering every keystroke on a fresh inline lambda. Guards activeBlockId so
     // a late move after the active block clears is a no-op.
