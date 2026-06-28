@@ -929,11 +929,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       // gutter-column hover at most once per animation frame: capture the latest move
       // on every event, but coalesce the actual resolution into a single rAF.
       let moveRaf = 0;
-      let lastMove: { clientX: number; clientY: number; target: EventTarget | null } | null = null;
+      let lastMove: { clientY: number; target: EventTarget | null } | null = null;
       const onMove = (e: MouseEvent) => {
         if (blockMenuOpenRef.current || draggingRef.current) return;
         // capture the latest move; resolve at most once per frame
-        lastMove = { clientX: e.clientX, clientY: e.clientY, target: e.target };
+        lastMove = { clientY: e.clientY, target: e.target };
         if (moveRaf) return;
         moveRaf = requestAnimationFrame(() => {
           moveRaf = 0;
