@@ -1,6 +1,6 @@
 // renderDoc.tsx — pure model → React. Read-only; used by <RichText>. The model
 // is flat; this reconstructs list nesting from `depth` at render time.
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, type ReactElement, type ReactNode } from 'react';
 import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
 import { runsText, runsLength } from './inlines';
 import { safeHref } from './safeHref';
@@ -38,6 +38,50 @@ interface ResolvedOptions {
   editable: boolean;
   renderLink?: RenderLink;
   renderMention?: RenderMention;
+}
+
+// Per-block element cache for CONTEXT-INDEPENDENT blocks only (paragraph, heading,
+// blockquote, code_block, attachment). The model is immutable: a block keeps its
+// reference across edits unless it changed, so an element built purely from
+// (block + options) can be cached by block reference — reusing the same element
+// lets React bail out of reconciling unchanged blocks (referential equality).
+//
+// Keyed in a WeakMap on the immutable Block object, so entries are GC'd with their
+// block — no leak, no manual invalidation. The render options are part of the
+// stored entry: a change to `editable`/`renderLink`/`renderMention` correctly
+// misses the cache and rebuilds.
+//
+// LIST items (bullet_item/ordered_item) are NEVER cached here: their nested
+// <ul>/<ol>/<li> shape depends on NEIGHBORS (grouping + relative depth), so a
+// sibling change can alter a list item's output while its own reference is
+// unchanged. They render fresh every time via collectList/renderListTree.
+type BlockCacheEntry = {
+  editable: boolean;
+  renderLink?: RenderLink;
+  renderMention?: RenderMention;
+  el: ReactElement;
+};
+const blockCache = new WeakMap<Block, BlockCacheEntry>();
+
+function cachedBlockEl(
+  block: Block,
+  editable: boolean,
+  renderLink: RenderLink | undefined,
+  renderMention: RenderMention | undefined,
+  build: () => ReactElement,
+): ReactElement {
+  const hit = blockCache.get(block);
+  if (
+    hit &&
+    hit.editable === editable &&
+    hit.renderLink === renderLink &&
+    hit.renderMention === renderMention
+  ) {
+    return hit.el;
+  }
+  const el = build();
+  blockCache.set(block, { editable, renderLink, renderMention, el });
+  return el;
 }
 
 function wrapMark(type: MarkType, mark: Mark, child: ReactNode): ReactNode {
@@ -191,7 +235,12 @@ function blockContent(block: Block, opts: ResolvedOptions): ReactNode {
   return renderInlines(block.inlines, opts);
 }
 
-function renderBlock(block: Block, opts: ResolvedOptions): ReactNode {
+// Build the element for a single NON-LIST block. Pure in (block, opts): no
+// position/index/depth/neighbor input (the effective depths computed in renderDoc
+// are consumed only by the list path). Every branch returns a single top-level
+// element carrying `key={block.id}` — so caching + reusing the reference preserves
+// the key and lets React skip reconciling the block.
+function buildBlock(block: Block, opts: ResolvedOptions): ReactElement {
   const anchor = opts.editable ? { 'data-block-id': block.id } : undefined;
   switch (block.type) {
     case 'heading': {
@@ -236,6 +285,14 @@ function renderBlock(block: Block, opts: ResolvedOptions): ReactNode {
         </p>
       );
   }
+}
+
+// Cache wrapper for a non-list block: returns the cached element when the block
+// reference AND the relevant options are unchanged, otherwise builds + stores it.
+function renderBlock(block: Block, opts: ResolvedOptions): ReactElement {
+  return cachedBlockEl(block, opts.editable, opts.renderLink, opts.renderMention, () =>
+    buildBlock(block, opts),
+  );
 }
 
 interface ListItemNode {
