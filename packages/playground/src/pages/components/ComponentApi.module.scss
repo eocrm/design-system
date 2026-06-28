@@ -33,6 +33,29 @@
   color: var(--color-fg-subtle);
 }
 
+// Clickable type alias inside the Type column — looks like part of the code text
+// but with a dotted underline affordance; toggles to its expanded definition.
+.typeAlias {
+  font: inherit;
+  color: inherit;
+  background: none;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.typeAlias:hover {
+  text-decoration-style: solid;
+}
+
+.typeAlias:focus-visible {
+  outline: var(--ring-width) solid var(--ring-accent);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
 .description {
   display: flex;
   flex-direction: column;

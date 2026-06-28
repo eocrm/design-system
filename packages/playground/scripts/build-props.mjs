@@ -13,8 +13,9 @@ const OUTPUT_PATH = join(__dirname, '..', 'src', 'lib', 'props.manifest.json');
 const manifest = extractProps();
 writeFileSync(OUTPUT_PATH, JSON.stringify(manifest, null, 2) + '\n');
 
-const count = Object.keys(manifest).length;
-const total = Object.values(manifest).reduce((sum, c) => sum + c.props.length, 0);
+const count = Object.keys(manifest.components).length;
+const total = Object.values(manifest.components).reduce((sum, c) => sum + c.props.length, 0);
+const typeCount = Object.keys(manifest.types).length;
 console.log(
-  `props.manifest.json regenerated — ${count} components, ${total} props → ${relative(process.cwd(), OUTPUT_PATH)}`,
+  `props.manifest.json regenerated — ${count} components, ${total} props, ${typeCount} expandable types → ${relative(process.cwd(), OUTPUT_PATH)}`,
 );

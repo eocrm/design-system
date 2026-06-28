@@ -17,6 +17,11 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DS_SRC = resolve(__dirname, '..', '..', 'design-system', 'src');
 const COMPONENTS_DIR = join(DS_SRC, 'components');
+const ROOT_INDEX = join(DS_SRC, 'index.ts');
+
+// Cap on an expanded alias definition we'll surface in the API table — keeps a
+// pathological generic from dumping a wall of text into a chip.
+const MAX_EXPANSION_LENGTH = 200;
 
 /** Compiler options mirroring tsconfig.base.json (enough to resolve types). */
 const COMPILER_OPTIONS = {
@@ -77,14 +82,64 @@ function documentedDefault(symbol, checker, description) {
   return match ? match[1] : '';
 }
 
-/** Build the manifest for every component that exports `<Name>Props`. */
+/**
+ * Map of every public type alias (e.g. `DividerOrientation`) to its expanded
+ * definition (`"horizontal" | "vertical"`), read from the package's root barrel.
+ * Interfaces (object shapes) print as their own name and are skipped — only
+ * aliases whose expansion differs (unions, etc.) are surfaced, so the API table
+ * can expand them inline on click. Resolved by `typeToString` WITHOUT the
+ * alias-preserving flag, which fully resolves nested aliases to literals.
+ */
+function extractTypeAliases(program, checker) {
+  const types = {};
+  const rootIndex = program.getSourceFile(ROOT_INDEX);
+  const rootModule = rootIndex && checker.getSymbolAtLocation(rootIndex);
+  if (!rootModule) return types;
+
+  for (const exp of checker.getExportsOfModule(rootModule)) {
+    let sym = exp;
+    if (sym.flags & ts.SymbolFlags.Alias) {
+      try {
+        sym = checker.getAliasedSymbol(sym);
+      } catch {
+        continue;
+      }
+    }
+    if (!(sym.flags & ts.SymbolFlags.TypeAlias)) continue;
+
+    const name = exp.getName();
+    let declared;
+    try {
+      declared = checker.getDeclaredTypeOfSymbol(sym);
+    } catch {
+      continue;
+    }
+    const expansion = cleanTypeText(
+      checker.typeToString(
+        declared,
+        undefined,
+        ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.InTypeAlias,
+      ),
+    );
+    if (expansion && expansion !== name && expansion.length <= MAX_EXPANSION_LENGTH) {
+      types[name] = expansion;
+    }
+  }
+  return types;
+}
+
+/**
+ * Build the manifest: `{ components, types }`. `components[Name].props` is the prop
+ * table; `types` maps public type-alias names appearing in those prop types to
+ * their expanded definitions (for click-to-expand in the API table).
+ */
 export function extractProps() {
   const names = componentDirs();
-  const rootNames = names.map((n) => join(COMPONENTS_DIR, n, 'index.ts'));
+  const rootNames = [...names.map((n) => join(COMPONENTS_DIR, n, 'index.ts')), ROOT_INDEX];
   const program = ts.createProgram(rootNames, COMPILER_OPTIONS);
   const checker = program.getTypeChecker();
 
-  const manifest = {};
+  const components = {};
 
   for (const name of names) {
     const indexPath = join(COMPONENTS_DIR, name, 'index.ts');
@@ -134,10 +189,24 @@ export function extractProps() {
 
     if (props.length === 0) continue;
     props.sort((a, b) => a.order - b.order);
-    manifest[name] = {
+    components[name] = {
       props: props.map(({ order, ...rest }) => rest),
     };
   }
 
-  return manifest;
+  // Only keep aliases that actually appear in some prop's type — no point shipping
+  // expansions the table will never reference.
+  const referenced = new Set();
+  for (const c of Object.values(components)) {
+    for (const p of c.props) {
+      for (const id of p.type.match(/[A-Za-z_$][\w$]*/g) ?? []) referenced.add(id);
+    }
+  }
+  const allTypes = extractTypeAliases(program, checker);
+  const types = {};
+  for (const [name, expansion] of Object.entries(allTypes)) {
+    if (referenced.has(name)) types[name] = expansion;
+  }
+
+  return { components, types };
 }
