@@ -30,10 +30,54 @@ export function StickyDemo() {
       <Example
         title="Detail page: sticky sidebar in a Split"
         description="Scroll inside the box — the wide main column scrolls while the sidebar pins (top='md'). align='stretch' makes the aside track full-height so the Sticky has a tall containing block to pin within."
-        code={`<Split side="end" asideWidth="220px" align="stretch"
-  aside={<Sticky top="md"><Card>…sidebar…</Card></Sticky>}>
-  <Stack gap="md">…long main column…</Stack>
-</Split>`}
+        code={`import { CSSProperties } from 'react';
+import { Card, Split, Stack, Sticky, Text, Title } from '@eocrm/design-system';
+
+const scrollBox: CSSProperties = {
+  maxHeight: 300,
+  overflowY: 'auto',
+  border: '1px solid var(--color-border)',
+  borderRadius: 'var(--radius-md)',
+  padding: 'var(--space-3)',
+};
+
+const rows = [1, 2, 3, 4, 5];
+
+export function Demo() {
+  return (
+    <div style={scrollBox}>
+      <Split
+        side="end"
+        asideWidth="220px"
+        gap="lg"
+        align="stretch"
+        aside={
+          <Sticky top="md">
+            <Card>
+              <Stack gap="xs">
+                <Title order={4} size="sm">
+                  Sidebar
+                </Title>
+                <Text size="sm" tone="muted">
+                  Owner · Tags · Linked records. Pins to the top as you scroll
+                  the main column.
+                </Text>
+              </Stack>
+            </Card>
+          </Sticky>
+        }
+      >
+        <Stack gap="md">
+          {rows.map((n) => (
+            <Card key={n}>
+              <Text>Main column row {n}</Text>
+            </Card>
+          ))}
+        </Stack>
+      </Split>
+    </div>
+  );
+}`}
       >
         <div style={scrollBox}>
           <Split
@@ -70,7 +114,48 @@ export function StickyDemo() {
       <Example
         title="Top offset"
         description="top maps to the spacing scale (none / xs / sm / md / lg / xl). none (default) pins flush (top:0); a non-zero step clears a sticky header or adds breathing room."
-        code={`<Sticky top="lg"><FilterPanel /></Sticky>`}
+        code={`import { CSSProperties } from 'react';
+import { Card, Split, Stack, Sticky, Text } from '@eocrm/design-system';
+
+const scrollBox: CSSProperties = {
+  maxHeight: 300,
+  overflowY: 'auto',
+  border: '1px solid var(--color-border)',
+  borderRadius: 'var(--radius-md)',
+  padding: 'var(--space-3)',
+};
+
+const rows = [1, 2, 3, 4, 5];
+
+export function Demo() {
+  return (
+    <div style={scrollBox}>
+      <Split
+        side="start"
+        asideWidth="160px"
+        gap="lg"
+        align="stretch"
+        aside={
+          <Sticky top="lg">
+            <Card>
+              <Text size="sm" tone="muted">
+                top=&quot;lg&quot;
+              </Text>
+            </Card>
+          </Sticky>
+        }
+      >
+        <Stack gap="md">
+          {rows.map((n) => (
+            <Card key={n}>
+              <Text>Row {n}</Text>
+            </Card>
+          ))}
+        </Stack>
+      </Split>
+    </div>
+  );
+}`}
       >
         <div style={scrollBox}>
           <Split
@@ -102,14 +187,47 @@ export function StickyDemo() {
       <Example
         title="Scroll-viewport mode: a sidebar taller than the screen"
         description="With scroll, the pinned box is capped at the viewport height (minus the top offset and an equal bottom gap) and scrolls its own content — so a sidebar with more items than fit on screen stays fully reachable instead of running off below the fold. Scroll the page: the sidebar pins, and once it hits the bottom its own scrollbar takes over (overscroll-behavior:contain keeps the page from scroll-chaining). Pair with a non-none top for breathing room."
-        code={`<Split side="end" asideWidth="240px" align="stretch"
-  aside={
-    <Sticky top="lg" scroll>
-      <Stack gap="md">{manyCards}</Stack>
-    </Sticky>
-  }>
-  <Stack gap="md">…long main column…</Stack>
-</Split>`}
+        code={`import { Card, Split, Stack, Sticky, Text, Title } from '@eocrm/design-system';
+
+const sidebarItems = Array.from({ length: 5 }, (_, i) => i + 1);
+const mainRows = [1, 2, 3, 4, 5];
+
+export function Demo() {
+  return (
+    <Split
+      side="end"
+      asideWidth="240px"
+      gap="lg"
+      align="stretch"
+      aside={
+        <Sticky top="lg" scroll>
+          <Stack gap="md">
+            {sidebarItems.map((n) => (
+              <Card key={n}>
+                <Stack gap="xs">
+                  <Title order={4} size="sm">
+                    Linked record {n}
+                  </Title>
+                  <Text size="sm" tone="muted">
+                    Account · updated {n} day{n === 1 ? '' : 's'} ago
+                  </Text>
+                </Stack>
+              </Card>
+            ))}
+          </Stack>
+        </Sticky>
+      }
+    >
+      <Stack gap="md">
+        {mainRows.map((n) => (
+          <Card key={n}>
+            <Text>Main column row {n}</Text>
+          </Card>
+        ))}
+      </Stack>
+    </Split>
+  );
+}`}
       >
         <Split
           side="end"

@@ -71,12 +71,32 @@ export function OptionsPickerDemo() {
       <Example
         title="Multi-select, flat options"
         description="Default mode. Draft state buffered until Apply."
-        code={`<OptionsPicker selected={selected} onApply={setSelected}>
-  <OptionsPicker.Trigger>
-    <Button variant="secondary">Stage <ChevronDown size={14}/></Button>
-  </OptionsPicker.Trigger>
-  <OptionsPicker.Content label="Filter stage" options={flatOptions} />
-</OptionsPicker>`}
+        code={`import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Button, OptionsPicker } from '@eocrm/design-system';
+
+const flatOptions = [
+  { value: 'lead', label: 'Lead' },
+  { value: 'qualified', label: 'Qualified' },
+  { value: 'proposal', label: 'Proposal' },
+  { value: 'won', label: 'Won' },
+  { value: 'lost', label: 'Lost' },
+];
+
+export function Demo() {
+  const [selected, setSelected] = useState<string[]>(['lead']);
+
+  return (
+    <OptionsPicker selected={selected} onApply={setSelected}>
+      <OptionsPicker.Trigger>
+        <Button variant="secondary">
+          Stage ({selected.length}) <ChevronDown size={14} />
+        </Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter stage" options={flatOptions} />
+    </OptionsPicker>
+  );
+}`}
       >
         <InputExample width="auto">
           <OptionsPicker selected={multiFlat} onApply={setMultiFlat}>
@@ -93,12 +113,52 @@ export function OptionsPickerDemo() {
       <Example
         title="Multi-select, grouped with namespace hints"
         description="Each group has a colored dot, label, and a right-side hint label (e.g., auth.*). Clicking the group header toggles all options in the namespace."
-        code={`<OptionsPicker selected={selected} onApply={setSelected}>
-  <OptionsPicker.Trigger>
-    <Button variant="secondary">Events <ChevronDown size={14}/></Button>
-  </OptionsPicker.Trigger>
-  <OptionsPicker.Content label="Filter events" groups={groupedOptions} />
-</OptionsPicker>`}
+        code={`import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Button, OptionsPicker } from '@eocrm/design-system';
+
+const groupedOptions = [
+  {
+    id: 'auth',
+    label: 'Authentication',
+    color: 'blue' as const,
+    hint: 'auth.*',
+    options: [
+      { value: 'auth.login_succeeded', label: 'login_succeeded' },
+      { value: 'auth.login_failed', label: 'login_failed' },
+      { value: 'auth.logout', label: 'logout' },
+    ],
+  },
+  {
+    id: 'role',
+    label: 'Roles',
+    color: 'emerald' as const,
+    hint: 'role.*',
+    options: [
+      { value: 'role.assigned', label: 'assigned' },
+      { value: 'role.updated', label: 'updated' },
+      { value: 'role.revoked', label: 'revoked' },
+    ],
+  },
+];
+
+export function Demo() {
+  const [selected, setSelected] = useState<string[]>([
+    'auth.login_succeeded',
+    'role.assigned',
+  ]);
+
+  return (
+    <OptionsPicker selected={selected} onApply={setSelected}>
+      <OptionsPicker.Trigger>
+        <Button variant="secondary">
+          Events ({selected.length}) <ChevronDown size={14} />
+        </Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter events" groups={groupedOptions} />
+    </OptionsPicker>
+  );
+}`}
       >
         <InputExample width="auto">
           <OptionsPicker selected={multiGrouped} onApply={setMultiGrouped}>
@@ -115,12 +175,32 @@ export function OptionsPickerDemo() {
       <Example
         title="Single-select (auto-commits on click)"
         description="No Apply/Cancel footer. Each click fires onApply(value) and closes the panel. Use for single-choice filter UX (Tenant, status, etc.)."
-        code={`<OptionsPicker mode="single" selected={value} onApply={setValue}>
-  <OptionsPicker.Trigger>
-    <Button variant="secondary">Stage <ChevronDown size={14}/></Button>
-  </OptionsPicker.Trigger>
-  <OptionsPicker.Content label="Filter stage" options={flatOptions} />
-</OptionsPicker>`}
+        code={`import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Button, OptionsPicker } from '@eocrm/design-system';
+
+const flatOptions = [
+  { value: 'lead', label: 'Lead' },
+  { value: 'qualified', label: 'Qualified' },
+  { value: 'proposal', label: 'Proposal' },
+  { value: 'won', label: 'Won' },
+  { value: 'lost', label: 'Lost' },
+];
+
+export function Demo() {
+  const [value, setValue] = useState<string | null>('qualified');
+
+  return (
+    <OptionsPicker mode="single" selected={value} onApply={setValue}>
+      <OptionsPicker.Trigger>
+        <Button variant="secondary">
+          Stage: {value ?? '—'} <ChevronDown size={14} />
+        </Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter stage" options={flatOptions} />
+    </OptionsPicker>
+  );
+}`}
       >
         <InputExample width="auto">
           <OptionsPicker mode="single" selected={single} onApply={setSingle}>
@@ -137,15 +217,43 @@ export function OptionsPickerDemo() {
       <Example
         title="Controlled open state"
         description="Pass open + onOpenChange to drive the panel externally."
-        code={`<OptionsPicker
-  open={open}
-  onOpenChange={setOpen}
-  selected={selected}
-  onApply={setSelected}
->
-  <OptionsPicker.Trigger><Button>Filter</Button></OptionsPicker.Trigger>
-  <OptionsPicker.Content label="Filter" options={flatOptions} />
-</OptionsPicker>`}
+        code={`import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Button, OptionsPicker, Stack } from '@eocrm/design-system';
+
+const flatOptions = [
+  { value: 'lead', label: 'Lead' },
+  { value: 'qualified', label: 'Qualified' },
+  { value: 'proposal', label: 'Proposal' },
+  { value: 'won', label: 'Won' },
+  { value: 'lost', label: 'Lost' },
+];
+
+export function Demo() {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+
+  return (
+    <Stack gap="sm">
+      <OptionsPicker
+        open={open}
+        onOpenChange={setOpen}
+        selected={selected}
+        onApply={setSelected}
+      >
+        <OptionsPicker.Trigger>
+          <Button variant="secondary">
+            Filter ({selected.length}) <ChevronDown size={14} />
+          </Button>
+        </OptionsPicker.Trigger>
+        <OptionsPicker.Content label="Filter stage" options={flatOptions} />
+      </OptionsPicker>
+      <Button variant="ghost" size="sm" onClick={() => setOpen((o) => !o)}>
+        Toggle externally (currently {open ? 'open' : 'closed'})
+      </Button>
+    </Stack>
+  );
+}`}
       >
         <InputExample width="auto">
           <Stack gap="sm">

@@ -57,13 +57,23 @@ export function PasswordStrengthMeterDemo() {
       <Example
         title="Live with PasswordInput"
         description="The canonical signup pattern — shared controlled state between a PasswordInput and the meter. Associate them with `aria-describedby` so screen readers announce the score."
-        code={`const [pw, setPw] = useState('');
-<PasswordInput
-  value={pw}
-  onChange={(e) => setPw(e.target.value)}
-  aria-describedby="strength-meter"
-/>
-<PasswordStrengthMeter id="strength-meter" value={pw} />`}
+        code={`import { useState } from 'react';
+import { PasswordInput, PasswordStrengthMeter, Stack } from '@eocrm/design-system';
+
+export function LiveWithInputDemo() {
+  const [pw, setPw] = useState('');
+  return (
+    <Stack gap="xs">
+      <PasswordInput
+        value={pw}
+        onChange={(e) => setPw(e.target.value)}
+        placeholder="Type a password"
+        aria-describedby="live-demo-meter"
+      />
+      <PasswordStrengthMeter id="live-demo-meter" value={pw} />
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <LiveWithInputDemo />
@@ -73,8 +83,32 @@ export function PasswordStrengthMeterDemo() {
       <Example
         title="Standalone with score prop"
         description="Pass a pre-computed `score` (0–4) when scoring is done externally (zxcvbn, server-side). The `score` prop wins over `value` when both are present."
-        code={`// score comes from zxcvbn(pw).score or similar
-<PasswordStrengthMeter score={score} />`}
+        code={`import { useState } from 'react';
+import {
+  PasswordStrengthMeter,
+  Stack,
+  type PasswordStrengthScore,
+} from '@eocrm/design-system';
+
+export function ScoreSliderDemo() {
+  const [score, setScore] = useState<PasswordStrengthScore>(0);
+  return (
+    <Stack gap="sm">
+      <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-muted)' }}>
+        Score: {score}
+        <input
+          type="range"
+          min={0}
+          max={4}
+          value={score}
+          onChange={(e) => setScore(Number(e.target.value) as PasswordStrengthScore)}
+          style={{ display: 'block', width: '100%', marginTop: 'var(--space-1)' }}
+        />
+      </label>
+      <PasswordStrengthMeter score={score} />
+    </Stack>
+  );
+}`}
       >
         <InputExample>
           <ScoreSliderDemo />
@@ -84,7 +118,11 @@ export function PasswordStrengthMeterDemo() {
       <Example
         title="No label"
         description="`showLabel={false}` renders segments only — useful when space is very tight or you're showing the label text elsewhere."
-        code={`<PasswordStrengthMeter value="Hunter2!@#" showLabel={false} />`}
+        code={`import { PasswordStrengthMeter } from '@eocrm/design-system';
+
+export function Demo() {
+  return <PasswordStrengthMeter value="Hunter2!@#" showLabel={false} />;
+}`}
       >
         <InputExample>
           <PasswordStrengthMeter value="Hunter2!@#" showLabel={false} />
@@ -94,9 +132,20 @@ export function PasswordStrengthMeterDemo() {
       <Example
         title="Localized labels (ru-RU)"
         description="Wrap in <I18nProvider locale='ru'> to swap the labels. The default Russian translations come from the library; consumers may further override individual keys via `overrides`."
-        code={`<I18nProvider locale="ru">
-  <PasswordStrengthMeter value="Hunter2!@#" />
-</I18nProvider>`}
+        code={`import { I18nProvider, PasswordStrengthMeter, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <I18nProvider locale="ru">
+      <Stack gap="sm">
+        <PasswordStrengthMeter value="" />
+        <PasswordStrengthMeter value="abc" />
+        <PasswordStrengthMeter value="AbcDef12" />
+        <PasswordStrengthMeter value="Hunter2!@#" />
+      </Stack>
+    </I18nProvider>
+  );
+}`}
       >
         <InputExample>
           <I18nProvider locale="ru">

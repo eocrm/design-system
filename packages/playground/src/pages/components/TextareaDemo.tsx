@@ -18,7 +18,11 @@ export function TextareaDemo() {
       <Example
         title="Default"
         description="Auto-grows on input, 3 row minimum, no max. Resize handle hidden because auto-grow is on."
-        code={`<Textarea placeholder="Write something…" />`}
+        code={`import { Textarea } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Textarea placeholder="Write something…" />;
+}`}
       >
         <Textarea placeholder="Write something…" />
       </Example>
@@ -26,9 +30,17 @@ export function TextareaDemo() {
       <Example
         title="Three sizes"
         description="Size affects typography + padding only (height comes from minRows). Useful when matching Input alongside."
-        code={`<Textarea size="sm" minRows={2} placeholder="sm" />
-<Textarea size="md" minRows={2} placeholder="md" />
-<Textarea size="lg" minRows={2} placeholder="lg" />`}
+        code={`import { Stack, Textarea } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <Textarea size="sm" minRows={2} placeholder="sm" />
+      <Textarea size="md" minRows={2} placeholder="md" />
+      <Textarea size="lg" minRows={2} placeholder="lg" />
+    </Stack>
+  );
+}`}
       >
         <Stack gap="sm">
           <Textarea size="sm" minRows={2} placeholder="sm" />
@@ -40,13 +52,21 @@ export function TextareaDemo() {
       <Example
         title="Auto-grow in action (capped at 8 rows)"
         description="Type multiple lines — the field expands up to 8 rows, then scrolls."
-        code={`<Textarea
-  minRows={2}
-  maxRows={8}
-  value={value}
-  onChange={(e) => setValue(e.target.value)}
-  placeholder="Try multiple lines…"
-/>`}
+        code={`import { useState } from 'react';
+import { Textarea } from '@eocrm/design-system';
+
+export function Demo() {
+  const [value, setValue] = useState('');
+  return (
+    <Textarea
+      minRows={2}
+      maxRows={8}
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      placeholder="Try multiple lines…"
+    />
+  );
+}`}
       >
         <Textarea
           minRows={2}
@@ -60,7 +80,11 @@ export function TextareaDemo() {
       <Example
         title="Fixed rows (no auto-grow) with resize handle"
         description="Opting out of auto-grow lets the user drag the resize handle in the bottom-right corner."
-        code={`<Textarea autoGrow={false} minRows={4} resize="vertical" />`}
+        code={`import { Textarea } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Textarea autoGrow={false} minRows={4} resize="vertical" />;
+}`}
       >
         <Textarea autoGrow={false} minRows={4} resize="vertical" />
       </Example>
@@ -68,11 +92,19 @@ export function TextareaDemo() {
       <Example
         title="Twitter-style counter"
         description="When maxLength is set, the counter appears automatically. Controlled state shown."
-        code={`<Textarea
-  maxLength={140}
-  value={tweet}
-  onChange={(e) => setTweet(e.target.value)}
-/>`}
+        code={`import { useState } from 'react';
+import { Textarea } from '@eocrm/design-system';
+
+export function Demo() {
+  const [tweet, setTweet] = useState("What's happening?");
+  return (
+    <Textarea
+      maxLength={140}
+      value={tweet}
+      onChange={(e) => setTweet(e.target.value)}
+    />
+  );
+}`}
       >
         <Textarea maxLength={140} value={tweet} onChange={(e) => setTweet(e.target.value)} />
       </Example>
@@ -80,7 +112,11 @@ export function TextareaDemo() {
       <Example
         title="Bare counter (no maxLength)"
         description="showCount={true} forces the counter even without a hard limit — shows just the running count."
-        code={`<Textarea showCount minRows={3} placeholder="Free-form…" />`}
+        code={`import { Textarea } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Textarea showCount minRows={3} placeholder="Free-form…" />;
+}`}
       >
         <Textarea showCount minRows={3} placeholder="Free-form…" />
       </Example>
@@ -88,10 +124,25 @@ export function TextareaDemo() {
       <Example
         title="Error state"
         description="invalid={true} adds the red border + danger focus ring. Pair with a visible error message via aria-describedby."
-        code={`<Textarea invalid aria-describedby="bio-error" defaultValue="" />
-<p id="bio-error" style={{ color: 'var(--color-danger)' }}>
-  Bio must not be empty.
-</p>`}
+        code={`import { Stack, Textarea } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <Textarea invalid aria-describedby="bio-error" defaultValue="" />
+      <p
+        id="bio-error"
+        style={{
+          color: 'var(--color-danger)',
+          margin: 0,
+          fontSize: 'var(--font-size-sm)',
+        }}
+      >
+        Bio must not be empty.
+      </p>
+    </Stack>
+  );
+}`}
       >
         <Stack gap="sm">
           <Textarea invalid aria-describedby="bio-error" defaultValue="" />
@@ -111,8 +162,19 @@ export function TextareaDemo() {
       <Example
         title="Disabled and readOnly"
         description="Native attributes — same visual treatment as Input."
-        code={`<Textarea disabled defaultValue="Disabled — can't focus or edit." />
-<Textarea readOnly defaultValue="Read-only — focusable, content selectable, not editable." />`}
+        code={`import { Cluster, Textarea } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm">
+      <Textarea disabled defaultValue="Disabled — can't focus or edit." />
+      <Textarea
+        readOnly
+        defaultValue="Read-only — focusable, content selectable, not editable."
+      />
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm">
           <Textarea disabled defaultValue="Disabled — can't focus or edit." />

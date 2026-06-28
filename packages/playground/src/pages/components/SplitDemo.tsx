@@ -47,13 +47,57 @@ export function SplitDemo() {
       <Example
         title="Vertical Tabs rail + detail panel (canonical)"
         description="aside holds the narrow vertical Tabs rail; children is the filling detail panel. The panel sits to the right and fills remaining width at any container size — no wrapping."
-        code={`const [section, setSection] = useState('general');
+        code={`import { useState } from 'react';
+import { Activity, CreditCard, Settings, Shield } from 'lucide-react';
+import { Badge, Card, Split, Stack, Tabs, type TabItem } from '@eocrm/design-system';
 
-<Split aside={
-  <Tabs orientation="vertical" items={settingsTabs} activeId={section} onChange={setSection} />
-} gap="lg">
-  <Card padding="md">{/* detail for {section} */}</Card>
-</Split>`}
+const sections: Record<string, { title: string; body: string }> = {
+  general: { title: 'General', body: 'Workspace name, locale, and default landing page.' },
+  security: {
+    title: 'Security',
+    body: 'SSO, session timeout, and IP allow-list. Unsaved changes.',
+  },
+  activity: { title: 'Activity', body: 'Audit log of configuration changes (14 this month).' },
+  billing: { title: 'Billing', body: 'Plan, seats, and invoices.' },
+};
+
+const settingsTabs: TabItem[] = [
+  { id: 'general', label: 'General', icon: <Settings size={14} /> },
+  {
+    id: 'security',
+    label: 'Security',
+    icon: <Shield size={14} />,
+    trailing: <Badge tone="warning">Unsaved</Badge>,
+  },
+  { id: 'activity', label: 'Activity', icon: <Activity size={14} />, count: 14 },
+  { id: 'billing', label: 'Billing', icon: <CreditCard size={14} />, count: 3 },
+];
+
+export function Demo() {
+  const [section, setSection] = useState('general');
+  const active = sections[section];
+
+  return (
+    <Split
+      gap="lg"
+      aside={
+        <Tabs
+          orientation="vertical"
+          items={settingsTabs}
+          activeId={section}
+          onChange={setSection}
+        />
+      }
+    >
+      <Card padding="md" style={{ color: 'var(--color-fg-muted)' }}>
+        <Stack gap="xs">
+          <strong style={{ color: 'var(--color-fg)' }}>{active.title}</strong>
+          <span>{active.body}</span>
+        </Stack>
+      </Card>
+    </Split>
+  );
+}`}
       >
         <Split
           gap="lg"
@@ -78,9 +122,59 @@ export function SplitDemo() {
       <Example
         title="side='end' + pinned asideWidth"
         description="side='end' moves the aside to the trailing edge; asideWidth pins the rail width so the main panel doesn't reflow as the active row's adornments change."
-        code={`<Split side="end" asideWidth="200px" gap="lg" aside={<Tabs orientation="vertical" … />}>
-  <Card padding="md">{/* detail */}</Card>
-</Split>`}
+        code={`import { useState } from 'react';
+import { Activity, CreditCard, Settings, Shield } from 'lucide-react';
+import { Badge, Card, Split, Stack, Tabs, type TabItem } from '@eocrm/design-system';
+
+const sections: Record<string, { title: string; body: string }> = {
+  general: { title: 'General', body: 'Workspace name, locale, and default landing page.' },
+  security: {
+    title: 'Security',
+    body: 'SSO, session timeout, and IP allow-list. Unsaved changes.',
+  },
+  activity: { title: 'Activity', body: 'Audit log of configuration changes (14 this month).' },
+  billing: { title: 'Billing', body: 'Plan, seats, and invoices.' },
+};
+
+const settingsTabs: TabItem[] = [
+  { id: 'general', label: 'General', icon: <Settings size={14} /> },
+  {
+    id: 'security',
+    label: 'Security',
+    icon: <Shield size={14} />,
+    trailing: <Badge tone="warning">Unsaved</Badge>,
+  },
+  { id: 'activity', label: 'Activity', icon: <Activity size={14} />, count: 14 },
+  { id: 'billing', label: 'Billing', icon: <CreditCard size={14} />, count: 3 },
+];
+
+export function Demo() {
+  const [sectionEnd, setSectionEnd] = useState('general');
+  const activeEnd = sections[sectionEnd];
+
+  return (
+    <Split
+      side="end"
+      asideWidth="200px"
+      gap="lg"
+      aside={
+        <Tabs
+          orientation="vertical"
+          items={settingsTabs}
+          activeId={sectionEnd}
+          onChange={setSectionEnd}
+        />
+      }
+    >
+      <Card padding="md" style={{ color: 'var(--color-fg-muted)' }}>
+        <Stack gap="xs">
+          <strong style={{ color: 'var(--color-fg)' }}>{activeEnd.title}</strong>
+          <span>{activeEnd.body}</span>
+        </Stack>
+      </Card>
+    </Split>
+  );
+}`}
       >
         <Split
           side="end"

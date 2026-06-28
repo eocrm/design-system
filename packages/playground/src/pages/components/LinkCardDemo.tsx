@@ -14,12 +14,18 @@ export function LinkCardDemo() {
       <Example
         title="As a link (default <a>)"
         description="The whole card is one anchor. Hover for the lift; tab to it for the focus ring."
-        code={`<LinkCard href="https://status.example.com">
-  <Stack gap="xs">
-    <Text weight="semibold">Status page</Text>
-    <Text size="sm" tone="muted">All systems operational.</Text>
-  </Stack>
-</LinkCard>`}
+        code={`import { LinkCard, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <LinkCard href="https://status.example.com">
+      <Stack gap="xs">
+        <Text weight="semibold">Status page</Text>
+        <Text size="sm" tone="muted">All systems operational.</Text>
+      </Stack>
+    </LinkCard>
+  );
+}`}
       >
         <LinkCard href="https://status.example.com">
           <Stack gap="xs">
@@ -34,9 +40,15 @@ export function LinkCardDemo() {
       <Example
         title="As a button (action)"
         description={`Pass as="button" for an action instead of navigation.`}
-        code={`<LinkCard as="button" type="button" onClick={openImporter}>
-  <Text weight="semibold">Import contacts</Text>
-</LinkCard>`}
+        code={`import { LinkCard, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <LinkCard as="button" type="button" onClick={() => {}}>
+      <Text weight="semibold">Import contacts</Text>
+    </LinkCard>
+  );
+}`}
       >
         <LinkCard as="button" type="button" onClick={() => undefined}>
           <Text weight="semibold">Import contacts</Text>
@@ -46,11 +58,32 @@ export function LinkCardDemo() {
       <Example
         title="Index grid"
         description="The canonical use — a grid of cards each linking somewhere. padding + tone match Card."
-        code={`<Grid minColumnWidth="220px" gap="md">
-  <LinkCard href="#" tone="accent"><Text weight="semibold">Dashboard</Text></LinkCard>
-  <LinkCard href="#" tone="success"><Text weight="semibold">Deals</Text></LinkCard>
-  <LinkCard href="#"><Text weight="semibold">Contacts</Text></LinkCard>
-</Grid>`}
+        code={`import { Grid, LinkCard, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Grid minColumnWidth="220px" gap="md">
+      <LinkCard href="https://example.com/dashboard" tone="accent">
+        <Stack gap="xs">
+          <Text weight="semibold">Dashboard</Text>
+          <Text size="sm" tone="muted">KPIs & pipeline.</Text>
+        </Stack>
+      </LinkCard>
+      <LinkCard href="https://example.com/deals" tone="success">
+        <Stack gap="xs">
+          <Text weight="semibold">Deals</Text>
+          <Text size="sm" tone="muted">Kanban board.</Text>
+        </Stack>
+      </LinkCard>
+      <LinkCard href="https://example.com/contacts">
+        <Stack gap="xs">
+          <Text weight="semibold">Contacts</Text>
+          <Text size="sm" tone="muted">Directory.</Text>
+        </Stack>
+      </LinkCard>
+    </Grid>
+  );
+}`}
       >
         <Grid minColumnWidth="220px" gap="md">
           <LinkCard href="https://example.com/dashboard" tone="accent">

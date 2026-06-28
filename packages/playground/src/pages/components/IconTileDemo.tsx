@@ -15,9 +15,18 @@ export function IconTileDemo() {
       <Example
         title="Palette colors"
         description="color is one of the 30 categorical Palette colors (default 'slate'). Categorical, not semantic."
-        code={`{PALETTE_COLORS.map((c) => (
-  <IconTile key={c} color={c} label={c} icon={<Shapes size={16} />} />
-))}`}
+        code={`import { Shapes } from 'lucide-react';
+import { Cluster, IconTile, PALETTE_COLORS } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm">
+      {PALETTE_COLORS.map((c) => (
+        <IconTile key={c} color={c} label={c} icon={<Shapes size={16} />} />
+      ))}
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="sm">
           {PALETTE_COLORS.map((c) => (
@@ -29,9 +38,18 @@ export function IconTileDemo() {
       <Example
         title="Sizes"
         description="sm 24 / md 32 / lg 40 — sizes the tile box; size your icon to match."
-        code={`<IconTile color="blue" size="sm" icon={<Shapes size={14} />} />
-<IconTile color="blue" size="md" icon={<Shapes size={16} />} />
-<IconTile color="blue" size="lg" icon={<Shapes size={20} />} />`}
+        code={`import { Shapes } from 'lucide-react';
+import { Cluster, IconTile } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" align="center">
+      <IconTile color="blue" size="sm" icon={<Shapes size={14} />} />
+      <IconTile color="blue" size="md" icon={<Shapes size={16} />} />
+      <IconTile color="blue" size="lg" icon={<Shapes size={20} />} />
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" align="center">
           <IconTile color="blue" size="sm" icon={<Shapes size={14} />} />
@@ -43,8 +61,17 @@ export function IconTileDemo() {
       <Example
         title="Shape"
         description="square (default) or circle."
-        code={`<IconTile color="amber" shape="square" icon={<MailPlus size={16} />} />
-<IconTile color="amber" shape="circle" icon={<MailPlus size={16} />} />`}
+        code={`import { MailPlus } from 'lucide-react';
+import { Cluster, IconTile } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" align="center">
+      <IconTile color="amber" shape="square" icon={<MailPlus size={16} />} />
+      <IconTile color="amber" shape="circle" icon={<MailPlus size={16} />} />
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" align="center">
           <IconTile color="amber" shape="square" icon={<MailPlus size={16} />} />
@@ -55,14 +82,22 @@ export function IconTileDemo() {
       <Example
         title="Decorative vs labelled"
         description="Decorative by default (aria-hidden) beside text; pass a label when the icon stands alone."
-        code={`// decorative — text nearby carries meaning
-<Cluster gap="sm" align="center">
-  <IconTile color="amber" shape="circle" icon={<MailPlus size={14} />} />
-  <Text>alex@acme.co</Text>
-</Cluster>
+        code={`import { Check, MailPlus } from 'lucide-react';
+import { Cluster, IconTile, Stack, Text } from '@eocrm/design-system';
 
-// standalone + meaningful → label
-<IconTile color="green" label="Verified" icon={<Check size={16} />} />`}
+export function Demo() {
+  return (
+    <Stack gap="md">
+      {/* decorative — text nearby carries meaning */}
+      <Cluster gap="sm" align="center">
+        <IconTile color="amber" shape="circle" icon={<MailPlus size={14} />} />
+        <Text>alex@acme.co</Text>
+      </Cluster>
+      {/* standalone + meaningful → label */}
+      <IconTile color="green" label="Verified" icon={<Check size={16} />} />
+    </Stack>
+  );
+}`}
       >
         <Stack gap="md">
           <Cluster gap="sm" align="center">

@@ -23,11 +23,25 @@ export function PageDemo() {
       <Example
         title='Default — gap="lg"'
         description="The canonical CRM page rhythm: 16px between top-level sections. Matches every shipped mockup."
-        code={`<Page>
-  <PageHeader>{/* … */}</PageHeader>
-  <Card>{/* … */}</Card>
-  <Table>{/* … */}</Table>
-</Page>`}
+        code={`import { Card, Page, Text } from '@eocrm/design-system';
+
+function Stand({ children }: { children: string }) {
+  return (
+    <Card padding="md">
+      <Text>{children}</Text>
+    </Card>
+  );
+}
+
+export function Demo() {
+  return (
+    <Page>
+      <Stand>PageHeader stand-in</Stand>
+      <Stand>Card / filter row</Stand>
+      <Stand>Table / body section</Stand>
+    </Page>
+  );
+}`}
       >
         <InputExample width="auto">
           <Page>
@@ -41,9 +55,25 @@ export function PageDemo() {
       <Example
         title='Compact — gap="md"'
         description="Tighter rhythm (12px). Use for dense dashboards or pages that pack many narrow sections."
-        code={`<Page gap="md">
-  {/* … */}
-</Page>`}
+        code={`import { Card, Page, Text } from '@eocrm/design-system';
+
+function Stand({ children }: { children: string }) {
+  return (
+    <Card padding="md">
+      <Text>{children}</Text>
+    </Card>
+  );
+}
+
+export function Demo() {
+  return (
+    <Page gap="md">
+      <Stand>Section one</Stand>
+      <Stand>Section two</Stand>
+      <Stand>Section three</Stand>
+    </Page>
+  );
+}`}
       >
         <InputExample width="auto">
           <Page gap="md">
@@ -57,9 +87,25 @@ export function PageDemo() {
       <Example
         title='Spacious — gap="xl"'
         description="Looser rhythm (24px). Use for overview / hero pages with few large sections."
-        code={`<Page gap="xl">
-  {/* … */}
-</Page>`}
+        code={`import { Card, Page, Text } from '@eocrm/design-system';
+
+function Stand({ children }: { children: string }) {
+  return (
+    <Card padding="md">
+      <Text>{children}</Text>
+    </Card>
+  );
+}
+
+export function Demo() {
+  return (
+    <Page gap="xl">
+      <Stand>Section one</Stand>
+      <Stand>Section two</Stand>
+      <Stand>Section three</Stand>
+    </Page>
+  );
+}`}
       >
         <InputExample width="auto">
           <Page gap="xl">

@@ -11,6 +11,8 @@ import styles from './DemoLayout.module.scss';
 export interface DemoBodyProps {
   files: ComponentFile[];
   componentName?: ComponentName;
+  /** Override for the API-table lookup key; defaults to `componentName`. */
+  apiName?: string;
   children: ReactNode;
 }
 
@@ -19,7 +21,7 @@ export interface DemoBodyProps {
  * `<DemoLayout>` — reusable inside multi-variant pages where the page
  * header is rendered once and tabs swap the body.
  */
-export function DemoBody({ files, componentName, children }: DemoBodyProps) {
+export function DemoBody({ files, componentName, apiName, children }: DemoBodyProps) {
   const [activeId, setActiveId] = useState(files[0]?.filename ?? '');
   const active = files.find((f) => f.filename === activeId) ?? files[0];
 
@@ -56,7 +58,7 @@ export function DemoBody({ files, componentName, children }: DemoBodyProps) {
       <h2 className={styles.sectionTitle}>Examples</h2>
       <div className={styles.examplesGrid}>{children}</div>
 
-      {componentName && <ComponentApi name={componentName} />}
+      {(apiName ?? componentName) && <ComponentApi name={apiName ?? componentName!} />}
       {componentName && <CrossLinks kind="component" name={componentName} />}
     </>
   );

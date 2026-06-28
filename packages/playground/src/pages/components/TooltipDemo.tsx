@@ -16,9 +16,17 @@ export function TooltipDemo() {
       <Example
         title="Default — top + center"
         description="Wrap any trigger; tooltip opens after a short hover delay and immediately on keyboard focus."
-        code={`<Tooltip content="Save the record (⌘S)">
-  <Button>Save</Button>
-</Tooltip>`}
+        code={`import { Button, Cluster, Tooltip } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" justify="center">
+      <Tooltip content="Save the record (⌘S)">
+        <Button>Save</Button>
+      </Tooltip>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <Tooltip content="Save the record (⌘S)">
@@ -30,10 +38,26 @@ export function TooltipDemo() {
       <Example
         title="Sides"
         description="Floating UI auto-flips on collision; this row pins each tooltip to a specific side."
-        code={`<Tooltip content="Top" side="top"><Button>Top</Button></Tooltip>
-<Tooltip content="Right" side="right"><Button>Right</Button></Tooltip>
-<Tooltip content="Bottom" side="bottom"><Button>Bottom</Button></Tooltip>
-<Tooltip content="Left" side="left"><Button>Left</Button></Tooltip>`}
+        code={`import { Button, Cluster, Tooltip } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" justify="center">
+      <Tooltip content="Top" side="top">
+        <Button variant="secondary">Top</Button>
+      </Tooltip>
+      <Tooltip content="Right" side="right">
+        <Button variant="secondary">Right</Button>
+      </Tooltip>
+      <Tooltip content="Bottom" side="bottom">
+        <Button variant="secondary">Bottom</Button>
+      </Tooltip>
+      <Tooltip content="Left" side="left">
+        <Button variant="secondary">Left</Button>
+      </Tooltip>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <Tooltip content="Top" side="top">
@@ -54,9 +78,19 @@ export function TooltipDemo() {
       <Example
         title="Icon-only trigger"
         description="Trigger needs its own aria-label; tooltip is supplementary description, not the label."
-        code={`<Tooltip content="Filter results">
-  <Button variant="ghost" aria-label="Filter">⏷</Button>
-</Tooltip>`}
+        code={`import { Button, Cluster, Tooltip } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" justify="center">
+      <Tooltip content="Filter results">
+        <Button variant="ghost" aria-label="Filter">
+          ⏷
+        </Button>
+      </Tooltip>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <Tooltip content="Filter results">
@@ -70,19 +104,28 @@ export function TooltipDemo() {
       <Example
         title="Rich content"
         description="content is a ReactNode — combine an icon, an emphasised label, secondary copy, and an inline <kbd> shortcut. Use <Cluster> for layout so it wraps gracefully if the copy grows."
-        code={`<Tooltip
-  content={
-    <Cluster gap="xs" align="center">
-      <Sparkles size={14} aria-hidden="true" />
-      <span>
-        <strong>Smart save</strong> — autoformats
-      </span>
-      <kbd>⌘⇧S</kbd>
+        code={`import { Sparkles } from 'lucide-react';
+import { Button, Cluster, Tooltip } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" justify="center">
+      <Tooltip
+        content={
+          <Cluster gap="xs" align="center">
+            <Sparkles size={14} aria-hidden="true" />
+            <span>
+              <strong>Smart save</strong> — autoformats
+            </span>
+            <kbd>⌘⇧S</kbd>
+          </Cluster>
+        }
+      >
+        <Button>Smart save</Button>
+      </Tooltip>
     </Cluster>
-  }
->
-  <Button>Smart save</Button>
-</Tooltip>`}
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <Tooltip
@@ -104,9 +147,17 @@ export function TooltipDemo() {
       <Example
         title="Long content wraps"
         description="The panel has a max-width; copy wraps. Use sparingly — long copy belongs in body content, not a tooltip."
-        code={`<Tooltip content="…">
-  <Button>Long tooltip</Button>
-</Tooltip>`}
+        code={`import { Button, Cluster, Tooltip } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" justify="center">
+      <Tooltip content="This tooltip body is long enough to wrap onto multiple lines so you can see the chrome at its widest.">
+        <Button variant="secondary">Long tooltip</Button>
+      </Tooltip>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <Tooltip content="This tooltip body is long enough to wrap onto multiple lines so you can see the chrome at its widest.">
@@ -118,16 +169,28 @@ export function TooltipDemo() {
       <Example
         title="On a DropdownMenu item (z-index sanity)"
         description="Tooltip's z-layer is above DropdownMenu, so a tooltip on a menu item appears over the menu."
-        code={`<DropdownMenu>
-  <DropdownMenu.Trigger>
-    <Button variant="secondary">Actions</Button>
-  </DropdownMenu.Trigger>
-  <DropdownMenu.Content>
-    <DropdownMenu.Item onSelect={() => {}}>
-      <Tooltip content="Permanently remove this record"><span>Delete</span></Tooltip>
-    </DropdownMenu.Item>
-  </DropdownMenu.Content>
-</DropdownMenu>`}
+        code={`import { Button, Cluster, DropdownMenu, Tooltip } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="md" justify="center">
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="secondary">Actions</Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Duplicate</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}} tone="danger">
+            <Tooltip content="Permanently remove this record">
+              <span>Delete</span>
+            </Tooltip>
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="md" justify="center">
           <DropdownMenu>
@@ -150,10 +213,19 @@ export function TooltipDemo() {
       <Example
         title="Controlled open"
         description="Drive open externally — rare, but useful for orchestrating with other UI state."
-        code={`const [open, setOpen] = useState(false);
-<Tooltip content="Controlled" open={open} onOpenChange={setOpen}>
-  <Button onClick={() => setOpen(o => !o)}>Toggle</Button>
-</Tooltip>`}
+        code={`import { useState } from 'react';
+import { Button, Cluster, Tooltip } from '@eocrm/design-system';
+
+export function ControlledExample() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Cluster gap="md" justify="center">
+      <Tooltip content="Controlled programmatically" open={open} onOpenChange={setOpen}>
+        <Button onClick={() => setOpen((prev) => !prev)}>Toggle</Button>
+      </Tooltip>
+    </Cluster>
+  );
+}`}
       >
         <ControlledExample />
       </Example>

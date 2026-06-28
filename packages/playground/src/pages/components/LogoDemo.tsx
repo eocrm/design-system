@@ -16,8 +16,11 @@ export function LogoDemo() {
         title="Mark + wordmark"
         description="The common header / auth lockup — pass the mark via src and the wordmark via text."
         code={`import logo from '../assets/eocrm-logo.svg';
+import { Logo } from '@eocrm/design-system';
 
-<Logo src={logo} text="eocrm" />`}
+export function Demo() {
+  return <Logo src={logo} text="eocrm" />;
+}`}
       >
         <Logo src={eocrmLogo} text="eocrm" />
       </Example>
@@ -25,7 +28,12 @@ export function LogoDemo() {
       <Example
         title="Mark only"
         description="Omit text for just the mark. Pass label for a standalone accessible name (the image alt)."
-        code={`<Logo src={logo} label="eocrm" />`}
+        code={`import logo from '../assets/eocrm-logo.svg';
+import { Logo } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Logo src={logo} label="eocrm" />;
+}`}
       >
         <Logo src={eocrmLogo} label="eocrm" />
       </Example>
@@ -33,7 +41,12 @@ export function LogoDemo() {
       <Example
         title="Wordmark below the mark"
         description="textPlacement='bottom' stacks the wordmark under the mark, centered."
-        code={`<Logo src={logo} text="eocrm" textPlacement="bottom" />`}
+        code={`import logo from '../assets/eocrm-logo.svg';
+import { Logo } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Logo src={logo} text="eocrm" textPlacement="bottom" />;
+}`}
       >
         <Logo src={eocrmLogo} text="eocrm" textPlacement="bottom" />
       </Example>
@@ -41,7 +54,12 @@ export function LogoDemo() {
       <Example
         title="With a muted subline"
         description="subtext adds a small muted line under the wordmark — the app-shell brand lockup (name + plan)."
-        code={`<Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />`}
+        code={`import logo from '../assets/eocrm-logo.svg';
+import { Logo } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />;
+}`}
       >
         <Logo src={eocrmLogo} text="eocrm" subtext="Free trial" size="sm" />
       </Example>
@@ -49,9 +67,18 @@ export function LogoDemo() {
       <Example
         title="Sizes"
         description="sm (24) / md (32, default) / lg (40)."
-        code={`<Logo src={logo} text="eocrm" size="sm" />
-<Logo src={logo} text="eocrm" size="md" />
-<Logo src={logo} text="eocrm" size="lg" />`}
+        code={`import logo from '../assets/eocrm-logo.svg';
+import { Cluster, Logo } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="lg" align="center">
+      <Logo src={logo} text="eocrm" size="sm" />
+      <Logo src={logo} text="eocrm" size="md" />
+      <Logo src={logo} text="eocrm" size="lg" />
+    </Cluster>
+  );
+}`}
       >
         <Cluster gap="lg" align="center">
           <Logo src={eocrmLogo} text="eocrm" size="sm" />

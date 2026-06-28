@@ -30,8 +30,16 @@ function PaginationDemoPanel() {
       <Example
         title="Basic"
         description="Default md size. Click prev / next / a page number to update."
-        code={`const [page, setPage] = useState(1);
-<Pagination currentPage={page} pageCount={10} onPageChange={setPage} />`}
+        code={`import { useState } from 'react';
+import { Pagination } from '@eocrm/design-system';
+
+export function Demo() {
+  const [page, setPage] = useState(1);
+
+  return (
+    <Pagination currentPage={page} pageCount={10} onPageChange={setPage} />
+  );
+}`}
       >
         <Pagination currentPage={page} pageCount={10} onPageChange={setPage} />
       </Example>
@@ -39,7 +47,16 @@ function PaginationDemoPanel() {
       <Example
         title="Middle of a long list"
         description="With pageCount=20 and current=5, both ellipses appear. Total slot count stays at 7."
-        code={`<Pagination currentPage={5} pageCount={20} onPageChange={setPage} />`}
+        code={`import { useState } from 'react';
+import { Pagination } from '@eocrm/design-system';
+
+export function Demo() {
+  const [page, setPage] = useState(5);
+
+  return (
+    <Pagination currentPage={page} pageCount={20} onPageChange={setPage} />
+  );
+}`}
       >
         <Pagination currentPage={pageMid} pageCount={20} onPageChange={setPageMid} />
       </Example>
@@ -47,7 +64,13 @@ function PaginationDemoPanel() {
       <Example
         title="Single page"
         description="Edge case — pageCount=1 still renders (single disabled-current button + both prev/next disabled). Consumer doesn't have to conditionally hide it."
-        code={`<Pagination currentPage={1} pageCount={1} onPageChange={() => {}} />`}
+        code={`import { Pagination } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Pagination currentPage={1} pageCount={1} onPageChange={() => {}} />
+  );
+}`}
       >
         <Pagination currentPage={1} pageCount={1} onPageChange={() => {}} />
       </Example>
@@ -55,12 +78,21 @@ function PaginationDemoPanel() {
       <Example
         title="siblingCount=0 (tight)"
         description="For sidebar / narrow column use. Hides the sibling pages — just first, current, last + ellipses."
-        code={`<Pagination
-  currentPage={5}
-  pageCount={100}
-  onPageChange={setPage}
-  siblingCount={0}
-/>`}
+        code={`import { useState } from 'react';
+import { Pagination } from '@eocrm/design-system';
+
+export function Demo() {
+  const [page, setPage] = useState(5);
+
+  return (
+    <Pagination
+      currentPage={page}
+      pageCount={100}
+      onPageChange={setPage}
+      siblingCount={0}
+    />
+  );
+}`}
       >
         <Pagination
           currentPage={pageTight}
@@ -73,12 +105,21 @@ function PaginationDemoPanel() {
       <Example
         title="siblingCount=2 (wide)"
         description="For full-width footers. Two sibling pages on each side of current — totalSlots = 9."
-        code={`<Pagination
-  currentPage={6}
-  pageCount={20}
-  onPageChange={setPage}
-  siblingCount={2}
-/>`}
+        code={`import { useState } from 'react';
+import { Pagination } from '@eocrm/design-system';
+
+export function Demo() {
+  const [page, setPage] = useState(5);
+
+  return (
+    <Pagination
+      currentPage={page}
+      pageCount={20}
+      onPageChange={setPage}
+      siblingCount={2}
+    />
+  );
+}`}
       >
         <Pagination
           currentPage={pageWide}
@@ -91,11 +132,17 @@ function PaginationDemoPanel() {
       <Example
         title="Sizes — sm / md / lg"
         description="sm for tight footers and sidebars, md (default) for DataTable, lg for hero / standalone."
-        code={`<Stack gap="md">
-  <Pagination size="sm" currentPage={3} pageCount={10} onPageChange={setPage} />
-  <Pagination size="md" currentPage={3} pageCount={10} onPageChange={setPage} />
-  <Pagination size="lg" currentPage={3} pageCount={10} onPageChange={setPage} />
-</Stack>`}
+        code={`import { Pagination, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="md">
+      <Pagination size="sm" currentPage={3} pageCount={10} onPageChange={() => {}} />
+      <Pagination size="md" currentPage={3} pageCount={10} onPageChange={() => {}} />
+      <Pagination size="lg" currentPage={3} pageCount={10} onPageChange={() => {}} />
+    </Stack>
+  );
+}`}
       >
         <Stack gap="md">
           <Pagination size="sm" currentPage={3} pageCount={10} onPageChange={() => {}} />
@@ -107,7 +154,13 @@ function PaginationDemoPanel() {
       <Example
         title="Disabled (loading lock)"
         description="Lock the whole nav while data is refetching to prevent double-clicks."
-        code={`<Pagination currentPage={3} pageCount={10} onPageChange={setPage} disabled />`}
+        code={`import { Pagination } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Pagination currentPage={3} pageCount={10} onPageChange={() => {}} disabled />
+  );
+}`}
       >
         <Pagination currentPage={3} pageCount={10} onPageChange={() => {}} disabled />
       </Example>
@@ -115,33 +168,42 @@ function PaginationDemoPanel() {
       <Example
         title="Composed with <Select> for page size"
         description="The canonical DataTable footer shape — page-size selector on one side, pagination on the other. Pagination doesn't ship a page-size selector itself; the consumer composes it."
-        code={`const [page, setPage] = useState(1);
-const [pageSize, setPageSize] = useState('10');
-const pageSizeNum = Number(pageSize);
+        code={`import { useState } from 'react';
+import { Cluster, Pagination, Select } from '@eocrm/design-system';
 
-<Cluster justify="between" align="center" wrap>
-  <Cluster gap="sm" align="center">
-    <span>Rows per page</span>
-    <Select
-      value={pageSize}
-      onChange={(value) => {
-        setPageSize(value as string);
-        setPage(1); // reset to first page when page size changes
-      }}
-      options={[
-        { value: '10', label: '10' },
-        { value: '25', label: '25' },
-        { value: '50', label: '50' },
-      ]}
-    />
-  </Cluster>
-  <Pagination
-    currentPage={page}
-    pageCount={Math.ceil(240 / pageSizeNum)}
-    onPageChange={setPage}
-    size="sm"
-  />
-</Cluster>`}
+export function Demo() {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState('10');
+  const pageSizeNum = Number(pageSize);
+
+  return (
+    <Cluster justify="between" align="center" wrap>
+      <Cluster gap="sm" align="center">
+        <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-muted)' }}>
+          Rows per page
+        </span>
+        <Select
+          value={pageSize}
+          onChange={(value) => {
+            setPageSize(value as string);
+            setPage(1);
+          }}
+          options={[
+            { value: '10', label: '10' },
+            { value: '25', label: '25' },
+            { value: '50', label: '50' },
+          ]}
+        />
+      </Cluster>
+      <Pagination
+        currentPage={page}
+        pageCount={Math.ceil(240 / pageSizeNum)}
+        onPageChange={setPage}
+        size="sm"
+      />
+    </Cluster>
+  );
+}`}
       >
         <Cluster justify="between" align="center" wrap>
           <Cluster gap="sm" align="center">
@@ -185,12 +247,28 @@ function CursorPaginationDemoPanel() {
       <Example
         title="Basic"
         description="Both buttons enabled — has both directions to navigate."
-        code={`<CursorPagination
-  hasPrevious={hasPrev}
-  hasNext={hasNext}
-  onPrevious={loadPrevious}
-  onNext={loadNext}
-/>`}
+        code={`import { useState } from 'react';
+import { CursorPagination, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  const [cursor, setCursor] = useState(2);
+  const hasPrev = cursor > 0;
+  const hasNext = cursor < 5;
+
+  return (
+    <Stack gap="xs">
+      <CursorPagination
+        hasPrevious={hasPrev}
+        hasNext={hasNext}
+        onPrevious={() => setCursor((c) => c - 1)}
+        onNext={() => setCursor((c) => c + 1)}
+      />
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        cursor = {cursor} (range 0–5)
+      </code>
+    </Stack>
+  );
+}`}
       >
         <Stack gap="xs">
           <CursorPagination
@@ -208,12 +286,18 @@ function CursorPaginationDemoPanel() {
       <Example
         title="At the start (hasPrevious=false)"
         description="Previous is disabled. Layout doesn't shift — the button stays in the row."
-        code={`<CursorPagination
-  hasPrevious={false}
-  hasNext={true}
-  onPrevious={loadPrevious}
-  onNext={loadNext}
-/>`}
+        code={`import { CursorPagination } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <CursorPagination
+      hasPrevious={false}
+      hasNext
+      onPrevious={() => {}}
+      onNext={() => {}}
+    />
+  );
+}`}
       >
         <CursorPagination hasPrevious={false} hasNext onPrevious={() => {}} onNext={() => {}} />
       </Example>
@@ -221,12 +305,18 @@ function CursorPaginationDemoPanel() {
       <Example
         title="At the end (hasNext=false)"
         description="Next is disabled. Same layout shape."
-        code={`<CursorPagination
-  hasPrevious={true}
-  hasNext={false}
-  onPrevious={loadPrevious}
-  onNext={loadNext}
-/>`}
+        code={`import { CursorPagination } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <CursorPagination
+      hasPrevious
+      hasNext={false}
+      onPrevious={() => {}}
+      onNext={() => {}}
+    />
+  );
+}`}
       >
         <CursorPagination hasPrevious hasNext={false} onPrevious={() => {}} onNext={() => {}} />
       </Example>
@@ -234,14 +324,20 @@ function CursorPaginationDemoPanel() {
       <Example
         title="Custom labels — 'Newer' / 'Older'"
         description="For reverse-chronological feeds where 'Previous' means going to more recent items."
-        code={`<CursorPagination
-  hasPrevious={hasNewer}
-  hasNext={hasOlder}
-  onPrevious={loadNewer}
-  onNext={loadOlder}
-  previousLabel="Newer"
-  nextLabel="Older"
-/>`}
+        code={`import { CursorPagination } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <CursorPagination
+      hasPrevious
+      hasNext
+      onPrevious={() => {}}
+      onNext={() => {}}
+      previousLabel="Newer"
+      nextLabel="Older"
+    />
+  );
+}`}
       >
         <CursorPagination
           hasPrevious

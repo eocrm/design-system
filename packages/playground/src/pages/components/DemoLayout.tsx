@@ -10,10 +10,23 @@ export interface DemoLayoutProps {
   description: string;
   files: ComponentFile[];
   componentName?: ComponentName;
+  /**
+   * Component key for the auto-generated API table when it differs from
+   * `componentName` or the component isn't in the cross-link registry (e.g.
+   * `AppLayout`). Defaults to `componentName`.
+   */
+  apiName?: string;
   children: ReactNode;
 }
 
-export function DemoLayout({ name, description, files, componentName, children }: DemoLayoutProps) {
+export function DemoLayout({
+  name,
+  description,
+  files,
+  componentName,
+  apiName,
+  children,
+}: DemoLayoutProps) {
   return (
     <Stack gap="lg">
       <header className={styles.header}>
@@ -22,7 +35,7 @@ export function DemoLayout({ name, description, files, componentName, children }
         <p className={styles.description}>{description}</p>
       </header>
 
-      <DemoBody files={files} componentName={componentName}>
+      <DemoBody files={files} componentName={componentName} apiName={apiName}>
         {children}
       </DemoBody>
     </Stack>
