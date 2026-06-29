@@ -1106,26 +1106,38 @@ describe('Select — visual states', () => {
 });
 
 describe('Select — clearable', () => {
-  it('shows ✕ button when single + clearable + has value (default behavior, not required)', () => {
+  it('does NOT show ✕ by default — clearable is opt-in', () => {
     render(<Select options={STATUSES} value="pending" />);
+    expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();
+  });
+
+  it('shows ✕ button when single + clearable + has value', () => {
+    render(<Select options={STATUSES} value="pending" clearable />);
     expect(screen.getByRole('button', { name: /clear selection/i })).toBeInTheDocument();
   });
 
   it('clicking ✕ clears the selection', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<Select options={STATUSES} defaultValue="pending" onChange={onChange} />);
+    render(<Select options={STATUSES} defaultValue="pending" clearable onChange={onChange} />);
     await user.click(screen.getByRole('button', { name: /clear selection/i }));
     expect(onChange).toHaveBeenCalledWith('', null);
   });
 
-  it('does NOT show ✕ when required', () => {
-    render(<Select options={STATUSES} value="pending" required name="x" />);
+  it('explicit clearable shows ✕ even on a required field (required does not suppress opt-in)', () => {
+    render(<Select options={STATUSES} value="pending" required name="x" clearable />);
+    expect(screen.getByRole('button', { name: /clear selection/i })).toBeInTheDocument();
+  });
+
+  it('does NOT show ✕ when clearable but no value', () => {
+    render(<Select options={STATUSES} clearable />);
     expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();
   });
 
-  it('does NOT show ✕ when no value', () => {
-    render(<Select options={STATUSES} />);
+  it('clearable is suppressed when disabled or readOnly', () => {
+    const { rerender } = render(<Select options={STATUSES} value="pending" clearable disabled />);
+    expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();
+    rerender(<Select options={STATUSES} value="pending" clearable readOnly />);
     expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();
   });
 
@@ -1160,7 +1172,7 @@ describe('Select — clearable', () => {
 
   it('clear ✕ button is focusable via keyboard', async () => {
     const user = userEvent.setup();
-    render(<Select options={STATUSES} defaultValue="active" />);
+    render(<Select options={STATUSES} defaultValue="active" clearable />);
     const trigger = screen.getByRole('button', { name: /Active/i });
     trigger.focus();
     await user.tab(); // moves to next focusable
@@ -1171,7 +1183,7 @@ describe('Select — clearable', () => {
   it('Enter on focused clear ✕ clears the selection', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<Select options={STATUSES} defaultValue="pending" onChange={onChange} />);
+    render(<Select options={STATUSES} defaultValue="pending" clearable onChange={onChange} />);
     const clearBtn = screen.getByRole('button', { name: /clear selection/i });
     clearBtn.focus();
     await user.keyboard('{Enter}');

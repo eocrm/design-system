@@ -121,6 +121,38 @@ export function StatusExample() {
       </Example>
 
       <Example
+        title="Clearable (opt-in)"
+        description="The ✕ clear button is opt-in — pass clearable to show it once there's a value. (It's suppressed when disabled/readOnly.)"
+        code={`import { useState } from 'react';
+import { Select, type SelectOption } from '@eocrm/design-system';
+
+const STATUSES: SelectOption[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'archived', label: 'Archived' },
+];
+
+export function ClearableExample() {
+  const [status, setStatus] = useState<string>('pending');
+  return (
+    <div style={{ width: 320 }}>
+      <Select
+        options={STATUSES}
+        value={status}
+        onChange={(v) => setStatus(v as string)}
+        clearable
+        placeholder="Pick a status"
+      />
+    </div>
+  );
+}`}
+      >
+        <InputExample>
+          <ClearableExample />
+        </InputExample>
+      </Example>
+
+      <Example
         title="Country — single, searchable, grouped"
         description="Options can be nested under group labels. Type to filter; arrow keys traverse across groups."
         code={`import { useState } from 'react';
@@ -549,6 +581,21 @@ function StatusExample() {
       </div>
       {status ? <Badge tone="info">{status}</Badge> : <Badge tone="neutral">none</Badge>}
     </Stack>
+  );
+}
+
+function ClearableExample() {
+  const [status, setStatus] = useState<string>('pending');
+  return (
+    <div style={{ width: 320 }}>
+      <Select
+        options={STATUSES}
+        value={status}
+        onChange={(v) => setStatus(v as string)}
+        clearable
+        placeholder="Pick a status"
+      />
+    </div>
   );
 }
 

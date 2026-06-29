@@ -3519,7 +3519,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Shows a `✕` button in the trigger that clears the selection. Default\nis `true` in single mode (when not `required`), `false` in multi mode.\nForced `false` when `disabled` or `readOnly`."
+          "description": "Shows a `✕` button in the trigger that clears the selection. Opt-in:\ndefaults to `false`. Always forced `false` when `disabled` or `readOnly`."
         },
         {
           "name": "disabled",
@@ -3547,7 +3547,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Marks the field as required for native form validation. When `true`,\n`clearable` defaults to `false` and an empty selection blocks submit."
+          "description": "Marks the field as required for native form validation. When `true`, an empty\nselection blocks submit."
         },
         {
           "name": "form",

@@ -201,9 +201,8 @@ export interface SelectProps<T = unknown> extends Omit<
    */
   placeholder?: string;
   /**
-   * Shows a `✕` button in the trigger that clears the selection. Default
-   * is `true` in single mode (when not `required`), `false` in multi mode.
-   * Forced `false` when `disabled` or `readOnly`.
+   * Shows a `✕` button in the trigger that clears the selection. Opt-in:
+   * defaults to `false`. Always forced `false` when `disabled` or `readOnly`.
    */
   clearable?: boolean;
 
@@ -228,8 +227,8 @@ export interface SelectProps<T = unknown> extends Omit<
    */
   name?: string;
   /**
-   * Marks the field as required for native form validation. When `true`,
-   * `clearable` defaults to `false` and an empty selection blocks submit.
+   * Marks the field as required for native form validation. When `true`, an empty
+   * selection blocks submit.
    */
   required?: boolean;
   /** `form` attribute forwarded to the hidden `<input>` elements. */
@@ -495,15 +494,10 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   const triggerRef = useRef<HTMLElement | null>(null);
   const listboxRef = useRef<HTMLUListElement | null>(null);
 
-  // `clearable` default depends on cardinality + `required`. Single-mode
-  // pickers usually want a clear button (the only way for a user to reach
-  // the empty state without typing); multi-mode users typically clear chip
-  // by chip and a "clear all" affordance is opt-in. `required` forces the
-  // ✕ off — a required field with no other selection escape would be a
-  // form-validation foot-gun. `disabled` / `readOnly` also suppress because
-  // the trigger is non-interactive in those states.
-  const effectiveClearable =
-    (clearable === undefined ? !multiple && !required : clearable) && !disabled && !readOnly;
+  // `clearable` is opt-in: the ✕ clear button defaults OFF and only shows when a
+  // consumer explicitly sets `clearable`. `disabled` / `readOnly` always suppress it
+  // (the trigger is non-interactive in those states).
+  const effectiveClearable = (clearable ?? false) && !disabled && !readOnly;
 
   // Defined inline rather than via useCallback because it captures the
   // current `setOpen` and `triggerRef` — both stable identities — and is
