@@ -85,3 +85,26 @@ it('fires onColor("bgColor", key) from the Highlight submenu', async () => {
   await userEvent.click(await screen.findByRole('button', { name: 'Blue' }));
   expect(onColor).toHaveBeenCalledWith('bgColor', 'blue');
 });
+
+it('closes the color submenu after a pick but leaves the main menu open', async () => {
+  const onColor = vi.fn();
+  setup({ onColor });
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Text color' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Green' }));
+  // Submenu collapsed: its swatches are gone.
+  expect(screen.queryByRole('button', { name: 'Green' })).toBeNull();
+  // Main menu still open: its items + the color trigger remain, ready for another pick.
+  expect(screen.getByRole('menuitem', { name: /delete/i })).toBeInTheDocument();
+  expect(screen.getByRole('menuitem', { name: 'Text color' })).toBeInTheDocument();
+});
+
+it('reopens the color submenu after a pick (close-on-pick does not latch it shut)', async () => {
+  const onColor = vi.fn();
+  setup({ onColor });
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Text color' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Green' }));
+  expect(screen.queryByRole('button', { name: 'Green' })).toBeNull(); // collapsed
+  // Reopen the same submenu → the palette is back.
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Text color' }));
+  expect(await screen.findByRole('button', { name: 'Green' })).toBeInTheDocument();
+});

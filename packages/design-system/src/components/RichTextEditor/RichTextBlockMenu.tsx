@@ -1,7 +1,7 @@
 // RichTextBlockMenu.tsx — internal block actions menu (DropdownMenu wrapper). The
 // `⠿` handle is the trigger; open is controlled by the editor so a keyboard
 // Shift+F10 can open the SAME menu anchored to the active block's handle.
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
 import { useTranslation } from '../../i18n';
@@ -45,6 +45,18 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
     ref,
   ) {
     const t = useTranslation();
+    // Which color submenu is open. Controlled so picking a color can collapse the
+    // submenu (back to the still-open main menu) instead of leaving the palette up.
+    const [openColorSub, setOpenColorSub] = useState<'textColor' | 'bgColor' | null>(null);
+    // Reset when the whole menu closes so it doesn't reopen a palette next time.
+    useEffect(() => {
+      if (!open) setOpenColorSub(null);
+    }, [open]);
+    const colorSubProps = (which: 'textColor' | 'bgColor') => ({
+      open: openColorSub === which,
+      onOpenChange: (next: boolean) =>
+        setOpenColorSub((prev) => (next ? which : prev === which ? null : prev)),
+    });
     return (
       <DropdownMenu open={open} onOpenChange={onOpenChange}>
         <DropdownMenu.Trigger>
@@ -69,18 +81,31 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
           )}
           {onColor && (
             <>
-              <DropdownMenu.Sub>
+              <DropdownMenu.Sub {...colorSubProps('textColor')}>
                 <DropdownMenu.SubTrigger>{t('richTextEditor.textColor')}</DropdownMenu.SubTrigger>
                 <DropdownMenu.SubContent>
                   {/* The block menu doesn't reflect an active color — omit `active`. The
-                      badges are plain buttons (pointer-first), not registered menu items. */}
-                  <RichTextColorMenu type="textColor" onPick={(key) => onColor('textColor', key)} />
+                      badges are plain buttons (pointer-first), not registered menu items.
+                      Picking one collapses this submenu but leaves the main menu open. */}
+                  <RichTextColorMenu
+                    type="textColor"
+                    onPick={(key) => {
+                      onColor('textColor', key);
+                      setOpenColorSub(null);
+                    }}
+                  />
                 </DropdownMenu.SubContent>
               </DropdownMenu.Sub>
-              <DropdownMenu.Sub>
+              <DropdownMenu.Sub {...colorSubProps('bgColor')}>
                 <DropdownMenu.SubTrigger>{t('richTextEditor.highlight')}</DropdownMenu.SubTrigger>
                 <DropdownMenu.SubContent>
-                  <RichTextColorMenu type="bgColor" onPick={(key) => onColor('bgColor', key)} />
+                  <RichTextColorMenu
+                    type="bgColor"
+                    onPick={(key) => {
+                      onColor('bgColor', key);
+                      setOpenColorSub(null);
+                    }}
+                  />
                 </DropdownMenu.SubContent>
               </DropdownMenu.Sub>
             </>
