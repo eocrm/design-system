@@ -73,7 +73,13 @@ export function moveBlockUnit(
 
 /** Clone a block with a fresh id (inline runs copied so marks aren't shared). */
 function cloneBlock(b: Block): Block {
-  return { ...b, id: nextId(), inlines: b.inlines.map((r) => ({ ...r, marks: r.marks.slice() })) };
+  // `?? []` so duplicating a void block (an `attachment` carries no `inlines`)
+  // can't crash on undefined.
+  return {
+    ...b,
+    id: nextId(),
+    inlines: (b.inlines ?? []).map((r) => ({ ...r, marks: r.marks.slice() })),
+  };
 }
 
 /**

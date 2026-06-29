@@ -12,6 +12,13 @@ describe('inlines', () => {
     expect(runsLength([plain('ab'), b('cd')])).toBe(4);
   });
 
+  it('runsText / runsLength tolerate a missing inlines (void/attachment block)', () => {
+    // A void block (e.g. `attachment`) can carry no `inlines`; the helpers must treat
+    // it as zero text instead of throwing on `.map`/`.reduce` of undefined.
+    expect(runsText(undefined)).toBe('');
+    expect(runsLength(undefined)).toBe(0);
+  });
+
   it('normalizeInlines merges adjacent equal-mark runs and drops empties', () => {
     expect(normalizeInlines([plain('a'), plain(''), plain('b')])).toEqual([plain('ab')]);
     expect(normalizeInlines([plain('a'), b('b'), b('c')])).toEqual([plain('a'), b('bc')]);
