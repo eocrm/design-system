@@ -65,7 +65,7 @@ import { RichTextBlockControls } from './RichTextBlockControls';
 import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
 import { useAttachmentConfig } from './useAttachmentConfig';
 import { RichTextImageResizer } from './RichTextImageResizer';
-import { attachmentIsImage } from '../RichText/engine/attachment';
+import { attachmentIsImage, isAttachmentSettled } from '../RichText/engine/attachment';
 import { safeHref } from '../RichText/engine/safeHref';
 import type { BlockAction } from './RichTextBlockMenu';
 import { useUpload, type UploadConfig } from './useUpload';
@@ -1493,7 +1493,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       : undefined;
     const activeBlockType = activeBlock?.type;
     const canConfigure =
-      uploadOn && activeBlock?.type === 'attachment' && activeBlock.status === 'ready';
+      uploadOn && activeBlock?.type === 'attachment' && isAttachmentSettled(activeBlock);
     const configBlock = configBlockId
       ? value.blocks.find((b) => b.id === configBlockId)
       : undefined;
@@ -1529,7 +1529,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           (b) =>
             b.id === hoveredImageId &&
             b.type === 'attachment' &&
-            b.status === 'ready' &&
+            // Settled = ready OR no status (a persisted/imported block drops its
+            // transient status); mirrors the renderer's "ready-or-absent" displayable
+            // rule so the handle can't drift from what's shown. See #263.
+            isAttachmentSettled(b) &&
             attachmentIsImage(b) &&
             !!safeHref(b.src ?? ''),
         )
@@ -1548,7 +1551,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       ) : null;
 
     const configEl =
-      configBlock && configBlock.type === 'attachment' && configBlock.status === 'ready' && uploadOn
+      configBlock && configBlock.type === 'attachment' && isAttachmentSettled(configBlock) && uploadOn
         ? (() => {
             const figEl = rootRef.current?.querySelector<HTMLElement>(
               `[data-block-id="${CSS.escape(configBlock.id)}"]`,
