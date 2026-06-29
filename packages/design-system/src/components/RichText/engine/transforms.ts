@@ -27,7 +27,7 @@ function replaceBlock(doc: RichDoc, index: number, block: Block): RichDoc {
 /** Bounds of the mention run strictly containing `offset`, or null. */
 function mentionRunBoundsAt(block: Block, offset: number): { start: number; end: number } | null {
   let pos = 0;
-  for (const run of block.inlines) {
+  for (const run of block.inlines ?? []) {
     const s = pos;
     const e = pos + run.text.length;
     pos = e;

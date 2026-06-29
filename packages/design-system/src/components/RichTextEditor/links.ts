@@ -23,6 +23,9 @@ export function linkAt(doc: RichDoc, point: Point): LinkAtResult | null {
   if (idx === -1) return null;
   const block = doc.blocks[idx];
   const len = blockLength(block);
+  // A zero-length block (empty, or a void `attachment` that carries no `inlines`)
+  // can't host a link — bail before iterating (block.inlines may be undefined).
+  if (len === 0) return null;
   // Per-character link href across the block (null where no link).
   const hrefs: (string | null)[] = [];
   for (const run of block.inlines) {

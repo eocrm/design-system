@@ -2,14 +2,22 @@
 import type { Inline, Mark } from './model';
 import { marksEqual } from './marks';
 
-/** Concatenate the text of all inline runs, discarding mark information. */
-export function runsText(inlines: Inline[]): string {
-  return inlines.map((r) => r.text).join('');
+/**
+ * Concatenate the text of all inline runs, discarding mark information. Tolerates a
+ * missing `inlines` (a void block like `attachment` carries none) — a block with no
+ * runs contributes no text.
+ */
+export function runsText(inlines: Inline[] | undefined): string {
+  return (inlines ?? []).map((r) => r.text).join('');
 }
 
-/** Total character count across all inline runs (sum of run text lengths). */
-export function runsLength(inlines: Inline[]): number {
-  return inlines.reduce((n, r) => n + r.text.length, 0);
+/**
+ * Total character count across all inline runs (sum of run text lengths). Tolerates a
+ * missing `inlines` (void blocks like `attachment` carry none) → length 0, so the
+ * caret/length math never crashes on an attachment-containing doc.
+ */
+export function runsLength(inlines: Inline[] | undefined): number {
+  return (inlines ?? []).reduce((n, r) => n + r.text.length, 0);
 }
 
 /** Canonical form: adjacent equal-mark runs merged, empty runs dropped, ≥1 run. */

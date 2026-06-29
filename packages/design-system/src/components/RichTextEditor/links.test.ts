@@ -137,3 +137,24 @@ describe('setLink', () => {
     expect(r.doc.blocks[0].inlines).toEqual([{ text: 'hi', marks: [] }]);
   });
 });
+
+describe('linkAt — void blocks (issue #261)', () => {
+  // An external / image-attachment doc can carry an attachment block with NO
+  // `inlines` field at all. The toolbar recomputes the active link from the caret
+  // block on every selection change, so linkAt must resolve "no link" for a void
+  // block instead of crashing on `block.inlines` being undefined.
+  const attachment = { id: 'img', type: 'attachment', src: 'x.png' } as RichDoc['blocks'][number];
+
+  it('returns null (does not throw) for a point on an attachment with no inlines', () => {
+    const doc: RichDoc = { blocks: [attachment] };
+    expect(() => linkAt(doc, at('img', 0))).not.toThrow();
+    expect(linkAt(doc, at('img', 0))).toBeNull();
+  });
+
+  it('still resolves links in sibling text blocks when an attachment is present', () => {
+    const doc: RichDoc = {
+      blocks: [attachment, para('a', [{ text: 'home', marks: [link('/home')] }])],
+    };
+    expect(linkAt(doc, at('a', 2))).toEqual({ href: '/home', range: span(at('a', 0), at('a', 4)) });
+  });
+});

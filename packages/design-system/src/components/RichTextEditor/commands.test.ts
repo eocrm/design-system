@@ -46,6 +46,21 @@ describe('activeMarks', () => {
     const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [] }])] };
     expect(activeMarks(doc, span(at('a', 0), at('a', 0)), [bold])).toEqual(['bold']);
   });
+
+  // Issue #261: an external attachment block can omit `inlines` entirely. The
+  // toolbar derives pressed-state from a selection that may span such a block —
+  // the zero-length void slice must be skipped, not iterated.
+  it('does not throw over a selection spanning an attachment with no inlines', () => {
+    const attachment = {
+      id: 'img',
+      type: 'attachment',
+      src: 'x.png',
+    } as RichDoc['blocks'][number];
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [bold] }]), attachment] };
+    const range = span(at('a', 0), at('img', 0));
+    expect(() => activeMarks(doc, range, null)).not.toThrow();
+    expect(activeMarks(doc, range, null)).toEqual(['bold']);
+  });
 });
 
 describe('activeColors', () => {
@@ -99,6 +114,20 @@ describe('activeColors', () => {
       textColor: 'red',
       bgColor: 'blue',
     });
+  });
+
+  // Issue #261: mirror of the activeMarks guard — a selection that runs into a
+  // void attachment block (no `inlines`) must not crash the color derivation.
+  it('does not throw over a selection spanning an attachment with no inlines', () => {
+    const attachment = {
+      id: 'img',
+      type: 'attachment',
+      src: 'x.png',
+    } as RichDoc['blocks'][number];
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [red] }]), attachment] };
+    const range = span(at('a', 0), at('img', 0));
+    expect(() => activeColors(doc, range, null)).not.toThrow();
+    expect(activeColors(doc, range, null)).toEqual({ textColor: 'red' });
   });
 });
 

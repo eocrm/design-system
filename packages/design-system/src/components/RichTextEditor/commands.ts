@@ -68,8 +68,13 @@ export function activeMarks(doc: RichDoc, range: Range, pending: Mark[] | null):
       const block = doc.blocks[i];
       const from = i === si ? start.offset : 0;
       const to = i === ei ? end.offset : blockLength(block);
+      // Skip a zero-length slice — incl. a void `attachment` (no `inlines`), which
+      // would otherwise crash iterating undefined. Mirrors the transforms guard.
+      if (to <= from) continue;
       let pos = 0;
-      for (const run of block.inlines) {
+      // `?? []` so the iteration is safe even if a caller hands a void block a
+      // non-zero end offset (the `to <= from` skip already covers the editor path).
+      for (const run of block.inlines ?? []) {
         const rs = pos;
         const re = pos + run.text.length;
         pos = re;
@@ -144,8 +149,13 @@ export function activeColors(doc: RichDoc, range: Range, pending: Mark[] | null)
       const block = doc.blocks[i];
       const from = i === si ? start.offset : 0;
       const to = i === ei ? end.offset : blockLength(block);
+      // Skip a zero-length slice — incl. a void `attachment` (no `inlines`), which
+      // would otherwise crash iterating undefined. Mirrors the transforms guard.
+      if (to <= from) continue;
       let pos = 0;
-      for (const run of block.inlines) {
+      // `?? []` so the iteration is safe even if a caller hands a void block a
+      // non-zero end offset (the `to <= from` skip already covers the editor path).
+      for (const run of block.inlines ?? []) {
         const rs = pos;
         const re = pos + run.text.length;
         pos = re;

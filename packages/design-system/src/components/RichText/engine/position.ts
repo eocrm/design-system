@@ -51,7 +51,7 @@ export function marksBeforeCaret(doc: RichDoc, point: Point): Mark[] {
   const idx = findBlockIndex(doc, point.blockId);
   if (idx === -1 || point.offset <= 0) return [];
   let pos = 0;
-  for (const run of doc.blocks[idx].inlines) {
+  for (const run of doc.blocks[idx].inlines ?? []) {
     const end = pos + run.text.length;
     if (point.offset - 1 >= pos && point.offset - 1 < end) return run.marks;
     pos = end;

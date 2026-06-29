@@ -21,6 +21,15 @@ describe('position', () => {
     expect(blockLength(doc.blocks[0])).toBe(5);
   });
 
+  it('blockLength is 0 for a void block with no inlines (attachment) — never throws', () => {
+    // External / image-attachment docs can carry an attachment block with no
+    // `inlines`. blockLength (→ runsLength) must treat it as zero, not crash — this
+    // is the render/caret-recompute path that previously threw on such docs.
+    const attachment = { id: 'img', type: 'attachment', src: 'x.png' } as RichDoc['blocks'][number];
+    expect(() => blockLength(attachment)).not.toThrow();
+    expect(blockLength(attachment)).toBe(0);
+  });
+
   it('findBlockIndex returns index or -1', () => {
     expect(findBlockIndex(doc, 'b')).toBe(1);
     expect(findBlockIndex(doc, 'zzz')).toBe(-1);
