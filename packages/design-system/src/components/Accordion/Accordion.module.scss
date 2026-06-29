@@ -8,6 +8,13 @@
   border-radius: var(--accordion-radius);
   background: var(--accordion-bg);
   overflow: hidden;
+
+  // How a closed item's `.actions` render — resolved through inherited custom props
+  // so the NEAREST accordion wins (a nested accordion with a different
+  // `actionsWhenClosed` is unaffected by an ancestor's). Default: visible.
+  --accordion-actions-closed-opacity: var(--opacity-visible);
+  --accordion-actions-closed-visibility: visible;
+  --accordion-actions-closed-pointer-events: auto;
 }
 
 // Borderless variant: strip the outer chrome. Item dividing lines also
@@ -160,6 +167,29 @@
   gap: var(--accordion-actions-gap);
   flex-shrink: 0;
   padding-inline-end: var(--accordion-trigger-padding-x-md);
+
+  // Bare-class transition (matches the reduced-motion reset's specificity so that
+  // override actually wins). Only fires when the values below change — i.e. in
+  // `actionsWhenClosed="hide"` mode as items toggle.
+  transition:
+    opacity var(--transition-fast),
+    visibility var(--transition-fast);
+}
+
+// actionsWhenClosed="hide": a closed item's actions fade out and leave the focus
+// order (visibility:hidden) — useful for dense sidebars of collapsed cards. The
+// values come from the nearest accordion's inherited props, so this also resolves
+// correctly for nested accordions. Layout space is kept (no reflow on toggle).
+.accordion[data-actions-when-closed='hide'] {
+  --accordion-actions-closed-opacity: var(--opacity-hidden);
+  --accordion-actions-closed-visibility: hidden;
+  --accordion-actions-closed-pointer-events: none;
+}
+
+.item[data-state='closed'] .actions {
+  opacity: var(--accordion-actions-closed-opacity);
+  visibility: var(--accordion-actions-closed-visibility);
+  pointer-events: var(--accordion-actions-closed-pointer-events);
 }
 
 .content {
@@ -265,7 +295,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .content,
-  .indicator {
+  .indicator,
+  .actions {
     transition: none;
   }
 }

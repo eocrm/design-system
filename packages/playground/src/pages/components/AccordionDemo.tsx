@@ -359,7 +359,7 @@ export function Demo() {
 
       <Example
         title="Collapsible cards — gap + left chevron + header actions"
-        description="gap separates the items into cards; indicatorSide='left' moves the chevron before the title; Accordion.Trigger's actions slot holds controls at the right of the header. The action buttons are outside the toggle, so clicking them edits/deletes without opening the section."
+        description="gap separates the items into cards; indicatorSide='left' moves the chevron before the title; Accordion.Trigger's actions slot holds controls at the right of the header (outside the toggle, so clicking them edits/deletes without opening the section). actionsWhenClosed='hide' fades the controls out on collapsed cards — expand 'Billing plan' vs the closed cards to see it."
         code={`import { Pencil, Trash2 } from 'lucide-react';
 import { Accordion, Button, Cluster } from '@eocrm/design-system';
 
@@ -376,7 +376,13 @@ const rowActions = (label) => (
 
 export function Demo() {
   return (
-    <Accordion type="multiple" gap="md" indicatorSide="left" defaultValue={['plan']}>
+    <Accordion
+      type="multiple"
+      gap="md"
+      indicatorSide="left"
+      actionsWhenClosed="hide"
+      defaultValue={['plan']}
+    >
       <Accordion.Item value="plan">
         <Accordion.Trigger actions={rowActions('plan')}>Billing plan</Accordion.Trigger>
         <Accordion.Content>Pro — $49/mo, renews Jul 1. 12 seats.</Accordion.Content>
@@ -393,7 +399,13 @@ export function Demo() {
   );
 }`}
       >
-        <Accordion type="multiple" gap="md" indicatorSide="left" defaultValue={['plan']}>
+        <Accordion
+          type="multiple"
+          gap="md"
+          indicatorSide="left"
+          actionsWhenClosed="hide"
+          defaultValue={['plan']}
+        >
           <Accordion.Item value="plan">
             <Accordion.Trigger
               actions={

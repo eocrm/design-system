@@ -600,6 +600,46 @@ describe('<Accordion>', () => {
     );
   });
 
+  it('default actionsWhenClosed is "show"; "hide" sets the data attr on the root', () => {
+    const { container: c0 } = render(<BasicSingle />);
+    expect(container0OfRoot(c0)).toHaveAttribute('data-actions-when-closed', 'show');
+    const { container: c1 } = render(
+      <Accordion type="multiple" actionsWhenClosed="hide">
+        <Accordion.Item value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    expect(container0OfRoot(c1)).toHaveAttribute('data-actions-when-closed', 'hide');
+  });
+
+  it('nested accordions each carry their own actionsWhenClosed (no leak via inherited vars)', () => {
+    // The hide behavior is driven by inherited CSS custom props keyed off the
+    // NEAREST [data-accordion]; this asserts each root owns its own attr so a
+    // nested 'show' inside an outer 'hide' resolves independently. (The computed
+    // opacity/visibility is covered by the Playwright pass — jsdom doesn't apply
+    // the module stylesheet.)
+    const { container } = render(
+      <Accordion type="multiple" actionsWhenClosed="hide" defaultValue={['a']}>
+        <Accordion.Item value="a">
+          <Accordion.Trigger>Outer</Accordion.Trigger>
+          <Accordion.Content>
+            <Accordion type="single">
+              <Accordion.Item value="n">
+                <Accordion.Trigger>Inner</Accordion.Trigger>
+                <Accordion.Content>z</Accordion.Content>
+              </Accordion.Item>
+            </Accordion>
+          </Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    const roots = container.querySelectorAll('[data-accordion]');
+    expect(roots[0]).toHaveAttribute('data-actions-when-closed', 'hide');
+    expect(roots[1]).toHaveAttribute('data-actions-when-closed', 'show');
+  });
+
   it('gap is absent by default and set as data-gap when provided', () => {
     const { container: c0 } = render(<BasicSingle />);
     expect(container0OfRoot(c0)).not.toHaveAttribute('data-gap');

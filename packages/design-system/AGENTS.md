@@ -1867,6 +1867,7 @@ import { Accordion } from '@eocrm/design-system';
 - **`gap`** — `"sm"` / `"md"` / `"lg"` separates items into **collapsible cards** (each gets its own border + radius; the joined container chrome is dropped). Omit for the default joined look.
 - **`indicatorSide`** — `"right"` (default) or `"left"` to put the chevron before the title.
 - **`<Accordion.Trigger actions={…}>`** — a controls slot at the **right of the header**, rendered OUTSIDE the toggle button so its buttons/menus are clickable without toggling the section (and don't pollute the heading's accessible name). Keep it to a few small controls.
+- **`actionsWhenClosed`** — `"show"` (default) keeps `actions` always visible; `"hide"` fades them out (and drops them from focus order) while the item is collapsed — for dense sidebars of collapsed cards.
 - **Smooth animation** via CSS `grid-template-rows: 0fr → 1fr`. No JS measurement.
 - **Heading wrapping** — Trigger is wrapped in `<h3>` by default per WAI-ARIA APG. Override via `headerLevel` on Item.
 - **Keyboard**: ArrowDown/Up cycles between triggers, Home/End jumps to ends, Space/Enter toggles. Disabled items are skipped.
