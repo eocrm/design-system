@@ -2442,6 +2442,7 @@ const [open, setOpen] = useState(false);
 - **Async**: pass `loadOptions(query, signal)`. Debounce (250ms default, configurable via `searchDebounceMs`) and `AbortSignal` cancellation are built-in. Do NOT debounce externally.
 - **Tag input pattern** = `multiple + searchable + creatable + triggerDisplay='chips'`. There is no separate `<Tags>` component.
 - **Form integration**: pass `name` (and `required`/`form` if needed). Hidden inputs render so `new FormData(form)` works. Multi mode renders one hidden input per selected value; `FormData.getAll(name)` returns the array.
+- **`clearable`** is opt-in (default `false`) — pass it to show the ✕ clear button once there's a value. Always suppressed when `disabled`/`readOnly`.
 - **`onChange` signature** is `(value, option | options | null)` — the second arg is the matched option(s), saving you a lookup.
 - **Render escape hatches**: `renderOption`, `renderValue`, `renderTag`, `renderEmpty`, `renderLoading`, `renderError`. Use when defaults don't suffice; default rendering is always token-correct.
 - For **action menus** (Edit/Delete/Duplicate buttons), use `<DropdownMenu>` — Select is for value selection, not actions.
