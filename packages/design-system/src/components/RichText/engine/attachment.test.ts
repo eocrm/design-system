@@ -5,6 +5,7 @@ import {
   updateAttachmentBlock,
   isVoidBlock,
   clearAttachmentFields,
+  isAttachmentSettled,
 } from './attachment';
 
 const p = (id: string, text = '') => createBlock('paragraph', text, { id });
@@ -145,5 +146,18 @@ describe('align + clearAttachmentFields', () => {
       blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'x', marks: [] }] }],
     };
     expect(clearAttachmentFields(d, 'p', ['width'])).toBe(d);
+  });
+});
+
+describe('isAttachmentSettled', () => {
+  it('is true for a ready upload and for a persisted block with no status', () => {
+    expect(isAttachmentSettled({ status: 'ready' })).toBe(true);
+    expect(isAttachmentSettled({})).toBe(true); // persisted/imported: status dropped on serialization
+    expect(isAttachmentSettled({ status: undefined })).toBe(true);
+  });
+
+  it('is false while uploading or after an error', () => {
+    expect(isAttachmentSettled({ status: 'uploading' })).toBe(false);
+    expect(isAttachmentSettled({ status: 'error' })).toBe(false);
   });
 });
