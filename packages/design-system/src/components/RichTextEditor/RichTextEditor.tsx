@@ -483,7 +483,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     }, []);
 
     const commit = useCallback(
-      (result: { doc: RichDoc; selection: Range }, kind: EditKind = 'other') => {
+      (
+        result: { doc: RichDoc; selection: Range },
+        kind: EditKind = 'other',
+        options?: {
+          /**
+           * Keep the DOM selection as-is — do NOT writeSelection on the re-render.
+           * Used by edits applied from a floating UI that owns focus (e.g. the ⠿
+           * block-color submenu): writing `result.selection` would both yank focus
+           * out of the open menu and visibly select the whole block. `result.selection`
+           * is still recorded in history so undo lands somewhere sensible.
+           */
+          keepSelection?: boolean;
+        },
+      ) => {
         // No-op transforms (e.g. Backspace at the very start of the document)
         // return the SAME doc reference — skip so we don't fire onChange or leave a
         // stale pending selection that React would never consume (no re-render).
@@ -495,7 +508,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           Date.now(),
         );
         syncHistoryFlags();
-        pendingSelectionRef.current = result.selection;
+        if (!options?.keepSelection) pendingSelectionRef.current = result.selection;
         liveDocRef.current = result.doc;
         latest.current.onChange(result.doc);
       },
@@ -1320,12 +1333,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         commit(moveBlockUnitToIndex(latest.current.value, id, targetIndex), 'other'),
       [commit],
     );
-    // Whole-block color from the ⠿ menu's Color submenu. Computes the block's full
-    // range and routes through the same setColorMark path the toolbar uses.
+    // Whole-block color from the ⠿ menu's Color submenu. Colors the block's full
+    // range via the shared setColorMark path, but commits with `keepSelection` so it
+    // does NOT writeSelection: the block menu owns focus and stays open, and the block
+    // isn't left visibly fully-selected after the pick.
     const onBlockColor = useCallback(
       (id: string, type: 'textColor' | 'bgColor', key: string | null) => {
         const r = wholeBlockRange(latest.current.value, id);
-        if (r) commit({ doc: setColorMark(latest.current.value, r, type, key), selection: r });
+        if (r)
+          commit({ doc: setColorMark(latest.current.value, r, type, key), selection: r }, 'other', {
+            keepSelection: true,
+          });
       },
       [commit],
     );
