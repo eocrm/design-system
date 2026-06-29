@@ -34,6 +34,17 @@ export type AccordionVariant = 'bordered' | 'borderless';
  */
 export type AccordionSize = 'sm' | 'md' | 'lg';
 
+/**
+ * Spacing between items. When set, items render as separated **cards** (each gets
+ * its own border + radius) and the joined container chrome (outer border + item
+ * dividers) is dropped. Omit for the default joined look. `'sm'`/`'md'`/`'lg'`
+ * step the gap. Applies regardless of `variant`.
+ */
+export type AccordionGap = 'sm' | 'md' | 'lg';
+
+/** Which side the trigger indicator (chevron) sits on. Defaults to `'right'`. */
+export type AccordionIndicatorSide = 'left' | 'right';
+
 interface AccordionBaseProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'defaultValue' | 'onChange'
@@ -42,6 +53,13 @@ interface AccordionBaseProps extends Omit<
   variant?: AccordionVariant;
   /** Trigger size (font + padding). Defaults to `'md'`. */
   size?: AccordionSize;
+  /**
+   * Gap between items → separated "card" look (each item gets its own border +
+   * radius; the outer container chrome is dropped). Omit for the joined default.
+   */
+  gap?: AccordionGap;
+  /** Which side the chevron indicator sits on. Defaults to `'right'`. */
+  indicatorSide?: AccordionIndicatorSide;
   children: ReactNode;
 }
 
@@ -123,6 +141,24 @@ export type AccordionProps = AccordionBaseProps & (AccordionSingleProps | Accord
  *   ...
  * </Accordion>
  *
+ * @example
+ * // Collapsible cards: gap between items + chevron on the left + a header
+ * // controls slot (rendered outside the toggle, so it doesn't toggle the section).
+ * <Accordion type="multiple" gap="md" indicatorSide="left">
+ *   <Accordion.Item value="billing">
+ *     <Accordion.Trigger
+ *       actions={
+ *         <Button iconOnly size="xs" variant="ghost" aria-label="Edit billing">
+ *           <Pencil size={14} />
+ *         </Button>
+ *       }
+ *     >
+ *       Billing
+ *     </Accordion.Trigger>
+ *     <Accordion.Content>…</Accordion.Content>
+ *   </Accordion.Item>
+ * </Accordion>
+ *
  * @remarks When NOT to use
  * - Mutually-exclusive view switchers → `<Tabs>`.
  * - Single show/hide toggle → `<Button>` + conditional render.
@@ -132,6 +168,9 @@ export type AccordionProps = AccordionBaseProps & (AccordionSingleProps | Accord
  * - ❌ Nesting `<Accordion.Trigger>` inside a heading the consumer also renders. Trigger wraps itself in a heading.
  * - ❌ Manually setting `aria-expanded` on the Trigger via `{...props}`. The component owns the ARIA contract.
  * - ❌ Using `headerLevel="h1"`. There should only be one `<h1>` per page; Accordion lives below it.
+ * - ❌ Putting bulky or primary content in the Trigger `actions` slot. It's for a
+ *   few small header controls (an icon `<Button>`, a `<DropdownMenu>` trigger, a
+ *   `<Switch>`) — the section's real content belongs in `<Accordion.Content>`.
  */
 const AccordionRoot = forwardRef<HTMLDivElement, AccordionProps>(
   function AccordionRoot(props, ref) {
@@ -154,6 +193,8 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
       collapsible = false,
       variant = 'bordered',
       size = 'md',
+      gap,
+      indicatorSide = 'right',
       children,
       className,
       ...rest
@@ -198,6 +239,8 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
           data-accordion=""
           data-variant={variant}
           data-size={size}
+          data-gap={gap}
+          data-indicator-side={indicatorSide}
           className={clsx(styles.accordion, className)}
         >
           {children}
@@ -218,6 +261,8 @@ const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
       onValueChange,
       variant = 'bordered',
       size = 'md',
+      gap,
+      indicatorSide = 'right',
       children,
       className,
       ...rest
@@ -261,6 +306,8 @@ const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
           data-accordion=""
           data-variant={variant}
           data-size={size}
+          data-gap={gap}
+          data-indicator-side={indicatorSide}
           className={clsx(styles.accordion, className)}
         >
           {children}

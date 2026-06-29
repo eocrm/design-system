@@ -23,6 +23,19 @@
   // Indicator (chevron)
   --accordion-indicator-fg: var(--color-fg-muted);
 
+  // Gap between the indicator and the label when the indicator sits on the left.
+  --accordion-indicator-gap: var(--space-2);
+
+  // Header actions slot — gap between the trigger and the controls, and between
+  // adjacent action controls.
+  --accordion-header-gap: var(--space-3);
+  --accordion-actions-gap: var(--space-1);
+
+  // Gap between items when `gap` is set (separated "card" look).
+  --accordion-gap-sm: var(--space-2);
+  --accordion-gap-md: var(--space-3);
+  --accordion-gap-lg: var(--space-4);
+
   // Size: sm
   --accordion-header-font-size-sm: var(--font-size-sm);
   --accordion-trigger-padding-y-sm: var(--space-2);
