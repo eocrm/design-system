@@ -52,6 +52,11 @@
 }
 
 .accordion[data-gap] .item {
+  // Fill each card with the accordion surface so gapped items read as real cards
+  // on a tinted page background — not transparent outlined boxes. (The joined root
+  // carries this fill normally; in gap mode the root is transparent, so it moves
+  // to the items.)
+  background: var(--accordion-bg);
   border: var(--border-width) solid var(--accordion-item-border-color);
   border-radius: var(--accordion-radius);
   overflow: hidden;
