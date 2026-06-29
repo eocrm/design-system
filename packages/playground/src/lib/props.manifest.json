@@ -31,6 +31,13 @@
           "description": "Which side the chevron indicator sits on. Defaults to `'right'`."
         },
         {
+          "name": "actionsWhenClosed",
+          "type": "AccordionActionsWhenClosed",
+          "required": false,
+          "default": "",
+          "description": "Whether `Accordion.Trigger` `actions` stay visible when the item is collapsed.\nDefaults to `'show'`; `'hide'` fades them out (and drops them from focus order)\nwhile closed."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
@@ -4567,6 +4574,7 @@
     "AccordionSize": "\"sm\" | \"md\" | \"lg\"",
     "AccordionGap": "\"sm\" | \"md\" | \"lg\"",
     "AccordionIndicatorSide": "\"left\" | \"right\"",
+    "AccordionActionsWhenClosed": "\"show\" | \"hide\"",
     "TopBarElement": "\"div\" | \"header\"",
     "CodeTone": "\"danger\" | \"accent\" | \"default\" | \"muted\"",
     "RichDoc": "{ blocks: Block[] }",

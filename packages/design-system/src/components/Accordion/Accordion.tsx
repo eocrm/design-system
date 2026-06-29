@@ -45,6 +45,14 @@ export type AccordionGap = 'sm' | 'md' | 'lg';
 /** Which side the trigger indicator (chevron) sits on. Defaults to `'right'`. */
 export type AccordionIndicatorSide = 'left' | 'right';
 
+/**
+ * Whether a `<Accordion.Trigger actions>` slot stays visible when its item is
+ * collapsed. `'show'` (default) keeps controls always visible; `'hide'` fades them
+ * out (and removes them from focus order) while the item is closed — useful for a
+ * dense sidebar of collapsed blocks whose controls act on hidden body content.
+ */
+export type AccordionActionsWhenClosed = 'show' | 'hide';
+
 interface AccordionBaseProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'defaultValue' | 'onChange'
@@ -60,6 +68,12 @@ interface AccordionBaseProps extends Omit<
   gap?: AccordionGap;
   /** Which side the chevron indicator sits on. Defaults to `'right'`. */
   indicatorSide?: AccordionIndicatorSide;
+  /**
+   * Whether `Accordion.Trigger` `actions` stay visible when the item is collapsed.
+   * Defaults to `'show'`; `'hide'` fades them out (and drops them from focus order)
+   * while closed.
+   */
+  actionsWhenClosed?: AccordionActionsWhenClosed;
   children: ReactNode;
 }
 
@@ -144,7 +158,8 @@ export type AccordionProps = AccordionBaseProps & (AccordionSingleProps | Accord
  * @example
  * // Collapsible cards: gap between items + chevron on the left + a header
  * // controls slot (rendered outside the toggle, so it doesn't toggle the section).
- * <Accordion type="multiple" gap="md" indicatorSide="left">
+ * // `actionsWhenClosed="hide"` fades the controls out on collapsed cards.
+ * <Accordion type="multiple" gap="md" indicatorSide="left" actionsWhenClosed="hide">
  *   <Accordion.Item value="billing">
  *     <Accordion.Trigger
  *       actions={
@@ -195,6 +210,7 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
       size = 'md',
       gap,
       indicatorSide = 'right',
+      actionsWhenClosed = 'show',
       children,
       className,
       ...rest
@@ -241,6 +257,7 @@ const AccordionSingleImpl = forwardRef<HTMLDivElement, SingleImplProps>(
           data-size={size}
           data-gap={gap}
           data-indicator-side={indicatorSide}
+          data-actions-when-closed={actionsWhenClosed}
           className={clsx(styles.accordion, className)}
         >
           {children}
@@ -263,6 +280,7 @@ const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
       size = 'md',
       gap,
       indicatorSide = 'right',
+      actionsWhenClosed = 'show',
       children,
       className,
       ...rest
@@ -308,6 +326,7 @@ const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
           data-size={size}
           data-gap={gap}
           data-indicator-side={indicatorSide}
+          data-actions-when-closed={actionsWhenClosed}
           className={clsx(styles.accordion, className)}
         >
           {children}

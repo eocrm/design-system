@@ -459,6 +459,7 @@ export type {
   AccordionSize,
   AccordionGap,
   AccordionIndicatorSide,
+  AccordionActionsWhenClosed,
 } from './components/Accordion';
 
 export { Breadcrumb } from './components/Breadcrumb';
