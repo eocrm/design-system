@@ -18,6 +18,13 @@ export interface AccordionTriggerProps extends Omit<
    * Pass `null` to suppress the icon entirely. Default: `<ChevronDown />`.
    */
   icon?: ReactNode | null;
+  /**
+   * Controls rendered at the **right of the header**, OUTSIDE the toggle button —
+   * so their buttons/menus are clickable without toggling the section, and the
+   * heading's accessible name stays just the title. Keep it to a few small
+   * controls (`<Button iconOnly>`, a `<DropdownMenu>` trigger, a `<Switch>`).
+   */
+  actions?: ReactNode;
   children: ReactNode;
 }
 
@@ -30,7 +37,7 @@ interface ItemContextWithHeaderLevel extends AccordionItemContextValue {
  * `<ChevronDown>` icon that rotates 180° when open.
  */
 export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
-  function AccordionTrigger({ icon, children, className, onKeyDown, ...props }, ref) {
+  function AccordionTrigger({ icon, actions, children, className, onKeyDown, ...props }, ref) {
     const { toggle } = useAccordionContext('Trigger');
     const itemCtx = useAccordionItemContext('Trigger') as ItemContextWithHeaderLevel;
     const { value, disabled, isOpen, triggerId, contentId, headerLevel } = itemCtx;
@@ -45,13 +52,13 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
       const root = e.currentTarget.closest<HTMLElement>('[data-accordion]');
       if (!root) return;
 
-      // querySelectorAll matches all descendants — including triggers in a
-      // NESTED Accordion inside an open Content. Scope keyboard nav to the
-      // current root by filtering to triggers whose nearest accordion ancestor
-      // IS this root. Without this, ArrowDown from an outer trigger jumps into
-      // the inner accordion.
+      // Match ONLY accordion toggle buttons (the `data-accordion-trigger` marker),
+      // never an `aria-expanded` control a consumer put in the `actions` slot (a
+      // DropdownMenu/Select trigger). Then scope to THIS root by filtering to
+      // triggers whose nearest accordion ancestor is this root — so ArrowDown from
+      // an outer trigger doesn't jump into a nested Accordion inside open Content.
       const triggers = Array.from(
-        root.querySelectorAll<HTMLButtonElement>('button[aria-expanded]:not(:disabled)'),
+        root.querySelectorAll<HTMLButtonElement>('button[data-accordion-trigger]:not(:disabled)'),
       ).filter((btn) => btn.closest('[data-accordion]') === root);
       if (triggers.length === 0) return;
 
@@ -76,26 +83,39 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
     const Heading = headerLevel as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
     return (
-      <Heading className={styles.header}>
-        {/* Pattern B — {...props} first so component-owned id/aria-expanded/
-            aria-controls/disabled/onClick/onKeyDown/className win and the ARIA
-            contract can't be overridden by a consumer. */}
-        <button
-          {...props}
-          ref={ref}
-          type="button"
-          id={triggerId}
-          aria-expanded={isOpen}
-          aria-controls={contentId}
-          disabled={disabled}
-          onClick={() => toggle(value)}
-          onKeyDown={handleKeyDown}
-          className={clsx(styles.trigger, className)}
-        >
-          <span className={styles.label}>{children}</span>
-          {renderedIcon}
-        </button>
-      </Heading>
+      // Header ROW: the heading (toggle button) + an optional actions slot. Actions
+      // live OUTSIDE the heading/button so they're independently clickable (no
+      // toggle), valid HTML (no nested buttons), and don't pollute the heading's
+      // accessible name.
+      <div className={styles.header}>
+        <Heading className={styles.heading}>
+          {/* Pattern B — {...props} first so component-owned id/aria-expanded/
+              aria-controls/disabled/onClick/onKeyDown/className win and the ARIA
+              contract can't be overridden by a consumer. */}
+          <button
+            {...props}
+            ref={ref}
+            type="button"
+            id={triggerId}
+            // Stable marker so keyboard arrow-nav targets ONLY accordion toggles,
+            // never an aria-expanded control in the `actions` slot.
+            data-accordion-trigger=""
+            aria-expanded={isOpen}
+            aria-controls={contentId}
+            disabled={disabled}
+            onClick={() => toggle(value)}
+            onKeyDown={handleKeyDown}
+            className={clsx(styles.trigger, className)}
+          >
+            <span className={styles.label}>{children}</span>
+            {/* Icon wrapped in a slot so its side is controlled purely by CSS
+                (root data-indicator-side flips its `order`) — works for a custom
+                `icon` too, not just the default chevron. */}
+            {renderedIcon !== null && <span className={styles.indicatorSlot}>{renderedIcon}</span>}
+          </button>
+        </Heading>
+        {actions != null && <div className={styles.actions}>{actions}</div>}
+      </div>
     );
   },
 );

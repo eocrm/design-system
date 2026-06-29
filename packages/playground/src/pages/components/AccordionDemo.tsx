@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { Accordion, Stack } from '@eocrm/design-system';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Accordion, Button, Cluster, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -353,6 +353,97 @@ export function Demo() {
           <Accordion.Item value="security">
             <Accordion.Trigger>Security</Accordion.Trigger>
             <Accordion.Content>2FA, active sessions, API keys.</Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      </Example>
+
+      <Example
+        title="Collapsible cards — gap + left chevron + header actions"
+        description="gap separates the items into cards; indicatorSide='left' moves the chevron before the title; Accordion.Trigger's actions slot holds controls at the right of the header. The action buttons are outside the toggle, so clicking them edits/deletes without opening the section."
+        code={`import { Pencil, Trash2 } from 'lucide-react';
+import { Accordion, Button, Cluster } from '@eocrm/design-system';
+
+const rowActions = (label) => (
+  <Cluster gap="xs">
+    <Button iconOnly size="xs" variant="ghost" aria-label={\`Edit \${label}\`}>
+      <Pencil size={14} />
+    </Button>
+    <Button iconOnly size="xs" variant="ghost" aria-label={\`Delete \${label}\`}>
+      <Trash2 size={14} />
+    </Button>
+  </Cluster>
+);
+
+export function Demo() {
+  return (
+    <Accordion type="multiple" gap="md" indicatorSide="left" defaultValue={['plan']}>
+      <Accordion.Item value="plan">
+        <Accordion.Trigger actions={rowActions('plan')}>Billing plan</Accordion.Trigger>
+        <Accordion.Content>Pro — $49/mo, renews Jul 1. 12 seats.</Accordion.Content>
+      </Accordion.Item>
+      <Accordion.Item value="payment">
+        <Accordion.Trigger actions={rowActions('payment method')}>Payment method</Accordion.Trigger>
+        <Accordion.Content>Visa ending 4242, expires 08/27.</Accordion.Content>
+      </Accordion.Item>
+      <Accordion.Item value="invoices">
+        <Accordion.Trigger actions={rowActions('invoices')}>Invoices</Accordion.Trigger>
+        <Accordion.Content>Download past invoices as PDF.</Accordion.Content>
+      </Accordion.Item>
+    </Accordion>
+  );
+}`}
+      >
+        <Accordion type="multiple" gap="md" indicatorSide="left" defaultValue={['plan']}>
+          <Accordion.Item value="plan">
+            <Accordion.Trigger
+              actions={
+                <Cluster gap="xs">
+                  <Button iconOnly size="xs" variant="ghost" aria-label="Edit plan">
+                    <Pencil size={14} />
+                  </Button>
+                  <Button iconOnly size="xs" variant="ghost" aria-label="Delete plan">
+                    <Trash2 size={14} />
+                  </Button>
+                </Cluster>
+              }
+            >
+              Billing plan
+            </Accordion.Trigger>
+            <Accordion.Content>Pro — $49/mo, renews Jul 1. 12 seats.</Accordion.Content>
+          </Accordion.Item>
+          <Accordion.Item value="payment">
+            <Accordion.Trigger
+              actions={
+                <Cluster gap="xs">
+                  <Button iconOnly size="xs" variant="ghost" aria-label="Edit payment method">
+                    <Pencil size={14} />
+                  </Button>
+                  <Button iconOnly size="xs" variant="ghost" aria-label="Delete payment method">
+                    <Trash2 size={14} />
+                  </Button>
+                </Cluster>
+              }
+            >
+              Payment method
+            </Accordion.Trigger>
+            <Accordion.Content>Visa ending 4242, expires 08/27.</Accordion.Content>
+          </Accordion.Item>
+          <Accordion.Item value="invoices">
+            <Accordion.Trigger
+              actions={
+                <Cluster gap="xs">
+                  <Button iconOnly size="xs" variant="ghost" aria-label="Edit invoices">
+                    <Pencil size={14} />
+                  </Button>
+                  <Button iconOnly size="xs" variant="ghost" aria-label="Delete invoices">
+                    <Trash2 size={14} />
+                  </Button>
+                </Cluster>
+              }
+            >
+              Invoices
+            </Accordion.Trigger>
+            <Accordion.Content>Download past invoices as PDF.</Accordion.Content>
           </Accordion.Item>
         </Accordion>
       </Example>

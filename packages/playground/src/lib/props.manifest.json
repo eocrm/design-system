@@ -17,6 +17,20 @@
           "description": "Trigger size (font + padding). Defaults to `'md'`."
         },
         {
+          "name": "gap",
+          "type": "AccordionGap",
+          "required": false,
+          "default": "",
+          "description": "Gap between items → separated \"card\" look (each item gets its own border +\nradius; the outer container chrome is dropped). Omit for the joined default."
+        },
+        {
+          "name": "indicatorSide",
+          "type": "AccordionIndicatorSide",
+          "required": false,
+          "default": "",
+          "description": "Which side the chevron indicator sits on. Defaults to `'right'`."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
@@ -768,7 +782,7 @@
         },
         {
           "name": "side",
-          "type": "\"top\" | \"bottom\" | \"right\" | \"left\"",
+          "type": "\"left\" | \"right\" | \"top\" | \"bottom\"",
           "required": false,
           "default": "",
           "description": "Preferred side. Default `'top'` — confirmations anchor above the trigger by convention."
@@ -4494,7 +4508,7 @@
     "ErrorStateHeadingLevel": "1 | 2 | 3 | 4 | 5 | 6",
     "IconTileSize": "\"sm\" | \"md\" | \"lg\"",
     "IconTileShape": "\"square\" | \"circle\"",
-    "TooltipSide": "\"top\" | \"bottom\" | \"right\" | \"left\"",
+    "TooltipSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "TooltipAlign": "\"start\" | \"end\" | \"center\"",
     "ConfirmationVariant": "\"danger\" | \"default\"",
     "ModalSize": "\"sm\" | \"md\" | \"lg\"",
@@ -4503,7 +4517,7 @@
     "ScreenFill": "\"viewport\" | \"block\"",
     "ScreenBackdrop": "\"danger\" | \"none\" | \"accent\" | \"plain\"",
     "ScreenAlign": "\"start\" | \"center\"",
-    "DrawerSide": "\"top\" | \"bottom\" | \"right\" | \"left\"",
+    "DrawerSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "DrawerSize": "\"sm\" | \"md\" | \"lg\"",
     "DrawerOverlayVariant": "\"solid\" | \"blur\"",
     "RadioSize": "\"sm\" | \"md\" | \"lg\"",
@@ -4534,7 +4548,7 @@
     "TextareaResize": "\"none\" | \"vertical\" | \"both\"",
     "LiquidVariable": "{ code: string; label?: string; type?: string; group?: string }",
     "LiquidPreviewStatus": "\"error\" | \"loading\" | \"idle\"",
-    "LiquidPreviewPlacement": "\"bottom\" | \"right\"",
+    "LiquidPreviewPlacement": "\"right\" | \"bottom\"",
     "MentionsConfig": "{ onQuery: (query: string) => MentionItem[] | Promise<MentionItem[]>; trigger?: string }",
     "UploadConfig": "{ onUpload: (file: File) => Promise<UploadResult>; accept?: string; onUploadingChange?: ((uploading: boolean) => void) }",
     "FileEntry": "{ id: string; file: File; status: \"error\" | \"done\" | \"pending\" | \"uploading\"; progress?: number; error?: string }",
@@ -4551,6 +4565,8 @@
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",
     "AccordionVariant": "\"bordered\" | \"borderless\"",
     "AccordionSize": "\"sm\" | \"md\" | \"lg\"",
+    "AccordionGap": "\"sm\" | \"md\" | \"lg\"",
+    "AccordionIndicatorSide": "\"left\" | \"right\"",
     "TopBarElement": "\"div\" | \"header\"",
     "CodeTone": "\"danger\" | \"accent\" | \"default\" | \"muted\"",
     "RichDoc": "{ blocks: Block[] }",
@@ -4560,7 +4576,7 @@
     "TextSize": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\"",
     "TextTone": "\"success\" | \"warning\" | \"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
     "TextWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",
-    "TextAlign": "\"center\" | \"right\" | \"left\"",
+    "TextAlign": "\"left\" | \"right\" | \"center\"",
     "TitleOrder": "1 | 2 | 3 | 4 | 5 | 6",
     "TitleSize": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\" | \"3xl\"",
     "TitleTone": "\"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",

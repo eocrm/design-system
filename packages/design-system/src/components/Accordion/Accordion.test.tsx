@@ -59,7 +59,7 @@ describe('<Accordion>', () => {
 
   it('renders items in DOM order', () => {
     const { container } = render(<BasicSingle />);
-    const triggers = container.querySelectorAll('button[aria-expanded]');
+    const triggers = container.querySelectorAll('button[data-accordion-trigger]');
     expect(triggers[0]).toHaveTextContent('A trigger');
     expect(triggers[1]).toHaveTextContent('B trigger');
     expect(triggers[2]).toHaveTextContent('C trigger');
@@ -574,4 +574,112 @@ describe('<Accordion>', () => {
     await user.keyboard('{ArrowDown}');
     expect(screen.getByRole('button', { name: 'Outer B' })).toHaveFocus();
   });
+
+  // ─── indicatorSide + gap + header actions ────────────────────────────────
+
+  it('default indicatorSide is "right" (data-indicator-side attr)', () => {
+    const { container } = render(<BasicSingle />);
+    expect(container.querySelector('[data-accordion]')!).toHaveAttribute(
+      'data-indicator-side',
+      'right',
+    );
+  });
+
+  it('indicatorSide="left" sets data-indicator-side on the root', () => {
+    const { container } = render(
+      <Accordion type="single" indicatorSide="left">
+        <Accordion.Item value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    expect(container.querySelector('[data-accordion]')!).toHaveAttribute(
+      'data-indicator-side',
+      'left',
+    );
+  });
+
+  it('gap is absent by default and set as data-gap when provided', () => {
+    const { container: c0 } = render(<BasicSingle />);
+    expect(container0OfRoot(c0)).not.toHaveAttribute('data-gap');
+    const { container: c1 } = render(
+      <Accordion type="multiple" gap="md">
+        <Accordion.Item value="a">
+          <Accordion.Trigger>A</Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    expect(container0OfRoot(c1)).toHaveAttribute('data-gap', 'md');
+  });
+
+  it('header actions render outside the toggle button and clicking them does not toggle', async () => {
+    const user = userEvent.setup();
+    const onEdit = vi.fn();
+    render(
+      <Accordion type="single" collapsible>
+        <Accordion.Item value="a">
+          <Accordion.Trigger
+            actions={
+              <button type="button" onClick={onEdit}>
+                Edit
+              </button>
+            }
+          >
+            A trigger
+          </Accordion.Trigger>
+          <Accordion.Content>A content</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    const content = document.querySelector('[role="region"]')!;
+    expect(content).toHaveAttribute('data-state', 'closed');
+
+    const edit = screen.getByRole('button', { name: 'Edit' });
+    const toggle = screen.getByRole('button', { name: 'A trigger' });
+    // Action lives OUTSIDE the toggle button (valid HTML, independently clickable).
+    expect(toggle.contains(edit)).toBe(false);
+    // The heading's accessible name is just the title, not the action label.
+    expect(screen.getByRole('heading', { name: 'A trigger' })).toBeInTheDocument();
+
+    await user.click(edit);
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    // Section stayed closed — the action click did not toggle it.
+    expect(content).toHaveAttribute('data-state', 'closed');
+  });
+
+  it('arrow-nav cycles only triggers, skipping an aria-expanded control in actions', async () => {
+    const user = userEvent.setup();
+    render(
+      <Accordion type="multiple">
+        <Accordion.Item value="a">
+          <Accordion.Trigger
+            actions={
+              // Mimics a DropdownMenu/Select trigger in the slot — it carries
+              // aria-expanded but must NOT be a keyboard-nav stop for the accordion.
+              <button type="button" aria-expanded="false" aria-label="row menu">
+                ⋯
+              </button>
+            }
+          >
+            A
+          </Accordion.Trigger>
+          <Accordion.Content>x</Accordion.Content>
+        </Accordion.Item>
+        <Accordion.Item value="b">
+          <Accordion.Trigger>B</Accordion.Trigger>
+          <Accordion.Content>y</Accordion.Content>
+        </Accordion.Item>
+      </Accordion>,
+    );
+    screen.getByRole('button', { name: 'A' }).focus();
+    await user.keyboard('{ArrowDown}');
+    // Lands on trigger B, NOT the "row menu" action control.
+    expect(screen.getByRole('button', { name: 'B' })).toHaveFocus();
+  });
 });
+
+function container0OfRoot(container: HTMLElement): HTMLElement {
+  return container.querySelector('[data-accordion]') as HTMLElement;
+}

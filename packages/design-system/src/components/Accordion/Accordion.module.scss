@@ -31,9 +31,54 @@
   border-bottom: 0;
 }
 
+// ─── Gap → separated "card" look ─────────────────────────────────────────
+// When `gap` is set, drop the joined container chrome and give each item its own
+// border + radius, separated vertically by the gap. Placed AFTER the variant
+// rules so it wins on equal specificity → cards regardless of `variant`.
+.accordion[data-gap] {
+  gap: var(--accordion-gap-md);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.accordion[data-gap='sm'] {
+  gap: var(--accordion-gap-sm);
+}
+
+.accordion[data-gap='lg'] {
+  gap: var(--accordion-gap-lg);
+}
+
+.accordion[data-gap] .item {
+  border: var(--border-width) solid var(--accordion-item-border-color);
+  border-radius: var(--accordion-radius);
+  overflow: hidden;
+}
+
+// Header ROW: the heading (toggle button) and an optional actions slot, side by
+// side, separated by a gap (no-op when there's no actions slot).
 .header {
+  display: flex;
+  align-items: center;
+  column-gap: var(--accordion-header-gap);
+  transition: background var(--transition-fast);
+}
+
+// Hover highlights the FULL header row — including the actions area — even when an
+// actions slot makes the toggle button itself shorter. Skipped for disabled items.
+.item:not([data-disabled]) .header:hover {
+  background: var(--accordion-trigger-bg-hover);
+}
+
+// The heading element (h2–h6) wrapping the toggle button. Grows to fill the row,
+// leaving the actions slot its intrinsic width on the right.
+.heading {
   // stylelint-disable-next-line property-disallowed-list -- native heading margin reset
   margin: 0;
+  flex: 1;
+  min-width: 0;
   font-weight: var(--accordion-header-font-weight);
   font-size: var(--accordion-header-font-size);
 }
@@ -54,12 +99,9 @@
   color: var(--accordion-trigger-fg);
   cursor: pointer;
   text-align: left;
-  transition: background var(--transition-fast);
 
-  &:hover:not(:disabled) {
-    background: var(--accordion-trigger-bg-hover);
-  }
-
+  // Hover background lives on `.header` (the full row) so it spans full width even
+  // when an actions slot shortens this button. The trigger stays transparent.
   &:focus-visible {
     outline: none;
     box-shadow: inset 0 0 0 var(--ring-width) var(--accordion-trigger-ring);
@@ -76,6 +118,14 @@
   min-width: 0;
 }
 
+// Wraps the indicator icon so its SIDE is controlled purely by CSS (root
+// data-indicator-side flips `order`), working for a custom `icon` too.
+.indicatorSlot {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .indicator {
   flex-shrink: 0;
   transition: transform var(--transition-fast);
@@ -84,6 +134,27 @@
 
 .item[data-state='open'] .indicator {
   transform: rotate(180deg);
+}
+
+// Indicator on the LEFT: pack the trigger to the start and move the icon slot
+// ahead of the label (a gap separates them). Default is right (space-between).
+.accordion[data-indicator-side='left'] .trigger {
+  justify-content: flex-start;
+  gap: var(--accordion-indicator-gap);
+}
+
+.accordion[data-indicator-side='left'] .indicatorSlot {
+  order: -1;
+}
+
+// Controls slot at the right of the header, OUTSIDE the toggle button. Its
+// inline-end padding mirrors the trigger's so controls align to the content edge.
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--accordion-actions-gap);
+  flex-shrink: 0;
+  padding-inline-end: var(--accordion-trigger-padding-x-md);
 }
 
 .content {
@@ -133,10 +204,10 @@
 
 // ─── Size variants ─────────────────────────────────────────────────────
 // Drive both the trigger padding+font-size and the content padding from a
-// single data-size on the root. .header also inherits font-size for the
+// single data-size on the root. .heading also inherits font-size for the
 // heading element.
 
-.accordion[data-size='sm'] .header {
+.accordion[data-size='sm'] .heading {
   font-size: var(--accordion-header-font-size-sm);
 }
 
@@ -150,7 +221,7 @@
   font-size: var(--accordion-content-font-size-sm);
 }
 
-.accordion[data-size='md'] .header {
+.accordion[data-size='md'] .heading {
   font-size: var(--accordion-header-font-size-md);
 }
 
@@ -163,7 +234,7 @@
   padding: var(--accordion-content-padding-y-md) var(--accordion-content-padding-x-md);
 }
 
-.accordion[data-size='lg'] .header {
+.accordion[data-size='lg'] .heading {
   font-size: var(--accordion-header-font-size-lg);
 }
 
@@ -175,6 +246,16 @@
 .accordion[data-size='lg'] .body {
   padding: var(--accordion-content-padding-y-lg) var(--accordion-content-padding-x-lg);
   font-size: var(--accordion-content-font-size-lg);
+}
+
+// Actions inline-end padding tracks the trigger's so controls stay aligned to
+// the content edge across sizes (md is the base on `.actions`).
+.accordion[data-size='sm'] .actions {
+  padding-inline-end: var(--accordion-trigger-padding-x-sm);
+}
+
+.accordion[data-size='lg'] .actions {
+  padding-inline-end: var(--accordion-trigger-padding-x-lg);
 }
 
 @media (prefers-reduced-motion: reduce) {

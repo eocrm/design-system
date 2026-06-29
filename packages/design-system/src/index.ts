@@ -457,6 +457,8 @@ export type {
   AccordionHeaderLevel,
   AccordionVariant,
   AccordionSize,
+  AccordionGap,
+  AccordionIndicatorSide,
 } from './components/Accordion';
 
 export { Breadcrumb } from './components/Breadcrumb';
