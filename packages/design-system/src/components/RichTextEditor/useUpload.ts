@@ -103,7 +103,7 @@ export function useUpload({
             // The measure is best-effort — a throwing injected measurer must not
             // strand the block mid-upload, so swallow and fall back to "unsized".
             if (naturalW == null || naturalH == null) {
-              let measured = null;
+              let measured: NaturalSize | null = null;
               try {
                 measured = await measureImage(file);
               } catch {
