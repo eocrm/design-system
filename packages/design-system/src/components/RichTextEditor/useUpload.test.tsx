@@ -3,7 +3,11 @@ import { useUpload } from './useUpload';
 import { docFromText } from '../RichText/engine/model';
 import type { RichDoc } from '../RichText/engine/model';
 
-function harness(onUpload: (f: File) => Promise<any>, onUploadingChange?: (b: boolean) => void) {
+function harness(
+  onUpload: (f: File) => Promise<any>,
+  onUploadingChange?: (b: boolean) => void,
+  overrides?: Partial<Parameters<typeof useUpload>[0]>,
+) {
   let doc: RichDoc = docFromText('hi');
   const getValue = () => doc;
   const apply = (d: RichDoc) => {
@@ -17,6 +21,8 @@ function harness(onUpload: (f: File) => Promise<any>, onUploadingChange?: (b: bo
       applyInsert: apply,
       applySettle: apply,
       getCaret,
+      measureImage: async () => null,
+      ...overrides,
     }),
   );
   return { result, getDoc: () => doc };
@@ -108,7 +114,14 @@ it('remove leaves one empty paragraph when the attachment was the only block', (
   };
   const getCaret = () => ({ blockId: doc.blocks[0].id, offset: 0 });
   const { result } = renderHook(() =>
-    useUpload({ config: { onUpload }, getValue, applyInsert: apply, applySettle: apply, getCaret }),
+    useUpload({
+      config: { onUpload },
+      getValue,
+      applyInsert: apply,
+      applySettle: apply,
+      getCaret,
+      measureImage: async () => null,
+    }),
   );
   act(() => {
     result.current.uploadFiles([file('p.png')]);
@@ -159,7 +172,14 @@ it('replace swaps a ready attachment in place, keeping align/alt', async () => {
   };
   const getCaret = () => ({ blockId: 'v', offset: 0 });
   const { result } = renderHook(() =>
-    useUpload({ config: { onUpload }, getValue, applyInsert: apply, applySettle: apply, getCaret }),
+    useUpload({
+      config: { onUpload },
+      getValue,
+      applyInsert: apply,
+      applySettle: apply,
+      getCaret,
+      measureImage: async () => null,
+    }),
   );
   act(() => {
     result.current.replace('v', new File(['x'], 'new.png', { type: 'image/png' }));
@@ -197,4 +217,94 @@ it('drops a settle whose block was already removed', async () => {
   await waitFor(() => expect(onUpload).toHaveBeenCalled());
   // updateAttachmentBlock no-ops on a missing id → block stays gone, no crash
   expect(getDoc().blocks.some((b) => b.id === id)).toBe(false);
+});
+
+it('sizes an uploaded image to perceived size (÷DPR) capped to the editor width', async () => {
+  const onUpload = vi.fn().mockResolvedValue({ url: 'http://u/p.png', mime: 'image/png' });
+  const { result, getDoc } = harness(onUpload, undefined, {
+    measureImage: async () => ({ width: 1200, height: 800 }),
+    getDevicePixelRatio: () => 2,
+    getContentWidth: () => 700,
+  });
+  act(() => {
+    result.current.uploadFiles([new File(['x'], 'p.png', { type: 'image/png' })]);
+  });
+  await waitFor(() => {
+    const b = getDoc().blocks.find((bl) => bl.type === 'attachment' && bl.status === 'ready');
+    expect(b?.width).toBe(600);
+    expect(b?.height).toBe(400);
+  });
+});
+
+it('treats a consumer-reported width/height as natural and transforms it (no measure call)', async () => {
+  const measureImage = vi.fn();
+  const onUpload = vi
+    .fn()
+    .mockResolvedValue({ url: 'http://u/p.png', mime: 'image/png', width: 1000, height: 500 });
+  const { result, getDoc } = harness(onUpload, undefined, {
+    measureImage,
+    getDevicePixelRatio: () => 2,
+    getContentWidth: () => 700,
+  });
+  act(() => {
+    result.current.uploadFiles([new File(['x'], 'p.png', { type: 'image/png' })]);
+  });
+  await waitFor(() => {
+    const b = getDoc().blocks.find((bl) => bl.type === 'attachment' && bl.status === 'ready');
+    expect(b?.width).toBe(500);
+    expect(b?.height).toBe(250);
+  });
+  expect(measureImage).not.toHaveBeenCalled();
+});
+
+it('leaves a block unsized when dimensions are unknown (measure → null)', async () => {
+  const onUpload = vi.fn().mockResolvedValue({ url: 'http://u/f.pdf', mime: 'application/pdf' });
+  const { result, getDoc } = harness(onUpload, undefined, { measureImage: async () => null });
+  act(() => {
+    result.current.uploadFiles([new File(['x'], 'f.pdf', { type: 'application/pdf' })]);
+  });
+  await waitFor(() => {
+    const b = getDoc().blocks.find((bl) => bl.type === 'attachment' && bl.status === 'ready');
+    expect(b).toBeTruthy();
+    expect(b?.width).toBeUndefined();
+    expect(b?.height).toBeUndefined();
+  });
+});
+
+it('uses the MEASURED pair wholesale when the consumer reports only one dimension', async () => {
+  // Consumer gives only width (and a value that disagrees with the real file); the
+  // measured pair must win so the aspect ratio isn't distorted by the mismatch.
+  const onUpload = vi
+    .fn()
+    .mockResolvedValue({ url: 'http://u/p.png', mime: 'image/png', width: 999 });
+  const { result, getDoc } = harness(onUpload, undefined, {
+    measureImage: async () => ({ width: 1200, height: 800 }),
+    getDevicePixelRatio: () => 2,
+    getContentWidth: () => 0,
+  });
+  act(() => {
+    result.current.uploadFiles([new File(['x'], 'p.png', { type: 'image/png' })]);
+  });
+  await waitFor(() => {
+    const b = getDoc().blocks.find((bl) => bl.type === 'attachment' && bl.status === 'ready');
+    expect(b?.width).toBe(600); // 1200/2 — from the measured pair, not the consumer's 999
+    expect(b?.height).toBe(400); // aspect from the measured 1200×800
+  });
+});
+
+it('still settles (unsized) when the measurer throws', async () => {
+  const onUpload = vi.fn().mockResolvedValue({ url: 'http://u/p.png', mime: 'image/png' });
+  const { result, getDoc } = harness(onUpload, undefined, {
+    measureImage: async () => {
+      throw new Error('decode boom');
+    },
+  });
+  act(() => {
+    result.current.uploadFiles([new File(['x'], 'p.png', { type: 'image/png' })]);
+  });
+  await waitFor(() => {
+    const b = getDoc().blocks.find((bl) => bl.type === 'attachment' && bl.status === 'ready');
+    expect(b).toBeTruthy(); // not stranded in 'uploading'
+    expect(b?.width).toBeUndefined();
+  });
 });

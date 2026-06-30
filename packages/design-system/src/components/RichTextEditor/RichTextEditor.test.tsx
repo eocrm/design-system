@@ -1707,6 +1707,35 @@ describe('attachment config', () => {
     await waitFor(() => expect(screen.queryByTitle('Drag to resize')).toBeNull());
   });
 
+  it('shows the resize handle for a persisted image (attachment with no status)', async () => {
+    // Regression #263: a persisted/imported attachment drops its transient `status`
+    // on serialization. The hover resize handle (and the Configure popover) must still
+    // appear for it — the gate mirrors the renderer's "ready-or-absent" (settled) rule,
+    // not a stricter `status === 'ready'`, which silently disagreed on persisted docs.
+    const user = userEvent.setup();
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          // persisted image: NO `status` field, safe http src → renders as <figure><img>
+          {
+            id: 'img',
+            type: 'attachment',
+            src: 'http://u/p.png',
+            mime: 'image/png',
+            name: 'p.png',
+            width: 200,
+            inlines: [],
+          },
+          { id: 'p', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} blockControls upload={up()} />;
+    }
+    renderEditor(<Harness />);
+    await user.hover(document.querySelector('figure[data-block-id="img"]') as HTMLElement);
+    await waitFor(() => expect(document.querySelector('[data-rte-resize-handle]')).toBeTruthy());
+  });
+
   it('shows the resize handle on hover even when upload is off (decoupled from the slider)', async () => {
     // Behavior change: the handle used to require upload (so the keyboard Width slider
     // was its accessible fallback). It now shows for ANY previewable image on hover —

@@ -42,6 +42,18 @@ export function attachmentIsImage(block: Pick<Block, 'mime' | 'src'>): boolean {
   return /\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(block.src ?? '');
 }
 
+/**
+ * Whether an attachment is "settled" — its upload finished (`status: 'ready'`) OR
+ * it is a persisted/imported block whose transient `status` was dropped on
+ * serialization (`status` absent). Excludes in-flight (`uploading`) and failed
+ * (`error`) blocks. This is the SAME set the renderer treats as displayable, so
+ * the editor's resize-handle / Configure gates must use it (not a stricter
+ * `status === 'ready'`) or they silently disagree on persisted docs. See #263.
+ */
+export function isAttachmentSettled(block: Pick<Block, 'status'>): boolean {
+  return block.status === 'ready' || block.status == null;
+}
+
 function attachmentBlock(attrs: AttachmentAttrs): Block {
   return {
     id: nextId(),

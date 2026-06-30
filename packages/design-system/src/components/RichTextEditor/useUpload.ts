@@ -10,6 +10,7 @@ import {
   updateAttachmentBlock,
   clearAttachmentFields,
 } from '../RichText/engine/attachment';
+import { computeDisplaySize, measureImageFromFile, type NaturalSize } from './imageSize';
 
 /** What a consumer's upload handler must resolve with. */
 export interface UploadResult {
@@ -19,7 +20,12 @@ export interface UploadResult {
   name?: string;
   /** MIME type; defaults to the File's type. Decides image-preview vs file-chip. */
   mime?: string;
-  /** Natural pixel dimensions — help lay out image previews. */
+  /**
+   * NATURAL pixel dimensions of the image (not the on-screen size). The editor
+   * derives the initial display size from these — scaling by the device pixel
+   * ratio and capping to the editor width — so a retina screenshot isn't inserted
+   * at 2× its perceived size. Omit them and the editor measures the file itself.
+   */
   width?: number;
   height?: number;
   /** Initial alt text. */
@@ -46,9 +52,24 @@ interface UseUploadArgs {
   applySettle: (doc: RichDoc) => void;
   /** Current caret Point (where to insert). */
   getCaret: () => Point;
+  /** Measure an image File's natural pixel size (injectable for tests). */
+  measureImage?: (file: File) => Promise<NaturalSize | null>;
+  /** Editor content width in CSS px — caps a pasted image's initial width. `0` = no cap. */
+  getContentWidth?: () => number;
+  /** Current device pixel ratio (injectable for tests). */
+  getDevicePixelRatio?: () => number;
 }
 
-export function useUpload({ config, getValue, applyInsert, applySettle, getCaret }: UseUploadArgs) {
+export function useUpload({
+  config,
+  getValue,
+  applyInsert,
+  applySettle,
+  getCaret,
+  measureImage = measureImageFromFile,
+  getContentWidth = () => 0,
+  getDevicePixelRatio = () => (typeof window !== 'undefined' && window.devicePixelRatio) || 1,
+}: UseUploadArgs) {
   const filesRef = useRef(new Map<string, File>()); // block id → File (for retry)
   const inflightRef = useRef(0);
 
@@ -68,16 +89,43 @@ export function useUpload({ config, getValue, applyInsert, applySettle, getCaret
       config
         .onUpload(file)
         .then(
-          (res) => {
+          async (res) => {
             filesRef.current.delete(id);
+            // Natural dims: prefer the consumer's reported size (documented as
+            // natural px), else measure the File. Then lay out at perceived size
+            // (÷DPR) capped to the editor width — so a retina screenshot doesn't
+            // come in at 2× the size you saw.
+            let naturalW = res.width;
+            let naturalH = res.height;
+            // Only a COMPLETE consumer pair short-circuits the measure; if either is
+            // missing we measure and take the measured pair WHOLESALE, so a partial
+            // (and possibly inconsistent) consumer value can't distort the aspect.
+            // The measure is best-effort — a throwing injected measurer must not
+            // strand the block mid-upload, so swallow and fall back to "unsized".
+            if (naturalW == null || naturalH == null) {
+              let measured: NaturalSize | null = null;
+              try {
+                measured = await measureImage(file);
+              } catch {
+                measured = null;
+              }
+              naturalW = measured?.width ?? naturalW;
+              naturalH = measured?.height ?? naturalH;
+            }
+            const display = computeDisplaySize(
+              naturalW,
+              naturalH,
+              getDevicePixelRatio(),
+              getContentWidth(),
+            );
             applySettle(
               updateAttachmentBlock(getValue(), id, {
                 status: 'ready',
                 src: res.url,
                 name: res.name ?? file.name,
                 mime: res.mime ?? file.type,
-                width: res.width,
-                height: res.height,
+                width: display?.width,
+                height: display?.height,
                 alt: res.alt,
               }),
             );
@@ -88,7 +136,15 @@ export function useUpload({ config, getValue, applyInsert, applySettle, getCaret
         )
         .finally(() => setInflight(-1));
     },
-    [config, getValue, applySettle, setInflight],
+    [
+      config,
+      getValue,
+      applySettle,
+      setInflight,
+      measureImage,
+      getContentWidth,
+      getDevicePixelRatio,
+    ],
   );
 
   const uploadFiles = useCallback(

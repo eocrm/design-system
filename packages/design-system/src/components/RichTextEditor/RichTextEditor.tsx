@@ -65,7 +65,7 @@ import { RichTextBlockControls } from './RichTextBlockControls';
 import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
 import { useAttachmentConfig } from './useAttachmentConfig';
 import { RichTextImageResizer } from './RichTextImageResizer';
-import { attachmentIsImage } from '../RichText/engine/attachment';
+import { attachmentIsImage, isAttachmentSettled } from '../RichText/engine/attachment';
 import { safeHref } from '../RichText/engine/safeHref';
 import type { BlockAction } from './RichTextBlockMenu';
 import { useUpload, type UploadConfig } from './useUpload';
@@ -576,6 +576,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           blockId: liveDocRef.current.blocks[0].id,
           offset: 0,
         },
+      // Cap a freshly-uploaded image's initial width to the editor content width
+      // (mirrors the resizer's maxWidth measurement). `0` when unmounted → no cap.
+      getContentWidth: () => rootRef.current?.getBoundingClientRect().width ?? 0,
     });
     // The paste/click handlers close over a stale `uploader`; mirror it in a ref so
     // we read the current one without re-subscribing the native paste listener.
@@ -1493,7 +1496,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       : undefined;
     const activeBlockType = activeBlock?.type;
     const canConfigure =
-      uploadOn && activeBlock?.type === 'attachment' && activeBlock.status === 'ready';
+      uploadOn && activeBlock?.type === 'attachment' && isAttachmentSettled(activeBlock);
     const configBlock = configBlockId
       ? value.blocks.find((b) => b.id === configBlockId)
       : undefined;
@@ -1529,7 +1532,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           (b) =>
             b.id === hoveredImageId &&
             b.type === 'attachment' &&
-            b.status === 'ready' &&
+            // Settled = ready OR no status (a persisted/imported block drops its
+            // transient status); mirrors the renderer's "ready-or-absent" displayable
+            // rule so the handle can't drift from what's shown. See #263.
+            isAttachmentSettled(b) &&
             attachmentIsImage(b) &&
             !!safeHref(b.src ?? ''),
         )
@@ -1548,7 +1554,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       ) : null;
 
     const configEl =
-      configBlock && configBlock.type === 'attachment' && configBlock.status === 'ready' && uploadOn
+      configBlock &&
+      configBlock.type === 'attachment' &&
+      isAttachmentSettled(configBlock) &&
+      uploadOn
         ? (() => {
             const figEl = rootRef.current?.querySelector<HTMLElement>(
               `[data-block-id="${CSS.escape(configBlock.id)}"]`,
