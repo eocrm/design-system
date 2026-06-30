@@ -127,7 +127,7 @@ Lines ~1530-1533 (inside `resizableImage`'s `find`): replace `b.status === 'read
 Line ~1551:
 
 ```ts
-configBlock && configBlock.type === 'attachment' && isAttachmentSettled(configBlock) && uploadOn
+configBlock && configBlock.type === 'attachment' && isAttachmentSettled(configBlock) && uploadOn;
 ```
 
 - [ ] **Step 4: Run it, expect PASS.** Also run the whole `RichTextEditor.test.tsx` to confirm no regression in the existing resize/config tests (uploading/error blocks must still be excluded).

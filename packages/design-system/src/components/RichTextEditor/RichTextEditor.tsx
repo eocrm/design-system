@@ -1554,7 +1554,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       ) : null;
 
     const configEl =
-      configBlock && configBlock.type === 'attachment' && isAttachmentSettled(configBlock) && uploadOn
+      configBlock &&
+      configBlock.type === 'attachment' &&
+      isAttachmentSettled(configBlock) &&
+      uploadOn
         ? (() => {
             const figEl = rootRef.current?.querySelector<HTMLElement>(
               `[data-block-id="${CSS.escape(configBlock.id)}"]`,
