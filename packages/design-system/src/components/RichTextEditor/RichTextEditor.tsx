@@ -576,6 +576,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           blockId: liveDocRef.current.blocks[0].id,
           offset: 0,
         },
+      // Cap a freshly-uploaded image's initial width to the editor content width
+      // (mirrors the resizer's maxWidth measurement). `0` when unmounted → no cap.
+      getContentWidth: () => rootRef.current?.getBoundingClientRect().width ?? 0,
     });
     // The paste/click handlers close over a stale `uploader`; mirror it in a ref so
     // we read the current one without re-subscribing the native paste listener.

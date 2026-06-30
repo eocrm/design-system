@@ -20,7 +20,12 @@ export interface UploadResult {
   name?: string;
   /** MIME type; defaults to the File's type. Decides image-preview vs file-chip. */
   mime?: string;
-  /** Natural pixel dimensions — help lay out image previews. */
+  /**
+   * NATURAL pixel dimensions of the image (not the on-screen size). The editor
+   * derives the initial display size from these — scaling by the device pixel
+   * ratio and capping to the editor width — so a retina screenshot isn't inserted
+   * at 2× its perceived size. Omit them and the editor measures the file itself.
+   */
   width?: number;
   height?: number;
   /** Initial alt text. */
