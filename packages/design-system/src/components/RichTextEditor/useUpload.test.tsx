@@ -270,3 +270,41 @@ it('leaves a block unsized when dimensions are unknown (measure → null)', asyn
     expect(b?.height).toBeUndefined();
   });
 });
+
+it('uses the MEASURED pair wholesale when the consumer reports only one dimension', async () => {
+  // Consumer gives only width (and a value that disagrees with the real file); the
+  // measured pair must win so the aspect ratio isn't distorted by the mismatch.
+  const onUpload = vi
+    .fn()
+    .mockResolvedValue({ url: 'http://u/p.png', mime: 'image/png', width: 999 });
+  const { result, getDoc } = harness(onUpload, undefined, {
+    measureImage: async () => ({ width: 1200, height: 800 }),
+    getDevicePixelRatio: () => 2,
+    getContentWidth: () => 0,
+  });
+  act(() => {
+    result.current.uploadFiles([new File(['x'], 'p.png', { type: 'image/png' })]);
+  });
+  await waitFor(() => {
+    const b = getDoc().blocks.find((bl) => bl.type === 'attachment' && bl.status === 'ready');
+    expect(b?.width).toBe(600); // 1200/2 — from the measured pair, not the consumer's 999
+    expect(b?.height).toBe(400); // aspect from the measured 1200×800
+  });
+});
+
+it('still settles (unsized) when the measurer throws', async () => {
+  const onUpload = vi.fn().mockResolvedValue({ url: 'http://u/p.png', mime: 'image/png' });
+  const { result, getDoc } = harness(onUpload, undefined, {
+    measureImage: async () => {
+      throw new Error('decode boom');
+    },
+  });
+  act(() => {
+    result.current.uploadFiles([new File(['x'], 'p.png', { type: 'image/png' })]);
+  });
+  await waitFor(() => {
+    const b = getDoc().blocks.find((bl) => bl.type === 'attachment' && bl.status === 'ready');
+    expect(b).toBeTruthy(); // not stranded in 'uploading'
+    expect(b?.width).toBeUndefined();
+  });
+});

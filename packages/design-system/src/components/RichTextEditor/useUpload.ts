@@ -97,12 +97,20 @@ export function useUpload({
             // come in at 2× the size you saw.
             let naturalW = res.width;
             let naturalH = res.height;
+            // Only a COMPLETE consumer pair short-circuits the measure; if either is
+            // missing we measure and take the measured pair WHOLESALE, so a partial
+            // (and possibly inconsistent) consumer value can't distort the aspect.
+            // The measure is best-effort — a throwing injected measurer must not
+            // strand the block mid-upload, so swallow and fall back to "unsized".
             if (naturalW == null || naturalH == null) {
-              const measured = await measureImage(file);
-              if (measured) {
-                naturalW = naturalW ?? measured.width;
-                naturalH = naturalH ?? measured.height;
+              let measured = null;
+              try {
+                measured = await measureImage(file);
+              } catch {
+                measured = null;
               }
+              naturalW = measured?.width ?? naturalW;
+              naturalH = measured?.height ?? naturalH;
             }
             const display = computeDisplaySize(
               naturalW,
