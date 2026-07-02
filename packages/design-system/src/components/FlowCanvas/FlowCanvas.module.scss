@@ -133,17 +133,29 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
 }
 
 .handle {
+  // The span is the (invisible) 24px pointer target — WCAG 2.5.8: this is
+  // the only pointer path that creates an edge, and a missed press starts a
+  // node drag instead. The visible dot is the ::after.
   position: absolute;
   top: 50%;
   right: 0;
-  width: var(--flow-handle-size);
-  height: var(--flow-handle-size);
-  background: var(--flow-handle-bg);
-  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--flow-handle-hit-size);
+  height: var(--flow-handle-hit-size);
   cursor: crosshair;
   opacity: var(--opacity-hidden);
   transform: translate(50%, -50%);
   transition: opacity var(--transition-fast);
+}
+
+.handle::after {
+  content: '';
+  width: var(--flow-handle-size);
+  height: var(--flow-handle-size);
+  background: var(--flow-handle-bg);
+  border-radius: var(--radius-full);
 }
 
 .node:hover .handle,

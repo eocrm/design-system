@@ -30,6 +30,9 @@ export interface FlowCanvasNode {
   /**
    * Slot rendered after the label — badges, icons, counters. Not announced to
    * screen readers; keep essential state in `label` or the consumer's own UI.
+   * Avoid interactive elements (buttons, inputs): the node itself is a
+   * `role="button"`, so nested controls are invisible to assistive tech
+   * (nested-interactive) even though their keystrokes are let through.
    */
   adornment?: ReactNode;
 }

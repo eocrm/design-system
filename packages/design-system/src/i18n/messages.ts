@@ -272,6 +272,11 @@ export interface Messages {
     canvasLabel: string;
     /** Visually-hidden keyboard instructions referenced by aria-describedby. */
     instructions: string;
+    /**
+     * Instructions variant for readOnly canvases — navigation, open, and zoom
+     * only; the editing cheat-sheet would contradict actual behavior.
+     */
+    instructionsReadOnly: string;
     /** aria-roledescription for node elements. */
     nodeRole: string;
     /** aria-roledescription for edge elements. */

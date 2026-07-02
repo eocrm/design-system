@@ -54,6 +54,22 @@ export function FlowCanvasDemo() {
     setEdges((prev) => prev.filter((e) => e.id !== id));
     setLastEvent(`onEdgeDelete(${id})`);
   }, []);
+  const handleNodeOpen = useCallback((id: string) => {
+    setLastEvent(`onNodeOpen(${id})`);
+  }, []);
+  const handleEdgeOpen = useCallback((id: string) => {
+    setLastEvent(`onEdgeOpen(${id})`);
+  }, []);
+  const handleSelectionChange = useCallback(
+    (selection: { type: 'node' | 'edge'; id: string } | null) => {
+      setLastEvent(
+        selection
+          ? `onSelectionChange(${selection.type}: ${selection.id})`
+          : 'onSelectionChange(null)',
+      );
+    },
+    [],
+  );
 
   return (
     <DemoLayout
@@ -108,8 +124,11 @@ export function Demo() {
               onNodeCreate={handleNodeCreate}
               onNodeMove={handleNodeMove}
               onNodeDelete={handleNodeDelete}
+              onNodeOpen={handleNodeOpen}
               onEdgeCreate={handleEdgeCreate}
               onEdgeDelete={handleEdgeDelete}
+              onEdgeOpen={handleEdgeOpen}
+              onSelectionChange={handleSelectionChange}
             />
           </div>
           <Text size="sm" tone="muted">

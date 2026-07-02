@@ -17,12 +17,18 @@
   --flow-edge-stroke: var(--color-fg-subtle);
   --flow-edge-stroke-active: var(--color-accent);
   --flow-edge-width: var(--border-width-emphasis);
-  --flow-edge-hit-width: var(--space-3);
+
+  // 24px hit corridor — WCAG 2.5.8 target size for the edge's only pointer target.
+  --flow-edge-hit-width: var(--space-6);
   --flow-chip-bg: var(--color-bg);
   --flow-chip-border: var(--color-border);
   --flow-chip-radius: var(--radius-full);
   --flow-chip-padding-y: var(--space-05);
   --flow-chip-padding-x: var(--space-2);
   --flow-handle-size: var(--space-3);
+
+  // Pointer target around the visual dot — WCAG 2.5.8 (24px) for the only
+  // pointer path that creates an edge; a missed press would drag the node.
+  --flow-handle-hit-size: var(--space-6);
   --flow-handle-bg: var(--color-accent);
 }

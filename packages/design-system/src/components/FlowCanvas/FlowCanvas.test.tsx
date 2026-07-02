@@ -1689,3 +1689,143 @@ describe('FlowCanvas focus reclaim after deletion', () => {
     expect(document.activeElement).toBe(screen.getByLabelText('Open'));
   });
 });
+
+// Regressions pinned from the Rule-8 review rounds: each of these mutations
+// previously left the whole suite green.
+describe('FlowCanvas review regressions', () => {
+  it('re-announces identical consecutive messages (live region child mutates)', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    const status = screen.getByRole('status');
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { pointerId: 1, button: 0 });
+    fireEvent.pointerUp(node, { pointerId: 1 });
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(status.textContent).toBe('Selection cleared');
+    const firstSpan = status.firstElementChild;
+    fireEvent.pointerDown(node, { pointerId: 1, button: 0 });
+    fireEvent.pointerUp(node, { pointerId: 1 });
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(status.textContent).toBe('Selection cleared');
+    // Same text, NEW child node — without the nonce the DOM never mutates
+    // and screen readers stay silent on the second clear.
+    expect(status.firstElementChild).not.toBe(firstSpan);
+  });
+
+  it('a second pointer on another node cannot hijack an in-flight drag', () => {
+    const onNodeMove = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    const open = screen.getByLabelText('Open');
+    const done = screen.getByLabelText('Done');
+    fireEvent.pointerDown(open, { clientX: 50, clientY: 20, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(open, { clientX: 70, clientY: 20, pointerId: 1 });
+    // Second finger taps another node mid-drag — must not orphan gesture 1.
+    fireEvent.pointerDown(done, { clientX: 350, clientY: 20, pointerId: 2, button: 0 });
+    fireEvent.pointerUp(done, { clientX: 350, clientY: 20, pointerId: 2 });
+    fireEvent.pointerMove(open, { clientX: 90, clientY: 50, pointerId: 1 });
+    fireEvent.pointerUp(open, { clientX: 90, clientY: 50, pointerId: 1 });
+    expect(onNodeMove).toHaveBeenCalledTimes(1);
+    expect(onNodeMove).toHaveBeenCalledWith('open', { x: 40, y: 30 });
+  });
+
+  it('click on empty canvas clears the selection once, silently when already empty', () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={[]}
+        defaultSelection={{ type: 'node', id: 'open' }}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+    const root = screen.getByRole('application');
+    fireEvent.pointerDown(root, { clientX: 600, clientY: 400, pointerId: 1, button: 0 });
+    fireEvent.pointerUp(root, { clientX: 600, clientY: 400, pointerId: 1 });
+    expect(screen.getByLabelText('Open').getAttribute('data-selected')).toBeNull();
+    expect(onSelectionChange).toHaveBeenCalledWith(null);
+    expect(screen.getByRole('status').textContent).toBe('Selection cleared');
+    onSelectionChange.mockClear();
+    // Nothing selected now — a second empty click must not fire a spurious
+    // onSelectionChange(null) (useControllableState has no equality guard).
+    fireEvent.pointerDown(root, { clientX: 600, clientY: 400, pointerId: 1, button: 0 });
+    fireEvent.pointerUp(root, { clientX: 600, clientY: 400, pointerId: 1 });
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
+  it('sizes the edges svg to the content extent, covering negative coordinates', () => {
+    const { container, rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const svg = container.querySelector('svg')!;
+    // NODES span x 0..460 (est. width), y 0..40, margin 64 on each side.
+    expect(Number(svg.getAttribute('width'))).toBeGreaterThanOrEqual(460 + 64);
+    expect(Number(svg.getAttribute('height'))).toBeGreaterThanOrEqual(40 + 64);
+    rerender(
+      <FlowCanvas
+        nodes={[...NODES, { id: 'far', label: 'Far', position: { x: 900, y: 500 } }]}
+        edges={EDGES}
+      />,
+    );
+    expect(Number(svg.getAttribute('width'))).toBeGreaterThanOrEqual(1060 + 64);
+    // Negative positions pull the anchored box (and viewBox origin) with them.
+    rerender(
+      <FlowCanvas
+        nodes={[{ id: 'neg', label: 'Neg', position: { x: -500, y: -200 } }]}
+        edges={[]}
+      />,
+    );
+    const viewBoxX = Number(svg.getAttribute('viewBox')!.split(' ')[0]);
+    expect(viewBoxX).toBeLessThanOrEqual(-500);
+  });
+
+  it('controlled selection does not self-update on click; it only reports', () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={[]}
+        selection={null}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { pointerId: 1, button: 0 });
+    expect(onSelectionChange).toHaveBeenCalledWith({ type: 'node', id: 'open' });
+    expect(node.getAttribute('data-selected')).toBeNull(); // prop is still null
+  });
+
+  it('keyboard connect pans to reveal an off-screen target', () => {
+    const row: FlowCanvasNode[] = [
+      { id: 's', label: 'S', position: { x: 0, y: 0 } },
+      { id: 'far', label: 'Far', position: { x: 1000, y: 0 } },
+    ];
+    const { container } = render(<FlowCanvas nodes={row} edges={[]} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    const source = screen.getByLabelText('S');
+    source.focus();
+    fireEvent.keyDown(source, { key: 'c' });
+    fireEvent.keyDown(source, { key: 'ArrowRight' });
+    expect(screen.getByRole('status').textContent).toBe('Target: Far');
+    // Far's right edge (1160) revealed with 24px pad: dx = 800 - 24 - 1160.
+    expect(getStage(container).style.transform).toBe('translate(-384px, 0px) scale(1)');
+  });
+
+  it('modifier zoom shortcuts pass through keyboard connect (WCAG 1.4.4)', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    // fireEvent returns false when preventDefault was called.
+    expect(fireEvent.keyDown(node, { key: '+', ctrlKey: true })).toBe(true);
+  });
+
+  it('readOnly swaps the keyboard instructions for the navigation-only variant', () => {
+    render(<FlowCanvas nodes={[]} edges={[]} readOnly />);
+    const root = screen.getByRole('application');
+    const id = root.getAttribute('aria-describedby')!.split(' ')[0];
+    const text = document.getElementById(id)!.textContent!;
+    expect(text).not.toMatch(/Delete/);
+    expect(text).toMatch(/Enter to open/);
+  });
+});

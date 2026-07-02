@@ -320,7 +320,9 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
 
   const nodeAtPoint = useCallback(
     (point: FlowCanvasPoint): string | null => {
-      for (const [id, rect] of rects) {
+      // Reverse iteration matches paint order: later nodes render on top, so
+      // when nodes overlap the hit must go to the visually-topmost one.
+      for (const [id, rect] of [...rects].reverse()) {
         if (
           point.x >= rect.x &&
           point.x <= rect.x + rect.width &&
@@ -400,17 +402,23 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }, [rects]);
 
-  // Explicit svg size spanning the content's positive extent: the default
-  // SVG box is 300x150 and some engines (historically WebKit) hit-test SVG
-  // children unreliably outside the element's box — any multi-rank layout
-  // exceeds the default. overflow: visible still renders/covers negative
-  // coordinates; the margin absorbs arrowheads, self-loops, and pair bows.
+  // Explicit svg box spanning the full content extent: the default SVG box
+  // is 300x150 and some engines (historically WebKit) hit-test SVG children
+  // unreliably outside the element's box — any multi-rank layout exceeds the
+  // default, and dragged/consumer positions can go negative. The box is
+  // anchored at the (clamped-to-zero) minimum via left/top, with a viewBox
+  // starting at the same origin so child path coordinates stay plain canvas
+  // coordinates. The margin absorbs arrowheads, self-loops, and pair bows.
   const svgExtent = useMemo(() => {
-    if (!contentBounds) return { width: 1, height: 1 };
     const MARGIN = 64;
+    if (!contentBounds) return { x: 0, y: 0, width: 1, height: 1 };
+    const x = Math.min(0, contentBounds.x) - MARGIN;
+    const y = Math.min(0, contentBounds.y) - MARGIN;
     return {
-      width: Math.max(1, contentBounds.x + contentBounds.width + MARGIN),
-      height: Math.max(1, contentBounds.y + contentBounds.height + MARGIN),
+      x,
+      y,
+      width: Math.max(1, contentBounds.x + contentBounds.width + MARGIN - x),
+      height: Math.max(1, contentBounds.y + contentBounds.height + MARGIN - y),
     };
   }, [contentBounds]);
 
@@ -786,6 +794,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // which is gone.
     if (connect?.mode === 'pointer' && key === 'Escape') {
       event.preventDefault();
+      // Layered dismiss, same as the selection-clearing Escape below: this
+      // Escape is consumed here; a consumer's own bubble-phase Escape
+      // handler (panel/overlay) must not co-fire on a mere gesture cancel.
+      event.stopPropagation();
       setConnect(null);
       announce(t('flowCanvas.connectCancelled'));
       return;
@@ -800,8 +812,15 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         // announces) once focus actually leaves the canvas.
         return;
       }
+      if (ctrlKey || metaKey) {
+        // Modifier combos stay the browser's: page zoom (ctrl +/-/0, WCAG
+        // 1.4.4), copy, etc. — same carve-out the plain-navigation keys make.
+        return;
+      }
       event.preventDefault();
       if (key === 'Escape') {
+        // Layered dismiss — see the pointer-draw Escape above.
+        event.stopPropagation();
         setConnect(null);
         announce(t('flowCanvas.connectCancelled'));
         return;
@@ -848,6 +867,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         }
         if (next && next !== connect.from) {
           setConnect({ ...connect, target: next });
+          // Same pan-to-reveal invariant as roving focus: a zoomed-in
+          // keyboard user must see the target ring, and zoom keys are
+          // swallowed while connecting.
+          const targetRect = candidates.get(next);
+          if (targetRect) revealRect(targetRect);
           announce(t('flowCanvas.connectTarget', { label: nodeById.get(next)?.label ?? next }));
         } else {
           // Nothing valid that way — say so; a silent no-op reads as a
@@ -897,6 +921,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         setDragOverrides((prev) => new Map(prev).set(nodeId, next));
       }
       onNodeMove?.(nodeId, next);
+      // Keep the pan-to-reveal invariant: repeated nudges must not push the
+      // focused node (and its focus ring) out of the viewport.
+      const size = rects.get(nodeId);
+      if (size) revealRect({ x: next.x, y: next.y, width: size.width, height: size.height });
       announce(t('flowCanvas.nodeMoved', { label: node.label }));
       return;
     }
@@ -939,7 +967,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       }
       const direction = key.replace('Arrow', '').toLowerCase() as NavDirection;
       if (!focusedNodeId) {
-        const first = topLeftMost(rects);
+        // Resume roving where the user left off: a selected node (e.g. after
+        // tabbing out to the zoom controls and back) beats the top-left
+        // default — Enter/Delete already fall back to the selection the
+        // same way.
+        const first =
+          selection?.type === 'node' && rects.has(selection.id) ? selection.id : topLeftMost(rects);
         if (first) focusNode(first);
         return;
       }
@@ -1219,7 +1252,13 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       >
         {/* NOT aria-hidden: the child hit-paths are the focusable edges —
             hiding the svg would strip every edge out of the a11y tree. */}
-        <svg className={styles.edges} width={svgExtent.width} height={svgExtent.height}>
+        <svg
+          className={styles.edges}
+          style={{ left: svgExtent.x, top: svgExtent.y }}
+          width={svgExtent.width}
+          height={svgExtent.height}
+          viewBox={`${svgExtent.x} ${svgExtent.y} ${svgExtent.width} ${svgExtent.height}`}
+        >
           <defs>
             <marker
               id={markerId}
@@ -1322,7 +1361,9 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       </div>
       <FlowControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFit={() => fitTo(contentBounds)} />
       <div id={instructionsId} className={styles.srOnly}>
-        {t('flowCanvas.instructions')}
+        {/* readOnly gets its own cheat-sheet: describing Delete/move/connect
+            on a canvas where those keys are inert would contradict behavior. */}
+        {t(readOnly ? 'flowCanvas.instructionsReadOnly' : 'flowCanvas.instructions')}
       </div>
       <div role="status" className={styles.srOnly}>
         <span key={announcement.nonce}>{announcement.text}</span>
