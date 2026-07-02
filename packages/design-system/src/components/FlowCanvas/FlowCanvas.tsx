@@ -171,14 +171,32 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-observe when the node set changes
   }, [nodeIdsKey]);
 
-  // --- positions: explicit prop > session drag override > auto-layout ------
-  // `_setDragOverrides` is wired up by the node-drag task.
-  const [dragOverrides, _setDragOverrides] = useState<Map<string, FlowCanvasPoint>>(new Map());
+  // --- positions: live drag > explicit prop > session override > layout ----
+  // `dragOverrides` retains committed drags of auto-laid-out nodes for the
+  // session; `liveDrag` is the in-flight gesture position and wins over
+  // everything so controlled nodes track the pointer too (they snap back on
+  // release unless the consumer persists the move from `onNodeMove`).
+  const [dragOverrides, setDragOverrides] = useState<Map<string, FlowCanvasPoint>>(new Map());
+  const [liveDrag, setLiveDrag] = useState<{ id: string; position: FlowCanvasPoint } | null>(null);
+  const dragState = useRef<{
+    id: string;
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    startPosition: FlowCanvasPoint;
+    moved: boolean;
+  } | null>(null);
   const layoutPositions = useMemo(() => computeLayout(nodes, edges, sizes), [nodes, edges, sizes]);
   const positionOf = useCallback(
-    (node: FlowCanvasNode): FlowCanvasPoint =>
-      node.position ?? dragOverrides.get(node.id) ?? layoutPositions.get(node.id) ?? { x: 0, y: 0 },
-    [dragOverrides, layoutPositions],
+    (node: FlowCanvasNode): FlowCanvasPoint => {
+      if (liveDrag?.id === node.id) return liveDrag.position;
+      return (
+        node.position ??
+        dragOverrides.get(node.id) ??
+        layoutPositions.get(node.id) ?? { x: 0, y: 0 }
+      );
+    },
+    [liveDrag, dragOverrides, layoutPositions],
   );
   const rects = useMemo(() => {
     const map = new Map<string, Rect>();
@@ -335,6 +353,19 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const handleRootPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerMove?.(event);
     if (event.defaultPrevented) return;
+    const drag = dragState.current;
+    if (drag && event.pointerId === drag.pointerId) {
+      const dx = (event.clientX - drag.startClientX) / viewport.z;
+      const dy = (event.clientY - drag.startClientY) / viewport.z;
+      // 3px screen-space click tolerance (deltas are in canvas units).
+      if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 3 / viewport.z) return;
+      drag.moved = true;
+      setLiveDrag({
+        id: drag.id,
+        position: { x: drag.startPosition.x + dx, y: drag.startPosition.y + dy },
+      });
+      return;
+    }
     const pan = panState.current;
     if (!pan || event.pointerId !== pan.pointerId) return;
     const dx = event.clientX - pan.startX;
@@ -348,6 +379,25 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   };
   const handleRootPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerUp?.(event);
+    const drag = dragState.current;
+    if (drag && event.pointerId === drag.pointerId) {
+      // Like the pan below, end-of-gesture cleanup always runs.
+      dragState.current = null;
+      if (drag.moved) {
+        const dx = (event.clientX - drag.startClientX) / viewport.z;
+        const dy = (event.clientY - drag.startClientY) / viewport.z;
+        const position = { x: drag.startPosition.x + dx, y: drag.startPosition.y + dy };
+        const node = nodeById.get(drag.id);
+        if (node && node.position === undefined) {
+          // Session-local arrangement for auto-laid-out nodes.
+          setDragOverrides((prev) => new Map(prev).set(drag.id, position));
+        }
+        onNodeMove?.(drag.id, position);
+        announce(t('flowCanvas.nodeMoved', { label: node?.label ?? drag.id }));
+      }
+      setLiveDrag(null);
+      return;
+    }
     const pan = panState.current;
     if (!pan || event.pointerId !== pan.pointerId) return;
     // End-of-gesture cleanup always runs (a stuck pan is unrecoverable);
@@ -364,6 +414,14 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   };
   const handleRootPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerCancel?.(event);
+    const drag = dragState.current;
+    if (drag && event.pointerId === drag.pointerId) {
+      // The system aborted the gesture — drop the drag without committing
+      // (no onNodeMove, no session override); the node snaps back.
+      dragState.current = null;
+      setLiveDrag(null);
+      return;
+    }
     const pan = panState.current;
     if (!pan || event.pointerId !== pan.pointerId) return;
     // The system aborted the gesture (palm rejection, OS interruption, pen
@@ -388,6 +446,30 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       targetEl.hasAttribute('data-flow-edge');
     if (!isCanvasKeyTarget) return;
     const { key, ctrlKey, metaKey } = event;
+    // Shift+Arrow nudges the focused/selected node (checked before ctrl+arrow
+    // pan so shift wins when both modifiers are held).
+    if (event.shiftKey && key.startsWith('Arrow')) {
+      if (readOnly) return;
+      const nodeId =
+        targetEl.getAttribute('data-flow-node') ??
+        (selection?.type === 'node' ? selection.id : null);
+      if (!nodeId) return;
+      event.preventDefault();
+      const node = nodeById.get(nodeId);
+      if (!node) return;
+      const current = positionOf(node);
+      const NUDGE = 8;
+      const next = {
+        x: current.x + (key === 'ArrowRight' ? NUDGE : key === 'ArrowLeft' ? -NUDGE : 0),
+        y: current.y + (key === 'ArrowDown' ? NUDGE : key === 'ArrowUp' ? -NUDGE : 0),
+      };
+      if (node.position === undefined) {
+        setDragOverrides((prev) => new Map(prev).set(nodeId, next));
+      }
+      onNodeMove?.(nodeId, next);
+      announce(t('flowCanvas.nodeMoved', { label: node.label }));
+      return;
+    }
     if ((ctrlKey || metaKey) && key.startsWith('Arrow')) {
       event.preventDefault();
       // Pan moves the stage opposite to the look direction: ArrowRight looks
@@ -449,20 +531,40 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     }
   };
 
-  // Node/edge presses select immediately. The node handler is the seam the
-  // node-drag task extends (select, then arm the drag). Re-selects are
-  // guarded: useControllableState has no equality check, so re-pressing the
-  // current selection would fire onSelectionChange with a fresh object on
+  // Node/edge presses select immediately; a node press also arms a drag
+  // (committed on pointerup only if the pointer actually moved). Re-selects
+  // are guarded: useControllableState has no equality check, so re-pressing
+  // the current selection would fire onSelectionChange with a fresh object on
   // every click (and twice more per double-click before the open intent).
   const handleNodePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<HTMLDivElement>) => {
       if (event.button !== 0) return;
       event.stopPropagation();
       const current = selectionRef.current;
-      if (current?.type === 'node' && current.id === id) return;
-      setSelection({ type: 'node', id });
+      if (!(current?.type === 'node' && current.id === id)) {
+        setSelection({ type: 'node', id });
+      }
+      if (readOnly) return;
+      const node = nodeById.get(id);
+      if (!node) return;
+      const start = node.position ??
+        dragOverrides.get(id) ??
+        layoutPositions.get(id) ?? { x: 0, y: 0 };
+      dragState.current = {
+        id,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startPosition: start,
+        moved: false,
+      };
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        /* jsdom */
+      }
     },
-    [setSelection],
+    [setSelection, readOnly, nodeById, dragOverrides, layoutPositions],
   );
   // Placeholder — wired up by the connect task.
   const handleHandlePointerDown = useCallback(
@@ -604,7 +706,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
             node={node}
             position={positionOf(node)}
             selected={selection?.type === 'node' && selection.id === node.id}
-            dragging={false}
+            dragging={liveDrag?.id === node.id}
             connectTarget={false}
             readOnly={readOnly}
             roleDescription={t('flowCanvas.nodeRole')}

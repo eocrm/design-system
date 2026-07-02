@@ -868,3 +868,83 @@ describe('FlowCanvas viewport geometry (measured 800x600 root)', () => {
     expect(point.y).toBeCloseTo(100, 6);
   });
 });
+
+describe('FlowCanvas node dragging', () => {
+  it('drag commits onNodeMove with the delta in canvas units', () => {
+    const onNodeMove = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    const node = screen.getByLabelText('Open'); // starts at {0, 0}
+    fireEvent.pointerDown(node, { clientX: 50, clientY: 20, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 90, clientY: 50, pointerId: 1 });
+    fireEvent.pointerUp(node, { clientX: 90, clientY: 50, pointerId: 1 });
+    expect(onNodeMove).toHaveBeenCalledWith('open', { x: 40, y: 30 });
+  });
+
+  it('a click without movement does NOT fire onNodeMove', () => {
+    const onNodeMove = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} />);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { clientX: 50, clientY: 20, pointerId: 1, button: 0 });
+    fireEvent.pointerUp(node, { clientX: 50, clientY: 20, pointerId: 1 });
+    expect(onNodeMove).not.toHaveBeenCalled();
+  });
+
+  it('positionless nodes keep their dragged position for the session', () => {
+    render(<FlowCanvas nodes={[{ id: 'a', label: 'A' }]} edges={[]} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    const node = screen.getByLabelText('A');
+    const startLeft = parseFloat(node.style.left);
+    fireEvent.pointerDown(node, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 25, clientY: 0, pointerId: 1 });
+    fireEvent.pointerUp(node, { clientX: 25, clientY: 0, pointerId: 1 });
+    expect(parseFloat(node.style.left)).toBe(startLeft + 25);
+  });
+
+  it('controlled nodes snap back unless the consumer persists the move', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 25, clientY: 0, pointerId: 1 });
+    expect(node.style.left).toBe('25px'); // live during drag
+    fireEvent.pointerUp(node, { clientX: 25, clientY: 0, pointerId: 1 });
+    expect(node.style.left).toBe('0px'); // prop still says 0 → snap back
+  });
+
+  it('Shift+Arrow nudges the focused node by 8px and announces', () => {
+    const onNodeMove = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'ArrowRight', shiftKey: true });
+    expect(onNodeMove).toHaveBeenCalledWith('open', { x: 8, y: 0 });
+    expect(screen.getByRole('status').textContent).toBe('Open moved');
+  });
+
+  it('drag and nudge are inert in readOnly mode', () => {
+    const onNodeMove = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} readOnly />);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 25, clientY: 0, pointerId: 1 });
+    fireEvent.pointerUp(node, { clientX: 25, clientY: 0, pointerId: 1 });
+    node.focus();
+    fireEvent.keyDown(node, { key: 'ArrowRight', shiftKey: true });
+    expect(onNodeMove).not.toHaveBeenCalled();
+  });
+
+  it('pointercancel aborts a drag without committing or leaving a live position', () => {
+    const onNodeMove = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 25, clientY: 0, pointerId: 1 });
+    expect(node.style.left).toBe('25px');
+    // The system aborted the gesture — the node must snap back, uncommitted.
+    fireEvent.pointerCancel(node, { pointerId: 1 });
+    expect(node.style.left).toBe('0px');
+    expect(onNodeMove).not.toHaveBeenCalled();
+  });
+});
