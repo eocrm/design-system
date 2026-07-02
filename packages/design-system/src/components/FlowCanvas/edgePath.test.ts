@@ -38,6 +38,9 @@ describe('edgeGeometry', () => {
 
   it('produces only finite numbers even for coincident rects', () => {
     const g = edgeGeometry(rect(0, 0), rect(0, 0));
+    // Template interpolation stringifies broken math as 'NaN' / 'Infinity' —
+    // catch those tokens directly (a digits-only regex would skip them).
+    expect(g.path).not.toMatch(/NaN|Infinity/);
     for (const value of g.path.match(/-?\d+(\.\d+)?/g)!.map(Number)) {
       expect(Number.isFinite(value)).toBe(true);
     }

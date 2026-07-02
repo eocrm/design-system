@@ -6,6 +6,7 @@ export interface Rect {
   height: number;
 }
 
+/** Point in canvas coordinates. */
 export interface Point {
   x: number;
   y: number;
