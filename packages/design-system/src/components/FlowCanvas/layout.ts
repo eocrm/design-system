@@ -57,7 +57,9 @@ export function computeLayout(
   };
   const sources = nodes.filter((node) => indegree.get(node.id) === 0);
   for (const source of sources.length > 0 ? sources : [nodes[0]]) visit(source.id, 0);
-  for (const node of nodes) if (!rank.has(node.id)) rank.set(node.id, 0);
+  // Cycle components unreachable from any source: seed a DFS from each still-
+  // unranked node so their internal edges keep flowing left → right.
+  for (const node of nodes) if (!rank.has(node.id)) visit(node.id, 0);
 
   // Bucket by rank in input order.
   const ranks: FlowCanvasNode[][] = [];
