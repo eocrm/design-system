@@ -837,7 +837,20 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // E cycles through the origin node's edges (outgoing first, then
     // incoming); pressing E on a focused edge steps to the next one.
     if (key === 'e' || key === 'E') {
-      const originId = focusedNodeId ?? edgeCycle.current?.nodeId;
+      // Origin resolution on a focused edge applies the arrow branch's
+      // staleness rule: the E-cycle only counts when it belongs to this edge
+      // (its origin is the edge's from/to) — a cycle left over from an
+      // unrelated node must not hijack the key. Otherwise (click-focused
+      // edge, no cycle or a stale one) the edge's source is the origin.
+      const focusedEdge = focusedEdgeId ? edges.find((e) => e.id === focusedEdgeId) : undefined;
+      const cycleOrigin = edgeCycle.current?.nodeId;
+      const cycleOwnsFocusedEdge =
+        focusedEdge != null &&
+        cycleOrigin != null &&
+        (focusedEdge.from === cycleOrigin || focusedEdge.to === cycleOrigin);
+      const originId =
+        focusedNodeId ??
+        (focusedEdge ? (cycleOwnsFocusedEdge ? cycleOrigin : focusedEdge.from) : cycleOrigin);
       if (!originId) return;
       event.preventDefault();
       const attached = [

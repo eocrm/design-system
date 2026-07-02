@@ -1501,6 +1501,37 @@ describe('FlowCanvas keyboard navigation', () => {
     fireEvent.keyDown(t2, { key: 'ArrowDown' });
     expect(document.activeElement).toBe(screen.getByLabelText('Other'));
   });
+
+  it('E on a click-focused edge ignores an E-cycle left on an unrelated node', () => {
+    const nodes: FlowCanvasNode[] = [
+      ...NODES,
+      { id: 'other', label: 'Other', position: { x: 0, y: 300 } },
+    ];
+    const edges: FlowCanvasEdge[] = [
+      { id: 't1', from: 'open', to: 'done' },
+      { id: 't2', from: 'other', to: 'done' },
+    ];
+    render(<FlowCanvas nodes={nodes} edges={edges} />);
+    const open = screen.getByLabelText('Open');
+    open.focus();
+    fireEvent.keyDown(open, { key: 'e' }); // cycle on Open's edges → t1 focused
+    const t2 = screen.getByLabelText('From Other to Done');
+    t2.focus(); // click-focus a DIFFERENT edge; the old cycle is stale
+    fireEvent.keyDown(t2, { key: 'e' });
+    // E must cycle the focused edge's own origin (Other), not teleport back
+    // to the stale cycle's node (Open).
+    expect(document.activeElement).toBe(t2);
+    expect(screen.getByRole('status').textContent).toBe('Connection from Other to Done, 1 of 1');
+  });
+
+  it('E on a click-focused edge (no E-cycle) starts a cycle from the edge source node', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const edge = screen.getByLabelText('From Open to Done');
+    edge.focus(); // browsers focus the tabIndex=-1 path on click — no cycle exists
+    fireEvent.keyDown(edge, { key: 'e' });
+    expect(document.activeElement).toBe(edge);
+    expect(screen.getByRole('status').textContent).toBe('Connection from Open to Done, 1 of 1');
+  });
 });
 
 describe('FlowCanvas focus reclaim after deletion', () => {
