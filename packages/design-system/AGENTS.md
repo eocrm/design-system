@@ -934,6 +934,42 @@ Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once pe
 - ❌ Non-stable column / card ids (e.g. array indices). Both must persist across reorders.
 - ❌ Mutating board state in place inside `onMove`. Always return a new object/array reference.
 
+### `<FlowCanvas>` — pan/zoom canvas for directed node-edge diagrams
+
+Pan/zoom canvas for directed node-edge diagrams (workflow builders). Events-only: you own
+`nodes`/`edges`; the canvas emits intents (`onNodeCreate`, `onNodeMove`, `onNodeOpen`,
+`onNodeDelete`, `onEdgeCreate`, `onEdgeOpen`, `onEdgeDelete`) and never mutates data. Nodes
+without `position` auto-layout left → right and stay draggable for the session. Selection is
+single (`selection`/`defaultSelection`/`onSelectionChange`); `readOnly` disables editing but
+keeps select/open. Validation of new connections via `isValidConnection` (default: no
+self-loops, no duplicate pairs). The canvas fills its parent — give the wrapper a height.
+Full keyboard: arrows rove nodes, E cycles a node's edges, C connect mode, Shift+arrows
+nudge, +/−/0 zoom/fit, Ctrl+arrows pan, Delete deletes, Enter opens.
+
+```tsx
+const [nodes, setNodes] = useState<FlowCanvasNode[]>([
+  { id: 'open', label: 'Open', color: '#0052CC', adornment: <Badge tone="info">Initial</Badge> },
+  { id: 'done', label: 'Done', color: '#1F845A' },
+]);
+const [edges, setEdges] = useState<FlowCanvasEdge[]>([
+  { id: 't1', from: 'open', to: 'done', label: <Badge tone="purple">Guard</Badge> },
+]);
+
+<div style={{ height: 480 }}>
+  <FlowCanvas
+    nodes={nodes}
+    edges={edges}
+    onEdgeCreate={(from, to) => createTransition(from, to)}
+    onNodeOpen={(id) => openStateModal(id)}
+    onNodeDelete={(id) => confirmDeleteState(id)}
+  />
+</div>;
+```
+
+When NOT to use: >100-node graphs (no virtualization); list/column reordering (use
+Kanban/Sortable); undirected/free-form drawing; as the only editing surface for complex
+attributes (anchor your own modals via the open callbacks — keep a form-based fallback).
+
 ### `<LiquidEditor>` — Liquid template editor
 
 Liquid template editor: syntax highlighting, line-number gutter, variable-insert menu, caret autocomplete, client-side unknown-variable flagging, and a controlled preview pane. Controlled only (`value` + `onChange`). It never parses or renders Liquid — backend syntax errors arrive via `invalid`/`error`; the rendered preview arrives via `preview`/`previewStatus`.
