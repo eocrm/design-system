@@ -73,6 +73,14 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
   stroke: var(--flow-edge-stroke-active);
 }
 
+.markerFill {
+  fill: var(--flow-edge-stroke);
+}
+
+.markerFillActive {
+  fill: var(--flow-edge-stroke-active);
+}
+
 .ghostEdge {
   fill: none;
   pointer-events: none;

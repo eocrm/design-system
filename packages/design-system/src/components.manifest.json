@@ -68,6 +68,7 @@
       "DataTable",
       "Drawer",
       "FileUpload",
+      "FlowCanvas",
       "Image",
       "LiquidEditor",
       "Modal",
@@ -302,9 +303,11 @@
     "composedBy": []
   },
   "FlowCanvas": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Display",
-    "composes": [],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "FormRow": {

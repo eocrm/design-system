@@ -57,10 +57,7 @@ describe('computeLayout', () => {
   it('reorders a rank by predecessor position to reduce crossings', () => {
     // Input order lists x before y, but b→x and a→y with rank-0 order [a, b]
     // means y must be placed above x or the two edges cross.
-    const pos = computeLayout(
-      [n('a'), n('b'), n('x'), n('y')],
-      [e('b', 'x'), e('a', 'y')],
-    );
+    const pos = computeLayout([n('a'), n('b'), n('x'), n('y')], [e('b', 'x'), e('a', 'y')]);
     expect(pos.get('x')!.x).toBe(pos.get('y')!.x);
     expect(pos.get('y')!.y).toBeLessThan(pos.get('x')!.y);
   });
