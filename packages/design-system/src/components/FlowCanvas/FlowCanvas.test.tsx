@@ -396,6 +396,144 @@ describe('FlowCanvas selection & intents', () => {
     fireEvent.keyDown(root, { key: 'Escape' });
     expect(screen.getByLabelText('Open').getAttribute('data-selected')).toBeNull();
   });
+
+  it('re-selecting the current selection does not re-fire onSelectionChange', () => {
+    const onSelectionChange = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={EDGES} onSelectionChange={onSelectionChange} />);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { pointerId: 1, button: 0 });
+    fireEvent.pointerUp(node, { pointerId: 1 });
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    // Clicking the selected node again (also the first half of a double-click
+    // open) must not report a duplicate selection change.
+    fireEvent.pointerDown(node, { pointerId: 1, button: 0 });
+    fireEvent.pointerUp(node, { pointerId: 1 });
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    const edge = screen.getByLabelText('From Open to Done');
+    fireEvent.pointerDown(edge, { pointerId: 1, button: 0 });
+    expect(onSelectionChange).toHaveBeenCalledTimes(2);
+    fireEvent.pointerDown(edge, { pointerId: 1, button: 0 });
+    expect(onSelectionChange).toHaveBeenCalledTimes(2);
+    // The label chip selects its edge too — and applies the same guard.
+    fireEvent.pointerDown(node, { pointerId: 1, button: 0 });
+    expect(onSelectionChange).toHaveBeenCalledTimes(3);
+    fireEvent.pointerDown(screen.getByText('Guard'), { pointerId: 1, button: 0 });
+    expect(onSelectionChange).toHaveBeenCalledTimes(4);
+    fireEvent.pointerDown(screen.getByText('Guard'), { pointerId: 1, button: 0 });
+    expect(onSelectionChange).toHaveBeenCalledTimes(4);
+  });
+
+  it('consumes Escape only when it clears a selection', () => {
+    const outerKeyDown = vi.fn();
+    render(
+      <div onKeyDown={outerKeyDown}>
+        <FlowCanvas nodes={NODES} edges={EDGES} defaultSelection={{ type: 'node', id: 'open' }} />
+      </div>,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    // First Escape clears the selection and is consumed — a bubble-phase
+    // ancestor (a consumer's own overlay/panel handler) must not also dismiss.
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(screen.getByLabelText('Open')).not.toHaveAttribute('data-selected');
+    expect(outerKeyDown).not.toHaveBeenCalled();
+    // Second Escape has nothing to clear — it propagates so layered dismiss
+    // still reaches the enclosing surface.
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(outerKeyDown).toHaveBeenCalledTimes(1);
+  });
+
+  it('Backspace is a delete alias and routes to the edge intent for edge selections', () => {
+    const onNodeDelete = vi.fn();
+    const onEdgeDelete = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+        onNodeDelete={onNodeDelete}
+        onEdgeDelete={onEdgeDelete}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Backspace' });
+    expect(onEdgeDelete).toHaveBeenCalledWith('t1');
+    expect(onNodeDelete).not.toHaveBeenCalled();
+  });
+
+  it('Enter opens the selected node; Space opens the selected edge', () => {
+    const onNodeOpen = vi.fn();
+    const onEdgeOpen = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultSelection={{ type: 'node', id: 'open' }}
+        onNodeOpen={onNodeOpen}
+        onEdgeOpen={onEdgeOpen}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onNodeOpen).toHaveBeenCalledWith('open');
+    expect(onEdgeOpen).not.toHaveBeenCalled();
+    fireEvent.pointerDown(screen.getByLabelText('From Open to Done'), { pointerId: 1, button: 0 });
+    fireEvent.keyDown(root, { key: ' ' });
+    expect(onEdgeOpen).toHaveBeenCalledWith('t1');
+    expect(onNodeOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('readOnly blocks delete keys and double-click create but keeps open working', () => {
+    const onNodeDelete = vi.fn();
+    const onNodeCreate = vi.fn();
+    const onNodeOpen = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        readOnly
+        defaultSelection={{ type: 'node', id: 'open' }}
+        onNodeDelete={onNodeDelete}
+        onNodeCreate={onNodeCreate}
+        onNodeOpen={onNodeOpen}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Delete' });
+    fireEvent.keyDown(root, { key: 'Backspace' });
+    expect(onNodeDelete).not.toHaveBeenCalled();
+    fireEvent.doubleClick(root, { clientX: 100, clientY: 100 });
+    expect(onNodeCreate).not.toHaveBeenCalled();
+    // Open stays allowed in readOnly — only create/move/connect/delete are gated.
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onNodeOpen).toHaveBeenCalledWith('open');
+  });
+
+  it('ignores keys originating from interactive adornment content', () => {
+    const onNodeDelete = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={[{ id: 'a', label: 'A', adornment: <input aria-label="Filter" /> }]}
+        edges={[]}
+        defaultSelection={{ type: 'node', id: 'a' }}
+        onNodeDelete={onNodeDelete}
+      />,
+    );
+    const input = screen.getByLabelText('Filter');
+    input.focus();
+    // Backspace inside the input edits text — the canvas must neither treat
+    // it as a delete intent nor preventDefault it (fireEvent returns true
+    // when the default was not prevented).
+    expect(fireEvent.keyDown(input, { key: 'Backspace' })).toBe(true);
+    fireEvent.keyDown(input, { key: 'Delete' });
+    expect(onNodeDelete).not.toHaveBeenCalled();
+    // Zoom keys typed into the adornment must not zoom the canvas either.
+    fireEvent.keyDown(input, { key: '+' });
+    expect(getStage(container).style.transform).toBe('translate(0px, 0px) scale(1)');
+  });
 });
 
 // jsdom reports 0x0 rects, so everything above exercises the degenerate
@@ -593,5 +731,22 @@ describe('FlowCanvas viewport geometry (measured 800x600 root)', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it('double-click create inverts the viewport transform when zoomed and panned', () => {
+    const onNodeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onNodeCreate={onNodeCreate} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    // Zoom in (center-anchored → translate(-80, -60) scale(1.2), pinned by
+    // the zoom-anchor test above), then pan by wheel → translate(-90, -80).
+    fireEvent.click(screen.getByLabelText('Zoom in'));
+    fireEvent.wheel(root, { deltaX: 10, deltaY: 20 });
+    fireEvent.doubleClick(root, { clientX: 90, clientY: 40 });
+    // x = (90 - 0 - (-90)) / 1.2 = 150; y = (40 - 0 - (-80)) / 1.2 = 100.
+    expect(onNodeCreate).toHaveBeenCalledTimes(1);
+    const point = onNodeCreate.mock.calls[0][0] as { x: number; y: number };
+    expect(point.x).toBeCloseTo(150, 6);
+    expect(point.y).toBeCloseTo(100, 6);
   });
 });

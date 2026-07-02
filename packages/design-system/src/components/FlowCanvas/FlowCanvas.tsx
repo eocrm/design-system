@@ -110,6 +110,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     defaultValue: defaultSelection,
     onChange: onSelectionChange,
   });
+  // Latest selection, readable from the stable node/edge pointer handlers:
+  // they guard re-selects against it without taking `selection` as a
+  // dependency (which would re-create the handlers and re-render every
+  // memoized node/edge on each selection change).
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
 
   // --- node registry + measurement -----------------------------------------
   const nodeEls = useRef(new Map<string, HTMLDivElement>());
@@ -391,6 +397,15 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     }
     if (key === 'Escape') {
       if (selection) {
+        // Layered dismiss: consume the key when the canvas acts on it so a
+        // bubble-phase ancestor (a consumer's own overlay/panel keydown
+        // handler) doesn't also dismiss; with nothing selected it propagates.
+        // Note this library's Modal/Popover listen for Escape on document in
+        // the CAPTURE phase, deliberately beating widget-level consumption —
+        // inside those, Escape still closes the surface; a consumer who wants
+        // Escape-to-deselect within a Modal uses its `disableEscapeClose`.
+        event.preventDefault();
+        event.stopPropagation();
         setSelection(null);
         announce(t('flowCanvas.selectionCleared'));
       }
@@ -407,11 +422,16 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   };
 
   // Node/edge presses select immediately. The node handler is the seam the
-  // node-drag task extends (select, then arm the drag).
+  // node-drag task extends (select, then arm the drag). Re-selects are
+  // guarded: useControllableState has no equality check, so re-pressing the
+  // current selection would fire onSelectionChange with a fresh object on
+  // every click (and twice more per double-click before the open intent).
   const handleNodePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<HTMLDivElement>) => {
       if (event.button !== 0) return;
       event.stopPropagation();
+      const current = selectionRef.current;
+      if (current?.type === 'node' && current.id === id) return;
       setSelection({ type: 'node', id });
     },
     [setSelection],
@@ -425,6 +445,8 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     (id: string, event: ReactPointerEvent<SVGPathElement>) => {
       if (event.button !== 0) return;
       event.stopPropagation();
+      const current = selectionRef.current;
+      if (current?.type === 'edge' && current.id === id) return;
       setSelection({ type: 'edge', id });
     },
     [setSelection],
@@ -535,6 +557,8 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               onPointerDown={(event) => {
                 if (event.button !== 0) return;
                 event.stopPropagation();
+                // Same re-select guard as handleEdgePointerDown.
+                if (selection?.type === 'edge' && selection.id === edge.id) return;
                 setSelection({ type: 'edge', id: edge.id });
               }}
               onDoubleClick={(event) => {
