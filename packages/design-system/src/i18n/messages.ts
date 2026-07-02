@@ -267,6 +267,42 @@ export interface Messages {
     /** Function leaf — aria-label template for the per-row remove (×) button. */
     removeAriaLabel: (params: { name: string }) => string;
   };
+  flowCanvas: {
+    /** aria-label for the canvas region when the consumer supplies none. */
+    canvasLabel: string;
+    /** Visually-hidden keyboard instructions referenced by aria-describedby. */
+    instructions: string;
+    /** aria-roledescription for node elements. */
+    nodeRole: string;
+    /** aria-roledescription for edge elements. */
+    edgeRole: string;
+    /** aria-label for the zoom-in control. */
+    zoomIn: string;
+    /** aria-label for the zoom-out control. */
+    zoomOut: string;
+    /** aria-label for the zoom-to-fit control. */
+    zoomToFit: string;
+    /** aria-label for an edge: "From X to Y". */
+    edgeLabel: (params: { from: string; to: string }) => string;
+    /** Live announcement when node focus moves. */
+    nodeFocused: (params: { label: string; index: number; total: number }) => string;
+    /** Live announcement when edge focus moves (E cycling). */
+    edgeFocused: (params: { from: string; to: string; index: number; total: number }) => string;
+    /** Live announcement when keyboard connect mode starts. */
+    connectStart: (params: { label: string }) => string;
+    /** Live announcement when the connect target changes. */
+    connectTarget: (params: { label: string }) => string;
+    /** Live announcement when a connection is requested. */
+    connectDone: (params: { from: string; to: string }) => string;
+    /** Live announcement when connect mode is cancelled. */
+    connectCancelled: string;
+    /** Live announcement after a node is moved (drag or keyboard nudge). */
+    nodeMoved: (params: { label: string }) => string;
+    /** Live announcement when the selection is cleared. */
+    selectionCleared: string;
+    /** Live announcement after zooming. */
+    zoomLevel: (params: { percent: number }) => string;
+  };
   imageCrop: {
     /** aria-label for the zoom slider. */
     zoom: string;

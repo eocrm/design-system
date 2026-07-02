@@ -160,6 +160,29 @@ export const en: Messages = {
     uploadingAriaLabel: ({ name }) => `Uploading ${name as string}`,
     removeAriaLabel: ({ name }) => `Remove ${name as string}`,
   },
+  flowCanvas: {
+    canvasLabel: 'Flow canvas',
+    instructions:
+      'Use the arrow keys to move between nodes. Press Enter to open a node, Delete to delete it, and Shift plus an arrow key to move it. Press E to cycle through a node’s connections, C to start a new connection, plus and minus to zoom, and 0 to fit the diagram.',
+    nodeRole: 'node',
+    edgeRole: 'connection',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    zoomToFit: 'Zoom to fit',
+    edgeLabel: ({ from, to }) => `From ${from as string} to ${to as string}`,
+    nodeFocused: ({ label, index, total }) =>
+      `${label as string}, node ${index as number} of ${total as number}`,
+    edgeFocused: ({ from, to, index, total }) =>
+      `Connection from ${from as string} to ${to as string}, ${index as number} of ${total as number}`,
+    connectStart: ({ label }) =>
+      `Connecting from ${label as string}. Use the arrow keys to pick a target, Enter to confirm, Escape to cancel.`,
+    connectTarget: ({ label }) => `Target: ${label as string}`,
+    connectDone: ({ from, to }) => `Connected ${from as string} to ${to as string}`,
+    connectCancelled: 'Connection cancelled',
+    nodeMoved: ({ label }) => `${label as string} moved`,
+    selectionCleared: 'Selection cleared',
+    zoomLevel: ({ percent }) => `Zoom ${percent as number}%`,
+  },
   imageCrop: {
     zoom: 'Zoom',
   },

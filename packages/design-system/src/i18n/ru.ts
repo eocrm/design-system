@@ -162,6 +162,29 @@ export const ru: Messages = {
     uploadingAriaLabel: ({ name }) => `Загрузка ${name as string}`,
     removeAriaLabel: ({ name }) => `Удалить ${name as string}`,
   },
+  flowCanvas: {
+    canvasLabel: 'Холст диаграммы',
+    instructions:
+      'Используйте стрелки для перехода между узлами. Enter — открыть узел, Delete — удалить, Shift со стрелкой — переместить. E — перебор связей узла, C — новая связь, плюс и минус — масштаб, 0 — вписать диаграмму.',
+    nodeRole: 'узел',
+    edgeRole: 'связь',
+    zoomIn: 'Приблизить',
+    zoomOut: 'Отдалить',
+    zoomToFit: 'Показать всё',
+    edgeLabel: ({ from, to }) => `Из «${from as string}» в «${to as string}»`,
+    nodeFocused: ({ label, index, total }) =>
+      `${label as string}, узел ${index as number} из ${total as number}`,
+    edgeFocused: ({ from, to, index, total }) =>
+      `Связь из «${from as string}» в «${to as string}», ${index as number} из ${total as number}`,
+    connectStart: ({ label }) =>
+      `Соединение из «${label as string}». Стрелки — выбор цели, Enter — подтвердить, Escape — отмена.`,
+    connectTarget: ({ label }) => `Цель: ${label as string}`,
+    connectDone: ({ from, to }) => `Соединено: «${from as string}» → «${to as string}»`,
+    connectCancelled: 'Соединение отменено',
+    nodeMoved: ({ label }) => `«${label as string}» перемещён`,
+    selectionCleared: 'Выделение снято',
+    zoomLevel: ({ percent }) => `Масштаб ${percent as number}%`,
+  },
   imageCrop: {
     zoom: 'Масштаб',
   },
