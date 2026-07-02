@@ -813,8 +813,18 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         return;
       }
       if (ctrlKey || metaKey) {
-        // Modifier combos stay the browser's: page zoom (ctrl +/-/0, WCAG
-        // 1.4.4), copy, etc. — same carve-out the plain-navigation keys make.
+        if (key.startsWith('Arrow')) {
+          // The instructions promise Ctrl/Cmd+Arrow pans — keep that true
+          // mid-connect too (same directions as the main pan branch).
+          event.preventDefault();
+          if (key === 'ArrowRight') panBy(-PAN_STEP, 0);
+          else if (key === 'ArrowLeft') panBy(PAN_STEP, 0);
+          else if (key === 'ArrowDown') panBy(0, -PAN_STEP);
+          else if (key === 'ArrowUp') panBy(0, PAN_STEP);
+          return;
+        }
+        // Other modifier combos stay the browser's: page zoom (ctrl +/-/0,
+        // WCAG 1.4.4), copy, etc. — same carve-out the plain keys make.
         return;
       }
       event.preventDefault();
@@ -822,6 +832,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         // Layered dismiss — see the pointer-draw Escape above.
         event.stopPropagation();
         setConnect(null);
+        // The arrow-step reveals may have panned the (still-focused) source
+        // off-screen; bring its focus ring back into view on exit.
+        const sourceRect = rects.get(connect.from);
+        if (sourceRect) revealRect(sourceRect);
         announce(t('flowCanvas.connectCancelled'));
         return;
       }
@@ -844,6 +858,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
           announce(t('flowCanvas.connectCancelled'));
         }
         setConnect(null);
+        // Focus stayed on the source throughout the gesture — reveal it, as
+        // on Escape, in case target-stepping panned it off-screen.
+        const exitRect = rects.get(connect.from);
+        if (exitRect) revealRect(exitRect);
         return;
       }
       if (key.startsWith('Arrow')) {

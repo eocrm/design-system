@@ -57,6 +57,11 @@
   stroke: transparent;
   stroke-width: var(--flow-edge-hit-width);
 
+  // Keep the 24px corridor in SCREEN pixels regardless of stage zoom —
+  // without this, fit-zoom < 1 shrinks the only pointer target of an
+  // unlabeled edge below the WCAG 2.5.8 minimum.
+  vector-effect: non-scaling-stroke;
+
   &:focus-visible {
     outline: none;
   }

@@ -1818,6 +1818,9 @@ describe('FlowCanvas review regressions', () => {
     fireEvent.keyDown(node, { key: 'c' });
     // fireEvent returns false when preventDefault was called.
     expect(fireEvent.keyDown(node, { key: '+', ctrlKey: true })).toBe(true);
+    // ...and the passthrough must not have cancelled the connect gesture.
+    fireEvent.keyDown(node, { key: 'ArrowRight' });
+    expect(screen.getByRole('status').textContent).toBe('Target: Done');
   });
 
   it('readOnly swaps the keyboard instructions for the navigation-only variant', () => {

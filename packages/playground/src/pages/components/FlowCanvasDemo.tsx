@@ -111,6 +111,9 @@ export function Demo() {
           setEdges((prev) => [...prev, { id: crypto.randomUUID(), from, to }])
         }
         onEdgeDelete={(id) => setEdges((prev) => prev.filter((e) => e.id !== id))}
+        onNodeOpen={(id) => console.log('open node', id)}
+        onEdgeOpen={(id) => console.log('open edge', id)}
+        onSelectionChange={(selection) => console.log('selection', selection)}
       />
     </div>
   );
