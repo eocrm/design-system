@@ -531,7 +531,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'FlowCanvas',
     description: 'Pan/zoom canvas for directed node-edge diagrams.',
     preview: (
-      <div style={{ height: 120, width: '100%' }}>
+      <div style={{ height: 120, width: '100%', pointerEvents: 'none' }}>
         <FlowCanvas
           readOnly
           nodes={[
