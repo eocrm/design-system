@@ -947,4 +947,71 @@ describe('FlowCanvas node dragging', () => {
     expect(node.style.left).toBe('0px');
     expect(onNodeMove).not.toHaveBeenCalled();
   });
+
+  it('consumer preventDefault on pointerup skips the drag commit but still ends the drag', () => {
+    const onNodeMove = vi.fn();
+    const onPointerUp = vi.fn((event: ReactPointerEvent<HTMLDivElement>) => {
+      event.preventDefault();
+    });
+    render(
+      <FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} onPointerUp={onPointerUp} />,
+    );
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 25, clientY: 0, pointerId: 1 });
+    expect(node.style.left).toBe('25px'); // live during drag
+    fireEvent.pointerUp(node, { clientX: 25, clientY: 0, pointerId: 1 });
+    expect(onPointerUp).toHaveBeenCalledTimes(1);
+    // The consumer vetoed the commit (e.g. drop-on-trash-zone): no move
+    // intent, no announcement, and the node snaps back to its prop position.
+    expect(onNodeMove).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toBe('');
+    expect(node.style.left).toBe('0px');
+    // But the gesture is over: a later move must not resume the drag.
+    fireEvent.pointerMove(node, { clientX: 200, clientY: 0, pointerId: 1 });
+    expect(node.style.left).toBe('0px');
+  });
+
+  it('drag while zoomed converts the screen-pixel delta to canvas units', () => {
+    const onNodeMove = vi.fn();
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    // Settle the deferred mount fit before zooming: the root measured 0x0 at
+    // mount so the fit is still pending, and the first live-drag render would
+    // re-run it mid-gesture, resetting the zoom under the pointer. A fresh
+    // nodes identity re-runs the fit effect now that the root is measurable
+    // (NODES fit at z = 1, so only tx/ty change) — matching a real browser,
+    // where the fit lands before the user can interact.
+    rerender(
+      <FlowCanvas nodes={NODES.map((n) => ({ ...n }))} edges={[]} onNodeMove={onNodeMove} />,
+    );
+    fireEvent.click(screen.getByLabelText('Zoom in')); // z = 1.2
+    const node = screen.getByLabelText('Open'); // starts at {0, 0}
+    fireEvent.pointerDown(node, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 24, clientY: 12, pointerId: 1 });
+    // The live position during the drag is already in canvas units: 24/1.2.
+    expect(parseFloat(node.style.left)).toBeCloseTo(20, 6);
+    fireEvent.pointerUp(node, { clientX: 24, clientY: 12, pointerId: 1 });
+    expect(onNodeMove).toHaveBeenCalledTimes(1);
+    const [id, position] = onNodeMove.mock.calls[0] as [string, { x: number; y: number }];
+    expect(id).toBe('open');
+    expect(position.x).toBeCloseTo(20, 6); // 24 screen px / 1.2
+    expect(position.y).toBeCloseTo(10, 6); // 12 screen px / 1.2
+  });
+
+  it('measures the click tolerance in screen pixels, not canvas units, when zoomed out', () => {
+    const onNodeMove = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    fireEvent.click(screen.getByLabelText('Zoom out')); // z = 1/1.2
+    const node = screen.getByLabelText('Open');
+    // 2.8 screen px is under the 3px screen tolerance, but converts to
+    // 2.8 * 1.2 = 3.36 canvas units — a threshold mistakenly compared in
+    // canvas units would treat this jittery click as a drag.
+    fireEvent.pointerDown(node, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 2.8, clientY: 0, pointerId: 1 });
+    fireEvent.pointerUp(node, { clientX: 2.8, clientY: 0, pointerId: 1 });
+    expect(onNodeMove).not.toHaveBeenCalled();
+  });
 });

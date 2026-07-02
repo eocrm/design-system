@@ -381,9 +381,13 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     onPointerUp?.(event);
     const drag = dragState.current;
     if (drag && event.pointerId === drag.pointerId) {
-      // Like the pan below, end-of-gesture cleanup always runs.
+      // Like the pan below, end-of-gesture cleanup (dropping the drag state
+      // and the live position) always runs so a drag can't get stuck; the
+      // commit below (session override, onNodeMove, announcement) is what a
+      // consumer's preventDefault() opts out of — the node then snaps back
+      // exactly like a cancelled gesture.
       dragState.current = null;
-      if (drag.moved) {
+      if (drag.moved && !event.defaultPrevented) {
         const dx = (event.clientX - drag.startClientX) / viewport.z;
         const dy = (event.clientY - drag.startClientY) / viewport.z;
         const position = { x: drag.startPosition.x + dx, y: drag.startPosition.y + dy };
