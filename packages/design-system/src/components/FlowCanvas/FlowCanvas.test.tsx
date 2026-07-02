@@ -536,6 +536,124 @@ describe('FlowCanvas selection & intents', () => {
   });
 });
 
+// The consumer applies a delete intent by removing the node/edge from props.
+// The retained (uncontrolled) selection state must stop acting once its id
+// leaves the graph — intents may never target ids that are not in the graph.
+describe('FlowCanvas stale selection', () => {
+  it('stops firing node intents once the selected node leaves the graph', () => {
+    const onNodeDelete = vi.fn();
+    const onNodeOpen = vi.fn();
+    const { rerender } = render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={[]}
+        defaultSelection={{ type: 'node', id: 'open' }}
+        onNodeDelete={onNodeDelete}
+        onNodeOpen={onNodeOpen}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Delete' });
+    expect(onNodeDelete).toHaveBeenCalledWith('open');
+    // Consumer applies the intent: the node is gone from `nodes`.
+    rerender(
+      <FlowCanvas
+        nodes={NODES.filter((n) => n.id !== 'open')}
+        edges={[]}
+        defaultSelection={{ type: 'node', id: 'open' }}
+        onNodeDelete={onNodeDelete}
+        onNodeOpen={onNodeOpen}
+      />,
+    );
+    onNodeDelete.mockClear();
+    fireEvent.keyDown(root, { key: 'Delete' });
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onNodeDelete).not.toHaveBeenCalled();
+    expect(onNodeOpen).not.toHaveBeenCalled();
+  });
+
+  it('stops firing edge intents once the selected edge leaves the graph', () => {
+    const onEdgeDelete = vi.fn();
+    const onEdgeOpen = vi.fn();
+    const { rerender } = render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+        onEdgeDelete={onEdgeDelete}
+        onEdgeOpen={onEdgeOpen}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Delete' });
+    expect(onEdgeDelete).toHaveBeenCalledWith('t1');
+    rerender(
+      <FlowCanvas
+        nodes={NODES}
+        edges={[]}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+        onEdgeDelete={onEdgeDelete}
+        onEdgeOpen={onEdgeOpen}
+      />,
+    );
+    onEdgeDelete.mockClear();
+    fireEvent.keyDown(root, { key: 'Backspace' });
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onEdgeDelete).not.toHaveBeenCalled();
+    expect(onEdgeOpen).not.toHaveBeenCalled();
+  });
+
+  it('treats a controlled selection pointing outside the graph as no selection', () => {
+    const onNodeDelete = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        selection={{ type: 'node', id: 'ghost' }}
+        onNodeDelete={onNodeDelete}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Delete' });
+    expect(onNodeDelete).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Open')).not.toHaveAttribute('data-selected');
+    expect(screen.getByLabelText('Done')).not.toHaveAttribute('data-selected');
+  });
+
+  it('lets Escape propagate when the only selection is stale', () => {
+    const outerKeyDown = vi.fn();
+    const view = (nodes: FlowCanvasNode[]) => (
+      <div onKeyDown={outerKeyDown}>
+        <FlowCanvas nodes={nodes} edges={[]} defaultSelection={{ type: 'node', id: 'open' }} />
+      </div>
+    );
+    const { rerender } = render(view(NODES));
+    rerender(view(NODES.filter((n) => n.id !== 'open')));
+    const root = screen.getByRole('application');
+    root.focus();
+    // A stale selection is no selection — Escape has nothing to clear, so it
+    // must reach the enclosing surface instead of being consumed.
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(outerKeyDown).toHaveBeenCalledTimes(1);
+  });
+
+  it('restores the selection when the id returns to the graph (consumer undo)', () => {
+    const view = (nodes: FlowCanvasNode[]) => (
+      <FlowCanvas nodes={nodes} edges={[]} defaultSelection={{ type: 'node', id: 'open' }} />
+    );
+    const { rerender } = render(view(NODES));
+    expect(screen.getByLabelText('Open')).toHaveAttribute('data-selected');
+    rerender(view(NODES.filter((n) => n.id !== 'open')));
+    expect(screen.queryByLabelText('Open')).not.toBeInTheDocument();
+    // Undo re-adds the same id — the retained selection becomes valid again.
+    rerender(view(NODES));
+    expect(screen.getByLabelText('Open')).toHaveAttribute('data-selected');
+  });
+});
+
 // jsdom reports 0x0 rects, so everything above exercises the degenerate
 // path. Mocking getBoundingClientRect on the root makes the real geometry —
 // fit centering/scale, zoom clamping, cursor-anchored zoom — testable.

@@ -46,9 +46,13 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
    * @default rejects self-loops and duplicate (from, to) pairs
    */
   isValidConnection?: (from: string, to: string) => boolean;
-  /** Controlled selection. Use with `onSelectionChange`. */
+  /**
+   * Controlled selection. Use with `onSelectionChange`. A selection whose id
+   * is not (or no longer) in `nodes`/`edges` acts as no selection — e.g.
+   * after applying a delete intent — until the id reappears in the graph.
+   */
   selection?: FlowCanvasSelection;
-  /** Initial selection when uncontrolled. @default null */
+  /** Initial selection when uncontrolled. Stale ids act as no selection. @default null */
   defaultSelection?: FlowCanvasSelection;
   /** Fires whenever the selection changes (click, focus, Escape). */
   onSelectionChange?: (selection: FlowCanvasSelection) => void;
@@ -105,11 +109,28 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const markerId = `flow-arrow-${uid}`;
   const markerActiveId = `flow-arrow-active-${uid}`;
 
-  const [selection, setSelection] = useControllableState<FlowCanvasSelection>({
+  const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+  const edgeIds = useMemo(() => new Set(edges.map((e) => e.id)), [edges]);
+
+  const [rawSelection, setSelection] = useControllableState<FlowCanvasSelection>({
     value: selectionProp,
     defaultValue: defaultSelection,
     onChange: onSelectionChange,
   });
+  // The consumer applies a delete intent by removing the node/edge from
+  // props — but the retained (uncontrolled) selection state still holds the
+  // dead id afterwards, and there is no imperative API to clear it. Every
+  // read below goes through this derived selection instead: an id absent
+  // from the current graph acts as no selection, so intents (Delete/Enter)
+  // can never target ids that are not in the graph. The raw state is
+  // deliberately kept — if the id returns (e.g. the consumer undoes the
+  // delete), the selection resurrects.
+  const selection = useMemo(() => {
+    if (!rawSelection) return null;
+    const exists =
+      rawSelection.type === 'node' ? nodeById.has(rawSelection.id) : edgeIds.has(rawSelection.id);
+    return exists ? rawSelection : null;
+  }, [rawSelection, nodeById, edgeIds]);
   // Latest selection, readable from the stable node/edge pointer handlers:
   // they guard re-selects against it without taking `selection` as a
   // dependency (which would re-create the handlers and re-render every
@@ -171,7 +192,6 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
 
   // --- edges: resolve + skip broken ones (one-time dev warning) ------------
   const warnedEdges = useRef(new Set<string>());
-  const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const resolvedEdges = useMemo(() => {
     const reverse = new Set(edges.map((e) => `${e.to} ${e.from}`));
     return edges.flatMap((edge) => {
