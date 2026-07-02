@@ -309,6 +309,95 @@ describe('FlowCanvas viewport', () => {
   });
 });
 
+describe('FlowCanvas selection & intents', () => {
+  it('click selects a node (uncontrolled) and reports the change', () => {
+    const onSelectionChange = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={EDGES} onSelectionChange={onSelectionChange} />);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { pointerId: 1, button: 0 });
+    fireEvent.pointerUp(node, { pointerId: 1 });
+    expect(node.getAttribute('data-selected')).toBe('true');
+    expect(onSelectionChange).toHaveBeenCalledWith({ type: 'node', id: 'open' });
+  });
+
+  it('click selects an edge', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const edge = screen.getByLabelText('From Open to Done');
+    fireEvent.pointerDown(edge, { pointerId: 1, button: 0 });
+    expect(edge.closest('g')!.querySelector('[data-active="true"]')).not.toBeNull();
+  });
+
+  it('controlled selection round-trips', () => {
+    const { rerender } = render(
+      <FlowCanvas nodes={NODES} edges={EDGES} selection={{ type: 'node', id: 'done' }} />,
+    );
+    expect(screen.getByLabelText('Done').getAttribute('data-selected')).toBe('true');
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={null} />);
+    expect(screen.getByLabelText('Done').getAttribute('data-selected')).toBeNull();
+  });
+
+  it('double-click on node/edge fires open callbacks', () => {
+    const onNodeOpen = vi.fn();
+    const onEdgeOpen = vi.fn();
+    render(
+      <FlowCanvas nodes={NODES} edges={EDGES} onNodeOpen={onNodeOpen} onEdgeOpen={onEdgeOpen} />,
+    );
+    fireEvent.doubleClick(screen.getByLabelText('Open'));
+    expect(onNodeOpen).toHaveBeenCalledWith('open');
+    fireEvent.doubleClick(screen.getByLabelText('From Open to Done'));
+    expect(onEdgeOpen).toHaveBeenCalledWith('t1');
+  });
+
+  it('double-click on empty canvas fires onNodeCreate with canvas coordinates', () => {
+    const onNodeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onNodeCreate={onNodeCreate} />);
+    const root = screen.getByRole('application');
+    root.getBoundingClientRect = () =>
+      ({
+        left: 10,
+        top: 20,
+        width: 800,
+        height: 600,
+        right: 810,
+        bottom: 620,
+        x: 10,
+        y: 20,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    fireEvent.doubleClick(root, { clientX: 110, clientY: 220 });
+    expect(onNodeCreate).toHaveBeenCalledWith({ x: 100, y: 200 });
+  });
+
+  it('Delete fires the delete intent for the selection', () => {
+    const onNodeDelete = vi.fn();
+    const onEdgeDelete = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultSelection={{ type: 'node', id: 'open' }}
+        onNodeDelete={onNodeDelete}
+        onEdgeDelete={onEdgeDelete}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Delete' });
+    expect(onNodeDelete).toHaveBeenCalledWith('open');
+    expect(onEdgeDelete).not.toHaveBeenCalled();
+  });
+
+  it('Escape clears the selection', () => {
+    render(
+      <FlowCanvas nodes={NODES} edges={EDGES} defaultSelection={{ type: 'node', id: 'open' }} />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(screen.getByLabelText('Open').getAttribute('data-selected')).toBeNull();
+  });
+});
+
 // jsdom reports 0x0 rects, so everything above exercises the degenerate
 // path. Mocking getBoundingClientRect on the root makes the real geometry —
 // fit centering/scale, zoom clamping, cursor-anchored zoom — testable.

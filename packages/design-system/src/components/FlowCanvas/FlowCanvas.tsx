@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useEffect, useId, useMemo, useRef, useState } 
 import type {
   HTMLAttributes,
   KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
 } from 'react';
 import clsx from 'clsx';
@@ -92,6 +93,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     onPointerUp,
     onPointerCancel,
     onKeyDown,
+    onDoubleClick,
     ...rest
   },
   ref,
@@ -337,10 +339,20 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     setIsPanning(false);
   };
 
-  // Viewport keys; later tasks extend this handler with node/edge keys.
+  // Viewport + selection-intent keys; later tasks extend this handler with
+  // node/edge navigation keys.
   const handleRootKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     onKeyDown?.(event);
     if (event.defaultPrevented) return;
+    // Only act when the key targets the canvas itself, a node, or an edge —
+    // never the consumer's interactive adornment content (e.g. an input
+    // inside a node adornment must keep its own keystrokes).
+    const targetEl = event.target as HTMLElement;
+    const isCanvasKeyTarget =
+      targetEl === event.currentTarget ||
+      targetEl.hasAttribute('data-flow-node') ||
+      targetEl.hasAttribute('data-flow-edge');
+    if (!isCanvasKeyTarget) return;
     const { key, ctrlKey, metaKey } = event;
     if ((ctrlKey || metaKey) && key.startsWith('Arrow')) {
       event.preventDefault();
@@ -370,30 +382,82 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       fitTo(contentBounds);
       return;
     }
+    if (key === 'Delete' || key === 'Backspace') {
+      if (readOnly || !selection) return;
+      event.preventDefault();
+      if (selection.type === 'node') onNodeDelete?.(selection.id);
+      else onEdgeDelete?.(selection.id);
+      return;
+    }
+    if (key === 'Escape') {
+      if (selection) {
+        setSelection(null);
+        announce(t('flowCanvas.selectionCleared'));
+      }
+      return;
+    }
+    if (key === 'Enter' || key === ' ') {
+      if (!selection) return;
+      event.preventDefault();
+      // Open stays allowed in readOnly — only create/move/connect/delete are gated.
+      if (selection.type === 'node') onNodeOpen?.(selection.id);
+      else onEdgeOpen?.(selection.id);
+      return;
+    }
   };
 
-  // Placeholder handlers — wired up in later tasks.
+  // Node/edge presses select immediately. The node handler is the seam the
+  // node-drag task extends (select, then arm the drag).
   const handleNodePointerDown = useCallback(
-    (_id: string, _event: ReactPointerEvent<HTMLDivElement>) => {},
-    [],
+    (id: string, event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return;
+      event.stopPropagation();
+      setSelection({ type: 'node', id });
+    },
+    [setSelection],
   );
+  // Placeholder — wired up by the connect task.
   const handleHandlePointerDown = useCallback(
     (_id: string, _event: ReactPointerEvent<HTMLElement>) => {},
     [],
   );
   const handleEdgePointerDown = useCallback(
-    (_id: string, _event: ReactPointerEvent<SVGPathElement>) => {},
-    [],
+    (id: string, event: ReactPointerEvent<SVGPathElement>) => {
+      if (event.button !== 0) return;
+      event.stopPropagation();
+      setSelection({ type: 'edge', id });
+    },
+    [setSelection],
   );
   const handleNodeDoubleClick = useCallback((id: string) => onNodeOpen?.(id), [onNodeOpen]);
   const handleEdgeDoubleClick = useCallback((id: string) => onEdgeOpen?.(id), [onEdgeOpen]);
+
+  /** Client (screen) coordinates → canvas coordinates, inverting the viewport transform. */
+  const toCanvasPoint = useCallback(
+    (clientX: number, clientY: number): FlowCanvasPoint => {
+      const rect = rootRef.current?.getBoundingClientRect();
+      const x = (clientX - (rect?.left ?? 0) - viewport.tx) / viewport.z;
+      const y = (clientY - (rect?.top ?? 0) - viewport.ty) / viewport.z;
+      return { x, y };
+    },
+    [viewport],
+  );
+
+  // Double-click on empty canvas requests a node there. Nodes/edges/chips
+  // stopPropagation on their own dblclick, but guard on the target anyway.
+  const handleRootDoubleClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+    onDoubleClick?.(event);
+    if (event.defaultPrevented) return;
+    if (readOnly || !isBackgroundTarget(event.target)) return;
+    onNodeCreate?.(toCanvasPoint(event.clientX, event.clientY));
+  };
 
   const setRootRef = useMemo(() => mergeRefs(rootRef, ref), [ref]);
 
   return (
     // aria-label before {...rest} so consumers can override it; role/tabIndex
     // after so the application-widget contract survives whatever is spread.
-    // Pointer/key handlers are destructured out of the props and composed:
+    // Pointer/key/double-click handlers are destructured out of the props and composed:
     // the consumer's handler runs first, and preventDefault() skips the
     // canvas's own gesture handling (except end-of-gesture state cleanup on
     // pointerup/pointercancel, which always runs so a pan can't get stuck).
@@ -410,6 +474,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       onPointerUp={handleRootPointerUp}
       onPointerCancel={handleRootPointerCancel}
       onKeyDown={handleRootKeyDown}
+      onDoubleClick={handleRootDoubleClick}
     >
       <div
         className={styles.stage}
@@ -467,6 +532,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               className={styles.chip}
               data-flow-chip={edge.id}
               style={{ left: geometry.midpoint.x, top: geometry.midpoint.y }}
+              onPointerDown={(event) => {
+                if (event.button !== 0) return;
+                event.stopPropagation();
+                setSelection({ type: 'edge', id: edge.id });
+              }}
               onDoubleClick={(event) => {
                 event.stopPropagation();
                 onEdgeOpen?.(edge.id);
