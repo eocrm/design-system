@@ -13,6 +13,8 @@ import { computeLayout, ESTIMATED_NODE_SIZE } from './layout';
 import type { NodeSize } from './layout';
 import { edgeGeometry, selfLoopGeometry } from './edgePath';
 import type { Rect } from './edgePath';
+import { nearestInDirection } from './spatialNav';
+import type { NavDirection } from './spatialNav';
 import { FlowControls } from './FlowControls';
 import { FlowEdge } from './FlowEdge';
 import { FlowNode } from './FlowNode';
@@ -213,6 +215,39 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     return map;
   }, [nodes, positionOf, sizes]);
 
+  // --- connections: pointer draw + keyboard connect mode -------------------
+  // `connect` is the in-flight connection gesture. Pointer mode tracks the
+  // cursor for the ghost edge; keyboard mode steps the target with arrows.
+  const [connect, setConnect] = useState<{
+    from: string;
+    mode: 'pointer' | 'keyboard';
+    target: string | null;
+    cursor: FlowCanvasPoint | null; // pointer mode ghost end
+  } | null>(null);
+
+  const defaultIsValid = useCallback(
+    (from: string, to: string) => from !== to && !edges.some((e) => e.from === from && e.to === to),
+    [edges],
+  );
+  const isValid = isValidConnection ?? defaultIsValid;
+
+  const nodeAtPoint = useCallback(
+    (point: FlowCanvasPoint): string | null => {
+      for (const [id, rect] of rects) {
+        if (
+          point.x >= rect.x &&
+          point.x <= rect.x + rect.width &&
+          point.y >= rect.y &&
+          point.y <= rect.y + rect.height
+        ) {
+          return id;
+        }
+      }
+      return null;
+    },
+    [rects],
+  );
+
   // --- edges: resolve + skip broken ones (one-time dev warning) ------------
   const warnedEdges = useRef(new Set<string>());
   const resolvedEdges = useMemo(() => {
@@ -358,6 +393,13 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const handleRootPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerMove?.(event);
     if (event.defaultPrevented) return;
+    if (connect?.mode === 'pointer') {
+      const point = toCanvasPoint(event.clientX, event.clientY);
+      const over = nodeAtPoint(point);
+      const target = over && over !== connect.from && isValid(connect.from, over) ? over : null;
+      setConnect({ ...connect, target, cursor: point });
+      return;
+    }
     const drag = dragState.current;
     if (drag && event.pointerId === drag.pointerId) {
       // 3px screen-space click tolerance, measured from the pointerdown point.
@@ -397,6 +439,22 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   };
   const handleRootPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerUp?.(event);
+    if (connect?.mode === 'pointer') {
+      // End-of-gesture cleanup always runs (like drag/pan below); the create
+      // intent honors a consumer's preventDefault() the same way the drag
+      // commit does.
+      if (connect.target && !event.defaultPrevented) {
+        onEdgeCreate?.(connect.from, connect.target);
+        announce(
+          t('flowCanvas.connectDone', {
+            from: nodeById.get(connect.from)?.label ?? connect.from,
+            to: nodeById.get(connect.target)?.label ?? connect.target,
+          }),
+        );
+      }
+      setConnect(null);
+      return;
+    }
     const drag = dragState.current;
     if (drag && event.pointerId === drag.pointerId) {
       // Like the pan below, end-of-gesture cleanup (dropping the drag state
@@ -439,6 +497,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   };
   const handleRootPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerCancel?.(event);
+    if (connect?.mode === 'pointer') {
+      // The system aborted the gesture — drop the pending connection without
+      // creating an edge; the ghost edge disappears.
+      setConnect(null);
+      return;
+    }
     const drag = dragState.current;
     if (drag && event.pointerId === drag.pointerId) {
       // The system aborted the gesture — drop the drag without committing
@@ -471,6 +535,62 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       targetEl.hasAttribute('data-flow-edge');
     if (!isCanvasKeyTarget) return;
     const { key, ctrlKey, metaKey } = event;
+    // Keyboard connect mode swallows every key first — Escape must cancel the
+    // connection (not clear the selection), Enter must confirm (not open),
+    // and arrows must step the target (not navigate/pan).
+    if (connect?.mode === 'keyboard') {
+      event.preventDefault();
+      if (key === 'Escape') {
+        setConnect(null);
+        announce(t('flowCanvas.connectCancelled'));
+        return;
+      }
+      if (key === 'Enter') {
+        if (connect.target) {
+          onEdgeCreate?.(connect.from, connect.target);
+          announce(
+            t('flowCanvas.connectDone', {
+              from: nodeById.get(connect.from)?.label ?? connect.from,
+              to: nodeById.get(connect.target)?.label ?? connect.target,
+            }),
+          );
+        }
+        setConnect(null);
+        return;
+      }
+      if (key.startsWith('Arrow')) {
+        const candidates = new Map<string, Rect>();
+        for (const [id, rect] of rects) {
+          if (id !== connect.from && isValid(connect.from, id)) candidates.set(id, rect);
+        }
+        // Navigate among candidates from the current target (or the source —
+        // included so the first arrow press has an origin to measure from).
+        const sourceRect = rects.get(connect.from);
+        if (sourceRect) candidates.set(connect.from, sourceRect);
+        const fromId = connect.target ?? connect.from;
+        const direction = key.replace('Arrow', '').toLowerCase() as NavDirection;
+        const next = nearestInDirection(fromId, candidates, direction);
+        if (next && next !== connect.from) {
+          setConnect({ ...connect, target: next });
+          announce(t('flowCanvas.connectTarget', { label: nodeById.get(next)?.label ?? next }));
+        }
+        return;
+      }
+      return; // swallow other keys while connecting
+    }
+    // Plain C starts keyboard connect mode; ctrl/cmd+C stays the browser's
+    // copy shortcut.
+    if ((key === 'c' || key === 'C') && !ctrlKey && !metaKey) {
+      if (readOnly) return;
+      const nodeId =
+        targetEl.getAttribute('data-flow-node') ??
+        (selection?.type === 'node' ? selection.id : null);
+      if (!nodeId) return;
+      event.preventDefault();
+      setConnect({ from: nodeId, mode: 'keyboard', target: null, cursor: null });
+      announce(t('flowCanvas.connectStart', { label: nodeById.get(nodeId)?.label ?? nodeId }));
+      return;
+    }
     // Shift+Arrow nudges the focused/selected node (checked before ctrl+arrow
     // pan so shift wins when both modifiers are held).
     if (event.shiftKey && key.startsWith('Arrow')) {
@@ -598,10 +718,20 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     },
     [setSelection, readOnly, nodeById, dragOverrides, layoutPositions],
   );
-  // Placeholder — wired up by the connect task.
+  // Dragging from a node's connect handle starts a pointer connection. The
+  // ROOT captures the pointer (not the handle) so the move/up stream keeps
+  // flowing to the root handlers while the ghost edge tracks the cursor.
   const handleHandlePointerDown = useCallback(
-    (_id: string, _event: ReactPointerEvent<HTMLElement>) => {},
-    [],
+    (id: string, event: ReactPointerEvent<HTMLElement>) => {
+      if (event.button !== 0 || readOnly) return;
+      setConnect({ from: id, mode: 'pointer', target: null, cursor: null });
+      try {
+        rootRef.current?.setPointerCapture(event.pointerId);
+      } catch {
+        /* jsdom */
+      }
+    },
+    [readOnly],
   );
   const handleEdgePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<SVGPathElement>) => {
@@ -708,6 +838,22 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               onEdgeDoubleClick={handleEdgeDoubleClick}
             />
           ))}
+          {connect
+            ? (() => {
+                // Dashed ghost edge for the in-flight connection: source →
+                // hovered/stepped target, or the pointer-mode cursor stub.
+                const sourceRect = rects.get(connect.from);
+                if (!sourceRect) return null;
+                const targetRect = connect.target ? rects.get(connect.target) : null;
+                const end: Rect = targetRect ?? {
+                  x: (connect.cursor?.x ?? sourceRect.x + sourceRect.width + 40) - 1,
+                  y: (connect.cursor?.y ?? sourceRect.y) - 1,
+                  width: 2,
+                  height: 2,
+                };
+                return <path className={styles.ghostEdge} d={edgeGeometry(sourceRect, end).path} />;
+              })()
+            : null}
         </svg>
         {resolvedEdges.map(({ edge, geometry }) =>
           edge.label != null ? (
@@ -739,7 +885,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
             position={positionOf(node)}
             selected={selection?.type === 'node' && selection.id === node.id}
             dragging={liveDrag?.id === node.id}
-            connectTarget={false}
+            connectTarget={connect?.target === node.id}
             readOnly={readOnly}
             roleDescription={t('flowCanvas.nodeRole')}
             registerEl={registerNodeEl}

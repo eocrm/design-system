@@ -1042,3 +1042,131 @@ describe('FlowCanvas node dragging', () => {
     expect(onNodeMove).not.toHaveBeenCalled();
   });
 });
+
+describe('FlowCanvas connections', () => {
+  const getHandle = (label: string) =>
+    screen.getByLabelText(label).querySelector('[data-flow-handle]') as HTMLElement;
+
+  it('dragging from the handle onto a valid target fires onEdgeCreate', () => {
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    // NODES: open at {0,0}, done at {300,0}; estimated size 160x40 → done center ≈ (380, 20)
+    fireEvent.pointerDown(getHandle('Open'), {
+      clientX: 160,
+      clientY: 20,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(screen.getByRole('application'), {
+      clientX: 380,
+      clientY: 20,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(screen.getByRole('application'), {
+      clientX: 380,
+      clientY: 20,
+      pointerId: 1,
+    });
+    expect(onEdgeCreate).toHaveBeenCalledWith('open', 'done');
+  });
+
+  it('dropping on empty canvas cancels', () => {
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    fireEvent.pointerDown(getHandle('Open'), {
+      clientX: 160,
+      clientY: 20,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(screen.getByRole('application'), {
+      clientX: 600,
+      clientY: 400,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(screen.getByRole('application'), {
+      clientX: 600,
+      clientY: 400,
+      pointerId: 1,
+    });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+  });
+
+  it('default validation rejects duplicate edges (drop is ignored)', () => {
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={EDGES} onEdgeCreate={onEdgeCreate} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    fireEvent.pointerDown(getHandle('Open'), {
+      clientX: 160,
+      clientY: 20,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(screen.getByRole('application'), {
+      clientX: 380,
+      clientY: 20,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(screen.getByRole('application'), {
+      clientX: 380,
+      clientY: 20,
+      pointerId: 1,
+    });
+    expect(onEdgeCreate).not.toHaveBeenCalled(); // EDGES already has open → done
+  });
+
+  it('keyboard connect: C, arrow to target, Enter → onEdgeCreate; announcements along the way', () => {
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    expect(screen.getByRole('status').textContent).toMatch(/^Connecting from Open/);
+    fireEvent.keyDown(node, { key: 'ArrowRight' });
+    expect(screen.getByRole('status').textContent).toBe('Target: Done');
+    fireEvent.keyDown(node, { key: 'Enter' });
+    expect(onEdgeCreate).toHaveBeenCalledWith('open', 'done');
+    expect(screen.getByRole('status').textContent).toBe('Connected Open to Done');
+  });
+
+  it('keyboard connect: Escape cancels', () => {
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    fireEvent.keyDown(node, { key: 'ArrowRight' });
+    fireEvent.keyDown(node, { key: 'Escape' });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+  });
+
+  it('keyboard connect skips invalid targets (custom isValidConnection)', () => {
+    const onEdgeCreate = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={[]}
+        onEdgeCreate={onEdgeCreate}
+        isValidConnection={() => false}
+      />,
+    );
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    fireEvent.keyDown(node, { key: 'ArrowRight' }); // no valid targets → no target announcement
+    fireEvent.keyDown(node, { key: 'Enter' });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+  });
+
+  it('connect handle is hidden in readOnly mode and C is inert', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} readOnly />);
+    expect(screen.getByLabelText('Open').querySelector('[data-flow-handle]')).toBeNull();
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    expect(screen.getByRole('status').textContent).not.toMatch(/Connecting/);
+  });
+});
