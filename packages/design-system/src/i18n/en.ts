@@ -177,6 +177,7 @@ export const en: Messages = {
     connectStart: ({ label }) =>
       `Connecting from ${label as string}. Use the arrow keys to pick a target, Enter to confirm, Escape to cancel.`,
     connectTarget: ({ label }) => `Target: ${label as string}`,
+    connectNoTarget: 'No target in that direction',
     connectDone: ({ from, to }) => `Connected ${from as string} to ${to as string}`,
     connectCancelled: 'Connection cancelled',
     nodeMoved: ({ label }) => `${label as string} moved`,

@@ -257,6 +257,15 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     [rects],
   );
 
+  // Commit-time revalidation: `connect.target` was validated when it was
+  // LAST SET (pointer move / arrow step), but the graph is live props — the
+  // consumer can remove either node or add an identical edge between then
+  // and the commit (pointerup / Enter). Re-checking here keeps the same
+  // invariant as the derived selection above: intents never fire with ids
+  // that are not in (or no longer valid against) the current graph.
+  const canCommitConnect = (from: string, to: string): boolean =>
+    nodeById.has(from) && nodeById.has(to) && isValid(from, to);
+
   // --- edges: resolve + skip broken ones (one-time dev warning) ------------
   const warnedEdges = useRef(new Set<string>());
   const resolvedEdges = useMemo(() => {
@@ -471,8 +480,13 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     if (connect?.mode === 'pointer' && event.pointerId === connect.pointerId) {
       // End-of-gesture cleanup always runs (like drag/pan below); the create
       // intent honors a consumer's preventDefault() the same way the drag
-      // commit does.
-      if (connect.target && !event.defaultPrevented) {
+      // commit does, and revalidates against the live graph (the target was
+      // only known-valid when the pointer last moved).
+      if (
+        connect.target &&
+        !event.defaultPrevented &&
+        canCommitConnect(connect.from, connect.target)
+      ) {
         onEdgeCreate?.(connect.from, connect.target);
         announce(
           t('flowCanvas.connectDone', {
@@ -575,7 +589,9 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         return;
       }
       if (key === 'Enter') {
-        if (connect.target) {
+        // Same commit-time revalidation as pointerup: the target was only
+        // known-valid when the last arrow press set it.
+        if (connect.target && canCommitConnect(connect.from, connect.target)) {
           onEdgeCreate?.(connect.from, connect.target);
           announce(
             t('flowCanvas.connectDone', {
@@ -583,6 +599,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               to: nodeById.get(connect.target)?.label ?? connect.target,
             }),
           );
+        } else {
+          // No target picked (or the graph changed under the gesture): the
+          // mode still ends, and that must be audible — Escape parity. A
+          // silent exit would leave a screen-reader user pressing arrows
+          // that now navigate/pan instead of stepping targets.
+          announce(t('flowCanvas.connectCancelled'));
         }
         setConnect(null);
         return;
@@ -602,6 +624,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         if (next && next !== connect.from) {
           setConnect({ ...connect, target: next });
           announce(t('flowCanvas.connectTarget', { label: nodeById.get(next)?.label ?? next }));
+        } else {
+          // Nothing valid that way — say so; a silent no-op reads as a
+          // dead keyboard to a screen-reader user mid-connect.
+          announce(t('flowCanvas.connectNoTarget'));
         }
         return;
       }
@@ -611,6 +637,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // copy shortcut.
     if ((key === 'c' || key === 'C') && !ctrlKey && !metaKey) {
       if (readOnly) return;
+      // One gesture at a time (mirror of handleHandlePointerDown's guard):
+      // C mid-pointer-draw must not replace the in-flight draw with a
+      // keyboard connect — the discarded drag would turn its eventual
+      // pointerup into a silent no-op.
+      if (connect?.mode === 'pointer') return;
       const nodeId =
         targetEl.getAttribute('data-flow-node') ??
         (selection?.type === 'node' ? selection.id : null);

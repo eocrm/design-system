@@ -179,6 +179,7 @@ export const ru: Messages = {
     connectStart: ({ label }) =>
       `Соединение из «${label as string}». Стрелки — выбор цели, Enter — подтвердить, Escape — отмена.`,
     connectTarget: ({ label }) => `Цель: ${label as string}`,
+    connectNoTarget: 'В этом направлении нет цели',
     connectDone: ({ from, to }) => `Соединено: «${from as string}» → «${to as string}»`,
     connectCancelled: 'Соединение отменено',
     nodeMoved: ({ label }) => `«${label as string}» перемещён`,

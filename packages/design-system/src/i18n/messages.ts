@@ -292,6 +292,8 @@ export interface Messages {
     connectStart: (params: { label: string }) => string;
     /** Live announcement when the connect target changes. */
     connectTarget: (params: { label: string }) => string;
+    /** Live announcement when an arrow press finds no valid target while connecting. */
+    connectNoTarget: string;
     /** Live announcement when a connection is requested. */
     connectDone: (params: { from: string; to: string }) => string;
     /** Live announcement when connect mode is cancelled. */

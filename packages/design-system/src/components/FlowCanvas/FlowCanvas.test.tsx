@@ -1292,4 +1292,90 @@ describe('FlowCanvas connections', () => {
     fireEvent.keyDown(node, { key: 'Enter' });
     expect(onEdgeCreate).not.toHaveBeenCalled();
   });
+
+  it('revalidates a pointer connect at drop time against the live graph', () => {
+    const onEdgeCreate = vi.fn();
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    fireEvent.pointerDown(getHandle('Open'), {
+      clientX: 160,
+      clientY: 20,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 380, clientY: 20, pointerId: 1 }); // over Done
+    // An identical edge appears mid-gesture (undo, collaboration): the drop
+    // must not request a duplicate the validator would have rejected.
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} onEdgeCreate={onEdgeCreate} />);
+    fireEvent.pointerUp(root, { clientX: 380, clientY: 20, pointerId: 1 });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+  });
+
+  it('revalidates a keyboard connect at Enter against the live graph', () => {
+    const onEdgeCreate = vi.fn();
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    fireEvent.keyDown(node, { key: 'ArrowRight' }); // target: Done
+    // The consumer removes the target node before the commit — Enter must not
+    // fire onEdgeCreate with an id that is no longer in the graph.
+    rerender(
+      <FlowCanvas
+        nodes={NODES.filter((n) => n.id !== 'done')}
+        edges={[]}
+        onEdgeCreate={onEdgeCreate}
+      />,
+    );
+    fireEvent.keyDown(node, { key: 'Enter' });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+  });
+
+  it('Enter with no target picked cancels audibly', () => {
+    const onEdgeCreate = vi.fn();
+    const onNodeOpen = vi.fn();
+    render(
+      <FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} onNodeOpen={onNodeOpen} />,
+    );
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    fireEvent.keyDown(node, { key: 'Enter' }); // no target picked yet
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+    // The mode ended — that must be announced, not silent (Escape parity).
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+    expect(onNodeOpen).not.toHaveBeenCalled(); // the confirming Enter is consumed
+  });
+
+  it('announces when an arrow press finds no valid target', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} isValidConnection={() => false} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    fireEvent.keyDown(node, { key: 'ArrowRight' }); // every target rejected
+    expect(screen.getByRole('status').textContent).toBe('No target in that direction');
+  });
+
+  it('C is inert while a pointer draw is in flight', () => {
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    fireEvent.pointerDown(getHandle('Open'), {
+      clientX: 160,
+      clientY: 20,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 380, clientY: 20, pointerId: 1 }); // over Done
+    // Pressing C mid-draw must not replace the pointer draw with a keyboard
+    // connect (which would silently discard the in-flight gesture).
+    fireEvent.keyDown(screen.getByLabelText('Done'), { key: 'c' });
+    expect(screen.getByRole('status').textContent).not.toMatch(/Connecting from Done/);
+    fireEvent.pointerUp(root, { clientX: 380, clientY: 20, pointerId: 1 });
+    expect(onEdgeCreate).toHaveBeenCalledWith('open', 'done');
+    expect(onEdgeCreate).toHaveBeenCalledTimes(1);
+  });
 });
