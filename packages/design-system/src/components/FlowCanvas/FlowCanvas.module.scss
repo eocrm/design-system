@@ -57,8 +57,14 @@
   stroke: transparent;
   stroke-width: var(--flow-edge-hit-width);
 
+  // Keyboard focus (E-key edge cycling) must stay visible even when the
+  // consumer controls `selection` and pins it elsewhere — selection-follows-
+  // focus cannot flip `data-active` then, so paint the focused hit path
+  // itself instead of relying on the sibling .edgePath's active state.
   &:focus-visible {
     outline: none;
+    stroke: var(--flow-edge-stroke-active);
+    stroke-width: var(--flow-edge-width);
   }
 }
 
@@ -132,8 +138,16 @@
 
 .chip {
   position: absolute;
+  padding: var(--flow-chip-padding-y) var(--flow-chip-padding-x);
+  background: var(--flow-chip-bg);
+  border: var(--border-width) solid var(--flow-chip-border);
+  border-radius: var(--flow-chip-radius);
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
   cursor: pointer;
   transform: translate(-50%, -50%);
+  user-select: none;
 }
 
 .controls {
