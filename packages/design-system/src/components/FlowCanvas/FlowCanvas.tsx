@@ -128,7 +128,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     const observer = new ResizeObserver(() => {
       const next = new Map<string, NodeSize>();
       for (const [id, el] of nodeEls.current) {
-        next.set(id, { width: el.offsetWidth, height: el.offsetHeight });
+        // Hidden mounts (display: none Modal/Tab) measure 0x0 — treat those
+        // as unmeasured so ESTIMATED_NODE_SIZE keeps applying and the
+        // corrective 'estimated' -> 'done' re-fit still runs on reveal.
+        if (el.offsetWidth > 0 && el.offsetHeight > 0) {
+          next.set(id, { width: el.offsetWidth, height: el.offsetHeight });
+        }
       }
       setSizes(next);
     });
@@ -313,7 +318,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // consumer preventDefault() only opts out of click-clears-selection.
     panState.current = null;
     setIsPanning(false);
-    if (!pan.moved && !event.defaultPrevented) {
+    if (!pan.moved && !event.defaultPrevented && selection != null) {
+      // Guarded on selection: useControllableState has no equality check, so
+      // an unguarded clear would fire onSelectionChange(null) and announce
+      // "Selection cleared" even when nothing was selected.
       setSelection(null); // click on empty canvas clears selection
       announce(t('flowCanvas.selectionCleared'));
     }
