@@ -400,6 +400,20 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }, [rects]);
 
+  // Explicit svg size spanning the content's positive extent: the default
+  // SVG box is 300x150 and some engines (historically WebKit) hit-test SVG
+  // children unreliably outside the element's box — any multi-rank layout
+  // exceeds the default. overflow: visible still renders/covers negative
+  // coordinates; the margin absorbs arrowheads, self-loops, and pair bows.
+  const svgExtent = useMemo(() => {
+    if (!contentBounds) return { width: 1, height: 1 };
+    const MARGIN = 64;
+    return {
+      width: Math.max(1, contentBounds.x + contentBounds.width + MARGIN),
+      height: Math.max(1, contentBounds.y + contentBounds.height + MARGIN),
+    };
+  }, [contentBounds]);
+
   // Fit once, as soon as the fit can actually apply. `fitTo` reports whether
   // it did (a 0x0 root is a no-op), so when the canvas mounts hidden — Modal
   // not yet open, inactive Tab, display: none panel — we retry on the root's
@@ -584,20 +598,22 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       // consumer's preventDefault() opts out of — the node then snaps back
       // exactly like a cancelled gesture.
       dragState.current = null;
-      if (drag.moved && !event.defaultPrevented) {
+      const node = nodeById.get(drag.id);
+      // Commit-time revalidation, same as connect/Delete/Enter intents: a
+      // node deleted mid-drag must not emit onNodeMove with a dead id.
+      if (drag.moved && !event.defaultPrevented && node) {
         // Fold in any final movement carried by the pointerup itself, at the
         // current zoom — the same per-segment conversion as the move handler.
         const position = {
           x: drag.position.x + (event.clientX - drag.lastClientX) / viewport.z,
           y: drag.position.y + (event.clientY - drag.lastClientY) / viewport.z,
         };
-        const node = nodeById.get(drag.id);
-        if (node && node.position === undefined) {
+        if (node.position === undefined) {
           // Session-local arrangement for auto-laid-out nodes.
           setDragOverrides((prev) => new Map(prev).set(drag.id, position));
         }
         onNodeMove?.(drag.id, position);
-        announce(t('flowCanvas.nodeMoved', { label: node?.label ?? drag.id }));
+        announce(t('flowCanvas.nodeMoved', { label: node.label }));
       }
       setLiveDrag(null);
       return;
@@ -764,10 +780,26 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       targetEl.hasAttribute('data-flow-edge');
     if (!isCanvasKeyTarget) return;
     const { key, ctrlKey, metaKey } = event;
+    // Escape also aborts an in-flight pointer draw (spec: "Esc/miss
+    // cancels"). Dropping the connect state makes the gesture's eventual
+    // pointerup a no-op — its connect branch matches on the stored state,
+    // which is gone.
+    if (connect?.mode === 'pointer' && key === 'Escape') {
+      event.preventDefault();
+      setConnect(null);
+      announce(t('flowCanvas.connectCancelled'));
+      return;
+    }
     // Keyboard connect mode swallows every key first — Escape must cancel the
     // connection (not clear the selection), Enter must confirm (not open),
     // and arrows must step the target (not navigate/pan).
     if (connect?.mode === 'keyboard') {
+      if (key === 'Tab') {
+        // Never a keyboard trap (WCAG 2.1.2): let Tab move focus out
+        // untouched; the focus-out handler cancels the connect (and
+        // announces) once focus actually leaves the canvas.
+        return;
+      }
       event.preventDefault();
       if (key === 'Escape') {
         setConnect(null);
@@ -940,10 +972,14 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         (focusedEdge ? (cycleOwnsFocusedEdge ? cycleOrigin : focusedEdge.from) : cycleOrigin);
       if (!originId) return;
       event.preventDefault();
+      // Cycle only over rendered edges: a broken edge (skipped from rendering
+      // for referencing a missing node) has no element to focus, so cycling
+      // onto it would be a silent dead E press.
+      const renderable = new Set(resolvedEdges.map((r) => r.edge.id));
       const attached = [
         ...edges.filter((e) => e.from === originId),
         ...edges.filter((e) => e.to === originId && e.from !== originId),
-      ];
+      ].filter((e) => renderable.has(e.id));
       if (attached.length === 0) return;
       // A cycle left over from another node (focus moved by click, not
       // focusNode) must restart at 0, not resume that node's index.
@@ -1181,7 +1217,9 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         data-flow-stage=""
         style={{ transform: `translate(${viewport.tx}px, ${viewport.ty}px) scale(${viewport.z})` }}
       >
-        <svg className={styles.edges} aria-hidden={undefined}>
+        {/* NOT aria-hidden: the child hit-paths are the focusable edges —
+            hiding the svg would strip every edge out of the a11y tree. */}
+        <svg className={styles.edges} width={svgExtent.width} height={svgExtent.height}>
           <defs>
             <marker
               id={markerId}

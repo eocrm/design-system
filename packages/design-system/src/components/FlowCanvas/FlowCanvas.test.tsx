@@ -890,6 +890,30 @@ describe('FlowCanvas node dragging', () => {
     expect(onNodeMove).not.toHaveBeenCalled();
   });
 
+  it('does not emit onNodeMove when the node was deleted mid-drag', () => {
+    const onNodeMove = vi.fn();
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { clientX: 50, clientY: 20, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 90, clientY: 50, pointerId: 1 });
+    // Consumer applies a delete intent mid-gesture — the commit must not
+    // fire with the dead id (same revalidation as connect/Delete/Enter).
+    rerender(
+      <FlowCanvas
+        nodes={NODES.filter((n) => n.id !== 'open')}
+        edges={[]}
+        onNodeMove={onNodeMove}
+      />,
+    );
+    fireEvent.pointerUp(screen.getByRole('application'), {
+      clientX: 90,
+      clientY: 50,
+      pointerId: 1,
+    });
+    expect(onNodeMove).not.toHaveBeenCalled();
+  });
+
   it('positionless nodes keep their dragged position for the session', () => {
     render(<FlowCanvas nodes={[{ id: 'a', label: 'A' }]} edges={[]} />);
     mockRootRect(screen.getByRole('application'), 800, 600);
@@ -1129,6 +1153,34 @@ describe('FlowCanvas connections', () => {
     fireEvent.keyDown(node, { key: 'Enter' });
     expect(onEdgeCreate).toHaveBeenCalledWith('open', 'done');
     expect(screen.getByRole('status').textContent).toBe('Connected Open to Done');
+  });
+
+  it('Escape cancels an in-flight pointer draw; the later pointerup does not commit', () => {
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    fireEvent.pointerDown(getHandle('Open'), {
+      clientX: 160,
+      clientY: 20,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 380, clientY: 20, pointerId: 1 }); // over Done
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+    fireEvent.pointerUp(root, { clientX: 380, clientY: 20, pointerId: 1 });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+  });
+
+  it('Tab is not swallowed during keyboard connect (no keyboard trap)', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    // fireEvent returns false when preventDefault was called — Tab must
+    // remain free to move focus out of the widget (WCAG 2.1.2).
+    expect(fireEvent.keyDown(node, { key: 'Tab' })).toBe(true);
   });
 
   it('keyboard connect hops over the source when it sits between targets (A — S — B)', () => {
@@ -1434,6 +1486,25 @@ describe('FlowCanvas keyboard navigation', () => {
     expect(document.activeElement).toBe(screen.getByLabelText('Done'));
     fireEvent.keyDown(screen.getByLabelText('Done'), { key: 'Home' });
     expect(document.activeElement).toBe(screen.getByLabelText('Open'));
+  });
+
+  it('E-cycling skips broken edges that are not rendered', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={[
+          { id: 'ok', from: 'open', to: 'done' },
+          { id: 'broken', from: 'open', to: 'ghost' },
+        ]}
+      />,
+    );
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'e' });
+    // Dense cycle: 1 of 1, not 1 of 2 with a dead second press.
+    expect(screen.getByRole('status').textContent).toBe('Connection from Open to Done, 1 of 1');
+    warn.mockRestore();
   });
 
   it('focuses with preventScroll — native focus-scroll would desync the viewport', () => {
