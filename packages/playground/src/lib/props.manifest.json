@@ -1798,6 +1798,108 @@
         }
       ]
     },
+    "FlowCanvas": {
+      "props": [
+        {
+          "name": "nodes",
+          "type": "FlowCanvasNode[]",
+          "required": true,
+          "default": "",
+          "description": "Nodes to render. The canvas never mutates this array."
+        },
+        {
+          "name": "edges",
+          "type": "FlowCanvasEdge[]",
+          "required": true,
+          "default": "",
+          "description": "Directed edges between nodes. Edges referencing unknown ids are skipped (dev warning)."
+        },
+        {
+          "name": "onNodeCreate",
+          "type": "((position: FlowCanvasPoint) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when the user requests a node at a canvas point (double-click empty canvas)."
+        },
+        {
+          "name": "onNodeMove",
+          "type": "((id: string, position: FlowCanvasPoint) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when a node's position is committed (drag end, keyboard nudge)."
+        },
+        {
+          "name": "onNodeOpen",
+          "type": "((id: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when a node is opened (Enter/Space or double-click)."
+        },
+        {
+          "name": "onNodeDelete",
+          "type": "((id: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when deletion of the selected node is requested (Delete/Backspace)."
+        },
+        {
+          "name": "onEdgeCreate",
+          "type": "((from: string, to: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when the user draws or confirms a connection between two nodes."
+        },
+        {
+          "name": "onEdgeOpen",
+          "type": "((id: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when an edge is opened (Enter/Space or double-click)."
+        },
+        {
+          "name": "onEdgeDelete",
+          "type": "((id: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when deletion of the selected edge is requested (Delete/Backspace)."
+        },
+        {
+          "name": "isValidConnection",
+          "type": "((from: string, to: string) => boolean)",
+          "required": false,
+          "default": "rejects self-loops and duplicate (from, to) pairs",
+          "description": "Live validation while drawing a connection. Invalid targets can't be\ndropped on (pointer) and are skipped (keyboard)."
+        },
+        {
+          "name": "selection",
+          "type": "FlowCanvasSelection",
+          "required": false,
+          "default": "",
+          "description": "Controlled selection. Use with `onSelectionChange`. A selection whose id\nis not (or no longer) in `nodes`/`edges` acts as no selection — e.g.\nafter applying a delete intent — until the id reappears in the graph."
+        },
+        {
+          "name": "defaultSelection",
+          "type": "FlowCanvasSelection",
+          "required": false,
+          "default": "null",
+          "description": "Initial selection when uncontrolled. Stale ids act as no selection."
+        },
+        {
+          "name": "onSelectionChange",
+          "type": "((selection: FlowCanvasSelection) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires whenever the selection changes (click, focus, Escape)."
+        },
+        {
+          "name": "readOnly",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Render-only mode: create/move/connect/delete are disabled; selection and\nopen still work."
+        }
+      ]
+    },
     "FormRow": {
       "props": [
         {
@@ -4503,6 +4605,8 @@
     "ThreadNodeAlign": "\"top\" | \"header\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",
+    "FlowCanvasSelection": "{ type: \"node\" | \"edge\"; id: string; } | null",
+    "FlowCanvasPoint": "{ x: number; y: number }",
     "PersonDisplaySize": "\"sm\" | \"md\" | \"lg\"",
     "TabsActivationMode": "\"auto\" | \"manual\"",
     "TabsOrientation": "\"horizontal\" | \"vertical\"",

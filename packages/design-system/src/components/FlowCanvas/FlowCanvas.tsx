@@ -570,6 +570,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         setSelection({ type: 'node', id });
       }
       if (readOnly) return;
+      // One drag at a time: a second pointer going down mid-gesture (second
+      // finger on this or another node) must not overwrite dragState — that
+      // would orphan the first gesture (no commit) and snap it back on the
+      // second pointer's tap-release.
+      if (dragState.current) return;
       const node = nodeById.get(id);
       if (!node) return;
       const start = node.position ??
