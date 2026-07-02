@@ -87,7 +87,10 @@ export function Demo() {
         onNodeMove={(id, position) =>
           setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, position } : n)))
         }
-        onNodeDelete={(id) => setNodes((prev) => prev.filter((n) => n.id !== id))}
+        onNodeDelete={(id) => {
+          setNodes((prev) => prev.filter((n) => n.id !== id));
+          setEdges((prev) => prev.filter((e) => e.from !== id && e.to !== id));
+        }}
         onEdgeCreate={(from, to) =>
           setEdges((prev) => [...prev, { id: crypto.randomUUID(), from, to }])
         }
