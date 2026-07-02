@@ -127,8 +127,10 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
 .node[data-selected='true'] {
   // Four-value form: highlight three sides but keep the left accent stripe on
   // the node's own color — selection must not erase per-node identity.
+  // Deliberately NO ring here: the glow ring is reserved for keyboard focus
+  // (:focus-visible above), so mouse clicks don't read as focus outlines —
+  // the accent border alone marks the selection.
   border-color: var(--color-accent) var(--color-accent) var(--color-accent) var(--flow-node-color);
-  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
 }
 
 .node[data-dragging='true'] {
