@@ -301,6 +301,12 @@
     ],
     "composedBy": []
   },
+  "FlowCanvas": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "FormRow": {
     "tier": "composition",
     "cluster": "Forms",

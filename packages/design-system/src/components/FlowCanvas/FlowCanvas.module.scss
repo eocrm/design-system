@@ -1,0 +1,10 @@
+// PLACEHOLDER — replaced by the real FlowCanvas styles (Task 7 of
+// docs/superpowers/plans/2026-07-02-flowcanvas.md). Exists so the
+// structure meta-test's four-file invariant holds at every commit.
+
+.root {
+  // `relative` is allowed by Rule 4 as an internal child anchor: the real
+  // implementation absolutely positions nodes over an SVG edge underlay.
+  position: relative;
+  overflow: hidden;
+}

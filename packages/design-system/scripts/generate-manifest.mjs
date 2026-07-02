@@ -87,6 +87,7 @@ const CLUSTERS = {
   ErrorState: 'Display',
   IconTile: 'Display',
   FilterChip: 'Display',
+  FlowCanvas: 'Display',
   Kbd: 'Display',
   Pagination: 'Display',
   PersonDisplay: 'Display',
