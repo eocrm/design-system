@@ -37,6 +37,13 @@
   left: 0;
   overflow: visible;
   pointer-events: none;
+
+  // The global reset clamps `svg { max-width: 100% }` — and this svg's
+  // containing block (.stage) is a zero-width absolute anchor, so the clamp
+  // resolves to 0. A zero-width SVG viewport DISABLES RENDERING per spec:
+  // without this override no edge ever paints in a real browser (jsdom
+  // applies no CSS, so unit tests cannot catch it).
+  max-width: none;
 }
 
 .edgePath {
