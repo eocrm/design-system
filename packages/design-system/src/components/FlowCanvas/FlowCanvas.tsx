@@ -67,15 +67,64 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Generic node-edge graph editor primitive: pan/zoom canvas, nodes over a
- * bezier-edge SVG underlay, single selection, and intent callbacks. The
- * canvas never mutates consumer data — every user gesture surfaces as an
- * `on*` event for the consumer to apply.
+ * A pan/zoom canvas for directed node-edge diagrams — the primitive behind
+ * visual workflow builders. Nodes are draggable cards with a colored accent
+ * bar and an adornment slot; edges are directed bezier curves with an
+ * optional mid-edge chip slot. The canvas is events-only: it renders the
+ * `nodes`/`edges` you pass and emits intent callbacks (`onNodeCreate`,
+ * `onEdgeCreate`, …) — it never mutates data, so wire the callbacks to your
+ * own state or server mutations and re-render.
+ *
+ * Nodes without `position` are auto-laid-out (layered, left → right) and stay
+ * draggable for the session. Full keyboard support: arrows rove between
+ * nodes, E cycles a node's connections, C starts a keyboard connect mode,
+ * Shift+arrows nudge, +/−/0 zoom and fit, Ctrl+arrows pan.
  *
  * @remarks
- * Under construction on this branch: static rendering is in place; pan/zoom,
- * dragging, connecting, and keyboard interactions land in follow-up tasks.
- * Full usage docs arrive with the final task.
+ * When NOT to use:
+ * - Large graphs (100+ nodes) — there is no virtualization; rendering and
+ *   auto-layout are O(n·e) per change.
+ * - Column/list reordering — use `Kanban` or `Sortable`; this is a 2D canvas,
+ *   not a sortable list.
+ * - Undirected or free-form drawing (mind maps, whiteboards) — edges here are
+ *   directed with arrowheads and the interaction model assumes a digraph.
+ * - As the only editing surface for critical flows — keep an accessible
+ *   form-based alternative for complex attribute editing; the canvas's inline
+ *   surface is selection + spatial arrangement only, editors belong to the
+ *   consumer (anchor modals/popovers via the open callbacks).
+ * - Rewiring an existing edge's endpoints by dragging — not supported;
+ *   delete + recreate instead.
+ *
+ * @example
+ * ```tsx
+ * const [nodes, setNodes] = useState<FlowCanvasNode[]>([
+ *   { id: 'open', label: 'Open', color: '#0052CC', adornment: <Badge>Initial</Badge> },
+ *   { id: 'done', label: 'Done', color: '#1F845A' },
+ * ]);
+ * const [edges, setEdges] = useState<FlowCanvasEdge[]>([
+ *   { id: 't1', from: 'open', to: 'done', label: <Badge tone="purple">Guard</Badge> },
+ * ]);
+ *
+ * <div style={{ height: 480 }}>
+ *   <FlowCanvas
+ *     nodes={nodes}
+ *     edges={edges}
+ *     onEdgeCreate={(from, to) =>
+ *       setEdges((prev) => [...prev, { id: crypto.randomUUID(), from, to }])
+ *     }
+ *     onNodeMove={(id, position) =>
+ *       setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, position } : n)))
+ *     }
+ *     onNodeOpen={(id) => openStateModal(id)}
+ *   />
+ * </div>
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Read-only diagram (record page): no editing intents, still zoomable.
+ * <FlowCanvas nodes={nodes} edges={edges} readOnly aria-label="Deal workflow" />
+ * ```
  */
 export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function FlowCanvas(
   {
