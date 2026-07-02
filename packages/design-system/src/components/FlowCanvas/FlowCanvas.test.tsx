@@ -1,4 +1,5 @@
 import { createRef } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { FlowCanvas } from './FlowCanvas';
 import type { FlowCanvasEdge, FlowCanvasNode } from './types';
@@ -225,6 +226,87 @@ describe('FlowCanvas viewport', () => {
     fireEvent.wheel(root, { deltaX: 1, deltaY: 3, deltaMode: 1 });
     expect(getStage(container).style.transform).toContain('translate(-16px, -48px)');
   });
+
+  it('leaves ctrl/cmd +/-/0 (the browser page-zoom shortcuts) alone', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    // fireEvent returns false when preventDefault was called — these must
+    // stay uncancelled so the browser's own zoom (WCAG 1.4.4) still works.
+    expect(fireEvent.keyDown(root, { key: '+', ctrlKey: true })).toBe(true);
+    expect(fireEvent.keyDown(root, { key: '=', metaKey: true })).toBe(true);
+    expect(fireEvent.keyDown(root, { key: '-', ctrlKey: true })).toBe(true);
+    expect(fireEvent.keyDown(root, { key: '0', metaKey: true })).toBe(true);
+    expect(getStage(container).style.transform).toBe('translate(0px, 0px) scale(1)');
+  });
+
+  it('pointercancel aborts a pending pan without clearing the selection', () => {
+    render(
+      <FlowCanvas nodes={NODES} edges={EDGES} defaultSelection={{ type: 'node', id: 'open' }} />,
+    );
+    const root = screen.getByRole('application');
+    // Press on empty canvas, then the system aborts the gesture (palm
+    // rejection, OS interruption) — the selection must survive, silently.
+    fireEvent.pointerDown(root, { clientX: 100, clientY: 100, pointerId: 1, button: 0 });
+    fireEvent.pointerCancel(root, { pointerId: 1 });
+    expect(screen.getByLabelText('Open')).toHaveAttribute('data-selected');
+    expect(screen.getByRole('status').textContent).toBe('');
+  });
+
+  it('pointercancel mid-pan drops the panning cursor class', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    fireEvent.pointerDown(root, { clientX: 100, clientY: 100, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(root, { clientX: 130, clientY: 110, pointerId: 1 });
+    expect(root.className).toMatch(/rootPanning/);
+    fireEvent.pointerCancel(root, { pointerId: 1 });
+    expect(root.className).not.toMatch(/rootPanning/);
+  });
+
+  it('composes consumer pointer/key handlers; preventDefault opts out of canvas handling', () => {
+    const onPointerDown = vi.fn();
+    const onKeyDown = vi.fn((event: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (event.key === '+') event.preventDefault();
+    });
+    const { container } = render(
+      <FlowCanvas nodes={NODES} edges={[]} onPointerDown={onPointerDown} onKeyDown={onKeyDown} />,
+    );
+    const root = screen.getByRole('application');
+    fireEvent.pointerDown(root, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    expect(onPointerDown).toHaveBeenCalledTimes(1);
+    fireEvent.pointerUp(root, { pointerId: 1 });
+    root.focus();
+    // Consumer preventDefault on '+' → the canvas must not zoom.
+    fireEvent.keyDown(root, { key: '+' });
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+    expect(getStage(container).style.transform).toBe('translate(0px, 0px) scale(1)');
+    // Unprevented '-' still reaches the canvas zoom.
+    fireEvent.keyDown(root, { key: '-' });
+    expect(getStage(container).style.transform).toContain('scale(0.83');
+  });
+
+  it('consumer preventDefault on pointerup skips the selection clear but still ends the pan', () => {
+    const onPointerUp = vi.fn((event: ReactPointerEvent<HTMLDivElement>) => {
+      event.preventDefault();
+    });
+    const { container } = render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultSelection={{ type: 'node', id: 'open' }}
+        onPointerUp={onPointerUp}
+      />,
+    );
+    const root = screen.getByRole('application');
+    // Press-without-move would normally clear the selection on release.
+    fireEvent.pointerDown(root, { clientX: 100, clientY: 100, pointerId: 1, button: 0 });
+    fireEvent.pointerUp(root, { clientX: 100, clientY: 100, pointerId: 1 });
+    expect(onPointerUp).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText('Open')).toHaveAttribute('data-selected');
+    // But the gesture is over: a later move must not pan (no stuck pan state).
+    fireEvent.pointerMove(root, { clientX: 200, clientY: 200, pointerId: 1 });
+    expect(getStage(container).style.transform).toBe('translate(0px, 0px) scale(1)');
+  });
 });
 
 // jsdom reports 0x0 rects, so everything above exercises the degenerate
@@ -366,6 +448,59 @@ describe('FlowCanvas viewport geometry (measured 800x600 root)', () => {
         for (const o of rootObservers) o.cb([], o as unknown as ResizeObserver);
       });
       expect(getStage(container).style.transform).toBe('translate(170px, 280px) scale(1)');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('re-applies the mount fit once when real node measurements replace the estimates', () => {
+    // The mount fit necessarily runs before ResizeObserver delivers node
+    // sizes, so it uses ESTIMATED_NODE_SIZE rects. When the first real
+    // measurements shift the bounds, the fit must correct itself once.
+    interface ObserverEntry {
+      cb: ResizeObserverCallback;
+      targets: Element[];
+    }
+    const observers: ObserverEntry[] = [];
+    class MockResizeObserver {
+      private entry: ObserverEntry;
+      constructor(cb: ResizeObserverCallback) {
+        this.entry = { cb, targets: [] };
+        observers.push(this.entry);
+      }
+      observe(el: Element) {
+        this.entry.targets.push(el);
+      }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal('ResizeObserver', MockResizeObserver);
+    try {
+      const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+      const root = screen.getByRole('application');
+      mockRootRect(root, 800, 600);
+      const rootObservers = observers.filter((o) => o.targets.includes(root));
+      act(() => {
+        for (const o of rootObservers) o.cb([], o as unknown as ResizeObserver);
+      });
+      // Estimated fit: 160x40 nodes at x=0/x=300 → bounds 460x40 at (0, 0).
+      expect(getStage(container).style.transform).toBe('translate(170px, 280px) scale(1)');
+
+      // Real measurements arrive: both nodes are 300x40 → bounds 600x40.
+      for (const label of ['Open', 'Done']) {
+        const el = screen.getByLabelText(label);
+        Object.defineProperty(el, 'offsetWidth', { value: 300, configurable: true });
+        Object.defineProperty(el, 'offsetHeight', { value: 40, configurable: true });
+      }
+      const nodeObservers = observers.filter((o) =>
+        o.targets.includes(screen.getByLabelText('Open')),
+      );
+      expect(nodeObservers.length).toBeGreaterThan(0);
+      act(() => {
+        for (const o of nodeObservers) o.cb([], o as unknown as ResizeObserver);
+      });
+      // z stays 1 (600 < 800-64); tx re-centers: (800-600)/2 = 100.
+      expect(getStage(container).style.transform).toBe('translate(100px, 280px) scale(1)');
     } finally {
       vi.unstubAllGlobals();
     }

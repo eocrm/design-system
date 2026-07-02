@@ -87,6 +87,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     readOnly = false,
     className,
     'aria-describedby': ariaDescribedby,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerCancel,
+    onKeyDown,
     ...rest
   },
   ref,
@@ -204,25 +209,34 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   // it did (a 0x0 root is a no-op), so when the canvas mounts hidden — Modal
   // not yet open, inactive Tab, display: none panel — we retry on the root's
   // first non-zero measurement instead of permanently skipping the fit.
-  const didFit = useRef(false);
+  // The mount fit necessarily runs before ResizeObserver delivers node sizes,
+  // so its bounds come from ESTIMATED_NODE_SIZE rects ('estimated'); when the
+  // first real measurements land a frame later and shift the bounds, the fit
+  // re-applies once to correct itself ('done').
+  const fitState = useRef<'pending' | 'estimated' | 'done'>('pending');
+  const hasMeasuredSizes = sizes.size > 0;
   useEffect(() => {
-    if (didFit.current || !contentBounds) return;
+    if (fitState.current === 'done' || !contentBounds) return;
+    if (fitState.current === 'estimated') {
+      if (hasMeasuredSizes && fitTo(contentBounds)) fitState.current = 'done';
+      return;
+    }
     if (fitTo(contentBounds)) {
-      didFit.current = true;
+      fitState.current = hasMeasuredSizes ? 'done' : 'estimated';
       return;
     }
     if (typeof ResizeObserver === 'undefined') return; // jsdom — stays unfit
     const el = rootRef.current;
     if (!el) return;
     const observer = new ResizeObserver(() => {
-      if (!didFit.current && fitTo(contentBounds)) {
-        didFit.current = true;
+      if (fitState.current === 'pending' && fitTo(contentBounds)) {
+        fitState.current = hasMeasuredSizes ? 'done' : 'estimated';
         observer.disconnect();
       }
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [contentBounds, fitTo]);
+  }, [contentBounds, fitTo, hasMeasuredSizes]);
 
   const zoomIn = useCallback(() => {
     zoomBy(ZOOM_STEP);
@@ -259,7 +273,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     );
   };
 
+  // Consumer handlers (composed below) run before the canvas's own gesture
+  // handling; `event.preventDefault()` in a consumer handler opts out of it.
   const handleRootPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    onPointerDown?.(event);
+    if (event.defaultPrevented) return;
     if (event.button !== 0 || !isBackgroundTarget(event.target)) return;
     panState.current = {
       pointerId: event.pointerId,
@@ -274,6 +292,8 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     }
   };
   const handleRootPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    onPointerMove?.(event);
+    if (event.defaultPrevented) return;
     const pan = panState.current;
     if (!pan || event.pointerId !== pan.pointerId) return;
     const dx = event.clientX - pan.startX;
@@ -286,18 +306,33 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     panBy(dx, dy);
   };
   const handleRootPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    onPointerUp?.(event);
     const pan = panState.current;
     if (!pan || event.pointerId !== pan.pointerId) return;
+    // End-of-gesture cleanup always runs (a stuck pan is unrecoverable);
+    // consumer preventDefault() only opts out of click-clears-selection.
     panState.current = null;
     setIsPanning(false);
-    if (!pan.moved) {
+    if (!pan.moved && !event.defaultPrevented) {
       setSelection(null); // click on empty canvas clears selection
       announce(t('flowCanvas.selectionCleared'));
     }
   };
+  const handleRootPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
+    onPointerCancel?.(event);
+    const pan = panState.current;
+    if (!pan || event.pointerId !== pan.pointerId) return;
+    // The system aborted the gesture (palm rejection, OS interruption, pen
+    // leaving range) — drop the pan silently. Unlike pointerup, this is not
+    // a deliberate click, so it must not clear the selection.
+    panState.current = null;
+    setIsPanning(false);
+  };
 
   // Viewport keys; later tasks extend this handler with node/edge keys.
   const handleRootKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    onKeyDown?.(event);
+    if (event.defaultPrevented) return;
     const { key, ctrlKey, metaKey } = event;
     if ((ctrlKey || metaKey) && key.startsWith('Arrow')) {
       event.preventDefault();
@@ -309,6 +344,9 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       else if (key === 'ArrowUp') panBy(0, PAN_STEP);
       return;
     }
+    // Ctrl/Cmd + '+'/'-'/'0' are the browser's page-zoom shortcuts — a WCAG
+    // 1.4.4 resize path. Only the plain (unmodified) keys zoom the canvas.
+    if (ctrlKey || metaKey) return;
     if (key === '+' || key === '=') {
       event.preventDefault();
       zoomIn();
@@ -347,6 +385,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   return (
     // aria-label before {...rest} so consumers can override it; role/tabIndex
     // after so the application-widget contract survives whatever is spread.
+    // Pointer/key handlers are destructured out of the props and composed:
+    // the consumer's handler runs first, and preventDefault() skips the
+    // canvas's own gesture handling (except end-of-gesture state cleanup on
+    // pointerup/pointercancel, which always runs so a pan can't get stuck).
     <div
       aria-label={t('flowCanvas.canvasLabel')}
       {...rest}
@@ -358,7 +400,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       onPointerDown={handleRootPointerDown}
       onPointerMove={handleRootPointerMove}
       onPointerUp={handleRootPointerUp}
-      onPointerCancel={handleRootPointerUp}
+      onPointerCancel={handleRootPointerCancel}
       onKeyDown={handleRootKeyDown}
     >
       <div
