@@ -1404,3 +1404,69 @@ describe('FlowCanvas connections', () => {
     expect(onEdgeCreate).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('FlowCanvas keyboard navigation', () => {
+  it('ArrowRight from the root focuses the top-left node, then moves spatially', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(screen.getByLabelText('Open'));
+    expect(screen.getByRole('status').textContent).toBe('Open, node 1 of 2');
+    fireEvent.keyDown(screen.getByLabelText('Open'), { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(screen.getByLabelText('Done'));
+    expect(screen.getByRole('status').textContent).toBe('Done, node 2 of 2');
+  });
+
+  it('focus selects the node (selection follows focus)', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'ArrowRight' });
+    expect(screen.getByLabelText('Open').getAttribute('data-selected')).toBe('true');
+  });
+
+  it('Home and End jump to first/last node in document order', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'End' });
+    expect(document.activeElement).toBe(screen.getByLabelText('Done'));
+    fireEvent.keyDown(screen.getByLabelText('Done'), { key: 'Home' });
+    expect(document.activeElement).toBe(screen.getByLabelText('Open'));
+  });
+
+  it('E cycles through the focused node’s edges and announces position', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'e' });
+    const edge = screen.getByLabelText('From Open to Done');
+    expect(document.activeElement).toBe(edge);
+    expect(screen.getByRole('status').textContent).toBe('Connection from Open to Done, 1 of 1');
+    // Enter on the focused edge opens it
+  });
+
+  it('Enter on a focused edge fires onEdgeOpen; an arrow returns to the source node', () => {
+    const onEdgeOpen = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={EDGES} onEdgeOpen={onEdgeOpen} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'e' });
+    const edge = screen.getByLabelText('From Open to Done');
+    fireEvent.keyDown(edge, { key: 'Enter' });
+    expect(onEdgeOpen).toHaveBeenCalledWith('t1');
+    fireEvent.keyDown(edge, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(node);
+  });
+
+  it('Delete on a focused edge fires onEdgeDelete', () => {
+    const onEdgeDelete = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={EDGES} onEdgeDelete={onEdgeDelete} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'e' });
+    fireEvent.keyDown(screen.getByLabelText('From Open to Done'), { key: 'Delete' });
+    expect(onEdgeDelete).toHaveBeenCalledWith('t1');
+  });
+});

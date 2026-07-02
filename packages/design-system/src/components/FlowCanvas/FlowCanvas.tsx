@@ -14,7 +14,7 @@ import { computeLayout, ESTIMATED_NODE_SIZE } from './layout';
 import type { NodeSize } from './layout';
 import { edgeGeometry, selfLoopGeometry } from './edgePath';
 import type { Rect } from './edgePath';
-import { nearestInDirection } from './spatialNav';
+import { nearestInDirection, topLeftMost } from './spatialNav';
 import type { NavDirection } from './spatialNav';
 import { FlowControls } from './FlowControls';
 import { FlowEdge } from './FlowEdge';
@@ -102,6 +102,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     onKeyDown,
     onDoubleClick,
     onBlur,
+    onFocusCapture,
     ...rest
   },
   ref,
@@ -563,8 +564,50 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     setIsPanning(false);
   };
 
-  // Viewport + selection-intent keys; later tasks extend this handler with
-  // node/edge navigation keys.
+  // --- roving focus: spatial arrows, Home/End, E edge cycling --------------
+  // The in-flight E-cycle: which node's edges are being cycled and where the
+  // cycle stands. Any node focus (arrow, Home/End, click) resets it.
+  const edgeCycle = useRef<{ nodeId: string; index: number } | null>(null);
+
+  const focusNode = useCallback(
+    (id: string) => {
+      const el = nodeEls.current.get(id);
+      if (!el) return;
+      edgeCycle.current = null;
+      el.focus();
+      const index = nodes.findIndex((n) => n.id === id);
+      announce(
+        t('flowCanvas.nodeFocused', {
+          label: nodeById.get(id)?.label ?? id,
+          index: index + 1,
+          total: nodes.length,
+        }),
+      );
+    },
+    [nodes, nodeById, announce, t],
+  );
+
+  const focusEdge = useCallback(
+    (id: string, index: number, total: number) => {
+      const el = edgeEls.current.get(id);
+      if (!el) return;
+      el.focus();
+      const edge = edges.find((e) => e.id === id);
+      if (edge) {
+        announce(
+          t('flowCanvas.edgeFocused', {
+            from: nodeById.get(edge.from)?.label ?? edge.from,
+            to: nodeById.get(edge.to)?.label ?? edge.to,
+            index,
+            total,
+          }),
+        );
+      }
+    },
+    [edges, nodeById, announce, t],
+  );
+
+  // Viewport, roving-focus, and selection-intent keys.
   const handleRootKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     onKeyDown?.(event);
     if (event.defaultPrevented) return;
@@ -695,6 +738,55 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // Ctrl/Cmd + '+'/'-'/'0' are the browser's page-zoom shortcuts — a WCAG
     // 1.4.4 resize path. Only the plain (unmodified) keys zoom the canvas.
     if (ctrlKey || metaKey) return;
+    // Everything below acts on the FOCUSED node/edge when there is one, and
+    // falls back to the selection (the two are normally in sync via
+    // selection-follows-focus — belt and braces).
+    const focusedNodeId = targetEl.getAttribute('data-flow-node');
+    const focusedEdgeId = targetEl.getAttribute('data-flow-edge');
+    // Plain arrows rove focus spatially (nudge/pan/connect arrows returned above).
+    if (key.startsWith('Arrow')) {
+      event.preventDefault();
+      if (focusedEdgeId && edgeCycle.current) {
+        focusNode(edgeCycle.current.nodeId); // any arrow on an edge returns to its node
+        return;
+      }
+      const direction = key.replace('Arrow', '').toLowerCase() as NavDirection;
+      if (!focusedNodeId) {
+        const first = topLeftMost(rects);
+        if (first) focusNode(first);
+        return;
+      }
+      const next = nearestInDirection(focusedNodeId, rects, direction);
+      if (next) focusNode(next);
+      return;
+    }
+    if (key === 'Home' || key === 'End') {
+      event.preventDefault();
+      const target = key === 'Home' ? nodes[0] : nodes[nodes.length - 1];
+      if (target) focusNode(target.id);
+      return;
+    }
+    // E cycles through the origin node's edges (outgoing first, then
+    // incoming); pressing E on a focused edge steps to the next one.
+    if (key === 'e' || key === 'E') {
+      const originId = focusedNodeId ?? edgeCycle.current?.nodeId;
+      if (!originId) return;
+      event.preventDefault();
+      const attached = [
+        ...edges.filter((e) => e.from === originId),
+        ...edges.filter((e) => e.to === originId && e.from !== originId),
+      ];
+      if (attached.length === 0) return;
+      // A cycle left over from another node (focus moved by click, not
+      // focusNode) must restart at 0, not resume that node's index.
+      const index =
+        edgeCycle.current?.nodeId === originId
+          ? (edgeCycle.current.index + 1) % attached.length
+          : 0;
+      edgeCycle.current = { nodeId: originId, index };
+      focusEdge(attached[index].id, index + 1, attached.length);
+      return;
+    }
     if (key === '+' || key === '=') {
       event.preventDefault();
       zoomIn();
@@ -711,10 +803,17 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       return;
     }
     if (key === 'Delete' || key === 'Backspace') {
-      if (readOnly || !selection) return;
+      if (readOnly) return;
+      const target =
+        focusedNodeId != null
+          ? ({ type: 'node', id: focusedNodeId } as const)
+          : focusedEdgeId != null
+            ? ({ type: 'edge', id: focusedEdgeId } as const)
+            : selection;
+      if (!target) return;
       event.preventDefault();
-      if (selection.type === 'node') onNodeDelete?.(selection.id);
-      else onEdgeDelete?.(selection.id);
+      if (target.type === 'node') onNodeDelete?.(target.id);
+      else onEdgeDelete?.(target.id);
       return;
     }
     if (key === 'Escape') {
@@ -734,11 +833,17 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       return;
     }
     if (key === 'Enter' || key === ' ') {
-      if (!selection) return;
+      const target =
+        focusedNodeId != null
+          ? ({ type: 'node', id: focusedNodeId } as const)
+          : focusedEdgeId != null
+            ? ({ type: 'edge', id: focusedEdgeId } as const)
+            : selection;
+      if (!target) return;
       event.preventDefault();
       // Open stays allowed in readOnly — only create/move/connect/delete are gated.
-      if (selection.type === 'node') onNodeOpen?.(selection.id);
-      else onEdgeOpen?.(selection.id);
+      if (target.type === 'node') onNodeOpen?.(target.id);
+      else onEdgeOpen?.(target.id);
       return;
     }
   };
@@ -850,6 +955,24 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     cancelKeyboardConnect();
   };
 
+  // Selection follows focus: focusing a node/edge (roving arrows, E cycling,
+  // or a browser click-focus) selects it, keeping the two in sync. Re-selects
+  // are guarded like the pointer handlers — useControllableState has no
+  // equality check, so an unguarded set would re-fire onSelectionChange with
+  // a fresh object every time focus lands on the already-selected element.
+  const handleRootFocusCapture = (event: ReactFocusEvent<HTMLDivElement>) => {
+    onFocusCapture?.(event);
+    const el = event.target as HTMLElement;
+    const nodeId = el.getAttribute?.('data-flow-node');
+    const edgeId = el.getAttribute?.('data-flow-edge');
+    const current = selectionRef.current;
+    if (nodeId && !(current?.type === 'node' && current.id === nodeId)) {
+      setSelection({ type: 'node', id: nodeId });
+    } else if (edgeId && !(current?.type === 'edge' && current.id === edgeId)) {
+      setSelection({ type: 'edge', id: edgeId });
+    }
+  };
+
   // Double-click on empty canvas requests a node there. Nodes/edges/chips
   // stopPropagation on their own dblclick, but guard on the target anyway.
   const handleRootDoubleClick = (event: ReactMouseEvent<HTMLDivElement>) => {
@@ -883,6 +1006,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       onKeyDown={handleRootKeyDown}
       onDoubleClick={handleRootDoubleClick}
       onBlur={handleRootBlur}
+      onFocusCapture={handleRootFocusCapture}
     >
       <div
         className={styles.stage}
