@@ -21,11 +21,29 @@ export interface FitBounds {
   height: number;
 }
 
+// Wheel deltas arrive in pixels (Chrome, deltaMode 0), lines (Firefox mouse
+// wheels, deltaMode 1, ~3 per notch), or pages (deltaMode 2). Normalize to
+// pixels so pan/zoom speed matches across browsers.
+const WHEEL_LINE_PX = 16;
+const WHEEL_PAGE_PX = 800;
+const wheelDeltaToPixels = (delta: number, deltaMode: number): number => {
+  if (deltaMode === 1) return delta * WHEEL_LINE_PX;
+  if (deltaMode === 2) return delta * WHEEL_PAGE_PX;
+  return delta;
+};
+
+// Continuous ctrl/cmd-wheel zoom: one mouse notch (~100px) multiplies the
+// zoom by ZOOM_STEP, while a trackpad pinch (a rapid stream of small
+// fractional ctrlKey deltas) scales proportionally per event instead of
+// slamming a full step each time.
+const WHEEL_ZOOM_SENSITIVITY = Math.log(ZOOM_STEP) / 100;
+
 /**
  * Pan/zoom state for the canvas stage. Wheel: plain scroll pans, ctrl/cmd
  * zooms toward the cursor (native non-passive listener — React's onWheel
- * can't preventDefault reliably). Fit is a no-op when the root has no
- * measurable size (jsdom, display: none).
+ * can't preventDefault reliably). `fitTo` returns whether it applied — it's
+ * a no-op returning `false` when the root or bounds have no measurable size
+ * (jsdom, display: none), so callers can retry once measurable.
  */
 export function useViewport(rootRef: RefObject<HTMLDivElement | null>) {
   const [viewport, setViewport] = useState<Viewport>({ tx: 0, ty: 0, z: 1 });
@@ -52,10 +70,10 @@ export function useViewport(rootRef: RefObject<HTMLDivElement | null>) {
   );
 
   const fitTo = useCallback(
-    (bounds: FitBounds | null) => {
+    (bounds: FitBounds | null): boolean => {
       const rect = rootRef.current?.getBoundingClientRect();
-      if (!bounds || !rect || rect.width === 0 || rect.height === 0) return;
-      if (bounds.width === 0 || bounds.height === 0) return;
+      if (!bounds || !rect || rect.width === 0 || rect.height === 0) return false;
+      if (bounds.width === 0 || bounds.height === 0) return false;
       const pad = 32;
       const z = Math.min(
         1,
@@ -69,6 +87,7 @@ export function useViewport(rootRef: RefObject<HTMLDivElement | null>) {
         ty: (rect.height - bounds.height * z) / 2 - bounds.y * z,
         z,
       });
+      return true;
     },
     [rootRef],
   );
@@ -84,13 +103,15 @@ export function useViewport(rootRef: RefObject<HTMLDivElement | null>) {
     if (!el) return;
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
+      const deltaX = wheelDeltaToPixels(event.deltaX, event.deltaMode);
+      const deltaY = wheelDeltaToPixels(event.deltaY, event.deltaMode);
       if (event.ctrlKey || event.metaKey) {
-        zoomByRef.current(event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP, {
+        zoomByRef.current(Math.exp(-deltaY * WHEEL_ZOOM_SENSITIVITY), {
           x: event.clientX,
           y: event.clientY,
         });
       } else {
-        panByRef.current(-event.deltaX, -event.deltaY);
+        panByRef.current(-deltaX, -deltaY);
       }
     };
     el.addEventListener('wheel', onWheel, { passive: false });

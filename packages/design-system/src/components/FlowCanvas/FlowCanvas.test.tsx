@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { FlowCanvas } from './FlowCanvas';
 import type { FlowCanvasEdge, FlowCanvasNode } from './types';
 
@@ -189,5 +189,185 @@ describe('FlowCanvas viewport', () => {
     root.focus();
     fireEvent.keyDown(root, { key: 'ArrowRight', ctrlKey: true });
     expect(getStage(container).style.transform).toContain('translate(-40px, 0px)');
+  });
+
+  it('pointerdown on a node does NOT start a background pan', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    // The press lands on a node; it bubbles to the root, whose target check
+    // must reject it — subsequent moves must not pan the stage.
+    fireEvent.pointerDown(screen.getByLabelText('Open'), {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 160, clientY: 140, pointerId: 1 });
+    fireEvent.pointerUp(root, { clientX: 160, clientY: 140, pointerId: 1 });
+    expect(getStage(container).style.transform).toBe('translate(0px, 0px) scale(1)');
+  });
+
+  it('applies the panning cursor class only while dragging, not after release', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    expect(root.className).not.toMatch(/rootPanning/);
+    fireEvent.pointerDown(root, { clientX: 100, clientY: 100, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(root, { clientX: 130, clientY: 110, pointerId: 1 });
+    expect(root.className).toMatch(/rootPanning/);
+    fireEvent.pointerUp(root, { clientX: 130, clientY: 110, pointerId: 1 });
+    expect(root.className).not.toMatch(/rootPanning/);
+  });
+
+  it('normalizes line-based wheel deltas (Firefox deltaMode 1) to pixels', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    // 1 line right, 3 lines down at 16px/line → pan by (-16, -48).
+    fireEvent.wheel(root, { deltaX: 1, deltaY: 3, deltaMode: 1 });
+    expect(getStage(container).style.transform).toContain('translate(-16px, -48px)');
+  });
+});
+
+// jsdom reports 0x0 rects, so everything above exercises the degenerate
+// path. Mocking getBoundingClientRect on the root makes the real geometry —
+// fit centering/scale, zoom clamping, cursor-anchored zoom — testable.
+const mockRootRect = (el: HTMLElement, width: number, height: number) => {
+  el.getBoundingClientRect = () =>
+    ({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: width,
+      bottom: height,
+      width,
+      height,
+      toJSON: () => ({}),
+    }) as DOMRect;
+};
+
+const stageScale = (container: HTMLElement): number =>
+  parseFloat(/scale\(([\d.]+)\)/.exec(getStage(container).style.transform)![1]);
+
+describe('FlowCanvas viewport geometry (measured 800x600 root)', () => {
+  // Node sizes fall back to ESTIMATED_NODE_SIZE (160x40) in jsdom, so with
+  // nodes at x=0 and x=300 the content bounds are 460x40 at (0, 0).
+  it('zoom-to-fit centers the content bounds inside the padded root', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    fireEvent.click(screen.getByLabelText('Zoom to fit'));
+    // z = min(1, (800-64)/460, (600-64)/40) = 1; tx = (800-460)/2; ty = (600-40)/2.
+    expect(getStage(container).style.transform).toBe('translate(170px, 280px) scale(1)');
+  });
+
+  it('zoom-to-fit scales down large content and subtracts the bounds origin', () => {
+    const { container } = render(
+      <FlowCanvas
+        nodes={[
+          { id: 'a', label: 'A', position: { x: 100, y: 50 } },
+          { id: 'b', label: 'B', position: { x: 1412, y: 50 } },
+        ]}
+        edges={[]}
+      />,
+    );
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    fireEvent.click(screen.getByLabelText('Zoom to fit'));
+    // Bounds 1472x40 at (100, 50): z = (800-64)/1472 = 0.5;
+    // tx = (800-736)/2 - 100*0.5 = -18; ty = (600-20)/2 - 50*0.5 = 265.
+    expect(getStage(container).style.transform).toBe('translate(-18px, 265px) scale(0.5)');
+  });
+
+  it('zoom-to-fit clamps at MIN_ZOOM for very large graphs', () => {
+    const { container } = render(
+      <FlowCanvas
+        nodes={[
+          { id: 'a', label: 'A', position: { x: 0, y: 0 } },
+          { id: 'b', label: 'B', position: { x: 10000, y: 0 } },
+        ]}
+        edges={[]}
+      />,
+    );
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    fireEvent.click(screen.getByLabelText('Zoom to fit'));
+    // Raw fit scale would be (800-64)/10160 ≈ 0.072 → clamped to 0.25.
+    expect(getStage(container).style.transform).toContain('scale(0.25)');
+  });
+
+  it('zoom buttons clamp at MAX_ZOOM and MIN_ZOOM', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    for (let i = 0; i < 5; i += 1) fireEvent.click(screen.getByLabelText('Zoom in'));
+    expect(stageScale(container)).toBe(2); // 1.2^4 ≈ 2.07 → clamped
+    for (let i = 0; i < 20; i += 1) fireEvent.click(screen.getByLabelText('Zoom out'));
+    expect(stageScale(container)).toBe(0.25);
+  });
+
+  it('zoom buttons anchor the zoom at the viewport center', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    fireEvent.click(screen.getByLabelText('Zoom in'));
+    // Center (400, 300) stays fixed: t = c - c*z → (-80, -60).
+    expect(getStage(container).style.transform).toBe('translate(-80px, -60px) scale(1.2)');
+  });
+
+  it('ctrl+wheel keeps the canvas point under the cursor stationary', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    fireEvent.wheel(root, { deltaY: -100, ctrlKey: true, clientX: 200, clientY: 150 });
+    // t = c - c*z with c = (200, 150), z = 1.2.
+    expect(getStage(container).style.transform).toBe('translate(-40px, -30px) scale(1.2)');
+    fireEvent.wheel(root, { deltaY: -100, ctrlKey: true, clientX: 200, clientY: 150 });
+    // Same anchor again: the point under the cursor must not drift.
+    expect(getStage(container).style.transform).toBe('translate(-88px, -66px) scale(1.44)');
+  });
+
+  it('trackpad pinch (stream of small ctrl deltas) zooms proportionally, not a full step per event', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    // Ten events of deltaY = -5 total 50px ≈ half a notch → z ≈ 1.2^0.5.
+    for (let i = 0; i < 10; i += 1) {
+      fireEvent.wheel(root, { deltaY: -5, ctrlKey: true, clientX: 400, clientY: 300 });
+    }
+    expect(stageScale(container)).toBeCloseTo(Math.sqrt(1.2), 5);
+    expect(stageScale(container)).toBeLessThan(1.2);
+  });
+
+  it('retries the skipped initial fit once the hidden root becomes measurable', () => {
+    // Simulate mounting inside a hidden container: the root measures 0x0, so
+    // the mount-time fit no-ops; revealing it (first non-zero ResizeObserver
+    // tick) must apply the fit rather than leaving the graph at identity.
+    interface ObserverEntry {
+      cb: ResizeObserverCallback;
+      targets: Element[];
+    }
+    const observers: ObserverEntry[] = [];
+    class MockResizeObserver {
+      private entry: ObserverEntry;
+      constructor(cb: ResizeObserverCallback) {
+        this.entry = { cb, targets: [] };
+        observers.push(this.entry);
+      }
+      observe(el: Element) {
+        this.entry.targets.push(el);
+      }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal('ResizeObserver', MockResizeObserver);
+    try {
+      const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+      const root = screen.getByRole('application');
+      expect(getStage(container).style.transform).toBe('translate(0px, 0px) scale(1)');
+      mockRootRect(root, 800, 600); // the container is revealed
+      const rootObservers = observers.filter((o) => o.targets.includes(root));
+      expect(rootObservers.length).toBeGreaterThan(0);
+      act(() => {
+        for (const o of rootObservers) o.cb([], o as unknown as ResizeObserver);
+      });
+      expect(getStage(container).style.transform).toBe('translate(170px, 280px) scale(1)');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

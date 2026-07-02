@@ -200,12 +200,28 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }, [rects]);
 
-  // Fit once on mount (skipped when the root has no size, e.g. jsdom).
+  // Fit once, as soon as the fit can actually apply. `fitTo` reports whether
+  // it did (a 0x0 root is a no-op), so when the canvas mounts hidden — Modal
+  // not yet open, inactive Tab, display: none panel — we retry on the root's
+  // first non-zero measurement instead of permanently skipping the fit.
   const didFit = useRef(false);
   useEffect(() => {
     if (didFit.current || !contentBounds) return;
-    didFit.current = true;
-    fitTo(contentBounds);
+    if (fitTo(contentBounds)) {
+      didFit.current = true;
+      return;
+    }
+    if (typeof ResizeObserver === 'undefined') return; // jsdom — stays unfit
+    const el = rootRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      if (!didFit.current && fitTo(contentBounds)) {
+        didFit.current = true;
+        observer.disconnect();
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [contentBounds, fitTo]);
 
   const zoomIn = useCallback(() => {
@@ -225,7 +241,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   }, [viewport.z, announce, t]);
 
   // Background pan: press on empty canvas (not node/edge/chip/controls) drags
-  // the viewport; a press-without-move clears the selection.
+  // the viewport; a press-without-move clears the selection. `isPanning`
+  // mirrors `panState.current?.moved` as state because the render output
+  // (cursor class) depends on it — reading the ref during render would leave
+  // a stale grabbing cursor after release.
+  const [isPanning, setIsPanning] = useState(false);
   const panState = useRef<{
     pointerId: number;
     startX: number;
@@ -260,6 +280,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     const dy = event.clientY - pan.startY;
     if (!pan.moved && Math.abs(dx) + Math.abs(dy) < 3) return; // click tolerance
     pan.moved = true;
+    setIsPanning(true);
     pan.startX = event.clientX;
     pan.startY = event.clientY;
     panBy(dx, dy);
@@ -268,6 +289,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     const pan = panState.current;
     if (!pan || event.pointerId !== pan.pointerId) return;
     panState.current = null;
+    setIsPanning(false);
     if (!pan.moved) {
       setSelection(null); // click on empty canvas clears selection
       announce(t('flowCanvas.selectionCleared'));
@@ -332,7 +354,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       role="application"
       tabIndex={0}
       aria-describedby={mergeAriaDescribedby(ariaDescribedby, instructionsId)}
-      className={clsx(styles.root, panState.current?.moved && styles.rootPanning, className)}
+      className={clsx(styles.root, isPanning && styles.rootPanning, className)}
       onPointerDown={handleRootPointerDown}
       onPointerMove={handleRootPointerMove}
       onPointerUp={handleRootPointerUp}
