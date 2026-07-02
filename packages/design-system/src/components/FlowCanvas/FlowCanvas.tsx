@@ -220,8 +220,16 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
 
   // --- viewport: pan/zoom/fit --------------------------------------------
   const { viewport, panBy, zoomBy, fitTo } = useViewport(rootRef);
-  const [announcement, setAnnouncement] = useState('');
-  const announce = useCallback((message: string) => setAnnouncement(message), []);
+  // The nonce forces a DOM mutation even for back-to-back identical messages
+  // (select A, Escape, select B, Escape) — with a plain string, React bails
+  // on the identical state and the live region never re-announces. The nonce
+  // keys a child <span> so the region node itself stays stable (screen
+  // readers can miss announcements when the live region is replaced).
+  const [announcement, setAnnouncement] = useState({ text: '', nonce: 0 });
+  const announce = useCallback(
+    (message: string) => setAnnouncement((prev) => ({ text: message, nonce: prev.nonce + 1 })),
+    [],
+  );
 
   const contentBounds = useMemo(() => {
     if (rects.size === 0) return null;
@@ -612,7 +620,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         {t('flowCanvas.instructions')}
       </div>
       <div role="status" className={styles.srOnly}>
-        {announcement}
+        <span key={announcement.nonce}>{announcement.text}</span>
       </div>
     </div>
   );
