@@ -57,15 +57,20 @@
   stroke: transparent;
   stroke-width: var(--flow-edge-hit-width);
 
-  // Keyboard focus (E-key edge cycling) must stay visible even when the
-  // consumer controls `selection` and pins it elsewhere — selection-follows-
-  // focus cannot flip `data-active` then, so paint the focused hit path
-  // itself instead of relying on the sibling .edgePath's active state.
   &:focus-visible {
     outline: none;
-    stroke: var(--flow-edge-stroke-active);
-    stroke-width: var(--flow-edge-width);
   }
+}
+
+// Keyboard focus (E-key edge cycling) must stay visible even when the
+// consumer controls `selection` and pins it elsewhere — selection-follows-
+// focus cannot flip `data-active` then. Paint the sibling visible path
+// instead of the hit path itself: with `pointer-events: stroke` the hit
+// corridor IS the stroke, so restyling .edgeHit's stroke-width on focus
+// would collapse the clickable target from the wide hit width down to the
+// visible edge width (WCAG 2.5.8 target size).
+g:has(> .edgeHit:focus-visible) > .edgePath {
+  stroke: var(--flow-edge-stroke-active);
 }
 
 .ghostEdge {
