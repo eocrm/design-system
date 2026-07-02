@@ -182,6 +182,7 @@ export const en: Messages = {
     connectCancelled: 'Connection cancelled',
     nodeMoved: ({ label }) => `${label as string} moved`,
     selectionCleared: 'Selection cleared',
+    focusReturned: 'Focus returned to the canvas',
     zoomLevel: ({ percent }) => `Zoom ${percent as number}%`,
   },
   imageCrop: {

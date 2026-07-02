@@ -1469,4 +1469,87 @@ describe('FlowCanvas keyboard navigation', () => {
     fireEvent.keyDown(screen.getByLabelText('From Open to Done'), { key: 'Delete' });
     expect(onEdgeDelete).toHaveBeenCalledWith('t1');
   });
+
+  it('an arrow on a click-focused edge (no E-cycle) returns to the edge source node', () => {
+    // A third node placed top-left-most makes a wrong topLeftMost fall-through detectable.
+    const nodes: FlowCanvasNode[] = [
+      { id: 'far', label: 'Far', position: { x: -500, y: -500 } },
+      ...NODES,
+    ];
+    render(<FlowCanvas nodes={nodes} edges={EDGES} />);
+    const edge = screen.getByLabelText('From Open to Done');
+    edge.focus(); // browsers focus the tabIndex=-1 path on click — no cycle exists
+    fireEvent.keyDown(edge, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(screen.getByLabelText('Open'));
+  });
+
+  it('an arrow on a click-focused edge ignores an E-cycle left on an unrelated node', () => {
+    const nodes: FlowCanvasNode[] = [
+      ...NODES,
+      { id: 'other', label: 'Other', position: { x: 0, y: 300 } },
+    ];
+    const edges: FlowCanvasEdge[] = [
+      { id: 't1', from: 'open', to: 'done' },
+      { id: 't2', from: 'other', to: 'done' },
+    ];
+    render(<FlowCanvas nodes={nodes} edges={edges} />);
+    const open = screen.getByLabelText('Open');
+    open.focus();
+    fireEvent.keyDown(open, { key: 'e' }); // cycle on Open's edges → t1 focused
+    const t2 = screen.getByLabelText('From Other to Done');
+    t2.focus(); // click-focus a DIFFERENT edge; the old cycle is stale
+    fireEvent.keyDown(t2, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(screen.getByLabelText('Other'));
+  });
+});
+
+describe('FlowCanvas focus reclaim after deletion', () => {
+  it('returns focus to the canvas and announces it when the focused node unmounts', () => {
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'ArrowRight' }); // focus Open
+    expect(document.activeElement).toBe(screen.getByLabelText('Open'));
+    fireEvent.keyDown(screen.getByLabelText('Open'), { key: 'Delete' });
+    // The consumer applies the delete intent: the focused node unmounts.
+    rerender(<FlowCanvas nodes={NODES.filter((n) => n.id !== 'open')} edges={[]} />);
+    expect(document.activeElement).toBe(root);
+    expect(screen.getByRole('status').textContent).toBe('Focus returned to the canvas');
+  });
+
+  it('returns focus to the canvas when the focused edge unmounts', () => {
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const root = screen.getByRole('application');
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'e' }); // focus the edge
+    expect(document.activeElement).toBe(screen.getByLabelText('From Open to Done'));
+    fireEvent.keyDown(screen.getByLabelText('From Open to Done'), { key: 'Delete' });
+    rerender(<FlowCanvas nodes={NODES} edges={[]} />);
+    expect(document.activeElement).toBe(root);
+    expect(screen.getByRole('status').textContent).toBe('Focus returned to the canvas');
+  });
+
+  it('does not move focus when an unfocused node unmounts', () => {
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    rerender(<FlowCanvas nodes={NODES.filter((n) => n.id !== 'done')} edges={[]} />);
+    expect(document.activeElement).toBe(screen.getByLabelText('Open'));
+  });
+
+  it('a re-render of the focused node (memo props change, ref re-attach) does not steal focus', () => {
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    // A new node object re-renders the memoized FlowNode, whose inline ref
+    // callback detaches (null) and re-attaches within the same commit.
+    rerender(
+      <FlowCanvas
+        nodes={NODES.map((n) => (n.id === 'open' ? { ...n, color: '#ff0000' } : n))}
+        edges={[]}
+      />,
+    );
+    expect(document.activeElement).toBe(screen.getByLabelText('Open'));
+  });
 });

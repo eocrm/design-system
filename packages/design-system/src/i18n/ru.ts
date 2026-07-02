@@ -184,6 +184,7 @@ export const ru: Messages = {
     connectCancelled: 'Соединение отменено',
     nodeMoved: ({ label }) => `«${label as string}» перемещён`,
     selectionCleared: 'Выделение снято',
+    focusReturned: 'Фокус возвращён на холст',
     zoomLevel: ({ percent }) => `Масштаб ${percent as number}%`,
   },
   imageCrop: {

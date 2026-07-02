@@ -302,6 +302,8 @@ export interface Messages {
     nodeMoved: (params: { label: string }) => string;
     /** Live announcement when the selection is cleared. */
     selectionCleared: string;
+    /** Live announcement when the focused node/edge left the graph and focus returned to the canvas. */
+    focusReturned: string;
     /** Live announcement after zooming. */
     zoomLevel: (params: { percent: number }) => string;
   };

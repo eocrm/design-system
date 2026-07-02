@@ -147,14 +147,42 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const nodeEls = useRef(new Map<string, HTMLDivElement>());
   const edgeEls = useRef(new Map<string, SVGPathElement>());
   const [sizes, setSizes] = useState<Map<string, NodeSize>>(new Map());
-  const registerNodeEl = useCallback((id: string, el: HTMLDivElement | null) => {
-    if (el) nodeEls.current.set(id, el);
-    else nodeEls.current.delete(id);
+  // A ref detach for the element that holds focus is EITHER that element
+  // unmounting (the consumer applied a delete intent — focus is about to
+  // collapse to <body>) OR ref-identity churn on a re-render of a
+  // still-focused node/edge (FlowNode/FlowEdge attach inline ref callbacks,
+  // so every memo re-render detaches and re-attaches within one commit). The
+  // two are indistinguishable here in the mutation phase, so the registers
+  // only raise this flag; the post-commit effect below (see "focus reclaim")
+  // decides — a churned element still holds focus, a deleted one has lost it.
+  const pendingFocusReclaim = useRef(false);
+  const flagFocusReclaim = useCallback((el: Element | undefined) => {
+    if (el && (el === document.activeElement || el.contains(document.activeElement))) {
+      pendingFocusReclaim.current = true;
+    }
   }, []);
-  const registerEdgeEl = useCallback((id: string, el: SVGPathElement | null) => {
-    if (el) edgeEls.current.set(id, el);
-    else edgeEls.current.delete(id);
-  }, []);
+  const registerNodeEl = useCallback(
+    (id: string, el: HTMLDivElement | null) => {
+      if (el) {
+        nodeEls.current.set(id, el);
+      } else {
+        flagFocusReclaim(nodeEls.current.get(id));
+        nodeEls.current.delete(id);
+      }
+    },
+    [flagFocusReclaim],
+  );
+  const registerEdgeEl = useCallback(
+    (id: string, el: SVGPathElement | null) => {
+      if (el) {
+        edgeEls.current.set(id, el);
+      } else {
+        flagFocusReclaim(edgeEls.current.get(id));
+        edgeEls.current.delete(id);
+      }
+    },
+    [flagFocusReclaim],
+  );
 
   const nodeIdsKey = nodes.map((n) => n.id).join(' ');
   useEffect(() => {
@@ -607,6 +635,34 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     [edges, nodeById, announce, t],
   );
 
+  // Focus reclaim: when the focused node/edge unmounts (the consumer applied
+  // a delete intent), the browser drops focus to <body> — the keyboard user
+  // is silently ejected from the application widget. The registers flag that
+  // unregister; this post-commit effect returns focus to the canvas root and
+  // announces the move. No dependency array — the flag can only be raised
+  // during a commit, and the check costs a ref read.
+  useEffect(() => {
+    if (!pendingFocusReclaim.current) return;
+    pendingFocusReclaim.current = false;
+    const active = document.activeElement;
+    // Focus still on a live element? Then the detach was ref-identity churn
+    // on a re-render (the node/edge kept focus), or the consumer already
+    // moved focus deliberately (e.g. into a confirm dialog) — don't steal it.
+    // (`isConnected` guards jsdom, which can leave activeElement detached.)
+    if (
+      active &&
+      active !== document.body &&
+      active !== document.documentElement &&
+      active.isConnected
+    ) {
+      return;
+    }
+    const root = rootRef.current;
+    if (!root || !root.isConnected) return; // the whole canvas unmounted
+    root.focus();
+    announce(t('flowCanvas.focusReturned'));
+  });
+
   // Viewport, roving-focus, and selection-intent keys.
   const handleRootKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     onKeyDown?.(event);
@@ -746,9 +802,21 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // Plain arrows rove focus spatially (nudge/pan/connect arrows returned above).
     if (key.startsWith('Arrow')) {
       event.preventDefault();
-      if (focusedEdgeId && edgeCycle.current) {
-        focusNode(edgeCycle.current.nodeId); // any arrow on an edge returns to its node
-        return;
+      if (focusedEdgeId) {
+        // Any arrow on an edge returns to a node: the E-cycle's origin when
+        // the cycle belongs to this edge (also right for incoming edges);
+        // otherwise — an edge focused by pointer click has no cycle, and a
+        // cycle left over from an unrelated node is stale — the edge's source.
+        const edge = edges.find((e) => e.id === focusedEdgeId);
+        const cycleOrigin = edgeCycle.current?.nodeId;
+        const originId =
+          edge && cycleOrigin != null && (edge.from === cycleOrigin || edge.to === cycleOrigin)
+            ? cycleOrigin
+            : edge?.from;
+        if (originId) {
+          focusNode(originId);
+          return;
+        }
       }
       const direction = key.replace('Arrow', '').toLowerCase() as NavDirection;
       if (!focusedNodeId) {
