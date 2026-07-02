@@ -15,6 +15,12 @@ describe('nearestInDirection', () => {
   it('finds the node below', () => {
     expect(nearestInDirection('a', rects, 'down')).toBe('d');
   });
+  it('finds the node above', () => {
+    expect(nearestInDirection('d', rects, 'up')).toBe('a');
+  });
+  it('finds the node to the left', () => {
+    expect(nearestInDirection('b', rects, 'left')).toBe('a');
+  });
   it('prefers the aligned candidate over a closer diagonal one', () => {
     expect(nearestInDirection('d', rects, 'right')).toBe('c');
   });
