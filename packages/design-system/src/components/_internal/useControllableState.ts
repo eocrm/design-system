@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import type { Updater } from './types';
+
+/** New value or a function of the previous value — same shape as a React state setter argument. */
+export type Updater<T> = T | ((prev: T) => T);
 
 /**
  * Radix-style controlled/uncontrolled state hook.

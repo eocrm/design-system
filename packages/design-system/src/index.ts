@@ -125,6 +125,15 @@ export type {
   FilterChipValueProps,
 } from './components/FilterChip';
 
+export { FlowCanvas } from './components/FlowCanvas';
+export type {
+  FlowCanvasProps,
+  FlowCanvasNode,
+  FlowCanvasEdge,
+  FlowCanvasSelection,
+  FlowCanvasPoint,
+} from './components/FlowCanvas';
+
 export { PersonDisplay } from './components/PersonDisplay';
 export type {
   PersonDisplayProps,

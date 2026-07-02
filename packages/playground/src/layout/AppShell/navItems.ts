@@ -88,6 +88,7 @@ import {
   Component,
   Braces,
   Smile,
+  Workflow,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -218,6 +219,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/empty-state', label: 'EmptyState', icon: Inbox, end: false },
       { to: '/components/error-state', label: 'ErrorState', icon: TriangleAlert, end: false },
       { to: '/components/filter-chip', label: 'FilterChip', icon: Filter, end: false },
+      { to: '/components/flow-canvas', label: 'FlowCanvas', icon: Workflow, end: false },
       { to: '/components/icon-tile', label: 'IconTile', icon: Shapes, end: false },
       { to: '/components/image', label: 'Image', icon: ImageIcon, end: false },
       { to: '/components/media-tile', label: 'MediaTile', icon: GalleryThumbnails, end: false },

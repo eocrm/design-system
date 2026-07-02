@@ -162,6 +162,33 @@ export const ru: Messages = {
     uploadingAriaLabel: ({ name }) => `Загрузка ${name as string}`,
     removeAriaLabel: ({ name }) => `Удалить ${name as string}`,
   },
+  flowCanvas: {
+    canvasLabel: 'Холст диаграммы',
+    instructions:
+      'Используйте стрелки для перехода между узлами, Home и End — первый и последний узел. Enter — открыть узел, Delete — удалить, Shift со стрелкой — переместить. E — перебор связей узла, C — новая связь, Escape — отмена или снятие выделения. Масштаб — плюс и минус, 0 — вписать диаграмму, Control или Command со стрелкой — панорамирование.',
+    instructionsReadOnly:
+      'Используйте стрелки для перехода между узлами, Home и End — первый и последний узел. Enter — открыть узел, E — перебор связей узла, Escape — снятие выделения. Масштаб — плюс и минус, 0 — вписать диаграмму, Control или Command со стрелкой — панорамирование.',
+    nodeRole: 'узел',
+    edgeRole: 'связь',
+    zoomIn: 'Приблизить',
+    zoomOut: 'Отдалить',
+    zoomToFit: 'Показать всё',
+    edgeLabel: ({ from, to }) => `Из «${from as string}» в «${to as string}»`,
+    nodeFocused: ({ label, index, total }) =>
+      `${label as string}, узел ${index as number} из ${total as number}`,
+    edgeFocused: ({ from, to, index, total }) =>
+      `Связь из «${from as string}» в «${to as string}», ${index as number} из ${total as number}`,
+    connectStart: ({ label }) =>
+      `Соединение из «${label as string}». Стрелки — выбор цели, Enter — подтвердить, Escape — отмена.`,
+    connectTarget: ({ label }) => `Цель: ${label as string}`,
+    connectNoTarget: 'В этом направлении нет цели',
+    connectDone: ({ from, to }) => `Соединено: «${from as string}» → «${to as string}»`,
+    connectCancelled: 'Соединение отменено',
+    nodeMoved: ({ label }) => `«${label as string}» перемещён`,
+    selectionCleared: 'Выделение снято',
+    focusReturned: 'Фокус возвращён на холст',
+    zoomLevel: ({ percent }) => `Масштаб ${percent as number}%`,
+  },
   imageCrop: {
     zoom: 'Масштаб',
   },

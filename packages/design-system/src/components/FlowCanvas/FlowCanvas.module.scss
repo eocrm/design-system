@@ -1,0 +1,210 @@
+@use './FlowCanvas.tokens';
+@use '../../styles/mixins' as *;
+
+.root {
+  // `relative` is allowed by Rule 4 as an internal child anchor: nodes are
+  // absolutely positioned over an SVG edge underlay inside the stage.
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--flow-canvas-bg);
+  background-image: radial-gradient(var(--flow-canvas-grid-dot) 1px, transparent 1px);
+  background-size: var(--flow-canvas-grid-size) var(--flow-canvas-grid-size);
+  border-radius: var(--flow-node-radius);
+  touch-action: none; // claim touch drags so the page doesn't scroll instead
+  cursor: grab;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.rootPanning {
+  cursor: grabbing;
+}
+
+.stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+
+  // The global reset clamps `svg { max-width: 100% }` — and this svg's
+  // containing block (.stage) is a zero-width absolute anchor, so the clamp
+  // resolves to 0. A zero-width SVG viewport DISABLES RENDERING per spec:
+  // without this override no edge ever paints in a real browser (jsdom
+  // applies no CSS, so unit tests cannot catch it).
+  max-width: none;
+}
+
+.edgePath {
+  fill: none;
+  pointer-events: none;
+  stroke: var(--flow-edge-stroke);
+  stroke-width: var(--flow-edge-width);
+}
+
+.edgePath[data-active='true'] {
+  stroke: var(--flow-edge-stroke-active);
+}
+
+.edgeHit {
+  fill: none;
+  cursor: pointer;
+  pointer-events: stroke;
+  stroke: transparent;
+  stroke-width: var(--flow-edge-hit-width);
+
+  // Keep the 24px corridor in SCREEN pixels regardless of stage zoom —
+  // without this, fit-zoom < 1 shrinks the only pointer target of an
+  // unlabeled edge below the WCAG 2.5.8 minimum.
+  vector-effect: non-scaling-stroke;
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+// Keyboard focus (E-key edge cycling) must stay visible even when the
+// consumer controls `selection` and pins it elsewhere — selection-follows-
+// focus cannot flip `data-active` then. Paint the sibling visible path
+// instead of the hit path itself: with `pointer-events: stroke` the hit
+// corridor IS the stroke, so restyling .edgeHit's stroke-width on focus
+// would collapse the clickable target from the wide hit width down to the
+// visible edge width (WCAG 2.5.8 target size).
+g:has(> .edgeHit:focus-visible) > .edgePath {
+  stroke: var(--flow-edge-stroke-active);
+}
+
+.markerFill {
+  fill: var(--flow-edge-stroke);
+}
+
+.markerFillActive {
+  fill: var(--flow-edge-stroke-active);
+}
+
+.ghostEdge {
+  fill: none;
+  pointer-events: none;
+  stroke: var(--flow-edge-stroke-active);
+  stroke-dasharray: var(--space-1) var(--space-1);
+  stroke-width: var(--flow-edge-width);
+}
+
+.node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--flow-node-gap);
+  padding: var(--flow-node-padding-y) var(--flow-node-padding-x);
+  background: var(--flow-node-bg);
+  border: var(--border-width) solid var(--flow-node-border);
+  border-left: var(--flow-node-accent-width) solid var(--flow-node-color);
+  border-radius: var(--flow-node-radius);
+  box-shadow: var(--flow-node-shadow);
+  color: var(--color-fg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.node[data-selected='true'] {
+  // Four-value form: highlight three sides but keep the left accent stripe on
+  // the node's own color — selection must not erase per-node identity.
+  // Deliberately NO ring here: the glow ring is reserved for keyboard focus
+  // (:focus-visible above), so mouse clicks don't read as focus outlines —
+  // the accent border alone marks the selection.
+  border-color: var(--color-accent) var(--color-accent) var(--color-accent) var(--flow-node-color);
+}
+
+.node[data-dragging='true'] {
+  cursor: grabbing;
+  box-shadow: var(--shadow-lg);
+}
+
+.node[data-connect-target='true'] {
+  box-shadow: 0 0 0 var(--ring-width) var(--ring-success);
+}
+
+.nodeLabel {
+  white-space: nowrap;
+}
+
+.handle {
+  // The span is the (invisible) 24px pointer target — WCAG 2.5.8: this is
+  // the only pointer path that creates an edge, and a missed press starts a
+  // node drag instead. The visible dot is the ::after.
+  position: absolute;
+  top: 50%;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--flow-handle-hit-size);
+  height: var(--flow-handle-hit-size);
+  cursor: crosshair;
+  opacity: var(--opacity-hidden);
+  transform: translate(50%, -50%);
+  transition: opacity var(--transition-fast);
+}
+
+.handle::after {
+  content: '';
+  width: var(--flow-handle-size);
+  height: var(--flow-handle-size);
+  background: var(--flow-handle-bg);
+  border-radius: var(--radius-full);
+}
+
+.node:hover .handle,
+.node:focus-visible .handle {
+  opacity: var(--opacity-visible);
+}
+
+.chip {
+  position: absolute;
+  padding: var(--flow-chip-padding-y) var(--flow-chip-padding-x);
+  background: var(--flow-chip-bg);
+  border: var(--border-width) solid var(--flow-chip-border);
+  border-radius: var(--flow-chip-radius);
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  user-select: none;
+}
+
+.controls {
+  position: absolute;
+  bottom: var(--space-3);
+  left: var(--space-3);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.srOnly {
+  @include visually-hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handle {
+    transition: none;
+  }
+}

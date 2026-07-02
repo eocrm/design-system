@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useControllableState } from './useControllableState';
+import { useControllableState } from '../_internal/useControllableState';
 import type {
   ColumnOrderState,
   ColumnPinningState,

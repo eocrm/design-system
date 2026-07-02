@@ -34,6 +34,7 @@ export type ComponentName =
   | 'Field'
   | 'FileUpload'
   | 'FilterChip'
+  | 'FlowCanvas'
   | 'FormRow'
   | 'FormSection'
   | 'IconTile'

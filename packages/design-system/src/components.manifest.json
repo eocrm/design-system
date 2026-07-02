@@ -68,6 +68,7 @@
       "DataTable",
       "Drawer",
       "FileUpload",
+      "FlowCanvas",
       "Image",
       "LiquidEditor",
       "Modal",
@@ -298,6 +299,14 @@
       "Badge",
       "Dot",
       "Text"
+    ],
+    "composedBy": []
+  },
+  "FlowCanvas": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Button"
     ],
     "composedBy": []
   },
