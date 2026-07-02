@@ -1,0 +1,26 @@
+// Component tokens for FlowCanvas. Every token defaults to a primitive so the
+// resolved values match the global theme; consumers can retheme by overriding
+// these custom properties.
+:root {
+  --flow-canvas-bg: var(--color-bg-sunken);
+  --flow-canvas-grid-dot: var(--color-border);
+  --flow-canvas-grid-size: var(--space-4);
+  --flow-node-bg: var(--color-bg);
+  --flow-node-border: var(--color-border);
+  --flow-node-radius: var(--radius-md);
+  --flow-node-shadow: var(--shadow-sm);
+  --flow-node-accent-width: var(--space-1);
+  --flow-node-color: var(--color-accent);
+  --flow-node-gap: var(--space-2);
+  --flow-node-padding-y: var(--space-2);
+  --flow-node-padding-x: var(--space-3);
+  --flow-edge-stroke: var(--color-fg-subtle);
+  --flow-edge-stroke-active: var(--color-accent);
+  --flow-edge-width: var(--border-width-emphasis);
+  --flow-edge-hit-width: var(--space-3);
+  --flow-chip-bg: var(--color-bg);
+  --flow-chip-border: var(--color-border);
+  --flow-chip-radius: var(--radius-full);
+  --flow-handle-size: var(--space-3);
+  --flow-handle-bg: var(--color-accent);
+}

@@ -1,10 +1,155 @@
-// PLACEHOLDER — replaced by the real FlowCanvas styles (Task 7 of
-// docs/superpowers/plans/2026-07-02-flowcanvas.md). Exists so the
-// structure meta-test's four-file invariant holds at every commit.
+@use './FlowCanvas.tokens';
+@use '../../styles/mixins' as *;
 
 .root {
-  // `relative` is allowed by Rule 4 as an internal child anchor: the real
-  // implementation absolutely positions nodes over an SVG edge underlay.
+  // `relative` is allowed by Rule 4 as an internal child anchor: nodes are
+  // absolutely positioned over an SVG edge underlay inside the stage.
   position: relative;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
+  background-color: var(--flow-canvas-bg);
+  background-image: radial-gradient(var(--flow-canvas-grid-dot) 1px, transparent 1px);
+  background-size: var(--flow-canvas-grid-size) var(--flow-canvas-grid-size);
+  border-radius: var(--flow-node-radius);
+  touch-action: none; // claim touch drags so the page doesn't scroll instead
+  cursor: grab;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.rootPanning {
+  cursor: grabbing;
+}
+
+.stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.edgePath {
+  fill: none;
+  pointer-events: none;
+  stroke: var(--flow-edge-stroke);
+  stroke-width: var(--flow-edge-width);
+}
+
+.edgePath[data-active='true'] {
+  stroke: var(--flow-edge-stroke-active);
+}
+
+.edgeHit {
+  fill: none;
+  cursor: pointer;
+  pointer-events: stroke;
+  stroke: transparent;
+  stroke-width: var(--flow-edge-hit-width);
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.ghostEdge {
+  fill: none;
+  pointer-events: none;
+  stroke: var(--flow-edge-stroke-active);
+  stroke-dasharray: var(--space-1) var(--space-1);
+  stroke-width: var(--flow-edge-width);
+}
+
+.node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--flow-node-gap);
+  padding: var(--flow-node-padding-y) var(--flow-node-padding-x);
+  background: var(--flow-node-bg);
+  border: var(--border-width) solid var(--flow-node-border);
+  border-left: var(--flow-node-accent-width) solid var(--flow-node-color);
+  border-radius: var(--flow-node-radius);
+  box-shadow: var(--flow-node-shadow);
+  color: var(--color-fg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.node[data-selected='true'] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+}
+
+.node[data-dragging='true'] {
+  cursor: grabbing;
+  box-shadow: var(--shadow-lg);
+}
+
+.node[data-connect-target='true'] {
+  box-shadow: 0 0 0 var(--ring-width) var(--ring-success);
+}
+
+.nodeLabel {
+  white-space: nowrap;
+}
+
+.handle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: var(--flow-handle-size);
+  height: var(--flow-handle-size);
+  background: var(--flow-handle-bg);
+  border-radius: var(--radius-full);
+  cursor: crosshair;
+  opacity: var(--opacity-hidden);
+  transform: translate(50%, -50%);
+  transition: opacity var(--transition-fast);
+}
+
+.node:hover .handle,
+.node:focus-visible .handle {
+  opacity: var(--opacity-visible);
+}
+
+.chip {
+  position: absolute;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.controls {
+  position: absolute;
+  bottom: var(--space-3);
+  left: var(--space-3);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.srOnly {
+  @include visually-hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handle {
+    transition: none;
+  }
 }
