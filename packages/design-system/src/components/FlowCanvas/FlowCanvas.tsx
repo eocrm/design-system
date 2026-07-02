@@ -597,12 +597,42 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   // cycle stands. Any node focus (arrow, Home/End, click) resets it.
   const edgeCycle = useRef<{ nodeId: string; index: number } | null>(null);
 
+  // Keyboard focus must never rely on native focus-scrolling: the
+  // overflow:hidden root is still a scroll container, so a browser
+  // scroll-into-view would silently offset root.scrollLeft/Top and desync
+  // the dot-grid and all pointer→canvas math from the transform-based
+  // viewport. Focus calls pass preventScroll and reveal via the viewport
+  // transform instead — panning just enough to bring the rect fully into
+  // view (with padding so the focus ring isn't clipped at the edge).
+  const REVEAL_PAD = 24;
+  const revealRect = useCallback(
+    (rect: Rect) => {
+      const rootRect = rootRef.current?.getBoundingClientRect();
+      if (!rootRect || rootRect.width === 0 || rootRect.height === 0) return;
+      const { tx, ty, z } = viewport;
+      const left = rect.x * z + tx;
+      const top = rect.y * z + ty;
+      const right = (rect.x + rect.width) * z + tx;
+      const bottom = (rect.y + rect.height) * z + ty;
+      let dx = 0;
+      let dy = 0;
+      if (right > rootRect.width) dx = rootRect.width - REVEAL_PAD - right;
+      if (left + dx < 0) dx = REVEAL_PAD - left; // left/top win for over-wide rects
+      if (bottom > rootRect.height) dy = rootRect.height - REVEAL_PAD - bottom;
+      if (top + dy < 0) dy = REVEAL_PAD - top;
+      if (dx !== 0 || dy !== 0) panBy(dx, dy);
+    },
+    [viewport, panBy],
+  );
+
   const focusNode = useCallback(
     (id: string) => {
       const el = nodeEls.current.get(id);
       if (!el) return;
       edgeCycle.current = null;
-      el.focus();
+      el.focus({ preventScroll: true });
+      const rect = rects.get(id);
+      if (rect) revealRect(rect);
       const index = nodes.findIndex((n) => n.id === id);
       announce(
         t('flowCanvas.nodeFocused', {
@@ -612,14 +642,22 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         }),
       );
     },
-    [nodes, nodeById, announce, t],
+    [nodes, nodeById, announce, t, rects, revealRect],
   );
 
   const focusEdge = useCallback(
     (id: string, index: number, total: number) => {
       const el = edgeEls.current.get(id);
       if (!el) return;
-      el.focus();
+      el.focus({ preventScroll: true });
+      const resolved = resolvedEdges.find((r) => r.edge.id === id);
+      if (resolved) {
+        // Reveal around the midpoint — where the focus highlight and the
+        // label chip sit — rather than the edge's full bounding box, which
+        // for a long edge could exceed the viewport and force a max zoom-out.
+        const { midpoint } = resolved.geometry;
+        revealRect({ x: midpoint.x - 20, y: midpoint.y - 20, width: 40, height: 40 });
+      }
       const edge = edges.find((e) => e.id === id);
       if (edge) {
         announce(
@@ -632,7 +670,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         );
       }
     },
-    [edges, nodeById, announce, t],
+    [edges, nodeById, announce, t, resolvedEdges, revealRect],
   );
 
   // Focus reclaim: when the focused node/edge unmounts (the consumer applied
@@ -659,7 +697,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     }
     const root = rootRef.current;
     if (!root || !root.isConnected) return; // the whole canvas unmounted
-    root.focus();
+    root.focus({ preventScroll: true });
     announce(t('flowCanvas.focusReturned'));
   });
 

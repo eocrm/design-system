@@ -1436,6 +1436,40 @@ describe('FlowCanvas keyboard navigation', () => {
     expect(document.activeElement).toBe(screen.getByLabelText('Open'));
   });
 
+  it('focuses with preventScroll — native focus-scroll would desync the viewport', () => {
+    render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    const node = screen.getByLabelText('Open');
+    const spy = vi.spyOn(node, 'focus');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'ArrowRight' });
+    expect(spy).toHaveBeenCalledWith({ preventScroll: true });
+  });
+
+  it('pans the viewport to reveal a focused off-screen node', () => {
+    const row: FlowCanvasNode[] = [
+      { id: 'near', label: 'Near', position: { x: 0, y: 0 } },
+      { id: 'far', label: 'Far', position: { x: 1000, y: 0 } },
+    ];
+    const { container } = render(<FlowCanvas nodes={row} edges={[]} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    root.focus();
+    fireEvent.keyDown(root, { key: 'End' }); // Far: right edge 1160 > 800
+    expect(document.activeElement).toBe(screen.getByLabelText('Far'));
+    // dx = 800 - 24(pad) - 1160 = -384; no vertical correction needed.
+    expect(getStage(container).style.transform).toBe('translate(-384px, 0px) scale(1)');
+  });
+
+  it('does not pan when the focused node is already fully visible', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    root.focus();
+    fireEvent.keyDown(root, { key: 'ArrowRight' }); // Open at {0,0} — visible
+    expect(getStage(container).style.transform).toBe('translate(0px, 0px) scale(1)');
+  });
+
   it('E cycles through the focused node’s edges and announces position', () => {
     render(<FlowCanvas nodes={NODES} edges={EDGES} />);
     const node = screen.getByLabelText('Open');
