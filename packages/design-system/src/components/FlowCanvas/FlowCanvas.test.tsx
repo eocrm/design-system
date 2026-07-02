@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { FlowCanvas } from './FlowCanvas';
 import type { FlowCanvasEdge, FlowCanvasNode } from './types';
 
@@ -133,5 +133,61 @@ describe('FlowCanvas selection and read-only rendering', () => {
 
     rerender(<FlowCanvas nodes={NODES} edges={EDGES} readOnly />);
     expect(container.querySelectorAll('[data-flow-handle]')).toHaveLength(0);
+  });
+});
+
+const getStage = (container: HTMLElement) =>
+  container.querySelector('[data-flow-stage]') as HTMLDivElement;
+
+describe('FlowCanvas viewport', () => {
+  it('starts at identity transform in jsdom (zero-sized root skips fit)', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    expect(getStage(container).style.transform).toBe('translate(0px, 0px) scale(1)');
+  });
+
+  it('zoom controls scale the stage and announce the level', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    fireEvent.click(screen.getByLabelText('Zoom in'));
+    expect(getStage(container).style.transform).toContain('scale(1.2)');
+    expect(screen.getByRole('status').textContent).toBe('Zoom 120%');
+    fireEvent.click(screen.getByLabelText('Zoom out'));
+    expect(getStage(container).style.transform).toContain('scale(1)');
+  });
+
+  it('plain wheel pans, ctrl+wheel zooms', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    fireEvent.wheel(root, { deltaX: 10, deltaY: 20 });
+    expect(getStage(container).style.transform).toContain('translate(-10px, -20px)');
+    fireEvent.wheel(root, { deltaY: -100, ctrlKey: true });
+    expect(getStage(container).style.transform).toContain('scale(1.2)');
+  });
+
+  it('dragging the background pans', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    fireEvent.pointerDown(root, { clientX: 100, clientY: 100, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(root, { clientX: 130, clientY: 110, pointerId: 1 });
+    fireEvent.pointerUp(root, { clientX: 130, clientY: 110, pointerId: 1 });
+    expect(getStage(container).style.transform).toContain('translate(30px, 10px)');
+  });
+
+  it('+/-/0 keys zoom and fit', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: '+' });
+    expect(getStage(container).style.transform).toContain('scale(1.2)');
+    fireEvent.keyDown(root, { key: '-' });
+    expect(getStage(container).style.transform).toContain('scale(1)');
+    fireEvent.keyDown(root, { key: '0' }); // zero-sized root → fit is a no-op, must not throw
+  });
+
+  it('ctrl+arrows pan', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'ArrowRight', ctrlKey: true });
+    expect(getStage(container).style.transform).toContain('translate(-40px, 0px)');
   });
 });

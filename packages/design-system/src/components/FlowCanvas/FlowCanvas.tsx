@@ -1,5 +1,9 @@
 import { forwardRef, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { HTMLAttributes, PointerEvent as ReactPointerEvent } from 'react';
+import type {
+  HTMLAttributes,
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+} from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
 import { mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
@@ -12,6 +16,7 @@ import { FlowControls } from './FlowControls';
 import { FlowEdge } from './FlowEdge';
 import { FlowNode } from './FlowNode';
 import type { FlowCanvasEdge, FlowCanvasNode, FlowCanvasPoint, FlowCanvasSelection } from './types';
+import { PAN_STEP, ZOOM_STEP, useViewport } from './useViewport';
 import styles from './FlowCanvas.module.scss';
 
 /** Props for {@link FlowCanvas}. */
@@ -93,8 +98,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const markerId = `flow-arrow-${uid}`;
   const markerActiveId = `flow-arrow-active-${uid}`;
 
-  // `_setSelection` is wired up by the interaction tasks (click/focus/Escape).
-  const [selection, _setSelection] = useControllableState<FlowCanvasSelection>({
+  const [selection, setSelection] = useControllableState<FlowCanvasSelection>({
     value: selectionProp,
     defaultValue: defaultSelection,
     onChange: onSelectionChange,
@@ -176,6 +180,130 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     });
   }, [edges, rects]);
 
+  // --- viewport: pan/zoom/fit --------------------------------------------
+  const { viewport, panBy, zoomBy, fitTo } = useViewport(rootRef);
+  const [announcement, setAnnouncement] = useState('');
+  const announce = useCallback((message: string) => setAnnouncement(message), []);
+
+  const contentBounds = useMemo(() => {
+    if (rects.size === 0) return null;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
+    for (const rect of rects.values()) {
+      minX = Math.min(minX, rect.x);
+      minY = Math.min(minY, rect.y);
+      maxX = Math.max(maxX, rect.x + rect.width);
+      maxY = Math.max(maxY, rect.y + rect.height);
+    }
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  }, [rects]);
+
+  // Fit once on mount (skipped when the root has no size, e.g. jsdom).
+  const didFit = useRef(false);
+  useEffect(() => {
+    if (didFit.current || !contentBounds) return;
+    didFit.current = true;
+    fitTo(contentBounds);
+  }, [contentBounds, fitTo]);
+
+  const zoomIn = useCallback(() => {
+    zoomBy(ZOOM_STEP);
+  }, [zoomBy]);
+  const zoomOut = useCallback(() => {
+    zoomBy(1 / ZOOM_STEP);
+  }, [zoomBy]);
+
+  // Announce zoom changes (skip the initial render).
+  const lastZoom = useRef(viewport.z);
+  useEffect(() => {
+    if (viewport.z !== lastZoom.current) {
+      lastZoom.current = viewport.z;
+      announce(t('flowCanvas.zoomLevel', { percent: Math.round(viewport.z * 100) }));
+    }
+  }, [viewport.z, announce, t]);
+
+  // Background pan: press on empty canvas (not node/edge/chip/controls) drags
+  // the viewport; a press-without-move clears the selection.
+  const panState = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    moved: boolean;
+  } | null>(null);
+  const isBackgroundTarget = (target: EventTarget | null): boolean => {
+    const el = target as HTMLElement | null;
+    return !el?.closest?.(
+      '[data-flow-node], [data-flow-edge], [data-flow-chip], [data-flow-controls], [data-flow-handle]',
+    );
+  };
+
+  const handleRootPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || !isBackgroundTarget(event.target)) return;
+    panState.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+    };
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* jsdom */
+    }
+  };
+  const handleRootPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const pan = panState.current;
+    if (!pan || event.pointerId !== pan.pointerId) return;
+    const dx = event.clientX - pan.startX;
+    const dy = event.clientY - pan.startY;
+    if (!pan.moved && Math.abs(dx) + Math.abs(dy) < 3) return; // click tolerance
+    pan.moved = true;
+    pan.startX = event.clientX;
+    pan.startY = event.clientY;
+    panBy(dx, dy);
+  };
+  const handleRootPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const pan = panState.current;
+    if (!pan || event.pointerId !== pan.pointerId) return;
+    panState.current = null;
+    if (!pan.moved) {
+      setSelection(null); // click on empty canvas clears selection
+      announce(t('flowCanvas.selectionCleared'));
+    }
+  };
+
+  // Viewport keys; later tasks extend this handler with node/edge keys.
+  const handleRootKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const { key, ctrlKey, metaKey } = event;
+    if ((ctrlKey || metaKey) && key.startsWith('Arrow')) {
+      event.preventDefault();
+      // Pan moves the stage opposite to the look direction: ArrowRight looks
+      // right, so the stage shifts left (tx decreases).
+      if (key === 'ArrowRight') panBy(-PAN_STEP, 0);
+      else if (key === 'ArrowLeft') panBy(PAN_STEP, 0);
+      else if (key === 'ArrowDown') panBy(0, -PAN_STEP);
+      else if (key === 'ArrowUp') panBy(0, PAN_STEP);
+      return;
+    }
+    if (key === '+' || key === '=') {
+      event.preventDefault();
+      zoomIn();
+      return;
+    }
+    if (key === '-' || key === '_') {
+      event.preventDefault();
+      zoomOut();
+      return;
+    }
+    if (key === '0') {
+      event.preventDefault();
+      fitTo(contentBounds);
+      return;
+    }
+  };
+
   // Placeholder handlers — wired up in later tasks.
   const handleNodePointerDown = useCallback(
     (_id: string, _event: ReactPointerEvent<HTMLDivElement>) => {},
@@ -204,12 +332,17 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       role="application"
       tabIndex={0}
       aria-describedby={mergeAriaDescribedby(ariaDescribedby, instructionsId)}
-      className={clsx(styles.root, className)}
+      className={clsx(styles.root, panState.current?.moved && styles.rootPanning, className)}
+      onPointerDown={handleRootPointerDown}
+      onPointerMove={handleRootPointerMove}
+      onPointerUp={handleRootPointerUp}
+      onPointerCancel={handleRootPointerUp}
+      onKeyDown={handleRootKeyDown}
     >
       <div
         className={styles.stage}
         data-flow-stage=""
-        style={{ transform: 'translate(0px, 0px) scale(1)' }}
+        style={{ transform: `translate(${viewport.tx}px, ${viewport.ty}px) scale(${viewport.z})` }}
       >
         <svg className={styles.edges} aria-hidden={undefined}>
           <defs>
@@ -288,11 +421,13 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
           />
         ))}
       </div>
-      <FlowControls onZoomIn={() => {}} onZoomOut={() => {}} onFit={() => {}} />
+      <FlowControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFit={() => fitTo(contentBounds)} />
       <div id={instructionsId} className={styles.srOnly}>
         {t('flowCanvas.instructions')}
       </div>
-      <div role="status" className={styles.srOnly} />
+      <div role="status" className={styles.srOnly}>
+        {announcement}
+      </div>
     </div>
   );
 });
