@@ -47,6 +47,7 @@ import { Select } from '@eocrm/design-system';
 import { Skeleton } from '@eocrm/design-system';
 import { Slider } from '@eocrm/design-system';
 import { Kanban } from '@eocrm/design-system';
+import { FlowCanvas } from '@eocrm/design-system';
 import { Rail } from '@eocrm/design-system';
 import { TopBar } from '@eocrm/design-system';
 import { Sortable } from '@eocrm/design-system';
@@ -522,6 +523,23 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             </Kanban.Card>
           </Kanban.Column>
         </Kanban>
+      </div>
+    ),
+  },
+  {
+    to: '/components/flow-canvas',
+    name: 'FlowCanvas',
+    description: 'Pan/zoom canvas for directed node-edge diagrams.',
+    preview: (
+      <div style={{ height: 120, width: '100%' }}>
+        <FlowCanvas
+          readOnly
+          nodes={[
+            { id: 'a', label: 'Open', color: '#0052CC', position: { x: 0, y: 8 } },
+            { id: 'b', label: 'Done', color: '#1F845A', position: { x: 150, y: 48 } },
+          ]}
+          edges={[{ id: 'e', from: 'a', to: 'b' }]}
+        />
       </div>
     ),
   },
