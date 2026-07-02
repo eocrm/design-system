@@ -84,3 +84,54 @@ describe('FlowCanvas rendering', () => {
     expect(screen.getByLabelText('Zoom to fit')).toBeInTheDocument();
   });
 });
+
+// Interaction-driven selection changes (click/focus/Escape firing
+// `onSelectionChange`) are covered by the interaction tasks; this slice pins
+// the prop-driven rendering that already ships.
+describe('FlowCanvas selection and read-only rendering', () => {
+  it('marks the controlled-selected node and follows the prop across rerenders', () => {
+    const { rerender } = render(
+      <FlowCanvas nodes={NODES} edges={EDGES} selection={{ type: 'node', id: 'open' }} />,
+    );
+    expect(screen.getByLabelText('Open')).toHaveAttribute('data-selected');
+    expect(screen.getByLabelText('Done')).not.toHaveAttribute('data-selected');
+
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={{ type: 'node', id: 'done' }} />);
+    expect(screen.getByLabelText('Open')).not.toHaveAttribute('data-selected');
+    expect(screen.getByLabelText('Done')).toHaveAttribute('data-selected');
+
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={null} />);
+    expect(screen.getByLabelText('Open')).not.toHaveAttribute('data-selected');
+    expect(screen.getByLabelText('Done')).not.toHaveAttribute('data-selected');
+  });
+
+  it('renders the controlled-selected edge with the active stroke and arrowhead', () => {
+    const { container, rerender } = render(
+      <FlowCanvas nodes={NODES} edges={EDGES} selection={{ type: 'edge', id: 't1' }} />,
+    );
+    const active = container.querySelector('path[data-active]');
+    expect(active).not.toBeNull();
+    expect(active!.getAttribute('marker-end')).toContain('flow-arrow-active');
+
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={null} />);
+    expect(container.querySelector('path[data-active]')).toBeNull();
+    const visible = container.querySelector('path[marker-end]')!;
+    expect(visible.getAttribute('marker-end')).not.toContain('flow-arrow-active');
+  });
+
+  it('applies defaultSelection when uncontrolled', () => {
+    render(
+      <FlowCanvas nodes={NODES} edges={EDGES} defaultSelection={{ type: 'node', id: 'open' }} />,
+    );
+    expect(screen.getByLabelText('Open')).toHaveAttribute('data-selected');
+    expect(screen.getByLabelText('Done')).not.toHaveAttribute('data-selected');
+  });
+
+  it('shows a connect handle per node normally and none in readOnly mode', () => {
+    const { container, rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(container.querySelectorAll('[data-flow-handle]')).toHaveLength(NODES.length);
+
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} readOnly />);
+    expect(container.querySelectorAll('[data-flow-handle]')).toHaveLength(0);
+  });
+});
