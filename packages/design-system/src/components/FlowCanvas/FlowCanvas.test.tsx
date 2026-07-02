@@ -1169,4 +1169,127 @@ describe('FlowCanvas connections', () => {
     fireEvent.keyDown(node, { key: 'c' });
     expect(screen.getByRole('status').textContent).not.toMatch(/Connecting/);
   });
+
+  it('ignores a second pointer while a connection is being drawn', () => {
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    fireEvent.pointerDown(getHandle('Open'), {
+      clientX: 160,
+      clientY: 20,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 380, clientY: 20, pointerId: 1 }); // over Done
+    // A second finger moves over empty canvas and lifts — it must neither
+    // retarget the ghost nor commit/cancel the first finger's connection.
+    fireEvent.pointerMove(root, { clientX: 600, clientY: 400, pointerId: 2 });
+    fireEvent.pointerUp(root, { clientX: 600, clientY: 400, pointerId: 2 });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+    // The original pointer still completes its connection.
+    fireEvent.pointerUp(root, { clientX: 380, clientY: 20, pointerId: 1 });
+    expect(onEdgeCreate).toHaveBeenCalledWith('open', 'done');
+  });
+
+  it('lets a second pointer pan the background without disturbing an in-flight connection', () => {
+    const onEdgeCreate = vi.fn();
+    const { container } = render(
+      <FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />,
+    );
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    fireEvent.pointerDown(getHandle('Open'), {
+      clientX: 160,
+      clientY: 20,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 380, clientY: 20, pointerId: 1 }); // over Done
+    // A second finger presses empty canvas and drags: its pan must run (and
+    // its pan state must be cleaned up on release, not stranded).
+    fireEvent.pointerDown(root, { clientX: 500, clientY: 400, pointerId: 2, button: 0 });
+    fireEvent.pointerMove(root, { clientX: 530, clientY: 410, pointerId: 2 });
+    fireEvent.pointerUp(root, { clientX: 530, clientY: 410, pointerId: 2 });
+    expect(getStage(container).style.transform).toContain('translate(30px, 10px)');
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+    fireEvent.pointerUp(root, { clientX: 380, clientY: 20, pointerId: 1 });
+    expect(onEdgeCreate).toHaveBeenCalledWith('open', 'done');
+  });
+
+  it('pressing a node cancels an in-flight keyboard connect', () => {
+    const onEdgeCreate = vi.fn();
+    const onNodeOpen = vi.fn();
+    render(
+      <FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} onNodeOpen={onNodeOpen} />,
+    );
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    fireEvent.keyDown(node, { key: 'ArrowRight' }); // target: Done
+    // The user visibly moves on — pressing another node abandons the connect.
+    fireEvent.pointerDown(screen.getByLabelText('Done'), { pointerId: 1, button: 0 });
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+    // Enter now opens the selected node instead of confirming a stale connect.
+    fireEvent.keyDown(screen.getByLabelText('Done'), { key: 'Enter' });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+    expect(onNodeOpen).toHaveBeenCalledWith('done');
+  });
+
+  it('pressing empty canvas cancels an in-flight keyboard connect', () => {
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const root = screen.getByRole('application');
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    fireEvent.keyDown(node, { key: 'ArrowRight' }); // target: Done
+    fireEvent.pointerDown(root, { clientX: 600, clientY: 400, pointerId: 1, button: 0 });
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+    fireEvent.pointerUp(root, { clientX: 600, clientY: 400, pointerId: 1 });
+    fireEvent.keyDown(node, { key: 'Enter' });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+  });
+
+  it('pressing an edge cancels an in-flight keyboard connect', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    expect(screen.getByRole('status').textContent).toMatch(/^Connecting from Open/);
+    fireEvent.pointerDown(screen.getByLabelText('From Open to Done'), { pointerId: 1, button: 0 });
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+  });
+
+  it('pressing an edge label chip cancels an in-flight keyboard connect', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    fireEvent.pointerDown(screen.getByText('Guard'), { pointerId: 1, button: 0 });
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+  });
+
+  it('cancels keyboard connect when focus leaves the canvas, but not on internal focus moves', () => {
+    const onEdgeCreate = vi.fn();
+    render(
+      <>
+        <FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />
+        <button type="button">outside</button>
+      </>,
+    );
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' });
+    fireEvent.keyDown(node, { key: 'ArrowRight' }); // target: Done
+    // Focus moving within the canvas keeps the gesture alive…
+    fireEvent.focusOut(node, { relatedTarget: screen.getByLabelText('Done') });
+    expect(screen.getByRole('status').textContent).toBe('Target: Done');
+    // …but focus leaving the canvas entirely must not leave the mode armed
+    // invisibly.
+    fireEvent.focusOut(node, { relatedTarget: screen.getByText('outside') });
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+    fireEvent.keyDown(node, { key: 'Enter' });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+  });
 });

@@ -1,5 +1,6 @@
 import { forwardRef, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type {
+  FocusEvent as ReactFocusEvent,
   HTMLAttributes,
   KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
@@ -100,6 +101,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     onPointerCancel,
     onKeyDown,
     onDoubleClick,
+    onBlur,
     ...rest
   },
   ref,
@@ -221,9 +223,16 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const [connect, setConnect] = useState<{
     from: string;
     mode: 'pointer' | 'keyboard';
+    /** Pointer that started a pointer-mode draw; null in keyboard mode. */
+    pointerId: number | null;
     target: string | null;
     cursor: FlowCanvasPoint | null; // pointer mode ghost end
   } | null>(null);
+  // Latest connect gesture, readable from the stable node/edge/handle pointer
+  // handlers without taking `connect` as a dependency (same reasoning as
+  // `selectionRef` above).
+  const connectRef = useRef(connect);
+  connectRef.current = connect;
 
   const defaultIsValid = useCallback(
     (from: string, to: string) => from !== to && !edges.some((e) => e.from === from && e.to === to),
@@ -372,12 +381,26 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     );
   };
 
+  // Any pointer press elsewhere on the canvas visibly abandons an in-flight
+  // KEYBOARD connect: without this, the ghost edge stays pinned after the
+  // user clicks/drags other nodes, arrows keep stepping the stale target, and
+  // Enter would create an edge from the long-forgotten source. Reads through
+  // `connectRef` so the stable node/edge handlers can call it without
+  // re-rendering every memoized node when the connect state changes.
+  // (Pointer-mode connects are unaffected — they end with their own pointer.)
+  const cancelKeyboardConnect = useCallback(() => {
+    if (connectRef.current?.mode !== 'keyboard') return;
+    setConnect(null);
+    announce(t('flowCanvas.connectCancelled'));
+  }, [announce, t]);
+
   // Consumer handlers (composed below) run before the canvas's own gesture
   // handling; `event.preventDefault()` in a consumer handler opts out of it.
   const handleRootPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerDown?.(event);
     if (event.defaultPrevented) return;
     if (event.button !== 0 || !isBackgroundTarget(event.target)) return;
+    cancelKeyboardConnect(); // pressing empty canvas abandons a keyboard connect
     panState.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -393,7 +416,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const handleRootPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerMove?.(event);
     if (event.defaultPrevented) return;
-    if (connect?.mode === 'pointer') {
+    // Only the pointer that started the draw moves the ghost — a second
+    // finger's moves fall through to the drag/pan branches below (same
+    // pointerId discipline as `dragState`/`panState`).
+    if (connect?.mode === 'pointer' && event.pointerId === connect.pointerId) {
       const point = toCanvasPoint(event.clientX, event.clientY);
       const over = nodeAtPoint(point);
       const target = over && over !== connect.from && isValid(connect.from, over) ? over : null;
@@ -439,7 +465,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   };
   const handleRootPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerUp?.(event);
-    if (connect?.mode === 'pointer') {
+    // Only the drawing pointer's release ends the connection — a second
+    // finger lifting must neither commit nor cancel it (it falls through to
+    // its own drag/pan cleanup below).
+    if (connect?.mode === 'pointer' && event.pointerId === connect.pointerId) {
       // End-of-gesture cleanup always runs (like drag/pan below); the create
       // intent honors a consumer's preventDefault() the same way the drag
       // commit does.
@@ -497,7 +526,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   };
   const handleRootPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerCancel?.(event);
-    if (connect?.mode === 'pointer') {
+    if (connect?.mode === 'pointer' && event.pointerId === connect.pointerId) {
       // The system aborted the gesture — drop the pending connection without
       // creating an edge; the ghost edge disappears.
       setConnect(null);
@@ -587,7 +616,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         (selection?.type === 'node' ? selection.id : null);
       if (!nodeId) return;
       event.preventDefault();
-      setConnect({ from: nodeId, mode: 'keyboard', target: null, cursor: null });
+      setConnect({ from: nodeId, mode: 'keyboard', pointerId: null, target: null, cursor: null });
       announce(t('flowCanvas.connectStart', { label: nodeById.get(nodeId)?.label ?? nodeId }));
       return;
     }
@@ -685,6 +714,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     (id: string, event: ReactPointerEvent<HTMLDivElement>) => {
       if (event.button !== 0) return;
       event.stopPropagation();
+      cancelKeyboardConnect(); // the user visibly moved on to another node
       const current = selectionRef.current;
       if (!(current?.type === 'node' && current.id === id)) {
         setSelection({ type: 'node', id });
@@ -716,7 +746,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         /* jsdom */
       }
     },
-    [setSelection, readOnly, nodeById, dragOverrides, layoutPositions],
+    [setSelection, cancelKeyboardConnect, readOnly, nodeById, dragOverrides, layoutPositions],
   );
   // Dragging from a node's connect handle starts a pointer connection. The
   // ROOT captures the pointer (not the handle) so the move/up stream keeps
@@ -724,7 +754,17 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const handleHandlePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<HTMLElement>) => {
       if (event.button !== 0 || readOnly) return;
-      setConnect({ from: id, mode: 'pointer', target: null, cursor: null });
+      // One draw at a time (matching the drag guard): a second pointer
+      // grabbing a handle mid-draw must not hijack the first ghost. A
+      // keyboard connect, by contrast, is superseded by the new draw.
+      if (connectRef.current?.mode === 'pointer') return;
+      setConnect({
+        from: id,
+        mode: 'pointer',
+        pointerId: event.pointerId,
+        target: null,
+        cursor: null,
+      });
       try {
         rootRef.current?.setPointerCapture(event.pointerId);
       } catch {
@@ -737,11 +777,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     (id: string, event: ReactPointerEvent<SVGPathElement>) => {
       if (event.button !== 0) return;
       event.stopPropagation();
+      cancelKeyboardConnect(); // the user visibly moved on to an edge
       const current = selectionRef.current;
       if (current?.type === 'edge' && current.id === id) return;
       setSelection({ type: 'edge', id });
     },
-    [setSelection],
+    [setSelection, cancelKeyboardConnect],
   );
   const handleNodeDoubleClick = useCallback((id: string) => onNodeOpen?.(id), [onNodeOpen]);
   const handleEdgeDoubleClick = useCallback((id: string) => onEdgeOpen?.(id), [onEdgeOpen]);
@@ -756,6 +797,20 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     },
     [viewport],
   );
+
+  // Keyboard connect must not outlive focus: if focus leaves the canvas
+  // entirely, the mode would persist invisibly — the ghost edge stays pinned
+  // and a later Enter would still create an edge from the forgotten source.
+  // Focus moves WITHIN the canvas (root ↔ node ↔ adornment) keep it alive.
+  // React's onBlur is backed by the bubbling focusout event, so node blurs
+  // reach this root handler. (focusout is not cancelable, so there is no
+  // preventDefault opt-out here.)
+  const handleRootBlur = (event: ReactFocusEvent<HTMLDivElement>) => {
+    onBlur?.(event);
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget.contains(next)) return;
+    cancelKeyboardConnect();
+  };
 
   // Double-click on empty canvas requests a node there. Nodes/edges/chips
   // stopPropagation on their own dblclick, but guard on the target anyway.
@@ -789,6 +844,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       onPointerCancel={handleRootPointerCancel}
       onKeyDown={handleRootKeyDown}
       onDoubleClick={handleRootDoubleClick}
+      onBlur={handleRootBlur}
     >
       <div
         className={styles.stage}
@@ -865,6 +921,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               onPointerDown={(event) => {
                 if (event.button !== 0) return;
                 event.stopPropagation();
+                cancelKeyboardConnect(); // same abandon rule as handleEdgePointerDown
                 // Same re-select guard as handleEdgePointerDown.
                 if (selection?.type === 'edge' && selection.id === edge.id) return;
                 setSelection({ type: 'edge', id: edge.id });
