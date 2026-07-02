@@ -979,10 +979,12 @@ describe('FlowCanvas node dragging', () => {
     mockRootRect(screen.getByRole('application'), 800, 600);
     // Settle the deferred mount fit before zooming: the root measured 0x0 at
     // mount so the fit is still pending, and the first live-drag render would
-    // re-run it mid-gesture, resetting the zoom under the pointer. A fresh
-    // nodes identity re-runs the fit effect now that the root is measurable
-    // (NODES fit at z = 1, so only tx/ty change) — matching a real browser,
-    // where the fit lands before the user can interact.
+    // re-run it mid-gesture, resetting the zoom under the pointer (harmless
+    // for the drag math — segments convert at the z in effect when they
+    // happen — but it would make this test's expected z indeterminate). A
+    // fresh nodes identity re-runs the fit effect now that the root is
+    // measurable (NODES fit at z = 1, so only tx/ty change) — matching a real
+    // browser, where the fit lands before the user can interact.
     rerender(
       <FlowCanvas nodes={NODES.map((n) => ({ ...n }))} edges={[]} onNodeMove={onNodeMove} />,
     );
@@ -998,6 +1000,31 @@ describe('FlowCanvas node dragging', () => {
     expect(id).toBe('open');
     expect(position.x).toBeCloseTo(20, 6); // 24 screen px / 1.2
     expect(position.y).toBeCloseTo(10, 6); // 12 screen px / 1.2
+  });
+
+  it('a mid-gesture zoom converts only subsequent movement, not the accumulated delta', () => {
+    const onNodeMove = vi.fn();
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} onNodeMove={onNodeMove} />);
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    // Settle the deferred mount fit at z = 1 (see the zoomed-drag test above).
+    rerender(
+      <FlowCanvas nodes={NODES.map((n) => ({ ...n }))} edges={[]} onNodeMove={onNodeMove} />,
+    );
+    const node = screen.getByLabelText('Open'); // starts at {0, 0}
+    fireEvent.pointerDown(node, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 24, clientY: 0, pointerId: 1 }); // 24px at z=1 → 24 units
+    expect(parseFloat(node.style.left)).toBeCloseTo(24, 6);
+    // A second touch taps the zoom control mid-drag (z: 1 → 1.2). The already
+    // dragged 24 canvas units must stay 24 — dividing the TOTAL screen delta
+    // by the new z would retroactively reconvert them and jump the node.
+    fireEvent.click(screen.getByLabelText('Zoom in'));
+    fireEvent.pointerMove(node, { clientX: 36, clientY: 0, pointerId: 1 }); // +12px at z=1.2 → +10 units
+    expect(parseFloat(node.style.left)).toBeCloseTo(34, 6); // not 36 / 1.2 = 30
+    fireEvent.pointerUp(node, { clientX: 36, clientY: 0, pointerId: 1 });
+    expect(onNodeMove).toHaveBeenCalledTimes(1);
+    const [, position] = onNodeMove.mock.calls[0] as [string, { x: number; y: number }];
+    expect(position.x).toBeCloseTo(34, 6);
+    expect(position.y).toBeCloseTo(0, 6);
   });
 
   it('measures the click tolerance in screen pixels, not canvas units, when zoomed out', () => {

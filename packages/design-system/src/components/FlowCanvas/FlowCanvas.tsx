@@ -181,9 +181,14 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const dragState = useRef<{
     id: string;
     pointerId: number;
+    /** Pointerdown coordinates — the click-tolerance baseline (screen px). */
     startClientX: number;
     startClientY: number;
-    startPosition: FlowCanvasPoint;
+    /** Last processed coordinates — the per-segment conversion baseline. */
+    lastClientX: number;
+    lastClientY: number;
+    /** Node position so far, accumulated per segment in canvas units. */
+    position: FlowCanvasPoint;
     moved: boolean;
   } | null>(null);
   const layoutPositions = useMemo(() => computeLayout(nodes, edges, sizes), [nodes, edges, sizes]);
@@ -355,15 +360,28 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     if (event.defaultPrevented) return;
     const drag = dragState.current;
     if (drag && event.pointerId === drag.pointerId) {
-      const dx = (event.clientX - drag.startClientX) / viewport.z;
-      const dy = (event.clientY - drag.startClientY) / viewport.z;
-      // 3px screen-space click tolerance (deltas are in canvas units).
-      if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 3 / viewport.z) return;
+      // 3px screen-space click tolerance, measured from the pointerdown point.
+      if (
+        !drag.moved &&
+        Math.abs(event.clientX - drag.startClientX) + Math.abs(event.clientY - drag.startClientY) <
+          3
+      ) {
+        return;
+      }
       drag.moved = true;
-      setLiveDrag({
-        id: drag.id,
-        position: { x: drag.startPosition.x + dx, y: drag.startPosition.y + dy },
-      });
+      // Convert each move's own segment at the zoom in effect NOW and
+      // accumulate, re-baselining like the pan branch below. Dividing the
+      // total delta since pointerdown by the current z would retroactively
+      // reconvert the whole gesture when the zoom changes mid-drag — a second
+      // touch on the zoom controls, or '+'/'-'/'0' on the mousedown-focused
+      // node — and jump the node.
+      drag.position = {
+        x: drag.position.x + (event.clientX - drag.lastClientX) / viewport.z,
+        y: drag.position.y + (event.clientY - drag.lastClientY) / viewport.z,
+      };
+      drag.lastClientX = event.clientX;
+      drag.lastClientY = event.clientY;
+      setLiveDrag({ id: drag.id, position: drag.position });
       return;
     }
     const pan = panState.current;
@@ -388,9 +406,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       // exactly like a cancelled gesture.
       dragState.current = null;
       if (drag.moved && !event.defaultPrevented) {
-        const dx = (event.clientX - drag.startClientX) / viewport.z;
-        const dy = (event.clientY - drag.startClientY) / viewport.z;
-        const position = { x: drag.startPosition.x + dx, y: drag.startPosition.y + dy };
+        // Fold in any final movement carried by the pointerup itself, at the
+        // current zoom — the same per-segment conversion as the move handler.
+        const position = {
+          x: drag.position.x + (event.clientX - drag.lastClientX) / viewport.z,
+          y: drag.position.y + (event.clientY - drag.lastClientY) / viewport.z,
+        };
         const node = nodeById.get(drag.id);
         if (node && node.position === undefined) {
           // Session-local arrangement for auto-laid-out nodes.
@@ -559,7 +580,9 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         pointerId: event.pointerId,
         startClientX: event.clientX,
         startClientY: event.clientY,
-        startPosition: start,
+        lastClientX: event.clientX,
+        lastClientY: event.clientY,
+        position: start,
         moved: false,
       };
       try {
