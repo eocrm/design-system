@@ -1131,6 +1131,27 @@ describe('FlowCanvas connections', () => {
     expect(screen.getByRole('status').textContent).toBe('Connected Open to Done');
   });
 
+  it('keyboard connect hops over the source when it sits between targets (A — S — B)', () => {
+    // Source in the middle: stepping left from B must reach A, not dead-end
+    // on the (invalid) source with a wrong "no target" announcement.
+    const row: FlowCanvasNode[] = [
+      { id: 'a', label: 'A', position: { x: 0, y: 0 } },
+      { id: 's', label: 'S', position: { x: 300, y: 0 } },
+      { id: 'b', label: 'B', position: { x: 600, y: 0 } },
+    ];
+    const onEdgeCreate = vi.fn();
+    render(<FlowCanvas nodes={row} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const source = screen.getByLabelText('S');
+    source.focus();
+    fireEvent.keyDown(source, { key: 'c' });
+    fireEvent.keyDown(source, { key: 'ArrowRight' });
+    expect(screen.getByRole('status').textContent).toBe('Target: B');
+    fireEvent.keyDown(source, { key: 'ArrowLeft' }); // nearest is S → hop over to A
+    expect(screen.getByRole('status').textContent).toBe('Target: A');
+    fireEvent.keyDown(source, { key: 'Enter' });
+    expect(onEdgeCreate).toHaveBeenCalledWith('s', 'a');
+  });
+
   it('keyboard connect: Escape cancels', () => {
     const onEdgeCreate = vi.fn();
     render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
@@ -1295,7 +1316,9 @@ describe('FlowCanvas connections', () => {
 
   it('revalidates a pointer connect at drop time against the live graph', () => {
     const onEdgeCreate = vi.fn();
-    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const { rerender } = render(
+      <FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />,
+    );
     const root = screen.getByRole('application');
     mockRootRect(root, 800, 600);
     fireEvent.pointerDown(getHandle('Open'), {
@@ -1314,7 +1337,9 @@ describe('FlowCanvas connections', () => {
 
   it('revalidates a keyboard connect at Enter against the live graph', () => {
     const onEdgeCreate = vi.fn();
-    const { rerender } = render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
+    const { rerender } = render(
+      <FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />,
+    );
     const node = screen.getByLabelText('Open');
     node.focus();
     fireEvent.keyDown(node, { key: 'c' });

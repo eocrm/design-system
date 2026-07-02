@@ -620,7 +620,14 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         if (sourceRect) candidates.set(connect.from, sourceRect);
         const fromId = connect.target ?? connect.from;
         const direction = key.replace('Arrow', '').toLowerCase() as NavDirection;
-        const next = nearestInDirection(fromId, candidates, direction);
+        let next = nearestInDirection(fromId, candidates, direction);
+        if (next === connect.from) {
+          // The source is not a valid target but can sit between targets
+          // (A — S — B: stepping left from B hits S first). Hop over it by
+          // re-measuring from the source's rect in the same direction —
+          // nearestInDirection excludes the cursor id, so this terminates.
+          next = nearestInDirection(connect.from, candidates, direction);
+        }
         if (next && next !== connect.from) {
           setConnect({ ...connect, target: next });
           announce(t('flowCanvas.connectTarget', { label: nodeById.get(next)?.label ?? next }));
