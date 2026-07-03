@@ -5,8 +5,13 @@ import { useLayoutEffect, useState, type RefObject } from 'react';
 // (so a DropdownMenu/Popover/ConfirmationPopover opened from inside a Popover —
 // or from a DropdownMenu item nested in one — elevates above its host instead
 // of rendering behind it). Reuses the existing content markers; no new attrs.
+// `[data-in-overlay]` makes elevation transitive: a surface nested inside an
+// already-elevated surface (the embedded TimeField clock inside a DatePicker
+// calendar that sits in a Modal, #272) elevates with its host — the host's
+// marker is set in a layout effect before the nested surface can open, so
+// the chain is observable by the time the child's hook runs.
 const OVERLAY_PORTAL_SELECTOR =
-  '[data-drawer-portal-root], [data-modal-portal-root], [data-popover-content], [data-dropdown-menu-content]';
+  '[data-drawer-portal-root], [data-modal-portal-root], [data-popover-content], [data-dropdown-menu-content], [data-in-overlay]';
 
 /**
  * True when `referenceRef`'s element is rendered inside an overlay host — a

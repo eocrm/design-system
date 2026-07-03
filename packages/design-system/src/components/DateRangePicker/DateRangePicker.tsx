@@ -11,6 +11,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
@@ -277,6 +278,9 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       },
       [refs],
     );
+
+    // #272: same overlay elevation as DatePicker.
+    const inOverlay = useInOverlay(wrapperRef, open);
 
     const commit = useCallback(
       (raw: string) => {
@@ -588,6 +592,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
               ref={refs.setFloating}
               style={floatingStyles}
               className={styles.popover}
+              data-in-overlay={inOverlay ? '' : undefined}
               role="dialog"
               aria-modal="false"
               aria-label={t('datePicker.openCalendar')}

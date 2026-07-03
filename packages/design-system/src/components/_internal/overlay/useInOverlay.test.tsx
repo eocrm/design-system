@@ -56,6 +56,17 @@ describe('useInOverlay', () => {
     expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
   });
 
+  it('is true when the reference is inside an already-elevated surface (transitive)', () => {
+    // An embedded TimeField inside a DatePicker popover that itself carries
+    // data-in-overlay must elevate too — the chain, not just direct hosts.
+    render(
+      <div data-in-overlay="">
+        <Probe active />
+      </div>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
+  });
+
   it('is false when inactive, even if nested', () => {
     render(
       <div data-drawer-portal-root="">

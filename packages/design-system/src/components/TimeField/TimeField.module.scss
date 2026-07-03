@@ -94,6 +94,12 @@
   padding: var(--date-picker-time-popover-padding);
 }
 
+.timePopover[data-in-overlay] {
+  // #272: inside a Modal/Drawer (or another elevated surface) the base
+  // z-index sits below --z-modal — elevate above the host, below toasts.
+  z-index: var(--z-overlay-floating);
+}
+
 // Two-column layout for the hour + minute lists, with a thin divider.
 .timeColumns {
   display: flex;

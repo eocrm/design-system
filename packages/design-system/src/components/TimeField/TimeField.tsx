@@ -10,6 +10,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Check, ChevronDown } from 'lucide-react';
@@ -286,6 +287,10 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
   );
 
   // ---- Popover toggle ----
+  // #272: elevate the clock above Modal/Drawer hosts — and, transitively,
+  // above an elevated DatePicker calendar this field may be embedded in.
+  const inOverlay = useInOverlay(wrapperRef, open);
+
   const handleToggle = useCallback(() => {
     if (isDisabled) return;
     setOpen((v) => {
@@ -647,6 +652,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
             // checks for `[data-timefield-popover]` and treats those clicks
             // as "inside" so the parent doesn't auto-close mid-interaction.
             data-timefield-popover="true"
+            data-in-overlay={inOverlay ? '' : undefined}
             onKeyDown={handlePopoverKeyDown}
             // Don't steal focus when clicking inside the popover (rows).
             onMouseDown={(e) => e.preventDefault()}

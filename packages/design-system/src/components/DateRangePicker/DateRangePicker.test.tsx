@@ -758,3 +758,23 @@ describe('DateRangePicker', () => {
     expect((document.activeElement as HTMLElement)?.textContent).toBe('30');
   });
 });
+
+describe('DateRangePicker — overlay elevation (#272)', () => {
+  it('elevates the popover (data-in-overlay) when opened inside an overlay', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-modal-portal-root="">
+        <DateRangePicker aria-label="Range" value={null} onChange={() => {}} />
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('does not elevate the popover at page level', async () => {
+    const user = userEvent.setup();
+    render(<DateRangePicker aria-label="Range" value={null} onChange={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).not.toHaveAttribute('data-in-overlay');
+  });
+});

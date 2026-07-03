@@ -931,3 +931,26 @@ describe('TimeField — labelling', () => {
     expect(screen.getByRole('button', { name: 'Open time list' })).toBeInTheDocument();
   });
 });
+
+describe('TimeField — overlay elevation (#272)', () => {
+  it('elevates the time popover (data-in-overlay) when opened inside an overlay', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-drawer-portal-root="">
+        <Driver hourCycle="24" />
+      </div>,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('button', { name: /Open time list/i }));
+    const hours = await screen.findByRole('listbox', { name: 'Hours' });
+    expect(hours.closest('[data-timefield-popover="true"]')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('does not elevate the time popover at page level', async () => {
+    const user = userEvent.setup();
+    render(<Driver hourCycle="24" />, { wrapper: wrap() });
+    await user.click(screen.getByRole('button', { name: /Open time list/i }));
+    const hours = await screen.findByRole('listbox', { name: 'Hours' });
+    expect(hours.closest('[data-timefield-popover="true"]')).not.toHaveAttribute('data-in-overlay');
+  });
+});
