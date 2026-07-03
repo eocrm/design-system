@@ -1,0 +1,60 @@
+// Blueprint-accent schematic vocabulary for the components overview grid.
+// Every card preview is drawn from these shapes — tokens only, so light and
+// dark themes both work with no special-casing.
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+}
+
+.box {
+  flex-shrink: 0;
+  background: var(--color-accent-subtle-bg);
+  border-radius: var(--radius-sm);
+}
+
+.solid {
+  flex-shrink: 0;
+  background: var(--color-accent);
+  border-radius: var(--radius-sm);
+}
+
+.outline {
+  flex-shrink: 0;
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.panel {
+  flex-shrink: 0;
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.dashed {
+  flex-shrink: 0;
+
+  // 45% accent ≈ the approved mockup's dashed tint; opacity would also wash
+  // out children, so mix the border color instead.
+  border: var(--border-width) dashed color-mix(in srgb, var(--color-accent) 45%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.dot {
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+}
+
+.pill {
+  flex-shrink: 0;
+  background: var(--color-accent-subtle-bg);
+  border-radius: var(--radius-full);
+}
