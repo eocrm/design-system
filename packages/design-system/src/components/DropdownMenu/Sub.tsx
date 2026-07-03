@@ -258,6 +258,24 @@ export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps
       };
     }, [closeTimerRef]);
 
+    // Any open-state transition supersedes pending hover intent. Critically:
+    // a CLOSE while the 100ms hover-open timer is still pending (hover →
+    // click-open → pick-close, all inside the window) must cancel that timer,
+    // or it re-opens the sub right after the pick — an intermittent CI
+    // failure and a real-browser bug (fast hover+click+pick). Clearing the
+    // shared close timer on transitions is the symmetric guard (e.g. a
+    // keyboard re-open racing a pending hover-close).
+    useEffect(() => {
+      if (openTimerRef.current) {
+        clearTimeout(openTimerRef.current);
+        openTimerRef.current = null;
+      }
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    }, [subCtx.open, closeTimerRef]);
+
     const handlePointerEnter = useCallback(() => {
       if (disabled) return;
       // Cancel any pending close.

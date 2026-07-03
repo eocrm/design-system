@@ -1,8 +1,8 @@
-import { act, configure, render, screen } from '@testing-library/react';
+import { act, configure, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createRef, type ReactNode } from 'react';
+import { createRef, useState, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
 
 beforeEach(() => {
@@ -1892,5 +1892,56 @@ describe('DropdownMenu — overlay elevation', () => {
     for (const panel of panels) {
       expect(panel).toHaveAttribute('data-in-overlay', '');
     }
+  });
+});
+
+describe('DropdownMenu — Sub stale hover-intent timer', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function ControlledSub() {
+    const [subOpen, setSubOpen] = useState(false);
+    return (
+      <DropdownMenu open onOpenChange={() => {}}>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub open={subOpen} onOpenChange={setSubOpen}>
+            <DropdownMenu.SubTrigger>Colors</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              {/* Mirrors RichTextColorMenu's pick: a plain button that closes
+                  the controlled sub. */}
+              <button type="button" onClick={() => setSubOpen(false)}>
+                Pick
+              </button>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    );
+  }
+
+  it('a click-opened sub closed by a pick stays closed past the hover window', () => {
+    render(<ControlledSub />);
+    const trigger = screen.getByRole('menuitem', { name: 'Colors' });
+    // Hover starts the 100ms hover-intent open timer…
+    fireEvent.pointerEnter(trigger);
+    // …the click opens immediately (and must supersede the pending timer)…
+    fireEvent.click(trigger);
+    // …the pick closes the sub within the hover window.
+    fireEvent.click(screen.getByRole('button', { name: 'Pick' }));
+    expect(screen.queryByRole('button', { name: 'Pick' })).toBeNull();
+    // Cross the hover window: a stale open timer would re-open the sub here —
+    // the exact sequence that intermittently broke CI (and reproduces in real
+    // browsers as hover → click → pick within 100ms).
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.queryByRole('button', { name: 'Pick' })).toBeNull();
   });
 });
