@@ -18,13 +18,13 @@ function InlineClusterExample() {
     <ButtonGroup value={view} onValueChange={setView} aria-label="View">
       <ButtonGroup.Item value="list">
         <Cluster as="span" gap="xs" align="center" wrap={false}>
-          <List size={14} />
+          <List size={14} aria-hidden />
           List
         </Cluster>
       </ButtonGroup.Item>
       <ButtonGroup.Item value="board">
         <Cluster as="span" gap="xs" align="center" wrap={false}>
-          <Kanban size={14} />
+          <Kanban size={14} aria-hidden />
           Board
         </Cluster>
       </ButtonGroup.Item>
@@ -222,13 +222,13 @@ export function Demo() {
     <ButtonGroup value={view} onValueChange={setView} aria-label="View">
       <ButtonGroup.Item value="list">
         <Cluster as="span" gap="xs" align="center" wrap={false}>
-          <List size={14} />
+          <List size={14} aria-hidden />
           List
         </Cluster>
       </ButtonGroup.Item>
       <ButtonGroup.Item value="board">
         <Cluster as="span" gap="xs" align="center" wrap={false}>
-          <Kanban size={14} />
+          <Kanban size={14} aria-hidden />
           Board
         </Cluster>
       </ButtonGroup.Item>

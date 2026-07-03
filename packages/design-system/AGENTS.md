@@ -1294,8 +1294,18 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
     <Button>Add user</Button>
   </Cluster>
 </Cluster>
+
+// Inline, inside a <button>/<a>/<label> where a <div> is invalid HTML —
+// as="span" renders inline-flex (e.g. icon + label in a ButtonGroup.Item):
+<ButtonGroup.Item value="list">
+  <Cluster as="span" gap="xs" align="center" wrap={false}>
+    <List size={14} aria-hidden />
+    List
+  </Cluster>
+</ButtonGroup.Item>
 ```
 
+- `as`: `div` (default) / `span` / `section` / `aside`. `span` = inline-flex for phrasing-content contexts (inside `<button>`, `<a>`, `<label>`). `section`/`aside` only for genuinely standalone, labelled regions — `aside` creates a `complementary` landmark; never use it for visual grouping.
 - `gap`: same scale as Stack
 - `justify`: `start` (default) / `center` / `end` / `between`
 - `align`: `start` / `center` (default) / `end` / `baseline`

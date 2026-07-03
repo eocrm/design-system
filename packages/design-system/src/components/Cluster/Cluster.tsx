@@ -20,10 +20,14 @@ export type ClusterAs = 'div' | 'span' | 'section' | 'aside';
 export interface ClusterProps extends HTMLAttributes<HTMLElement> {
   /**
    * Element to render. Defaults to `'div'`.
-   * - `div` (default) / `section` / `aside` — block-level flex container.
+   * - `div` (default) — block-level flex container; right for nearly all uses.
    * - `span` — renders `display: inline-flex`, for phrasing-content contexts
    *   where a block element is invalid HTML: inside `<button>` (e.g. a
    *   `ButtonGroup.Item` icon + label), `<a>`, or `<label>`.
+   * - `section` — only for a genuinely standalone, nameable region; pair with
+   *   `aria-label`/`aria-labelledby` (an unnamed section is just a div to AT).
+   * - `aside` — exposes a `complementary` landmark to screen readers; label it,
+   *   and never use it for mere visual grouping.
    */
   as?: ClusterAs;
   /**
@@ -103,6 +107,16 @@ const alignClass: Record<ClusterAlign, string> = {
  * <Cluster gap="xs">
  *   {tags.map(t => <Badge key={t.id} tone={t.tone}>{t.label}</Badge>)}
  * </Cluster>
+ *
+ * @example
+ * // Inline, inside a <button> where a <div> is invalid HTML — as="span"
+ * // renders inline-flex (icon + label in a segmented ButtonGroup.Item):
+ * <ButtonGroup.Item value="list">
+ *   <Cluster as="span" gap="xs" align="center" wrap={false}>
+ *     <List size={14} aria-hidden />
+ *     List
+ *   </Cluster>
+ * </ButtonGroup.Item>
  *
  * @remarks When NOT to use
  * - For aligned columns of equal width — use `<Grid>`. Cluster wraps

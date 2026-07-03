@@ -612,7 +612,7 @@
           "type": "ClusterAs",
           "required": false,
           "default": "div",
-          "description": "Element to render. Defaults to `'div'`.\n- `div` (default) / `section` / `aside` — block-level flex container.\n- `span` — renders `display: inline-flex`, for phrasing-content contexts\n  where a block element is invalid HTML: inside `<button>` (e.g. a\n  `ButtonGroup.Item` icon + label), `<a>`, or `<label>`."
+          "description": "Element to render. Defaults to `'div'`.\n- `div` (default) — block-level flex container; right for nearly all uses.\n- `span` — renders `display: inline-flex`, for phrasing-content contexts\n  where a block element is invalid HTML: inside `<button>` (e.g. a\n  `ButtonGroup.Item` icon + label), `<a>`, or `<label>`.\n- `section` — only for a genuinely standalone, nameable region; pair with\n  `aria-label`/`aria-labelledby` (an unnamed section is just a div to AT).\n- `aside` — exposes a `complementary` landmark to screen readers; label it,\n  and never use it for mere visual grouping."
         },
         {
           "name": "gap",

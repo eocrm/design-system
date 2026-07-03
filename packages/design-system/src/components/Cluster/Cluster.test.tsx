@@ -80,14 +80,19 @@ describe('Cluster', () => {
     expect((asSection.firstChild as HTMLElement).className).not.toMatch(/inline/);
   });
 
-  it('forwards the ref to the chosen element for as="span"', () => {
+  it.each([
+    ['span', HTMLSpanElement],
+    ['section', HTMLElement],
+    ['aside', HTMLElement],
+  ] as const)('forwards the ref to the chosen element for as="%s"', (as, expected) => {
     const ref = createRef<HTMLElement>();
     render(
-      <Cluster as="span" ref={ref}>
+      <Cluster as={as} ref={ref}>
         x
       </Cluster>,
     );
-    expect(ref.current).toBeInstanceOf(HTMLSpanElement);
+    expect(ref.current).toBeInstanceOf(expected);
+    expect(ref.current!.tagName).toBe(as.toUpperCase());
   });
 
   it('keeps variant classes and className merging with as="span"', () => {
