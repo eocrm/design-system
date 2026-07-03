@@ -58,7 +58,13 @@ export { Switch } from './components/Switch';
 export type { SwitchProps, SwitchSize, SwitchTone } from './components/Switch';
 
 export { Cluster } from './components/Cluster';
-export type { ClusterProps, ClusterGap, ClusterJustify, ClusterAlign } from './components/Cluster';
+export type {
+  ClusterProps,
+  ClusterAs,
+  ClusterGap,
+  ClusterJustify,
+  ClusterAlign,
+} from './components/Cluster';
 
 export { Constrain } from './components/Constrain';
 export type { ConstrainProps, ConstrainWidth, ConstrainFlex } from './components/Constrain';

@@ -5,6 +5,13 @@
   flex-direction: row;
 }
 
+// as="span": phrasing-content contexts (inside <button>, <a>, <label>) need
+// an inline-level box — a block flex container would break inline flow and
+// is invalid HTML there; this is the reason the span variant exists.
+.inline {
+  display: inline-flex;
+}
+
 .wrap {
   flex-wrap: wrap;
 }

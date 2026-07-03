@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from 'react';
+import { forwardRef, type HTMLAttributes, type Ref } from 'react';
 import clsx from 'clsx';
 import styles from './Cluster.module.scss';
 
@@ -11,7 +11,28 @@ export type ClusterJustify = 'start' | 'center' | 'end' | 'between';
 /** Cross-axis alignment. */
 export type ClusterAlign = 'start' | 'center' | 'end' | 'baseline';
 
-export interface ClusterProps extends HTMLAttributes<HTMLDivElement> {
+/**
+ * Rendered element. A small union rather than a fully generic polymorphic
+ * `as`, mirroring `TextAs`; details on the `as` prop.
+ */
+export type ClusterAs = 'div' | 'span' | 'section' | 'aside';
+
+export interface ClusterProps extends HTMLAttributes<HTMLElement> {
+  /**
+   * Element to render. Defaults to `'div'`.
+   * - `div` (default) — block-level flex container; right for nearly all uses.
+   * - `span` — renders `display: inline-flex`, for phrasing-content contexts
+   *   where a block element is invalid HTML: inside `<button>` (e.g. a
+   *   `ButtonGroup.Item` icon + label), `<a>`, or `<label>`.
+   * - `section` — only for a genuinely standalone, nameable region; pair with
+   *   `aria-label`/`aria-labelledby` (an unnamed section is just a div to AT).
+   * - `aside` — exposes a `complementary` landmark to screen readers; label it,
+   *   and never use it for mere visual grouping.
+   *
+   * `span` is the ONLY value valid inside `<button>`/`<a>`/`<label>` —
+   * `section` and `aside` are flow content and remain invalid HTML there.
+   */
+  as?: ClusterAs;
   /**
    * Gap between children, in pixels:
    * `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32).
@@ -90,6 +111,16 @@ const alignClass: Record<ClusterAlign, string> = {
  *   {tags.map(t => <Badge key={t.id} tone={t.tone}>{t.label}</Badge>)}
  * </Cluster>
  *
+ * @example
+ * // Inline, inside a <button> where a <div> is invalid HTML — as="span"
+ * // renders inline-flex (icon + label in a segmented ButtonGroup.Item):
+ * <ButtonGroup.Item value="list">
+ *   <Cluster as="span" gap="xs" align="center" wrap={false}>
+ *     <List size={14} aria-hidden />
+ *     List
+ *   </Cluster>
+ * </ButtonGroup.Item>
+ *
  * @remarks When NOT to use
  * - For aligned columns of equal width — use `<Grid>`. Cluster wraps
  *   unpredictably at narrow widths and isn't a column system.
@@ -101,16 +132,28 @@ const alignClass: Record<ClusterAlign, string> = {
  * - ❌ Inline `style={{ marginLeft: 'auto' }}` on a child to push it right.
  *   Use `justify="between"` (with a sibling on the left) or split into two
  *   Clusters in the parent.
+ * - ❌ `as="span"` as a general styling hook. Reach for it only when block
+ *   content is invalid HTML (inside `<button>`, `<a>`, `<label>`); in normal
+ *   flow, the default block `div` is what you want.
  */
-export const Cluster = forwardRef<HTMLDivElement, ClusterProps>(function Cluster(
-  { gap = 'md', justify = 'start', align = 'center', wrap = true, className, ...props },
+export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
+  { as = 'div', gap = 'md', justify = 'start', align = 'center', wrap = true, className, ...props },
   ref,
 ) {
+  const Component = as;
+  // The rendered element type varies across the union, so the JSX ref slot
+  // expects an intersection of the element ref types. Cast like Text does —
+  // the runtime type is always correct because Component is exactly `as`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const domRef = ref as unknown as Ref<any>;
+  // className merged via clsx so consumer classes stack with ours;
+  // {...props} last so the consumer can override anything (Pattern A).
   return (
-    <div
-      ref={ref}
+    <Component
+      ref={domRef}
       className={clsx(
         styles.cluster,
+        as === 'span' && styles.inline,
         gapClass[gap],
         justifyClass[justify],
         alignClass[align],

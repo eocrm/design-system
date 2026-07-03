@@ -56,8 +56,71 @@ describe('Cluster', () => {
   });
 
   it('forwards refs to the underlying div', () => {
-    const ref = createRef<HTMLDivElement>();
+    const ref = createRef<HTMLElement>();
     render(<Cluster ref={ref}>x</Cluster>);
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('renders a div by default', () => {
+    const { container } = render(<Cluster>x</Cluster>);
+    expect((container.firstChild as HTMLElement).tagName).toBe('DIV');
+  });
+
+  it.each(['span', 'section', 'aside'] as const)('renders as %s when as is set', (as) => {
+    const { container } = render(<Cluster as={as}>x</Cluster>);
+    expect((container.firstChild as HTMLElement).tagName).toBe(as.toUpperCase());
+  });
+
+  it('applies the inline class only for as="span"', () => {
+    const { container: asSpan } = render(<Cluster as="span">x</Cluster>);
+    expect((asSpan.firstChild as HTMLElement).className).toMatch(/inline/);
+    const { container: asDiv } = render(<Cluster>x</Cluster>);
+    expect((asDiv.firstChild as HTMLElement).className).not.toMatch(/inline/);
+    const { container: asSection } = render(<Cluster as="section">x</Cluster>);
+    expect((asSection.firstChild as HTMLElement).className).not.toMatch(/inline/);
+    const { container: asAside } = render(<Cluster as="aside">x</Cluster>);
+    expect((asAside.firstChild as HTMLElement).className).not.toMatch(/inline/);
+  });
+
+  it.each([
+    ['span', HTMLSpanElement],
+    ['section', HTMLElement],
+    ['aside', HTMLElement],
+  ] as const)('forwards the ref to the chosen element for as="%s"', (as, expected) => {
+    const ref = createRef<HTMLElement>();
+    render(
+      <Cluster as={as} ref={ref}>
+        x
+      </Cluster>,
+    );
+    expect(ref.current).toBeInstanceOf(expected);
+    expect(ref.current!.tagName).toBe(as.toUpperCase());
+  });
+
+  it('nests validly inside a <button> with as="span" (the #266 acceptance criterion)', () => {
+    // React logs validateDOMNesting console.error for block content inside a
+    // button — the exact failure as="span" exists to avoid.
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <button type="button">
+        <Cluster as="span" gap="xs">
+          x
+        </Cluster>
+      </button>,
+    );
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  it('keeps variant classes and className merging with as="span"', () => {
+    const { container } = render(
+      <Cluster as="span" gap="xs" justify="between" className="external">
+        x
+      </Cluster>,
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.className).toMatch(/gapXs/);
+    expect(el.className).toMatch(/justifyBetween/);
+    expect(el.className).toMatch(/external/);
   });
 });
