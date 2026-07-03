@@ -1,5 +1,5 @@
 // RichTextBlockMenu.test.tsx
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n';
 import { RichTextBlockMenu } from './RichTextBlockMenu';
@@ -91,8 +91,10 @@ it('closes the color submenu after a pick but leaves the main menu open', async 
   setup({ onColor });
   await userEvent.click(screen.getByRole('menuitem', { name: 'Text color' }));
   await userEvent.click(await screen.findByRole('button', { name: 'Green' }));
-  // Submenu collapsed: its swatches are gone.
-  expect(screen.queryByRole('button', { name: 'Green' })).toBeNull();
+  // Submenu collapsed: its swatches are gone. waitFor: the collapse can land
+  // a tick after the click under load (observed flaking on CI) — poll instead
+  // of asserting synchronously.
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Green' })).toBeNull());
   // Main menu still open: its items + the color trigger remain, ready for another pick.
   expect(screen.getByRole('menuitem', { name: /delete/i })).toBeInTheDocument();
   expect(screen.getByRole('menuitem', { name: 'Text color' })).toBeInTheDocument();
@@ -103,7 +105,7 @@ it('reopens the color submenu after a pick (close-on-pick does not latch it shut
   setup({ onColor });
   await userEvent.click(screen.getByRole('menuitem', { name: 'Text color' }));
   await userEvent.click(await screen.findByRole('button', { name: 'Green' }));
-  expect(screen.queryByRole('button', { name: 'Green' })).toBeNull(); // collapsed
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Green' })).toBeNull()); // collapsed
   // Reopen the same submenu → the palette is back.
   await userEvent.click(screen.getByRole('menuitem', { name: 'Text color' }));
   expect(await screen.findByRole('button', { name: 'Green' })).toBeInTheDocument();
