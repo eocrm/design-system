@@ -79,7 +79,7 @@ For a new demo page to be reachable:
 
 1. `src/App.tsx` — add a `<Route path="/components/<name>" element={<<Name>Demo />} />`
 2. `src/layout/AppShell/AppShell.tsx` — add the item to the appropriate group in `componentGroups` (`Layout`, `Forms`, `Display`, `Navigation`). If none of the existing groups fit, add a new group rather than stuffing the item somewhere it doesn't belong.
-3. `src/pages/components/ComponentsIndex.tsx` — add a card to the overview grid with a small live preview
+3. `src/pages/components/ComponentsIndex.tsx` — add a card to the overview grid, plus a schematic preview in `overviewSchematics.tsx` (blueprint-accent vocabulary — tinted shapes, exactly one solid-accent focal element; see the SCHEMATICS record). Overview previews are schematics, not live renders.
 4. `src/pages/mockups/registry.ts` — if the new component is used by any mockup, add its name to that mockup's `usesComponents` list (and extend the `ComponentName` union if it's a brand-new component name)
 
 Skipping 1–3 → users can navigate to the URL but the page is unreachable through nav. Skipping 4 → the cross-link between mockups and component demos is broken.

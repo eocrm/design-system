@@ -110,25 +110,3 @@
   -webkit-box-orient: vertical;
   min-height: calc(2em * var(--line-height-normal));
 }
-
-// Skeleton primitives used by Card preview
-.skeleton {
-  height: 8px;
-  background: var(--color-bg-sunken);
-  border-radius: var(--radius-sm);
-  width: 100%;
-}
-
-.bar {
-  width: 80px;
-  height: 10px;
-  background: var(--color-accent-subtle-bg);
-  border-radius: var(--radius-sm);
-}
-
-.tile {
-  width: 32px;
-  height: 32px;
-  background: var(--color-accent-subtle-bg);
-  border-radius: var(--radius-sm);
-}
