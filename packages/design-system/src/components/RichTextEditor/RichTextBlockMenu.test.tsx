@@ -100,6 +100,19 @@ it('closes the color submenu after a pick but leaves the main menu open', async 
   expect(screen.getByRole('menuitem', { name: 'Text color' })).toBeInTheDocument();
 });
 
+it('the pick-closed submenu stays closed past the hover-intent window (stale timer regression)', async () => {
+  const onColor = vi.fn();
+  setup({ onColor });
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Text color' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Green' }));
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Green' })).toBeNull());
+  // Cross the SubTrigger's 100ms hover-intent window with real time: a stale
+  // open timer (hover scheduled it; the click opened without clearing it)
+  // re-opened the palette here — the intermittent CI failure's root cause.
+  await new Promise((r) => setTimeout(r, 150));
+  expect(screen.queryByRole('button', { name: 'Green' })).toBeNull();
+});
+
 it('reopens the color submenu after a pick (close-on-pick does not latch it shut)', async () => {
   const onColor = vi.fn();
   setup({ onColor });
