@@ -1462,12 +1462,32 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           display: 'flex',
           alignItems: 'stretch',
           justifyContent: 'flex-end',
-          height: 110,
+          height: 116,
           pointerEvents: 'none',
           overflow: 'hidden',
           position: 'relative',
+          borderRadius: 'var(--radius-sm)',
+          border: 'var(--border-width) solid var(--color-border)',
+          background: 'var(--color-bg)',
         }}
       >
+        {/* Page content behind the drawer — gives the overlay something to
+            dim, and keeps the panel readable as a raised surface in dark
+            mode (previously the backdrop was a featureless void there). */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            padding: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
+          <div className={styles.skeleton} style={{ width: '40%' }} />
+          <div className={styles.skeleton} style={{ width: '75%' }} />
+          <div className={styles.skeleton} style={{ width: '60%' }} />
+        </div>
         {/* Overlay */}
         <div
           style={{
@@ -1477,11 +1497,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             opacity: 0.4,
           }}
         />
-        {/* Drawer panel */}
+        {/* Drawer panel — 160px so the footer buttons fit inside (they
+            overflowed the previous 130px panel). */}
         <div
           style={{
-            width: 130,
-            borderLeft: '1px solid var(--color-border)',
+            width: 160,
+            borderLeft: 'var(--border-width) solid var(--color-border)',
             background: 'var(--color-bg)',
             boxShadow: 'var(--shadow-lg)',
             display: 'flex',
@@ -1492,8 +1513,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         >
           <div
             style={{
-              padding: '8px 12px',
-              borderBottom: '1px solid var(--color-border)',
+              padding: '6px 12px',
+              borderBottom: 'var(--border-width) solid var(--color-border)',
               fontWeight: 600,
               fontSize: '0.75rem',
             }}
@@ -1502,7 +1523,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           </div>
           <div
             style={{
-              padding: '8px 12px',
+              padding: '6px 12px',
               fontSize: '0.7rem',
               color: 'var(--color-fg-muted)',
               flex: 1,
@@ -1512,14 +1533,14 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           </div>
           <div
             style={{
-              padding: '8px 12px',
-              borderTop: '1px solid var(--color-border)',
+              padding: '6px 8px',
+              borderTop: 'var(--border-width) solid var(--color-border)',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: 6,
             }}
           >
-            <Button size="sm" variant="secondary">
+            <Button size="sm" variant="ghost">
               Cancel
             </Button>
             <Button size="sm">Apply</Button>
