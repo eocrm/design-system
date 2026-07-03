@@ -800,6 +800,9 @@ describe('DateRangePicker — overlay elevation (#272)', () => {
     // Close it, then open the end-time clock — symmetric coverage of both fields.
     await user.click(screen.getAllByRole('button', { name: /Open time list/i })[0]);
     await user.click(screen.getAllByRole('button', { name: /Open time list/i })[1]);
+    // Exactly one clock open: guards against querySelector re-matching the
+    // (regressed, still-open) start clock and passing vacuously.
+    expect(document.querySelectorAll('[data-timefield-popover="true"]')).toHaveLength(1);
     clock = document.querySelector('[data-timefield-popover="true"]');
     expect(clock).not.toBeNull();
     expect(clock).toHaveAttribute('data-in-overlay', '');
