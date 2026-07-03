@@ -608,6 +608,13 @@
     "Cluster": {
       "props": [
         {
+          "name": "as",
+          "type": "ClusterAs",
+          "required": false,
+          "default": "div",
+          "description": "Element to render. Defaults to `'div'`.\n- `div` (default) / `section` / `aside` — block-level flex container.\n- `span` — renders `display: inline-flex`, for phrasing-content contexts\n  where a block element is invalid HTML: inside `<button>` (e.g. a\n  `ButtonGroup.Item` icon + label), `<a>`, or `<label>`."
+        },
+        {
           "name": "gap",
           "type": "ClusterGap",
           "required": false,
@@ -4577,6 +4584,7 @@
     "StackAlign": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "SwitchSize": "\"sm\" | \"md\" | \"lg\"",
     "SwitchTone": "\"success\" | \"danger\" | \"accent\"",
+    "ClusterAs": "\"div\" | \"span\" | \"section\" | \"aside\"",
     "ClusterGap": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\"",
     "ClusterJustify": "\"start\" | \"end\" | \"center\" | \"between\"",
     "ClusterAlign": "\"start\" | \"end\" | \"center\" | \"baseline\"",
@@ -4586,7 +4594,7 @@
     "GridGap": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\"",
     "GridAlignItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "GridJustifyItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
-    "GridAs": "\"article\" | \"main\" | \"div\" | \"section\" | \"ul\" | \"ol\" | \"nav\" | \"aside\" | \"header\" | \"footer\"",
+    "GridAs": "\"div\" | \"section\" | \"aside\" | \"article\" | \"main\" | \"ul\" | \"ol\" | \"nav\" | \"header\" | \"footer\"",
     "SplitSide": "\"start\" | \"end\"",
     "SplitGap": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\"",
     "SplitAlign": "\"start\" | \"center\" | \"stretch\"",
@@ -4684,7 +4692,7 @@
     "RichDoc": "{ blocks: Block[] }",
     "RenderLink": "(link: RichTextLink, defaultNode: ReactNode) => ReactNode",
     "RenderMention": "(mention: RichTextMention, defaultNode: ReactNode) => ReactNode",
-    "TextAs": "\"div\" | \"label\" | \"p\" | \"span\"",
+    "TextAs": "\"div\" | \"span\" | \"label\" | \"p\"",
     "TextSize": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\"",
     "TextTone": "\"success\" | \"warning\" | \"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
     "TextWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",

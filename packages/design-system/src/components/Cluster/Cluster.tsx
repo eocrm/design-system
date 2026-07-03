@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from 'react';
+import { forwardRef, type HTMLAttributes, type Ref } from 'react';
 import clsx from 'clsx';
 import styles from './Cluster.module.scss';
 
@@ -11,7 +11,21 @@ export type ClusterJustify = 'start' | 'center' | 'end' | 'between';
 /** Cross-axis alignment. */
 export type ClusterAlign = 'start' | 'center' | 'end' | 'baseline';
 
-export interface ClusterProps extends HTMLAttributes<HTMLDivElement> {
+/**
+ * Rendered element. A small union rather than a fully generic polymorphic
+ * `as`, mirroring `TextAs`; details on the `as` prop.
+ */
+export type ClusterAs = 'div' | 'span' | 'section' | 'aside';
+
+export interface ClusterProps extends HTMLAttributes<HTMLElement> {
+  /**
+   * Element to render. Defaults to `'div'`.
+   * - `div` (default) / `section` / `aside` — block-level flex container.
+   * - `span` — renders `display: inline-flex`, for phrasing-content contexts
+   *   where a block element is invalid HTML: inside `<button>` (e.g. a
+   *   `ButtonGroup.Item` icon + label), `<a>`, or `<label>`.
+   */
+  as?: ClusterAs;
   /**
    * Gap between children, in pixels:
    * `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32).
@@ -101,16 +115,26 @@ const alignClass: Record<ClusterAlign, string> = {
  * - ❌ Inline `style={{ marginLeft: 'auto' }}` on a child to push it right.
  *   Use `justify="between"` (with a sibling on the left) or split into two
  *   Clusters in the parent.
+ * - ❌ `as="span"` as a general styling hook. Reach for it only when block
+ *   content is invalid HTML (inside `<button>`, `<a>`, `<label>`); in normal
+ *   flow, the default block `div` is what you want.
  */
-export const Cluster = forwardRef<HTMLDivElement, ClusterProps>(function Cluster(
-  { gap = 'md', justify = 'start', align = 'center', wrap = true, className, ...props },
+export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
+  { as = 'div', gap = 'md', justify = 'start', align = 'center', wrap = true, className, ...props },
   ref,
 ) {
+  const Component = as;
+  // The rendered element type varies across the union, so the JSX ref slot
+  // expects an intersection of the element ref types. Cast like Text does —
+  // the runtime type is always correct because Component is exactly `as`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const domRef = ref as unknown as Ref<any>;
   return (
-    <div
-      ref={ref}
+    <Component
+      ref={domRef}
       className={clsx(
         styles.cluster,
+        as === 'span' && styles.inline,
         gapClass[gap],
         justifyClass[justify],
         alignClass[align],

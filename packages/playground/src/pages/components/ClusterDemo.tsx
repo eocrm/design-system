@@ -1,11 +1,36 @@
+import { useState } from 'react';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { ButtonGroup } from '@eocrm/design-system';
+import { Kanban, List } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import outlineStyles from './demoOutline.module.scss';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+// Live preview for the as="span" example — the issue's motivating use case:
+// icon + label inside a segmented ButtonGroup.Item, where a <div> is invalid.
+function InlineClusterExample() {
+  const [view, setView] = useState('list');
+  return (
+    <ButtonGroup value={view} onValueChange={setView} aria-label="View">
+      <ButtonGroup.Item value="list">
+        <Cluster as="span" gap="xs" align="center" wrap={false}>
+          <List size={14} />
+          List
+        </Cluster>
+      </ButtonGroup.Item>
+      <ButtonGroup.Item value="board">
+        <Cluster as="span" gap="xs" align="center" wrap={false}>
+          <Kanban size={14} />
+          Board
+        </Cluster>
+      </ButtonGroup.Item>
+    </ButtonGroup>
+  );
+}
 
 const Block = ({ children }: { children: React.ReactNode }) => (
   <div
@@ -182,6 +207,36 @@ export function Demo() {
             <Badge tone="neutral">North America</Badge>
           </Cluster>
         </div>
+      </Example>
+
+      <Example
+        title={`Inline (as="span")`}
+        description="Inside a <button>, <a>, or <label>, a block <div> is invalid HTML. as='span' renders an inline-flex <span> — here giving a segmented ButtonGroup.Item a proper icon + label with a token gap."
+        code={`import { useState } from 'react';
+import { ButtonGroup, Cluster } from '@eocrm/design-system';
+import { Kanban, List } from 'lucide-react';
+
+export function Demo() {
+  const [view, setView] = useState('list');
+  return (
+    <ButtonGroup value={view} onValueChange={setView} aria-label="View">
+      <ButtonGroup.Item value="list">
+        <Cluster as="span" gap="xs" align="center" wrap={false}>
+          <List size={14} />
+          List
+        </Cluster>
+      </ButtonGroup.Item>
+      <ButtonGroup.Item value="board">
+        <Cluster as="span" gap="xs" align="center" wrap={false}>
+          <Kanban size={14} />
+          Board
+        </Cluster>
+      </ButtonGroup.Item>
+    </ButtonGroup>
+  );
+}`}
+      >
+        <InlineClusterExample />
       </Example>
 
       <Example
