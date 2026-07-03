@@ -758,3 +758,53 @@ describe('DateRangePicker', () => {
     expect((document.activeElement as HTMLElement)?.textContent).toBe('30');
   });
 });
+
+describe('DateRangePicker — overlay elevation (#272)', () => {
+  it('elevates the popover (data-in-overlay) when opened inside an overlay', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-modal-portal-root="">
+        <DateRangePicker aria-label="Range" value={null} onChange={() => {}} />
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('does not elevate the popover at page level', async () => {
+    const user = userEvent.setup();
+    render(<DateRangePicker aria-label="Range" value={null} onChange={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).not.toHaveAttribute('data-in-overlay');
+  });
+
+  it('elevates the embedded time popovers transitively (popover in overlay -> clocks too)', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-modal-portal-root="">
+        <DateRangePicker
+          aria-label="Range"
+          granularity="minute"
+          value={{ start: new Date(2026, 5, 10, 9, 0), end: new Date(2026, 5, 12, 17, 0) }}
+          onChange={() => {}}
+        />
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-in-overlay', '');
+    // Open the first embedded TimeField clock from inside the elevated popover.
+    await user.click(screen.getAllByRole('button', { name: /Open time list/i })[0]);
+    let clock = document.querySelector('[data-timefield-popover="true"]');
+    expect(clock).not.toBeNull();
+    expect(clock).toHaveAttribute('data-in-overlay', '');
+    // Close it, then open the end-time clock — symmetric coverage of both fields.
+    await user.click(screen.getAllByRole('button', { name: /Open time list/i })[0]);
+    await user.click(screen.getAllByRole('button', { name: /Open time list/i })[1]);
+    // Exactly one clock open: guards against querySelector re-matching the
+    // (regressed, still-open) start clock and passing vacuously.
+    expect(document.querySelectorAll('[data-timefield-popover="true"]')).toHaveLength(1);
+    clock = document.querySelector('[data-timefield-popover="true"]');
+    expect(clock).not.toBeNull();
+    expect(clock).toHaveAttribute('data-in-overlay', '');
+  });
+});

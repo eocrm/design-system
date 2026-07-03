@@ -91,6 +91,12 @@
   z-index: var(--date-picker-popover-z);
 }
 
+.popover[data-in-overlay] {
+  // #272: inside a Modal/Drawer (or another elevated surface) the base
+  // z-index sits below --z-modal — elevate above the host, below toasts.
+  z-index: var(--z-overlay-floating);
+}
+
 // Size modifiers — drive wrapper padding, inner input height + font, and
 // clear/open button slot dimensions. The chevrons inside the popover grid
 // are NOT controlled here; they belong to DatePickerGrid.

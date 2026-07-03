@@ -506,3 +506,44 @@ describe('DatePicker', () => {
     });
   });
 });
+
+describe('DatePicker — overlay elevation (#272)', () => {
+  it('elevates the calendar popover (data-in-overlay) when opened inside an overlay', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-modal-portal-root="">
+        <DatePicker aria-label="Due" value={null} onChange={() => {}} />
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('does not elevate the calendar popover at page level', async () => {
+    const user = userEvent.setup();
+    render(<DatePicker aria-label="Due" value={null} onChange={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).not.toHaveAttribute('data-in-overlay');
+  });
+
+  it('elevates the embedded time popover transitively (calendar in overlay -> clock too)', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-modal-portal-root="">
+        <DatePicker
+          aria-label="Due"
+          granularity="minute"
+          value={new Date(2026, 5, 15, 14, 30)}
+          onChange={() => {}}
+        />
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-in-overlay', '');
+    // Open the embedded TimeField clock from inside the calendar dialog.
+    await user.click(screen.getByRole('button', { name: /Open time list/i }));
+    const clock = document.querySelector('[data-timefield-popover="true"]');
+    expect(clock).not.toBeNull();
+    expect(clock).toHaveAttribute('data-in-overlay', '');
+  });
+});

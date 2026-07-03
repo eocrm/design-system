@@ -38,6 +38,15 @@ describe('useInOverlay', () => {
     expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
   });
 
+  it('is true when the reference is inside a lightbox portal root', () => {
+    render(
+      <div data-lightbox-portal-root="">
+        <Probe active />
+      </div>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
+  });
+
   it('is true when the reference is inside a Popover.Content host', () => {
     render(
       <div data-popover-content="">
@@ -50,6 +59,17 @@ describe('useInOverlay', () => {
   it('is true when the reference is inside a DropdownMenu content host', () => {
     render(
       <div data-dropdown-menu-content="">
+        <Probe active />
+      </div>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('is true when the reference is inside an already-elevated surface (transitive)', () => {
+    // An embedded TimeField inside a DatePicker popover that itself carries
+    // data-in-overlay must elevate too — the chain, not just direct hosts.
+    render(
+      <div data-in-overlay="">
         <Probe active />
       </div>,
     );

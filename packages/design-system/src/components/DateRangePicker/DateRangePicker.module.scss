@@ -102,6 +102,12 @@
   gap: var(--date-range-picker-popover-gap);
 }
 
+.popover[data-in-overlay] {
+  // #272: inside a Modal/Drawer (or another elevated surface) the base
+  // z-index sits below --z-modal — elevate above the host, below toasts.
+  z-index: var(--z-overlay-floating);
+}
+
 // External chevrons (prev/next), rendered by DateRangePicker. Centered
 // vertically above the two grids; same shape as the grid's own chevrons.
 .popoverHeader {

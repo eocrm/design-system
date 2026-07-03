@@ -11,6 +11,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
@@ -389,6 +390,11 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     return () => document.removeEventListener('pointerdown', handler, true);
   }, [open, refs.floating, commit, draft]);
 
+  // #272: inside a Modal/Drawer the popover's base z (--z-popover, below
+  // --z-modal) paints it behind the host — elevate when the trigger sits in
+  // an overlay, exactly like Select/Popover/DropdownMenu.
+  const inOverlay = useInOverlay(wrapperRef, open);
+
   const showClear = clearable && value != null && !disabled;
 
   const setWrapperRef = useCallback(
@@ -468,6 +474,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
             ref={refs.setFloating}
             style={floatingStyles}
             className={styles.popover}
+            data-in-overlay={inOverlay ? '' : undefined}
             role="dialog"
             aria-modal="false"
             aria-label={t('datePicker.openCalendar')}
