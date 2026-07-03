@@ -777,4 +777,25 @@ describe('DateRangePicker — overlay elevation (#272)', () => {
     await user.click(screen.getByRole('button', { name: 'Open calendar' }));
     expect(screen.getByRole('dialog')).not.toHaveAttribute('data-in-overlay');
   });
+
+  it('elevates the embedded time popovers transitively (popover in overlay -> clocks too)', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-modal-portal-root="">
+        <DateRangePicker
+          aria-label="Range"
+          granularity="minute"
+          value={{ start: new Date(2026, 5, 10, 9, 0), end: new Date(2026, 5, 12, 17, 0) }}
+          onChange={() => {}}
+        />
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-in-overlay', '');
+    // Open the first embedded TimeField clock from inside the elevated popover.
+    await user.click(screen.getAllByRole('button', { name: /Open time list/i })[0]);
+    const clock = document.querySelector('[data-timefield-popover="true"]');
+    expect(clock).not.toBeNull();
+    expect(clock).toHaveAttribute('data-in-overlay', '');
+  });
 });
