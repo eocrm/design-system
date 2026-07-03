@@ -28,6 +28,9 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    *   `aria-label`/`aria-labelledby` (an unnamed section is just a div to AT).
    * - `aside` — exposes a `complementary` landmark to screen readers; label it,
    *   and never use it for mere visual grouping.
+   *
+   * `span` is the ONLY value valid inside `<button>`/`<a>`/`<label>` —
+   * `section` and `aside` are flow content and remain invalid HTML there.
    */
   as?: ClusterAs;
   /**
@@ -143,6 +146,8 @@ export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
   // the runtime type is always correct because Component is exactly `as`.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const domRef = ref as unknown as Ref<any>;
+  // className merged via clsx so consumer classes stack with ours;
+  // {...props} last so the consumer can override anything (Pattern A).
   return (
     <Component
       ref={domRef}

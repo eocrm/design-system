@@ -78,6 +78,8 @@ describe('Cluster', () => {
     expect((asDiv.firstChild as HTMLElement).className).not.toMatch(/inline/);
     const { container: asSection } = render(<Cluster as="section">x</Cluster>);
     expect((asSection.firstChild as HTMLElement).className).not.toMatch(/inline/);
+    const { container: asAside } = render(<Cluster as="aside">x</Cluster>);
+    expect((asAside.firstChild as HTMLElement).className).not.toMatch(/inline/);
   });
 
   it.each([
@@ -93,6 +95,21 @@ describe('Cluster', () => {
     );
     expect(ref.current).toBeInstanceOf(expected);
     expect(ref.current!.tagName).toBe(as.toUpperCase());
+  });
+
+  it('nests validly inside a <button> with as="span" (the #266 acceptance criterion)', () => {
+    // React logs validateDOMNesting console.error for block content inside a
+    // button — the exact failure as="span" exists to avoid.
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <button type="button">
+        <Cluster as="span" gap="xs">
+          x
+        </Cluster>
+      </button>,
+    );
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
   });
 
   it('keeps variant classes and className merging with as="span"', () => {
