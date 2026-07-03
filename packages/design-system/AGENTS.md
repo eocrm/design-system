@@ -3053,7 +3053,7 @@ All available as CSS custom properties after you import `global.scss`:
 | Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
 | Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width`                                                                                                                               |
 | Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
-| Layer (z-index) | `--z-dropdown` / `--z-popover` / `--z-modal` / `--z-toast` / `--z-tooltip`                                                                                                                          |
+| Layer (z-index) | `--z-dropdown` / `--z-popover` / `--z-modal` / `--z-overlay-floating` / `--z-toast` / `--z-tooltip`                                                                                                 |
 
 ---
 

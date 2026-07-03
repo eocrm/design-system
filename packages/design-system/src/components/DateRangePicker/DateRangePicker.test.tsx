@@ -794,7 +794,13 @@ describe('DateRangePicker — overlay elevation (#272)', () => {
     expect(screen.getByRole('dialog')).toHaveAttribute('data-in-overlay', '');
     // Open the first embedded TimeField clock from inside the elevated popover.
     await user.click(screen.getAllByRole('button', { name: /Open time list/i })[0]);
-    const clock = document.querySelector('[data-timefield-popover="true"]');
+    let clock = document.querySelector('[data-timefield-popover="true"]');
+    expect(clock).not.toBeNull();
+    expect(clock).toHaveAttribute('data-in-overlay', '');
+    // Close it, then open the end-time clock — symmetric coverage of both fields.
+    await user.click(screen.getAllByRole('button', { name: /Open time list/i })[0]);
+    await user.click(screen.getAllByRole('button', { name: /Open time list/i })[1]);
+    clock = document.querySelector('[data-timefield-popover="true"]');
     expect(clock).not.toBeNull();
     expect(clock).toHaveAttribute('data-in-overlay', '');
   });

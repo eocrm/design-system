@@ -8,15 +8,15 @@ import { useLayoutEffect, useState, type RefObject } from 'react';
 // `[data-in-overlay]` makes elevation transitive: a surface nested inside an
 // already-elevated surface (the embedded TimeField clock inside a DatePicker
 // calendar that sits in a Modal, #272) elevates with its host — the host's
-// marker lands on the DOM (layout effect -> state -> same-commit re-render,
-// still pre-paint) before the nested surface can open, so the chain is
-// observable by the time the child's hook runs.
+// marker lands on the DOM via the layout effect's setState (a second
+// synchronous commit, still pre-paint) before the nested surface can open,
+// so the chain is observable by the time the child's hook runs.
 const OVERLAY_PORTAL_SELECTOR =
-  '[data-drawer-portal-root], [data-modal-portal-root], [data-popover-content], [data-dropdown-menu-content], [data-in-overlay]';
+  '[data-drawer-portal-root], [data-modal-portal-root], [data-lightbox-portal-root], [data-popover-content], [data-dropdown-menu-content], [data-in-overlay]';
 
 /**
  * True when `referenceRef`'s element is rendered inside an overlay host — a
- * `Modal`/`Drawer` overlay portal, a `Popover.Content` / `DropdownMenu`
+ * `Modal`/`Drawer`/`Lightbox` overlay portal, a `Popover.Content` / `DropdownMenu`
  * content panel, or ANY already-elevated surface carrying `[data-in-overlay]`
  * (transitive elevation). Floating surfaces (`Select` / `Popover` /
  * `DropdownMenu` / `DatePicker` / `DateRangePicker` / `TimeField`) use this
@@ -36,7 +36,9 @@ const OVERLAY_PORTAL_SELECTOR =
  * commit as the opened surface (no flash behind the overlay).
  *
  * @example
- * // `ctx` is the component's own context (e.g. useSelectContext()).
+ * // `ctx` is the component's own context (e.g. useSelectContext()) — but any
+ * // ref to the trigger or a wrapper ancestor works equally well (DatePicker/
+ * // DateRangePicker/TimeField pass their wrapperRef).
  * const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
  * // Empty-string presence idiom — React serializes `{true}` on a data-*
  * // attribute as "true", so use `? '' : undefined` to match the CSS

@@ -12,6 +12,10 @@ const FOCUSABLE_SELECTOR = [
 // Floating UI surfaces whose portals are direct body-siblings of our modal
 // portal. Focus moving into these should not be redirected back to the modal —
 // the popover / dropdown / tooltip is handling its own focus session.
+// The DatePicker/DateRangePicker calendar popovers rely on the [role="dialog"]
+// entry here: they move real DOM focus into body-portaled grid cells while
+// open inside a Modal (unlike Select's aria-activedescendant pattern), so
+// removing that entry would re-trap their keyboard users (#272).
 const FLOATING_BYPASS_SELECTOR = [
   '[data-popover-content]',
   '[data-dropdown-menu-content]',

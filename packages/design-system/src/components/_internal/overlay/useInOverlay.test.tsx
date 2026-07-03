@@ -38,6 +38,15 @@ describe('useInOverlay', () => {
     expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
   });
 
+  it('is true when the reference is inside a lightbox portal root', () => {
+    render(
+      <div data-lightbox-portal-root="">
+        <Probe active />
+      </div>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
+  });
+
   it('is true when the reference is inside a Popover.Content host', () => {
     render(
       <div data-popover-content="">
