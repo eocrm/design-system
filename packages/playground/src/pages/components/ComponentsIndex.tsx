@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Bell, Home, Inbox, Settings as SettingsIcon, Users } from 'lucide-react';
+import { ArrowRight, Bell, Home, Inbox, Users } from 'lucide-react';
 import { Accordion } from '@eocrm/design-system';
 import { Alert } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
@@ -58,10 +58,8 @@ import { Tabs } from '@eocrm/design-system';
 import { Textarea } from '@eocrm/design-system';
 import { TimeField } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
-import { Tooltip } from '@eocrm/design-system';
 import { Calendar } from '@eocrm/design-system';
 import { DatePicker } from '@eocrm/design-system';
-import { ConfirmationPopover, Popover } from '@eocrm/design-system';
 import { DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
 import { DefinitionList } from '@eocrm/design-system';
 import { EmptyState } from '@eocrm/design-system';
@@ -215,7 +213,18 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'Screen',
     description: 'Full-bleed / centered screen layout for auth, 404, and error pages.',
     preview: (
-      <div style={{ width: '100%', maxWidth: '260px', height: '96px' }}>
+      // Override the component token: fillBlock's default min-height (~500px)
+      // is meant for real pages and would bleed far past the preview box.
+      <div
+        style={
+          {
+            width: '100%',
+            maxWidth: '260px',
+            height: '96px',
+            '--screen-block-min-height': '96px',
+          } as React.CSSProperties
+        }
+      >
         <Screen fill="block" backdrop="accent">
           <Text size="sm" tone="muted">
             Full-bleed screen
@@ -284,7 +293,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description:
       'Remote image with Skeleton loading state, fade-in on load, and an accessible broken-image placeholder with retry.',
     preview: (
-      <div style={{ maxWidth: 220, width: '100%' }}>
+      <div style={{ maxWidth: 180, width: '100%' }}>
         <Image
           src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=80"
           alt=""
@@ -298,7 +307,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'MediaTile',
     description: 'Media tile — image/icon body with hover-revealed name/size + controls bars.',
     preview: (
-      <div style={{ width: '100%', maxWidth: 140 }}>
+      <div style={{ width: '100%', maxWidth: 110 }}>
         <MediaTile
           revealOn="visible"
           media={
@@ -356,7 +365,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'Pagination',
     description:
       'Numbered nav with windowing, plus a cursor variant for streams without total. Both controlled, no built-in page size.',
-    preview: <Pagination currentPage={3} pageCount={10} onPageChange={() => {}} size="sm" />,
+    // pageCount kept small — the windowed 10-page control is wider than the card.
+    preview: <Pagination currentPage={2} pageCount={3} onPageChange={() => {}} size="sm" />,
   },
   {
     to: '/components/palette',
@@ -510,19 +520,34 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'Kanban',
     description: 'Multi-column board with live cross-column drag.',
     preview: (
-      <div style={{ width: '100%', maxWidth: 220, pointerEvents: 'none' }}>
-        <Kanban>
-          <Kanban.Column id="a">
-            <Kanban.Card id="card-a">
-              <Card padding="sm">A</Card>
-            </Kanban.Card>
-          </Kanban.Column>
-          <Kanban.Column id="b">
-            <Kanban.Card id="card-b">
-              <Card padding="sm">B</Card>
-            </Kanban.Card>
-          </Kanban.Column>
-        </Kanban>
+      // Columns have a 260px min-width, so a two-column board can never fit
+      // the preview box unscaled — same scale-down trick as the Calendar card.
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 230,
+          height: 118,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+        }}
+      >
+        <div style={{ width: '240%', transform: 'scale(0.42)', transformOrigin: 'top left' }}>
+          <Kanban>
+            <Kanban.Column id="a">
+              <Kanban.Card id="card-a1">
+                <Card padding="sm">Call Acme</Card>
+              </Kanban.Card>
+              <Kanban.Card id="card-a2">
+                <Card padding="sm">Send quote</Card>
+              </Kanban.Card>
+            </Kanban.Column>
+            <Kanban.Column id="b">
+              <Kanban.Card id="card-b1">
+                <Card padding="sm">Demo call</Card>
+              </Kanban.Card>
+            </Kanban.Column>
+          </Kanban>
+        </div>
       </div>
     ),
   },
@@ -705,21 +730,25 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description:
       'Controlled HEX color picker with two shapes — popover trigger for form fields and an inline <ColorPicker.Panel> for theme builders. SV square + hue slider + HEX input + optional presets.',
     preview: (
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 220,
-          display: 'flex',
-          justifyContent: 'center',
-          pointerEvents: 'none',
-        }}
-      >
-        <ColorPicker.Panel
-          value="#4F46E5"
-          onChange={() => {}}
-          presets={['#4F46E5', '#10B981', '#F59E0B', '#EF4444']}
-        />
-      </div>
+      // The inline Panel is ~370px tall — far beyond the preview box. Show
+      // the closed popover trigger next to a preset row instead.
+      <Cluster gap="sm" justify="center">
+        <div style={{ pointerEvents: 'none' }}>
+          <ColorPicker value="#4F46E5" onChange={() => {}} />
+        </div>
+        {['#4F46E5', '#10B981', '#F59E0B', '#EF4444'].map((hex) => (
+          <span
+            key={hex}
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 'var(--radius-sm)',
+              border: 'var(--border-width) solid var(--color-border)',
+              background: hex,
+            }}
+          />
+        ))}
+      </Cluster>
     ),
   },
   {
@@ -826,7 +855,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description:
       '2D layout primitive with token-driven gap, auto-fit responsive columns, and equal-width fixed columns.',
     preview: (
-      <Grid gap="xs">
+      <Grid columns={2} gap="xs">
         <div className={styles.tile} />
         <div className={styles.tile} />
         <div className={styles.tile} />
@@ -1023,13 +1052,10 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'Breadcrumb',
     description: 'Navigation trail with auto-current on the last item.',
     preview: (
+      // as="span": real anchors would nest inside the card's <Link> (invalid HTML).
       <Breadcrumb>
-        <Breadcrumb.Item href="#a" onClick={(e) => e.preventDefault()}>
-          Workspace
-        </Breadcrumb.Item>
-        <Breadcrumb.Item href="#b" onClick={(e) => e.preventDefault()}>
-          Contacts
-        </Breadcrumb.Item>
+        <Breadcrumb.Item as="span">Workspace</Breadcrumb.Item>
+        <Breadcrumb.Item as="span">Contacts</Breadcrumb.Item>
         <Breadcrumb.Item>Acme</Breadcrumb.Item>
       </Breadcrumb>
     ),
@@ -1039,9 +1065,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'Link',
     description: 'Polymorphic styled anchor with three visual variants.',
     preview: (
-      <DSLink href="#" onClick={(e) => e.preventDefault()}>
-        View details →
-      </DSLink>
+      // as="span": a real anchor would nest inside the card's <Link> (invalid HTML).
+      <DSLink as="span">View details →</DSLink>
     ),
   },
   {
@@ -1064,17 +1089,16 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description:
       'Collapsible left-side nav with sections, items, groups, and hover-popover for collapsed groups.',
     preview: (
-      <div style={{ width: 240, height: 180, overflow: 'hidden', pointerEvents: 'none' }}>
+      // as="span": real anchors here would nest inside the card's <Link>
+      // (invalid HTML); the preview is inert anyway.
+      <div style={{ width: 240, height: 118, overflow: 'hidden', pointerEvents: 'none' }}>
         <Rail>
           <Rail.Section title="Main">
-            <Rail.Item icon={<Home size={14} />} href="#">
+            <Rail.Item as="span" icon={<Home size={14} />}>
               Dashboard
             </Rail.Item>
-            <Rail.Item icon={<Users size={14} />} href="#" aria-current="page">
+            <Rail.Item as="span" icon={<Users size={14} />} aria-current="page">
               Contacts
-            </Rail.Item>
-            <Rail.Item icon={<SettingsIcon size={14} />} href="#">
-              Settings
             </Rail.Item>
           </Rail.Section>
         </Rail>
@@ -1209,13 +1233,42 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'Tooltip',
     description: 'Small floating label on hover/focus, with a pointer arrow.',
     preview: (
-      <Cluster gap="sm" justify="center">
-        <Tooltip content="Save (⌘S)" defaultOpen>
-          <Button size="sm" variant="secondary">
-            Save
-          </Button>
-        </Tooltip>
-      </Cluster>
+      // Static stand-in (same approach as the Modal/Drawer previews): a
+      // defaultOpen Tooltip portals to <body> and floats outside the card.
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 6,
+          pointerEvents: 'none',
+        }}
+      >
+        <span
+          style={{
+            padding: '4px 8px',
+            background: 'var(--color-fg)',
+            color: 'var(--color-bg)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: 'var(--font-size-xs)',
+          }}
+        >
+          Save (⌘S)
+        </span>
+        <span
+          style={{
+            width: 0,
+            height: 0,
+            marginTop: -6,
+            borderLeft: '5px solid transparent',
+            borderRight: '5px solid transparent',
+            borderTop: '5px solid var(--color-fg)',
+          }}
+        />
+        <Button size="sm" variant="secondary">
+          Save
+        </Button>
+      </div>
     ),
   },
   {
@@ -1409,12 +1462,32 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           display: 'flex',
           alignItems: 'stretch',
           justifyContent: 'flex-end',
-          height: 110,
+          height: 116,
           pointerEvents: 'none',
           overflow: 'hidden',
           position: 'relative',
+          borderRadius: 'var(--radius-sm)',
+          border: 'var(--border-width) solid var(--color-border)',
+          background: 'var(--color-bg)',
         }}
       >
+        {/* Page content behind the drawer — gives the overlay something to
+            dim, and keeps the panel readable as a raised surface in dark
+            mode (previously the backdrop was a featureless void there). */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            padding: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
+          <div className={styles.skeleton} style={{ width: '40%' }} />
+          <div className={styles.skeleton} style={{ width: '75%' }} />
+          <div className={styles.skeleton} style={{ width: '60%' }} />
+        </div>
         {/* Overlay */}
         <div
           style={{
@@ -1424,11 +1497,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
             opacity: 0.4,
           }}
         />
-        {/* Drawer panel */}
+        {/* Drawer panel — 160px so the footer buttons fit inside (they
+            overflowed the previous 130px panel). */}
         <div
           style={{
-            width: 130,
-            borderLeft: '1px solid var(--color-border)',
+            width: 160,
+            borderLeft: 'var(--border-width) solid var(--color-border)',
             background: 'var(--color-bg)',
             boxShadow: 'var(--shadow-lg)',
             display: 'flex',
@@ -1439,8 +1513,8 @@ const items: { to: string; name: string; description: string; preview: React.Rea
         >
           <div
             style={{
-              padding: '8px 12px',
-              borderBottom: '1px solid var(--color-border)',
+              padding: '6px 12px',
+              borderBottom: 'var(--border-width) solid var(--color-border)',
               fontWeight: 600,
               fontSize: '0.75rem',
             }}
@@ -1449,7 +1523,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           </div>
           <div
             style={{
-              padding: '8px 12px',
+              padding: '6px 12px',
               fontSize: '0.7rem',
               color: 'var(--color-fg-muted)',
               flex: 1,
@@ -1459,14 +1533,14 @@ const items: { to: string; name: string; description: string; preview: React.Rea
           </div>
           <div
             style={{
-              padding: '8px 12px',
-              borderTop: '1px solid var(--color-border)',
+              padding: '6px 8px',
+              borderTop: 'var(--border-width) solid var(--color-border)',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: 6,
             }}
           >
-            <Button size="sm" variant="secondary">
+            <Button size="sm" variant="ghost">
               Cancel
             </Button>
             <Button size="sm">Apply</Button>
@@ -1480,21 +1554,39 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'Popover',
     description: 'Non-modal floating panel for arbitrary small surfaces.',
     preview: (
-      <Cluster gap="sm" justify="center">
-        <Popover defaultOpen>
-          <Popover.Trigger>
-            <Button size="sm" variant="secondary">
+      // Static stand-in (same approach as the Modal/Drawer previews): a
+      // defaultOpen Popover portals to <body> and floats outside the card.
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 6,
+          pointerEvents: 'none',
+        }}
+      >
+        <Button size="sm" variant="secondary">
+          Filters
+        </Button>
+        <div
+          style={{
+            width: 150,
+            padding: 'var(--space-3)',
+            background: 'var(--color-bg)',
+            border: 'var(--border-width) solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-md)',
+          }}
+        >
+          <Stack gap="xs">
+            <Text size="sm" weight="semibold">
               Filters
-            </Button>
-          </Popover.Trigger>
-          <Popover.Content>
-            <Stack gap="xs">
-              <Popover.Heading>Filters</Popover.Heading>
-              <div>(controls)</div>
-            </Stack>
-          </Popover.Content>
-        </Popover>
-      </Cluster>
+            </Text>
+            <div className={styles.skeleton} />
+            <div className={styles.skeleton} style={{ width: '70%' }} />
+          </Stack>
+        </div>
+      </div>
     ),
   },
   {
@@ -1541,20 +1633,37 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'ConfirmationPopover',
     description: '"Are you sure?" preset on top of Popover, with async-aware Confirm.',
     preview: (
-      <Cluster gap="sm" justify="center">
-        <ConfirmationPopover
-          defaultOpen
-          title="Delete?"
-          description="Cannot be undone."
-          confirmLabel="Delete"
-          variant="danger"
-          onConfirm={() => undefined}
-        >
-          <Button size="sm" variant="danger">
-            Delete
-          </Button>
-        </ConfirmationPopover>
-      </Cluster>
+      // Static stand-in (same approach as the Modal/Drawer previews): a
+      // defaultOpen ConfirmationPopover portals to <body> and floats outside
+      // the card.
+      <div
+        style={{
+          width: 190,
+          padding: 'var(--space-3)',
+          background: 'var(--color-bg)',
+          border: 'var(--border-width) solid var(--color-border)',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-md)',
+          pointerEvents: 'none',
+        }}
+      >
+        <Stack gap="xs">
+          <Text size="sm" weight="semibold">
+            Delete?
+          </Text>
+          <Text size="sm" tone="muted">
+            Cannot be undone.
+          </Text>
+          <Cluster gap="xs" justify="end">
+            <Button size="sm" variant="ghost">
+              Cancel
+            </Button>
+            <Button size="sm" variant="danger">
+              Delete
+            </Button>
+          </Cluster>
+        </Stack>
+      </div>
     ),
   },
 ];
