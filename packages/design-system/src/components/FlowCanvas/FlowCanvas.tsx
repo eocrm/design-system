@@ -3,7 +3,6 @@ import {
   useCallback,
   useEffect,
   useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -217,6 +216,27 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     setMaximized(next);
     announce(t(next ? 'flowCanvas.maximized' : 'flowCanvas.restored'));
   };
+  // --- maximize: scroll lock, focus trap, focus move/restore ----------------
+  useScrollLock(maximized);
+  useFocusTrap(rootRef, maximized);
+  // Capture the pre-maximize focus and move focus into the canvas on enter;
+  // restore it on exit. Passive effect, ordered after useFocusTrap so the trap
+  // has torn down before we restore focus outward (see note above).
+  const prevMaximizedRef = useRef(maximized);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const was = prevMaximizedRef.current;
+    prevMaximizedRef.current = maximized;
+    if (maximized && !was) {
+      previouslyFocusedRef.current = (document.activeElement as HTMLElement | null) ?? null;
+      rootRef.current?.focus({ preventScroll: true });
+    } else if (!maximized && was) {
+      const target = previouslyFocusedRef.current;
+      previouslyFocusedRef.current = null;
+      if (target && document.contains(target)) target.focus({ preventScroll: true });
+      else rootRef.current?.focus({ preventScroll: true });
+    }
+  }, [maximized]);
   // The consumer applies a delete intent by removing the node/edge from
   // props — but the retained (uncontrolled) selection state still holds the
   // dead id afterwards, and there is no imperative API to clear it. Every

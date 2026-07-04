@@ -1941,3 +1941,38 @@ describe('FlowCanvas maximize keyboard', () => {
     expect(onMaximizedChange).not.toHaveBeenCalled();
   });
 });
+
+describe('FlowCanvas maximize overlay behavior', () => {
+  it('locks body scroll while maximized and restores on exit', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(document.body.style.position).not.toBe('fixed');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    expect(document.body.style.position).toBe('fixed');
+    fireEvent.click(screen.getByLabelText('Restore'));
+    expect(document.body.style.position).not.toBe('fixed');
+  });
+
+  it('moves focus into the canvas on maximize and restores it on exit', () => {
+    render(
+      <>
+        <button data-testid="outside">outside</button>
+        <FlowCanvas nodes={NODES} edges={EDGES} />
+      </>,
+    );
+    const outside = screen.getByTestId('outside');
+    outside.focus();
+    expect(document.activeElement).toBe(outside);
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    const root = screen.getByRole('application');
+    expect(document.activeElement).toBe(root);
+    fireEvent.click(screen.getByLabelText('Restore'));
+    expect(document.activeElement).toBe(outside);
+  });
+
+  it('restores body scroll if unmounted while maximized', () => {
+    const { unmount } = render(<FlowCanvas nodes={NODES} edges={EDGES} defaultMaximized />);
+    expect(document.body.style.position).toBe('fixed');
+    unmount();
+    expect(document.body.style.position).not.toBe('fixed');
+  });
+});
