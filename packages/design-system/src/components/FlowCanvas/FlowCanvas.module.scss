@@ -24,7 +24,6 @@
   cursor: grabbing;
 }
 
-// stylelint-disable property-disallowed-list -- maximized canvas is an in-place fixed overlay, not consumer layout
 .rootMaximized {
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- must be fixed to fill the viewport
   position: fixed;
@@ -37,7 +36,6 @@
   z-index: var(--flow-canvas-maximized-z);
   border-radius: 0;
 }
-// stylelint-enable property-disallowed-list
 
 .stage {
   position: absolute;

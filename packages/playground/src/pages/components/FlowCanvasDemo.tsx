@@ -98,7 +98,7 @@ export function FlowCanvasDemo() {
         title="Workflow builder"
         description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, Shift+arrows nudge."
         code={`import { useState } from 'react';
-import { Badge, FlowCanvas, type FlowCanvasEdge, type FlowCanvasNode } from '@eocrm/design-system';
+import { Badge, Button, FlowCanvas, type FlowCanvasEdge, type FlowCanvasNode } from '@eocrm/design-system';
 
 export function Demo() {
   const [nodes, setNodes] = useState<FlowCanvasNode[]>([
@@ -113,11 +113,7 @@ export function Demo() {
       <FlowCanvas
         nodes={nodes}
         edges={edges}
-        controls={
-          <button onClick={() => setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: { x: 40, y: 40 } }])}>
-            Add node
-          </button>
-        }
+        controls={<Button size="sm" onClick={() => setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: { x: 40, y: 40 } }])}>Add node</Button>}
         onNodeCreate={(pos) =>
           setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: pos }])
         }

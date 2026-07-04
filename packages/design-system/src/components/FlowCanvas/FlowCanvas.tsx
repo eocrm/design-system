@@ -131,6 +131,11 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
  * - Do not hide primary, always-needed actions solely behind Maximize or in the
  *   `controls` slot — those are canvas chrome, not a substitute for the page's
  *   own toolbar; keep essential actions reachable when the canvas is inline.
+ * - Relying on maximize while the canvas sits inside an ancestor that
+ *   establishes a containing block via `transform`/`filter`/`perspective`/
+ *   `will-change` — in-page maximize uses `position: fixed`, so it anchors to
+ *   that ancestor instead of the viewport and won't fill the screen. Keep the
+ *   canvas out of transformed wrappers if you depend on maximize.
  *
  * @example
  * ```tsx
@@ -1152,27 +1157,19 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       return;
     }
     if (key === 'Escape') {
+      // Tier 1 (#274): an open consumer floating surface (DropdownMenu/Popover
+      // rendered in `controls`) owns this press — let it close first.
+      if (overlayStack.hasOpenFloating() || overlayStack.wasEscapeConsumed(event.nativeEvent)) {
+        return;
+      }
       if (selection) {
-        // Layered dismiss: consume the key when the canvas acts on it so a
-        // bubble-phase ancestor (a consumer's own overlay/panel keydown
-        // handler) doesn't also dismiss; with nothing selected it propagates.
-        // Note this library's Modal/Popover listen for Escape on document in
-        // the CAPTURE phase, deliberately beating widget-level consumption —
-        // inside those, Escape still closes the surface; a consumer who wants
-        // Escape-to-deselect within a Modal uses its `disableEscapeClose`.
         event.preventDefault();
         event.stopPropagation();
         setSelection(null);
         announce(t('flowCanvas.selectionCleared'));
         return;
       }
-      // No selection: exit maximize, unless an open floating surface (a
-      // consumer DropdownMenu/Popover) is claiming this press (#274).
-      if (
-        maximized &&
-        !overlayStack.hasOpenFloating() &&
-        !overlayStack.wasEscapeConsumed(event.nativeEvent)
-      ) {
+      if (maximized) {
         event.preventDefault();
         event.stopPropagation();
         setMaximizedAnnounced(false);

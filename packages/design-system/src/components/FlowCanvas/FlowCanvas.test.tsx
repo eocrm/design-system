@@ -1942,6 +1942,37 @@ describe('FlowCanvas maximize keyboard', () => {
     fireEvent.keyDown(root, { key: 'Escape' });
     expect(onMaximizedChange).not.toHaveBeenCalled();
   });
+
+  it('yields Escape to an open floating surface instead of exiting maximize', () => {
+    const onMaximizedChange = vi.fn();
+    render(
+      <FlowCanvas nodes={NODES} edges={EDGES} defaultMaximized onMaximizedChange={onMaximizedChange} />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    overlayStack.registerFloating('test-surface'); // simulate an open consumer menu
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(root).toHaveAttribute('data-flowcanvas-maximized'); // did NOT exit
+    expect(onMaximizedChange).not.toHaveBeenCalled();
+    overlayStack.unregisterFloating('test-surface');
+  });
+
+  it('does not toggle maximize when F is pressed inside a controls input', () => {
+    const onMaximizedChange = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        onMaximizedChange={onMaximizedChange}
+        controls={<input data-testid="ctl-input" />}
+      />,
+    );
+    const input = screen.getByTestId('ctl-input');
+    input.focus();
+    fireEvent.keyDown(input, { key: 'f' });
+    expect(onMaximizedChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('application')).not.toHaveAttribute('data-flowcanvas-maximized');
+  });
 });
 
 describe('FlowCanvas maximize overlay behavior', () => {
