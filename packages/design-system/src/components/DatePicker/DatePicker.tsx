@@ -11,7 +11,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useInOverlay } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
@@ -318,6 +318,9 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         setOpen(false);
       }
       if (e.key === 'Escape' && open) {
+        // Already handled by an inner surface's capture listener on this
+        // same press (the embedded clock) — one layer per press (#274).
+        if (overlayStack.wasEscapeConsumed(e.nativeEvent)) return;
         e.preventDefault();
         setOpen(false);
         inputRef.current?.focus();
@@ -325,6 +328,30 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     },
     [commit, draft, open],
   );
+
+  // #274: Escape must close the calendar from ANYWHERE while open — the
+  // input-scoped handler above is dead once focus moves into the grid via
+  // ArrowDown (a pre-existing gap), and hosts now yield Escape to open
+  // floating surfaces, which would otherwise leave the press doing nothing.
+  // Capture phase to beat focused widgets (matches TimeField). Defers to an
+  // open embedded TimeField clock: the clock's own (later-registered)
+  // listener must close it first — closing the calendar would unmount the
+  // clock mid-press.
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(e: globalThis.KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      // Another surface already closed on this press — one layer per press.
+      if (overlayStack.wasEscapeConsumed(e)) return;
+      if (document.querySelector('[data-timefield-popover="true"]')) return;
+      e.preventDefault();
+      overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
+      setOpen(false);
+      inputRef.current?.focus();
+    }
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [open]);
 
   const handleSelect = useCallback(
     (next: Date) => {
@@ -394,6 +421,9 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
   // --z-modal) paints it behind the host — elevate when the trigger sits in
   // an overlay, exactly like Select/Popover/DropdownMenu.
   const inOverlay = useInOverlay(wrapperRef, open);
+  // #274: hosts yield Escape while we're open — our own capture/element
+  // handler closes us on the same press instead of the Modal/Drawer.
+  useFloatingSurface(open);
 
   const showClear = clearable && value != null && !disabled;
 

@@ -18,6 +18,7 @@ import {
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { useDropdownMenuContext } from './context';
+import { overlayStack } from '../_internal/overlay';
 import { mergeRefs } from '../_internal/refs';
 import styles from './DropdownMenu.module.scss';
 
@@ -149,6 +150,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
     const onKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
+        overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         // Only handle Escape for this level if focus is inside this panel or
         // no deeper sub is open. A deeper sub (higher depth) will have
         // registered its own capture listener and should handle Escape first.

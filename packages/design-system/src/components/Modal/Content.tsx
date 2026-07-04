@@ -41,6 +41,12 @@ export function Content({ children, className, style }: ContentProps) {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== 'Escape') return;
       if (!modalStack.isTop(ctx.modalId)) return;
+      // #274: an open floating surface (Select/Popover/menu/date-time popover/
+      // Rail flyout) wins this press — its own Escape handling (a capture
+      // listener or an element-scoped handler) closes it on this same press;
+      // wasEscapeConsumed covers a surface whose listener already ran. The
+      // next press reaches us.
+      if (modalStack.hasOpenFloating() || modalStack.wasEscapeConsumed(e)) return;
       if (ctx.disableEscapeClose) return;
       e.preventDefault();
       ctx.setOpen(false);

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { overlayStack } from '../_internal/overlay';
 import { Lightbox, type LightboxItem, type LightboxProps } from './Lightbox';
 
 const ITEMS: LightboxItem[] = [
@@ -247,5 +248,22 @@ describe('Lightbox', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Close gallery' }));
     expect(trigger).toHaveFocus();
+  });
+});
+
+describe('Lightbox — Escape yields to open floating surfaces (#274)', () => {
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
+  it('does not close while a floating surface is registered; closes after', () => {
+    const onOpenChange = vi.fn();
+    open({ onOpenChange });
+    overlayStack.registerFloating('probe-surface');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onOpenChange).not.toHaveBeenCalled();
+    overlayStack.unregisterFloating('probe-surface');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { useOverlayStack, overlayStack } from './useOverlayStack';
+import { useFloatingSurface, useOverlayStack, overlayStack } from './useOverlayStack';
 
 describe('overlayStack singleton', () => {
   afterEach(() => {
@@ -101,5 +101,38 @@ describe('useOverlayStack', () => {
     expect(overlayStack.depthOf('a')).toBe(0);
     unmount();
     expect(overlayStack.depthOf('a')).toBe(-1);
+  });
+});
+
+describe('floating-surface registry (#274)', () => {
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
+  it('hasOpenFloating reflects register/unregister', () => {
+    expect(overlayStack.hasOpenFloating()).toBe(false);
+    overlayStack.registerFloating('a');
+    overlayStack.registerFloating('b');
+    expect(overlayStack.hasOpenFloating()).toBe(true);
+    overlayStack.unregisterFloating('a');
+    expect(overlayStack.hasOpenFloating()).toBe(true);
+    overlayStack.unregisterFloating('b');
+    expect(overlayStack.hasOpenFloating()).toBe(false);
+  });
+
+  it('useFloatingSurface registers while open and cleans up on unmount', () => {
+    const { rerender, unmount } = renderHook(
+      ({ open }: { open: boolean }) => useFloatingSurface(open),
+      { initialProps: { open: false } },
+    );
+    expect(overlayStack.hasOpenFloating()).toBe(false);
+    rerender({ open: true });
+    expect(overlayStack.hasOpenFloating()).toBe(true);
+    rerender({ open: false });
+    expect(overlayStack.hasOpenFloating()).toBe(false);
+    rerender({ open: true });
+    expect(overlayStack.hasOpenFloating()).toBe(true);
+    unmount();
+    expect(overlayStack.hasOpenFloating()).toBe(false);
   });
 });

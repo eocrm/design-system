@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { useFloatingSurface } from '../_internal/overlay';
 import { createPortal } from 'react-dom';
 import { useFloating, autoUpdate, flip, shift, offset } from '@floating-ui/react-dom';
 import clsx from 'clsx';
@@ -31,6 +32,10 @@ export function AutocompleteMenu({
   listboxId,
   onSelect,
 }: AutocompleteMenuProps) {
+  // #274: mounted only while open — register as a floating surface so
+  // Modal/Drawer/Lightbox yield Escape to us (our own Escape handling closes
+  // us; without registration one press would close the host too).
+  useFloatingSurface(true);
   const t = useTranslation();
 
   // A Floating UI virtual element: only `getBoundingClientRect` is required.

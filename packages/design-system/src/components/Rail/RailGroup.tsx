@@ -22,7 +22,7 @@ import {
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { useRail } from './Rail';
-import { useInOverlay } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Rail.module.scss';
 
 /** Open-delay for hover-intent before opening the collapsed-mode flyout. */
@@ -141,6 +141,9 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
 
   // ─── Hover-driven popover state (used when rail is collapsed) ────────
   const [popoverOpen, setPopoverOpen] = useState(false);
+  // #274: hosts yield Escape while the flyout is open — our own capture
+  // listener closes it on the same press instead of the Modal/Drawer.
+  useFloatingSurface(popoverOpen);
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -219,6 +222,8 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
     if (!popoverOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault(); // consistency with every other floating surface
+        overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         clearOpenTimer();
         clearCloseTimer();
         setPopoverOpen(false);

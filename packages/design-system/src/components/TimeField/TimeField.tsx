@@ -10,7 +10,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useInOverlay } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Check, ChevronDown } from 'lucide-react';
@@ -290,6 +290,9 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
   // #272: elevate the clock above Modal/Drawer hosts — and, transitively,
   // above an elevated DatePicker calendar this field may be embedded in.
   const inOverlay = useInOverlay(wrapperRef, open);
+  // #274: hosts yield Escape while we're open — our own capture/element
+  // handler closes us on the same press instead of the Modal/Drawer.
+  useFloatingSurface(open);
 
   const handleToggle = useCallback(() => {
     if (isDisabled) return;
@@ -325,6 +328,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
+        overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         setOpen(false);
         inputRef.current?.focus();
       }

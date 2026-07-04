@@ -16,7 +16,7 @@ import { Image } from '../Image';
 import { Skeleton } from '../Skeleton';
 import { useFocusTrap } from '../_internal/overlay/useFocusTrap';
 import { useScrollLock } from '../_internal/overlay/useScrollLock';
-import { useOverlayStack } from '../_internal/overlay';
+import { overlayStack, useOverlayStack } from '../_internal/overlay';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Lightbox.module.scss';
 
@@ -214,6 +214,12 @@ export function Lightbox({
   useEffect(() => {
     if (!open || !isTop) return;
     function onKeyDown(e: KeyboardEvent) {
+      // #274: yield to an open floating surface — see Modal/Content.tsx.
+      if (
+        e.key === 'Escape' &&
+        (overlayStack.hasOpenFloating() || overlayStack.wasEscapeConsumed(e))
+      )
+        return;
       if (e.key === 'Escape') {
         e.stopPropagation();
         close();

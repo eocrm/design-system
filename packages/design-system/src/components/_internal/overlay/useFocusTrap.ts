@@ -18,6 +18,9 @@ const FOCUSABLE_SELECTOR = [
 // removing that entry would re-trap their keyboard users (#272).
 const FLOATING_BYPASS_SELECTOR = [
   '[data-popover-content]',
+  // RTE link-editor / attachment-config bubbles: form-like, hold their own
+  // focus while open inside a Modal (#274).
+  '[data-rte-overlay]',
   '[data-dropdown-menu-content]',
   '[role="tooltip"]',
   '[role="menu"]',

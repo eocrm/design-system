@@ -808,3 +808,32 @@ describe('DateRangePicker — overlay elevation (#272)', () => {
     expect(clock).toHaveAttribute('data-in-overlay', '');
   });
 });
+
+describe('DateRangePicker — Escape from anywhere while open (#274)', () => {
+  it('Escape with focus in the grid closes the popover, resets in-flight selection, refocuses the input', async () => {
+    const user = userEvent.setup();
+    render(<DateRangePicker aria-label="Range" value={null} onChange={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    // Start a range selection (first click sets selectionStart)…
+    const fives = screen.getAllByRole('gridcell', { name: /^5$/ });
+    await user.click(fives[0]);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // …then Escape from grid/document scope (not the input).
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('textbox')).toHaveFocus();
+    // Reopen: the in-flight selection was reset — no cell carries the
+    // in-range/selection-preview state.
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const marked = screen
+      .getAllByRole('gridcell')
+      .filter(
+        (c) =>
+          c.getAttribute('aria-selected') === 'true' ||
+          c.getAttribute('data-in-range') === 'true' ||
+          c.getAttribute('data-range-start') === 'true',
+      );
+    expect(marked).toHaveLength(0);
+  });
+});

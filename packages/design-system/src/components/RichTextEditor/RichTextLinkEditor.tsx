@@ -5,6 +5,7 @@
 // LiquidEditor's AutocompleteMenu, so it escapes the editor's overflow and any
 // Drawer/Modal ancestor). Enter applies, Esc / click-outside cancels.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { overlayStack, useFloatingSurface } from '../_internal/overlay';
 import { createPortal } from 'react-dom';
 import { Button } from '../Button';
 import { Input } from '../Input';
@@ -52,6 +53,10 @@ export function RichTextLinkEditor({
   onRemove,
   onCancel,
 }: RichTextLinkEditorProps) {
+  // #274: mounted only while open — register as a floating surface so
+  // Modal/Drawer/Lightbox yield Escape to us (our own Escape handling closes
+  // us; without registration one press would close the host too).
+  useFloatingSurface(true);
   const t = useTranslation();
   const [value, setValue] = useState(href);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -69,7 +74,25 @@ export function RichTextLinkEditor({
   }, [editing]);
 
   // Dismiss on a pointerdown outside the bubble.
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
   useDismissOnOutsidePointerDown(bubbleRef, onCancel);
+
+  // #274: Escape must close the bubble from ANYWHERE — inside a Modal the
+  // focus trap can hold focus on the dialog, so the container-scoped
+  // onKeyDown below never fires; without this the registered bubble makes
+  // the host yield and the press goes dead. Capture + consume so the host
+  // (and the editor) treat the press as handled.
+  useEffect(() => {
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      overlayStack.consumeEscape(e);
+      onCancelRef.current();
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, []);
 
   const setRefs = useCallback(
     (node: HTMLDivElement | null) => {
@@ -94,6 +117,7 @@ export function RichTextLinkEditor({
     >
       <form
         role="group"
+        data-rte-overlay=""
         aria-label={t('richTextEditor.linkEditorLabel')}
         onSubmit={(e) => {
           e.preventDefault();

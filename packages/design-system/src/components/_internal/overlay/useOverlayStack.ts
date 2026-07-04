@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useId, useLayoutEffect, useState } from 'react';
 
 export type OverlayStackMode = 'replace' | 'overlay';
 
@@ -10,6 +10,26 @@ interface Entry {
 // Internal ordered list of open overlay entries, most-recently-registered last.
 const stack: Entry[] = [];
 const listeners = new Set<() => void>();
+const floating = new Set<string>();
+// Escape events already handled (surface closed on them). Order-independent
+// complement to the registry: a re-render can re-register a surface's
+// document-capture listener AHEAD of its host's (effects re-fire child-
+// first), so the surface may close + unregister within the same press —
+// the host must still yield to a consumed event. WeakSet: no leaks.
+const consumedEscapes = new WeakSet<Event>();
+
+// Open floating surfaces (Select listbox, Popover, DropdownMenu levels,
+// date/time popovers, Rail flyout). Hosts' Escape handlers yield while any
+// is open so a single press closes the innermost surface, not the host too
+// (#274). A Set of ids — hosts only need "is anything open". Surface-vs-
+// surface ordering is NOT guaranteed here (a Select inside a Popover still
+// closes with it on one press); only two hardcoded pairs defer today:
+// DropdownMenu sub->parent and TimeField clock->calendar. See #280. The
+// registry is also global, not host-scoped: any host yields to any open
+// surface, even one belonging to a lower overlay — rare but reachable (e.g.
+// a modal opened from a control inside a Popover: the popover dismisses only
+// on outside pointerdown, so it stays open and registered underneath, and
+// the modal's first Escape press yields to it).
 
 function notify() {
   for (const fn of listeners) fn();
@@ -66,6 +86,25 @@ export const overlayStack = {
     return topEntry()?.mode ?? null;
   },
   depthOf,
+  /** Register an open floating surface (Escape-yield participant, #274). */
+  registerFloating(id: string): void {
+    floating.add(id);
+  },
+  unregisterFloating(id: string): void {
+    floating.delete(id);
+  },
+  /** True while any floating surface is open — hosts yield Escape to it. */
+  hasOpenFloating(): boolean {
+    return floating.size > 0;
+  },
+  /** A closing surface marks its Escape so hosts yield even when the
+   *  surface's listener ran first (registration order is not stable). */
+  consumeEscape(e: Event): void {
+    consumedEscapes.add(e);
+  },
+  wasEscapeConsumed(e: Event): boolean {
+    return consumedEscapes.has(e);
+  },
   /** Subscribe to register/unregister notifications. Returns unsubscribe. */
   _subscribe(fn: () => void): () => void {
     listeners.add(fn);
@@ -77,6 +116,7 @@ export const overlayStack = {
   _reset(): void {
     stack.length = 0;
     listeners.clear();
+    floating.clear();
   },
 };
 
@@ -147,4 +187,24 @@ export function useOverlayStack(
   }, [id, active, mode]);
 
   return state;
+}
+
+/**
+ * Register this floating surface in the Escape-yield registry while `open`
+ * (#274). Hosts (Modal/Drawer/Lightbox) skip their Escape-close while any
+ * surface is registered, so the surface's own Escape handling — a document-
+ * capture listener for most surfaces, an element-scoped handler for the
+ * editor-owned menus (Liquid autocomplete, RTE mentions) — closes it instead;
+ * the next press reaches the host. Layout effect: the registration must be
+ * observable before the browser can deliver the next keydown.
+ */
+export function useFloatingSurface(open: boolean): void {
+  const id = useId();
+  useLayoutEffect(() => {
+    if (!open) return;
+    overlayStack.registerFloating(id);
+    return () => {
+      overlayStack.unregisterFloating(id);
+    };
+  }, [id, open]);
 }

@@ -2364,7 +2364,7 @@ const [open, setOpen] = useState(false);
 - **`<Modal.Footer>` defaults to right-aligned actions.** Use `align="space-between"` to split a danger action away from save/cancel.
 - **`<Modal.Close>`** wraps a clickable child and fires `onOpenChange(false)` on click. Chains with the child's existing `onClick`.
 - **Forced step:** combine `disableEscapeClose`, `dismissOnOverlayClick={false}`, omit `<Modal.Close>`, and pass `<Modal.Header closeButton={false}>` to lock the user into the modal until they resolve it programmatically.
-- **Stacked modals.** Default `stackMode="overlay"`: the parent stays visible underneath and the inner overlay paints transparent so the parent's dim shows through (one effective dim layer for the stack). Use `stackMode="replace"` to hide the parent via `display: none` (React state preserved) — best for forced steps where the parent context is irrelevant. Escape still closes only the topmost; body scroll stays locked across the whole stack.
+- **Stacked modals.** Default `stackMode="overlay"`: the parent stays visible underneath and the inner overlay paints transparent so the parent's dim shows through (one effective dim layer for the stack). Use `stackMode="replace"` to hide the parent via `display: none` (React state preserved) — best for forced steps where the parent context is irrelevant. Escape still closes only the topmost — and yields to any open floating surface first (Select/Popover/menu/date-time popover: the first press closes the surface, the next closes the modal); body scroll stays locked across the whole stack.
 - **Initial focus:** pass `initialFocusRef` to focus a specific element (e.g. the first input). Otherwise the dialog container receives focus and the focus trap takes over.
 
 **Anti-patterns:**
@@ -2394,7 +2394,7 @@ const [start, setStart] = useState(0);
 - Each `LightboxItem` is `{ src, alt, kind?, caption?, thumbnail? }` — `alt` is required.
 - `items` accept `kind: 'pdf'` (or a `.pdf` src) → rendered in an `<iframe>` with a download action; mixed image+PDF galleries supported. A PDF without a `thumbnail` shows a document-icon placeholder in the strip; unsafe (non-http(s)) doc srcs show a "Preview unavailable" message.
 - Single item → chevrons, counter, and strip auto-hide. Empty `items` → renders nothing.
-- Reuses the DS overlay machinery (focus-trap, scroll-lock, Esc, stacking above modals).
+- Reuses the DS overlay machinery (focus-trap, scroll-lock, Esc — yielding to open floating surfaces first like Modal/Drawer, stacking above modals).
 
 ### `<Drawer>` — edge-anchored slide-in panel
 
@@ -2422,7 +2422,7 @@ const [open, setOpen] = useState(false);
 - **Three sizes:** `sm` (320px), `md` (440px, default), `lg` (640px). Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen.
 - **Drag-to-close** on mobile: swipe the Header in the dismiss direction (right drawer → swipe right, bottom → swipe down, etc.). Threshold: 40% of drawer size or 0.5 px/ms velocity. Opt out with `dragToClose={false}`.
 - **Overlay variants:** `overlay="solid"` (default) or `overlay="blur"` (frosted-glass with `backdrop-filter: blur(4px)`).
-- **Stacks with Modal.** Both share one overlay registry — a Drawer can open from inside a Modal (and vice versa). Escape closes the topmost regardless of type; body scroll lock is shared.
+- **Stacks with Modal.** Both share one overlay registry — a Drawer can open from inside a Modal (and vice versa). Escape closes the topmost regardless of type — after yielding to any open floating surface (innermost-first: the first press closes the surface, the next closes the host); body scroll lock is shared.
 - **Forced step:** combine `disableEscapeClose + dismissOnOverlayClick={false} + dragToClose={false}` + `<Drawer.Header closeButton={false}>` + omit `<Drawer.Close>`.
 
 **Anti-patterns:**

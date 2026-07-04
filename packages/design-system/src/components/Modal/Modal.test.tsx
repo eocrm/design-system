@@ -7,6 +7,7 @@ import { useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Modal } from './Modal';
+import { Select } from '../Select';
 import { overlayStack } from '../_internal/overlay';
 
 function Harness(props: Partial<ComponentProps<typeof Modal>>) {
@@ -548,5 +549,78 @@ describe('<Modal>', () => {
     await user.keyboard('{Escape}');
     // Focus should land somewhere sensible; document.body is fine for jsdom.
     expect(document.activeElement).toBeDefined();
+  });
+});
+
+describe('Modal — Escape yields to open floating surfaces (#274)', () => {
+  function ModalWithSelect() {
+    const [open, setOpen] = useState(true);
+    return (
+      <Modal open={open} onOpenChange={setOpen} aria-label="Filters">
+        <Select
+          aria-label="Status"
+          options={[
+            { value: 'a', label: 'Active' },
+            { value: 'b', label: 'Archived' },
+          ]}
+        />
+      </Modal>
+    );
+  }
+
+  it('first Escape closes only the open Select; the second closes the Modal', async () => {
+    const user = userEvent.setup();
+    render(<ModalWithSelect />);
+    await user.click(screen.getByRole('button', { name: 'Status' }));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    // Inner surface closed, host survived.
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('Escape with no surface open still closes the Modal directly', async () => {
+    const user = userEvent.setup();
+    render(<ModalWithSelect />);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+describe('Modal — Escape yield is order-independent (consumed events, #274)', () => {
+  it('survives when a surface listener runs BEFORE the modal and consumes the press', async () => {
+    // Re-render churn can re-register a surface's document-capture listener
+    // ahead of the host's; the surface then closes + unregisters within the
+    // same press. The host must still yield to the consumed event.
+    const user = userEvent.setup();
+    const surfaceListener = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      // Simulate the surface: it is no longer registered (already closed by
+      // the time the host's listener runs) but marked the event consumed.
+      overlayStack.consumeEscape(e);
+    };
+    document.addEventListener('keydown', surfaceListener, true);
+    try {
+      function Host() {
+        const [open, setOpen] = useState(true);
+        return (
+          <Modal open={open} onOpenChange={setOpen} aria-label="Filters">
+            <button type="button">Body</button>
+          </Modal>
+        );
+      }
+      render(<Host />);
+      await user.keyboard('{Escape}');
+      // Consumed press: the modal must NOT close.
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      document.removeEventListener('keydown', surfaceListener, true);
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).toBeNull();
+    } finally {
+      document.removeEventListener('keydown', surfaceListener, true);
+    }
   });
 });
