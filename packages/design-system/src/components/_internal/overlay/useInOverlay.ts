@@ -11,8 +11,11 @@ import { useLayoutEffect, useState, type RefObject } from 'react';
 // marker lands on the DOM via the layout effect's setState (a second
 // synchronous commit, still pre-paint) before the nested surface can open,
 // so the chain is observable by the time the child's hook runs.
+// Also the in-place maximized FlowCanvas ([data-flowcanvas-maximized]), so a
+// consumer DropdownMenu/Select/Popover opened from its controls elevates above
+// the fixed maximized surface instead of rendering behind it.
 const OVERLAY_PORTAL_SELECTOR =
-  '[data-drawer-portal-root], [data-modal-portal-root], [data-lightbox-portal-root], [data-popover-content], [data-dropdown-menu-content], [data-in-overlay]';
+  '[data-drawer-portal-root], [data-modal-portal-root], [data-lightbox-portal-root], [data-flowcanvas-maximized], [data-popover-content], [data-dropdown-menu-content], [data-in-overlay]';
 
 /**
  * True when `referenceRef`'s element is rendered inside an overlay host — a
