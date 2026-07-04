@@ -2082,3 +2082,27 @@ describe('FlowCanvas maximize elevation', () => {
     expect(listbox).toHaveAttribute('data-in-overlay');
   });
 });
+
+describe('FlowCanvas auto-layout with pinned nodes', () => {
+  it('adding a pinned node does not move the auto-laid-out nodes', () => {
+    const auto: FlowCanvasNode[] = [
+      { id: 'a', label: 'A' },
+      { id: 'b', label: 'B' },
+    ];
+    const edges: FlowCanvasEdge[] = [{ id: 'ab', from: 'a', to: 'b' }];
+    const { rerender } = render(<FlowCanvas nodes={auto} edges={edges} />);
+    const posOf = (label: string) => {
+      const el = screen.getByLabelText(label);
+      return { left: el.style.left, top: el.style.top };
+    };
+    const before = { a: posOf('A'), b: posOf('B') };
+    rerender(
+      <FlowCanvas
+        nodes={[...auto, { id: 'p', label: 'Pinned', position: { x: 500, y: 500 } }]}
+        edges={edges}
+      />,
+    );
+    expect(posOf('A')).toEqual(before.a);
+    expect(posOf('B')).toEqual(before.b);
+  });
+});
