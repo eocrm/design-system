@@ -7,6 +7,7 @@ import {
   Stack,
   Text,
   Title,
+  arrangeNodes,
   type FlowCanvasEdge,
   type FlowCanvasNode,
 } from '@eocrm/design-system';
@@ -81,11 +82,10 @@ export function FlowCanvasDemo() {
     ]);
     setLastEvent('controls: add node');
   }, [nodes.length]);
-  const handleReset = useCallback(() => {
-    setNodes(WORKFLOW_NODES);
-    setEdges(WORKFLOW_EDGES);
-    setLastEvent('controls: reset');
-  }, []);
+  const handleArrange = useCallback(() => {
+    setNodes((prev) => arrangeNodes(prev, edges));
+    setLastEvent('controls: re-arrange');
+  }, [edges]);
 
   return (
     <DemoLayout
@@ -96,9 +96,9 @@ export function FlowCanvasDemo() {
     >
       <Example
         title="Workflow builder"
-        description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, Shift+arrows nudge."
+        description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, Shift+arrows nudge. The top-left controls show a custom Add-node button and a Re-arrange button wired to arrangeNodes()."
         code={`import { useState } from 'react';
-import { Badge, Button, FlowCanvas, type FlowCanvasEdge, type FlowCanvasNode } from '@eocrm/design-system';
+import { Badge, Button, Cluster, FlowCanvas, arrangeNodes, type FlowCanvasEdge, type FlowCanvasNode } from '@eocrm/design-system';
 
 export function Demo() {
   const [nodes, setNodes] = useState<FlowCanvasNode[]>([
@@ -113,7 +113,12 @@ export function Demo() {
       <FlowCanvas
         nodes={nodes}
         edges={edges}
-        controls={<Button size="sm" onClick={() => setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: { x: 40, y: 40 } }])}>Add node</Button>}
+        controls={
+          <Cluster gap="xs">
+            <Button size="sm" onClick={() => setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: { x: 40, y: 40 } }])}>Add node</Button>
+            <Button size="sm" variant="secondary" onClick={() => setNodes((prev) => arrangeNodes(prev, edges))}>Re-arrange</Button>
+          </Cluster>
+        }
         onNodeCreate={(pos) =>
           setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: pos }])
         }
@@ -146,8 +151,8 @@ export function Demo() {
                   <Button size="sm" variant="primary" onClick={handleAddNode}>
                     Add node
                   </Button>
-                  <Button size="sm" variant="secondary" onClick={handleReset}>
-                    Reset
+                  <Button size="sm" variant="secondary" onClick={handleArrange}>
+                    Re-arrange
                   </Button>
                 </Cluster>
               }
