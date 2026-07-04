@@ -11,7 +11,7 @@ import {
 import clsx from 'clsx';
 import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
-import { useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import type { SelectOption } from './utils-types';
 import { isCreateRow } from './utils';
 import { Empty } from './Empty';
@@ -97,6 +97,7 @@ export function Listbox() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
+        overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         ctx.closeAndFocusTrigger();
       }
     };

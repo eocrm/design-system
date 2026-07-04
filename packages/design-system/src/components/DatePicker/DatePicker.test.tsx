@@ -561,3 +561,28 @@ describe('DatePicker — Escape from anywhere while open (#274)', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
+
+describe('DatePicker — Escape cascade with the embedded clock (#274)', () => {
+  it('three presses: clock -> calendar -> (host would be next); calendar defers to the open clock', async () => {
+    const user = userEvent.setup();
+    render(
+      <DatePicker
+        aria-label="Due"
+        granularity="minute"
+        value={new Date(2026, 5, 15, 14, 30)}
+        onChange={() => {}}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    await user.click(screen.getByRole('button', { name: /Open time list/i }));
+    expect(document.querySelector('[data-timefield-popover="true"]')).not.toBeNull();
+    // Press 1: closes ONLY the clock — the calendar's document listener
+    // defers to [data-timefield-popover].
+    await user.keyboard('{Escape}');
+    expect(document.querySelector('[data-timefield-popover="true"]')).toBeNull();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // Press 2: closes the calendar.
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});

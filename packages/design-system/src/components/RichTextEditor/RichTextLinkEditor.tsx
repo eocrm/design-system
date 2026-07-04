@@ -5,6 +5,7 @@
 // LiquidEditor's AutocompleteMenu, so it escapes the editor's overflow and any
 // Drawer/Modal ancestor). Enter applies, Esc / click-outside cancels.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFloatingSurface } from '../_internal/overlay';
 import { createPortal } from 'react-dom';
 import { Button } from '../Button';
 import { Input } from '../Input';
@@ -52,6 +53,10 @@ export function RichTextLinkEditor({
   onRemove,
   onCancel,
 }: RichTextLinkEditorProps) {
+  // #274: mounted only while open — register as a floating surface so
+  // Modal/Drawer/Lightbox yield Escape to us (our own Escape handling closes
+  // us; without registration one press would close the host too).
+  useFloatingSurface(true);
   const t = useTranslation();
   const [value, setValue] = useState(href);
   const inputRef = useRef<HTMLInputElement | null>(null);

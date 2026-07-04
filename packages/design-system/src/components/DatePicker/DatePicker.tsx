@@ -11,7 +11,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
@@ -340,6 +340,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       if (e.key !== 'Escape') return;
       if (document.querySelector('[data-timefield-popover="true"]')) return;
       e.preventDefault();
+      overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
       setOpen(false);
       inputRef.current?.focus();
     }

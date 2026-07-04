@@ -10,7 +10,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Check, ChevronDown } from 'lucide-react';
@@ -328,6 +328,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
+        overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         setOpen(false);
         inputRef.current?.focus();
       }

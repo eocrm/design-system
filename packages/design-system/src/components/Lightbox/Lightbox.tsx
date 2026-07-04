@@ -215,7 +215,11 @@ export function Lightbox({
     if (!open || !isTop) return;
     function onKeyDown(e: KeyboardEvent) {
       // #274: yield to an open floating surface — see Modal/Content.tsx.
-      if (e.key === 'Escape' && overlayStack.hasOpenFloating()) return;
+      if (
+        e.key === 'Escape' &&
+        (overlayStack.hasOpenFloating() || overlayStack.wasEscapeConsumed(e))
+      )
+        return;
       if (e.key === 'Escape') {
         e.stopPropagation();
         close();

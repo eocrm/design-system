@@ -44,7 +44,7 @@ export function Content({ children, className, style }: ContentProps) {
       // #274: an open floating surface (Select/Popover/menu/date-time popover/
       // Rail flyout) wins this press — its own capture listener, which runs
       // later in the same keydown, closes it. The next press reaches us.
-      if (modalStack.hasOpenFloating()) return;
+      if (modalStack.hasOpenFloating() || modalStack.wasEscapeConsumed(e)) return;
       if (ctx.disableEscapeClose) return;
       e.preventDefault();
       ctx.setOpen(false);

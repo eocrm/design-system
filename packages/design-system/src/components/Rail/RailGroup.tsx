@@ -22,7 +22,7 @@ import {
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { useRail } from './Rail';
-import { useFloatingSurface } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface } from '../_internal/overlay';
 import styles from './Rail.module.scss';
 
 /** Open-delay for hover-intent before opening the collapsed-mode flyout. */
@@ -217,6 +217,8 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
     if (!popoverOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault(); // consistency with every other floating surface
+        overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         clearOpenTimer();
         clearCloseTimer();
         setPopoverOpen(false);

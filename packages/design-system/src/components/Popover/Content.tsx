@@ -12,7 +12,7 @@ import {
 import clsx from 'clsx';
 import { usePopoverContext } from './context';
 import { mergeRefs } from '../_internal/refs';
-import { useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Popover.module.scss';
 
 /** Which side of the trigger the popover prefers. Floating UI auto-flips if it doesn't fit. */
@@ -102,6 +102,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
+        overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         ctx.closeAll();
       }
     };

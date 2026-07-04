@@ -2,6 +2,7 @@ import { useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Drawer } from './Drawer';
+import { Select } from '../Select';
 import { overlayStack } from '../_internal/overlay';
 
 function Harness(props: Partial<ComponentProps<typeof Drawer>>) {
@@ -375,5 +376,34 @@ describe('<Drawer>', () => {
     const overlay = document.querySelector('[data-drawer-portal-root]') as HTMLElement;
     await user.click(overlay);
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('Drawer — Escape yields to open floating surfaces (#274)', () => {
+  function DrawerWithSelect() {
+    const [open, setOpen] = useState(true);
+    return (
+      <Drawer open={open} onOpenChange={setOpen} aria-label="Filters">
+        <Select
+          aria-label="Status"
+          options={[
+            { value: 'a', label: 'Active' },
+            { value: 'b', label: 'Archived' },
+          ]}
+        />
+      </Drawer>
+    );
+  }
+
+  it('first Escape closes only the open Select; the second closes the Drawer', async () => {
+    const user = userEvent.setup();
+    render(<DrawerWithSelect />);
+    await user.click(screen.getByRole('button', { name: 'Status' }));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

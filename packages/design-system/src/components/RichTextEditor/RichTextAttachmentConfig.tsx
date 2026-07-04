@@ -6,6 +6,7 @@
 // preview (a safe, fetchable src — an embed); an uploaded object-URL image is a
 // chip, so it gets no width. Non-image chips get replace/open/download.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFloatingSurface } from '../_internal/overlay';
 import { createPortal } from 'react-dom';
 import { Button } from '../Button';
 import { Input } from '../Input';
@@ -79,6 +80,10 @@ export function RichTextAttachmentConfig({
   onReplace,
   onClose,
 }: RichTextAttachmentConfigProps) {
+  // #274: mounted only while open — register as a floating surface so
+  // Modal/Drawer/Lightbox yield Escape to us (our own Escape handling closes
+  // us; without registration one press would close the host too).
+  useFloatingSurface(true);
   const t = useTranslation();
   const isImage = attachmentIsImage(block);
   const popRef = useRef<HTMLDivElement | null>(null);

@@ -11,6 +11,12 @@ interface Entry {
 const stack: Entry[] = [];
 const listeners = new Set<() => void>();
 const floating = new Set<string>();
+// Escape events already handled (surface closed on them). Order-independent
+// complement to the registry: a re-render can re-register a surface's
+// document-capture listener AHEAD of its host's (effects re-fire child-
+// first), so the surface may close + unregister within the same press —
+// the host must still yield to a consumed event. WeakSet: no leaks.
+const consumedEscapes = new WeakSet<Event>();
 
 // Open floating surfaces (Select listbox, Popover, DropdownMenu levels,
 // date/time popovers, Rail flyout). Hosts' Escape handlers yield while any
@@ -83,6 +89,14 @@ export const overlayStack = {
   /** True while any floating surface is open — hosts yield Escape to it. */
   hasOpenFloating(): boolean {
     return floating.size > 0;
+  },
+  /** A closing surface marks its Escape so hosts yield even when the
+   *  surface's listener ran first (registration order is not stable). */
+  consumeEscape(e: Event): void {
+    consumedEscapes.add(e);
+  },
+  wasEscapeConsumed(e: Event): boolean {
+    return consumedEscapes.has(e);
   },
   /** Subscribe to register/unregister notifications. Returns unsubscribe. */
   _subscribe(fn: () => void): () => void {
