@@ -2016,7 +2016,7 @@ import { Home, Users, Settings } from 'lucide-react';
 - **Layout-owning primitive (Hard rule 4 exception)** — like `<Modal>`, `<Drawer>`, `<Page>`, the rail owns its own width and height because that IS its job. Place the rail inside whatever container shape your page needs (sticky aside, fixed sidebar, in-flow column).
 - **Collapse state**: controlled (`collapsed` + `onCollapsedChange`) or uncontrolled (`defaultCollapsed`). The `<Rail.CollapseToggle>` button reads context and flips the state without prop drilling.
 - **`Rail.Item` is polymorphic** — `as={NavLink}` (or any router primitive) sets `aria-current="page"` on the rendered anchor; Rail's CSS applies the active accent via `[aria-current="page"]` and `:has([aria-current="page"])` selectors. No router dependency in the library.
-- **`Rail.Group`** — renders inline-expanding subitems when the rail is expanded, and a hover-popover (`right-start` placement, 80ms open delay, 200ms close grace) when collapsed. Auto-opens on mount when any subitem is the active route.
+- **`Rail.Group`** — renders inline-expanding subitems when the rail is expanded, and a hover-popover (`right-start` placement, 80ms open delay, 200ms close grace) when collapsed — portaled to `document.body` at `--z-popover` and auto-elevating above Modal/Drawer like other floating surfaces. Auto-opens on mount when any subitem is the active route.
 - **`Rail.Spacer`** — `flex-grow: 1` filler; place it before `Rail.Footer` to anchor the footer to the bottom.
 - **i18n**: `rail.expand` / `rail.collapse` (toggle aria-label), `rail.navigation` (default `<nav>` aria-label).
 
