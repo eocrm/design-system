@@ -156,9 +156,12 @@ describe('Escape yield contract per surface (#274)', () => {
     const user = userEvent.setup();
     function LinkHost() {
       const [open, setOpen] = useState(true);
-      const [bubble, setBubble] = useState(true);
+      // Mounted after the modal (via the Add link click) so the modal's
+      // capture listener runs first — see the attachment-config case.
+      const [bubble, setBubble] = useState(false);
       return (
         <Modal open={open} onOpenChange={setOpen} aria-label="Host">
+          <Button onClick={() => setBubble(true)}>Add link</Button>
           {bubble ? (
             <RichTextLinkEditor
               href=""
@@ -173,6 +176,7 @@ describe('Escape yield contract per surface (#274)', () => {
       );
     }
     render(<LinkHost />);
+    await user.click(screen.getByRole('button', { name: 'Add link' }));
     expect(screen.getByRole('group')).toBeInTheDocument();
     // The modal's focus trap must NOT steal focus from the bubble.
     await user.keyboard('{Escape}');
@@ -282,9 +286,16 @@ describe('Escape yield contract per surface (#274)', () => {
     };
     function ConfigHost() {
       const [open, setOpen] = useState(true);
-      const [cfg, setCfg] = useState(true);
+      // Mounted AFTER the modal (via the Configure click) so listener order
+      // matches production: the modal's capture listener registered first and
+      // runs first — ONLY the useFloatingSurface registration saves the host.
+      // Mounting both in one commit would register the config's listener
+      // first (child effects run before parent effects) and consumeEscape
+      // would mask a deleted registration.
+      const [cfg, setCfg] = useState(false);
       return (
         <Modal open={open} onOpenChange={setOpen} aria-label="Host">
+          <Button onClick={() => setCfg(true)}>Configure</Button>
           <Button>Elsewhere</Button>
           {cfg ? (
             <RichTextAttachmentConfig
@@ -303,12 +314,14 @@ describe('Escape yield contract per surface (#274)', () => {
       );
     }
     render(<ConfigHost />);
+    await user.click(screen.getByRole('button', { name: 'Configure' }));
     expect(screen.getByRole('group')).toBeInTheDocument();
+    expect(overlayStack.hasOpenFloating()).toBe(true);
     // Focus OUTSIDE the popover: only the document-capture listener sees this
     // press (the container onKeyDown is dead) — pins that listener specifically.
-    // No click (pointerdown-outside would dismiss the popover); flush the
-    // Modal's pending initial-focus microtask first so bare .focus() sticks.
-    await act(async () => {});
+    // No click (pointerdown-outside would dismiss the popover); bare .focus()
+    // is safe here — the Modal's initial-focus microtask flushed during the
+    // Configure click.
     screen.getByRole('button', { name: 'Elsewhere' }).focus();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('group')).toBeNull();

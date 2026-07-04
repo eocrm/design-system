@@ -26,8 +26,10 @@ const consumedEscapes = new WeakSet<Event>();
 // closes with it on one press); only two hardcoded pairs defer today:
 // DropdownMenu sub->parent and TimeField clock->calendar. See #280. The
 // registry is also global, not host-scoped: any host yields to any open
-// surface, even one belonging to a lower overlay (unreachable in practice —
-// outside-pointerdown dismissal closes surfaces before a new host can open).
+// surface, even one belonging to a lower overlay — rare but reachable (e.g.
+// a modal opened from a control inside a Popover: the popover dismisses only
+// on outside pointerdown, so it stays open and registered underneath, and
+// the modal's first Escape press yields to it).
 
 function notify() {
   for (const fn of listeners) fn();
