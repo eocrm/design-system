@@ -131,7 +131,7 @@ export type {
   FilterChipValueProps,
 } from './components/FilterChip';
 
-export { FlowCanvas } from './components/FlowCanvas';
+export { FlowCanvas, arrangeNodes } from './components/FlowCanvas';
 export type {
   FlowCanvasProps,
   FlowCanvasNode,

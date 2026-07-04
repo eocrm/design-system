@@ -116,3 +116,33 @@ export function computeLayout(
   }
   return result;
 }
+
+/**
+ * Lay out every node into the layered left→right auto-layout and return the
+ * nodes with `position` filled in — for a consumer-driven "re-arrange / tidy"
+ * action. Unlike {@link computeLayout} (which only places nodes without an
+ * explicit `position`), this re-flows ALL nodes, overwriting any existing
+ * `position`. Pure and deterministic; every other node field is preserved.
+ *
+ * Uses estimated node sizes, so vertical centering can differ by a few pixels
+ * from the live in-canvas layout (a standalone function cannot measure the
+ * rendered DOM). Fine for a tidy action.
+ *
+ * @example
+ * // A "Re-arrange" button in your own UI (e.g. the FlowCanvas `controls` slot):
+ * <Button onClick={() => setNodes((prev) => arrangeNodes(prev, edges))}>Re-arrange</Button>
+ */
+export function arrangeNodes(
+  nodes: FlowCanvasNode[],
+  edges: FlowCanvasEdge[],
+): FlowCanvasNode[] {
+  // Strip positions so the whole graph is treated as auto and re-laid-out.
+  const layout = computeLayout(
+    nodes.map((node) => ({ ...node, position: undefined })),
+    edges,
+  );
+  return nodes.map((node) => {
+    const position = layout.get(node.id);
+    return position ? { ...node, position } : node;
+  });
+}
