@@ -132,7 +132,10 @@ export function computeLayout(
  * // A "Re-arrange" button in your own UI (e.g. the FlowCanvas `controls` slot):
  * <Button onClick={() => setNodes((prev) => arrangeNodes(prev, edges))}>Re-arrange</Button>
  */
-export function arrangeNodes(nodes: FlowCanvasNode[], edges: FlowCanvasEdge[]): FlowCanvasNode[] {
+export function arrangeNodes(
+  nodes: readonly FlowCanvasNode[],
+  edges: readonly FlowCanvasEdge[],
+): FlowCanvasNode[] {
   // Strip positions so the whole graph is treated as auto and re-laid-out.
   const layout = computeLayout(
     nodes.map((node) => ({ ...node, position: undefined })),
