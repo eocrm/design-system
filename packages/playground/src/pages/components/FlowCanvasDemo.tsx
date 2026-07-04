@@ -263,9 +263,9 @@ export function Demo() {
           The canvas fills its parent — give the wrapper an explicit height. All mutations flow
           through intent callbacks; the canvas never changes your data. Keyboard: arrows rove
           between nodes, E cycles a node's connections, C starts connect mode, Shift+arrows nudge,
-          +/−/0 zoom and fit, Ctrl+arrows pan. Pass `controls` to render your own
-          buttons top-left; the built-in Maximize toggle (top-right, or F / Escape)
-          expands the canvas to fill the viewport.
+          +/−/0 zoom and fit, Ctrl+arrows pan. Pass `controls` to render your own buttons top-left;
+          the built-in Maximize toggle (top-right, or F / Escape) expands the canvas to fill the
+          viewport.
         </Text>
       </Stack>
     </DemoLayout>

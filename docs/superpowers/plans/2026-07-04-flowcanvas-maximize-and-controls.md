@@ -26,6 +26,7 @@
 ## Task 1: i18n keys for the new controls
 
 **Files:**
+
 - Modify: `packages/design-system/src/i18n/messages.ts:313` (inside the `flowCanvas` type block, after `zoomLevel`)
 - Modify: `packages/design-system/src/i18n/en.ts:188` (after `zoomLevel`)
 - Modify: `packages/design-system/src/i18n/ru.ts:190` (after `zoomLevel`)
@@ -103,6 +104,7 @@ git commit -m "feat(FlowCanvas): i18n keys for maximize + controls"
 ## Task 2: z-index token + overlay-selector registration
 
 **Files:**
+
 - Modify: `packages/design-system/src/styles/tokens.scss:361` (layering ladder)
 - Modify: `packages/design-system/src/components/FlowCanvas/FlowCanvas.tokens.scss:33` (component token)
 - Modify: `packages/design-system/src/components/_internal/overlay/useInOverlay.ts:15` (`OVERLAY_PORTAL_SELECTOR`)
@@ -112,9 +114,9 @@ git commit -m "feat(FlowCanvas): i18n keys for maximize + controls"
 In `tokens.scss`, the layering block ends at `--z-tooltip: 1300; ...`. Add a line for the maximized canvas. It must sit **below** `--z-modal` (1100) so a Modal opened from a control still wins:
 
 ```scss
-  --z-modal: 1100;
-  --z-flowcanvas-maximized: 1090; // in-page maximized FlowCanvas — above page content, below modal
-  --z-overlay-floating: 1190; // floating content (Select/Popover/DropdownMenu/DatePicker/DateRangePicker/TimeField/Rail flyout) opened INSIDE a Modal or Drawer — or inside another elevated surface (elevation is transitive)
+--z-modal: 1100;
+--z-flowcanvas-maximized: 1090; // in-page maximized FlowCanvas — above page content, below modal
+--z-overlay-floating: 1190; // floating content (Select/Popover/DropdownMenu/DatePicker/DateRangePicker/TimeField/Rail flyout) opened INSIDE a Modal or Drawer — or inside another elevated surface (elevation is transitive)
 ```
 
 - [ ] **Step 2: Add the component token**
@@ -164,6 +166,7 @@ git commit -m "feat(FlowCanvas): maximize z-index token + overlay-selector regis
 This task adds the props, the resolved state, the two new chrome containers, and the SCSS — WITHOUT the scroll-lock/focus/keyboard behavior (those are Tasks 5–6). Tests cover pure rendering.
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/FlowCanvas/FlowCanvas.tsx`
 - Modify: `packages/design-system/src/components/FlowCanvas/FlowCanvas.module.scss`
 - Test: `packages/design-system/src/components/FlowCanvas/FlowCanvas.test.tsx`
@@ -299,20 +302,20 @@ In the `function FlowCanvas({ ... }, ref)` parameter destructuring, add the new 
 Immediately after the `useControllableState` call for selection (the `const [rawSelection, setSelection] = useControllableState<FlowCanvasSelection>({...});` block ending at line ~173), add:
 
 ```ts
-  const [maximized, setMaximized] = useControllableState<boolean>({
-    value: maximizedProp,
-    defaultValue: defaultMaximized,
-    onChange: onMaximizedChange,
-  });
-  // Toggle + announce in one place so the button, the F key, and the Escape
-  // exit all narrate consistently.
-  const setMaximizedAnnounced = (next: boolean) => {
-    setMaximized(next);
-    announce(t(next ? 'flowCanvas.maximized' : 'flowCanvas.restored'));
-  };
+const [maximized, setMaximized] = useControllableState<boolean>({
+  value: maximizedProp,
+  defaultValue: defaultMaximized,
+  onChange: onMaximizedChange,
+});
+// Toggle + announce in one place so the button, the F key, and the Escape
+// exit all narrate consistently.
+const setMaximizedAnnounced = (next: boolean) => {
+  setMaximized(next);
+  announce(t(next ? 'flowCanvas.maximized' : 'flowCanvas.restored'));
+};
 ```
 
-> NOTE: `announce` and `t` are defined later in the component body but `setMaximizedAnnounced` is only *called* from event handlers that run after mount, so the forward reference is fine (it closes over the latest `announce`/`t` each render). If your linter complains about use-before-define on `announce`, move this `setMaximizedAnnounced` definition to just below where `announce` is defined.
+> NOTE: `announce` and `t` are defined later in the component body but `setMaximizedAnnounced` is only _called_ from event handlers that run after mount, so the forward reference is fine (it closes over the latest `announce`/`t` each render). If your linter complains about use-before-define on `announce`, move this `setMaximizedAnnounced` definition to just below where `announce` is defined.
 
 - [ ] **Step 7: Add the maximize class + marker to the root element**
 
@@ -341,38 +344,42 @@ to:
 Find the line `<FlowControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFit={() => fitTo(contentBounds)} />` (line ~1380) and insert the two containers immediately after it:
 
 ```tsx
-      <FlowControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFit={() => fitTo(contentBounds)} />
-      {controls != null ? (
-        // data-flow-controls: background-pan hit-testing skips this subtree, so
-        // pressing a control never starts a canvas pan (same carve-out as the
-        // zoom cluster).
-        <div
-          className={styles.controlsTopLeft}
-          data-flow-controls=""
-          role="toolbar"
-          aria-label={t('flowCanvas.controlsLabel')}
-        >
-          {controls}
-        </div>
-      ) : null}
-      {maximizeControl ? (
-        <div className={styles.controlsTopRight} data-flow-controls="">
-          <Button
-            variant="secondary"
-            size="sm"
-            iconOnly
-            aria-label={t(maximized ? 'flowCanvas.exitFullscreen' : 'flowCanvas.enterFullscreen')}
-            aria-pressed={maximized}
-            onClick={() => setMaximizedAnnounced(!maximized)}
-          >
-            {maximized ? (
-              <Minimize2 size={16} aria-hidden="true" />
-            ) : (
-              <Maximize2 size={16} aria-hidden="true" />
-            )}
-          </Button>
-        </div>
-      ) : null}
+<FlowControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFit={() => fitTo(contentBounds)} />;
+{
+  controls != null ? (
+    // data-flow-controls: background-pan hit-testing skips this subtree, so
+    // pressing a control never starts a canvas pan (same carve-out as the
+    // zoom cluster).
+    <div
+      className={styles.controlsTopLeft}
+      data-flow-controls=""
+      role="toolbar"
+      aria-label={t('flowCanvas.controlsLabel')}
+    >
+      {controls}
+    </div>
+  ) : null;
+}
+{
+  maximizeControl ? (
+    <div className={styles.controlsTopRight} data-flow-controls="">
+      <Button
+        variant="secondary"
+        size="sm"
+        iconOnly
+        aria-label={t(maximized ? 'flowCanvas.exitFullscreen' : 'flowCanvas.enterFullscreen')}
+        aria-pressed={maximized}
+        onClick={() => setMaximizedAnnounced(!maximized)}
+      >
+        {maximized ? (
+          <Minimize2 size={16} aria-hidden="true" />
+        ) : (
+          <Maximize2 size={16} aria-hidden="true" />
+        )}
+      </Button>
+    </div>
+  ) : null;
+}
 ```
 
 - [ ] **Step 9: Add the SCSS classes**
@@ -438,6 +445,7 @@ git commit -m "feat(FlowCanvas): maximize toggle + controls slot (rendering)"
 ## Task 4: Toggle behavior — click + controlled/uncontrolled
 
 **Files:**
+
 - Test: `packages/design-system/src/components/FlowCanvas/FlowCanvas.test.tsx`
 - (No new source — Task 3's `setMaximizedAnnounced` + `useControllableState` already implement this; this task pins the behavior with tests.)
 
@@ -497,6 +505,7 @@ git commit -m "test(FlowCanvas): maximize toggle controlled/uncontrolled behavio
 ## Task 5: Keyboard — `F` toggles, `Escape` exits (after selection)
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/FlowCanvas/FlowCanvas.tsx` (`handleRootKeyDown`)
 - Test: `packages/design-system/src/components/FlowCanvas/FlowCanvas.test.tsx`
 
@@ -558,12 +567,12 @@ Expected: FAIL — `F` does nothing; second Escape doesn't exit maximize.
 In `handleRootKeyDown`, after the `if (key === '0') { ... }` fit-to-content block (ends line ~1059) and before the `if (key === 'Delete' || key === 'Backspace')` block, insert:
 
 ```ts
-    if ((key === 'f' || key === 'F') && !ctrlKey && !metaKey) {
-      // Maximize works in readOnly too (viewing a large graph fullscreen is valid).
-      event.preventDefault();
-      setMaximizedAnnounced(!maximized);
-      return;
-    }
+if ((key === 'f' || key === 'F') && !ctrlKey && !metaKey) {
+  // Maximize works in readOnly too (viewing a large graph fullscreen is valid).
+  event.preventDefault();
+  setMaximizedAnnounced(!maximized);
+  return;
+}
 ```
 
 - [ ] **Step 4: Extend the `Escape` branch to exit maximize**
@@ -571,41 +580,41 @@ In `handleRootKeyDown`, after the `if (key === '0') { ... }` fit-to-content bloc
 Replace the existing Escape block:
 
 ```ts
-    if (key === 'Escape') {
-      if (selection) {
-        event.preventDefault();
-        event.stopPropagation();
-        setSelection(null);
-        announce(t('flowCanvas.selectionCleared'));
-      }
-      return;
-    }
+if (key === 'Escape') {
+  if (selection) {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelection(null);
+    announce(t('flowCanvas.selectionCleared'));
+  }
+  return;
+}
 ```
 
 with a version that falls through to maximize-exit when there is no selection, yielding to any open floating surface (the #274 protocol) so a consumer menu closes first:
 
 ```ts
-    if (key === 'Escape') {
-      if (selection) {
-        event.preventDefault();
-        event.stopPropagation();
-        setSelection(null);
-        announce(t('flowCanvas.selectionCleared'));
-        return;
-      }
-      // No selection: exit maximize, unless an open floating surface (a
-      // consumer DropdownMenu/Popover) is claiming this press (#274).
-      if (
-        maximized &&
-        !overlayStack.hasOpenFloating() &&
-        !overlayStack.wasEscapeConsumed(event.nativeEvent)
-      ) {
-        event.preventDefault();
-        event.stopPropagation();
-        setMaximizedAnnounced(false);
-      }
-      return;
-    }
+if (key === 'Escape') {
+  if (selection) {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelection(null);
+    announce(t('flowCanvas.selectionCleared'));
+    return;
+  }
+  // No selection: exit maximize, unless an open floating surface (a
+  // consumer DropdownMenu/Popover) is claiming this press (#274).
+  if (
+    maximized &&
+    !overlayStack.hasOpenFloating() &&
+    !overlayStack.wasEscapeConsumed(event.nativeEvent)
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    setMaximizedAnnounced(false);
+  }
+  return;
+}
 ```
 
 - [ ] **Step 5: Run the tests to verify they pass**
@@ -625,6 +634,7 @@ git commit -m "feat(FlowCanvas): F toggles maximize, Escape exits after clearing
 ## Task 6: Scroll lock + focus trap + focus restore
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/FlowCanvas/FlowCanvas.tsx`
 - Test: `packages/design-system/src/components/FlowCanvas/FlowCanvas.test.tsx`
 
@@ -679,27 +689,27 @@ Expected: FAIL — body is not locked; focus does not move to the root.
 In the component body, place these near the other top-level hooks (after the `maximized` state from Task 3, and BEFORE the render). The focus effect is a **passive** `useEffect` placed AFTER `useFocusTrap` on purpose: on exit, `useFocusTrap`'s cleanup (removing its `focusin` redirect listener) must run before we restore focus outward, or the trap would bounce the restored focus back into the canvas.
 
 ```ts
-  // --- maximize: scroll lock, focus trap, focus move/restore ----------------
-  useScrollLock(maximized);
-  useFocusTrap(rootRef, maximized);
-  // Capture the pre-maximize focus and move focus into the canvas on enter;
-  // restore it on exit. Passive effect, ordered after useFocusTrap so the trap
-  // has torn down before we restore focus outward (see note above).
-  const prevMaximizedRef = useRef(maximized);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    const was = prevMaximizedRef.current;
-    prevMaximizedRef.current = maximized;
-    if (maximized && !was) {
-      previouslyFocusedRef.current = (document.activeElement as HTMLElement | null) ?? null;
-      rootRef.current?.focus({ preventScroll: true });
-    } else if (!maximized && was) {
-      const target = previouslyFocusedRef.current;
-      previouslyFocusedRef.current = null;
-      if (target && document.contains(target)) target.focus({ preventScroll: true });
-      else rootRef.current?.focus({ preventScroll: true });
-    }
-  }, [maximized]);
+// --- maximize: scroll lock, focus trap, focus move/restore ----------------
+useScrollLock(maximized);
+useFocusTrap(rootRef, maximized);
+// Capture the pre-maximize focus and move focus into the canvas on enter;
+// restore it on exit. Passive effect, ordered after useFocusTrap so the trap
+// has torn down before we restore focus outward (see note above).
+const prevMaximizedRef = useRef(maximized);
+const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+useEffect(() => {
+  const was = prevMaximizedRef.current;
+  prevMaximizedRef.current = maximized;
+  if (maximized && !was) {
+    previouslyFocusedRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    rootRef.current?.focus({ preventScroll: true });
+  } else if (!maximized && was) {
+    const target = previouslyFocusedRef.current;
+    previouslyFocusedRef.current = null;
+    if (target && document.contains(target)) target.focus({ preventScroll: true });
+    else rootRef.current?.focus({ preventScroll: true });
+  }
+}, [maximized]);
 ```
 
 > `useLayoutEffect` is imported (Task 3) for other potential use, but this focus effect is intentionally `useEffect`. Keep it as `useEffect`.
@@ -721,6 +731,7 @@ git commit -m "feat(FlowCanvas): scroll lock + focus trap + focus restore for ma
 ## Task 7: Viewport preservation + readOnly maximize
 
 **Files:**
+
 - Test: `packages/design-system/src/components/FlowCanvas/FlowCanvas.test.tsx`
 - (No source change expected — this pins the no-remount guarantee and readOnly behavior. If a test fails it reveals an accidental remount/reset from an earlier task.)
 
@@ -776,6 +787,7 @@ git commit -m "test(FlowCanvas): maximize preserves viewport, works in readOnly"
 This validates Task 2's `OVERLAY_PORTAL_SELECTOR` change end-to-end with a real DS floating component.
 
 **Files:**
+
 - Test: `packages/design-system/src/components/FlowCanvas/FlowCanvas.test.tsx`
 
 - [ ] **Step 1: Write the failing test**
@@ -840,6 +852,7 @@ git commit -m "test(FlowCanvas): consumer menu elevates above the maximized canv
 ## Task 9: Playground demo — controls slot + maximize note
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/FlowCanvasDemo.tsx`
 
 - [ ] **Step 1: Add the controls handlers and imports**
@@ -863,20 +876,20 @@ import {
 Inside `FlowCanvasDemo`, after the existing `handleSelectionChange` callback, add two custom-control handlers:
 
 ```tsx
-  const handleAddNode = useCallback(() => {
-    const id = `state-${nextId++}`;
-    const offset = 40 + nodes.length * 24;
-    setNodes((prev) => [
-      ...prev,
-      { id, label: `New state ${nextId - 1}`, position: { x: offset, y: offset } },
-    ]);
-    setLastEvent('controls: add node');
-  }, [nodes.length]);
-  const handleReset = useCallback(() => {
-    setNodes(WORKFLOW_NODES);
-    setEdges(WORKFLOW_EDGES);
-    setLastEvent('controls: reset');
-  }, []);
+const handleAddNode = useCallback(() => {
+  const id = `state-${nextId++}`;
+  const offset = 40 + nodes.length * 24;
+  setNodes((prev) => [
+    ...prev,
+    { id, label: `New state ${nextId - 1}`, position: { x: offset, y: offset } },
+  ]);
+  setLastEvent('controls: add node');
+}, [nodes.length]);
+const handleReset = useCallback(() => {
+  setNodes(WORKFLOW_NODES);
+  setEdges(WORKFLOW_EDGES);
+  setLastEvent('controls: reset');
+}, []);
 ```
 
 - [ ] **Step 2: Wire `controls` into the interactive `FlowCanvas`**
@@ -884,28 +897,28 @@ Inside `FlowCanvasDemo`, after the existing `handleSelectionChange` callback, ad
 In the "Workflow builder" `Example`, add the `controls` prop to the live `<FlowCanvas>` (the one at line ~124, not the code string):
 
 ```tsx
-            <FlowCanvas
-              nodes={nodes}
-              edges={edges}
-              controls={
-                <Cluster gap="xs">
-                  <Button size="sm" variant="primary" onClick={handleAddNode}>
-                    Add node
-                  </Button>
-                  <Button size="sm" variant="secondary" onClick={handleReset}>
-                    Reset
-                  </Button>
-                </Cluster>
-              }
-              onNodeCreate={handleNodeCreate}
-              onNodeMove={handleNodeMove}
-              onNodeDelete={handleNodeDelete}
-              onNodeOpen={handleNodeOpen}
-              onEdgeCreate={handleEdgeCreate}
-              onEdgeDelete={handleEdgeDelete}
-              onEdgeOpen={handleEdgeOpen}
-              onSelectionChange={handleSelectionChange}
-            />
+<FlowCanvas
+  nodes={nodes}
+  edges={edges}
+  controls={
+    <Cluster gap="xs">
+      <Button size="sm" variant="primary" onClick={handleAddNode}>
+        Add node
+      </Button>
+      <Button size="sm" variant="secondary" onClick={handleReset}>
+        Reset
+      </Button>
+    </Cluster>
+  }
+  onNodeCreate={handleNodeCreate}
+  onNodeMove={handleNodeMove}
+  onNodeDelete={handleNodeDelete}
+  onNodeOpen={handleNodeOpen}
+  onEdgeCreate={handleEdgeCreate}
+  onEdgeDelete={handleEdgeDelete}
+  onEdgeOpen={handleEdgeOpen}
+  onSelectionChange={handleSelectionChange}
+/>
 ```
 
 - [ ] **Step 3: Update the example description + code string**
@@ -913,7 +926,8 @@ In the "Workflow builder" `Example`, add the `controls` prop to the live `<FlowC
 Change the "Workflow builder" `Example`'s `description` to mention the new affordances:
 
 ```tsx
-        description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, Shift+arrows nudge."
+description =
+  "Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, Shift+arrows nudge.";
 ```
 
 In the same `Example`'s `code={`...`}` template string, add the `controls` prop so the copy-pasteable snippet matches the live demo. Insert after `edges={edges}` inside the template's `<FlowCanvas`:
@@ -959,6 +973,7 @@ git commit -m "docs(FlowCanvas): demo the controls slot + maximize toggle"
 ## Task 10: Component JSDoc + AGENTS.md
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/FlowCanvas/FlowCanvas.tsx` (component `@remarks`)
 - Modify: `packages/design-system/AGENTS.md:937` (the `### <FlowCanvas>` TL;DR section)
 
@@ -1022,16 +1037,18 @@ npm run lint:css -w @eocrm/design-system
 npm run build -w @eocrm/design-system
 npm pack --dry-run -w @eocrm/design-system
 ```
+
 Expected: all PASS; `npm pack --dry-run` shows no `*.test.tsx` and no internal-only paths in the tarball.
 
 - [ ] **Step 2: Browser-verify the maximize paint** (jsdom can't see paint — required for a visually-novel change)
 
 Start the playground (`make dev`), open the FlowCanvas demo, and with Playwright (or Claude-in-Chrome) confirm:
+
 - The Maximize toggle (top-right) and the custom controls (top-left) render over the canvas.
 - Clicking Maximize expands the canvas to fill the viewport; zoom cluster stays bottom-left, controls top-left, toggle (now Restore) top-right.
 - `F` and `Escape` toggle/exit; the page behind does not scroll while maximized.
 - A control that opens a menu (if added) renders ABOVE the maximized canvas.
-Capture a screenshot of the maximized state for the PR.
+  Capture a screenshot of the maximized state for the PR.
 
 - [ ] **Step 3: Fresh-context review agent**
 

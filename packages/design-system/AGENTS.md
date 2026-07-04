@@ -962,7 +962,11 @@ const [edges, setEdges] = useState<FlowCanvasEdge[]>([
   <FlowCanvas
     nodes={nodes}
     edges={edges}
-    controls={<Button size="sm" onClick={addNode}>Add node</Button>}
+    controls={
+      <Button size="sm" onClick={addNode}>
+        Add node
+      </Button>
+    }
     onEdgeCreate={(from, to) => createTransition(from, to)}
     onNodeOpen={(id) => openStateModal(id)}
     onNodeDelete={(id) => confirmDeleteState(id)}

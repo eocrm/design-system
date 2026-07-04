@@ -1952,7 +1952,12 @@ describe('FlowCanvas maximize keyboard', () => {
   it('yields Escape to an open floating surface instead of exiting maximize', () => {
     const onMaximizedChange = vi.fn();
     render(
-      <FlowCanvas nodes={NODES} edges={EDGES} defaultMaximized onMaximizedChange={onMaximizedChange} />,
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultMaximized
+        onMaximizedChange={onMaximizedChange}
+      />,
     );
     const root = screen.getByRole('application');
     root.focus();
