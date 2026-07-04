@@ -939,7 +939,10 @@ Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once pe
 Pan/zoom canvas for directed node-edge diagrams (workflow builders). Events-only: you own
 `nodes`/`edges`; the canvas emits intents (`onNodeCreate`, `onNodeMove`, `onNodeOpen`,
 `onNodeDelete`, `onEdgeCreate`, `onEdgeOpen`, `onEdgeDelete`) and never mutates data. Nodes
-without `position` auto-layout left → right and stay draggable for the session. Selection is
+without `position` auto-layout left → right and stay draggable for the session. Nodes with an
+explicit `position` are pinned and don't affect the auto-layout of the others (nodes without a
+`position` are auto-laid-out). `arrangeNodes(nodes, edges)` (exported) re-flows the whole graph
+and returns the nodes with fresh positions — wire it to your own "Re-arrange" button. Selection is
 single (`selection`/`defaultSelection`/`onSelectionChange`); `readOnly` disables editing but
 keeps select/open. Validation of new connections via `isValidConnection` (default: no
 self-loops, no duplicate pairs). The canvas fills its parent — give the wrapper a height.

@@ -1,4 +1,4 @@
-import { computeLayout, ESTIMATED_NODE_SIZE } from './layout';
+import { arrangeNodes, computeLayout, ESTIMATED_NODE_SIZE } from './layout';
 import type { FlowCanvasEdge, FlowCanvasNode } from './types';
 
 const n = (id: string): FlowCanvasNode => ({ id, label: id });
@@ -89,5 +89,79 @@ describe('computeLayout', () => {
       narrow.get('b')!.x - narrow.get('a')!.x,
     );
     expect(ESTIMATED_NODE_SIZE.width).toBeGreaterThan(0);
+  });
+
+  it('ignores pinned nodes (explicit position) — absent from the result', () => {
+    const pos = computeLayout(
+      [n('a'), n('b'), { id: 'pinned', label: 'P', position: { x: 5, y: 5 } }],
+      [e('a', 'b')],
+    );
+    expect(pos.has('pinned')).toBe(false);
+    expect(pos.has('a')).toBe(true);
+    expect(pos.has('b')).toBe(true);
+  });
+
+  it('lays out auto nodes independently of pinned nodes', () => {
+    const autoOnly = computeLayout([n('a'), n('b'), n('c')], [e('a', 'b'), e('b', 'c')]);
+    const withPinned = computeLayout(
+      [n('a'), n('b'), n('c'), { id: 'd', label: 'D', position: { x: 9, y: 9 } }],
+      [e('a', 'b'), e('b', 'c')],
+    );
+    expect(withPinned.get('a')).toEqual(autoOnly.get('a'));
+    expect(withPinned.get('b')).toEqual(autoOnly.get('b'));
+    expect(withPinned.get('c')).toEqual(autoOnly.get('c'));
+  });
+
+  it('treats an auto node fed only by a pinned node as a source (edge to pinned skipped)', () => {
+    const pos = computeLayout(
+      [{ id: 'p', label: 'P', position: { x: 0, y: 0 } }, n('b')],
+      [e('p', 'b')],
+    );
+    expect(pos.has('p')).toBe(false);
+    expect(pos.get('b')!.x).toBe(0); // rank-0 source, no incoming
+  });
+
+  it('returns an empty map when every node is pinned', () => {
+    const pos = computeLayout(
+      [
+        { id: 'a', label: 'A', position: { x: 0, y: 0 } },
+        { id: 'b', label: 'B', position: { x: 1, y: 1 } },
+      ],
+      [e('a', 'b')],
+    );
+    expect(pos.size).toBe(0);
+  });
+});
+
+describe('arrangeNodes', () => {
+  it('gives every node a position and lays the graph out left → right', () => {
+    const result = arrangeNodes([n('a'), n('b'), n('c')], [e('a', 'b'), e('b', 'c')]);
+    expect(result.every((node) => node.position !== undefined)).toBe(true);
+    const x = (id: string) => result.find((node) => node.id === id)!.position!.x;
+    expect(x('a')).toBeLessThan(x('b'));
+    expect(x('b')).toBeLessThan(x('c'));
+  });
+
+  it('overwrites existing (pinned) positions — it re-flows ALL nodes', () => {
+    const result = arrangeNodes(
+      [{ id: 'a', label: 'A', position: { x: 999, y: 999 } }, n('b')],
+      [e('a', 'b')],
+    );
+    expect(result.find((node) => node.id === 'a')!.position).not.toEqual({ x: 999, y: 999 });
+    expect(result.find((node) => node.id === 'b')!.position).toBeDefined();
+  });
+
+  it('preserves all other node fields', () => {
+    const result = arrangeNodes([{ id: 'a', label: 'A', color: '#123456', adornment: 'x' }], []);
+    const a = result.find((node) => node.id === 'a')!;
+    expect(a.label).toBe('A');
+    expect(a.color).toBe('#123456');
+    expect(a.adornment).toBe('x');
+  });
+
+  it('is deterministic', () => {
+    const nodes = [n('a'), n('b'), n('c')];
+    const edges = [e('a', 'b')];
+    expect(arrangeNodes(nodes, edges)).toEqual(arrangeNodes(nodes, edges));
   });
 });
