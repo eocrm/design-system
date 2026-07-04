@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import {
   Badge,
+  Button,
+  Cluster,
   FlowCanvas,
   Stack,
   Text,
@@ -70,6 +72,20 @@ export function FlowCanvasDemo() {
     },
     [],
   );
+  const handleAddNode = useCallback(() => {
+    const id = `state-${nextId++}`;
+    const offset = 40 + nodes.length * 24;
+    setNodes((prev) => [
+      ...prev,
+      { id, label: `New state ${nextId - 1}`, position: { x: offset, y: offset } },
+    ]);
+    setLastEvent('controls: add node');
+  }, [nodes.length]);
+  const handleReset = useCallback(() => {
+    setNodes(WORKFLOW_NODES);
+    setEdges(WORKFLOW_EDGES);
+    setLastEvent('controls: reset');
+  }, []);
 
   return (
     <DemoLayout
@@ -80,7 +96,7 @@ export function FlowCanvasDemo() {
     >
       <Example
         title="Workflow builder"
-        description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Full keyboard support: arrows rove, E cycles edges, C connects, Shift+arrows nudge."
+        description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, Shift+arrows nudge."
         code={`import { useState } from 'react';
 import { Badge, FlowCanvas, type FlowCanvasEdge, type FlowCanvasNode } from '@eocrm/design-system';
 
@@ -97,6 +113,11 @@ export function Demo() {
       <FlowCanvas
         nodes={nodes}
         edges={edges}
+        controls={
+          <button onClick={() => setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: { x: 40, y: 40 } }])}>
+            Add node
+          </button>
+        }
         onNodeCreate={(pos) =>
           setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: pos }])
         }
@@ -124,6 +145,16 @@ export function Demo() {
             <FlowCanvas
               nodes={nodes}
               edges={edges}
+              controls={
+                <Cluster gap="xs">
+                  <Button size="sm" variant="primary" onClick={handleAddNode}>
+                    Add node
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={handleReset}>
+                    Reset
+                  </Button>
+                </Cluster>
+              }
               onNodeCreate={handleNodeCreate}
               onNodeMove={handleNodeMove}
               onNodeDelete={handleNodeDelete}
@@ -236,7 +267,9 @@ export function Demo() {
           The canvas fills its parent — give the wrapper an explicit height. All mutations flow
           through intent callbacks; the canvas never changes your data. Keyboard: arrows rove
           between nodes, E cycles a node's connections, C starts connect mode, Shift+arrows nudge,
-          +/−/0 zoom and fit, Ctrl+arrows pan.
+          +/−/0 zoom and fit, Ctrl+arrows pan. Pass `controls` to render your own
+          buttons top-left; the built-in Maximize toggle (top-right, or F / Escape)
+          expands the canvas to fill the viewport.
         </Text>
       </Stack>
     </DemoLayout>
