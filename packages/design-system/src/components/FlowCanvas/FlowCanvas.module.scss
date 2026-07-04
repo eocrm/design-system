@@ -118,6 +118,7 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
   position: absolute;
   display: flex;
   align-items: center;
+  width: max-content;
   gap: var(--flow-node-gap);
   padding: var(--flow-node-padding-y) var(--flow-node-padding-x);
   background: var(--flow-node-bg);
@@ -192,6 +193,7 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
 
 .chip {
   position: absolute;
+  width: max-content;
   padding: var(--flow-chip-padding-y) var(--flow-chip-padding-x);
   background: var(--flow-chip-bg);
   border: var(--border-width) solid var(--flow-chip-border);
