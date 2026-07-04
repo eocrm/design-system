@@ -2392,7 +2392,7 @@ const [start, setStart] = useState(0);
 - Each `LightboxItem` is `{ src, alt, kind?, caption?, thumbnail? }` — `alt` is required.
 - `items` accept `kind: 'pdf'` (or a `.pdf` src) → rendered in an `<iframe>` with a download action; mixed image+PDF galleries supported. A PDF without a `thumbnail` shows a document-icon placeholder in the strip; unsafe (non-http(s)) doc srcs show a "Preview unavailable" message.
 - Single item → chevrons, counter, and strip auto-hide. Empty `items` → renders nothing.
-- Reuses the DS overlay machinery (focus-trap, scroll-lock, Esc, stacking above modals).
+- Reuses the DS overlay machinery (focus-trap, scroll-lock, Esc — yielding to open floating surfaces first like Modal/Drawer, stacking above modals).
 
 ### `<Drawer>` — edge-anchored slide-in panel
 

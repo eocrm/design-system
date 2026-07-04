@@ -21,8 +21,10 @@ const consumedEscapes = new WeakSet<Event>();
 // Open floating surfaces (Select listbox, Popover, DropdownMenu levels,
 // date/time popovers, Rail flyout). Hosts' Escape handlers yield while any
 // is open so a single press closes the innermost surface, not the host too
-// (#274). A Set of ids — surfaces have no meaningful order; their own
-// (later-registered) capture listeners close them innermost-first already.
+// (#274). A Set of ids — hosts only need "is anything open". Surface-vs-
+// surface ordering is NOT guaranteed here (a Select inside a Popover still
+// closes with it on one press); only two hardcoded pairs defer today:
+// DropdownMenu sub->parent and TimeField clock->calendar. See #280.
 
 function notify() {
   for (const fn of listeners) fn();

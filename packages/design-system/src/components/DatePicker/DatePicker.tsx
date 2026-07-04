@@ -318,6 +318,9 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         setOpen(false);
       }
       if (e.key === 'Escape' && open) {
+        // Already handled by an inner surface's capture listener on this
+        // same press (the embedded clock) — one layer per press (#274).
+        if (overlayStack.wasEscapeConsumed(e.nativeEvent)) return;
         e.preventDefault();
         setOpen(false);
         inputRef.current?.focus();

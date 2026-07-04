@@ -822,8 +822,18 @@ describe('DateRangePicker — Escape from anywhere while open (#274)', () => {
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByRole('textbox')).toHaveFocus();
-    // Reopen: no stale in-flight selection (no range preview persists).
+    // Reopen: the in-flight selection was reset — no cell carries the
+    // in-range/selection-preview state.
     await user.click(screen.getByRole('button', { name: 'Open calendar' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const marked = screen
+      .getAllByRole('gridcell')
+      .filter(
+        (c) =>
+          c.getAttribute('aria-selected') === 'true' ||
+          c.getAttribute('data-in-range') === 'true' ||
+          c.getAttribute('data-range-start') === 'true',
+      );
+    expect(marked).toHaveLength(0);
   });
 });

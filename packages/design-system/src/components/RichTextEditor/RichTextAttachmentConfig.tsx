@@ -6,7 +6,7 @@
 // preview (a safe, fetchable src — an embed); an uploaded object-URL image is a
 // chip, so it gets no width. Non-image chips get replace/open/download.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useFloatingSurface } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface } from '../_internal/overlay';
 import { createPortal } from 'react-dom';
 import { Button } from '../Button';
 import { Input } from '../Input';
@@ -111,7 +111,22 @@ export function RichTextAttachmentConfig({
   );
 
   // Dismiss on a pointerdown outside the popover.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useDismissOnOutsidePointerDown(popRef, onClose);
+
+  // #274: Escape from anywhere — see RichTextLinkEditor for the rationale
+  // (focus trap can hold focus outside this body-portaled popover).
+  useEffect(() => {
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      overlayStack.consumeEscape(e);
+      onCloseRef.current();
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, []);
 
   // Move focus into the popover on open so the Escape handler (on the container)
   // works without the trigger keeping focus — mirrors RichTextLinkEditor focusing
@@ -134,6 +149,7 @@ export function RichTextAttachmentConfig({
       className={styles.configPopover}
       style={floatingStyles}
       role="group"
+      data-rte-overlay=""
       aria-label={t('richTextEditor.attachmentConfigure')}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {

@@ -364,6 +364,8 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           setHoverDate(null);
         }
         if (e.key === 'Escape' && open) {
+          // Already handled by the embedded clock on this press (#274).
+          if (overlayStack.wasEscapeConsumed(e.nativeEvent)) return;
           e.preventDefault();
           setOpen(false);
           setSelectionStart(null);
