@@ -1976,3 +1976,30 @@ describe('FlowCanvas maximize overlay behavior', () => {
     expect(document.body.style.position).not.toBe('fixed');
   });
 });
+
+describe('FlowCanvas maximize preserves state', () => {
+  it('keeps the viewport transform across a maximize/restore round trip', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const root = screen.getByRole('application');
+    const stage = container.querySelector('[data-flow-stage]') as HTMLElement;
+    root.focus();
+    // Zoom in twice so the transform is non-default.
+    fireEvent.keyDown(root, { key: '+' });
+    fireEvent.keyDown(root, { key: '+' });
+    const zoomed = stage.style.transform;
+    expect(zoomed).not.toBe('');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    fireEvent.click(screen.getByLabelText('Restore'));
+    // Same DOM node, same transform — no remount/reset.
+    const stageAfter = container.querySelector('[data-flow-stage]') as HTMLElement;
+    expect(stageAfter).toBe(stage);
+    expect(stageAfter.style.transform).toBe(zoomed);
+  });
+
+  it('allows maximize in readOnly', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} readOnly />);
+    const root = screen.getByRole('application');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+  });
+});
