@@ -3,6 +3,8 @@ import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerE
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { FlowCanvas } from './FlowCanvas';
 import type { FlowCanvasEdge, FlowCanvasNode } from './types';
+import { Select } from '../Select';
+import { overlayStack } from '../_internal/overlay';
 
 const NODES: FlowCanvasNode[] = [
   { id: 'open', label: 'Open', color: '#0052cc', position: { x: 0, y: 0 } },
@@ -2001,5 +2003,40 @@ describe('FlowCanvas maximize preserves state', () => {
     const root = screen.getByRole('application');
     fireEvent.click(screen.getByLabelText('Maximize'));
     expect(root).toHaveAttribute('data-flowcanvas-maximized');
+  });
+});
+
+describe('FlowCanvas maximize elevation', () => {
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
+  it('elevates a Select opened from the controls slot above the maximized canvas', async () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultMaximized
+        controls={
+          // Real Select API: options come via the `options` prop (there is no
+          // `Select.Option` subcomponent), and the single non-searchable trigger
+          // is a native <button> (role "button"), not role="combobox".
+          <Select
+            aria-label="Node type"
+            defaultValue="task"
+            options={[
+              { value: 'task', label: 'Task' },
+              { value: 'gate', label: 'Gate' },
+            ]}
+          />
+        }
+      />,
+    );
+    // Open the Select — its listbox portals to document.body.
+    fireEvent.click(screen.getByRole('button', { name: 'Node type' }));
+    const listbox = await screen.findByRole('listbox');
+    // Registered against [data-flowcanvas-maximized] via OVERLAY_PORTAL_SELECTOR,
+    // so it stamps data-in-overlay and elevates above the fixed maximized canvas.
+    expect(listbox).toHaveAttribute('data-in-overlay');
   });
 });
