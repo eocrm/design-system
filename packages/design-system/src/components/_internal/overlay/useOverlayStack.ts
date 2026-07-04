@@ -24,7 +24,10 @@ const consumedEscapes = new WeakSet<Event>();
 // (#274). A Set of ids — hosts only need "is anything open". Surface-vs-
 // surface ordering is NOT guaranteed here (a Select inside a Popover still
 // closes with it on one press); only two hardcoded pairs defer today:
-// DropdownMenu sub->parent and TimeField clock->calendar. See #280.
+// DropdownMenu sub->parent and TimeField clock->calendar. See #280. The
+// registry is also global, not host-scoped: any host yields to any open
+// surface, even one belonging to a lower overlay (unreachable in practice —
+// outside-pointerdown dismissal closes surfaces before a new host can open).
 
 function notify() {
   for (const fn of listeners) fn();
@@ -187,9 +190,10 @@ export function useOverlayStack(
 /**
  * Register this floating surface in the Escape-yield registry while `open`
  * (#274). Hosts (Modal/Drawer/Lightbox) skip their Escape-close while any
- * surface is registered, so the surface's own capture listener — which runs
- * later in the same keydown (registration order) — closes it instead; the
- * next press reaches the host. Layout effect: the registration must be
+ * surface is registered, so the surface's own Escape handling — a document-
+ * capture listener for most surfaces, an element-scoped handler for the
+ * editor-owned menus (Liquid autocomplete, RTE mentions) — closes it instead;
+ * the next press reaches the host. Layout effect: the registration must be
  * observable before the browser can deliver the next keydown.
  */
 export function useFloatingSurface(open: boolean): void {

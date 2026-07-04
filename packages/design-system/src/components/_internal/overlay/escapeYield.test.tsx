@@ -1,7 +1,8 @@
 // #274 — parametrized host-yield contract: with a floating surface open
 // inside a Modal, the FIRST Escape closes only the surface and the SECOND
 // closes the host. Deleting any surface's useFloatingSurface registration
-// (or its consumeEscape call) fails its case here.
+// (or its consumeEscape call) fails its case here. (Select's case lives in
+// Modal.test.tsx / Drawer.test.tsx.)
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
@@ -9,11 +10,16 @@ import { Modal } from '../../Modal';
 import { Popover } from '../../Popover';
 import { DropdownMenu } from '../../DropdownMenu';
 import { DatePicker } from '../../DatePicker';
+import { DateRangePicker } from '../../DateRangePicker';
 import { TimeField } from '../../TimeField';
 import { Rail } from '../../Rail';
 import { Button } from '../../Button';
+import { LiquidEditor } from '../../LiquidEditor';
 import { LocaleProvider } from '../../../i18n/LocaleProvider';
 import { RichTextLinkEditor } from '../../RichTextEditor/RichTextLinkEditor';
+import { RichTextMentionMenu } from '../../RichTextEditor/RichTextMentionMenu';
+import { RichTextAttachmentConfig } from '../../RichTextEditor/RichTextAttachmentConfig';
+import type { Block } from '../../RichText/engine/model';
 import { overlayStack } from './index';
 
 function Host({ children }: { children: ReactNode }) {
@@ -169,6 +175,141 @@ describe('Escape yield contract per surface (#274)', () => {
     render(<LinkHost />);
     expect(screen.getByRole('group')).toBeInTheDocument();
     // The modal's focus trap must NOT steal focus from the bubble.
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('group')).toBeNull();
+    expect(dialogOpen()).toBe(true);
+    await user.keyboard('{Escape}');
+    expect(dialogOpen()).toBe(false);
+  });
+
+  it('DateRangePicker: first Escape closes the calendar, second the modal', async () => {
+    const user = userEvent.setup();
+    render(
+      <Host>
+        <DateRangePicker aria-label="Period" value={null} onChange={() => {}} />
+      </Host>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    // Two dialogs open: the modal + the calendar popover.
+    expect(screen.getAllByRole('dialog').length).toBe(2);
+    await user.keyboard('{Escape}');
+    expect(screen.getAllByRole('dialog').length).toBe(1);
+    await user.keyboard('{Escape}');
+    expect(dialogOpen()).toBe(false);
+  });
+
+  it('LiquidEditor autocomplete: first Escape closes the menu, second the modal', async () => {
+    const user = userEvent.setup();
+    function LiquidHost() {
+      const [open, setOpen] = useState(true);
+      const [value, setValue] = useState('');
+      return (
+        <Modal open={open} onOpenChange={setOpen} aria-label="Host">
+          <LiquidEditor
+            value={value}
+            onChange={setValue}
+            variables={[{ code: 'first_name', label: 'First name', type: 'text' }]}
+          />
+        </Modal>
+      );
+    }
+    render(<LiquidHost />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    // `{{{{ fir` types the literal `{{ fir` (userEvent escapes `{` by doubling).
+    await user.type(ta, '{{{{ fir');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(dialogOpen()).toBe(true);
+    await user.keyboard('{Escape}');
+    expect(dialogOpen()).toBe(false);
+  });
+
+  it('RTE mention menu: first Escape closes the menu, second the modal', async () => {
+    const user = userEvent.setup();
+    function MentionHost() {
+      const [open, setOpen] = useState(true);
+      const [menu, setMenu] = useState(true);
+      return (
+        <Modal open={open} onOpenChange={setOpen} aria-label="Host">
+          {/* The real editor closes the menu from its own element-scoped
+              keydown — mirror that here; the menu itself only registers. */}
+          <div onKeyDown={(e) => e.key === 'Escape' && setMenu(false)}>
+            <Button>Editor stand-in</Button>
+          </div>
+          {menu ? (
+            <RichTextMentionMenu
+              items={[{ id: 'u1', label: 'Alice' }]}
+              activeIndex={0}
+              anchorRect={{ top: 10, left: 10, width: 0, height: 16 }}
+              listboxId="lb"
+              getOptionId={(i) => `opt-${i}`}
+              label="Mentions"
+              emptyLabel="No matches"
+              onSelect={() => {}}
+              onHover={() => {}}
+            />
+          ) : null}
+        </Modal>
+      );
+    }
+    render(<MentionHost />);
+    expect(screen.getByRole('listbox', { name: 'Mentions' })).toBeInTheDocument();
+    // The real editor owns focus while the menu is open — mirror that, else
+    // the element-scoped close handler never sees the press. Click (not bare
+    // .focus()): the Modal's initial-focus microtask is still pending at the
+    // first await and would steal a synchronously-set focus.
+    await user.click(screen.getByRole('button', { name: 'Editor stand-in' }));
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(dialogOpen()).toBe(true);
+    await user.keyboard('{Escape}');
+    expect(dialogOpen()).toBe(false);
+  });
+
+  it('RTE attachment config: Escape with focus OUTSIDE the popover closes it, second press the modal', async () => {
+    const user = userEvent.setup();
+    const block: Block = {
+      id: 'a',
+      type: 'attachment',
+      status: 'ready',
+      src: 'http://u/p.png',
+      mime: 'image/png',
+      name: 'p.png',
+      alt: 'Chart',
+      inlines: [],
+    };
+    function ConfigHost() {
+      const [open, setOpen] = useState(true);
+      const [cfg, setCfg] = useState(true);
+      return (
+        <Modal open={open} onOpenChange={setOpen} aria-label="Host">
+          <Button>Elsewhere</Button>
+          {cfg ? (
+            <RichTextAttachmentConfig
+              block={block}
+              anchorRect={{ top: 10, left: 10, width: 200, height: 120 }}
+              maxWidth={600}
+              onAltChange={() => {}}
+              onAlignChange={() => {}}
+              onWidthChange={() => {}}
+              onWidthReset={() => {}}
+              onReplace={() => {}}
+              onClose={() => setCfg(false)}
+            />
+          ) : null}
+        </Modal>
+      );
+    }
+    render(<ConfigHost />);
+    expect(screen.getByRole('group')).toBeInTheDocument();
+    // Focus OUTSIDE the popover: only the document-capture listener sees this
+    // press (the container onKeyDown is dead) — pins that listener specifically.
+    // No click (pointerdown-outside would dismiss the popover); flush the
+    // Modal's pending initial-focus microtask first so bare .focus() sticks.
+    await act(async () => {});
+    screen.getByRole('button', { name: 'Elsewhere' }).focus();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('group')).toBeNull();
     expect(dialogOpen()).toBe(true);

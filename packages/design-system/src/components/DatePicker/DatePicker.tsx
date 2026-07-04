@@ -341,6 +341,8 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     if (!open) return;
     function onKeyDown(e: globalThis.KeyboardEvent) {
       if (e.key !== 'Escape') return;
+      // Another surface already closed on this press — one layer per press.
+      if (overlayStack.wasEscapeConsumed(e)) return;
       if (document.querySelector('[data-timefield-popover="true"]')) return;
       e.preventDefault();
       overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
