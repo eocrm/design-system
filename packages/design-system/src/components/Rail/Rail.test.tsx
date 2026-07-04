@@ -420,3 +420,49 @@ describe('Rail', () => {
     }
   });
 });
+
+describe('Rail — Group flyout overlay elevation (#273)', () => {
+  function renderCollapsedGroup(wrap?: (node: React.ReactNode) => React.ReactNode) {
+    const tree = (
+      <Rail defaultCollapsed>
+        <Rail.Section title="Ops">
+          <Rail.Group icon={<span aria-hidden />} label="Settings">
+            <Rail.Item href="/a">Sub A</Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>
+    );
+    render(<>{wrap ? wrap(tree) : tree}</>);
+  }
+
+  function openFlyout() {
+    const trigger = screen.getByRole('button', { name: /Settings/ });
+    act(() => {
+      fireEvent.pointerEnter(trigger);
+    });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    return screen.getByRole('dialog', { name: 'Settings' });
+  }
+
+  it('elevates the flyout (data-in-overlay) when the rail sits inside an overlay', () => {
+    vi.useFakeTimers();
+    try {
+      renderCollapsedGroup((node) => <div data-drawer-portal-root="">{node}</div>);
+      expect(openFlyout()).toHaveAttribute('data-in-overlay', '');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not elevate the flyout at page level', () => {
+    vi.useFakeTimers();
+    try {
+      renderCollapsedGroup();
+      expect(openFlyout()).not.toHaveAttribute('data-in-overlay');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
