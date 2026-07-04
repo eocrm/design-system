@@ -188,6 +188,11 @@ export const ru: Messages = {
     selectionCleared: 'Выделение снято',
     focusReturned: 'Фокус возвращён на холст',
     zoomLevel: ({ percent }) => `Масштаб ${percent as number}%`,
+    enterFullscreen: 'На весь экран',
+    exitFullscreen: 'Свернуть',
+    controlsLabel: 'Действия с холстом',
+    maximized: 'Холст развёрнут',
+    restored: 'Холст свёрнут',
   },
   imageCrop: {
     zoom: 'Масштаб',

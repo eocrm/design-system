@@ -311,6 +311,16 @@ export interface Messages {
     focusReturned: string;
     /** Live announcement after zooming. */
     zoomLevel: (params: { percent: number }) => string;
+    /** aria-label for the maximize (enter-fullscreen) toggle. */
+    enterFullscreen: string;
+    /** aria-label for the restore (exit-fullscreen) toggle. */
+    exitFullscreen: string;
+    /** aria-label for the consumer controls toolbar (top-left slot). */
+    controlsLabel: string;
+    /** Live announcement when the canvas is maximized. */
+    maximized: string;
+    /** Live announcement when the canvas is restored from maximize. */
+    restored: string;
   };
   imageCrop: {
     /** aria-label for the zoom slider. */
