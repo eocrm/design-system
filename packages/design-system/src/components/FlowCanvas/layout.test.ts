@@ -90,4 +90,45 @@ describe('computeLayout', () => {
     );
     expect(ESTIMATED_NODE_SIZE.width).toBeGreaterThan(0);
   });
+
+  it('ignores pinned nodes (explicit position) — absent from the result', () => {
+    const pos = computeLayout(
+      [n('a'), n('b'), { id: 'pinned', label: 'P', position: { x: 5, y: 5 } }],
+      [e('a', 'b')],
+    );
+    expect(pos.has('pinned')).toBe(false);
+    expect(pos.has('a')).toBe(true);
+    expect(pos.has('b')).toBe(true);
+  });
+
+  it('lays out auto nodes independently of pinned nodes', () => {
+    const autoOnly = computeLayout([n('a'), n('b'), n('c')], [e('a', 'b'), e('b', 'c')]);
+    const withPinned = computeLayout(
+      [n('a'), n('b'), n('c'), { id: 'd', label: 'D', position: { x: 9, y: 9 } }],
+      [e('a', 'b'), e('b', 'c')],
+    );
+    expect(withPinned.get('a')).toEqual(autoOnly.get('a'));
+    expect(withPinned.get('b')).toEqual(autoOnly.get('b'));
+    expect(withPinned.get('c')).toEqual(autoOnly.get('c'));
+  });
+
+  it('treats an auto node fed only by a pinned node as a source (edge to pinned skipped)', () => {
+    const pos = computeLayout(
+      [{ id: 'p', label: 'P', position: { x: 0, y: 0 } }, n('b')],
+      [e('p', 'b')],
+    );
+    expect(pos.has('p')).toBe(false);
+    expect(pos.get('b')!.x).toBe(0); // rank-0 source, no incoming
+  });
+
+  it('returns an empty map when every node is pinned', () => {
+    const pos = computeLayout(
+      [
+        { id: 'a', label: 'A', position: { x: 0, y: 0 } },
+        { id: 'b', label: 'B', position: { x: 1, y: 1 } },
+      ],
+      [e('a', 'b')],
+    );
+    expect(pos.size).toBe(0);
+  });
 });

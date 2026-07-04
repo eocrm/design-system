@@ -18,6 +18,9 @@ const NODE_GAP = 32; // vertical gap between nodes within a rank
  * crossings; ranks are vertically centered against the tallest rank.
  * Pure, deterministic, and cycle-safe (back-edges to on-stack nodes are
  * skipped). Self-loops and edges to unknown nodes are ignored.
+ * Only nodes without an explicit `position` are laid out; a node WITH a
+ * `position` is pinned by the consumer and is ignored here — it neither
+ * occupies layout space nor anchors edges, so it never shifts the others.
  */
 export function computeLayout(
   nodes: readonly FlowCanvasNode[],
@@ -27,11 +30,18 @@ export function computeLayout(
   const result = new Map<string, FlowCanvasPoint>();
   if (nodes.length === 0) return result;
 
-  const ids = new Set(nodes.map((node) => node.id));
+  // Only nodes WITHOUT an explicit position participate in auto-layout. Pinned
+  // nodes are placed by the consumer and must not perturb the others' ranking
+  // or centering; edges touching a pinned node fall through the unknown-node
+  // guard below (the pinned id is absent from `ids`).
+  const autoNodes = nodes.filter((node) => node.position === undefined);
+  if (autoNodes.length === 0) return result;
+
+  const ids = new Set(autoNodes.map((node) => node.id));
   const out = new Map<string, string[]>();
   const incoming = new Map<string, string[]>();
   const indegree = new Map<string, number>();
-  for (const node of nodes) {
+  for (const node of autoNodes) {
     out.set(node.id, []);
     incoming.set(node.id, []);
     indegree.set(node.id, 0);
@@ -55,15 +65,15 @@ export function computeLayout(
     for (const next of out.get(id)!) visit(next, r + 1);
     onStack.delete(id);
   };
-  const sources = nodes.filter((node) => indegree.get(node.id) === 0);
-  for (const source of sources.length > 0 ? sources : [nodes[0]]) visit(source.id, 0);
+  const sources = autoNodes.filter((node) => indegree.get(node.id) === 0);
+  for (const source of sources.length > 0 ? sources : [autoNodes[0]]) visit(source.id, 0);
   // Cycle components unreachable from any source: seed a DFS from each still-
   // unranked node so their internal edges keep flowing left → right.
-  for (const node of nodes) if (!rank.has(node.id)) visit(node.id, 0);
+  for (const node of autoNodes) if (!rank.has(node.id)) visit(node.id, 0);
 
   // Bucket by rank in input order.
   const ranks: FlowCanvasNode[][] = [];
-  for (const node of nodes) {
+  for (const node of autoNodes) {
     const r = rank.get(node.id)!;
     (ranks[r] ??= []).push(node);
   }
