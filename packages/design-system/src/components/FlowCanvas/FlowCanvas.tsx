@@ -1103,6 +1103,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       fitTo(contentBounds);
       return;
     }
+    if ((key === 'f' || key === 'F') && !ctrlKey && !metaKey) {
+      // Maximize works in readOnly too (viewing a large graph fullscreen is valid).
+      event.preventDefault();
+      setMaximizedAnnounced(!maximized);
+      return;
+    }
     if (key === 'Delete' || key === 'Backspace') {
       if (readOnly) return;
       const target =
@@ -1130,6 +1136,18 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         event.stopPropagation();
         setSelection(null);
         announce(t('flowCanvas.selectionCleared'));
+        return;
+      }
+      // No selection: exit maximize, unless an open floating surface (a
+      // consumer DropdownMenu/Popover) is claiming this press (#274).
+      if (
+        maximized &&
+        !overlayStack.hasOpenFloating() &&
+        !overlayStack.wasEscapeConsumed(event.nativeEvent)
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        setMaximizedAnnounced(false);
       }
       return;
     }

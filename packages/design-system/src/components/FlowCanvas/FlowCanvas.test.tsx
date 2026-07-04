@@ -1899,3 +1899,45 @@ describe('FlowCanvas maximize toggle behavior', () => {
     expect(root).toHaveAttribute('data-flowcanvas-maximized');
   });
 });
+
+describe('FlowCanvas maximize keyboard', () => {
+  it('F toggles maximize from the canvas', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'f' });
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+    fireEvent.keyDown(root, { key: 'f' });
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+  });
+
+  it('Escape exits maximize, but clears a selection first', () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultMaximized
+        defaultSelection={{ type: 'node', id: 'open' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+    expect(screen.getByLabelText('Open')).toHaveAttribute('data-selected');
+    // First Escape clears the selection, stays maximized.
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(screen.getByLabelText('Open')).not.toHaveAttribute('data-selected');
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+    // Second Escape exits maximize.
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+  });
+
+  it('Escape does nothing when not maximized and nothing is selected', () => {
+    const onMaximizedChange = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={EDGES} onMaximizedChange={onMaximizedChange} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(onMaximizedChange).not.toHaveBeenCalled();
+  });
+});
