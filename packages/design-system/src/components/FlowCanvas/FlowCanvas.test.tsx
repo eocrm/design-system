@@ -1903,6 +1903,12 @@ describe('FlowCanvas maximize toggle behavior', () => {
 });
 
 describe('FlowCanvas maximize keyboard', () => {
+  // Belt-and-braces: the Escape-yield test registers a floating surface; reset
+  // the shared registry after each test so a mid-test throw can't leak it.
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
   it('F toggles maximize from the canvas', () => {
     render(<FlowCanvas nodes={NODES} edges={EDGES} />);
     const root = screen.getByRole('application');
