@@ -47,7 +47,7 @@ After v0.2.19 shipped a `controls` slot, an "Add node" button that inserts a nod
 
 **JSDoc:** update `computeLayout`'s doc to state it lays out only nodes without an explicit `position`; pinned nodes are placed by the consumer and are ignored (they neither occupy layout space nor anchor edges).
 
-**Out of scope:** a *dragged* auto node (its `position` is still `undefined`; its live position lives in the canvas's separate `dragOverrides` map) remains "auto" and still participates — that is pre-existing behavior unrelated to this bug. Keyed strictly off `node.position !== undefined`.
+**Out of scope:** a _dragged_ auto node (its `position` is still `undefined`; its live position lives in the canvas's separate `dragOverrides` map) remains "auto" and still participates — that is pre-existing behavior unrelated to this bug. Keyed strictly off `node.position !== undefined`.
 
 ### Part 2 — `arrangeNodes(nodes, edges)` (`layout.ts`, exported)
 
@@ -67,10 +67,7 @@ After v0.2.19 shipped a `controls` slot, an "Add node" button that inserts a nod
  * // A "Re-arrange" button in the consumer's UI (e.g. the FlowCanvas `controls` slot):
  * <Button onClick={() => setNodes((prev) => arrangeNodes(prev, edges))}>Re-arrange</Button>
  */
-export function arrangeNodes(
-  nodes: FlowCanvasNode[],
-  edges: FlowCanvasEdge[],
-): FlowCanvasNode[] {
+export function arrangeNodes(nodes: FlowCanvasNode[], edges: FlowCanvasEdge[]): FlowCanvasNode[] {
   // Strip positions so the whole graph is treated as auto and re-laid-out.
   const layout = computeLayout(
     nodes.map((node) => ({ ...node, position: undefined })),
@@ -93,6 +90,7 @@ Because every node is stripped to `position: undefined`, `computeLayout` treats 
 ## Testing
 
 ### `layout.test.ts` — `computeLayout` fix
+
 - **Pinned excluded from result:** a mixed graph (some nodes with `position`, some without) → the result Map has keys only for the auto nodes.
 - **Auto layout is pinned-independent:** the auto nodes' computed positions equal `computeLayout(<only the auto nodes>, edges)` byte-for-byte.
 - **Reported repro:** given auto nodes A/B/C with edges, `computeLayout([A,B,C], e)` and `computeLayout([A,B,C, {id:'D', label:'D', position:{x:9,y:9}}], e)` return identical positions for A/B/C.
@@ -101,22 +99,26 @@ Because every node is stripped to `position: undefined`, `computeLayout` treats 
 - Existing all-auto tests must still pass unchanged.
 
 ### `layout.test.ts` — `arrangeNodes`
+
 - Returns every input node with a `position` set (including nodes that were pinned — their old position is overwritten).
 - Preserves other fields (`label`, `color`, `adornment`, `id`).
 - Deterministic (two calls → equal output).
 - Layered order sane (a source is left of its target: `x` ascending along an edge).
 
 ### `FlowCanvas.test.tsx` — integration
+
 - Render auto nodes, capture each rendered node's `style.left`/`style.top`, rerender with an **added pinned node**, assert the pre-existing nodes' `left`/`top` are unchanged (jsdom uses `ESTIMATED_NODE_SIZE`, so positions are deterministic).
 
 ## Demo
 
 `packages/playground/src/pages/components/FlowCanvasDemo.tsx`: in the "Workflow builder" example, change the second controls-slot button from **"Reset"** to **"Re-arrange"**, wired to `arrangeNodes`:
+
 ```tsx
 <Button size="sm" variant="secondary" onClick={() => setNodes((prev) => arrangeNodes(prev, edges))}>
   Re-arrange
 </Button>
 ```
+
 Update the displayed `code` snippet and the imports (`arrangeNodes`) to match. Keep "Add node".
 
 ## Documentation

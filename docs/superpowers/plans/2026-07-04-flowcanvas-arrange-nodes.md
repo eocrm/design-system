@@ -23,6 +23,7 @@
 ## Task 1: `computeLayout` ignores pinned nodes
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/FlowCanvas/layout.ts` (the `computeLayout` function + its JSDoc)
 - Test: `packages/design-system/src/components/FlowCanvas/layout.test.ts`
 
@@ -31,46 +32,46 @@
 Append inside the existing `describe('computeLayout', () => { ... })` block in `layout.test.ts`:
 
 ```ts
-  it('ignores pinned nodes (explicit position) — absent from the result', () => {
-    const pos = computeLayout(
-      [n('a'), n('b'), { id: 'pinned', label: 'P', position: { x: 5, y: 5 } }],
-      [e('a', 'b')],
-    );
-    expect(pos.has('pinned')).toBe(false);
-    expect(pos.has('a')).toBe(true);
-    expect(pos.has('b')).toBe(true);
-  });
+it('ignores pinned nodes (explicit position) — absent from the result', () => {
+  const pos = computeLayout(
+    [n('a'), n('b'), { id: 'pinned', label: 'P', position: { x: 5, y: 5 } }],
+    [e('a', 'b')],
+  );
+  expect(pos.has('pinned')).toBe(false);
+  expect(pos.has('a')).toBe(true);
+  expect(pos.has('b')).toBe(true);
+});
 
-  it('lays out auto nodes independently of pinned nodes', () => {
-    const autoOnly = computeLayout([n('a'), n('b'), n('c')], [e('a', 'b'), e('b', 'c')]);
-    const withPinned = computeLayout(
-      [n('a'), n('b'), n('c'), { id: 'd', label: 'D', position: { x: 9, y: 9 } }],
-      [e('a', 'b'), e('b', 'c')],
-    );
-    expect(withPinned.get('a')).toEqual(autoOnly.get('a'));
-    expect(withPinned.get('b')).toEqual(autoOnly.get('b'));
-    expect(withPinned.get('c')).toEqual(autoOnly.get('c'));
-  });
+it('lays out auto nodes independently of pinned nodes', () => {
+  const autoOnly = computeLayout([n('a'), n('b'), n('c')], [e('a', 'b'), e('b', 'c')]);
+  const withPinned = computeLayout(
+    [n('a'), n('b'), n('c'), { id: 'd', label: 'D', position: { x: 9, y: 9 } }],
+    [e('a', 'b'), e('b', 'c')],
+  );
+  expect(withPinned.get('a')).toEqual(autoOnly.get('a'));
+  expect(withPinned.get('b')).toEqual(autoOnly.get('b'));
+  expect(withPinned.get('c')).toEqual(autoOnly.get('c'));
+});
 
-  it('treats an auto node fed only by a pinned node as a source (edge to pinned skipped)', () => {
-    const pos = computeLayout(
-      [{ id: 'p', label: 'P', position: { x: 0, y: 0 } }, n('b')],
-      [e('p', 'b')],
-    );
-    expect(pos.has('p')).toBe(false);
-    expect(pos.get('b')!.x).toBe(0); // rank-0 source, no incoming
-  });
+it('treats an auto node fed only by a pinned node as a source (edge to pinned skipped)', () => {
+  const pos = computeLayout(
+    [{ id: 'p', label: 'P', position: { x: 0, y: 0 } }, n('b')],
+    [e('p', 'b')],
+  );
+  expect(pos.has('p')).toBe(false);
+  expect(pos.get('b')!.x).toBe(0); // rank-0 source, no incoming
+});
 
-  it('returns an empty map when every node is pinned', () => {
-    const pos = computeLayout(
-      [
-        { id: 'a', label: 'A', position: { x: 0, y: 0 } },
-        { id: 'b', label: 'B', position: { x: 1, y: 1 } },
-      ],
-      [e('a', 'b')],
-    );
-    expect(pos.size).toBe(0);
-  });
+it('returns an empty map when every node is pinned', () => {
+  const pos = computeLayout(
+    [
+      { id: 'a', label: 'A', position: { x: 0, y: 0 } },
+      { id: 'b', label: 'B', position: { x: 1, y: 1 } },
+    ],
+    [e('a', 'b')],
+  );
+  expect(pos.size).toBe(0);
+});
 ```
 
 - [ ] **Step 2: Run to verify they fail**
@@ -85,18 +86,18 @@ In `layout.ts`, make these edits to `computeLayout` (the body operates on `autoN
 (a) Right after `if (nodes.length === 0) return result;`, insert:
 
 ```ts
-  // Only nodes WITHOUT an explicit position participate in auto-layout. Pinned
-  // nodes are placed by the consumer and must not perturb the others' ranking
-  // or centering; edges touching a pinned node fall through the unknown-node
-  // guard below (the pinned id is absent from `ids`).
-  const autoNodes = nodes.filter((node) => node.position === undefined);
-  if (autoNodes.length === 0) return result;
+// Only nodes WITHOUT an explicit position participate in auto-layout. Pinned
+// nodes are placed by the consumer and must not perturb the others' ranking
+// or centering; edges touching a pinned node fall through the unknown-node
+// guard below (the pinned id is absent from `ids`).
+const autoNodes = nodes.filter((node) => node.position === undefined);
+if (autoNodes.length === 0) return result;
 ```
 
 (b) Change the `ids` line from `new Set(nodes.map(...))` to:
 
 ```ts
-  const ids = new Set(autoNodes.map((node) => node.id));
+const ids = new Set(autoNodes.map((node) => node.id));
 ```
 
 (c) The init loop `for (const node of nodes) {` that sets `out`/`incoming`/`indegree` → change to `for (const node of autoNodes) {`.
@@ -104,8 +105,8 @@ In `layout.ts`, make these edits to `computeLayout` (the body operates on `autoN
 (d) The sources line and fallback:
 
 ```ts
-  const sources = autoNodes.filter((node) => indegree.get(node.id) === 0);
-  for (const source of sources.length > 0 ? sources : [autoNodes[0]]) visit(source.id, 0);
+const sources = autoNodes.filter((node) => indegree.get(node.id) === 0);
+for (const source of sources.length > 0 ? sources : [autoNodes[0]]) visit(source.id, 0);
 ```
 
 (e) The unranked-cycle seed line → `for (const node of autoNodes) if (!rank.has(node.id)) visit(node.id, 0);`
@@ -141,6 +142,7 @@ git commit -m "fix(FlowCanvas): computeLayout ignores pinned nodes"
 ## Task 2: `arrangeNodes` export + tests
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/FlowCanvas/layout.ts` (add `arrangeNodes`)
 - Modify: `packages/design-system/src/components/FlowCanvas/index.ts` (export)
 - Modify: `packages/design-system/src/index.ts` (export)
@@ -216,10 +218,7 @@ In `layout.ts`, after the `computeLayout` function, add:
  * // A "Re-arrange" button in your own UI (e.g. the FlowCanvas `controls` slot):
  * <Button onClick={() => setNodes((prev) => arrangeNodes(prev, edges))}>Re-arrange</Button>
  */
-export function arrangeNodes(
-  nodes: FlowCanvasNode[],
-  edges: FlowCanvasEdge[],
-): FlowCanvasNode[] {
+export function arrangeNodes(nodes: FlowCanvasNode[], edges: FlowCanvasEdge[]): FlowCanvasNode[] {
   // Strip positions so the whole graph is treated as auto and re-laid-out.
   const layout = computeLayout(
     nodes.map((node) => ({ ...node, position: undefined })),
@@ -270,6 +269,7 @@ git commit -m "feat(FlowCanvas): arrangeNodes API for consumer-driven re-arrange
 ## Task 3: FlowCanvas integration test — added pinned node moves nothing
 
 **Files:**
+
 - Test: `packages/design-system/src/components/FlowCanvas/FlowCanvas.test.tsx`
 
 - [ ] **Step 1: Write the failing/guard test**
@@ -319,6 +319,7 @@ git commit -m "test(FlowCanvas): adding a pinned node leaves auto nodes in place
 ## Task 4: Playground demo — Reset → Re-arrange
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/FlowCanvasDemo.tsx`
 
 - [ ] **Step 1: Import `arrangeNodes`**
@@ -345,10 +346,10 @@ import {
 Change the `handleReset` callback to:
 
 ```tsx
-  const handleArrange = useCallback(() => {
-    setNodes((prev) => arrangeNodes(prev, edges));
-    setLastEvent('controls: re-arrange');
-  }, [edges]);
+const handleArrange = useCallback(() => {
+  setNodes((prev) => arrangeNodes(prev, edges));
+  setLastEvent('controls: re-arrange');
+}, [edges]);
 ```
 
 - [ ] **Step 3: Swap the live button**
@@ -370,7 +371,7 @@ In the interactive `<FlowCanvas>` `controls` prop, change the second button from
 
 - [ ] **Step 4: Update the displayed code snippet**
 
-In the `code={\`...\`}` template string, change the snippet import line to include `Cluster` and `arrangeNodes`:
+In the `code={\`...\`}`template string, change the snippet import line to include`Cluster`and`arrangeNodes`:
 
 ```
 import { Badge, Button, Cluster, FlowCanvas, arrangeNodes, type FlowCanvasEdge, type FlowCanvasNode } from '@eocrm/design-system';
@@ -410,6 +411,7 @@ git commit -m "docs(FlowCanvas): demo Re-arrange via arrangeNodes"
 ## Task 5: Docs — node `position` JSDoc + AGENTS.md
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/FlowCanvas/types.ts` (the `position` field on `FlowCanvasNode`)
 - Modify: `packages/design-system/AGENTS.md` (the `### <FlowCanvas>` section)
 
@@ -457,6 +459,7 @@ npm run build -w playground
 npm pack --dry-run -w @eocrm/design-system
 npm run format:check
 ```
+
 All must pass; `npm pack --dry-run` shows no test/internal files. If `format:check` flags files, run `npm run format` and amend/commit.
 
 - [ ] **Step 2: Browser-verify** (playground on http://localhost:8080)
