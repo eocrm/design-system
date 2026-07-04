@@ -46,6 +46,7 @@
 
   // Collapsed flyout (the hover popover surface for collapsed groups)
   --rail-flyout-min-width: 200px;
+  --rail-flyout-z: var(--z-popover);
   --rail-flyout-bg: var(--color-bg);
   --rail-flyout-border-color: var(--color-border);
   --rail-flyout-border-width: var(--border-width);

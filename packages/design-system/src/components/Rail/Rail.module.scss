@@ -300,6 +300,11 @@
   display: flex;
   flex-direction: column;
   min-width: var(--rail-flyout-min-width);
+
+  // #273: without an explicit z the body-portaled flyout sat at z-auto —
+  // below --z-modal AND below any positive-z page content (e.g. Table's
+  // sticky header).
+  z-index: var(--rail-flyout-z);
   background: var(--rail-flyout-bg);
   border: var(--rail-flyout-border-width) solid var(--rail-flyout-border-color);
   border-radius: var(--rail-flyout-radius);
@@ -308,6 +313,12 @@
   // Clip child rounded corners (subitems with hover backgrounds) to the
   // flyout's rounded outer edge.
   overflow: hidden;
+}
+
+.flyout[data-in-overlay] {
+  // #272-pattern: inside a Modal/Drawer (or another elevated surface) the
+  // base z sits below --z-modal — elevate above the host, below toasts.
+  z-index: var(--z-overlay-floating);
 }
 
 .flyoutHeader {

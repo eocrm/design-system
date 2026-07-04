@@ -31,6 +31,7 @@ function fakeRender(template: string): string {
 export function LiquidEditorDemo() {
   const [formula, setFormula] = useState('{{ first_name }} {{ last_name | upcase }}');
   const [withTypo, setWithTypo] = useState('{{ first_naem }}');
+  const [compact, setCompact] = useState('{{ first_name | upcase }}');
 
   return (
     <DemoLayout
@@ -131,6 +132,40 @@ export function Demo() {
               Docs
             </Button>
           }
+        />
+      </Example>
+
+      <Example
+        title="Compact (showLineNumbers={false})"
+        description="Hide the line-number gutter for single-line formula fields and dense forms; pair with showToolbar={false} for the most minimal chrome."
+        code={`import { useState } from 'react';
+import { LiquidEditor, type LiquidVariable } from '@eocrm/design-system';
+
+const VARS: LiquidVariable[] = [
+  { code: 'first_name', label: 'First name', type: 'text', group: 'Built-in fields' },
+  { code: 'last_name', label: 'Last name', type: 'text', group: 'Built-in fields' },
+];
+
+export function Demo() {
+  const [value, setValue] = useState('{{ first_name | upcase }}');
+
+  return (
+    <LiquidEditor
+      value={value}
+      onChange={setValue}
+      variables={VARS}
+      showLineNumbers={false}
+      minRows={2}
+    />
+  );
+}`}
+      >
+        <LiquidEditor
+          value={compact}
+          onChange={setCompact}
+          variables={VARS}
+          showLineNumbers={false}
+          minRows={2}
         />
       </Example>
 

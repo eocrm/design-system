@@ -22,7 +22,7 @@ import {
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { useRail } from './Rail';
-import { overlayStack, useFloatingSurface } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Rail.module.scss';
 
 /** Open-delay for hover-intent before opening the collapsed-mode flyout. */
@@ -212,6 +212,11 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
     elements: { reference: triggerRef.current },
   });
 
+  // #273: the flyout portals to document.body — elevate it above Modal/
+  // Drawer (and any other elevated surface), same pattern as the date/time
+  // popovers (#272); its base z sits at --z-popover otherwise.
+  const inOverlay = useInOverlay(triggerRef, popoverOpen);
+
   // Close on Escape (a11y).
   useEffect(() => {
     if (!popoverOpen) return;
@@ -377,6 +382,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
           <div
             ref={refs.setFloating}
             role="dialog"
+            data-in-overlay={inOverlay ? '' : undefined}
             aria-label={label}
             style={floatingStyles}
             className={styles.flyout}

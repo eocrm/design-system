@@ -19,7 +19,8 @@ const OVERLAY_PORTAL_SELECTOR =
  * `Modal`/`Drawer`/`Lightbox` overlay portal, a `Popover.Content` / `DropdownMenu`
  * content panel, or ANY already-elevated surface carrying `[data-in-overlay]`
  * (transitive elevation). Floating surfaces (`Select` / `Popover` /
- * `DropdownMenu` / `DatePicker` / `DateRangePicker` / `TimeField`) use this
+ * `DropdownMenu` / `DatePicker` / `DateRangePicker` / `TimeField` / the
+ * `Rail.Group` collapsed-mode flyout) use this
  * to elevate their portaled content above the host — their default z-index
  * sits below `--z-modal` (and at/below an open Popover), so without
  * elevation they render behind it. Covers a kebab `DropdownMenu`, nested
