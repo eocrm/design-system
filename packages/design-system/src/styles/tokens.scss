@@ -355,6 +355,7 @@
   // (sidebar, topbar) live in the consuming app's own SCSS.
   --z-dropdown: 1000;
   --z-popover: 1050; // above dropdown, below modal — popover can open from a menu item
+  --z-flowcanvas-maximized: 1090; // in-page maximized FlowCanvas — above page content, below modal
   --z-modal: 1100;
   --z-overlay-floating: 1190; // floating content (Select/Popover/DropdownMenu/DatePicker/DateRangePicker/TimeField/Rail flyout) opened INSIDE a Modal or Drawer — or inside another elevated surface (elevation is transitive)
   --z-toast: 1200;

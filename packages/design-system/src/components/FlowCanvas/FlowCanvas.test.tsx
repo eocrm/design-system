@@ -3,6 +3,8 @@ import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerE
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { FlowCanvas } from './FlowCanvas';
 import type { FlowCanvasEdge, FlowCanvasNode } from './types';
+import { Select } from '../Select';
+import { overlayStack } from '../_internal/overlay';
 
 const NODES: FlowCanvasNode[] = [
   { id: 'open', label: 'Open', color: '#0052cc', position: { x: 0, y: 0 } },
@@ -1830,5 +1832,253 @@ describe('FlowCanvas review regressions', () => {
     const text = document.getElementById(id)!.textContent!;
     expect(text).not.toMatch(/Delete/);
     expect(text).toMatch(/Enter to open/);
+  });
+});
+
+describe('FlowCanvas maximize + controls rendering', () => {
+  it('renders the maximize toggle with a localized label, hidden when maximizeControl is false', () => {
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(screen.getByLabelText('Maximize')).toBeInTheDocument();
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} maximizeControl={false} />);
+    expect(screen.queryByLabelText('Maximize')).not.toBeInTheDocument();
+  });
+
+  it('renders the controls slot in a labelled toolbar with the pan carve-out', () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        controls={<button data-testid="add">Add node</button>}
+      />,
+    );
+    const toolbar = screen.getByRole('toolbar', { name: 'Canvas actions' });
+    expect(toolbar).toBeInTheDocument();
+    expect(toolbar).toHaveAttribute('data-flow-controls');
+    expect(toolbar).toContainElement(screen.getByTestId('add'));
+  });
+
+  it('does not render the controls toolbar when no controls are passed', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+  });
+
+  it('honors defaultMaximized on first render', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} defaultMaximized />);
+    expect(screen.getByRole('application')).toHaveAttribute('data-flowcanvas-maximized');
+    expect(screen.getByLabelText('Restore')).toBeInTheDocument();
+  });
+});
+
+describe('FlowCanvas maximize toggle behavior', () => {
+  it('clicking the toggle maximizes and restores (uncontrolled)', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const root = screen.getByRole('application');
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+    fireEvent.click(screen.getByLabelText('Restore'));
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+  });
+
+  it('fires onMaximizedChange and respects the controlled prop', () => {
+    const onMaximizedChange = vi.fn();
+    const { rerender } = render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        maximized={false}
+        onMaximizedChange={onMaximizedChange}
+      />,
+    );
+    const root = screen.getByRole('application');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    expect(onMaximizedChange).toHaveBeenCalledWith(true);
+    // Controlled: no visual change until the prop updates.
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+    rerender(
+      <FlowCanvas nodes={NODES} edges={EDGES} maximized onMaximizedChange={onMaximizedChange} />,
+    );
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+  });
+});
+
+describe('FlowCanvas maximize keyboard', () => {
+  // Belt-and-braces: the Escape-yield test registers a floating surface; reset
+  // the shared registry after each test so a mid-test throw can't leak it.
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
+  it('F toggles maximize from the canvas', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'f' });
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+    fireEvent.keyDown(root, { key: 'f' });
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+  });
+
+  it('Escape exits maximize, but clears a selection first', () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultMaximized
+        defaultSelection={{ type: 'node', id: 'open' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+    expect(screen.getByLabelText('Open')).toHaveAttribute('data-selected');
+    // First Escape clears the selection, stays maximized.
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(screen.getByLabelText('Open')).not.toHaveAttribute('data-selected');
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+    // Second Escape exits maximize.
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+  });
+
+  it('Escape does nothing when not maximized and nothing is selected', () => {
+    const onMaximizedChange = vi.fn();
+    render(<FlowCanvas nodes={NODES} edges={EDGES} onMaximizedChange={onMaximizedChange} />);
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(onMaximizedChange).not.toHaveBeenCalled();
+  });
+
+  it('yields Escape to an open floating surface instead of exiting maximize', () => {
+    const onMaximizedChange = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultMaximized
+        onMaximizedChange={onMaximizedChange}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    overlayStack.registerFloating('test-surface'); // simulate an open consumer menu
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(root).toHaveAttribute('data-flowcanvas-maximized'); // did NOT exit
+    expect(onMaximizedChange).not.toHaveBeenCalled();
+    overlayStack.unregisterFloating('test-surface');
+  });
+
+  it('does not toggle maximize when F is pressed inside a controls input', () => {
+    const onMaximizedChange = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        onMaximizedChange={onMaximizedChange}
+        controls={<input data-testid="ctl-input" />}
+      />,
+    );
+    const input = screen.getByTestId('ctl-input');
+    input.focus();
+    fireEvent.keyDown(input, { key: 'f' });
+    expect(onMaximizedChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('application')).not.toHaveAttribute('data-flowcanvas-maximized');
+  });
+});
+
+describe('FlowCanvas maximize overlay behavior', () => {
+  it('locks body scroll while maximized and restores on exit', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(document.body.style.position).not.toBe('fixed');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    expect(document.body.style.position).toBe('fixed');
+    fireEvent.click(screen.getByLabelText('Restore'));
+    expect(document.body.style.position).not.toBe('fixed');
+  });
+
+  it('moves focus into the canvas on maximize and restores it on exit', () => {
+    render(
+      <>
+        <button data-testid="outside">outside</button>
+        <FlowCanvas nodes={NODES} edges={EDGES} />
+      </>,
+    );
+    const outside = screen.getByTestId('outside');
+    outside.focus();
+    expect(document.activeElement).toBe(outside);
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    const root = screen.getByRole('application');
+    expect(document.activeElement).toBe(root);
+    fireEvent.click(screen.getByLabelText('Restore'));
+    expect(document.activeElement).toBe(outside);
+  });
+
+  it('restores body scroll if unmounted while maximized', () => {
+    const { unmount } = render(<FlowCanvas nodes={NODES} edges={EDGES} defaultMaximized />);
+    expect(document.body.style.position).toBe('fixed');
+    unmount();
+    expect(document.body.style.position).not.toBe('fixed');
+  });
+});
+
+describe('FlowCanvas maximize preserves state', () => {
+  it('keeps the viewport transform across a maximize/restore round trip', () => {
+    const { container } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const root = screen.getByRole('application');
+    const stage = container.querySelector('[data-flow-stage]') as HTMLElement;
+    root.focus();
+    // Zoom in twice so the transform is non-default.
+    fireEvent.keyDown(root, { key: '+' });
+    fireEvent.keyDown(root, { key: '+' });
+    const zoomed = stage.style.transform;
+    expect(zoomed).not.toBe('');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    fireEvent.click(screen.getByLabelText('Restore'));
+    // Same DOM node, same transform — no remount/reset.
+    const stageAfter = container.querySelector('[data-flow-stage]') as HTMLElement;
+    expect(stageAfter).toBe(stage);
+    expect(stageAfter.style.transform).toBe(zoomed);
+  });
+
+  it('allows maximize in readOnly', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} readOnly />);
+    const root = screen.getByRole('application');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+  });
+});
+
+describe('FlowCanvas maximize elevation', () => {
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
+  it('elevates a Select opened from the controls slot above the maximized canvas', async () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        defaultMaximized
+        controls={
+          // Real Select API: options come via the `options` prop (there is no
+          // `Select.Option` subcomponent), and the single non-searchable trigger
+          // is a native <button> (role "button"), not role="combobox".
+          <Select
+            aria-label="Node type"
+            defaultValue="task"
+            options={[
+              { value: 'task', label: 'Task' },
+              { value: 'gate', label: 'Gate' },
+            ]}
+          />
+        }
+      />,
+    );
+    // Open the Select — its listbox portals to document.body.
+    fireEvent.click(screen.getByRole('button', { name: 'Node type' }));
+    const listbox = await screen.findByRole('listbox');
+    // Registered against [data-flowcanvas-maximized] via OVERLAY_PORTAL_SELECTOR,
+    // so it stamps data-in-overlay and elevates above the fixed maximized canvas.
+    expect(listbox).toHaveAttribute('data-in-overlay');
   });
 });

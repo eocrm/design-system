@@ -5,8 +5,12 @@ import type {
   KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
+  ReactNode,
 } from 'react';
 import clsx from 'clsx';
+import { Maximize2, Minimize2 } from 'lucide-react';
+import { Button } from '../Button';
+import { overlayStack, useFocusTrap, useScrollLock } from '../_internal/overlay';
 import { useTranslation } from '../../i18n/useTranslation';
 import { mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import { useControllableState } from '../_internal/useControllableState';
@@ -64,6 +68,23 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
    * open still work. @default false
    */
   readOnly?: boolean;
+  /**
+   * Consumer-rendered controls shown in a top-left toolbar overlay. Put design-
+   * system `<Button>`s here (e.g. an "Add node" button wired to your own state).
+   * Stays pinned when the canvas is maximized. @default none
+   */
+  controls?: ReactNode;
+  /**
+   * Show the built-in maximize / restore toggle (top-right). Set false to drive
+   * maximize entirely via the `maximized` prop. @default true
+   */
+  maximizeControl?: boolean;
+  /** Controlled maximize state. Use with `onMaximizedChange`. */
+  maximized?: boolean;
+  /** Initial maximize state when uncontrolled. @default false */
+  defaultMaximized?: boolean;
+  /** Fires whenever maximize is toggled (button, `F` key, or Escape). */
+  onMaximizedChange?: (maximized: boolean) => void;
 }
 
 /**
@@ -80,6 +101,11 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
  * nodes, E cycles a node's connections, C starts a keyboard connect mode,
  * Shift+arrows nudge, +/−/0 zoom and fit, Ctrl+arrows pan.
  *
+ * Pass `controls` to render your own buttons in a top-left toolbar (e.g. an
+ * "Add node" button wired to your state). A built-in Maximize toggle (top-right,
+ * or the `F` key; Escape restores) expands the canvas **in place** to fill the
+ * viewport — this is an in-page maximize, not the native Fullscreen API.
+ *
  * @remarks
  * When NOT to use:
  * - Large graphs (100+ nodes) — there is no virtualization; rendering and
@@ -94,6 +120,14 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
  *   consumer (anchor modals/popovers via the open callbacks).
  * - Rewiring an existing edge's endpoints by dragging — not supported;
  *   delete + recreate instead.
+ * - Do not hide primary, always-needed actions solely behind Maximize or in the
+ *   `controls` slot — those are canvas chrome, not a substitute for the page's
+ *   own toolbar; keep essential actions reachable when the canvas is inline.
+ * - Relying on maximize while the canvas sits inside an ancestor that
+ *   establishes a containing block via `transform`/`filter`/`perspective`/
+ *   `will-change` — in-page maximize uses `position: fixed`, so it anchors to
+ *   that ancestor instead of the viewport and won't fill the screen. Keep the
+ *   canvas out of transformed wrappers if you depend on maximize.
  *
  * @example
  * ```tsx
@@ -142,6 +176,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     defaultSelection = null,
     onSelectionChange,
     readOnly = false,
+    controls,
+    maximizeControl = true,
+    maximized: maximizedProp,
+    defaultMaximized = false,
+    onMaximizedChange,
     className,
     'aria-describedby': ariaDescribedby,
     onPointerDown,
@@ -171,6 +210,38 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     defaultValue: defaultSelection,
     onChange: onSelectionChange,
   });
+  const [maximized, setMaximized] = useControllableState<boolean>({
+    value: maximizedProp,
+    defaultValue: defaultMaximized,
+    onChange: onMaximizedChange,
+  });
+  // Toggle + announce in one place so the button, the F key, and the Escape
+  // exit all narrate consistently.
+  const setMaximizedAnnounced = (next: boolean) => {
+    setMaximized(next);
+    announce(t(next ? 'flowCanvas.maximized' : 'flowCanvas.restored'));
+  };
+  // --- maximize: scroll lock, focus trap, focus move/restore ----------------
+  useScrollLock(maximized);
+  useFocusTrap(rootRef, maximized);
+  // Capture the pre-maximize focus and move focus into the canvas on enter;
+  // restore it on exit. Passive effect, ordered after useFocusTrap so the trap
+  // has torn down before we restore focus outward (see note above).
+  const prevMaximizedRef = useRef(maximized);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const was = prevMaximizedRef.current;
+    prevMaximizedRef.current = maximized;
+    if (maximized && !was) {
+      previouslyFocusedRef.current = (document.activeElement as HTMLElement | null) ?? null;
+      rootRef.current?.focus({ preventScroll: true });
+    } else if (!maximized && was) {
+      const target = previouslyFocusedRef.current;
+      previouslyFocusedRef.current = null;
+      if (target && document.contains(target)) target.focus({ preventScroll: true });
+      else rootRef.current?.focus({ preventScroll: true });
+    }
+  }, [maximized]);
   // The consumer applies a delete intent by removing the node/edge from
   // props — but the retained (uncontrolled) selection state still holds the
   // dead id afterwards, and there is no imperative API to clear it. Every
@@ -1057,6 +1128,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       fitTo(contentBounds);
       return;
     }
+    if ((key === 'f' || key === 'F') && !ctrlKey && !metaKey) {
+      // Maximize works in readOnly too (viewing a large graph fullscreen is valid).
+      event.preventDefault();
+      setMaximizedAnnounced(!maximized);
+      return;
+    }
     if (key === 'Delete' || key === 'Backspace') {
       if (readOnly) return;
       const target =
@@ -1072,18 +1149,22 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       return;
     }
     if (key === 'Escape') {
+      // Tier 1 (#274): an open consumer floating surface (DropdownMenu/Popover
+      // rendered in `controls`) owns this press — let it close first.
+      if (overlayStack.hasOpenFloating() || overlayStack.wasEscapeConsumed(event.nativeEvent)) {
+        return;
+      }
       if (selection) {
-        // Layered dismiss: consume the key when the canvas acts on it so a
-        // bubble-phase ancestor (a consumer's own overlay/panel keydown
-        // handler) doesn't also dismiss; with nothing selected it propagates.
-        // Note this library's Modal/Popover listen for Escape on document in
-        // the CAPTURE phase, deliberately beating widget-level consumption —
-        // inside those, Escape still closes the surface; a consumer who wants
-        // Escape-to-deselect within a Modal uses its `disableEscapeClose`.
         event.preventDefault();
         event.stopPropagation();
         setSelection(null);
         announce(t('flowCanvas.selectionCleared'));
+        return;
+      }
+      if (maximized) {
+        event.preventDefault();
+        event.stopPropagation();
+        setMaximizedAnnounced(false);
       }
       return;
     }
@@ -1253,7 +1334,13 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       role="application"
       tabIndex={0}
       aria-describedby={mergeAriaDescribedby(ariaDescribedby, instructionsId)}
-      className={clsx(styles.root, isPanning && styles.rootPanning, className)}
+      className={clsx(
+        styles.root,
+        isPanning && styles.rootPanning,
+        maximized && styles.rootMaximized,
+        className,
+      )}
+      data-flowcanvas-maximized={maximized ? '' : undefined}
       onPointerDown={handleRootPointerDown}
       onPointerMove={handleRootPointerMove}
       onPointerUp={handleRootPointerUp}
@@ -1378,6 +1465,37 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         ))}
       </div>
       <FlowControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFit={() => fitTo(contentBounds)} />
+      {controls != null ? (
+        // data-flow-controls: background-pan hit-testing skips this subtree, so
+        // pressing a control never starts a canvas pan (same carve-out as the
+        // zoom cluster).
+        <div
+          className={styles.controlsTopLeft}
+          data-flow-controls=""
+          role="toolbar"
+          aria-label={t('flowCanvas.controlsLabel')}
+        >
+          {controls}
+        </div>
+      ) : null}
+      {maximizeControl ? (
+        <div className={styles.controlsTopRight} data-flow-controls="">
+          <Button
+            variant="secondary"
+            size="sm"
+            iconOnly
+            aria-label={t(maximized ? 'flowCanvas.exitFullscreen' : 'flowCanvas.enterFullscreen')}
+            aria-pressed={maximized}
+            onClick={() => setMaximizedAnnounced(!maximized)}
+          >
+            {maximized ? (
+              <Minimize2 size={16} aria-hidden="true" />
+            ) : (
+              <Maximize2 size={16} aria-hidden="true" />
+            )}
+          </Button>
+        </div>
+      ) : null}
       <div id={instructionsId} className={styles.srOnly}>
         {/* readOnly gets its own cheat-sheet: describing Delete/move/connect
             on a canvas where those keys are inert would contradict behavior. */}

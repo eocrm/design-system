@@ -944,7 +944,10 @@ single (`selection`/`defaultSelection`/`onSelectionChange`); `readOnly` disables
 keeps select/open. Validation of new connections via `isValidConnection` (default: no
 self-loops, no duplicate pairs). The canvas fills its parent — give the wrapper a height.
 Full keyboard: arrows rove nodes, E cycles a node's edges, C connect mode, Shift+arrows
-nudge, +/−/0 zoom/fit, Ctrl+arrows pan, Delete deletes, Enter opens.
+nudge, +/−/0 zoom/fit, Ctrl+arrows pan, Delete deletes, Enter opens. Pass `controls` (a
+`ReactNode`) to render your own buttons top-left; a built-in Maximize toggle (top-right / `F`
+key, Escape to restore) expands the canvas in place to fill the viewport. `maximizeControl={false}`
+hides the toggle if you drive `maximized` yourself.
 
 ```tsx
 const [nodes, setNodes] = useState<FlowCanvasNode[]>([
@@ -959,6 +962,11 @@ const [edges, setEdges] = useState<FlowCanvasEdge[]>([
   <FlowCanvas
     nodes={nodes}
     edges={edges}
+    controls={
+      <Button size="sm" onClick={addNode}>
+        Add node
+      </Button>
+    }
     onEdgeCreate={(from, to) => createTransition(from, to)}
     onNodeOpen={(id) => openStateModal(id)}
     onNodeDelete={(id) => confirmDeleteState(id)}

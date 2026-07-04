@@ -186,6 +186,11 @@ export const en: Messages = {
     selectionCleared: 'Selection cleared',
     focusReturned: 'Focus returned to the canvas',
     zoomLevel: ({ percent }) => `Zoom ${percent as number}%`,
+    enterFullscreen: 'Maximize',
+    exitFullscreen: 'Restore',
+    controlsLabel: 'Canvas actions',
+    maximized: 'Canvas maximized',
+    restored: 'Canvas restored',
   },
   imageCrop: {
     zoom: 'Zoom',
