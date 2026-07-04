@@ -1866,3 +1866,36 @@ describe('FlowCanvas maximize + controls rendering', () => {
     expect(screen.getByLabelText('Restore')).toBeInTheDocument();
   });
 });
+
+describe('FlowCanvas maximize toggle behavior', () => {
+  it('clicking the toggle maximizes and restores (uncontrolled)', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    const root = screen.getByRole('application');
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+    fireEvent.click(screen.getByLabelText('Restore'));
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+  });
+
+  it('fires onMaximizedChange and respects the controlled prop', () => {
+    const onMaximizedChange = vi.fn();
+    const { rerender } = render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        maximized={false}
+        onMaximizedChange={onMaximizedChange}
+      />,
+    );
+    const root = screen.getByRole('application');
+    fireEvent.click(screen.getByLabelText('Maximize'));
+    expect(onMaximizedChange).toHaveBeenCalledWith(true);
+    // Controlled: no visual change until the prop updates.
+    expect(root).not.toHaveAttribute('data-flowcanvas-maximized');
+    rerender(
+      <FlowCanvas nodes={NODES} edges={EDGES} maximized onMaximizedChange={onMaximizedChange} />,
+    );
+    expect(root).toHaveAttribute('data-flowcanvas-maximized');
+  });
+});
