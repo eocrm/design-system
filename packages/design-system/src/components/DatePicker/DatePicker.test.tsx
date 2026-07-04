@@ -547,3 +547,17 @@ describe('DatePicker — overlay elevation (#272)', () => {
     expect(clock).toHaveAttribute('data-in-overlay', '');
   });
 });
+
+describe('DatePicker — Escape from anywhere while open (#274)', () => {
+  it('Escape closes the calendar when focus is inside the grid (not the input)', async () => {
+    const user = userEvent.setup();
+    render(<DatePicker aria-label="Due" value={new Date(2026, 5, 15)} onChange={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // Move real focus into the month grid, then Escape from there.
+    const cell = screen.getAllByRole('gridcell', { name: /15/ })[0].querySelector('button');
+    (cell ?? screen.getByRole('dialog')).focus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});

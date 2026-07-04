@@ -11,7 +11,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useInOverlay } from '../_internal/overlay';
+import { useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
@@ -281,6 +281,8 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
 
     // #272: same overlay elevation as DatePicker.
     const inOverlay = useInOverlay(wrapperRef, open);
+    // #274: hosts yield Escape while we're open.
+    useFloatingSurface(open);
 
     const commit = useCallback(
       (raw: string) => {
@@ -384,6 +386,23 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
     }, [focusGridTick, open, refs.floating]);
 
     // Click-1 → click-2 → commit dance.
+    // #274: Escape from anywhere while open — mirrors DatePicker; see there
+    // for the rationale and the embedded-clock deferral.
+    useEffect(() => {
+      if (!open) return;
+      function onKeyDown(e: globalThis.KeyboardEvent) {
+        if (e.key !== 'Escape') return;
+        if (document.querySelector('[data-timefield-popover="true"]')) return;
+        e.preventDefault();
+        setOpen(false);
+        setSelectionStart(null);
+        setHoverDate(null);
+        inputRef.current?.focus();
+      }
+      document.addEventListener('keydown', onKeyDown, true);
+      return () => document.removeEventListener('keydown', onKeyDown, true);
+    }, [open]);
+
     const handleGridSelect = useCallback(
       (date: Date) => {
         if (selectionStart == null) {

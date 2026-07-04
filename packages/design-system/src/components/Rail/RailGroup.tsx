@@ -22,6 +22,7 @@ import {
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { useRail } from './Rail';
+import { useFloatingSurface } from '../_internal/overlay';
 import styles from './Rail.module.scss';
 
 /** Open-delay for hover-intent before opening the collapsed-mode flyout. */
@@ -140,6 +141,9 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
 
   // ─── Hover-driven popover state (used when rail is collapsed) ────────
   const [popoverOpen, setPopoverOpen] = useState(false);
+  // #274: hosts yield Escape while the flyout is open — our own capture
+  // listener closes it on the same press instead of the Modal/Drawer.
+  useFloatingSurface(popoverOpen);
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

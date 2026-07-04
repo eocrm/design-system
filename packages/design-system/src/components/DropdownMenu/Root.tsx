@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { DropdownMenuContext, type DropdownMenuContextValue, type RegisteredItem } from './context';
 import { sanitizeId } from '../_internal/refs';
-import { useInOverlay } from '../_internal/overlay';
+import { useFloatingSurface, useInOverlay } from '../_internal/overlay';
 
 export interface DropdownMenuProps {
   /** Must contain exactly one `<DropdownMenu.Trigger>` and one `<DropdownMenu.Content>`. */
@@ -98,6 +98,9 @@ export function DropdownMenuRoot({
 
   const triggerRef = useRef<HTMLElement | null>(null);
   const inOverlay = useInOverlay(triggerRef, open);
+  // #274: hosts yield Escape while the menu (any level) is open — the
+  // menu's own capture listeners peel one level per press instead.
+  useFloatingSurface(open);
   const reactId = useId();
   const contentId = `dropdown-menu-${sanitizeId(reactId)}`;
 

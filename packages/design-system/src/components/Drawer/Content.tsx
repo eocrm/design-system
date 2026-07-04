@@ -31,6 +31,10 @@ export function Content({ children, className, style }: ContentProps) {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== 'Escape') return;
       if (!overlayStack.isTop(ctx.drawerId)) return;
+      // #274: an open floating surface (Select/Popover/menu/date-time popover/
+      // Rail flyout) wins this press — its own capture listener, which runs
+      // later in the same keydown, closes it. The next press reaches us.
+      if (overlayStack.hasOpenFloating()) return;
       if (ctx.disableEscapeClose) return;
       e.preventDefault();
       ctx.setOpen(false);

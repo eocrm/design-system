@@ -12,7 +12,7 @@ import {
 import clsx from 'clsx';
 import { usePopoverContext } from './context';
 import { mergeRefs } from '../_internal/refs';
-import { useInOverlay } from '../_internal/overlay';
+import { useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Popover.module.scss';
 
 /** Which side of the trigger the popover prefers. Floating UI auto-flips if it doesn't fit. */
@@ -63,6 +63,9 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
 ) {
   const ctx = usePopoverContext('Content');
   const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
+  // #274: hosts yield Escape while we're open — our capture listener
+  // closes us (or one menu level) on the same press instead.
+  useFloatingSurface(ctx.open);
   const arrowRef = useRef<HTMLSpanElement | null>(null);
 
   const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;

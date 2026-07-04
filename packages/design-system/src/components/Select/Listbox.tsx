@@ -11,7 +11,7 @@ import {
 import clsx from 'clsx';
 import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
-import { useInOverlay } from '../_internal/overlay';
+import { useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import type { SelectOption } from './utils-types';
 import { isCreateRow } from './utils';
 import { Empty } from './Empty';
@@ -33,6 +33,9 @@ import styles from './Select.module.scss';
 export function Listbox() {
   const ctx = useSelectContext('Listbox');
   const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
+  // #274: hosts yield Escape while we're open — our own capture/element
+  // handler closes us on the same press instead of the Modal/Drawer.
+  useFloatingSurface(ctx.open);
 
   const { refs, floatingStyles } = useFloating({
     open: ctx.open,
