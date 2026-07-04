@@ -25,6 +25,9 @@ export interface FlowCanvasNode {
   /**
    * Position in canvas coordinates. When omitted the node is auto-laid-out
    * (layered, left → right) and remains user-draggable for the session.
+   * A node with an explicit `position` is *pinned*: it stays where you place it
+   * and does not participate in — or perturb — the auto-layout of the other
+   * nodes. Use `arrangeNodes(nodes, edges)` to re-flow the whole graph.
    */
   position?: FlowCanvasPoint;
   /**
