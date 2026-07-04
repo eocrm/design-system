@@ -109,6 +109,11 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
  * nodes, E cycles a node's connections, C starts a keyboard connect mode,
  * Shift+arrows nudge, +/−/0 zoom and fit, Ctrl+arrows pan.
  *
+ * Pass `controls` to render your own buttons in a top-left toolbar (e.g. an
+ * "Add node" button wired to your state). A built-in Maximize toggle (top-right,
+ * or the `F` key; Escape restores) expands the canvas **in place** to fill the
+ * viewport — this is an in-page maximize, not the native Fullscreen API.
+ *
  * @remarks
  * When NOT to use:
  * - Large graphs (100+ nodes) — there is no virtualization; rendering and
@@ -123,6 +128,9 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
  *   consumer (anchor modals/popovers via the open callbacks).
  * - Rewiring an existing edge's endpoints by dragging — not supported;
  *   delete + recreate instead.
+ * - Do not hide primary, always-needed actions solely behind Maximize or in the
+ *   `controls` slot — those are canvas chrome, not a substitute for the page's
+ *   own toolbar; keep essential actions reachable when the canvas is inline.
  *
  * @example
  * ```tsx

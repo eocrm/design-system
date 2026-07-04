@@ -1904,6 +1904,41 @@
           "required": false,
           "default": "false",
           "description": "Render-only mode: create/move/connect/delete are disabled; selection and\nopen still work."
+        },
+        {
+          "name": "controls",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "none",
+          "description": "Consumer-rendered controls shown in a top-left toolbar overlay. Put design-\nsystem `<Button>`s here (e.g. an \"Add node\" button wired to your own state).\nStays pinned when the canvas is maximized."
+        },
+        {
+          "name": "maximizeControl",
+          "type": "boolean",
+          "required": false,
+          "default": "true",
+          "description": "Show the built-in maximize / restore toggle (top-right). Set false to drive\nmaximize entirely via the `maximized` prop."
+        },
+        {
+          "name": "maximized",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Controlled maximize state. Use with `onMaximizedChange`."
+        },
+        {
+          "name": "defaultMaximized",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Initial maximize state when uncontrolled."
+        },
+        {
+          "name": "onMaximizedChange",
+          "type": "((maximized: boolean) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires whenever maximize is toggled (button, `F` key, or Escape)."
         }
       ]
     },
