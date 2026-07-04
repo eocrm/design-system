@@ -1832,3 +1832,37 @@ describe('FlowCanvas review regressions', () => {
     expect(text).toMatch(/Enter to open/);
   });
 });
+
+describe('FlowCanvas maximize + controls rendering', () => {
+  it('renders the maximize toggle with a localized label, hidden when maximizeControl is false', () => {
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(screen.getByLabelText('Maximize')).toBeInTheDocument();
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} maximizeControl={false} />);
+    expect(screen.queryByLabelText('Maximize')).not.toBeInTheDocument();
+  });
+
+  it('renders the controls slot in a labelled toolbar with the pan carve-out', () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        controls={<button data-testid="add">Add node</button>}
+      />,
+    );
+    const toolbar = screen.getByRole('toolbar', { name: 'Canvas actions' });
+    expect(toolbar).toBeInTheDocument();
+    expect(toolbar).toHaveAttribute('data-flow-controls');
+    expect(toolbar).toContainElement(screen.getByTestId('add'));
+  });
+
+  it('does not render the controls toolbar when no controls are passed', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+  });
+
+  it('honors defaultMaximized on first render', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} defaultMaximized />);
+    expect(screen.getByRole('application')).toHaveAttribute('data-flowcanvas-maximized');
+    expect(screen.getByLabelText('Restore')).toBeInTheDocument();
+  });
+});

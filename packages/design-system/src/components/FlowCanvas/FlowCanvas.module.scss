@@ -24,6 +24,21 @@
   cursor: grabbing;
 }
 
+// stylelint-disable property-disallowed-list -- maximized canvas is an in-place fixed overlay, not consumer layout
+.rootMaximized {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- must be fixed to fill the viewport
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: var(--flow-canvas-maximized-z);
+  border-radius: 0;
+}
+// stylelint-enable property-disallowed-list
+
 .stage {
   position: absolute;
   top: 0;
@@ -195,6 +210,22 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
   position: absolute;
   bottom: var(--space-3);
   left: var(--space-3);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.controlsTopLeft {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.controlsTopRight {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
   display: flex;
   gap: var(--space-1);
 }
