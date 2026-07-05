@@ -184,8 +184,10 @@ export const ru: Messages = {
     connectNoTarget: 'В этом направлении нет цели',
     connectDone: ({ from, to }) => `Соединено: «${from as string}» → «${to as string}»`,
     connectCancelled: 'Соединение отменено',
-    rewireStart: ({ end }) =>
-      `Переподключение ${end as string} связи. Стрелки — выбор узла, Enter — подтвердить, Escape — отмена.`,
+    rewireStartSource:
+      'Переподключение источника связи. Стрелки — выбор узла, Enter — подтвердить, Escape — отмена.',
+    rewireStartTarget:
+      'Переподключение цели связи. Стрелки — выбор узла, Enter — подтвердить, Escape — отмена.',
     rewireDone: ({ from, to }) => `Переподключено: «${from as string}» → «${to as string}»`,
     nodeMoved: ({ label }) => `«${label as string}» перемещён`,
     selectionCleared: 'Выделение снято',

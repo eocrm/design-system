@@ -303,8 +303,10 @@ export interface Messages {
     connectDone: (params: { from: string; to: string }) => string;
     /** Live announcement when connect mode is cancelled. */
     connectCancelled: string;
-    /** Live announcement when keyboard rewire mode starts (`R` / `Shift+R`). */
-    rewireStart: (params: { end: string }) => string;
+    /** Live announcement when keyboard rewire of the SOURCE endpoint starts (`Shift+R`). */
+    rewireStartSource: string;
+    /** Live announcement when keyboard rewire of the TARGET endpoint starts (`R`). */
+    rewireStartTarget: string;
     /** Live announcement when an edge endpoint is rewired to a new node. */
     rewireDone: (params: { from: string; to: string }) => string;
     /** Live announcement after a node is moved (drag or keyboard nudge). */

@@ -182,8 +182,10 @@ export const en: Messages = {
     connectNoTarget: 'No target in that direction',
     connectDone: ({ from, to }) => `Connected ${from as string} to ${to as string}`,
     connectCancelled: 'Connection cancelled',
-    rewireStart: ({ end }) =>
-      `Rewiring the ${end as string} of this connection. Arrow keys pick a node, Enter confirms, Escape cancels.`,
+    rewireStartSource:
+      'Rewiring the source of this connection. Arrow keys pick a node, Enter confirms, Escape cancels.',
+    rewireStartTarget:
+      'Rewiring the target of this connection. Arrow keys pick a node, Enter confirms, Escape cancels.',
     rewireDone: ({ from, to }) => `Reconnected ${from as string} to ${to as string}`,
     nodeMoved: ({ label }) => `${label as string} moved`,
     selectionCleared: 'Selection cleared',

@@ -35,6 +35,7 @@
   // Edge endpoint (rewire) handles.
   --flow-endpoint-bg: var(--color-accent);
   --flow-endpoint-ring: var(--color-bg);
+  --flow-endpoint-size: var(--space-2); // visible dot diameter (screen px)
 
   // Selection floating toolbar (renderNodeActions / renderEdgeActions).
   --flow-selection-actions-z: 1; // above the stage within the canvas

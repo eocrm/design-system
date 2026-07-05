@@ -114,21 +114,30 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
   stroke-width: var(--flow-edge-width);
 }
 
-.endpoint {
-  fill: var(--flow-endpoint-bg);
-  stroke: var(--flow-endpoint-ring);
-  stroke-width: var(--border-width-emphasis);
-  vector-effect: non-scaling-stroke; // constant thickness regardless of zoom
-  pointer-events: none; // the wider .endpointHit takes the pointer
+// Edge rewire endpoint handles — an HTML overlay ABOVE the nodes (see
+// FlowCanvas.tsx), not SVG inside the edge layer, so a node <div> can't occlude
+// the grab target. Positioned in screen px, so the hit size and dot stay
+// constant regardless of stage zoom.
+.endpointHandle {
+  position: absolute;
+
+  // Screen-constant hit target (WCAG 2.5.8) larger than the visible dot.
+  width: var(--flow-handle-hit-size);
+  height: var(--flow-handle-hit-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%); // center on the endpoint's screen point
+  cursor: grab;
+  z-index: 1; // above the nodes within the canvas
 }
 
-.endpointHit {
-  fill: transparent;
-  cursor: grab;
-
-  // Wider transparent target than the visual .endpoint dot so the rewire grab
-  // area stays comfortable (WCAG 2.5.8); vector-effect keeps the stroke thin.
-  vector-effect: non-scaling-stroke;
+.endpointDot {
+  width: var(--flow-endpoint-size);
+  height: var(--flow-endpoint-size);
+  background: var(--flow-endpoint-bg);
+  border: var(--border-width-emphasis) solid var(--flow-endpoint-ring);
+  border-radius: var(--radius-full);
 }
 
 .node {

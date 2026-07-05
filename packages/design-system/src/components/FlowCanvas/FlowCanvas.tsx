@@ -1186,7 +1186,9 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         end,
         fixed,
       });
-      announce(t('flowCanvas.rewireStart', { end }));
+      announce(
+        t(end === 'source' ? 'flowCanvas.rewireStartSource' : 'flowCanvas.rewireStartTarget'),
+      );
       return;
     }
     // Shift+Arrow nudges the focused/selected node (checked before ctrl+arrow
@@ -1653,7 +1655,6 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               edge={edge}
               geometry={geometry}
               active={selection?.type === 'edge' && selection.id === edge.id}
-              editable={canConnect}
               markerId={markerId}
               markerActiveId={markerActiveId}
               ariaLabel={t('flowCanvas.edgeLabel', {
@@ -1664,7 +1665,6 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               registerEl={registerEdgeEl}
               onEdgePointerDown={handleEdgePointerDown}
               onEdgeDoubleClick={handleEdgeDoubleClick}
-              onEndpointPointerDown={handleEndpointPointerDown}
             />
           ))}
           {connect
@@ -1731,6 +1731,36 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
           />
         ))}
       </div>
+      {/* Edge rewire endpoint handles — an HTML overlay ABOVE the nodes (a
+          sibling of the transformed .stage, not inside the below-nodes edges
+          <svg>). Rendering them here is what makes them grabbable: SVG circles
+          inside the edge layer are occluded by the node <div>s, which paint on
+          top and intercept the pointer at the endpoint (which sits on a node's
+          edge). Positioned in screen px from the endpoint's canvas coords ×
+          viewport, exactly like selectionActions. */}
+      {canConnect && selection?.type === 'edge'
+        ? (() => {
+            const resolved = resolvedEdges.find((r) => r.edge.id === selection.id);
+            if (!resolved) return null;
+            const { z, tx, ty } = viewport;
+            return (['source', 'target'] as const).map((end) => {
+              const p = resolved.geometry[end];
+              return (
+                <div
+                  key={end}
+                  className={styles.endpointHandle}
+                  data-flow-edge-endpoint={end}
+                  data-flow-edge-endpoint-hit={end}
+                  aria-hidden="true"
+                  style={{ left: p.x * z + tx, top: p.y * z + ty }}
+                  onPointerDown={(event) => handleEndpointPointerDown(selection.id, end, event)}
+                >
+                  <span className={styles.endpointDot} />
+                </div>
+              );
+            });
+          })()
+        : null}
       <FlowControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFit={() => fitTo(contentBounds)} />
       {controls != null ? (
         // data-flow-controls: background-pan hit-testing skips this subtree, so

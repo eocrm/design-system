@@ -2237,6 +2237,42 @@ describe('FlowCanvas pointer rewire', () => {
     rewire(container, 'target', { x: 380, y: 20 }); // back onto 'done' (current target)
     expect(onEdgeReconnect).not.toHaveBeenCalled();
   });
+
+  it('reverts when the rewire would duplicate a different existing edge', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={[
+          { id: 't1', from: 'open', to: 'done' },
+          { id: 't2', from: 'open', to: 'later' },
+        ]}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    // Rewiring t1's target onto 'later' makes it open→later, which already
+    // exists as t2 — isRewireValid rejects the duplicate, so it reverts.
+    rewire(container, 'target', { x: 380, y: 220 }); // center of 'later'
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+
+  it('does not rewire onto a valid node when isValidConnection rejects it', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        isValidConnection={() => false}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    // The endpoint hovers a real node, but isValidConnection vetoes it —
+    // isRewireValid folds in the consumer predicate, so the drag reverts.
+    rewire(container, 'target', { x: 380, y: 220 }); // center of 'later'
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
 });
 
 describe('FlowCanvas keyboard rewire', () => {
