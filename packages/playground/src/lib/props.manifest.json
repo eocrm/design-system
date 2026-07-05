@@ -1857,6 +1857,13 @@
           "description": "Called when the user draws or confirms a connection between two nodes."
         },
         {
+          "name": "onEdgeReconnect",
+          "type": "((id: string, from: string, to: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when the user drags an existing edge's endpoint onto a different\nnode, or confirms a keyboard rewire (`R` / `Shift+R`). `id` is the edge;\n`from`/`to` are its NEW endpoints. The canvas never mutates the edge — apply\nthis to your state. Not fired on revert (empty-canvas drop, invalid target,\nor no change). Disabled by `readOnly` and `allowConnections={false}`."
+        },
+        {
           "name": "onEdgeOpen",
           "type": "((id: string) => void)",
           "required": false,
@@ -1904,6 +1911,34 @@
           "required": false,
           "default": "false",
           "description": "Render-only mode: create/move/connect/delete are disabled; selection and\nopen still work."
+        },
+        {
+          "name": "allowConnections",
+          "type": "boolean",
+          "required": false,
+          "default": "true",
+          "description": "When false, disables creating and rewiring connections — the node connect\nhandle is hidden, pointer/keyboard connect (`C`, handle drag) and edge\nrewiring (`R`, endpoint drag) are inert. Node drag/move/delete/selection\nstill work. `readOnly` overrides this (it disables everything)."
+        },
+        {
+          "name": "confineNodesToView",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "When true, a dragged node is clamped so its whole card stays within the\ncurrently-visible canvas area (accounting for pan/zoom). Applies to pointer\ndrag, the committed `onNodeMove`, and Shift+Arrow nudges."
+        },
+        {
+          "name": "renderNodeActions",
+          "type": "((id: string) => ReactNode)",
+          "required": false,
+          "default": "none",
+          "description": "Render a floating toolbar anchored to the top-right corner of the selected\nNODE. Called with the node id; return `null` to show nothing for that node.\nThe toolbar is a screen-positioned overlay (a sibling of the transformed\nstage, so it is not scaled) that follows pan/zoom. Pressing it never starts\na pan or clears the selection. Only rendered for the current single\nselection."
+        },
+        {
+          "name": "renderEdgeActions",
+          "type": "((id: string) => ReactNode)",
+          "required": false,
+          "default": "none",
+          "description": "Render a floating toolbar anchored near the midpoint of the selected EDGE.\nCalled with the edge id; return `null` to show nothing for that edge. Same\nscreen-positioned, pan/zoom-following overlay as `renderNodeActions`; safe\nto host a `ConfirmationPopover` here."
         },
         {
           "name": "controls",

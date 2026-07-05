@@ -43,6 +43,14 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
   onNodeDelete?: (id: string) => void;
   /** Called when the user draws or confirms a connection between two nodes. */
   onEdgeCreate?: (from: string, to: string) => void;
+  /**
+   * Called when the user drags an existing edge's endpoint onto a different
+   * node, or confirms a keyboard rewire (`R` / `Shift+R`). `id` is the edge;
+   * `from`/`to` are its NEW endpoints. The canvas never mutates the edge — apply
+   * this to your state. Not fired on revert (empty-canvas drop, invalid target,
+   * or no change). Disabled by `readOnly` and `allowConnections={false}`.
+   */
+  onEdgeReconnect?: (id: string, from: string, to: string) => void;
   /** Called when an edge is opened (Enter/Space or double-click). */
   onEdgeOpen?: (id: string) => void;
   /** Called when deletion of the selected edge is requested (Delete/Backspace). */
@@ -68,6 +76,35 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
    * open still work. @default false
    */
   readOnly?: boolean;
+  /**
+   * When false, disables creating and rewiring connections — the node connect
+   * handle is hidden, pointer/keyboard connect (`C`, handle drag) and edge
+   * rewiring (`R`, endpoint drag) are inert. Node drag/move/delete/selection
+   * still work. `readOnly` overrides this (it disables everything). @default true
+   */
+  allowConnections?: boolean;
+  /**
+   * When true, a dragged node is clamped so its whole card stays within the
+   * currently-visible canvas area (accounting for pan/zoom). Applies to pointer
+   * drag, the committed `onNodeMove`, and Shift+Arrow nudges. @default false
+   */
+  confineNodesToView?: boolean;
+  /**
+   * Render a floating toolbar anchored to the top-right corner of the selected
+   * NODE. Called with the node id; return `null` to show nothing for that node.
+   * The toolbar is a screen-positioned overlay (a sibling of the transformed
+   * stage, so it is not scaled) that follows pan/zoom. Pressing it never starts
+   * a pan or clears the selection. Only rendered for the current single
+   * selection. @default none
+   */
+  renderNodeActions?: (id: string) => ReactNode;
+  /**
+   * Render a floating toolbar anchored near the midpoint of the selected EDGE.
+   * Called with the edge id; return `null` to show nothing for that edge. Same
+   * screen-positioned, pan/zoom-following overlay as `renderNodeActions`; safe
+   * to host a `ConfirmationPopover` here. @default none
+   */
+  renderEdgeActions?: (id: string) => ReactNode;
   /**
    * Consumer-rendered controls shown in a top-left toolbar overlay. Put design-
    * system `<Button>`s here (e.g. an "Add node" button wired to your own state).
@@ -99,7 +136,16 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
  * Nodes without `position` are auto-laid-out (layered, left → right) and stay
  * draggable for the session. Full keyboard support: arrows rove between
  * nodes, E cycles a node's connections, C starts a keyboard connect mode,
+ * R (`Shift+R` for the source) rewires a selected edge's endpoint,
  * Shift+arrows nudge, +/−/0 zoom and fit, Ctrl+arrows pan.
+ *
+ * Selecting an edge exposes endpoint handles you can drag onto another node —
+ * or press `R` / `Shift+R` — firing `onEdgeReconnect(id, from, to)` (the canvas
+ * never mutates the edge; apply it to your state). `allowConnections={false}`
+ * disables all connecting and rewiring while leaving node drag/move/delete/select
+ * intact; `confineNodesToView` clamps a dragged node to the visible canvas area;
+ * and `renderNodeActions`/`renderEdgeActions` float a toolbar on the selected
+ * node/edge that tracks it through pan and zoom.
  *
  * Pass `controls` to render your own buttons in a top-left toolbar (e.g. an
  * "Add node" button wired to your state). A built-in Maximize toggle (top-right,
@@ -118,8 +164,6 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
  *   form-based alternative for complex attribute editing; the canvas's inline
  *   surface is selection + spatial arrangement only, editors belong to the
  *   consumer (anchor modals/popovers via the open callbacks).
- * - Rewiring an existing edge's endpoints by dragging — not supported;
- *   delete + recreate instead.
  * - Do not hide primary, always-needed actions solely behind Maximize or in the
  *   `controls` slot — those are canvas chrome, not a substitute for the page's
  *   own toolbar; keep essential actions reachable when the canvas is inline.
@@ -169,6 +213,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     onNodeOpen,
     onNodeDelete,
     onEdgeCreate,
+    onEdgeReconnect,
     onEdgeOpen,
     onEdgeDelete,
     isValidConnection,
@@ -176,6 +221,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     defaultSelection = null,
     onSelectionChange,
     readOnly = false,
+    allowConnections = true,
+    confineNodesToView = false,
+    renderNodeActions,
+    renderEdgeActions,
     controls,
     maximizeControl = true,
     maximized: maximizedProp,
@@ -201,6 +250,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const instructionsId = `flow-instructions-${uid}`;
   const markerId = `flow-arrow-${uid}`;
   const markerActiveId = `flow-arrow-active-${uid}`;
+  // Gate for all connect/rewire entry points. `readOnly` disables everything;
+  // `allowConnections={false}` disables only connecting/rewiring while leaving
+  // node drag/move/delete/selection intact.
+  const canConnect = !readOnly && allowConnections;
 
   const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const edgeIds = useMemo(() => new Set(edges.map((e) => e.id)), [edges]);
@@ -376,6 +429,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     pointerId: number | null;
     target: string | null;
     cursor: FlowCanvasPoint | null; // pointer mode ghost end
+    /** Set only when rewiring an existing edge (distinguishes rewire from create). */
+    edgeId?: string;
+    /** Which endpoint of the edge is being moved (rewire only). */
+    end?: 'source' | 'target';
+    /** The edge's OTHER (fixed) endpoint that stays put during a rewire. */
+    fixed?: string;
   } | null>(null);
   // Latest connect gesture, readable from the stable node/edge/handle pointer
   // handlers without taking `connect` as a dependency (same reasoning as
@@ -388,6 +447,23 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     [edges],
   );
   const isValid = isValidConnection ?? defaultIsValid;
+
+  // Rewire validation. Unlike `isValid`, it excludes the edge being rewired so
+  // dropping the endpoint back near its own current node isn't flagged as a
+  // self-duplicate — that case is a silent no-op (revert), handled at commit.
+  const isRewireValid = useCallback(
+    (edgeId: string, from: string, to: string): boolean =>
+      from !== to &&
+      !edges.some((e) => e.id !== edgeId && e.from === from && e.to === to) &&
+      (isValidConnection ? isValidConnection(from, to) : true),
+    [edges, isValidConnection],
+  );
+
+  // The edge's NEW (from, to) given the in-flight rewire: the moving end takes
+  // the hovered/stepped `target` (falling back to `fixed` — a no-op — when none
+  // is picked); the other end stays `fixed`.
+  const rewireEndpoints = (c: NonNullable<typeof connect>): [string, string] =>
+    c.end === 'source' ? [c.target ?? c.fixed!, c.fixed!] : [c.fixed!, c.target ?? c.fixed!];
 
   const nodeAtPoint = useCallback(
     (point: FlowCanvasPoint): string | null => {
@@ -456,6 +532,55 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const announce = useCallback(
     (message: string) => setAnnouncement((prev) => ({ text: message, nonce: prev.nonce + 1 })),
     [],
+  );
+
+  // Commit a rewire — shared by pointer-up and keyboard Enter. Fires
+  // onEdgeReconnect only when a target is picked, the gesture wasn't
+  // preventDefault-ed, the result is still valid against the live graph, AND it
+  // actually changes the edge (dropping back on the current endpoint is a
+  // silent no-op / revert). Never touches the create (onEdgeCreate) path.
+  // Returns whether the reconnect intent fired (callers use it to narrate).
+  const commitRewire = (c: NonNullable<typeof connect>, prevented = false): boolean => {
+    if (!c.edgeId || !c.target || prevented) return false;
+    const edge = edges.find((e) => e.id === c.edgeId);
+    if (!edge) return false;
+    const [newFrom, newTo] = rewireEndpoints(c);
+    if (newFrom === edge.from && newTo === edge.to) return false; // unchanged → revert
+    if (!isRewireValid(c.edgeId, newFrom, newTo)) return false;
+    onEdgeReconnect?.(c.edgeId, newFrom, newTo);
+    announce(
+      t('flowCanvas.rewireDone', {
+        from: nodeById.get(newFrom)?.label ?? newFrom,
+        to: nodeById.get(newTo)?.label ?? newTo,
+      }),
+    );
+    return true;
+  };
+
+  // Clamp a node position so its whole card stays inside the visible canvas
+  // rect (derived from the root's screen size and the current pan/zoom). A
+  // no-op unless `confineNodesToView` is on. Shared by the pointer-drag move,
+  // the drag commit, and the Shift+Arrow nudge so all three honor the bound.
+  const clampToView = useCallback(
+    (id: string, position: FlowCanvasPoint): FlowCanvasPoint => {
+      if (!confineNodesToView) return position;
+      const root = rootRef.current;
+      if (!root) return position;
+      const { width: rw, height: rh } = root.getBoundingClientRect();
+      const { tx, ty, z } = viewport;
+      const visX = -tx / z;
+      const visY = -ty / z;
+      const visW = rw / z;
+      const visH = rh / z;
+      const size = sizes.get(id) ?? ESTIMATED_NODE_SIZE;
+      const maxX = Math.max(visX, visX + visW - size.width);
+      const maxY = Math.max(visY, visY + visH - size.height);
+      return {
+        x: Math.min(Math.max(position.x, visX), maxX),
+        y: Math.min(Math.max(position.y, visY), maxY),
+      };
+    },
+    [confineNodesToView, viewport, sizes],
   );
 
   const contentBounds = useMemo(() => {
@@ -610,7 +735,20 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     if (connect?.mode === 'pointer' && event.pointerId === connect.pointerId) {
       const point = toCanvasPoint(event.clientX, event.clientY);
       const over = nodeAtPoint(point);
-      const target = over && over !== connect.from && isValid(connect.from, over) ? over : null;
+      // Rewire (connect.edgeId set) validates against the OTHER endpoint via
+      // isRewireValid; a plain create validates against connect.from.
+      const target =
+        over &&
+        (connect.edgeId
+          ? over !== connect.fixed &&
+            isRewireValid(
+              connect.edgeId,
+              connect.end === 'target' ? connect.fixed! : over,
+              connect.end === 'target' ? over : connect.fixed!,
+            )
+          : over !== connect.from && isValid(connect.from, over))
+          ? over
+          : null;
       setConnect({ ...connect, target, cursor: point });
       return;
     }
@@ -631,10 +769,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       // reconvert the whole gesture when the zoom changes mid-drag — a second
       // touch on the zoom controls, or '+'/'-'/'0' on the mousedown-focused
       // node — and jump the node.
-      drag.position = {
+      drag.position = clampToView(drag.id, {
         x: drag.position.x + (event.clientX - drag.lastClientX) / viewport.z,
         y: drag.position.y + (event.clientY - drag.lastClientY) / viewport.z,
-      };
+      });
       drag.lastClientX = event.clientX;
       drag.lastClientY = event.clientY;
       setLiveDrag({ id: drag.id, position: drag.position });
@@ -657,10 +795,16 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // finger lifting must neither commit nor cancel it (it falls through to
     // its own drag/pan cleanup below).
     if (connect?.mode === 'pointer' && event.pointerId === connect.pointerId) {
-      // End-of-gesture cleanup always runs (like drag/pan below); the create
-      // intent honors a consumer's preventDefault() the same way the drag
-      // commit does, and revalidates against the live graph (the target was
-      // only known-valid when the pointer last moved).
+      // End-of-gesture cleanup always runs (like drag/pan below); the intent
+      // honors a consumer's preventDefault() the same way the drag commit does,
+      // and revalidates against the live graph (the target was only
+      // known-valid when the pointer last moved).
+      if (connect.edgeId) {
+        // Rewire branch — MUST NOT fall through to onEdgeCreate.
+        commitRewire(connect, event.defaultPrevented);
+        setConnect(null);
+        return;
+      }
       if (
         connect.target &&
         !event.defaultPrevented &&
@@ -690,11 +834,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       // node deleted mid-drag must not emit onNodeMove with a dead id.
       if (drag.moved && !event.defaultPrevented && node) {
         // Fold in any final movement carried by the pointerup itself, at the
-        // current zoom — the same per-segment conversion as the move handler.
-        const position = {
+        // current zoom — the same per-segment conversion as the move handler —
+        // then clamp to the visible rect (no-op unless confineNodesToView).
+        const position = clampToView(drag.id, {
           x: drag.position.x + (event.clientX - drag.lastClientX) / viewport.z,
           y: drag.position.y + (event.clientY - drag.lastClientY) / viewport.z,
-        };
+        });
         if (node.position === undefined) {
           // Session-local arrangement for auto-laid-out nodes.
           setDragOverrides((prev) => new Map(prev).set(drag.id, position));
@@ -919,6 +1064,15 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         return;
       }
       if (key === 'Enter') {
+        // Rewire commits through onEdgeReconnect — MUST NOT fall through to the
+        // create (onEdgeCreate) branch below.
+        if (connect.edgeId) {
+          if (!commitRewire(connect)) announce(t('flowCanvas.connectCancelled'));
+          setConnect(null);
+          const exitRect = rects.get(connect.fixed ?? connect.from);
+          if (exitRect) revealRect(exitRect);
+          return;
+        }
         // Same commit-time revalidation as pointerup: the target was only
         // known-valid when the last arrow press set it.
         if (connect.target && canCommitConnect(connect.from, connect.target)) {
@@ -946,7 +1100,17 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       if (key.startsWith('Arrow')) {
         const candidates = new Map<string, Rect>();
         for (const [id, rect] of rects) {
-          if (id !== connect.from && isValid(connect.from, id)) candidates.set(id, rect);
+          // Rewire filters against the OTHER (fixed) endpoint via isRewireValid;
+          // a plain create validates against connect.from.
+          const ok = connect.edgeId
+            ? id !== connect.fixed &&
+              isRewireValid(
+                connect.edgeId,
+                connect.end === 'target' ? connect.fixed! : id,
+                connect.end === 'target' ? id : connect.fixed!,
+              )
+            : id !== connect.from && isValid(connect.from, id);
+          if (ok) candidates.set(id, rect);
         }
         // Navigate among candidates from the current target (or the source —
         // included so the first arrow press has an origin to measure from).
@@ -982,7 +1146,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // Plain C starts keyboard connect mode; ctrl/cmd+C stays the browser's
     // copy shortcut.
     if ((key === 'c' || key === 'C') && !ctrlKey && !metaKey) {
-      if (readOnly) return;
+      if (!canConnect) return;
       // One gesture at a time (mirror of handleHandlePointerDown's guard):
       // C mid-pointer-draw must not replace the in-flight draw with a
       // keyboard connect — the discarded drag would turn its eventual
@@ -995,6 +1159,36 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       event.preventDefault();
       setConnect({ from: nodeId, mode: 'keyboard', pointerId: null, target: null, cursor: null });
       announce(t('flowCanvas.connectStart', { label: nodeById.get(nodeId)?.label ?? nodeId }));
+      return;
+    }
+    // Plain R starts a keyboard rewire of the selected edge's TARGET endpoint;
+    // Shift+R rewires the SOURCE. Only acts when an edge is selected/focused;
+    // ctrl/cmd+R stays the browser's reload.
+    if ((key === 'r' || key === 'R') && !ctrlKey && !metaKey) {
+      if (!canConnect) return;
+      if (connect?.mode === 'pointer') return; // one gesture at a time
+      const edgeId =
+        targetEl.getAttribute('data-flow-edge') ??
+        (selection?.type === 'edge' ? selection.id : null);
+      if (!edgeId) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      event.preventDefault();
+      const end: 'source' | 'target' = event.shiftKey ? 'source' : 'target';
+      const fixed = end === 'target' ? edge.from : edge.to;
+      setConnect({
+        from: fixed,
+        mode: 'keyboard',
+        pointerId: null,
+        target: null,
+        cursor: null,
+        edgeId,
+        end,
+        fixed,
+      });
+      announce(
+        t(end === 'source' ? 'flowCanvas.rewireStartSource' : 'flowCanvas.rewireStartTarget'),
+      );
       return;
     }
     // Shift+Arrow nudges the focused/selected node (checked before ctrl+arrow
@@ -1010,10 +1204,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       if (!node) return;
       const current = positionOf(node);
       const NUDGE = 8;
-      const next = {
+      const next = clampToView(nodeId, {
         x: current.x + (key === 'ArrowRight' ? NUDGE : key === 'ArrowLeft' ? -NUDGE : 0),
         y: current.y + (key === 'ArrowDown' ? NUDGE : key === 'ArrowUp' ? -NUDGE : 0),
-      };
+      });
       if (node.position === undefined) {
         setDragOverrides((prev) => new Map(prev).set(nodeId, next));
       }
@@ -1240,7 +1434,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   // flowing to the root handlers while the ghost edge tracks the cursor.
   const handleHandlePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<HTMLElement>) => {
-      if (event.button !== 0 || readOnly) return;
+      if (event.button !== 0 || !canConnect) return;
       // One draw at a time (matching the drag guard): a second pointer
       // grabbing a handle mid-draw must not hijack the first ghost. A
       // keyboard connect, by contrast, is superseded by the new draw.
@@ -1258,7 +1452,37 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         /* jsdom */
       }
     },
-    [readOnly],
+    [canConnect],
+  );
+  // Dragging an existing edge's endpoint handle starts a pointer REWIRE. Like
+  // the connect handle, the ROOT captures the pointer so move/up flow to the
+  // root handlers; `fixed` is the endpoint that stays put (dragging `target`
+  // keeps `source` fixed, and vice-versa).
+  const handleEndpointPointerDown = useCallback(
+    (edgeId: string, end: 'source' | 'target', event: ReactPointerEvent<Element>) => {
+      if (event.button !== 0 || !canConnect) return;
+      event.stopPropagation();
+      if (connectRef.current?.mode === 'pointer') return; // one gesture at a time
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      const fixed = end === 'target' ? edge.from : edge.to;
+      setConnect({
+        from: fixed,
+        mode: 'pointer',
+        pointerId: event.pointerId,
+        target: null,
+        cursor: null,
+        edgeId,
+        end,
+        fixed,
+      });
+      try {
+        rootRef.current?.setPointerCapture(event.pointerId);
+      } catch {
+        /* jsdom */
+      }
+    },
+    [edges, canConnect],
   );
   const handleEdgePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<SVGPathElement>) => {
@@ -1325,6 +1549,35 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     if (readOnly || !isBackgroundTarget(event.target)) return;
     onNodeCreate?.(toCanvasPoint(event.clientX, event.clientY));
   };
+
+  // Screen-positioned toolbar anchored to the current single selection. It is
+  // rendered as a sibling of the transformed .stage (not inside it), so its
+  // content keeps its intrinsic size regardless of zoom; left/top are computed
+  // in screen px from the element's canvas rect × the viewport, so it follows
+  // pan/zoom/drag. Only the matching render prop that returns non-null shows.
+  const selectionActions = (() => {
+    if (!selection) return null;
+    const { tx, ty, z } = viewport;
+    if (selection.type === 'node' && renderNodeActions) {
+      const rect = rects.get(selection.id);
+      if (!rect) return null;
+      const content = renderNodeActions(selection.id);
+      if (content == null) return null;
+      // Node top-right corner, in screen px.
+      const left = rect.x * z + tx + rect.width * z;
+      const top = rect.y * z + ty;
+      return { left, top, content };
+    }
+    if (selection.type === 'edge' && renderEdgeActions) {
+      const resolved = resolvedEdges.find((r) => r.edge.id === selection.id);
+      if (!resolved) return null;
+      const content = renderEdgeActions(selection.id);
+      if (content == null) return null;
+      const mid = resolved.geometry.midpoint;
+      return { left: mid.x * z + tx, top: mid.y * z + ty, content };
+    }
+    return null;
+  })();
 
   const setRootRef = useMemo(() => mergeRefs(rootRef, ref), [ref]);
 
@@ -1416,18 +1669,24 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
           ))}
           {connect
             ? (() => {
-                // Dashed ghost edge for the in-flight connection: source →
-                // hovered/stepped target, or the pointer-mode cursor stub.
-                const sourceRect = rects.get(connect.from);
-                if (!sourceRect) return null;
-                const targetRect = connect.target ? rects.get(connect.target) : null;
-                const end: Rect = targetRect ?? {
-                  x: (connect.cursor?.x ?? sourceRect.x + sourceRect.width + 40) - 1,
-                  y: (connect.cursor?.y ?? sourceRect.y) - 1,
+                // Dashed ghost edge for the in-flight connection: the fixed
+                // anchor → hovered/stepped target (or the pointer-mode cursor
+                // stub). For a create, `fixed` is undefined so this is just
+                // `from`. For a `source` rewire the moving end IS the source,
+                // so we draw moving→fixed (inverted) to keep the arrowhead on
+                // the fixed target.
+                const anchorRect = rects.get(connect.fixed ?? connect.from);
+                if (!anchorRect) return null;
+                const otherRect = connect.target ? rects.get(connect.target) : null;
+                const movingEnd: Rect = otherRect ?? {
+                  x: (connect.cursor?.x ?? anchorRect.x + anchorRect.width + 40) - 1,
+                  y: (connect.cursor?.y ?? anchorRect.y) - 1,
                   width: 2,
                   height: 2,
                 };
-                return <path className={styles.ghostEdge} d={edgeGeometry(sourceRect, end).path} />;
+                const [a, b] =
+                  connect.end === 'source' ? [movingEnd, anchorRect] : [anchorRect, movingEnd];
+                return <path className={styles.ghostEdge} d={edgeGeometry(a, b).path} />;
               })()
             : null}
         </svg>
@@ -1463,7 +1722,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
             selected={selection?.type === 'node' && selection.id === node.id}
             dragging={liveDrag?.id === node.id}
             connectTarget={connect?.target === node.id}
-            readOnly={readOnly}
+            canConnect={canConnect}
             roleDescription={t('flowCanvas.nodeRole')}
             registerEl={registerNodeEl}
             onNodePointerDown={handleNodePointerDown}
@@ -1472,6 +1731,36 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
           />
         ))}
       </div>
+      {/* Edge rewire endpoint handles — an HTML overlay ABOVE the nodes (a
+          sibling of the transformed .stage, not inside the below-nodes edges
+          <svg>). Rendering them here is what makes them grabbable: SVG circles
+          inside the edge layer are occluded by the node <div>s, which paint on
+          top and intercept the pointer at the endpoint (which sits on a node's
+          edge). Positioned in screen px from the endpoint's canvas coords ×
+          viewport, exactly like selectionActions. */}
+      {canConnect && selection?.type === 'edge'
+        ? (() => {
+            const resolved = resolvedEdges.find((r) => r.edge.id === selection.id);
+            if (!resolved) return null;
+            const { z, tx, ty } = viewport;
+            return (['source', 'target'] as const).map((end) => {
+              const p = resolved.geometry[end];
+              return (
+                <div
+                  key={end}
+                  className={styles.endpointHandle}
+                  data-flow-edge-endpoint={end}
+                  data-flow-edge-endpoint-hit={end}
+                  aria-hidden="true"
+                  style={{ left: p.x * z + tx, top: p.y * z + ty }}
+                  onPointerDown={(event) => handleEndpointPointerDown(selection.id, end, event)}
+                >
+                  <span className={styles.endpointDot} />
+                </div>
+              );
+            });
+          })()
+        : null}
       <FlowControls onZoomIn={zoomIn} onZoomOut={zoomOut} onFit={() => fitTo(contentBounds)} />
       {controls != null ? (
         // data-flow-controls: background-pan hit-testing skips this subtree, so
@@ -1502,6 +1791,20 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               <Maximize2 size={16} aria-hidden="true" />
             )}
           </Button>
+        </div>
+      ) : null}
+      {selectionActions ? (
+        // data-flow-controls: like the zoom/maximize clusters, this overlay is
+        // exempted from background-pan hit-testing (isBackgroundTarget) and the
+        // #290 dismissal guards, so pressing an action never starts a pan or
+        // clears the selection. It is a sibling of the transformed .stage — its
+        // left/top are screen px, so its content is not scaled by the zoom.
+        <div
+          className={styles.selectionActions}
+          data-flow-controls=""
+          style={{ left: selectionActions.left, top: selectionActions.top }}
+        >
+          {selectionActions.content}
         </div>
       ) : null}
       <div id={instructionsId} className={styles.srOnly}>

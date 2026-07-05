@@ -2134,3 +2134,395 @@ describe('FlowCanvas controls with portaled overlays (#290)', () => {
     expect(onNodeCreate).not.toHaveBeenCalled();
   });
 });
+
+describe('FlowCanvas edge endpoint handles', () => {
+  it('shows two endpoint handles on the selected edge and none otherwise', () => {
+    const { container, rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(container.querySelectorAll('[data-flow-edge-endpoint]')).toHaveLength(0);
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={{ type: 'edge', id: 't1' }} />);
+    const endpoints = container.querySelectorAll('[data-flow-edge-endpoint]');
+    expect(endpoints).toHaveLength(2);
+    expect(container.querySelector('[data-flow-edge-endpoint="source"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-flow-edge-endpoint="target"]')).toBeInTheDocument();
+  });
+
+  it('does not show endpoint handles on a selected edge when readOnly', () => {
+    const { container } = render(
+      <FlowCanvas nodes={NODES} edges={EDGES} readOnly selection={{ type: 'edge', id: 't1' }} />,
+    );
+    expect(container.querySelectorAll('[data-flow-edge-endpoint]')).toHaveLength(0);
+  });
+});
+
+describe('FlowCanvas pointer rewire', () => {
+  // NODES has 'open' at {0,0} / 'done' at {300,0}; add a third node below so a
+  // move can hover it. With mockRootRect(800x600) at identity viewport,
+  // toCanvasPoint maps client px 1:1 to canvas coords: 'later' spans
+  // x 300..460, y 200..240 (center ≈ 380,220).
+  const N3: FlowCanvasNode[] = [
+    ...NODES,
+    { id: 'later', label: 'Later', position: { x: 300, y: 200 } },
+  ];
+
+  // jsdom getBoundingClientRect is 0x0, so — like the pointer-connect tests —
+  // we mock the root rect and drive the hover with explicit client coords that
+  // land on the target node's rect (from positionOf + ESTIMATED_NODE_SIZE).
+  const rewire = (
+    container: HTMLElement,
+    end: 'source' | 'target',
+    over: { x: number; y: number } | null,
+  ) => {
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    const hit = container.querySelector(`[data-flow-edge-endpoint-hit="${end}"]`)!;
+    fireEvent.pointerDown(hit, { button: 0, pointerId: 1 });
+    if (over) {
+      fireEvent.pointerMove(root, { pointerId: 1, clientX: over.x, clientY: over.y });
+    }
+    fireEvent.pointerUp(root, { pointerId: 1 });
+  };
+
+  it('rewires the target endpoint onto another node', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    rewire(container, 'target', { x: 380, y: 220 }); // center of 'later'
+    expect(onEdgeReconnect).toHaveBeenCalledWith('t1', 'open', 'later');
+  });
+
+  it('rewires the source endpoint (from) onto another node', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    rewire(container, 'source', { x: 380, y: 220 }); // move source onto 'later'
+    expect(onEdgeReconnect).toHaveBeenCalledWith('t1', 'later', 'done');
+  });
+
+  it('reverts when dropped on empty canvas', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    rewire(container, 'target', null); // no move over a node
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+
+  it('reverts (no-op) when the target endpoint is dropped back on its own node', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    rewire(container, 'target', { x: 380, y: 20 }); // back onto 'done' (current target)
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+
+  it('reverts when the rewire would duplicate a different existing edge', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={[
+          { id: 't1', from: 'open', to: 'done' },
+          { id: 't2', from: 'open', to: 'later' },
+        ]}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    // Rewiring t1's target onto 'later' makes it open→later, which already
+    // exists as t2 — isRewireValid rejects the duplicate, so it reverts.
+    rewire(container, 'target', { x: 380, y: 220 }); // center of 'later'
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+
+  it('does not rewire onto a valid node when isValidConnection rejects it', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        isValidConnection={() => false}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    // The endpoint hovers a real node, but isValidConnection vetoes it —
+    // isRewireValid folds in the consumer predicate, so the drag reverts.
+    rewire(container, 'target', { x: 380, y: 220 }); // center of 'later'
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+});
+
+describe('FlowCanvas keyboard rewire', () => {
+  it('R re-targets the edge to the node stepped to, Enter commits', () => {
+    const N3: FlowCanvasNode[] = [
+      ...NODES,
+      { id: 'later', label: 'Later', position: { x: 0, y: 200 } }, // directly below 'open'
+    ];
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'r' }); // start rewiring the target endpoint
+    fireEvent.keyDown(root, { key: 'ArrowDown' }); // step to 'later' (below the fixed source)
+    fireEvent.keyDown(root, { key: 'Enter' }); // commit
+    expect(onEdgeReconnect).toHaveBeenCalledWith('t1', 'open', 'later');
+  });
+
+  it('Shift+R rewires the source endpoint', () => {
+    const N3: FlowCanvasNode[] = [
+      ...NODES,
+      { id: 'branch', label: 'Branch', position: { x: 300, y: 200 } }, // directly below 'done'
+    ];
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'R', shiftKey: true }); // rewire the source; fixed = 'done'
+    fireEvent.keyDown(root, { key: 'ArrowDown' }); // step to 'branch'
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onEdgeReconnect).toHaveBeenCalledWith('t1', 'branch', 'done');
+  });
+
+  it('Escape reverts a keyboard rewire without firing onEdgeReconnect', () => {
+    const N3: FlowCanvasNode[] = [
+      ...NODES,
+      { id: 'later', label: 'Later', position: { x: 0, y: 200 } },
+    ];
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'r' });
+    fireEvent.keyDown(root, { key: 'ArrowDown' });
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+  });
+
+  it('R is inert when a node (not an edge) is selected', () => {
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'node', id: 'open' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'r' });
+    fireEvent.keyDown(root, { key: 'ArrowRight' });
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+});
+
+describe('FlowCanvas allowConnections', () => {
+  it('hides the node connect handle when allowConnections is false', () => {
+    const { container, rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(container.querySelector('[data-flow-handle]')).toBeInTheDocument();
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} allowConnections={false} />);
+    expect(container.querySelector('[data-flow-handle]')).not.toBeInTheDocument();
+  });
+
+  it('does not create an edge on C when allowConnections is false', () => {
+    const onEdgeCreate = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        allowConnections={false}
+        onEdgeCreate={onEdgeCreate}
+        defaultSelection={{ type: 'node', id: 'open' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'c' });
+    fireEvent.keyDown(root, { key: 'ArrowRight' });
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+  });
+
+  it('hides edge endpoint handles when allowConnections is false', () => {
+    const { container } = render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        allowConnections={false}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    expect(container.querySelectorAll('[data-flow-edge-endpoint]')).toHaveLength(0);
+  });
+
+  it('does not rewire an edge on R when allowConnections is false', () => {
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        allowConnections={false}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'r' });
+    fireEvent.keyDown(root, { key: 'ArrowDown' });
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+
+  it('still allows node drag/move when allowConnections is false', () => {
+    const onNodeMove = vi.fn();
+    render(
+      <FlowCanvas nodes={NODES} edges={EDGES} allowConnections={false} onNodeMove={onNodeMove} />,
+    );
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { clientX: 50, clientY: 20, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 90, clientY: 50, pointerId: 1 });
+    fireEvent.pointerUp(node, { clientX: 90, clientY: 50, pointerId: 1 });
+    expect(onNodeMove).toHaveBeenCalledWith('open', { x: 40, y: 30 });
+  });
+});
+
+describe('FlowCanvas confineNodesToView', () => {
+  it('clamps a node drag so its whole card stays within the visible area', () => {
+    const onNodeMove = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={[{ id: 'a', label: 'A', position: { x: 10, y: 10 } }]}
+        edges={[]}
+        confineNodesToView
+        onNodeMove={onNodeMove}
+      />,
+    );
+    const root = screen.getByRole('application');
+    const a = screen.getByLabelText('A');
+    // Drag far to the left/up (negative) — should clamp to >= 0 (visible origin).
+    fireEvent.pointerDown(a, { button: 0, pointerId: 1, clientX: 20, clientY: 20 });
+    fireEvent.pointerMove(root, { pointerId: 1, clientX: -500, clientY: -500 });
+    fireEvent.pointerUp(root, { pointerId: 1, clientX: -500, clientY: -500 });
+    expect(onNodeMove).toHaveBeenCalled();
+    const [, pos] = onNodeMove.mock.calls[0];
+    expect(pos.x).toBeGreaterThanOrEqual(0);
+    expect(pos.y).toBeGreaterThanOrEqual(0);
+  });
+
+  it('clamps a Shift+Arrow nudge so the node stays within the visible area', () => {
+    const onNodeMove = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={[{ id: 'a', label: 'A', position: { x: 0, y: 0 } }]}
+        edges={[]}
+        confineNodesToView
+        onNodeMove={onNodeMove}
+      />,
+    );
+    const a = screen.getByLabelText('A');
+    a.focus();
+    // Nudge left from the visible origin — clamp keeps x >= 0.
+    fireEvent.keyDown(a, { key: 'ArrowLeft', shiftKey: true });
+    expect(onNodeMove).toHaveBeenCalled();
+    const [, pos] = onNodeMove.mock.calls[0];
+    expect(pos.x).toBeGreaterThanOrEqual(0);
+  });
+
+  it('does not clamp when confineNodesToView is off (default)', () => {
+    const onNodeMove = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={[{ id: 'a', label: 'A', position: { x: 0, y: 0 } }]}
+        edges={[]}
+        onNodeMove={onNodeMove}
+      />,
+    );
+    const a = screen.getByLabelText('A');
+    a.focus();
+    fireEvent.keyDown(a, { key: 'ArrowLeft', shiftKey: true });
+    expect(onNodeMove).toHaveBeenCalledWith('a', { x: -8, y: 0 });
+  });
+});
+
+describe('FlowCanvas selection actions', () => {
+  it('renders node actions for a selected node, in a data-flow-controls overlay', () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        selection={{ type: 'node', id: 'open' }}
+        renderNodeActions={(id) => <button data-testid="node-act">act {id}</button>}
+      />,
+    );
+    const act = screen.getByTestId('node-act');
+    expect(act).toHaveTextContent('act open');
+    expect(act.closest('[data-flow-controls]')).not.toBeNull();
+  });
+
+  it('renders edge actions for a selected edge, not node actions', () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        selection={{ type: 'edge', id: 't1' }}
+        renderNodeActions={() => <button data-testid="node-act">n</button>}
+        renderEdgeActions={(id) => <button data-testid="edge-act">e {id}</button>}
+      />,
+    );
+    expect(screen.queryByTestId('node-act')).not.toBeInTheDocument();
+    expect(screen.getByTestId('edge-act')).toHaveTextContent('e t1');
+  });
+
+  it('renders no actions when there is no selection', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} renderNodeActions={() => <button>n</button>} />);
+    expect(screen.queryByRole('button', { name: 'n' })).not.toBeInTheDocument();
+  });
+});

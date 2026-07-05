@@ -31,5 +31,15 @@
   // pointer path that creates an edge; a missed press would drag the node.
   --flow-handle-hit-size: var(--space-6);
   --flow-handle-bg: var(--color-accent);
+
+  // Edge endpoint (rewire) handles.
+  --flow-endpoint-bg: var(--color-accent);
+  --flow-endpoint-ring: var(--color-bg);
+  --flow-endpoint-size: var(--space-2); // visible dot diameter (screen px)
+
+  // Selection floating toolbar (renderNodeActions / renderEdgeActions).
+  --flow-selection-actions-z: 1; // above the stage within the canvas
+  --flow-selection-actions-offset-x: var(--space-1);
+  --flow-selection-actions-offset-y: calc(-1 * var(--space-6));
   --flow-canvas-maximized-z: var(--z-flowcanvas-maximized);
 }

@@ -55,3 +55,20 @@ describe('selfLoopGeometry', () => {
     expect(g.midpoint.y).toBeLessThan(0); // chip floats above the node
   });
 });
+
+describe('edgeGeometry endpoints', () => {
+  it('returns source/target points on the facing sides of the two rects', () => {
+    const source = { x: 0, y: 0, width: 100, height: 40 };
+    const target = { x: 300, y: 0, width: 100, height: 40 };
+    const g = edgeGeometry(source, target);
+    // horizontal layout: source anchor on source's right edge, target on target's left edge
+    expect(g.source).toEqual({ x: 100, y: 20 });
+    expect(g.target).toEqual({ x: 300, y: 20 });
+  });
+
+  it('selfLoopGeometry exposes its start/end points', () => {
+    const g = selfLoopGeometry({ x: 0, y: 0, width: 100, height: 40 });
+    expect(g.source).toEqual({ x: 75, y: 0 });
+    expect(g.target).toEqual({ x: 100, y: 10 });
+  });
+});
