@@ -4198,6 +4198,13 @@
           "required": false,
           "default": "'horizontal'",
           "description": "`'horizontal'` (default) — a horizontal strip with a sliding underline.\n`'vertical'` — a stacked master–detail rail: full-width rows, a left accent\nbar + tinted background on the active row, and ArrowUp/ArrowDown navigation.\nSets `aria-orientation` on the tablist accordingly. Put a vertical strip in a\n`Split`'s `aside`, with the detail panel as the `Split`'s children beside it."
+        },
+        {
+          "name": "endContent",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Controls for the whole tab bar (e.g. an \"add tab\" button, a filter\ntoggle), rendered at the end of the strip OUTSIDE the tablist so it never\nscrolls with the tabs and is not part of tab keyboard navigation. For a\ncontrol attached to a single tab, use `TabItem.actions` instead."
         }
       ]
     },

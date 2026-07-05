@@ -22,6 +22,7 @@
 ## Task 1: `endContent` strip-level slot
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Tabs/Tabs.tsx` (add prop; wrap render when present)
 - Modify: `packages/design-system/src/components/Tabs/Tabs.module.scss` (`.root`, `.endContent`)
 - Test: `packages/design-system/src/components/Tabs/Tabs.test.tsx`
@@ -31,26 +32,26 @@
 Append to `Tabs.test.tsx` (inside the top-level `describe('Tabs', ...)`):
 
 ```tsx
-  it('renders endContent outside the tablist and keeps it Tab-reachable', () => {
-    render(
-      <Tabs
-        items={items}
-        activeId="a"
-        onChange={noop}
-        endContent={<button data-testid="new-tab">New</button>}
-      />,
-    );
-    const tablist = screen.getByRole('tablist');
-    const end = screen.getByTestId('new-tab');
-    expect(end).toBeInTheDocument();
-    expect(tablist).not.toContainElement(end); // outside the tablist
-  });
+it('renders endContent outside the tablist and keeps it Tab-reachable', () => {
+  render(
+    <Tabs
+      items={items}
+      activeId="a"
+      onChange={noop}
+      endContent={<button data-testid="new-tab">New</button>}
+    />,
+  );
+  const tablist = screen.getByRole('tablist');
+  const end = screen.getByTestId('new-tab');
+  expect(end).toBeInTheDocument();
+  expect(tablist).not.toContainElement(end); // outside the tablist
+});
 
-  it('does not render an endContent region when the prop is omitted', () => {
-    const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
-    // No extra wrapper: the tablist's parent is still the scroll wrapper only.
-    expect(container.querySelector('[data-tabs-end]')).toBeNull();
-  });
+it('does not render an endContent region when the prop is omitted', () => {
+  const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+  // No extra wrapper: the tablist's parent is still the scroll wrapper only.
+  expect(container.querySelector('[data-tabs-end]')).toBeNull();
+});
 ```
 
 - [ ] **Step 2: Run to verify they fail**
@@ -80,34 +81,34 @@ Destructure it: find where props are destructured (the function signature / `con
 Replace the `return ( ... )` block (`Tabs.tsx:300-364`) so the current markup becomes a `strip` const, wrapped only when `endContent` is set:
 
 ```tsx
-  const strip = (
-    <div className={clsx(styles.scrollWrap, orientation === 'vertical' && styles.scrollWrapVertical)}>
-      <div
-        {...props}
-        ref={ref}
-        role="tablist"
-        aria-orientation={orientation}
-        onKeyDown={onKeyDown}
-        className={clsx(styles.tabs, orientation === 'vertical' && styles.vertical, className)}
-      >
-        {items.map((item) => {
-          /* ...existing item mapping unchanged... */
-        })}
-        <span ref={indicatorRef} className={styles.indicator} aria-hidden="true" />
-      </div>
+const strip = (
+  <div className={clsx(styles.scrollWrap, orientation === 'vertical' && styles.scrollWrapVertical)}>
+    <div
+      {...props}
+      ref={ref}
+      role="tablist"
+      aria-orientation={orientation}
+      onKeyDown={onKeyDown}
+      className={clsx(styles.tabs, orientation === 'vertical' && styles.vertical, className)}
+    >
+      {items.map((item) => {
+        /* ...existing item mapping unchanged... */
+      })}
+      <span ref={indicatorRef} className={styles.indicator} aria-hidden="true" />
     </div>
-  );
+  </div>
+);
 
-  if (endContent == null) return strip;
+if (endContent == null) return strip;
 
-  return (
-    <div className={clsx(styles.root, orientation === 'vertical' && styles.rootVertical)}>
-      {strip}
-      <div data-tabs-end="" className={styles.endContent}>
-        {endContent}
-      </div>
+return (
+  <div className={clsx(styles.root, orientation === 'vertical' && styles.rootVertical)}>
+    {strip}
+    <div data-tabs-end="" className={styles.endContent}>
+      {endContent}
     </div>
-  );
+  </div>
+);
 ```
 
 (Keep the entire existing `items.map(...)` body exactly as it is — only the surrounding structure changes.)
@@ -151,7 +152,7 @@ In `Tabs.module.scss`, append:
 Add the token to `Tabs.tokens.scss` (near the other `--tabs-*` gaps):
 
 ```scss
-  --tabs-endcontent-gap: var(--space-2);
+--tabs-endcontent-gap: var(--space-2);
 ```
 
 - [ ] **Step 6: Run tests + lint**
@@ -171,6 +172,7 @@ git commit -m "feat(Tabs): endContent slot for strip-level controls"
 ## Task 2: Per-tab `actions` slot + arrow-key guard (horizontal)
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Tabs/Tabs.tsx` (TabItem prop, onKeyDown guard, cell wrapper)
 - Modify: `packages/design-system/src/components/Tabs/Tabs.module.scss` (`.cell`, `.tabActions`)
 - Test: `packages/design-system/src/components/Tabs/Tabs.test.tsx`
@@ -180,80 +182,80 @@ git commit -m "feat(Tabs): endContent slot for strip-level controls"
 Append to `Tabs.test.tsx`:
 
 ```tsx
-  it('renders per-tab actions OUTSIDE the role=tab button', () => {
-    render(
-      <Tabs
-        items={[
-          { id: 'a', label: 'Overview' },
-          { id: 'b', label: 'Fields', actions: <button data-testid="close-b">x</button> },
-        ]}
-        activeId="a"
-        onChange={noop}
-      />,
-    );
-    const closeBtn = screen.getByTestId('close-b');
-    const fieldsTab = screen.getByRole('tab', { name: 'Fields' });
-    expect(closeBtn).toBeInTheDocument();
-    // The control must NOT be a descendant of the tab button.
-    expect(fieldsTab).not.toContainElement(closeBtn);
-    // The tab itself is still a proper tab.
-    expect(fieldsTab).toHaveAttribute('role', 'tab');
-    expect(fieldsTab).toHaveAttribute('aria-selected', 'false');
-  });
+it('renders per-tab actions OUTSIDE the role=tab button', () => {
+  render(
+    <Tabs
+      items={[
+        { id: 'a', label: 'Overview' },
+        { id: 'b', label: 'Fields', actions: <button data-testid="close-b">x</button> },
+      ]}
+      activeId="a"
+      onChange={noop}
+    />,
+  );
+  const closeBtn = screen.getByTestId('close-b');
+  const fieldsTab = screen.getByRole('tab', { name: 'Fields' });
+  expect(closeBtn).toBeInTheDocument();
+  // The control must NOT be a descendant of the tab button.
+  expect(fieldsTab).not.toContainElement(closeBtn);
+  // The tab itself is still a proper tab.
+  expect(fieldsTab).toHaveAttribute('role', 'tab');
+  expect(fieldsTab).toHaveAttribute('aria-selected', 'false');
+});
 
-  it('clicking a per-tab action does not activate/switch the tab', async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(
-      <Tabs
-        items={[
-          { id: 'a', label: 'Overview' },
-          { id: 'b', label: 'Fields', actions: <button data-testid="close-b">x</button> },
-        ]}
-        activeId="a"
-        onChange={onChange}
-      />,
-    );
-    await user.click(screen.getByTestId('close-b'));
-    expect(onChange).not.toHaveBeenCalled();
-  });
+it('clicking a per-tab action does not activate/switch the tab', async () => {
+  const user = userEvent.setup();
+  const onChange = vi.fn();
+  render(
+    <Tabs
+      items={[
+        { id: 'a', label: 'Overview' },
+        { id: 'b', label: 'Fields', actions: <button data-testid="close-b">x</button> },
+      ]}
+      activeId="a"
+      onChange={onChange}
+    />,
+  );
+  await user.click(screen.getByTestId('close-b'));
+  expect(onChange).not.toHaveBeenCalled();
+});
 
-  it('does not rove tabs when an arrow key fires inside a per-tab action control', async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(
-      <Tabs
-        items={[
-          { id: 'a', label: 'Overview', actions: <button data-testid="act-a">a</button> },
-          { id: 'b', label: 'Fields' },
-        ]}
-        activeId="a"
-        onChange={onChange}
-      />,
-    );
-    screen.getByTestId('act-a').focus();
-    await user.keyboard('{ArrowRight}');
-    // Focus stayed on the control; tab navigation was NOT triggered.
-    expect(document.activeElement).toBe(screen.getByTestId('act-a'));
-    expect(onChange).not.toHaveBeenCalled();
-  });
+it('does not rove tabs when an arrow key fires inside a per-tab action control', async () => {
+  const user = userEvent.setup();
+  const onChange = vi.fn();
+  render(
+    <Tabs
+      items={[
+        { id: 'a', label: 'Overview', actions: <button data-testid="act-a">a</button> },
+        { id: 'b', label: 'Fields' },
+      ]}
+      activeId="a"
+      onChange={onChange}
+    />,
+  );
+  screen.getByTestId('act-a').focus();
+  await user.keyboard('{ArrowRight}');
+  // Focus stayed on the control; tab navigation was NOT triggered.
+  expect(document.activeElement).toBe(screen.getByTestId('act-a'));
+  expect(onChange).not.toHaveBeenCalled();
+});
 
-  it('still roves tabs on ArrowRight when focus is on a tab (regression)', async () => {
-    const user = userEvent.setup();
-    render(
-      <Tabs
-        items={[
-          { id: 'a', label: 'Overview', actions: <button>a</button> },
-          { id: 'b', label: 'Fields' },
-        ]}
-        activeId="a"
-        onChange={noop}
-      />,
-    );
-    screen.getByRole('tab', { name: 'Overview' }).focus();
-    await user.keyboard('{ArrowRight}');
-    expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Fields' }));
-  });
+it('still roves tabs on ArrowRight when focus is on a tab (regression)', async () => {
+  const user = userEvent.setup();
+  render(
+    <Tabs
+      items={[
+        { id: 'a', label: 'Overview', actions: <button>a</button> },
+        { id: 'b', label: 'Fields' },
+      ]}
+      activeId="a"
+      onChange={noop}
+    />,
+  );
+  screen.getByRole('tab', { name: 'Overview' }).focus();
+  await user.keyboard('{ArrowRight}');
+  expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Fields' }));
+});
 ```
 
 - [ ] **Step 2: Run to verify they fail**
@@ -283,19 +285,19 @@ In `Tabs.tsx`, add to `TabItem` (after `trailing?`):
 In `onKeyDown` (`Tabs.tsx:271`), add the guard as the FIRST statement:
 
 ```ts
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    // Only rove when the key originates on a tab (or the tablist itself). This
-    // stops Arrow/Home/End inside a per-tab `actions` control from hijacking
-    // tab navigation. Real roving focus always lands on a role="tab".
-    if (
-      event.target !== event.currentTarget &&
-      (event.target as HTMLElement).getAttribute('role') !== 'tab'
-    ) {
-      return;
-    }
-    if (items.length === 0 || effectiveFocusedId === null) return;
-    /* ...rest unchanged... */
-  };
+const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  // Only rove when the key originates on a tab (or the tablist itself). This
+  // stops Arrow/Home/End inside a per-tab `actions` control from hijacking
+  // tab navigation. Real roving focus always lands on a role="tab".
+  if (
+    event.target !== event.currentTarget &&
+    (event.target as HTMLElement).getAttribute('role') !== 'tab'
+  ) {
+    return;
+  }
+  if (items.length === 0 || effectiveFocusedId === null) return;
+  /* ...rest unchanged... */
+};
 ```
 
 - [ ] **Step 5: Wrap tabs that have `actions` in a presentation cell**
@@ -303,47 +305,47 @@ In `onKeyDown` (`Tabs.tsx:271`), add the guard as the FIRST statement:
 In the `items.map((item) => { ... })` body, keep the `<button role="tab">…</button>` exactly as-is but assign it to a const `tab`, then return it wrapped when `item.actions` is set. The end of the map callback becomes:
 
 ```tsx
-          const tab = (
-            <button
-              key={item.id}
-              ref={(el) => {
-                tabRefs.current[item.id] = el;
-                return () => {
-                  delete tabRefs.current[item.id];
-                };
-              }}
-              id={tabId}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              aria-controls={panelId}
-              tabIndex={focused ? 0 : -1}
-              className={clsx(styles.tab, active && styles.active)}
-              onClick={() => {
-                if (item.id !== activeId) onChange(item.id);
-              }}
-            >
-              <span className={styles.main}>
-                {item.leading != null && <span className={styles.leading}>{item.leading}</span>}
-                {item.icon != null && (
-                  <span className={styles.icon} aria-hidden="true">
-                    {item.icon}
-                  </span>
-                )}
-                <span className={styles.label}>{item.label}</span>
-                {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
-              </span>
-              {item.trailing != null && <span className={styles.trailing}>{item.trailing}</span>}
-            </button>
-          );
+const tab = (
+  <button
+    key={item.id}
+    ref={(el) => {
+      tabRefs.current[item.id] = el;
+      return () => {
+        delete tabRefs.current[item.id];
+      };
+    }}
+    id={tabId}
+    type="button"
+    role="tab"
+    aria-selected={active}
+    aria-controls={panelId}
+    tabIndex={focused ? 0 : -1}
+    className={clsx(styles.tab, active && styles.active)}
+    onClick={() => {
+      if (item.id !== activeId) onChange(item.id);
+    }}
+  >
+    <span className={styles.main}>
+      {item.leading != null && <span className={styles.leading}>{item.leading}</span>}
+      {item.icon != null && (
+        <span className={styles.icon} aria-hidden="true">
+          {item.icon}
+        </span>
+      )}
+      <span className={styles.label}>{item.label}</span>
+      {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
+    </span>
+    {item.trailing != null && <span className={styles.trailing}>{item.trailing}</span>}
+  </button>
+);
 
-          if (item.actions == null) return tab;
-          return (
-            <span key={item.id} role="presentation" className={styles.cell}>
-              {tab}
-              <span className={styles.tabActions}>{item.actions}</span>
-            </span>
-          );
+if (item.actions == null) return tab;
+return (
+  <span key={item.id} role="presentation" className={styles.cell}>
+    {tab}
+    <span className={styles.tabActions}>{item.actions}</span>
+  </span>
+);
 ```
 
 (The `<button>` keeps `key={item.id}`; when wrapped, the `<span>` also carries `key={item.id}` — the list key resolves to the returned root in each branch.)
@@ -373,7 +375,7 @@ In `Tabs.module.scss`, append:
 Add the token to `Tabs.tokens.scss`:
 
 ```scss
-  --tabs-cell-gap: var(--space-1);
+--tabs-cell-gap: var(--space-1);
 ```
 
 - [ ] **Step 7: Run tests + lint + typecheck**
@@ -393,6 +395,7 @@ git commit -m "feat(Tabs): per-tab actions slot outside the tab button + arrow-k
 ## Task 3: Vertical-orientation cell styling
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Tabs/Tabs.module.scss`
 - Test: `packages/design-system/src/components/Tabs/Tabs.test.tsx`
 
@@ -401,24 +404,24 @@ git commit -m "feat(Tabs): per-tab actions slot outside the tab button + arrow-k
 Append to `Tabs.test.tsx`:
 
 ```tsx
-  it('renders per-tab actions in vertical orientation with the tab still a tab', () => {
-    render(
-      <Tabs
-        orientation="vertical"
-        items={[
-          { id: 'a', label: 'General' },
-          { id: 'b', label: 'Security', actions: <button data-testid="v-act">x</button> },
-        ]}
-        activeId="a"
-        onChange={noop}
-      />,
-    );
-    const act = screen.getByTestId('v-act');
-    const securityTab = screen.getByRole('tab', { name: 'Security' });
-    expect(act).toBeInTheDocument();
-    expect(securityTab).not.toContainElement(act);
-    expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
-  });
+it('renders per-tab actions in vertical orientation with the tab still a tab', () => {
+  render(
+    <Tabs
+      orientation="vertical"
+      items={[
+        { id: 'a', label: 'General' },
+        { id: 'b', label: 'Security', actions: <button data-testid="v-act">x</button> },
+      ]}
+      activeId="a"
+      onChange={noop}
+    />,
+  );
+  const act = screen.getByTestId('v-act');
+  const securityTab = screen.getByRole('tab', { name: 'Security' });
+  expect(act).toBeInTheDocument();
+  expect(securityTab).not.toContainElement(act);
+  expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+});
 ```
 
 - [ ] **Step 2: Run**
@@ -482,6 +485,7 @@ git commit -m "feat(Tabs): vertical-orientation styling for per-tab actions cell
 ## Task 4: Playground demo
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/TabsDemo.tsx`
 
 - [ ] **Step 1: Add a "Per-tab controls" example**
@@ -491,10 +495,10 @@ At the top of `TabsDemo.tsx`, ensure `Switch` and `Button` are imported from `@e
 Add a new `<Example>` block (follow the file's existing pattern — a `useState` for `activeId`, a `code` string, and the live render):
 
 ```tsx
-      <Example
-        title="Per-tab controls"
-        description="Interactive controls (a Switch, a close button) render OUTSIDE the tab's role=tab button via TabItem.actions — so they're valid and keyboard-operable. Static badges keep using leading/trailing."
-        code={`// actions renders outside the role="tab" button
+<Example
+  title="Per-tab controls"
+  description="Interactive controls (a Switch, a close button) render OUTSIDE the tab's role=tab button via TabItem.actions — so they're valid and keyboard-operable. Static badges keep using leading/trailing."
+  code={`// actions renders outside the role="tab" button
 <Tabs
   items={[
     { id: 'auto', label: 'Automation', actions: <Switch aria-label="Enable automation" checked={on} onCheckedChange={setOn} /> },
@@ -503,25 +507,30 @@ Add a new `<Example>` block (follow the file's existing pattern — a `useState`
   activeId={activeId}
   onChange={setActiveId}
 />`}
-      >
-        {/* live render: an activeId state + a Switch state, wired to the real Switch API */}
-      </Example>
+>
+  {/* live render: an activeId state + a Switch state, wired to the real Switch API */}
+</Example>
 ```
 
 Wire the live render with local `useState` for `activeId` and the switch's checked state, using the verified `Switch` API. Keep it small and realistic (an "Automation" tab with an enable toggle).
 
 - [ ] **Step 2: Add a "Closeable tabs" sub-example** (generic `actions`, consumer-owned removal)
 
-Add an example where each tab has a ✕ `Button` in `actions` that removes the item from a local `items` state (and re-points `activeId` if the active tab was closed). This demonstrates the generic slot doing closeable tabs without a dedicated API. Use `<Button iconOnly size="xs" aria-label={\`Close \${item.label}\`}>` with a lucide `X` icon.
+Add an example where each tab has a ✕ `Button` in `actions` that removes the item from a local `items` state (and re-points `activeId` if the active tab was closed). This demonstrates the generic slot doing closeable tabs without a dedicated API. Use `<Button iconOnly size="xs" aria-label={\`Close \${item.label}\`}>`with a lucide`X` icon.
 
 - [ ] **Step 3: Add a "Strip-level actions" example**
 
 Add an `<Example>` showing `endContent`:
 
 ```tsx
-<Tabs items={items} activeId={activeId} onChange={setActiveId}
-  endContent={<Button size="sm">+ New tab</Button>} />
+<Tabs
+  items={items}
+  activeId={activeId}
+  onChange={setActiveId}
+  endContent={<Button size="sm">+ New tab</Button>}
+/>
 ```
+
 with the matching live render.
 
 - [ ] **Step 4: Build the playground**
@@ -541,6 +550,7 @@ git commit -m "docs(Tabs): demo per-tab actions, closeable tabs, and endContent"
 ## Task 5: AGENTS.md
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md` (the `### <Tabs>` section, ~line 1846-1888)
 
 - [ ] **Step 1: Document both slots**
@@ -573,11 +583,13 @@ npm run build -w playground
 npm pack --dry-run -w @eocrm/design-system
 npm run format:check
 ```
+
 All pass; `npm pack --dry-run` clean. If `format:check` flags files, run `npm run format` and commit.
 
 - [ ] **Step 2: Browser-verify** (playground http://localhost:8080, `/components/tabs`)
 
 Confirm in the browser (jsdom can't see paint):
+
 - A tab with `actions` shows the control beside the label; the animated **underline still sits correctly under that tab** (cell wrapper didn't shift it) — check both a tab-with-actions and switching between it and a plain tab.
 - Clicking the per-tab control operates the control and does NOT switch tabs; clicking the tab label still switches.
 - Arrow keys rove tabs; focus inside the control + arrow does not jump tabs; `Tab` reaches the control then `endContent`.

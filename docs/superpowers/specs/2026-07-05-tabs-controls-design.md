@@ -30,6 +30,7 @@ Each tab is a single `<button role="tab">`; today's `leading`/`icon`/`count`/`tr
 ## Current structure (for reference)
 
 `Tabs.tsx:300-364`:
+
 ```
 <div class="scrollWrap">                      // owns overflow-x
   <div {...props} ref={ref} role="tablist" onKeyDown={onKeyDown} class="tabs">
@@ -43,6 +44,7 @@ Each tab is a single `<button role="tab">`; today's `leading`/`icon`/`count`/`tr
   </div>
 </div>
 ```
+
 - Trigger = native `<button type="button" role="tab">`; activation is native Enter/Space/click.
 - Roving tabindex via `effectiveFocusedId`; `tabRefs` map holds the button elements.
 - Arrow/Home/End handler on the tablist (`Tabs.tsx:271-298`) currently fires for ANY key target inside the tablist.
@@ -53,6 +55,7 @@ Each tab is a single `<button role="tab">`; today's `leading`/`icon`/`count`/`tr
 ### API
 
 `TabItem` (add one field):
+
 ```ts
 export interface TabItem {
   // ...existing: id, label, count?, icon?, leading?, trailing? ...
@@ -68,6 +71,7 @@ export interface TabItem {
 ```
 
 `TabsProps` (add one field):
+
 ```ts
 export interface TabsProps {
   // ...existing...
@@ -83,6 +87,7 @@ export interface TabsProps {
 ### DOM structure
 
 **Per-tab actions** — when `item.actions != null`, wrap the tab in a presentation cell:
+
 ```tsx
 item.actions != null ? (
   <span key={item.id} role="presentation" className={styles.cell}>
@@ -93,12 +98,14 @@ item.actions != null ? (
   <button key={item.id} role="tab" …>…</button>   // unchanged for tabs without actions
 )
 ```
+
 - The `<button role="tab">` is unchanged (same id/refs/handlers/aria). The action controls are **siblings** of the button, inside a `role="presentation"` wrapper (ignored in the a11y tree, so the tab is still a direct owned tab of the tablist).
 - Only tabs WITH `actions` are wrapped — tabs without stay bare buttons (zero regression for existing usage).
 - `styles.cell` is `display: inline-flex; align-items: center` (horizontal) so the button + actions read as one tab. Keep the cell **unpositioned** (`position: static`) so the indicator's `offsetLeft`/`offsetWidth` math on the button is unchanged (see Primary risk).
 - Vertical orientation: the cell is the full-width row; the button flexes to fill and the actions pin to the right edge (mirrors how `trailing` pins today, but now outside the button).
 
 **Strip-level `endContent`** — add an outer flex row so it pins beside the scrolling tablist:
+
 ```tsx
 <div className={clsx(styles.root, vertical && styles.rootVertical)}>
   <div className={styles.scrollWrap …}>
@@ -107,6 +114,7 @@ item.actions != null ? (
   {endContent != null && <div className={styles.endContent}>{endContent}</div>}
 </div>
 ```
+
 - The existing `scrollWrap` (overflow-x) becomes the inner scroller; the new `root` is a flex row holding the scroller + the `endContent` region. `endContent` sits outside `scrollWrap`, so it stays pinned when the tabs overflow-scroll.
 - `ref`, `{...props}`, `role="tablist"`, `onKeyDown`, `className` merge stay exactly where they are (on the tablist). No breaking change to the ref target or prop spread.
 - Horizontal: `endContent` pins to the right (main-axis end); vertical: to the bottom of the rail (or top — implementer picks the natural end; `align`/order handled in SCSS with tokens).
@@ -118,7 +126,8 @@ item.actions != null ? (
   if (
     event.target !== event.currentTarget &&
     (event.target as HTMLElement).getAttribute('role') !== 'tab'
-  ) return;
+  )
+    return;
   ```
   Without this, ArrowLeft/Right pressed while focus is inside a per-tab `actions` control would move tab focus instead of doing the control's own thing. The `event.target === event.currentTarget` allowance keeps arrows working when a test (or edge case) dispatches the key on the tablist element itself rather than a focused tab — so it does not break existing arrow-key tests. Real roving focus always lands on a `role="tab"`, which also passes.
 - **Roving tabindex unchanged** — only `role="tab"` buttons participate; `tabRefs`/`effectiveFocusedId`/`focusTab` untouched.
@@ -145,6 +154,7 @@ item.actions != null ? (
 ## Demo (`packages/playground/src/pages/components/TabsDemo.tsx`)
 
 Add two examples:
+
 1. **Per-tab controls** — a `Switch` in `actions` on the active tab (e.g. "Automation" with an enabled toggle), and a second sub-example of closeable tabs (a ✕ `Button` in `actions` wired to remove the item from state).
 2. **Strip-level actions** — `endContent={<Button size="sm">+ New tab</Button>}` beside a horizontal strip.
 
