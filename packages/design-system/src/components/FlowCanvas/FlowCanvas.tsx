@@ -84,6 +84,12 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
    */
   allowConnections?: boolean;
   /**
+   * When true, a dragged node is clamped so its whole card stays within the
+   * currently-visible canvas area (accounting for pan/zoom). Applies to pointer
+   * drag, the committed `onNodeMove`, and Shift+Arrow nudges. @default false
+   */
+  confineNodesToView?: boolean;
+  /**
    * Consumer-rendered controls shown in a top-left toolbar overlay. Put design-
    * system `<Button>`s here (e.g. an "Add node" button wired to your own state).
    * Stays pinned when the canvas is maximized. @default none
@@ -193,6 +199,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     onSelectionChange,
     readOnly = false,
     allowConnections = true,
+    confineNodesToView = false,
     controls,
     maximizeControl = true,
     maximized: maximizedProp,
@@ -525,6 +532,32 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     return true;
   };
 
+  // Clamp a node position so its whole card stays inside the visible canvas
+  // rect (derived from the root's screen size and the current pan/zoom). A
+  // no-op unless `confineNodesToView` is on. Shared by the pointer-drag move,
+  // the drag commit, and the Shift+Arrow nudge so all three honor the bound.
+  const clampToView = useCallback(
+    (id: string, position: FlowCanvasPoint): FlowCanvasPoint => {
+      if (!confineNodesToView) return position;
+      const root = rootRef.current;
+      if (!root) return position;
+      const { width: rw, height: rh } = root.getBoundingClientRect();
+      const { tx, ty, z } = viewport;
+      const visX = -tx / z;
+      const visY = -ty / z;
+      const visW = rw / z;
+      const visH = rh / z;
+      const size = sizes.get(id) ?? ESTIMATED_NODE_SIZE;
+      const maxX = Math.max(visX, visX + visW - size.width);
+      const maxY = Math.max(visY, visY + visH - size.height);
+      return {
+        x: Math.min(Math.max(position.x, visX), maxX),
+        y: Math.min(Math.max(position.y, visY), maxY),
+      };
+    },
+    [confineNodesToView, viewport, sizes],
+  );
+
   const contentBounds = useMemo(() => {
     if (rects.size === 0) return null;
     let minX = Infinity,
@@ -711,10 +744,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       // reconvert the whole gesture when the zoom changes mid-drag — a second
       // touch on the zoom controls, or '+'/'-'/'0' on the mousedown-focused
       // node — and jump the node.
-      drag.position = {
+      drag.position = clampToView(drag.id, {
         x: drag.position.x + (event.clientX - drag.lastClientX) / viewport.z,
         y: drag.position.y + (event.clientY - drag.lastClientY) / viewport.z,
-      };
+      });
       drag.lastClientX = event.clientX;
       drag.lastClientY = event.clientY;
       setLiveDrag({ id: drag.id, position: drag.position });
@@ -776,11 +809,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       // node deleted mid-drag must not emit onNodeMove with a dead id.
       if (drag.moved && !event.defaultPrevented && node) {
         // Fold in any final movement carried by the pointerup itself, at the
-        // current zoom — the same per-segment conversion as the move handler.
-        const position = {
+        // current zoom — the same per-segment conversion as the move handler —
+        // then clamp to the visible rect (no-op unless confineNodesToView).
+        const position = clampToView(drag.id, {
           x: drag.position.x + (event.clientX - drag.lastClientX) / viewport.z,
           y: drag.position.y + (event.clientY - drag.lastClientY) / viewport.z,
-        };
+        });
         if (node.position === undefined) {
           // Session-local arrangement for auto-laid-out nodes.
           setDragOverrides((prev) => new Map(prev).set(drag.id, position));
@@ -1143,10 +1177,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       if (!node) return;
       const current = positionOf(node);
       const NUDGE = 8;
-      const next = {
+      const next = clampToView(nodeId, {
         x: current.x + (key === 'ArrowRight' ? NUDGE : key === 'ArrowLeft' ? -NUDGE : 0),
         y: current.y + (key === 'ArrowDown' ? NUDGE : key === 'ArrowUp' ? -NUDGE : 0),
-      };
+      });
       if (node.position === undefined) {
         setDragOverrides((prev) => new Map(prev).set(nodeId, next));
       }

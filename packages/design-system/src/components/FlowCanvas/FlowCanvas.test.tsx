@@ -2397,3 +2397,61 @@ describe('FlowCanvas allowConnections', () => {
     expect(onNodeMove).toHaveBeenCalledWith('open', { x: 40, y: 30 });
   });
 });
+
+describe('FlowCanvas confineNodesToView', () => {
+  it('clamps a node drag so its whole card stays within the visible area', () => {
+    const onNodeMove = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={[{ id: 'a', label: 'A', position: { x: 10, y: 10 } }]}
+        edges={[]}
+        confineNodesToView
+        onNodeMove={onNodeMove}
+      />,
+    );
+    const root = screen.getByRole('application');
+    const a = screen.getByLabelText('A');
+    // Drag far to the left/up (negative) — should clamp to >= 0 (visible origin).
+    fireEvent.pointerDown(a, { button: 0, pointerId: 1, clientX: 20, clientY: 20 });
+    fireEvent.pointerMove(root, { pointerId: 1, clientX: -500, clientY: -500 });
+    fireEvent.pointerUp(root, { pointerId: 1, clientX: -500, clientY: -500 });
+    expect(onNodeMove).toHaveBeenCalled();
+    const [, pos] = onNodeMove.mock.calls[0];
+    expect(pos.x).toBeGreaterThanOrEqual(0);
+    expect(pos.y).toBeGreaterThanOrEqual(0);
+  });
+
+  it('clamps a Shift+Arrow nudge so the node stays within the visible area', () => {
+    const onNodeMove = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={[{ id: 'a', label: 'A', position: { x: 0, y: 0 } }]}
+        edges={[]}
+        confineNodesToView
+        onNodeMove={onNodeMove}
+      />,
+    );
+    const a = screen.getByLabelText('A');
+    a.focus();
+    // Nudge left from the visible origin — clamp keeps x >= 0.
+    fireEvent.keyDown(a, { key: 'ArrowLeft', shiftKey: true });
+    expect(onNodeMove).toHaveBeenCalled();
+    const [, pos] = onNodeMove.mock.calls[0];
+    expect(pos.x).toBeGreaterThanOrEqual(0);
+  });
+
+  it('does not clamp when confineNodesToView is off (default)', () => {
+    const onNodeMove = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={[{ id: 'a', label: 'A', position: { x: 0, y: 0 } }]}
+        edges={[]}
+        onNodeMove={onNodeMove}
+      />,
+    );
+    const a = screen.getByLabelText('A');
+    a.focus();
+    fireEvent.keyDown(a, { key: 'ArrowLeft', shiftKey: true });
+    expect(onNodeMove).toHaveBeenCalledWith('a', { x: -8, y: 0 });
+  });
+});
