@@ -178,4 +178,77 @@
     height: 0;
     border-radius: var(--tabs-vertical-indicator-radius);
   }
+
+  // A celled tab is the full-width row: the button fills, actions pin right.
+  // `display`/`gap`/`align-items` are inherited from the base `.cell` rule.
+  .cell {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .cell > .tab {
+    // The button no longer needs full width itself — the cell is the row.
+    flex: 0 1 auto;
+    width: auto;
+  }
+
+  // Active-row tint covers the whole cell (button + actions), not just the
+  // button. :has scopes it to the cell that holds the active tab.
+  .cell:has(> .tab.active) {
+    background: var(--tabs-vertical-tab-bg-active);
+    border-radius: var(--tabs-vertical-tab-radius);
+  }
+
+  // Avoid a double background: when a tab is inside a cell, its own active
+  // tint is suppressed (the cell provides it). Bare (action-less) tabs keep
+  // their existing `.vertical .active` tint.
+  .cell > .tab.active {
+    background: transparent;
+  }
+}
+
+// ---- Strip-level endContent (only rendered when the prop is set) ----
+// space-between pins endContent to the far end; the scroll wrapper is allowed
+// to shrink (min-width: 0) so tabs scroll within it while endContent stays put.
+// No flex-grow / margin (Rule 4 / stylelint) — space-between + flex-shrink do it.
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tabs-endcontent-gap);
+
+  .scrollWrap {
+    min-width: 0;
+  }
+}
+
+.endContent {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.rootVertical {
+  flex-direction: column;
+  align-items: stretch;
+
+  .endContent {
+    justify-content: flex-start;
+  }
+}
+
+// ---- Per-tab actions cell (only for tabs with `actions`) ----
+// A presentation wrapper so interactive controls sit OUTSIDE the role="tab"
+// button. Kept UNPOSITIONED (static) so the active tab button's offsetLeft/
+// offsetWidth — which drive the indicator — are unchanged.
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tabs-cell-gap);
+}
+
+.tabActions {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
