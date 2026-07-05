@@ -235,15 +235,22 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     }
     indicator.style.opacity = '1';
 
+    // When the active tab is wrapped in a per-tab `actions` cell
+    // (role="presentation"), measure the CELL so the underline spans the whole
+    // tab — label AND its controls — instead of just the button. Bare tabs
+    // (no actions) measure the button, unchanged.
+    const cell = node.parentElement;
+    const measureNode = cell && cell.getAttribute('role') === 'presentation' ? cell : node;
+
     const vertical = orientation === 'vertical';
     const write = () => {
       if (vertical) {
-        indicator.style.transform = `translateY(${node.offsetTop}px)`;
-        indicator.style.height = `${node.offsetHeight}px`;
+        indicator.style.transform = `translateY(${measureNode.offsetTop}px)`;
+        indicator.style.height = `${measureNode.offsetHeight}px`;
         indicator.style.width = ''; // CSS owns the bar thickness in vertical
       } else {
-        indicator.style.transform = `translateX(${node.offsetLeft}px)`;
-        indicator.style.width = `${node.offsetWidth}px`;
+        indicator.style.transform = `translateX(${measureNode.offsetLeft}px)`;
+        indicator.style.width = `${measureNode.offsetWidth}px`;
         indicator.style.height = ''; // CSS owns the bar thickness in horizontal
       }
     };
