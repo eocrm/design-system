@@ -114,6 +114,23 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
   stroke-width: var(--flow-edge-width);
 }
 
+.endpoint {
+  fill: var(--flow-endpoint-bg);
+  stroke: var(--flow-endpoint-ring);
+  stroke-width: var(--border-width-emphasis);
+  vector-effect: non-scaling-stroke; // constant thickness regardless of zoom
+  pointer-events: none; // the wider .endpointHit takes the pointer
+}
+
+.endpointHit {
+  fill: transparent;
+  cursor: grab;
+
+  // Wider transparent target than the visual .endpoint dot so the rewire grab
+  // area stays comfortable (WCAG 2.5.8); vector-effect keeps the stroke thin.
+  vector-effect: non-scaling-stroke;
+}
+
 .node {
   position: absolute;
   display: flex;

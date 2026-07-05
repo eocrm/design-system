@@ -2134,3 +2134,22 @@ describe('FlowCanvas controls with portaled overlays (#290)', () => {
     expect(onNodeCreate).not.toHaveBeenCalled();
   });
 });
+
+describe('FlowCanvas edge endpoint handles', () => {
+  it('shows two endpoint handles on the selected edge and none otherwise', () => {
+    const { container, rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(container.querySelectorAll('[data-flow-edge-endpoint]')).toHaveLength(0);
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={{ type: 'edge', id: 't1' }} />);
+    const endpoints = container.querySelectorAll('[data-flow-edge-endpoint]');
+    expect(endpoints).toHaveLength(2);
+    expect(container.querySelector('[data-flow-edge-endpoint="source"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-flow-edge-endpoint="target"]')).toBeInTheDocument();
+  });
+
+  it('does not show endpoint handles on a selected edge when readOnly', () => {
+    const { container } = render(
+      <FlowCanvas nodes={NODES} edges={EDGES} readOnly selection={{ type: 'edge', id: 't1' }} />,
+    );
+    expect(container.querySelectorAll('[data-flow-edge-endpoint]')).toHaveLength(0);
+  });
+});

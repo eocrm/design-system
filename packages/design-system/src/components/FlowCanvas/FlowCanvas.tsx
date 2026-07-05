@@ -43,6 +43,14 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
   onNodeDelete?: (id: string) => void;
   /** Called when the user draws or confirms a connection between two nodes. */
   onEdgeCreate?: (from: string, to: string) => void;
+  /**
+   * Called when the user drags an existing edge's endpoint onto a different
+   * node, or confirms a keyboard rewire (`R` / `Shift+R`). `id` is the edge;
+   * `from`/`to` are its NEW endpoints. The canvas never mutates the edge — apply
+   * this to your state. Not fired on revert (empty-canvas drop, invalid target,
+   * or no change). Disabled by `readOnly` and `allowConnections={false}`.
+   */
+  onEdgeReconnect?: (id: string, from: string, to: string) => void;
   /** Called when an edge is opened (Enter/Space or double-click). */
   onEdgeOpen?: (id: string) => void;
   /** Called when deletion of the selected edge is requested (Delete/Backspace). */
@@ -169,6 +177,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     onNodeOpen,
     onNodeDelete,
     onEdgeCreate,
+    onEdgeReconnect,
     onEdgeOpen,
     onEdgeDelete,
     isValidConnection,
@@ -376,6 +385,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     pointerId: number | null;
     target: string | null;
     cursor: FlowCanvasPoint | null; // pointer mode ghost end
+    /** Set only when rewiring an existing edge (distinguishes rewire from create). */
+    edgeId?: string;
+    /** Which endpoint of the edge is being moved (rewire only). */
+    end?: 'source' | 'target';
+    /** The edge's OTHER (fixed) endpoint that stays put during a rewire. */
+    fixed?: string;
   } | null>(null);
   // Latest connect gesture, readable from the stable node/edge/handle pointer
   // handlers without taking `connect` as a dependency (same reasoning as
@@ -388,6 +403,17 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     [edges],
   );
   const isValid = isValidConnection ?? defaultIsValid;
+
+  // Rewire validation. Unlike `isValid`, it excludes the edge being rewired so
+  // dropping the endpoint back near its own current node isn't flagged as a
+  // self-duplicate — that case is a silent no-op (revert), handled at commit.
+  const isRewireValid = useCallback(
+    (edgeId: string, from: string, to: string): boolean =>
+      from !== to &&
+      !edges.some((e) => e.id !== edgeId && e.from === from && e.to === to) &&
+      (isValidConnection ? isValidConnection(from, to) : true),
+    [edges, isValidConnection],
+  );
 
   const nodeAtPoint = useCallback(
     (point: FlowCanvasPoint): string | null => {
@@ -1260,6 +1286,36 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     },
     [readOnly],
   );
+  // Dragging an existing edge's endpoint handle starts a pointer REWIRE. Like
+  // the connect handle, the ROOT captures the pointer so move/up flow to the
+  // root handlers; `fixed` is the endpoint that stays put (dragging `target`
+  // keeps `source` fixed, and vice-versa).
+  const handleEndpointPointerDown = useCallback(
+    (edgeId: string, end: 'source' | 'target', event: ReactPointerEvent<Element>) => {
+      if (event.button !== 0 || readOnly) return;
+      event.stopPropagation();
+      if (connectRef.current?.mode === 'pointer') return; // one gesture at a time
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      const fixed = end === 'target' ? edge.from : edge.to;
+      setConnect({
+        from: fixed,
+        mode: 'pointer',
+        pointerId: event.pointerId,
+        target: null,
+        cursor: null,
+        edgeId,
+        end,
+        fixed,
+      });
+      try {
+        rootRef.current?.setPointerCapture(event.pointerId);
+      } catch {
+        /* jsdom */
+      }
+    },
+    [edges, readOnly],
+  );
   const handleEdgePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<SVGPathElement>) => {
       if (event.button !== 0) return;
@@ -1402,6 +1458,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               edge={edge}
               geometry={geometry}
               active={selection?.type === 'edge' && selection.id === edge.id}
+              editable={!readOnly}
               markerId={markerId}
               markerActiveId={markerActiveId}
               ariaLabel={t('flowCanvas.edgeLabel', {
@@ -1412,6 +1469,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               registerEl={registerEdgeEl}
               onEdgePointerDown={handleEdgePointerDown}
               onEdgeDoubleClick={handleEdgeDoubleClick}
+              onEndpointPointerDown={handleEndpointPointerDown}
             />
           ))}
           {connect

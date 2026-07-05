@@ -31,5 +31,9 @@
   // pointer path that creates an edge; a missed press would drag the node.
   --flow-handle-hit-size: var(--space-6);
   --flow-handle-bg: var(--color-accent);
+
+  // Edge endpoint (rewire) handles.
+  --flow-endpoint-bg: var(--color-accent);
+  --flow-endpoint-ring: var(--color-bg);
   --flow-canvas-maximized-z: var(--z-flowcanvas-maximized);
 }
