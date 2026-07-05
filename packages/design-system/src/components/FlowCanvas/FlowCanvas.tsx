@@ -1573,8 +1573,13 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       if (!resolved) return null;
       const content = renderEdgeActions(selection.id);
       if (content == null) return null;
-      const mid = resolved.geometry.midpoint;
-      return { left: mid.x * z + tx, top: mid.y * z + ty, content };
+      // Top-right corner of the edge's bounding box (endpoints + midpoint, so a
+      // bowed edge is covered), matching how node actions anchor to the node's
+      // top-right corner.
+      const { source, target, midpoint } = resolved.geometry;
+      const maxX = Math.max(source.x, target.x, midpoint.x);
+      const minY = Math.min(source.y, target.y, midpoint.y);
+      return { left: maxX * z + tx, top: minY * z + ty, content };
     }
     return null;
   })();

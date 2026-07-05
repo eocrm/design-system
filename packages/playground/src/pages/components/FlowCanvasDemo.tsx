@@ -157,14 +157,14 @@ export function Demo() {
           }
           // Floating toolbars anchored to the selected node / edge:
           renderNodeActions={(id) => (
-            <Button size="xs" iconOnly variant="ghost" aria-label="Delete node" onClick={() => deleteNode(id)}>
-              <Trash2 size={12} />
+            <Button size="sm" iconOnly variant="ghost" aria-label="Delete node" onClick={() => deleteNode(id)}>
+              <Trash2 size={16} />
             </Button>
           )}
           renderEdgeActions={(id) => (
             <ConfirmationPopover title="Delete connection?" confirmLabel="Delete" variant="danger" onConfirm={() => deleteEdge(id)}>
-              <Button size="xs" iconOnly variant="ghost" aria-label="Delete connection">
-                <Trash2 size={12} />
+              <Button size="sm" iconOnly variant="ghost" aria-label="Delete connection">
+                <Trash2 size={16} />
               </Button>
             </ConfirmationPopover>
           )}
@@ -219,13 +219,13 @@ export function Demo() {
               onSelectionChange={handleSelectionChange}
               renderNodeActions={(id) => (
                 <Button
-                  size="xs"
+                  size="sm"
                   iconOnly
                   variant="ghost"
                   aria-label="Delete node"
                   onClick={() => handleNodeDelete(id)}
                 >
-                  <Trash2 size={12} />
+                  <Trash2 size={16} />
                 </Button>
               )}
               renderEdgeActions={(id) => (
@@ -237,8 +237,8 @@ export function Demo() {
                   variant="danger"
                   onConfirm={() => handleEdgeDelete(id)}
                 >
-                  <Button size="xs" iconOnly variant="ghost" aria-label="Delete connection">
-                    <Trash2 size={12} />
+                  <Button size="sm" iconOnly variant="ghost" aria-label="Delete connection">
+                    <Trash2 size={16} />
                   </Button>
                 </ConfirmationPopover>
               )}
