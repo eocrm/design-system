@@ -556,7 +556,15 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   } | null>(null);
   const isBackgroundTarget = (target: EventTarget | null): boolean => {
     const el = target as HTMLElement | null;
-    return !el?.closest?.(
+    // Events from a portaled overlay opened inside `controls` (a Popover /
+    // ConfirmationPopover / DropdownMenu whose content renders into
+    // document.body) still bubble to these React handlers — React portals
+    // bubble through the React tree, not the DOM tree — even though the DOM
+    // target lives outside the canvas. Never treat those as canvas background:
+    // doing so starts a background pan (setPointerCapture swallows the
+    // overlay's own click) or creates a node on double-click. #290
+    if (!el || !rootRef.current?.contains(el)) return false;
+    return !el.closest?.(
       '[data-flow-node], [data-flow-edge], [data-flow-chip], [data-flow-controls], [data-flow-handle]',
     );
   };

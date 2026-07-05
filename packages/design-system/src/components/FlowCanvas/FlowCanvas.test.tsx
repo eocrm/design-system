@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { FlowCanvas } from './FlowCanvas';
 import type { FlowCanvasEdge, FlowCanvasNode } from './types';
 import { Select } from '../Select';
+import { ConfirmationPopover } from '../ConfirmationPopover';
 import { overlayStack } from '../_internal/overlay';
 
 const NODES: FlowCanvasNode[] = [
@@ -2104,5 +2105,32 @@ describe('FlowCanvas auto-layout with pinned nodes', () => {
     );
     expect(posOf('A')).toEqual(before.a);
     expect(posOf('B')).toEqual(before.b);
+  });
+});
+
+describe('FlowCanvas controls with portaled overlays (#290)', () => {
+  it('does not treat a controls popover portaled to body as canvas background', async () => {
+    const onNodeCreate = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        onNodeCreate={onNodeCreate}
+        controls={
+          <ConfirmationPopover title="Re-arrange?" onConfirm={() => {}}>
+            <button>Re-arrange</button>
+          </ConfirmationPopover>
+        }
+      />,
+    );
+    // Open the ConfirmationPopover — its footer renders in a portal to
+    // document.body but its events still bubble to the canvas root's handlers.
+    fireEvent.click(screen.getByRole('button', { name: 'Re-arrange' }));
+    const confirm = await screen.findByRole('button', { name: 'Confirm' });
+    // A double-click on the portaled footer must NOT be read as an empty-canvas
+    // background double-click (which would create a node). Before the fix,
+    // isBackgroundTarget returned true for the body-portaled target.
+    fireEvent.dblClick(confirm);
+    expect(onNodeCreate).not.toHaveBeenCalled();
   });
 });
