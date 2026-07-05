@@ -77,6 +77,13 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
    */
   readOnly?: boolean;
   /**
+   * When false, disables creating and rewiring connections — the node connect
+   * handle is hidden, pointer/keyboard connect (`C`, handle drag) and edge
+   * rewiring (`R`, endpoint drag) are inert. Node drag/move/delete/selection
+   * still work. `readOnly` overrides this (it disables everything). @default true
+   */
+  allowConnections?: boolean;
+  /**
    * Consumer-rendered controls shown in a top-left toolbar overlay. Put design-
    * system `<Button>`s here (e.g. an "Add node" button wired to your own state).
    * Stays pinned when the canvas is maximized. @default none
@@ -185,6 +192,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     defaultSelection = null,
     onSelectionChange,
     readOnly = false,
+    allowConnections = true,
     controls,
     maximizeControl = true,
     maximized: maximizedProp,
@@ -210,6 +218,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const instructionsId = `flow-instructions-${uid}`;
   const markerId = `flow-arrow-${uid}`;
   const markerActiveId = `flow-arrow-active-${uid}`;
+  // Gate for all connect/rewire entry points. `readOnly` disables everything;
+  // `allowConnections={false}` disables only connecting/rewiring while leaving
+  // node drag/move/delete/selection intact.
+  const canConnect = !readOnly && allowConnections;
 
   const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const edgeIds = useMemo(() => new Set(edges.map((e) => e.id)), [edges]);
@@ -1075,7 +1087,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // Plain C starts keyboard connect mode; ctrl/cmd+C stays the browser's
     // copy shortcut.
     if ((key === 'c' || key === 'C') && !ctrlKey && !metaKey) {
-      if (readOnly) return;
+      if (!canConnect) return;
       // One gesture at a time (mirror of handleHandlePointerDown's guard):
       // C mid-pointer-draw must not replace the in-flight draw with a
       // keyboard connect — the discarded drag would turn its eventual
@@ -1094,7 +1106,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // Shift+R rewires the SOURCE. Only acts when an edge is selected/focused;
     // ctrl/cmd+R stays the browser's reload.
     if ((key === 'r' || key === 'R') && !ctrlKey && !metaKey) {
-      if (readOnly) return;
+      if (!canConnect) return;
       if (connect?.mode === 'pointer') return; // one gesture at a time
       const edgeId =
         targetEl.getAttribute('data-flow-edge') ??
@@ -1361,7 +1373,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   // flowing to the root handlers while the ghost edge tracks the cursor.
   const handleHandlePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<HTMLElement>) => {
-      if (event.button !== 0 || readOnly) return;
+      if (event.button !== 0 || !canConnect) return;
       // One draw at a time (matching the drag guard): a second pointer
       // grabbing a handle mid-draw must not hijack the first ghost. A
       // keyboard connect, by contrast, is superseded by the new draw.
@@ -1379,7 +1391,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         /* jsdom */
       }
     },
-    [readOnly],
+    [canConnect],
   );
   // Dragging an existing edge's endpoint handle starts a pointer REWIRE. Like
   // the connect handle, the ROOT captures the pointer so move/up flow to the
@@ -1387,7 +1399,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   // keeps `source` fixed, and vice-versa).
   const handleEndpointPointerDown = useCallback(
     (edgeId: string, end: 'source' | 'target', event: ReactPointerEvent<Element>) => {
-      if (event.button !== 0 || readOnly) return;
+      if (event.button !== 0 || !canConnect) return;
       event.stopPropagation();
       if (connectRef.current?.mode === 'pointer') return; // one gesture at a time
       const edge = edges.find((e) => e.id === edgeId);
@@ -1409,7 +1421,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         /* jsdom */
       }
     },
-    [edges, readOnly],
+    [edges, canConnect],
   );
   const handleEdgePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<SVGPathElement>) => {
@@ -1553,7 +1565,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               edge={edge}
               geometry={geometry}
               active={selection?.type === 'edge' && selection.id === edge.id}
-              editable={!readOnly}
+              editable={canConnect}
               markerId={markerId}
               markerActiveId={markerActiveId}
               ariaLabel={t('flowCanvas.edgeLabel', {
@@ -1622,7 +1634,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
             selected={selection?.type === 'node' && selection.id === node.id}
             dragging={liveDrag?.id === node.id}
             connectTarget={connect?.target === node.id}
-            readOnly={readOnly}
+            canConnect={canConnect}
             roleDescription={t('flowCanvas.nodeRole')}
             registerEl={registerNodeEl}
             onNodePointerDown={handleNodePointerDown}

@@ -2325,3 +2325,75 @@ describe('FlowCanvas keyboard rewire', () => {
     expect(onEdgeReconnect).not.toHaveBeenCalled();
   });
 });
+
+describe('FlowCanvas allowConnections', () => {
+  it('hides the node connect handle when allowConnections is false', () => {
+    const { container, rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} />);
+    expect(container.querySelector('[data-flow-handle]')).toBeInTheDocument();
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} allowConnections={false} />);
+    expect(container.querySelector('[data-flow-handle]')).not.toBeInTheDocument();
+  });
+
+  it('does not create an edge on C when allowConnections is false', () => {
+    const onEdgeCreate = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        allowConnections={false}
+        onEdgeCreate={onEdgeCreate}
+        defaultSelection={{ type: 'node', id: 'open' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'c' });
+    fireEvent.keyDown(root, { key: 'ArrowRight' });
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onEdgeCreate).not.toHaveBeenCalled();
+  });
+
+  it('hides edge endpoint handles when allowConnections is false', () => {
+    const { container } = render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        allowConnections={false}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    expect(container.querySelectorAll('[data-flow-edge-endpoint]')).toHaveLength(0);
+  });
+
+  it('does not rewire an edge on R when allowConnections is false', () => {
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        allowConnections={false}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'r' });
+    fireEvent.keyDown(root, { key: 'ArrowDown' });
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+
+  it('still allows node drag/move when allowConnections is false', () => {
+    const onNodeMove = vi.fn();
+    render(
+      <FlowCanvas nodes={NODES} edges={EDGES} allowConnections={false} onNodeMove={onNodeMove} />,
+    );
+    mockRootRect(screen.getByRole('application'), 800, 600);
+    const node = screen.getByLabelText('Open');
+    fireEvent.pointerDown(node, { clientX: 50, clientY: 20, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(node, { clientX: 90, clientY: 50, pointerId: 1 });
+    fireEvent.pointerUp(node, { clientX: 90, clientY: 50, pointerId: 1 });
+    expect(onNodeMove).toHaveBeenCalledWith('open', { x: 40, y: 30 });
+  });
+});

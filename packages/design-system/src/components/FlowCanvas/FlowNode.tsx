@@ -9,7 +9,8 @@ interface FlowNodeProps {
   selected: boolean;
   dragging: boolean;
   connectTarget: boolean;
-  readOnly: boolean;
+  /** Whether connecting is enabled — gates the connect handle. */
+  canConnect: boolean;
   roleDescription: string;
   registerEl: (id: string, el: HTMLDivElement | null) => void;
   onNodePointerDown: (id: string, event: ReactPointerEvent<HTMLDivElement>) => void;
@@ -24,7 +25,7 @@ export const FlowNode = memo(function FlowNode({
   selected,
   dragging,
   connectTarget,
-  readOnly,
+  canConnect,
   roleDescription,
   registerEl,
   onNodePointerDown,
@@ -55,7 +56,7 @@ export const FlowNode = memo(function FlowNode({
     >
       <span className={styles.nodeLabel}>{node.label}</span>
       {node.adornment != null ? <span>{node.adornment}</span> : null}
-      {!readOnly ? (
+      {canConnect ? (
         <span
           aria-hidden="true"
           className={styles.handle}
