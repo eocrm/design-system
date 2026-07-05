@@ -209,3 +209,19 @@
     justify-content: flex-start;
   }
 }
+
+// ---- Per-tab actions cell (only for tabs with `actions`) ----
+// A presentation wrapper so interactive controls sit OUTSIDE the role="tab"
+// button. Kept UNPOSITIONED (static) so the active tab button's offsetLeft/
+// offsetWidth — which drive the indicator — are unchanged.
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tabs-cell-gap);
+}
+
+.tabActions {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}

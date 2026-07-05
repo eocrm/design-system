@@ -40,6 +40,15 @@ export interface TabItem {
    * count. Rendered as-is (NOT `aria-hidden`) — same a11y note as `leading`.
    */
   trailing?: ReactNode;
+  /**
+   * Interactive control(s) for this tab (a `Switch`, a close button, a `⋯`
+   * menu), rendered OUTSIDE the tab's `role="tab"` button so the markup is
+   * valid and the control is focusable and keyboard-operable. For STATIC
+   * adornments (a `Badge`, a status dot, a numeric count) use
+   * `leading`/`trailing`/`count` — those render inside the button. Not
+   * `aria-hidden`; give controls an accessible label. Adds a Tab stop.
+   */
+  actions?: ReactNode;
 }
 
 /**
@@ -277,6 +286,15 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Only rove when the key originates on a tab (or the tablist itself). This
+    // stops Arrow/Home/End inside a per-tab `actions` control from hijacking
+    // tab navigation. Real roving focus always lands on a role="tab".
+    if (
+      event.target !== event.currentTarget &&
+      (event.target as HTMLElement).getAttribute('role') !== 'tab'
+    ) {
+      return;
+    }
     if (items.length === 0 || effectiveFocusedId === null) return;
     const currentIndex = items.findIndex((i) => i.id === effectiveFocusedId);
     // Vertical strips navigate with Up/Down; horizontal with Left/Right. The
@@ -328,7 +346,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
           const focused = item.id === effectiveFocusedId;
           const tabId = `${prefix}-${item.id}-tab`;
           const panelId = `${prefix}-${item.id}-panel`;
-          return (
+          const tab = (
             <button
               key={item.id}
               ref={(el) => {
@@ -364,6 +382,14 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
               </span>
               {item.trailing != null && <span className={styles.trailing}>{item.trailing}</span>}
             </button>
+          );
+
+          if (item.actions == null) return tab;
+          return (
+            <span key={item.id} role="presentation" className={styles.cell}>
+              {tab}
+              <span className={styles.tabActions}>{item.actions}</span>
+            </span>
           );
         })}
         <span ref={indicatorRef} className={styles.indicator} aria-hidden="true" />

@@ -479,4 +479,79 @@ describe('Tabs', () => {
     // No extra wrapper: the tablist's parent is still the scroll wrapper only.
     expect(container.querySelector('[data-tabs-end]')).toBeNull();
   });
+
+  it('renders per-tab actions OUTSIDE the role=tab button', () => {
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'Overview' },
+          { id: 'b', label: 'Fields', actions: <button data-testid="close-b">x</button> },
+        ]}
+        activeId="a"
+        onChange={noop}
+      />,
+    );
+    const closeBtn = screen.getByTestId('close-b');
+    const fieldsTab = screen.getByRole('tab', { name: 'Fields' });
+    expect(closeBtn).toBeInTheDocument();
+    // The control must NOT be a descendant of the tab button.
+    expect(fieldsTab).not.toContainElement(closeBtn);
+    // The tab itself is still a proper tab.
+    expect(fieldsTab).toHaveAttribute('role', 'tab');
+    expect(fieldsTab).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('clicking a per-tab action does not activate/switch the tab', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'Overview' },
+          { id: 'b', label: 'Fields', actions: <button data-testid="close-b">x</button> },
+        ]}
+        activeId="a"
+        onChange={onChange}
+      />,
+    );
+    await user.click(screen.getByTestId('close-b'));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('does not rove tabs when an arrow key fires inside a per-tab action control', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'Overview', actions: <button data-testid="act-a">a</button> },
+          { id: 'b', label: 'Fields' },
+        ]}
+        activeId="a"
+        onChange={onChange}
+      />,
+    );
+    screen.getByTestId('act-a').focus();
+    await user.keyboard('{ArrowRight}');
+    // Focus stayed on the control; tab navigation was NOT triggered.
+    expect(document.activeElement).toBe(screen.getByTestId('act-a'));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('still roves tabs on ArrowRight when focus is on a tab (regression)', async () => {
+    const user = userEvent.setup();
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'Overview', actions: <button>a</button> },
+          { id: 'b', label: 'Fields' },
+        ]}
+        activeId="a"
+        onChange={noop}
+      />,
+    );
+    screen.getByRole('tab', { name: 'Overview' }).focus();
+    await user.keyboard('{ArrowRight}');
+    expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Fields' }));
+  });
 });
