@@ -18,6 +18,10 @@ export interface EdgeGeometry {
   path: string;
   /** True cubic midpoint (t = 0.5) — where the label chip is anchored. */
   midpoint: Point;
+  /** Source anchor point (on the source node's facing side). */
+  source: Point;
+  /** Target anchor point (on the target node's facing side). */
+  target: Point;
 }
 
 const MIN_STRENGTH = 40; // minimum control-point pull so short edges still curve
@@ -32,6 +36,8 @@ function cubic(p0: Point, c1: Point, c2: Point, p3: Point): EdgeGeometry {
       x: (p0.x + 3 * c1.x + 3 * c2.x + p3.x) / 8,
       y: (p0.y + 3 * c1.y + 3 * c2.y + p3.y) / 8,
     },
+    source: p0,
+    target: p3,
   };
 }
 
