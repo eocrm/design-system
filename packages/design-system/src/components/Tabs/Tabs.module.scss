@@ -181,9 +181,13 @@
 
   // A celled tab is the full-width row: the button fills, actions pin right.
   // `display`/`gap`/`align-items` are inherited from the base `.cell` rule.
+  // padding-inline-end insets the actions from the rail's right edge to match
+  // the button's own horizontal padding on the left (otherwise the control is
+  // glued to the edge).
   .cell {
     width: 100%;
     justify-content: space-between;
+    padding-inline-end: var(--tabs-vertical-tab-padding-x);
   }
 
   .cell > .tab {
@@ -245,6 +249,12 @@
   display: inline-flex;
   align-items: center;
   gap: var(--tabs-cell-gap);
+
+  // Trailing inset so the actions aren't glued to the tab's right edge — matches
+  // the horizontal padding a bare tab button carries. The underline spans the
+  // whole cell, so this also gives the underline the same right breathing room
+  // a bare tab's underline has. (Vertical overrides with its own padding-x.)
+  padding-inline-end: var(--tabs-tab-padding-x);
 }
 
 .tabActions {
