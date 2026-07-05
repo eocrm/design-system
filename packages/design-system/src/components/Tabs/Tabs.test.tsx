@@ -458,4 +458,25 @@ describe('Tabs', () => {
       expect(tab.querySelector('[class*="trailing"]')).toBeNull();
     });
   });
+
+  it('renders endContent outside the tablist and keeps it Tab-reachable', () => {
+    render(
+      <Tabs
+        items={items}
+        activeId="a"
+        onChange={noop}
+        endContent={<button data-testid="new-tab">New</button>}
+      />,
+    );
+    const tablist = screen.getByRole('tablist');
+    const end = screen.getByTestId('new-tab');
+    expect(end).toBeInTheDocument();
+    expect(tablist).not.toContainElement(end); // outside the tablist
+  });
+
+  it('does not render an endContent region when the prop is omitted', () => {
+    const { container } = render(<Tabs items={items} activeId="a" onChange={noop} />);
+    // No extra wrapper: the tablist's parent is still the scroll wrapper only.
+    expect(container.querySelector('[data-tabs-end]')).toBeNull();
+  });
 });

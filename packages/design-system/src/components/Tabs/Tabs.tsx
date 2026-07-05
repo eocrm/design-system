@@ -84,6 +84,13 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * `Split`'s `aside`, with the detail panel as the `Split`'s children beside it.
    */
   orientation?: TabsOrientation;
+  /**
+   * Controls for the whole tab bar (e.g. an "add tab" button, a filter
+   * toggle), rendered at the end of the strip OUTSIDE the tablist so it never
+   * scrolls with the tabs and is not part of tab keyboard navigation. For a
+   * control attached to a single tab, use `TabItem.actions` instead.
+   */
+  endContent?: ReactNode;
 }
 
 // React 19's useId() can include characters that are valid HTML id values but
@@ -172,6 +179,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     panelIdPrefix,
     activationMode = 'auto',
     orientation = 'horizontal',
+    endContent,
     className,
     ...props
   },
@@ -297,7 +305,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     focusTab(items[nextIndex].id);
   };
 
-  return (
+  const strip = (
     // The scroll wrapper owns overflow-x so the tablist itself stays an
     // overflow-visible box — that keeps the indicator span (positioned just
     // below the tablist's baseline) from being clipped by the auto-promoted
@@ -359,6 +367,17 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
           );
         })}
         <span ref={indicatorRef} className={styles.indicator} aria-hidden="true" />
+      </div>
+    </div>
+  );
+
+  if (endContent == null) return strip;
+
+  return (
+    <div className={clsx(styles.root, orientation === 'vertical' && styles.rootVertical)}>
+      {strip}
+      <div data-tabs-end="" className={styles.endContent}>
+        {endContent}
       </div>
     </div>
   );
