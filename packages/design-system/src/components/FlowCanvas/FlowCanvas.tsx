@@ -495,13 +495,14 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   // preventDefault-ed, the result is still valid against the live graph, AND it
   // actually changes the edge (dropping back on the current endpoint is a
   // silent no-op / revert). Never touches the create (onEdgeCreate) path.
-  const commitRewire = (c: NonNullable<typeof connect>, prevented = false): void => {
-    if (!c.edgeId || !c.target || prevented) return;
+  // Returns whether the reconnect intent fired (callers use it to narrate).
+  const commitRewire = (c: NonNullable<typeof connect>, prevented = false): boolean => {
+    if (!c.edgeId || !c.target || prevented) return false;
     const edge = edges.find((e) => e.id === c.edgeId);
-    if (!edge) return;
+    if (!edge) return false;
     const [newFrom, newTo] = rewireEndpoints(c);
-    if (newFrom === edge.from && newTo === edge.to) return; // unchanged → revert
-    if (!isRewireValid(c.edgeId, newFrom, newTo)) return;
+    if (newFrom === edge.from && newTo === edge.to) return false; // unchanged → revert
+    if (!isRewireValid(c.edgeId, newFrom, newTo)) return false;
     onEdgeReconnect?.(c.edgeId, newFrom, newTo);
     announce(
       t('flowCanvas.rewireDone', {
@@ -509,6 +510,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         to: nodeById.get(newTo)?.label ?? newTo,
       }),
     );
+    return true;
   };
 
   const contentBounds = useMemo(() => {
@@ -991,6 +993,15 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         return;
       }
       if (key === 'Enter') {
+        // Rewire commits through onEdgeReconnect — MUST NOT fall through to the
+        // create (onEdgeCreate) branch below.
+        if (connect.edgeId) {
+          if (!commitRewire(connect)) announce(t('flowCanvas.connectCancelled'));
+          setConnect(null);
+          const exitRect = rects.get(connect.fixed ?? connect.from);
+          if (exitRect) revealRect(exitRect);
+          return;
+        }
         // Same commit-time revalidation as pointerup: the target was only
         // known-valid when the last arrow press set it.
         if (connect.target && canCommitConnect(connect.from, connect.target)) {
@@ -1018,7 +1029,17 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       if (key.startsWith('Arrow')) {
         const candidates = new Map<string, Rect>();
         for (const [id, rect] of rects) {
-          if (id !== connect.from && isValid(connect.from, id)) candidates.set(id, rect);
+          // Rewire filters against the OTHER (fixed) endpoint via isRewireValid;
+          // a plain create validates against connect.from.
+          const ok = connect.edgeId
+            ? id !== connect.fixed &&
+              isRewireValid(
+                connect.edgeId,
+                connect.end === 'target' ? connect.fixed! : id,
+                connect.end === 'target' ? id : connect.fixed!,
+              )
+            : id !== connect.from && isValid(connect.from, id);
+          if (ok) candidates.set(id, rect);
         }
         // Navigate among candidates from the current target (or the source —
         // included so the first arrow press has an origin to measure from).
@@ -1067,6 +1088,34 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       event.preventDefault();
       setConnect({ from: nodeId, mode: 'keyboard', pointerId: null, target: null, cursor: null });
       announce(t('flowCanvas.connectStart', { label: nodeById.get(nodeId)?.label ?? nodeId }));
+      return;
+    }
+    // Plain R starts a keyboard rewire of the selected edge's TARGET endpoint;
+    // Shift+R rewires the SOURCE. Only acts when an edge is selected/focused;
+    // ctrl/cmd+R stays the browser's reload.
+    if ((key === 'r' || key === 'R') && !ctrlKey && !metaKey) {
+      if (readOnly) return;
+      if (connect?.mode === 'pointer') return; // one gesture at a time
+      const edgeId =
+        targetEl.getAttribute('data-flow-edge') ??
+        (selection?.type === 'edge' ? selection.id : null);
+      if (!edgeId) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      event.preventDefault();
+      const end: 'source' | 'target' = event.shiftKey ? 'source' : 'target';
+      const fixed = end === 'target' ? edge.from : edge.to;
+      setConnect({
+        from: fixed,
+        mode: 'keyboard',
+        pointerId: null,
+        target: null,
+        cursor: null,
+        edgeId,
+        end,
+        fixed,
+      });
+      announce(t('flowCanvas.rewireStart', { end }));
       return;
     }
     // Shift+Arrow nudges the focused/selected node (checked before ctrl+arrow

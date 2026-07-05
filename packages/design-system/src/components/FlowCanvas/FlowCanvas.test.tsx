@@ -2238,3 +2238,90 @@ describe('FlowCanvas pointer rewire', () => {
     expect(onEdgeReconnect).not.toHaveBeenCalled();
   });
 });
+
+describe('FlowCanvas keyboard rewire', () => {
+  it('R re-targets the edge to the node stepped to, Enter commits', () => {
+    const N3: FlowCanvasNode[] = [
+      ...NODES,
+      { id: 'later', label: 'Later', position: { x: 0, y: 200 } }, // directly below 'open'
+    ];
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'r' }); // start rewiring the target endpoint
+    fireEvent.keyDown(root, { key: 'ArrowDown' }); // step to 'later' (below the fixed source)
+    fireEvent.keyDown(root, { key: 'Enter' }); // commit
+    expect(onEdgeReconnect).toHaveBeenCalledWith('t1', 'open', 'later');
+  });
+
+  it('Shift+R rewires the source endpoint', () => {
+    const N3: FlowCanvasNode[] = [
+      ...NODES,
+      { id: 'branch', label: 'Branch', position: { x: 300, y: 200 } }, // directly below 'done'
+    ];
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'R', shiftKey: true }); // rewire the source; fixed = 'done'
+    fireEvent.keyDown(root, { key: 'ArrowDown' }); // step to 'branch'
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onEdgeReconnect).toHaveBeenCalledWith('t1', 'branch', 'done');
+  });
+
+  it('Escape reverts a keyboard rewire without firing onEdgeReconnect', () => {
+    const N3: FlowCanvasNode[] = [
+      ...NODES,
+      { id: 'later', label: 'Later', position: { x: 0, y: 200 } },
+    ];
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'r' });
+    fireEvent.keyDown(root, { key: 'ArrowDown' });
+    fireEvent.keyDown(root, { key: 'Escape' });
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toBe('Connection cancelled');
+  });
+
+  it('R is inert when a node (not an edge) is selected', () => {
+    const onEdgeReconnect = vi.fn();
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        defaultSelection={{ type: 'node', id: 'open' }}
+      />,
+    );
+    const root = screen.getByRole('application');
+    root.focus();
+    fireEvent.keyDown(root, { key: 'r' });
+    fireEvent.keyDown(root, { key: 'ArrowRight' });
+    fireEvent.keyDown(root, { key: 'Enter' });
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+});

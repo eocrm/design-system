@@ -163,7 +163,7 @@ export const en: Messages = {
   flowCanvas: {
     canvasLabel: 'Flow canvas',
     instructions:
-      'Use the arrow keys to move between nodes, Home and End for the first and last node. Press Enter to open a node, Delete to delete it, and Shift plus an arrow key to move it. Press E to cycle through a node’s connections, C to start a new connection, Escape to cancel or clear the selection. Zoom with plus and minus, 0 fits the diagram, Control or Command plus an arrow key pans.',
+      'Use the arrow keys to move between nodes, Home and End for the first and last node. Press Enter to open a node, Delete to delete it, and Shift plus an arrow key to move it. Press E to cycle through a node’s connections, C to start a new connection. With a connection selected, press R to rewire its target onto another node, or Shift plus R to rewire its source. Press Escape to cancel or clear the selection. Zoom with plus and minus, 0 fits the diagram, Control or Command plus an arrow key pans.',
     instructionsReadOnly:
       'Use the arrow keys to move between nodes, Home and End for the first and last node. Press Enter to open a node, E to cycle through a node’s connections, Escape to clear the selection. Zoom with plus and minus, 0 fits the diagram, Control or Command plus an arrow key pans.',
     nodeRole: 'node',
