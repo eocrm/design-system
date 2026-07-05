@@ -15,8 +15,25 @@
   touch-action: none; // claim touch drags so the page doesn't scroll instead
   cursor: grab;
 
+  // Canvas keyboard-focus ring. The `focus-ring` mixin also sets `outline:
+  // none`, which kills the raw UA focus outline whenever the canvas is focused.
   &:focus-visible {
     @include focus-ring;
+  }
+
+  // Keyboard roving moves real DOM focus onto the child node/edge (which then
+  // shows its own ring/recolor), but selecting an edge by CLICK leaves focus on
+  // this root (SVG paths don't take reliable click-focus), so the ring above
+  // would wrap the WHOLE canvas in a loose rounded box that reads as a giant
+  // selection frame around the selected item. That item already shows its own
+  // highlight (node accent border / edge recolor), so drop the redundant ring
+  // whenever a selection is present. `outline: none` from the mixin still
+  // applies, so the raw UA outline never reappears either. The attribute is
+  // gated on the selection resolving to a rendered item (see FlowCanvas.tsx),
+  // so a dangling selection keeps the ring — the focused-but-empty state stays
+  // visible for keyboard users (WCAG 2.4.7).
+  &[data-flow-has-selection]:focus-visible {
+    box-shadow: none;
   }
 }
 

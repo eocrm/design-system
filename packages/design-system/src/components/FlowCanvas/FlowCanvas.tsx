@@ -1573,9 +1573,10 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       if (!resolved) return null;
       const content = renderEdgeActions(selection.id);
       if (content == null) return null;
-      // Top-right corner of the edge's bounding box (endpoints + midpoint, so a
-      // bowed edge is covered), matching how node actions anchor to the node's
-      // top-right corner.
+      // Approximate top-right corner of the edge — the max/min of its endpoints
+      // and midpoint (a curved edge can bow slightly past this 3-point hull via
+      // its control points, but the toolbar still lands adjacent to the edge),
+      // matching how node actions anchor to the node's top-right corner.
       const { source, target, midpoint } = resolved.geometry;
       const maxX = Math.max(source.x, target.x, midpoint.x);
       const minY = Math.min(source.y, target.y, midpoint.y);
@@ -1583,6 +1584,23 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     }
     return null;
   })();
+
+  // Gates the root's focus ring (see .module.scss). Keyed on the selection
+  // actually resolving to a RENDERED node/edge — not merely on `selection`
+  // being non-null — so a dangling selection (e.g. the retained id after a
+  // keyboard delete, before the consumer drops it from props) does NOT suppress
+  // the ring and strand a keyboard user with no visible focus. Mirrors the
+  // dangling-selection guards in `selectionActions` above.
+  const selectionResolves =
+    selection != null &&
+    (selection.type === 'node'
+      ? // Redundant with the derived-selection filter above (a node id survives
+        // there iff it is in `rects`), kept for symmetry with `selectionActions`.
+        rects.has(selection.id)
+      : // Load-bearing: the derived filter keeps an edge whose id is in `edges`,
+        // but a dangling-endpoint edge is skipped by resolvedEdges (never
+        // rendered), so this is what withholds the flag for it.
+        resolvedEdges.some((r) => r.edge.id === selection.id));
 
   const setRootRef = useMemo(() => mergeRefs(rootRef, ref), [ref]);
 
@@ -1607,6 +1625,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         className,
       )}
       data-flowcanvas-maximized={maximized ? '' : undefined}
+      // Gates the root's own focus ring (see .module.scss): a resolved
+      // selection's own highlight is the focus indicator, so the whole-canvas
+      // ring is suppressed while an item is selected and reserved for the
+      // focused-but-empty state.
+      data-flow-has-selection={selectionResolves ? '' : undefined}
       onPointerDown={handleRootPointerDown}
       onPointerMove={handleRootPointerMove}
       onPointerUp={handleRootPointerUp}
