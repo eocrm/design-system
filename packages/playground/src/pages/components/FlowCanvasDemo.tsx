@@ -3,6 +3,7 @@ import {
   Badge,
   Button,
   Cluster,
+  ConfirmationPopover,
   FlowCanvas,
   Stack,
   Text,
@@ -151,9 +152,18 @@ export function Demo() {
                   <Button size="sm" variant="primary" onClick={handleAddNode}>
                     Add node
                   </Button>
-                  <Button size="sm" variant="secondary" onClick={handleArrange}>
-                    Re-arrange
-                  </Button>
+                  {/* A ConfirmationPopover works from the controls slot even though
+                      its footer portals to document.body (#290). */}
+                  <ConfirmationPopover
+                    title="Re-arrange all nodes?"
+                    description="This overwrites every node's current position."
+                    confirmLabel="Re-arrange"
+                    onConfirm={handleArrange}
+                  >
+                    <Button size="sm" variant="secondary">
+                      Re-arrange
+                    </Button>
+                  </ConfirmationPopover>
                 </Cluster>
               }
               onNodeCreate={handleNodeCreate}
