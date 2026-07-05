@@ -136,7 +136,16 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
  * Nodes without `position` are auto-laid-out (layered, left → right) and stay
  * draggable for the session. Full keyboard support: arrows rove between
  * nodes, E cycles a node's connections, C starts a keyboard connect mode,
+ * R (`Shift+R` for the source) rewires a selected edge's endpoint,
  * Shift+arrows nudge, +/−/0 zoom and fit, Ctrl+arrows pan.
+ *
+ * Selecting an edge exposes endpoint handles you can drag onto another node —
+ * or press `R` / `Shift+R` — firing `onEdgeReconnect(id, from, to)` (the canvas
+ * never mutates the edge; apply it to your state). `allowConnections={false}`
+ * disables all connecting and rewiring while leaving node drag/move/delete/select
+ * intact; `confineNodesToView` clamps a dragged node to the visible canvas area;
+ * and `renderNodeActions`/`renderEdgeActions` float a toolbar on the selected
+ * node/edge that tracks it through pan and zoom.
  *
  * Pass `controls` to render your own buttons in a top-left toolbar (e.g. an
  * "Add node" button wired to your state). A built-in Maximize toggle (top-right,
@@ -155,8 +164,6 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
  *   form-based alternative for complex attribute editing; the canvas's inline
  *   surface is selection + spatial arrangement only, editors belong to the
  *   consumer (anchor modals/popovers via the open callbacks).
- * - Rewiring an existing edge's endpoints by dragging — not supported;
- *   delete + recreate instead.
  * - Do not hide primary, always-needed actions solely behind Maximize or in the
  *   `controls` slot — those are canvas chrome, not a substitute for the page's
  *   own toolbar; keep essential actions reachable when the canvas is inline.
