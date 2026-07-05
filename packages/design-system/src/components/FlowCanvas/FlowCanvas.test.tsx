@@ -2153,3 +2153,88 @@ describe('FlowCanvas edge endpoint handles', () => {
     expect(container.querySelectorAll('[data-flow-edge-endpoint]')).toHaveLength(0);
   });
 });
+
+describe('FlowCanvas pointer rewire', () => {
+  // NODES has 'open' at {0,0} / 'done' at {300,0}; add a third node below so a
+  // move can hover it. With mockRootRect(800x600) at identity viewport,
+  // toCanvasPoint maps client px 1:1 to canvas coords: 'later' spans
+  // x 300..460, y 200..240 (center ≈ 380,220).
+  const N3: FlowCanvasNode[] = [
+    ...NODES,
+    { id: 'later', label: 'Later', position: { x: 300, y: 200 } },
+  ];
+
+  // jsdom getBoundingClientRect is 0x0, so — like the pointer-connect tests —
+  // we mock the root rect and drive the hover with explicit client coords that
+  // land on the target node's rect (from positionOf + ESTIMATED_NODE_SIZE).
+  const rewire = (
+    container: HTMLElement,
+    end: 'source' | 'target',
+    over: { x: number; y: number } | null,
+  ) => {
+    const root = screen.getByRole('application');
+    mockRootRect(root, 800, 600);
+    const hit = container.querySelector(`[data-flow-edge-endpoint-hit="${end}"]`)!;
+    fireEvent.pointerDown(hit, { button: 0, pointerId: 1 });
+    if (over) {
+      fireEvent.pointerMove(root, { pointerId: 1, clientX: over.x, clientY: over.y });
+    }
+    fireEvent.pointerUp(root, { pointerId: 1 });
+  };
+
+  it('rewires the target endpoint onto another node', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    rewire(container, 'target', { x: 380, y: 220 }); // center of 'later'
+    expect(onEdgeReconnect).toHaveBeenCalledWith('t1', 'open', 'later');
+  });
+
+  it('rewires the source endpoint (from) onto another node', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    rewire(container, 'source', { x: 380, y: 220 }); // move source onto 'later'
+    expect(onEdgeReconnect).toHaveBeenCalledWith('t1', 'later', 'done');
+  });
+
+  it('reverts when dropped on empty canvas', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    rewire(container, 'target', null); // no move over a node
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+
+  it('reverts (no-op) when the target endpoint is dropped back on its own node', () => {
+    const onEdgeReconnect = vi.fn();
+    const { container } = render(
+      <FlowCanvas
+        nodes={N3}
+        edges={EDGES}
+        onEdgeReconnect={onEdgeReconnect}
+        selection={{ type: 'edge', id: 't1' }}
+      />,
+    );
+    rewire(container, 'target', { x: 380, y: 20 }); // back onto 'done' (current target)
+    expect(onEdgeReconnect).not.toHaveBeenCalled();
+  });
+});

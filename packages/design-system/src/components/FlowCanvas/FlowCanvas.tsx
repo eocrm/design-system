@@ -415,6 +415,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     [edges, isValidConnection],
   );
 
+  // The edge's NEW (from, to) given the in-flight rewire: the moving end takes
+  // the hovered/stepped `target` (falling back to `fixed` — a no-op — when none
+  // is picked); the other end stays `fixed`.
+  const rewireEndpoints = (c: NonNullable<typeof connect>): [string, string] =>
+    c.end === 'source' ? [c.target ?? c.fixed!, c.fixed!] : [c.fixed!, c.target ?? c.fixed!];
+
   const nodeAtPoint = useCallback(
     (point: FlowCanvasPoint): string | null => {
       // Reverse iteration matches paint order: later nodes render on top, so
@@ -483,6 +489,27 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     (message: string) => setAnnouncement((prev) => ({ text: message, nonce: prev.nonce + 1 })),
     [],
   );
+
+  // Commit a rewire — shared by pointer-up and keyboard Enter. Fires
+  // onEdgeReconnect only when a target is picked, the gesture wasn't
+  // preventDefault-ed, the result is still valid against the live graph, AND it
+  // actually changes the edge (dropping back on the current endpoint is a
+  // silent no-op / revert). Never touches the create (onEdgeCreate) path.
+  const commitRewire = (c: NonNullable<typeof connect>, prevented = false): void => {
+    if (!c.edgeId || !c.target || prevented) return;
+    const edge = edges.find((e) => e.id === c.edgeId);
+    if (!edge) return;
+    const [newFrom, newTo] = rewireEndpoints(c);
+    if (newFrom === edge.from && newTo === edge.to) return; // unchanged → revert
+    if (!isRewireValid(c.edgeId, newFrom, newTo)) return;
+    onEdgeReconnect?.(c.edgeId, newFrom, newTo);
+    announce(
+      t('flowCanvas.rewireDone', {
+        from: nodeById.get(newFrom)?.label ?? newFrom,
+        to: nodeById.get(newTo)?.label ?? newTo,
+      }),
+    );
+  };
 
   const contentBounds = useMemo(() => {
     if (rects.size === 0) return null;
@@ -636,7 +663,20 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     if (connect?.mode === 'pointer' && event.pointerId === connect.pointerId) {
       const point = toCanvasPoint(event.clientX, event.clientY);
       const over = nodeAtPoint(point);
-      const target = over && over !== connect.from && isValid(connect.from, over) ? over : null;
+      // Rewire (connect.edgeId set) validates against the OTHER endpoint via
+      // isRewireValid; a plain create validates against connect.from.
+      const target =
+        over &&
+        (connect.edgeId
+          ? over !== connect.fixed &&
+            isRewireValid(
+              connect.edgeId,
+              connect.end === 'target' ? connect.fixed! : over,
+              connect.end === 'target' ? over : connect.fixed!,
+            )
+          : over !== connect.from && isValid(connect.from, over))
+          ? over
+          : null;
       setConnect({ ...connect, target, cursor: point });
       return;
     }
@@ -683,10 +723,16 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // finger lifting must neither commit nor cancel it (it falls through to
     // its own drag/pan cleanup below).
     if (connect?.mode === 'pointer' && event.pointerId === connect.pointerId) {
-      // End-of-gesture cleanup always runs (like drag/pan below); the create
-      // intent honors a consumer's preventDefault() the same way the drag
-      // commit does, and revalidates against the live graph (the target was
-      // only known-valid when the pointer last moved).
+      // End-of-gesture cleanup always runs (like drag/pan below); the intent
+      // honors a consumer's preventDefault() the same way the drag commit does,
+      // and revalidates against the live graph (the target was only
+      // known-valid when the pointer last moved).
+      if (connect.edgeId) {
+        // Rewire branch — MUST NOT fall through to onEdgeCreate.
+        commitRewire(connect, event.defaultPrevented);
+        setConnect(null);
+        return;
+      }
       if (
         connect.target &&
         !event.defaultPrevented &&
@@ -1474,18 +1520,24 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
           ))}
           {connect
             ? (() => {
-                // Dashed ghost edge for the in-flight connection: source →
-                // hovered/stepped target, or the pointer-mode cursor stub.
-                const sourceRect = rects.get(connect.from);
-                if (!sourceRect) return null;
-                const targetRect = connect.target ? rects.get(connect.target) : null;
-                const end: Rect = targetRect ?? {
-                  x: (connect.cursor?.x ?? sourceRect.x + sourceRect.width + 40) - 1,
-                  y: (connect.cursor?.y ?? sourceRect.y) - 1,
+                // Dashed ghost edge for the in-flight connection: the fixed
+                // anchor → hovered/stepped target (or the pointer-mode cursor
+                // stub). For a create, `fixed` is undefined so this is just
+                // `from`. For a `source` rewire the moving end IS the source,
+                // so we draw moving→fixed (inverted) to keep the arrowhead on
+                // the fixed target.
+                const anchorRect = rects.get(connect.fixed ?? connect.from);
+                if (!anchorRect) return null;
+                const otherRect = connect.target ? rects.get(connect.target) : null;
+                const movingEnd: Rect = otherRect ?? {
+                  x: (connect.cursor?.x ?? anchorRect.x + anchorRect.width + 40) - 1,
+                  y: (connect.cursor?.y ?? anchorRect.y) - 1,
                   width: 2,
                   height: 2,
                 };
-                return <path className={styles.ghostEdge} d={edgeGeometry(sourceRect, end).path} />;
+                const [a, b] =
+                  connect.end === 'source' ? [movingEnd, anchorRect] : [anchorRect, movingEnd];
+                return <path className={styles.ghostEdge} d={edgeGeometry(a, b).path} />;
               })()
             : null}
         </svg>
