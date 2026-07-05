@@ -181,9 +181,13 @@
 
   // A celled tab is the full-width row: the button fills, actions pin right.
   // `display`/`gap`/`align-items` are inherited from the base `.cell` rule.
+  // padding-inline-end insets the actions from the rail's right edge to match
+  // the button's own horizontal padding on the left (otherwise the control is
+  // glued to the edge).
   .cell {
     width: 100%;
     justify-content: space-between;
+    padding-inline-end: var(--tabs-vertical-tab-padding-x);
   }
 
   .cell > .tab {
@@ -208,17 +212,17 @@
 }
 
 // ---- Strip-level endContent (only rendered when the prop is set) ----
-// space-between pins endContent to the far end; the scroll wrapper is allowed
-// to shrink (min-width: 0) so tabs scroll within it while endContent stays put.
-// No flex-grow / margin (Rule 4 / stylelint) — space-between + flex-shrink do it.
+// The scroll region fills the row so the tablist's bottom border spans the full
+// tab area, and endContent carries a matching border so the track runs unbroken
+// under it (full-width, not cut at the last tab). align-items: flex-end
+// bottom-aligns both so their borders — and the indicator — land on one line.
 .root {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--tabs-endcontent-gap);
+  align-items: flex-end;
 
   .scrollWrap {
-    min-width: 0;
+    flex: 1; // fill the row (shorthand, not the disallowed flex-grow longhand)
+    min-width: 0; // let the tabs overflow-scroll instead of forcing the row wider
   }
 }
 
@@ -226,14 +230,26 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
+
+  // Space before the controls (a flex gap would break the border line) plus the
+  // continuation of the tablist's bottom track under endContent.
+  padding-inline-start: var(--tabs-endcontent-gap);
+  border-bottom: var(--border-width-emphasis) solid var(--tabs-border-color);
 }
 
 .rootVertical {
   flex-direction: column;
   align-items: stretch;
 
+  // Vertical has no bottom track: the rail is content-height, endContent below.
+  .scrollWrap {
+    flex: initial;
+  }
+
   .endContent {
     justify-content: flex-start;
+    padding-inline-start: 0;
+    border-bottom: none;
   }
 }
 
@@ -245,6 +261,12 @@
   display: inline-flex;
   align-items: center;
   gap: var(--tabs-cell-gap);
+
+  // Trailing inset so the actions aren't glued to the tab's right edge — matches
+  // the horizontal padding a bare tab button carries. The underline spans the
+  // whole cell, so this also gives the underline the same right breathing room
+  // a bare tab's underline has. (Vertical overrides with its own padding-x.)
+  padding-inline-end: var(--tabs-tab-padding-x);
 }
 
 .tabActions {

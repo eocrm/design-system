@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { Activity, CreditCard, FileText, Mail, Settings, Shield, User, X } from 'lucide-react';
+import {
+  Activity,
+  CreditCard,
+  FileText,
+  Mail,
+  MoreVertical,
+  Settings,
+  Shield,
+  User,
+  X,
+} from 'lucide-react';
 import { Tabs } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
@@ -249,7 +259,16 @@ export function Demo() {
         <Tabs
           orientation="vertical"
           items={[
-            { id: 'general', label: 'General', icon: <Settings size={14} /> },
+            {
+              id: 'general',
+              label: 'General',
+              icon: <Settings size={14} />,
+              actions: (
+                <Button iconOnly size="xs" variant="ghost" aria-label="General options">
+                  <MoreVertical size={14} />
+                </Button>
+              ),
+            },
             {
               id: 'security',
               label: 'Security',
@@ -280,7 +299,16 @@ export function Demo() {
             <Tabs
               orientation="vertical"
               items={[
-                { id: 'general', label: 'General', icon: <Settings size={14} /> },
+                {
+                  id: 'general',
+                  label: 'General',
+                  icon: <Settings size={14} />,
+                  actions: (
+                    <Button iconOnly size="xs" variant="ghost" aria-label="General options">
+                      <MoreVertical size={14} />
+                    </Button>
+                  ),
+                },
                 {
                   id: 'security',
                   label: 'Security',
