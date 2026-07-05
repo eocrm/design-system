@@ -90,6 +90,22 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
    */
   confineNodesToView?: boolean;
   /**
+   * Render a floating toolbar anchored to the top-right corner of the selected
+   * NODE. Called with the node id; return `null` to show nothing for that node.
+   * The toolbar is a screen-positioned overlay (a sibling of the transformed
+   * stage, so it is not scaled) that follows pan/zoom. Pressing it never starts
+   * a pan or clears the selection. Only rendered for the current single
+   * selection. @default none
+   */
+  renderNodeActions?: (id: string) => ReactNode;
+  /**
+   * Render a floating toolbar anchored near the midpoint of the selected EDGE.
+   * Called with the edge id; return `null` to show nothing for that edge. Same
+   * screen-positioned, pan/zoom-following overlay as `renderNodeActions`; safe
+   * to host a `ConfirmationPopover` here. @default none
+   */
+  renderEdgeActions?: (id: string) => ReactNode;
+  /**
    * Consumer-rendered controls shown in a top-left toolbar overlay. Put design-
    * system `<Button>`s here (e.g. an "Add node" button wired to your own state).
    * Stays pinned when the canvas is maximized. @default none
@@ -200,6 +216,8 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     readOnly = false,
     allowConnections = true,
     confineNodesToView = false,
+    renderNodeActions,
+    renderEdgeActions,
     controls,
     maximizeControl = true,
     maximized: maximizedProp,
@@ -1523,6 +1541,35 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     onNodeCreate?.(toCanvasPoint(event.clientX, event.clientY));
   };
 
+  // Screen-positioned toolbar anchored to the current single selection. It is
+  // rendered as a sibling of the transformed .stage (not inside it), so its
+  // content keeps its intrinsic size regardless of zoom; left/top are computed
+  // in screen px from the element's canvas rect × the viewport, so it follows
+  // pan/zoom/drag. Only the matching render prop that returns non-null shows.
+  const selectionActions = (() => {
+    if (!selection) return null;
+    const { tx, ty, z } = viewport;
+    if (selection.type === 'node' && renderNodeActions) {
+      const rect = rects.get(selection.id);
+      if (!rect) return null;
+      const content = renderNodeActions(selection.id);
+      if (content == null) return null;
+      // Node top-right corner, in screen px.
+      const left = rect.x * z + tx + rect.width * z;
+      const top = rect.y * z + ty;
+      return { left, top, content };
+    }
+    if (selection.type === 'edge' && renderEdgeActions) {
+      const resolved = resolvedEdges.find((r) => r.edge.id === selection.id);
+      if (!resolved) return null;
+      const content = renderEdgeActions(selection.id);
+      if (content == null) return null;
+      const mid = resolved.geometry.midpoint;
+      return { left: mid.x * z + tx, top: mid.y * z + ty, content };
+    }
+    return null;
+  })();
+
   const setRootRef = useMemo(() => mergeRefs(rootRef, ref), [ref]);
 
   return (
@@ -1707,6 +1754,20 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               <Maximize2 size={16} aria-hidden="true" />
             )}
           </Button>
+        </div>
+      ) : null}
+      {selectionActions ? (
+        // data-flow-controls: like the zoom/maximize clusters, this overlay is
+        // exempted from background-pan hit-testing (isBackgroundTarget) and the
+        // #290 dismissal guards, so pressing an action never starts a pan or
+        // clears the selection. It is a sibling of the transformed .stage — its
+        // left/top are screen px, so its content is not scaled by the zoom.
+        <div
+          className={styles.selectionActions}
+          data-flow-controls=""
+          style={{ left: selectionActions.left, top: selectionActions.top }}
+        >
+          {selectionActions.content}
         </div>
       ) : null}
       <div id={instructionsId} className={styles.srOnly}>

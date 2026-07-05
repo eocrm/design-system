@@ -247,6 +247,21 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
   gap: var(--space-1);
 }
 
+.selectionActions {
+  position: absolute;
+  z-index: var(--flow-selection-actions-z);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+
+  // The anchor point is a node corner / edge midpoint; nudge the toolbar just
+  // outside it so it doesn't sit on top of the selection.
+  transform: translate(
+    var(--flow-selection-actions-offset-x),
+    var(--flow-selection-actions-offset-y)
+  );
+}
+
 .srOnly {
   @include visually-hidden;
 }

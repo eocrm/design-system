@@ -2455,3 +2455,38 @@ describe('FlowCanvas confineNodesToView', () => {
     expect(onNodeMove).toHaveBeenCalledWith('a', { x: -8, y: 0 });
   });
 });
+
+describe('FlowCanvas selection actions', () => {
+  it('renders node actions for a selected node, in a data-flow-controls overlay', () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        selection={{ type: 'node', id: 'open' }}
+        renderNodeActions={(id) => <button data-testid="node-act">act {id}</button>}
+      />,
+    );
+    const act = screen.getByTestId('node-act');
+    expect(act).toHaveTextContent('act open');
+    expect(act.closest('[data-flow-controls]')).not.toBeNull();
+  });
+
+  it('renders edge actions for a selected edge, not node actions', () => {
+    render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        selection={{ type: 'edge', id: 't1' }}
+        renderNodeActions={() => <button data-testid="node-act">n</button>}
+        renderEdgeActions={(id) => <button data-testid="edge-act">e {id}</button>}
+      />,
+    );
+    expect(screen.queryByTestId('node-act')).not.toBeInTheDocument();
+    expect(screen.getByTestId('edge-act')).toHaveTextContent('e t1');
+  });
+
+  it('renders no actions when there is no selection', () => {
+    render(<FlowCanvas nodes={NODES} edges={EDGES} renderNodeActions={() => <button>n</button>} />);
+    expect(screen.queryByRole('button', { name: 'n' })).not.toBeInTheDocument();
+  });
+});
