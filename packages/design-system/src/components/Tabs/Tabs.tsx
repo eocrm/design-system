@@ -402,6 +402,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   return (
     <div className={clsx(styles.root, orientation === 'vertical' && styles.rootVertical)}>
       {strip}
+      {/* data-tabs-end is an internal test hook (module classes are hashed), not public API. */}
       <div data-tabs-end="" className={styles.endContent}>
         {endContent}
       </div>

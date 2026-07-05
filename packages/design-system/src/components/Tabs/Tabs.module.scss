@@ -180,10 +180,10 @@
   }
 
   // A celled tab is the full-width row: the button fills, actions pin right.
+  // `display`/`gap`/`align-items` are inherited from the base `.cell` rule.
   .cell {
     width: 100%;
     justify-content: space-between;
-    gap: var(--tabs-cell-gap);
   }
 
   .cell > .tab {
