@@ -554,4 +554,23 @@ describe('Tabs', () => {
     await user.keyboard('{ArrowRight}');
     expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Fields' }));
   });
+
+  it('renders per-tab actions in vertical orientation with the tab still a tab', () => {
+    render(
+      <Tabs
+        orientation="vertical"
+        items={[
+          { id: 'a', label: 'General' },
+          { id: 'b', label: 'Security', actions: <button data-testid="v-act">x</button> },
+        ]}
+        activeId="a"
+        onChange={noop}
+      />,
+    );
+    const act = screen.getByTestId('v-act');
+    const securityTab = screen.getByRole('tab', { name: 'Security' });
+    expect(act).toBeInTheDocument();
+    expect(securityTab).not.toContainElement(act);
+    expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+  });
 });

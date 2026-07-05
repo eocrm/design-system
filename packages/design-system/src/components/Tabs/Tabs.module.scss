@@ -178,6 +178,33 @@
     height: 0;
     border-radius: var(--tabs-vertical-indicator-radius);
   }
+
+  // A celled tab is the full-width row: the button fills, actions pin right.
+  .cell {
+    width: 100%;
+    justify-content: space-between;
+    gap: var(--tabs-cell-gap);
+  }
+
+  .cell > .tab {
+    // The button no longer needs full width itself — the cell is the row.
+    flex: 0 1 auto;
+    width: auto;
+  }
+
+  // Active-row tint covers the whole cell (button + actions), not just the
+  // button. :has scopes it to the cell that holds the active tab.
+  .cell:has(> .tab.active) {
+    background: var(--tabs-vertical-tab-bg-active);
+    border-radius: var(--tabs-vertical-tab-radius);
+  }
+
+  // Avoid a double background: when a tab is inside a cell, its own active
+  // tint is suppressed (the cell provides it). Bare (action-less) tabs keep
+  // their existing `.vertical .active` tint.
+  .cell > .tab.active {
+    background: transparent;
+  }
 }
 
 // ---- Strip-level endContent (only rendered when the prop is set) ----
