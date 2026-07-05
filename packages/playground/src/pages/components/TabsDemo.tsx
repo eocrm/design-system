@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Activity, CreditCard, FileText, Mail, Settings, Shield, User } from 'lucide-react';
+import { Activity, CreditCard, FileText, Mail, Settings, Shield, User, X } from 'lucide-react';
 import { Tabs } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { Button } from '@eocrm/design-system';
 import { Card } from '@eocrm/design-system';
 import { Split } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
+import { Switch } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -16,6 +18,29 @@ export function TabsDemo() {
   const [t4, setT4] = useState('inbox');
   const [vTab, setVTab] = useState('general');
   const [t5, setT5] = useState('lead');
+
+  // Per-tab controls example: an activeId + the Switch's checked state.
+  const [pcTab, setPcTab] = useState('auto');
+  const [autoOn, setAutoOn] = useState(true);
+
+  // Closeable-tabs example: a local items list + activeId the consumer owns.
+  const [closeTabs, setCloseTabs] = useState([
+    { id: 'accounts', label: 'Accounts' },
+    { id: 'contacts', label: 'Contacts' },
+    { id: 'deals', label: 'Deals' },
+  ]);
+  const [closeActive, setCloseActive] = useState('accounts');
+  const closeTab = (id: string) => {
+    const idx = closeTabs.findIndex((tab) => tab.id === id);
+    const next = closeTabs.filter((tab) => tab.id !== id);
+    setCloseTabs(next);
+    if (id === closeActive && next.length > 0) {
+      setCloseActive(next[Math.min(idx, next.length - 1)].id);
+    }
+  };
+
+  // Strip-level actions example.
+  const [stripTab, setStripTab] = useState('board');
 
   const verticalDetail: Record<string, { title: string; body: string }> = {
     general: {
@@ -347,6 +372,164 @@ export function Demo() {
           ]}
           activeId={t5}
           onChange={setT5}
+        />
+      </Example>
+
+      <Example
+        title="Per-tab controls"
+        description="Interactive controls (a Switch, a close button) render OUTSIDE the tab's role=tab button via TabItem.actions — so the markup is valid and the control stays focusable and keyboard-operable. Static badges keep using leading/trailing, which render inside the button."
+        code={`import { useState } from 'react';
+import { Switch, Tabs } from '@eocrm/design-system';
+
+export function Demo() {
+  const [tab, setTab] = useState('auto');
+  const [autoOn, setAutoOn] = useState(true);
+  return (
+    <Tabs
+      items={[
+        {
+          id: 'auto',
+          label: 'Automation',
+          // actions renders OUTSIDE the role="tab" button — valid + keyboard-operable.
+          actions: (
+            <Switch
+              size="sm"
+              aria-label="Enable automation"
+              checked={autoOn}
+              onChange={(next) => setAutoOn(next)}
+            />
+          ),
+        },
+        { id: 'fields', label: 'Fields' },
+        { id: 'audit', label: 'Audit log' },
+      ]}
+      activeId={tab}
+      onChange={setTab}
+    />
+  );
+}`}
+      >
+        <Tabs
+          items={[
+            {
+              id: 'auto',
+              label: 'Automation',
+              actions: (
+                <Switch
+                  size="sm"
+                  aria-label="Enable automation"
+                  checked={autoOn}
+                  onChange={(next) => setAutoOn(next)}
+                />
+              ),
+            },
+            { id: 'fields', label: 'Fields' },
+            { id: 'audit', label: 'Audit log' },
+          ]}
+          activeId={pcTab}
+          onChange={setPcTab}
+        />
+      </Example>
+
+      <Example
+        title="Closeable tabs"
+        description="actions is a generic slot, so closeable tabs need no dedicated API: put a ✕ Button in each tab's actions and let the consumer own removal — filter the item out of local state and re-point activeId when the closed tab was active."
+        code={`import { useState } from 'react';
+import { X } from 'lucide-react';
+import { Button, Tabs } from '@eocrm/design-system';
+
+export function Demo() {
+  const [tabs, setTabs] = useState([
+    { id: 'accounts', label: 'Accounts' },
+    { id: 'contacts', label: 'Contacts' },
+    { id: 'deals', label: 'Deals' },
+  ]);
+  const [active, setActive] = useState('accounts');
+
+  const closeTab = (id: string) => {
+    const idx = tabs.findIndex((tab) => tab.id === id);
+    const next = tabs.filter((tab) => tab.id !== id);
+    setTabs(next);
+    if (id === active && next.length > 0) {
+      setActive(next[Math.min(idx, next.length - 1)].id);
+    }
+  };
+
+  return (
+    <Tabs
+      items={tabs.map((tab) => ({
+        id: tab.id,
+        label: tab.label,
+        actions: (
+          <Button
+            iconOnly
+            size="xs"
+            variant="ghost"
+            aria-label={\`Close \${tab.label}\`}
+            onClick={() => closeTab(tab.id)}
+          >
+            <X size={12} />
+          </Button>
+        ),
+      }))}
+      activeId={active}
+      onChange={setActive}
+    />
+  );
+}`}
+      >
+        <Tabs
+          items={closeTabs.map((tab) => ({
+            id: tab.id,
+            label: tab.label,
+            actions: (
+              <Button
+                iconOnly
+                size="xs"
+                variant="ghost"
+                aria-label={`Close ${tab.label}`}
+                onClick={() => closeTab(tab.id)}
+              >
+                <X size={12} />
+              </Button>
+            ),
+          }))}
+          activeId={closeActive}
+          onChange={setCloseActive}
+        />
+      </Example>
+
+      <Example
+        title="Strip-level actions"
+        description="endContent renders controls for the whole bar (an add-tab button, a filter toggle) at the end of the strip, OUTSIDE the tablist — so they never scroll with the tabs and aren't part of arrow-key tab navigation. For a control attached to a single tab, use TabItem.actions instead."
+        code={`import { useState } from 'react';
+import { Button, Tabs } from '@eocrm/design-system';
+
+export function Demo() {
+  const [tab, setTab] = useState('board');
+  return (
+    <Tabs
+      items={[
+        { id: 'board', label: 'Board' },
+        { id: 'list', label: 'List' },
+        { id: 'calendar', label: 'Calendar' },
+      ]}
+      activeId={tab}
+      onChange={setTab}
+      endContent={<Button size="sm">+ New tab</Button>}
+    />
+  );
+}`}
+      >
+        <Tabs
+          items={[
+            { id: 'board', label: 'Board' },
+            { id: 'list', label: 'List' },
+            { id: 'calendar', label: 'Calendar' },
+          ]}
+          activeId={stripTab}
+          onChange={setStripTab}
+          endContent={<Button size="sm">+ New tab</Button>}
         />
       </Example>
     </DemoLayout>
