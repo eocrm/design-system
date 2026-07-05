@@ -6,12 +6,14 @@ import {
   ConfirmationPopover,
   FlowCanvas,
   Stack,
+  Switch,
   Text,
   Title,
   arrangeNodes,
   type FlowCanvasEdge,
   type FlowCanvasNode,
 } from '@eocrm/design-system';
+import { Trash2 } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -35,6 +37,8 @@ export function FlowCanvasDemo() {
   const [nodes, setNodes] = useState(WORKFLOW_NODES);
   const [edges, setEdges] = useState(WORKFLOW_EDGES);
   const [lastEvent, setLastEvent] = useState('—');
+  const [allowConnections, setAllowConnections] = useState(true);
+  const [confineNodesToView, setConfineNodesToView] = useState(false);
 
   const handleNodeCreate = useCallback((position: { x: number; y: number }) => {
     const id = `state-${nextId++}`;
@@ -57,6 +61,10 @@ export function FlowCanvasDemo() {
   const handleEdgeDelete = useCallback((id: string) => {
     setEdges((prev) => prev.filter((e) => e.id !== id));
     setLastEvent(`onEdgeDelete(${id})`);
+  }, []);
+  const handleEdgeReconnect = useCallback((id: string, from: string, to: string) => {
+    setEdges((prev) => prev.map((e) => (e.id === id ? { ...e, from, to } : e)));
+    setLastEvent(`onEdgeReconnect(${id}: ${from} → ${to})`);
   }, []);
   const handleNodeOpen = useCallback((id: string) => {
     setLastEvent(`onNodeOpen(${id})`);
@@ -97,9 +105,10 @@ export function FlowCanvasDemo() {
     >
       <Example
         title="Workflow builder"
-        description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, Shift+arrows nudge. The top-left controls show a custom Add-node button and a Re-arrange button wired to arrangeNodes()."
+        description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Select an edge and drag either endpoint handle onto another node — or press R (Shift+R for the source) — to rewire it via onEdgeReconnect. Selecting a node or edge floats an action toolbar (renderNodeActions / renderEdgeActions) with a delete button; the edge toolbar guards its delete behind a ConfirmationPopover. Toggle Allow connections to gate all create/rewire, and Confine nodes to view to clamp dragged cards to the visible area. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, R / Shift+R rewire, Shift+arrows nudge."
         code={`import { useState } from 'react';
-import { Badge, Button, Cluster, FlowCanvas, arrangeNodes, type FlowCanvasEdge, type FlowCanvasNode } from '@eocrm/design-system';
+import { Badge, Button, ConfirmationPopover, Cluster, FlowCanvas, Switch, type FlowCanvasEdge, type FlowCanvasNode } from '@eocrm/design-system';
+import { Trash2 } from 'lucide-react';
 
 export function Demo() {
   const [nodes, setNodes] = useState<FlowCanvasNode[]>([
@@ -109,44 +118,77 @@ export function Demo() {
   const [edges, setEdges] = useState<FlowCanvasEdge[]>([
     { id: 't1', from: 'open', to: 'done', label: <Badge tone="purple">Guard</Badge> },
   ]);
+  const [allowConnections, setAllowConnections] = useState(true);
+  const [confineNodesToView, setConfineNodesToView] = useState(false);
+
+  const deleteNode = (id: string) => {
+    setNodes((prev) => prev.filter((n) => n.id !== id));
+    setEdges((prev) => prev.filter((e) => e.from !== id && e.to !== id));
+  };
+  const deleteEdge = (id: string) => setEdges((prev) => prev.filter((e) => e.id !== id));
+
   return (
-    <div style={{ height: 420 }}>
-      <FlowCanvas
-        nodes={nodes}
-        edges={edges}
-        controls={
-          <Cluster gap="xs">
-            <Button size="sm" onClick={() => setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: { x: 40, y: 40 } }])}>Add node</Button>
-            <Button size="sm" variant="secondary" onClick={() => setNodes((prev) => arrangeNodes(prev, edges))}>Re-arrange</Button>
-          </Cluster>
-        }
-        onNodeCreate={(pos) =>
-          setNodes((prev) => [...prev, { id: crypto.randomUUID(), label: 'New state', position: pos }])
-        }
-        onNodeMove={(id, position) =>
-          setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, position } : n)))
-        }
-        onNodeDelete={(id) => {
-          setNodes((prev) => prev.filter((n) => n.id !== id));
-          setEdges((prev) => prev.filter((e) => e.from !== id && e.to !== id));
-        }}
-        onEdgeCreate={(from, to) =>
-          setEdges((prev) => [...prev, { id: crypto.randomUUID(), from, to }])
-        }
-        onEdgeDelete={(id) => setEdges((prev) => prev.filter((e) => e.id !== id))}
-        onNodeOpen={(id) => console.log('open node', id)}
-        onEdgeOpen={(id) => console.log('open edge', id)}
-        onSelectionChange={(selection) => console.log('selection', selection)}
-      />
-    </div>
+    <>
+      <Cluster gap="md">
+        <Switch checked={allowConnections} onChange={(next) => setAllowConnections(next)}>
+          Allow connections
+        </Switch>
+        <Switch checked={confineNodesToView} onChange={(next) => setConfineNodesToView(next)}>
+          Confine nodes to view
+        </Switch>
+      </Cluster>
+      <div style={{ height: 420 }}>
+        <FlowCanvas
+          nodes={nodes}
+          edges={edges}
+          allowConnections={allowConnections}
+          confineNodesToView={confineNodesToView}
+          onNodeMove={(id, position) =>
+            setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, position } : n)))
+          }
+          onNodeDelete={deleteNode}
+          onEdgeCreate={(from, to) =>
+            setEdges((prev) => [...prev, { id: crypto.randomUUID(), from, to }])
+          }
+          onEdgeDelete={deleteEdge}
+          // Drag a selected edge's endpoint onto another node, or press R / Shift+R:
+          onEdgeReconnect={(id, from, to) =>
+            setEdges((prev) => prev.map((e) => (e.id === id ? { ...e, from, to } : e)))
+          }
+          // Floating toolbars anchored to the selected node / edge:
+          renderNodeActions={(id) => (
+            <Button size="xs" iconOnly variant="ghost" aria-label="Delete node" onClick={() => deleteNode(id)}>
+              <Trash2 size={12} />
+            </Button>
+          )}
+          renderEdgeActions={(id) => (
+            <ConfirmationPopover title="Delete connection?" confirmLabel="Delete" variant="danger" onConfirm={() => deleteEdge(id)}>
+              <Button size="xs" iconOnly variant="ghost" aria-label="Delete connection">
+                <Trash2 size={12} />
+              </Button>
+            </ConfirmationPopover>
+          )}
+        />
+      </div>
+    </>
   );
 }`}
       >
         <Stack gap="sm">
+          <Cluster gap="md">
+            <Switch checked={allowConnections} onChange={(next) => setAllowConnections(next)}>
+              Allow connections
+            </Switch>
+            <Switch checked={confineNodesToView} onChange={(next) => setConfineNodesToView(next)}>
+              Confine nodes to view
+            </Switch>
+          </Cluster>
           <div style={{ height: 420 }}>
             <FlowCanvas
               nodes={nodes}
               edges={edges}
+              allowConnections={allowConnections}
+              confineNodesToView={confineNodesToView}
               controls={
                 <Cluster gap="xs">
                   <Button size="sm" variant="primary" onClick={handleAddNode}>
@@ -172,8 +214,34 @@ export function Demo() {
               onNodeOpen={handleNodeOpen}
               onEdgeCreate={handleEdgeCreate}
               onEdgeDelete={handleEdgeDelete}
+              onEdgeReconnect={handleEdgeReconnect}
               onEdgeOpen={handleEdgeOpen}
               onSelectionChange={handleSelectionChange}
+              renderNodeActions={(id) => (
+                <Button
+                  size="xs"
+                  iconOnly
+                  variant="ghost"
+                  aria-label="Delete node"
+                  onClick={() => handleNodeDelete(id)}
+                >
+                  <Trash2 size={12} />
+                </Button>
+              )}
+              renderEdgeActions={(id) => (
+                // Re-verifies the #290 fix from a selection toolbar: the popover's
+                // footer portals to document.body yet Confirm still fires.
+                <ConfirmationPopover
+                  title="Delete connection?"
+                  confirmLabel="Delete"
+                  variant="danger"
+                  onConfirm={() => handleEdgeDelete(id)}
+                >
+                  <Button size="xs" iconOnly variant="ghost" aria-label="Delete connection">
+                    <Trash2 size={12} />
+                  </Button>
+                </ConfirmationPopover>
+              )}
             />
           </div>
           <Text size="sm" tone="muted">
@@ -277,10 +345,10 @@ export function Demo() {
         <Text size="sm" tone="muted">
           The canvas fills its parent — give the wrapper an explicit height. All mutations flow
           through intent callbacks; the canvas never changes your data. Keyboard: arrows rove
-          between nodes, E cycles a node's connections, C starts connect mode, Shift+arrows nudge,
-          +/−/0 zoom and fit, Ctrl+arrows pan. Pass `controls` to render your own buttons top-left;
-          the built-in Maximize toggle (top-right, or F / Escape) expands the canvas to fill the
-          viewport.
+          between nodes, E cycles a node's connections, C starts connect mode, R (or Shift+R)
+          rewires a selected edge's target (or source), Shift+arrows nudge, +/−/0 zoom and fit,
+          Ctrl+arrows pan. Pass `controls` to render your own buttons top-left; the built-in
+          Maximize toggle (top-right, or F / Escape) expands the canvas to fill the viewport.
         </Text>
       </Stack>
     </DemoLayout>
