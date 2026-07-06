@@ -1631,14 +1631,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       if (!resolved) return null;
       const content = renderEdgeActions(selection.id);
       if (content == null) return null;
-      // Approximate top-right corner of the edge — the max/min of its endpoints
-      // and midpoint (a curved edge can bow slightly past this 3-point hull via
-      // its control points, but the toolbar still lands adjacent to the edge),
-      // matching how node actions anchor to the node's top-right corner.
-      const { source, target, midpoint } = resolved.geometry;
-      const maxX = Math.max(source.x, target.x, midpoint.x);
-      const minY = Math.min(source.y, target.y, midpoint.y);
-      return { left: maxX * z + tx, top: minY * z + ty, content };
+      // The edge's midpoint. CSS (`.selectionActions[data-flow-selection-edge]`)
+      // centers the toolbar horizontally on this point and lifts it above the
+      // edge, so it floats "by the middle" of the edge without sitting on the
+      // line itself.
+      const { midpoint } = resolved.geometry;
+      return { left: midpoint.x * z + tx, top: midpoint.y * z + ty, content };
     }
     return null;
   })();
@@ -1888,6 +1886,9 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         <div
           className={styles.selectionActions}
           data-flow-controls=""
+          // Edge toolbar anchors at the edge midpoint; the attribute switches
+          // its transform to centered-above (vs the node's up-right corner).
+          data-flow-selection-edge={selection?.type === 'edge' ? '' : undefined}
           style={{ left: selectionActions.left, top: selectionActions.top }}
         >
           {selectionActions.content}
