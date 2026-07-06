@@ -256,6 +256,73 @@ describe('FlowCanvas viewport', () => {
     expect(screen.getByRole('status').textContent).toBe('');
   });
 
+  it('flags the root with data-flow-has-selection only while a RESOLVED item is selected (gates the canvas focus ring)', () => {
+    // The root keeps DOM focus when an edge is click-selected, so its
+    // :focus-visible ring would wrap the whole canvas. The
+    // [data-flow-has-selection] flag lets the SCSS suppress that ring once a
+    // node/edge is selected (the item's own highlight is the focus indicator
+    // then) while keeping it for the focused-but-empty state. See
+    // FlowCanvas.module.scss `.root:focus-visible`.
+    const { rerender } = render(<FlowCanvas nodes={NODES} edges={EDGES} selection={null} />);
+    const root = screen.getByRole('application');
+    expect(root).not.toHaveAttribute('data-flow-has-selection');
+
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={{ type: 'node', id: 'open' }} />);
+    expect(root).toHaveAttribute('data-flow-has-selection', '');
+
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={{ type: 'edge', id: 't1' }} />);
+    expect(root).toHaveAttribute('data-flow-has-selection', '');
+
+    // A selection whose id is entirely absent from the graph is already voided
+    // by the derived-selection filter, so the flag never sets.
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={{ type: 'node', id: 'ghost' }} />);
+    expect(root).not.toHaveAttribute('data-flow-has-selection');
+
+    // The load-bearing case for the resolve gate: an edge that IS in `edges`
+    // (so the derived-selection filter keeps it) but references a node missing
+    // from `nodes`, so it is never rendered (resolvedEdges skips it). Here
+    // `selection != null` is true, yet nothing is highlighted — suppressing the
+    // root ring would strand a keyboard user with no visible focus (WCAG 2.4.7),
+    // so the flag must stay off. (resolvedEdges warns on the missing node.)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    rerender(
+      <FlowCanvas
+        nodes={NODES}
+        edges={[{ id: 'x', from: 'open', to: 'ghost' }]}
+        selection={{ type: 'edge', id: 'x' }}
+      />,
+    );
+    expect(root).not.toHaveAttribute('data-flow-has-selection');
+    warn.mockRestore();
+
+    rerender(<FlowCanvas nodes={NODES} edges={EDGES} selection={null} />);
+    expect(root).not.toHaveAttribute('data-flow-has-selection');
+  });
+
+  it('anchors the edge action toolbar at the edge bounding-box top-right (target edge), not the midpoint', () => {
+    // Horizontal edge open(0,0) → done(300,0): the edge's rightmost point is the
+    // target's left edge — canvas x = 300 = done's position, independent of node
+    // size — well past the midpoint (~(w+300)/2). The toolbar anchors to that
+    // top-right corner (matching how node actions anchor to a node's corner), so
+    // its screen-px left is maxX*z + tx with maxX = 300, which a midpoint anchor
+    // would not produce. Read z/tx off the stage so it's viewport-invariant.
+    const { container } = render(
+      <FlowCanvas
+        nodes={NODES}
+        edges={EDGES}
+        selection={{ type: 'edge', id: 't1' }}
+        renderEdgeActions={(id) => <button data-testid="edge-act">del {id}</button>}
+      />,
+    );
+    const toolbar = screen.getByTestId('edge-act').closest('[data-flow-controls]') as HTMLElement;
+    const done = screen.getByLabelText('Done');
+    const [, tx, , z] = getStage(container).style.transform.match(
+      /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/,
+    )!;
+    const expectedLeft = parseFloat(done.style.left) * parseFloat(z) + parseFloat(tx);
+    expect(parseFloat(toolbar.style.left)).toBeCloseTo(expectedLeft, 1);
+  });
+
   it('pointercancel mid-pan drops the panning cursor class', () => {
     render(<FlowCanvas nodes={NODES} edges={[]} />);
     const root = screen.getByRole('application');
