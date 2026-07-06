@@ -26,6 +26,8 @@ export interface DropdownMenuContextValue {
   depth: number;
   /** True when the menu tree is opened inside a Modal/Drawer overlay. Computed at the root from the root trigger, inherited by submenus. */
   inOverlay: boolean;
+  /** The menu tree's floating-surface id (registered once at the root). Content panels gate their Escape on `overlayStack.isTopFloating(floatingId)` so the whole menu defers to a DEEPER surface — e.g. a ConfirmationPopover opened from an item (#280). Inherited by submenus. */
+  floatingId: string;
 }
 
 export const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(null);

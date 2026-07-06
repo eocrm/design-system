@@ -9,6 +9,7 @@ import { useState, type ReactNode } from 'react';
 import { Modal } from '../../Modal';
 import { Popover } from '../../Popover';
 import { Tooltip } from '../../Tooltip';
+import { Select } from '../../Select';
 import { DropdownMenu } from '../../DropdownMenu';
 import { DatePicker } from '../../DatePicker';
 import { DateRangePicker } from '../../DateRangePicker';
@@ -355,5 +356,106 @@ describe('Escape yield contract per surface (#274)', () => {
     expect(dialogOpen()).toBe(true);
     await user.keyboard('{Escape}');
     expect(dialogOpen()).toBe(false);
+  });
+});
+
+describe('Surface-in-surface Escape ordering (#280)', () => {
+  it('Select inside a Popover: first Escape closes the Select, second the Popover', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider locale="en-US">
+        <Popover defaultOpen>
+          <Popover.Trigger>
+            <Button>Filters</Button>
+          </Popover.Trigger>
+          <Popover.Content>
+            <span>panel body</span>
+            <Select
+              options={[
+                { value: 'a', label: 'Alpha' },
+                { value: 'b', label: 'Beta' },
+              ]}
+              placeholder="Pick"
+            />
+          </Popover.Content>
+        </Popover>
+      </LocaleProvider>,
+    );
+    expect(screen.getByText('panel body')).toBeInTheDocument();
+    // Open the Select nested inside the popover.
+    await user.click(screen.getByRole('button', { name: 'Pick' }));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    // First Escape: only the INNERMOST surface (the Select) closes; the popover
+    // survives. Before #280 both closed on this one press.
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(screen.getByText('panel body')).toBeInTheDocument();
+    // Second Escape: the popover is now innermost → it closes.
+    await user.keyboard('{Escape}');
+    expect(screen.queryByText('panel body')).toBeNull();
+  });
+
+  it('Popover inside a Popover: first Escape closes the inner, second the outer', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider locale="en-US">
+        <Popover defaultOpen>
+          <Popover.Trigger>
+            <Button>Outer</Button>
+          </Popover.Trigger>
+          <Popover.Content>
+            <span>outer body</span>
+            <Popover>
+              <Popover.Trigger>
+                <Button>Open inner</Button>
+              </Popover.Trigger>
+              <Popover.Content>
+                <span>inner body</span>
+              </Popover.Content>
+            </Popover>
+          </Popover.Content>
+        </Popover>
+      </LocaleProvider>,
+    );
+    expect(screen.getByText('outer body')).toBeInTheDocument();
+    // Open the inner popover (registers AFTER the outer ⇒ innermost).
+    await user.click(screen.getByRole('button', { name: 'Open inner' }));
+    expect(screen.getByText('inner body')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByText('inner body')).toBeNull();
+    expect(screen.getByText('outer body')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByText('outer body')).toBeNull();
+  });
+
+  it('DropdownMenu defers Escape while a DEEPER floating surface is open (#280)', async () => {
+    // The realistic case is a ConfirmationPopover/Select opened from a menu
+    // item; that popover registers as a floating surface AFTER the menu, so it's
+    // innermost. Simulate that registration directly (rendering a Popover inside
+    // a menu's Content doesn't compose in jsdom) — it exercises the exact
+    // isTopFloating deferral the menu's Escape handler uses.
+    const user = userEvent.setup();
+    render(
+      <Host>
+        <DropdownMenu defaultOpen>
+          <DropdownMenu.Trigger>
+            <Button>Actions</Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+      </Host>,
+    );
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    act(() => overlayStack.registerFloating('deeper-surface'));
+    await user.keyboard('{Escape}');
+    // The whole menu defers to the deeper surface — it stays open (before #280 it
+    // would have closed on this press).
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    // Deeper surface gone → the menu is innermost again → Escape closes it.
+    act(() => overlayStack.unregisterFloating('deeper-surface'));
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).toBeNull();
   });
 });

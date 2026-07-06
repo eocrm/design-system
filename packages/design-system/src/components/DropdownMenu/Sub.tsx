@@ -161,6 +161,7 @@ export function Sub({
     closeAll,
     depth: parentCtx.depth + 1,
     inOverlay: parentCtx.inOverlay,
+    floatingId: parentCtx.floatingId,
   };
 
   return (
