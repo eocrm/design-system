@@ -948,6 +948,64 @@ describe('DropdownMenu — typeahead', () => {
     await user.keyboard('e'); // 'e' alone, "Edit"
     expect(screen.getByRole('menuitem', { name: 'Edit' })).toHaveFocus();
   });
+
+  it('RadioItem `icon` prop keeps first-letter typeahead working (issue #294)', async () => {
+    // Regression guard: passing the icon as a prop (not inlined into children)
+    // keeps the typeahead label the pure string. Inlining a leading icon would
+    // leave the JSX whitespace " " as the first string child → typeahead dead.
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value="light" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem value="light" icon={<span aria-hidden="true" />}>
+              Light
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="dark" icon={<span aria-hidden="true" />}>
+              Dark
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}'); // opens; first radio active
+    await user.keyboard('d'); // jumps to "Dark"
+    expect(screen.getByRole('menuitemradio', { name: 'Dark' })).toHaveFocus();
+  });
+
+  it('contrast: INLINING a leading icon into children breaks typeahead (the pitfall `icon` avoids)', async () => {
+    // The failure mode #294 documents: with a leading icon inlined into
+    // children, the first string child is the whitespace-prefixed text, so the
+    // typeahead label no longer starts with the label's first letter and 'd'
+    // fails to jump. This is the exact regression the `icon` prop above avoids.
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value="light" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem value="light">
+              <span aria-hidden="true" /> Light
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="dark">
+              <span aria-hidden="true" /> Dark
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}'); // opens; first radio (Light) active
+    await user.keyboard('d'); // would jump to "Dark" IF the label were clean
+    // It doesn't — focus stays on the first item because no label starts with 'd'.
+    expect(screen.getByRole('menuitemradio', { name: 'Light' })).toHaveFocus();
+  });
 });
 
 describe('DropdownMenu — ItemIndicator', () => {
@@ -1132,6 +1190,39 @@ describe('DropdownMenu — RadioGroup and RadioItem', () => {
     await user.click(screen.getByRole('button', { name: 'Open' }));
     expect(screen.getByTestId('indicator-date')).toBeInTheDocument();
     expect(screen.queryByTestId('indicator-name')).toBeNull();
+  });
+
+  it('renders the `icon` prop in a leading slot without polluting the accessible name', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value="light" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem
+              value="light"
+              icon={<span data-testid="radio-icon" aria-hidden="true" />}
+            >
+              Light
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    // Accessible name stays the pure label — the icon is aria-hidden AND passed
+    // outside `children`, which is exactly what keeps typeahead's label clean.
+    const item = screen.getByRole('menuitemradio', { name: 'Light' });
+    const icon = screen.getByTestId('radio-icon');
+    expect(item).toContainElement(icon);
+    // Icon precedes the label in document order.
+    const children = Array.from(item.children) as HTMLElement[];
+    const iconIdx = children.findIndex((c) => c.contains(icon));
+    const labelIdx = children.findIndex((c) => c.textContent === 'Light');
+    expect(iconIdx).toBeGreaterThanOrEqual(0);
+    expect(iconIdx).toBeLessThan(labelIdx);
   });
 });
 
@@ -1346,6 +1437,35 @@ describe('DropdownMenu — CheckboxItem', () => {
     // stays in the DOM so labels stay aligned across mixed checked/unchecked
     // items when the consumer provides indicators throughout.
     expect(screen.queryByTestId('custom-indicator')).toBeNull();
+  });
+
+  it('renders the `icon` prop in a leading slot without polluting the accessible name', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem
+            checked={false}
+            onCheckedChange={() => {}}
+            icon={<span data-testid="check-icon" aria-hidden="true" />}
+          >
+            Show archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const item = screen.getByRole('menuitemcheckbox', { name: 'Show archived' });
+    const icon = screen.getByTestId('check-icon');
+    expect(item).toContainElement(icon);
+    const children = Array.from(item.children) as HTMLElement[];
+    const iconIdx = children.findIndex((c) => c.contains(icon));
+    const labelIdx = children.findIndex((c) => c.textContent === 'Show archived');
+    expect(iconIdx).toBeGreaterThanOrEqual(0);
+    expect(iconIdx).toBeLessThan(labelIdx);
   });
 });
 
