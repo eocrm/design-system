@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pin } from 'lucide-react';
+import { Pin, Type, Calendar, Ruler } from 'lucide-react';
 import { Button } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
@@ -245,8 +245,9 @@ export function FilterExample() {
 
       <Example
         title="Single-select sort (RadioGroup)"
-        description="Radio items default to close-on-select — picking a sort closes the menu."
+        description="Radio items default to close-on-select — picking a sort closes the menu. Give each row a leading glyph via the `icon` prop (parity with Item) — passing it as a prop instead of inlining it into the label keeps first-letter typeahead working."
         code={`import { useState } from 'react';
+import { Type, Calendar, Ruler } from 'lucide-react';
 import { Button, Cluster, DropdownMenu } from '@eocrm/design-system';
 
 export function SortExample() {
@@ -259,9 +260,17 @@ export function SortExample() {
         </DropdownMenu.Trigger>
         <DropdownMenu.Content>
           <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
-            <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
-            <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
-            <DropdownMenu.RadioItem value="size">Size</DropdownMenu.RadioItem>
+            {/* Pass the glyph via \`icon\` (not inlined into children) so
+                first-letter typeahead keeps matching the real label. */}
+            <DropdownMenu.RadioItem value="name" icon={<Type size={14} aria-hidden="true" />}>
+              Name
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="date" icon={<Calendar size={14} aria-hidden="true" />}>
+              Date
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="size" icon={<Ruler size={14} aria-hidden="true" />}>
+              Size
+            </DropdownMenu.RadioItem>
           </DropdownMenu.RadioGroup>
         </DropdownMenu.Content>
       </DropdownMenu>
@@ -472,9 +481,15 @@ function SortExample() {
         </DropdownMenu.Trigger>
         <DropdownMenu.Content>
           <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
-            <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
-            <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
-            <DropdownMenu.RadioItem value="size">Size</DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="name" icon={<Type size={14} aria-hidden="true" />}>
+              Name
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="date" icon={<Calendar size={14} aria-hidden="true" />}>
+              Date
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="size" icon={<Ruler size={14} aria-hidden="true" />}>
+              Size
+            </DropdownMenu.RadioItem>
           </DropdownMenu.RadioGroup>
         </DropdownMenu.Content>
       </DropdownMenu>

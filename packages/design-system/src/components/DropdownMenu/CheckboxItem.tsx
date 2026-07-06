@@ -38,6 +38,15 @@ export interface DropdownMenuCheckboxItemProps extends Omit<
   closeOnSelect?: boolean;
   /** Disabled items don't fire `onCheckedChange`, are skipped by keyboard nav, and render dimmed. */
   disabled?: boolean;
+  /**
+   * Leading icon, rendered in a fixed-size slot before the label (parity with
+   * `<DropdownMenu.Item icon>`). Prefer this over inlining an icon into
+   * `children`: typeahead derives its match string from the string children, so
+   * an inlined leading icon leaves the JSX whitespace `" "` as the first string
+   * child and breaks first-letter type-to-select. Passing the icon here keeps
+   * the typeahead label the pure label string. Mark the glyph `aria-hidden`.
+   */
+  icon?: ReactNode;
   /** Optional trailing shortcut hint (e.g. `'⌘D'`). Visual cue only — does NOT register a global key handler. */
   shortcut?: string;
   /**
@@ -96,6 +105,7 @@ export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemP
       onCheckedChange,
       closeOnSelect = false,
       disabled = false,
+      icon,
       shortcut,
       className,
       children,
@@ -146,6 +156,7 @@ export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemP
             {checked && indicator}
           </span>
         )}
+        {icon !== undefined && <span className={styles.icon}>{icon}</span>}
         <span className={styles.itemLabel}>{labelContent}</span>
         {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
       </div>

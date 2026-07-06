@@ -94,6 +94,15 @@ export interface DropdownMenuRadioItemProps extends Omit<
   closeOnSelect?: boolean;
   /** Disabled items don't fire `onValueChange`, are skipped by keyboard nav, and render dimmed. */
   disabled?: boolean;
+  /**
+   * Leading icon, rendered in a fixed-size slot before the label (parity with
+   * `<DropdownMenu.Item icon>`). Prefer this over inlining an icon into
+   * `children`: typeahead derives its match string from the string children, so
+   * an inlined leading icon leaves the JSX whitespace `" "` as the first string
+   * child and breaks first-letter type-to-select. Passing the icon here keeps
+   * the typeahead label the pure label string. Mark the glyph `aria-hidden`.
+   */
+  icon?: ReactNode;
   /** Optional trailing shortcut hint (e.g. `'⌘N'`). Visual cue only — does NOT register a global key handler. */
   shortcut?: string;
   /**
@@ -139,7 +148,7 @@ export interface DropdownMenuRadioItemProps extends Omit<
  *   shallow; deeper nesting won't render in the indicator slot.
  */
 export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(function RadioItem(
-  { value, closeOnSelect = true, disabled = false, shortcut, className, children, ...rest },
+  { value, closeOnSelect = true, disabled = false, icon, shortcut, className, children, ...rest },
   forwardedRef,
 ) {
   const ctx = useDropdownMenuContext('RadioItem');
@@ -190,6 +199,7 @@ export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(
           {checked && indicator}
         </span>
       )}
+      {icon !== undefined && <span className={styles.icon}>{icon}</span>}
       <span className={styles.itemLabel}>{labelContent}</span>
       {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
     </div>
