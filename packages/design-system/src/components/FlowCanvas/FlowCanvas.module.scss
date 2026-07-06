@@ -15,6 +15,12 @@
   touch-action: none; // claim touch drags so the page doesn't scroll instead
   cursor: grab;
 
+  // Never paint the UA focus outline — our indicator is the box-shadow ring
+  // below. A `:focus-visible` reset misses a plain MOUSE `:focus` (e.g. clicking
+  // empty canvas), where Chrome on Windows paints `outline: auto` around the
+  // whole role=application canvas. Suppress it in every focus state.
+  outline: none;
+
   // Canvas keyboard-focus ring. The `focus-ring` mixin also sets `outline:
   // none`, which kills the raw UA focus outline whenever the canvas is focused.
   &:focus-visible {
@@ -99,9 +105,14 @@
   // unlabeled edge below the WCAG 2.5.8 minimum.
   vector-effect: non-scaling-stroke;
 
-  &:focus-visible {
-    outline: none;
-  }
+  // Never paint the UA focus outline. This corridor is a WIDE invisible stroke,
+  // so an `outline: auto` traces a big rounded box around the edge's bounding
+  // area. A `:focus-visible`-scoped reset is NOT enough: a MOUSE click gives
+  // plain `:focus` (not `-visible`), and Chrome on Windows paints `outline:
+  // auto` in that state (macOS Chromium doesn't — hence it only reproduces on
+  // Windows). Focus/selection is shown by recoloring the visible .edgePath
+  // (below / [data-active]), so suppress the outline outright.
+  outline: none;
 }
 
 // Keyboard focus (E-key edge cycling) must stay visible even when the
@@ -175,6 +186,12 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
   cursor: grab;
   user-select: none;
   touch-action: none;
+
+  // Never paint the UA focus outline — selection is the accent border
+  // ([data-selected]) and keyboard focus is the glow ring (:focus-visible). A
+  // `:focus-visible` reset misses a plain MOUSE `:focus`, where Chrome on
+  // Windows paints `outline: auto` around this role=button node.
+  outline: none;
 
   &:focus-visible {
     @include focus-ring;
