@@ -4,6 +4,7 @@ import {
   DndContext,
   PointerSensor,
   KeyboardSensor,
+  useDndContext,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -21,6 +22,7 @@ import { EmptyState } from '../EmptyState';
 import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
 import { reorderRespectingPins } from './reorderColumns';
+import { useFloatingSurface } from '../_internal/overlay';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -119,6 +121,19 @@ export interface DataTableProps<T> {
  *   trigger a re-derive. Pass a stable reference (e.g. defined outside render
  *   or memoized).
  */
+
+/**
+ * #282: registers the active column-reorder drag as a floating surface so a
+ * host Modal/Drawer yields the Escape that cancels it. A leaf inside DndContext
+ * (reads `active` via `useDndContext`) so the drag-active toggle re-renders only
+ * this null node — never the table body.
+ */
+function DragFloatingProbe() {
+  const { active } = useDndContext();
+  useFloatingSurface(active != null);
+  return null;
+}
+
 function DataTableInner<T>(
   {
     instance,
@@ -140,7 +155,6 @@ function DataTableInner<T>(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
-
   const visibleIds = useMemo(
     () => instance.visibleColumns.map((c) => c.id),
     [instance.visibleColumns],
@@ -194,6 +208,11 @@ function DataTableInner<T>(
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      {/* #282: register the column-reorder drag as a floating surface while
+          active so a host Modal/Drawer yields the Escape that cancels it (the
+          drag cancels; the host survives). A leaf probe (not root state) so the
+          drag-active toggle re-renders only this null node, never the table body. */}
+      <DragFloatingProbe />
       <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
         {/* {...rest} last so consumer overrides win (Pattern A). */}
         <Table

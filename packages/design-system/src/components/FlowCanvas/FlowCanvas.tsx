@@ -19,7 +19,12 @@ import type {
 import clsx from 'clsx';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '../Button';
-import { overlayStack, useFocusTrap, useScrollLock } from '../_internal/overlay';
+import {
+  overlayStack,
+  useFloatingSurface,
+  useFocusTrap,
+  useScrollLock,
+} from '../_internal/overlay';
 import { useTranslation } from '../../i18n/useTranslation';
 import { mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import { useControllableState } from '../_internal/useControllableState';
@@ -466,6 +471,12 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   // `selectionRef` above).
   const connectRef = useRef(connect);
   connectRef.current = connect;
+  // #282: an armed connect gesture (drawing / rewiring an edge) is an
+  // Escape-consuming MODE — register it as a floating surface so a host
+  // Modal/Drawer yields the Escape that cancels the connect (the mode cancels;
+  // the host survives that press). A mere selection deliberately does NOT
+  // register — deselect shouldn't hold the host hostage.
+  useFloatingSurface(connect != null);
 
   const defaultIsValid = useCallback(
     (from: string, to: string) => from !== to && !edges.some((e) => e.from === from && e.to === to),

@@ -31,6 +31,7 @@ import {
 import { CSS, type Transform } from '@dnd-kit/utilities';
 import clsx from 'clsx';
 import { mergeRefs } from '../_internal/refs';
+import { useFloatingSurface } from '../_internal/overlay';
 import styles from './Sortable.module.scss';
 
 /**
@@ -231,6 +232,10 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
   ref,
 ) {
   const [activeId, setActiveId] = useState<string | number | null>(null);
+  // #282: a keyboard drag is an Escape-consuming MODE (Escape cancels the
+  // drag). Register it as a floating surface while active so a host Modal/Drawer
+  // yields that Escape — the drag cancels, the host survives that press.
+  useFloatingSurface(activeId != null);
   // Internal handle on the <ol> so the restrict modifier can read the live
   // list rect, independent of whether the consumer forwards a ref.
   const olRef = useRef<HTMLOListElement | null>(null);

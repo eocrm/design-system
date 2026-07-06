@@ -841,7 +841,7 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 
 **Drag origin** (hybrid): if `<Sortable.Handle>` is present in the Item subtree, only the Handle initiates drag. If no Handle is present, the entire Item is draggable + focusable. A 5px activation distance means short clicks-without-movement on internal buttons / links pass through.
 
-**Keyboard reorder**: Tab to focus the Handle (or the Item if no Handle), press **Space** to pick up, **ArrowUp** / **ArrowDown** to move, **Space** to drop, **Escape** to cancel. dnd-kit's KeyboardSensor ships built-in `aria-live` announcements describing each move.
+**Keyboard reorder**: Tab to focus the Handle (or the Item if no Handle), press **Space** to pick up, **ArrowUp** / **ArrowDown** to move, **Space** to drop, **Escape** to cancel. dnd-kit's KeyboardSensor ships built-in `aria-live` announcements describing each move. Inside a `Modal`/`Drawer`, an in-progress drag is an Escape-consuming mode: Escape cancels the drag and the host survives that press; the next Escape closes the host (#282). Same for `DataTable` column reorder.
 
 **Drop visual / async-safe**: the dragged item renders in a dnd-kit `<DragOverlay>` (a portaled, fixed-position clone); the active list `<li>` is an invisible placeholder during drag. Because the overlay owns the drop animation, the in-list row never carries a stale drag transform — so `onReorder` may commit the new order **asynchronously / optimistically** (e.g. an optimistic TanStack mutation's `onMutate` that lands a tick late) without the dropped row glitching ("fly up then settle"). You no longer need to reorder synchronously. The drop animation respects `prefers-reduced-motion` (it's disabled under reduced motion).
 
@@ -955,7 +955,10 @@ a `ReactNode` floated as a toolbar on the selected node/edge, tracking it throug
 a delete icon-button, or one behind a `ConfirmationPopover`). The canvas fills its parent — give
 the wrapper a height. Full keyboard: arrows rove nodes, E cycles a node's edges, C connect mode,
 R / Shift+R rewire the selected edge's target / source, Shift+arrows nudge, +/−/0 zoom/fit,
-Ctrl+arrows pan, Delete deletes, Enter opens. Pass `controls` (a
+Ctrl+arrows pan, Delete deletes, Enter opens. Inside a `Modal`/`Drawer`, an armed connect gesture
+(and a `Sortable`/`DataTable` reorder drag — keyboard or pointer) is an Escape-consuming **mode**:
+the first Escape cancels the mode and the host survives that press; a mere selection does NOT hold
+the host (Escape closes the host, deselect is incidental) (#282). Pass `controls` (a
 `ReactNode`) to render your own buttons top-left; a built-in Maximize toggle (top-right / `F`
 key, Escape to restore) expands the canvas in place to fill the viewport. `maximizeControl={false}`
 hides the toggle if you drive `maximized` yourself. The canvas fits-to-content once on mount; to
