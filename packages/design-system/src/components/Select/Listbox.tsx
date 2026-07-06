@@ -35,7 +35,7 @@ export function Listbox() {
   const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
   // #274: hosts yield Escape while we're open — our own capture/element
   // handler closes us on the same press instead of the Modal/Drawer.
-  useFloatingSurface(ctx.open);
+  const floatingId = useFloatingSurface(ctx.open);
 
   const { refs, floatingStyles } = useFloating({
     open: ctx.open,
@@ -96,6 +96,11 @@ export function Listbox() {
     if (!ctx.open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // #280: defer to a DEEPER floating surface — only the innermost closes.
+        // A Select listbox is normally innermost, so this is uniformity/safety
+        // net, not load-bearing; the real Select-in-Popover fix is the Popover
+        // deferring to us.
+        if (!overlayStack.isTopFloating(floatingId)) return;
         e.preventDefault();
         overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         ctx.closeAndFocusTrigger();
@@ -103,7 +108,7 @@ export function Listbox() {
     };
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [ctx.open, ctx.closeAndFocusTrigger]);
+  }, [ctx.open, ctx.closeAndFocusTrigger, floatingId]);
 
   // On open: pre-highlight the current selection (if any), else the
   // first non-disabled option. Trigger's ArrowUp handler may override

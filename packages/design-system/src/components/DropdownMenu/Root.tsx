@@ -99,8 +99,9 @@ export function DropdownMenuRoot({
   const triggerRef = useRef<HTMLElement | null>(null);
   const inOverlay = useInOverlay(triggerRef, open);
   // #274: hosts yield Escape while the menu (any level) is open — the
-  // menu's own capture listeners peel one level per press instead.
-  useFloatingSurface(open);
+  // menu's own capture listeners peel one level per press instead. The id lets
+  // Content defer to a DEEPER surface (e.g. a popover from an item) (#280).
+  const floatingId = useFloatingSurface(open);
   const reactId = useId();
   const contentId = `dropdown-menu-${sanitizeId(reactId)}`;
 
@@ -148,6 +149,7 @@ export function DropdownMenuRoot({
     closeAll,
     depth: 0,
     inOverlay,
+    floatingId,
   };
 
   return <DropdownMenuContext.Provider value={value}>{children}</DropdownMenuContext.Provider>;

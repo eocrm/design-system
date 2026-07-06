@@ -149,6 +149,12 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
     if (!ctx.open) return;
     const onKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // #280: defer the WHOLE menu to a DEEPER non-menu floating surface —
+        // e.g. a ConfirmationPopover/Select opened from a menu item, which
+        // registers after the menu and is thus innermost. Its own listener
+        // closes it on this press; the menu stays open. (isTopFloating is keyed
+        // on the root's floating id, shared by every Content panel via context.)
+        if (!overlayStack.isTopFloating(ctx.floatingId)) return;
         e.preventDefault();
         overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         // Defer to any DEEPER open dropdown panel: only the single innermost

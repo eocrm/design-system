@@ -120,6 +120,33 @@ describe('floating-surface registry (#274)', () => {
     expect(overlayStack.hasOpenFloating()).toBe(false);
   });
 
+  it('isTopFloating is true only for the most-recently-registered open surface (#280)', () => {
+    expect(overlayStack.isTopFloating('a')).toBe(false); // none open
+    overlayStack.registerFloating('a');
+    expect(overlayStack.isTopFloating('a')).toBe(true);
+    overlayStack.registerFloating('b'); // b opened later ⇒ innermost
+    expect(overlayStack.isTopFloating('a')).toBe(false);
+    expect(overlayStack.isTopFloating('b')).toBe(true);
+    overlayStack.unregisterFloating('b'); // a is innermost again
+    expect(overlayStack.isTopFloating('a')).toBe(true);
+    overlayStack.unregisterFloating('a');
+    expect(overlayStack.isTopFloating('a')).toBe(false);
+  });
+
+  it('useFloatingSurface returns a stable id usable for isTopFloating (#280)', () => {
+    const { result, rerender } = renderHook(
+      ({ open }: { open: boolean }) => useFloatingSurface(open),
+      {
+        initialProps: { open: true },
+      },
+    );
+    const id = result.current;
+    expect(typeof id).toBe('string');
+    expect(overlayStack.isTopFloating(id)).toBe(true);
+    rerender({ open: true });
+    expect(result.current).toBe(id); // stable across renders
+  });
+
   it('useFloatingSurface registers while open and cleans up on unmount', () => {
     const { rerender, unmount } = renderHook(
       ({ open }: { open: boolean }) => useFloatingSurface(open),
