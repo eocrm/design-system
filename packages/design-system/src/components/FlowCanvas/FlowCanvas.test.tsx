@@ -374,28 +374,39 @@ describe('FlowCanvas viewport', () => {
     expect(root).not.toHaveAttribute('data-flow-has-selection');
   });
 
-  it('anchors the edge action toolbar at the edge bounding-box top-right (target edge), not the midpoint', () => {
-    // Horizontal edge open(0,0) → done(300,0): the edge's rightmost point is the
-    // target's left edge — canvas x = 300 = done's position, independent of node
-    // size — well past the midpoint (~(w+300)/2). The toolbar anchors to that
-    // top-right corner (matching how node actions anchor to a node's corner), so
-    // its screen-px left is maxX*z + tx with maxX = 300, which a midpoint anchor
-    // would not produce. Read z/tx off the stage so it's viewport-invariant.
+  it('anchors the edge action toolbar at the edge midpoint (floats above the middle, not the corner)', () => {
+    // The toolbar anchors at the edge's MIDPOINT (CSS then centers it and lifts
+    // it above the line via [data-flow-selection-edge]). The edge label chip is
+    // anchored at the SAME midpoint but in CANVAS coords (it lives inside the
+    // transformed stage), so the toolbar's screen-px left/top equal the chip's
+    // canvas coords × the viewport. It is NOT the old bbox top-right anchor
+    // (the target's edge, x=300), which sits well past the midpoint.
     const { container } = render(
       <FlowCanvas
         nodes={NODES}
-        edges={EDGES}
+        edges={EDGES} // t1 has a label → a chip anchored at the midpoint
         selection={{ type: 'edge', id: 't1' }}
         renderEdgeActions={(id) => <button data-testid="edge-act">del {id}</button>}
       />,
     );
     const toolbar = screen.getByTestId('edge-act').closest('[data-flow-controls]') as HTMLElement;
-    const done = screen.getByLabelText('Done');
-    const [, tx, , z] = getStage(container).style.transform.match(
+    const chip = container.querySelector('[data-flow-chip]') as HTMLElement;
+    const [, tx, ty, z] = getStage(container).style.transform.match(
       /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/,
     )!;
-    const expectedLeft = parseFloat(done.style.left) * parseFloat(z) + parseFloat(tx);
-    expect(parseFloat(toolbar.style.left)).toBeCloseTo(expectedLeft, 1);
+    expect(parseFloat(toolbar.style.left)).toBeCloseTo(
+      parseFloat(chip.style.left) * parseFloat(z) + parseFloat(tx),
+      1,
+    );
+    expect(parseFloat(toolbar.style.top)).toBeCloseTo(
+      parseFloat(chip.style.top) * parseFloat(z) + parseFloat(ty),
+      1,
+    );
+    // And it's the midpoint, strictly left of the old top-right anchor (done's x).
+    const done = screen.getByLabelText('Done');
+    expect(parseFloat(toolbar.style.left)).toBeLessThan(
+      parseFloat(done.style.left) * parseFloat(z) + parseFloat(tx),
+    );
   });
 
   it('pointercancel mid-pan drops the panning cursor class', () => {

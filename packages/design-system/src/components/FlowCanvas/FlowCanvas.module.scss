@@ -297,12 +297,19 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
   align-items: center;
   gap: var(--space-1);
 
-  // The anchor point is a node corner / edge midpoint; nudge the toolbar just
-  // outside it so it doesn't sit on top of the selection.
+  // Node anchor = the node's top-right corner; nudge the toolbar just outside
+  // it (up-right) so it doesn't sit on top of the node.
   transform: translate(
     var(--flow-selection-actions-offset-x),
     var(--flow-selection-actions-offset-y)
   );
+}
+
+// Edge anchor = the edge's MIDPOINT. Center the toolbar horizontally on it and
+// lift the whole bar above the edge by a small gap, so it floats "by the
+// middle" of the edge without covering the line itself.
+.selectionActions[data-flow-selection-edge] {
+  transform: translate(-50%, calc(-100% - var(--space-2)));
 }
 
 .srOnly {
