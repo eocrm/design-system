@@ -105,6 +105,25 @@ export const overlayStack = {
   wasEscapeConsumed(e: Event): boolean {
     return consumedEscapes.has(e);
   },
+  /**
+   * True iff `id` is the INNERMOST open floating surface — the last one
+   * registered (surfaces register on open, outer-first, so the most-recently-
+   * opened is innermost). On Escape every surface defers unless it's innermost,
+   * so one press closes exactly the deepest surface (#280). Order-independent of
+   * listener firing: it reads the registry, not the event. Returns false if `id`
+   * isn't registered (e.g. already closing).
+   *
+   * Only CONTAINER surfaces that can host a deeper one (Popover, Select,
+   * DropdownMenu) gate their Escape on this. Leaf surfaces (date-time grids, the
+   * Rail flyout, RTE menus) are always innermost when nested and intentionally
+   * omit the guard — add it if a leaf ever hosts a Select/Popover/menu, or one
+   * Escape will wrongly close both.
+   */
+  isTopFloating(id: string): boolean {
+    let last: string | undefined;
+    for (const x of floating) last = x; // Set preserves insertion (open) order
+    return last === id;
+  },
   /** Subscribe to register/unregister notifications. Returns unsubscribe. */
   _subscribe(fn: () => void): () => void {
     listeners.add(fn);
@@ -198,7 +217,7 @@ export function useOverlayStack(
  * the next press reaches the host. Layout effect: the registration must be
  * observable before the browser can deliver the next keydown.
  */
-export function useFloatingSurface(open: boolean): void {
+export function useFloatingSurface(open: boolean): string {
   const id = useId();
   useLayoutEffect(() => {
     if (!open) return;
@@ -207,4 +226,7 @@ export function useFloatingSurface(open: boolean): void {
       overlayStack.unregisterFloating(id);
     };
   }, [id, open]);
+  // Returned so a surface can gate its Escape handler on `isTopFloating(id)` and
+  // defer to a deeper surface (#280). Stable across renders (useId).
+  return id;
 }

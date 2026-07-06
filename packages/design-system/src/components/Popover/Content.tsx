@@ -65,7 +65,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
   const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
   // #274: hosts yield Escape while we're open — our capture listener
   // closes us (or one menu level) on the same press instead.
-  useFloatingSurface(ctx.open);
+  const floatingId = useFloatingSurface(ctx.open);
   const arrowRef = useRef<HTMLSpanElement | null>(null);
 
   const placement: Placement = (align === 'center' ? side : `${side}-${align}`) as Placement;
@@ -101,6 +101,9 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     if (!ctx.open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // #280: defer to a DEEPER floating surface (e.g. a Select open inside
+        // this popover) — only the innermost closes on this press.
+        if (!overlayStack.isTopFloating(floatingId)) return;
         e.preventDefault();
         overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
         ctx.closeAll();
@@ -108,7 +111,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     };
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [ctx.open, ctx.closeAll]);
+  }, [ctx.open, ctx.closeAll, floatingId]);
 
   // Outside-click closes.
   useEffect(() => {
