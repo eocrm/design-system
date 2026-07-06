@@ -2205,7 +2205,7 @@ import { Bell, Plus } from 'lucide-react';
 - `side` (`'top'` default) / `align` (`'center'` default) / `sideOffset` (default `6`) — Floating UI auto-flips on collision.
 - `delay` — ms before hover opens. Default `400`. Keyboard focus is always immediate (a11y); close is always immediate.
 - `open` / `onOpenChange` / `defaultOpen` — controlled mode, same shape as DropdownMenu.
-- Dismissal: `pointerleave`, `blur`, document `pointerdown`, `Escape`. Tooltip never owns focus.
+- Dismissal: `pointerleave`, `blur`, document `pointerdown`, `Escape`. Tooltip never owns focus. On `Escape` (WCAG 1.4.13) the tooltip registers as a floating surface, so inside a `Modal`/`Drawer` the dismiss press closes only the tooltip — the host survives; the next `Escape` closes the host.
 - Touch devices: no tap-to-open. Tooltips are progressive enhancement for pointer + keyboard users; rely on the trigger's accessible name on touch.
 - Opens with a short scale-fade (140 ms) from the trigger side. Closes instantly. Respects `prefers-reduced-motion: reduce`.
 - Z-layer `--z-tooltip: 1300` is above modal and toast, so tooltips inside any host UI remain visible.
