@@ -1619,6 +1619,44 @@ describe('DropdownMenu — SubContent', () => {
     expect(screen.queryAllByRole('menu')).toHaveLength(1);
   });
 
+  it('Escape closes exactly ONE level per press for sub-in-sub nesting (#279)', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Sub>
+                <DropdownMenu.SubTrigger>More</DropdownMenu.SubTrigger>
+                <DropdownMenu.SubContent>
+                  <DropdownMenu.Item onSelect={() => {}}>Deep</DropdownMenu.Item>
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Sub>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('menuitem', { name: /Export/ })); // opens depth-1
+    await user.click(screen.getByRole('menuitem', { name: /More/ })); // opens depth-2
+    expect(screen.getAllByRole('menu')).toHaveLength(3);
+    // Before #279, a depth-1 listener would stopImmediatePropagation + close,
+    // taking the depth-2 panel with it (two levels per press). Now each press
+    // closes exactly the innermost level.
+    screen.getAllByRole('menu')[2].focus();
+    await user.keyboard('{Escape}'); // closes only depth-2
+    expect(screen.getAllByRole('menu')).toHaveLength(2);
+    await user.keyboard('{Escape}'); // closes depth-1
+    expect(screen.getAllByRole('menu')).toHaveLength(1);
+    await user.keyboard('{Escape}'); // closes the root
+    expect(screen.queryAllByRole('menu')).toHaveLength(0);
+  });
+
   it('SubContent opens to the right of SubTrigger by default', async () => {
     const user = userEvent.setup();
     render(

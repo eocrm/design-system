@@ -151,29 +151,22 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       if (e.key === 'Escape') {
         e.preventDefault();
         overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
-        // Only handle Escape for this level if focus is inside this panel or
-        // no deeper sub is open. A deeper sub (higher depth) will have
-        // registered its own capture listener and should handle Escape first.
-        // Since deeper subs register their listener AFTER this one (they mount
-        // later), and both listeners are on document in capture phase, this
-        // listener fires BEFORE the sub's listener. Skip here if a deeper
-        // panel is open — the sub's listener will handle it and stop propagation.
-        if (ctx.depth === 0) {
-          const deeperPanels = document.querySelectorAll(
-            `[data-dropdown-menu-content][data-dropdown-depth]`,
-          );
-          let hasDeeper = false;
-          for (const panel of deeperPanels) {
-            const depth = Number(panel.getAttribute('data-dropdown-depth') ?? '0');
-            if (depth > ctx.depth) {
-              hasDeeper = true;
-              break;
-            }
-          }
-          if (hasDeeper) return;
+        // Defer to any DEEPER open dropdown panel: only the single innermost
+        // panel (no deeper panel in the DOM) closes, so one Escape peels exactly
+        // one level. This is purely DOM-based — it does NOT rely on listener
+        // registration order (the keydown effect re-registers every render, so
+        // that order isn't guaranteed). Applies at EVERY depth (#279): a depth-1
+        // sub must defer to a depth-2 sub, not only depth-0 to depth-1.
+        const deeperPanels = document.querySelectorAll(
+          `[data-dropdown-menu-content][data-dropdown-depth]`,
+        );
+        for (const panel of deeperPanels) {
+          const depth = Number(panel.getAttribute('data-dropdown-depth') ?? '0');
+          if (depth > ctx.depth) return;
         }
         if (ctx.depth > 0) {
-          // Stop propagation so the parent Content's listener does not fire.
+          // Stop propagation so no later document listener double-handles this
+          // press. Shallower ancestor listeners already fired and deferred.
           e.stopImmediatePropagation();
         }
         ctx.setOpen(false);
