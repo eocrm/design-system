@@ -1,9 +1,10 @@
-import { forwardRef, useMemo, useState, type ReactNode, type Ref } from 'react';
+import { forwardRef, useMemo, type ReactNode, type Ref } from 'react';
 import clsx from 'clsx';
 import {
   DndContext,
   PointerSensor,
   KeyboardSensor,
+  useDndContext,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -120,6 +121,19 @@ export interface DataTableProps<T> {
  *   trigger a re-derive. Pass a stable reference (e.g. defined outside render
  *   or memoized).
  */
+
+/**
+ * #282: registers the active column-reorder drag as a floating surface so a
+ * host Modal/Drawer yields the Escape that cancels it. A leaf inside DndContext
+ * (reads `active` via `useDndContext`) so the drag-active toggle re-renders only
+ * this null node — never the table body.
+ */
+function DragFloatingProbe() {
+  const { active } = useDndContext();
+  useFloatingSurface(active != null);
+  return null;
+}
+
 function DataTableInner<T>(
   {
     instance,
@@ -141,12 +155,6 @@ function DataTableInner<T>(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
-  // #282: a keyboard column-reorder drag is an Escape-consuming MODE (Escape
-  // cancels it). Register it as a floating surface while active so a host
-  // Modal/Drawer yields that Escape — the drag cancels, the host survives.
-  const [dragging, setDragging] = useState(false);
-  useFloatingSurface(dragging);
-
   const visibleIds = useMemo(
     () => instance.visibleColumns.map((c) => c.id),
     [instance.visibleColumns],
@@ -164,7 +172,6 @@ function DataTableInner<T>(
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setDragging(false);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const activeId = String(active.id);
@@ -200,12 +207,12 @@ function DataTableInner<T>(
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={() => setDragging(true)}
-      onDragEnd={handleDragEnd}
-      onDragCancel={() => setDragging(false)}
-    >
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      {/* #282: register the column-reorder drag as a floating surface while
+          active so a host Modal/Drawer yields the Escape that cancels it (the
+          drag cancels; the host survives). A leaf probe (not root state) so the
+          drag-active toggle re-renders only this null node, never the table body. */}
+      <DragFloatingProbe />
       <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
         {/* {...rest} last so consumer overrides win (Pattern A). */}
         <Table
