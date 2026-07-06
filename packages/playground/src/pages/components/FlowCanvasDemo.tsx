@@ -39,6 +39,8 @@ export function FlowCanvasDemo() {
   const [lastEvent, setLastEvent] = useState('—');
   const [allowConnections, setAllowConnections] = useState(true);
   const [confineNodesToView, setConfineNodesToView] = useState(false);
+  // Bumping this re-centers the canvas (fit-to-content) without a remount.
+  const [refitKey, setRefitKey] = useState(0);
 
   const handleNodeCreate = useCallback((position: { x: number; y: number }) => {
     const id = `state-${nextId++}`;
@@ -93,6 +95,7 @@ export function FlowCanvasDemo() {
   }, [nodes.length]);
   const handleArrange = useCallback(() => {
     setNodes((prev) => arrangeNodes(prev, edges));
+    setRefitKey((k) => k + 1); // re-center on the freshly laid-out nodes
     setLastEvent('controls: re-arrange');
   }, [edges]);
 
@@ -105,7 +108,7 @@ export function FlowCanvasDemo() {
     >
       <Example
         title="Workflow builder"
-        description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Select an edge and drag either endpoint handle onto another node — or press R (Shift+R for the source) — to rewire it via onEdgeReconnect. Selecting a node or edge floats an action toolbar (renderNodeActions / renderEdgeActions) with a delete button; the edge toolbar guards its delete behind a ConfirmationPopover. Toggle Allow connections to gate all create/rewire, and Confine nodes to view to clamp dragged cards to the visible area. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, R / Shift+R rewire, Shift+arrows nudge."
+        description="Drag nodes, drag from a node's edge handle to connect, double-click empty space to add a state, Delete to remove the selection. Select an edge and drag either endpoint handle onto another node — or press R (Shift+R for the source) — to rewire it via onEdgeReconnect. Selecting a node or edge floats an action toolbar (renderNodeActions / renderEdgeActions) with a delete button; the edge toolbar guards its delete behind a ConfirmationPopover. Toggle Allow connections to gate all create/rewire, and Confine nodes to view to clamp dragged cards to the visible area. Custom controls (top-left) and a Maximize toggle (top-right) — press F or Escape to toggle fullscreen. Full keyboard support: arrows rove, E cycles edges, C connects, R / Shift+R rewire, Shift+arrows nudge. Re-arrange bumps `refitKey` to re-center on the new layout without a remount."
         code={`import { useState } from 'react';
 import { Badge, Button, ConfirmationPopover, Cluster, FlowCanvas, Switch, type FlowCanvasEdge, type FlowCanvasNode } from '@eocrm/design-system';
 import { Trash2 } from 'lucide-react';
@@ -187,6 +190,7 @@ export function Demo() {
             <FlowCanvas
               nodes={nodes}
               edges={edges}
+              refitKey={refitKey}
               allowConnections={allowConnections}
               confineNodesToView={confineNodesToView}
               controls={

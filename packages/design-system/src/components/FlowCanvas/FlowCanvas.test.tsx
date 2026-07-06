@@ -187,6 +187,81 @@ describe('FlowCanvas viewport', () => {
     fireEvent.keyDown(root, { key: '0' }); // zero-sized root → fit is a no-op, must not throw
   });
 
+  it('refitKey change re-fits the viewport (re-centers) without a remount', () => {
+    // fitTo no-ops on a zero-sized root (the jsdom default), so give the root a
+    // real size to make the fit observable.
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      width: 400,
+      height: 300,
+      top: 0,
+      left: 0,
+      right: 400,
+      bottom: 300,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+    try {
+      const { container, rerender } = render(
+        <FlowCanvas
+          nodes={NODES}
+          edges={EDGES}
+          refitKey={0}
+          defaultSelection={{ type: 'node', id: 'open' }}
+        />,
+      );
+      const root = screen.getByRole('application');
+      const fitTransform = getStage(container).style.transform;
+      // Zoom away from the fit.
+      root.focus();
+      fireEvent.keyDown(root, { key: '+' });
+      expect(getStage(container).style.transform).not.toBe(fitTransform);
+      // Bump refitKey → re-fits back to the framed view.
+      rerender(
+        <FlowCanvas
+          nodes={NODES}
+          edges={EDGES}
+          refitKey={1}
+          defaultSelection={{ type: 'node', id: 'open' }}
+        />,
+      );
+      expect(getStage(container).style.transform).toBe(fitTransform);
+      // No remount: the selection survived (a `key` remount would have reset it).
+      expect(screen.getByLabelText('Open')).toHaveAttribute('data-selected');
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
+
+  it('refitKey does not re-fit on a re-render that leaves it unchanged', () => {
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      width: 400,
+      height: 300,
+      top: 0,
+      left: 0,
+      right: 400,
+      bottom: 300,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+    try {
+      const { container, rerender } = render(
+        <FlowCanvas nodes={NODES} edges={EDGES} refitKey={7} />,
+      );
+      const root = screen.getByRole('application');
+      root.focus();
+      fireEvent.keyDown(root, { key: '+' }); // zoom away from the fit
+      const zoomed = getStage(container).style.transform;
+      // Re-render with the SAME refitKey (and an unrelated prop change) → the
+      // manual zoom is preserved; only a refitKey CHANGE re-fits.
+      rerender(<FlowCanvas nodes={NODES} edges={EDGES} refitKey={7} readOnly />);
+      expect(getStage(container).style.transform).toBe(zoomed);
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
+
   it('ctrl+arrows pan', () => {
     const { container } = render(<FlowCanvas nodes={NODES} edges={[]} />);
     const root = screen.getByRole('application');

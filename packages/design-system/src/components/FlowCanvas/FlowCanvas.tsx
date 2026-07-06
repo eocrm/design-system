@@ -1,4 +1,13 @@
-import { forwardRef, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type {
   FocusEvent as ReactFocusEvent,
   HTMLAttributes,
@@ -122,6 +131,21 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
   defaultMaximized?: boolean;
   /** Fires whenever maximize is toggled (button, `F` key, or Escape). */
   onMaximizedChange?: (maximized: boolean) => void;
+  /**
+   * Re-fit signal. Whenever this value CHANGES, the canvas re-runs its
+   * fit-to-content — the same fit as the Fit control / `0` key — re-centering
+   * and re-zooming to frame all content. It does this WITHOUT remounting, so the
+   * viewport, selection, keyboard focus, and the built-in maximize focus
+   * management are all preserved (unlike forcing a re-fit with a changing React
+   * `key`, which remounts and drops focus to `<body>`).
+   *
+   * Bind it to whatever should trigger a re-center: `refitKey={maximized}` to
+   * re-fit on maximize enter/exit (the container resizes), or bump a counter
+   * after a programmatic re-arrange that moves every node. The FIRST value never
+   * fits on its own — the mount fit handles the first frame — so any initial
+   * value is safe. @default none
+   */
+  refitKey?: string | number | boolean;
 }
 
 /**
@@ -230,6 +254,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     maximized: maximizedProp,
     defaultMaximized = false,
     onMaximizedChange,
+    refitKey,
     className,
     'aria-describedby': ariaDescribedby,
     onPointerDown,
@@ -650,6 +675,28 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     observer.observe(el);
     return () => observer.disconnect();
   }, [contentBounds, fitTo, hasMeasuredSizes]);
+
+  // Programmatic re-fit: when `refitKey` CHANGES, re-frame content without a
+  // remount. `fitTo`/`contentBounds` are read through refs so this fires ONLY on
+  // a refitKey change — depending on them directly would re-fit on every node
+  // move (which changes contentBounds). The first value is skipped: the mount
+  // fit above owns the first frame. useLayoutEffect (not useEffect) so a
+  // maximize-driven re-fit lands before paint — the container has already
+  // resized to its new bounds, so we frame the new size with no flash.
+  const fitToRef = useRef(fitTo);
+  fitToRef.current = fitTo;
+  const contentBoundsRef = useRef(contentBounds);
+  contentBoundsRef.current = contentBounds;
+  // Compare the previous value (not a mounted flag) so the first render AND a
+  // StrictMode double-invoked mount both no-op — only a real refitKey CHANGE
+  // fits. The mount fit above owns the first frame.
+  const prevRefitKeyRef = useRef(refitKey);
+  useLayoutEffect(() => {
+    if (prevRefitKeyRef.current === refitKey) return;
+    prevRefitKeyRef.current = refitKey;
+    const bounds = contentBoundsRef.current;
+    if (bounds) fitToRef.current(bounds);
+  }, [refitKey]);
 
   const zoomIn = useCallback(() => {
     zoomBy(ZOOM_STEP);

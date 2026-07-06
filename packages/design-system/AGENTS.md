@@ -958,7 +958,12 @@ R / Shift+R rewire the selected edge's target / source, Shift+arrows nudge, +/�
 Ctrl+arrows pan, Delete deletes, Enter opens. Pass `controls` (a
 `ReactNode`) to render your own buttons top-left; a built-in Maximize toggle (top-right / `F`
 key, Escape to restore) expands the canvas in place to fill the viewport. `maximizeControl={false}`
-hides the toggle if you drive `maximized` yourself.
+hides the toggle if you drive `maximized` yourself. The canvas fits-to-content once on mount; to
+re-center afterward — on a maximize toggle, a viewport resize, or a programmatic re-arrange that
+moves every node — change the **`refitKey`** prop (any `string | number | boolean`): a new value
+re-runs the fit **without a remount**, preserving viewport/selection/focus. Don't force a re-fit
+with a changing React `key` — that remounts and drops focus to `<body>`. Bind `refitKey={maximized}`
+to re-fit on maximize enter/exit, or bump a counter after a re-arrange.
 
 ```tsx
 const [nodes, setNodes] = useState<FlowCanvasNode[]>([

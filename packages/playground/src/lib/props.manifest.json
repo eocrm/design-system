@@ -1974,6 +1974,13 @@
           "required": false,
           "default": "",
           "description": "Fires whenever maximize is toggled (button, `F` key, or Escape)."
+        },
+        {
+          "name": "refitKey",
+          "type": "string | number | boolean",
+          "required": false,
+          "default": "none",
+          "description": "Re-fit signal. Whenever this value CHANGES, the canvas re-runs its\nfit-to-content — the same fit as the Fit control / `0` key — re-centering\nand re-zooming to frame all content. It does this WITHOUT remounting, so the\nviewport, selection, keyboard focus, and the built-in maximize focus\nmanagement are all preserved (unlike forcing a re-fit with a changing React\n`key`, which remounts and drops focus to `<body>`).\n\nBind it to whatever should trigger a re-center: `refitKey={maximized}` to\nre-fit on maximize enter/exit (the container resizes), or bump a counter\nafter a programmatic re-arrange that moves every node. The FIRST value never\nfits on its own — the mount fit handles the first frame — so any initial\nvalue is safe."
         }
       ]
     },
