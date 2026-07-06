@@ -955,7 +955,10 @@ a `ReactNode` floated as a toolbar on the selected node/edge, tracking it throug
 a delete icon-button, or one behind a `ConfirmationPopover`). The canvas fills its parent — give
 the wrapper a height. Full keyboard: arrows rove nodes, E cycles a node's edges, C connect mode,
 R / Shift+R rewire the selected edge's target / source, Shift+arrows nudge, +/−/0 zoom/fit,
-Ctrl+arrows pan, Delete deletes, Enter opens. Pass `controls` (a
+Ctrl+arrows pan, Delete deletes, Enter opens. Inside a `Modal`/`Drawer`, an armed connect gesture
+(and a `Sortable`/`DataTable` keyboard reorder drag) is an Escape-consuming **mode**: the first
+Escape cancels the mode and the host survives that press; a mere selection does NOT hold the host
+(Escape closes the host, deselect is incidental) (#282). Pass `controls` (a
 `ReactNode`) to render your own buttons top-left; a built-in Maximize toggle (top-right / `F`
 key, Escape to restore) expands the canvas in place to fill the viewport. `maximizeControl={false}`
 hides the toggle if you drive `maximized` yourself. The canvas fits-to-content once on mount; to

@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, type ReactNode, type Ref } from 'react';
+import { forwardRef, useMemo, useState, type ReactNode, type Ref } from 'react';
 import clsx from 'clsx';
 import {
   DndContext,
@@ -21,6 +21,7 @@ import { EmptyState } from '../EmptyState';
 import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
 import { reorderRespectingPins } from './reorderColumns';
+import { useFloatingSurface } from '../_internal/overlay';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -140,6 +141,11 @@ function DataTableInner<T>(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  // #282: a keyboard column-reorder drag is an Escape-consuming MODE (Escape
+  // cancels it). Register it as a floating surface while active so a host
+  // Modal/Drawer yields that Escape — the drag cancels, the host survives.
+  const [dragging, setDragging] = useState(false);
+  useFloatingSurface(dragging);
 
   const visibleIds = useMemo(
     () => instance.visibleColumns.map((c) => c.id),
@@ -158,6 +164,7 @@ function DataTableInner<T>(
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
+    setDragging(false);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const activeId = String(active.id);
@@ -193,7 +200,12 @@ function DataTableInner<T>(
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={() => setDragging(true)}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setDragging(false)}
+    >
       <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
         {/* {...rest} last so consumer overrides win (Pattern A). */}
         <Table

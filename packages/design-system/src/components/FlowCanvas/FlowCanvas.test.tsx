@@ -1300,6 +1300,20 @@ describe('FlowCanvas connections', () => {
     expect(screen.getByRole('status').textContent).toBe('Connected Open to Done');
   });
 
+  it('registers a floating surface only while connect-mode is armed, not for a selection (#282)', () => {
+    overlayStack._reset();
+    render(<FlowCanvas nodes={NODES} edges={[]} defaultSelection={{ type: 'node', id: 'open' }} />);
+    // A plain selection does NOT register — a mere deselect shouldn't hold a
+    // host Modal/Drawer hostage (per the resolved scope: active modes only).
+    expect(overlayStack.hasOpenFloating()).toBe(false);
+    const node = screen.getByLabelText('Open');
+    node.focus();
+    fireEvent.keyDown(node, { key: 'c' }); // arm keyboard connect (an active mode)
+    expect(overlayStack.hasOpenFloating()).toBe(true);
+    fireEvent.keyDown(node, { key: 'Escape' }); // cancel the connect
+    expect(overlayStack.hasOpenFloating()).toBe(false);
+  });
+
   it('Escape cancels an in-flight pointer draw; the later pointerup does not commit', () => {
     const onEdgeCreate = vi.fn();
     render(<FlowCanvas nodes={NODES} edges={[]} onEdgeCreate={onEdgeCreate} />);
