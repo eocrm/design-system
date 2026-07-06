@@ -23,6 +23,7 @@ import {
   type Placement,
 } from '@floating-ui/react-dom';
 import { chain, mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
+import { overlayStack, useFloatingSurface } from '../_internal/overlay';
 import styles from './Tooltip.module.scss';
 
 /** Which side of the trigger the tooltip prefers. Floating UI auto-flips if it doesn't fit. */
@@ -253,10 +254,22 @@ export function Tooltip({
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
   }, [open, cancelPendingOpen, setOpen]);
 
+  // Register as an open floating surface so a host Modal/Drawer yields the
+  // Escape that dismisses this tooltip (#281). The host's capture Escape
+  // listener runs first (it opened first), so `hasOpenFloating()` — not
+  // `consumeEscape` alone — is what actually saves the host on this press.
+  useFloatingSurface(open);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // WCAG 1.4.13: Escape dismisses the tooltip. preventDefault + consume
+        // (contract symmetry with the other floating surfaces) so a host that
+        // already ran its listener still yields the press (the reverse-order
+        // fallback; the registration above covers the common order).
+        e.preventDefault();
+        overlayStack.consumeEscape(e);
         cancelPendingOpen();
         setOpen(false);
       }

@@ -8,6 +8,7 @@ import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
 import { Modal } from '../../Modal';
 import { Popover } from '../../Popover';
+import { Tooltip } from '../../Tooltip';
 import { DropdownMenu } from '../../DropdownMenu';
 import { DatePicker } from '../../DatePicker';
 import { DateRangePicker } from '../../DateRangePicker';
@@ -59,6 +60,32 @@ describe('Escape yield contract per surface (#274)', () => {
     expect(screen.queryByText('Panel body')).toBeNull();
     expect(dialogOpen()).toBe(true);
     await user.keyboard('{Escape}');
+    expect(dialogOpen()).toBe(false);
+  });
+
+  it('Tooltip: first Escape dismisses the tooltip, second closes the modal (#281)', () => {
+    render(
+      <Host>
+        <Tooltip content="Tip" delay={0}>
+          <Button>Info</Button>
+        </Tooltip>
+      </Host>,
+    );
+    // Open via hover (delay 0) — avoids the :focus-visible gate; the Escape
+    // handling under test is identical however it opened.
+    act(() => {
+      fireEvent.pointerEnter(screen.getByRole('button', { name: 'Info' }));
+    });
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Tip');
+    // First Escape: the host's capture listener runs first but yields because
+    // the tooltip is a registered floating surface (useFloatingSurface) — so the
+    // tooltip dismisses and the modal survives. (Deleting the registration would
+    // close the modal here.)
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(dialogOpen()).toBe(true);
+    // Second Escape: nothing floating left → the modal closes.
+    fireEvent.keyDown(document, { key: 'Escape' });
     expect(dialogOpen()).toBe(false);
   });
 
