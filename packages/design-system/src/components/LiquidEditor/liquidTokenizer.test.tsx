@@ -1,4 +1,4 @@
-import { tokenize } from './liquidTokenizer';
+import { tokenize, unknownVariables } from './liquidTokenizer';
 
 function types(source: string, known?: string[]) {
   return tokenize(source, known ? new Set(known) : undefined)
@@ -99,5 +99,54 @@ describe('tokenize', () => {
         .map((t) => t.value)
         .join(''),
     ).toBe('{{ name');
+  });
+});
+
+describe('dotted known codes (#304)', () => {
+  const KNOWN = new Set(['event.type', 'record.title', 'first_name']);
+
+  it('does not flag a reference whose root matches a dotted code root', () => {
+    const tokens = tokenize('{{ event.type }}', KNOWN);
+    expect(tokens.find((t) => t.value === 'event')?.type).toBe('variable');
+    expect(unknownVariables('{{ event.type }}', KNOWN)).toEqual([]);
+  });
+
+  it('any event.* reference is accepted once an event.* code exists', () => {
+    expect(unknownVariables('{{ event.other }}', KNOWN)).toEqual([]);
+  });
+
+  it('still flags an unknown root', () => {
+    expect(unknownVariables('{{ bogus.thing }}', KNOWN)).toEqual(['bogus']);
+    expect(tokenize('{{ bogus }}', KNOWN).find((t) => t.value === 'bogus')?.type).toBe('unknown');
+  });
+
+  it('flat codes keep working', () => {
+    expect(unknownVariables('{{ first_name }}', KNOWN)).toEqual([]);
+  });
+
+  it('dotted segments after the root stay unchecked', () => {
+    const tokens = tokenize('{{ event.zzz }}', KNOWN);
+    expect(tokens.find((t) => t.value === 'zzz')?.type).toBe('variable');
+  });
+});
+
+describe('for-loop variables (#304)', () => {
+  const KNOWN = new Set(['record.associations']);
+
+  it('does not flag the loop variable declared by a for tag', () => {
+    const src = '{% for item in record.associations %}{{ item }}{% endfor %}';
+    expect(unknownVariables(src, KNOWN)).toEqual([]);
+    // The loop variable is typed 'variable' everywhere, including inside {{ }}.
+    expect(tokenize(src, KNOWN).every((t) => t.type !== 'unknown')).toBe(true);
+  });
+
+  it('still flags {{ item }} used BEFORE any for-tag declares it', () => {
+    const src = '{{ item }}{% for item in record.associations %}{% endfor %}';
+    expect(unknownVariables(src, KNOWN)).toEqual(['item']);
+  });
+
+  it('still flags a genuinely unknown root inside the loop body', () => {
+    const src = '{% for item in record.associations %}{{ bogus }}{% endfor %}';
+    expect(unknownVariables(src, KNOWN)).toEqual(['bogus']);
   });
 });

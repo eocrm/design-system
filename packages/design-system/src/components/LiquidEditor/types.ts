@@ -10,6 +10,19 @@ export interface LiquidVariable {
   type?: string;
   /** Optional group header that sections the picker + autocomplete. */
   group?: string;
+  /**
+   * Optional human description. Surfaces as a second muted line in the insert
+   * menu and autocomplete suggestions, and in the footer when the caret sits
+   * on this variable's reference.
+   */
+  description?: string;
+  /**
+   * Marks an array/collection variable meant to be iterated, not interpolated.
+   * The insert menu drops a `{% for item in code %}{{ item }}{% endfor %}`
+   * snippet instead of `{{ code }}`, and menus show a muted "list" tag.
+   * Default `false`.
+   */
+  collection?: boolean;
 }
 
 /** Drives the preview pane chrome. */

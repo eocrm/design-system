@@ -13,7 +13,12 @@ export interface AutocompleteContext {
   wordStart: number;
 }
 
-const IDENT_CHAR = /[A-Za-z0-9_]/;
+// #304: the QUERY walk includes dots so a dotted code ("event.type") matches
+// while the user types past the root. Only the walk-back + validity check
+// use it — tokenization/filter detection are unaffected. Exported so callers
+// that need to walk the same "variable reference" word (e.g. the footer's
+// caret-variable lookup) share one definition instead of a second literal.
+export const QUERY_CHAR = /[A-Za-z0-9_.]/;
 
 /**
  * Inspect the value + caret and decide if/what to autocomplete. Returns null
@@ -35,9 +40,9 @@ export function getAutocompleteContext(value: string, caret: number): Autocomple
 
   // Walk back from the caret over identifier chars to get the current word.
   let wordStart = caret;
-  while (wordStart > open + 2 && IDENT_CHAR.test(value[wordStart - 1])) wordStart -= 1;
+  while (wordStart > open + 2 && QUERY_CHAR.test(value[wordStart - 1])) wordStart -= 1;
   const query = value.slice(wordStart, caret);
-  if (/[^A-Za-z0-9_]/.test(query)) return null;
+  if (/[^A-Za-z0-9_.]/.test(query)) return null;
 
   // Look back (skipping spaces) for a `|` → filter context.
   let j = wordStart - 1;
@@ -73,6 +78,10 @@ export interface AutocompleteItem {
   type?: string;
   /** Optional group header (variables only). */
   group?: string;
+  /** Optional description shown as a muted second line (variables only). */
+  description?: string;
+  /** Collection flag → "list" tag (variables only). */
+  collection?: boolean;
 }
 
 export interface UseLiquidAutocompleteArgs {
@@ -118,6 +127,8 @@ export function useLiquidAutocomplete({ variables, filters, enabled }: UseLiquid
         label: v.label ?? v.code,
         type: v.type,
         group: v.group,
+        description: v.description,
+        collection: v.collection,
       })),
     [variables],
   );

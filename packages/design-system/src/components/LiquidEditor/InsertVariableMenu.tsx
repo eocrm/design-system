@@ -2,18 +2,21 @@ import { DropdownMenu } from '../DropdownMenu';
 import { Button } from '../Button';
 import { useTranslation } from '../../i18n';
 import type { LiquidVariable } from './types';
+import styles from './LiquidEditor.module.scss';
 
 export interface InsertVariableMenuProps {
   /** Variables offered in the menu, grouped by `group` in first-seen order. */
   variables: LiquidVariable[];
   /** Disable the trigger (read-only / disabled editor). */
   disabled?: boolean;
-  /** Called with the chosen variable's `code` when an item is selected. */
-  onInsert: (code: string) => void;
+  /** Called with the chosen variable when an item is selected. */
+  onInsert: (variable: LiquidVariable) => void;
 }
 
 /**
- * Toolbar menu that inserts `{{ code }}` at the caret. Groups variables by their
+ * Toolbar menu that inserts `{{ code }}` at the caret — or, for a collection
+ * variable (`collection: true`), a `{% for item in code %}{{ item }}{% endfor %}`
+ * snippet with the caret left after `{{ item }}`. Groups variables by their
  * `group` field (first-seen order) under section labels; ungrouped variables
  * render without a label. Shows an empty-state label when there are none.
  */
@@ -46,11 +49,25 @@ export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVari
           groups.map((group, gi) => (
             <DropdownMenu.Group key={group.name ?? `g${gi}`}>
               {group.name ? <DropdownMenu.Label>{group.name}</DropdownMenu.Label> : null}
-              {group.items.map((v) => (
-                <DropdownMenu.Item key={v.code} onSelect={() => onInsert(v.code)}>
-                  {v.label ?? v.code}
-                </DropdownMenu.Item>
-              ))}
+              {group.items.map((v) => {
+                const tags = [v.collection ? t('liquidEditor.collectionTag') : null, v.type]
+                  .filter(Boolean)
+                  .join(' · ');
+                return (
+                  <DropdownMenu.Item
+                    key={v.code}
+                    onSelect={() => onInsert(v)}
+                    shortcut={tags || undefined}
+                  >
+                    <span className={styles.menuItemMain}>
+                      <span>{v.label ?? v.code}</span>
+                      {v.description ? (
+                        <span className={styles.menuItemDesc}>{v.description}</span>
+                      ) : null}
+                    </span>
+                  </DropdownMenu.Item>
+                );
+              })}
             </DropdownMenu.Group>
           ))
         )}

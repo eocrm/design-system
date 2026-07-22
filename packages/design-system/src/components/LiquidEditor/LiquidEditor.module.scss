@@ -204,6 +204,13 @@
   font-size: var(--font-size-sm);
 }
 
+// Info variant (#304) — the neutral caret-description footer, not an error.
+.footerInfo {
+  background: var(--liquid-editor-footer-info-bg);
+  color: var(--liquid-editor-footer-info-fg);
+  border-top-color: var(--liquid-editor-footer-info-border-color);
+}
+
 // ─── Preview pane ─────────────────────────────────────────────────────────────
 .preview {
   background: var(--liquid-editor-preview-bg);
@@ -278,4 +285,20 @@
   color: var(--color-fg-subtle);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
+}
+
+.menuItemMain {
+  display: flex;
+  flex-direction: column;
+}
+
+.menuItemDesc {
+  color: var(--color-fg-subtle);
+  font-size: var(--font-size-xs);
+}
+
+.menuItemTags {
+  display: inline-flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
 }

@@ -34,6 +34,12 @@
   // (which is the on-solid white). Pairs legibly with the subtle bg above.
   --liquid-editor-footer-fg: var(--color-danger);
 
+  // Footer info variant (#304) — the neutral caret-description line
+  // (`label — description`), not an error, so neutral surface/text/border.
+  --liquid-editor-footer-info-bg: var(--color-bg-muted);
+  --liquid-editor-footer-info-fg: var(--color-fg-muted);
+  --liquid-editor-footer-info-border-color: var(--color-border);
+
   // Preview pane
   --liquid-editor-preview-bg: var(--color-success-bg-subtle);
   --liquid-editor-preview-fg: var(--color-success);

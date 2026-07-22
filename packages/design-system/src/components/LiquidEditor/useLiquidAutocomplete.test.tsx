@@ -38,3 +38,31 @@ describe('applyCompletion', () => {
     expect(result.caret).toBe('{{ name | upcase'.length);
   });
 });
+
+describe('dotted queries (#304)', () => {
+  it('query spans the dotted path', () => {
+    const v = '{{ event.ty';
+    const ctx = getAutocompleteContext(v, v.length);
+    expect(ctx).toEqual({ kind: 'variable', query: 'event.ty', wordStart: 3 });
+  });
+
+  it('trailing dot keeps the prefix as query', () => {
+    const v = '{{ event.';
+    const ctx = getAutocompleteContext(v, v.length);
+    expect(ctx?.query).toBe('event.');
+    expect(ctx?.wordStart).toBe(3);
+  });
+
+  it('accepting a dotted completion replaces the whole dotted prefix', () => {
+    const v = '{{ event.ty }}';
+    const caret = '{{ event.ty'.length;
+    const ctx = getAutocompleteContext(v, caret)!;
+    const r = applyCompletion(v, caret, ctx, 'event.type');
+    expect(r.value).toBe('{{ event.type }}');
+  });
+
+  it('filter context after | is unaffected', () => {
+    const v = '{{ x | upc';
+    expect(getAutocompleteContext(v, v.length)?.kind).toBe('filter');
+  });
+});

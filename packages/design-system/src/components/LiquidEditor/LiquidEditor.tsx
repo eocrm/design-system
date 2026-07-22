@@ -18,8 +18,13 @@ import { HighlightLayer } from './HighlightLayer';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { InsertVariableMenu } from './InsertVariableMenu';
 import { PreviewPane } from './PreviewPane';
-import { useLiquidAutocomplete, applyCompletion } from './useLiquidAutocomplete';
-import type { LiquidEditorProps } from './types';
+import {
+  useLiquidAutocomplete,
+  applyCompletion,
+  getAutocompleteContext,
+  QUERY_CHAR,
+} from './useLiquidAutocomplete';
+import type { LiquidEditorProps, LiquidVariable } from './types';
 import styles from './LiquidEditor.module.scss';
 
 // Keys the autocomplete menu owns while open — handled in keyDown, so key-up
@@ -43,6 +48,19 @@ const MENU_NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape']
  *   { code: 'last_name', label: 'Last name', type: 'text', group: 'Built-in' },
  * ];
  * <LiquidEditor value={formula} onChange={setFormula} variables={VARS} />
+ *
+ * @example
+ * // Grouped/dotted palette with descriptions and a collection variable.
+ * const VARS = [
+ *   { code: 'event.type', label: 'Event type', group: 'Event',
+ *     description: 'The journal event type' },
+ *   { code: 'record.associations', label: 'Associations', group: 'Record',
+ *     collection: true, description: "The record's links — iterate with for" },
+ * ];
+ * // {{ event.type }} is known (root "event" matches), the insert menu drops a
+ * // {% for %} snippet for Associations, and the footer explains the variable
+ * // under the caret.
+ * <LiquidEditor value={tpl} onChange={setTpl} variables={VARS} />
  *
  * @example
  * // With a debounced backend preview.
@@ -152,6 +170,24 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
 
     const [anchorRect, setAnchorRect] = useState({ top: 0, left: 0, height: 0, width: 0 });
 
+    // #304: the known variable whose reference the caret sits on (exact
+    // dotted-path match only) — drives the footer description line.
+    const [caretVar, setCaretVar] = useState<LiquidVariable | null>(null);
+
+    const resolveCaretVar = useCallback(
+      (nextValue: string, caret: number): LiquidVariable | null => {
+        const ctx = getAutocompleteContext(nextValue, caret);
+        // Only variable positions describe a variable — a caret after `|` is
+        // naming a filter, even if the word happens to match a variable code.
+        if (!ctx || ctx.kind !== 'variable') return null;
+        let end = caret;
+        while (end < nextValue.length && QUERY_CHAR.test(nextValue[end])) end += 1;
+        const word = nextValue.slice(ctx.wordStart, end);
+        return variables.find((v) => v.code === word && v.description) ?? null;
+      },
+      [variables],
+    );
+
     // After an explicit dismiss (Escape) or accept, suppress re-opening the menu
     // at the SAME caret/value signature — otherwise the trailing keyUp (or the
     // post-commit refresh) would immediately reopen it on a still-matching word.
@@ -176,6 +212,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
 
     const refresh = useCallback(
       (nextValue: string, caret: number) => {
+        setCaretVar(resolveCaretVar(nextValue, caret));
         // Honor an active dismissal: don't reopen at the same signature.
         if (dismissedSigRef.current === `${caret}:${nextValue}`) {
           updateAnchor();
@@ -185,7 +222,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
         recompute(nextValue, caret);
         updateAnchor();
       },
-      [recompute, updateAnchor],
+      [recompute, updateAnchor, resolveCaretVar],
     );
 
     // Auto-resize like Textarea: clamp height between minRows and maxRows.
@@ -232,13 +269,18 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
     );
 
     const insertVariable = useCallback(
-      (code: string) => {
+      (variable: LiquidVariable) => {
         const ta = textareaRef.current;
-        const snippet = `{{ ${code} }}`;
+        // Collections iterate — insert a for-loop with the caret right after
+        // `{{ item }}` (the spot the user edits next: `item.name`, separators).
+        const head = variable.collection
+          ? `{% for item in ${variable.code} %}{{ item }}`
+          : `{{ ${variable.code} }}`;
+        const snippet = variable.collection ? `${head}{% endfor %}` : head;
         const start = ta?.selectionStart ?? value.length;
         const end = ta?.selectionEnd ?? value.length;
         const next = value.slice(0, start) + snippet + value.slice(end);
-        commit(next, start + snippet.length);
+        commit(next, start + head.length);
         ta?.focus();
       },
       [value, commit],
@@ -297,11 +339,19 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
 
     const activeOptionId = ac.open ? `${listboxId}-opt-${ac.activeIndex}` : undefined;
     const hasPreview = preview !== undefined || previewStatus !== 'idle';
-    const footer =
+    // Error/warning first; the neutral caret description (info tone) only when
+    // there's nothing to warn about.
+    const footerWarning =
       error ??
       (unknowns.length > 0 ? t('liquidEditor.unknownVariable', { name: unknowns[0] }) : null);
-    // Associate the footer description (error / unknown-variable warning) with
-    // the textarea, merged with any consumer-supplied `aria-describedby`.
+    const footer =
+      footerWarning ??
+      (caretVar?.description
+        ? `${caretVar.label ?? caretVar.code} — ${caretVar.description}`
+        : null);
+    const footerIsInfo = footerWarning == null && footer != null;
+    // Associate the footer line (error / unknown-variable warning / caret-variable
+    // description) with the textarea, merged with any consumer `aria-describedby`.
     const describedBy =
       [aria['aria-describedby'], footer != null ? footerId : null].filter(Boolean).join(' ') ||
       undefined;
@@ -379,7 +429,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
           </div>
         </div>
         {footer ? (
-          <div id={footerId} className={styles.footer}>
+          <div id={footerId} className={clsx(styles.footer, footerIsInfo && styles.footerInfo)}>
             {footer}
           </div>
         ) : null}

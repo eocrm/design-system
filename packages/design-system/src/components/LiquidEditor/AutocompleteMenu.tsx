@@ -111,8 +111,18 @@ export function AutocompleteMenu({
                 onSelect(item, idx);
               }}
             >
-              <span>{item.label}</span>
-              {item.type ? <span className={styles.menuItemType}>{item.type}</span> : null}
+              <span className={styles.menuItemMain}>
+                <span>{item.label}</span>
+                {item.description ? (
+                  <span className={styles.menuItemDesc}>{item.description}</span>
+                ) : null}
+              </span>
+              <span className={styles.menuItemTags}>
+                {item.collection ? (
+                  <span className={styles.menuItemType}>{t('liquidEditor.collectionTag')}</span>
+                ) : null}
+                {item.type ? <span className={styles.menuItemType}>{item.type}</span> : null}
+              </span>
             </div>
           </li>
         );

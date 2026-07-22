@@ -393,6 +393,8 @@ export interface Messages {
     editorLabel: string;
     /** aria-label on the autocomplete suggestion listbox. */
     suggestions: string;
+    /** Muted tag marking a collection (array) variable in menus. */
+    collectionTag: string;
   };
   richTextEditor: {
     /** Default aria-label for the editable region when none is supplied. */

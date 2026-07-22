@@ -242,6 +242,7 @@ export const ru: Messages = {
     unknownVariable: ({ name }) => `Неизвестная переменная «${name}»`,
     editorLabel: 'Шаблон Liquid',
     suggestions: 'Подсказки',
+    collectionTag: 'список',
   },
   richTextEditor: {
     editorLabel: 'Редактор форматированного текста',

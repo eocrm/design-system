@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState, type ReactElement } from 'react';
 import { LiquidEditor } from './LiquidEditor';
@@ -153,7 +153,9 @@ describe('LiquidEditor', () => {
     const user = userEvent.setup();
     renderEditor(<Harness />);
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'First name' }));
+    // Exact match would break now that the "text" type tag rides the item's
+    // trailing shortcut slot and folds into its accessible name.
+    await user.click(await screen.findByRole('menuitem', { name: /First name/ }));
     // Caret restore after the controlled onChange runs in a requestAnimationFrame;
     // findBy retries until the value settles.
     const ta = screen.getByRole('combobox');
@@ -292,5 +294,168 @@ describe('LiquidEditor', () => {
       />,
     );
     expect(screen.queryByRole('button', { name: 'Docs' })).not.toBeInTheDocument();
+  });
+});
+
+describe('descriptions + collection tag in autocomplete (#304)', () => {
+  const VARS: LiquidVariable[] = [
+    { code: 'event.type', label: 'Event type', description: 'The journal event type' },
+    { code: 'record.associations', label: 'Associations', collection: true },
+  ];
+
+  it('renders the description as a second line in suggestions', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ ');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByText('The journal event type')).toBeInTheDocument();
+  });
+
+  it('renders a "list" tag for collection variables', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ ');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByText('list')).toBeInTheDocument();
+  });
+});
+
+describe('insert menu with grouped palette (#304)', () => {
+  const VARS = [
+    { code: 'event.type', label: 'Event type', description: 'The journal event type' },
+    { code: 'record.associations', label: 'Associations', collection: true },
+  ];
+
+  it('inserts a for-loop snippet for collection variables, caret after {{ item }}', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    // A controlled harness (not a bare onChange spy) so the caret-restore rAF
+    // — which reads the DOM textarea after React re-renders with the new
+    // controlled value — has an actual value change to restore the caret on.
+    function Controlled() {
+      const [value, setValue] = useState('');
+      return (
+        <LiquidEditor
+          value={value}
+          onChange={(next) => {
+            onChange(next);
+            setValue(next);
+          }}
+          variables={VARS}
+        />
+      );
+    }
+    render(<Controlled />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await user.click(screen.getByRole('menuitem', { name: /Associations/ }));
+    const expected = '{% for item in record.associations %}{{ item }}{% endfor %}';
+    expect(onChange).toHaveBeenCalledWith(expected);
+    // Caret restore after the controlled onChange runs in a requestAnimationFrame
+    // (same pattern as "exposes the variable-insert menu and inserts at the end");
+    // findByDisplayValue retries until the value has settled, but the rAF that
+    // restores the caret can still be pending at that instant (a controlled
+    // <textarea>'s value-assignment resets the DOM caret to the end until the
+    // rAF runs) — waitFor keeps polling past that gap.
+    const ta = (await screen.findByDisplayValue(expected)) as HTMLTextAreaElement;
+    await waitFor(() => {
+      expect(ta.selectionStart).toBe('{% for item in record.associations %}{{ item }}'.length);
+    });
+  });
+
+  it('inserts {{ code }} for non-collection variables', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<LiquidEditor value="" onChange={onChange} variables={VARS} />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await user.click(screen.getByRole('menuitem', { name: /Event type/ }));
+    expect(onChange).toHaveBeenCalledWith('{{ event.type }}');
+  });
+
+  it('shows the description line in the insert menu', async () => {
+    const user = userEvent.setup();
+    render(<LiquidEditor value="" onChange={() => {}} variables={VARS} />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    expect(screen.getByText('The journal event type')).toBeInTheDocument();
+  });
+
+  it('does not flag its own for-loop snippet as an unknown variable', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await user.click(screen.getByRole('menuitem', { name: /Associations/ }));
+    await screen.findByDisplayValue('{% for item in record.associations %}{{ item }}{% endfor %}');
+    expect(screen.queryByText(/Unknown variable/)).not.toBeInTheDocument();
+  });
+});
+
+describe('footer caret description (#304)', () => {
+  const VARS: LiquidVariable[] = [
+    { code: 'event.type', label: 'Event type', description: 'The journal event type' },
+  ];
+
+  it('shows label — description when the caret is inside the reference', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ event.type');
+    expect(await screen.findByText('Event type — The journal event type')).toBeInTheDocument();
+  });
+
+  it('unknown-variable warning wins over the description', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ bogus }}}} {{{{ event.type');
+    expect(screen.getByText('Unknown variable "bogus"')).toBeInTheDocument();
+    expect(screen.queryByText('Event type — The journal event type')).toBeNull();
+  });
+
+  it('the error prop wins over the description', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} error="Liquid syntax error" />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ event.type');
+    expect(screen.getByText('Liquid syntax error')).toBeInTheDocument();
+    expect(screen.queryByText('Event type — The journal event type')).toBeNull();
+  });
+
+  it('hides the description when the caret moves out of the reference', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ event.type');
+    expect(await screen.findByText('Event type — The journal event type')).toBeInTheDocument();
+    // Close the tag and keep typing — the caret is now past the reference.
+    await user.type(ta, ' }}}} and more');
+    expect(screen.queryByText('Event type — The journal event type')).toBeNull();
+  });
+
+  it('styles the description footer as info, not danger', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ event.type');
+    const footer = await screen.findByText('Event type — The journal event type');
+    expect(footer.className).toMatch(/footerInfo/);
+  });
+
+  it('does NOT style the unknown-variable warning as info', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ bogus');
+    const footer = screen.getByText('Unknown variable "bogus"');
+    expect(footer.className).not.toMatch(/footerInfo/);
+    expect(footer.className).toMatch(/footer/);
   });
 });
