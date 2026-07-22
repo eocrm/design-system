@@ -22,6 +22,7 @@ import {
   useLiquidAutocomplete,
   applyCompletion,
   getAutocompleteContext,
+  QUERY_CHAR,
 } from './useLiquidAutocomplete';
 import type { LiquidEditorProps, LiquidVariable } from './types';
 import styles from './LiquidEditor.module.scss';
@@ -47,6 +48,19 @@ const MENU_NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape']
  *   { code: 'last_name', label: 'Last name', type: 'text', group: 'Built-in' },
  * ];
  * <LiquidEditor value={formula} onChange={setFormula} variables={VARS} />
+ *
+ * @example
+ * // Grouped/dotted palette with descriptions and a collection variable.
+ * const VARS = [
+ *   { code: 'event.type', label: 'Event type', group: 'Event',
+ *     description: 'The journal event type' },
+ *   { code: 'record.associations', label: 'Associations', group: 'Record',
+ *     collection: true, description: "The record's links — iterate with for" },
+ * ];
+ * // {{ event.type }} is known (root "event" matches), the insert menu drops a
+ * // {% for %} snippet for Associations, and the footer explains the variable
+ * // under the caret.
+ * <LiquidEditor value={tpl} onChange={setTpl} variables={VARS} />
  *
  * @example
  * // With a debounced backend preview.
@@ -165,7 +179,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
         const ctx = getAutocompleteContext(nextValue, caret);
         if (!ctx) return null;
         let end = caret;
-        while (end < nextValue.length && /[A-Za-z0-9_.]/.test(nextValue[end])) end += 1;
+        while (end < nextValue.length && QUERY_CHAR.test(nextValue[end])) end += 1;
         const word = nextValue.slice(ctx.wordStart, end);
         return variables.find((v) => v.code === word && v.description) ?? null;
       },

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState, type ReactElement } from 'react';
 import { LiquidEditor } from './LiquidEditor';
@@ -333,12 +333,37 @@ describe('insert menu with grouped palette (#304)', () => {
   it('inserts a for-loop snippet for collection variables, caret after {{ item }}', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<LiquidEditor value="" onChange={onChange} variables={VARS} />);
+    // A controlled harness (not a bare onChange spy) so the caret-restore rAF
+    // — which reads the DOM textarea after React re-renders with the new
+    // controlled value — has an actual value change to restore the caret on.
+    function Controlled() {
+      const [value, setValue] = useState('');
+      return (
+        <LiquidEditor
+          value={value}
+          onChange={(next) => {
+            onChange(next);
+            setValue(next);
+          }}
+          variables={VARS}
+        />
+      );
+    }
+    render(<Controlled />);
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
     await user.click(screen.getByRole('menuitem', { name: /Associations/ }));
-    expect(onChange).toHaveBeenCalledWith(
-      '{% for item in record.associations %}{{ item }}{% endfor %}',
-    );
+    const expected = '{% for item in record.associations %}{{ item }}{% endfor %}';
+    expect(onChange).toHaveBeenCalledWith(expected);
+    // Caret restore after the controlled onChange runs in a requestAnimationFrame
+    // (same pattern as "exposes the variable-insert menu and inserts at the end");
+    // findByDisplayValue retries until the value has settled, but the rAF that
+    // restores the caret can still be pending at that instant (a controlled
+    // <textarea>'s value-assignment resets the DOM caret to the end until the
+    // rAF runs) — waitFor keeps polling past that gap.
+    const ta = (await screen.findByDisplayValue(expected)) as HTMLTextAreaElement;
+    await waitFor(() => {
+      expect(ta.selectionStart).toBe('{% for item in record.associations %}{{ item }}'.length);
+    });
   });
 
   it('inserts {{ code }} for non-collection variables', async () => {

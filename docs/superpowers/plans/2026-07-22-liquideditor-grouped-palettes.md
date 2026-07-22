@@ -21,10 +21,12 @@
 ### Task 1: Tokenizer — root-set membership for dotted codes
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/LiquidEditor/liquidTokenizer.ts`
 - Test: `packages/design-system/src/components/LiquidEditor/liquidTokenizer.test.tsx`
 
 **Interfaces:**
+
 - Consumes: nothing new.
 - Produces: `tokenize(source, knownCodes?)` and `unknownVariables(source, knownCodes)` unchanged signatures; semantics change — a root identifier is known when it matches the FIRST dotted segment of any known code.
 
@@ -68,19 +70,17 @@ Expected: FAIL — `event` typed `unknown` (roots not derived).
 - [ ] **Step 3: Implement** — in `liquidTokenizer.ts`, inside `tokenize`, derive roots once (after the `hasKnown` line):
 
 ```ts
-  const hasKnown = knownCodes !== undefined && knownCodes.size > 0;
-  // #304: `code` is a PATH — "event.type" makes the ROOT `event` known. A
-  // reference is checked by its root identifier only, so membership is
-  // tested against the set of first dotted segments.
-  const knownRoots = hasKnown
-    ? new Set([...knownCodes!].map((c) => c.split('.')[0]))
-    : undefined;
+const hasKnown = knownCodes !== undefined && knownCodes.size > 0;
+// #304: `code` is a PATH — "event.type" makes the ROOT `event` known. A
+// reference is checked by its root identifier only, so membership is
+// tested against the set of first dotted segments.
+const knownRoots = hasKnown ? new Set([...knownCodes!].map((c) => c.split('.')[0])) : undefined;
 ```
 
 and change the unknown check to use it:
 
 ```ts
-          const unknown = hasKnown && !seenValue && !knownRoots!.has(word);
+const unknown = hasKnown && !seenValue && !knownRoots!.has(word);
 ```
 
 `unknownVariables` needs no change (it delegates to `tokenize`). Update the `@param knownCodes` JSDoc on `tokenize` to say roots are derived from dotted codes.
@@ -102,10 +102,12 @@ git commit -m "fix(LiquidEditor): dotted variable codes no longer false-flag as 
 ### Task 2: Autocomplete context — dotted query word-walk
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/LiquidEditor/useLiquidAutocomplete.ts`
 - Test: `packages/design-system/src/components/LiquidEditor/useLiquidAutocomplete.test.tsx`
 
 **Interfaces:**
+
 - Consumes: nothing new.
 - Produces: `getAutocompleteContext(value, caret)` — `query` may now contain dots and `wordStart` spans the whole dotted prefix. `applyCompletion` unchanged.
 
@@ -159,10 +161,10 @@ const QUERY_CHAR = /[A-Za-z0-9_.]/;
 ```
 
 ```ts
-  let wordStart = caret;
-  while (wordStart > open + 2 && QUERY_CHAR.test(value[wordStart - 1])) wordStart -= 1;
-  const query = value.slice(wordStart, caret);
-  if (/[^A-Za-z0-9_.]/.test(query)) return null;
+let wordStart = caret;
+while (wordStart > open + 2 && QUERY_CHAR.test(value[wordStart - 1])) wordStart -= 1;
+const query = value.slice(wordStart, caret);
+if (/[^A-Za-z0-9_.]/.test(query)) return null;
 ```
 
 - [ ] **Step 4: Run to verify pass**
@@ -182,6 +184,7 @@ git commit -m "feat(LiquidEditor): autocomplete matches dotted variable codes (#
 ### Task 3: Types + i18n + autocomplete menu description/tag
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/LiquidEditor/types.ts`
 - Modify: `packages/design-system/src/i18n/messages.ts`, `packages/design-system/src/i18n/en.ts`, `packages/design-system/src/i18n/ru.ts`
 - Modify: `packages/design-system/src/components/LiquidEditor/useLiquidAutocomplete.ts` (AutocompleteItem plumbing)
@@ -190,6 +193,7 @@ git commit -m "feat(LiquidEditor): autocomplete matches dotted variable codes (#
 - Test: `packages/design-system/src/components/LiquidEditor/LiquidEditor.test.tsx`
 
 **Interfaces:**
+
 - Consumes: nothing new.
 - Produces: `LiquidVariable.description?: string`, `LiquidVariable.collection?: boolean`; `AutocompleteItem.description?: string`, `AutocompleteItem.collection?: boolean`; i18n key `liquidEditor.collectionTag`; SCSS classes `.menuItemMain`, `.menuItemDesc`. Task 4 and 5 rely on the two new `LiquidVariable` props and the i18n key.
 
@@ -254,8 +258,8 @@ Expected: FAIL — description / tag not rendered.
 `messages.ts` — inside the `liquidEditor` block:
 
 ```ts
-    /** Muted tag marking a collection (array) variable in menus. */
-    collectionTag: string;
+/** Muted tag marking a collection (array) variable in menus. */
+collectionTag: string;
 ```
 
 `en.ts`: `collectionTag: 'list',` — `ru.ts`: `collectionTag: 'список',`
@@ -336,12 +340,14 @@ git commit -m "feat(LiquidEditor): variable descriptions + collection tag in aut
 ### Task 4: Insert menu — description line, tag, and collection loop insert
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/LiquidEditor/InsertVariableMenu.tsx`
 - Modify: `packages/design-system/src/components/LiquidEditor/LiquidEditor.tsx` (`insertVariable`)
 - Modify: `packages/design-system/src/components/LiquidEditor/LiquidEditor.module.scss` (reuses Task 3 classes; add nothing new unless needed)
 - Test: `packages/design-system/src/components/LiquidEditor/LiquidEditor.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `LiquidVariable.description` / `.collection`, i18n `liquidEditor.collectionTag` (Task 3).
 - Produces: `InsertVariableMenuProps.onInsert: (variable: LiquidVariable) => void` (was `(code: string)`; internal component, not exported from the package).
 
@@ -404,25 +410,21 @@ export interface InsertVariableMenuProps {
 ```
 
 ```tsx
-              {group.items.map((v) => {
-                const tags = [v.collection ? t('liquidEditor.collectionTag') : null, v.type]
-                  .filter(Boolean)
-                  .join(' · ');
-                return (
-                  <DropdownMenu.Item
-                    key={v.code}
-                    onSelect={() => onInsert(v)}
-                    shortcut={tags || undefined}
-                  >
-                    <span className={styles.menuItemMain}>
-                      <span>{v.label ?? v.code}</span>
-                      {v.description ? (
-                        <span className={styles.menuItemDesc}>{v.description}</span>
-                      ) : null}
-                    </span>
-                  </DropdownMenu.Item>
-                );
-              })}
+{
+  group.items.map((v) => {
+    const tags = [v.collection ? t('liquidEditor.collectionTag') : null, v.type]
+      .filter(Boolean)
+      .join(' · ');
+    return (
+      <DropdownMenu.Item key={v.code} onSelect={() => onInsert(v)} shortcut={tags || undefined}>
+        <span className={styles.menuItemMain}>
+          <span>{v.label ?? v.code}</span>
+          {v.description ? <span className={styles.menuItemDesc}>{v.description}</span> : null}
+        </span>
+      </DropdownMenu.Item>
+    );
+  });
+}
 ```
 
 Add `import styles from './LiquidEditor.module.scss';` at the top.
@@ -430,23 +432,23 @@ Add `import styles from './LiquidEditor.module.scss';` at the top.
 `LiquidEditor.tsx` — `insertVariable` builds the snippet from the variable:
 
 ```tsx
-    const insertVariable = useCallback(
-      (variable: LiquidVariable) => {
-        const ta = textareaRef.current;
-        // Collections iterate — insert a for-loop with the caret right after
-        // `{{ item }}` (the spot the user edits next: `item.name`, separators).
-        const head = variable.collection
-          ? `{% for item in ${variable.code} %}{{ item }}`
-          : `{{ ${variable.code} }}`;
-        const snippet = variable.collection ? `${head}{% endfor %}` : head;
-        const start = ta?.selectionStart ?? value.length;
-        const end = ta?.selectionEnd ?? value.length;
-        const next = value.slice(0, start) + snippet + value.slice(end);
-        commit(next, start + head.length);
-        ta?.focus();
-      },
-      [value, commit],
-    );
+const insertVariable = useCallback(
+  (variable: LiquidVariable) => {
+    const ta = textareaRef.current;
+    // Collections iterate — insert a for-loop with the caret right after
+    // `{{ item }}` (the spot the user edits next: `item.name`, separators).
+    const head = variable.collection
+      ? `{% for item in ${variable.code} %}{{ item }}`
+      : `{{ ${variable.code} }}`;
+    const snippet = variable.collection ? `${head}{% endfor %}` : head;
+    const start = ta?.selectionStart ?? value.length;
+    const end = ta?.selectionEnd ?? value.length;
+    const next = value.slice(0, start) + snippet + value.slice(end);
+    commit(next, start + head.length);
+    ta?.focus();
+  },
+  [value, commit],
+);
 ```
 
 Add `import type { LiquidEditorProps, LiquidVariable } from './types';` (extend the existing type import).
@@ -468,10 +470,12 @@ git commit -m "feat(LiquidEditor): collection variables insert a for-loop; inser
 ### Task 5: Footer caret description
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/LiquidEditor/LiquidEditor.tsx`
 - Test: `packages/design-system/src/components/LiquidEditor/LiquidEditor.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `LiquidVariable.description` (Task 3), `getAutocompleteContext` (existing).
 - Produces: footer precedence `error` > unknown warning > caret description (`label — description`).
 
@@ -479,9 +483,7 @@ git commit -m "feat(LiquidEditor): collection variables insert a for-loop; inser
 
 ```tsx
 describe('footer caret description (#304)', () => {
-  const VARS = [
-    { code: 'event.type', label: 'Event type', description: 'The journal event type' },
-  ];
+  const VARS = [{ code: 'event.type', label: 'Event type', description: 'The journal event type' }];
 
   it('shows label — description when the caret is inside the reference', async () => {
     const user = userEvent.setup();
@@ -524,21 +526,21 @@ Expected: FAIL — description never in footer.
 State + lookup (near the other `useState` calls). The dotted word under the caret comes from `getAutocompleteContext` (whose query now spans dots, Task 2) extended FORWARD over query chars so a caret mid-word still resolves the whole path:
 
 ```tsx
-    // #304: the known variable whose reference the caret sits on (exact
-    // dotted-path match only) — drives the footer description line.
-    const [caretVar, setCaretVar] = useState<LiquidVariable | null>(null);
+// #304: the known variable whose reference the caret sits on (exact
+// dotted-path match only) — drives the footer description line.
+const [caretVar, setCaretVar] = useState<LiquidVariable | null>(null);
 
-    const resolveCaretVar = useCallback(
-      (nextValue: string, caret: number): LiquidVariable | null => {
-        const ctx = getAutocompleteContext(nextValue, caret);
-        if (!ctx) return null;
-        let end = caret;
-        while (end < nextValue.length && /[A-Za-z0-9_.]/.test(nextValue[end])) end += 1;
-        const word = nextValue.slice(ctx.wordStart, end);
-        return variables.find((v) => v.code === word && v.description) ?? null;
-      },
-      [variables],
-    );
+const resolveCaretVar = useCallback(
+  (nextValue: string, caret: number): LiquidVariable | null => {
+    const ctx = getAutocompleteContext(nextValue, caret);
+    if (!ctx) return null;
+    let end = caret;
+    while (end < nextValue.length && /[A-Za-z0-9_.]/.test(nextValue[end])) end += 1;
+    const word = nextValue.slice(ctx.wordStart, end);
+    return variables.find((v) => v.code === word && v.description) ?? null;
+  },
+  [variables],
+);
 ```
 
 Import `getAutocompleteContext` from `./useLiquidAutocomplete` (extend the existing import) and `LiquidVariable` from `./types` (done in Task 4).
@@ -546,35 +548,35 @@ Import `getAutocompleteContext` from `./useLiquidAutocomplete` (extend the exist
 In `refresh` (both branches — the dismissed-signature early return AND the normal path), record the caret variable:
 
 ```tsx
-    const refresh = useCallback(
-      (nextValue: string, caret: number) => {
-        setCaretVar(resolveCaretVar(nextValue, caret));
-        // Honor an active dismissal: don't reopen at the same signature.
-        if (dismissedSigRef.current === `${caret}:${nextValue}`) {
-          updateAnchor();
-          return;
-        }
-        dismissedSigRef.current = null;
-        recompute(nextValue, caret);
-        updateAnchor();
-      },
-      [recompute, updateAnchor, resolveCaretVar],
-    );
+const refresh = useCallback(
+  (nextValue: string, caret: number) => {
+    setCaretVar(resolveCaretVar(nextValue, caret));
+    // Honor an active dismissal: don't reopen at the same signature.
+    if (dismissedSigRef.current === `${caret}:${nextValue}`) {
+      updateAnchor();
+      return;
+    }
+    dismissedSigRef.current = null;
+    recompute(nextValue, caret);
+    updateAnchor();
+  },
+  [recompute, updateAnchor, resolveCaretVar],
+);
 ```
 
 Footer precedence — replace the `footer` computation:
 
 ```tsx
-    const footer =
-      error ??
-      (unknowns.length > 0
-        ? t('liquidEditor.unknownVariable', { name: unknowns[0] })
-        : caretVar?.description
-          ? `${caretVar.label ?? caretVar.code} — ${caretVar.description}`
-          : null);
+const footer =
+  error ??
+  (unknowns.length > 0
+    ? t('liquidEditor.unknownVariable', { name: unknowns[0] })
+    : caretVar?.description
+      ? `${caretVar.label ?? caretVar.code} — ${caretVar.description}`
+      : null);
 ```
 
-(The joined string mixes consumer-provided label + description — per Rule 9 the dynamic parts come from props, so no new i18n key is needed for the ` — ` join.)
+(The joined string mixes consumer-provided label + description — per Rule 9 the dynamic parts come from props, so no new i18n key is needed for the `—` join.)
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -593,10 +595,12 @@ git commit -m "feat(LiquidEditor): footer shows the caret variable's description
 ### Task 6: JSDoc example + AGENTS.md TL;DR
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/LiquidEditor/LiquidEditor.tsx` (component JSDoc)
 - Modify: `packages/design-system/AGENTS.md` (LiquidEditor section)
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: docs only.
 

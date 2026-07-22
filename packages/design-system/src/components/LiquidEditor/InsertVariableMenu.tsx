@@ -14,7 +14,9 @@ export interface InsertVariableMenuProps {
 }
 
 /**
- * Toolbar menu that inserts `{{ code }}` at the caret. Groups variables by their
+ * Toolbar menu that inserts `{{ code }}` at the caret — or, for a collection
+ * variable (`collection: true`), a `{% for item in code %}{{ item }}{% endfor %}`
+ * snippet with the caret left after `{{ item }}`. Groups variables by their
  * `group` field (first-seen order) under section labels; ungrouped variables
  * render without a label. Shows an empty-state label when there are none.
  */

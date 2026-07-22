@@ -77,9 +77,7 @@ export function tokenize(source: string, knownCodes?: ReadonlySet<string>): Liqu
   // #304: `code` is a PATH — "event.type" makes the ROOT `event` known. A
   // reference is checked by its root identifier only, so membership is
   // tested against the set of first dotted segments.
-  const knownRoots = hasKnown
-    ? new Set([...knownCodes!].map((c) => c.split('.')[0]))
-    : undefined;
+  const knownRoots = hasKnown ? new Set([...knownCodes!].map((c) => c.split('.')[0])) : undefined;
 
   const push = (type: LiquidTokenType, start: number, end: number) => {
     if (end > start) tokens.push({ type, value: source.slice(start, end), start, end });

@@ -15,8 +15,10 @@ export interface AutocompleteContext {
 
 // #304: the QUERY walk includes dots so a dotted code ("event.type") matches
 // while the user types past the root. Only the walk-back + validity check
-// use it — tokenization/filter detection are unaffected.
-const QUERY_CHAR = /[A-Za-z0-9_.]/;
+// use it — tokenization/filter detection are unaffected. Exported so callers
+// that need to walk the same "variable reference" word (e.g. the footer's
+// caret-variable lookup) share one definition instead of a second literal.
+export const QUERY_CHAR = /[A-Za-z0-9_.]/;
 
 /**
  * Inspect the value + caret and decide if/what to autocomplete. Returns null
