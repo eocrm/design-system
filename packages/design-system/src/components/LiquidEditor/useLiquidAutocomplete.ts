@@ -14,6 +14,10 @@ export interface AutocompleteContext {
 }
 
 const IDENT_CHAR = /[A-Za-z0-9_]/;
+// #304: the QUERY walk includes dots so a dotted code ("event.type") matches
+// while the user types past the root. Only the walk-back + validity check
+// use it — tokenization/filter detection are unaffected.
+const QUERY_CHAR = /[A-Za-z0-9_.]/;
 
 /**
  * Inspect the value + caret and decide if/what to autocomplete. Returns null
@@ -35,9 +39,9 @@ export function getAutocompleteContext(value: string, caret: number): Autocomple
 
   // Walk back from the caret over identifier chars to get the current word.
   let wordStart = caret;
-  while (wordStart > open + 2 && IDENT_CHAR.test(value[wordStart - 1])) wordStart -= 1;
+  while (wordStart > open + 2 && QUERY_CHAR.test(value[wordStart - 1])) wordStart -= 1;
   const query = value.slice(wordStart, caret);
-  if (/[^A-Za-z0-9_]/.test(query)) return null;
+  if (/[^A-Za-z0-9_.]/.test(query)) return null;
 
   // Look back (skipping spaces) for a `|` → filter context.
   let j = wordStart - 1;
