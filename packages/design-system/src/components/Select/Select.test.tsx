@@ -195,11 +195,11 @@ describe('Select — keyboard (single, non-searchable)', () => {
       // earlier would target the panel while it still sits at the document
       // origin and yank the window).
       await waitFor(() => expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' }));
-      expect(scrollSpy.mock.instances[0]).toBe(screen.getByRole('option', { name: 'Active' }));
+      expect(scrollSpy.mock.contexts[0]).toBe(screen.getByRole('option', { name: 'Active' }));
       scrollSpy.mockClear();
       await user.keyboard('{ArrowDown}'); // move within the open listbox
       await waitFor(() => expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' }));
-      expect(scrollSpy.mock.instances[0]).toBe(screen.getByRole('option', { name: 'Pending' }));
+      expect(scrollSpy.mock.contexts[0]).toBe(screen.getByRole('option', { name: 'Pending' }));
     } finally {
       if (original) proto.scrollIntoView = original;
       else delete proto.scrollIntoView;
