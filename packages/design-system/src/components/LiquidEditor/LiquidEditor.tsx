@@ -19,7 +19,7 @@ import { AutocompleteMenu } from './AutocompleteMenu';
 import { InsertVariableMenu } from './InsertVariableMenu';
 import { PreviewPane } from './PreviewPane';
 import { useLiquidAutocomplete, applyCompletion } from './useLiquidAutocomplete';
-import type { LiquidEditorProps } from './types';
+import type { LiquidEditorProps, LiquidVariable } from './types';
 import styles from './LiquidEditor.module.scss';
 
 // Keys the autocomplete menu owns while open — handled in keyDown, so key-up
@@ -232,13 +232,18 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
     );
 
     const insertVariable = useCallback(
-      (code: string) => {
+      (variable: LiquidVariable) => {
         const ta = textareaRef.current;
-        const snippet = `{{ ${code} }}`;
+        // Collections iterate — insert a for-loop with the caret right after
+        // `{{ item }}` (the spot the user edits next: `item.name`, separators).
+        const head = variable.collection
+          ? `{% for item in ${variable.code} %}{{ item }}`
+          : `{{ ${variable.code} }}`;
+        const snippet = variable.collection ? `${head}{% endfor %}` : head;
         const start = ta?.selectionStart ?? value.length;
         const end = ta?.selectionEnd ?? value.length;
         const next = value.slice(0, start) + snippet + value.slice(end);
-        commit(next, start + snippet.length);
+        commit(next, start + head.length);
         ta?.focus();
       },
       [value, commit],

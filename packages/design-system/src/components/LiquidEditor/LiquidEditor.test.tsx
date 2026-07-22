@@ -153,7 +153,9 @@ describe('LiquidEditor', () => {
     const user = userEvent.setup();
     renderEditor(<Harness />);
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'First name' }));
+    // Exact match would break now that the "text" type tag rides the item's
+    // trailing shortcut slot and folds into its accessible name.
+    await user.click(await screen.findByRole('menuitem', { name: /First name/ }));
     // Caret restore after the controlled onChange runs in a requestAnimationFrame;
     // findBy retries until the value settles.
     const ta = screen.getByRole('combobox');
@@ -319,5 +321,39 @@ describe('descriptions + collection tag in autocomplete (#304)', () => {
     await user.type(ta, '{{{{ ');
     expect(await screen.findByRole('listbox')).toBeInTheDocument();
     expect(screen.getByText('list')).toBeInTheDocument();
+  });
+});
+
+describe('insert menu with grouped palette (#304)', () => {
+  const VARS = [
+    { code: 'event.type', label: 'Event type', description: 'The journal event type' },
+    { code: 'record.associations', label: 'Associations', collection: true },
+  ];
+
+  it('inserts a for-loop snippet for collection variables, caret after {{ item }}', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<LiquidEditor value="" onChange={onChange} variables={VARS} />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await user.click(screen.getByRole('menuitem', { name: /Associations/ }));
+    expect(onChange).toHaveBeenCalledWith(
+      '{% for item in record.associations %}{{ item }}{% endfor %}',
+    );
+  });
+
+  it('inserts {{ code }} for non-collection variables', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<LiquidEditor value="" onChange={onChange} variables={VARS} />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await user.click(screen.getByRole('menuitem', { name: /Event type/ }));
+    expect(onChange).toHaveBeenCalledWith('{{ event.type }}');
+  });
+
+  it('shows the description line in the insert menu', async () => {
+    const user = userEvent.setup();
+    render(<LiquidEditor value="" onChange={() => {}} variables={VARS} />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    expect(screen.getByText('The journal event type')).toBeInTheDocument();
   });
 });
