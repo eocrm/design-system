@@ -1,4 +1,4 @@
-import { act, configure, fireEvent, render, screen } from '@testing-library/react';
+import { act, configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -504,19 +504,23 @@ describe('DropdownMenu — item navigation', () => {
     // scrollIntoView is what keeps keyboard-focused items visible.
     const scrollSpy = vi.fn();
     const proto = HTMLElement.prototype as unknown as { scrollIntoView?: () => void };
-    const had = 'scrollIntoView' in proto;
+    const original = proto.scrollIntoView;
     proto.scrollIntoView = scrollSpy;
     try {
       const { user } = renderMenu();
       const trigger = screen.getByRole('button', { name: 'Open' });
       trigger.focus();
       await user.keyboard('{ArrowDown}'); // keyboard-open → focus first item
-      expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' });
+      // The open-path scroll waits for Floating UI's isPositioned (scrolling
+      // at focus time would target the panel while it still sits at the
+      // document origin and yank the window).
+      await waitFor(() => expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' }));
       scrollSpy.mockClear();
       await user.keyboard('{ArrowDown}'); // move within the open menu
       expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' });
     } finally {
-      if (!had) delete proto.scrollIntoView;
+      if (original) proto.scrollIntoView = original;
+      else delete proto.scrollIntoView;
     }
   });
 

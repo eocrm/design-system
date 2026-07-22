@@ -27,12 +27,13 @@ export type DropdownMenuSide = 'top' | 'bottom' | 'left' | 'right';
 /** Which edge of the menu aligns to the corresponding trigger edge. */
 export type DropdownMenuAlign = 'start' | 'center' | 'end';
 
-// Focus an item without scrolling the page (the portaled panel starts at the
-// document origin until Floating UI positions it — see the preventScroll note
-// in the open effect), then explicitly scroll the item into view WITHIN the
-// panel: `.content` is height-clamped by the size middleware and scrolls
-// (#303), and preventScroll suppresses that scroll too. Guarded — jsdom has
-// no scrollIntoView.
+// Focus an item without scrolling the page, then explicitly scroll it into
+// view WITHIN the panel: `.content` is height-clamped by the size middleware
+// and scrolls (#303), and preventScroll suppresses that scroll too.
+// ONLY for the keydown paths, where the panel is already positioned — at
+// open time the panel still sits at the document origin and scrollIntoView
+// would yank the page (the open effect defers to the isPositioned effect
+// instead). Guarded — jsdom has no scrollIntoView.
 const focusItem = (el: HTMLElement | null | undefined) => {
   el?.focus({ preventScroll: true });
   el?.scrollIntoView?.({ block: 'nearest' });
@@ -76,6 +77,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
   const {
     refs,
     floatingStyles,
+    isPositioned,
     placement: resolvedPlacement,
   } = useFloating({
     open: ctx.open,
@@ -230,12 +232,30 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
     const target = ctx.openIntent === 'last' ? enabled[enabled.length - 1] : enabled[0];
     const idx = ctx.itemsRef.current.findIndex((x) => x.id === target.id);
     ctx.setActiveIndex(idx);
-    queueMicrotask(() => focusItem(target.ref.current));
+    queueMicrotask(() => target.ref.current?.focus({ preventScroll: true }));
     ctx.setOpenIntent(null);
     // Depend only on ctx.open so this fires exactly when the menu transitions
     // to open. openIntent is read but not re-fired on its own.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx.open]);
+
+  // #303 (open path): once Floating UI has positioned the panel — and the
+  // size middleware has clamped its maxHeight — bring the active item into
+  // view. The open-intent focus above runs BEFORE positioning, while the
+  // portaled panel still sits at the document origin: scrollIntoView there
+  // would scroll the WINDOW to the top of the document, and the not-yet-
+  // clamped panel has nothing to scroll anyway (ArrowUp-open focuses the
+  // last item, which sits below the fold once the clamp lands). isPositioned
+  // resets to false on close, so this fires once per open.
+  useEffect(() => {
+    if (!ctx.open || !isPositioned) return;
+    if (ctx.activeIndex < 0) return;
+    const active = ctx.itemsRef.current[ctx.activeIndex];
+    active?.ref.current?.scrollIntoView?.({ block: 'nearest' });
+    // Mid-open activeIndex changes are scrolled by focusItem in the keydown
+    // path; this effect only covers the positioning transition.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx.open, isPositioned]);
 
   const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {

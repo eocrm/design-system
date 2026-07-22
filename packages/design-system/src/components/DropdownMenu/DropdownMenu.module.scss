@@ -16,6 +16,10 @@
   // items with no way to reach them.
   overflow-y: auto;
   overflow-x: hidden;
+
+  // Don't chain wheel/touch scrolling past the panel's edge to the page —
+  // the menu stays open while the page shifts underneath otherwise.
+  overscroll-behavior: contain;
   padding: var(--dropdown-menu-padding);
   background: var(--dropdown-menu-bg);
   border: var(--border-width) solid var(--dropdown-menu-border-color);
