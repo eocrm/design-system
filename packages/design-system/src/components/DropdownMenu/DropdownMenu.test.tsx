@@ -224,6 +224,17 @@ describe('DropdownMenu — Content', () => {
     // a bare substring match would miss.
     expect(scss).toMatch(/\.content[^{]*\{[\s\S]{0,500}?@starting-style/);
   });
+
+  it('content panel scrolls when height-clamped (overflow-y on .content)', () => {
+    // #303: Floating UI's size middleware sets an inline maxHeight on the
+    // panel; without overflow-y the clamped panel clips its items with no
+    // scrollbar. Same SCSS-source fallback as the @starting-style test above
+    // (jsdom never loads the compiled stylesheet).
+    const scssPath = resolve(__dirname, 'DropdownMenu.module.scss');
+    const scss = readFileSync(scssPath, 'utf8');
+    expect(scss).toMatch(/\.content\s*\{[\s\S]{0,500}?overflow-y:\s*auto/);
+    expect(scss).toMatch(/\.content\s*\{[\s\S]{0,500}?overflow-x:\s*hidden/);
+  });
 });
 
 describe('DropdownMenu — Item / Separator', () => {

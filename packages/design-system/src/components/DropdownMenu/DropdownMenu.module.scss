@@ -10,6 +10,12 @@
   flex-direction: column;
   gap: var(--dropdown-menu-gap);
   min-width: var(--dropdown-menu-min-width);
+
+  // #303: Floating UI's size middleware inline-clamps maxHeight to the
+  // available viewport space; without these the clamped panel clips its
+  // items with no way to reach them.
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--dropdown-menu-padding);
   background: var(--dropdown-menu-bg);
   border: var(--border-width) solid var(--dropdown-menu-border-color);
