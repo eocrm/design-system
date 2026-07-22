@@ -515,9 +515,13 @@ describe('DropdownMenu — item navigation', () => {
       // at focus time would target the panel while it still sits at the
       // document origin and yank the window).
       await waitFor(() => expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' }));
+      // Pin WHICH element scrolled — a refactor that scrolls the panel (or
+      // scrolls at pre-position focus time) must not pass.
+      expect(scrollSpy.mock.instances[0]).toBe(screen.getByRole('menuitem', { name: 'Alpha' }));
       scrollSpy.mockClear();
-      await user.keyboard('{ArrowDown}'); // move within the open menu
+      await user.keyboard('{ArrowDown}'); // move within the open menu → Gamma
       expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' });
+      expect(scrollSpy.mock.instances[0]).toBe(screen.getByRole('menuitem', { name: 'Gamma' }));
     } finally {
       if (original) proto.scrollIntoView = original;
       else delete proto.scrollIntoView;
