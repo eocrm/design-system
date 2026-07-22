@@ -381,6 +381,15 @@ describe('insert menu with grouped palette (#304)', () => {
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
     expect(screen.getByText('The journal event type')).toBeInTheDocument();
   });
+
+  it('does not flag its own for-loop snippet as an unknown variable', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await user.click(screen.getByRole('menuitem', { name: /Associations/ }));
+    await screen.findByDisplayValue('{% for item in record.associations %}{{ item }}{% endfor %}');
+    expect(screen.queryByText(/Unknown variable/)).not.toBeInTheDocument();
+  });
 });
 
 describe('footer caret description (#304)', () => {
@@ -405,5 +414,48 @@ describe('footer caret description (#304)', () => {
     await user.type(ta, '{{{{ bogus }}}} {{{{ event.type');
     expect(screen.getByText('Unknown variable "bogus"')).toBeInTheDocument();
     expect(screen.queryByText('Event type — The journal event type')).toBeNull();
+  });
+
+  it('the error prop wins over the description', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} error="Liquid syntax error" />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ event.type');
+    expect(screen.getByText('Liquid syntax error')).toBeInTheDocument();
+    expect(screen.queryByText('Event type — The journal event type')).toBeNull();
+  });
+
+  it('hides the description when the caret moves out of the reference', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ event.type');
+    expect(await screen.findByText('Event type — The journal event type')).toBeInTheDocument();
+    // Close the tag and keep typing — the caret is now past the reference.
+    await user.type(ta, ' }}}} and more');
+    expect(screen.queryByText('Event type — The journal event type')).toBeNull();
+  });
+
+  it('styles the description footer as info, not danger', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ event.type');
+    const footer = await screen.findByText('Event type — The journal event type');
+    expect(footer.className).toMatch(/footerInfo/);
+  });
+
+  it('does NOT style the unknown-variable warning as info', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ bogus');
+    const footer = screen.getByText('Unknown variable "bogus"');
+    expect(footer.className).not.toMatch(/footerInfo/);
+    expect(footer.className).toMatch(/footer/);
   });
 });

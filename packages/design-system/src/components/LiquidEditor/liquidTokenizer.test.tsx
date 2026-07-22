@@ -129,3 +129,24 @@ describe('dotted known codes (#304)', () => {
     expect(tokens.find((t) => t.value === 'zzz')?.type).toBe('variable');
   });
 });
+
+describe('for-loop variables (#304)', () => {
+  const KNOWN = new Set(['record.associations']);
+
+  it('does not flag the loop variable declared by a for tag', () => {
+    const src = '{% for item in record.associations %}{{ item }}{% endfor %}';
+    expect(unknownVariables(src, KNOWN)).toEqual([]);
+    // The loop variable is typed 'variable' everywhere, including inside {{ }}.
+    expect(tokenize(src, KNOWN).every((t) => t.type !== 'unknown')).toBe(true);
+  });
+
+  it('still flags {{ item }} used BEFORE any for-tag declares it', () => {
+    const src = '{{ item }}{% for item in record.associations %}{% endfor %}';
+    expect(unknownVariables(src, KNOWN)).toEqual(['item']);
+  });
+
+  it('still flags a genuinely unknown root inside the loop body', () => {
+    const src = '{% for item in record.associations %}{{ bogus }}{% endfor %}';
+    expect(unknownVariables(src, KNOWN)).toEqual(['bogus']);
+  });
+});

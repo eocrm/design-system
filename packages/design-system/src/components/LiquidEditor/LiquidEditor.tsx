@@ -177,7 +177,9 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
     const resolveCaretVar = useCallback(
       (nextValue: string, caret: number): LiquidVariable | null => {
         const ctx = getAutocompleteContext(nextValue, caret);
-        if (!ctx) return null;
+        // Only variable positions describe a variable — a caret after `|` is
+        // naming a filter, even if the word happens to match a variable code.
+        if (!ctx || ctx.kind !== 'variable') return null;
         let end = caret;
         while (end < nextValue.length && QUERY_CHAR.test(nextValue[end])) end += 1;
         const word = nextValue.slice(ctx.wordStart, end);
@@ -337,15 +339,19 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
 
     const activeOptionId = ac.open ? `${listboxId}-opt-${ac.activeIndex}` : undefined;
     const hasPreview = preview !== undefined || previewStatus !== 'idle';
-    const footer =
+    // Error/warning first; the neutral caret description (info tone) only when
+    // there's nothing to warn about.
+    const footerWarning =
       error ??
-      (unknowns.length > 0
-        ? t('liquidEditor.unknownVariable', { name: unknowns[0] })
-        : caretVar?.description
-          ? `${caretVar.label ?? caretVar.code} — ${caretVar.description}`
-          : null);
-    // Associate the footer description (error / unknown-variable warning) with
-    // the textarea, merged with any consumer-supplied `aria-describedby`.
+      (unknowns.length > 0 ? t('liquidEditor.unknownVariable', { name: unknowns[0] }) : null);
+    const footer =
+      footerWarning ??
+      (caretVar?.description
+        ? `${caretVar.label ?? caretVar.code} — ${caretVar.description}`
+        : null);
+    const footerIsInfo = footerWarning == null && footer != null;
+    // Associate the footer line (error / unknown-variable warning / caret-variable
+    // description) with the textarea, merged with any consumer `aria-describedby`.
     const describedBy =
       [aria['aria-describedby'], footer != null ? footerId : null].filter(Boolean).join(' ') ||
       undefined;
@@ -423,7 +429,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
           </div>
         </div>
         {footer ? (
-          <div id={footerId} className={styles.footer}>
+          <div id={footerId} className={clsx(styles.footer, footerIsInfo && styles.footerInfo)}>
             {footer}
           </div>
         ) : null}
