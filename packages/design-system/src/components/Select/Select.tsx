@@ -491,6 +491,38 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     return createRow ? [...rows, createRow] : rows;
   }, [rows, createRow]);
 
+  // #309: filtering while open rebuilds `rows`, but `activeIndex` is a flat
+  // index — keeping it points the highlight at whatever row now occupies
+  // that slot (or past the end, hiding it). Re-seed to the first selectable
+  // row whenever the QUERY changes while open. The open transition is
+  // excluded (the Listbox open-seed effect highlights the current selection
+  // there); non-query row changes (multi toggle, async refresh with the
+  // same query) keep the cursor.
+  // ponytail: in async mode this fires against the pre-fetch rows (results
+  // land after the debounce); first-selectable is almost always index 0
+  // either way. Re-seed on async arrival too if a palette with leading
+  // disabled rows ever makes this visible.
+  const prevQueryRef = useRef(query);
+  useEffect(() => {
+    if (prevQueryRef.current === query) return;
+    prevQueryRef.current = query;
+    if (!state.open) return;
+    setActiveIndex(rowsWithCreate.findIndex((r) => r.kind === 'option' && !r.option.disabled));
+    // rowsWithCreate is read fresh (it recomputes in the same render as the
+    // query) but must not itself re-trigger the reseed — non-query row
+    // changes keep the cursor (see above).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, state.open]);
+
+  // Safety net for every OTHER row-shrink path (async results landing after
+  // arrow-key navigation, a mid-open `options` prop change): a cursor past
+  // the end of the rebuilt list is meaningless — re-seed it. Never fires for
+  // an in-bounds cursor, so it cannot steal a valid position.
+  useEffect(() => {
+    if (!state.open || activeIndex < rowsWithCreate.length) return;
+    setActiveIndex(rowsWithCreate.findIndex((r) => r.kind === 'option' && !r.option.disabled));
+  }, [state.open, activeIndex, rowsWithCreate]);
+
   const triggerRef = useRef<HTMLElement | null>(null);
   const listboxRef = useRef<HTMLUListElement | null>(null);
 
