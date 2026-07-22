@@ -232,8 +232,10 @@ describe('DropdownMenu — Content', () => {
     // (jsdom never loads the compiled stylesheet).
     const scssPath = resolve(__dirname, 'DropdownMenu.module.scss');
     const scss = readFileSync(scssPath, 'utf8');
-    expect(scss).toMatch(/\.content\s*\{[\s\S]{0,500}?overflow-y:\s*auto/);
-    expect(scss).toMatch(/\.content\s*\{[\s\S]{0,500}?overflow-x:\s*hidden/);
+    // [^}]* bounds the match inside the .content block — an overflow-y in a
+    // LATER rule must not satisfy this.
+    expect(scss).toMatch(/\.content\s*\{[^}]*overflow-y:\s*auto/);
+    expect(scss).toMatch(/\.content\s*\{[^}]*overflow-x:\s*hidden/);
   });
 });
 
@@ -493,6 +495,29 @@ describe('DropdownMenu — item navigation', () => {
     trigger.focus();
     await user.keyboard('{ArrowDown}');
     expect(screen.getByRole('menuitem', { name: 'Alpha' })).toHaveFocus();
+  });
+
+  it('scrolls the focused item into view as keyboard nav moves it (#303)', async () => {
+    // jsdom has no scrollIntoView, so define a spy (the component calls it
+    // optionally). Item focus uses preventScroll (page-yank guard), which also
+    // suppresses scrolling of the height-clamped panel — the explicit
+    // scrollIntoView is what keeps keyboard-focused items visible.
+    const scrollSpy = vi.fn();
+    const proto = HTMLElement.prototype as unknown as { scrollIntoView?: () => void };
+    const had = 'scrollIntoView' in proto;
+    proto.scrollIntoView = scrollSpy;
+    try {
+      const { user } = renderMenu();
+      const trigger = screen.getByRole('button', { name: 'Open' });
+      trigger.focus();
+      await user.keyboard('{ArrowDown}'); // keyboard-open → focus first item
+      expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' });
+      scrollSpy.mockClear();
+      await user.keyboard('{ArrowDown}'); // move within the open menu
+      expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' });
+    } finally {
+      if (!had) delete proto.scrollIntoView;
+    }
   });
 
   it('last enabled item is active on open via ArrowUp', async () => {

@@ -27,6 +27,17 @@ export type DropdownMenuSide = 'top' | 'bottom' | 'left' | 'right';
 /** Which edge of the menu aligns to the corresponding trigger edge. */
 export type DropdownMenuAlign = 'start' | 'center' | 'end';
 
+// Focus an item without scrolling the page (the portaled panel starts at the
+// document origin until Floating UI positions it — see the preventScroll note
+// in the open effect), then explicitly scroll the item into view WITHIN the
+// panel: `.content` is height-clamped by the size middleware and scrolls
+// (#303), and preventScroll suppresses that scroll too. Guarded — jsdom has
+// no scrollIntoView.
+const focusItem = (el: HTMLElement | null | undefined) => {
+  el?.focus({ preventScroll: true });
+  el?.scrollIntoView?.({ block: 'nearest' });
+};
+
 /**
  * Content props.
  *
@@ -219,7 +230,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
     const target = ctx.openIntent === 'last' ? enabled[enabled.length - 1] : enabled[0];
     const idx = ctx.itemsRef.current.findIndex((x) => x.id === target.id);
     ctx.setActiveIndex(idx);
-    queueMicrotask(() => target.ref.current?.focus({ preventScroll: true }));
+    queueMicrotask(() => focusItem(target.ref.current));
     ctx.setOpenIntent(null);
     // Depend only on ctx.open so this fires exactly when the menu transitions
     // to open. openIntent is read but not re-fired on its own.
@@ -285,7 +296,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
 
     const focusAt = (registryIndex: number) => {
       ctx.setActiveIndex(registryIndex);
-      queueMicrotask(() => items[registryIndex].ref.current?.focus({ preventScroll: true }));
+      queueMicrotask(() => focusItem(items[registryIndex].ref.current));
     };
 
     switch (e.key) {
@@ -334,8 +345,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       );
       if (match !== -1) {
         e.preventDefault();
-        ctx.setActiveIndex(match);
-        queueMicrotask(() => items[match].ref.current?.focus({ preventScroll: true }));
+        focusAt(match);
       }
       return;
     }
