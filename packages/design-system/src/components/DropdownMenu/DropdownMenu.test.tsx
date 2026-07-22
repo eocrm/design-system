@@ -1,4 +1,4 @@
-import { act, configure, fireEvent, render, screen } from '@testing-library/react';
+import { act, configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -223,6 +223,19 @@ describe('DropdownMenu — Content', () => {
     // to) a `.content` selector. Catches the "moved to wrong selector" case
     // a bare substring match would miss.
     expect(scss).toMatch(/\.content[^{]*\{[\s\S]{0,500}?@starting-style/);
+  });
+
+  it('content panel scrolls when height-clamped (overflow-y on .content)', () => {
+    // #303: Floating UI's size middleware sets an inline maxHeight on the
+    // panel; without overflow-y the clamped panel clips its items with no
+    // scrollbar. Same SCSS-source fallback as the @starting-style test above
+    // (jsdom never loads the compiled stylesheet).
+    const scssPath = resolve(__dirname, 'DropdownMenu.module.scss');
+    const scss = readFileSync(scssPath, 'utf8');
+    // [^}]* bounds the match inside the .content block — an overflow-y in a
+    // LATER rule must not satisfy this.
+    expect(scss).toMatch(/\.content\s*\{[^}]*overflow-y:\s*auto/);
+    expect(scss).toMatch(/\.content\s*\{[^}]*overflow-x:\s*hidden/);
   });
 });
 
@@ -482,6 +495,37 @@ describe('DropdownMenu — item navigation', () => {
     trigger.focus();
     await user.keyboard('{ArrowDown}');
     expect(screen.getByRole('menuitem', { name: 'Alpha' })).toHaveFocus();
+  });
+
+  it('scrolls the focused item into view as keyboard nav moves it (#303)', async () => {
+    // jsdom has no scrollIntoView, so define a spy (the component calls it
+    // optionally). Item focus uses preventScroll (page-yank guard), which also
+    // suppresses scrolling of the height-clamped panel — the explicit
+    // scrollIntoView is what keeps keyboard-focused items visible.
+    const scrollSpy = vi.fn();
+    const proto = HTMLElement.prototype as unknown as { scrollIntoView?: () => void };
+    const original = proto.scrollIntoView;
+    proto.scrollIntoView = scrollSpy;
+    try {
+      const { user } = renderMenu();
+      const trigger = screen.getByRole('button', { name: 'Open' });
+      trigger.focus();
+      await user.keyboard('{ArrowDown}'); // keyboard-open → focus first item
+      // The open-path scroll waits for Floating UI's isPositioned (scrolling
+      // at focus time would target the panel while it still sits at the
+      // document origin and yank the window).
+      await waitFor(() => expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' }));
+      // Pin WHICH element scrolled — a refactor that scrolls the panel (or
+      // scrolls at pre-position focus time) must not pass.
+      expect(scrollSpy.mock.instances[0]).toBe(screen.getByRole('menuitem', { name: 'Alpha' }));
+      scrollSpy.mockClear();
+      await user.keyboard('{ArrowDown}'); // move within the open menu → Gamma
+      expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' });
+      expect(scrollSpy.mock.instances[0]).toBe(screen.getByRole('menuitem', { name: 'Gamma' }));
+    } finally {
+      if (original) proto.scrollIntoView = original;
+      else delete proto.scrollIntoView;
+    }
   });
 
   it('last enabled item is active on open via ArrowUp', async () => {

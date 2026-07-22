@@ -27,6 +27,18 @@ export type DropdownMenuSide = 'top' | 'bottom' | 'left' | 'right';
 /** Which edge of the menu aligns to the corresponding trigger edge. */
 export type DropdownMenuAlign = 'start' | 'center' | 'end';
 
+// Focus an item without scrolling the page, then explicitly scroll it into
+// view WITHIN the panel: `.content` is height-clamped by the size middleware
+// and scrolls (#303), and preventScroll suppresses that scroll too.
+// ONLY for the keydown paths, where the panel is already positioned — at
+// open time the panel still sits at the document origin and scrollIntoView
+// would yank the page (the open effect defers to the isPositioned effect
+// instead). Guarded — jsdom has no scrollIntoView.
+const focusItem = (el: HTMLElement | null | undefined) => {
+  el?.focus({ preventScroll: true });
+  el?.scrollIntoView?.({ block: 'nearest' });
+};
+
 /**
  * Content props.
  *
@@ -65,6 +77,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
   const {
     refs,
     floatingStyles,
+    isPositioned,
     placement: resolvedPlacement,
   } = useFloating({
     open: ctx.open,
@@ -226,6 +239,24 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx.open]);
 
+  // #303 (open path): once Floating UI has positioned the panel — and the
+  // size middleware has clamped its maxHeight — bring the active item into
+  // view. The open-intent focus above runs BEFORE positioning, while the
+  // portaled panel still sits at the document origin: scrollIntoView there
+  // would scroll the WINDOW to the top of the document, and the not-yet-
+  // clamped panel has nothing to scroll anyway (ArrowUp-open focuses the
+  // last item, which sits below the fold once the clamp lands). isPositioned
+  // resets to false on close, so this fires once per open.
+  useEffect(() => {
+    if (!ctx.open || !isPositioned) return;
+    if (ctx.activeIndex < 0) return;
+    const active = ctx.itemsRef.current[ctx.activeIndex];
+    active?.ref.current?.scrollIntoView?.({ block: 'nearest' });
+    // Mid-open activeIndex changes are scrolled by focusItem in the keydown
+    // path; this effect only covers the positioning transition.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx.open, isPositioned]);
+
   const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -285,7 +316,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
 
     const focusAt = (registryIndex: number) => {
       ctx.setActiveIndex(registryIndex);
-      queueMicrotask(() => items[registryIndex].ref.current?.focus({ preventScroll: true }));
+      queueMicrotask(() => focusItem(items[registryIndex].ref.current));
     };
 
     switch (e.key) {
@@ -334,8 +365,7 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       );
       if (match !== -1) {
         e.preventDefault();
-        ctx.setActiveIndex(match);
-        queueMicrotask(() => items[match].ref.current?.focus({ preventScroll: true }));
+        focusAt(match);
       }
       return;
     }
