@@ -357,3 +357,28 @@ describe('insert menu with grouped palette (#304)', () => {
     expect(screen.getByText('The journal event type')).toBeInTheDocument();
   });
 });
+
+describe('footer caret description (#304)', () => {
+  const VARS: LiquidVariable[] = [
+    { code: 'event.type', label: 'Event type', description: 'The journal event type' },
+  ];
+
+  it('shows label — description when the caret is inside the reference', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ event.type');
+    expect(await screen.findByText('Event type — The journal event type')).toBeInTheDocument();
+  });
+
+  it('unknown-variable warning wins over the description', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ bogus }}}} {{{{ event.type');
+    expect(screen.getByText('Unknown variable "bogus"')).toBeInTheDocument();
+    expect(screen.queryByText('Event type — The journal event type')).toBeNull();
+  });
+});

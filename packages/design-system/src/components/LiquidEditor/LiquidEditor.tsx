@@ -18,7 +18,11 @@ import { HighlightLayer } from './HighlightLayer';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { InsertVariableMenu } from './InsertVariableMenu';
 import { PreviewPane } from './PreviewPane';
-import { useLiquidAutocomplete, applyCompletion } from './useLiquidAutocomplete';
+import {
+  useLiquidAutocomplete,
+  applyCompletion,
+  getAutocompleteContext,
+} from './useLiquidAutocomplete';
 import type { LiquidEditorProps, LiquidVariable } from './types';
 import styles from './LiquidEditor.module.scss';
 
@@ -152,6 +156,22 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
 
     const [anchorRect, setAnchorRect] = useState({ top: 0, left: 0, height: 0, width: 0 });
 
+    // #304: the known variable whose reference the caret sits on (exact
+    // dotted-path match only) — drives the footer description line.
+    const [caretVar, setCaretVar] = useState<LiquidVariable | null>(null);
+
+    const resolveCaretVar = useCallback(
+      (nextValue: string, caret: number): LiquidVariable | null => {
+        const ctx = getAutocompleteContext(nextValue, caret);
+        if (!ctx) return null;
+        let end = caret;
+        while (end < nextValue.length && /[A-Za-z0-9_.]/.test(nextValue[end])) end += 1;
+        const word = nextValue.slice(ctx.wordStart, end);
+        return variables.find((v) => v.code === word && v.description) ?? null;
+      },
+      [variables],
+    );
+
     // After an explicit dismiss (Escape) or accept, suppress re-opening the menu
     // at the SAME caret/value signature — otherwise the trailing keyUp (or the
     // post-commit refresh) would immediately reopen it on a still-matching word.
@@ -176,6 +196,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
 
     const refresh = useCallback(
       (nextValue: string, caret: number) => {
+        setCaretVar(resolveCaretVar(nextValue, caret));
         // Honor an active dismissal: don't reopen at the same signature.
         if (dismissedSigRef.current === `${caret}:${nextValue}`) {
           updateAnchor();
@@ -185,7 +206,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
         recompute(nextValue, caret);
         updateAnchor();
       },
-      [recompute, updateAnchor],
+      [recompute, updateAnchor, resolveCaretVar],
     );
 
     // Auto-resize like Textarea: clamp height between minRows and maxRows.
@@ -304,7 +325,11 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
     const hasPreview = preview !== undefined || previewStatus !== 'idle';
     const footer =
       error ??
-      (unknowns.length > 0 ? t('liquidEditor.unknownVariable', { name: unknowns[0] }) : null);
+      (unknowns.length > 0
+        ? t('liquidEditor.unknownVariable', { name: unknowns[0] })
+        : caretVar?.description
+          ? `${caretVar.label ?? caretVar.code} — ${caretVar.description}`
+          : null);
     // Associate the footer description (error / unknown-variable warning) with
     // the textarea, merged with any consumer-supplied `aria-describedby`.
     const describedBy =
