@@ -64,14 +64,22 @@ const DIGIT = /[0-9]/;
  *
  * @param source The raw template string.
  * @param knownCodes When provided and non-empty, a root identifier in value
- *   position that is not in the set is typed `unknown`. Omit (or pass an empty
- *   set) to never flag — the caller cannot assert validity.
+ *   position that is not in the set is typed `unknown`. Codes may be dotted
+ *   paths (e.g., "event.type"); the root identifier (first segment before the
+ *   first dot) is derived for membership testing. Omit (or pass an empty set)
+ *   to never flag — the caller cannot assert validity.
  */
 export function tokenize(source: string, knownCodes?: ReadonlySet<string>): LiquidToken[] {
   const tokens: LiquidToken[] = [];
   const n = source.length;
   let i = 0;
   const hasKnown = knownCodes !== undefined && knownCodes.size > 0;
+  // #304: `code` is a PATH — "event.type" makes the ROOT `event` known. A
+  // reference is checked by its root identifier only, so membership is
+  // tested against the set of first dotted segments.
+  const knownRoots = hasKnown
+    ? new Set([...knownCodes!].map((c) => c.split('.')[0]))
+    : undefined;
 
   const push = (type: LiquidTokenType, start: number, end: number) => {
     if (end > start) tokens.push({ type, value: source.slice(start, end), start, end });
@@ -148,7 +156,7 @@ export function tokenize(source: string, knownCodes?: ReadonlySet<string>): Liqu
         } else if (isDottedProperty) {
           push('variable', start, i); // neutral property access; not unknown-checked
         } else {
-          const unknown = hasKnown && !seenValue && !knownCodes!.has(word);
+          const unknown = hasKnown && !seenValue && !knownRoots!.has(word);
           // Only the leading value identifier is the "root"; subsequent ones
           // (rare) are treated as variables but not unknown-checked.
           push(unknown ? 'unknown' : 'variable', start, i);
