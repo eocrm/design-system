@@ -165,6 +165,11 @@ describe('assign variables (#310)', () => {
     expect(unknownVariables(src, KNOWN)).toEqual(['total']);
   });
 
+  it('assign in an OUTPUT tag does not arm declaration capture', () => {
+    // {{ assign mystery }} — output tags declare nothing; mystery is root-checked.
+    expect(unknownVariables('{{ assign mystery }}', KNOWN)).toEqual(['mystery']);
+  });
+
   it('a keyword between for/assign and the name cancels the declaration capture', () => {
     // `case` is a keyword, so `bogus` must NOT be mis-recorded as a declared
     // name (it is the collection here) — and being the first value identifier
