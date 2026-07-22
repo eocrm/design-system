@@ -149,6 +149,11 @@
 .listbox {
   z-index: var(--z-popover);
   overflow-y: auto;
+
+  // Don't chain wheel/touch scrolling past the panel's edge to the page —
+  // the listbox stays open while the page shifts underneath otherwise.
+  // Matches DropdownMenu `.content`.
+  overscroll-behavior: contain;
   padding: var(--select-listbox-padding);
   background: var(--select-listbox-bg);
   border: var(--border-width) solid var(--select-listbox-border-color);

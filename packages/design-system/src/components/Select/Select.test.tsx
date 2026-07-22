@@ -177,6 +177,35 @@ describe('Select — keyboard (single, non-searchable)', () => {
     );
   });
 
+  it('scrolls the active option into view as keyboard nav moves it (#305)', async () => {
+    // jsdom has no scrollIntoView, so define a spy (the component calls it
+    // optionally). aria-activedescendant means DOM focus never enters the
+    // clamped, scrollable listbox — the explicit scrollIntoView is the only
+    // thing keeping the active option visible.
+    const scrollSpy = vi.fn();
+    const proto = HTMLElement.prototype as unknown as { scrollIntoView?: () => void };
+    const original = proto.scrollIntoView;
+    proto.scrollIntoView = scrollSpy;
+    try {
+      const user = userEvent.setup();
+      render(<Select options={STATUSES} />);
+      screen.getByRole('button').focus();
+      await user.keyboard('{ArrowDown}'); // open → first option active
+      // The open-path scroll waits for Floating UI's isPositioned (scrolling
+      // earlier would target the panel while it still sits at the document
+      // origin and yank the window).
+      await waitFor(() => expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' }));
+      expect(scrollSpy.mock.instances[0]).toBe(screen.getByRole('option', { name: 'Active' }));
+      scrollSpy.mockClear();
+      await user.keyboard('{ArrowDown}'); // move within the open listbox
+      await waitFor(() => expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' }));
+      expect(scrollSpy.mock.instances[0]).toBe(screen.getByRole('option', { name: 'Pending' }));
+    } finally {
+      if (original) proto.scrollIntoView = original;
+      else delete proto.scrollIntoView;
+    }
+  });
+
   it('Home jumps to first, End jumps to last', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);

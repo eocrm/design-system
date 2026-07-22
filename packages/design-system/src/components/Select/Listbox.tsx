@@ -37,7 +37,7 @@ export function Listbox() {
   // handler closes us on the same press instead of the Modal/Drawer.
   const floatingId = useFloatingSurface(ctx.open);
 
-  const { refs, floatingStyles } = useFloating({
+  const { refs, floatingStyles, isPositioned } = useFloating({
     open: ctx.open,
     placement: 'bottom-start',
     // `transform: false` — emit `top` / `left` positioning instead of an
@@ -138,6 +138,31 @@ export function Listbox() {
     // the user's keyboard / mouse navigation).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx.open]);
+
+  // #305: keep the active option visible inside the height-clamped panel.
+  // aria-activedescendant means DOM focus never enters the listbox, so
+  // nothing scrolls it natively — with >~8 options the active row moves
+  // below the fold and the highlight disappears. One effect here covers
+  // every setActiveIndex source (trigger keyboard, typeahead, in-panel
+  // search, open seeding). Gated on isPositioned: before Floating UI
+  // places the portaled panel it sits at the document origin, where
+  // scrollIntoView would scroll the WINDOW to the top (see the identical
+  // fix in DropdownMenu/Content.tsx, #303) — and the size clamp hasn't
+  // been applied yet anyway. `block: 'nearest'` no-ops for
+  // already-visible rows, so mouse-hover activation causes no jumps.
+  // Guarded — jsdom has no scrollIntoView.
+  useEffect(() => {
+    if (!ctx.open || !isPositioned || ctx.activeIndex < 0) return;
+    const row = ctx.rows[ctx.activeIndex];
+    if (!row || row.kind !== 'option') return;
+    document
+      .getElementById(ctx.getOptionId(row.option.value))
+      ?.scrollIntoView?.({ block: 'nearest' });
+    // ctx.rows is read fresh but intentionally not a dep: a mid-open rows
+    // identity change (async load, filtering) must not re-scroll a row the
+    // user has already scrolled away from.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx.open, isPositioned, ctx.activeIndex]);
 
   return createPortal(
     <ul
