@@ -13,7 +13,6 @@ export interface AutocompleteContext {
   wordStart: number;
 }
 
-const IDENT_CHAR = /[A-Za-z0-9_]/;
 // #304: the QUERY walk includes dots so a dotted code ("event.type") matches
 // while the user types past the root. Only the walk-back + validity check
 // use it — tokenization/filter detection are unaffected.
@@ -77,6 +76,10 @@ export interface AutocompleteItem {
   type?: string;
   /** Optional group header (variables only). */
   group?: string;
+  /** Optional description shown as a muted second line (variables only). */
+  description?: string;
+  /** Collection flag → "list" tag (variables only). */
+  collection?: boolean;
 }
 
 export interface UseLiquidAutocompleteArgs {
@@ -122,6 +125,8 @@ export function useLiquidAutocomplete({ variables, filters, enabled }: UseLiquid
         label: v.label ?? v.code,
         type: v.type,
         group: v.group,
+        description: v.description,
+        collection: v.collection,
       })),
     [variables],
   );

@@ -279,3 +279,19 @@
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
 }
+
+.menuItemMain {
+  display: flex;
+  flex-direction: column;
+}
+
+.menuItemDesc {
+  color: var(--color-fg-subtle);
+  font-size: var(--font-size-xs);
+}
+
+.menuItemTags {
+  display: inline-flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}

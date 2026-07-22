@@ -240,6 +240,7 @@ export const en: Messages = {
     unknownVariable: ({ name }) => `Unknown variable "${name}"`,
     editorLabel: 'Liquid template',
     suggestions: 'Suggestions',
+    collectionTag: 'list',
   },
   richTextEditor: {
     editorLabel: 'Rich text editor',

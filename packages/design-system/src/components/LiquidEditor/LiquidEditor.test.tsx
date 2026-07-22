@@ -294,3 +294,30 @@ describe('LiquidEditor', () => {
     expect(screen.queryByRole('button', { name: 'Docs' })).not.toBeInTheDocument();
   });
 });
+
+describe('descriptions + collection tag in autocomplete (#304)', () => {
+  const VARS: LiquidVariable[] = [
+    { code: 'event.type', label: 'Event type', description: 'The journal event type' },
+    { code: 'record.associations', label: 'Associations', collection: true },
+  ];
+
+  it('renders the description as a second line in suggestions', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ ');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByText('The journal event type')).toBeInTheDocument();
+  });
+
+  it('renders a "list" tag for collection variables', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={VARS} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ ');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByText('list')).toBeInTheDocument();
+  });
+});
