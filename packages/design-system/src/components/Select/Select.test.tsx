@@ -415,6 +415,26 @@ describe('Select — single, searchable (combobox input)', () => {
     expect(screen.getByRole('option', { name: 'Archived' })).toBeInTheDocument();
   });
 
+  it('filtering re-seeds the highlight to the first matching option (#309)', async () => {
+    const user = userEvent.setup();
+    render(<Select searchable options={STATUSES} value="archived" />);
+    const input = screen.getByRole('combobox') as HTMLInputElement;
+    await user.click(input);
+    // Open-seed: the current selection is highlighted (flat index 2).
+    expect(input).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Archived' }).id,
+    );
+    // Type a query — rows rebuild to [Active, Archived]; the stale flat index
+    // must not survive (it would point past/at an arbitrary row). The cursor
+    // re-seeds to the first matching option.
+    await user.keyboard('a');
+    expect(input).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Active' }).id,
+    );
+  });
+
   it('Escape reverts query to selected label', async () => {
     const user = userEvent.setup();
     render(<Select searchable options={STATUSES} defaultValue="pending" />);
