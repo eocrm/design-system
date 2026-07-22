@@ -435,6 +435,25 @@ describe('Select — single, searchable (combobox input)', () => {
     );
   });
 
+  it('re-seeds when a mid-open row shrink strands the cursor out of bounds (#309)', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<Select options={STATUSES} value="archived" />);
+    const trigger = screen.getByRole('button', { name: 'Archived' });
+    await user.click(trigger);
+    // Open-seed highlights the selection (flat index 2).
+    expect(trigger).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Archived' }).id,
+    );
+    // Rows shrink under the open listbox (async results landing / options
+    // prop change) — index 2 no longer exists; the cursor must re-seed.
+    rerender(<Select options={STATUSES.slice(0, 1)} value="archived" />);
+    expect(trigger).toHaveAttribute(
+      'aria-activedescendant',
+      screen.getByRole('option', { name: 'Active' }).id,
+    );
+  });
+
   it('Escape reverts query to selected label', async () => {
     const user = userEvent.setup();
     render(<Select searchable options={STATUSES} defaultValue="pending" />);

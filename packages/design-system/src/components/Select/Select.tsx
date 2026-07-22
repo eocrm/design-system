@@ -514,6 +514,15 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, state.open]);
 
+  // Safety net for every OTHER row-shrink path (async results landing after
+  // arrow-key navigation, a mid-open `options` prop change): a cursor past
+  // the end of the rebuilt list is meaningless — re-seed it. Never fires for
+  // an in-bounds cursor, so it cannot steal a valid position.
+  useEffect(() => {
+    if (!state.open || activeIndex < rowsWithCreate.length) return;
+    setActiveIndex(rowsWithCreate.findIndex((r) => r.kind === 'option' && !r.option.disabled));
+  }, [state.open, activeIndex, rowsWithCreate]);
+
   const triggerRef = useRef<HTMLElement | null>(null);
   const listboxRef = useRef<HTMLUListElement | null>(null);
 
