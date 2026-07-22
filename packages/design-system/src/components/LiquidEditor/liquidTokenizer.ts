@@ -78,11 +78,13 @@ export function tokenize(source: string, knownCodes?: ReadonlySet<string>): Liqu
   // reference is checked by its root identifier only, so membership is
   // tested against the set of first dotted segments.
   const knownRoots = hasKnown ? new Set([...knownCodes!].map((c) => c.split('.')[0])) : undefined;
-  // #304: `{% for item in … %}` declares `item` — collect loop variables as the
-  // pass encounters them so later references (in tags and {{ }} bodies) aren't
-  // flagged unknown. Single forward pass: a use BEFORE its declaration stays
-  // flagged — acceptable ceiling, generated snippets always declare first.
-  const loopVars = new Set<string>();
+  // #304/#310: `{% for item in … %}` and `{% assign total = … %}` declare a
+  // name — collect declared names as the pass encounters them so later
+  // references (in tags and {{ }} bodies) aren't flagged unknown. Single
+  // forward pass: a use BEFORE its declaration stays flagged — acceptable
+  // ceiling, generated snippets always declare first. Names are not scoped
+  // to their loop/tag (lenient false negatives on out-of-scope use).
+  const declaredVars = new Set<string>();
 
   const push = (type: LiquidTokenType, start: number, end: number) => {
     if (end > start) tokens.push({ type, value: source.slice(start, end), start, end });
@@ -116,9 +118,11 @@ export function tokenize(source: string, knownCodes?: ReadonlySet<string>): Liqu
     // identifier in this tag (so only the ROOT identifier is unknown-checked).
     let expectFilter = false;
     let seenValue = false;
-    // Set right after the `for` keyword in a `{% %}` tag — the next identifier
-    // is the loop-variable declaration.
-    let expectLoopVar = false;
+    // Set right after the `for` / `assign` keyword in a `{% %}` tag — the
+    // next identifier is the declared name. Any other intervening keyword
+    // cancels the capture so a keyword-named declaration ({% for case in x %})
+    // can't mis-record the following identifier.
+    let expectDeclaration = false;
     // For `{% if … %}` the first identifier is the tag-name keyword.
 
     while (i < interiorEnd) {
@@ -159,22 +163,22 @@ export function tokenize(source: string, knownCodes?: ReadonlySet<string>): Liqu
           expectFilter = false;
         } else if (KEYWORDS.has(word)) {
           push('keyword', start, i);
-          if (!isOutput && word === 'for') expectLoopVar = true;
+          expectDeclaration = !isOutput && (word === 'for' || word === 'assign');
         } else if (isDottedProperty) {
           push('variable', start, i); // neutral property access; not unknown-checked
         } else {
-          if (expectLoopVar) loopVars.add(word);
+          if (expectDeclaration) declaredVars.add(word);
           const unknown =
             hasKnown &&
             !seenValue &&
-            !expectLoopVar &&
+            !expectDeclaration &&
             !knownRoots!.has(word) &&
-            !loopVars.has(word);
+            !declaredVars.has(word);
           // Only the leading value identifier is the "root"; subsequent ones
           // (rare) are treated as variables but not unknown-checked.
           push(unknown ? 'unknown' : 'variable', start, i);
           seenValue = true;
-          expectLoopVar = false;
+          expectDeclaration = false;
         }
         continue;
       }

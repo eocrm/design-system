@@ -150,3 +150,31 @@ describe('for-loop variables (#304)', () => {
     expect(unknownVariables(src, KNOWN)).toEqual(['bogus']);
   });
 });
+
+describe('assign variables (#310)', () => {
+  const KNOWN = new Set(['record.associations']);
+
+  it('does not flag a variable declared by an assign tag', () => {
+    const src = '{% assign total = 3 %}{{ total }}';
+    expect(unknownVariables(src, KNOWN)).toEqual([]);
+    expect(tokenize(src, KNOWN).every((t) => t.type !== 'unknown')).toBe(true);
+  });
+
+  it('still flags {{ total }} used BEFORE the assign declares it', () => {
+    const src = '{{ total }}{% assign total = 3 %}';
+    expect(unknownVariables(src, KNOWN)).toEqual(['total']);
+  });
+
+  it('assign in an OUTPUT tag does not arm declaration capture', () => {
+    // {{ assign mystery }} — output tags declare nothing; mystery is root-checked.
+    expect(unknownVariables('{{ assign mystery }}', KNOWN)).toEqual(['mystery']);
+  });
+
+  it('a keyword between for/assign and the name cancels the declaration capture', () => {
+    // `case` is a keyword, so `bogus` must NOT be mis-recorded as a declared
+    // name (it is the collection here) — and being the first value identifier
+    // in the tag, it is root-checked and flagged.
+    const src = '{% for case in bogus %}{{ bogus }}{% endfor %}';
+    expect(unknownVariables(src, KNOWN)).toEqual(['bogus']);
+  });
+});
