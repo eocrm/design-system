@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from 'react';
 import {
+  closestCenter,
   DndContext,
   DragOverlay,
   KeyboardSensor,
@@ -24,6 +25,7 @@ import {
 } from '@dnd-kit/core';
 import {
   SortableContext,
+  rectSortingStrategy,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
@@ -32,7 +34,16 @@ import { CSS, type Transform } from '@dnd-kit/utilities';
 import clsx from 'clsx';
 import { mergeRefs } from '../_internal/refs';
 import { useFloatingSurface } from '../_internal/overlay';
+import { resolveGridItemSpan, type GridItemSpan } from '../_internal/gridSpan';
 import styles from './Sortable.module.scss';
+
+/**
+ * Layout arrangement of the sortable items.
+ * - `'list'` (default) — a single vertical column (`verticalListSortingStrategy`).
+ * - `'grid'` — a `columns`-track CSS grid where items carry column spans and
+ *   siblings reflow in 2D during a drag (`rectSortingStrategy`).
+ */
+export type SortableArrangement = 'list' | 'grid';
 
 /**
  * Payload fired by `onReorder` after a successful drag-drop or keyboard move.
@@ -87,6 +98,23 @@ export interface SortableProps extends HTMLAttributes<HTMLOListElement> {
    * constrains the drag vertically to the list's extent.
    */
   restrictToContainer?: boolean;
+  /**
+   * Layout arrangement of the items.
+   * - `'list'` (default) — single vertical column; existing behavior unchanged.
+   * - `'grid'` — the `<ol>` becomes a `columns`-track CSS grid. Items carry
+   *   column spans (`Sortable.Item span`), rows are equal-height, and siblings
+   *   reflow in 2D during a drag. Reorder semantics stay order-based (a drop
+   *   reorders the flow; nothing here persists an x/y position).
+   */
+  arrangement?: SortableArrangement;
+  /**
+   * Number of equal-width grid tracks. Only applies when `arrangement="grid"`
+   * (ignored for a list). Default `12`, matching `Grid.Item`'s 12-column
+   * fraction spans (`'25%'`→3 … `'75%'`→9 tracks). Set another count for a
+   * simpler grid, but the named fraction spans then won't map to their
+   * fraction (documented, not validated — same as `Grid`).
+   */
+  columns?: number;
 }
 
 export interface SortableItemProps extends Omit<HTMLAttributes<HTMLLIElement>, 'id'> {
@@ -97,6 +125,15 @@ export interface SortableItemProps extends Omit<HTMLAttributes<HTMLLIElement>, '
   id: string | number;
   /** Item content — typically a `<Card>` or a row of text + icons. */
   children: ReactNode;
+  /**
+   * Column span, only meaningful under `<Sortable arrangement="grid">`
+   * (ignored in a list). Mirrors `Grid.Item`'s `span` exactly:
+   * - number — `span N` of the grid's `columns`.
+   * - `'25%' | '33%' | '50%' | '67%' | '75%'` — fractions of a 12-column grid.
+   * - `'100%'` / `'full'` — the entire row (`1 / -1`); safe with any `columns`.
+   * Omit for a single track (auto placement).
+   */
+  span?: GridItemSpan;
 }
 
 export interface SortableHandleProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -196,6 +233,31 @@ function containsHandle(children: ReactNode): boolean {
  *   ))}
  * </Sortable>
  *
+ * @example
+ * // Grid arrangement — a 12-column dashboard of widgets with mixed spans.
+ * // Items reflow in 2D during a drag; a drop reorders the flow (order-based,
+ * // no persisted x/y). Rows are equal-height.
+ * <Sortable
+ *   arrangement="grid"
+ *   columns={12}
+ *   onReorder={({ from, to }) => setWidgets((w) => arrayMove(w, from, to))}
+ * >
+ *   {widgets.map((w) => (
+ *     <Sortable.Item key={w.id} id={w.id} span={w.span}>
+ *       <Card>{w.title}</Card>
+ *     </Sortable.Item>
+ *   ))}
+ * </Sortable>
+ *
+ * @remarks Grid arrangement
+ * - `arrangement="grid"` re-lays the `<ol>` as a `columns`-track CSS grid
+ *   (default 12) using dnd-kit's `rectSortingStrategy`, so siblings reflow in
+ *   2D during a drag instead of shifting only vertically. Give each item a
+ *   `span` (`Sortable.Item span="50%"` / `span={6}` / `span="100%"`) — same
+ *   values as `Grid.Item`. Semantics stay order-based: a drop reorders the
+ *   flow; nothing persists a grid x/y position. `restrictToContainer` still
+ *   clamps the drag to the grid's bounding box.
+ *
  * @remarks Drag confinement
  * - By default (`restrictToContainer`) the dragged item is clamped to the
  *   list's bounding box and can't be dragged off over unrelated UI. Pass
@@ -228,9 +290,19 @@ function containsHandle(children: ReactNode): boolean {
  *   render but won't be reorderable.
  */
 const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function SortableRoot(
-  { onReorder, restrictToContainer = true, className, children, ...rest },
+  {
+    onReorder,
+    restrictToContainer = true,
+    arrangement = 'list',
+    columns = 12,
+    className,
+    style,
+    children,
+    ...rest
+  },
   ref,
 ) {
+  const isGrid = arrangement === 'grid';
   const [activeId, setActiveId] = useState<string | number | null>(null);
   // #282: a keyboard drag is an Escape-consuming MODE (Escape cancels the
   // drag). Register it as a floating surface while active so a host Modal/Drawer
@@ -317,12 +389,29 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
     <DndContext
       sensors={sensors}
       modifiers={modifiers}
+      // Grid: closestCenter is dnd-kit's idiomatic pairing for a 2D sortable
+      // grid — the dragged cell reflows to the nearest slot without needing to
+      // physically overlap it (the default rectIntersection requires overlap,
+      // which reads as sticky/unpredictable when cells vary in span). List
+      // keeps the default (undefined) so its behavior is unchanged.
+      collisionDetection={isGrid ? closestCenter : undefined}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-        <ol ref={mergeRefs(olRef, ref)} className={clsx(styles.list, className)} {...rest}>
+      <SortableContext
+        items={itemIds}
+        strategy={isGrid ? rectSortingStrategy : verticalListSortingStrategy}
+      >
+        <ol
+          ref={mergeRefs(olRef, ref)}
+          className={clsx(isGrid ? styles.grid : styles.list, className)}
+          // In grid mode the <ol> owns the track template; inject the column
+          // count as a custom prop AFTER the consumer's style so it wins
+          // (mirrors Grid's --grid-columns). List mode leaves style untouched.
+          style={isGrid ? { ...style, ['--sortable-columns' as string]: columns } : style}
+          {...rest}
+        >
           {children}
         </ol>
       </SortableContext>
@@ -353,9 +442,12 @@ SortableRoot.displayName = 'Sortable';
  * If the children subtree contains a `<Sortable.Handle>`, only the Handle
  * initiates drag. Otherwise the whole Item is draggable (and focusable for
  * keyboard reorder).
+ *
+ * Under `<Sortable arrangement="grid">`, pass `span` for the item's column
+ * span (mirrors `Grid.Item`'s `span`); it's ignored in a list.
  */
 export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(function SortableItem(
-  { id, className, children, ...rest },
+  { id, span, className, children, ...rest },
   ref,
 ) {
   const {
@@ -395,6 +487,11 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
           // is an invisible placeholder so it never carries a stale drag/drop
           // transform when onReorder commits the new order asynchronously (#165).
           opacity: isDragging ? 0 : undefined,
+          // Grid-arrangement column span. Always stamped (default 'auto') so a
+          // span-less item never inherits a spanned ancestor's custom property;
+          // ignored by the CSS in list mode (grid-column is inert on a flex
+          // child). Mirrors Grid.Item.
+          ['--sortable-item-span' as string]: resolveGridItemSpan(span) ?? 'auto',
         }}
         data-dragging={isDragging ? 'true' : undefined}
         className={clsx(styles.item, className)}

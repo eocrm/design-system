@@ -62,6 +62,14 @@ export function SortableDemo() {
     { id: 'f-3', label: 'Contract draft' },
   ]);
 
+  const [widgets, setWidgets] = useState([
+    { id: 'w-1', title: 'KPIs', span: '25%' as const },
+    { id: 'w-2', title: 'Revenue', span: '75%' as const },
+    { id: 'w-3', title: 'Recent deals', span: '33%' as const },
+    { id: 'w-4', title: 'Pipeline', span: '67%' as const },
+    { id: 'w-5', title: 'Activity feed', span: '100%' as const },
+  ]);
+
   return (
     <DemoLayout
       name="Sortable"
@@ -462,15 +470,81 @@ export function Demo() {
         </Cluster>
       </Example>
 
+      <Example
+        title="Grid arrangement (dashboard widgets)"
+        description="arrangement='grid' re-lays the <ol> as a 12-column grid (columns default 12). Each Sortable.Item carries a span (same values as Grid.Item: 25%/33%/50%/67%/75%/100%), rows are equal-height, and dnd-kit's rectSortingStrategy reflows siblings in 2D during a drag. A drop reorders the flow — order-based, no persisted x/y. Drag a widget's grip to any position."
+        code={`import { useState } from 'react';
+import { GripVertical } from 'lucide-react';
+import { arrayMove } from '@dnd-kit/sortable';
+import { Card, Cluster, Sortable, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  const [widgets, setWidgets] = useState([
+    { id: 'w-1', title: 'KPIs', span: '25%' as const },
+    { id: 'w-2', title: 'Revenue', span: '75%' as const },
+    { id: 'w-3', title: 'Recent deals', span: '33%' as const },
+    { id: 'w-4', title: 'Pipeline', span: '67%' as const },
+    { id: 'w-5', title: 'Activity feed', span: '100%' as const },
+  ]);
+
+  return (
+    <Sortable
+      arrangement="grid"
+      columns={12}
+      onReorder={({ from, to }) => setWidgets((w) => arrayMove(w, from, to))}
+    >
+      {widgets.map((widget) => (
+        <Sortable.Item key={widget.id} id={widget.id} span={widget.span}>
+          <Card padding="sm" style={{ height: '100%' }}>
+            <Cluster gap="sm" align="center">
+              <Sortable.Handle aria-label={\`Reorder \${widget.title}\`}>
+                <GripVertical size={14} />
+              </Sortable.Handle>
+              <Text weight="medium">{widget.title}</Text>
+              <Text size="sm" tone="muted">
+                {widget.span}
+              </Text>
+            </Cluster>
+          </Card>
+        </Sortable.Item>
+      ))}
+    </Sortable>
+  );
+}`}
+      >
+        <Sortable
+          arrangement="grid"
+          columns={12}
+          onReorder={({ from, to }) => setWidgets((w) => arrayMove(w, from, to))}
+        >
+          {widgets.map((widget) => (
+            <Sortable.Item key={widget.id} id={widget.id} span={widget.span}>
+              <Card padding="sm" style={{ height: '100%' }}>
+                <Cluster gap="sm" align="center">
+                  <Sortable.Handle aria-label={`Reorder ${widget.title}`}>
+                    <GripVertical size={14} />
+                  </Sortable.Handle>
+                  <Text weight="medium">{widget.title}</Text>
+                  <Text size="sm" tone="muted">
+                    {widget.span}
+                  </Text>
+                </Cluster>
+              </Card>
+            </Sortable.Item>
+          ))}
+        </Sortable>
+      </Example>
+
       <Stack gap="xs">
         <Title order={3} size="md">
           Implementation notes
         </Title>
         <Text size="sm" tone="muted">
           Thin wrapper over @dnd-kit/sortable. PointerSensor with 5px activation distance;
-          KeyboardSensor with sortableKeyboardCoordinates; vertical list strategy. Hybrid drag
-          origin via containsHandle children walk. dnd-kit ships built-in aria-live announcements
-          and autoscroll.
+          KeyboardSensor with sortableKeyboardCoordinates. arrangement='list' (default) uses the
+          vertical list strategy; arrangement='grid' uses rectSortingStrategy on a columns-track CSS
+          grid with per-item spans (Sortable.Item span). Hybrid drag origin via containsHandle
+          children walk. dnd-kit ships built-in aria-live announcements and autoscroll.
         </Text>
       </Stack>
     </DemoLayout>

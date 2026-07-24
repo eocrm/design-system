@@ -1,27 +1,16 @@
 import { forwardRef, type CSSProperties, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
+import { resolveGridItemSpan, type GridItemSpan } from '../_internal/gridSpan';
 import styles from './Grid.module.scss';
 
-/**
- * Column span for a `Grid.Item`. Numbers span that many tracks of whatever
- * `columns` the parent Grid declares. Fraction strings assume a 12-column
- * grid (`columns={12}`): `'25%'`→3, `'33%'`→4, `'50%'`→6, `'67%'`→8,
- * `'75%'`→9 tracks. `'100%'` / `'full'` span the entire row (`1 / -1`) and
- * are safe in ANY grid, including auto-fit.
- */
-export type GridItemSpan = number | 'full' | '25%' | '33%' | '50%' | '67%' | '75%' | '100%';
+// The span vocabulary (type + fraction→track resolver) is shared with
+// Sortable.Item's grid arrangement; it lives in _internal/gridSpan so neither
+// component imports the other. Re-exported here so `GridItemSpan` stays part of
+// Grid's public type surface.
+export type { GridItemSpan };
 
 /** Elements `Grid.Item` can render as. `'li'` pairs with `<Grid as="ul">`. */
 export type GridItemAs = 'div' | 'li' | 'section' | 'article' | 'aside';
-
-/** Fraction → 12-col track count. 100%/full handled separately (1 / -1). */
-const FRACTION_TRACKS: Record<Exclude<GridItemSpan, number | 'full' | '100%'>, number> = {
-  '25%': 3,
-  '33%': 4,
-  '50%': 6,
-  '67%': 8,
-  '75%': 9,
-};
 
 export interface GridItemProps extends HTMLAttributes<HTMLElement> {
   /**
@@ -60,14 +49,7 @@ export const GridItem = forwardRef<HTMLElement, GridItemProps>(function GridItem
   { span, as = 'div', className, style, ...rest },
   ref,
 ) {
-  const resolved =
-    span === undefined
-      ? undefined
-      : span === 'full' || span === '100%'
-        ? '1 / -1'
-        : typeof span === 'number'
-          ? `span ${span}`
-          : `span ${FRACTION_TRACKS[span]}`;
+  const resolved = resolveGridItemSpan(span);
 
   const Tag = as as unknown as 'div';
   return (

@@ -837,7 +837,19 @@ const [items, setItems] = useState([
 </Sortable>;
 ```
 
-Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when the drop position differs from the source. Consumer owns the items array and re-renders with the new order. `arrayMove` is shipped by `@dnd-kit/sortable` (the library is already a dep) — import it from there. Items must have a stable `id` prop (`string | number`). `restrictToContainer?: boolean` (default `true`) — clamps the drag to the list's bounding box so the dragged item can't leave the `<ol>`; pass `false` for free-drag (item follows the cursor anywhere on the page).
+Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when the drop position differs from the source. Consumer owns the items array and re-renders with the new order. `arrayMove` is shipped by `@dnd-kit/sortable` (the library is already a dep) — import it from there. Items must have a stable `id` prop (`string | number`). `restrictToContainer?: boolean` (default `true`) — clamps the drag to the list's bounding box so the dragged item can't leave the `<ol>`; pass `false` for free-drag (item follows the cursor anywhere on the page). `arrangement?: 'list' | 'grid'` (default `'list'`) + `columns?: number` (grid only, default 12) — see **Grid arrangement** below.
+
+**Grid arrangement** (`arrangement="grid"`): re-lays the `<ol>` as a `columns`-track CSS grid (`columns?: number`, default 12) driven by dnd-kit's `rectSortingStrategy`, so siblings reflow in **2D** during a drag instead of shifting only vertically. Give each item a span via `<Sortable.Item span="50%">` (or `span={6}` / `span="100%"`) — **same values as `Grid.Item`** (`25%`→3 … `75%`→9 tracks of 12; `100%`/`full`→whole row). Rows are equal-height (`align-items: stretch`). Semantics stay order-based: a drop reorders the flow — nothing persists a grid x/y position. `restrictToContainer` still clamps the drag to the grid box. Default `arrangement="list"` is unchanged (single vertical column). Canonical use: a WYSIWYG dashboard customize view where edit mode mirrors view mode's 12-col widget grid.
+
+```tsx
+<Sortable arrangement="grid" columns={12} onReorder={handle}>
+  {widgets.map((w) => (
+    <Sortable.Item key={w.id} id={w.id} span={w.span}>
+      <Card style={{ height: '100%' }}>{w.title}</Card>
+    </Sortable.Item>
+  ))}
+</Sortable>
+```
 
 **Drag origin** (hybrid): if `<Sortable.Handle>` is present in the Item subtree, only the Handle initiates drag. If no Handle is present, the entire Item is draggable + focusable. A 5px activation distance means short clicks-without-movement on internal buttons / links pass through.
 
