@@ -2091,6 +2091,13 @@
           "required": false,
           "default": "",
           "description": "Minimum column width for auto-fit responsive layout. Columns reflow\nbased on container width — no breakpoints needed. CSS length string\nlike `'240px'` or `'15rem'`. Defaults to `'240px'` when neither\n`columns` nor `minColumnWidth` is provided."
+        },
+        {
+          "name": "collapseBelow",
+          "type": "GridCollapseBreakpoint",
+          "required": false,
+          "default": "",
+          "description": "Collapse to a single visual column when the GRID'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Every child spans the full row below the threshold —\n`Grid.Item` spans included. Only valid with `columns` (auto-fit grids\nalready reflow).\n\nConsumer inline `style={{ gridColumn }}` on a child still wins below the\nthreshold (inline beats any stylesheet rule) — don't do that; use\n`Grid.Item span` instead.\n\n❌ Anti-pattern: a `collapseBelow` grid must get its width from its\nparent. `container-type: inline-size` zeroes the grid's contribution to\nintrinsic sizing, so in an intrinsic-width context (`Split`'s default\n`auto` aside track, a `Cluster` item, `width: max-content`) it renders at\nwidth 0 — give the parent a concrete width instead. The grid also becomes\nthe containing block for absolutely-positioned descendants (layout\ncontainment)."
         }
       ]
     },
@@ -4679,6 +4686,7 @@
     "GridAlignItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "GridJustifyItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "GridAs": "\"div\" | \"section\" | \"aside\" | \"article\" | \"main\" | \"ul\" | \"ol\" | \"nav\" | \"header\" | \"footer\"",
+    "GridCollapseBreakpoint": "\"sm\" | \"md\" | \"lg\"",
     "SplitSide": "\"start\" | \"end\"",
     "SplitGap": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\"",
     "SplitAlign": "\"start\" | \"center\" | \"stretch\"",
@@ -4749,7 +4757,7 @@
     "PaginationSize": "\"sm\" | \"md\" | \"lg\"",
     "TextareaSize": "\"sm\" | \"md\" | \"lg\"",
     "TextareaResize": "\"none\" | \"vertical\" | \"both\"",
-    "LiquidVariable": "{ code: string; label?: string; type?: string; group?: string }",
+    "LiquidVariable": "{ code: string; label?: string; type?: string; group?: string; description?: string; collection?: boolean }",
     "LiquidPreviewStatus": "\"error\" | \"loading\" | \"idle\"",
     "LiquidPreviewPlacement": "\"right\" | \"bottom\"",
     "MentionsConfig": "{ onQuery: (query: string) => MentionItem[] | Promise<MentionItem[]>; trigger?: string }",
