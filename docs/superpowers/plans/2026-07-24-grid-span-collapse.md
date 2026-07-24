@@ -21,6 +21,7 @@
 ### Task 1: `Grid.Item` component
 
 **Files:**
+
 - Create: `packages/design-system/src/components/Grid/GridItem.tsx`
 - Modify: `packages/design-system/src/components/Grid/Grid.tsx` (attach `Grid.Item`)
 - Modify: `packages/design-system/src/components/Grid/Grid.module.scss` (`.item` class)
@@ -28,6 +29,7 @@
 - Test: `packages/design-system/src/components/Grid/Grid.test.tsx`
 
 **Interfaces:**
+
 - Produces: `GridItemSpan`, `GridItemProps`, `GridItemAs` types; `Grid.Item` static property; `.item` SCSS class reading `--grid-item-span`. Task 2 relies on `.item`'s rule being declared BEFORE the collapse rules in the SCSS file.
 
 - [ ] **Step 1: Write the failing tests** — append to `Grid.test.tsx`:
@@ -241,6 +243,7 @@ git commit -m "feat(Grid): Grid.Item with numeric + 12-col fraction spans (#314)
 ### Task 2: `collapseBelow` container-query collapse
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Grid/Grid.tsx`
 - Modify: `packages/design-system/src/components/Grid/Grid.module.scss`
 - Modify: `packages/design-system/src/components/Grid/Grid.tokens.scss`
@@ -248,6 +251,7 @@ git commit -m "feat(Grid): Grid.Item with numeric + 12-col fraction spans (#314)
 - Test: `packages/design-system/src/components/Grid/Grid.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `.item` rule declared before collapse rules (Task 1).
 - Produces: `GridCollapseBreakpoint` type; `collapseBelow` prop on the fixed-columns variant.
 
@@ -390,6 +394,7 @@ git commit -m "feat(Grid): collapseBelow container-query collapse for fixed-colu
 ### Task 3: Docs + demo + visual verification
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Grid/Grid.tsx` (JSDoc remarks)
 - Modify: `packages/design-system/AGENTS.md`
 - Modify: `packages/playground/src/pages/components/GridDemo.tsx`
@@ -397,9 +402,9 @@ git commit -m "feat(Grid): collapseBelow container-query collapse for fixed-colu
 **Interfaces:** consumes everything above; docs only.
 
 - [ ] **Step 1: Update Grid JSDoc** — replace the two remarks lines
-  "For per-cell span / placement — same answer; raw CSS Grid." and the
-  named-tracks line's span reference with `Grid.Item` guidance, and add the
-  dashboard example to the Grid JSDoc:
+      "For per-cell span / placement — same answer; raw CSS Grid." and the
+      named-tracks line's span reference with `Grid.Item` guidance, and add the
+      dashboard example to the Grid JSDoc:
 
 ```
  * @example
@@ -414,16 +419,16 @@ git commit -m "feat(Grid): collapseBelow container-query collapse for fixed-colu
 ```
 
 - [ ] **Step 2: AGENTS.md** — extend the Grid section: `Grid.Item` span table
-  (`25%`→3/12 … `100%`→full row), "fractions need `columns={12}`",
-  `collapseBelow` presets with px values, container-not-viewport note, and the
-  canonical dashboard snippet above.
+      (`25%`→3/12 … `100%`→full row), "fractions need `columns={12}`",
+      `collapseBelow` presets with px values, container-not-viewport note, and the
+      canonical dashboard snippet above.
 
 - [ ] **Step 3: Playground demo** — add a `SpanCollapseExample` section to
-  `GridDemo.tsx` (registered in the sections list) showing the dashboard
-  snippet inside a resizable container (wrap in a div with
-  `style={{ resize: 'horizontal', overflow: 'auto' }}` so the collapse can be
-  demonstrated by dragging), with the code block mirroring the JSDoc example.
-  Follow the file's existing `Example` component conventions.
+      `GridDemo.tsx` (registered in the sections list) showing the dashboard
+      snippet inside a resizable container (wrap in a div with
+      `style={{ resize: 'horizontal', overflow: 'auto' }}` so the collapse can be
+      demonstrated by dragging), with the code block mirroring the JSDoc example.
+      Follow the file's existing `Example` component conventions.
 
 - [ ] **Step 4: Gates**
 
@@ -438,8 +443,8 @@ git commit -m "docs(Grid): Grid.Item + collapseBelow docs, AGENTS.md, playground
 ```
 
 - [ ] **Step 6: Visual verification (controller runs this, not a subagent):**
-  start the playground on port 8090 (`npm run dev -- --port 8090` in
-  `packages/playground`, no browser), Playwright: open `/components/grid`,
-  screenshot the span section wide (rows align 25/75, 33/67, 50/50), then
-  narrow the resizable container / viewport below 640px and confirm single
-  column. Kill the server after.
+      start the playground on port 8090 (`npm run dev -- --port 8090` in
+      `packages/playground`, no browser), Playwright: open `/components/grid`,
+      screenshot the span section wide (rows align 25/75, 33/67, 50/50), then
+      narrow the resizable container / viewport below 640px and confirm single
+      column. Kill the server after.
