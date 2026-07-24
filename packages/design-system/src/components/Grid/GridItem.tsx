@@ -77,11 +77,10 @@ export const GridItem = forwardRef<HTMLElement, GridItemProps>(function GridItem
     <Tag
       ref={ref as React.Ref<HTMLDivElement>}
       className={clsx(styles.item, className)}
-      style={
-        resolved !== undefined
-          ? { ...(style as CSSProperties), ['--grid-item-span' as string]: resolved }
-          : (style as CSSProperties)
-      }
+      // Always set the property — custom properties inherit, so an unset
+      // span-less item nested under a spanned one would resolve the
+      // ancestor's value instead of `auto`.
+      style={{ ...(style as CSSProperties), ['--grid-item-span' as string]: resolved ?? 'auto' }}
       {...(rest as HTMLAttributes<HTMLDivElement>)}
     />
   );

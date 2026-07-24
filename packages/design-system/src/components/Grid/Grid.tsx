@@ -59,6 +59,18 @@ interface GridFixedColumns extends GridBaseProps, HTMLAttributes<HTMLElement> {
    * `lg` 768px. Every child spans the full row below the threshold —
    * `Grid.Item` spans included. Only valid with `columns` (auto-fit grids
    * already reflow).
+   *
+   * Consumer inline `style={{ gridColumn }}` on a child still wins below the
+   * threshold (inline beats any stylesheet rule) — don't do that; use
+   * `Grid.Item span` instead.
+   *
+   * ❌ Anti-pattern: a `collapseBelow` grid must get its width from its
+   * parent. `container-type: inline-size` zeroes the grid's contribution to
+   * intrinsic sizing, so in an intrinsic-width context (`Split`'s default
+   * `auto` aside track, a `Cluster` item, `width: max-content`) it renders at
+   * width 0 — give the parent a concrete width instead. The grid also becomes
+   * the containing block for absolutely-positioned descendants (layout
+   * containment).
    */
   collapseBelow?: GridCollapseBreakpoint;
 }

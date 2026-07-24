@@ -1480,7 +1480,7 @@ Fractions assume a 12-column grid — pair them with `columns={12}` on the paren
 
 **`collapseBelow` — collapse to one column below a width preset:**
 
-Only valid on a fixed-`columns` Grid (auto-fit grids already reflow). Presets: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. This is a **container query on the Grid's own width, not the viewport** — it fires based on the space the Grid itself has, not the browser window, so it still collapses correctly inside a narrow sidebar or split pane even on a wide screen. Below the threshold every child spans the full row, `Grid.Item` spans included.
+Only valid on a fixed-`columns` Grid (auto-fit grids already reflow). Presets: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. This is a **container query on the Grid's own width, not the viewport** — it fires based on the space the Grid itself has, not the browser window, so it collapses correctly inside a narrow sidebar or split pane even on a wide screen — provided the pane gives the grid a definite width. Below the threshold every child spans the full row, `Grid.Item` spans included.
 
 **Anti-patterns:**
 
@@ -1489,6 +1489,7 @@ Only valid on a fixed-`columns` Grid (auto-fit grids already reflow). Presets: `
 - ❌ `<Grid columns="auto 1fr">` strings — not supported in v1. For asymmetric / named tracks, use raw CSS Grid via className.
 - ❌ `<Grid as="ul">` with non-`<li>` children. The component doesn't enforce list semantics; consumers must.
 - ❌ Fraction spans (other than `'100%'`) on a Grid whose `columns` isn't 12 — the span is a fixed track count, so it overflows into implicit tracks on a non-12 grid.
+- ❌ A `collapseBelow` grid in an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes the grid contribute zero intrinsic width, so it renders at width 0 — the grid must get its width from its parent; give the aside a concrete width instead. The grid also becomes the containing block for absolutely-positioned descendants (layout containment).
 
 ### `<Split>` — master–detail two-pane layout
 

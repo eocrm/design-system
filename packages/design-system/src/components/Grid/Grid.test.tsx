@@ -140,6 +140,12 @@ describe('<Grid>', () => {
     // Reference the value so the variable isn't reported as unused.
     expect(ConflictingGrid).toBeDefined();
   });
+
+  it('TS: collapseBelow is invalid on an auto-fit (minColumnWidth) grid', () => {
+    // @ts-expect-error — collapseBelow requires `columns`; auto-fit grids already reflow.
+    const InvalidCollapse = <Grid minColumnWidth="200px" collapseBelow="md" />;
+    expect(InvalidCollapse).toBeDefined();
+  });
 });
 
 describe('Grid.Item (#314)', () => {
@@ -148,7 +154,20 @@ describe('Grid.Item (#314)', () => {
     const el = container.firstChild as HTMLElement;
     expect(el.tagName).toBe('DIV');
     expect(el.className).toContain('ext');
-    expect(el.style.getPropertyValue('--grid-item-span')).toBe('');
+    // Explicit 'auto' (not unset) — custom properties inherit, so leaving it
+    // unset would let a nested span-less item resolve an ancestor's span.
+    expect(el.style.getPropertyValue('--grid-item-span')).toBe('auto');
+  });
+
+  it('a span-less Grid.Item nested inside a spanned one gets its own auto, not the inherited span', () => {
+    render(
+      <Grid.Item span="50%">
+        <Grid columns={2}>
+          <Grid.Item data-testid="inner">nested cell</Grid.Item>
+        </Grid>
+      </Grid.Item>,
+    );
+    expect(screen.getByTestId('inner').style.getPropertyValue('--grid-item-span')).toBe('auto');
   });
 
   it.each([

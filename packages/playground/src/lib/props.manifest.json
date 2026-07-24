@@ -2097,7 +2097,7 @@
           "type": "GridCollapseBreakpoint",
           "required": false,
           "default": "",
-          "description": "Collapse to a single visual column when the GRID'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Every child spans the full row below the threshold —\n`Grid.Item` spans included. Only valid with `columns` (auto-fit grids\nalready reflow)."
+          "description": "Collapse to a single visual column when the GRID'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Every child spans the full row below the threshold —\n`Grid.Item` spans included. Only valid with `columns` (auto-fit grids\nalready reflow).\n\nConsumer inline `style={{ gridColumn }}` on a child still wins below the\nthreshold (inline beats any stylesheet rule) — don't do that; use\n`Grid.Item span` instead.\n\n❌ Anti-pattern: a `collapseBelow` grid must get its width from its\nparent. `container-type: inline-size` zeroes the grid's contribution to\nintrinsic sizing, so in an intrinsic-width context (`Split`'s default\n`auto` aside track, a `Cluster` item, `width: max-content`) it renders at\nwidth 0 — give the parent a concrete width instead. The grid also becomes\nthe containing block for absolutely-positioned descendants (layout\ncontainment)."
         }
       ]
     },
