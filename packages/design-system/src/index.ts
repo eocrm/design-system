@@ -363,6 +363,7 @@ export type {
   SortableItemProps,
   SortableHandleProps,
   SortableReorderEvent,
+  SortableArrangement,
 } from './components/Sortable';
 
 export { SortableGroup, moveSortableItem } from './components/SortableGroup';

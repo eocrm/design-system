@@ -3988,6 +3988,20 @@
           "required": false,
           "default": "true",
           "description": "When `true` (default), the dragged item is clamped to the list's bounding\nbox — it can't be dragged outside the `<ol>`. Set `false` for free-drag\n(the item can be dragged anywhere on the page). For a vertical list this\nconstrains the drag vertically to the list's extent."
+        },
+        {
+          "name": "arrangement",
+          "type": "SortableArrangement",
+          "required": false,
+          "default": "'list'",
+          "description": "Layout arrangement of the items.\n- `'list'` (default) — single vertical column; existing behavior unchanged.\n- `'grid'` — the `<ol>` becomes a `columns`-track CSS grid. Items carry\n  column spans (`Sortable.Item span`), rows are equal-height, and siblings\n  reflow in 2D during a drag. Reorder semantics stay order-based (a drop\n  reorders the flow; nothing here persists an x/y position)."
+        },
+        {
+          "name": "columns",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Number of equal-width grid tracks. Only applies when `arrangement=\"grid\"`\n(ignored for a list). Default `12`, matching `Grid.Item`'s 12-column\nfraction spans (`'25%'`→3 … `'75%'`→9 tracks). Set another count for a\nsimpler grid, but the named fraction spans then won't map to their\nfraction (documented, not validated — same as `Grid`)."
         }
       ]
     },
@@ -4752,6 +4766,7 @@
     "SliderOrientation": "\"horizontal\" | \"vertical\"",
     "SliderMark": "{ value: number; label?: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null }",
     "SortableReorderEvent": "{ from: number; to: number; id: string | number }",
+    "SortableArrangement": "\"list\" | \"grid\"",
     "SortableMoveEvent": "{ id: string | number; from: { container: string | number; index: number; }; to: { container: string | number; index: number; } }",
     "TableDensity": "\"comfortable\" | \"dense\"",
     "PaginationSize": "\"sm\" | \"md\" | \"lg\"",

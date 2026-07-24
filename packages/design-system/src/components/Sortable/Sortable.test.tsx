@@ -1,5 +1,6 @@
-import { createRef } from 'react';
-import { render } from '@testing-library/react';
+import { createRef, type CSSProperties } from 'react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Sortable, restrictTransformToRect } from './Sortable';
 
 describe('Sortable', () => {
@@ -203,6 +204,193 @@ describe('Sortable', () => {
       </Sortable>,
     );
     expect(ref.current?.tagName).toBe('OL');
+  });
+});
+
+// dnd-kit's KeyboardSensor + sortableKeyboardCoordinates resolve the next drop
+// target from each item's bounding rect. jsdom reports zero-size rects, so the
+// sensor can't find a neighbour. Hand each <li> a STABLE box derived from its
+// DOM index (a vertical stack) — stable per element, because rectSortingStrategy
+// re-measures every item and a stateful counter would return a different rect on
+// each call for the same node. Descendants (the Handle button) inherit their
+// <li>'s rect; everything else gets a large container rect. Coordinate
+// resolution is strategy-independent, so ArrowDown resolves the same in a grid.
+function stubStackedRects(): () => void {
+  const orig = Element.prototype.getBoundingClientRect;
+  Element.prototype.getBoundingClientRect = function () {
+    const li = (this as Element).closest?.('li');
+    if (li?.parentElement) {
+      const i = Array.prototype.indexOf.call(li.parentElement.children, li);
+      const top = i * 50;
+      return {
+        x: 0,
+        y: top,
+        top,
+        left: 0,
+        right: 100,
+        bottom: top + 40,
+        width: 100,
+        height: 40,
+        toJSON() {},
+      } as DOMRect;
+    }
+    return {
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 1000,
+      bottom: 1000,
+      width: 1000,
+      height: 1000,
+      toJSON() {},
+    } as DOMRect;
+  };
+  return () => {
+    Element.prototype.getBoundingClientRect = orig;
+  };
+}
+
+describe('Sortable grid arrangement (#316)', () => {
+  it('defaults to the list arrangement (backward-compatible)', () => {
+    const { container } = render(
+      <Sortable>
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    const ol = container.querySelector('ol')!;
+    expect(ol.className).toMatch(/list/);
+    expect(ol.className).not.toMatch(/grid/);
+    // No column template injected in list mode.
+    expect(ol.style.getPropertyValue('--sortable-columns')).toBe('');
+  });
+
+  it('arrangement="grid" swaps the <ol> to the grid class and injects 12 columns by default', () => {
+    const { container } = render(
+      <Sortable arrangement="grid">
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    const ol = container.querySelector('ol')!;
+    expect(ol.className).toMatch(/grid/);
+    expect(ol.className).not.toMatch(/list/);
+    expect(ol.style.getPropertyValue('--sortable-columns')).toBe('12');
+  });
+
+  it('columns overrides the injected track count', () => {
+    const { container } = render(
+      <Sortable arrangement="grid" columns={4}>
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    expect(
+      (container.querySelector('ol') as HTMLElement).style.getPropertyValue('--sortable-columns'),
+    ).toBe('4');
+  });
+
+  it('merges consumer style with --sortable-columns; the injected value wins', () => {
+    const { container } = render(
+      <Sortable
+        arrangement="grid"
+        columns={6}
+        style={{ backgroundColor: 'red', ['--sortable-columns' as string]: '99' } as CSSProperties}
+      >
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    const ol = container.querySelector('ol') as HTMLElement;
+    expect(ol.style.backgroundColor).toBe('red');
+    expect(ol.style.getPropertyValue('--sortable-columns')).toBe('6');
+  });
+
+  it.each([
+    [undefined, 'auto'],
+    [2, 'span 2'],
+    ['25%', 'span 3'],
+    ['33%', 'span 4'],
+    ['50%', 'span 6'],
+    ['67%', 'span 8'],
+    ['75%', 'span 9'],
+    ['100%', '1 / -1'],
+    ['full', '1 / -1'],
+  ] as const)('Item span=%s stamps --sortable-item-span: %s on the <li>', (span, expected) => {
+    const { container } = render(
+      <Sortable arrangement="grid">
+        <Sortable.Item id="a" span={span}>
+          A
+        </Sortable.Item>
+      </Sortable>,
+    );
+    expect(
+      (container.querySelector('li') as HTMLElement).style.getPropertyValue('--sortable-item-span'),
+    ).toBe(expected);
+  });
+
+  it('a span-less Item stamps auto so it never inherits a spanned ancestor', () => {
+    const { container } = render(
+      <Sortable arrangement="grid">
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    expect(
+      (container.querySelector('li') as HTMLElement).style.getPropertyValue('--sortable-item-span'),
+    ).toBe('auto');
+  });
+
+  it('keeps handle-only drag semantics in grid mode (<li> gets no dnd-kit role/tabIndex)', () => {
+    const { container } = render(
+      <Sortable arrangement="grid">
+        <Sortable.Item id="a" span="50%">
+          <Sortable.Handle>h</Sortable.Handle>
+        </Sortable.Item>
+      </Sortable>,
+    );
+    const li = container.querySelector('li');
+    expect(li?.getAttribute('tabIndex')).toBeNull();
+    expect(li?.getAttribute('role')).toBeNull();
+    // The Handle still wires the drag activator.
+    expect(container.querySelector('[data-sortable-handle="true"]')).not.toBeNull();
+  });
+
+  it('without a Handle the grid <li> is keyboard-focusable (tabIndex=0)', () => {
+    const { container } = render(
+      <Sortable arrangement="grid">
+        <Sortable.Item id="a" span="50%">
+          A
+        </Sortable.Item>
+      </Sortable>,
+    );
+    expect(container.querySelector('li')?.getAttribute('tabIndex')).toBe('0');
+  });
+
+  it('fires onReorder with the correct from/to for a keyboard drag in a grid', async () => {
+    // Two items so the drop target is unambiguous (the only neighbour is
+    // index 1) — dnd-kit's closestCenter picks it deterministically. The
+    // from/to mapping is `itemIds.indexOf`, identical to list mode; this
+    // asserts it still resolves under the grid strategy + closestCenter.
+    const restore = stubStackedRects();
+    const onReorder = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Sortable arrangement="grid" columns={12} onReorder={onReorder}>
+        <Sortable.Item id="a" span="50%">
+          <Sortable.Handle aria-label="Reorder A">ha</Sortable.Handle>A
+        </Sortable.Item>
+        <Sortable.Item id="b" span="50%">
+          <Sortable.Handle aria-label="Reorder B">hb</Sortable.Handle>B
+        </Sortable.Item>
+      </Sortable>,
+    );
+
+    screen.getByLabelText('Reorder A').focus();
+    await user.keyboard('[Space]'); // pick up "a"
+    await user.keyboard('[ArrowDown]'); // move past "b"
+    await user.keyboard('[Space]'); // drop
+
+    restore();
+
+    expect(onReorder).toHaveBeenCalledTimes(1);
+    expect(onReorder).toHaveBeenCalledWith({ id: 'a', from: 0, to: 1 });
   });
 });
 

@@ -12,8 +12,31 @@
   gap: var(--sortable-list-gap);
 }
 
+// Grid arrangement (arrangement="grid"). The <ol> owns the track template;
+// the column count is injected inline as --sortable-columns (default 12).
+// `align-items: stretch` (the grid default, stated for intent) makes every
+// item in a row match its tallest sibling — equal-height cells, consistent
+// with <Grid>. Per-cell spans ride on `.item`'s grid-column below.
+.grid {
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ol> default margin
+  margin: 0;
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for <ol> default padding (bullet gutter)
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(var(--sortable-columns, 12), minmax(0, 1fr));
+  gap: var(--sortable-grid-gap);
+  align-items: stretch;
+}
+
 .item {
   position: relative;
+
+  // Per-cell column span for the grid arrangement — resolved in Sortable.tsx
+  // and injected inline as --sortable-item-span (span N / 1 / -1 / auto).
+  // Inert on a flex child (list mode), active when the parent <ol> is .grid.
+  // stylelint-disable-next-line property-disallowed-list -- Sortable's sanctioned grid-arrangement placement, mirrors Grid.Item (see Sortable.tsx)
+  grid-column: var(--sortable-item-span, auto);
 
   // Required for no-Handle whole-item drag on mobile. dnd-kit's PointerSensor
   // can't initiate drag if the browser claims the touch gesture for scroll.

@@ -3,6 +3,11 @@
   // List
   --sortable-list-gap: var(--space-2);
 
+  // Grid arrangement — gap between grid cells. Defaults to the list gap so the
+  // two arrangements match out of the box; overridable independently (a
+  // dashboard grid often wants a roomier gutter than a dense list).
+  --sortable-grid-gap: var(--sortable-list-gap);
+
   // Item (dragging state)
   --sortable-item-shadow-dragging: var(--shadow-lg);
 

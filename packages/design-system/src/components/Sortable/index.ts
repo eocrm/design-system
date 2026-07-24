@@ -8,4 +8,5 @@ export {
   type SortableHandleProps,
   type SortableReorderEvent,
   type SortableItemContextValue,
+  type SortableArrangement,
 } from './Sortable';
