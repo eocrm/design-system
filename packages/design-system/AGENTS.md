@@ -1447,6 +1447,15 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
   <Input label="First name" />
   <Input label="Last name" />
 </Grid>
+
+// Dashboard widgets — 12-column base, fraction spans, collapses under 640px.
+<Grid columns={12} gap="md" collapseBelow="md">
+  <Grid.Item span="25%"><Card>KPI</Card></Grid.Item>
+  <Grid.Item span="75%"><Card>Chart</Card></Grid.Item>
+  <Grid.Item span="33%"><Card>List</Card></Grid.Item>
+  <Grid.Item span="67%"><Card>Table</Card></Grid.Item>
+  <Grid.Item span="100%"><Card>Footer row</Card></Grid.Item>
+</Grid>
 ```
 
 - **One of `columns` or `minColumnWidth`, not both.** TypeScript enforces it.
@@ -1455,12 +1464,31 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - **alignItems / justifyItems** — pass `start` / `center` / `end` / `stretch` to override the default browser stretch on either axis. Useful for cards of varying intrinsic height.
 - **`as` prop** — 10 common semantic elements (`div` default, `section`, `ul`, `ol`, `nav`, `main`, `aside`, `article`, `header`, `footer`). Limited rather than fully polymorphic to keep types simple.
 
+**`<Grid.Item span>` — per-cell column span:**
+
+| `span`              | Tracks (12-col grid)                                      |
+| ------------------- | --------------------------------------------------------- |
+| `'25%'`             | 3/12                                                      |
+| `'33%'`             | 4/12                                                      |
+| `'50%'`             | 6/12                                                      |
+| `'67%'`             | 8/12                                                      |
+| `'75%'`             | 9/12                                                      |
+| `'100%'` / `'full'` | full row (`1 / -1`), safe in ANY grid                     |
+| number              | `span N` tracks of whatever `columns` the parent declares |
+
+Fractions assume a 12-column grid — pair them with `columns={12}` on the parent `<Grid>`. A numeric `span` is relative to the parent's actual `columns` count, no 12-col assumption. `Grid.Item` is opt-in; plain children remain valid Grid cells.
+
+**`collapseBelow` — collapse to one column below a width preset:**
+
+Only valid on a fixed-`columns` Grid (auto-fit grids already reflow). Presets: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. This is a **container query on the Grid's own width, not the viewport** — it fires based on the space the Grid itself has, not the browser window, so it still collapses correctly inside a narrow sidebar or split pane even on a wide screen. Below the threshold every child spans the full row, `Grid.Item` spans included.
+
 **Anti-patterns:**
 
 - ❌ Grid for a single column of vertical flow — use Stack.
 - ❌ Grid for unaligned wrapping rows (toolbars, tag lists) — use Cluster.
 - ❌ `<Grid columns="auto 1fr">` strings — not supported in v1. For asymmetric / named tracks, use raw CSS Grid via className.
 - ❌ `<Grid as="ul">` with non-`<li>` children. The component doesn't enforce list semantics; consumers must.
+- ❌ Fraction spans (other than `'100%'`) on a Grid whose `columns` isn't 12 — the span is a fixed track count, so it overflows into implicit tracks on a non-12 grid.
 
 ### `<Split>` — master–detail two-pane layout
 

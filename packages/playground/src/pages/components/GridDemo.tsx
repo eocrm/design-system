@@ -17,6 +17,7 @@ export function GridDemo() {
       <MinColumnWidthExample />
       <AlignmentExample />
       <SemanticElementExample />
+      <SpanCollapseExample />
     </DemoLayout>
   );
 }
@@ -309,6 +310,48 @@ export function Demo() {
           ))}
         </Grid>
       </Stack>
+    </Example>
+  );
+}
+
+function SpanCollapseExample() {
+  return (
+    <Example
+      title="Grid.Item span + collapseBelow"
+      description="`Grid.Item span` on a 12-column grid for per-cell width; `collapseBelow='md'` collapses every cell to a full row once the GRID'S OWN width (not the viewport) drops below 640px. Drag the box's resize handle (bottom-right corner) narrower to see it collapse."
+      code={`import { Card, Grid } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Grid columns={12} gap="md" collapseBelow="md">
+      <Grid.Item span="25%"><Card>KPI</Card></Grid.Item>
+      <Grid.Item span="75%"><Card>Chart</Card></Grid.Item>
+      <Grid.Item span="33%"><Card>List</Card></Grid.Item>
+      <Grid.Item span="67%"><Card>Table</Card></Grid.Item>
+      <Grid.Item span="100%"><Card>Footer row</Card></Grid.Item>
+    </Grid>
+  );
+}`}
+    >
+      <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+        <Grid columns={12} gap="md" collapseBelow="md">
+          <Grid.Item span="25%">
+            <Card>KPI</Card>
+          </Grid.Item>
+          <Grid.Item span="75%">
+            <Card>Chart</Card>
+          </Grid.Item>
+          <Grid.Item span="33%">
+            <Card>List</Card>
+          </Grid.Item>
+          <Grid.Item span="67%">
+            <Card>Table</Card>
+          </Grid.Item>
+          <Grid.Item span="100%">
+            <Card>Footer row</Card>
+          </Grid.Item>
+        </Grid>
+      </div>
     </Example>
   );
 }

@@ -191,12 +191,21 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
  *   <Card>...</Card>
  * </Grid>
  *
+ * @example
+ * // Dashboard widgets — 12-column base, fraction spans, collapses under 640px.
+ * <Grid columns={12} gap="md" collapseBelow="md">
+ *   <Grid.Item span="25%"><Card>KPI</Card></Grid.Item>
+ *   <Grid.Item span="75%"><Card>Chart</Card></Grid.Item>
+ *   <Grid.Item span="33%"><Card>List</Card></Grid.Item>
+ *   <Grid.Item span="67%"><Card>Table</Card></Grid.Item>
+ *   <Grid.Item span="100%"><Card>Footer row</Card></Grid.Item>
+ * </Grid>
+ *
  * @remarks When NOT to use
  * - For vertical flow with a single column — use `<Stack>`.
  * - For unaligned wrapping rows (toolbars, tag lists) — use `<Cluster>`.
  * - For asymmetric or named tracks (`auto 1fr`, named lines) — not
  *   supported in v1; use raw CSS Grid via `className`.
- * - For per-cell span / placement — same answer; raw CSS Grid.
  *
  * @remarks Anti-patterns
  * - ❌ `<Grid>` for a list of clickable items — semantics matter. Use
