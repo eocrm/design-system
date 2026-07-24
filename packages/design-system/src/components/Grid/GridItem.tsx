@@ -15,7 +15,7 @@ export type GridItemSpan = number | 'full' | '25%' | '33%' | '50%' | '67%' | '75
 export type GridItemAs = 'div' | 'li' | 'section' | 'article' | 'aside';
 
 /** Fraction → 12-col track count. 100%/full handled separately (1 / -1). */
-const FRACTION_TRACKS: Record<string, number> = {
+const FRACTION_TRACKS: Record<Exclude<GridItemSpan, number | 'full' | '100%'>, number> = {
   '25%': 3,
   '33%': 4,
   '50%': 6,

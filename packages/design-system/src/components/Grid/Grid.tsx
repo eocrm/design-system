@@ -12,6 +12,9 @@ export type GridAlignItems = 'start' | 'center' | 'end' | 'stretch';
 /** Main-axis (horizontal within track) alignment of each cell. */
 export type GridJustifyItems = 'start' | 'center' | 'end' | 'stretch';
 
+/** Container-width threshold below which a fixed-column grid collapses to one visual column. `sm` 480px / `md` 640px / `lg` 768px. */
+export type GridCollapseBreakpoint = 'sm' | 'md' | 'lg';
+
 /** Limited polymorphic element type. Covers the layout / semantic elements Grid is likely to render as. */
 export type GridAs =
   | 'div'
@@ -50,6 +53,14 @@ interface GridFixedColumns extends GridBaseProps, HTMLAttributes<HTMLElement> {
   /** Fixed number of equal-width columns. Mutually exclusive with `minColumnWidth`. */
   columns: number;
   minColumnWidth?: never;
+  /**
+   * Collapse to a single visual column when the GRID'S OWN width (container
+   * query, not viewport) drops below the preset: `sm` 480px / `md` 640px /
+   * `lg` 768px. Every child spans the full row below the threshold —
+   * `Grid.Item` spans included. Only valid with `columns` (auto-fit grids
+   * already reflow).
+   */
+  collapseBelow?: GridCollapseBreakpoint;
 }
 
 interface GridAutoFit extends GridBaseProps, HTMLAttributes<HTMLElement> {
@@ -61,6 +72,7 @@ interface GridAutoFit extends GridBaseProps, HTMLAttributes<HTMLElement> {
    */
   minColumnWidth?: string;
   columns?: never;
+  collapseBelow?: never;
 }
 
 /** Public props — discriminated union enforces mutual exclusion. */
@@ -89,6 +101,12 @@ const justifyItemsClass: Record<GridJustifyItems, string> = {
   stretch: styles.justifyItemsStretch,
 };
 
+const collapseClass: Record<GridCollapseBreakpoint, string> = {
+  sm: styles.collapseSm,
+  md: styles.collapseMd,
+  lg: styles.collapseLg,
+};
+
 const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
   {
     gap = 'md',
@@ -97,6 +115,7 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
     as = 'div',
     columns,
     minColumnWidth,
+    collapseBelow,
     className,
     style,
     ...rest
@@ -122,6 +141,8 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
         gapClass[gap],
         alignItems && alignItemsClass[alignItems],
         justifyItems && justifyItemsClass[justifyItems],
+        collapseBelow && styles.collapsible,
+        collapseBelow && collapseClass[collapseBelow],
         className,
       )}
       style={{ ...(style as CSSProperties), ['--grid-columns' as string]: template }}

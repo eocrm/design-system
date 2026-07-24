@@ -9,3 +9,10 @@
   --grid-gap-xl: var(--space-6);
   --grid-gap-2xl: var(--space-8);
 }
+
+// Collapse breakpoints for `collapseBelow` — container-width thresholds.
+// SCSS constants (not CSS custom properties): query conditions can't read
+// custom properties. Keep in sync with the GridCollapseBreakpoint JSDoc.
+$grid-collapse-sm: 480px;
+$grid-collapse-md: 640px;
+$grid-collapse-lg: 768px;

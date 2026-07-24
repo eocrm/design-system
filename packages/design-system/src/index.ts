@@ -82,6 +82,7 @@ export type {
   GridAlignItems,
   GridJustifyItems,
   GridAs,
+  GridCollapseBreakpoint,
   GridItemProps,
   GridItemSpan,
   GridItemAs,

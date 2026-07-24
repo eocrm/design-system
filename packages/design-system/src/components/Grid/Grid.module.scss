@@ -1,4 +1,4 @@
-@use './Grid.tokens';
+@use './Grid.tokens' as tokens;
 
 .grid {
   display: grid;
@@ -70,4 +70,35 @@
 
 .justifyItemsStretch {
   justify-items: stretch;
+}
+
+// --- collapseBelow -----------------------------------------------------
+// Only grids with `collapseBelow` become size containers, so existing grids
+// get zero containment changes.
+.collapsible {
+  container-type: inline-size;
+}
+
+// Below the container threshold every direct child spans the full row —
+// the template is untouched but the grid renders as one visual column.
+// These rules are declared after `.item` so they win by source order.
+@container (max-width: #{tokens.$grid-collapse-sm}) {
+  .collapseSm > * {
+    // stylelint-disable-next-line property-disallowed-list -- collapse override is Grid's own placement mechanism, same sanction as `.item` above
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: #{tokens.$grid-collapse-md}) {
+  .collapseMd > * {
+    // stylelint-disable-next-line property-disallowed-list -- collapse override is Grid's own placement mechanism, same sanction as `.item` above
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: #{tokens.$grid-collapse-lg}) {
+  .collapseLg > * {
+    // stylelint-disable-next-line property-disallowed-list -- collapse override is Grid's own placement mechanism, same sanction as `.item` above
+    grid-column: 1 / -1;
+  }
 }

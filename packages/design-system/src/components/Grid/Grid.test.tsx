@@ -186,4 +186,37 @@ describe('Grid.Item (#314)', () => {
     );
     expect(screen.getByTestId('w')).toHaveAttribute('aria-label', 'widget');
   });
+
+  it('merges consumer style with the injected --grid-item-span', () => {
+    const { container } = render(
+      <Grid.Item style={{ opacity: 0.5 }} span="50%">
+        cell
+      </Grid.Item>,
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.opacity).toBe('0.5');
+    expect(el.style.getPropertyValue('--grid-item-span')).toBe('span 6');
+  });
+});
+
+describe('Grid collapseBelow (#314)', () => {
+  it('adds the collapsible + breakpoint classes when set', () => {
+    const { container } = render(
+      <Grid columns={12} collapseBelow="md">
+        <div>a</div>
+      </Grid>,
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.className).toMatch(/collapsible/);
+    expect(el.className).toMatch(/collapseMd/);
+  });
+
+  it('adds no collapse classes when unset', () => {
+    const { container } = render(
+      <Grid columns={2}>
+        <div>a</div>
+      </Grid>,
+    );
+    expect((container.firstChild as HTMLElement).className).not.toMatch(/collaps/i);
+  });
 });
