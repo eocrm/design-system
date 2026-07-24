@@ -141,3 +141,49 @@ describe('<Grid>', () => {
     expect(ConflictingGrid).toBeDefined();
   });
 });
+
+describe('Grid.Item (#314)', () => {
+  it('renders a div by default with merged className and no span (auto)', () => {
+    const { container } = render(<Grid.Item className="ext">cell</Grid.Item>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.tagName).toBe('DIV');
+    expect(el.className).toContain('ext');
+    expect(el.style.getPropertyValue('--grid-item-span')).toBe('');
+  });
+
+  it.each([
+    [2, 'span 2'],
+    ['25%', 'span 3'],
+    ['33%', 'span 4'],
+    ['50%', 'span 6'],
+    ['67%', 'span 8'],
+    ['75%', 'span 9'],
+    ['100%', '1 / -1'],
+    ['full', '1 / -1'],
+  ] as const)('span=%s sets --grid-item-span: %s', (span, expected) => {
+    const { container } = render(<Grid.Item span={span}>cell</Grid.Item>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.getPropertyValue('--grid-item-span')).toBe(expected);
+  });
+
+  it('renders as="li" and forwards the ref to it', () => {
+    const ref = createRef<HTMLElement>();
+    render(
+      <Grid as="ul">
+        <Grid.Item as="li" ref={ref} span="50%">
+          cell
+        </Grid.Item>
+      </Grid>,
+    );
+    expect(ref.current?.tagName).toBe('LI');
+  });
+
+  it('spreads HTML attributes', () => {
+    render(
+      <Grid.Item data-testid="w" aria-label="widget">
+        cell
+      </Grid.Item>,
+    );
+    expect(screen.getByTestId('w')).toHaveAttribute('aria-label', 'widget');
+  });
+});

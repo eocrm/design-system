@@ -1,6 +1,7 @@
 import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactElement } from 'react';
 import clsx from 'clsx';
 import styles from './Grid.module.scss';
+import { GridItem } from './GridItem';
 
 /** Gap between cells. Same scale as Stack/Cluster: pixels 4/8/12/16/24/32. */
 export type GridGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -88,6 +89,47 @@ const justifyItemsClass: Record<GridJustifyItems, string> = {
   stretch: styles.justifyItemsStretch,
 };
 
+const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
+  {
+    gap = 'md',
+    alignItems,
+    justifyItems,
+    as = 'div',
+    columns,
+    minColumnWidth,
+    className,
+    style,
+    ...rest
+  },
+  ref,
+) {
+  const template =
+    columns !== undefined
+      ? `repeat(${columns}, minmax(0, 1fr))`
+      : `repeat(auto-fit, minmax(${minColumnWidth ?? '240px'}, 1fr))`;
+
+  // `as` is a string union of intrinsic JSX elements; cast through unknown
+  // for the limited union. At runtime React just uses the element name.
+  const Tag = as as unknown as 'div';
+
+  // Tag is constrained at the type level via GridAs; the ref + rest casts
+  // satisfy React's intrinsic-element signature without per-tag branching.
+  return (
+    <Tag
+      ref={ref as React.Ref<HTMLDivElement>}
+      className={clsx(
+        styles.grid,
+        gapClass[gap],
+        alignItems && alignItemsClass[alignItems],
+        justifyItems && justifyItemsClass[justifyItems],
+        className,
+      )}
+      style={{ ...(style as CSSProperties), ['--grid-columns' as string]: template }}
+      {...(rest as HTMLAttributes<HTMLDivElement>)}
+    />
+  );
+}) as <T extends GridProps>(props: T & { ref?: React.Ref<HTMLElement> }) => ReactElement;
+
 /**
  * 2D layout primitive — CSS Grid wrapper with token-driven gap. Sibling to
  * `<Stack>` (vertical) and `<Cluster>` (horizontal-with-wrap). Use when you
@@ -142,44 +184,10 @@ const justifyItemsClass: Record<GridJustifyItems, string> = {
  *   enforce list semantics; consumers must.
  * - ❌ Inline `gridTemplateColumns` in the `style` prop instead of using
  *   `columns` / `minColumnWidth`. Bypasses tokens and the responsive default.
+ *
+ * @remarks Grid.Item
+ * - Attach `<Grid.Item span={...}>` to a cell for an explicit column span
+ *   (numeric track count or 12-col fraction). See `GridItemSpan`. Plain
+ *   children remain valid Grid cells — `Grid.Item` is opt-in.
  */
-export const Grid = forwardRef<HTMLElement, GridProps>(function Grid(
-  {
-    gap = 'md',
-    alignItems,
-    justifyItems,
-    as = 'div',
-    columns,
-    minColumnWidth,
-    className,
-    style,
-    ...rest
-  },
-  ref,
-) {
-  const template =
-    columns !== undefined
-      ? `repeat(${columns}, minmax(0, 1fr))`
-      : `repeat(auto-fit, minmax(${minColumnWidth ?? '240px'}, 1fr))`;
-
-  // `as` is a string union of intrinsic JSX elements; cast through unknown
-  // for the limited union. At runtime React just uses the element name.
-  const Tag = as as unknown as 'div';
-
-  // Tag is constrained at the type level via GridAs; the ref + rest casts
-  // satisfy React's intrinsic-element signature without per-tag branching.
-  return (
-    <Tag
-      ref={ref as React.Ref<HTMLDivElement>}
-      className={clsx(
-        styles.grid,
-        gapClass[gap],
-        alignItems && alignItemsClass[alignItems],
-        justifyItems && justifyItemsClass[justifyItems],
-        className,
-      )}
-      style={{ ...(style as CSSProperties), ['--grid-columns' as string]: template }}
-      {...(rest as HTMLAttributes<HTMLDivElement>)}
-    />
-  );
-}) as <T extends GridProps>(props: T & { ref?: React.Ref<HTMLElement> }) => ReactElement;
+export const Grid = Object.assign(GridBase, { Item: GridItem });

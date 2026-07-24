@@ -5,6 +5,14 @@
   grid-template-columns: var(--grid-columns, repeat(auto-fit, minmax(240px, 1fr)));
 }
 
+// Grid.Item placement — the value is resolved in GridItem.tsx and injected
+// as an inline custom property (span N / 1 / -1). Declared before the
+// collapse rules so a collapsed grid's `1 / -1` override wins by source order.
+.item {
+  // stylelint-disable-next-line property-disallowed-list -- Grid.Item's sanctioned job: per-cell column placement is the layout family's own prop, not consumer layout (see GridItem.tsx)
+  grid-column: var(--grid-item-span, auto);
+}
+
 // Gap presets — mirror Stack/Cluster scale + camelCase naming
 .gapXs {
   gap: var(--grid-gap-xs);

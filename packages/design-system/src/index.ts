@@ -82,6 +82,9 @@ export type {
   GridAlignItems,
   GridJustifyItems,
   GridAs,
+  GridItemProps,
+  GridItemSpan,
+  GridItemAs,
 } from './components/Grid';
 export { Split } from './components/Split';
 export type { SplitProps, SplitSide, SplitGap, SplitAlign } from './components/Split';
