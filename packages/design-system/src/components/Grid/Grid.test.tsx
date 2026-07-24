@@ -170,6 +170,19 @@ describe('Grid.Item (#314)', () => {
     expect(screen.getByTestId('inner').style.getPropertyValue('--grid-item-span')).toBe('auto');
   });
 
+  it('internal --grid-item-span wins when consumer style sets the same custom prop', () => {
+    // Component-wins is load-bearing: the anti-inheritance fix relies on the
+    // item always stamping its own value (mirrors the --grid-columns test).
+    const { container } = render(
+      <Grid.Item span="50%" style={{ ['--grid-item-span' as string]: 'span 99' } as CSSProperties}>
+        cell
+      </Grid.Item>,
+    );
+    expect((container.firstChild as HTMLElement).style.getPropertyValue('--grid-item-span')).toBe(
+      'span 6',
+    );
+  });
+
   it.each([
     [2, 'span 2'],
     ['25%', 'span 3'],
