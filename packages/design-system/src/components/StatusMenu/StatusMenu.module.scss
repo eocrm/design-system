@@ -40,20 +40,29 @@
   flex-shrink: 0;
 }
 
-// Double class (.option.option) raises specificity to (0,3,0) with the
-// pseudo-classes below, deterministically beating DropdownMenu's own
-// `.item:hover` / `.item:focus-visible` rules (0,2,0) — see Item.tsx —
-// so each option row keeps ITS OWN injected status color on hover/focus
-// instead of falling back to the menu's default hover tint.
+// DropdownMenu's own hover/focus-visible rule is
+// `.item:hover:not([aria-disabled='true'])` — (0,3,0): the attribute
+// selector inside `:not()` counts toward specificity. A plain
+// `.option.option:hover` only reaches (0,3,0) too — a tie, whose winner
+// depends on CSS-module emission order, which isn't guaranteed. Adding our
+// own `:not([aria-disabled='true'])` pushes us to (0,4,0), a provable win
+// regardless of source order. CSS also cascades per PROPERTY, not per
+// rule — winning the selector fight doesn't help unless we redeclare
+// background/color here too, since DropdownMenu's rule would otherwise be
+// the only one setting `background` at all.
 .option.option {
   background: var(--status-menu-bg);
   color: var(--status-menu-fg);
 }
 
-.option.option:hover {
+.option.option:hover:not([aria-disabled='true']) {
+  background: var(--status-menu-bg);
+  color: var(--status-menu-fg);
   filter: brightness(0.94);
 }
 
-.option.option:focus-visible {
+.option.option:focus-visible:not([aria-disabled='true']) {
+  background: var(--status-menu-bg);
+  color: var(--status-menu-fg);
   filter: brightness(0.94);
 }
