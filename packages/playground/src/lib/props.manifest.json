@@ -234,6 +234,13 @@
           "required": false,
           "default": "",
           "description": "Optional categorical palette color. When set, takes precedence over\n`tone`: the badge fills with the matching `--color-palette-<name>-bg/fg`\ntokens. Use for non-semantic categorical labels (e.g., audit event\nnamespaces, tag colors) where the 6 semantic tones aren't enough.\n\nBoth filled and stripe variants are supported; for stripe the\nleft-border picks up the palette `fg` token."
+        },
+        {
+          "name": "align",
+          "type": "BadgeAlign",
+          "required": false,
+          "default": "baseline",
+          "description": "Vertical alignment within the surrounding line of text.\n- `baseline` (default) — rides the text baseline; right for body-size text.\n- `middle` — centers the badge on the line box; use for a badge inside a\n  heading line (`<Title>` / `<PageHeader.Title>`), where baseline riding\n  makes the badge look sunken next to large text."
         }
       ]
     },
@@ -4805,7 +4812,7 @@
     "ClusterAs": "\"div\" | \"span\" | \"section\" | \"aside\"",
     "ClusterGap": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\"",
     "ClusterJustify": "\"start\" | \"end\" | \"center\" | \"between\"",
-    "ClusterAlign": "\"start\" | \"end\" | \"center\" | \"baseline\"",
+    "ClusterAlign": "\"start\" | \"end\" | \"baseline\" | \"center\"",
     "ConstrainWidth": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"full\"",
     "ConstrainFlex": "\"none\" | \"grow\" | \"shrink\" | \"auto\"",
     "IndentGutter": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\"",
@@ -4828,6 +4835,7 @@
     "BadgeSize": "\"sm\" | \"md\"",
     "BadgeDot": "\"start\" | \"end\"",
     "BadgeVariant": "\"filled\" | \"stripe\"",
+    "BadgeAlign": "\"baseline\" | \"middle\"",
     "EntityChipStatus": "{ label: string; category?: StatusCategory; color?: PaletteColor }",
     "StatusMenuStatus": "{ id: string | number; name: string; category?: StatusCategory; color?: PaletteColor }",
     "ThreadNodeAlign": "\"top\" | \"header\"",
