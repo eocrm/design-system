@@ -1,0 +1,7 @@
+// Container-width collapse thresholds shared by Grid's `collapseBelow` and
+// Sortable's grid-arrangement `collapseBelow`. SCSS constants (not CSS custom
+// properties): container-query conditions can't read custom properties.
+// Keep in sync with the CollapseBreakpoint JSDoc in collapse.ts.
+$collapse-sm: 480px;
+$collapse-md: 640px;
+$collapse-lg: 768px;
