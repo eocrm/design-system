@@ -155,3 +155,14 @@ describe('Badge', () => {
     expect((container.firstElementChild as HTMLElement).style.background).toBe('red');
   });
 });
+
+describe('Badge align (#327)', () => {
+  it('align="middle" adds the alignMiddle class', () => {
+    render(<Badge align="middle">To Do</Badge>);
+    expect(screen.getByText('To Do').className).toMatch(/alignMiddle/);
+  });
+  it('no align class by default (baseline = current behavior)', () => {
+    render(<Badge>To Do</Badge>);
+    expect(screen.getByText('To Do').className).not.toMatch(/alignMiddle/);
+  });
+});

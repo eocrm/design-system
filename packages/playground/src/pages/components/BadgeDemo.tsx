@@ -1,6 +1,8 @@
 import { Badge, PALETTE_COLORS } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
+import { Text } from '@eocrm/design-system';
+import { Title } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -346,6 +348,45 @@ export function Demo() {
               <Badge tone="danger">Lost</Badge>
             </Cluster>
           </div>
+        </Stack>
+      </Example>
+
+      <Example
+        title="Alignment in headings"
+        description={`align="middle" centers the badge on the line box instead of riding the text baseline. Compare the default (baseline, sunken next to the heading) against align="middle" (centered) — pairs with Text size="inherit" for the muted prefix run.`}
+        code={`import { Badge, Stack, Text, Title } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="md">
+      <Title order={2}>
+        <Text as="span" size="inherit" tone="muted">ENG-5</Text> Fix login flow{' '}
+        <Badge tone="warning">In progress</Badge>
+      </Title>
+      <Title order={2}>
+        <Text as="span" size="inherit" tone="muted">ENG-5</Text> Fix login flow{' '}
+        <Badge align="middle" tone="warning">In progress</Badge>
+      </Title>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="md">
+          <Title order={2}>
+            <Text as="span" size="inherit" tone="muted">
+              ENG-5
+            </Text>{' '}
+            Fix login flow <Badge tone="warning">In progress</Badge>
+          </Title>
+          <Title order={2}>
+            <Text as="span" size="inherit" tone="muted">
+              ENG-5
+            </Text>{' '}
+            Fix login flow{' '}
+            <Badge align="middle" tone="warning">
+              In progress
+            </Badge>
+          </Title>
         </Stack>
       </Example>
 

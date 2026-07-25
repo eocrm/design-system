@@ -112,7 +112,14 @@ export { Avatar, AvatarGroup, avatarColorIndex } from './components/Avatar';
 export type { AvatarProps, AvatarSize, AvatarStatus, AvatarGroupProps } from './components/Avatar';
 
 export { Badge } from './components/Badge';
-export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot, BadgeVariant } from './components/Badge';
+export type {
+  BadgeProps,
+  BadgeTone,
+  BadgeSize,
+  BadgeDot,
+  BadgeVariant,
+  BadgeAlign,
+} from './components/Badge';
 
 export { Dot } from './components/Dot';
 export type { DotProps } from './components/Dot';
