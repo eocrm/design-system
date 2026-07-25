@@ -14,6 +14,8 @@
   --avatar-font-size-sm: var(--font-size-xs);
   --avatar-font-size-md: var(--font-size-sm);
   --avatar-font-size-lg: var(--font-size-md);
+
+  // Jumps two steps on the font scale (2xl, not lg/xl) — continues the decreasing size:font ratio (0.458 → 0.375 → 0.35 → 0.30) at 80px.
   --avatar-font-size-xl: var(--font-size-2xl);
 
   // Presence dot — ring + per-status fill
