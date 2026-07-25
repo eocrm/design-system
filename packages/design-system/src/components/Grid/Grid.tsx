@@ -2,6 +2,13 @@ import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactElement 
 import clsx from 'clsx';
 import styles from './Grid.module.scss';
 import { GridItem } from './GridItem';
+import {
+  CollapseColumnsContext,
+  COLLAPSE_BREAKPOINTS,
+  collapseTrackTemplate,
+  type CollapseBreakpoint,
+  type CollapseColumnsMap,
+} from '../_internal/collapse';
 
 /** Gap between cells. Same scale as Stack/Cluster: pixels 4/8/12/16/24/32. */
 export type GridGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -12,8 +19,9 @@ export type GridAlignItems = 'start' | 'center' | 'end' | 'stretch';
 /** Main-axis (horizontal within track) alignment of each cell. */
 export type GridJustifyItems = 'start' | 'center' | 'end' | 'stretch';
 
-/** Container-width threshold below which a fixed-column grid collapses to one visual column. `sm` 480px / `md` 640px / `lg` 768px. */
-export type GridCollapseBreakpoint = 'sm' | 'md' | 'lg';
+/** Container-width threshold below which a fixed-column grid collapses. `sm` 480px / `md` 640px / `lg` 768px. */
+export type GridCollapseBreakpoint = CollapseBreakpoint;
+export type { CollapseColumnsMap };
 
 /** Limited polymorphic element type. Covers the layout / semantic elements Grid is likely to render as. */
 export type GridAs =
@@ -71,8 +79,16 @@ interface GridFixedColumns extends GridBaseProps, HTMLAttributes<HTMLElement> {
    * width 0 — give the parent a concrete width instead. The grid also becomes
    * the containing block for absolutely-positioned descendants (layout
    * containment).
+   *
+   * Also accepts a graduated breakpoint→columns map, e.g.
+   * `collapseBelow={{ md: 6, sm: 1 }}`: below 640px the grid re-templates to
+   * 6 columns (item spans clamp to fit — a span wider than the step becomes a
+   * full row), and below 480px to a single column. Use when jumping straight
+   * from N columns to 1 wastes tablet widths. When several breakpoints match,
+   * the smallest wins. Only `Grid.Item` children get span clamping; plain
+   * children auto-place into the step's tracks.
    */
-  collapseBelow?: GridCollapseBreakpoint;
+  collapseBelow?: GridCollapseBreakpoint | CollapseColumnsMap;
 }
 
 interface GridAutoFit extends GridBaseProps, HTMLAttributes<HTMLElement> {
@@ -119,6 +135,12 @@ const collapseClass: Record<GridCollapseBreakpoint, string> = {
   lg: styles.collapseLg,
 };
 
+const stepClass: Record<CollapseBreakpoint, string> = {
+  sm: styles.stepSm,
+  md: styles.stepMd,
+  lg: styles.stepLg,
+};
+
 const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
   {
     gap = 'md',
@@ -139,13 +161,21 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
       ? `repeat(${columns}, minmax(0, 1fr))`
       : `repeat(auto-fit, minmax(${minColumnWidth ?? '240px'}, 1fr))`;
 
+  const collapseMap = typeof collapseBelow === 'object' ? collapseBelow : undefined;
+  const collapseKeys = collapseMap
+    ? COLLAPSE_BREAKPOINTS.filter((b) => collapseMap[b] !== undefined)
+    : [];
+  const stepVars = Object.fromEntries(
+    collapseKeys.map((b) => [`--grid-columns-${b}`, collapseTrackTemplate(collapseMap![b]!)]),
+  );
+
   // `as` is a string union of intrinsic JSX elements; cast through unknown
   // for the limited union. At runtime React just uses the element name.
   const Tag = as as unknown as 'div';
 
   // Tag is constrained at the type level via GridAs; the ref + rest casts
   // satisfy React's intrinsic-element signature without per-tag branching.
-  return (
+  const grid = (
     <Tag
       ref={ref as React.Ref<HTMLDivElement>}
       className={clsx(
@@ -154,12 +184,19 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
         alignItems && alignItemsClass[alignItems],
         justifyItems && justifyItemsClass[justifyItems],
         collapseBelow && styles.collapsible,
-        collapseBelow && collapseClass[collapseBelow],
+        typeof collapseBelow === 'string' && collapseClass[collapseBelow],
+        ...collapseKeys.map((b) => stepClass[b]),
         className,
       )}
-      style={{ ...(style as CSSProperties), ['--grid-columns' as string]: template }}
+      style={{ ...(style as CSSProperties), ...stepVars, ['--grid-columns' as string]: template }}
       {...(rest as HTMLAttributes<HTMLDivElement>)}
     />
+  );
+
+  return collapseMap ? (
+    <CollapseColumnsContext.Provider value={collapseMap}>{grid}</CollapseColumnsContext.Provider>
+  ) : (
+    grid
   );
 }) as <T extends GridProps>(props: T & { ref?: React.Ref<HTMLElement> }) => ReactElement;
 
@@ -213,6 +250,13 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
  *   <Grid.Item span="100%"><Card>Footer row</Card></Grid.Item>
  * </Grid>
  *
+ * @example
+ * // Graduated dashboard — re-templates at each step instead of jumping to 1 column.
+ * <Grid columns={12} gap="md" collapseBelow={{ md: 6, sm: 1 }}>
+ *   <Grid.Item span="25%"><Card>KPI</Card></Grid.Item>
+ *   <Grid.Item span="75%"><Card>Chart</Card></Grid.Item>
+ * </Grid>
+ *
  * @remarks When NOT to use
  * - For vertical flow with a single column — use `<Stack>`.
  * - For unaligned wrapping rows (toolbars, tag lists) — use `<Cluster>`.
@@ -231,5 +275,7 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
  * - Attach `<Grid.Item span={...}>` to a cell for an explicit column span
  *   (numeric track count or 12-col fraction). See `GridItemSpan`. Plain
  *   children remain valid Grid cells — `Grid.Item` is opt-in.
+ * - Under a map-form `collapseBelow`, each `Grid.Item`'s span clamps per
+ *   step — a span wider than the step's column count becomes a full row.
  */
 export const Grid = Object.assign(GridBase, { Item: GridItem });

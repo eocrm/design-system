@@ -83,6 +83,7 @@ export type {
   GridJustifyItems,
   GridAs,
   GridCollapseBreakpoint,
+  CollapseColumnsMap,
   GridItemProps,
   GridItemSpan,
   GridItemAs,
