@@ -109,9 +109,7 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
   return (
     <div ref={ref} className={clsx(styles.root, className)} {...props}>
       {sidebar != null && (
-        <div className={clsx(styles.sidebar, sidebarPinned && styles.sidebarPinned)}>
-          {sidebar}
-        </div>
+        <div className={clsx(styles.sidebar, sidebarPinned && styles.sidebarPinned)}>{sidebar}</div>
       )}
       <div className={styles.body}>
         {topBar != null && <div className={styles.topBar}>{topBar}</div>}

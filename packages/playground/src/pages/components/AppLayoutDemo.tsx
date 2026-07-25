@@ -1,4 +1,5 @@
-import { AppLayout, Page, Stack, Text, Title } from '@eocrm/design-system';
+import { AppLayout, Page, Rail, Stack, Text, Title } from '@eocrm/design-system';
+import { Home, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -53,6 +54,61 @@ function Side() {
         <Text tone="muted">Deals</Text>
       </Stack>
     </div>
+  );
+}
+
+// sidebarPinned makes the sidebar sticky within its nearest scrollport — this
+// frame IS that scrollport (overflow: auto, not hidden), so scrolling it
+// demonstrates the pin: unlike Frame above, height alone doesn't clip the
+// tall content, it scrolls.
+function PinnedFrame({ children }: { children: ReactNode }) {
+  return (
+    <div
+      style={{
+        height: 320,
+        overflow: 'auto',
+        borderRadius: 'var(--radius-md)',
+        border: 'var(--border-width) solid var(--color-border)',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function PinnedSide() {
+  return (
+    <Rail defaultCollapsed={false} aria-label="Main navigation">
+      <Rail.Header>
+        <Text weight="semibold">eocrm</Text>
+      </Rail.Header>
+      <Rail.Section title="Main">
+        <Rail.Item icon={<Home size={16} />} href="#dashboard" onClick={(e) => e.preventDefault()}>
+          Dashboard
+        </Rail.Item>
+        <Rail.Item icon={<Users size={16} />} href="#contacts" onClick={(e) => e.preventDefault()}>
+          Contacts
+        </Rail.Item>
+      </Rail.Section>
+      <Rail.Spacer />
+      <Rail.Footer>
+        <Rail.CollapseToggle />
+      </Rail.Footer>
+    </Rail>
+  );
+}
+
+function TallContent() {
+  return (
+    <Stack gap="md">
+      <Title order={3}>Dashboard</Title>
+      {Array.from({ length: 10 }, (_, i) => (
+        <Text key={i} tone="muted">
+          Row {i + 1} — scroll this frame. The sidebar (and its footer / CollapseToggle) stays
+          pinned to the top instead of scrolling away with the tall content.
+        </Text>
+      ))}
+    </Stack>
   );
 }
 
@@ -262,6 +318,89 @@ export function Demo() {
             </Page>
           </AppLayout>
         </Frame>
+      </Example>
+
+      <Example
+        title="sidebarPinned — Rail footer glued to the screen"
+        description="On pages taller than the viewport, sidebarPinned keeps the sidebar — and a Rail's footer / CollapseToggle — pinned to the top of the scrollport instead of scrolling away with tall content. Scroll the frame below; the rail stays put."
+        code={`import { type ReactNode } from 'react';
+import { AppLayout, Page, Rail, Stack, Text, Title } from '@eocrm/design-system';
+import { Home, Users } from 'lucide-react';
+
+// sidebarPinned makes the sidebar sticky within its nearest scrollport — this
+// frame IS that scrollport (overflow: auto, not hidden), so scrolling it
+// demonstrates the pin.
+function PinnedFrame({ children }: { children: ReactNode }) {
+  return (
+    <div
+      style={{
+        height: 320,
+        overflow: 'auto',
+        borderRadius: 'var(--radius-md)',
+        border: 'var(--border-width) solid var(--color-border)',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function PinnedSide() {
+  return (
+    <Rail defaultCollapsed={false} aria-label="Main navigation">
+      <Rail.Header>
+        <Text weight="semibold">eocrm</Text>
+      </Rail.Header>
+      <Rail.Section title="Main">
+        <Rail.Item icon={<Home size={16} />} href="#dashboard" onClick={(e) => e.preventDefault()}>
+          Dashboard
+        </Rail.Item>
+        <Rail.Item icon={<Users size={16} />} href="#contacts" onClick={(e) => e.preventDefault()}>
+          Contacts
+        </Rail.Item>
+      </Rail.Section>
+      <Rail.Spacer />
+      <Rail.Footer>
+        <Rail.CollapseToggle />
+      </Rail.Footer>
+    </Rail>
+  );
+}
+
+function TallContent() {
+  return (
+    <Stack gap="md">
+      <Title order={3}>Dashboard</Title>
+      {Array.from({ length: 10 }, (_, i) => (
+        <Text key={i} tone="muted">
+          Row {i + 1} — scroll this frame. The sidebar (and its footer /
+          CollapseToggle) stays pinned to the top instead of scrolling away
+          with the tall content.
+        </Text>
+      ))}
+    </Stack>
+  );
+}
+
+export function Demo() {
+  return (
+    <PinnedFrame>
+      <AppLayout sidebar={<PinnedSide />} sidebarPinned>
+        <Page>
+          <TallContent />
+        </Page>
+      </AppLayout>
+    </PinnedFrame>
+  );
+}`}
+      >
+        <PinnedFrame>
+          <AppLayout sidebar={<PinnedSide />} sidebarPinned>
+            <Page>
+              <TallContent />
+            </Page>
+          </AppLayout>
+        </PinnedFrame>
       </Example>
     </DemoLayout>
   );

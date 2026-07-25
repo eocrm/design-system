@@ -144,6 +144,13 @@
           "description": "Sidebar slot — runs the full height down the left, alongside both the top\nbar and the content. Sets its own width (intrinsic). Omit for no sidebar."
         },
         {
+          "name": "sidebarPinned",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Pin the sidebar to the viewport: `position: sticky; top: 0; height: 100dvh`\nwith internal overflow scrolling. On pages taller than the viewport the\nsidebar (and a `Rail` inside it — its `Rail.Spacer` + `Rail.Footer` /\nCollapseToggle) spans exactly the SCREEN, keeping the footer glued to the\nviewport bottom instead of the page bottom. Default `false` (sidebar\nstretches to the full row/page height — the original behavior).\n\nPrefer this over wrapping the sidebar slot in `Sticky` — the rail's\n`height: 100%` + flex spacer need a DEFINITE viewport height to pin the\nfooter, which `Sticky`'s max-height capping can't provide."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
