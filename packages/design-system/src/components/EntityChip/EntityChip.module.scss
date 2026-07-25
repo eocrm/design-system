@@ -3,7 +3,7 @@
 
 .chip {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--entity-chip-gap);
   padding: var(--entity-chip-padding-y) var(--entity-chip-padding-x);
   border: none;
@@ -23,10 +23,17 @@
     &:hover {
       background: var(--entity-chip-bg-hover);
       color: var(--entity-chip-fg-hover);
+
+      // Re-assert over the global `a:hover { text-decoration: underline }`
+      // (typography.scss), which out-specifies the rest-state rule above.
+      text-decoration: none;
+      filter: brightness(0.96);
     }
 
     &:focus-visible {
       @include focus-ring;
+
+      text-decoration: none;
     }
   }
 }
@@ -34,6 +41,8 @@
 .icon {
   display: inline-flex;
   align-items: center;
+  // stylelint-disable-next-line property-disallowed-list -- internal child of the chip's OWN flex row, opting the icon glyph back to vertical centering while the chip itself aligns on text baseline
+  align-self: center;
 }
 
 .prefix {
@@ -49,7 +58,9 @@
 }
 
 .dot {
+  padding-right: var(--entity-chip-dot-gap);
   color: var(--entity-chip-prefix-fg);
+  font-size: var(--entity-chip-dot-size);
 }
 
 // Specificity 0,2,0 (.unavailable .status) beats the plain .status rule

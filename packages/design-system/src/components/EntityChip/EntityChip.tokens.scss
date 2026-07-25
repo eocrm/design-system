@@ -1,10 +1,14 @@
-// EntityChip.tokens.scss — Component-scoped tokens for <EntityChip>. Subtle
-// neutral chip chrome (mirrors Badge's neutral fill primitive) + a muted
-// prefix run + an unavailable-state override.
+// EntityChip.tokens.scss — Component-scoped tokens for <EntityChip>. Stone
+// chip chrome + a muted prefix run + an unavailable-state override.
+// --entity-chip-bg is a literal-hex exception (same pattern as Badge/Tooltip
+// in dark.scss): the raw --color-palette-stone-bg reads too close to the
+// page/card canvas to register as a distinct chip, so it's deepened a step
+// here (and again, separately, in dark.scss) rather than changing the shared
+// palette token every other stone consumer (Badge, Palette) relies on.
 :root {
-  --entity-chip-bg: var(--color-bg-muted);
-  --entity-chip-bg-hover: var(--color-bg-sunken);
-  --entity-chip-fg: var(--color-fg);
+  --entity-chip-bg: #d6d0c5;
+  --entity-chip-bg-hover: #d6d0c5;
+  --entity-chip-fg: var(--color-palette-stone-fg);
   --entity-chip-fg-hover: var(--color-accent-hover);
   --entity-chip-prefix-fg: var(--color-fg-muted);
   --entity-chip-radius: var(--radius-sm);
@@ -13,4 +17,9 @@
   --entity-chip-padding-x: var(--space-2);
   --entity-chip-font-size: var(--font-size-sm);
   --entity-chip-unavailable-fg: var(--color-fg-muted);
+
+  // Status separator dot — bigger than body text + its own right gap so it
+  // reads as a deliberate divider, not a stray period.
+  --entity-chip-dot-size: var(--font-size-lg);
+  --entity-chip-dot-gap: var(--space-2);
 }
