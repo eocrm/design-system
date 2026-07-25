@@ -1,5 +1,6 @@
 import { createRef, type ComponentProps, type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { EntityChip } from './EntityChip';
 
 // A stub component used to verify polymorphic `as` forwarding. Looks like
@@ -107,6 +108,20 @@ describe('<EntityChip>', () => {
     expect(chip).toHaveAttribute('aria-disabled', 'true');
     expect(chip?.className).toMatch(/unavailable/);
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('loading keeps the icon slot', () => {
+    render(<EntityChip label="Task" icon={<svg data-testid="icon" />} loading />);
+    expect(screen.getByTestId('icon')).toBeInTheDocument();
+  });
+
+  it('unavailable neuters a consumer onClick — forced span, no click handler', async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    render(<EntityChip label="Pick" as="button" onClick={onClick} unavailable />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    await user.click(screen.getByText('Pick'));
+    expect(onClick).not.toHaveBeenCalled();
   });
 
   it('is valid inline content — no div/block tags render', () => {

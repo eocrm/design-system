@@ -27,8 +27,6 @@
 
     &:focus-visible {
       @include focus-ring;
-
-      outline: none;
     }
   }
 }

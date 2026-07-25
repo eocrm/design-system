@@ -1572,14 +1572,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Loading placeholder: icon slot + `…` body, aria-busy, non-interactive."
+          "description": "Loading placeholder: icon slot + `…` body, aria-busy, non-interactive.\nThe `as` component is still forced to a plain `<span>` — any of its\nother props (e.g. a RouterLink's `to`/`replace`) still spread onto that\nspan and may leave junk DOM attributes; pass them conditionally if that\nmatters."
         },
         {
           "name": "unavailable",
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Entity missing/no access: muted, non-interactive (renders `as` forced to 'span'), aria-disabled."
+          "description": "Entity missing/no access: muted, non-interactive (renders `as` forced to\n'span'), aria-disabled. Same caveat as `loading` — the `as` component's\nother props still spread onto the forced span."
         },
         {
           "name": "as",

@@ -40,9 +40,19 @@ interface EntityChipOwnProps {
   status?: EntityChipStatus;
   /** Renders `as="a"` with this href when `as` is omitted. */
   href?: string;
-  /** Loading placeholder: icon slot + `…` body, aria-busy, non-interactive. */
+  /**
+   * Loading placeholder: icon slot + `…` body, aria-busy, non-interactive.
+   * The `as` component is still forced to a plain `<span>` — any of its
+   * other props (e.g. a RouterLink's `to`/`replace`) still spread onto that
+   * span and may leave junk DOM attributes; pass them conditionally if that
+   * matters.
+   */
   loading?: boolean;
-  /** Entity missing/no access: muted, non-interactive (renders `as` forced to 'span'), aria-disabled. */
+  /**
+   * Entity missing/no access: muted, non-interactive (renders `as` forced to
+   * 'span'), aria-disabled. Same caveat as `loading` — the `as` component's
+   * other props still spread onto the forced span.
+   */
   unavailable?: boolean;
 }
 
@@ -152,6 +162,10 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       className={clsx(styles.chip, unavailable && styles.unavailable, className)}
       {...elementProps}
       {...rest}
+      // blocked (loading/unavailable) forces a non-interactive <span> — cancel
+      // any consumer onClick that {...rest} just spread on above, so it can't
+      // fire through a chip keyboard users have no way to reach (Pattern B).
+      {...(blocked ? { onClick: undefined } : null)}
       // Component-owned ARIA state must survive whatever the consumer passes
       // via {...rest} — aria-busy/aria-disabled are the component's contract.
       aria-busy={loading || undefined}
