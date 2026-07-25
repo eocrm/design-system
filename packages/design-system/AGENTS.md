@@ -851,6 +851,8 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 </Sortable>
 ```
 
+`collapseBelow` (grid arrangement only) mirrors Grid's `collapseBelow` exactly — `'sm' | 'md' | 'lg'` for a binary collapse to one column, or `{ md: 6, sm: 1 }` for a graduated step-down with item spans clamped per step.
+
 **Drag origin** (hybrid): if `<Sortable.Handle>` is present in the Item subtree, only the Handle initiates drag. If no Handle is present, the entire Item is draggable + focusable. A 5px activation distance means short clicks-without-movement on internal buttons / links pass through.
 
 **Keyboard reorder**: Tab to focus the Handle (or the Item if no Handle), press **Space** to pick up, **ArrowUp** / **ArrowDown** to move, **Space** to drop, **Escape** to cancel. dnd-kit's KeyboardSensor ships built-in `aria-live` announcements describing each move. Inside a `Modal`/`Drawer`, an in-progress drag is an Escape-consuming mode: Escape cancels the drag and the host survives that press; the next Escape closes the host (#282). Same for `DataTable` column reorder.
@@ -1493,6 +1495,12 @@ Fractions assume a 12-column grid — pair them with `columns={12}` on the paren
 **`collapseBelow` — collapse to one column below a width preset:**
 
 Only valid on a fixed-`columns` Grid (auto-fit grids already reflow). Presets: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. This is a **container query on the Grid's own width, not the viewport** — it fires based on the space the Grid itself has, not the browser window, so it collapses correctly inside a narrow sidebar or split pane even on a wide screen — provided the pane gives the grid a definite width. Below the threshold every child spans the full row, `Grid.Item` spans included.
+
+Also takes a graduated breakpoint→columns map instead of a single string, for a step-down rather than straight-to-1-column collapse — `Grid.Item` spans clamp to fit each step:
+
+```tsx
+<Grid columns={12} gap="md" collapseBelow={{ md: 6, sm: 1 }}>
+```
 
 **Anti-patterns:**
 

@@ -6,5 +6,6 @@ export type {
   GridJustifyItems,
   GridAs,
   GridCollapseBreakpoint,
+  CollapseColumnsMap,
 } from './Grid';
 export type { GridItemProps, GridItemSpan, GridItemAs } from './GridItem';

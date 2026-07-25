@@ -10,3 +10,4 @@ export {
   type SortableItemContextValue,
   type SortableArrangement,
 } from './Sortable';
+export type { CollapseBreakpoint } from '../_internal/collapse';

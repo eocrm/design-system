@@ -83,6 +83,7 @@ export type {
   GridJustifyItems,
   GridAs,
   GridCollapseBreakpoint,
+  CollapseColumnsMap,
   GridItemProps,
   GridItemSpan,
   GridItemAs,
@@ -364,6 +365,7 @@ export type {
   SortableHandleProps,
   SortableReorderEvent,
   SortableArrangement,
+  CollapseBreakpoint,
 } from './components/Sortable';
 
 export { SortableGroup, moveSortableItem } from './components/SortableGroup';

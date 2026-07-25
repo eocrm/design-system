@@ -70,6 +70,14 @@ export function SortableDemo() {
     { id: 'w-5', title: 'Activity feed', span: '100%' as const },
   ]);
 
+  const [collapsibleWidgets, setCollapsibleWidgets] = useState([
+    { id: 'cw-1', title: 'KPIs', span: '25%' as const },
+    { id: 'cw-2', title: 'Revenue', span: '75%' as const },
+    { id: 'cw-3', title: 'Recent deals', span: '33%' as const },
+    { id: 'cw-4', title: 'Pipeline', span: '67%' as const },
+    { id: 'cw-5', title: 'Activity feed', span: '100%' as const },
+  ]);
+
   return (
     <DemoLayout
       name="Sortable"
@@ -533,6 +541,75 @@ export function Demo() {
             </Sortable.Item>
           ))}
         </Sortable>
+      </Example>
+
+      <Example
+        title="Grid arrangement — graduated collapse"
+        description="collapseBelow accepts the same graduated map as Grid: {{ md: 6, sm: 1 }} re-templates the grid to 6 columns under 640px (item spans clamp to fit) and to 1 column under 480px, mirroring Grid's collapseBelow exactly. Drag the box's resize handle (bottom-right corner) narrower to see it step down."
+        code={`import { useState } from 'react';
+import { GripVertical } from 'lucide-react';
+import { arrayMove } from '@dnd-kit/sortable';
+import { Card, Cluster, Sortable, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  const [widgets, setWidgets] = useState([
+    { id: 'w-1', title: 'KPIs', span: '25%' as const },
+    { id: 'w-2', title: 'Revenue', span: '75%' as const },
+    { id: 'w-3', title: 'Recent deals', span: '33%' as const },
+    { id: 'w-4', title: 'Pipeline', span: '67%' as const },
+    { id: 'w-5', title: 'Activity feed', span: '100%' as const },
+  ]);
+
+  return (
+    <Sortable
+      arrangement="grid"
+      columns={12}
+      collapseBelow={{ md: 6, sm: 1 }}
+      onReorder={({ from, to }) => setWidgets((w) => arrayMove(w, from, to))}
+    >
+      {widgets.map((widget) => (
+        <Sortable.Item key={widget.id} id={widget.id} span={widget.span}>
+          <Card padding="sm" style={{ height: '100%' }}>
+            <Cluster gap="sm" align="center">
+              <Sortable.Handle aria-label={\`Reorder \${widget.title}\`}>
+                <GripVertical size={14} />
+              </Sortable.Handle>
+              <Text weight="medium">{widget.title}</Text>
+              <Text size="sm" tone="muted">
+                {widget.span}
+              </Text>
+            </Cluster>
+          </Card>
+        </Sortable.Item>
+      ))}
+    </Sortable>
+  );
+}`}
+      >
+        <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+          <Sortable
+            arrangement="grid"
+            columns={12}
+            collapseBelow={{ md: 6, sm: 1 }}
+            onReorder={({ from, to }) => setCollapsibleWidgets((w) => arrayMove(w, from, to))}
+          >
+            {collapsibleWidgets.map((widget) => (
+              <Sortable.Item key={widget.id} id={widget.id} span={widget.span}>
+                <Card padding="sm" style={{ height: '100%' }}>
+                  <Cluster gap="sm" align="center">
+                    <Sortable.Handle aria-label={`Reorder ${widget.title}`}>
+                      <GripVertical size={14} />
+                    </Sortable.Handle>
+                    <Text weight="medium">{widget.title}</Text>
+                    <Text size="sm" tone="muted">
+                      {widget.span}
+                    </Text>
+                  </Cluster>
+                </Card>
+              </Sortable.Item>
+            ))}
+          </Sortable>
+        </div>
       </Example>
 
       <Stack gap="xs">

@@ -34,7 +34,18 @@ import { CSS, type Transform } from '@dnd-kit/utilities';
 import clsx from 'clsx';
 import { mergeRefs } from '../_internal/refs';
 import { useFloatingSurface } from '../_internal/overlay';
-import { resolveGridItemSpan, type GridItemSpan } from '../_internal/gridSpan';
+import {
+  resolveGridItemSpan,
+  resolveCollapsedGridItemSpan,
+  type GridItemSpan,
+} from '../_internal/gridSpan';
+import {
+  CollapseColumnsContext,
+  COLLAPSE_BREAKPOINTS,
+  collapseTrackTemplate,
+  type CollapseBreakpoint,
+  type CollapseColumnsMap,
+} from '../_internal/collapse';
 import styles from './Sortable.module.scss';
 
 /**
@@ -115,6 +126,22 @@ export interface SortableProps extends HTMLAttributes<HTMLOListElement> {
    * fraction (documented, not validated — same as `Grid`).
    */
   columns?: number;
+  /**
+   * Responsive collapse for the grid arrangement — mirrors `Grid`'s
+   * `collapseBelow` exactly (same breakpoints, same container-query
+   * mechanism). Ignored unless `arrangement="grid"`.
+   * - `'sm' | 'md' | 'lg'` — below the container-width threshold (480 / 640 /
+   *   768px of the LIST'S OWN width) every item spans the full row: a single
+   *   visual column.
+   * - `{ lg?: n, md?: n, sm?: n }` — graduated: below each breakpoint the grid
+   *   re-templates to that many columns and item spans clamp to fit (a span
+   *   wider than the step becomes a full row). E.g. `{ md: 6, sm: 1 }`.
+   *
+   * ❌ Anti-pattern: a collapsible Sortable must get its width from its
+   * parent — `container-type: inline-size` zeroes the list's contribution to
+   * intrinsic sizing (same caveat as `Grid`'s `collapseBelow`).
+   */
+  collapseBelow?: CollapseBreakpoint | CollapseColumnsMap;
 }
 
 export interface SortableItemProps extends Omit<HTMLAttributes<HTMLLIElement>, 'id'> {
@@ -240,6 +267,7 @@ function containsHandle(children: ReactNode): boolean {
  * <Sortable
  *   arrangement="grid"
  *   columns={12}
+ *   collapseBelow={{ md: 6, sm: 1 }}
  *   onReorder={({ from, to }) => setWidgets((w) => arrayMove(w, from, to))}
  * >
  *   {widgets.map((w) => (
@@ -256,7 +284,9 @@ function containsHandle(children: ReactNode): boolean {
  *   `span` (`Sortable.Item span="50%"` / `span={6}` / `span="100%"`) — same
  *   values as `Grid.Item`. Semantics stay order-based: a drop reorders the
  *   flow; nothing persists a grid x/y position. `restrictToContainer` still
- *   clamps the drag to the grid's bounding box.
+ *   clamps the drag to the grid's bounding box. `collapseBelow` mirrors
+ *   `Grid`'s responsive collapse exactly — same breakpoints, same
+ *   container-query mechanism, same binary/graduated distinction.
  *
  * @remarks Drag confinement
  * - By default (`restrictToContainer`) the dragged item is clamped to the
@@ -289,12 +319,24 @@ function containsHandle(children: ReactNode): boolean {
  *   `SortableContext` only tracks the ids you pass it; arbitrary children
  *   render but won't be reorderable.
  */
+const collapseClass: Record<CollapseBreakpoint, string> = {
+  sm: styles.collapseSm,
+  md: styles.collapseMd,
+  lg: styles.collapseLg,
+};
+const stepClass: Record<CollapseBreakpoint, string> = {
+  sm: styles.stepSm,
+  md: styles.stepMd,
+  lg: styles.stepLg,
+};
+
 const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function SortableRoot(
   {
     onReorder,
     restrictToContainer = true,
     arrangement = 'list',
     columns = 12,
+    collapseBelow,
     className,
     style,
     children,
@@ -303,6 +345,11 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
   ref,
 ) {
   const isGrid = arrangement === 'grid';
+  const collapse = isGrid ? collapseBelow : undefined;
+  const collapseMap = typeof collapse === 'object' ? collapse : undefined;
+  const collapseKeys = collapseMap
+    ? COLLAPSE_BREAKPOINTS.filter((b) => collapseMap[b] !== undefined)
+    : [];
   const [activeId, setActiveId] = useState<string | number | null>(null);
   // #282: a keyboard drag is an Escape-consuming MODE (Escape cancels the
   // drag). Register it as a floating surface while active so a host Modal/Drawer
@@ -385,7 +432,7 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
   );
   const modifiers = restrictToContainer ? [restrictModifier] : undefined;
 
-  return (
+  const tree = (
     <DndContext
       sensors={sensors}
       modifiers={modifiers}
@@ -405,11 +452,30 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
       >
         <ol
           ref={mergeRefs(olRef, ref)}
-          className={clsx(isGrid ? styles.grid : styles.list, className)}
+          className={clsx(
+            isGrid ? styles.grid : styles.list,
+            collapse && styles.collapsible,
+            typeof collapse === 'string' && collapseClass[collapse],
+            ...collapseKeys.map((b) => stepClass[b]),
+            className,
+          )}
           // In grid mode the <ol> owns the track template; inject the column
           // count as a custom prop AFTER the consumer's style so it wins
           // (mirrors Grid's --grid-columns). List mode leaves style untouched.
-          style={isGrid ? { ...style, ['--sortable-columns' as string]: columns } : style}
+          style={
+            isGrid
+              ? {
+                  ...style,
+                  ...Object.fromEntries(
+                    collapseKeys.map((b) => [
+                      `--sortable-columns-${b}`,
+                      collapseTrackTemplate(collapseMap![b]!),
+                    ]),
+                  ),
+                  ['--sortable-columns' as string]: columns,
+                }
+              : style
+          }
           {...rest}
         >
           {children}
@@ -431,6 +497,12 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
         ) : null}
       </DragOverlay>
     </DndContext>
+  );
+
+  return collapseMap ? (
+    <CollapseColumnsContext.Provider value={collapseMap}>{tree}</CollapseColumnsContext.Provider>
+  ) : (
+    tree
   );
 });
 SortableRoot.displayName = 'Sortable';
@@ -462,6 +534,8 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
 
   const hasHandle = useMemo(() => containsHandle(children), [children]);
 
+  const collapseMap = useContext(CollapseColumnsContext);
+
   const ctxValue = useMemo<SortableItemContextValue>(
     () => ({ listeners, attributes, setActivatorNodeRef }),
     [listeners, attributes, setActivatorNodeRef],
@@ -492,6 +566,17 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
           // ignored by the CSS in list mode (grid-column is inert on a flex
           // child). Mirrors Grid.Item.
           ['--sortable-item-span' as string]: resolveGridItemSpan(span) ?? 'auto',
+          // Per-breakpoint clamped span for a graduated (map-form)
+          // `collapseBelow` ancestor — same always-stamp rationale as
+          // `--sortable-item-span` (custom properties inherit).
+          ...(collapseMap
+            ? Object.fromEntries(
+                (Object.keys(collapseMap) as CollapseBreakpoint[]).map((b) => [
+                  `--sortable-item-span-${b}`,
+                  resolveCollapsedGridItemSpan(span, collapseMap[b]!),
+                ]),
+              )
+            : undefined),
         }}
         data-dragging={isDragging ? 'true' : undefined}
         className={clsx(styles.item, className)}

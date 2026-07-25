@@ -37,3 +37,18 @@ export function resolveGridItemSpan(span: GridItemSpan | undefined): string | un
   if (typeof span === 'number') return `span ${span}`;
   return `span ${FRACTION_TRACKS[span]}`;
 }
+
+/**
+ * Resolve a span against a graduated-collapse step's column count: spans that
+ * fit keep their track count, spans >= the step's columns clamp to the full
+ * row (`1 / -1`), full-row spans stay full-row, span-less stays `auto`.
+ */
+export function resolveCollapsedGridItemSpan(
+  span: GridItemSpan | undefined,
+  columns: number,
+): string {
+  if (span === undefined) return 'auto';
+  if (span === 'full' || span === '100%' || columns <= 1) return '1 / -1';
+  const tracks = typeof span === 'number' ? span : FRACTION_TRACKS[span];
+  return tracks >= columns ? '1 / -1' : `span ${tracks}`;
+}

@@ -1,6 +1,11 @@
-import { forwardRef, type CSSProperties, type HTMLAttributes } from 'react';
+import { forwardRef, useContext, type CSSProperties, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
-import { resolveGridItemSpan, type GridItemSpan } from '../_internal/gridSpan';
+import {
+  resolveGridItemSpan,
+  resolveCollapsedGridItemSpan,
+  type GridItemSpan,
+} from '../_internal/gridSpan';
+import { CollapseColumnsContext } from '../_internal/collapse';
 import styles from './Grid.module.scss';
 
 // The span vocabulary (type + fraction→track resolver) is shared with
@@ -51,6 +56,20 @@ export const GridItem = forwardRef<HTMLElement, GridItemProps>(function GridItem
 ) {
   const resolved = resolveGridItemSpan(span);
 
+  // Set only when a graduated (map-form) `collapseBelow` grid is an
+  // ancestor — same always-stamp rationale as `--grid-item-span`: custom
+  // properties inherit, so every map key present on the container gets
+  // stamped on every Item (see resolveCollapsedGridItemSpan for clamping).
+  const collapseMap = useContext(CollapseColumnsContext);
+  const collapseVars = collapseMap
+    ? Object.fromEntries(
+        (Object.keys(collapseMap) as (keyof typeof collapseMap)[]).map((b) => [
+          `--grid-item-span-${b}`,
+          resolveCollapsedGridItemSpan(span, collapseMap[b]!),
+        ]),
+      )
+    : undefined;
+
   const Tag = as as unknown as 'div';
   return (
     // Grid/Stack/Cluster are the layout primitives — `grid-column` via the
@@ -62,7 +81,11 @@ export const GridItem = forwardRef<HTMLElement, GridItemProps>(function GridItem
       // Always set the property — custom properties inherit, so an unset
       // span-less item nested under a spanned one would resolve the
       // ancestor's value instead of `auto`.
-      style={{ ...(style as CSSProperties), ['--grid-item-span' as string]: resolved ?? 'auto' }}
+      style={{
+        ...(style as CSSProperties),
+        ...collapseVars,
+        ['--grid-item-span' as string]: resolved ?? 'auto',
+      }}
       {...(rest as HTMLAttributes<HTMLDivElement>)}
     />
   );

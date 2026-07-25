@@ -1,4 +1,5 @@
 @use './Grid.tokens' as tokens;
+@use '../_internal/collapse' as bp;
 
 .grid {
   display: grid;
@@ -84,23 +85,61 @@
 // Double class (.collapsible.collapseXx) gives specificity (0,2,0) so the
 // collapse beats any single-class consumer `grid-column` rule regardless of
 // CSS bundle emission order; vs `.item` it also still wins by source order.
-@container (max-width: #{tokens.$grid-collapse-sm}) {
+@container (max-width: #{bp.$collapse-sm}) {
   .collapsible.collapseSm > * {
     // stylelint-disable-next-line property-disallowed-list -- collapse override is Grid's own placement mechanism, same sanction as `.item` above
     grid-column: 1 / -1;
   }
 }
 
-@container (max-width: #{tokens.$grid-collapse-md}) {
+@container (max-width: #{bp.$collapse-md}) {
   .collapsible.collapseMd > * {
     // stylelint-disable-next-line property-disallowed-list -- collapse override is Grid's own placement mechanism, same sanction as `.item` above
     grid-column: 1 / -1;
   }
 }
 
-@container (max-width: #{tokens.$grid-collapse-lg}) {
+@container (max-width: #{bp.$collapse-lg}) {
   .collapsible.collapseLg > * {
     // stylelint-disable-next-line property-disallowed-list -- collapse override is Grid's own placement mechanism, same sanction as `.item` above
     grid-column: 1 / -1;
+  }
+}
+
+// --- graduated (map) collapse ------------------------------------------
+// Step track templates + per-item clamped spans are computed in Grid.tsx /
+// GridItem.tsx and injected inline (--grid-columns-<bp>, --grid-item-span-<bp>).
+// Declared lg → md → sm so when several steps match at a narrow width the
+// smallest breakpoint wins by source order (equal specificity).
+@container (max-width: #{bp.$collapse-lg}) {
+  .collapsible.stepLg {
+    grid-template-columns: var(--grid-columns-lg);
+
+    > .item {
+      // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Grid's own placement mechanism, same sanction as `.item` above
+      grid-column: var(--grid-item-span-lg, auto);
+    }
+  }
+}
+
+@container (max-width: #{bp.$collapse-md}) {
+  .collapsible.stepMd {
+    grid-template-columns: var(--grid-columns-md);
+
+    > .item {
+      // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Grid's own placement mechanism, same sanction as `.item` above
+      grid-column: var(--grid-item-span-md, auto);
+    }
+  }
+}
+
+@container (max-width: #{bp.$collapse-sm}) {
+  .collapsible.stepSm {
+    grid-template-columns: var(--grid-columns-sm);
+
+    > .item {
+      // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Grid's own placement mechanism, same sanction as `.item` above
+      grid-column: var(--grid-item-span-sm, auto);
+    }
   }
 }

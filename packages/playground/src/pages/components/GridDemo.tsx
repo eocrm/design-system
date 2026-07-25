@@ -18,6 +18,7 @@ export function GridDemo() {
       <AlignmentExample />
       <SemanticElementExample />
       <SpanCollapseExample />
+      <GraduatedCollapseExample />
     </DemoLayout>
   );
 }
@@ -335,6 +336,48 @@ export function Demo() {
     >
       <div style={{ resize: 'horizontal', overflow: 'auto' }}>
         <Grid columns={12} gap="md" collapseBelow="md">
+          <Grid.Item span="25%">
+            <Card>KPI</Card>
+          </Grid.Item>
+          <Grid.Item span="75%">
+            <Card>Chart</Card>
+          </Grid.Item>
+          <Grid.Item span="33%">
+            <Card>List</Card>
+          </Grid.Item>
+          <Grid.Item span="67%">
+            <Card>Table</Card>
+          </Grid.Item>
+          <Grid.Item span="100%">
+            <Card>Footer row</Card>
+          </Grid.Item>
+        </Grid>
+      </div>
+    </Example>
+  );
+}
+
+function GraduatedCollapseExample() {
+  return (
+    <Example
+      title="Graduated collapse (breakpoint→columns map)"
+      description="`collapseBelow={{ md: 6, sm: 1 }}` steps down instead of jumping straight to one column: 12 columns wide, re-templates to 6 columns under 640px (spans clamp to fit), then to 1 column under 480px. Drag the box's resize handle (bottom-right corner) narrower to see both steps."
+      code={`import { Card, Grid } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Grid columns={12} gap="md" collapseBelow={{ md: 6, sm: 1 }}>
+      <Grid.Item span="25%"><Card>KPI</Card></Grid.Item>
+      <Grid.Item span="75%"><Card>Chart</Card></Grid.Item>
+      <Grid.Item span="33%"><Card>List</Card></Grid.Item>
+      <Grid.Item span="67%"><Card>Table</Card></Grid.Item>
+      <Grid.Item span="100%"><Card>Footer row</Card></Grid.Item>
+    </Grid>
+  );
+}`}
+    >
+      <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+        <Grid columns={12} gap="md" collapseBelow={{ md: 6, sm: 1 }}>
           <Grid.Item span="25%">
             <Card>KPI</Card>
           </Grid.Item>

@@ -252,3 +252,62 @@ describe('Grid collapseBelow (#314)', () => {
     expect((container.firstChild as HTMLElement).className).not.toMatch(/collaps/i);
   });
 });
+
+describe('Grid graduated collapse (#318)', () => {
+  it('map form adds collapsible + one step class per breakpoint and injects step templates', () => {
+    render(
+      <Grid columns={12} collapseBelow={{ md: 6, sm: 1 }} data-testid="grid">
+        <div>a</div>
+      </Grid>,
+    );
+    const el = screen.getByTestId('grid');
+    expect(el.className).toMatch(/collapsible/);
+    expect(el.className).toMatch(/stepMd/);
+    expect(el.className).toMatch(/stepSm/);
+    expect(el.className).not.toMatch(/stepLg/);
+    expect(el.className).not.toMatch(/collapseMd/);
+    expect(el.style.getPropertyValue('--grid-columns-md')).toBe('repeat(6, minmax(0, 1fr))');
+    expect(el.style.getPropertyValue('--grid-columns-sm')).toBe('repeat(1, minmax(0, 1fr))');
+    expect(el.style.getPropertyValue('--grid-columns-lg')).toBe('');
+  });
+
+  it('Grid.Item under a map grid stamps clamped per-breakpoint spans', () => {
+    render(
+      <Grid columns={12} collapseBelow={{ md: 6, sm: 1 }}>
+        <Grid.Item span="75%" data-testid="wide">
+          w
+        </Grid.Item>
+        <Grid.Item span={3} data-testid="narrow">
+          n
+        </Grid.Item>
+        <Grid.Item data-testid="plain">p</Grid.Item>
+      </Grid>,
+    );
+    const wide = screen.getByTestId('wide');
+    expect(wide.style.getPropertyValue('--grid-item-span')).toBe('span 9');
+    expect(wide.style.getPropertyValue('--grid-item-span-md')).toBe('1 / -1');
+    expect(wide.style.getPropertyValue('--grid-item-span-sm')).toBe('1 / -1');
+    const narrow = screen.getByTestId('narrow');
+    expect(narrow.style.getPropertyValue('--grid-item-span-md')).toBe('span 3');
+    expect(narrow.style.getPropertyValue('--grid-item-span-sm')).toBe('1 / -1');
+    const plain = screen.getByTestId('plain');
+    expect(plain.style.getPropertyValue('--grid-item-span-md')).toBe('auto');
+  });
+
+  it('Grid.Item outside a map grid stamps no per-breakpoint spans', () => {
+    render(
+      <Grid columns={12} collapseBelow="md">
+        <Grid.Item span={3} data-testid="cell">
+          c
+        </Grid.Item>
+      </Grid>,
+    );
+    expect(screen.getByTestId('cell').style.getPropertyValue('--grid-item-span-md')).toBe('');
+  });
+
+  it('TS: map form is invalid on an auto-fit grid', () => {
+    // @ts-expect-error — collapseBelow (map form included) requires `columns`.
+    const Invalid = <Grid minColumnWidth="200px" collapseBelow={{ md: 6 }} />;
+    void Invalid;
+  });
+});
