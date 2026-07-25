@@ -76,3 +76,26 @@ describe('AppLayout', () => {
     expect(root.querySelector('[class*="main"]')).toBeInTheDocument();
   });
 });
+
+describe('AppLayout sidebarPinned (#324)', () => {
+  it('adds the pinned class to the sidebar wrapper', () => {
+    render(
+      <AppLayout sidebar={<nav data-testid="rail">nav</nav>} sidebarPinned>
+        content
+      </AppLayout>,
+    );
+    const wrapper = screen.getByTestId('rail').parentElement!;
+    expect(wrapper.className).toMatch(/sidebarPinned/);
+    expect(wrapper.className).toMatch(/sidebar/);
+  });
+
+  it('no pinned class by default', () => {
+    render(<AppLayout sidebar={<nav data-testid="rail">nav</nav>}>content</AppLayout>);
+    expect(screen.getByTestId('rail').parentElement!.className).not.toMatch(/sidebarPinned/);
+  });
+
+  it('sidebarPinned without a sidebar renders nothing extra', () => {
+    const { container } = render(<AppLayout sidebarPinned>content</AppLayout>);
+    expect(container.querySelector('[class*="sidebar"]')).toBeNull();
+  });
+});
