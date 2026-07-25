@@ -96,6 +96,7 @@ const CLUSTERS: Record<string, string> = {
   MediaTile: 'Display',
   Badge: 'Display',
   Dot: 'Display',
+  EntityChip: 'Display',
   Timeline: 'Display',
   Thread: 'Display',
   BrandIcon: 'Display',

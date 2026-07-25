@@ -74,6 +74,7 @@ const CLUSTERS = {
   MediaTile: 'Display',
   Badge: 'Display',
   Dot: 'Display',
+  EntityChip: 'Display',
   Timeline: 'Display',
   Thread: 'Display',
   BrandIcon: 'Display',

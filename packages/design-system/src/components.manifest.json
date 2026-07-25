@@ -270,6 +270,12 @@
       "DataTable"
     ]
   },
+  "EntityChip": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "ErrorState": {
     "tier": "primitive",
     "cluster": "Display",
