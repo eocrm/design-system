@@ -4299,7 +4299,7 @@
           "type": "TextSize",
           "required": false,
           "default": "",
-          "description": "Visual size. Defaults to `'md'` (body text).\n- `xs` — 11px, dense metadata / captions\n- `sm` — 12px, small body / labels\n- `md` — 14px, body text (default)\n- `lg` — 16px, large body / lead text\n- `xl` — 20px, very large body (rare)"
+          "description": "Visual size. Defaults to `'md'` (body text).\n- `xs` — 11px, dense metadata / captions\n- `sm` — 12px, small body / labels\n- `md` — 14px, body text (default)\n- `lg` — 16px, large body / lead text\n- `xl` — 20px, very large body (rare)\n- `inherit` — no fixed size; font-size AND line-height inherit from the\n  parent. For inline runs inside a heading (`as=\"span\"` inside a\n  `<Title>` / `<PageHeader.Title>`) that must keep the heading's size —\n  e.g. a muted task-key prefix. Tone / weight still apply."
         },
         {
           "name": "tone",
@@ -4807,7 +4807,7 @@
     "RenderLink": "(link: RichTextLink, defaultNode: ReactNode) => ReactNode",
     "RenderMention": "(mention: RichTextMention, defaultNode: ReactNode) => ReactNode",
     "TextAs": "\"div\" | \"span\" | \"label\" | \"p\"",
-    "TextSize": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\"",
+    "TextSize": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"inherit\"",
     "TextTone": "\"success\" | \"warning\" | \"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
     "TextWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",
     "TextAlign": "\"left\" | \"right\" | \"center\"",
