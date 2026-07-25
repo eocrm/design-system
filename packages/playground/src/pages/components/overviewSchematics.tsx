@@ -729,6 +729,40 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Outline>
     </Row>
   ),
+  StatusMenu: (
+    <Col gap={5} style={{ alignItems: 'flex-start' }}>
+      <Solid
+        w={54}
+        h={22}
+        style={{
+          borderRadius: 999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Box w={7} h={4} style={{ clipPath: 'polygon(0 0,100% 0,50% 100%)', borderRadius: 0 }} />
+      </Solid>
+      <Panel
+        w={104}
+        h={58}
+        style={{ display: 'flex', flexDirection: 'column', gap: 7, padding: 7 }}
+      >
+        <Row gap={5} style={{ alignItems: 'center' }}>
+          <Dot size={7} />
+          <Bar w={58} />
+        </Row>
+        <Row gap={5} style={{ alignItems: 'center' }}>
+          <Dot size={7} />
+          <Bar w={46} />
+        </Row>
+        <Row gap={5} style={{ alignItems: 'center' }}>
+          <Dot size={7} />
+          <Bar w={52} />
+        </Row>
+      </Panel>
+    </Col>
+  ),
   Skeleton: (
     <Row gap={8} style={{ alignItems: 'flex-start' }}>
       <Dot size={26} />

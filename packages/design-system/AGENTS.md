@@ -1759,6 +1759,28 @@ import { Divider } from '@eocrm/design-system';
 - **Non-interactive.** If it's clickable, use `<Button>` instead.
 - Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced.
 
+### `<StatusMenu>` — status-transition dropdown
+
+```tsx
+<StatusMenu
+  current={{ id: 'todo', name: 'To do', category: 'to_do' }}
+  options={[
+    { id: 'in_progress', name: 'In progress', category: 'in_progress' },
+    { id: 'done', name: 'Done', category: 'done' },
+  ]}
+  onSelect={(id) => updateStatus(task.id, id)}
+/>
+
+// Read-only chip — omit `options` for a static colored chip, no menu:
+<StatusMenu current={{ id: 'won', name: 'Won', category: 'won' }} />
+```
+
+- A colored pill trigger that opens a menu of transition targets, each row colored to its own status. Composes `<DropdownMenu>` internally.
+- `current` / each option: `{ id, name, category?, color? }`. `category` (`to_do` / `in_progress` / `open` / `done` / `won` / `lost`) maps to a default palette color (slate / blue / violet / green / green / red); `color` (a `PaletteColor`) overrides it per-status.
+- `options` omitted or empty → read-only mode: a static colored `<span>` chip, no button, no `aria-haspopup`. This is the read-only surface — there's no separate `readOnly` prop.
+- `disabled` blocks the trigger (dims via opacity, stays colored). `busy` sets `aria-busy` for a transition in flight — also non-interactive, no built-in spinner.
+- Not for a plain action menu (use `<DropdownMenu>`), a non-interactive status with no transition (use `<Badge>`), or picking from a long searchable list (use `<Select>`).
+
 ### `<Dot>` — bare palette/tone colored circle
 
 ```tsx
