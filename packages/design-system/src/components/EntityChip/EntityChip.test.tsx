@@ -22,10 +22,14 @@ function StubRouterLink({
   );
 }
 
+// The chip renders an invisible aria-hidden bold twin of the label (reserves
+// the bold-on-hover width) — visible-text queries must skip it.
+const visible = { ignore: '[aria-hidden="true"], script, style' };
+
 describe('<EntityChip>', () => {
   it('renders the label', () => {
     render(<EntityChip label="ENG-5 Fix login bug" />);
-    expect(screen.getByText('ENG-5 Fix login bug')).toBeInTheDocument();
+    expect(screen.getByText('ENG-5 Fix login bug', visible)).toBeInTheDocument();
   });
 
   it('renders the icon aria-hidden', () => {
@@ -70,12 +74,15 @@ describe('<EntityChip>', () => {
 
   it('renders as <a> with href when href is set', () => {
     render(<EntityChip label="Contact" href="/contacts/1" />);
-    expect(screen.getByText('Contact').closest('a')).toHaveAttribute('href', '/contacts/1');
+    expect(screen.getByText('Contact', visible).closest('a')).toHaveAttribute(
+      'href',
+      '/contacts/1',
+    );
   });
 
   it('renders as <span> by default when no href is set', () => {
-    render(<EntityChip label="Contact" />);
-    expect(screen.getByText('Contact').closest('span')?.tagName).toBe('SPAN');
+    const { container } = render(<EntityChip label="Contact" />);
+    expect((container.firstElementChild as HTMLElement).tagName).toBe('SPAN');
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 
@@ -85,7 +92,10 @@ describe('<EntityChip>', () => {
         {/* label prop still drives content */}
       </EntityChip>,
     );
-    expect(screen.getByText('Contacts')).toHaveAttribute('data-to', '/contacts');
+    expect(screen.getByText('Contacts', visible).closest('a')).toHaveAttribute(
+      'data-to',
+      '/contacts',
+    );
   });
 
   it('as="button" gets type="button"', () => {
@@ -93,20 +103,32 @@ describe('<EntityChip>', () => {
     expect(screen.getByRole('button', { name: /Pick/ })).toHaveAttribute('type', 'button');
   });
 
-  it('loading renders aria-busy, an ellipsis body, and a span (never a link)', () => {
+  it('loading + href stays a real link, aria-busy, named after the label', () => {
     render(<EntityChip label="Contact" href="/contacts/1" loading />);
     expect(screen.getByText('…')).toBeInTheDocument();
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    expect(screen.queryByText('Contact')).not.toBeInTheDocument();
-    const root = screen.getByText('…').closest('span[aria-busy]');
-    expect(root).toHaveAttribute('aria-busy', 'true');
+    const link = screen.getByRole('link', { name: /Contact/ });
+    expect(link).toHaveAttribute('href', '/contacts/1');
+    expect(link).toHaveAttribute('aria-busy', 'true');
+    expect(link).not.toHaveAttribute('aria-disabled');
   });
 
-  it('unavailable renders a span, aria-disabled, and the unavailable class', () => {
+  it('unavailable + href renders a live <a href> — no aria-disabled', () => {
     render(<EntityChip label="Contact" href="/contacts/1" unavailable />);
-    const chip = screen.getByText('Contact').closest('span[aria-disabled]');
-    expect(chip).toHaveAttribute('aria-disabled', 'true');
-    expect(chip?.className).toMatch(/unavailable/);
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/contacts/1');
+    expect(link).not.toHaveAttribute('aria-disabled');
+    expect(link.className).toMatch(/unavailable/);
+  });
+
+  it('unavailable + custom `as` keeps the real component and its props', () => {
+    render(<EntityChip label="Task" as={StubRouterLink} to="/tasks/5" unavailable />);
+    expect(screen.getByText('Task', visible).closest('a')).toHaveAttribute('data-to', '/tasks/5');
+  });
+
+  it('bare-span loading stays a span with aria-busy', () => {
+    render(<EntityChip label="Contact" loading />);
+    const root = screen.getByText('…').closest('span[aria-busy]');
+    expect(root).toHaveAttribute('aria-busy', 'true');
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 
@@ -115,12 +137,14 @@ describe('<EntityChip>', () => {
     expect(screen.getByTestId('icon')).toBeInTheDocument();
   });
 
-  it('unavailable neuters a consumer onClick — forced span, no click handler', async () => {
+  it('bare-span unavailable keeps aria-disabled and neuters a consumer onClick', async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
-    render(<EntityChip label="Pick" as="button" onClick={onClick} unavailable />);
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    await user.click(screen.getByText('Pick'));
+    render(<EntityChip label="Pick" onClick={onClick} unavailable />);
+    const chip = screen.getByText('Pick', visible).closest('span[aria-disabled]');
+    expect(chip).toHaveAttribute('aria-disabled', 'true');
+    expect(chip?.className).toMatch(/unavailable/);
+    await user.click(screen.getByText('Pick', visible));
     expect(onClick).not.toHaveBeenCalled();
   });
 
@@ -145,7 +169,7 @@ describe('<EntityChip>', () => {
   });
 
   it('merges className with the internal chip class', () => {
-    render(<EntityChip label="Contact" className="external" />);
-    expect(screen.getByText('Contact').closest('span')?.className).toMatch(/external/);
+    const { container } = render(<EntityChip label="Contact" className="external" />);
+    expect(container.querySelector('.external')?.className).toMatch(/chip/);
   });
 });

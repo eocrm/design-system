@@ -41,17 +41,17 @@ interface EntityChipOwnProps {
   /** Renders `as="a"` with this href when `as` is omitted. */
   href?: string;
   /**
-   * Loading placeholder: icon slot + `…` body, aria-busy, non-interactive.
-   * The `as` component is still forced to a plain `<span>` — any of its
-   * other props (e.g. a RouterLink's `to`/`replace`) still spread onto that
-   * span and may leave junk DOM attributes; pass them conditionally if that
-   * matters.
+   * Loading placeholder: icon slot + `…` body, aria-busy; the label stays in
+   * the DOM visually hidden so the chip keeps its accessible name. Purely
+   * visual — with a link target (`href`/`as`) the chip stays a live,
+   * keyboard-reachable link while loading.
    */
   loading?: boolean;
   /**
-   * Entity missing/no access: muted, non-interactive (renders `as` forced to
-   * 'span'), aria-disabled. Same caveat as `loading` — the `as` component's
-   * other props still spread onto the forced span.
+   * Entity missing/no access: muted styling. With a link target (`href`/`as`)
+   * the chip remains a real link — unavailable is a visual state, not a
+   * disabling one. Only a target-less chip (bare span) becomes non-interactive
+   * with aria-disabled.
    */
   unavailable?: boolean;
 }
@@ -93,9 +93,9 @@ function statusColorStyle(status: EntityChipStatus): CSSProperties {
  * Inline entity-link chip: an optional icon, an optional muted prefix (e.g.
  * a task key), the entity's name, and an optional workflow status shown in
  * its own color — all spans inside a single inline root, safe to drop
- * directly inside a `<p>`. Renders `<a>` when `href` is set, `<span>` for a
- * static (non-navigating) chip, or whatever `as` is passed for router-aware
- * navigation.
+ * directly inside a `<p>`. An EntityChip is canonically a link to its entity:
+ * pass `href` (renders `<a>`) or `as` (router-aware navigation). The bare
+ * `<span>` form is for rare non-navigable contexts only.
  *
  * @example
  * // Inline usage inside a sentence
@@ -115,9 +115,9 @@ function statusColorStyle(status: EntityChipStatus): CSSProperties {
  * />
  *
  * @example
- * // Loading / unavailable states
- * <EntityChip label="Contact" loading />
- * <EntityChip label="Deleted contact" unavailable />
+ * // Loading / unavailable states — still live links with a target
+ * <EntityChip href="/contacts/7" label="Contact" loading />
+ * <EntityChip href="/contacts/9" label="Deleted contact" unavailable />
  *
  * @remarks When NOT to use
  * - Plain status display with no linked entity → use `<Badge>` or `<StatusMenu>`.
@@ -131,6 +131,9 @@ function statusColorStyle(status: EntityChipStatus): CSSProperties {
  *   the inline-safety contract requires span-only content.
  * - ❌ Raw hex strings in `status.color`. It's a `PaletteColor` name
  *   (`'amber'`, `'violet'`, …), not a CSS color value.
+ * - ❌ Omitting a link target — an EntityChip should always link to its
+ *   entity (`href` or `as`); the span-only form is for rare non-navigable
+ *   contexts.
  */
 export const EntityChip = forwardRef(function EntityChip<C extends ElementType = 'a'>(
   {
@@ -148,11 +151,14 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   }: EntityChipProps<C>,
   ref: ForwardedRef<Element>,
 ) {
-  // unavailable/loading force a non-interactive span — never a link/button.
-  const blocked = unavailable || loading;
-  const Component = (blocked ? 'span' : (as ?? (href ? 'a' : 'span'))) as ElementType;
+  // A link target (`as` or `href`) always wins: loading/unavailable are then
+  // purely visual states on a live, keyboard-reachable link. Only a bare span
+  // (no target) becomes genuinely non-interactive when unavailable.
+  const Component = (as ?? (href ? 'a' : 'span')) as ElementType;
+  const bareSpan = !as && !href;
+  const inert = unavailable && bareSpan;
   const elementProps: { href?: string; type?: string } = {};
-  if (!blocked && Component === 'a') elementProps.href = href;
+  if (Component === 'a') elementProps.href = href;
   if (Component === 'button') elementProps.type = 'button';
 
   return (
@@ -162,14 +168,14 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       className={clsx(styles.chip, unavailable && styles.unavailable, className)}
       {...elementProps}
       {...rest}
-      // blocked (loading/unavailable) forces a non-interactive <span> — cancel
-      // any consumer onClick that {...rest} just spread on above, so it can't
+      // A target-less unavailable chip is non-interactive — cancel any
+      // consumer onClick that {...rest} just spread on above, so it can't
       // fire through a chip keyboard users have no way to reach (Pattern B).
-      {...(blocked ? { onClick: undefined } : null)}
+      {...(inert ? { onClick: undefined } : null)}
       // Component-owned ARIA state must survive whatever the consumer passes
       // via {...rest} — aria-busy/aria-disabled are the component's contract.
       aria-busy={loading || undefined}
-      aria-disabled={unavailable || undefined}
+      aria-disabled={inert || undefined}
     >
       {icon && (
         <span className={styles.icon} aria-hidden="true">
@@ -177,11 +183,25 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
         </span>
       )}
       {loading ? (
-        <span className={styles.ellipsis}>…</span>
+        <>
+          <span className={styles.ellipsis} aria-hidden="true">
+            …
+          </span>
+          {/* Label stays in the DOM visually hidden so a linked loading chip
+              keeps its accessible name instead of being announced as "…". */}
+          <span className={styles.hiddenLabel}>{label}</span>
+        </>
       ) : (
         <>
           {prefix && <span className={styles.prefix}>{prefix}</span>}
-          {label}
+          {/* The hidden bold twin reserves the hover-bold width up front, so
+              bolding the label on hover can't shift the surrounding text. */}
+          <span className={styles.label}>
+            {label}
+            <span className={styles.labelGhost} aria-hidden="true">
+              {label}
+            </span>
+          </span>
           {status && (
             <span className={styles.status} style={statusColorStyle(status)}>
               <span className={styles.dot} aria-hidden="true">

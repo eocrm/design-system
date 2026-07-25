@@ -9,13 +9,19 @@
   --entity-chip-bg: #d6d0c5;
   --entity-chip-bg-hover: #d6d0c5;
   --entity-chip-fg: var(--color-palette-stone-fg);
-  --entity-chip-fg-hover: var(--color-accent-hover);
   --entity-chip-prefix-fg: var(--color-fg-muted);
   --entity-chip-radius: var(--radius-sm);
   --entity-chip-gap: var(--space-1);
   --entity-chip-padding-y: var(--space-05);
   --entity-chip-padding-x: var(--space-2);
-  --entity-chip-font-size: var(--font-size-sm);
+
+  // No font-size token: the chip inherits the surrounding text's size by
+  // design (see EntityChip.module.scss) — a tight line-height keeps the
+  // padded box hugging the glyph band instead of hanging below the baseline.
+  --entity-chip-line-height: var(--line-height-none);
+
+  // Hover affordance is bolded text (never an underline).
+  --entity-chip-font-weight-hover: var(--font-weight-bold);
   --entity-chip-unavailable-fg: var(--color-fg-muted);
 
   // Status separator dot — bigger than body text + its own right gap so it

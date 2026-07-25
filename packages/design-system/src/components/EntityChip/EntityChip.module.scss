@@ -10,30 +10,41 @@
   border-radius: var(--entity-chip-radius);
   background: var(--entity-chip-bg);
   color: var(--entity-chip-fg);
+
+  // Font-size deliberately inherits (no override): the chip text runs at the
+  // surrounding text's size, which — with the tight line-height below — makes
+  // the padded box bracket the local glyph band symmetrically in any context.
+  // A fixed smaller size made the box hang ~4px below 14px body text even
+  // with perfect baseline alignment.
   font: inherit;
-  font-size: var(--entity-chip-font-size);
-  text-decoration: none;
+  line-height: var(--entity-chip-line-height);
+
+  // Consumer apps ship global link rules (`a:hover { text-decoration: … }`)
+  // that out-specify anything the chip can win by selectors alone — the chip
+  // must NEVER underline, so assert it unconditionally.
+  // stylelint-disable-next-line declaration-no-important -- global consumer link rules out-specify the chip; precedent: Sortable's reduced-motion !important
+  text-decoration: none !important;
   vertical-align: baseline;
 
-  // <a>/<button> renders are the interactive variants — everything else
-  // (a plain <span> or a blocked/unavailable chip) has no hover/focus chrome.
+  // <a>/<button> renders are the interactive variants and get hover/focus
+  // chrome even when loading/unavailable (those are purely visual states on a
+  // live link) — only a target-less <span> chip has none.
   &:is(a, button) {
     cursor: pointer;
 
     &:hover {
       background: var(--entity-chip-bg-hover);
-      color: var(--entity-chip-fg-hover);
-
-      // Re-assert over the global `a:hover { text-decoration: underline }`
-      // (typography.scss), which out-specifies the rest-state rule above.
-      text-decoration: none;
       filter: brightness(0.96);
+    }
+
+    // Hover affordance: the entity name bolds (never an underline). Scoped to
+    // the label so the muted prefix/status runs keep their weight.
+    &:hover .label {
+      font-weight: var(--entity-chip-font-weight-hover);
     }
 
     &:focus-visible {
       @include focus-ring;
-
-      text-decoration: none;
     }
   }
 }
@@ -47,6 +58,26 @@
 
 .prefix {
   color: var(--entity-chip-prefix-fg);
+}
+
+// Column-stacks the label over its invisible bold twin so the chip is always
+// as wide as the BOLD label — hover-bolding then causes zero layout shift.
+.label {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.labelGhost {
+  overflow: hidden;
+  height: 0;
+  font-weight: var(--entity-chip-font-weight-hover);
+  visibility: hidden;
+  user-select: none; // keep the twin out of rich-HTML copy/paste
+}
+
+// Keeps a loading chip's accessible name (the label) without showing it.
+.hiddenLabel {
+  @include visually-hidden;
 }
 
 .ellipsis {
