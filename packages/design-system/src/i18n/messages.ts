@@ -354,6 +354,10 @@ export interface Messages {
     /** aria-label fallback for the per-chip dismiss (×) button. */
     dismiss: string;
   };
+  statusMenu: {
+    /** aria-label prefix on the trigger, interpolated with the current status name. */
+    changeStatus: string;
+  };
   pageHeader: {
     /** aria-label fallback for `<PageHeader.BackButton>`. */
     back: string;

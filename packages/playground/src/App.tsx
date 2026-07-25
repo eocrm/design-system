@@ -43,6 +43,7 @@ import { SkeletonDemo } from './pages/components/SkeletonDemo';
 import { SliderDemo } from './pages/components/SliderDemo';
 import { SortableDemo } from './pages/components/SortableDemo';
 import { SortableGroupDemo } from './pages/components/SortableGroupDemo';
+import { StatusMenuDemo } from './pages/components/StatusMenuDemo';
 import { SwitchDemo } from './pages/components/SwitchDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { TextareaDemo } from './pages/components/TextareaDemo';
@@ -166,6 +167,7 @@ export default function App() {
             <Route path="/components/slider" element={<SliderDemo />} />
             <Route path="/components/sortable" element={<SortableDemo />} />
             <Route path="/components/sortable-group" element={<SortableGroupDemo />} />
+            <Route path="/components/status-menu" element={<StatusMenuDemo />} />
             <Route path="/components/switch" element={<SwitchDemo />} />
             <Route path="/components/table" element={<TableDemo />} />
             <Route path="/components/card" element={<CardDemo />} />

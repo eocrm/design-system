@@ -1,0 +1,15 @@
+// StatusMenu.tokens.scss
+// Component-scoped tokens for <StatusMenu>. Each token defaults to the
+// primitive/token it replaces — overriding any of these at :root re-themes
+// StatusMenu without touching globals. Convention: --status-menu-<part>.
+// See docs/superpowers/specs/2026-05-27-component-tokens-design.md
+:root {
+  --status-menu-radius: var(--radius-md);
+  --status-menu-padding-y: var(--space-1);
+  --status-menu-padding-x: var(--space-3);
+  --status-menu-font-size: var(--font-size-sm);
+  --status-menu-font-weight: var(--font-weight-medium);
+  --status-menu-gap: var(--space-2);
+  --status-menu-disabled-opacity: var(--opacity-disabled);
+  --status-menu-ring-focus: var(--ring-accent);
+}

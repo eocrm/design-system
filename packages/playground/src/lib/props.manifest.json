@@ -4087,6 +4087,45 @@
         }
       ]
     },
+    "StatusMenu": {
+      "props": [
+        {
+          "name": "current",
+          "type": "StatusMenuStatus",
+          "required": true,
+          "default": "",
+          "description": "The status currently shown on the trigger (or the read-only chip)."
+        },
+        {
+          "name": "options",
+          "type": "StatusMenuStatus[]",
+          "required": false,
+          "default": "",
+          "description": "Transition targets, offered in the dropdown. Omitted or empty renders\nread-only mode: a static colored chip with no button, no menu, no\naria-haspopup."
+        },
+        {
+          "name": "onSelect",
+          "type": "((id: string | number) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fired with the chosen option's `id` when a transition target is picked."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Disables the trigger. Stays colored, dims via opacity."
+        },
+        {
+          "name": "busy",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Transition in flight: trigger gets `aria-busy` and is non-interactive, keeps its color."
+        }
+      ]
+    },
     "Sticky": {
       "props": [
         {
@@ -4722,6 +4761,7 @@
     "BadgeSize": "\"sm\" | \"md\"",
     "BadgeDot": "\"start\" | \"end\"",
     "BadgeVariant": "\"filled\" | \"stripe\"",
+    "StatusMenuStatus": "{ id: string | number; name: string; category?: StatusMenuCategory; color?: PaletteColor }",
     "ThreadNodeAlign": "\"top\" | \"header\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",

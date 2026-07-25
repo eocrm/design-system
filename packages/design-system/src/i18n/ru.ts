@@ -218,6 +218,9 @@ export const ru: Messages = {
   filterChip: {
     dismiss: 'Удалить фильтр',
   },
+  statusMenu: {
+    changeStatus: 'Изменить статус',
+  },
   pageHeader: {
     back: 'Назад',
   },
