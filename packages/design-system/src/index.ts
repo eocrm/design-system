@@ -365,6 +365,7 @@ export type {
   SortableHandleProps,
   SortableReorderEvent,
   SortableArrangement,
+  CollapseBreakpoint,
 } from './components/Sortable';
 
 export { SortableGroup, moveSortableItem } from './components/SortableGroup';

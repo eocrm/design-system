@@ -158,7 +158,7 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
 ) {
   const template =
     columns !== undefined
-      ? `repeat(${columns}, minmax(0, 1fr))`
+      ? collapseTrackTemplate(columns)
       : `repeat(auto-fit, minmax(${minColumnWidth ?? '240px'}, 1fr))`;
 
   const collapseMap = typeof collapseBelow === 'object' ? collapseBelow : undefined;

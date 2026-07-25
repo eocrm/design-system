@@ -4773,6 +4773,7 @@
     "SliderMark": "{ value: number; label?: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null }",
     "SortableReorderEvent": "{ from: number; to: number; id: string | number }",
     "SortableArrangement": "\"list\" | \"grid\"",
+    "CollapseBreakpoint": "\"sm\" | \"md\" | \"lg\"",
     "SortableMoveEvent": "{ id: string | number; from: { container: string | number; index: number; }; to: { container: string | number; index: number; } }",
     "TableDensity": "\"comfortable\" | \"dense\"",
     "PaginationSize": "\"sm\" | \"md\" | \"lg\"",
