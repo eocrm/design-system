@@ -13,6 +13,25 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
    * bar and the content. Sets its own width (intrinsic). Omit for no sidebar.
    */
   sidebar?: ReactNode;
+  /**
+   * Pin the sidebar to the viewport: `position: sticky; top: 0; height: 100dvh`
+   * with internal overflow scrolling. On pages taller than the viewport the
+   * sidebar (and a `Rail` inside it — its `Rail.Spacer` + `Rail.Footer` /
+   * CollapseToggle) spans exactly the SCREEN, keeping the footer glued to the
+   * viewport bottom instead of the page bottom. Default `false` (sidebar
+   * stretches to the full row/page height — the original behavior).
+   *
+   * Prefer this over wrapping the sidebar slot in `Sticky` — the rail's
+   * `height: 100%` + flex spacer need a DEFINITE viewport height to pin the
+   * footer, which `Sticky`'s max-height capping can't provide.
+   *
+   * `100dvh` is always relative to the real browser viewport, never to a
+   * nested scroll container — so this only pins correctly when AppLayout is
+   * the actual outermost, page-scroll shell (its documented top-level use).
+   * Nest it inside another scrollable region and the sidebar will size to
+   * the whole window, not that region, and overflow it.
+   */
+  sidebarPinned?: boolean;
   /** Main content slot — fills the remaining space below the top bar. */
   children: ReactNode;
 }
@@ -36,6 +55,13 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * // No sidebar — top bar + content only:
  * <AppLayout topBar={<TopBar />}>
  *   <Page>{content}</Page>
+ * </AppLayout>
+ *
+ * @example
+ * // Tall pages: pin the sidebar so a Rail's footer/CollapseToggle stays glued
+ * // to the viewport bottom instead of scrolling away with the page:
+ * <AppLayout sidebar={<Rail>{nav}<Rail.Spacer /><Rail.Footer>{footer}</Rail.Footer></Rail>} sidebarPinned>
+ *   <Page>{routedContent}</Page>
  * </AppLayout>
  *
  * @remarks Layout-owning primitive
@@ -78,7 +104,7 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * `<Rail>` / the main region manage their own overflow.
  */
 export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLayout(
-  { topBar, sidebar, children, className, ...props },
+  { topBar, sidebar, sidebarPinned, children, className, ...props },
   ref,
 ) {
   // Pattern A — props last: AppLayout is a consumer-overridable layout
@@ -88,7 +114,9 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
   // content column, matching the CRM shell (see playground AppShell).
   return (
     <div ref={ref} className={clsx(styles.root, className)} {...props}>
-      {sidebar != null && <div className={styles.sidebar}>{sidebar}</div>}
+      {sidebar != null && (
+        <div className={clsx(styles.sidebar, sidebarPinned && styles.sidebarPinned)}>{sidebar}</div>
+      )}
       <div className={styles.body}>
         {topBar != null && <div className={styles.topBar}>{topBar}</div>}
         <div className={styles.main}>{children}</div>
