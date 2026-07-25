@@ -87,6 +87,12 @@
   --tooltip-fg: #f0f3f6;
   --tooltip-arrow-bg: #39424b;
 
+  // EntityChip — literal-hex exception (EntityChip.tokens.scss), same reason
+  // as the light override: the raw stone palette bg reads too close to the
+  // dark page/card canvas, so it's deepened a step to stay a distinct chip.
+  --entity-chip-bg: #514d45;
+  --entity-chip-bg-hover: #514d45;
+
   // Categorical palette — the 30 named colors (a bg + fg pair each). Same hue
   // as light, lightness flipped (dark tinted bg + light vivid fg), saturation
   // preserved so muted colors (slate / stone / charcoal / taupe) stay muted.
