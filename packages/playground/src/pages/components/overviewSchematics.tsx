@@ -763,6 +763,19 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Panel>
     </Col>
   ),
+  EntityChip: (
+    <Outline
+      w={168}
+      h={26}
+      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', borderRadius: 6 }}
+    >
+      <Dot solid size={9} />
+      <Bar w={20} style={{ height: 4 }} />
+      <Bar w={44} />
+      <Dot size={6} />
+      <Bar w={30} style={{ height: 4 }} />
+    </Outline>
+  ),
   Skeleton: (
     <Row gap={8} style={{ alignItems: 'flex-start' }}>
       <Dot size={26} />

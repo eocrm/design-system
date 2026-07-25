@@ -24,6 +24,7 @@ import {
   CircleUser,
   Circle,
   Tag,
+  IdCard,
   PanelTop,
   PanelsTopLeft,
   List,
@@ -206,6 +207,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
     items: [
       { to: '/components/avatar', label: 'Avatar', icon: CircleUser, end: false },
       { to: '/components/badge', label: 'Badge', icon: Tag, end: false },
+      { to: '/components/entity-chip', label: 'EntityChip', icon: IdCard, end: false },
       { to: '/components/dot', label: 'Dot', icon: Circle, end: false },
       { to: '/components/brand-icon', label: 'BrandIcon', icon: Fingerprint, end: false },
       { to: '/components/logo', label: 'Logo', icon: Hexagon, end: false },

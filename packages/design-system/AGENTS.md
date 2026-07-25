@@ -1759,6 +1759,34 @@ import { Divider } from '@eocrm/design-system';
 - **Non-interactive.** If it's clickable, use `<Button>` instead.
 - Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced.
 
+### `<EntityChip>` — inline entity-link chip
+
+```tsx
+// Inline, inside a sentence:
+<Text>
+  Reassigned <EntityChip icon={<User size={14} />} label="Priya Shah" /> to this deal.
+</Text>
+
+// href, prefix + status:
+<EntityChip
+  href="/tasks/5"
+  prefix="ENG-5"
+  label="Fix login bug"
+  status={{ label: 'In progress', category: 'in_progress' }}
+/>
+
+// RouterLink via `as`, or a status color override:
+import { Link as RouterLink } from 'react-router-dom';
+<EntityChip as={RouterLink} to="/deals/9" label="Acme Corp" status={{ label: 'At risk', color: 'amber' }} />
+```
+
+- Polymorphic inline chip: optional `icon` (rendered `aria-hidden`), optional muted `prefix` (e.g. a task key), the `label`, and an optional colored `status`. All inline `<span>`s inside one root — safe to drop directly inside a `<p>`/`<Text>`.
+- Renders `<a href>` when `href` is set, `<span>` (static, non-navigating) otherwise, or whatever `as` is passed (`RouterLink`, `'button'`, any component) — same polymorphic contract as `<Link>`.
+- `status`: `{ label, category?, color? }`. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default palette color; `color` (a `PaletteColor`) overrides it — same category → color mapping as `<StatusMenu>`.
+- `loading`: swaps the body for an `aria-busy` ellipsis, non-interactive. `unavailable`: mutes the chip and forces a non-interactive `<span>` with `aria-disabled` — even with `href`/`as` set (entity deleted or no access).
+- **When NOT to use**: plain status with no linked entity → `<Badge>`/`<StatusMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
+- **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` is a `PaletteColor` name, never a raw hex string.
+
 ### `<StatusMenu>` — status-transition dropdown
 
 ```tsx

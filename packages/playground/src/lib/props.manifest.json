@@ -1530,6 +1530,66 @@
         }
       ]
     },
+    "EntityChip": {
+      "props": [
+        {
+          "name": "icon",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Leading icon — consumer passes the element (e.g. a lucide icon). Rendered aria-hidden."
+        },
+        {
+          "name": "label",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Entity name. Optional at the type level only to satisfy the polymorphic\n`forwardRef` generic (same workaround `<Rail.Item>` documents on its\n`children`); in practice every chip needs a label."
+        },
+        {
+          "name": "prefix",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Muted leading run before the name (e.g. task key `ENG-5`)."
+        },
+        {
+          "name": "status",
+          "type": "EntityChipStatus",
+          "required": false,
+          "default": "",
+          "description": "Inline workflow status, shown as `· <label>` in the status's own color."
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Renders `as=\"a\"` with this href when `as` is omitted."
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Loading placeholder: icon slot + `…` body, aria-busy, non-interactive."
+        },
+        {
+          "name": "unavailable",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Entity missing/no access: muted, non-interactive (renders `as` forced to 'span'), aria-disabled."
+        },
+        {
+          "name": "as",
+          "type": "C",
+          "required": false,
+          "default": "",
+          "description": ""
+        }
+      ]
+    },
     "ErrorState": {
       "props": [
         {
@@ -4745,7 +4805,7 @@
     "GridGap": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\"",
     "GridAlignItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "GridJustifyItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
-    "GridAs": "\"div\" | \"section\" | \"aside\" | \"article\" | \"main\" | \"ul\" | \"ol\" | \"nav\" | \"header\" | \"footer\"",
+    "GridAs": "\"div\" | \"section\" | \"aside\" | \"article\" | \"footer\" | \"header\" | \"main\" | \"nav\" | \"ol\" | \"ul\"",
     "SplitSide": "\"start\" | \"end\"",
     "SplitGap": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\"",
     "SplitAlign": "\"start\" | \"center\" | \"stretch\"",
@@ -4761,7 +4821,8 @@
     "BadgeSize": "\"sm\" | \"md\"",
     "BadgeDot": "\"start\" | \"end\"",
     "BadgeVariant": "\"filled\" | \"stripe\"",
-    "StatusMenuStatus": "{ id: string | number; name: string; category?: StatusMenuCategory; color?: PaletteColor }",
+    "EntityChipStatus": "{ label: string; category?: StatusCategory; color?: PaletteColor }",
+    "StatusMenuStatus": "{ id: string | number; name: string; category?: StatusCategory; color?: PaletteColor }",
     "ThreadNodeAlign": "\"top\" | \"header\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",
@@ -4778,7 +4839,7 @@
     "ErrorStateTone": "\"neutral\" | \"danger\"",
     "ErrorStateHeadingLevel": "1 | 2 | 3 | 4 | 5 | 6",
     "IconTileSize": "\"sm\" | \"md\" | \"lg\"",
-    "IconTileShape": "\"square\" | \"circle\"",
+    "IconTileShape": "\"circle\" | \"square\"",
     "TooltipSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "TooltipAlign": "\"start\" | \"end\" | \"center\"",
     "ConfirmationVariant": "\"danger\" | \"default\"",
