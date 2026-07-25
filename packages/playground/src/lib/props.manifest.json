@@ -2094,10 +2094,10 @@
         },
         {
           "name": "collapseBelow",
-          "type": "GridCollapseBreakpoint",
+          "type": "CollapseBreakpoint | Partial<Record<CollapseBreakpoint, number>>",
           "required": false,
           "default": "",
-          "description": "Collapse to a single visual column when the GRID'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Every child spans the full row below the threshold —\n`Grid.Item` spans included. Only valid with `columns` (auto-fit grids\nalready reflow).\n\nConsumer inline `style={{ gridColumn }}` on a child still wins below the\nthreshold (inline beats any stylesheet rule) — don't do that; use\n`Grid.Item span` instead.\n\n❌ Anti-pattern: a `collapseBelow` grid must get its width from its\nparent. `container-type: inline-size` zeroes the grid's contribution to\nintrinsic sizing, so in an intrinsic-width context (`Split`'s default\n`auto` aside track, a `Cluster` item, `width: max-content`) it renders at\nwidth 0 — give the parent a concrete width instead. The grid also becomes\nthe containing block for absolutely-positioned descendants (layout\ncontainment)."
+          "description": "Collapse to a single visual column when the GRID'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Every child spans the full row below the threshold —\n`Grid.Item` spans included. Only valid with `columns` (auto-fit grids\nalready reflow).\n\nConsumer inline `style={{ gridColumn }}` on a child still wins below the\nthreshold (inline beats any stylesheet rule) — don't do that; use\n`Grid.Item span` instead.\n\n❌ Anti-pattern: a `collapseBelow` grid must get its width from its\nparent. `container-type: inline-size` zeroes the grid's contribution to\nintrinsic sizing, so in an intrinsic-width context (`Split`'s default\n`auto` aside track, a `Cluster` item, `width: max-content`) it renders at\nwidth 0 — give the parent a concrete width instead. The grid also becomes\nthe containing block for absolutely-positioned descendants (layout\ncontainment).\n\nAlso accepts a graduated breakpoint→columns map, e.g.\n`collapseBelow={{ md: 6, sm: 1 }}`: below 640px the grid re-templates to\n6 columns (item spans clamp to fit — a span wider than the step becomes a\nfull row), and below 480px to a single column. Use when jumping straight\nfrom N columns to 1 wastes tablet widths. When several breakpoints match,\nthe smallest wins. Only `Grid.Item` children get span clamping; plain\nchildren auto-place into the step's tracks."
         }
       ]
     },
@@ -4002,6 +4002,13 @@
           "required": false,
           "default": "",
           "description": "Number of equal-width grid tracks. Only applies when `arrangement=\"grid\"`\n(ignored for a list). Default `12`, matching `Grid.Item`'s 12-column\nfraction spans (`'25%'`→3 … `'75%'`→9 tracks). Set another count for a\nsimpler grid, but the named fraction spans then won't map to their\nfraction (documented, not validated — same as `Grid`)."
+        },
+        {
+          "name": "collapseBelow",
+          "type": "CollapseBreakpoint | Partial<Record<CollapseBreakpoint, number>>",
+          "required": false,
+          "default": "",
+          "description": "Responsive collapse for the grid arrangement — mirrors `Grid`'s\n`collapseBelow` exactly (same breakpoints, same container-query\nmechanism). Ignored unless `arrangement=\"grid\"`.\n- `'sm' | 'md' | 'lg'` — below the container-width threshold (480 / 640 /\n  768px of the LIST'S OWN width) every item spans the full row: a single\n  visual column.\n- `{ lg?: n, md?: n, sm?: n }` — graduated: below each breakpoint the grid\n  re-templates to that many columns and item spans clamp to fit (a span\n  wider than the step becomes a full row). E.g. `{ md: 6, sm: 1 }`.\n\n❌ Anti-pattern: a collapsible Sortable must get its width from its\nparent — `container-type: inline-size` zeroes the list's contribution to\nintrinsic sizing (same caveat as `Grid`'s `collapseBelow`)."
         }
       ]
     },
@@ -4700,7 +4707,6 @@
     "GridAlignItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "GridJustifyItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "GridAs": "\"div\" | \"section\" | \"aside\" | \"article\" | \"main\" | \"ul\" | \"ol\" | \"nav\" | \"header\" | \"footer\"",
-    "GridCollapseBreakpoint": "\"sm\" | \"md\" | \"lg\"",
     "SplitSide": "\"start\" | \"end\"",
     "SplitGap": "\"sm\" | \"md\" | \"lg\" | \"xs\" | \"xl\" | \"2xl\"",
     "SplitAlign": "\"start\" | \"center\" | \"stretch\"",
