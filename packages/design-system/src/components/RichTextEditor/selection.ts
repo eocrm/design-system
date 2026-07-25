@@ -43,6 +43,17 @@ function figureBlock(node: Node | null | undefined): HTMLElement | null {
     : null;
 }
 
+/** The first/last block element at or inside a root-level child node — the node
+ *  itself when it IS a block, else its first/last `[data-block-id]` descendant
+ *  (a `<ul>`/`<ol>` wrapper contains its `<li data-block-id>` items). Null for
+ *  text/absent nodes. */
+function blockWithin(node: Node | undefined, which: 'first' | 'last'): HTMLElement | null {
+  if (!(node instanceof HTMLElement)) return null;
+  if (node.hasAttribute('data-block-id')) return node;
+  const all = node.querySelectorAll<HTMLElement>('[data-block-id]');
+  return all.length > 0 ? all[which === 'first' ? 0 : all.length - 1] : null;
+}
+
 /**
  * Character offset within `blockEl` of the DOM position `(node, offset)`. Works
  * for both text-node boundaries (offset = char index) and element-node
@@ -111,6 +122,27 @@ export function pointFromDom(root: HTMLElement, node: Node, offset: number): Poi
     // one just before it. `kids[-1]` (offset 0) is undefined → figureBlock null.
     const fig = figureBlock(kids[offset]) ?? figureBlock(kids[offset - 1]);
     if (fig) return { blockId: fig.getAttribute('data-block-id')!, offset: 0 };
+    // Root-level caret beside ORDINARY blocks. This happens when the block the
+    // selection lived in is removed from the DOM — e.g. a controlled external
+    // value replacement (parent setDoc(emptyDoc())) swaps the block elements,
+    // and the DOM collapses the live selection boundary to (root, childIndex).
+    // Resolve to the start of the next block, else the end of the previous one.
+    // Returning null here would make readSelection null, and the beforeinput
+    // handler would cede the keystroke to the browser — which then mutates the
+    // contentEditable DOM outside the model (raw text over the re-rendered
+    // content, onChange stalled). See #321.
+    const next = blockWithin(kids[offset], 'first');
+    if (next) return { blockId: next.getAttribute('data-block-id')!, offset: 0 };
+    const prev = blockWithin(kids[offset - 1], 'last');
+    if (prev) {
+      return {
+        blockId: prev.getAttribute('data-block-id')!,
+        // A void figure's only position is 0; a text block's end is its full
+        // model length (widget-corrected by offsetWithinBlock).
+        offset:
+          prev.tagName === 'FIGURE' ? 0 : offsetWithinBlock(prev, prev, prev.childNodes.length),
+      };
+    }
   }
   const blockEl = blockElementFor(root, node);
   if (!blockEl) return null;
