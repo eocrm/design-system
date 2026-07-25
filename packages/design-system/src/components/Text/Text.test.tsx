@@ -183,3 +183,27 @@ describe('Text', () => {
     expect(el).toHaveAttribute('for', 'email-input');
   });
 });
+
+describe('Text size="inherit" (#319)', () => {
+  it('renders the sizeInherit class and no fixed-size class', () => {
+    render(
+      <Text as="span" size="inherit" data-testid="t">
+        ENG-5
+      </Text>,
+    );
+    const el = screen.getByTestId('t');
+    expect(el.className).toMatch(/sizeInherit/);
+    expect(el.className).not.toMatch(/sizeMd/);
+  });
+
+  it('tone and weight still apply with size="inherit"', () => {
+    render(
+      <Text as="span" size="inherit" tone="muted" weight="medium" data-testid="t">
+        ENG-5
+      </Text>,
+    );
+    const el = screen.getByTestId('t');
+    expect(el.className).toMatch(/toneMuted/);
+    expect(el.className).toMatch(/weightMedium/);
+  });
+});

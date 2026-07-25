@@ -3,6 +3,7 @@ import { Code } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
+import { Title } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -225,6 +226,40 @@ export function Demo() {
             </Text>
           </Stack>
         </Cluster>
+      </Example>
+
+      <Example
+        title='size="inherit" — inline runs inside headings'
+        description="No fixed size — font-size AND line-height inherit from the parent. Use for a muted inline run inside a <Title> that must keep the heading's size, instead of shrinking to Text's own default."
+        code={`import { Stack, Text, Title } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="xs">
+      <Title order={2}>
+        <Text as="span" size="inherit" tone="muted">ENG-5</Text> Fix login flow
+      </Title>
+      <Title order={2}>
+        <Text as="span" size="sm" tone="muted">ENG-5</Text> Fix login flow
+      </Title>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="xs">
+          <Title order={2}>
+            <Text as="span" size="inherit" tone="muted">
+              ENG-5
+            </Text>{' '}
+            Fix login flow
+          </Title>
+          <Title order={2}>
+            <Text as="span" size="sm" tone="muted">
+              ENG-5
+            </Text>{' '}
+            Fix login flow
+          </Title>
+        </Stack>
       </Example>
     </DemoLayout>
   );

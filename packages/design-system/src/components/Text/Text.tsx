@@ -10,8 +10,8 @@ import styles from './Text.module.scss';
  */
 export type TextAs = 'p' | 'span' | 'div' | 'label';
 
-/** Visual size. */
-export type TextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+/** Visual size. `'inherit'` takes font-size and line-height from the parent (inline runs inside headings). */
+export type TextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'inherit';
 
 /** Color tone. */
 export type TextTone = 'default' | 'muted' | 'subtle' | 'accent' | 'danger' | 'success' | 'warning';
@@ -43,6 +43,12 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
    * - `md` — 14px, body text (default)
    * - `lg` — 16px, large body / lead text
    * - `xl` — 20px, very large body (rare)
+   * - `inherit` — no fixed size; font-size AND line-height inherit from the
+   *   parent. For inline runs inside a heading (`as="span"` inside a
+   *   `<Title>` / `<PageHeader.Title>`) that must keep the heading's size —
+   *   e.g. a muted task-key prefix. Tone / weight still apply — font-weight
+   *   stays Text's own (default `regular`), it does NOT inherit; pass
+   *   `weight` to match the heading if needed.
    */
   size?: TextSize;
   /**
@@ -84,6 +90,7 @@ const SIZE_CLASS: Record<TextSize, string> = {
   md: styles.sizeMd,
   lg: styles.sizeLg,
   xl: styles.sizeXl,
+  inherit: styles.sizeInherit,
 };
 
 const TONE_CLASS: Record<TextTone, string> = {
@@ -144,6 +151,12 @@ const ALIGN_CLASS: Record<TextAlign, string> = {
  * <Text size="sm" tone="danger">Email is required.</Text>
  *
  * @example
+ * // Muted inline run inside a heading — keeps the heading's font size:
+ * <Title order={1}>
+ *   <Text as="span" size="inherit" tone="muted">ENG-5</Text> Fix login
+ * </Title>
+ *
+ * @example
  * // Body copy under a heading, spaced with Stack — the canonical CRM-page shape:
  * <Stack gap="xs">
  *   <Title order={2}>Pipeline</Title>
@@ -162,7 +175,8 @@ const ALIGN_CLASS: Record<TextAlign, string> = {
  *   The whitelist is the contract.
  * - ❌ `<Text as="h2">` — Text doesn't accept heading tags. Use `<Title order={2}>`.
  * - ❌ Wrapping a `<Title>` in `<Text>` for tone/weight tweaks. Pass tone/weight
- *   directly to the `<Title>` instead.
+ *   directly to the `<Title>` instead. `size="inherit"` is for runs INSIDE a
+ *   heading, not for wrapping the heading itself.
  * - ❌ Nesting `<Text>` inside another `<Text>` with the default `as="p"`. The
  *   inner `<p>` renders inside the outer `<p>`, which the React DOM nesting
  *   validator warns about (and is invalid HTML). When you need a tone or
