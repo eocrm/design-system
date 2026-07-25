@@ -62,6 +62,7 @@ const CLUSTERS = {
   Slider: 'Forms',
   Sortable: 'Forms',
   SortableGroup: 'Forms',
+  StatusMenu: 'Forms',
   Switch: 'Forms',
   RichTextEditor: 'Forms',
   Textarea: 'Forms',

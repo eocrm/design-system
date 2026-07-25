@@ -246,7 +246,8 @@
     "composedBy": [
       "DataTable",
       "LiquidEditor",
-      "RichTextEditor"
+      "RichTextEditor",
+      "StatusMenu"
     ]
   },
   "EmojiPicker": {
@@ -669,6 +670,14 @@
       "Page",
       "RichTextEditor"
     ]
+  },
+  "StatusMenu": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "DropdownMenu"
+    ],
+    "composedBy": []
   },
   "Sticky": {
     "tier": "primitive",

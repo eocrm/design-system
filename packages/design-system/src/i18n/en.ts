@@ -216,6 +216,9 @@ export const en: Messages = {
   filterChip: {
     dismiss: 'Remove filter',
   },
+  statusMenu: {
+    changeStatus: 'Change status',
+  },
   pageHeader: {
     back: 'Go back',
   },

@@ -117,6 +117,13 @@ export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot, BadgeVariant } from '.
 export { Dot } from './components/Dot';
 export type { DotProps } from './components/Dot';
 
+export { StatusMenu } from './components/StatusMenu';
+export type {
+  StatusMenuProps,
+  StatusMenuStatus,
+  StatusMenuCategory,
+} from './components/StatusMenu';
+
 export { Timeline } from './components/Timeline';
 export type { TimelineProps, TimelineItemProps } from './components/Timeline';
 

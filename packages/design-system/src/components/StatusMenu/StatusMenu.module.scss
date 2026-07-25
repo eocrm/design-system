@@ -1,0 +1,59 @@
+@use '../../styles/mixins' as *;
+@use './StatusMenu.tokens';
+
+// Shared by .trigger (interactive) and .chip (read-only) — both render the
+// same colored pill; only the interaction affordances differ below.
+.trigger,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--status-menu-gap);
+  border-radius: var(--status-menu-radius);
+  padding: var(--status-menu-padding-y) var(--status-menu-padding-x);
+  font-family: inherit;
+  font-size: var(--status-menu-font-size);
+  font-weight: var(--status-menu-font-weight);
+  background: var(--status-menu-bg);
+  color: var(--status-menu-fg);
+  white-space: nowrap;
+}
+
+.trigger {
+  border: none;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    filter: brightness(0.96);
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--status-menu-ring-focus));
+  }
+
+  &:disabled {
+    opacity: var(--status-menu-disabled-opacity);
+    cursor: default;
+  }
+}
+
+.chevron {
+  flex-shrink: 0;
+}
+
+// Double class (.option.option) raises specificity to (0,3,0) with the
+// pseudo-classes below, deterministically beating DropdownMenu's own
+// `.item:hover` / `.item:focus-visible` rules (0,2,0) — see Item.tsx —
+// so each option row keeps ITS OWN injected status color on hover/focus
+// instead of falling back to the menu's default hover tint.
+.option.option {
+  background: var(--status-menu-bg);
+  color: var(--status-menu-fg);
+}
+
+.option.option:hover {
+  filter: brightness(0.94);
+}
+
+.option.option:focus-visible {
+  filter: brightness(0.94);
+}
