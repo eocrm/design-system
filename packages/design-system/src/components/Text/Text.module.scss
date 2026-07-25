@@ -29,6 +29,14 @@
   font-size: var(--text-font-size-xl);
 }
 
+// `inherit` — no fixed size: font-size AND line-height come from the parent
+// (inline runs inside headings). Line-height must inherit too or Text's
+// base 1.5 would inflate a tight heading's line box.
+.sizeInherit {
+  font-size: inherit;
+  line-height: inherit;
+}
+
 .weightRegular {
   font-weight: var(--text-font-weight-regular);
 }
