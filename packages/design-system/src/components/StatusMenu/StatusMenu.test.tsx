@@ -88,6 +88,19 @@ describe('StatusMenu — interactive mode', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
+  it('does not reopen when busy clears after forcing an open menu closed', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<StatusMenu current={toDo} options={options} />);
+    await user.click(screen.getByRole('button'));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+
+    rerender(<StatusMenu current={toDo} options={options} busy />);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+    rerender(<StatusMenu current={toDo} options={options} busy={false} />);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
   it('busy trigger gets aria-busy and is disabled', () => {
     render(<StatusMenu current={toDo} options={options} busy />);
     const trigger = screen.getByRole('button');

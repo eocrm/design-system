@@ -111,7 +111,6 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
   // `--status-menu-*` custom properties can't be shadowed by a consumer's
   // own inline style object.
   const mergedStyle: CSSProperties = { ...style, ...statusColorStyle(current) };
-  const hasOptions = Boolean(options && options.length > 0);
   const isBlocked = disabled || busy;
 
   // DropdownMenu.Trigger clones an unconditional pointerdown/keydown toggle
@@ -122,7 +121,15 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
   // handlers try to do.
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
 
-  if (!hasOptions) {
+  // If the menu is open and a parent re-render flips busy/disabled true,
+  // DropdownMenu never fires onOpenChange for that externally-forced close
+  // (the `open` prop just renders false) — so uncontrolledOpen would stay
+  // stale-true, and the menu would pop back open with no user action once
+  // busy/disabled flips off again. React-sanctioned adjust-state-during-
+  // render: reset synchronously, before paint.
+  if (isBlocked && uncontrolledOpen) setUncontrolledOpen(false);
+
+  if (!options || options.length === 0) {
     return (
       // {...rest} first so a consumer prop can't collide with the chip's
       // own className/style resolution below.
@@ -170,7 +177,7 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>
-        {(options as StatusMenuStatus[]).map((option) => (
+        {options.map((option) => (
           <DropdownMenu.Item
             key={option.id}
             onSelect={() => onSelect?.(option.id)}

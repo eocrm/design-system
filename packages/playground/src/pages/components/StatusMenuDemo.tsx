@@ -69,8 +69,7 @@ export function DealExample() {
       <Example
         title="Read-only, disabled, and busy"
         description="Omitting options renders a static colored chip (no button, no menu). disabled and busy keep the trigger's color but block interaction — busy also sets aria-busy."
-        code={`import { StatusMenu, type StatusMenuStatus } from '@eocrm/design-system';
-import { Cluster } from '@eocrm/design-system';
+        code={`import { Cluster, StatusMenu, type StatusMenuStatus } from '@eocrm/design-system';
 
 const options: StatusMenuStatus[] = [
   { id: 'in_progress', name: 'In progress', category: 'in_progress' },
@@ -98,12 +97,12 @@ export function Demo() {
           <StatusMenu current={{ id: 'done', name: 'Done', category: 'done' }} />
           <StatusMenu
             current={{ id: 'todo', name: 'To do', category: 'to_do' }}
-            options={READ_ONLY_OPTIONS}
+            options={BLOCKED_EXAMPLE_OPTIONS}
             disabled
           />
           <StatusMenu
             current={{ id: 'todo', name: 'To do', category: 'to_do' }}
-            options={READ_ONLY_OPTIONS}
+            options={BLOCKED_EXAMPLE_OPTIONS}
             busy
           />
         </Cluster>
@@ -147,6 +146,6 @@ function DealExample() {
   );
 }
 
-const READ_ONLY_OPTIONS: StatusMenuStatus[] = [
+const BLOCKED_EXAMPLE_OPTIONS: StatusMenuStatus[] = [
   { id: 'in_progress', name: 'In progress', category: 'in_progress' },
 ];

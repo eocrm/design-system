@@ -32,7 +32,7 @@
 
   &:disabled {
     opacity: var(--status-menu-disabled-opacity);
-    cursor: default;
+    cursor: not-allowed;
   }
 }
 
