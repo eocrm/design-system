@@ -394,6 +394,53 @@ describe('Sortable grid arrangement (#316)', () => {
   });
 });
 
+describe('Sortable collapseBelow (#318)', () => {
+  it('string form adds collapsible + collapse class on the grid <ol>', () => {
+    render(
+      <Sortable arrangement="grid" collapseBelow="md" data-testid="ol">
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    const ol = screen.getByTestId('ol');
+    expect(ol.className).toMatch(/collapsible/);
+    expect(ol.className).toMatch(/collapseMd/);
+  });
+
+  it('map form adds step classes, injects step templates, items stamp clamped spans', () => {
+    render(
+      <Sortable arrangement="grid" collapseBelow={{ md: 6, sm: 1 }} data-testid="ol">
+        <Sortable.Item id="a" span="75%" data-testid="wide">
+          A
+        </Sortable.Item>
+        <Sortable.Item id="b" span={3} data-testid="narrow">
+          B
+        </Sortable.Item>
+      </Sortable>,
+    );
+    const ol = screen.getByTestId('ol');
+    expect(ol.className).toMatch(/collapsible/);
+    expect(ol.className).toMatch(/stepMd/);
+    expect(ol.className).toMatch(/stepSm/);
+    expect(ol.style.getPropertyValue('--sortable-columns-md')).toBe('repeat(6, minmax(0, 1fr))');
+    const wide = screen.getByTestId('wide');
+    expect(wide.style.getPropertyValue('--sortable-item-span-md')).toBe('1 / -1');
+    expect(wide.style.getPropertyValue('--sortable-item-span-sm')).toBe('1 / -1');
+    const narrow = screen.getByTestId('narrow');
+    expect(narrow.style.getPropertyValue('--sortable-item-span-md')).toBe('span 3');
+  });
+
+  it('collapseBelow is inert in list arrangement', () => {
+    render(
+      <Sortable collapseBelow="md" data-testid="ol">
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    const ol = screen.getByTestId('ol');
+    expect(ol.className).not.toMatch(/collapsible/);
+    expect(ol.className).not.toMatch(/collapseMd/);
+  });
+});
+
 describe('restrictTransformToRect', () => {
   // A 50px-tall, 100px-wide node sitting at (left:10, top:20) inside a
   // 400x300 bounding box anchored at (left:0, top:0).

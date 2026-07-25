@@ -1,4 +1,5 @@
 @use './Sortable.tokens';
+@use '../_internal/collapse' as bp;
 
 .list {
   // UA reset — <ol> ships with default browser margin and padding.
@@ -89,5 +90,73 @@
     // we override it under reduced motion. !important is the canonical way
     // to override inline styles with the same property at higher specificity.
     transition: none !important; // stylelint-disable-line declaration-no-important -- override dnd-kit's inline transition
+  }
+}
+
+// --- collapseBelow (grid arrangement) ----------------------------------
+// Mirrors Grid's collapseBelow: only collapsible lists become size
+// containers, so existing lists get zero containment changes.
+.collapsible {
+  container-type: inline-size;
+}
+
+// Binary (string) collapse — below the threshold every item spans the full
+// row. Double class gives specificity (0,2,0) so the collapse beats any
+// single-class consumer grid-column rule; vs `.item` it wins by source order.
+@container (max-width: #{bp.$collapse-sm}) {
+  .collapsible.collapseSm > * {
+    // stylelint-disable-next-line property-disallowed-list -- collapse override is Sortable's own placement mechanism, mirrors Grid
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: #{bp.$collapse-md}) {
+  .collapsible.collapseMd > * {
+    // stylelint-disable-next-line property-disallowed-list -- collapse override is Sortable's own placement mechanism, mirrors Grid
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: #{bp.$collapse-lg}) {
+  .collapsible.collapseLg > * {
+    // stylelint-disable-next-line property-disallowed-list -- collapse override is Sortable's own placement mechanism, mirrors Grid
+    grid-column: 1 / -1;
+  }
+}
+
+// Graduated (map) collapse — step templates + per-item clamped spans are
+// computed in Sortable.tsx and injected inline (--sortable-columns-<bp>,
+// --sortable-item-span-<bp>). Declared lg → md → sm so the smallest matching
+// breakpoint wins by source order (equal specificity).
+@container (max-width: #{bp.$collapse-lg}) {
+  .collapsible.stepLg {
+    grid-template-columns: var(--sortable-columns-lg);
+
+    > .item {
+      // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Sortable's own placement mechanism, mirrors Grid
+      grid-column: var(--sortable-item-span-lg, auto);
+    }
+  }
+}
+
+@container (max-width: #{bp.$collapse-md}) {
+  .collapsible.stepMd {
+    grid-template-columns: var(--sortable-columns-md);
+
+    > .item {
+      // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Sortable's own placement mechanism, mirrors Grid
+      grid-column: var(--sortable-item-span-md, auto);
+    }
+  }
+}
+
+@container (max-width: #{bp.$collapse-sm}) {
+  .collapsible.stepSm {
+    grid-template-columns: var(--sortable-columns-sm);
+
+    > .item {
+      // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Sortable's own placement mechanism, mirrors Grid
+      grid-column: var(--sortable-item-span-sm, auto);
+    }
   }
 }
