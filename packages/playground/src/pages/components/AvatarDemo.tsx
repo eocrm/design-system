@@ -42,7 +42,7 @@ export function AvatarDemo() {
     >
       <Example
         title="Sizes"
-        description="Three sizes. sm (24px) for table rows and dense UI, md (32px) for general use, lg (40px) for detail page headers."
+        description="Four sizes. sm (24px) for table rows and dense UI, md (32px) for general use, lg (40px) for detail page headers, xl (80px) for member-card popovers and profile headers."
         code={`import { Avatar, Cluster } from '@eocrm/design-system';
 
 export function Demo() {
@@ -51,6 +51,7 @@ export function Demo() {
       <Avatar name="Alex Rivera" size="sm" />
       <Avatar name="Alex Rivera" size="md" />
       <Avatar name="Alex Rivera" size="lg" />
+      <Avatar name="Alex Rivera" size="xl" />
     </Cluster>
   );
 }`}
@@ -59,6 +60,7 @@ export function Demo() {
           <Avatar name="Alex Rivera" size="sm" />
           <Avatar name="Alex Rivera" size="md" />
           <Avatar name="Alex Rivera" size="lg" />
+          <Avatar name="Alex Rivera" size="xl" />
         </Cluster>
       </Example>
 
@@ -207,7 +209,7 @@ export function GroupDemo() {
 
       <Example
         title="Group sizes"
-        description="Three sizes — sm / md (default) / lg. The group's size is the default for child avatars; per-child override still wins."
+        description="Four sizes — sm / md (default) / lg / xl. The group's size is the default for child avatars; per-child override still wins."
         code={`import { Avatar, AvatarGroup, Stack } from '@eocrm/design-system';
 
 const TEAM = [
@@ -237,6 +239,11 @@ export function Demo() {
           <Avatar key={n} name={n} />
         ))}
       </AvatarGroup>
+      <AvatarGroup size="xl" max={5}>
+        {TEAM.slice(0, 6).map((n) => (
+          <Avatar key={n} name={n} />
+        ))}
+      </AvatarGroup>
     </Stack>
   );
 }`}
@@ -253,6 +260,11 @@ export function Demo() {
             ))}
           </AvatarGroup>
           <AvatarGroup size="lg" max={5}>
+            {TEAM.slice(0, 6).map((n) => (
+              <Avatar key={n} name={n} />
+            ))}
+          </AvatarGroup>
+          <AvatarGroup size="xl" max={5}>
             {TEAM.slice(0, 6).map((n) => (
               <Avatar key={n} name={n} />
             ))}
