@@ -24,6 +24,9 @@ export type BadgeSize = 'sm' | 'md';
 /** Position of the optional status dot relative to the badge content. */
 export type BadgeDot = 'start' | 'end';
 
+/** Vertical alignment of the Badge on the surrounding line box. */
+export type BadgeAlign = 'baseline' | 'middle';
+
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   /**
    * Semantic tone.
@@ -74,6 +77,14 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
    * left-border picks up the palette `fg` token.
    */
   color?: PaletteColor;
+  /**
+   * Vertical alignment within the surrounding line of text.
+   * - `baseline` (default) — rides the text baseline; right for body-size text.
+   * - `middle` — centers the badge on the line box; use for a badge inside a
+   *   heading line (`<Title>` / `<PageHeader.Title>`), where baseline riding
+   *   makes the badge look sunken next to large text.
+   */
+  align?: BadgeAlign;
 }
 
 const toneClass: Record<BadgeTone, string> = {
@@ -125,10 +136,21 @@ const sizeClass: Record<BadgeSize, string> = {
  *   <Badge variant="stripe" tone="success">Active</Badge>
  * </Cluster>
  *
+ * @example
+ * // Inside a heading line — align="middle" so the badge doesn't ride the
+ * // heading's baseline (paired with Text size="inherit" for the muted run):
+ * <Title order={1}>
+ *   <Text as="span" size="inherit" tone="muted">ENG-5</Text> Fix login flow{' '}
+ *   <Badge align="middle" tone="warning">In progress</Badge>
+ * </Title>
+ *
  * @remarks When NOT to use
  * - As a button. Badges are non-interactive labels. If it's clickable, use
  *   a `Button` or `Link`.
  * - For long-form text. Badges should be 1-2 words max.
+ * - `align="middle"` outside a heading line. It's a fix for the
+ *   baseline-vs-line-box mismatch next to large text — leave the default
+ *   `baseline` for badges next to body-size text.
  *
  * @example
  * // Categorical palette color (not a semantic tone) — for tag-like labels
@@ -155,6 +177,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
     dot,
     variant = 'filled',
     color,
+    align = 'baseline',
     className,
     children,
     style,
@@ -192,6 +215,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
         toneClass[tone],
         sizeClass[size],
         variant === 'stripe' && styles.stripe,
+        align === 'middle' && styles.alignMiddle,
         className,
       )}
       style={mergedStyle}

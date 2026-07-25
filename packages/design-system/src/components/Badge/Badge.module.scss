@@ -58,6 +58,13 @@
   color: var(--badge-fg-purple);
 }
 
+// align="middle" — center the badge on the surrounding LINE BOX instead of
+// riding the text baseline. For badges inside a heading line (Title /
+// PageHeader.Title), where baseline riding looks sunken next to large text.
+.alignMiddle {
+  vertical-align: middle;
+}
+
 .dot {
   width: var(--size-badge-dot);
   height: var(--size-badge-dot);
