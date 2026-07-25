@@ -122,39 +122,46 @@ export function pointFromDom(root: HTMLElement, node: Node, offset: number): Poi
     // one just before it. `kids[-1]` (offset 0) is undefined → figureBlock null.
     const fig = figureBlock(kids[offset]) ?? figureBlock(kids[offset - 1]);
     if (fig) return { blockId: fig.getAttribute('data-block-id')!, offset: 0 };
-    // Root-level caret beside ORDINARY blocks. This happens when the block the
-    // selection lived in is removed from the DOM — e.g. a controlled external
-    // value replacement (parent setDoc(emptyDoc())) swaps the block elements,
-    // and the DOM collapses the live selection boundary to (root, childIndex).
-    // Resolve to the start of the next block, else the end of the previous one.
-    // Returning null here would make readSelection null, and the beforeinput
-    // handler would cede the keystroke to the browser — which then mutates the
-    // contentEditable DOM outside the model (raw text over the re-rendered
-    // content, onChange stalled). See #321.
+  }
+  const blockEl = blockElementFor(root, node);
+  if (blockEl) {
+    // A void figure block has no text — its only position is offset 0. (A caret on a
+    // figure descendant ascends to the figure via blockElementFor.)
+    if (blockEl.tagName === 'FIGURE') {
+      return { blockId: blockEl.getAttribute('data-block-id')!, offset: 0 };
+    }
+    return {
+      blockId: blockEl.getAttribute('data-block-id')!,
+      offset: offsetWithinBlock(blockEl, node, offset),
+    };
+  }
+  // Container-level caret: an element inside the editor with no block ancestor —
+  // the root itself or a <ul>/<ol> list wrapper (the only elements renderDoc puts
+  // between root and blocks). This happens when the block the selection lived in
+  // is removed from the DOM — e.g. a controlled external value replacement
+  // (parent setDoc(emptyDoc())) swaps the block elements, and the DOM collapses
+  // the live selection boundary to (container, childIndex). Resolve to the start
+  // of the next block, else the end of the previous one. Returning null here
+  // would make readSelection null, and the beforeinput handler would cede the
+  // keystroke to the browser — which then mutates the contentEditable DOM
+  // outside the model (raw text over the re-rendered content, onChange
+  // stalled). See #321.
+  if (node instanceof HTMLElement && (node === root || root.contains(node))) {
+    const kids = node.childNodes;
     const next = blockWithin(kids[offset], 'first');
     if (next) return { blockId: next.getAttribute('data-block-id')!, offset: 0 };
     const prev = blockWithin(kids[offset - 1], 'last');
     if (prev) {
+      // A figure here is unreachable (root-adjacent figures are caught by the
+      // figureBlock check above; figures never nest in list wrappers), so the
+      // end offset is always the block's widget-corrected full model length.
       return {
         blockId: prev.getAttribute('data-block-id')!,
-        // A void figure's only position is 0; a text block's end is its full
-        // model length (widget-corrected by offsetWithinBlock).
-        offset:
-          prev.tagName === 'FIGURE' ? 0 : offsetWithinBlock(prev, prev, prev.childNodes.length),
+        offset: offsetWithinBlock(prev, prev, prev.childNodes.length),
       };
     }
   }
-  const blockEl = blockElementFor(root, node);
-  if (!blockEl) return null;
-  // A void figure block has no text — its only position is offset 0. (A caret on a
-  // figure descendant ascends to the figure via blockElementFor.)
-  if (blockEl.tagName === 'FIGURE') {
-    return { blockId: blockEl.getAttribute('data-block-id')!, offset: 0 };
-  }
-  return {
-    blockId: blockEl.getAttribute('data-block-id')!,
-    offset: offsetWithinBlock(blockEl, node, offset),
-  };
+  return null;
 }
 
 /**

@@ -286,6 +286,43 @@ describe('void-block selection', () => {
   });
 });
 
+// A caret can land ON a block container — the editor root or a <ul>/<ol> list
+// wrapper — when the block it lived in is removed (e.g. a controlled external
+// value replacement; the DOM collapses the boundary to (container, childIndex)).
+// It must resolve to an adjacent block, not null (#321).
+describe('container-level carets (root + list wrappers) — #321', () => {
+  it('root caret before a block resolves to its start (next branch)', () => {
+    const r = makeRoot('<p data-block-id="a">hi</p><p data-block-id="b">world</p>');
+    expect(pointFromDom(r, r, 1)).toEqual({ blockId: 'b', offset: 0 });
+  });
+  it('root caret past the last block resolves to the END of the last block (prev branch)', () => {
+    const r = makeRoot('<p data-block-id="a">hi</p><p data-block-id="b">world</p>');
+    expect(pointFromDom(r, r, 2)).toEqual({ blockId: 'b', offset: 5 });
+  });
+  it('prev-branch end offset is widget-corrected (data-len, not display length)', () => {
+    const r = makeRoot(
+      '<p data-block-id="b1">hi <span data-rich-link data-len="13" contenteditable="false">#1 Task</span></p>',
+    );
+    // model: "hi " (3) + widget (13) = 16, not the 10 display chars.
+    expect(pointFromDom(r, r, 1)).toEqual({ blockId: 'b1', offset: 16 });
+  });
+  it('a caret ON a <ul> wrapper resolves to the adjacent <li> item', () => {
+    const r = makeRoot('<ul><li data-block-id="l1">one</li><li data-block-id="l2">two</li></ul>');
+    const ul = r.querySelector('ul')!;
+    expect(pointFromDom(r, ul, 1)).toEqual({ blockId: 'l2', offset: 0 }); // next: start
+    expect(pointFromDom(r, ul, 2)).toEqual({ blockId: 'l2', offset: 3 }); // prev: end
+  });
+  it('root caret beside a <ul> wrapper resolves INTO its first/last item', () => {
+    const r = makeRoot('<p data-block-id="a">hi</p><ul><li data-block-id="l1">one</li></ul>');
+    expect(pointFromDom(r, r, 1)).toEqual({ blockId: 'l1', offset: 0 }); // next: into the list
+    expect(pointFromDom(r, r, 2)).toEqual({ blockId: 'l1', offset: 3 }); // prev: list item end
+  });
+  it('an empty root still returns null', () => {
+    const r = makeRoot('');
+    expect(pointFromDom(r, r, 0)).toBeNull();
+  });
+});
+
 describe('selectionRect — degenerate-selection fallback', () => {
   const rect = (top: number, left: number, width: number, height: number): DOMRect =>
     ({

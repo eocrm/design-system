@@ -747,7 +747,16 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           return;
         }
         const range = readSelection(root);
-        if (!range) return;
+        if (!range) {
+          // Unmappable selection: never cede an editing input to the browser —
+          // an un-prevented default insert/delete mutates the contentEditable
+          // DOM outside the model (permanent DOM/model divergence, #321). A
+          // dropped keystroke is recoverable; a future resolver bug surfaces
+          // as dropped keystrokes instead of DOM corruption — acceptable.
+          if (e.inputType.startsWith('insert') || e.inputType.startsWith('delete'))
+            e.preventDefault();
+          return;
+        }
         // Markdown block input rules: a marker + space at the start of a paragraph
         // converts the block (e.g. "# " → heading, "- " → bullet). The space is
         // consumed; one commit → one undo step (⌘Z reverts the conversion).
