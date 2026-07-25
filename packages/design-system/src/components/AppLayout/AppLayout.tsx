@@ -24,6 +24,12 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
    * Prefer this over wrapping the sidebar slot in `Sticky` — the rail's
    * `height: 100%` + flex spacer need a DEFINITE viewport height to pin the
    * footer, which `Sticky`'s max-height capping can't provide.
+   *
+   * `100dvh` is always relative to the real browser viewport, never to a
+   * nested scroll container — so this only pins correctly when AppLayout is
+   * the actual outermost, page-scroll shell (its documented top-level use).
+   * Nest it inside another scrollable region and the sidebar will size to
+   * the whole window, not that region, and overflow it.
    */
   sidebarPinned?: boolean;
   /** Main content slot — fills the remaining space below the top bar. */
