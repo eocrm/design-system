@@ -36,6 +36,11 @@ describe('Avatar', () => {
     expect((container.firstChild as HTMLElement).className).toMatch(/lg/);
   });
 
+  it('applies the xl size class', () => {
+    const { container } = render(<Avatar name="A" size="xl" />);
+    expect((container.firstChild as HTMLElement).className).toMatch(/xl/);
+  });
+
   it('produces the same color for the same name (deterministic)', () => {
     const { container, rerender } = render(<Avatar name="Alex Rivera" />);
     const first = (container.firstChild as HTMLElement).style.getPropertyValue('--avatar-bg');

@@ -10,9 +10,13 @@
   --avatar-size-sm: var(--size-sm);
   --avatar-size-md: var(--size-md);
   --avatar-size-lg: var(--size-lg);
+  --avatar-size-xl: var(--size-xl);
   --avatar-font-size-sm: var(--font-size-xs);
   --avatar-font-size-md: var(--font-size-sm);
   --avatar-font-size-lg: var(--font-size-md);
+
+  // Jumps two steps on the font scale (2xl, not lg/xl) — continues the decreasing size:font ratio (0.458 → 0.375 → 0.35 → 0.30) at 80px.
+  --avatar-font-size-xl: var(--font-size-2xl);
 
   // Presence dot — ring + per-status fill
   --avatar-presence-radius: var(--radius-full);
@@ -21,6 +25,7 @@
   --avatar-presence-size-sm: var(--size-presence-sm);
   --avatar-presence-size-md: var(--size-presence-md);
   --avatar-presence-size-lg: var(--size-presence-lg);
+  --avatar-presence-size-xl: var(--size-presence-xl);
   --avatar-presence-bg-online: var(--color-presence-online);
   --avatar-presence-bg-busy: var(--color-presence-busy);
   --avatar-presence-bg-away: var(--color-presence-away);
@@ -34,6 +39,7 @@
   --avatar-group-overlap-sm: var(--avatar-overlap-sm);
   --avatar-group-overlap-md: var(--avatar-overlap-md);
   --avatar-group-overlap-lg: var(--avatar-overlap-lg);
+  --avatar-group-overlap-xl: var(--avatar-overlap-xl);
 
   // AvatarGroup — +N overflow chip
   --avatar-overflow-gap: var(--space-1);
@@ -52,7 +58,9 @@
   --avatar-overflow-size-sm: var(--size-sm);
   --avatar-overflow-size-md: var(--size-md);
   --avatar-overflow-size-lg: var(--size-lg);
+  --avatar-overflow-size-xl: var(--size-xl);
   --avatar-overflow-font-size-sm: var(--font-size-xs);
   --avatar-overflow-font-size-md: var(--font-size-sm);
   --avatar-overflow-font-size-lg: var(--font-size-md);
+  --avatar-overflow-font-size-xl: var(--font-size-2xl);
 }

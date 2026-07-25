@@ -40,13 +40,18 @@
   margin-left: var(--avatar-group-overlap-lg);
 }
 
+.groupSize-xl > .item:not(:first-child, .overflowItem) {
+  margin-left: var(--avatar-group-overlap-xl);
+}
+
 // The +N item gets a small positive gap from its preceding sibling instead
 // of the negative overlap used between avatars. It's metadata, not a face,
 // so it should not pretend to be another stacked avatar — plus longer
 // counts (+33, +99) deserve breathing room.
 .groupSize-sm > .overflowItem,
 .groupSize-md > .overflowItem,
-.groupSize-lg > .overflowItem {
+.groupSize-lg > .overflowItem,
+.groupSize-xl > .overflowItem {
   margin-left: var(--avatar-overflow-gap);
 }
 // stylelint-enable property-disallowed-list
@@ -107,4 +112,10 @@
   min-width: var(--avatar-overflow-size-lg);
   height: var(--avatar-overflow-size-lg);
   font-size: var(--avatar-overflow-font-size-lg);
+}
+
+.overflowSize-xl {
+  min-width: var(--avatar-overflow-size-xl);
+  height: var(--avatar-overflow-size-xl);
+  font-size: var(--avatar-overflow-font-size-xl);
 }

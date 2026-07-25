@@ -5,7 +5,7 @@ import { useAvatarGroup } from './AvatarGroupContext';
 import styles from './Avatar.module.scss';
 
 /** Diameter. Matches the shared `--size-*` scale so a Button next to an Avatar lines up. */
-export type AvatarSize = 'sm' | 'md' | 'lg';
+export type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 
 /** Presence dot rendered in the bottom-right corner. Omit to render no dot. */
 export type AvatarStatus = 'online' | 'busy' | 'away' | 'offline';
@@ -29,6 +29,7 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
    * - `sm` (24px) — table rows, dense lists.
    * - `md` (32px, default) — most uses.
    * - `lg` (40px) — detail-page headers.
+   * - `xl` (80px) — member-card popovers / profile headers.
    *
    * Inside `<AvatarGroup>`, the group's `size` overrides this.
    */
@@ -56,6 +57,7 @@ const sizeClass: Record<AvatarSize, string> = {
   sm: styles.sm,
   md: styles.md,
   lg: styles.lg,
+  xl: styles.xl,
 };
 
 function initials(name: string): string {

@@ -1680,7 +1680,7 @@ import { Divider } from '@eocrm/design-system';
 
 - `name` (required) — alt/aria-label, initials source, and color seed. Same name → same color, always.
 - `src` — image URL. Empty/whitespace = no image. Falls back to initials on load failure.
-- `size`: `sm` (24) / `md` (32, default) / `lg` (40)
+- `size`: `sm` (24) / `md` (32, default) / `lg` (40) / `xl` (80, member-card popovers / profile headers)
 - `status?` — presence dot in the bottom-right corner. `'online' | 'busy' | 'away' | 'offline'`. Omit to render no dot.
 - `tooltip?` — wraps the avatar in `<Tooltip>` with `content={name}`. Defaults to `false` standalone (back-compat). Inside `<AvatarGroup>`, the group's `tooltip` becomes the default (which itself defaults to `true`); explicit per-child still wins.
 - Inside `<AvatarGroup>`, the group's `size` and `tooltip` become defaults — explicit per-child props still win. The avatar also picks up a `--color-bg` ring so stacked siblings read as distinct.
@@ -1697,7 +1697,7 @@ import { Divider } from '@eocrm/design-system';
 ```
 
 - Horizontal row of overlapping `<Avatar>`s with a `+N` overflow control when child count exceeds `max` (default `4`).
-- `size` is the default for child avatars (per-child explicit `size` still wins). Three sizes: `'sm' | 'md' | 'lg'`. For a strictly uniform group, just don't set per-child sizes.
+- `size` is the default for child avatars (per-child explicit `size` still wins). Four sizes: `'sm' | 'md' | 'lg' | 'xl'` (`xl` = member-card popovers / profile headers). For a strictly uniform group, just don't set per-child sizes.
 - `tooltip` defaults to `true` (group context flips the per-Avatar default — standalone `<Avatar tooltip>` is opt-in, but inside a group each visible face shows its name on hover by default). Set `tooltip={false}` at the group level to suppress all tooltips, or per-child to opt out one.
 - `onOverflowClick(event, hiddenCount)` — the library does NOT render its own popover. The app decides what happens (open a `<Popover>` listing all members, navigate to a page, open a modal). When omitted, `+N` renders as a non-interactive `<span>` (still labelled for AT).
 - The group wrapper is `role="list"` and each visible avatar is wrapped in a `role="listitem"` div; the +N (button or span) is the last list item.
