@@ -63,6 +63,16 @@ describe('AvatarGroup', () => {
     expect(avatar?.className).toMatch(/lg/);
   });
 
+  it('propagates xl size to descendant Avatars via context', () => {
+    const { container } = render(
+      <AvatarGroup size="xl">
+        <Avatar name="A" />
+      </AvatarGroup>,
+    );
+    const avatar = container.querySelector('[role="img"]');
+    expect(avatar?.className).toMatch(/xl/);
+  });
+
   it('forwards ref to the outer div', () => {
     const ref = { current: null as HTMLDivElement | null };
     render(

@@ -54,6 +54,12 @@
   font-size: var(--avatar-font-size-lg);
 }
 
+.xl {
+  width: var(--avatar-size-xl);
+  height: var(--avatar-size-xl);
+  font-size: var(--avatar-font-size-xl);
+}
+
 // Presence dot (Avatar status). Anchored to the bottom-right via the
 // parent's position:relative. Carries a 2px ring of --color-bg so the dot
 // stays visible on tinted ancestors.
@@ -96,6 +102,11 @@
 .lg .presence {
   width: var(--avatar-presence-size-lg);
   height: var(--avatar-presence-size-lg);
+}
+
+.xl .presence {
+  width: var(--avatar-presence-size-xl);
+  height: var(--avatar-presence-size-xl);
 }
 
 // When inside an AvatarGroup, each avatar picks up a --color-bg ring so

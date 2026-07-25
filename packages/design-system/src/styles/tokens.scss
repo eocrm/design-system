@@ -180,6 +180,7 @@
   --size-sm: 24px;
   --size-md: 32px;
   --size-lg: 40px;
+  --size-xl: 80px;
 
   // Inline elements (badges, count chips)
   --size-badge: 20px;
@@ -323,12 +324,17 @@
   --size-presence-md: 10px;
   --size-presence-lg: 12px;
 
+  // xl is deliberately capped below the ~0.3 ratio (which would give 24px):
+  // at 80px the dot is a status indicator, not a feature — 24px would dominate the corner.
+  --size-presence-xl: 16px;
+
   // Avatar overlap when stacked in a group. Each child after the first
   // slides left by this amount (negative margin-left). 30% of diameter
   // looks like Slack at every supported size.
   --avatar-overlap-sm: calc(var(--size-sm) * -0.3);
   --avatar-overlap-md: calc(var(--size-md) * -0.3);
   --avatar-overlap-lg: calc(var(--size-lg) * -0.3);
+  --avatar-overlap-xl: calc(var(--size-xl) * -0.3);
 
   // States
   --opacity-disabled: 0.5;

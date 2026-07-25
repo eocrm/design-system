@@ -21,6 +21,10 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
    * still override via its own `size` prop (idiomatic React composition —
    * explicit prop wins). For a strictly uniform group, don't set `size` on
    * individual children.
+   * - `sm` (24px) — table rows, dense lists.
+   * - `md` (32px, default) — most uses.
+   * - `lg` (40px) — detail-page headers.
+   * - `xl` (80px) — member-card popovers / profile headers.
    */
   size?: AvatarSize;
 
