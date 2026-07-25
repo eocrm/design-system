@@ -117,6 +117,14 @@ export type { BadgeProps, BadgeTone, BadgeSize, BadgeDot, BadgeVariant } from '.
 export { Dot } from './components/Dot';
 export type { DotProps } from './components/Dot';
 
+export { EntityChip } from './components/EntityChip';
+export type {
+  EntityChipProps,
+  EntityChipAs,
+  EntityChipStatus,
+  StatusCategory,
+} from './components/EntityChip';
+
 export { StatusMenu } from './components/StatusMenu';
 export type {
   StatusMenuProps,

@@ -1,0 +1,64 @@
+@use '../../styles/mixins' as *;
+@use './EntityChip.tokens';
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--entity-chip-gap);
+  padding: var(--entity-chip-padding-y) var(--entity-chip-padding-x);
+  border: none;
+  border-radius: var(--entity-chip-radius);
+  background: var(--entity-chip-bg);
+  color: var(--entity-chip-fg);
+  font: inherit;
+  font-size: var(--entity-chip-font-size);
+  text-decoration: none;
+  vertical-align: baseline;
+
+  // <a>/<button> renders are the interactive variants — everything else
+  // (a plain <span> or a blocked/unavailable chip) has no hover/focus chrome.
+  &:is(a, button) {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--entity-chip-bg-hover);
+      color: var(--entity-chip-fg-hover);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.prefix {
+  color: var(--entity-chip-prefix-fg);
+}
+
+.ellipsis {
+  color: var(--entity-chip-prefix-fg);
+}
+
+.status {
+  color: var(--entity-chip-status-fg);
+}
+
+.dot {
+  color: var(--entity-chip-prefix-fg);
+}
+
+// Specificity 0,2,0 (.unavailable .status) beats the plain .status rule
+// (0,1,0) so the unavailable muted color wins over any resolved status color.
+.unavailable {
+  color: var(--entity-chip-unavailable-fg);
+
+  .status,
+  .dot {
+    color: var(--entity-chip-unavailable-fg);
+  }
+}

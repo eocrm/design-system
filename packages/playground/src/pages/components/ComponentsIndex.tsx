@@ -371,6 +371,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Badge'],
   },
   {
+    to: '/components/entity-chip',
+    name: 'EntityChip',
+    description:
+      'Inline entity-link chip — icon + muted prefix + name + colored status, safe inside a sentence. Polymorphic: <a>, <span>, <button>, or a custom `as`.',
+    preview: SCHEMATICS['EntityChip'],
+  },
+  {
     to: '/components/dot',
     name: 'Dot',
     description: 'Bare palette/tone colored circle for color-coding affordances.',

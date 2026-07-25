@@ -1,0 +1,16 @@
+// EntityChip.tokens.scss — Component-scoped tokens for <EntityChip>. Subtle
+// neutral chip chrome (mirrors Badge's neutral fill primitive) + a muted
+// prefix run + an unavailable-state override.
+:root {
+  --entity-chip-bg: var(--color-bg-muted);
+  --entity-chip-bg-hover: var(--color-bg-sunken);
+  --entity-chip-fg: var(--color-fg);
+  --entity-chip-fg-hover: var(--color-accent-hover);
+  --entity-chip-prefix-fg: var(--color-fg-muted);
+  --entity-chip-radius: var(--radius-sm);
+  --entity-chip-gap: var(--space-1);
+  --entity-chip-padding-y: var(--space-05);
+  --entity-chip-padding-x: var(--space-2);
+  --entity-chip-font-size: var(--font-size-sm);
+  --entity-chip-unavailable-fg: var(--color-fg-muted);
+}

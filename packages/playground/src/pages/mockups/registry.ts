@@ -30,6 +30,7 @@ export type ComponentName =
   | 'DropdownMenu'
   | 'EmojiPicker'
   | 'EmptyState'
+  | 'EntityChip'
   | 'ErrorState'
   | 'Field'
   | 'FileUpload'

@@ -3,10 +3,11 @@ import clsx from 'clsx';
 import { DropdownMenu } from '../DropdownMenu';
 import { paletteTokens, type PaletteColor } from '../../palette';
 import { useTranslation } from '../../i18n/useTranslation';
+import { resolveStatusColor, type StatusCategory } from '../_internal/statusColor';
 import styles from './StatusMenu.module.scss';
 
 /** Workflow status category — maps to a default palette color. */
-export type StatusMenuCategory = 'to_do' | 'in_progress' | 'open' | 'done' | 'won' | 'lost';
+export type StatusMenuCategory = StatusCategory;
 
 /** One status: current value or a transition target. */
 export interface StatusMenuStatus {
@@ -37,23 +38,9 @@ export interface StatusMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSe
   busy?: boolean;
 }
 
-const CATEGORY_COLOR: Record<StatusMenuCategory, PaletteColor> = {
-  to_do: 'slate',
-  in_progress: 'blue',
-  open: 'violet',
-  done: 'green',
-  won: 'green',
-  lost: 'red',
-};
-
-/** `color` wins; otherwise fall back to the category's default; otherwise slate. */
-function resolveColor(status: StatusMenuStatus): PaletteColor {
-  return status.color ?? (status.category && CATEGORY_COLOR[status.category]) ?? 'slate';
-}
-
 /** Injectable custom-property pair for a status's resolved color. */
 function statusColorStyle(status: StatusMenuStatus): CSSProperties {
-  const { bg, fg } = paletteTokens(resolveColor(status));
+  const { bg, fg } = paletteTokens(resolveStatusColor(status));
   return { '--status-menu-bg': bg, '--status-menu-fg': fg } as CSSProperties;
 }
 
