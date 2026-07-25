@@ -196,7 +196,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - `align`: `left | center | right` (default `left`).
 - `truncate`: single-line ellipsis. `lineClamp: number`: multi-line ellipsis. `lineClamp` overrides `truncate`.
 - **Use `<Text>` for every non-heading run.** No more `<span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-muted)' }}>`.
-- **`size="inherit"`** — for a muted/toned inline run INSIDE a heading (e.g. `<Text as="span" size="inherit" tone="muted">ENG-5</Text>` before a `<Title order={1}>` task name) that must keep the heading's size instead of shrinking to `md`. Font-size AND line-height both inherit from the parent.
+- **`size="inherit"`** — for a muted/toned inline run INSIDE a heading (e.g. `<Text as="span" size="inherit" tone="muted">ENG-5</Text>` at the start of a `<Title order={1}>` task name) that must keep the heading's size instead of shrinking to `md`. Font-size AND line-height both inherit from the parent.
 
 ### `<Code>` — inline `<code>` chip
 

@@ -46,7 +46,9 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
    * - `inherit` — no fixed size; font-size AND line-height inherit from the
    *   parent. For inline runs inside a heading (`as="span"` inside a
    *   `<Title>` / `<PageHeader.Title>`) that must keep the heading's size —
-   *   e.g. a muted task-key prefix. Tone / weight still apply.
+   *   e.g. a muted task-key prefix. Tone / weight still apply — font-weight
+   *   stays Text's own (default `regular`), it does NOT inherit; pass
+   *   `weight` to match the heading if needed.
    */
   size?: TextSize;
   /**
