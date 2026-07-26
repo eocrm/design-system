@@ -99,8 +99,11 @@ const NARROW_VALUE: DashboardCanvasValue = {
 function renderWidget(id: string | number) {
   const widget = WIDGETS[String(id)];
   if (!widget) return null;
+  // height: '100%' fills the grid cell — the "size the content to the cell"
+  // pattern from DashboardCanvas's renderItem JSDoc (#344): the widget's own
+  // edges ARE the cell edges, so resize/drag reads WYSIWYG against the dots.
   return (
-    <Card>
+    <Card style={{ height: '100%' }}>
       <Stack gap="xs">
         <Text size="sm" tone="muted">
           {widget.title}
@@ -164,8 +167,10 @@ const RECENT_EVENTS = [
 
 function renderWidget(id) {
   const w = WIDGETS[id];
+  // height: '100%' fills the grid cell (renderItem JSDoc's "size the content
+  // to the cell" pattern) — widget edges == cell edges, resizing is WYSIWYG.
   return (
-    <Card>
+    <Card style={{ height: '100%' }}>
       <Stack gap="xs">
         <Text size="sm" tone="muted">{w.title}</Text>
         <Title order={3} size="md">{w.metric}</Title>
