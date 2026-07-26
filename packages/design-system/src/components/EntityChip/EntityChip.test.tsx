@@ -22,14 +22,10 @@ function StubRouterLink({
   );
 }
 
-// The chip renders an invisible aria-hidden bold twin of the label (reserves
-// the bold-on-hover width) — visible-text queries must skip it.
-const visible = { ignore: '[aria-hidden="true"], script, style' };
-
 describe('<EntityChip>', () => {
   it('renders the label', () => {
     render(<EntityChip label="ENG-5 Fix login bug" />);
-    expect(screen.getByText('ENG-5 Fix login bug', visible)).toBeInTheDocument();
+    expect(screen.getByText('ENG-5 Fix login bug')).toBeInTheDocument();
   });
 
   it('renders the icon aria-hidden', () => {
@@ -41,6 +37,16 @@ describe('<EntityChip>', () => {
   it('renders the prefix with the muted class', () => {
     render(<EntityChip label="Fix login bug" prefix="ENG-5" />);
     expect(screen.getByText('ENG-5').className).toMatch(/prefix/);
+  });
+
+  it('status dot is an empty aria-hidden sibling of the status span (not a glyph)', () => {
+    const { container } = render(
+      <EntityChip label="Task" status={{ label: 'Done', category: 'done' }} />,
+    );
+    const dot = container.querySelector('[class*="dot"]') as HTMLElement;
+    expect(dot).toHaveAttribute('aria-hidden', 'true');
+    expect(dot.textContent).toBe('');
+    expect(dot.parentElement).toBe(container.firstElementChild); // direct flex item of the chip root
   });
 
   it('resolves the status color from category', () => {
@@ -74,10 +80,7 @@ describe('<EntityChip>', () => {
 
   it('renders as <a> with href when href is set', () => {
     render(<EntityChip label="Contact" href="/contacts/1" />);
-    expect(screen.getByText('Contact', visible).closest('a')).toHaveAttribute(
-      'href',
-      '/contacts/1',
-    );
+    expect(screen.getByText('Contact').closest('a')).toHaveAttribute('href', '/contacts/1');
   });
 
   it('renders as <span> by default when no href is set', () => {
@@ -92,10 +95,7 @@ describe('<EntityChip>', () => {
         {/* label prop still drives content */}
       </EntityChip>,
     );
-    expect(screen.getByText('Contacts', visible).closest('a')).toHaveAttribute(
-      'data-to',
-      '/contacts',
-    );
+    expect(screen.getByText('Contacts').closest('a')).toHaveAttribute('data-to', '/contacts');
   });
 
   it('as="button" gets type="button"', () => {
@@ -122,7 +122,7 @@ describe('<EntityChip>', () => {
 
   it('unavailable + custom `as` keeps the real component and its props', () => {
     render(<EntityChip label="Task" as={StubRouterLink} to="/tasks/5" unavailable />);
-    expect(screen.getByText('Task', visible).closest('a')).toHaveAttribute('data-to', '/tasks/5');
+    expect(screen.getByText('Task').closest('a')).toHaveAttribute('data-to', '/tasks/5');
   });
 
   it('bare-span loading stays a span with aria-busy', () => {
@@ -141,10 +141,10 @@ describe('<EntityChip>', () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     render(<EntityChip label="Pick" onClick={onClick} unavailable />);
-    const chip = screen.getByText('Pick', visible).closest('span[aria-disabled]');
+    const chip = screen.getByText('Pick').closest('span[aria-disabled]');
     expect(chip).toHaveAttribute('aria-disabled', 'true');
     expect(chip?.className).toMatch(/unavailable/);
-    await user.click(screen.getByText('Pick', visible));
+    await user.click(screen.getByText('Pick'));
     expect(onClick).not.toHaveBeenCalled();
   });
 

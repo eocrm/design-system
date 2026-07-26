@@ -37,10 +37,12 @@
       filter: brightness(0.96);
     }
 
-    // Hover affordance: the entity name bolds (never an underline). Scoped to
+    // Hover affordance: the entity name thickens via text-stroke — a fake
+    // bold that doesn't change glyph advance widths, so nothing reflows (real
+    // bold shifted the rest of the sentence). Never an underline. Scoped to
     // the label so the muted prefix/status runs keep their weight.
     &:hover .label {
-      font-weight: var(--entity-chip-font-weight-hover);
+      -webkit-text-stroke-width: var(--entity-chip-hover-stroke);
     }
 
     &:focus-visible {
@@ -60,21 +62,6 @@
   color: var(--entity-chip-prefix-fg);
 }
 
-// Column-stacks the label over its invisible bold twin so the chip is always
-// as wide as the BOLD label — hover-bolding then causes zero layout shift.
-.label {
-  display: inline-flex;
-  flex-direction: column;
-}
-
-.labelGhost {
-  overflow: hidden;
-  height: 0;
-  font-weight: var(--entity-chip-font-weight-hover);
-  visibility: hidden;
-  user-select: none; // keep the twin out of rich-HTML copy/paste
-}
-
 // Keeps a loading chip's accessible name (the label) without showing it.
 .hiddenLabel {
   @include visually-hidden;
@@ -89,9 +76,14 @@
 }
 
 .dot {
-  padding-right: var(--entity-chip-dot-gap);
+  flex-shrink: 0;
+  width: var(--entity-chip-dot-size);
+  height: var(--entity-chip-dot-size);
+  border-radius: var(--radius-full);
+  background: currentcolor;
   color: var(--entity-chip-prefix-fg);
-  font-size: var(--entity-chip-dot-size);
+  // stylelint-disable-next-line property-disallowed-list -- internal child of the chip's OWN flex row, centering the circle on the line while the chip itself aligns on text baseline
+  align-self: center;
 }
 
 // Specificity 0,2,0 (.unavailable .status) beats the plain .status rule

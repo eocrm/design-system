@@ -20,12 +20,15 @@
   // padded box hugging the glyph band instead of hanging below the baseline.
   --entity-chip-line-height: var(--line-height-none);
 
-  // Hover affordance is bolded text (never an underline).
-  --entity-chip-font-weight-hover: var(--font-weight-bold);
+  // Hover affordance: the label thickens via text-stroke (fake bold — glyph
+  // advance widths don't change, so the chip and the surrounding sentence
+  // never reflow on hover). Never an underline.
+  --entity-chip-hover-stroke: 0.04em;
   --entity-chip-unavailable-fg: var(--color-fg-muted);
 
-  // Status separator dot — bigger than body text + its own right gap so it
-  // reads as a deliberate divider, not a stray period.
-  --entity-chip-dot-size: var(--font-size-lg);
-  --entity-chip-dot-gap: var(--space-2);
+  // Status separator dot — DIAMETER of the solid circle rendered between the
+  // name and the status (its own flex item, so the chip's gap spaces it
+  // symmetrically). A fixed size on purpose: it must not scale with the
+  // inherited font and inflate the line box.
+  --entity-chip-dot-size: var(--space-1);
 }

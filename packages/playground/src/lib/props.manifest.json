@@ -1572,7 +1572,7 @@
           "type": "EntityChipStatus",
           "required": false,
           "default": "",
-          "description": "Inline workflow status, shown as `· <label>` in the status's own color."
+          "description": "Inline workflow status, separated by a small dot and rendered in the status's own color."
         },
         {
           "name": "href",

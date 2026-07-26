@@ -36,7 +36,7 @@ interface EntityChipOwnProps {
   label?: ReactNode;
   /** Muted leading run before the name (e.g. task key `ENG-5`). */
   prefix?: ReactNode;
-  /** Inline workflow status, shown as `· <label>` in the status's own color. */
+  /** Inline workflow status, separated by a small dot and rendered in the status's own color. */
   status?: EntityChipStatus;
   /** Renders `as="a"` with this href when `as` is omitted. */
   href?: string;
@@ -194,21 +194,18 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       ) : (
         <>
           {prefix && <span className={styles.prefix}>{prefix}</span>}
-          {/* The hidden bold twin reserves the hover-bold width up front, so
-              bolding the label on hover can't shift the surrounding text. */}
-          <span className={styles.label}>
-            {label}
-            <span className={styles.labelGhost} aria-hidden="true">
-              {label}
-            </span>
-          </span>
+          {/* Wrapper scopes the hover fake-bold to the entity name only. */}
+          <span className={styles.label}>{label}</span>
           {status && (
-            <span className={styles.status} style={statusColorStyle(status)}>
-              <span className={styles.dot} aria-hidden="true">
-                ·
+            <>
+              {/* Separator dot is its own flex item so the chip's `gap` spaces
+                  it symmetrically between name and status. A solid circle, not
+                  a font glyph — exact size, no line-box inflation. */}
+              <span className={styles.dot} aria-hidden="true" />
+              <span className={styles.status} style={statusColorStyle(status)}>
+                {status.label}
               </span>
-              {status.label}
-            </span>
+            </>
           )}
         </>
       )}
