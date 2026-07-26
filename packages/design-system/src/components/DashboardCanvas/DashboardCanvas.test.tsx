@@ -112,6 +112,37 @@ describe('DashboardCanvas rendering', () => {
     render(<DashboardCanvas value={baseValue()} renderItem={renderItem} className="custom" />);
     expect(screen.getByRole('group', { name: 'Dashboard canvas' }).className).toContain('custom');
   });
+
+  it('stamps --dc-cols 24 on the root by default', () => {
+    render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    expect(root.style.getPropertyValue('--dc-cols')).toBe('24');
+  });
+
+  it('stamps the columns prop as --dc-cols and merges a consumer style', () => {
+    render(
+      <DashboardCanvas
+        value={baseValue()}
+        renderItem={renderItem}
+        columns={12}
+        style={{ outline: 'none' }}
+      />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    expect(root.style.getPropertyValue('--dc-cols')).toBe('12');
+    expect(root.style.outline).toBe('none');
+  });
+
+  it('stamps the stackBelow breakpoint class: md by default, the given one otherwise', () => {
+    const { rerender } = render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    expect(root.className).toMatch(/stackMd/);
+    rerender(<DashboardCanvas value={baseValue()} renderItem={renderItem} stackBelow="sm" />);
+    expect(root.className).toMatch(/stackSm/);
+    expect(root.className).not.toMatch(/stackMd/);
+    rerender(<DashboardCanvas value={baseValue()} renderItem={renderItem} stackBelow="lg" />);
+    expect(root.className).toMatch(/stackLg/);
+  });
 });
 
 describe('DashboardCanvas section collapse', () => {
@@ -264,15 +295,41 @@ describe('DashboardCanvas pointer gestures', () => {
     restoreRects();
   });
 
+  // columns={12}: this suite's px math predates #350 — COL_PX=40 is the
+  // 12-column cell width of the stubbed 480px container.
   function renderCanvas(props: Partial<Parameters<typeof DashboardCanvas>[0]> = {}) {
     const onChange = vi.fn();
     const value = baseValue();
     const utils = render(
-      <DashboardCanvas value={value} onChange={onChange} renderItem={renderItem} {...props} />,
+      <DashboardCanvas
+        value={value}
+        onChange={onChange}
+        renderItem={renderItem}
+        columns={12}
+        {...props}
+      />,
     );
     const root = screen.getByRole('group', { name: 'Dashboard canvas' });
     return { ...utils, onChange, value, root };
   }
+
+  it('at the default 24 columns a drag snaps per 24th-width cell', () => {
+    const { container, onChange, value, root } = renderCanvas({ columns: 24 });
+    // 480px container / 24 cols → 20px cells. Grab 'b' at (10,10); origin
+    // (85,50) → cell (4,1) — twice the column index the 12-col math yields.
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(
+      applyMove(value, { kind: 'top' }, { kind: 'top' }, 'b', 4, 1),
+    );
+  });
 
   it('a snapped move commits onChange once with the engine applyMove result', () => {
     const { container, onChange, value, root } = renderCanvas();
@@ -519,7 +576,7 @@ describe('DashboardCanvas pointer gestures', () => {
     const onChange = vi.fn();
     const value = baseValue();
     const { container, rerender } = render(
-      <DashboardCanvas value={value} onChange={onChange} renderItem={renderItem} />,
+      <DashboardCanvas value={value} onChange={onChange} renderItem={renderItem} columns={12} />,
     );
     const root = screen.getByRole('group', { name: 'Dashboard canvas' });
     fireEvent.pointerDown(itemEl(container, 'b'), {
@@ -533,7 +590,9 @@ describe('DashboardCanvas pointer gestures', () => {
       ...value,
       items: [...value.items, { id: 'e', x: 6, y: 0, w: 2, h: 1 }],
     };
-    rerender(<DashboardCanvas value={updated} onChange={onChange} renderItem={renderItem} />);
+    rerender(
+      <DashboardCanvas value={updated} onChange={onChange} renderItem={renderItem} columns={12} />,
+    );
     fireEvent.pointerUp(root, { clientX: 175, clientY: 15, pointerId: 1 });
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0][0]).toEqual(
@@ -820,6 +879,50 @@ describe('DashboardCanvas keyboard editing', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('a picked item’s requested x clamps at the columns bound (#350)', () => {
+    const value: DashboardCanvasValue = {
+      items: [{ id: 'e', x: 10, y: 0, w: 2, h: 1 }],
+      sections: [],
+    };
+    const { container } = render(
+      <DashboardCanvas value={value} onChange={vi.fn()} renderItem={renderItem} columns={12} />,
+    );
+    const e = itemEl(container, 'e');
+    fireEvent.keyDown(e, { key: 'Enter' });
+    fireEvent.keyDown(e, { key: 'ArrowRight' });
+    // x + w is already at 12 — the request clamps back to column 11 (1-based).
+    expect(itemEl(container, 'e').style.getPropertyValue('--dc-col')).toBe('11 / span 2');
+  });
+
+  it('the same item keeps moving right under the default 24 columns (#350)', () => {
+    const value: DashboardCanvasValue = {
+      items: [{ id: 'e', x: 10, y: 0, w: 2, h: 1 }],
+      sections: [],
+    };
+    const { container } = render(
+      <DashboardCanvas value={value} onChange={vi.fn()} renderItem={renderItem} />,
+    );
+    const e = itemEl(container, 'e');
+    fireEvent.keyDown(e, { key: 'Enter' });
+    fireEvent.keyDown(e, { key: 'ArrowRight' });
+    expect(itemEl(container, 'e').style.getPropertyValue('--dc-col')).toBe('12 / span 2');
+  });
+
+  it('a keyboard resize clamps w to the columns remaining right of x (#350)', () => {
+    const value: DashboardCanvasValue = {
+      items: [{ id: 'e', x: 10, y: 0, w: 2, h: 1 }],
+      sections: [],
+    };
+    const onChange = vi.fn();
+    const { container } = render(
+      <DashboardCanvas value={value} onChange={onChange} renderItem={renderItem} columns={12} />,
+    );
+    fireEvent.keyDown(itemEl(container, 'e'), { key: 'ArrowRight', shiftKey: true });
+    // Clamped back to the current 2 columns — no commit, limit announced.
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent('Resized to 2 by 1');
+  });
+
   it('readOnly items are not keyboard-editable, but collapse toggles keep working', async () => {
     const user = userEvent.setup();
     const { container, onChange } = renderCanvas({ readOnly: true });
@@ -984,5 +1087,39 @@ describe('DashboardCanvas below-md editing gate', () => {
     fireWidth(observers, root, 800);
     expect(root).not.toHaveAttribute('data-narrow');
     expect(container.querySelector('[data-dc-resize]')).not.toBeNull();
+  });
+
+  it('stackBelow="lg" raises the gate to 768px inclusive (#350)', () => {
+    const observers = stubResizeObserver();
+    render(<DashboardCanvas value={baseValue()} renderItem={renderItem} stackBelow="lg" />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireWidth(observers, root, 700); // wide under md, narrow under lg
+    expect(root).toHaveAttribute('data-narrow');
+    fireWidth(observers, root, 768);
+    expect(root).toHaveAttribute('data-narrow');
+    fireWidth(observers, root, 769);
+    expect(root).not.toHaveAttribute('data-narrow');
+  });
+
+  it('stackBelow="sm" lowers the gate to 480px inclusive (#350)', () => {
+    const observers = stubResizeObserver();
+    render(<DashboardCanvas value={baseValue()} renderItem={renderItem} stackBelow="sm" />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireWidth(observers, root, 500); // narrow under the default md, wide under sm
+    expect(root).not.toHaveAttribute('data-narrow');
+    fireWidth(observers, root, 480);
+    expect(root).toHaveAttribute('data-narrow');
+  });
+
+  it('changing stackBelow re-evaluates the gate at the current width (#350)', () => {
+    const observers = stubResizeObserver();
+    const { rerender } = render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireWidth(observers, root, 700);
+    expect(root).not.toHaveAttribute('data-narrow');
+    rerender(<DashboardCanvas value={baseValue()} renderItem={renderItem} stackBelow="lg" />);
+    // The re-created observer re-reports the current width on observe().
+    fireWidth(observers, root, 700);
+    expect(root).toHaveAttribute('data-narrow');
   });
 });

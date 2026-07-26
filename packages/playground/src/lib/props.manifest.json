@@ -996,11 +996,25 @@
           "description": "Per-item size constraints, consulted when clamping resize gestures."
         },
         {
+          "name": "columns",
+          "type": "number",
+          "required": false,
+          "default": "24",
+          "description": "Column count of every container grid (top level and each section's\nsub-grid). All placement/resize bounds clamp against it. Minimum 1;\nfractional or sub-1 values are the consumer's bug, not validated.\n\nLayouts are NOT converted between column counts — a `value` saved at one\n`columns` renders at half width when the count doubles. Schemas written\nfor the pre-#350 12-column grid (e.g. the eocrm layout-v2 spec) either\npass `columns={12}` to match, or migrate their saved placements to 24."
+        },
+        {
+          "name": "stackBelow",
+          "type": "CollapseBreakpoint",
+          "required": false,
+          "default": "md",
+          "description": "Container width at (inclusive) and below which every container grid\nre-templates to one column and pointer + keyboard editing turns off:\n`sm` 480px / `md` 640px / `lg` 768px, measured against the canvas's OWN\nwidth (container query), not the viewport. Section collapse toggles keep\nworking at any width."
+        },
+        {
           "name": "readOnly",
           "type": "boolean",
           "required": false,
           "default": "false",
-          "description": "View-only mode: identical geometry, but no drag/resize wiring, no resize\nhandles, and no keyboard editing — the canvas renders `value` and lets\nsection collapse toggles keep working. The canvas also disables editing\non its own, without this prop, once its own width drops below 640px\n(below-md single-column stack) — `readOnly` is for a consumer-chosen\nview mode, the width gate is automatic."
+          "description": "View-only mode: identical geometry, but no drag/resize wiring, no resize\nhandles, and no keyboard editing — the canvas renders `value` and lets\nsection collapse toggles keep working. The canvas also disables editing\non its own, without this prop, once its own width drops to or below the\n`stackBelow` breakpoint (single-column stack) — `readOnly` is for a\nconsumer-chosen view mode, the width gate is automatic."
         }
       ]
     },
