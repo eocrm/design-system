@@ -390,6 +390,15 @@ describe('applyMove', () => {
     expect(next.sections[0].items).toEqual([p('a', 4, 0, 2, 2)]);
   });
 
+  it('a drop deep into an empty section compacts to y 0 (#353)', () => {
+    const v = value(
+      [p('a', 0, 0, 2, 2)],
+      [{ id: 's1', title: 'One', collapsed: false, items: [] }],
+    );
+    const next = applyMove(v, top, sec('s1'), 'a', 4, 7);
+    expect(next.sections[0].items).toEqual([p('a', 4, 0, 2, 2)]);
+  });
+
   it('returns the value unchanged when the id is not in the source container', () => {
     const v = value([p('a', 0, 0, 2, 2)]);
     expect(applyMove(v, top, top, 'nope', 0, 0)).toBe(v);

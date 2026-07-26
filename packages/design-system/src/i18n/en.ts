@@ -121,6 +121,7 @@ export const en: Messages = {
         : `${title as string} section moved`,
     enteredSection: ({ title }) => `Entered the ${title as string} section`,
     enteredTopLevel: 'Moved to the top level',
+    dropHint: 'Drop widgets here',
   },
   optionsPicker: {
     filter: 'Filter…',

@@ -80,6 +80,15 @@ export function DashboardCanvasSection({
   // draggable, not resizable, not keyboard-editable. `inert` below covers
   // consumer-rendered content too; this covers our own item chrome/wiring.
   const itemGestures: CanvasGestures = collapsed ? { ...gestures, readOnly: true } : gestures;
+  // #353: while a move (pointer drag or keyboard pick) is in flight, an empty
+  // expanded body advertises itself as a drop target. When the drag preview
+  // hovers this section the previewed item mounts here, `items` stops being
+  // empty, and the hint yields to the regular drop-preview cell.
+  const showDropHint =
+    !collapsed &&
+    items.length === 0 &&
+    !gestures.readOnly &&
+    (gestures.movingId != null || gestures.pickedId != null);
 
   return (
     <Accordion.Item
@@ -123,6 +132,7 @@ export function DashboardCanvasSection({
           <div
             className={styles.container}
             data-dc-container={String(id)}
+            data-dc-empty={items.length === 0 ? '' : undefined}
             inert={collapsed}
             ref={(el) => setContainerEl(containerRef, el)}
           >
@@ -136,6 +146,11 @@ export function DashboardCanvasSection({
                 {renderItem(item.id)}
               </DashboardCanvasItem>
             ))}
+            {showDropHint && (
+              <div className={styles.dropHint} data-dc-drop-hint aria-hidden="true">
+                {t('dashboardCanvas.dropHint')}
+              </div>
+            )}
           </div>
         </div>
       </Accordion.Content>

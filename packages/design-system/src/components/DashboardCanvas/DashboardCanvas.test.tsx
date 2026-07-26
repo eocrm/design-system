@@ -1123,3 +1123,132 @@ describe('DashboardCanvas below-md editing gate', () => {
     expect(root).toHaveAttribute('data-narrow');
   });
 });
+
+// --- empty sections: droppable body + drop affordance (#353) ---------------
+describe('DashboardCanvas empty sections (#353)', () => {
+  function emptyValue(): DashboardCanvasValue {
+    return {
+      items: [
+        { id: 'a', x: 0, y: 1, w: 2, h: 1 },
+        { id: 'b', x: 0, y: 0, w: 2, h: 1 },
+      ],
+      sections: [{ id: 's1', title: 'Section One', collapsed: false, items: [] }],
+    };
+  }
+
+  let restoreRects: () => void;
+  beforeEach(() => {
+    restoreRects = stubCanvasRects();
+  });
+  afterEach(() => {
+    restoreRects();
+  });
+
+  function renderCanvas(props: Partial<Parameters<typeof DashboardCanvas>[0]> = {}) {
+    const onChange = vi.fn();
+    const value = emptyValue();
+    const utils = render(
+      <DashboardCanvas
+        value={value}
+        onChange={onChange}
+        renderItem={renderItem}
+        columns={12}
+        {...props}
+      />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    return { ...utils, onChange, value, root };
+  }
+
+  it('stamps data-dc-empty on an empty container, not on a populated one', () => {
+    const { container } = renderCanvas();
+    expect(container.querySelector('[data-dc-container="s1"]')).toHaveAttribute('data-dc-empty');
+    expect(container.querySelector('[data-dc-container="top"]')).not.toHaveAttribute(
+      'data-dc-empty',
+    );
+  });
+
+  it('a single-jump pointer drag into the empty section commits applyMove into it', () => {
+    const { container, onChange, value, root } = renderCanvas();
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    // Pointer (55,615) is inside s1's body rect; origin (45,605) → cell (1,0).
+    fireEvent.pointerMove(root, { clientX: 55, clientY: 615, pointerId: 1 });
+    fireEvent.pointerUp(root, { clientX: 55, clientY: 615, pointerId: 1 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(
+      applyMove(value, { kind: 'top' }, { kind: 'section', id: 's1' }, 'b', 1, 0),
+    );
+  });
+
+  it('a slow multi-step drag into the empty section commits the same move', () => {
+    const { container, onChange, value, root } = renderCanvas();
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    for (const y of [60, 200, 400, 590, 615]) {
+      fireEvent.pointerMove(root, { clientX: 55, clientY: y, pointerId: 1 });
+    }
+    fireEvent.pointerUp(root, { clientX: 55, clientY: 615, pointerId: 1 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(
+      applyMove(value, { kind: 'top' }, { kind: 'section', id: 's1' }, 'b', 1, 0),
+    );
+  });
+
+  it('keyboard arrow-crossing enters the empty section and drops into it', () => {
+    const { container, onChange, value } = renderCanvas();
+    const a = itemEl(container, 'a');
+    a.focus();
+    fireEvent.keyDown(a, { key: 'Enter' });
+    // a sits at (0,1); the other top item ends at row 1, so one ArrowDown
+    // steps past the bottom and enters the empty Section One at y=0.
+    fireEvent.keyDown(a, { key: 'ArrowDown' });
+    expect(screen.getByRole('status')).toHaveTextContent('Entered the Section One section');
+    fireEvent.keyDown(itemEl(container, 'a'), { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(
+      applyMove(value, { kind: 'top' }, { kind: 'section', id: 's1' }, 'a', 0, 0),
+    );
+  });
+
+  it('shows the drop hint in the empty section only while a move drag is armed', () => {
+    const { container, root } = renderCanvas();
+    expect(screen.queryByText('Drop widgets here')).not.toBeInTheDocument();
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 }); // arms, stays in top
+    expect(screen.getByText('Drop widgets here')).toBeInTheDocument();
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(screen.queryByText('Drop widgets here')).not.toBeInTheDocument();
+  });
+
+  it('shows the drop hint during a keyboard pick, and never in readOnly', () => {
+    const { container, rerender, onChange, value } = renderCanvas();
+    fireEvent.keyDown(itemEl(container, 'b'), { key: 'Enter' });
+    expect(screen.getByText('Drop widgets here')).toBeInTheDocument();
+    fireEvent.keyDown(itemEl(container, 'b'), { key: 'Escape' });
+    expect(screen.queryByText('Drop widgets here')).not.toBeInTheDocument();
+    rerender(
+      <DashboardCanvas
+        value={value}
+        onChange={onChange}
+        renderItem={renderItem}
+        columns={12}
+        readOnly
+      />,
+    );
+    expect(screen.queryByText('Drop widgets here')).not.toBeInTheDocument();
+  });
+});

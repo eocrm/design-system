@@ -1117,6 +1117,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           <div
             className={styles.container}
             data-dc-container="top"
+            data-dc-empty={shown.items.length === 0 ? '' : undefined}
             ref={(el) => setContainerEl(TOP_CONTAINER, el)}
           >
             {sortByPosition(shown.items).map((item) => (

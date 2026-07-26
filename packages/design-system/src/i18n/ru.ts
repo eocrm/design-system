@@ -123,6 +123,7 @@ export const ru: Messages = {
         : `Секция «${title as string}» перемещена`,
     enteredSection: ({ title }) => `Перемещено в секцию «${title as string}»`,
     enteredTopLevel: 'Перемещено на верхний уровень',
+    dropHint: 'Перетащите виджеты сюда',
   },
   optionsPicker: {
     filter: 'Фильтр…',

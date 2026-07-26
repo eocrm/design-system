@@ -191,6 +191,8 @@ export interface Messages {
     enteredSection: (params: { title: string }) => string;
     /** Live announcement when a picked item crosses into the top-level grid. */
     enteredTopLevel: string;
+    /** Hint inside an empty section body while a move (drag or keyboard pick) is in flight. */
+    dropHint: string;
   };
   optionsPicker: {
     /** Placeholder and aria-label for the filter (search) input. */
