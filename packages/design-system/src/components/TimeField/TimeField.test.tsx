@@ -486,24 +486,20 @@ describe('TimeField', () => {
   // Now button
   // ===========================================================================
 
-  it('Now button click fires onChange with current rounded time; popover stays open', async () => {
+  it('Now button click fires onChange with current rounded time; popover stays open', () => {
+    // Frozen clock (#339 — real wall-clock time flaked in the last minutes of
+    // a UTC day). 10:07 + step=15 → Math.round(607/15)*15 = 600 min = 10:00.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 4, 28, 10, 7));
     const onChange = vi.fn();
-    const user = userEvent.setup();
     render(<Driver onChange={onChange} hourCycle="24" step={15} />, { wrapper: wrap() });
-    await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
-    const nowBtn = await screen.findByRole('button', { name: 'Now' });
-    fireEvent.click(nowBtn);
-    // We can't pin the wall clock without fake timers (which destabilise
-    // userEvent), so just assert the contract: a TimeValue snapped to the
-    // step. step=15 ⇒ minutes ∈ {0, 15, 30, 45}.
+    fireEvent.click(screen.getByRole('button', { name: /Time, Open time list/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Now' }));
     expect(onChange).toHaveBeenCalledTimes(1);
-    const [payload] = onChange.mock.calls[0];
-    expect(typeof payload.hours).toBe('number');
-    expect(payload.hours).toBeGreaterThanOrEqual(0);
-    expect(payload.hours).toBeLessThanOrEqual(23);
-    expect([0, 15, 30, 45]).toContain(payload.minutes);
+    expect(onChange).toHaveBeenCalledWith({ hours: 10, minutes: 0 });
     // Popover still open.
     expect(screen.getByRole('listbox', { name: 'Hours' })).toBeInTheDocument();
+    vi.useRealTimers();
   });
 
   it('hideNowButton hides the footer', async () => {
@@ -757,6 +753,27 @@ describe('TimeField', () => {
     fireEvent.click(screen.getByLabelText(/open time list/i));
     fireEvent.click(screen.getByText('Now'));
     expect(onChange).toHaveBeenCalledWith({ hours: 15, minutes: 0 });
+    vi.useRealTimers();
+  });
+
+  it('Now at end of day clamps to 23:59 instead of wrapping to 00:00 (#339)', () => {
+    // 23:58 + step=15 → Math.round(1438/15)*15 = 1440 min, clamped to 1439 = 23:59.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 4, 28, 23, 58));
+    const onChange = vi.fn();
+    render(
+      <TimeField
+        value={{ hours: 0, minutes: 0 }}
+        onChange={onChange}
+        aria-label="Time"
+        hourCycle="24"
+        step={15}
+      />,
+      { wrapper: wrap() },
+    );
+    fireEvent.click(screen.getByLabelText(/open time list/i));
+    fireEvent.click(screen.getByText('Now'));
+    expect(onChange).toHaveBeenCalledWith({ hours: 23, minutes: 59 });
     vi.useRealTimers();
   });
 
