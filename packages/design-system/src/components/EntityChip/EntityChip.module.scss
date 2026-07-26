@@ -5,7 +5,12 @@
   display: inline-flex;
   align-items: baseline;
   gap: var(--entity-chip-gap);
-  padding: var(--entity-chip-padding-y) var(--entity-chip-padding-x);
+
+  // Asymmetric top/bottom (see EntityChip.tokens.scss) corrects for the
+  // font's ascent/descent metric skew at line-height:1 — visually this reads
+  // as equal ink-to-edge spacing even though the CSS padding values differ.
+  padding: var(--entity-chip-padding-top) var(--entity-chip-padding-x)
+    var(--entity-chip-padding-bottom);
   border: none;
   border-radius: var(--entity-chip-radius);
   background: var(--entity-chip-bg);
