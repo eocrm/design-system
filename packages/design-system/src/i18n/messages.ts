@@ -169,6 +169,28 @@ export interface Messages {
     sectionCollapse: (params: { title: string }) => string;
     /** aria-label on a section's collapse toggle when collapsed (click expands it); interpolates the section title. */
     sectionExpand: (params: { title: string }) => string;
+    /** aria-roledescription for item cells in edit mode. */
+    itemRole: string;
+    /** Visually-hidden keyboard instructions referenced by aria-describedby (edit mode). */
+    instructions: string;
+    /** Instructions variant for readOnly canvases — collapse toggles are the only interaction. */
+    instructionsReadOnly: string;
+    /** Live announcement when an item is picked up for a keyboard move. */
+    pickedUp: string;
+    /** Live announcement after a picked item steps one cell (1-based column/row); `container` names the section while moving inside one. */
+    movedTo: (params: { x: number; y: number; container?: string }) => string;
+    /** Live announcement when a picked item is dropped. */
+    dropped: string;
+    /** Live announcement when a keyboard move is cancelled. */
+    cancelled: string;
+    /** Live announcement after a Shift+arrow resize (the engine-clamped size, in grid units). */
+    resized: (params: { w: number; h: number }) => string;
+    /** Live announcement after a section band moves (1-based position). */
+    sectionMoved: (params: { title: string; position?: number }) => string;
+    /** Live announcement when a picked item crosses into a section. */
+    enteredSection: (params: { title: string }) => string;
+    /** Live announcement when a picked item crosses into the top-level grid. */
+    enteredTopLevel: string;
   };
   optionsPicker: {
     /** Placeholder and aria-label for the filter (search) input. */

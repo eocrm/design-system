@@ -1,9 +1,15 @@
-import { Fragment, forwardRef, useCallback, useEffect, useRef, useState } from 'react';
-import type { HTMLAttributes, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import { Fragment, forwardRef, useCallback, useEffect, useId, useRef, useState } from 'react';
+import type {
+  FocusEvent as ReactFocusEvent,
+  HTMLAttributes,
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useFloatingSurface } from '../_internal/overlay';
-import { mergeRefs } from '../_internal/refs';
+import { mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import {
   DASHBOARD_COLUMNS,
   applyMove,
@@ -75,6 +81,27 @@ const TOP_CONTAINER: ContainerRef = { kind: 'top' };
 /** Stable registry key for a container (object identity is per-render). */
 function containerKey(cref: ContainerRef): string {
   return cref.kind === 'top' ? 'top' : `s:${String(cref.id)}`;
+}
+
+/** The items of one container within a value (engine's private lookup, re-derived). */
+function itemsOf(value: DashboardCanvasValue, cref: ContainerRef): DashboardPlacement[] {
+  return (
+    (cref.kind === 'top'
+      ? value.items
+      : value.sections.find((section) => section.id === cref.id)?.items) ?? []
+  );
+}
+
+/** Last occupied row end (max `y + h`) of a container, `excludeId` left out. */
+function bottomOf(
+  value: DashboardCanvasValue,
+  cref: ContainerRef,
+  excludeId?: string | number,
+): number {
+  return itemsOf(value, cref).reduce(
+    (max, p) => (p.id === excludeId ? max : Math.max(max, p.y + p.h)),
+    0,
+  );
 }
 
 /**
@@ -166,6 +193,28 @@ interface SectionDrag {
 }
 type DragState = MoveDrag | ResizeDrag | SectionDrag;
 
+/**
+ * Keyboard pick-up state (Enter/Space on a focused item). `x`/`y` track the
+ * REQUESTED cell exactly like a pointer drag tracks the cursor cell — the
+ * engine's compaction may render the item elsewhere, but requested tracking
+ * is what lets repeated ArrowDown presses tunnel past the compaction pull
+ * and reach the next container. Committed via the same applyMove call and
+ * `commit` choke point as the pointer path.
+ */
+interface KeyboardPick {
+  id: string | number;
+  from: ContainerRef;
+  homeX: number;
+  homeY: number;
+  /** Item dims, for clamping the requested x against the 12-column bound. */
+  w: number;
+  container: ContainerRef;
+  x: number;
+  y: number;
+  /** Engine preview of dropping right now — the rendered layout while picked. */
+  preview: DashboardCanvasValue;
+}
+
 /** Render-facing gesture projection: the engine preview IS the rendered layout. */
 type LiveState =
   | {
@@ -221,10 +270,12 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       constraints,
       readOnly = false,
       className,
+      'aria-describedby': ariaDescribedby,
       onPointerMove: onPointerMoveProp,
       onPointerUp: onPointerUpProp,
       onPointerCancel: onPointerCancelProp,
       onLostPointerCapture: onLostPointerCaptureProp,
+      onBlur: onBlurProp,
       ...rest
     },
     ref,
@@ -236,6 +287,25 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     const bandsRef = useRef(new Map<string | number, HTMLElement>());
     const dragRef = useRef<DragState | null>(null);
     const [live, setLive] = useState<LiveState | null>(null);
+    const [pick, setPick] = useState<KeyboardPick | null>(null);
+    const uid = sanitizeId(useId());
+    const instructionsId = `dashboard-instructions-${uid}`;
+
+    // Nonce-keyed live region (FlowCanvas precedent): the nonce forces a DOM
+    // mutation for back-to-back identical messages, and keys a child <span>
+    // so the region node itself stays stable across announcements.
+    const [announcement, setAnnouncement] = useState({ text: '', nonce: 0 });
+    const announce = useCallback(
+      (message: string) => setAnnouncement((prev) => ({ text: message, nonce: prev.nonce + 1 })),
+      [],
+    );
+
+    // A keyboard step can remount or DOM-reorder the focused element (a
+    // cross-container move re-parents the item; a band reorder re-orders the
+    // section nodes), silently dropping focus to <body> and stranding the
+    // keyboard user. Handlers flag what to re-focus; the post-commit effect
+    // below restores it (FlowCanvas focus-reclaim precedent).
+    const reclaimRef = useRef<{ kind: 'item' | 'section'; id: string | number } | null>(null);
 
     const setContainerEl = useCallback((cref: ContainerRef, el: HTMLElement | null) => {
       const key = containerKey(cref);
@@ -270,9 +340,10 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       container: ContainerRef,
     ) => {
       // One gesture at a time: a second pointer going down mid-drag must not
-      // overwrite the state (FlowCanvas discipline). No preventDefault —
-      // clicks inside item bodies pass through until the drag arms.
-      if (readOnly || event.button !== 0 || dragRef.current) return;
+      // overwrite the state (FlowCanvas discipline), and a keyboard pick owns
+      // the canvas until it drops or cancels. No preventDefault — clicks
+      // inside item bodies pass through until the drag arms.
+      if (readOnly || event.button !== 0 || dragRef.current || pick) return;
       const el = event.currentTarget;
       const rect = el.getBoundingClientRect();
       dragRef.current = {
@@ -305,7 +376,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       container: ContainerRef,
       edge: ResizeEdge,
     ) => {
-      if (readOnly || event.button !== 0 || dragRef.current) return;
+      if (readOnly || event.button !== 0 || dragRef.current || pick) return;
       // The handle sits inside the move-drag surface — never arm both.
       event.stopPropagation();
       dragRef.current = {
@@ -331,7 +402,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       event: ReactPointerEvent<HTMLDivElement>,
       sectionId: string | number,
     ) => {
-      if (readOnly || event.button !== 0 || dragRef.current) return;
+      if (readOnly || event.button !== 0 || dragRef.current || pick) return;
       // The drag zone is the header row MINUS the collapse button and the
       // renderSectionHeader extras — those keep their own interactions.
       if ((event.target as HTMLElement).closest('button, [data-dc-section-actions]')) return;
@@ -486,6 +557,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         return;
       }
       if (drag.kind === 'resize') {
+        // Requested dims unchanged → bail before applyResize, so a no-op
+        // gesture can't commit a compaction of an untouched value.
         if (drag.lastW === drag.startW && drag.lastH === drag.startH) return;
         commit(
           applyResize(
@@ -526,38 +599,293 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       setLive(null);
     };
 
-    // Escape cancels an armed gesture and restores the current value. An
-    // armed drag is an Escape-consuming mode — registering it as a floating
-    // surface makes a host Modal/Drawer yield that Escape (FlowCanvas #282).
-    const dragging = live != null;
-    useFloatingSurface(dragging);
+    // --- keyboard editing — same engine calls + commit choke point as pointer ---
+
+    const cancelPick = () => {
+      setPick(null);
+      announce(t('dashboardCanvas.cancelled'));
+    };
+
+    /** One arrow step of a picked item; crossing a container edge moves bands. */
+    const stepPick = (current: KeyboardPick, key: string) => {
+      const dx = key === 'ArrowRight' ? 1 : key === 'ArrowLeft' ? -1 : 0;
+      const dy = key === 'ArrowDown' ? 1 : key === 'ArrowUp' ? -1 : 0;
+      // Keyboard targets = expanded containers in band order; collapsed
+      // sections are skipped (pointer drop-target parity).
+      const order: ContainerRef[] = [
+        TOP_CONTAINER,
+        ...value.sections
+          .filter((section) => !section.collapsed)
+          .map((section): ContainerRef => ({ kind: 'section', id: section.id })),
+      ];
+      const idx = order.findIndex((cref) => containerKey(cref) === containerKey(current.container));
+      let container = current.container;
+      let crossed: ContainerRef | null = null;
+      const x = Math.min(Math.max(current.x + dx, 0), DASHBOARD_COLUMNS - current.w);
+      let y = current.y + dy;
+      if (idx !== -1 && dy > 0 && y > bottomOf(current.preview, container, current.id)) {
+        // Below the container's last occupied row: enter the next band at its
+        // top, or clamp at the bottom when there is none.
+        const next = order[idx + 1];
+        if (next) {
+          container = next;
+          crossed = next;
+          y = 0;
+        } else {
+          y = bottomOf(current.preview, container, current.id);
+        }
+      } else if (idx !== -1 && dy < 0 && y < 0) {
+        // Above the top row: enter the previous band at its bottom.
+        const prev = order[idx - 1];
+        if (prev) {
+          container = prev;
+          crossed = prev;
+          y = bottomOf(current.preview, prev, current.id);
+        } else {
+          y = 0;
+        }
+      } else {
+        y = Math.max(y, 0);
+      }
+      const preview = applyMove(value, current.from, container, current.id, x, y);
+      reclaimRef.current = { kind: 'item', id: current.id };
+      setPick({ ...current, container, x, y, preview });
+      if (crossed) {
+        announce(
+          crossed.kind === 'top'
+            ? t('dashboardCanvas.enteredTopLevel')
+            : t('dashboardCanvas.enteredSection', {
+                title:
+                  value.sections.find((section) => section.id === crossed.id)?.title ??
+                  String(crossed.id),
+              }),
+        );
+      } else {
+        announce(
+          t('dashboardCanvas.movedTo', {
+            x: x + 1,
+            y: y + 1,
+            container:
+              container.kind === 'section'
+                ? value.sections.find((section) => section.id === container.id)?.title
+                : undefined,
+          }),
+        );
+      }
+    };
+
+    const onItemKeyDown = (
+      event: ReactKeyboardEvent<HTMLDivElement>,
+      placement: DashboardPlacement,
+      container: ContainerRef,
+    ) => {
+      // Only keys aimed at the cell itself — interactive widget content keeps
+      // its own keystrokes (FlowCanvas key-target discipline).
+      if (event.target !== event.currentTarget) return;
+      const { key } = event;
+      const activate = key === 'Enter' || key === ' ';
+      if (pick) {
+        if (pick.id !== placement.id) return; // one pick at a time
+        if (key === 'Escape') {
+          // Layered dismiss: this Escape ends the pick, never a host modal.
+          event.preventDefault();
+          event.stopPropagation();
+          cancelPick();
+          return;
+        }
+        if (activate) {
+          event.preventDefault();
+          setPick(null);
+          // Same-cell drop mirrors the pointer no-op guard: nothing changed,
+          // even if committing would compact an uncompacted value.
+          if (
+            !(
+              containerKey(pick.from) === containerKey(pick.container) &&
+              pick.x === pick.homeX &&
+              pick.y === pick.homeY
+            )
+          ) {
+            commit(applyMove(value, pick.from, pick.container, pick.id, pick.x, pick.y));
+          }
+          announce(t('dashboardCanvas.dropped'));
+          return;
+        }
+        if (key.startsWith('Arrow')) {
+          event.preventDefault();
+          stepPick(pick, key);
+        }
+        return;
+      }
+      if (activate) {
+        event.preventDefault(); // Space must not scroll the page
+        setPick({
+          id: placement.id,
+          from: container,
+          container,
+          homeX: placement.x,
+          homeY: placement.y,
+          w: placement.w,
+          x: placement.x,
+          y: placement.y,
+          preview: value,
+        });
+        announce(t('dashboardCanvas.pickedUp'));
+        return;
+      }
+      if (event.shiftKey && key.startsWith('Arrow')) {
+        event.preventDefault();
+        const w = placement.w + (key === 'ArrowRight' ? 1 : key === 'ArrowLeft' ? -1 : 0);
+        const h = placement.h + (key === 'ArrowDown' ? 1 : key === 'ArrowUp' ? -1 : 0);
+        // Committed per keypress — no resize mode (FlowCanvas nudge precedent).
+        const next = applyResize(
+          value,
+          container,
+          placement.id,
+          w,
+          h,
+          constraintsFor(placement.id),
+        );
+        commit(next);
+        // Announce the engine-clamped size: at a constraint the layout does
+        // not change, but the user still needs the "you're at the limit" echo.
+        const result = itemsOf(next, container).find((p) => p.id === placement.id) ?? placement;
+        announce(t('dashboardCanvas.resized', { w: result.w, h: result.h }));
+      }
+    };
+
+    const onHeaderKeyDown = (
+      event: ReactKeyboardEvent<HTMLDivElement>,
+      sectionId: string | number,
+    ) => {
+      if (!event.shiftKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+      // Extras keep their keys (same exclusion as the pointer drag zone).
+      if ((event.target as HTMLElement).closest('[data-dc-section-actions]')) return;
+      const fromIndex = value.sections.findIndex((section) => section.id === sectionId);
+      if (fromIndex === -1) return;
+      event.preventDefault();
+      const next = reorderSection(
+        value,
+        sectionId,
+        fromIndex + (event.key === 'ArrowDown' ? 1 : -1),
+      );
+      if (next === value) return; // clamped at the edge — nothing moved
+      reclaimRef.current = { kind: 'section', id: sectionId };
+      commit(next);
+      announce(
+        t('dashboardCanvas.sectionMoved', {
+          title: value.sections[fromIndex].title,
+          position: next.sections.findIndex((section) => section.id === sectionId) + 1,
+        }),
+      );
+    };
+
+    // Focus reclaim. No dependency array — the flag is only ever raised
+    // alongside a state update, and the check costs a ref read. When focus
+    // survived (same element, still connected) this is a no-op.
     useEffect(() => {
-      if (!dragging) return undefined;
+      const target = reclaimRef.current;
+      if (!target) return;
+      reclaimRef.current = null;
+      const root = rootRef.current;
+      if (!root) return;
+      const active = document.activeElement;
+      if (
+        active &&
+        active !== document.body &&
+        active !== document.documentElement &&
+        active.isConnected &&
+        root.contains(active)
+      ) {
+        return;
+      }
+      // Attribute-value scan instead of a selector: ids are consumer strings
+      // and CSS-escaping them buys nothing at this element count.
+      const el =
+        target.kind === 'item'
+          ? Array.from(root.querySelectorAll<HTMLElement>('[data-dc-item]')).find(
+              (node) => node.getAttribute('data-dc-item') === String(target.id),
+            )
+          : Array.from(root.querySelectorAll<HTMLElement>('[data-dc-section]'))
+              .find((node) => node.getAttribute('data-dc-section') === String(target.id))
+              ?.querySelector<HTMLElement>('button[aria-expanded]');
+      el?.focus({ preventScroll: true });
+    });
+
+    // Focus leaving the picked item cancels the pick — Tab is never trapped
+    // (WCAG 2.1.2) and an unfocused pick would be uncancellable (Escape is
+    // handled on the item). The reclaim flag distinguishes the transient
+    // blur of a mid-step remount/reorder from a real departure.
+    const handleRootBlur = (event: ReactFocusEvent<HTMLDivElement>) => {
+      onBlurProp?.(event);
+      if (!pick || reclaimRef.current) return;
+      const target = event.target as HTMLElement;
+      if (target.getAttribute?.('data-dc-item') === String(pick.id)) cancelPick();
+    };
+
+    // Escape cancels an armed gesture and restores the current value. An
+    // armed drag or keyboard pick is an Escape-consuming mode — registering
+    // it as a floating surface makes a host Modal/Drawer yield that Escape
+    // (FlowCanvas #282). The pick's own Escape lands on the focused item.
+    const dragging = live != null;
+    useFloatingSurface(dragging || pick != null);
+    // Window-level Escape: cancels a pointer drag wherever focus sits, and
+    // is the belt-and-braces exit for a pick whose item lost focus (the
+    // item-level handler consumes Escape first when focused).
+    useEffect(() => {
+      if (!dragging && !pick) return undefined;
       const onKeyDown = (event: KeyboardEvent) => {
         if (event.key !== 'Escape') return;
         dragRef.current = null;
         setLive(null);
+        if (pick) cancelPick();
       };
       window.addEventListener('keydown', onKeyDown);
       return () => window.removeEventListener('keydown', onKeyDown);
-    }, [dragging]);
+      // cancelPick is re-created per render but only reads current state.
+    }, [dragging, pick]);
 
     // readOnly flipping on mid-gesture aborts it — same restore as Escape.
     useEffect(() => {
       if (!readOnly) return;
       dragRef.current = null;
       setLive(null);
+      if (pick) {
+        setPick(null);
+        announce(t('dashboardCanvas.cancelled'));
+      }
+      // Deliberately keyed on readOnly alone; the closure is from the
+      // render where it flipped, so `pick` is current.
     }, [readOnly]);
+
+    // An external value change mid-pick invalidates the pick's home/from
+    // coordinates (and can delete the picked item outright, which would
+    // strand the canvas: every pointerdown is gated on `pick` and the
+    // Escape handler lives on the now-gone item) — abort, same discipline
+    // as the readOnly flip. Identity-guarded, no dependency array: a drop
+    // clears `pick` before onChange in the same batch, so our own commits
+    // never trip this.
+    const prevValueRef = useRef(value);
+    useEffect(() => {
+      if (prevValueRef.current === value) return;
+      prevValueRef.current = value;
+      if (!pick) return;
+      setPick(null);
+      announce(t('dashboardCanvas.cancelled'));
+    });
 
     // Render EXACTLY what the engine returned for the in-flight gesture —
     // never parallel geometry. Section band order only changes on commit.
-    const shown = live != null && live.kind !== 'section' ? live.value : value;
+    const shown =
+      live != null && live.kind !== 'section' ? live.value : pick != null ? pick.preview : value;
     const gestures: CanvasGestures = {
       readOnly,
       movingId: live?.kind === 'move' ? live.id : null,
       resizingId: live?.kind === 'resize' ? live.id : null,
+      pickedId: pick?.id ?? null,
+      instructionsId,
       onMovePointerDown,
       onResizePointerDown,
+      onItemKeyDown,
     };
 
     // Band insertion indicator position (slot among N+1 gaps), suppressed
@@ -579,6 +907,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         ref={mergeRefs(ref, rootRef)}
         role="group"
         aria-label={t('dashboardCanvas.canvas')}
+        aria-describedby={mergeAriaDescribedby(ariaDescribedby, instructionsId)}
         className={clsx(styles.canvas, className)}
         data-readonly={readOnly ? '' : undefined}
         data-dragging={dragging ? '' : undefined}
@@ -586,6 +915,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         onPointerUp={handleRootPointerUp}
         onPointerCancel={handleRootPointerCancel}
         onLostPointerCapture={handleLostPointerCapture}
+        onBlur={handleRootBlur}
         {...rest}
       >
         <div
@@ -615,6 +945,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
               gestures={gestures}
               dragging={live?.kind === 'section' && live.id === section.id}
               onHeaderPointerDown={onHeaderPointerDown}
+              onHeaderKeyDown={onHeaderKeyDown}
               setContainerEl={setContainerEl}
               setBandEl={setBandEl}
             />
@@ -635,6 +966,12 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
             {renderItem(live.id)}
           </div>
         )}
+        <div id={instructionsId} className={styles.srOnly}>
+          {t(readOnly ? 'dashboardCanvas.instructionsReadOnly' : 'dashboardCanvas.instructions')}
+        </div>
+        <div role="status" className={styles.srOnly}>
+          <span key={announcement.nonce}>{announcement.text}</span>
+        </div>
       </div>
     );
   },

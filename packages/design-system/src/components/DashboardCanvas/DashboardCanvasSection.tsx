@@ -1,4 +1,8 @@
-import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { ContainerRef, DashboardSection } from './engine';
@@ -23,6 +27,11 @@ interface DashboardCanvasSectionProps {
     event: ReactPointerEvent<HTMLDivElement>,
     sectionId: string | number,
   ) => void;
+  /**
+   * Keyboard band reorder: Shift+ArrowUp/Down anywhere in the header row —
+   * in practice on the focused collapse toggle, the header's tab stop.
+   */
+  onHeaderKeyDown: (event: ReactKeyboardEvent<HTMLDivElement>, sectionId: string | number) => void;
   /** Registers the body grid in the cross-container drop-target registry. */
   setContainerEl: (cref: ContainerRef, el: HTMLElement | null) => void;
   /** Registers the band root for reorder insertion-index hit-testing. */
@@ -45,6 +54,7 @@ export function DashboardCanvasSection({
   gestures,
   dragging,
   onHeaderPointerDown,
+  onHeaderKeyDown,
   setContainerEl,
   setBandEl,
 }: DashboardCanvasSectionProps) {
@@ -61,6 +71,7 @@ export function DashboardCanvasSection({
       <div
         className={styles.sectionHeader}
         onPointerDown={gestures.readOnly ? undefined : (e) => onHeaderPointerDown(e, id)}
+        onKeyDown={gestures.readOnly ? undefined : (e) => onHeaderKeyDown(e, id)}
       >
         <button
           type="button"

@@ -1,4 +1,5 @@
 @use './DashboardCanvas.tokens' as tokens;
+@use '../../styles/mixins' as *;
 
 // Root stacks its own children — the top-level container grid, then one band
 // per section, top to bottom. This is the component's own internal
@@ -65,6 +66,18 @@
 
 .item[data-dc-resizing] {
   border-color: var(--dashboard-canvas-drop-preview-border);
+}
+
+// Keyboard editing: the cell itself is the focusable editing surface.
+.item:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-accent);
+}
+
+// A keyboard-picked item travels with the engine preview — mark it like an
+// armed drag (content stays visible; there is no ghost on the keyboard path).
+.item[data-dc-picked] {
+  border-color: var(--dashboard-canvas-drop-preview-border);
+  box-shadow: var(--dashboard-canvas-item-shadow-dragging);
 }
 
 // Cursor-following drag ghost: the moved item's content at its original px
@@ -189,4 +202,9 @@
 .sectionActions {
   display: flex;
   align-items: center;
+}
+
+// Keyboard instructions + live announcement region.
+.srOnly {
+  @include visually-hidden;
 }

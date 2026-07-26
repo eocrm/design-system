@@ -565,3 +565,243 @@ describe('DashboardCanvas pointer gestures', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+// --- keyboard editing + announcements (Task 4) ------------------------------
+// Pure engine math — no getBoundingClientRect stubs needed: the keyboard paths
+// never measure pixels, they step grid cells directly.
+describe('DashboardCanvas keyboard editing', () => {
+  function renderCanvas(props: Partial<Parameters<typeof DashboardCanvas>[0]> = {}) {
+    const onChange = vi.fn();
+    const value = baseValue();
+    const utils = render(
+      <DashboardCanvas value={value} onChange={onChange} renderItem={renderItem} {...props} />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    return { ...utils, onChange, value, root, status: screen.getByRole('status') };
+  }
+
+  it('edit-mode items are focusable with button semantics and a localized roledescription', () => {
+    const { container } = renderCanvas();
+    const b = itemEl(container, 'b');
+    expect(b).toHaveAttribute('tabindex', '0');
+    expect(b).toHaveAttribute('role', 'button');
+    expect(b).toHaveAttribute('aria-roledescription', 'widget');
+    expect(b.getAttribute('aria-describedby')).toBeTruthy();
+  });
+
+  it('a full keyboard move cycle commits once with the engine-equal payload', () => {
+    const { container, onChange, value, status } = renderCanvas();
+    const b = itemEl(container, 'b');
+    b.focus();
+    fireEvent.keyDown(b, { key: 'Enter' });
+    expect(status).toHaveTextContent('Picked up');
+    expect(b).toHaveAttribute('data-dc-picked');
+    fireEvent.keyDown(b, { key: 'ArrowRight' });
+    expect(status).toHaveTextContent('Moved to column 2, row 1');
+    fireEvent.keyDown(b, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(
+      applyMove(value, { kind: 'top' }, { kind: 'top' }, 'b', 1, 0),
+    );
+    expect(status).toHaveTextContent('Dropped');
+    expect(itemEl(container, 'b')).not.toHaveAttribute('data-dc-picked');
+  });
+
+  it('arrow moves while picked render the live engine preview', () => {
+    const { container } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.keyDown(b, { key: 'Enter' });
+    fireEvent.keyDown(b, { key: 'ArrowRight' });
+    // The preview IS applyMove's result: b snaps to column 2, a stays put.
+    expect(itemEl(container, 'b').style.getPropertyValue('--dc-col')).toBe('2 / span 2');
+    expect(itemEl(container, 'a').style.getPropertyValue('--dc-row')).toBe('2 / span 1');
+  });
+
+  it('Escape cancels the pick, restores the layout, and fires nothing', () => {
+    const { container, onChange, status } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.keyDown(b, { key: 'Enter' });
+    fireEvent.keyDown(b, { key: 'ArrowRight' });
+    expect(itemEl(container, 'b').style.getPropertyValue('--dc-col')).toBe('2 / span 2');
+    fireEvent.keyDown(b, { key: 'Escape' });
+    expect(itemEl(container, 'b').style.getPropertyValue('--dc-col')).toBe('1 / span 2');
+    expect(itemEl(container, 'b')).not.toHaveAttribute('data-dc-picked');
+    expect(status).toHaveTextContent('Move cancelled');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('dropping back on the home cell fires nothing (Space pickup and drop)', () => {
+    const { container, onChange } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.keyDown(b, { key: ' ' });
+    fireEvent.keyDown(b, { key: 'ArrowRight' });
+    fireEvent.keyDown(b, { key: 'ArrowLeft' });
+    fireEvent.keyDown(b, { key: ' ' });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('Shift+ArrowRight resizes one column per keypress, committing each time', () => {
+    const { container, onChange, value, status } = renderCanvas();
+    const a = itemEl(container, 'a');
+    fireEvent.keyDown(a, { key: 'ArrowRight', shiftKey: true });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(applyResize(value, { kind: 'top' }, 'a', 3, 1));
+    expect(status).toHaveTextContent('Resized to 3 by 1');
+    fireEvent.keyDown(itemEl(container, 'a'), { key: 'ArrowRight', shiftKey: true });
+    // Controlled value never re-rendered, so the second press re-requests 3×1.
+    expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('a Shift+arrow resize clamped back to the current size commits nothing but announces the limit', () => {
+    const { container, onChange, status } = renderCanvas({ constraints: { a: { minW: 2 } } });
+    fireEvent.keyDown(itemEl(container, 'a'), { key: 'ArrowLeft', shiftKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(status).toHaveTextContent('Resized to 2 by 1');
+  });
+
+  it('ArrowDown past the container bottom carries the pick into the next expanded section', () => {
+    const { container, onChange, value, status } = renderCanvas();
+    const a = itemEl(container, 'a');
+    a.focus();
+    fireEvent.keyDown(a, { key: 'Enter' });
+    // a sits at (0,1); the only other top-level item ends at row 1, so one
+    // ArrowDown steps past the bottom and enters Section One at y=0.
+    fireEvent.keyDown(a, { key: 'ArrowDown' });
+    expect(status).toHaveTextContent('Entered the Section One section');
+    // The cross-container preview remounts the item — focus is reclaimed.
+    expect(document.activeElement).toBe(itemEl(container, 'a'));
+    fireEvent.keyDown(itemEl(container, 'a'), { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(
+      applyMove(value, { kind: 'top' }, { kind: 'section', id: 's1' }, 'a', 0, 0),
+    );
+  });
+
+  it('ArrowUp at the top row carries the pick into the container above, entering at its bottom', () => {
+    const { container, onChange, value, status } = renderCanvas();
+    const c = itemEl(container, 'c');
+    fireEvent.keyDown(c, { key: 'Enter' });
+    fireEvent.keyDown(c, { key: 'ArrowUp' });
+    expect(status).toHaveTextContent('Moved to the top level');
+    fireEvent.keyDown(itemEl(container, 'c'), { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    // Top-level content ends at row 2 (item a), so c enters at y=2.
+    expect(onChange.mock.calls[0][0]).toEqual(
+      applyMove(value, { kind: 'section', id: 's1' }, { kind: 'top' }, 'c', 0, 2),
+    );
+  });
+
+  it('ArrowDown with only a collapsed section below clamps instead of entering it', () => {
+    const { container, onChange, status } = renderCanvas();
+    const c = itemEl(container, 'c');
+    fireEvent.keyDown(c, { key: 'Enter' });
+    // s2 (below s1) is collapsed — not a keyboard target, mirroring pointer.
+    fireEvent.keyDown(c, { key: 'ArrowDown' });
+    expect(status).toHaveTextContent('Moved to column 1, row 1');
+    expect(status).not.toHaveTextContent('Entered');
+    fireEvent.keyDown(c, { key: 'Enter' });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('Shift+ArrowDown on a section toggle commits reorderSection and announces the new position', () => {
+    const { onChange, value, status } = renderCanvas();
+    const toggle = screen.getByRole('button', { name: 'Collapse Section One section' });
+    toggle.focus();
+    fireEvent.keyDown(toggle, { key: 'ArrowDown', shiftKey: true });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(reorderSection(value, 's1', 1));
+    expect(status).toHaveTextContent('Section One section moved to position 2');
+  });
+
+  it('Shift+ArrowUp on the first band is a clamped no-op', () => {
+    const { onChange, status } = renderCanvas();
+    const toggle = screen.getByRole('button', { name: 'Collapse Section One section' });
+    fireEvent.keyDown(toggle, { key: 'ArrowUp', shiftKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(status).toHaveTextContent('');
+  });
+
+  it('wires the visually-hidden instructions via aria-describedby, merging a consumer value', () => {
+    const { container, root, rerender, onChange, value } = renderCanvas({
+      'aria-describedby': 'ext',
+    });
+    const ids = (root.getAttribute('aria-describedby') ?? '').split(' ');
+    expect(ids).toContain('ext');
+    const instructionsEl = document.getElementById(ids.find((id) => id !== 'ext') as string);
+    expect(instructionsEl).toHaveTextContent('pick it up');
+    // Items reference the same instructions block.
+    expect(itemEl(container, 'b')).toHaveAttribute('aria-describedby', instructionsEl?.id);
+    rerender(
+      <DashboardCanvas value={value} onChange={onChange} renderItem={renderItem} readOnly />,
+    );
+    expect(instructionsEl).not.toHaveTextContent('pick it up');
+  });
+
+  it('an external value change mid-pick cancels the pick and keeps the canvas editable', () => {
+    const onChange = vi.fn();
+    const value = baseValue();
+    const { container, rerender } = render(
+      <DashboardCanvas value={value} onChange={onChange} renderItem={renderItem} />,
+    );
+    const b = itemEl(container, 'b');
+    fireEvent.keyDown(b, { key: 'Enter' });
+    fireEvent.keyDown(b, { key: 'ArrowRight' });
+    expect(itemEl(container, 'b').style.getPropertyValue('--dc-col')).toBe('2 / span 2');
+    // The consumer deletes the picked item out from under the pick.
+    const updated: DashboardCanvasValue = {
+      ...value,
+      items: value.items.filter((item) => item.id !== 'b'),
+    };
+    rerender(<DashboardCanvas value={updated} onChange={onChange} renderItem={renderItem} />);
+    // No stale preview: the deleted item is gone, the pick is cancelled...
+    expect(container.querySelector('[data-dc-item="b"]')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Move cancelled');
+    // ...and the canvas is not locked: another item can be picked up.
+    fireEvent.keyDown(itemEl(container, 'a'), { key: 'Enter' });
+    expect(itemEl(container, 'a')).toHaveAttribute('data-dc-picked');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('focus leaving the picked item cancels the pick', () => {
+    const { container, onChange, status } = renderCanvas();
+    const b = itemEl(container, 'b');
+    b.focus();
+    fireEvent.keyDown(b, { key: 'Enter' });
+    fireEvent.keyDown(b, { key: 'ArrowRight' });
+    fireEvent.blur(b); // Tab-away
+    expect(itemEl(container, 'b')).not.toHaveAttribute('data-dc-picked');
+    expect(itemEl(container, 'b').style.getPropertyValue('--dc-col')).toBe('1 / span 2');
+    expect(status).toHaveTextContent('Move cancelled');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('pointer gestures are inert while an item is picked', () => {
+    const { container, onChange, root } = renderCanvas();
+    fireEvent.keyDown(itemEl(container, 'b'), { key: 'Enter' });
+    fireEvent.pointerDown(itemEl(container, 'a'), {
+      clientX: 10,
+      clientY: 60,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 200, clientY: 200, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).not.toBeInTheDocument();
+    expect(root).not.toHaveAttribute('data-dragging');
+    fireEvent.pointerUp(root, { clientX: 200, clientY: 200, pointerId: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('readOnly items are not keyboard-editable, but collapse toggles keep working', async () => {
+    const user = userEvent.setup();
+    const { container, onChange } = renderCanvas({ readOnly: true });
+    const b = itemEl(container, 'b');
+    expect(b).not.toHaveAttribute('tabindex');
+    expect(b).not.toHaveAttribute('role');
+    fireEvent.keyDown(b, { key: 'Enter' });
+    expect(b).not.toHaveAttribute('data-dc-picked');
+    fireEvent.keyDown(b, { key: 'ArrowRight', shiftKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Collapse Section One section' }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+});
