@@ -17,6 +17,23 @@
   --entity-chip-padding-y: var(--space-05);
   --entity-chip-padding-x: var(--space-2);
 
+  // At line-height:1 the browser synthesizes the line box's ascent/descent
+  // split from the font's own metrics, not from the rendered glyphs — most
+  // sans-serif fonts reserve far more headroom above the baseline (room for
+  // tall accents) than the descent metric leaves below it (barely enough for
+  // 'y'/'p'/'g'). With equal padding-top/padding-bottom that metric skew
+  // reads as extra padding on top (see #357). em-relative because the skew
+  // scales with the inherited font-size, not a fixed px amount — measured ~3px
+  // top/1px bottom ink gap at 14px body size and ~5px/1px at 24px heading
+  // size before this correction; 0.09em brings both within ~0.5px of equal.
+  --entity-chip-padding-y-shift: 0.09em;
+  --entity-chip-padding-top: calc(
+    var(--entity-chip-padding-y) - var(--entity-chip-padding-y-shift)
+  );
+  --entity-chip-padding-bottom: calc(
+    var(--entity-chip-padding-y) + var(--entity-chip-padding-y-shift)
+  );
+
   // No font-size token: the chip inherits the surrounding text's size by
   // design (see EntityChip.module.scss) — a tight line-height keeps the
   // padded box hugging the glyph band instead of hanging below the baseline.
