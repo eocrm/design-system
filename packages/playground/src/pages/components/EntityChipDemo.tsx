@@ -22,7 +22,7 @@ export function EntityChipDemo() {
     <DemoLayout
       name="EntityChip"
       componentName="EntityChip"
-      description="Inline entity-link chip — icon + muted prefix + name + colored status, all inside a single inline root safe to drop into a sentence. Renders <a>/<span>/whatever `as` is passed."
+      description="Inline chip that is always a link to its entity — icon + muted prefix + name + colored status, all inside a single inline root safe to drop into a sentence. Pass href (renders <a>) or `as` (router link); the bare <span> form is for rare non-navigable contexts."
       files={getComponentFiles('EntityChip')}
     >
       <Example
@@ -35,8 +35,9 @@ export function Demo() {
   return (
     <Text>
       Reassigned{' '}
-      <EntityChip icon={<User size={14} />} label="Priya Shah" /> to{' '}
+      <EntityChip href="/contacts/12" icon={<User size={14} />} label="Priya Shah" /> to{' '}
       <EntityChip
+        href="/deals/204"
         icon={<Building2 size={14} />}
         prefix="ACME-204"
         label="Acme Corp"
@@ -44,6 +45,7 @@ export function Demo() {
       />
       , blocked on{' '}
       <EntityChip
+        href="/tasks/5"
         icon={<CheckSquare size={14} />}
         prefix="ENG-5"
         label="Fix login bug"
@@ -55,8 +57,10 @@ export function Demo() {
 }`}
       >
         <Text>
-          Reassigned <EntityChip icon={<User size={14} />} label="Priya Shah" /> to{' '}
+          Reassigned <EntityChip href="/contacts/12" icon={<User size={14} />} label="Priya Shah" />{' '}
+          to{' '}
           <EntityChip
+            href="/deals/204"
             icon={<Building2 size={14} />}
             prefix="ACME-204"
             label="Acme Corp"
@@ -64,6 +68,7 @@ export function Demo() {
           />
           , blocked on{' '}
           <EntityChip
+            href="/tasks/5"
             icon={<CheckSquare size={14} />}
             prefix="ENG-5"
             label="Fix login bug"
@@ -153,22 +158,25 @@ export function Demo() {
 
       <Example
         title="Loading and unavailable"
-        description="`loading` swaps the body for an aria-busy ellipsis. `unavailable` mutes the chip and forces a non-interactive <span> (aria-disabled) — even with an href."
+        description="`loading` swaps the body for an aria-busy ellipsis; `unavailable` mutes the chip. Both are purely visual when the chip has a link target — it stays a live, keyboard-reachable link. Only a target-less unavailable chip goes non-interactive (aria-disabled)."
         code={`import { EntityChip } from '@eocrm/design-system';
 
 export function Demo() {
   return (
     <>
-      <EntityChip label="Contact" loading />
+      <EntityChip href="/contacts/7" label="Contact" loading />
       <EntityChip href="/contacts/9" label="Deleted contact" unavailable />
+      {/* no target — rare non-navigable case, aria-disabled */}
+      <EntityChip label="Deleted contact" unavailable />
     </>
   );
 }`}
       >
         <InputExample width="auto">
           <Cluster gap="sm">
-            <EntityChip label="Contact" loading />
+            <EntityChip href="/contacts/7" label="Contact" loading />
             <EntityChip href="/contacts/9" label="Deleted contact" unavailable />
+            <EntityChip label="Deleted contact" unavailable />
           </Cluster>
         </InputExample>
       </Example>

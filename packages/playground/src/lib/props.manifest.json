@@ -1586,14 +1586,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Loading placeholder: icon slot + `…` body, aria-busy, non-interactive.\nThe `as` component is still forced to a plain `<span>` — any of its\nother props (e.g. a RouterLink's `to`/`replace`) still spread onto that\nspan and may leave junk DOM attributes; pass them conditionally if that\nmatters."
+          "description": "Loading placeholder: icon slot + `…` body, aria-busy; the label stays in\nthe DOM visually hidden so the chip keeps its accessible name. Purely\nvisual — with a link target (`href`/`as`) the chip stays a live,\nkeyboard-reachable link while loading."
         },
         {
           "name": "unavailable",
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Entity missing/no access: muted, non-interactive (renders `as` forced to\n'span'), aria-disabled. Same caveat as `loading` — the `as` component's\nother props still spread onto the forced span."
+          "description": "Entity missing/no access: muted styling. With a link target (`href`/`as`)\nthe chip remains a real link — unavailable is a visual state, not a\ndisabling one. Only a target-less chip (bare span) becomes non-interactive\nwith aria-disabled."
         },
         {
           "name": "as",
