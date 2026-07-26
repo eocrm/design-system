@@ -29,6 +29,7 @@ const openMention = (id: string, label: string) => alert(`Mentioned ${label} (${
 const renderMention: RenderMention = ({ id, label }) => (
   <Badge
     tone="info"
+    size="sm"
     role="button"
     tabIndex={0}
     title={`Open ${label}'s profile`}
@@ -288,14 +289,43 @@ export function Demo() {
       </Example>
 
       <Example
+        title="Mentions (@-mention rendering)"
+        description="The default @-mention rendering: a non-interactive span in the accent tokens (same --color-accent-bg-subtle / --color-accent / medium weight as EntityChip's fill — no renderMention needed) — no uppercase, no letter-spacing."
+        code={`import { RichText, type RichDoc } from '@eocrm/design-system';
+
+const doc: RichDoc = {
+  blocks: [
+    {
+      id: 'mr',
+      type: 'paragraph',
+      inlines: [
+        { text: 'Assign this to ', marks: [] },
+        { text: '@Alice', marks: [{ type: 'mention', id: 'u1', label: 'Alice Nguyen' }] },
+        { text: ' and ', marks: [] },
+        { text: '@Bob', marks: [{ type: 'mention', id: 'u2', label: 'Bob Martinez' }] },
+        { text: '.', marks: [] },
+      ],
+    },
+  ],
+};
+
+export function Demo() {
+  return <RichText value={doc} />;
+}`}
+      >
+        <RichText value={MENTION_DOC} />
+      </Example>
+
+      <Example
         title="Mention substitution (renderMention)"
-        description="Pass renderMention to swap how an @-mention renders — same contract as renderLink but for mention marks. Here each mention becomes an interactive member chip (click one). It composes with renderLink and is render-time only; serialization still emits the mention mark."
+        description="The default rendering above is usually right. Reach for renderMention only when a mention needs to be interactive (click to open a profile) — same contract as renderLink but for mention marks. Badge's sm size keeps the non-uppercase, no-letter-spacing look the default has; composes with renderLink and is render-time only, so serialization still emits the mention mark."
         code={`import { RichText, Badge, type RichDoc, type RenderMention } from '@eocrm/design-system';
 
 const openMention = (id: string, label: string) => alert(\`Mentioned \${label} (\${id})\`);
 const renderMention: RenderMention = ({ id, label }) => (
   <Badge
     tone="info"
+    size="sm"
     role="button"
     tabIndex={0}
     title={\`Open \${label}'s profile\`}

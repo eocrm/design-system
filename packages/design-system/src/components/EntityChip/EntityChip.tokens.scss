@@ -1,16 +1,16 @@
-// EntityChip.tokens.scss — Component-scoped tokens for <EntityChip>. Blue
-// chip chrome + a muted prefix run + an unavailable-state override.
-// --entity-chip-bg AND --entity-chip-fg are literal-hex exceptions (same
-// pattern as Badge/Tooltip in dark.scss): the raw --color-palette-blue-bg/-fg
-// pair reads too faint here — the raw bg is too close to the page/card
-// canvas to register as a distinct chip, and the raw fg misses the 4.5:1
-// label-contrast bar once the bg is deepened enough to register — so both
-// are tuned a step here (and again, separately, in dark.scss) rather than
-// changing the shared palette tokens every other blue consumer relies on.
+// EntityChip.tokens.scss — Component-scoped tokens for <EntityChip>. Chip
+// chrome matches the RichText @mention fill exactly (--color-accent-bg-subtle
+// / --color-accent, see _prose.scss) so a chip and a rendered mention read as
+// the same visual object in both themes — no per-theme tuning needed since
+// the accent tokens are already theme-aware.
 :root {
-  --entity-chip-bg: #70a8ff;
-  --entity-chip-bg-hover: #70a8ff;
-  --entity-chip-fg: #053275;
+  --entity-chip-bg: var(--color-accent-bg-subtle);
+  --entity-chip-bg-hover: var(--color-accent-bg-subtle);
+  --entity-chip-fg: var(--color-accent);
+
+  // Matches the RichText @mention's own font-weight (_prose.scss) — part of
+  // the same "read as one visual object" goal as the bg/fg tokens above.
+  --entity-chip-label-font-weight: var(--font-weight-medium);
   --entity-chip-prefix-fg: var(--color-fg-muted);
   --entity-chip-radius: var(--radius-sm);
   --entity-chip-gap: var(--space-1);

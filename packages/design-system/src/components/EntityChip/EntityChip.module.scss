@@ -62,6 +62,10 @@
   color: var(--entity-chip-prefix-fg);
 }
 
+.label {
+  font-weight: var(--entity-chip-label-font-weight);
+}
+
 // Keeps a loading chip's accessible name (the label) without showing it.
 .hiddenLabel {
   @include visually-hidden;

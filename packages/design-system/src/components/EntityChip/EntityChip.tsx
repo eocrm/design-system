@@ -40,12 +40,14 @@ interface EntityChipOwnProps {
   status?: EntityChipStatus;
   /**
    * Optional categorical palette color for the chip fill. When set, takes
-   * precedence over the default blue chip tokens: the chip fills with the
+   * precedence over the default accent chip tokens: the chip fills with the
    * matching `--color-palette-<name>-bg/-fg` pair (same contract as `Badge
    * color` — picking a readable pair is the consumer's call). Omit for the
-   * default blue fill. The `status` run keeps its own resolved color
-   * independent of this prop, and `unavailable` still mutes the label/status
-   * text over any `color`.
+   * default fill, which matches RichText's `@mention` styling
+   * (`--color-accent-bg-subtle` / `--color-accent`) so a chip and a rendered
+   * mention read as the same visual object. The `status` run keeps its own
+   * resolved color independent of this prop, and `unavailable` still mutes
+   * the label/status text over any `color`.
    */
   color?: PaletteColor;
   /** Renders `as="a"` with this href when `as` is omitted. */

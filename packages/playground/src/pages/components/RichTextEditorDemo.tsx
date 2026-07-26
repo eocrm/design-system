@@ -40,6 +40,7 @@ const openMention = (id: string, label: string) => alert(`Mentioned ${label} (${
 const renderMention: RenderMention = ({ id, label }) => (
   <Badge
     tone="info"
+    size="sm"
     role="button"
     tabIndex={0}
     title={`Open ${label}'s profile`}
@@ -74,6 +75,9 @@ export function RichTextEditorDemo() {
     ),
   );
   const [mentionDoc, setMentionDoc] = useState<RichDoc>(() => docFromText('Assign this to '));
+  const [mentionRenderDoc, setMentionRenderDoc] = useState<RichDoc>(() =>
+    docFromText('Assign this to '),
+  );
   const [autolinkDoc, setAutolinkDoc] = useState<RichDoc>(() =>
     docFromText('Type a task URL below to watch it autolink. '),
   );
@@ -347,7 +351,45 @@ export function Demo() {
 
       <Example
         title="Mentions (@-autocomplete)"
-        description='Pass a mentions prop with onQuery to enable @-mentions. Type "@" then a name (e.g. "@al") to open the candidate menu; ↑/↓ to move, Enter/Tab to insert a chip, Esc to dismiss. The chip carries the id; Backspace removes the whole chip. Pass renderMention to swap the default span for an interactive member chip (click one below) — it composes with renderLink and is render-time only, so serialization keeps the mention mark.'
+        description='Pass a mentions prop with onQuery to enable @-mentions. Type "@" then a name (e.g. "@al") to open the candidate menu; ↑/↓ to move, Enter/Tab to insert a chip, Esc to dismiss. The chip carries the id; Backspace removes the whole chip. This is the default rendering — a non-interactive span in the accent tokens (same fill as EntityChip, no uppercase).'
+        code={`import { useState } from 'react';
+import { RichTextEditor, docFromText, type RichDoc } from '@eocrm/design-system';
+
+const TEAM = [
+  { id: 'u1', label: 'Alice Nguyen', description: 'alice@eocrm.dev' },
+  { id: 'u2', label: 'Bob Martinez', description: 'bob@eocrm.dev' },
+  { id: 'u3', label: 'Carlos Whitfield', description: 'carlos@eocrm.dev' },
+  { id: 'u4', label: 'Dana Lee', description: 'dana@eocrm.dev' },
+];
+
+const queryTeam = (q: string) =>
+  Promise.resolve(TEAM.filter((m) => m.label.toLowerCase().includes(q.toLowerCase())));
+
+export function Demo() {
+  const [doc, setDoc] = useState<RichDoc>(() => docFromText('Assign this to '));
+  return (
+    <RichTextEditor
+      value={doc}
+      onChange={setDoc}
+      toolbar
+      placeholder="Type @ to mention someone…"
+      mentions={{ onQuery: queryTeam }}
+    />
+  );
+}`}
+      >
+        <RichTextEditor
+          value={mentionDoc}
+          onChange={setMentionDoc}
+          toolbar
+          placeholder="Type @ to mention someone…"
+          mentions={{ onQuery: queryTeam }}
+        />
+      </Example>
+
+      <Example
+        title="Mention substitution (renderMention)"
+        description="The default rendering above is usually right. Reach for renderMention only when a mention needs to be interactive (click one below to open a profile) — it composes with renderLink and is render-time only, so serialization keeps the mention mark. Badge's sm size keeps the non-uppercase, no-letter-spacing look the default has."
         code={`import { useState } from 'react';
 import {
   RichTextEditor,
@@ -373,6 +415,7 @@ const openMention = (id: string, label: string) =>
 const renderMention: RenderMention = ({ id, label }) => (
   <Badge
     tone="info"
+    size="sm"
     role="button"
     tabIndex={0}
     title={\`Open \${label}'s profile\`}
@@ -403,8 +446,8 @@ export function Demo() {
 }`}
       >
         <RichTextEditor
-          value={mentionDoc}
-          onChange={setMentionDoc}
+          value={mentionRenderDoc}
+          onChange={setMentionRenderDoc}
           toolbar
           placeholder="Type @ to mention someone…"
           mentions={{ onQuery: queryTeam }}
