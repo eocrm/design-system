@@ -50,12 +50,15 @@ describe('DashboardCanvas rendering', () => {
   });
 
   it('calls renderItem exactly once per visible item id', () => {
-    render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const spy = vi.fn(renderItem);
+    render(<DashboardCanvas value={baseValue()} renderItem={spy} />);
     expect(screen.getByTestId('item-a')).toBeInTheDocument();
     expect(screen.getByTestId('item-b')).toBeInTheDocument();
     expect(screen.getByTestId('item-c')).toBeInTheDocument();
     // 'd' belongs to the collapsed section — its body is unmounted.
     expect(screen.queryByTestId('item-d')).not.toBeInTheDocument();
+    expect(spy).toHaveBeenCalledTimes(3);
+    expect(spy.mock.calls.map((call) => call[0]).sort()).toEqual(['a', 'b', 'c']);
   });
 
   it('renders sections in band (array) order with their titles', () => {
@@ -885,12 +888,12 @@ describe('DashboardCanvas below-md editing gate', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('a width of exactly 640px stays wide (the threshold is exclusive)', () => {
+  it('a width of exactly 640px goes narrow (matches the CSS max-width: 640px, inclusive)', () => {
     const observers = stubResizeObserver();
     render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
     const root = screen.getByRole('group', { name: 'Dashboard canvas' });
     fireWidth(observers, root, 640);
-    expect(root).not.toHaveAttribute('data-narrow');
+    expect(root).toHaveAttribute('data-narrow');
   });
 
   it('a zero-width report (unmeasured/hidden mount) stays wide, not narrow', () => {

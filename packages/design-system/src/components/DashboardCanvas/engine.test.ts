@@ -586,3 +586,67 @@ describe('no-op gestures return the input reference', () => {
     expect(applyResize(value, { kind: 'top' }, 'a', 0, 1, { minW: 2 })).toBe(value);
   });
 });
+
+describe('engine property test (seeded, #337 review)', () => {
+  // ponytail: fixed-seed mulberry32 — deterministic in CI, not a real fuzz-test
+  // dependency. Upgrade to fast-check only if a seed stops finding regressions.
+  function mulberry32(seed: number) {
+    let a = seed;
+    return () => {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rand = mulberry32(20260726);
+  const randInt = (max: number) => Math.floor(rand() * max);
+  const randomLayout = (): DashboardPlacement[] =>
+    Array.from({ length: 2 + randInt(6) }, (_, i) => {
+      const w = 1 + randInt(4);
+      return {
+        id: `p${i}`,
+        x: randInt(DASHBOARD_COLUMNS - w + 1),
+        y: randInt(8),
+        w,
+        h: 1 + randInt(3),
+      };
+    });
+  const expectBounds = (items: DashboardPlacement[]) => {
+    for (const item of items) {
+      expect(item.x).toBeGreaterThanOrEqual(0);
+      expect(item.x + item.w).toBeLessThanOrEqual(DASHBOARD_COLUMNS);
+    }
+  };
+
+  it('holds no-overlap, bounds, and full-compaction invariants across 200 random layouts', () => {
+    for (let i = 0; i < 200; i += 1) {
+      const compacted = compact(randomLayout());
+      expectNoOverlaps(compacted);
+      expectBounds(compacted);
+      expect(compact(compacted)).toEqual(compacted); // already fully compacted
+
+      const dropped = clampPlacement(
+        { ...compacted[randInt(compacted.length)], x: randInt(DASHBOARD_COLUMNS), y: randInt(8) },
+        undefined,
+      );
+      const pushed = placeWithPushDown(compacted, dropped);
+      expectNoOverlaps(pushed);
+      expectBounds(pushed);
+      const out = pushed.find((item) => item.id === dropped.id)!;
+      expect(out.x).toBe(dropped.x);
+      expect(out.w).toBe(dropped.w);
+      expect(out.h).toBe(dropped.h);
+
+      const resized = applyResize(
+        value(compacted),
+        { kind: 'top' },
+        dropped.id,
+        dropped.w + 1,
+        dropped.h + 1,
+      );
+      expectNoOverlaps(resized.items);
+      expectBounds(resized.items);
+    }
+  });
+});

@@ -123,8 +123,10 @@ const FALLBACK_ROW_PX = 48;
 /**
  * Editing-gate width threshold (px) — JS mirror of the `@container
  * (max-width: $collapse-md)` rule in DashboardCanvas.module.scss
- * (`_internal/collapse.scss`, 640px). SCSS constants aren't readable from
- * TS, so this literal and that one are kept in sync by hand, same as the
+ * (`_internal/collapse.scss`, 640px). `max-width` is INCLUSIVE, so a width
+ * exactly at this value already single-columns — the gate below must match
+ * with `<=`, not `<`. SCSS constants aren't readable from TS, so this
+ * literal and that one are kept in sync by hand, same as the
  * `FALLBACK_ROW_PX`/`--dashboard-canvas-row` pairing above.
  */
 const NARROW_PX = 640;
@@ -920,7 +922,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       if (!root || typeof ResizeObserver === 'undefined') return undefined;
       const observer = new ResizeObserver((entries) => {
         const width = entries[0]?.contentRect.width ?? 0;
-        setIsNarrow(width > 0 && width < NARROW_PX);
+        setIsNarrow(width > 0 && width <= NARROW_PX);
       });
       observer.observe(root);
       return () => observer.disconnect();
