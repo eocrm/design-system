@@ -1,5 +1,9 @@
 import { memo } from 'react';
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from 'react';
 import type { FlowCanvasNode, FlowCanvasPoint } from './types';
 import styles from './FlowCanvas.module.scss';
 
@@ -14,7 +18,7 @@ interface FlowNodeProps {
   roleDescription: string;
   registerEl: (id: string, el: HTMLDivElement | null) => void;
   onNodePointerDown: (id: string, event: ReactPointerEvent<HTMLDivElement>) => void;
-  onNodeDoubleClick: (id: string) => void;
+  onNodeDoubleClick: (id: string, event: ReactMouseEvent<HTMLDivElement>) => void;
   onHandlePointerDown: (id: string, event: ReactPointerEvent<HTMLElement>) => void;
 }
 
@@ -51,7 +55,7 @@ export const FlowNode = memo(function FlowNode({
       onPointerDown={(event) => onNodePointerDown(node.id, event)}
       onDoubleClick={(event) => {
         event.stopPropagation();
-        onNodeDoubleClick(node.id);
+        onNodeDoubleClick(node.id, event);
       }}
     >
       <span className={styles.nodeLabel}>{node.label}</span>

@@ -1565,8 +1565,23 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     },
     [setSelection, cancelKeyboardConnect],
   );
-  const handleNodeDoubleClick = useCallback((id: string) => onNodeOpen?.(id), [onNodeOpen]);
-  const handleEdgeDoubleClick = useCallback((id: string) => onEdgeOpen?.(id), [onEdgeOpen]);
+  // Same portal-press guard as the pointerdown handlers above (#362/#363): a
+  // backdrop double-click on a modal opened from a node adornment / edge
+  // label bubbles React-wise into these — never an open intent.
+  const handleNodeDoubleClick = useCallback(
+    (id: string, event: ReactMouseEvent<Element>) => {
+      if (!(event.target instanceof Node) || !rootRef.current?.contains(event.target)) return;
+      onNodeOpen?.(id);
+    },
+    [onNodeOpen],
+  );
+  const handleEdgeDoubleClick = useCallback(
+    (id: string, event: ReactMouseEvent<Element>) => {
+      if (!(event.target instanceof Node) || !rootRef.current?.contains(event.target)) return;
+      onEdgeOpen?.(id);
+    },
+    [onEdgeOpen],
+  );
 
   /** Client (screen) coordinates → canvas coordinates, inverting the viewport transform. */
   const toCanvasPoint = useCallback(
@@ -1806,7 +1821,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               }}
               onDoubleClick={(event) => {
                 event.stopPropagation();
-                onEdgeOpen?.(edge.id);
+                handleEdgeDoubleClick(edge.id, event);
               }}
             >
               {edge.label}

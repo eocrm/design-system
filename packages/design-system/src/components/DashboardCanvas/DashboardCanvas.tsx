@@ -502,6 +502,30 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     const underOpenOverlay = () =>
       overlayStack.topDepth() > 0 && !rootRef.current?.closest(OVERLAY_HOST_SELECTOR);
 
+    // A pending press has no capture (capture waits for the 5px arm), so a
+    // pointerup swallowed by an overlay OUTSIDE the React tree never reaches
+    // the root handlers and would leave dragRef stale — hijacking later
+    // hovers into a buttonless drag (a mouse reuses its pointerId) or
+    // blocking arming outright (touch ids retire) (#363). Window CAPTURE
+    // listeners see the physical release before any stopPropagation below;
+    // clearing an UNMOVED press is behavior-preserving (unmoved presses
+    // commit nothing), and a moved drag is capture-owned — its own root
+    // handlers clear the ref before this check could matter.
+    const armPendingRelease = (drag: MoveDrag | SectionDrag) => {
+      const release = (event: PointerEvent) => {
+        // Only the press's OWN pointer resolves it — a stray second pointer
+        // (palm/touch) releasing elsewhere must neither clear a still-live
+        // press nor detach these listeners (that would reopen the swallowed-
+        // release hole for the own pointer).
+        if (event.pointerId !== drag.pointerId) return;
+        window.removeEventListener('pointerup', release, true);
+        window.removeEventListener('pointercancel', release, true);
+        if (dragRef.current === drag && !drag.moved) dragRef.current = null;
+      };
+      window.addEventListener('pointerup', release, true);
+      window.addEventListener('pointercancel', release, true);
+    };
+
     // --- gesture starts (single `editingEnabled` choke point: readOnly prop OR narrow width) ---
     const onMovePointerDown = (
       event: ReactPointerEvent<HTMLDivElement>,
@@ -516,7 +540,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       if (isPortalEvent(event) || underOpenOverlay()) return;
       const el = event.currentTarget;
       const rect = el.getBoundingClientRect();
-      dragRef.current = {
+      const drag: MoveDrag = {
         kind: 'move',
         pointerId: event.pointerId,
         id: placement.id,
@@ -536,6 +560,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         previewKey: null,
         preview: null,
       };
+      dragRef.current = drag;
+      armPendingRelease(drag);
       // No capture yet — capture retargets the eventual click to the root,
       // so it must wait until the drag arms (clicks pass through until then).
     };
@@ -580,7 +606,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // the toggle button and the renderSectionHeader extras never wire this.
       const fromIndex = value.sections.findIndex((section) => section.id === sectionId);
       if (fromIndex === -1) return;
-      dragRef.current = {
+      const drag: SectionDrag = {
         kind: 'section',
         pointerId: event.pointerId,
         id: sectionId,
@@ -590,6 +616,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         moved: false,
         slot: fromIndex,
       };
+      dragRef.current = drag;
+      armPendingRelease(drag);
     };
 
     // --- pointer stream (root-level; capture retargeting still bubbles here) ---

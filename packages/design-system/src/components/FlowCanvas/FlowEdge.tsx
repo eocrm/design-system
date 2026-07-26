@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { EdgeGeometry } from './edgePath';
 import type { FlowCanvasEdge } from './types';
 import styles from './FlowCanvas.module.scss';
@@ -14,7 +14,7 @@ interface FlowEdgeProps {
   roleDescription: string;
   registerEl: (id: string, el: SVGPathElement | null) => void;
   onEdgePointerDown: (id: string, event: ReactPointerEvent<SVGPathElement>) => void;
-  onEdgeDoubleClick: (id: string) => void;
+  onEdgeDoubleClick: (id: string, event: ReactMouseEvent<SVGPathElement>) => void;
 }
 
 /** Internal: one edge — visible path plus a wide transparent hit/focus path. */
@@ -50,7 +50,7 @@ export const FlowEdge = memo(function FlowEdge({
         onPointerDown={(event) => onEdgePointerDown(edge.id, event)}
         onDoubleClick={(event) => {
           event.stopPropagation();
-          onEdgeDoubleClick(edge.id);
+          onEdgeDoubleClick(edge.id, event);
         }}
       />
     </g>

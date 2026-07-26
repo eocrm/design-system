@@ -511,6 +511,36 @@ describe('FlowCanvas selection & intents', () => {
     expect(onSelectionChange).not.toHaveBeenCalled();
   });
 
+  it('a double-click bubbled from a portal inside a node adornment never fires onNodeOpen (#363)', () => {
+    const onNodeOpen = vi.fn();
+    const nodes: FlowCanvasNode[] = [
+      {
+        id: 'open',
+        label: 'Open',
+        position: { x: 0, y: 0 },
+        adornment: createPortal(<div data-testid="portal-surface" />, document.body),
+      },
+    ];
+    render(<FlowCanvas nodes={nodes} edges={[]} onNodeOpen={onNodeOpen} />);
+    fireEvent.doubleClick(screen.getByTestId('portal-surface'));
+    expect(onNodeOpen).not.toHaveBeenCalled();
+  });
+
+  it('a double-click bubbled from a portal inside an edge-label chip never fires onEdgeOpen (#363)', () => {
+    const onEdgeOpen = vi.fn();
+    const edges: FlowCanvasEdge[] = [
+      {
+        id: 't1',
+        from: 'open',
+        to: 'done',
+        label: createPortal(<div data-testid="chip-portal" />, document.body),
+      },
+    ];
+    render(<FlowCanvas nodes={NODES} edges={edges} onEdgeOpen={onEdgeOpen} />);
+    fireEvent.doubleClick(screen.getByTestId('chip-portal'));
+    expect(onEdgeOpen).not.toHaveBeenCalled();
+  });
+
   it('click selects an edge', () => {
     render(<FlowCanvas nodes={NODES} edges={EDGES} />);
     const edge = screen.getByLabelText('From Open to Done');

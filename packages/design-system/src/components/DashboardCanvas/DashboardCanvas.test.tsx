@@ -1362,6 +1362,65 @@ describe('DashboardCanvas overlay & portal gating (#362)', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('a pointerup swallowed outside the React tree clears a pending press (#363)', () => {
+    const { container, onChange, root } = renderCanvas();
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    // The release lands on an out-of-tree overlay — the root handlers never
+    // see it; only the window-capture listener does.
+    fireEvent.pointerUp(document.body, { pointerId: 1 });
+    // A buttonless hover must not resume the stale press (a mouse reuses
+    // its pointerId)…
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).toBeNull();
+    expect(onChange).not.toHaveBeenCalled();
+    // …and the next real press arms normally.
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).not.toBeNull();
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("a second pointer's release does not discard another pointer's pending press (#363)", () => {
+    const { container, onChange, root } = renderCanvas();
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    // Stray touch/palm taps and releases elsewhere.
+    fireEvent.pointerUp(document.body, { pointerId: 2 });
+    // Pointer 1 is still down — its move past the threshold must arm.
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).not.toBeNull();
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('a swallowed release also clears a pending section press (#363)', () => {
+    const { container, root } = renderCanvas();
+    fireEvent.pointerDown(sectionHandle(container, 's1'), {
+      clientX: 80,
+      clientY: 70,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerUp(document.body, { pointerId: 1 });
+    fireEvent.pointerMove(root, { clientX: 80, clientY: 200, pointerId: 1 });
+    expect(root).not.toHaveAttribute('data-dragging');
+  });
+
   it('does not arm a pointer drag while a blocking overlay is open above the canvas', () => {
     const { container, onChange, root } = renderCanvas();
     act(() => {
