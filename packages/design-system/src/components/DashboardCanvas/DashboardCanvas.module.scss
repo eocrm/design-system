@@ -1,9 +1,14 @@
 @use './DashboardCanvas.tokens' as tokens;
 @use '../../styles/mixins' as *;
+@use '../_internal/collapse' as bp;
 
 // Root stacks its own children — the top-level container grid, then one band
 // per section, top to bottom. This is the component's own internal
 // composition (Stack/Cluster precedent), not layout imposed on a parent.
+// ALWAYS a size container (unconditional, unlike Grid's opt-in
+// `collapseBelow`) — the below-md single-column stack (Task 5, bottom of
+// this file) depends on it. See DashboardCanvas.tsx's JSDoc ❌ anti-pattern
+// paragraph for the intrinsic-sizing caveat this carries.
 .canvas {
   // Relative only as the anchor for the internal drag ghost (Rule 4's
   // sanctioned internal-child-anchor use).
@@ -11,12 +16,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--dashboard-canvas-gap);
+  container-type: inline-size;
 }
 
 // Edit-mode drag surfaces: whole item bodies and section headers start drags,
 // so the browser must not claim their touch gestures (Sortable precedent).
-.canvas:not([data-readonly]) .item,
-.canvas:not([data-readonly]) .sectionHeader {
+// Narrow width disables editing exactly like readOnly (DashboardCanvas.tsx's
+// `editingEnabled` gate) — excluded here too so the cursor doesn't lie.
+.canvas:not([data-readonly], [data-narrow]) .item,
+.canvas:not([data-readonly], [data-narrow]) .sectionHeader {
   touch-action: none;
   cursor: grab;
 }
@@ -27,7 +35,8 @@
 }
 
 // One container grid — used for both the top-level items and each section's
-// body. Below-md re-templating to a single column lands in Task 5.
+// body. Below-md re-templating to a single column: see the
+// `@container (max-width: $collapse-md)` block at the bottom of this file.
 .container {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -207,4 +216,34 @@
 // Keyboard instructions + live announcement region.
 .srOnly {
   @include visually-hidden;
+}
+
+// --- below-md single-column stacking (Task 5) --------------------------
+// Below the shared $collapse-md breakpoint (`_internal/collapse.scss`,
+// 640px — kept in sync by hand with DashboardCanvas.tsx's NARROW_PX, the
+// same JS/CSS pairing the editing gate uses), every container grid
+// re-templates to one column and each item spans the full row at its own
+// height. DOM order is ALREADY (container band order, y, x) —
+// DashboardCanvasItem.tsx's `sortByPosition`, load-bearing exactly for this
+// — so the correct (section, y, x) stack order falls out for free; no JS
+// re-render needed for the reflow itself, only for the editing gate
+// (DashboardCanvas.tsx's `isNarrow`/`editingEnabled`).
+// Specificity: the base `.item` rule above (`grid-column: var(--dc-col);
+// grid-row: var(--dc-row);`) is one class = (0,1,0). `.canvas .item` below
+// is two classes = (0,2,0), which beats (0,1,0) unconditionally — no
+// reliance on this file's own source order surviving bundling (#318
+// precedent; same reasoning as Grid's `.collapsible.collapseXx` double
+// class). Same math for `.canvas .container` vs the one-class `.container`
+// base rule.
+@container (max-width: #{bp.$collapse-md}) {
+  .canvas .container {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .canvas .item {
+    // stylelint-disable-next-line property-disallowed-list -- below-md override is DashboardCanvas's own placement mechanism, same sanction as the base .item rule above
+    grid-column: 1 / -1;
+    // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
+    grid-row: var(--dc-h-span);
+  }
 }

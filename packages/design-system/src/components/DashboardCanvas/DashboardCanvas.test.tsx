@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DashboardCanvas } from './DashboardCanvas';
 import { applyMove, applyResize, reorderSection } from './engine';
@@ -803,5 +803,157 @@ describe('DashboardCanvas keyboard editing', () => {
     expect(onChange).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Collapse Section One section' }));
     expect(onChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+// --- below-md single-column stacking + narrow editing gate (Task 5) --------
+// The @container reflow itself is browser-land (jsdom doesn't evaluate
+// container queries) — validated visually in Task 7. These tests cover the
+// JS-side editing gate: a ResizeObserver mirror of the CSS breakpoint
+// (FlowCanvas ResizeObserver-mock precedent, FlowCanvas.test.tsx:928-940).
+describe('DashboardCanvas below-md editing gate', () => {
+  interface ObserverEntry {
+    cb: ResizeObserverCallback;
+    targets: Element[];
+  }
+
+  function stubResizeObserver(): ObserverEntry[] {
+    const observers: ObserverEntry[] = [];
+    class MockResizeObserver {
+      private entry: ObserverEntry;
+      constructor(cb: ResizeObserverCallback) {
+        this.entry = { cb, targets: [] };
+        observers.push(this.entry);
+      }
+      observe(el: Element) {
+        this.entry.targets.push(el);
+      }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal('ResizeObserver', MockResizeObserver);
+    return observers;
+  }
+
+  function fireWidth(observers: ObserverEntry[], root: Element, width: number) {
+    act(() => {
+      for (const o of observers.filter((entry) => entry.targets.includes(root))) {
+        o.cb(
+          [{ contentRect: { width } } as ResizeObserverEntry],
+          null as unknown as ResizeObserver,
+        );
+      }
+    });
+  }
+
+  let restoreRects: () => void;
+  beforeEach(() => {
+    restoreRects = stubCanvasRects();
+  });
+  afterEach(() => {
+    restoreRects();
+    vi.unstubAllGlobals();
+  });
+
+  it('carries the always-on container class on the root regardless of width', () => {
+    render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    // container-type: inline-size lives on `.canvas` itself, unconditionally.
+    expect(root.className).toMatch(/canvas/);
+  });
+
+  it('a width below 640px sets data-narrow and turns off pointer editing', () => {
+    const observers = stubResizeObserver();
+    const onChange = vi.fn();
+    const { container } = render(
+      <DashboardCanvas value={baseValue()} onChange={onChange} renderItem={renderItem} />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    expect(root).not.toHaveAttribute('data-narrow');
+    fireWidth(observers, root, 400);
+    expect(root).toHaveAttribute('data-narrow');
+    expect(container.querySelector('[data-dc-resize]')).not.toBeInTheDocument();
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).not.toBeInTheDocument();
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('a width of exactly 640px stays wide (the threshold is exclusive)', () => {
+    const observers = stubResizeObserver();
+    render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireWidth(observers, root, 640);
+    expect(root).not.toHaveAttribute('data-narrow');
+  });
+
+  it('a zero-width report (unmeasured/hidden mount) stays wide, not narrow', () => {
+    const observers = stubResizeObserver();
+    render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireWidth(observers, root, 0);
+    expect(root).not.toHaveAttribute('data-narrow');
+  });
+
+  it('collapse toggles still fire onChange while narrow', async () => {
+    const user = userEvent.setup();
+    const observers = stubResizeObserver();
+    const onChange = vi.fn();
+    render(<DashboardCanvas value={baseValue()} onChange={onChange} renderItem={renderItem} />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireWidth(observers, root, 400);
+    await user.click(screen.getByRole('button', { name: 'Collapse Section One section' }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('going narrow mid-drag aborts the gesture without committing', () => {
+    const observers = stubResizeObserver();
+    const onChange = vi.fn();
+    const { container } = render(
+      <DashboardCanvas value={baseValue()} onChange={onChange} renderItem={renderItem} />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 175, clientY: 15, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).toBeInTheDocument();
+    fireWidth(observers, root, 400);
+    expect(container.querySelector('[data-dc-ghost]')).not.toBeInTheDocument();
+    fireEvent.pointerUp(root, { clientX: 175, clientY: 15, pointerId: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('narrow items are not keyboard-editable, and the instructions switch to the readOnly variant', () => {
+    const observers = stubResizeObserver();
+    const { container } = render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    const ids = (root.getAttribute('aria-describedby') ?? '').split(' ');
+    const instructionsEl = document.getElementById(ids[0]);
+    expect(instructionsEl).toHaveTextContent('pick it up');
+    fireWidth(observers, root, 400);
+    const b = itemEl(container, 'b');
+    expect(b).not.toHaveAttribute('tabindex');
+    expect(b).not.toHaveAttribute('role');
+    expect(instructionsEl).not.toHaveTextContent('pick it up');
+  });
+
+  it('widening back past 640px re-enables pointer editing', () => {
+    const observers = stubResizeObserver();
+    const { container } = render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireWidth(observers, root, 400);
+    fireWidth(observers, root, 800);
+    expect(root).not.toHaveAttribute('data-narrow');
+    expect(container.querySelector('[data-dc-resize]')).not.toBeNull();
   });
 });

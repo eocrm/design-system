@@ -70,8 +70,11 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
   constraints?: DashboardCanvasConstraintsProp;
   /**
    * View-only mode: identical geometry, but no drag/resize wiring, no resize
-   * handles, and no keyboard editing (Task 4) — the canvas renders `value`
-   * and lets section collapse toggles keep working. @default false
+   * handles, and no keyboard editing — the canvas renders `value` and lets
+   * section collapse toggles keep working. The canvas also disables editing
+   * on its own, without this prop, once its own width drops below 640px
+   * (below-md single-column stack) — `readOnly` is for a consumer-chosen
+   * view mode, the width gate is automatic. @default false
    */
   readOnly?: boolean;
 }
@@ -116,6 +119,15 @@ const DRAG_ACTIVATION_PX = 5;
  * when `grid-auto-rows` doesn't resolve to a px length (jsdom).
  */
 const FALLBACK_ROW_PX = 48;
+
+/**
+ * Editing-gate width threshold (px) — JS mirror of the `@container
+ * (max-width: $collapse-md)` rule in DashboardCanvas.module.scss
+ * (`_internal/collapse.scss`, 640px). SCSS constants aren't readable from
+ * TS, so this literal and that one are kept in sync by hand, same as the
+ * `FALLBACK_ROW_PX`/`--dashboard-canvas-row` pairing above.
+ */
+const NARROW_PX = 640;
 
 /** Live px geometry of one container grid, re-measured per pointermove. */
 function measureGrid(el: HTMLElement) {
@@ -241,6 +253,18 @@ type LiveState =
  * hover-to-expand). Escape or a pointer cancel mid-gesture restores the
  * current `value` without firing `onChange`.
  *
+ * ❌ Anti-pattern: the canvas is ALWAYS a size container (`container-type:
+ * inline-size` on the root, unconditionally — the below-md single-column
+ * stack depends on it) — give it a parent with a concrete width. In an
+ * intrinsic-width context (a `Cluster` item, `width: max-content`, a
+ * `Split` aside's default `auto` track) it renders at width 0 (Grid
+ * `collapseBelow` precedent — same caveat, same cause). Below 640px
+ * (`_internal/collapse.scss`'s `$collapse-md`) every container re-templates
+ * to one column and pointer + keyboard editing turns off (handles hidden,
+ * items not editing-focusable) — a `ResizeObserver` on the root mirrors the
+ * CSS breakpoint so a gesture can never half-start below it; section
+ * collapse toggles keep working regardless of width.
+ *
  * @example
  * // Static/read-only layout — no onChange, geometry only.
  * <DashboardCanvas
@@ -288,6 +312,12 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     const dragRef = useRef<DragState | null>(null);
     const [live, setLive] = useState<LiveState | null>(null);
     const [pick, setPick] = useState<KeyboardPick | null>(null);
+    // Below-md editing gate. Starts wide: jsdom has no ResizeObserver, and a
+    // freshly-mounted (possibly still-hidden) root reports 0 width — both
+    // stay wide so existing gesture tests keep exercising the full surface
+    // (FlowCanvas's "no RO / zero size -> untrustworthy" precedent).
+    const [isNarrow, setIsNarrow] = useState(false);
+    const editingEnabled = !readOnly && !isNarrow;
     const uid = sanitizeId(useId());
     const instructionsId = `dashboard-instructions-${uid}`;
 
@@ -329,11 +359,12 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     };
 
     const handleToggleSection = (sectionId: string | number) => {
-      // Collapse stays active in readOnly — it's navigation, not editing.
+      // Collapse stays active in readOnly AND below the narrow-editing
+      // threshold — it's navigation, not editing.
       commit(toggleSection(value, sectionId));
     };
 
-    // --- gesture starts (single readOnly choke point; Task 5 adds the narrow gate here) ---
+    // --- gesture starts (single `editingEnabled` choke point: readOnly prop OR narrow width) ---
     const onMovePointerDown = (
       event: ReactPointerEvent<HTMLDivElement>,
       placement: DashboardPlacement,
@@ -343,7 +374,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // overwrite the state (FlowCanvas discipline), and a keyboard pick owns
       // the canvas until it drops or cancels. No preventDefault — clicks
       // inside item bodies pass through until the drag arms.
-      if (readOnly || event.button !== 0 || dragRef.current || pick) return;
+      if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
       const el = event.currentTarget;
       const rect = el.getBoundingClientRect();
       dragRef.current = {
@@ -376,7 +407,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       container: ContainerRef,
       edge: ResizeEdge,
     ) => {
-      if (readOnly || event.button !== 0 || dragRef.current || pick) return;
+      if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
       // The handle sits inside the move-drag surface — never arm both.
       event.stopPropagation();
       dragRef.current = {
@@ -402,7 +433,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       event: ReactPointerEvent<HTMLDivElement>,
       sectionId: string | number,
     ) => {
-      if (readOnly || event.button !== 0 || dragRef.current || pick) return;
+      if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
       // The drag zone is the header row MINUS the collapse button and the
       // renderSectionHeader extras — those keep their own interactions.
       if ((event.target as HTMLElement).closest('button, [data-dc-section-actions]')) return;
@@ -844,18 +875,37 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // cancelPick is re-created per render but only reads current state.
     }, [dragging, pick]);
 
-    // readOnly flipping on mid-gesture aborts it — same restore as Escape.
+    // JS mirror of the CSS `@container (max-width: $collapse-md)` rule —
+    // width alone gates editing (below it, gestures + keyboard editing turn
+    // off; collapse toggles are unaffected). typeof-guard for jsdom; a
+    // reported 0 width means the root isn't laid out yet (hidden mount),
+    // which stays wide for the same reason FlowCanvas's node ResizeObserver
+    // treats 0×0 as unmeasured rather than "small."
     useEffect(() => {
-      if (!readOnly) return;
+      const root = rootRef.current;
+      if (!root || typeof ResizeObserver === 'undefined') return undefined;
+      const observer = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? 0;
+        setIsNarrow(width > 0 && width < NARROW_PX);
+      });
+      observer.observe(root);
+      return () => observer.disconnect();
+    }, []);
+
+    // readOnly OR the narrow-width gate flipping editing off mid-gesture
+    // aborts it — same restore as Escape.
+    useEffect(() => {
+      if (editingEnabled) return;
       dragRef.current = null;
       setLive(null);
       if (pick) {
         setPick(null);
         announce(t('dashboardCanvas.cancelled'));
       }
-      // Deliberately keyed on readOnly alone; the closure is from the
-      // render where it flipped, so `pick` is current.
-    }, [readOnly]);
+      // Deliberately keyed on the two raw gate inputs (not the derived
+      // `editingEnabled`, recomputed every render); the closure is from the
+      // render where either flipped, so `pick` is current.
+    }, [readOnly, isNarrow]);
 
     // An external value change mid-pick invalidates the pick's home/from
     // coordinates (and can delete the picked item outright, which would
@@ -878,7 +928,10 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     const shown =
       live != null && live.kind !== 'section' ? live.value : pick != null ? pick.preview : value;
     const gestures: CanvasGestures = {
-      readOnly,
+      // The item/section internals only care whether editing is off, not
+      // WHY — readOnly and narrow-width both render identically (no
+      // handles, not editing-focusable, gestures inert).
+      readOnly: !editingEnabled,
       movingId: live?.kind === 'move' ? live.id : null,
       resizingId: live?.kind === 'resize' ? live.id : null,
       pickedId: pick?.id ?? null,
@@ -910,6 +963,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         aria-describedby={mergeAriaDescribedby(ariaDescribedby, instructionsId)}
         className={clsx(styles.canvas, className)}
         data-readonly={readOnly ? '' : undefined}
+        data-narrow={isNarrow ? '' : undefined}
         data-dragging={dragging ? '' : undefined}
         onPointerMove={handleRootPointerMove}
         onPointerUp={handleRootPointerUp}
@@ -967,7 +1021,11 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           </div>
         )}
         <div id={instructionsId} className={styles.srOnly}>
-          {t(readOnly ? 'dashboardCanvas.instructionsReadOnly' : 'dashboardCanvas.instructions')}
+          {t(
+            editingEnabled
+              ? 'dashboardCanvas.instructions'
+              : 'dashboardCanvas.instructionsReadOnly',
+          )}
         </div>
         <div role="status" className={styles.srOnly}>
           <span key={announcement.nonce}>{announcement.text}</span>
