@@ -128,8 +128,8 @@ export function Demo() {
       </Example>
 
       <Example
-        title="Chip fill: default blue vs `color` override"
-        description="The chip fills blue by default. `color` (a PaletteColor) overrides the fill, independent of any `status` — same inline-injection contract as `Badge color`."
+        title="Chip fill: default accent (mention-matched) vs `color` override"
+        description="The chip fills with the accent tokens by default — the same `--color-accent-bg-subtle` / `--color-accent` pair RichText uses for @mentions, so a chip and a rendered mention read as one visual language. `color` (a PaletteColor) overrides the fill, independent of any `status` — same inline-injection contract as `Badge color`."
         code={`import { EntityChip } from '@eocrm/design-system';
 
 export function Demo() {

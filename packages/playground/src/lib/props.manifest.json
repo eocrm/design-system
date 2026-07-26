@@ -1639,7 +1639,7 @@
           "type": "PaletteColor",
           "required": false,
           "default": "",
-          "description": "Optional categorical palette color for the chip fill. When set, takes\nprecedence over the default blue chip tokens: the chip fills with the\nmatching `--color-palette-<name>-bg/-fg` pair (same contract as `Badge\ncolor` — picking a readable pair is the consumer's call). Omit for the\ndefault blue fill. The `status` run keeps its own resolved color\nindependent of this prop, and `unavailable` still mutes the label/status\ntext over any `color`."
+          "description": "Optional categorical palette color for the chip fill. When set, takes\nprecedence over the default accent chip tokens: the chip fills with the\nmatching `--color-palette-<name>-bg/-fg` pair (same contract as `Badge\ncolor` — picking a readable pair is the consumer's call). Omit for the\ndefault fill, which matches RichText's `@mention` styling\n(`--color-accent-bg-subtle` / `--color-accent`) so a chip and a rendered\nmention read as the same visual object. The `status` run keeps its own\nresolved color independent of this prop, and `unavailable` still mutes\nthe label/status text over any `color`."
         },
         {
           "name": "href",
