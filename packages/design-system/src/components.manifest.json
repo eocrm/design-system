@@ -177,6 +177,12 @@
     ],
     "composedBy": []
   },
+  "DashboardCanvas": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "DataTable": {
     "tier": "composition",
     "cluster": "Display",

@@ -101,6 +101,11 @@ export const ru: Messages = {
     pinnedRows: 'Закреплённые строки',
     empty: 'Нет данных',
   },
+  dashboardCanvas: {
+    canvas: 'Холст дашборда',
+    sectionCollapse: ({ title }) => `Свернуть секцию «${title as string}»`,
+    sectionExpand: ({ title }) => `Развернуть секцию «${title as string}»`,
+  },
   optionsPicker: {
     filter: 'Фильтр…',
     apply: 'Применить',

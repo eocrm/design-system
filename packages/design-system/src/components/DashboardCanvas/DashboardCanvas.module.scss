@@ -1,0 +1,85 @@
+@use './DashboardCanvas.tokens' as tokens;
+
+// Root stacks its own children — the top-level container grid, then one band
+// per section, top to bottom. This is the component's own internal
+// composition (Stack/Cluster precedent), not layout imposed on a parent.
+.canvas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dashboard-canvas-gap);
+}
+
+// One container grid — used for both the top-level items and each section's
+// body. Below-md re-templating to a single column lands in Task 5.
+.container {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: var(--dashboard-canvas-row);
+  gap: var(--dashboard-canvas-gap);
+}
+
+// Item placement — the value is resolved in DashboardCanvasItem.tsx and
+// injected as inline custom properties (Grid.Item precedent: per-cell
+// placement is this layout family's own prop, not consumer layout).
+.item {
+  // stylelint-disable-next-line property-disallowed-list -- DashboardCanvasItem's sanctioned job: per-cell grid placement (Grid.Item precedent), not consumer layout (Rule 4 exemption)
+  grid-column: var(--dc-col);
+  // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
+  grid-row: var(--dc-row);
+  overflow: auto;
+  background: var(--dashboard-canvas-item-bg);
+  border: var(--border-width) solid var(--dashboard-canvas-item-border);
+  border-radius: var(--dashboard-canvas-item-radius);
+  box-shadow: var(--dashboard-canvas-item-shadow);
+}
+
+// Full-width collapsible band.
+.section {
+  background: var(--dashboard-canvas-section-bg);
+  border: var(--border-width) solid var(--dashboard-canvas-section-border);
+  border-radius: var(--dashboard-canvas-section-radius);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--dashboard-canvas-gap);
+}
+
+.sectionToggle {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--dashboard-canvas-section-header-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: var(--border-width-emphasis) solid var(--color-accent);
+  }
+}
+
+.sectionIndicator {
+  flex-shrink: 0;
+  color: var(--dashboard-canvas-section-indicator-fg);
+  transition: transform var(--transition-fast);
+}
+
+// Chevron points down when expanded (default), rotates to point right when
+// the section is collapsed — aria-expanded is the single source of truth.
+.sectionToggle[aria-expanded='false'] .sectionIndicator {
+  transform: rotate(-90deg);
+}
+
+.sectionTitle {
+  color: var(--dashboard-canvas-section-header-fg);
+  font-weight: var(--font-weight-medium);
+}
+
+.sectionActions {
+  display: flex;
+  align-items: center;
+}

@@ -99,6 +99,11 @@ export const en: Messages = {
     pinnedRows: 'Pinned rows',
     empty: 'No data',
   },
+  dashboardCanvas: {
+    canvas: 'Dashboard canvas',
+    sectionCollapse: ({ title }) => `Collapse ${title as string} section`,
+    sectionExpand: ({ title }) => `Expand ${title as string} section`,
+  },
   optionsPicker: {
     filter: 'Filter…',
     apply: 'Apply',

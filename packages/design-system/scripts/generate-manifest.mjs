@@ -84,6 +84,7 @@ const CLUSTERS = {
   CircularProgress: 'Display',
   Code: 'Display',
   CursorPagination: 'Display',
+  DashboardCanvas: 'Display',
   DataTable: 'Display',
   EmptyState: 'Display',
   ErrorState: 'Display',

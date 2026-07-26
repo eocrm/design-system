@@ -162,6 +162,14 @@ export interface Messages {
     /** Default empty-state copy when no rows are rendered. */
     empty: string;
   };
+  dashboardCanvas: {
+    /** aria-label for the canvas root region. */
+    canvas: string;
+    /** aria-label on a section's collapse toggle when expanded (click collapses it); interpolates the section title. */
+    sectionCollapse: (params: { title: string }) => string;
+    /** aria-label on a section's collapse toggle when collapsed (click expands it); interpolates the section title. */
+    sectionExpand: (params: { title: string }) => string;
+  };
   optionsPicker: {
     /** Placeholder and aria-label for the filter (search) input. */
     filter: string;
