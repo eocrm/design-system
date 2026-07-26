@@ -8,6 +8,7 @@ import type {
 } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
+import { Accordion } from '../Accordion';
 import { useFloatingSurface } from '../_internal/overlay';
 import { mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import {
@@ -54,9 +55,18 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
    */
   onChange?: (next: DashboardCanvasValue) => void;
   /**
-   * Renders the body of an item by id. Called for every visible item on
-   * every render — and once more for the dragged item mid-gesture (the
-   * cursor-following ghost) — so keep it pure.
+   * Renders the body of an item by id. Called for every item on every
+   * render — including items inside a COLLAPSED section (its body stays
+   * mounted and `inert`, not unmounted, so Accordion's own collapse
+   * animation has real content to animate) — and once more for the dragged
+   * item mid-gesture (the cursor-following ghost). Keep it pure; a widget
+   * that fetches on mount pays that cost even while its section is
+   * collapsed. The cell itself is a bare positioned box with no
+   * background/border/radius/shadow of its own and no minimum height beyond
+   * its `h` row-span — that chrome belongs here, in whatever this returns
+   * (typically a `<Card>`); size the content to the cell, or accept that a
+   * shorter widget in a taller cell shows bare (dotted, in edit mode) space
+   * below it.
    */
   renderItem: (id: string | number) => ReactNode;
   /**
@@ -93,6 +103,15 @@ function itemsOf(value: DashboardCanvasValue, cref: ContainerRef): DashboardPlac
       ? value.items
       : value.sections.find((section) => section.id === cref.id)?.items) ?? []
   );
+}
+
+/**
+ * A collapsed section's body is never a drop target — its `Accordion.Content`
+ * stays mounted (CSS height animation, not a DOM unmount) so this must be
+ * checked explicitly rather than relying on the container being unregistered.
+ */
+function isCollapsedSection(value: DashboardCanvasValue, cref: ContainerRef): boolean {
+  return cref.kind === 'section' && !!value.sections.find((s) => s.id === cref.id)?.collapsed;
 }
 
 /** Last occupied row end (max `y + h`) of a container, `excludeId` left out. */
@@ -272,6 +291,10 @@ type LiveState =
  *   (`dragRef`/`pick`) assume exactly one canvas owns the pointer stream — a
  *   nested canvas fights its parent for capture and Escape handling.
  * - ❌ Using it for a simple ordered list — see "When NOT to use" above.
+ * - ❌ Expecting the grid cell to draw a card-like surface. It's chrome-less
+ *   by design (`renderItem` owns background/border/radius/shadow) so widgets
+ *   with transparent bodies (charts, images) don't render inside a redundant
+ *   box — wrap `renderItem`'s output in `<Card>` for the boxed look.
  * - ❌ The canvas is ALWAYS a size container (`container-type: inline-size`
  *   on the root, unconditionally — the below-md single-column stack depends
  *   on it) — give it a parent with a concrete width. In an intrinsic-width
@@ -400,6 +423,25 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       commit(toggleSection(value, sectionId));
     };
 
+    // Sections are composed from a single shared `<Accordion type="multiple">`
+    // (one Item per band) — `value` mirrors which bands are OPEN (inverse of
+    // `collapsed`). Reads `value`, not the render-facing `shown` (computed
+    // below): collapsed never changes mid-gesture, and `value` avoids a
+    // declaration-order dependency on `shown`. Accordion always hands back
+    // the WHOLE next open-ids array on a click, never which id changed;
+    // exactly one differs per click (its own toggle is the only way this
+    // fires), so the symmetric difference recovers it.
+    const openSectionIds = value.sections
+      .filter((section) => !section.collapsed)
+      .map((section) => String(section.id));
+    const handleSectionOpenChange = (next: string[]) => {
+      const toggledId =
+        next.find((id) => !openSectionIds.includes(id)) ??
+        openSectionIds.find((id) => !next.includes(id));
+      const section = value.sections.find((s) => String(s.id) === toggledId);
+      if (section) handleToggleSection(section.id);
+    };
+
     // --- gesture starts (single `editingEnabled` choke point: readOnly prop OR narrow width) ---
     const onMovePointerDown = (
       event: ReactPointerEvent<HTMLDivElement>,
@@ -470,9 +512,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       sectionId: string | number,
     ) => {
       if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
-      // The drag zone is the header row MINUS the collapse button and the
-      // renderSectionHeader extras — those keep their own interactions.
-      if ((event.target as HTMLElement).closest('button, [data-dc-section-actions]')) return;
+      // Called only from the section's dedicated grip handle (see
+      // DashboardCanvasSection's remarks) — no target-based exclusion needed,
+      // the toggle button and the renderSectionHeader extras never wire this.
       const fromIndex = value.sections.findIndex((section) => section.id === sectionId);
       if (fromIndex === -1) return;
       dragRef.current = {
@@ -505,10 +547,13 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           capturePointer(rootRef.current, event.pointerId);
         }
         // Drop target = the registered container grid under the pointer.
-        // Collapsed section bodies are unmounted hence unregistered, so their
-        // bands can't be targets; in dead zones (headers, gaps, outside) the
-        // last hovered container keeps the drop.
+        // Collapsed section bodies stay MOUNTED (Accordion.Content animates,
+        // never unmounts) and so stay registered — isCollapsedSection skips
+        // them explicitly here so their bands still can't be targets; in
+        // dead zones (headers, gaps, outside) the last hovered container
+        // keeps the drop.
         for (const entry of containersRef.current.values()) {
+          if (isCollapsedSection(value, entry.cref)) continue;
           const r = entry.el.getBoundingClientRect();
           if (
             event.clientX >= r.left &&
@@ -821,12 +866,13 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     };
 
     const onHeaderKeyDown = (
-      event: ReactKeyboardEvent<HTMLDivElement>,
+      event: ReactKeyboardEvent<HTMLButtonElement>,
       sectionId: string | number,
     ) => {
       if (!event.shiftKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
-      // Extras keep their keys (same exclusion as the pointer drag zone).
-      if ((event.target as HTMLElement).closest('[data-dc-section-actions]')) return;
+      // Composed onto Accordion.Trigger's own onKeyDown (it runs ours first);
+      // the target is always the trigger button itself — extras and the grip
+      // handle live outside it, so there's nothing to exclude here anymore.
       const fromIndex = value.sections.findIndex((section) => section.id === sectionId);
       if (fromIndex === -1) return;
       event.preventDefault();
@@ -1024,24 +1070,33 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
             </DashboardCanvasItem>
           ))}
         </div>
-        {shown.sections.map((section, index) => (
-          <Fragment key={section.id}>
-            {bandSlot === index && bandIndicator}
-            <DashboardCanvasSection
-              section={section}
-              renderItem={renderItem}
-              renderSectionHeader={renderSectionHeader}
-              onToggle={() => handleToggleSection(section.id)}
-              gestures={gestures}
-              dragging={live?.kind === 'section' && live.id === section.id}
-              onHeaderPointerDown={onHeaderPointerDown}
-              onHeaderKeyDown={onHeaderKeyDown}
-              setContainerEl={setContainerEl}
-              setBandEl={setBandEl}
-            />
-          </Fragment>
-        ))}
-        {bandSlot === shown.sections.length && bandIndicator}
+        {shown.sections.length > 0 && (
+          <Accordion
+            type="multiple"
+            value={openSectionIds}
+            onValueChange={handleSectionOpenChange}
+            gap="md"
+            indicatorSide="left"
+          >
+            {shown.sections.map((section, index) => (
+              <Fragment key={section.id}>
+                {bandSlot === index && bandIndicator}
+                <DashboardCanvasSection
+                  section={section}
+                  renderItem={renderItem}
+                  renderSectionHeader={renderSectionHeader}
+                  gestures={gestures}
+                  dragging={live?.kind === 'section' && live.id === section.id}
+                  onHeaderPointerDown={onHeaderPointerDown}
+                  onHeaderKeyDown={onHeaderKeyDown}
+                  setContainerEl={setContainerEl}
+                  setBandEl={setBandEl}
+                />
+              </Fragment>
+            ))}
+            {bandSlot === shown.sections.length && bandIndicator}
+          </Accordion>
+        )}
         {live?.kind === 'move' && (
           <div
             className={styles.ghost}

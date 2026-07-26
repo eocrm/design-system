@@ -6,24 +6,13 @@
   --dashboard-canvas-row: var(--space-12);
   --dashboard-canvas-gap: var(--space-3);
 
-  // Item surface
-  --dashboard-canvas-item-bg: var(--color-bg);
-  --dashboard-canvas-item-border: var(--color-border);
-  --dashboard-canvas-item-radius: var(--radius-md);
-  --dashboard-canvas-item-shadow: var(--shadow-sm);
+  // Items are chrome-less bare cells (#344) — background/border/radius/shadow
+  // belong to whatever `renderItem` returns (typically a `<Card>`), not the
+  // cell. Only gesture-state surfaces below are the canvas's own to style.
 
-  // Section band surface
-  --dashboard-canvas-section-bg: var(--color-bg-subtle);
-  --dashboard-canvas-section-border: var(--color-border);
-  --dashboard-canvas-section-radius: var(--radius-md);
-
-  // Section header
-  --dashboard-canvas-section-header-fg: var(--color-fg);
-  --dashboard-canvas-section-header-bg-hover: var(--color-bg-muted);
-  --dashboard-canvas-section-indicator-fg: var(--color-fg-subtle);
-
-  // Drag ghost + snapped drop-preview surfaces — Task 3 (pointer gestures)
-  // wires these; defined now per the plan so the token surface is stable.
+  // Drag ghost + snapped drop-preview + resize/pick surfaces — the item's
+  // OWN chrome-less idle state carries none of these; they're gesture
+  // affordances, not idle chrome.
   --dashboard-canvas-ghost-opacity: 0.6;
   --dashboard-canvas-item-shadow-dragging: var(--shadow-lg);
   --dashboard-canvas-drop-preview-bg: var(--color-accent-bg-subtle);
@@ -33,6 +22,13 @@
   --dashboard-canvas-handle-hit: var(--space-6);
   --dashboard-canvas-handle-fg: var(--color-fg-subtle);
 
-  // Band-reorder insertion indicator.
+  // Band-reorder insertion indicator. The section grip handle reuses
+  // --dashboard-canvas-handle-fg above (same "drag affordance glyph" role).
   --dashboard-canvas-drop-indicator: var(--color-accent);
+
+  // Edit-mode snap-grid dots (#344) — one dot per cell corner, hidden in
+  // readOnly/narrow (DashboardCanvas.module.scss's `:not([data-readonly],
+  // [data-narrow])` gate, same one the drag cursor uses).
+  --dashboard-canvas-dot-color: var(--color-border-strong);
+  --dashboard-canvas-dot-size: 1px;
 }

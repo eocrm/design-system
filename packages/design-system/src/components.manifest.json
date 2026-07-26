@@ -3,7 +3,9 @@
     "tier": "primitive",
     "cluster": "Navigation",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "DashboardCanvas"
+    ]
   },
   "Alert": {
     "tier": "composition",
@@ -178,9 +180,11 @@
     "composedBy": []
   },
   "DashboardCanvas": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Display",
-    "composes": [],
+    "composes": [
+      "Accordion"
+    ],
     "composedBy": []
   },
   "DataTable": {

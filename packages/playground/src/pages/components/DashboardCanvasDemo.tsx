@@ -28,11 +28,21 @@ const WIDGETS: Record<string, Widget> = {
   exports: { title: 'Scheduled exports', metric: '3 reports', sub: 'Next run: tomorrow 6am' },
 };
 
+// `activity` is the one widget tall enough (h: 3) to also show its feed —
+// content that actually fills the extra row, not blank cell below a short
+// stat (a fixed-unit grid cell never shrinks to fit; the DS `Card` inside it
+// does, so a taller widget needs taller content).
+const RECENT_EVENTS = [
+  'A. Chen closed Acme Corp — $18,200',
+  'M. Reyes logged a call with Initech',
+  'New lead: Globex Corporation',
+];
+
 const INITIAL_VALUE: DashboardCanvasValue = {
   items: [
     { id: 'revenue', x: 0, y: 0, w: 4, h: 2 },
     { id: 'deals', x: 4, y: 0, w: 4, h: 2 },
-    { id: 'activity', x: 8, y: 0, w: 4, h: 4 },
+    { id: 'activity', x: 8, y: 0, w: 4, h: 3 },
   ],
   sections: [
     {
@@ -40,8 +50,8 @@ const INITIAL_VALUE: DashboardCanvasValue = {
       title: 'Team performance',
       collapsed: false,
       items: [
-        { id: 'leaderboard', x: 0, y: 0, w: 6, h: 3 },
-        { id: 'quota', x: 6, y: 0, w: 6, h: 3 },
+        { id: 'leaderboard', x: 0, y: 0, w: 6, h: 2 },
+        { id: 'quota', x: 6, y: 0, w: 6, h: 2 },
       ],
     },
     {
@@ -90,6 +100,15 @@ function renderWidget(id: string | number) {
         <Text size="sm" tone="muted">
           {widget.sub}
         </Text>
+        {id === 'activity' && (
+          <Stack gap="xs">
+            {RECENT_EVENTS.map((event) => (
+              <Text key={event} size="sm">
+                {event}
+              </Text>
+            ))}
+          </Stack>
+        )}
       </Stack>
     </Card>
   );
@@ -125,6 +144,12 @@ const WIDGETS = {
   exports: { title: 'Scheduled exports', metric: '3 reports', sub: 'Next run: tomorrow 6am' },
 };
 
+const RECENT_EVENTS = [
+  'A. Chen closed Acme Corp — $18,200',
+  'M. Reyes logged a call with Initech',
+  'New lead: Globex Corporation',
+];
+
 function renderWidget(id) {
   const w = WIDGETS[id];
   return (
@@ -133,6 +158,11 @@ function renderWidget(id) {
         <Text size="sm" tone="muted">{w.title}</Text>
         <Title order={3} size="md">{w.metric}</Title>
         <Text size="sm" tone="muted">{w.sub}</Text>
+        {id === 'activity' && (
+          <Stack gap="xs">
+            {RECENT_EVENTS.map((event) => <Text key={event} size="sm">{event}</Text>)}
+          </Stack>
+        )}
       </Stack>
     </Card>
   );
@@ -143,7 +173,7 @@ export function Demo() {
     items: [
       { id: 'revenue', x: 0, y: 0, w: 4, h: 2 },
       { id: 'deals', x: 4, y: 0, w: 4, h: 2 },
-      { id: 'activity', x: 8, y: 0, w: 4, h: 4 },
+      { id: 'activity', x: 8, y: 0, w: 4, h: 3 },
     ],
     sections: [
       {
@@ -151,8 +181,8 @@ export function Demo() {
         title: 'Team performance',
         collapsed: false,
         items: [
-          { id: 'leaderboard', x: 0, y: 0, w: 6, h: 3 },
-          { id: 'quota', x: 6, y: 0, w: 6, h: 3 },
+          { id: 'leaderboard', x: 0, y: 0, w: 6, h: 2 },
+          { id: 'quota', x: 6, y: 0, w: 6, h: 2 },
         ],
       },
       {
