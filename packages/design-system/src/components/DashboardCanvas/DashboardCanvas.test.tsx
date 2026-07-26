@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
+import { createPortal } from 'react-dom';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { overlayStack } from '../_internal/overlay';
 import { DashboardCanvas } from './DashboardCanvas';
 import { applyMove, applyResize, reorderSection } from './engine';
 import type { DashboardCanvasValue } from './engine';
@@ -1277,5 +1279,217 @@ describe('DashboardCanvas snap-dot field (#356)', () => {
     expect(scss).toMatch(
       /background-position:\s*calc\(var\(--dashboard-canvas-gap\) \/ -2\)\s*calc\(var\(--dashboard-canvas-gap\) \/ -2\)/,
     );
+  });
+});
+
+// #362 — a Modal opened from inside renderItem portals to document.body, but
+// its events bubble through the REACT tree into the item/root handlers, so
+// without gating the canvas drags behind the open backdrop. Two layers under
+// test: the DOM-containment guard (portal-bubbled events never arm) and the
+// overlay-stack gate (no arming under an open Modal/Drawer/Lightbox, and an
+// overlay opening mid-gesture aborts it).
+describe('DashboardCanvas overlay & portal gating (#362)', () => {
+  let restoreRects: () => void;
+  beforeEach(() => {
+    restoreRects = stubCanvasRects();
+  });
+  afterEach(() => {
+    restoreRects();
+    act(() => {
+      overlayStack.unregister('test-overlay');
+    });
+  });
+
+  function renderCanvas(props: Partial<Parameters<typeof DashboardCanvas>[0]> = {}) {
+    const onChange = vi.fn();
+    const utils = render(
+      <DashboardCanvas
+        value={baseValue()}
+        onChange={onChange}
+        renderItem={renderItem}
+        columns={12}
+        {...props}
+      />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    return { ...utils, onChange, root };
+  }
+
+  it('a pointerdown bubbled from a portal inside renderItem never arms a drag', () => {
+    const portalRenderItem = (id: string | number) => (
+      <div data-testid={`item-${id}`}>
+        {id}
+        {id === 'b' && createPortal(<div data-testid="portal-surface" />, document.body)}
+      </div>
+    );
+    const { container, onChange, root } = renderCanvas({ renderItem: portalRenderItem });
+    fireEvent.pointerDown(screen.getByTestId('portal-surface'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).toBeNull();
+    expect(root).not.toHaveAttribute('data-dragging');
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('portal-bubbled moves never promote a pending press into a drag', () => {
+    const portalRenderItem = (id: string | number) => (
+      <div data-testid={`item-${id}`}>
+        {id}
+        {id === 'b' && createPortal(<div data-testid="portal-surface" />, document.body)}
+      </div>
+    );
+    const { container, onChange, root } = renderCanvas({ renderItem: portalRenderItem });
+    // Legit press on the item itself, then the move stream arrives portal-
+    // bubbled (an overlay opened on the press, before the 5px threshold).
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(screen.getByTestId('portal-surface'), {
+      clientX: 95,
+      clientY: 60,
+      pointerId: 1,
+    });
+    expect(container.querySelector('[data-dc-ghost]')).toBeNull();
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('does not arm a pointer drag while a blocking overlay is open above the canvas', () => {
+    const { container, onChange, root } = renderCanvas();
+    act(() => {
+      overlayStack.register('test-overlay', 'overlay');
+    });
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).toBeNull();
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('does not arm a keyboard pick or resize while a blocking overlay is open', () => {
+    const { container, onChange } = renderCanvas();
+    act(() => {
+      overlayStack.register('test-overlay', 'overlay');
+    });
+    const b = itemEl(container, 'b');
+    fireEvent.keyDown(b, { key: 'Enter' });
+    expect(b).not.toHaveAttribute('data-dc-picked');
+    fireEvent.keyDown(b, { key: 'ArrowRight', shiftKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('a canvas rendered INSIDE an open overlay portal keeps editing', () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <div data-modal-portal-root="">
+        <DashboardCanvas
+          value={baseValue()}
+          onChange={onChange}
+          renderItem={renderItem}
+          columns={12}
+        />
+      </div>,
+    );
+    act(() => {
+      overlayStack.register('test-overlay', 'overlay');
+    });
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('an overlay opening mid-drag aborts the gesture without committing', () => {
+    const { container, onChange, root } = renderCanvas();
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).not.toBeNull();
+    act(() => {
+      overlayStack.register('test-overlay', 'overlay');
+    });
+    expect(container.querySelector('[data-dc-ghost]')).toBeNull();
+    expect(root).not.toHaveAttribute('data-dragging');
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('does not reorder a section via Shift+Arrow while a blocking overlay is open', () => {
+    const { onChange } = renderCanvas();
+    act(() => {
+      overlayStack.register('test-overlay', 'overlay');
+    });
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Collapse Section One section' }), {
+      key: 'ArrowDown',
+      shiftKey: true,
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('an overlay opening mid-pick cancels the pick', () => {
+    const { container } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.keyDown(b, { key: 'Enter' });
+    expect(b).toHaveAttribute('data-dc-picked');
+    act(() => {
+      overlayStack.register('test-overlay', 'overlay');
+    });
+    expect(itemEl(container, 'b')).not.toHaveAttribute('data-dc-picked');
+  });
+
+  it('an overlay CLOSING mid-drag does not abort the gesture', () => {
+    act(() => {
+      overlayStack.register('test-overlay', 'overlay');
+    });
+    // Canvas inside the overlay portal so editing is allowed while it's open.
+    const onChange = vi.fn();
+    const { container } = render(
+      <div data-modal-portal-root="">
+        <DashboardCanvas
+          value={baseValue()}
+          onChange={onChange}
+          renderItem={renderItem}
+          columns={12}
+        />
+      </div>,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(container.querySelector('[data-dc-ghost]')).not.toBeNull();
+    act(() => {
+      overlayStack.unregister('test-overlay');
+    });
+    expect(container.querySelector('[data-dc-ghost]')).not.toBeNull();
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 });

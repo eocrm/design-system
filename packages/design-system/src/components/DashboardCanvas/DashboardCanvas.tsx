@@ -10,7 +10,7 @@ import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
 import { Accordion } from '../Accordion';
 import type { CollapseBreakpoint } from '../_internal/collapse';
-import { useFloatingSurface } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface } from '../_internal/overlay';
 import { mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import {
   DASHBOARD_COLUMNS,
@@ -202,6 +202,15 @@ function capturePointer(el: Element | null, pointerId: number) {
     /* jsdom */
   }
 }
+
+/**
+ * Portal roots of the stack-registered blocking overlays (Modal / Drawer /
+ * Lightbox — the ones that inert the background). A canvas inside one of
+ * these is that overlay's CONTENT and keeps editing while it's open; a canvas
+ * outside all of them is background whenever the stack is non-empty (#362).
+ */
+const OVERLAY_HOST_SELECTOR =
+  '[data-modal-portal-root], [data-drawer-portal-root], [data-lightbox-portal-root]';
 
 // In-flight gesture bookkeeping lives in a ref (FlowCanvas precedent): the
 // pointer stream mutates it without re-render churn; `live` state below is
@@ -478,6 +487,21 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       if (section) handleToggleSection(section.id);
     };
 
+    // A Modal/Popover/DropdownMenu rendered inside renderItem portals its DOM
+    // to document.body, but its events bubble through the REACT tree into the
+    // item's and root's handlers — the press physically landed on the
+    // overlay's backdrop or panel, never the canvas (the backdrop DOES win
+    // hit-testing; FlowCanvas #290 is the same class on its background pan).
+    // A target outside the canvas root is never a gesture (#362).
+    const isPortalEvent = (event: ReactPointerEvent) =>
+      !(event.target instanceof Node) || !rootRef.current?.contains(event.target);
+
+    // A blocking overlay is open and this canvas is not inside any overlay
+    // portal — the canvas is inert background, so neither a pointer press nor
+    // a keyboard pick may arm (#362).
+    const underOpenOverlay = () =>
+      overlayStack.topDepth() > 0 && !rootRef.current?.closest(OVERLAY_HOST_SELECTOR);
+
     // --- gesture starts (single `editingEnabled` choke point: readOnly prop OR narrow width) ---
     const onMovePointerDown = (
       event: ReactPointerEvent<HTMLDivElement>,
@@ -489,6 +513,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // the canvas until it drops or cancels. No preventDefault — clicks
       // inside item bodies pass through until the drag arms.
       if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
+      if (isPortalEvent(event) || underOpenOverlay()) return;
       const el = event.currentTarget;
       const rect = el.getBoundingClientRect();
       dragRef.current = {
@@ -522,6 +547,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       edge: ResizeEdge,
     ) => {
       if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
+      if (isPortalEvent(event) || underOpenOverlay()) return;
       // The handle sits inside the move-drag surface — never arm both.
       event.stopPropagation();
       dragRef.current = {
@@ -548,6 +574,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       sectionId: string | number,
     ) => {
       if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
+      if (isPortalEvent(event) || underOpenOverlay()) return;
       // Called only from the section's dedicated grip handle (see
       // DashboardCanvasSection's remarks) — no target-based exclusion needed,
       // the toggle button and the renderSectionHeader extras never wire this.
@@ -573,9 +600,14 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
 
       if (drag.kind === 'move') {
         if (!drag.moved) {
+          // Portal-bubbled moves never ARM: an overlay opened on the press
+          // itself (before the 5px threshold) must not have its backdrop
+          // moves promote the pending drag. Once armed, capture retargets
+          // the stream to the root, so this can't misfire mid-drag.
           if (
+            isPortalEvent(event) ||
             Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY) <
-            DRAG_ACTIVATION_PX
+              DRAG_ACTIVATION_PX
           ) {
             return;
           }
@@ -667,9 +699,11 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
 
       // Section band reorder — vertical only.
       if (!drag.moved) {
+        // Same portal-arming guard as the move branch above.
         if (
+          isPortalEvent(event) ||
           Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY) <
-          DRAG_ACTIVATION_PX
+            DRAG_ACTIVATION_PX
         ) {
           return;
         }
@@ -875,6 +909,14 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         }
         return;
       }
+      // A blocking overlay above the canvas gates the whole keyboard editing
+      // surface, not just the pick: `inert` already makes the cells
+      // unfocusable in the normal page case — this catches programmatic-focus
+      // edges (#362). The exemption is "inside ANY overlay host", so a canvas
+      // in a Drawer under a stacked Modal can still arm a fresh keyboard pick
+      // (pointer can't reach it; the mid-gesture abort covers post-arm opens)
+      // — deliberate residual.
+      if (underOpenOverlay()) return;
       if (activate) {
         event.preventDefault(); // Space must not scroll the page
         setPick({
@@ -918,6 +960,10 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       sectionId: string | number,
     ) => {
       if (!event.shiftKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+      // Same keyboard-editing gate as onItemKeyDown (#362) — the focus-reclaim
+      // effect programmatically focuses this very trigger, so inert alone
+      // can't be relied on to keep keys out.
+      if (underOpenOverlay()) return;
       // Composed onto Accordion.Trigger's own onKeyDown (it runs ours first);
       // the target is always the trigger button itself — extras and the grip
       // handle live outside it, so there's nothing to exclude here anymore.
@@ -1025,6 +1071,25 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       observer.observe(root);
       return () => observer.disconnect();
     }, [stackBelow]);
+
+    // An overlay opening mid-gesture aborts it (#362): pointer capture keeps
+    // the move stream flowing to the root even after a backdrop covers the
+    // canvas, so without this the drag would keep going under the modal.
+    // Depth is compared against the stack at gesture start, so a canvas
+    // already INSIDE an open overlay is unaffected by its own host; a close
+    // (depth shrinking) never aborts. Same restore as Escape.
+    useEffect(() => {
+      if (!dragging && !pick) return undefined;
+      const baseDepth = overlayStack.topDepth();
+      return overlayStack._subscribe(() => {
+        if (overlayStack.topDepth() <= baseDepth) return;
+        dragRef.current = null;
+        setLive(null);
+        if (pick) cancelPick();
+      });
+      // cancelPick is re-created per render but only reads current state.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dragging, pick]);
 
     // readOnly OR the narrow-width gate flipping editing off mid-gesture
     // aborts it — same restore as Escape.
