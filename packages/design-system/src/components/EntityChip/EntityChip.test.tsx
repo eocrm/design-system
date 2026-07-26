@@ -49,32 +49,50 @@ describe('<EntityChip>', () => {
     expect(dot.parentElement).toBe(container.firstElementChild); // direct flex item of the chip root
   });
 
-  it('resolves the status color from category', () => {
-    render(<EntityChip label="Task" status={{ label: 'In progress', category: 'in_progress' }} />);
-    const status = screen.getByText('In progress').closest('span');
-    expect(status?.style.getPropertyValue('--entity-chip-status-fg')).toBe(
+  it('resolves the status color from category, injected on the chip root (so the dot sees it too)', () => {
+    const { container } = render(
+      <EntityChip label="Task" status={{ label: 'In progress', category: 'in_progress' }} />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--entity-chip-status-fg')).toBe(
       'var(--color-palette-blue-fg)',
     );
   });
 
   it('an explicit status color wins over category', () => {
-    render(
+    const { container } = render(
       <EntityChip
         label="Task"
         status={{ label: 'Blocked', category: 'in_progress', color: 'red' }}
       />,
     );
-    const status = screen.getByText('Blocked').closest('span');
-    expect(status?.style.getPropertyValue('--entity-chip-status-fg')).toBe(
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--entity-chip-status-fg')).toBe(
       'var(--color-palette-red-fg)',
     );
   });
 
   it('falls back to slate with no category and no color', () => {
-    render(<EntityChip label="Task" status={{ label: 'Mystery' }} />);
-    const status = screen.getByText('Mystery').closest('span');
-    expect(status?.style.getPropertyValue('--entity-chip-status-fg')).toBe(
+    const { container } = render(<EntityChip label="Task" status={{ label: 'Mystery' }} />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--entity-chip-status-fg')).toBe(
       'var(--color-palette-slate-fg)',
+    );
+  });
+
+  it('the separator dot takes the status color via currentcolor (CSS reads --entity-chip-status-fg from the root)', () => {
+    const { container } = render(
+      <EntityChip label="Task" status={{ label: 'Done', category: 'done' }} />,
+    );
+    // jsdom doesn't resolve CSS Modules, so this asserts the wiring: the dot
+    // has no per-element color override and the fg custom property lives on
+    // the shared root ancestor the .dot/.status CSS rules both read from.
+    const dot = container.querySelector('[class*="dot"]') as HTMLElement;
+    const root = container.firstElementChild as HTMLElement;
+    expect(dot.style.getPropertyValue('--entity-chip-status-fg')).toBe('');
+    expect(root.contains(dot)).toBe(true);
+    expect(root.style.getPropertyValue('--entity-chip-status-fg')).toBe(
+      'var(--color-palette-green-fg)',
     );
   });
 
@@ -118,6 +136,52 @@ describe('<EntityChip>', () => {
     expect(link).toHaveAttribute('href', '/contacts/1');
     expect(link).not.toHaveAttribute('aria-disabled');
     expect(link.className).toMatch(/unavailable/);
+  });
+
+  it('`color` injects the palette bg/fg pair, and bg-hover matches bg so the hover filter works on any color', () => {
+    const { container } = render(<EntityChip label="Acme Corp" href="/deals/9" color="violet" />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--entity-chip-bg')).toBe('var(--color-palette-violet-bg)');
+    expect(root.style.getPropertyValue('--entity-chip-fg')).toBe('var(--color-palette-violet-fg)');
+    expect(root.style.getPropertyValue('--entity-chip-bg-hover')).toBe(
+      'var(--color-palette-violet-bg)',
+    );
+  });
+
+  it('without `color`, no chip-fill custom properties are injected — the default cyan tokens apply', () => {
+    const { container } = render(<EntityChip label="Contact" href="/contacts/1" />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--entity-chip-bg')).toBe('');
+    expect(root.style.getPropertyValue('--entity-chip-fg')).toBe('');
+  });
+
+  it('`color` and `status` inject independently — the status color does not leak into the chip fill', () => {
+    const { container } = render(
+      <EntityChip
+        label="Fix login bug"
+        href="/tasks/5"
+        color="teal"
+        status={{ label: 'In progress', category: 'in_progress' }}
+      />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--entity-chip-bg')).toBe('var(--color-palette-teal-bg)');
+    expect(root.style.getPropertyValue('--entity-chip-status-fg')).toBe(
+      'var(--color-palette-blue-fg)',
+    );
+  });
+
+  it("unavailable + `color`: the muted fg override still wins (the `.unavailable` class rule beats `.chip`'s color regardless of the injected --entity-chip-fg)", () => {
+    const { container } = render(
+      <EntityChip label="Deleted contact" href="/contacts/9" color="violet" unavailable />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    // The chip fill's own custom property IS still injected (unavailable
+    // doesn't touch the background) — only the text color is muted, by a
+    // `.unavailable { color: ... }` rule declared after `.chip`'s in the
+    // stylesheet, independent of what --entity-chip-fg resolves to.
+    expect(root.style.getPropertyValue('--entity-chip-fg')).toBe('var(--color-palette-violet-fg)');
+    expect(root.className).toMatch(/unavailable/);
   });
 
   it('unavailable + custom `as` keeps the real component and its props', () => {

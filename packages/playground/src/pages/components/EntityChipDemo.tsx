@@ -128,6 +128,44 @@ export function Demo() {
       </Example>
 
       <Example
+        title="Chip fill: default cyan vs `color` override"
+        description="The chip fills cyan by default. `color` (a PaletteColor) overrides the fill, independent of any `status` — same inline-injection contract as `Badge color`."
+        code={`import { EntityChip } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <>
+      <EntityChip href="/contacts/12" label="Priya Shah" />
+      <EntityChip href="/deals/9" label="Acme Corp" color="violet" />
+      <EntityChip href="/deals/14" label="Globex" color="amber" />
+      <EntityChip
+        href="/tasks/5"
+        prefix="ENG-5"
+        label="Fix login bug"
+        color="teal"
+        status={{ label: 'In progress', category: 'in_progress' }}
+      />
+    </>
+  );
+}`}
+      >
+        <InputExample width="auto">
+          <Cluster gap="sm">
+            <EntityChip href="/contacts/12" label="Priya Shah" />
+            <EntityChip href="/deals/9" label="Acme Corp" color="violet" />
+            <EntityChip href="/deals/14" label="Globex" color="amber" />
+            <EntityChip
+              href="/tasks/5"
+              prefix="ENG-5"
+              label="Fix login bug"
+              color="teal"
+              status={{ label: 'In progress', category: 'in_progress' }}
+            />
+          </Cluster>
+        </InputExample>
+      </Example>
+
+      <Example
         title="Polymorphic: link, custom `as`, button"
         description="No `as` + href renders <a>. `as={RouterLink-like}` forwards router props (to, replace, ...) with full type inference. `as` set to 'button' + onClick makes the chip an action."
         code={`import { EntityChip } from '@eocrm/design-system';
