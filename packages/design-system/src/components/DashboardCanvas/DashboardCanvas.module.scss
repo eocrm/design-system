@@ -6,9 +6,12 @@
 // per section, top to bottom. This is the component's own internal
 // composition (Stack/Cluster precedent), not layout imposed on a parent.
 // ALWAYS a size container (unconditional, unlike Grid's opt-in
-// `collapseBelow`) — the below-md single-column stack (Task 5, bottom of
-// this file) depends on it. See DashboardCanvas.tsx's JSDoc ❌ anti-pattern
-// paragraph for the intrinsic-sizing caveat this carries.
+// `collapseBelow`) — the below-breakpoint single-column stack (bottom of
+// this file) depends on it. NAMED, because each grid also sits inside an
+// unnamed `.sizer` container (square cells, below): the stack step rules
+// must keep querying the CANVAS width, and a bare `@container` would
+// resolve against the nearer sizer instead. See DashboardCanvas.tsx's JSDoc
+// ❌ anti-pattern paragraph for the intrinsic-sizing caveat this carries.
 .canvas {
   // Relative only as the anchor for the internal drag ghost (Rule 4's
   // sanctioned internal-child-anchor use).
@@ -16,6 +19,16 @@
   display: flex;
   flex-direction: column;
   gap: var(--dashboard-canvas-gap);
+  container: dashboard-canvas / inline-size;
+}
+
+// Square-cell measuring box around every container grid (top level and each
+// section body). `cqw` in `--dashboard-canvas-row` must equal the GRID's own
+// width — an element can't resolve cq units against itself, and the canvas
+// root is wrong for section bodies (Accordion.Content's padding shrinks
+// them) — so each grid gets this zero-styling wrapper as its nearest size
+// container.
+.sizer {
   container-type: inline-size;
 }
 
@@ -30,10 +43,10 @@
 
 // Edit-mode snap grid: one dot per cell corner, so a drag/resize's snapped
 // destination is visible before you commit to it. Horizontal pitch is
-// fr-based — a column's outer edge repeats every (100% + gap) / 12 (12
-// columns, 11 gaps between them: container width = 12·colWidth + 11·gap, and
-// colWidth + gap is exactly that expression / 12). Vertical pitch is the
-// fixed row unit + gap. `radial-gradient(circle at 0 0, …)` puts the dot at
+// fr-based — a column's outer edge repeats every (100% + gap) / N (N
+// columns, N-1 gaps between them: container width = N·colWidth + (N-1)·gap,
+// and colWidth + gap is exactly that expression / N). Vertical pitch is the
+// row unit + gap. `radial-gradient(circle at 0 0, …)` puts the dot at
 // each tile's own (0,0) corner rather than its center, so instances land
 // exactly on cell corners instead of cell centers.
 .canvas:not([data-readonly], [data-narrow]) .container {
@@ -42,8 +55,8 @@
     var(--dashboard-canvas-dot-color) var(--dashboard-canvas-dot-size),
     transparent var(--dashboard-canvas-dot-size)
   );
-  background-size: calc((100% + var(--dashboard-canvas-gap)) / 12)
-    calc(var(--dashboard-canvas-row) + var(--dashboard-canvas-gap));
+  background-size: calc((100% + var(--dashboard-canvas-gap)) / var(--dc-cols, 24))
+    calc(var(--dc-row-unit) + var(--dashboard-canvas-gap));
 }
 
 .canvas[data-dragging] {
@@ -52,12 +65,24 @@
 }
 
 // One container grid — used for both the top-level items and each section's
-// body. Below-md re-templating to a single column: see the
-// `@container (max-width: $collapse-md)` block at the bottom of this file.
+// body. `--dc-cols` is stamped inline on the canvas root (24 by default) and
+// inherits down. Below-breakpoint re-templating to a single column: see the
+// `@container dashboard-canvas` step blocks at the bottom of this file.
+// `--dc-row-unit` (private): the resolved row unit — the consumer-overridable
+// `--dashboard-canvas-row` token when set, else the SQUARE default: one
+// column's width, i.e. the grid's own width (100cqw via the `.sizer`
+// wrapper) minus the (N-1) gaps, split into N columns. Declared HERE, not in
+// tokens.scss's :root, because var() substitution happens at the declaring
+// element and `--dc-cols` only exists inside a canvas.
 .container {
+  --dc-row-unit: var(
+    --dashboard-canvas-row,
+    calc((100cqw - (var(--dc-cols, 24) - 1) * var(--dashboard-canvas-gap)) / var(--dc-cols, 24))
+  );
+
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-auto-rows: var(--dashboard-canvas-row);
+  grid-template-columns: repeat(var(--dc-cols, 24), minmax(0, 1fr));
+  grid-auto-rows: var(--dc-row-unit);
   gap: var(--dashboard-canvas-gap);
 }
 
@@ -206,32 +231,67 @@
   @include visually-hidden;
 }
 
-// --- below-md single-column stacking (Task 5) --------------------------
-// Below the shared $collapse-md breakpoint (`_internal/collapse.scss`,
-// 640px — kept in sync by hand with DashboardCanvas.tsx's NARROW_PX, the
-// same JS/CSS pairing the editing gate uses), every container grid
-// re-templates to one column and each item spans the full row at its own
-// height. DOM order is ALREADY (container band order, y, x) —
+// --- below-breakpoint single-column stacking ---------------------------
+// Below the `stackBelow` breakpoint (`_internal/collapse.scss` constants —
+// kept in sync by hand with DashboardCanvas.tsx's STACK_GATE_PX, the same
+// JS/CSS pairing the editing gate uses), every container grid re-templates
+// to one column and each item spans the full row at its own height. One
+// step block per breakpoint, gated by the stamped `.stackXx` class (#318
+// per-breakpoint pattern). Queries are NAMED (`dashboard-canvas`): the
+// matched elements' nearest container is the unnamed `.sizer` (square
+// cells), and the stack must key off the canvas width, which is also what
+// the JS gate observes.
+// The row unit switches to the fixed stacked token: the square `cqw` unit
+// would collapse to ~1/24 of the width once items span the full row.
+// DOM order is ALREADY (container band order, y, x) —
 // DashboardCanvasItem.tsx's `sortByPosition`, load-bearing exactly for this
 // — so the correct (section, y, x) stack order falls out for free; no JS
 // re-render needed for the reflow itself, only for the editing gate
 // (DashboardCanvas.tsx's `isNarrow`/`editingEnabled`).
 // Specificity: the base `.item` rule above (`grid-column: var(--dc-col);
-// grid-row: var(--dc-row);`) is one class = (0,1,0). `.canvas .item` below
-// is two classes = (0,2,0), which beats (0,1,0) unconditionally — no
-// reliance on this file's own source order surviving bundling (#318
+// grid-row: var(--dc-row);`) is one class = (0,1,0). `.canvas.stackXx
+// .item` below is three classes = (0,3,0), which beats it unconditionally —
+// no reliance on this file's own source order surviving bundling (#318
 // precedent; same reasoning as Grid's `.collapsible.collapseXx` double
-// class). Same math for `.canvas .container` vs the one-class `.container`
-// base rule.
-@container (max-width: #{bp.$collapse-md}) {
-  .canvas .container {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
+// class). Same math for the `.container` rules.
+@mixin stacked-container {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  grid-auto-rows: var(--dashboard-canvas-row-stacked);
+}
+
+@mixin stacked-item {
+  // stylelint-disable-next-line property-disallowed-list -- below-breakpoint override is DashboardCanvas's own placement mechanism, same sanction as the base .item rule above
+  grid-column: 1 / -1;
+  // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
+  grid-row: var(--dc-h-span);
+}
+
+@container dashboard-canvas (max-width: #{bp.$collapse-sm}) {
+  .canvas.stackSm .container {
+    @include stacked-container;
   }
 
-  .canvas .item {
-    // stylelint-disable-next-line property-disallowed-list -- below-md override is DashboardCanvas's own placement mechanism, same sanction as the base .item rule above
-    grid-column: 1 / -1;
-    // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
-    grid-row: var(--dc-h-span);
+  .canvas.stackSm .item {
+    @include stacked-item;
+  }
+}
+
+@container dashboard-canvas (max-width: #{bp.$collapse-md}) {
+  .canvas.stackMd .container {
+    @include stacked-container;
+  }
+
+  .canvas.stackMd .item {
+    @include stacked-item;
+  }
+}
+
+@container dashboard-canvas (max-width: #{bp.$collapse-lg}) {
+  .canvas.stackLg .container {
+    @include stacked-container;
+  }
+
+  .canvas.stackLg .item {
+    @include stacked-item;
   }
 }

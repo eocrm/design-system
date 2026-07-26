@@ -42,8 +42,8 @@ const value = (
 ): DashboardCanvasValue => ({ items, sections });
 
 describe('DASHBOARD_COLUMNS', () => {
-  it('is 12', () => {
-    expect(DASHBOARD_COLUMNS).toBe(12);
+  it('is 24', () => {
+    expect(DASHBOARD_COLUMNS).toBe(24);
   });
 });
 
@@ -52,12 +52,25 @@ describe('clampPlacement', () => {
     expect(clampPlacement(p('a', -3, -2, 2, 2), undefined)).toEqual(p('a', 0, 0, 2, 2));
   });
 
-  it('pulls x back so x + w fits in 12 columns', () => {
-    expect(clampPlacement(p('a', 10, 0, 4, 1), undefined)).toEqual(p('a', 8, 0, 4, 1));
+  it('pulls x back so x + w fits in the given columns (12)', () => {
+    expect(clampPlacement(p('a', 10, 0, 4, 1), undefined, 12)).toEqual(p('a', 8, 0, 4, 1));
   });
 
-  it('caps w at 12 columns and resets x to 0 when oversized', () => {
-    expect(clampPlacement(p('a', 3, 0, 20, 1), undefined)).toEqual(p('a', 0, 0, 12, 1));
+  it('pulls x back against the default 24 columns', () => {
+    expect(clampPlacement(p('a', 22, 0, 4, 1), undefined)).toEqual(p('a', 20, 0, 4, 1));
+  });
+
+  it('caps w at the given columns (12) and resets x to 0 when oversized', () => {
+    expect(clampPlacement(p('a', 3, 0, 20, 1), undefined, 12)).toEqual(p('a', 0, 0, 12, 1));
+  });
+
+  it('caps w at the default 24 columns when oversized', () => {
+    expect(clampPlacement(p('a', 3, 0, 30, 1), undefined)).toEqual(p('a', 0, 0, 24, 1));
+  });
+
+  it('clamps against an odd column count (7)', () => {
+    expect(clampPlacement(p('a', 5, 0, 4, 1), undefined, 7)).toEqual(p('a', 3, 0, 4, 1));
+    expect(clampPlacement(p('a', 2, 0, 9, 1), undefined, 7)).toEqual(p('a', 0, 0, 7, 1));
   });
 
   it('enforces w >= 1 and h >= 1 without constraints', () => {
@@ -319,10 +332,22 @@ describe('applyMove', () => {
     expect(byId(next.items, 'b')).toEqual(p('b', 0, 0, 2, 2));
   });
 
-  it('clamps the drop coordinates to the grid', () => {
+  it('clamps the drop coordinates to the grid (12 columns)', () => {
     const v = value([p('a', 0, 0, 4, 2)]);
-    const next = applyMove(v, top, top, 'a', 20, -5);
+    const next = applyMove(v, top, top, 'a', 20, -5, 12);
     expect(byId(next.items, 'a')).toEqual(p('a', 8, 0, 4, 2));
+  });
+
+  it('clamps the drop coordinates against the default 24 columns', () => {
+    const v = value([p('a', 0, 0, 4, 2)]);
+    const next = applyMove(v, top, top, 'a', 30, -5);
+    expect(byId(next.items, 'a')).toEqual(p('a', 20, 0, 4, 2));
+  });
+
+  it('clamps the drop coordinates against an odd column count (7)', () => {
+    const v = value([p('a', 0, 0, 4, 2)]);
+    const next = applyMove(v, top, top, 'a', 30, 0, 7);
+    expect(byId(next.items, 'a')).toEqual(p('a', 3, 0, 4, 2));
   });
 
   it('cross-container: removes from source, source compacts', () => {
@@ -417,14 +442,26 @@ describe('applyResize', () => {
 
   it('floors w at 1 even for an out-of-grid x from an invalid controlled value', () => {
     const v = value([p('a', 12, 0, 2, 2)]);
-    const next = applyResize(v, top, 'a', 5, 2);
+    const next = applyResize(v, top, 'a', 5, 2, undefined, 12);
     expect(byId(next.items, 'a').w).toBe(1);
   });
 
-  it('clamps w to the remaining columns at the item x', () => {
+  it('clamps w to the remaining columns at the item x (12 columns)', () => {
     const v = value([p('a', 8, 0, 2, 2)]);
+    const next = applyResize(v, top, 'a', 10, 2, undefined, 12);
+    expect(byId(next.items, 'a').w).toBe(4);
+  });
+
+  it('clamps w to the remaining columns against the default 24', () => {
+    const v = value([p('a', 20, 0, 2, 2)]);
     const next = applyResize(v, top, 'a', 10, 2);
     expect(byId(next.items, 'a').w).toBe(4);
+  });
+
+  it('clamps w to the remaining columns for an odd column count (7)', () => {
+    const v = value([p('a', 5, 0, 1, 2)]);
+    const next = applyResize(v, top, 'a', 9, 2, undefined, 7);
+    expect(byId(next.items, 'a').w).toBe(2);
   });
 
   it('respects minW, minH and maxH constraints', () => {
@@ -564,6 +601,10 @@ describe('cellFromPoint', () => {
     expect(at(100 + 40 * 72, 50 + 40 * 60)).toEqual({ x: DASHBOARD_COLUMNS - 1, y: 40 });
   });
 
+  it('clamps x overshoot against an explicit column count (7)', () => {
+    expect(cellFromPoint(100 + 40 * 72, 50, rect, 60, 48, 12, 7)).toEqual({ x: 6, y: 0 });
+  });
+
   it('guards zero-size cells (jsdom) without producing NaN', () => {
     expect(cellFromPoint(500, 500, rect, 0, 0, 0)).toEqual({ x: 0, y: 0 });
   });
@@ -601,52 +642,58 @@ describe('engine property test (seeded, #337 review)', () => {
   }
   const rand = mulberry32(20260726);
   const randInt = (max: number) => Math.floor(rand() * max);
-  const randomLayout = (): DashboardPlacement[] =>
+  const randomLayout = (columns: number): DashboardPlacement[] =>
     Array.from({ length: 2 + randInt(6) }, (_, i) => {
       const w = 1 + randInt(4);
       return {
         id: `p${i}`,
-        x: randInt(DASHBOARD_COLUMNS - w + 1),
+        x: randInt(columns - w + 1),
         y: randInt(8),
         w,
         h: 1 + randInt(3),
       };
     });
-  const expectBounds = (items: DashboardPlacement[]) => {
+  const expectBounds = (items: DashboardPlacement[], columns: number) => {
     for (const item of items) {
       expect(item.x).toBeGreaterThanOrEqual(0);
-      expect(item.x + item.w).toBeLessThanOrEqual(DASHBOARD_COLUMNS);
+      expect(item.x + item.w).toBeLessThanOrEqual(columns);
     }
   };
 
-  it('holds no-overlap, bounds, and full-compaction invariants across 200 random layouts', () => {
-    for (let i = 0; i < 200; i += 1) {
-      const compacted = compact(randomLayout());
-      expectNoOverlaps(compacted);
-      expectBounds(compacted);
-      expect(compact(compacted)).toEqual(compacted); // already fully compacted
+  it.each([[7], [12], [24]])(
+    'holds no-overlap, bounds, and full-compaction invariants across random layouts (%i columns)',
+    (columns) => {
+      for (let i = 0; i < 200; i += 1) {
+        const compacted = compact(randomLayout(columns));
+        expectNoOverlaps(compacted);
+        expectBounds(compacted, columns);
+        expect(compact(compacted)).toEqual(compacted); // already fully compacted
 
-      const dropped = clampPlacement(
-        { ...compacted[randInt(compacted.length)], x: randInt(DASHBOARD_COLUMNS), y: randInt(8) },
-        undefined,
-      );
-      const pushed = placeWithPushDown(compacted, dropped);
-      expectNoOverlaps(pushed);
-      expectBounds(pushed);
-      const out = pushed.find((item) => item.id === dropped.id)!;
-      expect(out.x).toBe(dropped.x);
-      expect(out.w).toBe(dropped.w);
-      expect(out.h).toBe(dropped.h);
+        const dropped = clampPlacement(
+          { ...compacted[randInt(compacted.length)], x: randInt(columns), y: randInt(8) },
+          undefined,
+          columns,
+        );
+        const pushed = placeWithPushDown(compacted, dropped);
+        expectNoOverlaps(pushed);
+        expectBounds(pushed, columns);
+        const out = pushed.find((item) => item.id === dropped.id)!;
+        expect(out.x).toBe(dropped.x);
+        expect(out.w).toBe(dropped.w);
+        expect(out.h).toBe(dropped.h);
 
-      const resized = applyResize(
-        value(compacted),
-        { kind: 'top' },
-        dropped.id,
-        dropped.w + 1,
-        dropped.h + 1,
-      );
-      expectNoOverlaps(resized.items);
-      expectBounds(resized.items);
-    }
-  });
+        const resized = applyResize(
+          value(compacted),
+          { kind: 'top' },
+          dropped.id,
+          dropped.w + 1,
+          dropped.h + 1,
+          undefined,
+          columns,
+        );
+        expectNoOverlaps(resized.items);
+        expectBounds(resized.items, columns);
+      }
+    },
+  );
 });

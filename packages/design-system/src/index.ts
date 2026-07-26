@@ -709,7 +709,7 @@ export type { FormSectionProps } from './components/FormSection';
 export { FormRow } from './components/FormRow';
 export type { FormRowProps } from './components/FormRow';
 
-export { DashboardCanvas } from './components/DashboardCanvas';
+export { DashboardCanvas, DASHBOARD_COLUMNS } from './components/DashboardCanvas';
 export type {
   DashboardCanvasProps,
   DashboardCanvasConstraintsProp,

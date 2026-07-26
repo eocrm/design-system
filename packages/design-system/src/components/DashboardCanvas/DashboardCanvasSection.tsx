@@ -115,22 +115,28 @@ export function DashboardCanvasSection({
         {title}
       </Accordion.Trigger>
       <Accordion.Content>
-        <div
-          className={styles.container}
-          data-dc-container={String(id)}
-          inert={collapsed}
-          ref={(el) => setContainerEl(containerRef, el)}
-        >
-          {sortByPosition(items).map((item) => (
-            <DashboardCanvasItem
-              key={item.id}
-              placement={item}
-              container={containerRef}
-              gestures={itemGestures}
-            >
-              {renderItem(item.id)}
-            </DashboardCanvasItem>
-          ))}
+        {/* .sizer: the square-cell measuring box, INSIDE Accordion.Content's
+            body padding — its width is the grid's own width, so the `cqw`
+            row unit stays square in section bodies too (same wrapper as the
+            top-level grid; see DashboardCanvas.tsx). */}
+        <div className={styles.sizer}>
+          <div
+            className={styles.container}
+            data-dc-container={String(id)}
+            inert={collapsed}
+            ref={(el) => setContainerEl(containerRef, el)}
+          >
+            {sortByPosition(items).map((item) => (
+              <DashboardCanvasItem
+                key={item.id}
+                placement={item}
+                container={containerRef}
+                gestures={itemGestures}
+              >
+                {renderItem(item.id)}
+              </DashboardCanvasItem>
+            ))}
+          </div>
         </div>
       </Accordion.Content>
     </Accordion.Item>

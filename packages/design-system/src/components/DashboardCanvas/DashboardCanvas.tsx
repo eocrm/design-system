@@ -9,6 +9,7 @@ import type {
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
 import { Accordion } from '../Accordion';
+import type { CollapseBreakpoint } from '../_internal/collapse';
 import { useFloatingSurface } from '../_internal/overlay';
 import { mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import {
@@ -79,17 +80,44 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
   /** Per-item size constraints, consulted when clamping resize gestures. */
   constraints?: DashboardCanvasConstraintsProp;
   /**
+   * Column count of every container grid (top level and each section's
+   * sub-grid). All placement/resize bounds clamp against it. Minimum 1;
+   * fractional or sub-1 values are the consumer's bug, not validated.
+   *
+   * Layouts are NOT converted between column counts — a `value` saved at one
+   * `columns` renders at half width when the count doubles. Schemas written
+   * for the pre-#350 12-column grid (e.g. the eocrm layout-v2 spec) either
+   * pass `columns={12}` to match, or migrate their saved placements to 24.
+   * @default 24
+   */
+  columns?: number;
+  /**
+   * Container width at (inclusive) and below which every container grid
+   * re-templates to one column and pointer + keyboard editing turns off:
+   * `sm` 480px / `md` 640px / `lg` 768px, measured against the canvas's OWN
+   * width (container query), not the viewport. Section collapse toggles keep
+   * working at any width. @default 'md'
+   */
+  stackBelow?: CollapseBreakpoint;
+  /**
    * View-only mode: identical geometry, but no drag/resize wiring, no resize
    * handles, and no keyboard editing — the canvas renders `value` and lets
    * section collapse toggles keep working. The canvas also disables editing
-   * on its own, without this prop, once its own width drops below 640px
-   * (below-md single-column stack) — `readOnly` is for a consumer-chosen
-   * view mode, the width gate is automatic. @default false
+   * on its own, without this prop, once its own width drops to or below the
+   * `stackBelow` breakpoint (single-column stack) — `readOnly` is for a
+   * consumer-chosen view mode, the width gate is automatic. @default false
    */
   readOnly?: boolean;
 }
 
 const TOP_CONTAINER: ContainerRef = { kind: 'top' };
+
+/** Per-breakpoint stack class (#318 pattern) — gates the @container step rules. */
+const stackClass: Record<CollapseBreakpoint, string> = {
+  sm: styles.stackSm,
+  md: styles.stackMd,
+  lg: styles.stackLg,
+};
 
 /** Stable registry key for a container (object identity is per-render). */
 function containerKey(cref: ContainerRef): string {
@@ -134,29 +162,30 @@ function bottomOf(
 const DRAG_ACTIVATION_PX = 5;
 
 /**
- * Mirrors the `--dashboard-canvas-row` default (`--space-12`, 48px). Used only
- * when `grid-auto-rows` doesn't resolve to a px length (jsdom).
+ * Fallback row unit when `grid-auto-rows` doesn't resolve to a px length
+ * (jsdom, where the square-cell `cqw` calc in `--dashboard-canvas-row` never
+ * evaluates). Mirrors `--dashboard-canvas-row-stacked` (`--space-12`, 48px).
  */
 const FALLBACK_ROW_PX = 48;
 
 /**
- * Editing-gate width threshold (px) — JS mirror of the `@container
- * (max-width: $collapse-md)` rule in DashboardCanvas.module.scss
- * (`_internal/collapse.scss`, 640px). `max-width` is INCLUSIVE, so a width
- * exactly at this value already single-columns — the gate below must match
- * with `<=`, not `<`. SCSS constants aren't readable from TS, so this
- * literal and that one are kept in sync by hand, same as the
- * `FALLBACK_ROW_PX`/`--dashboard-canvas-row` pairing above.
+ * Editing-gate width thresholds (px) — JS mirror of the `@container
+ * dashboard-canvas (max-width: …)` step rules in DashboardCanvas.module.scss
+ * (`_internal/collapse.scss` constants). `max-width` is INCLUSIVE, so a width
+ * exactly at the threshold already single-columns — the gate below must match
+ * with `<=`, not `<`. SCSS constants aren't readable from TS, so these
+ * literals and those are kept in sync by hand, same as the
+ * `FALLBACK_ROW_PX`/`--dashboard-canvas-row-stacked` pairing above.
  */
-const NARROW_PX = 640;
+const STACK_GATE_PX: Record<CollapseBreakpoint, number> = { sm: 480, md: 640, lg: 768 };
 
 /** Live px geometry of one container grid, re-measured per pointermove. */
-function measureGrid(el: HTMLElement) {
+function measureGrid(el: HTMLElement, columns: number) {
   const rect = el.getBoundingClientRect();
   const style = getComputedStyle(el);
   const gap = Number.parseFloat(style.columnGap) || 0;
   const rowHeight = Number.parseFloat(style.gridAutoRows) || FALLBACK_ROW_PX;
-  const colWidth = (rect.width - gap * (DASHBOARD_COLUMNS - 1)) / DASHBOARD_COLUMNS;
+  const colWidth = (rect.width - gap * (columns - 1)) / columns;
   return { rect, colWidth, rowHeight, gap };
 }
 
@@ -239,7 +268,7 @@ interface KeyboardPick {
   from: ContainerRef;
   homeX: number;
   homeY: number;
-  /** Item dims, for clamping the requested x against the 12-column bound. */
+  /** Item dims, for clamping the requested x against the columns bound. */
   w: number;
   container: ContainerRef;
   x: number;
@@ -261,8 +290,11 @@ type LiveState =
   | { kind: 'section'; id: string | number; slot: number };
 
 /**
- * Datadog-style 2D snap-grid dashboard: items placed on a 12-column grid with
- * a fixed row unit, full-width collapsible sections with their own sub-grids,
+ * Datadog-style 2D snap-grid dashboard: items placed on a configurable-column
+ * grid (24 by default) whose cells are SQUARE by default — the row unit
+ * derives from the container width, so the whole layout scales fluidly
+ * (override `--dashboard-canvas-row` to a fixed length for fixed-height
+ * rows) — full-width collapsible sections with their own sub-grids,
  * drag-to-move with push-down collision + live compaction preview, E/S/SE
  * resize handles, cross-container drags (top level ↔ any expanded section),
  * and vertical band reorder by dragging a section header. Always controlled —
@@ -295,13 +327,14 @@ type LiveState =
  *   by design (`renderItem` owns background/border/radius/shadow) so widgets
  *   with transparent bodies (charts, images) don't render inside a redundant
  *   box — wrap `renderItem`'s output in `<Card>` for the boxed look.
- * - ❌ The canvas is ALWAYS a size container (`container-type: inline-size`
- *   on the root, unconditionally — the below-md single-column stack depends
- *   on it) — give it a parent with a concrete width. In an intrinsic-width
- *   context (a `Cluster` item, `width: max-content`, a `Split` aside's
- *   default `auto` track) it renders at width 0 (Grid `collapseBelow`
- *   precedent — same caveat, same cause). Below 640px
- *   (`_internal/collapse.scss`'s `$collapse-md`) every container
+ * - ❌ The canvas is ALWAYS a size container (a named `container:
+ *   dashboard-canvas / inline-size` on the root, unconditionally — the
+ *   single-column stack and the square-cell row unit both depend on
+ *   container queries) — give it a parent with a concrete width. In an
+ *   intrinsic-width context (a `Cluster` item, `width: max-content`, a
+ *   `Split` aside's default `auto` track) it renders at width 0 (Grid
+ *   `collapseBelow` precedent — same caveat, same cause). At and below the
+ *   `stackBelow` breakpoint (default `md`, 640px) every container
  *   re-templates to one column and pointer + keyboard editing turns off
  *   (handles hidden, items not editing-focusable) — a `ResizeObserver` on
  *   the root mirrors the CSS breakpoint so a gesture can never half-start
@@ -351,8 +384,11 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       renderItem,
       renderSectionHeader,
       constraints,
+      columns = DASHBOARD_COLUMNS,
+      stackBelow = 'md',
       readOnly = false,
       className,
+      style,
       'aria-describedby': ariaDescribedby,
       onPointerMove: onPointerMoveProp,
       onPointerUp: onPointerUpProp,
@@ -568,13 +604,13 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         }
         const entry = containersRef.current.get(drag.targetKey);
         if (!entry) return;
-        const { rect, colWidth, rowHeight, gap } = measureGrid(entry.el);
+        const { rect, colWidth, rowHeight, gap } = measureGrid(entry.el, columns);
         // Snap by the ghost's origin (pointer minus grab offset), not the
         // pointer itself — grabbing a wide item mid-body must not yank its
         // left edge to the cursor column.
         const originX = event.clientX - drag.grabDX;
         const originY = event.clientY - drag.grabDY;
-        const cell = cellFromPoint(originX, originY, rect, colWidth, rowHeight, gap);
+        const cell = cellFromPoint(originX, originY, rect, colWidth, rowHeight, gap, columns);
         if (
           !drag.preview ||
           drag.previewKey !== drag.targetKey ||
@@ -583,7 +619,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         ) {
           // The preview IS the engine result of the hypothetical drop — the
           // exact value a pointerup right now would commit.
-          drag.preview = applyMove(value, drag.from, drag.target, drag.id, cell.x, cell.y);
+          drag.preview = applyMove(value, drag.from, drag.target, drag.id, cell.x, cell.y, columns);
           drag.previewKey = drag.targetKey;
           drag.cell = cell;
         }
@@ -605,7 +641,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       if (drag.kind === 'resize') {
         const entry = containersRef.current.get(drag.containerKey);
         if (!entry) return;
-        const { colWidth, rowHeight, gap } = measureGrid(entry.el);
+        const { colWidth, rowHeight, gap } = measureGrid(entry.el, columns);
         const dw =
           drag.edge === 's' ? 0 : Math.round((event.clientX - drag.startX) / (colWidth + gap));
         const dh =
@@ -615,7 +651,15 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         if (!drag.preview || w !== drag.lastW || h !== drag.lastH) {
           drag.lastW = w;
           drag.lastH = h;
-          drag.preview = applyResize(value, drag.container, drag.id, w, h, constraintsFor(drag.id));
+          drag.preview = applyResize(
+            value,
+            drag.container,
+            drag.id,
+            w,
+            h,
+            constraintsFor(drag.id),
+            columns,
+          );
         }
         setLive({ kind: 'resize', id: drag.id, value: drag.preview });
         return;
@@ -665,7 +709,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         ) {
           return;
         }
-        commit(applyMove(value, drag.from, drag.target, drag.id, drag.cell.x, drag.cell.y));
+        commit(
+          applyMove(value, drag.from, drag.target, drag.id, drag.cell.x, drag.cell.y, columns),
+        );
         return;
       }
       if (drag.kind === 'resize') {
@@ -680,6 +726,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
             drag.lastW,
             drag.lastH,
             constraintsFor(drag.id),
+            columns,
           ),
         );
         return;
@@ -733,7 +780,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       const idx = order.findIndex((cref) => containerKey(cref) === containerKey(current.container));
       let container = current.container;
       let crossed: ContainerRef | null = null;
-      const x = Math.min(Math.max(current.x + dx, 0), DASHBOARD_COLUMNS - current.w);
+      const x = Math.min(Math.max(current.x + dx, 0), columns - current.w);
       let y = current.y + dy;
       if (idx !== -1 && dy > 0 && y > bottomOf(current.preview, container, current.id)) {
         // Below the container's last occupied row: enter the next band at its
@@ -759,7 +806,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       } else {
         y = Math.max(y, 0);
       }
-      const preview = applyMove(value, current.from, container, current.id, x, y);
+      const preview = applyMove(value, current.from, container, current.id, x, y, columns);
       reclaimRef.current = { kind: 'item', id: current.id };
       setPick({ ...current, container, x, y, preview });
       if (crossed) {
@@ -817,7 +864,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
               pick.y === pick.homeY
             )
           ) {
-            commit(applyMove(value, pick.from, pick.container, pick.id, pick.x, pick.y));
+            commit(applyMove(value, pick.from, pick.container, pick.id, pick.x, pick.y, columns));
           }
           announce(t('dashboardCanvas.dropped'));
           return;
@@ -856,6 +903,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           w,
           h,
           constraintsFor(placement.id),
+          columns,
         );
         commit(next);
         // Announce the engine-clamped size: at a constraint the layout does
@@ -957,22 +1005,26 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // cancelPick is re-created per render but only reads current state.
     }, [dragging, pick]);
 
-    // JS mirror of the CSS `@container (max-width: $collapse-md)` rule —
-    // width alone gates editing (below it, gestures + keyboard editing turn
-    // off; collapse toggles are unaffected). typeof-guard for jsdom; a
-    // reported 0 width means the root isn't laid out yet (hidden mount),
-    // which stays wide for the same reason FlowCanvas's node ResizeObserver
-    // treats 0×0 as unmeasured rather than "small."
+    // JS mirror of the CSS `@container dashboard-canvas (max-width: …)`
+    // stack rule for the chosen breakpoint — width alone gates editing
+    // (below it, gestures + keyboard editing turn off; collapse toggles are
+    // unaffected). typeof-guard for jsdom; a reported 0 width means the root
+    // isn't laid out yet (hidden mount), which stays wide for the same
+    // reason FlowCanvas's node ResizeObserver treats 0×0 as unmeasured
+    // rather than "small." Re-created when `stackBelow` changes — observe()
+    // re-reports the current size, so the gate re-evaluates without a
+    // resize.
     useEffect(() => {
       const root = rootRef.current;
       if (!root || typeof ResizeObserver === 'undefined') return undefined;
+      const threshold = STACK_GATE_PX[stackBelow];
       const observer = new ResizeObserver((entries) => {
         const width = entries[0]?.contentRect.width ?? 0;
-        setIsNarrow(width > 0 && width <= NARROW_PX);
+        setIsNarrow(width > 0 && width <= threshold);
       });
       observer.observe(root);
       return () => observer.disconnect();
-    }, []);
+    }, [stackBelow]);
 
     // readOnly OR the narrow-width gate flipping editing off mid-gesture
     // aborts it — same restore as Escape.
@@ -1043,7 +1095,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         role="group"
         aria-label={t('dashboardCanvas.canvas')}
         aria-describedby={mergeAriaDescribedby(ariaDescribedby, instructionsId)}
-        className={clsx(styles.canvas, className)}
+        className={clsx(styles.canvas, stackClass[stackBelow], className)}
+        // Consumer style spreads last so its own custom properties win.
+        style={{ ['--dc-cols' as string]: columns, ...style }}
         data-readonly={readOnly ? '' : undefined}
         data-narrow={isNarrow ? '' : undefined}
         data-dragging={dragging ? '' : undefined}
@@ -1054,21 +1108,28 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         onBlur={handleRootBlur}
         {...rest}
       >
-        <div
-          className={styles.container}
-          data-dc-container="top"
-          ref={(el) => setContainerEl(TOP_CONTAINER, el)}
-        >
-          {sortByPosition(shown.items).map((item) => (
-            <DashboardCanvasItem
-              key={item.id}
-              placement={item}
-              container={TOP_CONTAINER}
-              gestures={gestures}
-            >
-              {renderItem(item.id)}
-            </DashboardCanvasItem>
-          ))}
+        {/* .sizer is the square-cell measuring box: an unnamed size container
+            whose content-box width IS the grid's width, so the `cqw` in
+            `--dashboard-canvas-row` resolves to it (an element can't resolve
+            cq units against itself — the root's own container only serves the
+            named stack queries). */}
+        <div className={styles.sizer}>
+          <div
+            className={styles.container}
+            data-dc-container="top"
+            ref={(el) => setContainerEl(TOP_CONTAINER, el)}
+          >
+            {sortByPosition(shown.items).map((item) => (
+              <DashboardCanvasItem
+                key={item.id}
+                placement={item}
+                container={TOP_CONTAINER}
+                gestures={gestures}
+              >
+                {renderItem(item.id)}
+              </DashboardCanvasItem>
+            ))}
+          </div>
         </div>
         {shown.sections.length > 0 && (
           <Accordion

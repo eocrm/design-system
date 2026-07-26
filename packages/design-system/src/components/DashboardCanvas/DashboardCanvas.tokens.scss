@@ -2,8 +2,20 @@
 // Every token defaults to a primitive so the resolved values match the
 // global theme; consumers retheme by overriding these custom properties.
 :root {
-  // Grid geometry — row unit is the spec's "~48px + gap" (--space-12).
-  --dashboard-canvas-row: var(--space-12);
+  // Grid geometry. `--dashboard-canvas-row` (the row unit) deliberately has
+  // NO :root default: its built-in default makes cells SQUARE by deriving
+  // one column's width from `--dc-cols` (stamped inline on the canvas root),
+  // and a var() inside a :root declaration would substitute AT :root — where
+  // `--dc-cols` doesn't exist — instead of at the grid. The square calc
+  // therefore lives on `.container` in DashboardCanvas.module.scss
+  // (`--dc-row-unit`), with `--dashboard-canvas-row` consulted first — override
+  // it anywhere (e.g. `--dashboard-canvas-row: 48px` at :root) for
+  // fixed-height, non-square rows.
+
+  // Row unit for the below-`stackBelow` single-column stack, where items
+  // span the full row and the square unit above would collapse to ~1/24 of
+  // the width. The pre-#350 fixed default ("~48px + gap", --space-12).
+  --dashboard-canvas-row-stacked: var(--space-12);
   --dashboard-canvas-gap: var(--space-3);
 
   // Items are chrome-less bare cells (#344) — background/border/radius/shadow

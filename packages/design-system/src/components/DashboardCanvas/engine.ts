@@ -1,5 +1,6 @@
 /**
- * Pure geometry engine for DashboardCanvas: 12-column snap-grid placement with
+ * Pure geometry engine for DashboardCanvas: snap-grid placement (24 columns
+ * by default; every bounds-aware op takes a trailing `columns`) with
  * Datadog-style push-down collision and vertical compaction. No React, no DOM
  * mutation — every function is deterministic and returns fresh objects,
  * never mutating its inputs.
@@ -38,22 +39,23 @@ export interface DashboardItemConstraints {
 /** Identifies a placement container: the top-level canvas or one section's sub-grid. */
 export type ContainerRef = { kind: 'top' } | { kind: 'section'; id: string | number };
 
-/** Fixed column count of every container grid. */
-export const DASHBOARD_COLUMNS = 12;
+/** Default column count of a container grid (`DashboardCanvas`'s `columns` default). */
+export const DASHBOARD_COLUMNS = 24;
 
 /**
  * Clamps a placement into the grid: `w`/`h` at least 1 (and `minW`/`minH` when
- * set), `h` capped at `maxH`, `w` capped at 12 columns, then `x` pulled back so
- * `x + w <= 12` and `x`/`y` floored at 0.
+ * set), `h` capped at `maxH`, `w` capped at `columns`, then `x` pulled back so
+ * `x + w <= columns` and `x`/`y` floored at 0.
  */
 export function clampPlacement(
   p: DashboardPlacement,
   c: DashboardItemConstraints | undefined,
+  columns: number = DASHBOARD_COLUMNS,
 ): DashboardPlacement {
-  const w = Math.min(Math.max(p.w, c?.minW ?? 1, 1), DASHBOARD_COLUMNS);
+  const w = Math.min(Math.max(p.w, c?.minW ?? 1, 1), columns);
   let h = Math.max(p.h, c?.minH ?? 1, 1);
   if (c?.maxH !== undefined) h = Math.max(Math.min(h, c.maxH), 1);
-  const x = Math.min(Math.max(p.x, 0), DASHBOARD_COLUMNS - w);
+  const x = Math.min(Math.max(p.x, 0), columns - w);
   const y = Math.max(p.y, 0);
   return { ...p, x, y, w, h };
 }
@@ -190,11 +192,12 @@ export function applyMove(
   id: string | number,
   x: number,
   y: number,
+  columns: number = DASHBOARD_COLUMNS,
 ): DashboardCanvasValue {
   const source = containerItems(value, from);
   const item = source?.find((candidate) => candidate.id === id);
   if (!source || !item || containerItems(value, to) === undefined) return value;
-  const dropped = clampPlacement({ ...item, x, y }, undefined);
+  const dropped = clampPlacement({ ...item, x, y }, undefined, columns);
   if (sameContainer(from, to)) {
     const placed = placeWithPushDown(source, dropped);
     return samePlacements(source, placed) ? value : withContainerItems(value, from, placed);
@@ -222,12 +225,13 @@ export function applyResize(
   w: number,
   h: number,
   c?: DashboardItemConstraints,
+  columns: number = DASHBOARD_COLUMNS,
 ): DashboardCanvasValue {
   const items = containerItems(value, container);
   const item = items?.find((candidate) => candidate.id === id);
   if (!items || !item) return value;
-  // Outermost floor: an invalid controlled x >= 12 must not yield w <= 0.
-  const nextW = Math.max(1, Math.min(Math.max(w, c?.minW ?? 1), DASHBOARD_COLUMNS - item.x));
+  // Outermost floor: an invalid controlled x >= columns must not yield w <= 0.
+  const nextW = Math.max(1, Math.min(Math.max(w, c?.minW ?? 1), columns - item.x));
   let nextH = Math.max(h, c?.minH ?? 1, 1);
   if (c?.maxH !== undefined) nextH = Math.max(Math.min(nextH, c.maxH), 1);
   const placed = placeWithPushDown(items, { ...item, w: nextW, h: nextH });
@@ -286,8 +290,9 @@ export function stackOrder(
 
 /**
  * Snaps a viewport point to a grid cell of the container: each cell owns its
- * trailing gap, x is clamped to [0, 11], y is floored at 0 but unbounded above
- * (the grid grows downward). Zero/negative cell sizes (jsdom) yield cell 0.
+ * trailing gap, x is clamped to [0, columns - 1], y is floored at 0 but
+ * unbounded above (the grid grows downward). Zero/negative cell sizes (jsdom)
+ * yield cell 0.
  */
 export function cellFromPoint(
   px: number,
@@ -296,13 +301,14 @@ export function cellFromPoint(
   colWidth: number,
   rowHeight: number,
   gap: number,
+  columns: number = DASHBOARD_COLUMNS,
 ): { x: number; y: number } {
   const colPitch = colWidth + gap;
   const rowPitch = rowHeight + gap;
   const rawX = colPitch > 0 ? Math.floor((px - containerRect.left) / colPitch) : 0;
   const rawY = rowPitch > 0 ? Math.floor((py - containerRect.top) / rowPitch) : 0;
   return {
-    x: Math.min(Math.max(rawX, 0), DASHBOARD_COLUMNS - 1),
+    x: Math.min(Math.max(rawX, 0), columns - 1),
     y: Math.max(rawY, 0),
   };
 }
