@@ -979,7 +979,7 @@
           "type": "(id: string | number) => ReactNode",
           "required": true,
           "default": "",
-          "description": "Renders the body of an item by id. Called for every visible item on\nevery render — and once more for the dragged item mid-gesture (the\ncursor-following ghost) — so keep it pure."
+          "description": "Renders the body of an item by id. Called for every item on every\nrender — including items inside a COLLAPSED section (its body stays\nmounted and `inert`, not unmounted, so Accordion's own collapse\nanimation has real content to animate) — and once more for the dragged\nitem mid-gesture (the cursor-following ghost). Keep it pure; a widget\nthat fetches on mount pays that cost even while its section is\ncollapsed. The cell itself is a bare positioned box with no\nbackground/border/radius/shadow of its own and no minimum height beyond\nits `h` row-span — that chrome belongs here, in whatever this returns\n(typically a `<Card>`); size the content to the cell, or accept that a\nshorter widget in a taller cell shows bare (dotted, in edit mode) space\nbelow it."
         },
         {
           "name": "renderSectionHeader",
