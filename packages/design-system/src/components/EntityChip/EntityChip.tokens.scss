@@ -1,14 +1,16 @@
-// EntityChip.tokens.scss — Component-scoped tokens for <EntityChip>. Stone
+// EntityChip.tokens.scss — Component-scoped tokens for <EntityChip>. Cyan
 // chip chrome + a muted prefix run + an unavailable-state override.
-// --entity-chip-bg is a literal-hex exception (same pattern as Badge/Tooltip
-// in dark.scss): the raw --color-palette-stone-bg reads too close to the
-// page/card canvas to register as a distinct chip, so it's deepened a step
-// here (and again, separately, in dark.scss) rather than changing the shared
-// palette token every other stone consumer (Badge, Palette) relies on.
+// --entity-chip-bg AND --entity-chip-fg are literal-hex exceptions (same
+// pattern as Badge/Tooltip in dark.scss): the raw --color-palette-cyan-bg/-fg
+// pair reads too faint here — the raw bg is too close to the page/card
+// canvas to register as a distinct chip, and the raw fg misses the 4.5:1
+// label-contrast bar once the bg is deepened enough to register — so both
+// are tuned a step here (and again, separately, in dark.scss) rather than
+// changing the shared palette tokens every other cyan consumer relies on.
 :root {
-  --entity-chip-bg: #d6d0c5;
-  --entity-chip-bg-hover: #d6d0c5;
-  --entity-chip-fg: var(--color-palette-stone-fg);
+  --entity-chip-bg: #87d9e8;
+  --entity-chip-bg-hover: #87d9e8;
+  --entity-chip-fg: #005466;
   --entity-chip-prefix-fg: var(--color-fg-muted);
   --entity-chip-radius: var(--radius-sm);
   --entity-chip-gap: var(--space-1);
@@ -20,10 +22,6 @@
   // padded box hugging the glyph band instead of hanging below the baseline.
   --entity-chip-line-height: var(--line-height-none);
 
-  // Hover affordance: the label thickens via text-stroke (fake bold — glyph
-  // advance widths don't change, so the chip and the surrounding sentence
-  // never reflow on hover). Never an underline.
-  --entity-chip-hover-stroke: 0.04em;
   --entity-chip-unavailable-fg: var(--color-fg-muted);
 
   // Status separator dot — DIAMETER of the solid circle rendered between the

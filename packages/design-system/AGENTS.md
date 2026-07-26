@@ -1801,16 +1801,20 @@ import { Divider } from '@eocrm/design-system';
 // RouterLink via `as`, or a status color override:
 import { Link as RouterLink } from 'react-router-dom';
 <EntityChip as={RouterLink} to="/deals/9" label="Acme Corp" status={{ label: 'At risk', color: 'amber' }} />
+
+// Chip fill override (categorical, independent of status):
+<EntityChip href="/deals/9" label="Acme Corp" color="violet" />
 ```
 
 - Polymorphic inline chip: optional `icon` (rendered `aria-hidden`), optional muted `prefix` (e.g. a task key), the `label`, and an optional colored `status`. All inline `<span>`s inside one root — safe to drop directly inside a `<p>`/`<Text>`.
 - **An EntityChip is always a link to its entity**: pass `href` (renders `<a href>`) or `as` (`RouterLink`, `'button'`, any component — same polymorphic contract as `<Link>`). The bare `<span>` form (no target) is for rare non-navigable contexts only.
-- `status`: `{ label, category?, color? }`. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default palette color; `color` (a `PaletteColor`) overrides it — same category → color mapping as `<StatusMenu>`.
+- Default chip fill is cyan. `color?: PaletteColor` overrides the fill (same inline-injection contract as `Badge color`) — independent of `status`, which keeps its own resolved color. `unavailable` still mutes the label/status/dot over any `color`.
+- `status`: `{ label, category?, color? }`. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default palette color; `color` (a `PaletteColor`) overrides it — same category → color mapping as `<StatusMenu>`. The separator dot between name and status takes the status's resolved color too (reads as one unit with the status label).
 - `loading`: swaps the body for an `aria-busy` ellipsis. `unavailable`: mutes the chip (entity deleted or no access). Both are purely visual when the chip has a link target — it stays a live, keyboard-reachable link. Only a target-less `unavailable` chip is non-interactive with `aria-disabled`.
-- Hover affordance on link/button chips: the label thickens via text-stroke (fake bold — glyph widths don't change, so nothing reflows) and the background deepens. The chip never underlines, even under aggressive consumer link CSS.
+- Hover affordance on link/button chips: the background deepens a step plus a brightness dip. Never a weight change, never an underline, even under aggressive consumer link CSS.
 - Chip text inherits the surrounding font size — inside a heading it renders at heading size, by design (that's what keeps the chip box symmetric around the local text in any context).
 - **When NOT to use**: plain status with no linked entity → `<Badge>`/`<StatusMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
-- **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` is a `PaletteColor` name, never a raw hex string. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity.
+- **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity.
 
 ### `<StatusMenu>` — status-transition dropdown
 
