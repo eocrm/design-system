@@ -40,7 +40,9 @@
 
   // Edit-mode snap-grid dots (#344) — one dot per cell corner, hidden in
   // readOnly/narrow (DashboardCanvas.module.scss's `:not([data-readonly],
-  // [data-narrow])` gate, same one the drag cursor uses).
-  --dashboard-canvas-dot-color: var(--color-border-strong);
-  --dashboard-canvas-dot-size: 1px;
+  // [data-narrow])` gate, same one the drag cursor uses). #354: 1px
+  // border-strong dots were invisible at 100% zoom — 1.5px fg-subtle reads
+  // at arm's length in both themes while staying quieter than content.
+  --dashboard-canvas-dot-color: var(--color-fg-subtle);
+  --dashboard-canvas-dot-size: 1.5px;
 }

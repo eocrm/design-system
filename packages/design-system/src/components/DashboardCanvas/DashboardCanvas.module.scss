@@ -86,6 +86,36 @@
   gap: var(--dashboard-canvas-gap);
 }
 
+// #353: an EMPTY container has no rows, so its rect collapses to zero height
+// and the pointer hit-test can never land in it — an empty, expanded body
+// keeps droppable height while editing is on: one row unit, floored at
+// --space-12 (a square row shrinks with width; ~18px is too thin a target
+// and too short for the drop-hint text). Any pointer y in the strip
+// resolves to some cell and the engine compacts the drop to y 0. `[inert]`
+// excludes collapsed section bodies (never drop targets, and their Accordion
+// collapse must still animate to zero); the readOnly/narrow gate matches the
+// other edit-only affordances, so view mode shows no blank strips.
+// `position: relative` is the internal anchor for `.dropHint` (Rule 4's
+// sanctioned use), which fills the whole strip independent of row geometry.
+.canvas:not([data-readonly], [data-narrow]) .container[data-dc-empty]:not([inert]) {
+  position: relative;
+  min-height: max(var(--dc-row-unit), var(--space-12));
+}
+
+// #353 drop affordance: rendered by DashboardCanvasSection inside an empty
+// body only while a move (drag or keyboard pick) is in flight.
+.dropHint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-width) dashed var(--dashboard-canvas-drop-preview-border);
+  border-radius: var(--radius-md);
+  color: var(--dashboard-canvas-handle-fg);
+  font-size: var(--font-size-sm);
+}
+
 // Item placement — the value is resolved in DashboardCanvasItem.tsx and
 // injected as inline custom properties (Grid.Item precedent: per-cell
 // placement is this layout family's own prop, not consumer layout). The cell
