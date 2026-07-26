@@ -4,9 +4,25 @@
 // per section, top to bottom. This is the component's own internal
 // composition (Stack/Cluster precedent), not layout imposed on a parent.
 .canvas {
+  // Relative only as the anchor for the internal drag ghost (Rule 4's
+  // sanctioned internal-child-anchor use).
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--dashboard-canvas-gap);
+}
+
+// Edit-mode drag surfaces: whole item bodies and section headers start drags,
+// so the browser must not claim their touch gestures (Sortable precedent).
+.canvas:not([data-readonly]) .item,
+.canvas:not([data-readonly]) .sectionHeader {
+  touch-action: none;
+  cursor: grab;
+}
+
+.canvas[data-dragging] {
+  cursor: grabbing;
+  user-select: none;
 }
 
 // One container grid — used for both the top-level items and each section's
@@ -26,11 +42,102 @@
   grid-column: var(--dc-col);
   // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
   grid-row: var(--dc-row);
+  position: relative; // anchor for the internal resize handles
   overflow: auto;
   background: var(--dashboard-canvas-item-bg);
   border: var(--border-width) solid var(--dashboard-canvas-item-border);
   border-radius: var(--dashboard-canvas-item-radius);
   box-shadow: var(--dashboard-canvas-item-shadow);
+}
+
+// The dragged item's cell renders the snapped drop preview — the ghost
+// carries the content, so the cell shows only the highlighted slot.
+.item[data-dc-drop-preview] {
+  background: var(--dashboard-canvas-drop-preview-bg);
+  border-color: var(--dashboard-canvas-drop-preview-border);
+  border-style: dashed;
+  box-shadow: none;
+
+  > * {
+    visibility: hidden;
+  }
+}
+
+.item[data-dc-resizing] {
+  border-color: var(--dashboard-canvas-drop-preview-border);
+}
+
+// Cursor-following drag ghost: the moved item's content at its original px
+// size, translated per pointermove in canvas-relative coordinates.
+.ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--dashboard-canvas-ghost-opacity);
+  background: var(--dashboard-canvas-item-bg);
+  border: var(--border-width) solid var(--dashboard-canvas-drop-preview-border);
+  border-radius: var(--dashboard-canvas-item-radius);
+  box-shadow: var(--dashboard-canvas-item-shadow-dragging);
+}
+
+// Resize handles — pointer-only edge/corner corridors (keyboard resize is
+// Task 4). 24px hit targets (WCAG 2.5.8, FlowCanvas token precedent); the
+// only visible affordance is the cursor plus the SE corner glyph on hover.
+.handleE,
+.handleS,
+.handleSE {
+  position: absolute;
+  touch-action: none;
+}
+
+.handleE {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--dashboard-canvas-handle-hit);
+  cursor: ew-resize;
+}
+
+.handleS {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--dashboard-canvas-handle-hit);
+  cursor: ns-resize;
+}
+
+.handleSE {
+  right: 0;
+  bottom: 0;
+  width: var(--dashboard-canvas-handle-hit);
+  height: var(--dashboard-canvas-handle-hit);
+  cursor: nwse-resize;
+}
+
+.handleSE::after {
+  content: '';
+  position: absolute;
+  right: var(--space-1);
+  bottom: var(--space-1);
+  width: var(--space-2);
+  height: var(--space-2);
+  border-right: var(--border-width-emphasis) solid var(--dashboard-canvas-handle-fg);
+  border-bottom: var(--border-width-emphasis) solid var(--dashboard-canvas-handle-fg);
+  border-bottom-right-radius: var(--radius-sm);
+  visibility: hidden;
+}
+
+.item:hover .handleSE::after {
+  visibility: visible;
+}
+
+// Live insertion indicator between section bands during a band-reorder drag.
+.bandIndicator {
+  height: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--dashboard-canvas-drop-indicator);
 }
 
 // Full-width collapsible band.

@@ -159,10 +159,29 @@ function sameContainer(a: ContainerRef, b: ContainerRef): boolean {
 }
 
 /**
+ * Index-wise placement equality — lets `applyMove`/`applyResize` return their
+ * input by reference when a gesture resolves to the current layout, so
+ * callers can gate commits on `next !== value` alone.
+ */
+function samePlacements(
+  a: readonly DashboardPlacement[],
+  b: readonly DashboardPlacement[],
+): boolean {
+  return (
+    a.length === b.length &&
+    a.every((p, i) => {
+      const q = b[i];
+      return p.id === q.id && p.x === q.x && p.y === q.y && p.w === q.w && p.h === q.h;
+    })
+  );
+}
+
+/**
  * Moves an item to cell (x, y) of the `to` container (which may equal `from`).
  * The source compacts after removal; the item is push-down-placed in the
- * target with its coordinates clamped to the grid. Unknown item or missing
- * target container returns the value unchanged.
+ * target with its coordinates clamped to the grid. Unknown item, missing
+ * target container, or a same-container move that resolves to the current
+ * layout returns the value unchanged (same reference).
  */
 export function applyMove(
   value: DashboardCanvasValue,
@@ -177,7 +196,8 @@ export function applyMove(
   if (!source || !item || containerItems(value, to) === undefined) return value;
   const dropped = clampPlacement({ ...item, x, y }, undefined);
   if (sameContainer(from, to)) {
-    return withContainerItems(value, from, placeWithPushDown(source, dropped));
+    const placed = placeWithPushDown(source, dropped);
+    return samePlacements(source, placed) ? value : withContainerItems(value, from, placed);
   }
   const removed = withContainerItems(
     value,
@@ -192,7 +212,8 @@ export function applyMove(
  * vertical compaction): `w`/`h` are clamped by the constraints and by the
  * columns remaining right of `x`, then the layout resettles around it —
  * growing pushes neighbors down, shrinking lets them compact back up.
- * Unknown item returns the value unchanged.
+ * Unknown item, or a resize whose clamped dimensions resolve to the current
+ * layout, returns the value unchanged (same reference).
  */
 export function applyResize(
   value: DashboardCanvasValue,
@@ -209,11 +230,8 @@ export function applyResize(
   const nextW = Math.max(1, Math.min(Math.max(w, c?.minW ?? 1), DASHBOARD_COLUMNS - item.x));
   let nextH = Math.max(h, c?.minH ?? 1, 1);
   if (c?.maxH !== undefined) nextH = Math.max(Math.min(nextH, c.maxH), 1);
-  return withContainerItems(
-    value,
-    container,
-    placeWithPushDown(items, { ...item, w: nextW, h: nextH }),
-  );
+  const placed = placeWithPushDown(items, { ...item, w: nextW, h: nextH });
+  return samePlacements(items, placed) ? value : withContainerItems(value, container, placed);
 }
 
 /** Flips one section's `collapsed` flag; everything else is untouched (same refs). */

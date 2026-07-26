@@ -568,3 +568,21 @@ describe('cellFromPoint', () => {
     expect(cellFromPoint(500, 500, rect, 0, 0, 0)).toEqual({ x: 0, y: 0 });
   });
 });
+
+describe('no-op gestures return the input reference', () => {
+  const value: DashboardCanvasValue = {
+    items: [
+      { id: 'a', x: 0, y: 0, w: 2, h: 1 },
+      { id: 'b', x: 0, y: 1, w: 2, h: 1 },
+    ],
+    sections: [],
+  };
+
+  it('applyMove: a same-cell drop in an already-compacted layout', () => {
+    expect(applyMove(value, { kind: 'top' }, { kind: 'top' }, 'a', 0, 0)).toBe(value);
+  });
+
+  it('applyResize: clamping that resolves to the current dimensions', () => {
+    expect(applyResize(value, { kind: 'top' }, 'a', 0, 1, { minW: 2 })).toBe(value);
+  });
+});

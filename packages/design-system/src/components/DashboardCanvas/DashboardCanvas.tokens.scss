@@ -28,4 +28,11 @@
   --dashboard-canvas-item-shadow-dragging: var(--shadow-lg);
   --dashboard-canvas-drop-preview-bg: var(--color-accent-bg-subtle);
   --dashboard-canvas-drop-preview-border: var(--color-accent);
+
+  // Resize handles: 24px pointer corridor (WCAG 2.5.8) + hover glyph color.
+  --dashboard-canvas-handle-hit: var(--space-6);
+  --dashboard-canvas-handle-fg: var(--color-fg-subtle);
+
+  // Band-reorder insertion indicator.
+  --dashboard-canvas-drop-indicator: var(--color-accent);
 }
