@@ -23,10 +23,27 @@
 // so the browser must not claim their touch gestures (Sortable precedent).
 // Narrow width disables editing exactly like readOnly (DashboardCanvas.tsx's
 // `editingEnabled` gate) — excluded here too so the cursor doesn't lie.
-.canvas:not([data-readonly], [data-narrow]) .item,
-.canvas:not([data-readonly], [data-narrow]) .sectionHeader {
+.canvas:not([data-readonly], [data-narrow]) .item {
   touch-action: none;
   cursor: grab;
+}
+
+// Edit-mode snap grid: one dot per cell corner, so a drag/resize's snapped
+// destination is visible before you commit to it. Horizontal pitch is
+// fr-based — a column's outer edge repeats every (100% + gap) / 12 (12
+// columns, 11 gaps between them: container width = 12·colWidth + 11·gap, and
+// colWidth + gap is exactly that expression / 12). Vertical pitch is the
+// fixed row unit + gap. `radial-gradient(circle at 0 0, …)` puts the dot at
+// each tile's own (0,0) corner rather than its center, so instances land
+// exactly on cell corners instead of cell centers.
+.canvas:not([data-readonly], [data-narrow]) .container {
+  background-image: radial-gradient(
+    circle at 0 0,
+    var(--dashboard-canvas-dot-color) var(--dashboard-canvas-dot-size),
+    transparent var(--dashboard-canvas-dot-size)
+  );
+  background-size: calc((100% + var(--dashboard-canvas-gap)) / 12)
+    calc(var(--dashboard-canvas-row) + var(--dashboard-canvas-gap));
 }
 
 .canvas[data-dragging] {
@@ -46,7 +63,10 @@
 
 // Item placement — the value is resolved in DashboardCanvasItem.tsx and
 // injected as inline custom properties (Grid.Item precedent: per-cell
-// placement is this layout family's own prop, not consumer layout).
+// placement is this layout family's own prop, not consumer layout). The cell
+// itself is a bare positioned box (#344) — no background/border/radius/
+// shadow of its own; that's whatever `renderItem` returns (typically a
+// `<Card>`). Only gesture-state affordances below get their own chrome.
 .item {
   // stylelint-disable-next-line property-disallowed-list -- DashboardCanvasItem's sanctioned job: per-cell grid placement (Grid.Item precedent), not consumer layout (Rule 4 exemption)
   grid-column: var(--dc-col);
@@ -54,19 +74,14 @@
   grid-row: var(--dc-row);
   position: relative; // anchor for the internal resize handles
   overflow: auto;
-  background: var(--dashboard-canvas-item-bg);
-  border: var(--border-width) solid var(--dashboard-canvas-item-border);
-  border-radius: var(--dashboard-canvas-item-radius);
-  box-shadow: var(--dashboard-canvas-item-shadow);
 }
 
 // The dragged item's cell renders the snapped drop preview — the ghost
-// carries the content, so the cell shows only the highlighted slot.
+// carries the content, so the cell shows only the highlighted slot. Its own
+// full border (the idle `.item` has none to inherit from).
 .item[data-dc-drop-preview] {
   background: var(--dashboard-canvas-drop-preview-bg);
-  border-color: var(--dashboard-canvas-drop-preview-border);
-  border-style: dashed;
-  box-shadow: none;
+  border: var(--border-width) dashed var(--dashboard-canvas-drop-preview-border);
 
   > * {
     visibility: hidden;
@@ -74,23 +89,29 @@
 }
 
 .item[data-dc-resizing] {
-  border-color: var(--dashboard-canvas-drop-preview-border);
+  border: var(--border-width) solid var(--dashboard-canvas-drop-preview-border);
 }
 
 // Keyboard editing: the cell itself is the focusable editing surface.
+// Inset so the ring stays inside the cell's own bounds — with no
+// background/border of its own to sit against, an outer ring would visually
+// bleed into the grid gap and read as belonging to the neighboring cell.
 .item:focus-visible {
   outline: var(--border-width-emphasis) solid var(--color-accent);
+  outline-offset: calc(-1 * var(--border-width-emphasis));
 }
 
 // A keyboard-picked item travels with the engine preview — mark it like an
 // armed drag (content stays visible; there is no ghost on the keyboard path).
 .item[data-dc-picked] {
-  border-color: var(--dashboard-canvas-drop-preview-border);
+  border: var(--border-width) solid var(--dashboard-canvas-drop-preview-border);
   box-shadow: var(--dashboard-canvas-item-shadow-dragging);
 }
 
 // Cursor-following drag ghost: the moved item's content at its original px
-// size, translated per pointermove in canvas-relative coordinates.
+// size, translated per pointermove in canvas-relative coordinates. No
+// background/border of its own — the content it carries (`renderItem`'s
+// output) supplies that; the shadow is the "lifted, mid-drag" cue.
 .ghost {
   position: absolute;
   top: 0;
@@ -98,9 +119,6 @@
   overflow: hidden;
   pointer-events: none;
   opacity: var(--dashboard-canvas-ghost-opacity);
-  background: var(--dashboard-canvas-item-bg);
-  border: var(--border-width) solid var(--dashboard-canvas-drop-preview-border);
-  border-radius: var(--dashboard-canvas-item-radius);
   box-shadow: var(--dashboard-canvas-item-shadow-dragging);
 }
 
@@ -162,55 +180,25 @@
   background: var(--dashboard-canvas-drop-indicator);
 }
 
-// Full-width collapsible band.
-.section {
-  background: var(--dashboard-canvas-section-bg);
-  border: var(--border-width) solid var(--dashboard-canvas-section-border);
-  border-radius: var(--dashboard-canvas-section-radius);
-}
+// Section bands are `<Accordion>` Items now (#344) — header/chevron/panel
+// chrome + the open↔close animation come from Accordion's own CSS.
 
-.sectionHeader {
+// Band-reorder grip: a dedicated handle in the Trigger's `actions` slot
+// (DashboardCanvasSection's remarks explain why it can't just be "grab the
+// header" once the header IS the toggle button). It's the ONLY pointer
+// affordance for band reorder, so it gets the same 24px hit corridor as the
+// resize handles (WCAG 2.5.8) even though the glyph itself is smaller.
+// Pointer-only; not rendered at all in readOnly (no `:not([data-readonly])`
+// gate needed here — DashboardCanvasSection omits the element outright).
+.sectionDragHandle {
   display: flex;
   align-items: center;
-  gap: var(--dashboard-canvas-gap);
-}
-
-.sectionToggle {
-  display: flex;
-  align-items: center;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--dashboard-canvas-section-header-bg-hover);
-  }
-
-  &:focus-visible {
-    outline: var(--border-width-emphasis) solid var(--color-accent);
-  }
-}
-
-.sectionIndicator {
-  flex-shrink: 0;
-  color: var(--dashboard-canvas-section-indicator-fg);
-  transition: transform var(--transition-fast);
-}
-
-// Chevron points down when expanded (default), rotates to point right when
-// the section is collapsed — aria-expanded is the single source of truth.
-.sectionToggle[aria-expanded='false'] .sectionIndicator {
-  transform: rotate(-90deg);
-}
-
-.sectionTitle {
-  color: var(--dashboard-canvas-section-header-fg);
-  font-weight: var(--font-weight-medium);
-}
-
-.sectionActions {
-  display: flex;
-  align-items: center;
+  justify-content: center;
+  width: var(--dashboard-canvas-handle-hit);
+  height: var(--dashboard-canvas-handle-hit);
+  color: var(--dashboard-canvas-handle-fg);
+  touch-action: none;
+  cursor: grab;
 }
 
 // Keyboard instructions + live announcement region.

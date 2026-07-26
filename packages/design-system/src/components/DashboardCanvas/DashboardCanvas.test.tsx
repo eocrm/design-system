@@ -45,20 +45,36 @@ describe('DashboardCanvas rendering', () => {
       el.getAttribute('data-dc-item'),
     );
     // a: y=1, b: y=0 → b renders before a even though it's second in value.items.
-    // c/d live inside their sections and come after.
-    expect(ids).toEqual(['b', 'a', 'c']); // s2 is collapsed, so 'd' is unmounted.
+    // c/d live inside their sections and come after. s2 (holding 'd') is
+    // collapsed, but Accordion.Content keeps its body mounted (a CSS height
+    // animation, not a DOM unmount) — 'd' still renders, inert, last.
+    expect(ids).toEqual(['b', 'a', 'c', 'd']);
   });
 
-  it('calls renderItem exactly once per visible item id', () => {
+  it('calls renderItem for every item, including ones in a collapsed section', () => {
     const spy = vi.fn(renderItem);
     render(<DashboardCanvas value={baseValue()} renderItem={spy} />);
     expect(screen.getByTestId('item-a')).toBeInTheDocument();
     expect(screen.getByTestId('item-b')).toBeInTheDocument();
     expect(screen.getByTestId('item-c')).toBeInTheDocument();
-    // 'd' belongs to the collapsed section — its body is unmounted.
-    expect(screen.queryByTestId('item-d')).not.toBeInTheDocument();
-    expect(spy).toHaveBeenCalledTimes(3);
-    expect(spy.mock.calls.map((call) => call[0]).sort()).toEqual(['a', 'b', 'c']);
+    // 'd' belongs to the collapsed section — present (Accordion.Content
+    // stays mounted) but inert (see the collapsed-section a11y test below).
+    expect(screen.getByTestId('item-d')).toBeInTheDocument();
+    expect(spy).toHaveBeenCalledTimes(4);
+    expect(spy.mock.calls.map((call) => call[0]).sort()).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('a collapsed section’s items are inert: not focusable, not a drag/resize surface', () => {
+    const { container } = render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    const d = itemEl(container, 'd');
+    expect(d).not.toHaveAttribute('tabindex');
+    expect(d).not.toHaveAttribute('role');
+    expect(container.querySelector('[data-dc-container="s2"]')).toHaveAttribute('inert');
+  });
+
+  it('an expanded section’s container is not inert', () => {
+    const { container } = render(<DashboardCanvas value={baseValue()} renderItem={renderItem} />);
+    expect(container.querySelector('[data-dc-container="s1"]')).not.toHaveAttribute('inert');
   });
 
   it('renders sections in band (array) order with their titles', () => {
@@ -110,7 +126,7 @@ describe('DashboardCanvas section collapse', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
     const next = onChange.mock.calls[0][0] as DashboardCanvasValue;
     expect(next.sections.find((s) => s.id === 's1')?.collapsed).toBe(true);
-    // Item geometry is preserved even though the body unmounts.
+    // Item geometry is preserved even though the body goes inert.
     expect(next.sections.find((s) => s.id === 's1')?.items).toEqual(value.sections[0].items);
     expect(next.items).toEqual(value.items);
   });
@@ -227,6 +243,16 @@ function stubCanvasRects(): () => void {
 
 function itemEl(container: HTMLElement, id: string): HTMLElement {
   return container.querySelector(`[data-dc-item="${id}"]`) as HTMLElement;
+}
+
+// Band drag-reorder starts from the section's dedicated grip handle, not the
+// header at large — Accordion's toggle button fills the whole header width
+// (DashboardCanvasSection's remarks), so there's no other independent
+// press-and-drag surface left in the row.
+function sectionHandle(container: HTMLElement, id: string): HTMLElement {
+  return container.querySelector(
+    `[data-dc-section="${id}"] [data-dc-section-handle]`,
+  ) as HTMLElement;
 }
 
 describe('DashboardCanvas pointer gestures', () => {
@@ -403,7 +429,7 @@ describe('DashboardCanvas pointer gestures', () => {
 
   it('dragging a section header shows an insertion indicator and commits reorderSection', () => {
     const { container, onChange, value, root } = renderCanvas();
-    fireEvent.pointerDown(screen.getByText('Section One'), {
+    fireEvent.pointerDown(sectionHandle(container, 's1'), {
       clientX: 100,
       clientY: 570,
       pointerId: 1,
@@ -420,7 +446,7 @@ describe('DashboardCanvas pointer gestures', () => {
 
   it('a band drag dropped back at its own slot fires nothing', () => {
     const { container, onChange, root } = renderCanvas();
-    fireEvent.pointerDown(screen.getByText('Section One'), {
+    fireEvent.pointerDown(sectionHandle(container, 's1'), {
       clientX: 100,
       clientY: 570,
       pointerId: 1,
