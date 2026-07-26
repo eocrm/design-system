@@ -38,6 +38,16 @@ interface EntityChipOwnProps {
   prefix?: ReactNode;
   /** Inline workflow status, separated by a small dot and rendered in the status's own color. */
   status?: EntityChipStatus;
+  /**
+   * Optional categorical palette color for the chip fill. When set, takes
+   * precedence over the default cyan chip tokens: the chip fills with the
+   * matching `--color-palette-<name>-bg/-fg` pair (same contract as `Badge
+   * color` — picking a readable pair is the consumer's call). Omit for the
+   * default cyan fill. The `status` run keeps its own resolved color
+   * independent of this prop, and `unavailable` still mutes the label/status
+   * text over any `color`.
+   */
+  color?: PaletteColor;
   /** Renders `as="a"` with this href when `as` is omitted. */
   href?: string;
   /**
@@ -89,6 +99,36 @@ function statusColorStyle(status: EntityChipStatus): CSSProperties {
   return { '--entity-chip-status-fg': fg } as CSSProperties;
 }
 
+/** Injectable custom-properties for a consumer `color` override — same
+ * inline-injection contract as `Badge color`. Points bg-hover at the same
+ * bg so the hover brightness filter works on any palette color. */
+function colorStyle(color: PaletteColor): CSSProperties {
+  return {
+    '--entity-chip-bg': `var(--color-palette-${color}-bg)`,
+    '--entity-chip-fg': `var(--color-palette-${color}-fg)`,
+    '--entity-chip-bg-hover': `var(--color-palette-${color}-bg)`,
+  } as CSSProperties;
+}
+
+/**
+ * Merged inline style for the chip root: the `color` prop's palette
+ * injection, the `status`'s resolved color (read by both `.status` and
+ * `.dot` — set on the root, not the `.status` span, so the dot — a sibling,
+ * not a descendant of `.status` — can see it too), then the consumer's own
+ * `style` last so it wins on a collision.
+ */
+function rootStyle(
+  color: PaletteColor | undefined,
+  status: EntityChipStatus | undefined,
+  consumerStyle: CSSProperties | undefined,
+): CSSProperties | undefined {
+  const colorVars = color ? colorStyle(color) : undefined;
+  const statusVars = status ? statusColorStyle(status) : undefined;
+  return colorVars || statusVars || consumerStyle
+    ? { ...colorVars, ...statusVars, ...consumerStyle }
+    : undefined;
+}
+
 /**
  * Inline entity-link chip: an optional icon, an optional muted prefix (e.g.
  * a task key), the entity's name, and an optional workflow status shown in
@@ -119,6 +159,10 @@ function statusColorStyle(status: EntityChipStatus): CSSProperties {
  * <EntityChip href="/contacts/7" label="Contact" loading />
  * <EntityChip href="/contacts/9" label="Deleted contact" unavailable />
  *
+ * @example
+ * // Categorical `color` override — the chip fill itself, independent of `status`
+ * <EntityChip href="/deals/9" label="Acme Corp" color="violet" />
+ *
  * @remarks When NOT to use
  * - Plain status display with no linked entity → use `<Badge>` or `<StatusMenu>`.
  * - Standalone navigation with no entity chrome (icon/prefix/status) → use `<Link>`.
@@ -129,8 +173,8 @@ function statusColorStyle(status: EntityChipStatus): CSSProperties {
  *   chip — that composition is exactly what `EntityChip` replaces.
  * - ❌ Putting block-level children (e.g. a `<div>`) inside `label`/`prefix` —
  *   the inline-safety contract requires span-only content.
- * - ❌ Raw hex strings in `status.color`. It's a `PaletteColor` name
- *   (`'amber'`, `'violet'`, …), not a CSS color value.
+ * - ❌ Raw hex strings in `status.color` or the chip's own `color`. Both are
+ *   `PaletteColor` names (`'amber'`, `'violet'`, …), not CSS color values.
  * - ❌ Omitting a link target — an EntityChip should always link to its
  *   entity (`href` or `as`); the span-only form is for rare non-navigable
  *   contexts.
@@ -142,6 +186,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
     label,
     prefix,
     status,
+    color,
     href,
     loading = false,
     unavailable = false,
@@ -164,7 +209,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   return (
     <Component
       ref={ref}
-      style={style}
+      style={rootStyle(color, status, style)}
       className={clsx(styles.chip, unavailable && styles.unavailable, className)}
       {...elementProps}
       {...rest}
@@ -194,17 +239,19 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       ) : (
         <>
           {prefix && <span className={styles.prefix}>{prefix}</span>}
-          {/* Wrapper scopes the hover fake-bold to the entity name only. */}
+          {/* Wrapper keeps the name a single flex item (matters when `label`
+              is itself multiple nodes — e.g. a fragment) so the chip's `gap`
+              doesn't insert extra space inside the name. No longer scopes
+              hover styling (the fake-bold rule was dropped, see #345). */}
           <span className={styles.label}>{label}</span>
           {status && (
             <>
               {/* Separator dot is its own flex item so the chip's `gap` spaces
                   it symmetrically between name and status. A solid circle, not
-                  a font glyph — exact size, no line-box inflation. */}
+                  a font glyph — exact size, no line-box inflation. Colored via
+                  --entity-chip-status-fg, set on the chip root above (rootStyle). */}
               <span className={styles.dot} aria-hidden="true" />
-              <span className={styles.status} style={statusColorStyle(status)}>
-                {status.label}
-              </span>
+              <span className={styles.status}>{status.label}</span>
             </>
           )}
         </>

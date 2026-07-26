@@ -88,10 +88,15 @@
   --tooltip-arrow-bg: #39424b;
 
   // EntityChip — literal-hex exception (EntityChip.tokens.scss), same reason
-  // as the light override: the raw stone palette bg reads too close to the
-  // dark page/card canvas, so it's deepened a step to stay a distinct chip.
-  --entity-chip-bg: #514d45;
-  --entity-chip-bg-hover: #514d45;
+  // as the light override: the raw cyan palette bg reads too close to the
+  // dark page/card canvas, so it's lightened a step to stay a distinct chip.
+  // fg is pinned to the (already dark-tuned) --color-palette-cyan-fg value —
+  // it clears the 4.5:1 bar against this bg as-is, but it's set explicitly
+  // here (not left to inherit) because the light default above is a literal
+  // that would otherwise leak into dark mode unchanged.
+  --entity-chip-bg: #255e6a;
+  --entity-chip-bg-hover: #255e6a;
+  --entity-chip-fg: var(--color-palette-cyan-fg);
 
   // Categorical palette — the 30 named colors (a bg + fg pair each). Same hue
   // as light, lightness flipped (dark tinted bg + light vivid fg), saturation
