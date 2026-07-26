@@ -218,6 +218,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['FlowCanvas'],
   },
   {
+    to: '/components/dashboard-canvas',
+    name: 'DashboardCanvas',
+    description:
+      '2D snap-grid dashboard — drag-to-move, resize, collapsible sections, band reorder.',
+    preview: SCHEMATICS['DashboardCanvas'],
+  },
+  {
     to: '/components/sortable',
     name: 'Sortable',
     description: 'Drag-to-reorder list with optional keyboard handle.',

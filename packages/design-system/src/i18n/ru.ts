@@ -101,6 +101,29 @@ export const ru: Messages = {
     pinnedRows: 'Закреплённые строки',
     empty: 'Нет данных',
   },
+  dashboardCanvas: {
+    canvas: 'Холст дашборда',
+    sectionCollapse: ({ title }) => `Свернуть секцию «${title as string}»`,
+    sectionExpand: ({ title }) => `Развернуть секцию «${title as string}»`,
+    itemRole: 'виджет',
+    instructions:
+      'Нажмите Enter или пробел на виджете, чтобы взять его. Пока виджет взят, стрелки перемещают его на одну ячейку — за границей контейнера он переходит в соседнюю секцию, — Enter или пробел размещает его, Escape отменяет перемещение. Shift со стрелкой изменяет размер виджета. Shift со стрелкой вверх или вниз на кнопке секции перемещает секцию.',
+    instructionsReadOnly: 'Кнопки секций сворачивают и разворачивают их.',
+    pickedUp: 'Виджет взят. Стрелки — перемещение, Enter или пробел — разместить, Escape — отмена.',
+    movedTo: ({ x, y, container }) =>
+      container
+        ? `Колонка ${x as number}, строка ${y as number}, секция «${container as string}»`
+        : `Колонка ${x as number}, строка ${y as number}`,
+    dropped: 'Виджет размещён',
+    cancelled: 'Перемещение отменено',
+    resized: ({ w, h }) => `Размер: ${w as number} на ${h as number}`,
+    sectionMoved: ({ title, position }) =>
+      position != null
+        ? `Секция «${title as string}» перемещена на позицию ${position as number}`
+        : `Секция «${title as string}» перемещена`,
+    enteredSection: ({ title }) => `Перемещено в секцию «${title as string}»`,
+    enteredTopLevel: 'Перемещено на верхний уровень',
+  },
   optionsPicker: {
     filter: 'Фильтр…',
     apply: 'Применить',

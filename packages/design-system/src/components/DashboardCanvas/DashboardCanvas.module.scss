@@ -1,0 +1,249 @@
+@use './DashboardCanvas.tokens' as tokens;
+@use '../../styles/mixins' as *;
+@use '../_internal/collapse' as bp;
+
+// Root stacks its own children — the top-level container grid, then one band
+// per section, top to bottom. This is the component's own internal
+// composition (Stack/Cluster precedent), not layout imposed on a parent.
+// ALWAYS a size container (unconditional, unlike Grid's opt-in
+// `collapseBelow`) — the below-md single-column stack (Task 5, bottom of
+// this file) depends on it. See DashboardCanvas.tsx's JSDoc ❌ anti-pattern
+// paragraph for the intrinsic-sizing caveat this carries.
+.canvas {
+  // Relative only as the anchor for the internal drag ghost (Rule 4's
+  // sanctioned internal-child-anchor use).
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dashboard-canvas-gap);
+  container-type: inline-size;
+}
+
+// Edit-mode drag surfaces: whole item bodies and section headers start drags,
+// so the browser must not claim their touch gestures (Sortable precedent).
+// Narrow width disables editing exactly like readOnly (DashboardCanvas.tsx's
+// `editingEnabled` gate) — excluded here too so the cursor doesn't lie.
+.canvas:not([data-readonly], [data-narrow]) .item,
+.canvas:not([data-readonly], [data-narrow]) .sectionHeader {
+  touch-action: none;
+  cursor: grab;
+}
+
+.canvas[data-dragging] {
+  cursor: grabbing;
+  user-select: none;
+}
+
+// One container grid — used for both the top-level items and each section's
+// body. Below-md re-templating to a single column: see the
+// `@container (max-width: $collapse-md)` block at the bottom of this file.
+.container {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: var(--dashboard-canvas-row);
+  gap: var(--dashboard-canvas-gap);
+}
+
+// Item placement — the value is resolved in DashboardCanvasItem.tsx and
+// injected as inline custom properties (Grid.Item precedent: per-cell
+// placement is this layout family's own prop, not consumer layout).
+.item {
+  // stylelint-disable-next-line property-disallowed-list -- DashboardCanvasItem's sanctioned job: per-cell grid placement (Grid.Item precedent), not consumer layout (Rule 4 exemption)
+  grid-column: var(--dc-col);
+  // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
+  grid-row: var(--dc-row);
+  position: relative; // anchor for the internal resize handles
+  overflow: auto;
+  background: var(--dashboard-canvas-item-bg);
+  border: var(--border-width) solid var(--dashboard-canvas-item-border);
+  border-radius: var(--dashboard-canvas-item-radius);
+  box-shadow: var(--dashboard-canvas-item-shadow);
+}
+
+// The dragged item's cell renders the snapped drop preview — the ghost
+// carries the content, so the cell shows only the highlighted slot.
+.item[data-dc-drop-preview] {
+  background: var(--dashboard-canvas-drop-preview-bg);
+  border-color: var(--dashboard-canvas-drop-preview-border);
+  border-style: dashed;
+  box-shadow: none;
+
+  > * {
+    visibility: hidden;
+  }
+}
+
+.item[data-dc-resizing] {
+  border-color: var(--dashboard-canvas-drop-preview-border);
+}
+
+// Keyboard editing: the cell itself is the focusable editing surface.
+.item:focus-visible {
+  outline: var(--border-width-emphasis) solid var(--color-accent);
+}
+
+// A keyboard-picked item travels with the engine preview — mark it like an
+// armed drag (content stays visible; there is no ghost on the keyboard path).
+.item[data-dc-picked] {
+  border-color: var(--dashboard-canvas-drop-preview-border);
+  box-shadow: var(--dashboard-canvas-item-shadow-dragging);
+}
+
+// Cursor-following drag ghost: the moved item's content at its original px
+// size, translated per pointermove in canvas-relative coordinates.
+.ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--dashboard-canvas-ghost-opacity);
+  background: var(--dashboard-canvas-item-bg);
+  border: var(--border-width) solid var(--dashboard-canvas-drop-preview-border);
+  border-radius: var(--dashboard-canvas-item-radius);
+  box-shadow: var(--dashboard-canvas-item-shadow-dragging);
+}
+
+// Resize handles — pointer-only edge/corner corridors (keyboard resize is
+// Task 4). 24px hit targets (WCAG 2.5.8, FlowCanvas token precedent); the
+// only visible affordance is the cursor plus the SE corner glyph on hover.
+.handleE,
+.handleS,
+.handleSE {
+  position: absolute;
+  touch-action: none;
+}
+
+.handleE {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--dashboard-canvas-handle-hit);
+  cursor: ew-resize;
+}
+
+.handleS {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--dashboard-canvas-handle-hit);
+  cursor: ns-resize;
+}
+
+.handleSE {
+  right: 0;
+  bottom: 0;
+  width: var(--dashboard-canvas-handle-hit);
+  height: var(--dashboard-canvas-handle-hit);
+  cursor: nwse-resize;
+}
+
+.handleSE::after {
+  content: '';
+  position: absolute;
+  right: var(--space-1);
+  bottom: var(--space-1);
+  width: var(--space-2);
+  height: var(--space-2);
+  border-right: var(--border-width-emphasis) solid var(--dashboard-canvas-handle-fg);
+  border-bottom: var(--border-width-emphasis) solid var(--dashboard-canvas-handle-fg);
+  border-bottom-right-radius: var(--radius-sm);
+  visibility: hidden;
+}
+
+.item:hover .handleSE::after {
+  visibility: visible;
+}
+
+// Live insertion indicator between section bands during a band-reorder drag.
+.bandIndicator {
+  height: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--dashboard-canvas-drop-indicator);
+}
+
+// Full-width collapsible band.
+.section {
+  background: var(--dashboard-canvas-section-bg);
+  border: var(--border-width) solid var(--dashboard-canvas-section-border);
+  border-radius: var(--dashboard-canvas-section-radius);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--dashboard-canvas-gap);
+}
+
+.sectionToggle {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--dashboard-canvas-section-header-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: var(--border-width-emphasis) solid var(--color-accent);
+  }
+}
+
+.sectionIndicator {
+  flex-shrink: 0;
+  color: var(--dashboard-canvas-section-indicator-fg);
+  transition: transform var(--transition-fast);
+}
+
+// Chevron points down when expanded (default), rotates to point right when
+// the section is collapsed — aria-expanded is the single source of truth.
+.sectionToggle[aria-expanded='false'] .sectionIndicator {
+  transform: rotate(-90deg);
+}
+
+.sectionTitle {
+  color: var(--dashboard-canvas-section-header-fg);
+  font-weight: var(--font-weight-medium);
+}
+
+.sectionActions {
+  display: flex;
+  align-items: center;
+}
+
+// Keyboard instructions + live announcement region.
+.srOnly {
+  @include visually-hidden;
+}
+
+// --- below-md single-column stacking (Task 5) --------------------------
+// Below the shared $collapse-md breakpoint (`_internal/collapse.scss`,
+// 640px — kept in sync by hand with DashboardCanvas.tsx's NARROW_PX, the
+// same JS/CSS pairing the editing gate uses), every container grid
+// re-templates to one column and each item spans the full row at its own
+// height. DOM order is ALREADY (container band order, y, x) —
+// DashboardCanvasItem.tsx's `sortByPosition`, load-bearing exactly for this
+// — so the correct (section, y, x) stack order falls out for free; no JS
+// re-render needed for the reflow itself, only for the editing gate
+// (DashboardCanvas.tsx's `isNarrow`/`editingEnabled`).
+// Specificity: the base `.item` rule above (`grid-column: var(--dc-col);
+// grid-row: var(--dc-row);`) is one class = (0,1,0). `.canvas .item` below
+// is two classes = (0,2,0), which beats (0,1,0) unconditionally — no
+// reliance on this file's own source order surviving bundling (#318
+// precedent; same reasoning as Grid's `.collapsible.collapseXx` double
+// class). Same math for `.canvas .container` vs the one-class `.container`
+// base rule.
+@container (max-width: #{bp.$collapse-md}) {
+  .canvas .container {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .canvas .item {
+    // stylelint-disable-next-line property-disallowed-list -- below-md override is DashboardCanvas's own placement mechanism, same sanction as the base .item rule above
+    grid-column: 1 / -1;
+    // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
+    grid-row: var(--dc-h-span);
+  }
+}

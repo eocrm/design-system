@@ -99,6 +99,29 @@ export const en: Messages = {
     pinnedRows: 'Pinned rows',
     empty: 'No data',
   },
+  dashboardCanvas: {
+    canvas: 'Dashboard canvas',
+    sectionCollapse: ({ title }) => `Collapse ${title as string} section`,
+    sectionExpand: ({ title }) => `Expand ${title as string} section`,
+    itemRole: 'widget',
+    instructions:
+      'Press Enter or Space on a widget to pick it up. While picked, the arrow keys move it one cell — past a container edge they carry it into the next section — Enter or Space drops it, Escape cancels. Shift plus an arrow key resizes a widget. On a section’s toggle button, Shift plus ArrowUp or ArrowDown moves the section.',
+    instructionsReadOnly: 'Use the section toggle buttons to collapse or expand sections.',
+    pickedUp: 'Picked up. Use the arrow keys to move, Enter or Space to drop, Escape to cancel.',
+    movedTo: ({ x, y, container }) =>
+      container
+        ? `Moved to column ${x as number}, row ${y as number} in the ${container as string} section`
+        : `Moved to column ${x as number}, row ${y as number}`,
+    dropped: 'Dropped',
+    cancelled: 'Move cancelled',
+    resized: ({ w, h }) => `Resized to ${w as number} by ${h as number}`,
+    sectionMoved: ({ title, position }) =>
+      position != null
+        ? `${title as string} section moved to position ${position as number}`
+        : `${title as string} section moved`,
+    enteredSection: ({ title }) => `Entered the ${title as string} section`,
+    enteredTopLevel: 'Moved to the top level',
+  },
   optionsPicker: {
     filter: 'Filter…',
     apply: 'Apply',

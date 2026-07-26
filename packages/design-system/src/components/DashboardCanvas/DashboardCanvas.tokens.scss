@@ -1,0 +1,38 @@
+// DashboardCanvas.tokens.scss — component-scoped tokens for <DashboardCanvas>.
+// Every token defaults to a primitive so the resolved values match the
+// global theme; consumers retheme by overriding these custom properties.
+:root {
+  // Grid geometry — row unit is the spec's "~48px + gap" (--space-12).
+  --dashboard-canvas-row: var(--space-12);
+  --dashboard-canvas-gap: var(--space-3);
+
+  // Item surface
+  --dashboard-canvas-item-bg: var(--color-bg);
+  --dashboard-canvas-item-border: var(--color-border);
+  --dashboard-canvas-item-radius: var(--radius-md);
+  --dashboard-canvas-item-shadow: var(--shadow-sm);
+
+  // Section band surface
+  --dashboard-canvas-section-bg: var(--color-bg-subtle);
+  --dashboard-canvas-section-border: var(--color-border);
+  --dashboard-canvas-section-radius: var(--radius-md);
+
+  // Section header
+  --dashboard-canvas-section-header-fg: var(--color-fg);
+  --dashboard-canvas-section-header-bg-hover: var(--color-bg-muted);
+  --dashboard-canvas-section-indicator-fg: var(--color-fg-subtle);
+
+  // Drag ghost + snapped drop-preview surfaces — Task 3 (pointer gestures)
+  // wires these; defined now per the plan so the token surface is stable.
+  --dashboard-canvas-ghost-opacity: 0.6;
+  --dashboard-canvas-item-shadow-dragging: var(--shadow-lg);
+  --dashboard-canvas-drop-preview-bg: var(--color-accent-bg-subtle);
+  --dashboard-canvas-drop-preview-border: var(--color-accent);
+
+  // Resize handles: 24px pointer corridor (WCAG 2.5.8) + hover glyph color.
+  --dashboard-canvas-handle-hit: var(--space-6);
+  --dashboard-canvas-handle-fg: var(--color-fg-subtle);
+
+  // Band-reorder insertion indicator.
+  --dashboard-canvas-drop-indicator: var(--color-accent);
+}
