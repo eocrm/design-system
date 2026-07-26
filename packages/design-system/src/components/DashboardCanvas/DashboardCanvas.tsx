@@ -253,35 +253,69 @@ type LiveState =
  * hover-to-expand). Escape or a pointer cancel mid-gesture restores the
  * current `value` without firing `onChange`.
  *
- * ❌ Anti-pattern: the canvas is ALWAYS a size container (`container-type:
- * inline-size` on the root, unconditionally — the below-md single-column
- * stack depends on it) — give it a parent with a concrete width. In an
- * intrinsic-width context (a `Cluster` item, `width: max-content`, a
- * `Split` aside's default `auto` track) it renders at width 0 (Grid
- * `collapseBelow` precedent — same caveat, same cause). Below 640px
- * (`_internal/collapse.scss`'s `$collapse-md`) every container re-templates
- * to one column and pointer + keyboard editing turns off (handles hidden,
- * items not editing-focusable) — a `ResizeObserver` on the root mirrors the
- * CSS breakpoint so a gesture can never half-start below it; section
- * collapse toggles keep working regardless of width.
+ * When NOT to use:
+ * - A single ordered list (priority queue, todo list, simple reordering) —
+ *   use `<Sortable>`; no 2D geometry or push-down collision is needed for 1D
+ *   reordering.
+ * - Fixed kanban-style columns — use `<Kanban>`.
+ * - A free-form node/edge graph (workflow builder) — use `<FlowCanvas>`.
+ *
+ * Anti-patterns:
+ * - ❌ Treating `value` as uncontrolled — passing it once with no `onChange`.
+ *   Drags and resizes still preview live, but nothing persists past
+ *   pointerup: the canvas is always controlled, so the next render snaps the
+ *   item back to the stale `value`.
+ * - ❌ Nesting a `DashboardCanvas` inside another one's `renderItem`.
+ *   Root-level pointer capture and the single in-flight-gesture guard
+ *   (`dragRef`/`pick`) assume exactly one canvas owns the pointer stream — a
+ *   nested canvas fights its parent for capture and Escape handling.
+ * - ❌ Using it for a simple ordered list — see "When NOT to use" above.
+ * - ❌ The canvas is ALWAYS a size container (`container-type: inline-size`
+ *   on the root, unconditionally — the below-md single-column stack depends
+ *   on it) — give it a parent with a concrete width. In an intrinsic-width
+ *   context (a `Cluster` item, `width: max-content`, a `Split` aside's
+ *   default `auto` track) it renders at width 0 (Grid `collapseBelow`
+ *   precedent — same caveat, same cause). Below 640px
+ *   (`_internal/collapse.scss`'s `$collapse-md`) every container
+ *   re-templates to one column and pointer + keyboard editing turns off
+ *   (handles hidden, items not editing-focusable) — a `ResizeObserver` on
+ *   the root mirrors the CSS breakpoint so a gesture can never half-start
+ *   below it; section collapse toggles keep working regardless of width.
  *
  * @example
- * // Static/read-only layout — no onChange, geometry only.
+ * // Edit-mode dashboard: top-level KPIs + a collapsible section, one
+ * // constrained item, and a persistence pattern — onChange keeps the canvas
+ * // controlled AND fires a save; debounce/fire-and-forget is the caller's job.
+ * const [value, setValue] = useState<DashboardCanvasValue>(initialLayout);
+ * const handleChange = (next: DashboardCanvasValue) => {
+ *   setValue(next);
+ *   saveDashboardLayout(dashboardId, next);
+ * };
  * <DashboardCanvas
- *   value={{ items: [{ id: 'kpi', x: 0, y: 0, w: 4, h: 2 }], sections: [] }}
- *   renderItem={(id) => <Card>{id}</Card>}
+ *   value={value}
+ *   onChange={handleChange}
+ *   renderItem={(id) => <Card>{widgets[id].title}</Card>}
+ *   constraints={{ kpi: { minW: 2, maxH: 4 } }}
+ * />
+ *
+ * @example
+ * // Read-only record view — same value shape, no editing affordances.
+ * <DashboardCanvas
+ *   value={savedLayout}
+ *   renderItem={(id) => <Card>{widgets[id].title}</Card>}
  *   readOnly
  * />
  *
  * @example
- * // Controlled layout with a section; onChange persists drags, resizes,
- * // band reorders, and collapse toggles.
- * const [value, setValue] = useState<DashboardCanvasValue>(initialLayout);
+ * // Constraints as a function — computed from data instead of a static map,
+ * // e.g. locking size for widget kinds with a fixed aspect ratio.
  * <DashboardCanvas
  *   value={value}
  *   onChange={setValue}
  *   renderItem={(id) => <Card>{widgets[id].title}</Card>}
- *   constraints={{ kpi: { minW: 2, maxH: 4 } }}
+ *   constraints={(id) =>
+ *     widgets[id]?.kind === 'chart' ? { minW: 4, minH: 3, maxH: 6 } : undefined
+ *   }
  * />
  */
 export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(

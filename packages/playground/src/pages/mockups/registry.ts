@@ -20,6 +20,7 @@ export type ComponentName =
   | 'ConfirmationPopover'
   | 'Constrain'
   | 'CursorPagination'
+  | 'DashboardCanvas'
   | 'DataTable'
   | 'DatePicker'
   | 'DateRangePicker'

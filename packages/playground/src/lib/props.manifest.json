@@ -958,6 +958,52 @@
         }
       ]
     },
+    "DashboardCanvas": {
+      "props": [
+        {
+          "name": "value",
+          "type": "DashboardCanvasValue",
+          "required": true,
+          "default": "",
+          "description": "The controlled layout: top-level items plus an ordered array of\ncollapsible sections. `DashboardCanvas` never mutates this value — every\nchange flows out through `onChange`."
+        },
+        {
+          "name": "onChange",
+          "type": "((next: DashboardCanvasValue) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires once per completed gesture — a drop, a resize end, a collapse\ntoggle, a section reorder, or a cross-container move — with the whole\nnext `value`. Omit for a read-only or fully static canvas; without it,\ndrags preview live but nothing persists on drop."
+        },
+        {
+          "name": "renderItem",
+          "type": "(id: string | number) => ReactNode",
+          "required": true,
+          "default": "",
+          "description": "Renders the body of an item by id. Called for every visible item on\nevery render — and once more for the dragged item mid-gesture (the\ncursor-following ghost) — so keep it pure."
+        },
+        {
+          "name": "renderSectionHeader",
+          "type": "((id: string | number) => ReactNode)",
+          "required": false,
+          "default": "",
+          "description": "Optional extra controls in a section's header (a title editor, a\n`DropdownMenu` trigger) rendered by section id, to the right of the\ntitle. Keep it small — the header row is not a general-purpose toolbar.\nPointer presses inside the slot never start a band-reorder drag."
+        },
+        {
+          "name": "constraints",
+          "type": "DashboardCanvasConstraintsProp",
+          "required": false,
+          "default": "",
+          "description": "Per-item size constraints, consulted when clamping resize gestures."
+        },
+        {
+          "name": "readOnly",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "View-only mode: identical geometry, but no drag/resize wiring, no resize\nhandles, and no keyboard editing — the canvas renders `value` and lets\nsection collapse toggles keep working. The canvas also disables editing\non its own, without this prop, once its own width drops below 640px\n(below-md single-column stack) — `readOnly` is for a consumer-chosen\nview mode, the width gate is automatic."
+        }
+      ]
+    },
     "DataTable": {
       "props": [
         {
@@ -4942,6 +4988,8 @@
     "HourCycle": "\"auto\" | \"12\" | \"24\"",
     "FieldOrientation": "\"horizontal\" | \"vertical\"",
     "FieldSize": "\"sm\" | \"md\" | \"lg\"",
-    "FieldRenderProps": "{ id: string; aria-describedby: string; aria-labelledby: string; aria-invalid: boolean; invalid: boolean; required: boolean; labelId: string }"
+    "FieldRenderProps": "{ id: string; aria-describedby: string; aria-labelledby: string; aria-invalid: boolean; invalid: boolean; required: boolean; labelId: string }",
+    "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
+    "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }"
   }
 }

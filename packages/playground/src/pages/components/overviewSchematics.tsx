@@ -839,6 +839,27 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Dashed>
     </Row>
   ),
+  DashboardCanvas: (
+    <Col gap={6}>
+      <Row gap={6} style={{ alignItems: 'flex-start' }}>
+        <Solid w={54} h={40} />
+        <Col gap={6}>
+          <Box w={40} h={17} />
+          <Box w={40} h={17} />
+        </Col>
+        <Box w={30} h={40} />
+      </Row>
+      <Dashed
+        w={128}
+        h={30}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 6px' }}
+      >
+        <Box w={22} h={16} />
+        <Box w={22} h={16} />
+        <Box w={22} h={16} />
+      </Dashed>
+    </Col>
+  ),
   FlowCanvas: (
     <Dashed w={210} h={100} style={{ display: 'block', position: 'relative' }}>
       <Solid w={52} h={22} style={{ position: 'absolute', left: 14, top: 12 }} />
