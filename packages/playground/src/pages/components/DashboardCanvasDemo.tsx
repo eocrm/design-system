@@ -2,8 +2,12 @@ import { useState } from 'react';
 import {
   Accordion,
   Badge,
+  Button,
   Card,
+  Cluster,
   DashboardCanvas,
+  Input,
+  Modal,
   Stack,
   Text,
   Title,
@@ -96,6 +100,62 @@ const NARROW_VALUE: DashboardCanvasValue = {
   ],
 };
 
+const CONFIG_VALUE: DashboardCanvasValue = {
+  items: [
+    { id: 'revenue', x: 0, y: 0, w: 12, h: 4 },
+    { id: 'deals', x: 12, y: 0, w: 12, h: 4 },
+  ],
+  sections: [],
+};
+
+// A widget whose card hosts its own config Modal — the modal is a React child
+// of the draggable cell (its portal renders to document.body, but its events
+// bubble through the REACT tree into the cell). The canvas must not treat
+// presses inside the open modal as drag starts (#362).
+function ConfigurableWidget({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
+  const widget = WIDGETS[id];
+  if (!widget) return null;
+  return (
+    <Card style={{ height: '100%' }}>
+      <Stack gap="xs">
+        <Cluster justify="between" gap="sm">
+          <Text size="sm" tone="muted">
+            {widget.title}
+          </Text>
+          <Button size="xs" variant="ghost" onClick={() => setOpen(true)}>
+            Configure
+          </Button>
+        </Cluster>
+        <Title order={3} size="md">
+          {widget.metric}
+        </Title>
+        <Text size="sm" tone="muted">
+          {widget.sub}
+        </Text>
+      </Stack>
+      <Modal open={open} onOpenChange={setOpen} size="sm">
+        <Modal.Header>Configure “{widget.title}”</Modal.Header>
+        <Modal.Body>
+          <Stack gap="md">
+            <Input defaultValue={widget.title} aria-label="Widget title" />
+            <Text size="sm" tone="muted">
+              While this modal is open the canvas behind it must not react to pointer or keyboard
+              gestures — try dragging across the backdrop.
+            </Text>
+          </Stack>
+        </Modal.Body>
+        <Modal.Footer>
+          <Modal.Close>
+            <Button variant="secondary">Cancel</Button>
+          </Modal.Close>
+          <Button onClick={() => setOpen(false)}>Save</Button>
+        </Modal.Footer>
+      </Modal>
+    </Card>
+  );
+}
+
 function renderWidget(id: string | number) {
   const widget = WIDGETS[String(id)];
   if (!widget) return null;
@@ -132,6 +192,7 @@ export function DashboardCanvasDemo() {
   const [value, setValue] = useState<DashboardCanvasValue>(INITIAL_VALUE);
   const [twelveValue, setTwelveValue] = useState<DashboardCanvasValue>(TWELVE_COL_VALUE);
   const [narrowValue, setNarrowValue] = useState<DashboardCanvasValue>(NARROW_VALUE);
+  const [configValue, setConfigValue] = useState<DashboardCanvasValue>(CONFIG_VALUE);
 
   const renderSectionHeader = (id: string | number) => (
     <Badge tone="neutral">{value.sections.find((s) => s.id === id)?.items.length ?? 0}</Badge>
@@ -264,6 +325,57 @@ export function Demo() {
           value={twelveValue}
           onChange={setTwelveValue}
           renderItem={renderWidget}
+        />
+      </Example>
+
+      <Example
+        title="Widget config modal"
+        description="The eocrm edit-mode pattern: each widget opens its own settings Modal from a button inside renderItem. The modal portals to document.body, but its React parent is the draggable cell — the canvas ignores pointer events whose DOM target lives outside it (portal-bubbled), and an overlay opening above the canvas aborts any in-flight gesture, so the dashboard is inert behind the backdrop (#362)."
+        code={`import { useState } from 'react';
+import { Button, Card, Cluster, DashboardCanvas, Input, Modal, Stack, Text, Title } from '@eocrm/design-system';
+
+function ConfigurableWidget({ id }) {
+  const [open, setOpen] = useState(false);
+  const widget = WIDGETS[id];
+  return (
+    <Card style={{ height: '100%' }}>
+      <Stack gap="xs">
+        <Cluster justify="between" gap="sm">
+          <Text size="sm" tone="muted">{widget.title}</Text>
+          <Button size="xs" variant="ghost" onClick={() => setOpen(true)}>Configure</Button>
+        </Cluster>
+        <Title order={3} size="md">{widget.metric}</Title>
+      </Stack>
+      {/* Rendered inside the draggable cell — the canvas must stay inert behind it. */}
+      <Modal open={open} onOpenChange={setOpen} size="sm">
+        <Modal.Header>Configure “{widget.title}”</Modal.Header>
+        <Modal.Body>
+          <Input defaultValue={widget.title} aria-label="Widget title" />
+        </Modal.Body>
+        <Modal.Footer>
+          <Modal.Close><Button variant="secondary">Cancel</Button></Modal.Close>
+          <Button onClick={() => setOpen(false)}>Save</Button>
+        </Modal.Footer>
+      </Modal>
+    </Card>
+  );
+}
+
+export function Demo() {
+  const [value, setValue] = useState(configLayout);
+  return (
+    <DashboardCanvas
+      value={value}
+      onChange={setValue}
+      renderItem={(id) => <ConfigurableWidget id={String(id)} />}
+    />
+  );
+}`}
+      >
+        <DashboardCanvas
+          value={configValue}
+          onChange={setConfigValue}
+          renderItem={(id) => <ConfigurableWidget id={String(id)} />}
         />
       </Example>
 

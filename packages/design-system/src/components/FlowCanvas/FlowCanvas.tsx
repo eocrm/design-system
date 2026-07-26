@@ -1452,6 +1452,15 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const handleNodePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<HTMLDivElement>) => {
       if (event.button !== 0) return;
+      // Portal-bubbled press (#290 class, #362): a Modal/Popover opened from
+      // a node's label/adornment renders into document.body but its events
+      // bubble through the REACT tree into this handler — the press landed on
+      // the overlay, not the node. Never a select/drag. Same guard on the
+      // edge/handle/endpoint handlers below and the edge-label chip. The
+      // overlay-stack arming gate + mid-gesture abort stay DashboardCanvas-
+      // only for now (#362): here, arming under an overlay is already blocked
+      // by inert + this guard.
+      if (!(event.target instanceof Node) || !rootRef.current?.contains(event.target)) return;
       event.stopPropagation();
       cancelKeyboardConnect(); // the user visibly moved on to another node
       const current = selectionRef.current;
@@ -1493,6 +1502,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const handleHandlePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<HTMLElement>) => {
       if (event.button !== 0 || !canConnect) return;
+      if (!(event.target instanceof Node) || !rootRef.current?.contains(event.target)) return;
       // One draw at a time (matching the drag guard): a second pointer
       // grabbing a handle mid-draw must not hijack the first ghost. A
       // keyboard connect, by contrast, is superseded by the new draw.
@@ -1519,6 +1529,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const handleEndpointPointerDown = useCallback(
     (edgeId: string, end: 'source' | 'target', event: ReactPointerEvent<Element>) => {
       if (event.button !== 0 || !canConnect) return;
+      if (!(event.target instanceof Node) || !rootRef.current?.contains(event.target)) return;
       event.stopPropagation();
       if (connectRef.current?.mode === 'pointer') return; // one gesture at a time
       const edge = edges.find((e) => e.id === edgeId);
@@ -1545,6 +1556,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
   const handleEdgePointerDown = useCallback(
     (id: string, event: ReactPointerEvent<SVGPathElement>) => {
       if (event.button !== 0) return;
+      if (!(event.target instanceof Node) || !rootRef.current?.contains(event.target)) return;
       event.stopPropagation();
       cancelKeyboardConnect(); // the user visibly moved on to an edge
       const current = selectionRef.current;
@@ -1783,6 +1795,9 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               style={{ left: geometry.midpoint.x, top: geometry.midpoint.y }}
               onPointerDown={(event) => {
                 if (event.button !== 0) return;
+                // Same portal-press guard as handleNodePointerDown (#362).
+                if (!(event.target instanceof Node) || !rootRef.current?.contains(event.target))
+                  return;
                 event.stopPropagation();
                 cancelKeyboardConnect(); // same abandon rule as handleEdgePointerDown
                 // Same re-select guard as handleEdgePointerDown.

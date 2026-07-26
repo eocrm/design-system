@@ -1,4 +1,5 @@
 import { createRef } from 'react';
+import { createPortal } from 'react-dom';
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { FlowCanvas } from './FlowCanvas';
@@ -474,6 +475,40 @@ describe('FlowCanvas selection & intents', () => {
     fireEvent.pointerUp(node, { pointerId: 1 });
     expect(node.getAttribute('data-selected')).toBe('true');
     expect(onSelectionChange).toHaveBeenCalledWith({ type: 'node', id: 'open' });
+  });
+
+  it('a pointerdown bubbled from a portal inside a node adornment never selects or drags (#362)', () => {
+    // A Modal/Popover opened from a node's adornment portals to document.body
+    // but bubbles through the REACT tree into the node's pointerdown handler.
+    const onSelectionChange = vi.fn();
+    const nodes: FlowCanvasNode[] = [
+      {
+        id: 'open',
+        label: 'Open',
+        position: { x: 0, y: 0 },
+        adornment: createPortal(<div data-testid="portal-surface" />, document.body),
+      },
+    ];
+    render(<FlowCanvas nodes={nodes} edges={[]} onSelectionChange={onSelectionChange} />);
+    fireEvent.pointerDown(screen.getByTestId('portal-surface'), { pointerId: 1, button: 0 });
+    fireEvent.pointerUp(screen.getByLabelText('Open'), { pointerId: 1 });
+    expect(screen.getByLabelText('Open').getAttribute('data-selected')).toBeNull();
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
+  it('a pointerdown bubbled from a portal inside an edge-label chip never selects (#362)', () => {
+    const onSelectionChange = vi.fn();
+    const edges: FlowCanvasEdge[] = [
+      {
+        id: 't1',
+        from: 'open',
+        to: 'done',
+        label: createPortal(<div data-testid="chip-portal" />, document.body),
+      },
+    ];
+    render(<FlowCanvas nodes={NODES} edges={edges} onSelectionChange={onSelectionChange} />);
+    fireEvent.pointerDown(screen.getByTestId('chip-portal'), { pointerId: 1, button: 0 });
+    expect(onSelectionChange).not.toHaveBeenCalled();
   });
 
   it('click selects an edge', () => {
