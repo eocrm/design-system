@@ -148,7 +148,7 @@ describe('<EntityChip>', () => {
     );
   });
 
-  it('without `color`, no chip-fill custom properties are injected — the default cyan tokens apply', () => {
+  it('without `color`, no chip-fill custom properties are injected — the default blue tokens apply', () => {
     const { container } = render(<EntityChip label="Contact" href="/contacts/1" />);
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue('--entity-chip-bg')).toBe('');

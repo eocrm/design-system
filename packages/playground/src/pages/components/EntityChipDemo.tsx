@@ -128,8 +128,8 @@ export function Demo() {
       </Example>
 
       <Example
-        title="Chip fill: default cyan vs `color` override"
-        description="The chip fills cyan by default. `color` (a PaletteColor) overrides the fill, independent of any `status` — same inline-injection contract as `Badge color`."
+        title="Chip fill: default blue vs `color` override"
+        description="The chip fills blue by default. `color` (a PaletteColor) overrides the fill, independent of any `status` — same inline-injection contract as `Badge color`."
         code={`import { EntityChip } from '@eocrm/design-system';
 
 export function Demo() {
