@@ -41,20 +41,32 @@
   cursor: grab;
 }
 
-// Edit-mode snap grid: one dot per cell corner, so a drag/resize's snapped
-// destination is visible before you commit to it. Horizontal pitch is
+// Edit-mode snap grid (#356): dots on BOTH cell-edge lattices per axis —
+// cell STARTS (k·pitch) and cell ENDS ((k+1)·pitch − gap) — so all four
+// corners of a snapped widget land exactly on dots. Horizontal pitch is
 // fr-based — a column's outer edge repeats every (100% + gap) / N (N
 // columns, N-1 gaps between them: container width = N·colWidth + (N-1)·gap,
 // and colWidth + gap is exactly that expression / N). Vertical pitch is the
-// row unit + gap. `radial-gradient(circle at 0 0, …)` puts the dot at
-// each tile's own (0,0) corner rather than its center, so instances land
-// exactly on cell corners instead of cell centers.
-.canvas:not([data-readonly], [data-narrow]) .container {
-  background-image: radial-gradient(
-    circle at 0 0,
+// row unit + gap. One tile therefore holds FOUR dots (start/end × both
+// axes), and the whole field is shifted by −gap/2 (background-position) so
+// every dot center sits half a gap inside its tile — full circles, never
+// clipped on tile seams (`circle at 0 0` used to quarter-clip every dot).
+// Within a tile, cell start = gap/2 and cell end = 100% − gap/2.
+@function dc-dot($x, $y) {
+  @return radial-gradient(
+    circle at #{$x} #{$y},
     var(--dashboard-canvas-dot-color) var(--dashboard-canvas-dot-size),
     transparent var(--dashboard-canvas-dot-size)
   );
+}
+
+.canvas:not([data-readonly], [data-narrow]) .container {
+  $start: calc(var(--dashboard-canvas-gap) / 2);
+  $end: calc(100% - var(--dashboard-canvas-gap) / 2);
+
+  background-image:
+    dc-dot($start, $start), dc-dot($end, $start), dc-dot($start, $end), dc-dot($end, $end);
+  background-position: calc(var(--dashboard-canvas-gap) / -2) calc(var(--dashboard-canvas-gap) / -2);
   background-size: calc((100% + var(--dashboard-canvas-gap)) / var(--dc-cols, 24))
     calc(var(--dc-row-unit) + var(--dashboard-canvas-gap));
 }
