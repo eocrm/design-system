@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -1250,5 +1252,30 @@ describe('DashboardCanvas empty sections (#353)', () => {
       />,
     );
     expect(screen.queryByText('Drop widgets here')).not.toBeInTheDocument();
+  });
+});
+
+// --- snap-dot field wiring (#356) ------------------------------------------
+// jsdom never computes CSS-module styles, so the both-lattices dot field is
+// asserted at the source level: four gradient layers (start/end × both axes)
+// plus the −gap/2 field shift that keeps every dot an unclipped full circle.
+describe('DashboardCanvas snap-dot field (#356)', () => {
+  const scss = readFileSync(resolve(import.meta.dirname, './DashboardCanvas.module.scss'), 'utf8');
+  const dotRule = /background-image:[^;]+;/.exec(scss)?.[0] ?? '';
+
+  it('paints four dot layers: cell start and cell end on both axes', () => {
+    expect(dotRule.match(/dc-dot\(/g)).toHaveLength(4);
+    expect(scss).toContain('$start: calc(var(--dashboard-canvas-gap) / 2)');
+    expect(scss).toContain('$end: calc(100% - var(--dashboard-canvas-gap) / 2)');
+    expect(dotRule).toContain('dc-dot($start, $start)');
+    expect(dotRule).toContain('dc-dot($end, $start)');
+    expect(dotRule).toContain('dc-dot($start, $end)');
+    expect(dotRule).toContain('dc-dot($end, $end)');
+  });
+
+  it('shifts the field by -gap/2 so lattice dots align with cell edges', () => {
+    expect(scss).toMatch(
+      /background-position:\s*calc\(var\(--dashboard-canvas-gap\) \/ -2\)\s*calc\(var\(--dashboard-canvas-gap\) \/ -2\)/,
+    );
   });
 });
