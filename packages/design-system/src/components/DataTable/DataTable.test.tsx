@@ -1,10 +1,15 @@
 /**
  * Integration tests for <DataTable> (Phase 1).
  *
- * NOTE on drag-and-drop coverage: column reorder via @dnd-kit's PointerSensor
- * is genuinely hard to test in jsdom. The playground demo serves as the smoke
- * test for reorder. A future Playwright e2e test is the recommended remedy
- * if reorder regresses in practice.
+ * NOTE on drag-and-drop coverage: jsdom 29 implements PointerEvent, so a real
+ * drag CAN be driven through DataTable's own DndContext and PointerSensor —
+ * see the 'whole-column drag preview' block, which fires pointerdown /
+ * pointermove / pointerup and asserts against the resulting styles. What jsdom
+ * still cannot do is lay anything out: every getBoundingClientRect is zero, so
+ * dnd-kit never resolves an `over` target and no actual reorder or drop
+ * animation occurs. Reorder outcome and drag aesthetics therefore remain
+ * playground/e2e territory; what is covered here is the styling contract
+ * (which cells carry a shift transform, and which must never).
  */
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -531,17 +536,10 @@ describe('<DataTable> — whole-column drag preview', () => {
     expect(screen.getByRole('table')).not.toHaveAttribute('data-drag-whole-column');
   });
 
-  it('never puts a transform on a pinned cell', () => {
-    render(<PinnedHarness />);
-    // 'name' is pinned left; its cells must carry sticky positioning and no
-    // transform, because a transform would break position: sticky.
-    const nameCells = screen.getAllByText(/Alpha|Bravo/);
-    for (const cell of nameCells) {
-      const td = cell.closest('td')!;
-      expect(td.style.position).toBe('sticky');
-      expect(td.style.transform).toBe('');
-    }
-  });
+  // (The former 'never puts a transform on a pinned cell' test lived here. It
+  // rendered with no drag active, so nothing on the page was transformed and it
+  // passed for a reason unrelated to its name. The real-drag test below asserts
+  // the same invariant while a drag is actually running.)
 
   it('never puts a transform on a row or body element', () => {
     render(<Harness />);
@@ -569,16 +567,20 @@ describe('<DataTable> — whole-column drag preview', () => {
     expect(screen.getByRole('table')).toHaveAttribute('data-ref-ok', 'yes');
   });
 
+  /** Drives a real drag on the 'amount' column through DataTable's own
+   *  DndContext + PointerSensor. First move clears the 6px activation
+   *  constraint; the second produces the delta the driver publishes. */
+  function dragAmountColumn() {
+    const grip = screen.getByLabelText(/drag to reorder amount/i);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    fireEvent.pointerMove(document, { clientX: 30, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 60, clientY: 0 });
+  }
+
   it('during a real drag, shifts unpinned cells and leaves pinned cells alone', () => {
     render(<PinnedHarness />);
     // 'name' is pinned left (no grip); 'amount' is the reorderable column.
-    const grip = screen.getByLabelText(/drag to reorder amount/i);
-
-    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
-    // First move clears the 6px activation constraint; the second produces the
-    // delta the driver publishes.
-    fireEvent.pointerMove(document, { clientX: 30, clientY: 0 });
-    fireEvent.pointerMove(document, { clientX: 60, clientY: 0 });
+    dragAmountColumn();
 
     const table = screen.getByRole('table');
     // The driver published the offset onto the <table>, never onto an ancestor
@@ -613,5 +615,26 @@ describe('<DataTable> — whole-column drag preview', () => {
     fireEvent.pointerUp(document);
     expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('');
     expect(screen.getByText('10').closest('td')!.style.transform).toBe('');
+  });
+
+  it('during a real drag with dragWholeColumn={false}, the body never moves', () => {
+    // The opt-out is now the road less travelled, so it gets the same real
+    // drag rather than a data-attribute check: the driver must publish nothing
+    // and no body cell may be transformed. Only the dragged header moves —
+    // dnd-kit's historical behavior.
+    render(<PinnedHarness dragWholeColumn={false} />);
+    dragAmountColumn();
+
+    const table = screen.getByRole('table');
+    expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('');
+    expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('');
+    expect(screen.getByText('10').closest('td')!.style.transform).toBe('');
+    expect(screen.getByText('Alpha').closest('td')!.style.transform).toBe('');
+    // And no body cell reads a shift variable it was never given.
+    for (const td of table.querySelectorAll('tbody td')) {
+      expect((td as HTMLElement).style.transform).not.toContain('--dt-shift-');
+    }
+
+    fireEvent.pointerUp(document);
   });
 });

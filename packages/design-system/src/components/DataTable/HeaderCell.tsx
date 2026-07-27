@@ -39,6 +39,10 @@ export interface HeaderCellProps<T> {
  *   `column.enableResize === false`. Also supports keyboard resize: arrow
  *   keys ±8px; Shift+arrow keys ±32px (when the label is focused).
  */
+/** See the `animateLayoutChanges` comment in HeaderCell. Module scope so the
+ * identity is stable across renders. */
+const neverAnimateLayoutChanges = () => false;
+
 const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none'> = {
   asc: 'ascending',
   desc: 'descending',
@@ -73,7 +77,21 @@ export function HeaderCell<T>({
   // dnd-kit sortable — column is its own sortable item. Pinned columns are
   // locked in place (see the isPinned comment above).
   const reorderable = column.enableReorder !== false && !isPinned;
-  const sortableResult = useSortable({ id: column.id, disabled: !reorderable });
+  const sortableResult = useSortable({
+    id: column.id,
+    disabled: !reorderable,
+    // Whole-column mode only: kill dnd-kit's post-drop FLIP animation. On
+    // release `defaultAnimateLayoutChanges` returns true for every column whose
+    // index changed, so the headers would glide to their new positions over
+    // ~200ms while the body cells — whose shift variable is removed on the same
+    // tick — snap instantly. That is the exact header/body disagreement this
+    // feature exists to remove, just relocated to the drop. Snapping the header
+    // with the body is the only way the two stay glued.
+    //
+    // `undefined` when the mode is off, so that path keeps dnd-kit's default
+    // animation byte-for-byte.
+    animateLayoutChanges: dragWholeColumn === true ? neverAnimateLayoutChanges : undefined,
+  });
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortableResult;
 
   const width = instance.columnSizesPx[column.id] ?? 120;

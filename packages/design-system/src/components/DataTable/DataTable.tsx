@@ -291,9 +291,17 @@ function DataTableInner<T>(
       <SortableContext
         items={sortableIds}
         // In whole-column mode the shift variables are the single source of
-        // truth for BOTH header and body, so dnd-kit's own per-item transform
-        // must stand down — otherwise the two fight and the header desyncs
-        // from the body it is supposed to be glued to.
+        // truth for BOTH header and body. Standing dnd-kit's own transforms
+        // down takes TWO mechanisms, because `useSortable` treats the dragged
+        // item and its neighbours differently:
+        //  - DISPLACED NEIGHBOURS go through the strategy, so a no-op strategy
+        //    is what silences them. That is all this prop does.
+        //  - The ACTIVE column never consults the strategy at all: with no
+        //    <DragOverlay> rendered, useSortable short-circuits to its own
+        //    `dragSourceDisplacement`. It is `useShiftVar` in HeaderCell —
+        //    which discards `transform` outright — that keeps the dragged
+        //    header glued to its body cells. Relaxing that guard would desync
+        //    the dragged column no matter what this strategy says.
         strategy={dragWholeColumn ? noopSortingStrategy : horizontalListSortingStrategy}
       >
         {/* {...rest} last so consumer overrides win (Pattern A). */}

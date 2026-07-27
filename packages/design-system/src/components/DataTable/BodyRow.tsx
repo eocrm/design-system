@@ -132,13 +132,15 @@ export function BodyRow<T>({
         )}
         {renderColumns.map((col) => {
           const pin = getPinStyle(col.id, instance);
-          // The shift variable is applied ONLY to unpinned cells, and only
-          // while a drag is running. Two reasons this is not unconditional:
-          //  - a transform on a pinned cell would break its position: sticky;
-          //  - a permanent `translateX(0px)` on every cell would establish a
-          //    containing block on every cell, trapping any position: fixed
-          //    descendant a consumer renders inside one.
-          const shifted = dragWholeColumn === true && dragActive === true && !pin.position;
+          // The shift variable is applied only while a drag is running: a
+          // permanent `translateX(0px)` on every cell would establish a
+          // containing block on every cell, trapping any position: fixed
+          // descendant a consumer renders inside one.
+          //
+          // Pinned cells are kept out by the ternary below testing
+          // `pin.position` FIRST — a transform there would break their
+          // position: sticky. Do not reorder those branches.
+          const shifted = dragWholeColumn === true && dragActive === true;
           const cellStyle = pin.position
             ? { position: pin.position, left: pin.left, right: pin.right }
             : shifted
