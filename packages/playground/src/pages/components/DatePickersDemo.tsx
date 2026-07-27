@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { Stack, Tabs } from '@eocrm/design-system';
 import { DatePickerDemoPanel } from './DatePickerDemo';
 import { DateRangePickerDemoPanel } from './DateRangePickerDemo';

@@ -8,7 +8,7 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import clsx from 'clsx';
 import { TopBar } from '@eocrm/design-system';
 import { SEARCH_ITEMS } from './navItems';

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Stack } from '@eocrm/design-system';
 import { ArrowRight } from 'lucide-react';
 import { SCHEMATICS } from './overviewSchematics';

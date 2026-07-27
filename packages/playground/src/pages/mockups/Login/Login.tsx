@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import { Mail } from 'lucide-react';
 import {
   Alert,

@@ -1,4 +1,4 @@
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import { Badge, Cluster, Code, Grid, LinkCard, Stack, Text, Title } from '@eocrm/design-system';
 import { MOCKUPS } from './registry';
 

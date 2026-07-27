@@ -1,4 +1,4 @@
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router';
 import { Button, Cluster, ErrorState, Link, Screen } from '@eocrm/design-system';
 import { Compass } from 'lucide-react';
 

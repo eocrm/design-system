@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { useParams, Link as RouterLink, Navigate } from 'react-router-dom';
+import { useParams, Link as RouterLink, Navigate } from 'react-router';
 import { Mail, Phone, MoreHorizontal, Building, MapPin } from 'lucide-react';
 import {
   Avatar,
