@@ -497,12 +497,15 @@ export function useColumnDragShift({
       });
       writtenRef.current = applyColumnShifts(rootRef.current, shifts, writtenRef.current);
     },
+    // Cleanup is NOT gated on `enabled`. If the flag flips from true to false
+    // mid-drag (the playground demo puts a Switch on exactly this prop), a
+    // guarded cleanup would strand the written custom properties on the table
+    // and leave `onDragActiveChange` stuck at true. `clear()` is a no-op when
+    // nothing was written, so running it unconditionally is always safe.
     onDragEnd() {
-      if (!enabled) return;
       clear();
     },
     onDragCancel() {
-      if (!enabled) return;
       clear();
     },
   });
