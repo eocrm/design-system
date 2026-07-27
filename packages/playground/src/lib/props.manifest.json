@@ -148,7 +148,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Pin the sidebar to the viewport: `position: sticky; top: 0; height: 100dvh`\nwith internal overflow scrolling. On pages taller than the viewport the\nsidebar (and a `Rail` inside it — its `Rail.Spacer` + `Rail.Footer` /\nCollapseToggle) spans exactly the SCREEN, keeping the footer glued to the\nviewport bottom instead of the page bottom. Default `false` (sidebar\nstretches to the full row/page height — the original behavior).\n\nPrefer this over wrapping the sidebar slot in `Sticky` — the rail's\n`height: 100%` + flex spacer need a DEFINITE viewport height to pin the\nfooter, which `Sticky`'s max-height capping can't provide.\n\n`100dvh` is always relative to the real browser viewport, never to a\nnested scroll container — so this only pins correctly when AppLayout is\nthe actual outermost, page-scroll shell (its documented top-level use).\nNest it inside another scrollable region and the sidebar will size to\nthe whole window, not that region, and overflow it."
+          "description": "Pin the sidebar to the viewport: `position: sticky; top: 0; height: 100dvh`\nwith internal overflow scrolling. On pages taller than the viewport the\nsidebar (and a `Rail` inside it — including its `Rail.Footer` /\nCollapseToggle) spans exactly the SCREEN, keeping the footer glued to the\nviewport bottom instead of the page bottom. Default `false` (sidebar\nstretches to the full row/page height — the original behavior).\n\nPrefer this over wrapping the sidebar slot in `Sticky` — the rail pins its\nfooter by filling its own `height: 100%` box, which needs a DEFINITE\nheight to resolve against. `Sticky` sets `align-self: start`, which drops\nthe row stretch that made it definite, so the footer stops pinning.\n\n`100dvh` is always relative to the real browser viewport, never to a\nnested scroll container — so this only pins correctly when AppLayout is\nthe actual outermost, page-scroll shell (its documented top-level use).\nNest it inside another scrollable region and the sidebar will size to\nthe whole window, not that region, and overflow it."
         },
         {
           "name": "children",
@@ -3550,7 +3550,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
           "default": "",
-          "description": "Rail children — typically a sequence of `<Rail.Header>`, `<Rail.Section>`,\n`<Rail.Group>`, `<Rail.Spacer>`, `<Rail.Footer>`. Order matters: the\n`<Rail.Spacer>` is what pushes a subsequent `<Rail.Footer>` to the\nbottom of the rail."
+          "description": "Rail children — typically a sequence of `<Rail.Header>`, `<Rail.Section>`,\n`<Rail.Group>`, `<Rail.Spacer>`, `<Rail.Footer>`. Order matters: the first\n`<Rail.Footer>` is the split point — everything before it goes in the\nscroll box, the Footer and anything after it stay outside and pinned to\nthe bottom. A `<Rail.Spacer>` is not needed for that; use it to push a\ntrailing *section* (settings, help) down inside the scrolling area."
         }
       ]
     },

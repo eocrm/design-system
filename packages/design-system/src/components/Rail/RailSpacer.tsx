@@ -6,24 +6,15 @@ export type RailSpacerProps = HTMLAttributes<HTMLDivElement>;
 
 /**
  * `flex-grow: 1` filler that pushes anything after it to the bottom of the
- * rail. Two common patterns:
+ * rail's scrolling body.
  *
- * **Footer-only pinning** — the spacer sits between the last section and
- * the footer so the footer (CollapseToggle, user chip) anchors at the
- * bottom regardless of how many sections appear above:
+ * You do NOT need one to pin the footer — `<Rail.Footer>` is extracted out of
+ * the scroll box and anchored on its own. Use the spacer to push trailing
+ * *sections* down instead.
  *
- * @example
- * <Rail>
- *   <Rail.Section>…</Rail.Section>
- *   <Rail.Section>…</Rail.Section>
- *   <Rail.Spacer />
- *   <Rail.Footer><UserChip /></Rail.Footer>
- * </Rail>
- *
- * **Pinning items to the bottom** — anything you render AFTER the spacer
- * gets pushed down, so a secondary section of items (Settings, Help,
- * Sign out) sits at the bottom of the rail just above the footer. Anchor
- * positioning matches Jira / Linear / VS Code sidebars.
+ * Anything you render AFTER the spacer gets pushed down, so a secondary
+ * section of items (Settings, Help, Sign out) sits at the bottom of the rail
+ * just above the footer. Matches Jira / Linear / VS Code sidebars.
  *
  * @example
  * <Rail>
@@ -36,10 +27,10 @@ export type RailSpacerProps = HTMLAttributes<HTMLDivElement>;
  *   <Rail.Footer><Rail.CollapseToggle /></Rail.Footer>
  * </Rail>
  *
- * Note: when the item list overflows the rail's height, the rail scrolls
- * and items after the spacer scroll WITH the content (only `Rail.Footer`
- * is sticky-pinned). Use the Footer slot for items that must stay visible
- * even on a tall scroll.
+ * Note: when the item list overflows, the rail's body scrolls and the spacer
+ * collapses to nothing — items after it scroll WITH the content. Only
+ * `<Rail.Footer>` sits outside the scroll box. Use the Footer slot for
+ * anything that must stay visible on a tall scroll.
  */
 export const RailSpacer = forwardRef<HTMLDivElement, RailSpacerProps>(function RailSpacer(
   { className, 'aria-hidden': ariaHidden = true, ...props },

@@ -94,7 +94,6 @@ function PinnedSide() {
           Contacts
         </Rail.Item>
       </Rail.Section>
-      <Rail.Spacer />
       <Rail.Footer>
         <Rail.CollapseToggle />
       </Rail.Footer>
@@ -368,7 +367,6 @@ function PinnedSide() {
           Contacts
         </Rail.Item>
       </Rail.Section>
-      <Rail.Spacer />
       <Rail.Footer>
         <Rail.CollapseToggle />
       </Rail.Footer>

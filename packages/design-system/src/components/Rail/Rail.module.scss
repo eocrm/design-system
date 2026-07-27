@@ -35,6 +35,27 @@
   gap: var(--rail-section-gap);
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- scroll long item lists
   overflow-y: auto;
+
+  // Y scrolls, X clips — never the other way. Declaring only `overflow-y`
+  // leaves X at `visible`, which the spec then computes to `auto` because the
+  // other axis isn't visible: the box becomes horizontally scrollable. That
+  // bites in collapsed mode, where the 56px rail leaves a ~39px body, the
+  // vertical gutter eats ~10px of it, and the remaining ~29px is narrower than
+  // an item row's min-content width — so a horizontal scrollbar appears under
+  // the icons. Clipping X is also just correct: the rail is a fixed-width nav
+  // and labels are meant to be clipped during the collapse transition (.rail
+  // clips X for the same reason).
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- horizontal label clip, never a horizontal scroll
+  overflow-x: hidden;
+}
+
+// Collapsed = icon-only at 56px. A ~10px scroll gutter is a quarter of the
+// body's width there: it shifts every item pill off-center (8px from the rail's
+// left edge, 19px from the right) and crowds the icon column. Hide the bar in
+// this mode only — wheel, keyboard, and scroll-into-view on focus all still
+// work, and the rail expands to a full-width bar the moment it's opened.
+.collapsed .body {
+  scrollbar-width: none;
 }
 
 .collapsed {

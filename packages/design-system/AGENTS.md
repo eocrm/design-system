@@ -126,7 +126,7 @@ The library ships a full dark palette, driven entirely by CSS. There is **no the
 </html>
 ```
 
-`color-scheme` is set automatically for each state, so native form controls and the browser chrome match the theme. Scrollbars go a step further: `reset.scss` applies `scrollbar-width: thin` + a token-colored `scrollbar-color` to every element, so every scroller in the app is thin and theme-colored rather than OS-default. Opt a scroller out with its own `scrollbar-width: auto` / `scrollbar-color: auto`.
+`color-scheme` is set automatically for each state, so native form controls and the browser chrome match the theme. Scrollbars go a step further: `reset.scss` applies `scrollbar-width: thin` + a token-colored `scrollbar-color` to every element, so every scroller in the app is thin and theme-colored rather than OS-default. Opt a scroller out with its own `scrollbar-width: auto` / `scrollbar-color: auto` — or drop the bar altogether with `scrollbar-width: none`, which is what a **collapsed** `<Rail>` does: a gutter is a quarter of the 56px rail's inner width. With no bar to drag, it scrolls by wheel/trackpad and scroll-into-view on Tab.
 
 **What flips for free:** every component whose colors resolve through the design tokens — which is all of them. Surfaces, text, borders, the accent and semantic palettes, shadows, overlays, focus rings, Badge tones, and Tooltip all redefine under dark with zero markup changes.
 
@@ -1471,7 +1471,7 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - **Content padding (default):** the main region ships the canonical shell gutter (`--app-layout-content-padding`, default `var(--space-6)`) — routed content is padded with **no prop and no raw CSS**. For a full-bleed main region, override the token (`--app-layout-content-padding: 0`) in your scope; there is no prop. _Migration:_ if you previously shimmed this gutter with your own `padding: var(--space-6)` wrapper, remove that shim now or the padding doubles.
 - **Content canvas (default):** the main region paints a subtle canvas (`--app-layout-content-background`, default `var(--color-bg-subtle)`) so white `<Card>`s lift off it — matches every mockup, **no prop, no raw CSS**. For a flat content area, override the token (`--app-layout-content-background: transparent`); there is no prop. _Migration:_ if you shimmed your own `background: var(--color-bg-subtle)` on the content region, remove it.
 - **Page-scroll shell:** `min-height: 100vh` means tall content scrolls the whole window (chrome scrolls away). For fixed chrome + independently-scrolling content, override the root to a fixed `height: 100vh` / `100dvh` via `className`.
-- **`sidebarPinned`** (default `false`): on pages taller than the viewport, pins the sidebar wrapper (`position: sticky; top: 0; height: 100dvh; overflow-y: auto`) so a `Rail`'s footer/`CollapseToggle` stays glued to the viewport bottom instead of scrolling away with the page. Don't reach for wrapping the sidebar slot in `<Sticky>` instead — its max-height capping can't give the Rail's `height: 100%` + spacer a definite viewport height, so the footer-pinning doesn't work. `100dvh` is always relative to the real browser viewport, not a nested scroll container — only use it when AppLayout is the outermost, page-scroll shell (its documented top-level use); nested inside another scrollable region, the sidebar sizes to the whole window and overflows it.
+- **`sidebarPinned`** (default `false`): on pages taller than the viewport, pins the sidebar wrapper (`position: sticky; top: 0; height: 100dvh; overflow-y: auto`) so a `Rail`'s footer/`CollapseToggle` stays glued to the viewport bottom instead of scrolling away with the page. Don't reach for wrapping the sidebar slot in `<Sticky>` instead — the Rail pins its footer by filling its own `height: 100%` box, and `Sticky`'s `align-self: start` drops the row stretch that made that height definite, so the footer-pinning doesn't work. `100dvh` is always relative to the real browser viewport, not a nested scroll container — only use it when AppLayout is the outermost, page-scroll shell (its documented top-level use); nested inside another scrollable region, the sidebar sizes to the whole window and overflows it.
 
 ### `<Grid>` — 2D layout primitive
 
@@ -2187,8 +2187,6 @@ import { Home, Users, Settings } from 'lucide-react';
     </Rail.Group>
   </Rail.Section>
 
-  <Rail.Spacer />
-
   <Rail.Footer>
     <Rail.CollapseToggle />
   </Rail.Footer>
@@ -2201,7 +2199,8 @@ import { Home, Users, Settings } from 'lucide-react';
 - **Collapse state**: controlled (`collapsed` + `onCollapsedChange`) or uncontrolled (`defaultCollapsed`). The `<Rail.CollapseToggle>` button reads context and flips the state without prop drilling.
 - **`Rail.Item` is polymorphic** — `as={NavLink}` (or any router primitive) sets `aria-current="page"` on the rendered anchor; Rail's CSS applies the active accent via `[aria-current="page"]` and `:has([aria-current="page"])` selectors. No router dependency in the library.
 - **`Rail.Group`** — renders inline-expanding subitems when the rail is expanded, and a hover-popover (`right-start` placement, 80ms open delay, 200ms close grace) when collapsed — portaled to `document.body` at `--z-popover` and auto-elevating above Modal/Drawer like other floating surfaces. Auto-opens on mount when any subitem is the active route.
-- **`Rail.Spacer`** — `flex-grow: 1` filler; place it before `Rail.Footer` to anchor the footer to the bottom.
+- **`Rail.Spacer`** — `flex-grow: 1` filler that pushes trailing _sections_ (Settings, Help) to the bottom of the scrolling body. Not needed to pin the footer.
+- **Scrolling** — everything before the first `Rail.Footer` renders in one scroll box; the Footer is extracted out of it and stays pinned on its own, no Spacer required. The box scrolls vertically only — the X axis is clipped, since the rail is fixed-width and labels are meant to clip as it collapses. **Collapsed, the scrollbar is hidden entirely** (`scrollbar-width: none`): a gutter is a quarter of the 56px rail's inner width and shifts every item pill off-center. Wheel/trackpad and scroll-into-view on Tab still scroll it; the bar returns when the rail expands.
 - **i18n**: `rail.expand` / `rail.collapse` (toggle aria-label), `rail.navigation` (default `<nav>` aria-label).
 
 #### When NOT to use

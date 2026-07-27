@@ -6,12 +6,12 @@ export type RailFooterProps = HTMLAttributes<HTMLDivElement>;
 
 /**
  * Bottom slot of the rail — typically a user chip, theme switcher, or the
- * `<Rail.CollapseToggle>` itself. To anchor the footer to the bottom of the
- * rail, render a `<Rail.Spacer />` before it; without the spacer the footer
- * sits at its natural flow position right after the preceding section.
+ * `<Rail.CollapseToggle>` itself. It anchors to the bottom on its own: the
+ * rail extracts the first `<Rail.Footer>` out of the scroll box and renders it
+ * as a separate flex child below, so it stays put however long the item list
+ * grows. No `<Rail.Spacer />` needed.
  *
  * @example
- * <Rail.Spacer />
  * <Rail.Footer>
  *   <Rail.CollapseToggle />
  *   <UserChip />
