@@ -80,9 +80,11 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
   'aria-label'?: string;
   /**
    * Rail children — typically a sequence of `<Rail.Header>`, `<Rail.Section>`,
-   * `<Rail.Group>`, `<Rail.Spacer>`, `<Rail.Footer>`. Order matters: the
-   * `<Rail.Spacer>` is what pushes a subsequent `<Rail.Footer>` to the
-   * bottom of the rail.
+   * `<Rail.Group>`, `<Rail.Spacer>`, `<Rail.Footer>`. Order matters: the first
+   * `<Rail.Footer>` is the split point — everything before it goes in the
+   * scroll box, the Footer and anything after it stay outside and pinned to
+   * the bottom. A `<Rail.Spacer>` is not needed for that; use it to push a
+   * trailing *section* (settings, help) down inside the scrolling area.
    */
   children: ReactNode;
 }
@@ -108,9 +110,10 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
  * - `<Rail.Group icon={…} label="…">` — a parent with subitems. Expand inline
  *   when the rail is open; pops out as a hover flyout when collapsed.
  * - `<Rail.Spacer />` — flex-grow filler that pushes anything after it to the
- *   bottom of the rail.
+ *   bottom of the scrolling body. Not needed to pin the Footer.
  * - `<Rail.CollapseToggle />` — the chevron button that toggles collapsed.
  * - `<Rail.Footer>` — slot at the bottom (user chip, theme switcher, etc.).
+ *   Pinned outside the scroll box on its own.
  *
  * @example
  * // Uncontrolled — the rail manages its own state.
@@ -129,8 +132,6 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
  *     </Rail.Group>
  *   </Rail.Section>
  *
- *   <Rail.Spacer />
- *
  *   <Rail.Footer>
  *     <Rail.CollapseToggle />
  *   </Rail.Footer>
@@ -148,6 +149,18 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
  * >
  *   … same children …
  * </Rail>
+ *
+ * @remarks Scrolling
+ * Everything before the first `<Rail.Footer>` renders inside one scroll box;
+ * the Footer sits outside it and stays pinned. That box only ever scrolls
+ * vertically — the X axis is clipped, since the rail is a fixed-width nav and
+ * labels are meant to be clipped as it collapses. When collapsed the scrollbar
+ * is hidden entirely (`scrollbar-width: none`): a gutter is a quarter of the
+ * 56px rail's inner width and shifts every item pill off-center. Wheel/trackpad
+ * scrolling and scroll-into-view on Tab still work, and the bar returns the
+ * moment the rail expands — the accepted cost is that a pointer-only user has
+ * nothing to drag while collapsed. It opts out of the thin themed scrollbar
+ * `reset.scss` applies everywhere else.
  *
  * @remarks When NOT to use
  * - For a top-bar / horizontal nav → use a `<Cluster>` + `<Link>` row.

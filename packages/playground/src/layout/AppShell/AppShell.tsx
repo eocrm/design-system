@@ -165,12 +165,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Rail.Section title="Mockups">{mockupItems.map(renderRailItem)}</Rail.Section>
           )}
 
-          {/* Spacer + Footer pinned to the bottom. Footer is position:sticky
-              so the mode-switch link (Mockups ↔ Components) and the
-              collapse-toggle stay visible even when the section list above
-              overflows and the rail scrolls. */}
-          <Rail.Spacer />
-
+          {/* No Rail.Spacer here: Rail renders the Footer outside its scroll
+              box, so the mode-switch link (Mockups ↔ Components) and the
+              collapse-toggle stay visible on their own when the section list
+              above overflows. A spacer as the last body child would be a
+              no-op. */}
           <Rail.Footer>
             <Rail.Item as={NavLink} to={switchLink.to} icon={<switchLink.icon size={16} />}>
               {switchLink.label}

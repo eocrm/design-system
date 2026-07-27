@@ -29,8 +29,10 @@
 
 // Viewport-pinned sidebar (sidebarPinned): the sidebar spans exactly the
 // screen, not the row/page. sticky (not fixed) so it keeps its flex-row slot
-// and width; a DEFINITE 100dvh height lets a Rail's `height: 100%` + spacer
-// pin its footer to the viewport bottom. dvh tracks mobile dynamic toolbars;
+// and width; a DEFINITE 100dvh height gives a Rail's `height: 100%` something
+// to resolve against, which is what lets its footer pin to the viewport
+// bottom (the Rail's own scroll body does the pinning, not a spacer).
+// dvh tracks mobile dynamic toolbars;
 // the vh line is the older-engine fallback. overflow-y: auto scrolls an
 // over-tall rail inside the pinned box instead of growing the page.
 .sidebarPinned {

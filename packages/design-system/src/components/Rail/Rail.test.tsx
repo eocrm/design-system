@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act, createRef, useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -464,5 +466,30 @@ describe('Rail — Group flyout overlay elevation (#273)', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('Rail — scroll box axes', () => {
+  // jsdom never loads the compiled CSS module, so computed styles can't be
+  // asserted. Same SCSS-source fallback DropdownMenu.test.tsx uses for its
+  // equivalent overflow contract.
+  const scss = readFileSync(resolve(__dirname, 'Rail.module.scss'), 'utf8');
+
+  it('.body clips the X axis instead of scrolling it', () => {
+    // Declaring only `overflow-y: auto` leaves X at `visible`, which the spec
+    // computes to `auto` — so the box scrolls horizontally. Collapsed, the
+    // vertical gutter squeezes the ~39px body below an item row's min-content
+    // width and a horizontal scrollbar appears under the icon column.
+    // ^ anchors to the bare `.body` rule (a descendant rule like
+    // `.collapsed .body` must not satisfy this), and [^}]* bounds the match
+    // inside that block so a later rule's overflow-x can't either.
+    expect(scss).toMatch(/^\.body\s*\{[^}]*overflow-y:\s*auto/m);
+    expect(scss).toMatch(/^\.body\s*\{[^}]*overflow-x:\s*hidden/m);
+  });
+
+  it('hides the scroll gutter in collapsed (icon-only) mode', () => {
+    // At 56px the gutter is a quarter of the body's width and shifts every
+    // item pill off-center. Wheel/keyboard scrolling still works without it.
+    expect(scss).toMatch(/\.collapsed\s+\.body\s*\{[^}]*scrollbar-width:\s*none/);
   });
 });

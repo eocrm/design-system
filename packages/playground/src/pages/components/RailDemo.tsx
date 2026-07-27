@@ -807,7 +807,7 @@ export function Demo() {
 
       <Example
         title="Items pinned to the bottom — Rail.Spacer pushes anything after it down"
-        description="Drop a `<Rail.Spacer />` between the main item list and a secondary section to keep settings / help / sign-out anchored at the rail's bottom edge. The Footer (CollapseToggle, user chip) sits below them and stays sticky when the item list overflows."
+        description="Drop a `<Rail.Spacer />` between the main item list and a secondary section to keep settings / help / sign-out anchored at the rail's bottom edge. The Footer (CollapseToggle, user chip) sits below them and stays put when the item list overflows — not by sticky positioning, but because Rail renders it outside the scroll box entirely."
         code={`import { type ReactNode } from 'react';
 import { Home, KanbanSquare, Search, Settings as SettingsIcon, Users } from 'lucide-react';
 import { Cluster, Rail, Text, useRail } from '@eocrm/design-system';
@@ -982,7 +982,7 @@ export function Demo() {
 
       <Example
         title="Overflowing item list — everything above the Footer scrolls"
-        description="Rail splits its children at the first `Rail.Footer`: everything before it renders inside one scroll box, the Footer outside it. So when the item list outgrows the rail, the Footer stays pinned at the bottom while the Header scrolls away with the items. The scrollbar is thin and theme-colored — that comes from the `scrollbar-width` / `scrollbar-color` reset in the library's `reset.scss`, not from a Rail-specific style, so every scroll container in the app looks the same."
+        description="Rail splits its children at the first `Rail.Footer`: everything before it renders inside one scroll box, the Footer outside it. So when the item list outgrows the rail, the Footer stays pinned at the bottom while the Header scrolls away with the items. The scrollbar is thin and theme-colored — that comes from the `scrollbar-width` / `scrollbar-color` reset in the library's `reset.scss`, so every scroll container in the app looks the same. The one Rail-specific override is collapsed mode, which hides the bar outright."
         code={`import { type ReactNode } from 'react';
 import { Building2, Home, Users } from 'lucide-react';
 import { Cluster, Rail, Text, useRail } from '@eocrm/design-system';
@@ -1126,8 +1126,9 @@ export function Demo() {
         <Cluster gap="sm" align="center">
           <Layers size={14} aria-hidden style={{ color: 'var(--color-fg-muted)' }} />
           <Text tone="muted" size="sm">
-            Collapse the rail while scrolled — the section titles fold away, so the list shortens
-            and the thumb grows. The gutter itself stays the same thin width.
+            Collapse the rail while scrolled — the bar disappears entirely. At 56px a scroll gutter
+            is a quarter of the rail's inner width, so icon-only mode drops it and scrolls by wheel
+            and by Tab instead.
           </Text>
         </Cluster>
       </Example>

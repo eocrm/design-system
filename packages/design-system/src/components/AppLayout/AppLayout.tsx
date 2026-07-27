@@ -16,14 +16,15 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Pin the sidebar to the viewport: `position: sticky; top: 0; height: 100dvh`
    * with internal overflow scrolling. On pages taller than the viewport the
-   * sidebar (and a `Rail` inside it — its `Rail.Spacer` + `Rail.Footer` /
+   * sidebar (and a `Rail` inside it — including its `Rail.Footer` /
    * CollapseToggle) spans exactly the SCREEN, keeping the footer glued to the
    * viewport bottom instead of the page bottom. Default `false` (sidebar
    * stretches to the full row/page height — the original behavior).
    *
-   * Prefer this over wrapping the sidebar slot in `Sticky` — the rail's
-   * `height: 100%` + flex spacer need a DEFINITE viewport height to pin the
-   * footer, which `Sticky`'s max-height capping can't provide.
+   * Prefer this over wrapping the sidebar slot in `Sticky` — the rail pins its
+   * footer by filling its own `height: 100%` box, which needs a DEFINITE
+   * height to resolve against. `Sticky` sets `align-self: start`, which drops
+   * the row stretch that made it definite, so the footer stops pinning.
    *
    * `100dvh` is always relative to the real browser viewport, never to a
    * nested scroll container — so this only pins correctly when AppLayout is
@@ -60,7 +61,7 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * @example
  * // Tall pages: pin the sidebar so a Rail's footer/CollapseToggle stays glued
  * // to the viewport bottom instead of scrolling away with the page:
- * <AppLayout sidebar={<Rail>{nav}<Rail.Spacer /><Rail.Footer>{footer}</Rail.Footer></Rail>} sidebarPinned>
+ * <AppLayout sidebar={<Rail>{nav}<Rail.Footer>{footer}</Rail.Footer></Rail>} sidebarPinned>
  *   <Page>{routedContent}</Page>
  * </AppLayout>
  *
