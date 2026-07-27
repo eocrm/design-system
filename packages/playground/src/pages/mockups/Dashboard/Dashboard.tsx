@@ -1,5 +1,5 @@
 import { ArrowUpRight, DollarSign, UserPlus, Briefcase } from 'lucide-react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import {
   Card,
   Stack,

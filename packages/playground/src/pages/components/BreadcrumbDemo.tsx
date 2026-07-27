@@ -1,4 +1,4 @@
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import { Slash } from 'lucide-react';
 import { Breadcrumb } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
@@ -16,7 +16,7 @@ export function BreadcrumbDemo() {
       <Example
         title="Basic — auto-current on last child"
         description="No explicit `current` prop needed; the last child becomes `<span aria-current='page'>` automatically."
-        code={`import { Link as RouterLink } from 'react-router-dom';
+        code={`import { Link as RouterLink } from 'react-router';
 import { Breadcrumb } from '@eocrm/design-system';
 
 export function Demo() {
@@ -47,7 +47,7 @@ export function Demo() {
       <Example
         title="Custom separator"
         description="Pass any ReactNode as the separator. The wrapper applies aria-hidden automatically."
-        code={`import { Link as RouterLink } from 'react-router-dom';
+        code={`import { Link as RouterLink } from 'react-router';
 import { Slash } from 'lucide-react';
 import { Breadcrumb } from '@eocrm/design-system';
 
@@ -97,7 +97,7 @@ export function Demo() {
       <Example
         title="Long trail (5+ items)"
         description="v1 has no truncation. Long trails wrap naturally; pick the separator/font-size that fits your layout."
-        code={`import { Link as RouterLink } from 'react-router-dom';
+        code={`import { Link as RouterLink } from 'react-router';
 import { Breadcrumb } from '@eocrm/design-system';
 
 export function Demo() {
@@ -146,7 +146,7 @@ export function Demo() {
       <Example
         title="External crumb (default <a>)"
         description="No `as` prop = native <a> for external URLs."
-        code={`import { Link as RouterLink } from 'react-router-dom';
+        code={`import { Link as RouterLink } from 'react-router';
 import { Breadcrumb } from '@eocrm/design-system';
 
 export function Demo() {

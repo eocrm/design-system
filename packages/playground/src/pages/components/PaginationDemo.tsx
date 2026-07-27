@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { CursorPagination, Cluster, Pagination, Select, Stack, Tabs } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';

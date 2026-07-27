@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Cluster } from '@eocrm/design-system';
 import { type ComponentName, type MockupSlug, getMockup, mockupsUsing } from '../mockups/registry';
 import styles from './CrossLinks.module.scss';

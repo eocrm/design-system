@@ -175,7 +175,7 @@ See `AGENTS.md` "Localization (i18n)" section for the consumer-facing API and ho
 
 - Pages, layouts (`AppShell`, etc.), mock data — playground only
 - App-specific business logic — CRM code
-- `react-router-dom`, `prismjs`, `prism-react-renderer`, `@types/prismjs` — playground-only deps. **Never import them from a library file**, even casually. They're not in this package's `dependencies` and will fail in the consumer.
+- `react-router`, `prismjs`, `prism-react-renderer`, `@types/prismjs` — playground-only deps. **Never import them from a library file**, even casually. They're not in this package's `dependencies` and will fail in the consumer.
 
 ## Adding a token
 

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { AppShell } from './layout/AppShell';
 import { MockupsIndex } from './pages/mockups/MockupsIndex';
 import { Audit } from './pages/mockups/Audit/Audit';

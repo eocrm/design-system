@@ -6,7 +6,7 @@ import { Example } from './Example';
 import { InputExample } from './InputExample';
 import { getComponentFiles } from '../../lib/componentFiles';
 
-// Looks like react-router-dom's <Link> — accepts `to`, renders an <a>. Stands
+// Looks like react-router's <Link> — accepts `to`, renders an <a>. Stands
 // in for a real router Link to show `as` accepts ANY component, not just
 // react-router's (see <LinkDemo> for the real-RouterLink integration).
 function FakeRouterLink({ to, children, ...rest }: { to: string; children?: ReactNode }) {
@@ -170,7 +170,7 @@ export function Demo() {
         description="No `as` + href renders <a>. `as={RouterLink-like}` forwards router props (to, replace, ...) with full type inference. `as` set to 'button' + onClick makes the chip an action."
         code={`import { EntityChip } from '@eocrm/design-system';
 
-// Stands in for react-router-dom's <Link> — \`as\` accepts any component.
+// Stands in for react-router's <Link> — \`as\` accepts any component.
 function FakeRouterLink({ to, children, ...rest }) {
   return <a href={to} {...rest}>{children}</a>;
 }

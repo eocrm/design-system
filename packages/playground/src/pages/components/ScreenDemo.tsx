@@ -1,6 +1,6 @@
 import { Button, Cluster, ErrorState, Link, Screen, Stack, Text } from '@eocrm/design-system';
 import { Compass, TriangleAlert } from 'lucide-react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -116,7 +116,7 @@ export function Demo() {
       <Example
         title="Live full-viewport screens"
         description={`fill="viewport" (the default) takes over the whole window — see it in the mockups.`}
-        code={`import { Link as RouterLink } from 'react-router-dom';
+        code={`import { Link as RouterLink } from 'react-router';
 import { Link, Stack } from '@eocrm/design-system';
 
 export function Demo() {

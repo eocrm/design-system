@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Stack, Title, Text, Code, Input, Badge } from '@eocrm/design-system';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import manifest from '@lib-source/components.manifest.json';
 import styles from './ArchitecturePage.module.scss';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { UserPlus, MoreHorizontal, MailPlus, Trash2 } from 'lucide-react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router';
 import {
   Badge,
   Button,

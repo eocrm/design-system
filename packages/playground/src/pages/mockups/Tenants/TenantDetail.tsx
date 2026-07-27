@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link as RouterLink, Navigate, useParams } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useParams } from 'react-router';
 import { Edit3, MoreHorizontal, Pause, Play, Plus, RotateCw, X } from 'lucide-react';
 import {
   Avatar,

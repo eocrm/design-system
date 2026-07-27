@@ -1,4 +1,4 @@
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import { ExternalLink } from 'lucide-react';
 import { Cluster, Link, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
@@ -68,7 +68,7 @@ export function Demo() {
       <Example
         title="SPA navigation via `as={RouterLink}`"
         description="Passes through router's `to`, `replace`, etc. with full type inference."
-        code={`import { Link as RouterLink } from 'react-router-dom';
+        code={`import { Link as RouterLink } from 'react-router';
 import { Link } from '@eocrm/design-system';
 
 export function Demo() {

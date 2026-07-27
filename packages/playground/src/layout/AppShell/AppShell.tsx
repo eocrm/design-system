@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router';
 import { Bell, Plus, Component, Layers, Monitor, Sun, Moon, type LucideIcon } from 'lucide-react';
 import {
   type NavItem,
