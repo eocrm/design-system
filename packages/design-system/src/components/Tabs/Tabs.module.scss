@@ -4,9 +4,10 @@
 // instead of on .tabs means the tablist itself remains an overflow-visible
 // box, so the active-tab underline (positioned just below its baseline) is
 // never clipped by overflow-y's auto-promotion.
+// `scrollbar-width: thin` used to live here; it now comes from the universal
+// scrollbar reset in styles/reset.scss, which themes every scroller at once.
 .scrollWrap {
   overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .tabs {

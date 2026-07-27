@@ -126,7 +126,7 @@ The library ships a full dark palette, driven entirely by CSS. There is **no the
 </html>
 ```
 
-`color-scheme` is set automatically for each state, so native form controls, scrollbars, and the browser chrome match the theme.
+`color-scheme` is set automatically for each state, so native form controls and the browser chrome match the theme. Scrollbars go a step further: `reset.scss` applies `scrollbar-width: thin` + a token-colored `scrollbar-color` to every element, so every scroller in the app is thin and theme-colored rather than OS-default. Opt a scroller out with its own `scrollbar-width: auto` / `scrollbar-color: auto`.
 
 **What flips for free:** every component whose colors resolve through the design tokens — which is all of them. Surfaces, text, borders, the accent and semantic palettes, shadows, overlays, focus rings, Badge tones, and Tooltip all redefine under dark with zero markup changes.
 

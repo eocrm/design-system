@@ -52,7 +52,7 @@ import {
 Importing `@eocrm/design-system/styles/global.scss` once at your app root applies three things:
 
 1. **Tokens** — defines every `--color-*`, `--space-*`, `--radius-*`, `--font-*`, `--shadow-*` etc. on `:root`. Required.
-2. **Modern reset** — including `* { margin: 0 }`. **All default browser margins on every element are zeroed.** Headings, paragraphs, lists have no intrinsic vertical rhythm; space them via `Stack`/`Cluster` or with the parent's own margin in CSS.
+2. **Modern reset** — including `* { margin: 0 }`. **All default browser margins on every element are zeroed.** Headings, paragraphs, lists have no intrinsic vertical rhythm; space them via `Stack`/`Cluster` or with the parent's own margin in CSS. The reset also applies `scrollbar-width: thin` + a token-colored `scrollbar-color` to every element, so **every** scroll container — library components and your own — gets a thin themed scrollbar instead of the OS default. It's declared at specificity 0-0-0; opt a scroller out with its own `scrollbar-width: auto` / `scrollbar-color: auto`. Note that Chromium ignores `::-webkit-scrollbar` rules on any scroller where these standard properties are set — if you already style scrollbars that way, they'll stop applying.
 3. **Base typography** — `body` font + size, `h1`–`h4` sizes, link color. Global rules, not scoped.
 
 If you need only the tokens (you're providing your own reset), import `@eocrm/design-system/styles/tokens.scss` directly. Other available subpath imports: `./styles/reset.scss`, `./styles/typography.scss`, `./styles/mixins.scss`.
