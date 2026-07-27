@@ -52,6 +52,25 @@ export interface TabItem {
 }
 
 /**
+ * A trailing action rendered after the tab items in the same strip (e.g. a
+ * `+ New deal` pseudo-tab). Rendered as a real `<button type="button">`, NOT
+ * `role="tab"` — it has no tabpanel to control, is excluded from the
+ * arrow-key roving order, and the animated selection indicator never targets
+ * it. Reachable via the Tab key like any ordinary button, right after the
+ * currently-focusable tab.
+ */
+export interface TabsAction {
+  /** Visible label. Also the button's accessible name — no separate aria-label needed. */
+  label: string;
+  /** Optional decorative icon rendered before the label. Rendered `aria-hidden` — the label carries the accessible name. */
+  icon?: ReactNode;
+  /** Called when the button is clicked. Never changes `activeId` or fires `onChange` — wire up your own state (e.g. append a new tab) in the handler. */
+  onClick: () => void;
+  /** Disables the button (dimmed, non-interactive). Default `false`. */
+  disabled?: boolean;
+}
+
+/**
  * Determines what happens when Arrow keys move focus between tabs.
  * - `auto` (default) — focus and onChange both fire on Arrow. Best for cheap, eager-rendered panels.
  * - `manual` — Arrow only moves focus; Enter/Space activates via native button click. Best for lazy-loaded panels.
@@ -93,6 +112,16 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * `Split`'s `aside`, with the detail panel as the `Split`'s children beside it.
    */
   orientation?: TabsOrientation;
+  /**
+   * A trailing action rendered after the tab items, inside the same strip
+   * (e.g. `{ label: 'New deal', icon: <Plus/>, onClick: addDeal }`). Styled
+   * tab-like but visibly muted, never becomes the selected tab, and is
+   * skipped by arrow-key roving — reachable via the Tab key instead. For
+   * controls that apply to the whole bar but aren't shaped like a tab (a
+   * filter toggle), use `endContent`. For a control on a single tab, use
+   * `TabItem.actions`.
+   */
+  action?: TabsAction;
   /**
    * Controls for the whole tab bar (e.g. an "add tab" button, a filter
    * toggle), rendered at the end of the strip OUTSIDE the tablist so it never
@@ -145,6 +174,15 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  * <Tabs items={items} activeId={tab} onChange={setTab} activationMode="manual" />
  *
  * @example
+ * // Trailing action — a button-like pseudo-tab that never becomes selected:
+ * <Tabs
+ *   items={items}
+ *   activeId={tab}
+ *   onChange={setTab}
+ *   action={{ label: '+ New entity', icon: <Plus size={14} />, onClick: createEntity }}
+ * />
+ *
+ * @example
  * // Vertical master–detail rail with a trailing unsaved-changes badge:
  * <Split
  *   aside={
@@ -179,6 +217,8 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  * - ❌ Using `orientation="vertical"` as a page sidebar / primary navigation.
  *   It is for *intra-page* master–detail section switching, not route changes —
  *   use the app sidebar for navigation.
+ * - ❌ Reaching for `action` to switch views. It never sets `activeId` — if
+ *   the click should select a tab, add a `TabItem` instead.
  */
 export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   {
@@ -188,6 +228,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     panelIdPrefix,
     activationMode = 'auto',
     orientation = 'horizontal',
+    action,
     endContent,
     className,
     ...props
@@ -399,6 +440,29 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
             </span>
           );
         })}
+        {action != null && (
+          // Plain button — deliberately NOT role="tab": no tabpanel to
+          // control, excluded from the arrow-key roving above (which only
+          // ever reads `items`/`tabRefs`), and never measured by the
+          // indicator effect (which only looks up `tabRefs[activeId]`).
+          // Known, accepted `aria-required-children` deviation: this leaves
+          // one non-"tab" child in a `role="tablist"` container, same as the
+          // `TabItem.actions` button above already does. A real `<button>`
+          // still announces correctly to AT regardless of its parent's role.
+          <button
+            type="button"
+            className={styles.action}
+            onClick={action.onClick}
+            disabled={action.disabled}
+          >
+            {action.icon != null && (
+              <span className={styles.icon} aria-hidden="true">
+                {action.icon}
+              </span>
+            )}
+            <span className={styles.label}>{action.label}</span>
+          </button>
+        )}
         <span ref={indicatorRef} className={styles.indicator} aria-hidden="true" />
       </div>
     </div>

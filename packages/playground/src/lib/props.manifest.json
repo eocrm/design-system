@@ -4450,6 +4450,13 @@
           "description": "`'horizontal'` (default) — a horizontal strip with a sliding underline.\n`'vertical'` — a stacked master–detail rail: full-width rows, a left accent\nbar + tinted background on the active row, and ArrowUp/ArrowDown navigation.\nSets `aria-orientation` on the tablist accordingly. Put a vertical strip in a\n`Split`'s `aside`, with the detail panel as the `Split`'s children beside it."
         },
         {
+          "name": "action",
+          "type": "TabsAction",
+          "required": false,
+          "default": "",
+          "description": "A trailing action rendered after the tab items, inside the same strip\n(e.g. `{ label: 'New deal', icon: <Plus/>, onClick: addDeal }`). Styled\ntab-like but visibly muted, never becomes the selected tab, and is\nskipped by arrow-key roving — reachable via the Tab key instead. For\ncontrols that apply to the whole bar but aren't shaped like a tab (a\nfilter toggle), use `endContent`. For a control on a single tab, use\n`TabItem.actions`."
+        },
+        {
           "name": "endContent",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,

@@ -5,6 +5,7 @@ import {
   FileText,
   Mail,
   MoreVertical,
+  Plus,
   Settings,
   Shield,
   User,
@@ -51,6 +52,22 @@ export function TabsDemo() {
 
   // Strip-level actions example.
   const [stripTab, setStripTab] = useState('board');
+
+  // Trailing action example: a stateful deal list where the action appends a
+  // new tab and selects it — the real product flow, not just a click handler.
+  const [dealTabs, setDealTabs] = useState([
+    { id: 'acme', label: 'Acme Corp' },
+    { id: 'globex', label: 'Globex' },
+  ]);
+  const [dealActive, setDealActive] = useState('acme');
+  const [dealCount, setDealCount] = useState(0);
+  const addDeal = () => {
+    const n = dealCount + 1;
+    const id = `deal-${n}`;
+    setDealTabs((prev) => [...prev, { id, label: `New deal ${n}` }]);
+    setDealCount(n);
+    setDealActive(id);
+  };
 
   const verticalDetail: Record<string, { title: string; body: string }> = {
     general: {
@@ -558,6 +575,47 @@ export function Demo() {
           activeId={stripTab}
           onChange={setStripTab}
           endContent={<Button size="sm">+ New tab</Button>}
+        />
+      </Example>
+
+      <Example
+        title="Trailing action"
+        description="action renders a button-like pseudo-tab after the tab items, in the same strip. Unlike endContent, it's styled to match the tab rhythm (just visibly muted) and sits right where the next tab would go. Clicking it never selects it — it only fires onClick, so the consumer decides what happens (here: append a new tab and select it)."
+        code={`import { useState } from 'react';
+import { Plus } from 'lucide-react';
+import { Tabs } from '@eocrm/design-system';
+
+export function Demo() {
+  const [tabs, setTabs] = useState([
+    { id: 'acme', label: 'Acme Corp' },
+    { id: 'globex', label: 'Globex' },
+  ]);
+  const [active, setActive] = useState('acme');
+  const [count, setCount] = useState(0);
+
+  const addDeal = () => {
+    const n = count + 1;
+    const id = \`deal-\${n}\`;
+    setTabs((prev) => [...prev, { id, label: \`New deal \${n}\` }]);
+    setCount(n);
+    setActive(id);
+  };
+
+  return (
+    <Tabs
+      items={tabs}
+      activeId={active}
+      onChange={setActive}
+      action={{ label: 'New deal', icon: <Plus size={14} />, onClick: addDeal }}
+    />
+  );
+}`}
+      >
+        <Tabs
+          items={dealTabs}
+          activeId={dealActive}
+          onChange={setDealActive}
+          action={{ label: 'New deal', icon: <Plus size={14} />, onClick: addDeal }}
         />
       </Example>
     </DemoLayout>

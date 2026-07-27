@@ -53,6 +53,40 @@
   color: var(--tabs-tab-fg-active);
 }
 
+// Trailing action button (`action` prop) — sits after the tabs in the same
+// flex row so it lines up as the last item in the strip. Same rhythm as
+// `.tab` (height/padding/typography) but deliberately more muted — it's a
+// button, not a tab, and must read as visually distinct even before hover.
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tabs-tab-gap);
+  padding: var(--tabs-tab-padding-y) var(--tabs-tab-padding-x);
+  border: none;
+  background: transparent;
+  color: var(--tabs-action-fg);
+  font-family: inherit;
+  font-size: var(--tabs-tab-font-size);
+  font-weight: var(--tabs-tab-font-weight);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    color: var(--tabs-tab-fg-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 var(--ring-width) var(--tabs-tab-ring);
+    border-radius: var(--tabs-tab-radius);
+  }
+
+  &:disabled {
+    opacity: var(--tabs-action-opacity-disabled);
+    cursor: not-allowed;
+  }
+}
+
 .icon {
   display: inline-flex;
   align-items: center;
@@ -168,6 +202,24 @@
 
   .active {
     background: var(--tabs-vertical-tab-bg-active);
+  }
+
+  // The action button follows the same axis as the tabs: a full-width row
+  // instead of an inline flex item. Never gets the active tint — it's never
+  // selected.
+  .action {
+    width: 100%;
+    justify-content: flex-start;
+    padding: var(--tabs-vertical-tab-padding-y) var(--tabs-vertical-tab-padding-x);
+    border-radius: var(--tabs-vertical-tab-radius);
+    text-align: left;
+    transition:
+      color var(--transition-fast),
+      background var(--transition-fast);
+
+    &:hover:not(:disabled) {
+      background: var(--tabs-vertical-tab-bg-hover);
+    }
   }
 
   .indicator {

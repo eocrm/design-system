@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useEffect, useState } from 'react';
-import { Tabs, type TabItem } from './Tabs';
+import { Tabs, type TabItem, type TabsAction } from './Tabs';
 
 const items: TabItem[] = [
   { id: 'a', label: 'Overview' },
@@ -572,5 +572,122 @@ describe('Tabs', () => {
     expect(act).toBeInTheDocument();
     expect(securityTab).not.toContainElement(act);
     expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+  });
+});
+
+describe('Tabs action', () => {
+  const action: TabsAction = { label: 'New deal', onClick: vi.fn() };
+
+  it('renders the action as a plain button, not a tab', () => {
+    render(<Tabs items={items} activeId="a" onChange={vi.fn()} action={action} />);
+    const btn = screen.getByRole('button', { name: 'New deal' });
+    expect(btn).toBeInTheDocument();
+    expect(btn).not.toHaveAttribute('role', 'tab');
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
+  });
+
+  it('sets type="button"', () => {
+    render(<Tabs items={items} activeId="a" onChange={vi.fn()} action={action} />);
+    expect(screen.getByRole('button', { name: 'New deal' })).toHaveAttribute('type', 'button');
+  });
+
+  it('renders the action after all tab items in document order', () => {
+    render(<Tabs items={items} activeId="a" onChange={vi.fn()} action={action} />);
+    const tabs = screen.getAllByRole('tab');
+    const btn = screen.getByRole('button', { name: 'New deal' });
+    const last = tabs[tabs.length - 1];
+    expect(last.compareDocumentPosition(btn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('does not render an action button when the prop is omitted', () => {
+    render(<Tabs items={items} activeId="a" onChange={vi.fn()} />);
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('fires action.onClick and NOT onChange when clicked', async () => {
+    const onClick = vi.fn();
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Tabs
+        items={items}
+        activeId="a"
+        onChange={onChange}
+        action={{ label: 'New deal', onClick }}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'New deal' }));
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('leaves activeId/aria-selected and the indicator untouched after clicking the action', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    const { container } = render(
+      <Tabs items={items} activeId="a" onChange={onChange} action={action} />,
+    );
+    const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
+    const before = indicator.getAttribute('style');
+    await user.click(screen.getByRole('button', { name: 'New deal' }));
+    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
+    expect(indicator.getAttribute('style')).toBe(before);
+  });
+
+  it('disables the button and blocks onClick when action.disabled is true', async () => {
+    const onClick = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Tabs
+        items={items}
+        activeId="a"
+        onChange={vi.fn()}
+        action={{ label: 'New deal', onClick, disabled: true }}
+      />,
+    );
+    const btn = screen.getByRole('button', { name: 'New deal' });
+    expect(btn).toBeDisabled();
+    await user.click(btn);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('renders the icon aria-hidden next to the label', () => {
+    render(
+      <Tabs
+        items={items}
+        activeId="a"
+        onChange={vi.fn()}
+        action={{ label: 'New deal', icon: <svg data-testid="action-icon" />, onClick: vi.fn() }}
+      />,
+    );
+    const btn = screen.getByRole('button', { name: 'New deal' });
+    const icon = within(btn).getByTestId('action-icon');
+    expect(icon.closest('[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it('is skipped by arrow-key roving — ArrowRight from the last tab wraps to the first tab', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Tabs items={items} activeId="c" onChange={onChange} action={action} />);
+    screen.getByRole('tab', { name: 'Notes' }).focus();
+    await user.keyboard('{ArrowRight}');
+    expect(onChange).toHaveBeenLastCalledWith('a');
+    expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Overview' }));
+  });
+
+  it('is reachable via the Tab key after the active tab, outside the roving tabindex', async () => {
+    const user = userEvent.setup();
+    render(<Tabs items={items} activeId="a" onChange={vi.fn()} action={action} />);
+    screen.getByRole('tab', { name: 'Overview' }).focus();
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'New deal' }));
+  });
+
+  it('renders in vertical orientation without becoming a tab', () => {
+    render(
+      <Tabs items={items} activeId="a" onChange={vi.fn()} orientation="vertical" action={action} />,
+    );
+    expect(screen.getByRole('button', { name: 'New deal' })).toBeInTheDocument();
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
   });
 });

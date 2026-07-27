@@ -20,6 +20,11 @@
   --tabs-tab-ring: var(--ring-accent);
   --tabs-tab-radius: var(--radius-sm);
 
+  // Trailing action button (`action` prop) — a button-like pseudo-tab, more
+  // muted than an idle tab since it never becomes selected.
+  --tabs-action-fg: var(--color-fg-subtle);
+  --tabs-action-opacity-disabled: var(--opacity-disabled);
+
   // Indicator
   --tabs-indicator-bg: var(--color-accent);
 

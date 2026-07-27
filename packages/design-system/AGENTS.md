@@ -2056,6 +2056,7 @@ const [tab, setTab] = useState('overview');
 - `orientation`: `horizontal` (default — sliding underline, ArrowLeft/Right) or `vertical` (stacked master–detail rail: full-width rows, left accent bar + tinted active row, ArrowUp/Down). Put a vertical strip in a `Split`'s `aside` beside its detail panel.
 - `panelIdPrefix`: optional. When set, each tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link.
 - The active-tab underline slides between tabs when `activeId` changes. Respects `prefers-reduced-motion: reduce`.
+- `action?: { label, icon?, onClick, disabled? }` renders a `+ New entity`-style button-like pseudo-tab after the tab items, inside the same strip — tab-shaped but visibly muted, NOT `role="tab"`, never selected, skipped by arrow-key roving (reachable via `Tab` instead), and the sliding indicator never targets it. It only fires `onClick`; if the click should change `activeId`, do that yourself in the handler (e.g. append + select a new tab). Known, accepted a11y tradeoff: like the `TabItem.actions` button, this leaves one non-`"tab"` child in the `role="tablist"` container (an `aria-required-children` deviation) — a real `<button>` still announces correctly to assistive tech regardless of its parent's role.
 
 ### `<Accordion>` — vertically-stacked collapsible panels
 
