@@ -126,31 +126,13 @@ The existing 8 components are fully JSDoc'd — match that pattern.
 
 ### 8. Pre-push review-fix cycle (library changes only)
 
-Before pushing changes that touch `packages/design-system/**`, run the review-fix loop. The library is consumed by AI agents who pattern-match against whatever we ship — a missing JSDoc, broken ARIA, or token slip propagates to every page they generate. Catching it here is cheaper than tracking it down across consumer code.
+Before pushing changes that touch `packages/design-system/**`, you MUST run the review-fix loop — invoke the **`pre-push-review`** skill (variant A) and follow it exactly. This is not optional, including for one-line SCSS tweaks. The library is consumed by AI agents who pattern-match against whatever we ship — a missing JSDoc, broken ARIA, or token slip propagates to every page they generate.
 
 **When this rule applies**: any change inside `packages/design-system/` — component code, tests, tokens, SCSS, `package.json`, `AGENTS.md`, `README.md`, or this `CLAUDE.md`.
 
 **When this rule does NOT apply**: changes scoped to `packages/playground/**`, root `README.md`, root `CLAUDE.md`, GitHub workflows, the Makefile, or other non-library files. Push those normally.
 
-**The loop**:
-
-1. **Run gates first** — `npm test`, `npm run typecheck`, `npm run lint:css`, `npm run build`, `npm pack --dry-run -w @eocrm/design-system`. They must all pass before review.
-2. **Spawn a fresh-context review agent** (`general-purpose`) targeted at `packages/design-system/`. Brief it explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell it to read this `CLAUDE.md`, `AGENTS.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`).
-3. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
-4. **For every finding you deliberately skip**, leave a one-line explanation in your response so the next reviewer doesn't re-flag it.
-5. **Re-run gates** after fixes.
-6. **Spawn another reviewer** with the same prompt.
-7. **Repeat** until the verdict is `clean enough to stop`.
-
-**Hard exit criteria**:
-
-- 0 Critical, 0 Important findings (or each remaining one has an explicit documented skip)
-- All four gates (test, typecheck, lint, build) green
-- `npm pack --dry-run` shows no test files or internal-only paths in the tarball
-
-**When to consider lint rules**: if a reviewer keeps catching the same class of issue (raw values, missing JSDoc, ARIA omissions), codify it in `.stylelintrc.json` overrides or a Vitest meta-test so future agents can't reintroduce it. That's how `.stylelintrc.json` and `src/structure.test.ts` grew to their current size.
-
-**Trivial-change escape hatch**: a one-line doc typo or comment tweak doesn't need a full review loop. Use judgment — if the change couldn't plausibly introduce a regression, push without the cycle. When unsure, run the cycle.
+The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch.
 
 ### 9. Every user-facing string goes through i18n
 
@@ -224,7 +206,7 @@ The CRM should NOT roll its own version of a design-system component. If somethi
 
 **Dependency policy:** No UI / component libraries. Two narrow exceptions: (a) `@floating-ui/react-dom` for collision-aware positioning (DropdownMenu and any future popover-shaped component), and (b) `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` for drag-and-drop sortable behavior (used by DataTable's column reorder and by Sortable). Everything else — ARIA, focus, keyboard, dismissal — is hand-rolled per WAI-ARIA APG patterns. When CSS anchor positioning has acceptable browser support, Floating UI can be removed without changing public APIs.
 
-The original wishlist — `Modal`, `Tooltip`, `Popover`, `Toast`, `Textarea`, `Checkbox`, `Radio`, `Switch`, `Skeleton`, `Breadcrumb`, `Link` — has all shipped. See `AGENTS.md` for the full component roster.
+See `AGENTS.md` for the full component roster.
 
 Genuinely still-missing:
 

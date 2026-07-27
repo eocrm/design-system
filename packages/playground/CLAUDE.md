@@ -115,53 +115,15 @@ This rule applies **only to files under `src/pages/mockups/`** — NOT to demo p
 
 ### 7. Pre-push review-fix cycle (mockup changes only)
 
-Mirrors the library's Hard rule 8 (`packages/design-system/CLAUDE.md`). Mockups are the most visible artifact of the library — they're what a new engineer or stakeholder loads first, and what AI agents pattern-match against when building real CRM screens. A drift here propagates straight into consumer code. The review cycle catches it before push.
+Before pushing mockup changes, you MUST run the review-fix loop — invoke the **`pre-push-review`** skill (variant B) and follow it exactly. Mirrors the library's Hard rule 8 (`packages/design-system/CLAUDE.md`). Mockups are the most visible artifact of the library — they're what a new engineer or stakeholder loads first, and what AI agents pattern-match against when building real CRM screens. A drift here propagates straight into consumer code.
 
 **When this rule applies**: any change that touches files under `packages/playground/src/pages/mockups/**`, the mockup registry (`packages/playground/src/pages/mockups/registry.ts`), or mock-data shared by mockups (`packages/playground/src/data/**`).
 
 **When this rule does NOT apply**: changes scoped to demo pages, AppShell, root `App.tsx`, layout files, or other playground tooling. Push those normally. Pure docs changes (this file, root README, etc.) also push directly per the root-CLAUDE.md's "standalone docs may be direct-pushed" carve-out.
 
-**The loop**:
-
-1. **Run gates first** — `make test`, `make build` (typecheck + bundle), `make lint`. They must all pass before review.
-2. **Spawn a fresh-context review agent** (`general-purpose`) targeted at the changed mockup file(s). Brief it on these 10 review categories:
-   1. **Hard rule 6 compliance** — no inline `style={...}`, no raw HTML tags, no co-located `.module.scss`. Any escape-hatch mock has a matching entry in `packages/design-system/src/components/TODO.md` AND an inline `{/* TODO: replace when … */}` comment.
-   2. **Registry sync** — every library component used in the mockup is listed in that mockup's `usesComponents` array in `registry.ts`. No stale entries (a name listed that's no longer imported).
-   3. **Imports** — only from `@eocrm/design-system`, never relative paths into the library (Rule 2). Demo-only deps from Rule 5 stay out.
-   4. **Realism** — does the mockup look like a real CRM screen, or a contrived demo? Mock data plausible (names, dates, currency formatting). No "lorem ipsum" or `"Click me"` placeholder text.
-   5. **Accessibility** — landmarks (`<main>` / nav present via library components), heading hierarchy (one h1 per page), images have alt text via `<Avatar name>` or equivalent, interactive elements have accessible labels.
-   6. **Keyboard / focus** — tab order matches visual order, no focus traps, Escape closes modals/popovers.
-   7. **Layout discipline** — spacing comes from `<Stack gap>` / `<Cluster gap>` props, not from inline margins or custom CSS. Vertical rhythm consistent across the page.
-   8. **Component coverage** — if a primitive exists for what the mockup does, the mockup uses it (no `<Button>` ignored in favor of a hand-rolled trigger). Cross-reference against the manifest at `packages/design-system/src/components.manifest.json`.
-   9. **State realism** — interactive state (open/closed, selected, loading, empty) reflects how the CRM would use it. If the mockup has only a single state, flag whether the empty / loading / error variants are worth adding.
-   10. **No stale TODOs** — any `{/* TODO: replace when … */}` comment has a matching open entry in `TODO.md`; any TODO entry whose listed primitive HAS shipped should be ticked + the inline mock refactored away.
-
-   Ask for output as `Critical` / `Important` / `Nice-to-have` / `Regression-watch` + a final verdict line (`clean enough to stop` or `keep iterating`).
-
-3. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
-4. **For every finding deliberately skipped**, leave a one-line explanation so the next reviewer doesn't re-flag it.
-5. **Re-run gates** after fixes.
-6. **Spawn another reviewer** with the same prompt.
-7. **Repeat** until the verdict is `clean enough to stop`.
-
-**Hard exit criteria**:
-
-- 0 Critical, 0 Important findings (or each remaining one has an explicit documented skip).
-- All three gates (test, build, lint) green.
-- All open TODOs in `packages/design-system/src/components/TODO.md` that the changed mockup touches are either still open with a matching inline comment, OR ticked + the refactor done in this PR.
-
-**Trivial-change escape hatch**: a one-character text fix or a typo in mock data doesn't need a full review loop. Use judgment — if the change couldn't plausibly affect Rule 6 compliance, layout, or component coverage, push without the cycle.
+The skill holds the gates, the 10-category reviewer brief, the exit criteria, and the trivial-change escape hatch.
 
 ## What goes here vs in the library
-
-|                                                           | Playground | Library |
-| --------------------------------------------------------- | ---------- | ------- |
-| `pages/`, `layout/AppShell`                               | ✅         | ❌      |
-| Mock data (`data/mock.ts`)                                | ✅         | ❌      |
-| Demo helpers (`CodeBlock`, `Example`, `DemoLayout`)       | ✅         | ❌      |
-| Prism setup                                               | ✅         | ❌      |
-| Reusable visual primitives (`Button`, `Card`, `Stack`...) | ❌         | ✅      |
-| Tokens, reset, typography, mixins                         | ❌         | ✅      |
 
 Heuristic: "would the CRM benefit from this?" If yes → library. If no → playground.
 

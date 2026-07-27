@@ -68,14 +68,6 @@ If either fails, run `npm install` again — do not proceed with code changes un
 
 **Never bypass with `--no-verify` on your own initiative.** If the hook blocks a push you believe is correct, the right move is to (a) fix the failing check, or (b) explain the failure to the user and let them decide whether to authorize the bypass. A hook bypass without authorization defeats the purpose of having the hook.
 
-## Common commands
-
-- `make up` — start playground at http://localhost:8080 (browser opens automatically)
-- `make dev` — start playground without opening a browser
-- `make build` — full build (typecheck + bundle the playground; smoke-tests the library too)
-- `make build-lib` — typecheck the library alone
-- `make lint` — stylelint over both packages
-
 ## Publishing
 
 Releases are automatic. Merging to `main` triggers the `Release` workflow (`.github/workflows/release.yml`): it runs the quality gate, and **if the library changed** auto-increments from the latest `v*` tag (patch by default), refuses to overwrite existing tags, publishes to GitHub Packages, and pushes a `vX.Y.Z` tag. It then redeploys the playground whenever quality passes (even on playground-only changes). There is no manual workflow button — merge to release. Force a minor/major bump by editing `BUMP` in `release.yml` on a branch and merging.
