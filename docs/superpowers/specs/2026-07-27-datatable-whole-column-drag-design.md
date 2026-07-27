@@ -1,7 +1,7 @@
 # DataTable: whole-column drag preview — design
 
 **Date:** 2026-07-27
-**Status:** proposed
+**Status:** approved
 
 ## Problem
 
@@ -61,12 +61,14 @@ This is deliberate: the header/body mismatch is a visual defect, not a taste
 preference, so shipping the fix off-by-default would leave every current table
 broken. Consequences to accept:
 
-- Releases are automatic on merge and default to a **patch** bump. A visible
-  interaction change on a patch release is surprising. This should ship as a
-  **minor** bump (edit `BUMP` in `release.yml` on the branch).
 - The CRM's tables change drag feel with no code change on their side.
-- `dragWholeColumn={false}` is the documented escape hatch, and the release
-  notes must name it.
+- `dragWholeColumn={false}` is the documented escape hatch. Because the change
+  arrives unannounced by version, the opt-out has to be easy to find: it is
+  named in the prop JSDoc, the AGENTS.md DataTable entry, and the PR body.
+- Ships on the repo's **normal automatic patch bump** — no `BUMP` edit in
+  `release.yml`. Decided deliberately: the mismatch is treated as a defect
+  being fixed, not a feature being added, so it rides the ordinary release
+  path like any other fix.
 
 ### Mechanism
 
@@ -208,8 +210,10 @@ DataTable reorder tests are structured.
   main argument against the chosen default; it is accepted knowingly. If a
   large table proves janky in the CRM, the answer is `dragWholeColumn={false}`
   on that table, not a revert of the default.
-- **Behavior change on upgrade.** Covered under API above: ship as a minor
-  bump and name the opt-out in the release notes.
+- **Behavior change on an unremarkable patch release.** Consumers get a new
+  drag feel from a version number that signals a bugfix. Accepted; the
+  mitigation is discoverability of `dragWholeColumn={false}` (see API above),
+  not the version number.
 - **CSS variable inheritance is table-wide.** Every `--dt-shift-*` variable
   lives on one element. With many columns that is many custom properties on a
   single node; they are only written while a drag is active and cleared on
