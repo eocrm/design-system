@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, useState } from 'react';
@@ -969,5 +971,22 @@ describe('TimeField — overlay elevation (#272)', () => {
     await user.click(screen.getByRole('button', { name: /Open time list/i }));
     const hours = await screen.findByRole('listbox', { name: 'Hours' });
     expect(hours.closest('[data-timefield-popover="true"]')).not.toHaveAttribute('data-in-overlay');
+  });
+});
+
+describe('TimeField — scroll box axes (#375)', () => {
+  // jsdom never loads the compiled CSS module, so computed styles can't be
+  // asserted here. Same SCSS-source fallback DropdownMenu.test.tsx and
+  // Rail.test.tsx use for their equivalent overflow contracts.
+  const scss = readFileSync(resolve(__dirname, 'TimeField.module.scss'), 'utf8');
+
+  it('.timeColumn clips the X axis instead of scrolling it', () => {
+    // Declaring only `overflow-y: auto` leaves X at `visible`, which the spec
+    // computes to `auto` — making a 4rem listbox column horizontally
+    // scrollable. `[^}]*` bounds each match inside the .timeColumn block so a
+    // later rule's declaration can't satisfy it, and `^` anchors to the bare
+    // rule so a descendant selector can't either.
+    expect(scss).toMatch(/^\.timeColumn\s*\{[^}]*overflow-y:\s*auto/m);
+    expect(scss).toMatch(/^\.timeColumn\s*\{[^}]*overflow-x:\s*hidden/m);
   });
 });
