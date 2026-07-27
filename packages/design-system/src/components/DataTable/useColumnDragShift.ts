@@ -85,12 +85,16 @@ export function useColumnDragShift({
       });
       writtenRef.current = applyColumnShifts(rootRef.current, shifts, writtenRef.current);
     },
+    // Deliberately ungated (unlike onDragStart/onDragMove above): `enabled`
+    // can flip to false mid-drag, and if cleanup were also gated the
+    // properties written at drag start would never be removed and
+    // onDragActiveChange(false) would never fire — the table would be stuck
+    // showing a shifted column. clear() is harmless as a no-op when nothing
+    // was written, so running it unconditionally is always safe.
     onDragEnd() {
-      if (!enabled) return;
       clear();
     },
     onDragCancel() {
-      if (!enabled) return;
       clear();
     },
   });
