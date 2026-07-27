@@ -37,6 +37,11 @@ function Harness(props: Partial<Parameters<typeof useDataTable<Row>>[0]>) {
   return <DataTable instance={instance} aria-label="Test" />;
 }
 
+function HarnessWithProps(props: { dragWholeColumn?: boolean }) {
+  const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+  return <DataTable instance={instance} aria-label="Test" {...props} />;
+}
+
 describe('<DataTable>', () => {
   it('renders header + body rows', () => {
     render(<Harness />);
@@ -494,5 +499,54 @@ describe('<DataTable>', () => {
     const nameHeader = screen.getByRole('columnheader', { name: /name/i });
     // 44px (select) + 44px (expand) = 88px
     expect(nameHeader).toHaveStyle({ left: '88px' });
+  });
+});
+
+describe('<DataTable> — whole-column drag preview', () => {
+  // The transform is applied only while a drag is active, so these tests drive
+  // BodyRow's `dragActive` path through DataTable's own prop plumbing. jsdom
+  // cannot run a real pointer drag (see the note at the top of this file), so
+  // what is asserted here is the static wiring: which cells are eligible to
+  // carry a shift variable, and which must never be.
+  function PinnedHarness({ dragWholeColumn }: { dragWholeColumn?: boolean }) {
+    const instance = useDataTable<Row>({
+      data: rows,
+      columns: cols,
+      getRowId,
+      defaultColumnPinning: { left: ['name'], right: [] },
+    });
+    return <DataTable instance={instance} aria-label="Pinned" dragWholeColumn={dragWholeColumn} />;
+  }
+
+  it('defaults dragWholeColumn to true', () => {
+    render(<Harness />);
+    // The table element carries the mode as a data attribute so the mode is
+    // observable without simulating a drag.
+    expect(screen.getByRole('table')).toHaveAttribute('data-drag-whole-column', 'true');
+  });
+
+  it('reflects dragWholeColumn={false}', () => {
+    render(<HarnessWithProps dragWholeColumn={false} />);
+    expect(screen.getByRole('table')).not.toHaveAttribute('data-drag-whole-column');
+  });
+
+  it('never puts a transform on a pinned cell', () => {
+    render(<PinnedHarness />);
+    // 'name' is pinned left; its cells must carry sticky positioning and no
+    // transform, because a transform would break position: sticky.
+    const nameCells = screen.getAllByText(/Alpha|Bravo/);
+    for (const cell of nameCells) {
+      const td = cell.closest('td')!;
+      expect(td.style.position).toBe('sticky');
+      expect(td.style.transform).toBe('');
+    }
+  });
+
+  it('never puts a transform on a row or body element', () => {
+    render(<Harness />);
+    const table = screen.getByRole('table');
+    for (const el of table.querySelectorAll('tr, tbody, thead')) {
+      expect((el as HTMLElement).style.transform).toBe('');
+    }
   });
 });

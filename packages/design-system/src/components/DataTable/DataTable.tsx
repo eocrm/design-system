@@ -43,6 +43,23 @@ export interface DataTableProps<T> {
   /** Required for a11y when no caption is provided. */
   'aria-label'?: string;
   caption?: ReactNode;
+  /**
+   * Drag the whole column while reordering, not just its header cell.
+   *
+   * Default `true` — the dragged column's body cells travel with its header,
+   * and every column the drag displaces shifts its body cells too, so the
+   * header row and the body never disagree mid-drag. Costs one CSS-variable
+   * write per shifted column per frame; the cells move on the compositor, so
+   * the table body is not re-rendered during pointer movement.
+   *
+   * Set `false` for the cheaper preview: only the dragged header cell follows
+   * the pointer and the body stays put until drop. Worth it for very large
+   * tables on low-end hardware, or to restore the previous behavior.
+   *
+   * Pinned columns never move under either setting — they are excluded from
+   * reordering entirely.
+   */
+  dragWholeColumn?: boolean;
   className?: string;
 }
 
@@ -145,6 +162,7 @@ function DataTableInner<T>(
     loadingRowCount = 10,
     emptyState,
     caption,
+    dragWholeColumn = true,
     className,
     ...rest
   }: DataTableProps<T>,
@@ -206,6 +224,12 @@ function DataTableInner<T>(
     (instance.hasExpansion ? 1 : 0);
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
 
+  // Placeholder: Task 4 replaces this with real drag state from the shift
+  // driver. Until then no cell ever receives a transform, which is why the
+  // tests below assert eligibility and the pinned-cell guard rather than
+  // observing motion.
+  const dragActive = false;
+
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       {/* #282: register the column-reorder drag as a floating surface while
@@ -223,6 +247,7 @@ function DataTableInner<T>(
           striped={striped}
           bordered={bordered}
           aria-rowcount={instance.rowCount}
+          data-drag-whole-column={dragWholeColumn ? 'true' : undefined}
           className={clsx(styles.root, className)}
           {...rest}
         >
@@ -275,7 +300,14 @@ function DataTableInner<T>(
           {instance.pinnedRows.length > 0 && (
             <Table.Body className={styles.pinnedRowsTbody} aria-label={t('dataTable.pinnedRows')}>
               {instance.pinnedRows.map((row) => (
-                <BodyRow key={instance.getRowId(row)} row={row} instance={instance} isPinnedRow />
+                <BodyRow
+                  key={instance.getRowId(row)}
+                  row={row}
+                  instance={instance}
+                  isPinnedRow
+                  dragWholeColumn={dragWholeColumn}
+                  dragActive={dragActive}
+                />
               ))}
             </Table.Body>
           )}
@@ -287,7 +319,13 @@ function DataTableInner<T>(
               <EmptyRow totalColCount={totalColCount} content={emptyState} />
             ) : (
               instance.data.map((row) => (
-                <BodyRow key={instance.getRowId(row)} row={row} instance={instance} />
+                <BodyRow
+                  key={instance.getRowId(row)}
+                  row={row}
+                  instance={instance}
+                  dragWholeColumn={dragWholeColumn}
+                  dragActive={dragActive}
+                />
               ))
             )}
           </Table.Body>
