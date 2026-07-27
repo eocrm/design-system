@@ -60,7 +60,10 @@ export interface DataTableProps<T> {
    * and every column the drag displaces shifts its body cells too, so the
    * header row and the body never disagree mid-drag. Costs one CSS-variable
    * write per shifted column per frame; the cells move on the compositor, so
-   * the table body is not re-rendered during pointer movement.
+   * the table body is not re-rendered during pointer movement. It does cost
+   * two full body reconciliations per drag — one at drag start, one at drag
+   * end — because the drag-active flag is component state and body rows are
+   * not memoized; that is the number to weigh for a very large table.
    *
    * Set `false` for the cheaper preview: only the dragged header cell follows
    * the pointer and the body stays put until drop. Worth it for very large
@@ -225,6 +228,19 @@ function DataTableInner<T>(
     [instance.unpinnedColumns],
   );
 
+  // Shift-driver geometry: EVERY unpinned column, reorderable or not. Do not
+  // "deduplicate" this with `sortableIds` — the enableReorder filter above is
+  // correct for SortableContext and wrong here. A non-reorderable unpinned
+  // column still occupies space and is still displaced when a reorderable
+  // column is dragged past it, and the drop path (reorderRespectingPins) moves
+  // it. Feeding sortableIds here made the preview skip it: the skipped column
+  // and its neighbour rendered on top of each other full-height, then the drop
+  // landed somewhere the preview never showed.
+  const shiftOrderedIds = useMemo(
+    () => instance.unpinnedColumns.map((c) => c.id),
+    [instance.unpinnedColumns],
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -268,8 +284,19 @@ function DataTableInner<T>(
   const setTableRef = useCallback(
     (node: HTMLTableElement | null) => {
       tableRef.current = node;
-      if (typeof ref === 'function') ref(node);
-      else if (ref) (ref as { current: HTMLTableElement | null }).current = node;
+      if (typeof ref === 'function') {
+        // React 19 callback refs may return a cleanup function. Returning one
+        // from here keeps that contract alive — swallowing it would make React
+        // fall back to the legacy `ref(null)` call and leak whatever the
+        // consumer set up. Callback refs that return nothing, and object refs,
+        // behave exactly as before.
+        const cleanup = ref(node);
+        if (typeof cleanup === 'function')
+          return () => {
+            cleanup();
+            tableRef.current = null;
+          };
+      } else if (ref) (ref as { current: HTMLTableElement | null }).current = node;
     },
     [ref],
   );
@@ -284,7 +311,7 @@ function DataTableInner<T>(
       <ColumnShiftDriver
         rootRef={tableRef}
         enabled={dragWholeColumn}
-        orderedIds={sortableIds}
+        orderedIds={shiftOrderedIds}
         widths={instance.columnSizesPx}
         onDragActiveChange={setDragActive}
       />
@@ -313,7 +340,6 @@ function DataTableInner<T>(
           striped={striped}
           bordered={bordered}
           aria-rowcount={instance.rowCount}
-          data-drag-whole-column={dragWholeColumn ? 'true' : undefined}
           className={clsx(styles.root, className)}
           {...rest}
         >

@@ -100,6 +100,22 @@ describe('computeColumnShifts', () => {
     expect(shifts.c).toBe(-0);
   });
 
+  it('shifts a non-reorderable column that sits between the active and hovered columns', () => {
+    // [name, stage(enableReorder:false), owner], all 120px. Dragging `name`
+    // onto `owner` displaces BOTH of the columns it passes. If the caller
+    // passes only the reorderable ids, `stage` is never told to move and its
+    // preview overlaps `owner` full-height — while the drop path
+    // (reorderRespectingPins) still lands on ['stage', 'owner', 'name'].
+    const shifts = computeColumnShifts({
+      orderedIds: ['name', 'stage', 'owner'],
+      activeId: 'name',
+      overId: 'owner',
+      widths: { name: 120, stage: 120, owner: 120 },
+      deltaX: 240,
+    });
+    expect(shifts).toEqual({ name: 240, stage: -120, owner: -120 });
+  });
+
   it('handles a single-column table', () => {
     const shifts = computeColumnShifts({
       orderedIds: ['only'],

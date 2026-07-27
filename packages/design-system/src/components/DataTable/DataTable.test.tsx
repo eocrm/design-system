@@ -43,11 +43,6 @@ function Harness(props: Partial<Parameters<typeof useDataTable<Row>>[0]>) {
   return <DataTable instance={instance} aria-label="Test" />;
 }
 
-function HarnessWithProps(props: { dragWholeColumn?: boolean }) {
-  const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
-  return <DataTable instance={instance} aria-label="Test" {...props} />;
-}
-
 describe('<DataTable>', () => {
   it('renders header + body rows', () => {
     render(<Harness />);
@@ -524,30 +519,11 @@ describe('<DataTable> — whole-column drag preview', () => {
     return <DataTable instance={instance} aria-label="Pinned" dragWholeColumn={dragWholeColumn} />;
   }
 
-  it('defaults dragWholeColumn to true', () => {
-    render(<Harness />);
-    // The table element carries the mode as a data attribute so the mode is
-    // observable without simulating a drag.
-    expect(screen.getByRole('table')).toHaveAttribute('data-drag-whole-column', 'true');
-  });
-
-  it('reflects dragWholeColumn={false}', () => {
-    render(<HarnessWithProps dragWholeColumn={false} />);
-    expect(screen.getByRole('table')).not.toHaveAttribute('data-drag-whole-column');
-  });
-
-  // (The former 'never puts a transform on a pinned cell' test lived here. It
-  // rendered with no drag active, so nothing on the page was transformed and it
-  // passed for a reason unrelated to its name. The real-drag test below asserts
-  // the same invariant while a drag is actually running.)
-
-  it('never puts a transform on a row or body element', () => {
-    render(<Harness />);
-    const table = screen.getByRole('table');
-    for (const el of table.querySelectorAll('tr, tbody, thead')) {
-      expect((el as HTMLElement).style.transform).toBe('');
-    }
-  });
+  // (Three tests that rendered without a drag lived here — two reading a
+  // `data-drag-whole-column` attribute and one asserting no row/body transform.
+  // All passed for reasons unrelated to their names. The real-drag tests below
+  // cover the same ground meaningfully: default-true, the `false` opt-out, and
+  // the "transform only on unpinned cells" invariant.)
 
   it('exposes the table element to the shift driver via the forwarded ref', () => {
     function RefHarness() {

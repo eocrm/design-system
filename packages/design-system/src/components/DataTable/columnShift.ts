@@ -6,7 +6,12 @@
 
 /** Inputs describing one frame of an in-progress column drag. */
 export interface ColumnShiftArgs {
-  /** Unpinned, reorderable column ids in their current visual order. */
+  /**
+   * ALL unpinned column ids in their current visual order — including columns
+   * with `enableReorder: false`. A non-reorderable column still occupies space
+   * and is still displaced when a reorderable column is dragged past it, so
+   * omitting it makes the preview overlap two columns.
+   */
   orderedIds: string[];
   /** Id of the column being dragged. */
   activeId: string;
@@ -70,7 +75,8 @@ export function computeColumnShifts({
  */
 export function cssIdent(columnId: string): string {
   const safe = columnId.replace(/[^a-zA-Z0-9_-]/g, '_');
-  // djb2-style rolling hash — deterministic, no crypto needed, collisions are
+  // Java String.hashCode-style rolling hash (×31) — deterministic, no crypto
+  // needed, collisions are
   // vanishingly unlikely across one table's column set.
   let hash = 0;
   for (let i = 0; i < columnId.length; i++) {
