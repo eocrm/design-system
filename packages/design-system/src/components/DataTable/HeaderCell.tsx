@@ -15,11 +15,16 @@ import type { TableSortDirection } from '../Table';
 import { useResizeHandle } from './useResizeHandle';
 import type { ColumnDef, DataTableInstance } from './types';
 import { getPinStyle } from './pinStyle';
+import { shiftVarName } from './columnShift';
 import styles from './HeaderCell.module.scss';
 
 export interface HeaderCellProps<T> {
   column: ColumnDef<T>;
   instance: DataTableInstance<T>;
+  /** Whole-column drag preview is enabled for this table. */
+  dragWholeColumn?: boolean;
+  /** A column drag is currently in progress. */
+  dragActive?: boolean;
 }
 
 /**
@@ -40,7 +45,12 @@ const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none
   none: 'none',
 };
 
-export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
+export function HeaderCell<T>({
+  column,
+  instance,
+  dragWholeColumn,
+  dragActive,
+}: HeaderCellProps<T>) {
   // Pinned columns are LOCKED in position — no drag-to-reorder grip, can't
   // be moved within or across pin groups. Sort and resize remain available
   // since they don't change column position. Within-pin-group drag is also a
@@ -105,9 +115,15 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   const stickyStyle = pinStyle.position
     ? { position: pinStyle.position, left: pinStyle.left, right: pinStyle.right }
     : undefined;
+  // In whole-column mode the header rides the SAME custom property as its body
+  // cells, so the two cannot desync — that is the entire point of the feature.
+  // Pinned cells are excluded: a transform would break their position: sticky.
+  const useShiftVar = dragWholeColumn === true && dragActive === true && !isPinned;
   const cellStyle = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: useShiftVar
+      ? `translateX(var(${shiftVarName(column.id)}, 0px))`
+      : CSS.Transform.toString(transform),
+    transition: useShiftVar ? undefined : transition,
     ...stickyStyle,
   };
 

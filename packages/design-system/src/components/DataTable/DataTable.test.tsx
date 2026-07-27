@@ -6,11 +6,12 @@
  * test for reorder. A future Playwright e2e test is the recommended remedy
  * if reorder regresses in practice.
  */
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { DataTable } from './DataTable';
 import { useDataTable } from './useDataTable';
+import { shiftVarName } from './columnShift';
 import type { ColumnDef } from './types';
 
 type Row = { id: string; name: string; amount: number };
@@ -503,11 +504,11 @@ describe('<DataTable>', () => {
 });
 
 describe('<DataTable> — whole-column drag preview', () => {
-  // The transform is applied only while a drag is active, so these tests drive
-  // BodyRow's `dragActive` path through DataTable's own prop plumbing. jsdom
-  // cannot run a real pointer drag (see the note at the top of this file), so
-  // what is asserted here is the static wiring: which cells are eligible to
-  // carry a shift variable, and which must never be.
+  // The transform is applied only while a drag is active. The last test in
+  // this block drives a REAL drag through DataTable's own DndContext and
+  // PointerSensor (jsdom 29 implements PointerEvent, so `pointerdown` +
+  // `pointermove` activate the sensor for real); the others assert the static
+  // wiring around it.
   function PinnedHarness({ dragWholeColumn }: { dragWholeColumn?: boolean }) {
     const instance = useDataTable<Row>({
       data: rows,
@@ -548,5 +549,69 @@ describe('<DataTable> — whole-column drag preview', () => {
     for (const el of table.querySelectorAll('tr, tbody, thead')) {
       expect((el as HTMLElement).style.transform).toBe('');
     }
+  });
+
+  it('exposes the table element to the shift driver via the forwarded ref', () => {
+    function RefHarness() {
+      const ref = useRef<HTMLTableElement>(null);
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return (
+        <>
+          <DataTable ref={ref} instance={instance} aria-label="Reffed" />
+          <button onClick={() => ref.current?.setAttribute('data-ref-ok', 'yes')}>probe</button>
+        </>
+      );
+    }
+    render(<RefHarness />);
+    screen.getByRole('button', { name: 'probe' }).click();
+    // The consumer's ref must still reach the <table> after the internal
+    // merge added for the shift driver.
+    expect(screen.getByRole('table')).toHaveAttribute('data-ref-ok', 'yes');
+  });
+
+  it('during a real drag, shifts unpinned cells and leaves pinned cells alone', () => {
+    render(<PinnedHarness />);
+    // 'name' is pinned left (no grip); 'amount' is the reorderable column.
+    const grip = screen.getByLabelText(/drag to reorder amount/i);
+
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    // First move clears the 6px activation constraint; the second produces the
+    // delta the driver publishes.
+    fireEvent.pointerMove(document, { clientX: 30, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 60, clientY: 0 });
+
+    const table = screen.getByRole('table');
+    // The driver published the offset onto the <table>, never onto an ancestor
+    // of a sticky cell as a transform.
+    expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('60px');
+    expect(table.style.transform).toBe('');
+
+    const shift = `var(${shiftVarName('amount')}, 0px)`;
+
+    // Unpinned body cells read the shift variable...
+    const amountCell = screen.getByText('10').closest('td')!;
+    expect(amountCell.style.transform).toBe(`translateX(${shift})`);
+    // ...and so does the unpinned header cell — same variable, so they cannot
+    // desync.
+    const amountHeader = screen.getByRole('columnheader', { name: /amount/i });
+    expect(amountHeader.style.transform).toBe(`translateX(${shift})`);
+
+    // Pinned cells must NOT be transformed — a transform breaks position:sticky.
+    const nameCell = screen.getByText('Alpha').closest('td')!;
+    expect(nameCell.style.position).toBe('sticky');
+    expect(nameCell.style.transform).toBe('');
+    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+    expect(nameHeader.style.position).toBe('sticky');
+    expect(nameHeader.style.transform).toBe('');
+
+    // And no ancestor of a sticky cell may be transformed either.
+    for (const el of table.querySelectorAll('tr, tbody, thead, colgroup')) {
+      expect((el as HTMLElement).style.transform).toBe('');
+    }
+
+    // Drop clears both the variable and the transforms.
+    fireEvent.pointerUp(document);
+    expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('');
+    expect(screen.getByText('10').closest('td')!.style.transform).toBe('');
   });
 });

@@ -1,4 +1,13 @@
-import { forwardRef, useMemo, type ReactNode, type Ref } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+  type RefObject,
+} from 'react';
 import clsx from 'clsx';
 import {
   DndContext,
@@ -22,6 +31,7 @@ import { EmptyState } from '../EmptyState';
 import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
 import { reorderRespectingPins } from './reorderColumns';
+import { useColumnDragShift } from './useColumnDragShift';
 import { useFloatingSurface } from '../_internal/overlay';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
@@ -151,6 +161,32 @@ function DragFloatingProbe() {
   return null;
 }
 
+/**
+ * Publishes per-column drag offsets as CSS custom properties on the table
+ * element. A leaf that renders `null` for the same reason `DragFloatingProbe`
+ * is one: `useDndMonitor` fires on every pointer move, and keeping the
+ * subscription here means those events never re-render the table body.
+ */
+function ColumnShiftDriver({
+  rootRef,
+  enabled,
+  orderedIds,
+  widths,
+  onDragActiveChange,
+}: {
+  rootRef: RefObject<HTMLElement | null>;
+  enabled: boolean;
+  orderedIds: string[];
+  widths: Record<string, number>;
+  onDragActiveChange: (active: boolean) => void;
+}) {
+  useColumnDragShift({ rootRef, enabled, orderedIds, widths, onDragActiveChange });
+  return null;
+}
+
+/** Sorting strategy that moves nothing — see the SortableContext comment. */
+const noopSortingStrategy = () => null;
+
 function DataTableInner<T>(
   {
     instance,
@@ -224,11 +260,19 @@ function DataTableInner<T>(
     (instance.hasExpansion ? 1 : 0);
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
 
-  // Placeholder: Task 4 replaces this with real drag state from the shift
-  // driver. Until then no cell ever receives a transform, which is why the
-  // tests below assert eligibility and the pinned-cell guard rather than
-  // observing motion.
-  const dragActive = false;
+  const [dragActive, setDragActive] = useState(false);
+
+  // The shift driver writes custom properties onto the <table> element, so we
+  // need our own handle on it while still honouring the consumer's ref.
+  const tableRef = useRef<HTMLTableElement | null>(null);
+  const setTableRef = useCallback(
+    (node: HTMLTableElement | null) => {
+      tableRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) (ref as { current: HTMLTableElement | null }).current = node;
+    },
+    [ref],
+  );
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -237,10 +281,24 @@ function DataTableInner<T>(
           drag cancels; the host survives). A leaf probe (not root state) so the
           drag-active toggle re-renders only this null node, never the table body. */}
       <DragFloatingProbe />
-      <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
+      <ColumnShiftDriver
+        rootRef={tableRef}
+        enabled={dragWholeColumn}
+        orderedIds={sortableIds}
+        widths={instance.columnSizesPx}
+        onDragActiveChange={setDragActive}
+      />
+      <SortableContext
+        items={sortableIds}
+        // In whole-column mode the shift variables are the single source of
+        // truth for BOTH header and body, so dnd-kit's own per-item transform
+        // must stand down — otherwise the two fight and the header desyncs
+        // from the body it is supposed to be glued to.
+        strategy={dragWholeColumn ? noopSortingStrategy : horizontalListSortingStrategy}
+      >
         {/* {...rest} last so consumer overrides win (Pattern A). */}
         <Table
-          ref={ref}
+          ref={setTableRef}
           stickyHeader
           hover={hover}
           density={density}
@@ -292,7 +350,13 @@ function DataTableInner<T>(
                 />
               )}
               {renderColumns.map((col) => (
-                <HeaderCell key={col.id} column={col} instance={instance} />
+                <HeaderCell
+                  key={col.id}
+                  column={col}
+                  instance={instance}
+                  dragWholeColumn={dragWholeColumn}
+                  dragActive={dragActive}
+                />
               ))}
             </Table.Row>
           </Table.Header>
