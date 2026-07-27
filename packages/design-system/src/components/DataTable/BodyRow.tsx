@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Table } from '../Table';
 import { Checkbox } from '../Checkbox';
 import { AUTO_CELL_WIDTH, getPinStyle } from './pinStyle';
+import { shiftVarName } from './columnShift';
 import type { DataTableInstance, ColumnDef } from './types';
 import styles from './DataTable.module.scss';
 
@@ -12,6 +13,10 @@ export interface BodyRowProps<T> {
   instance: DataTableInstance<T>;
   /** When true, paint the row with the pinned-row background tint. */
   isPinnedRow?: boolean;
+  /** Whole-column drag preview is enabled for this table. */
+  dragWholeColumn?: boolean;
+  /** A column drag is currently in progress. */
+  dragActive?: boolean;
 }
 
 /**
@@ -29,7 +34,13 @@ export interface BodyRowProps<T> {
  *  - `isPinnedRow` paints the row with `--color-bg-row-pinned` tint (used by
  *    the pinned-rows section above the main body).
  */
-export function BodyRow<T>({ row, instance, isPinnedRow }: BodyRowProps<T>) {
+export function BodyRow<T>({
+  row,
+  instance,
+  isPinnedRow,
+  dragWholeColumn,
+  dragActive,
+}: BodyRowProps<T>) {
   const rowId = instance.getRowId(row);
   const selected = instance.rowSelection[rowId] === true;
   const expanded = instance.expandedRows[rowId] === true;
@@ -121,9 +132,20 @@ export function BodyRow<T>({ row, instance, isPinnedRow }: BodyRowProps<T>) {
         )}
         {renderColumns.map((col) => {
           const pin = getPinStyle(col.id, instance);
+          // The shift variable is applied only while a drag is running: a
+          // permanent `translateX(0px)` on every cell would establish a
+          // containing block on every cell, trapping any position: fixed
+          // descendant a consumer renders inside one.
+          //
+          // Pinned cells are kept out by the ternary below testing
+          // `pin.position` FIRST — a transform there would break their
+          // position: sticky. Do not reorder those branches.
+          const shifted = dragWholeColumn === true && dragActive === true;
           const cellStyle = pin.position
             ? { position: pin.position, left: pin.left, right: pin.right }
-            : undefined;
+            : shifted
+              ? { transform: `translateX(var(${shiftVarName(col.id)}, 0px))` }
+              : undefined;
           return (
             <Table.Cell
               key={col.id}

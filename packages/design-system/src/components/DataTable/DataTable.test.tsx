@@ -1,16 +1,23 @@
 /**
  * Integration tests for <DataTable> (Phase 1).
  *
- * NOTE on drag-and-drop coverage: column reorder via @dnd-kit's PointerSensor
- * is genuinely hard to test in jsdom. The playground demo serves as the smoke
- * test for reorder. A future Playwright e2e test is the recommended remedy
- * if reorder regresses in practice.
+ * NOTE on drag-and-drop coverage: jsdom 29 implements PointerEvent, so a real
+ * drag CAN be driven through DataTable's own DndContext and PointerSensor —
+ * see the 'whole-column drag preview' block, which fires pointerdown /
+ * pointermove / pointerup and asserts against the resulting styles. What jsdom
+ * still cannot do is lay anything out: every getBoundingClientRect is zero, so
+ * by default dnd-kit never resolves an `over` target. A test that needs one
+ * stubs getBoundingClientRect on the header cells (see the non-reorderable
+ * column test). Drag aesthetics remain playground/e2e territory; what is
+ * covered here is the styling contract (which cells carry a shift transform,
+ * which must never, and which columns the driver is told about).
  */
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { DataTable } from './DataTable';
 import { useDataTable } from './useDataTable';
+import { shiftVarName } from './columnShift';
 import type { ColumnDef } from './types';
 
 type Row = { id: string; name: string; amount: number };
@@ -494,5 +501,167 @@ describe('<DataTable>', () => {
     const nameHeader = screen.getByRole('columnheader', { name: /name/i });
     // 44px (select) + 44px (expand) = 88px
     expect(nameHeader).toHaveStyle({ left: '88px' });
+  });
+});
+
+describe('<DataTable> — whole-column drag preview', () => {
+  // The transform is applied only while a drag is active. The last test in
+  // this block drives a REAL drag through DataTable's own DndContext and
+  // PointerSensor (jsdom 29 implements PointerEvent, so `pointerdown` +
+  // `pointermove` activate the sensor for real); the others assert the static
+  // wiring around it.
+  function PinnedHarness({ dragWholeColumn }: { dragWholeColumn?: boolean }) {
+    const instance = useDataTable<Row>({
+      data: rows,
+      columns: cols,
+      getRowId,
+      defaultColumnPinning: { left: ['name'], right: [] },
+    });
+    return <DataTable instance={instance} aria-label="Pinned" dragWholeColumn={dragWholeColumn} />;
+  }
+
+  // (Three tests that rendered without a drag lived here — two reading a
+  // `data-drag-whole-column` attribute and one asserting no row/body transform.
+  // All passed for reasons unrelated to their names. The real-drag tests below
+  // cover the same ground meaningfully: default-true, the `false` opt-out, and
+  // the "transform only on unpinned cells" invariant.)
+
+  it('exposes the table element to the shift driver via the forwarded ref', () => {
+    function RefHarness() {
+      const ref = useRef<HTMLTableElement>(null);
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return (
+        <>
+          <DataTable ref={ref} instance={instance} aria-label="Reffed" />
+          <button onClick={() => ref.current?.setAttribute('data-ref-ok', 'yes')}>probe</button>
+        </>
+      );
+    }
+    render(<RefHarness />);
+    screen.getByRole('button', { name: 'probe' }).click();
+    // The consumer's ref must still reach the <table> after the internal
+    // merge added for the shift driver.
+    expect(screen.getByRole('table')).toHaveAttribute('data-ref-ok', 'yes');
+  });
+
+  /** Drives a real drag on the 'amount' column through DataTable's own
+   *  DndContext + PointerSensor. First move clears the 6px activation
+   *  constraint; the second produces the delta the driver publishes. */
+  function dragAmountColumn() {
+    const grip = screen.getByLabelText(/drag to reorder amount/i);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    fireEvent.pointerMove(document, { clientX: 30, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 60, clientY: 0 });
+  }
+
+  it('during a real drag, shifts unpinned cells and leaves pinned cells alone', () => {
+    render(<PinnedHarness />);
+    // 'name' is pinned left (no grip); 'amount' is the reorderable column.
+    dragAmountColumn();
+
+    const table = screen.getByRole('table');
+    // The driver published the offset onto the <table>, never onto an ancestor
+    // of a sticky cell as a transform.
+    expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('60px');
+    expect(table.style.transform).toBe('');
+
+    const shift = `var(${shiftVarName('amount')}, 0px)`;
+
+    // Unpinned body cells read the shift variable...
+    const amountCell = screen.getByText('10').closest('td')!;
+    expect(amountCell.style.transform).toBe(`translateX(${shift})`);
+    // ...and so does the unpinned header cell — same variable, so they cannot
+    // desync.
+    const amountHeader = screen.getByRole('columnheader', { name: /amount/i });
+    expect(amountHeader.style.transform).toBe(`translateX(${shift})`);
+
+    // Pinned cells must NOT be transformed — a transform breaks position:sticky.
+    const nameCell = screen.getByText('Alpha').closest('td')!;
+    expect(nameCell.style.position).toBe('sticky');
+    expect(nameCell.style.transform).toBe('');
+    const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+    expect(nameHeader.style.position).toBe('sticky');
+    expect(nameHeader.style.transform).toBe('');
+
+    // And no ancestor of a sticky cell may be transformed either.
+    for (const el of table.querySelectorAll('tr, tbody, thead, colgroup')) {
+      expect((el as HTMLElement).style.transform).toBe('');
+    }
+
+    // Drop clears both the variable and the transforms.
+    fireEvent.pointerUp(document);
+    expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('');
+    expect(screen.getByText('10').closest('td')!.style.transform).toBe('');
+  });
+
+  it('during a real drag, a NON-reorderable column the drag passes over is shifted too', () => {
+    // Regression guard for the two-column overlap: the shift driver must be fed
+    // EVERY unpinned column, not just the reorderable ones. A column with
+    // `enableReorder: false` still occupies space and is still displaced by the
+    // drop, so if it is omitted from `orderedIds` it never moves and renders on
+    // top of its neighbour. Wiring the driver to `sortableIds` (which filters
+    // `enableReorder === false` out — correct for SortableContext, wrong here)
+    // makes this test fail: 'stage' gets no shift variable at all.
+    const gapCols: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', cell: (r) => r.name },
+      { id: 'stage', header: 'Stage', cell: () => 'Won', enableReorder: false },
+      { id: 'owner', header: 'Owner', cell: (r) => r.amount },
+    ];
+    function GapHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: gapCols, getRowId });
+      return <DataTable instance={instance} aria-label="Gap" />;
+    }
+    render(<GapHarness />);
+    const table = screen.getByRole('table');
+
+    // jsdom lays nothing out, so every rect is zero and dnd-kit can never
+    // resolve an `over` target — and with `over` null the driver only publishes
+    // the active column's offset, which would make this assertion vacuous.
+    // Give the header cells real rects (each 120px wide, matching the default
+    // column size) so collision detection has something to hit.
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.getBoundingClientRect = () => new DOMRect(i * 120, 0, 120, 32);
+    });
+
+    const grip = screen.getByLabelText(/drag to reorder name/i);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    // First move clears the 6px activation constraint; the second lands the
+    // dragged column squarely on 'owner', two positions to the right.
+    fireEvent.pointerMove(document, { clientX: 20, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 240, clientY: 0 });
+    // Third move because dnd-kit's `over` lags one frame: the collision found
+    // on the previous move is what the monitor sees on this one.
+    fireEvent.pointerMove(document, { clientX: 250, clientY: 0 });
+
+    // Sanity: the drag really did resolve a target two columns over, so the
+    // displacement assertions below are not vacuous.
+    expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('250px');
+    expect(table.style.getPropertyValue(shiftVarName('owner'))).toBe('-120px');
+    // The point of the test — the skipped-over non-reorderable column moves by
+    // exactly the same amount. With `sortableIds` this reads ''.
+    expect(table.style.getPropertyValue(shiftVarName('stage'))).toBe('-120px');
+
+    fireEvent.pointerUp(document);
+  });
+
+  it('during a real drag with dragWholeColumn={false}, the body never moves', () => {
+    // The opt-out is now the road less travelled, so it gets the same real
+    // drag rather than a data-attribute check: the driver must publish nothing
+    // and no body cell may be transformed. Only the dragged header moves —
+    // dnd-kit's historical behavior.
+    render(<PinnedHarness dragWholeColumn={false} />);
+    dragAmountColumn();
+
+    const table = screen.getByRole('table');
+    expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('');
+    expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('');
+    expect(screen.getByText('10').closest('td')!.style.transform).toBe('');
+    expect(screen.getByText('Alpha').closest('td')!.style.transform).toBe('');
+    // And no body cell reads a shift variable it was never given.
+    for (const td of table.querySelectorAll('tbody td')) {
+      expect((td as HTMLElement).style.transform).not.toContain('--dt-shift-');
+    }
+
+    fireEvent.pointerUp(document);
   });
 });

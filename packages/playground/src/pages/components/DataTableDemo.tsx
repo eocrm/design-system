@@ -5,6 +5,7 @@ import {
   ColumnVisibilityTrigger,
   DataTable,
   Stack,
+  Switch,
   useDataTable,
   type ColumnDef,
   type SortState,
@@ -95,6 +96,7 @@ export function DataTableDemo() {
       <ExpansionExample />
       <PinningExample />
       <WidePinningExample />
+      <WholeColumnDragExample />
       <PinnedRowsExample />
     </DemoLayout>
   );
@@ -1153,6 +1155,126 @@ export function Demo() {
 }`}
     >
       <DataTable instance={instance} aria-label="Wide deals (pinning)" />
+    </Example>
+  );
+}
+
+function WholeColumnDragExample() {
+  const [dragWholeColumn, setDragWholeColumn] = useState(true);
+  const [sort, setSort] = useState<SortState | null>(null);
+  const sortedWideDeals = useClientSort(wideDeals, sort);
+  const instance = useDataTable<WideDeal>({
+    data: sortedWideDeals,
+    columns: wideDealColumns,
+    getRowId: (r) => r.id,
+    sort,
+    onSortChange: setSort,
+  });
+
+  return (
+    <Example
+      title="Whole-column drag (dragWholeColumn)"
+      description="`dragWholeColumn` defaults to `true`: dragging a column's grip moves its header and its body cells together, and any displaced column shifts out of the way in the same motion, so the header row and body never disagree mid-drag. Flip the toggle to compare against `dragWholeColumn={false}`, the cheaper historical preview where only the header cell tracks the pointer while the body stays put until drop. Either way, the left-pinned `Deal` column and the right-pinned `Amount` / actions columns never move — pin a column when its position must stay predictable during reorder."
+      code={`import { useMemo, useState } from 'react';
+import { Badge, DataTable, Switch, useDataTable, type ColumnDef, type SortState } from '@eocrm/design-system';
+
+type WideDeal = {
+  id: string;
+  name: string;
+  stage: 'Lead' | 'Negotiation' | 'Won' | 'Lost';
+  amount: number;
+  owner: string;
+  region: string;
+  source: string;
+  closeDate: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  lastActivity: string;
+  priority: 'Low' | 'Med' | 'High';
+  nextStep: string;
+  actions: string;
+};
+
+// Same fixture as the "Column pinning — wide table" example above (trimmed
+// to 2 rows here — see that example for the full 4-row fixture).
+const wideDeals: WideDeal[] = [
+  { id: 'w1', name: 'Acme renewal',     stage: 'Negotiation', amount: 12000, owner: 'Sara',   region: 'EMEA', source: 'Inbound',  closeDate: '2026-06-14', contactName: 'Wile E. Coyote', contactEmail: 'wile@acme.test',   contactPhone: '+1 555 0101', lastActivity: '2d ago', priority: 'High', nextStep: 'Send contract',  actions: '⋯' },
+  { id: 'w2', name: 'Globex expansion', stage: 'Lead',        amount:  4500, owner: 'Marcus', region: 'NA',   source: 'Referral', closeDate: '2026-07-02', contactName: 'Hank Scorpio',   contactEmail: 'hank@globex.test', contactPhone: '+1 555 0102', lastActivity: '5h ago', priority: 'Med',  nextStep: 'Discovery call', actions: '⋯' },
+];
+
+function stageTone(stage: WideDeal['stage']) {
+  switch (stage) {
+    case 'Won':         return 'success' as const;
+    case 'Lost':        return 'danger'  as const;
+    case 'Negotiation': return 'warning' as const;
+    default:            return 'info'    as const;
+  }
+}
+
+const wideDealColumns: ColumnDef<WideDeal>[] = [
+  { id: 'name',         header: 'Deal',          cell: (r) => r.name,                                              sortable: true, size: 220, pin: 'left'  },
+  { id: 'stage',        header: 'Stage',         cell: (r) => <Badge tone={stageTone(r.stage)}>{r.stage}</Badge>,                  size: 140              },
+  { id: 'owner',        header: 'Owner',         cell: (r) => r.owner,                                                             size: 120              },
+  { id: 'region',       header: 'Region',        cell: (r) => r.region,                                                            size: 100              },
+  { id: 'source',       header: 'Source',        cell: (r) => r.source,                                                            size: 140              },
+  { id: 'closeDate',    header: 'Close date',    cell: (r) => r.closeDate,                                                         size: 130              },
+  { id: 'contactName',  header: 'Contact',       cell: (r) => r.contactName,                                                       size: 180              },
+  { id: 'contactEmail', header: 'Email',         cell: (r) => r.contactEmail,                                                      size: 200              },
+  { id: 'contactPhone', header: 'Phone',         cell: (r) => r.contactPhone,                                                      size: 150              },
+  { id: 'lastActivity', header: 'Last activity', cell: (r) => r.lastActivity,                                                      size: 140              },
+  { id: 'priority',     header: 'Priority',      cell: (r) => r.priority,                                                          size: 100              },
+  { id: 'nextStep',     header: 'Next step',     cell: (r) => r.nextStep,                                                          size: 200              },
+  { id: 'amount',       header: 'Amount',        cell: (r) => \`$\${r.amount.toLocaleString()}\`, align: 'end', sortable: true, size: 130, pin: 'right' },
+  { id: 'actions',      header: '',              cell: (r) => r.actions,                           align: 'center',               size:  56, pin: 'right' },
+];
+
+function useClientSort<T>(data: T[], sort: SortState | null): T[] {
+  return useMemo(() => {
+    if (!sort) return data;
+    return [...data].sort((a, b) => {
+      const va = (a as Record<string, unknown>)[sort.columnId] as string | number;
+      const vb = (b as Record<string, unknown>)[sort.columnId] as string | number;
+      const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+      return sort.direction === 'asc' ? cmp : -cmp;
+    });
+  }, [data, sort]);
+}
+
+export function Demo() {
+  // Compare the two drag previews live — see the description above for what
+  // each mode does. Toggling mid-drag is safe; the library doesn't need the
+  // switch disabled while a drag is in flight.
+  const [dragWholeColumn, setDragWholeColumn] = useState(true);
+  const [sort, setSort] = useState<SortState | null>(null);
+  const sortedWideDeals = useClientSort(wideDeals, sort);
+  const instance = useDataTable<WideDeal>({
+    data: sortedWideDeals,
+    columns: wideDealColumns,
+    getRowId: (r) => r.id,
+    sort,
+    onSortChange: setSort,
+  });
+  return (
+    <>
+      <Switch checked={dragWholeColumn} onChange={setDragWholeColumn}>
+        dragWholeColumn
+      </Switch>
+      <DataTable instance={instance} dragWholeColumn={dragWholeColumn} aria-label="Wide deals" />
+    </>
+  );
+}`}
+    >
+      <Stack gap="sm">
+        <Switch checked={dragWholeColumn} onChange={setDragWholeColumn}>
+          dragWholeColumn
+        </Switch>
+        <DataTable
+          instance={instance}
+          dragWholeColumn={dragWholeColumn}
+          aria-label="Wide deals (whole-column drag)"
+        />
+      </Stack>
     </Example>
   );
 }

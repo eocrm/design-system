@@ -1091,6 +1091,13 @@
           "description": ""
         },
         {
+          "name": "dragWholeColumn",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Drag the whole column while reordering, not just its header cell.\n\nDefault `true` — the dragged column's body cells travel with its header,\nand every column the drag displaces shifts its body cells too, so the\nheader row and the body never disagree mid-drag. Costs one CSS-variable\nwrite per shifted column per frame; the cells move on the compositor, so\nthe table body is not re-rendered during pointer movement. It does cost\ntwo full body reconciliations per drag — one at drag start, one at drag\nend — because the drag-active flag is component state and body rows are\nnot memoized; that is the number to weigh for a very large table.\n\nSet `false` for the cheaper preview: only the dragged header cell follows\nthe pointer and the body stays put until drop. Worth it for very large\ntables on low-end hardware, or to restore the previous behavior.\n\nPinned columns never move under either setting — they are excluded from\nreordering entirely."
+        },
+        {
           "name": "className",
           "type": "string",
           "required": false,

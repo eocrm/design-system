@@ -1,4 +1,13 @@
-import { forwardRef, useMemo, type ReactNode, type Ref } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+  type RefObject,
+} from 'react';
 import clsx from 'clsx';
 import {
   DndContext,
@@ -22,6 +31,7 @@ import { EmptyState } from '../EmptyState';
 import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
 import { reorderRespectingPins } from './reorderColumns';
+import { useColumnDragShift } from './useColumnDragShift';
 import { useFloatingSurface } from '../_internal/overlay';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
@@ -43,6 +53,26 @@ export interface DataTableProps<T> {
   /** Required for a11y when no caption is provided. */
   'aria-label'?: string;
   caption?: ReactNode;
+  /**
+   * Drag the whole column while reordering, not just its header cell.
+   *
+   * Default `true` — the dragged column's body cells travel with its header,
+   * and every column the drag displaces shifts its body cells too, so the
+   * header row and the body never disagree mid-drag. Costs one CSS-variable
+   * write per shifted column per frame; the cells move on the compositor, so
+   * the table body is not re-rendered during pointer movement. It does cost
+   * two full body reconciliations per drag — one at drag start, one at drag
+   * end — because the drag-active flag is component state and body rows are
+   * not memoized; that is the number to weigh for a very large table.
+   *
+   * Set `false` for the cheaper preview: only the dragged header cell follows
+   * the pointer and the body stays put until drop. Worth it for very large
+   * tables on low-end hardware, or to restore the previous behavior.
+   *
+   * Pinned columns never move under either setting — they are excluded from
+   * reordering entirely.
+   */
+  dragWholeColumn?: boolean;
   className?: string;
 }
 
@@ -134,6 +164,32 @@ function DragFloatingProbe() {
   return null;
 }
 
+/**
+ * Publishes per-column drag offsets as CSS custom properties on the table
+ * element. A leaf that renders `null` for the same reason `DragFloatingProbe`
+ * is one: `useDndMonitor` fires on every pointer move, and keeping the
+ * subscription here means those events never re-render the table body.
+ */
+function ColumnShiftDriver({
+  rootRef,
+  enabled,
+  orderedIds,
+  widths,
+  onDragActiveChange,
+}: {
+  rootRef: RefObject<HTMLElement | null>;
+  enabled: boolean;
+  orderedIds: string[];
+  widths: Record<string, number>;
+  onDragActiveChange: (active: boolean) => void;
+}) {
+  useColumnDragShift({ rootRef, enabled, orderedIds, widths, onDragActiveChange });
+  return null;
+}
+
+/** Sorting strategy that moves nothing — see the SortableContext comment. */
+const noopSortingStrategy = () => null;
+
 function DataTableInner<T>(
   {
     instance,
@@ -145,6 +201,7 @@ function DataTableInner<T>(
     loadingRowCount = 10,
     emptyState,
     caption,
+    dragWholeColumn = true,
     className,
     ...rest
   }: DataTableProps<T>,
@@ -168,6 +225,19 @@ function DataTableInner<T>(
   // shift them during another column's drag.
   const sortableIds = useMemo(
     () => instance.unpinnedColumns.filter((c) => c.enableReorder !== false).map((c) => c.id),
+    [instance.unpinnedColumns],
+  );
+
+  // Shift-driver geometry: EVERY unpinned column, reorderable or not. Do not
+  // "deduplicate" this with `sortableIds` — the enableReorder filter above is
+  // correct for SortableContext and wrong here. A non-reorderable unpinned
+  // column still occupies space and is still displaced when a reorderable
+  // column is dragged past it, and the drop path (reorderRespectingPins) moves
+  // it. Feeding sortableIds here made the preview skip it: the skipped column
+  // and its neighbour rendered on top of each other full-height, then the drop
+  // landed somewhere the preview never showed.
+  const shiftOrderedIds = useMemo(
+    () => instance.unpinnedColumns.map((c) => c.id),
     [instance.unpinnedColumns],
   );
 
@@ -206,6 +276,31 @@ function DataTableInner<T>(
     (instance.hasExpansion ? 1 : 0);
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
 
+  const [dragActive, setDragActive] = useState(false);
+
+  // The shift driver writes custom properties onto the <table> element, so we
+  // need our own handle on it while still honouring the consumer's ref.
+  const tableRef = useRef<HTMLTableElement | null>(null);
+  const setTableRef = useCallback(
+    (node: HTMLTableElement | null) => {
+      tableRef.current = node;
+      if (typeof ref === 'function') {
+        // React 19 callback refs may return a cleanup function. Returning one
+        // from here keeps that contract alive — swallowing it would make React
+        // fall back to the legacy `ref(null)` call and leak whatever the
+        // consumer set up. Callback refs that return nothing, and object refs,
+        // behave exactly as before.
+        const cleanup = ref(node);
+        if (typeof cleanup === 'function')
+          return () => {
+            cleanup();
+            tableRef.current = null;
+          };
+      } else if (ref) (ref as { current: HTMLTableElement | null }).current = node;
+    },
+    [ref],
+  );
+
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       {/* #282: register the column-reorder drag as a floating surface while
@@ -213,10 +308,32 @@ function DataTableInner<T>(
           drag cancels; the host survives). A leaf probe (not root state) so the
           drag-active toggle re-renders only this null node, never the table body. */}
       <DragFloatingProbe />
-      <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
+      <ColumnShiftDriver
+        rootRef={tableRef}
+        enabled={dragWholeColumn}
+        orderedIds={shiftOrderedIds}
+        widths={instance.columnSizesPx}
+        onDragActiveChange={setDragActive}
+      />
+      <SortableContext
+        items={sortableIds}
+        // In whole-column mode the shift variables are the single source of
+        // truth for BOTH header and body. Standing dnd-kit's own transforms
+        // down takes TWO mechanisms, because `useSortable` treats the dragged
+        // item and its neighbours differently:
+        //  - DISPLACED NEIGHBOURS go through the strategy, so a no-op strategy
+        //    is what silences them. That is all this prop does.
+        //  - The ACTIVE column never consults the strategy at all: with no
+        //    <DragOverlay> rendered, useSortable short-circuits to its own
+        //    `dragSourceDisplacement`. It is `useShiftVar` in HeaderCell —
+        //    which discards `transform` outright — that keeps the dragged
+        //    header glued to its body cells. Relaxing that guard would desync
+        //    the dragged column no matter what this strategy says.
+        strategy={dragWholeColumn ? noopSortingStrategy : horizontalListSortingStrategy}
+      >
         {/* {...rest} last so consumer overrides win (Pattern A). */}
         <Table
-          ref={ref}
+          ref={setTableRef}
           stickyHeader
           hover={hover}
           density={density}
@@ -267,7 +384,13 @@ function DataTableInner<T>(
                 />
               )}
               {renderColumns.map((col) => (
-                <HeaderCell key={col.id} column={col} instance={instance} />
+                <HeaderCell
+                  key={col.id}
+                  column={col}
+                  instance={instance}
+                  dragWholeColumn={dragWholeColumn}
+                  dragActive={dragActive}
+                />
               ))}
             </Table.Row>
           </Table.Header>
@@ -275,7 +398,14 @@ function DataTableInner<T>(
           {instance.pinnedRows.length > 0 && (
             <Table.Body className={styles.pinnedRowsTbody} aria-label={t('dataTable.pinnedRows')}>
               {instance.pinnedRows.map((row) => (
-                <BodyRow key={instance.getRowId(row)} row={row} instance={instance} isPinnedRow />
+                <BodyRow
+                  key={instance.getRowId(row)}
+                  row={row}
+                  instance={instance}
+                  isPinnedRow
+                  dragWholeColumn={dragWholeColumn}
+                  dragActive={dragActive}
+                />
               ))}
             </Table.Body>
           )}
@@ -287,7 +417,13 @@ function DataTableInner<T>(
               <EmptyRow totalColCount={totalColCount} content={emptyState} />
             ) : (
               instance.data.map((row) => (
-                <BodyRow key={instance.getRowId(row)} row={row} instance={instance} />
+                <BodyRow
+                  key={instance.getRowId(row)}
+                  row={row}
+                  instance={instance}
+                  dragWholeColumn={dragWholeColumn}
+                  dragActive={dragActive}
+                />
               ))
             )}
           </Table.Body>

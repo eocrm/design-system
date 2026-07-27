@@ -15,11 +15,16 @@ import type { TableSortDirection } from '../Table';
 import { useResizeHandle } from './useResizeHandle';
 import type { ColumnDef, DataTableInstance } from './types';
 import { getPinStyle } from './pinStyle';
+import { shiftVarName } from './columnShift';
 import styles from './HeaderCell.module.scss';
 
 export interface HeaderCellProps<T> {
   column: ColumnDef<T>;
   instance: DataTableInstance<T>;
+  /** Whole-column drag preview is enabled for this table. */
+  dragWholeColumn?: boolean;
+  /** A column drag is currently in progress. */
+  dragActive?: boolean;
 }
 
 /**
@@ -34,13 +39,22 @@ export interface HeaderCellProps<T> {
  *   `column.enableResize === false`. Also supports keyboard resize: arrow
  *   keys ±8px; Shift+arrow keys ±32px (when the label is focused).
  */
+/** See the `animateLayoutChanges` comment in HeaderCell. Module scope so the
+ * identity is stable across renders. */
+const neverAnimateLayoutChanges = () => false;
+
 const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none'> = {
   asc: 'ascending',
   desc: 'descending',
   none: 'none',
 };
 
-export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
+export function HeaderCell<T>({
+  column,
+  instance,
+  dragWholeColumn,
+  dragActive,
+}: HeaderCellProps<T>) {
   // Pinned columns are LOCKED in position — no drag-to-reorder grip, can't
   // be moved within or across pin groups. Sort and resize remain available
   // since they don't change column position. Within-pin-group drag is also a
@@ -63,7 +77,21 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   // dnd-kit sortable — column is its own sortable item. Pinned columns are
   // locked in place (see the isPinned comment above).
   const reorderable = column.enableReorder !== false && !isPinned;
-  const sortableResult = useSortable({ id: column.id, disabled: !reorderable });
+  const sortableResult = useSortable({
+    id: column.id,
+    disabled: !reorderable,
+    // Whole-column mode only: kill dnd-kit's post-drop FLIP animation. On
+    // release `defaultAnimateLayoutChanges` returns true for every column whose
+    // index changed, so the headers would glide to their new positions over
+    // ~200ms while the body cells — whose shift variable is removed on the same
+    // tick — snap instantly. That is the exact header/body disagreement this
+    // feature exists to remove, just relocated to the drop. Snapping the header
+    // with the body is the only way the two stay glued.
+    //
+    // `undefined` when the mode is off, so that path keeps dnd-kit's default
+    // animation byte-for-byte.
+    animateLayoutChanges: dragWholeColumn === true ? neverAnimateLayoutChanges : undefined,
+  });
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortableResult;
 
   const width = instance.columnSizesPx[column.id] ?? 120;
@@ -105,9 +133,15 @@ export function HeaderCell<T>({ column, instance }: HeaderCellProps<T>) {
   const stickyStyle = pinStyle.position
     ? { position: pinStyle.position, left: pinStyle.left, right: pinStyle.right }
     : undefined;
+  // In whole-column mode the header rides the SAME custom property as its body
+  // cells, so the two cannot desync — that is the entire point of the feature.
+  // Pinned cells are excluded: a transform would break their position: sticky.
+  const useShiftVar = dragWholeColumn === true && dragActive === true && !isPinned;
   const cellStyle = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: useShiftVar
+      ? `translateX(var(${shiftVarName(column.id)}, 0px))`
+      : CSS.Transform.toString(transform),
+    transition: useShiftVar ? undefined : transition,
     ...stickyStyle,
   };
 
