@@ -14,7 +14,6 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  closestCorners,
   DndContext,
   KeyboardSensor,
   PointerSensor,
@@ -39,6 +38,7 @@ import {
   type SortableItemContextValue,
 } from '../Sortable/Sortable';
 import { useTranslation } from '../../i18n/useTranslation';
+import { containerAwareClosestCorners } from '../Sortable/containerAwareCollision';
 import styles from './Kanban.module.scss';
 
 // ---------------------------------------------------------------------------
@@ -650,7 +650,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={containerAwareClosestCorners}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}

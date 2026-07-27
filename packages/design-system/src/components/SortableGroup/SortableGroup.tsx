@@ -14,7 +14,6 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import {
-  closestCorners,
   DndContext,
   DragOverlay,
   KeyboardSensor,
@@ -37,6 +36,7 @@ import {
   type SortableItemContextValue,
   type SortableItemProps,
 } from '../Sortable';
+import { containerAwareClosestCorners } from '../Sortable/containerAwareCollision';
 import { type SortableMoveEvent } from './moveSortableItem';
 import styles from './SortableGroup.module.scss';
 
@@ -239,7 +239,7 @@ const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableG
     <GroupContext.Provider value={ctx}>
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={containerAwareClosestCorners}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
