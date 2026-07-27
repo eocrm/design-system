@@ -83,6 +83,28 @@ function BrandMark() {
   );
 }
 
+// Enough workspaces to overflow the 480px stage, so the scrolling-body example
+// actually shows a scrollbar rather than describing one.
+const WORKSPACES = [
+  'Acme Corp',
+  'Globex',
+  'Initech',
+  'Umbrella Health',
+  'Stark Industries',
+  'Wayne Enterprises',
+  'Soylent',
+  'Hooli',
+  'Pied Piper',
+  'Vehement Capital',
+  'Massive Dynamic',
+  'Cyberdyne',
+  'Tyrell Corp',
+  'Wonka Industries',
+  'Gringotts',
+  'Duff Brewing',
+  'Oceanic Airlines',
+];
+
 export function RailDemo() {
   // Example 3: controlled state driven by a sibling button outside the rail.
   const [controlledCollapsed, setControlledCollapsed] = useState(false);
@@ -956,6 +978,158 @@ export function Demo() {
             </Rail.Footer>
           </Rail>
         </RailStage>
+      </Example>
+
+      <Example
+        title="Overflowing item list — everything above the Footer scrolls"
+        description="Rail splits its children at the first `Rail.Footer`: everything before it renders inside one scroll box, the Footer outside it. So when the item list outgrows the rail, the Footer stays pinned at the bottom while the Header scrolls away with the items. The scrollbar is thin and theme-colored — that comes from the `scrollbar-width` / `scrollbar-color` reset in the library's `reset.scss`, not from a Rail-specific style, so every scroll container in the app looks the same."
+        code={`import { type ReactNode } from 'react';
+import { Building2, Home, Users } from 'lucide-react';
+import { Cluster, Rail, Text, useRail } from '@eocrm/design-system';
+
+// 17 entries — the list has to outgrow the stage's height to scroll at all.
+const WORKSPACES = ['Acme Corp', 'Globex', 'Initech' /* …14 more */];
+
+// The rail fills its parent's height — bound that height or nothing overflows.
+function RailStage({ children }: { children: ReactNode }) {
+  return (
+    <div
+      style={{
+        height: 480,
+        minHeight: 480,
+        display: 'flex',
+        borderRadius: 'var(--radius-md)',
+        border: 'var(--border-width) solid var(--color-border)',
+        overflow: 'hidden',
+        background: 'var(--color-bg-subtle)',
+      }}
+    >
+      {children}
+      <div
+        style={{
+          flex: '1 1 auto',
+          padding: 'var(--space-4)',
+          color: 'var(--color-fg-muted)',
+        }}
+      >
+        <Text tone="muted">Main content area — the rail is to the left.</Text>
+      </div>
+    </div>
+  );
+}
+
+function BrandMark() {
+  const { collapsed } = useRail();
+  return (
+    <Cluster gap="sm" align="center" wrap={false} justify={collapsed ? 'center' : 'start'}>
+      <div
+        aria-hidden
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--color-accent)',
+          color: 'var(--color-accent-fg)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 'var(--font-weight-semibold)',
+          flexShrink: 0,
+        }}
+      >
+        R
+      </div>
+      {!collapsed && <Text weight="semibold">Railside</Text>}
+    </Cluster>
+  );
+}
+
+export function Demo() {
+  return (
+    <RailStage>
+      <Rail>
+        <Rail.Header>
+          <BrandMark />
+        </Rail.Header>
+
+        <Rail.Section title="Main">
+          <Rail.Item icon={<Home size={16} />} href="#dashboard">
+            Dashboard
+          </Rail.Item>
+          <Rail.Item icon={<Users size={16} />} href="#contacts">
+            Contacts
+          </Rail.Item>
+        </Rail.Section>
+
+        {/* Long enough to overflow — these scroll, the Footer below does not. */}
+        <Rail.Section title="Workspaces">
+          {WORKSPACES.map((name) => (
+            <Rail.Item
+              key={name}
+              icon={<Building2 size={16} />}
+              href={\`#/w/\${encodeURIComponent(name)}\`}
+            >
+              {name}
+            </Rail.Item>
+          ))}
+        </Rail.Section>
+
+        <Rail.Footer>
+          <Rail.CollapseToggle />
+        </Rail.Footer>
+      </Rail>
+    </RailStage>
+  );
+}`}
+      >
+        <RailStage>
+          <Rail>
+            <Rail.Header>
+              <BrandMark />
+            </Rail.Header>
+
+            <Rail.Section title="Main">
+              <Rail.Item
+                icon={<Home size={16} />}
+                href="#dashboard"
+                onClick={(e) => e.preventDefault()}
+              >
+                Dashboard
+              </Rail.Item>
+              <Rail.Item
+                icon={<Users size={16} />}
+                href="#contacts"
+                onClick={(e) => e.preventDefault()}
+              >
+                Contacts
+              </Rail.Item>
+            </Rail.Section>
+
+            <Rail.Section title="Workspaces">
+              {WORKSPACES.map((name) => (
+                <Rail.Item
+                  key={name}
+                  icon={<Building2 size={16} />}
+                  href={`#/w/${encodeURIComponent(name)}`}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  {name}
+                </Rail.Item>
+              ))}
+            </Rail.Section>
+
+            <Rail.Footer>
+              <Rail.CollapseToggle />
+            </Rail.Footer>
+          </Rail>
+        </RailStage>
+        <Cluster gap="sm" align="center">
+          <Layers size={14} aria-hidden style={{ color: 'var(--color-fg-muted)' }} />
+          <Text tone="muted" size="sm">
+            Collapse the rail while scrolled — the section titles fold away, so the list shortens
+            and the thumb grows. The gutter itself stays the same thin width.
+          </Text>
+        </Cluster>
       </Example>
     </DemoLayout>
   );

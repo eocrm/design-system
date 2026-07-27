@@ -6,6 +6,23 @@
 
 * {
   margin: 0;
+
+  // Thin, theme-colored scrollbars instead of the chunky OS default, on every
+  // scroller in the library and in consumer code. The universal selector is
+  // deliberate: `scrollbar-color` inherits, `scrollbar-width` does NOT — set
+  // only on the root, nested scrollers keep a fat `auto` gutter painted in our
+  // thumb color. The color rides along on `*` rather than inheriting from the
+  // root so a subtree that retones `--color-fg-subtle` retones its scrollbars
+  // too. Specificity 0-0-0, so opt a scroller out with its own
+  // `scrollbar-width: auto` / `scrollbar-color: auto` — on the scroller itself,
+  // not an ancestor, since every descendant re-matches `*`. Unsupporting
+  // engines keep their default; overlay-scrollbar platforms (macOS) ignore the
+  // track color; forced-colors reverts the thumb to the system palette; and
+  // Chromium ignores `::-webkit-scrollbar` rules once these are set. Accepted
+  // trade-off: `thin` is a smaller drag target than the OS bar, below WCAG
+  // 2.5.8's 24px.
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-fg-subtle) transparent;
 }
 
 html,
