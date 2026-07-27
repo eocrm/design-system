@@ -570,8 +570,6 @@ describe('<DataTable> — whole-column drag preview', () => {
   });
 
   it('reflects dragWholeColumn={false}', () => {
-    const instance = null as never;
-    void instance;
     render(<HarnessWithProps dragWholeColumn={false} />);
     expect(screen.getByRole('table')).not.toHaveAttribute('data-drag-whole-column');
   });
