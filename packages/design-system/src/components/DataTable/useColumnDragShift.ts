@@ -38,7 +38,13 @@ export interface ColumnDragShiftArgs {
   rootRef: RefObject<HTMLElement | null>;
   /** False when `dragWholeColumn` is off — the hook then does nothing. */
   enabled: boolean;
-  /** Unpinned, reorderable column ids in current visual order. */
+  /**
+   * ALL unpinned column ids in current visual order — including columns with
+   * `enableReorder: false`. Do NOT filter by reorderability: a non-reorderable
+   * column cannot be *picked up*, but it is still displaced when a reorderable
+   * column is dragged past it (and the drop moves it for real). Omit it and it
+   * never shifts, so it and its neighbour render on top of each other.
+   */
   orderedIds: string[];
   /** Rendered width per column id, px. */
   widths: Record<string, number>;

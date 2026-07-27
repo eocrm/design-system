@@ -6,10 +6,11 @@
  * see the 'whole-column drag preview' block, which fires pointerdown /
  * pointermove / pointerup and asserts against the resulting styles. What jsdom
  * still cannot do is lay anything out: every getBoundingClientRect is zero, so
- * dnd-kit never resolves an `over` target and no actual reorder or drop
- * animation occurs. Reorder outcome and drag aesthetics therefore remain
- * playground/e2e territory; what is covered here is the styling contract
- * (which cells carry a shift transform, and which must never).
+ * by default dnd-kit never resolves an `over` target. A test that needs one
+ * stubs getBoundingClientRect on the header cells (see the non-reorderable
+ * column test). Drag aesthetics remain playground/e2e territory; what is
+ * covered here is the styling contract (which cells carry a shift transform,
+ * which must never, and which columns the driver is told about).
  */
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -591,6 +592,56 @@ describe('<DataTable> — whole-column drag preview', () => {
     fireEvent.pointerUp(document);
     expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('');
     expect(screen.getByText('10').closest('td')!.style.transform).toBe('');
+  });
+
+  it('during a real drag, a NON-reorderable column the drag passes over is shifted too', () => {
+    // Regression guard for the two-column overlap: the shift driver must be fed
+    // EVERY unpinned column, not just the reorderable ones. A column with
+    // `enableReorder: false` still occupies space and is still displaced by the
+    // drop, so if it is omitted from `orderedIds` it never moves and renders on
+    // top of its neighbour. Wiring the driver to `sortableIds` (which filters
+    // `enableReorder === false` out — correct for SortableContext, wrong here)
+    // makes this test fail: 'stage' gets no shift variable at all.
+    const gapCols: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', cell: (r) => r.name },
+      { id: 'stage', header: 'Stage', cell: () => 'Won', enableReorder: false },
+      { id: 'owner', header: 'Owner', cell: (r) => r.amount },
+    ];
+    function GapHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: gapCols, getRowId });
+      return <DataTable instance={instance} aria-label="Gap" />;
+    }
+    render(<GapHarness />);
+    const table = screen.getByRole('table');
+
+    // jsdom lays nothing out, so every rect is zero and dnd-kit can never
+    // resolve an `over` target — and with `over` null the driver only publishes
+    // the active column's offset, which would make this assertion vacuous.
+    // Give the header cells real rects (each 120px wide, matching the default
+    // column size) so collision detection has something to hit.
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.getBoundingClientRect = () => new DOMRect(i * 120, 0, 120, 32);
+    });
+
+    const grip = screen.getByLabelText(/drag to reorder name/i);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    // First move clears the 6px activation constraint; the second lands the
+    // dragged column squarely on 'owner', two positions to the right.
+    fireEvent.pointerMove(document, { clientX: 20, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 240, clientY: 0 });
+    // Third move because dnd-kit's `over` lags one frame: the collision found
+    // on the previous move is what the monitor sees on this one.
+    fireEvent.pointerMove(document, { clientX: 250, clientY: 0 });
+
+    // Sanity: the drag really did resolve a target two columns over, so the
+    // displacement assertions below are not vacuous.
+    expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('250px');
+    expect(table.style.getPropertyValue(shiftVarName('owner'))).toBe('-120px');
+    // The point of the test — the skipped-over non-reorderable column moves by
+    // exactly the same amount. With `sortableIds` this reads ''.
+    expect(table.style.getPropertyValue(shiftVarName('stage'))).toBe('-120px');
+
+    fireEvent.pointerUp(document);
   });
 
   it('during a real drag with dragWholeColumn={false}, the body never moves', () => {
