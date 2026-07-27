@@ -116,6 +116,13 @@
   width: var(--date-picker-time-popover-column-width);
   max-height: var(--date-picker-time-popover-max-height);
   overflow-y: auto;
+
+  // Y scrolls, X clips. Declaring only `overflow-y` leaves X at `visible`,
+  // which the spec computes to `auto` — making a 4rem listbox column
+  // horizontally scrollable. Same fix `Rail.body` and `DropdownMenu.content`
+  // carry. Nothing overflows today; this keeps it that way if the column token
+  // shrinks or rows grow (#375).
+  overflow-x: hidden;
 }
 
 .timeColumnDivider {
