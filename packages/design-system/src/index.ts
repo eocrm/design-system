@@ -177,7 +177,13 @@ export type {
 } from './components/PersonDisplay';
 
 export { Tabs } from './components/Tabs';
-export type { TabsProps, TabItem, TabsActivationMode, TabsOrientation } from './components/Tabs';
+export type {
+  TabsProps,
+  TabItem,
+  TabsAction,
+  TabsActivationMode,
+  TabsOrientation,
+} from './components/Tabs';
 
 export { DropdownMenu } from './components/DropdownMenu';
 export type {
