@@ -14,7 +14,8 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
-import { useBelowBreakpoint, type CollapseBreakpoint } from '../_internal/collapse';
+import type { CollapseBreakpoint } from '../_internal/collapse';
+import { useBelowBreakpoint } from '../../hooks/useBelowBreakpoint';
 import { RailHeader } from './RailHeader';
 import { RailFooter } from './RailFooter';
 import { RailSpacer } from './RailSpacer';

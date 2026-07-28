@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
 import { AppLayout } from './AppLayout';
-import { stubMatchMedia } from '../_internal/matchMediaStub';
+import { stubMatchMedia } from '../_internal/matchMediaStub.testutil';
 
 describe('AppLayout', () => {
-  it('renders children in a <div> and forwards ref to the root', () => {
+  it('renders children in a <main> landmark and forwards ref to the root', () => {
     const ref = createRef<HTMLDivElement>();
     const { container } = render(
       <AppLayout ref={ref}>
@@ -16,6 +16,10 @@ describe('AppLayout', () => {
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
     expect(ref.current).toBe(container.firstChild);
     expect(screen.getByTestId('content')).toBeInTheDocument();
+    // The content region is a <main> — the playground's only main landmark;
+    // a refactor back to a plain <div> must fail this, not just the
+    // `[class*="main"]` structural check below.
+    expect(screen.getByRole('main')).toContainElement(screen.getByTestId('content'));
   });
 
   it('renders the topBar slot when provided, omits its wrapper when not', () => {

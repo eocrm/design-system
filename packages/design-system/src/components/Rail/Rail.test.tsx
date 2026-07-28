@@ -4,7 +4,7 @@ import { act, createRef, useState } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
-import { stubMatchMedia } from '../_internal/matchMediaStub';
+import { stubMatchMedia } from '../_internal/matchMediaStub.testutil';
 import { Rail, useRail } from './Rail';
 
 describe('Rail', () => {

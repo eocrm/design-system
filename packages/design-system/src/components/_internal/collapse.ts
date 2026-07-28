@@ -1,4 +1,4 @@
-import { createContext, useMemo, useSyncExternalStore } from 'react';
+import { createContext } from 'react';
 
 /**
  * Shared `collapseBelow` threshold scale: `sm` 480px / `md` 640px / `lg` 768px.
@@ -53,48 +53,4 @@ export const CollapseColumnsContext = createContext<CollapseColumnsMap | null>(n
 /** Track template for a collapse step — mirrors Grid's fixed-column template. */
 export function collapseTrackTemplate(columns: number): string {
   return `repeat(${columns}, minmax(0, 1fr))`;
-}
-
-/**
- * Subscribes to `(max-width: <breakpoint>px)` on the VIEWPORT and reports
- * whether it currently matches. `false` when no breakpoint is given, and on a
- * server / any environment without `matchMedia`.
- *
- * Viewport, not container — use this only where a container query would be
- * circular, i.e. where the thing being measured is what the collapse changes:
- * `Rail` (its own width IS the collapse) and `AppLayout`'s overlay sidebar (the
- * sidebar's presence in the row IS the collapse). For content that re-templates
- * inside a box of stable width, prefer the container-query `collapseBelow`
- * classes instead — see the type doc above.
- */
-export function useBelowBreakpoint(breakpoint: CollapseBreakpoint | undefined): boolean {
-  // `max-width` is inclusive, matching the `@container (max-width: …)` form the
-  // SCSS breakpoints use — the threshold matches AT the breakpoint value.
-  const query = breakpoint ? `(max-width: ${COLLAPSE_BREAKPOINT_PX[breakpoint]}px)` : null;
-
-  const [subscribe, getSnapshot] = useMemo(() => {
-    const supported =
-      query !== null && typeof window !== 'undefined' && typeof window.matchMedia === 'function';
-    if (!supported) return [() => () => {}, () => false] as const;
-    const mql = window.matchMedia(query);
-    return [
-      (onStoreChange: () => void) => {
-        // Safari < 13.1 exposes `matchMedia` but no `addEventListener` on the
-        // MediaQueryList — only the deprecated `addListener`. Feature-detecting
-        // `matchMedia` alone would throw here during commit and take the app
-        // down rather than degrading, so detect the subscription API too.
-        if (typeof mql.addEventListener === 'function') {
-          mql.addEventListener('change', onStoreChange);
-          return () => mql.removeEventListener('change', onStoreChange);
-        }
-        mql.addListener(onStoreChange);
-        return () => mql.removeListener(onStoreChange);
-      },
-      () => mql.matches,
-    ] as const;
-  }, [query]);
-
-  // Server snapshot is `false`: SSR has no viewport, so the markup matches the
-  // consumer's own value and the client corrects on hydration.
-  return useSyncExternalStore(subscribe, getSnapshot, () => false);
 }

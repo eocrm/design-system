@@ -1504,7 +1504,8 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - **Content canvas (default):** the main region paints a subtle canvas (`--app-layout-content-background`, default `var(--color-bg-subtle)`) so white `<Card>`s lift off it — matches every mockup, **no prop, no raw CSS**. For a flat content area, override the token (`--app-layout-content-background: transparent`); there is no prop. _Migration:_ if you shimmed your own `background: var(--color-bg-subtle)` on the content region, remove it.
 - **Page-scroll shell:** `min-height: 100vh` means tall content scrolls the whole window, but the chrome doesn't scroll away with it — `topBar` is always pinned (`position: sticky`), and `sidebar` pins too when `sidebarPinned` is set. Only the main content region scrolls. For fixed chrome + independently-scrolling content, override the root to a fixed `height: 100vh` / `100dvh` via `className`.
 - **`sidebarPinned`** (default `false`): on pages taller than the viewport, pins the sidebar wrapper (`position: sticky; top: 0; height: 100dvh; overflow-y: auto`) so a `Rail`'s footer/`CollapseToggle` stays glued to the viewport bottom instead of scrolling away with the page. Don't reach for wrapping the sidebar slot in `<Sticky>` instead — the Rail pins its footer by filling its own `height: 100%` box, and `Sticky`'s `align-self: start` drops the row stretch that made that height definite, so the footer-pinning doesn't work. `100dvh` is always relative to the real browser viewport, not a nested scroll container — only use it when AppLayout is the outermost, page-scroll shell (its documented top-level use); nested inside another scrollable region, the sidebar sizes to the whole window and overflows it.
-- **`sidebarOverlayBelow`** (default: none): below a **viewport** threshold (`'sm'` 480 / `'md'` 640 / `'lg'` 768) the sidebar leaves the flow and renders in a left `<Drawer>`, so the content column gets the full viewport width — the fix for a 240px rail eating a phone screen. Drive it with `sidebarOpen` / `onSidebarOpenChange` (both optional; uncontrolled still closes on Esc and backdrop). **AppLayout renders no trigger** — put a hamburger in your `topBar` and gate it with the exported `useBelowBreakpoint(bp)` hook so it only shows while the overlay is active. `sidebarPinned` is ignored below the threshold (the drawer owns the sidebar's box there). Measures the viewport, not a container — same basis as `<Rail collapseBelow>`, since the sidebar's presence in the row is exactly what the threshold changes.
+- **`sidebarOverlayBelow`** (default: none): below a **viewport** threshold (`'sm'` 480 / `'md'` 640 / `'lg'` 768) the sidebar leaves the flow and renders in a left `<Drawer>`, so the content column gets the full viewport width — the fix for a 240px rail eating a phone screen. Drive it with `sidebarOpen` / `onSidebarOpenChange` (both optional; uncontrolled still closes on Esc and backdrop). **AppLayout renders no trigger** — put a hamburger in your `topBar` and gate it with the `useBelowBreakpoint` hook (see below) so it only shows while the overlay is active. `sidebarPinned` is ignored below the threshold (the drawer owns the sidebar's box there).
+- The `children` slot renders inside a `<main>` element — don't also wrap your routed content in its own `<main>`, or you get two nested `main` landmarks (an axe violation). Use `<Page>` / `<Screen>` / a plain `<div>` for the routed content itself.
 
 ### `<Grid>` — 2D layout primitive
 
@@ -3274,6 +3275,18 @@ const { days, rangeLabel } = useAgenda(rangeStart, rangeEnd);
 - Each hook accepts an optional `options.locale` to override the Context value. `useMonth`, `useWeek`, and `useAgenda` accept `options.weekStartsOn` to override the locale-derived first day (used by `useAgenda` to compute the locale-aware column index for each `Day.weekday`).
 - `Day.key` is `'YYYY-MM-DD'` in local time — safe React key, comparison handle, and event-lookup index.
 - Pure date math + `Intl` formatters live alongside as utility exports: `addDays`, `startOfWeek`, `formatMonth`, `getFirstDayOfWeek`, etc. Use them if you need to derive labels or do date math outside a component.
+
+### `useBelowBreakpoint` — viewport breakpoint hook
+
+```tsx
+import { useBelowBreakpoint } from '@eocrm/design-system';
+
+const isOverlay = useBelowBreakpoint('lg'); // true at ≤768px viewport width
+```
+
+- The library's only public hook. `useBelowBreakpoint(breakpoint?: 'sm' | 'md' | 'lg'): boolean` — subscribes to `(max-width: …px)` on the **viewport** (`matchMedia`: `sm` 480 / `md` 640 / `lg` 768) and returns whether it currently matches. `breakpoint` is optional — omit it (or pass `undefined`) and the hook always returns `false`.
+- Returns `false` on the server AND on the first client render (before hydration/the first effect corrects it) — this is a `useSyncExternalStore` server-snapshot, not a bug; don't gate anything on it being accurate before mount.
+- Viewport, not container — use it only where a container query would be circular, i.e. where the thing being measured is what the collapse changes: `<Rail>`'s own width (internal use) and `<AppLayout>`'s overlay-sidebar trigger (`sidebarOverlayBelow` — gate your `topBar` hamburger on this so it shows only while the overlay is active). For content that re-templates inside a box of stable width, use a `collapseBelow` prop (`<Grid>` / `<Split>` / `<Sortable>` / `<DashboardCanvas>`) instead — those use container queries in CSS and need no hook.
 
 ---
 

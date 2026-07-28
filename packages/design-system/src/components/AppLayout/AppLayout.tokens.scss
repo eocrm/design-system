@@ -16,8 +16,10 @@
 }
 
 // Narrow viewports: --space-6 (24px) each side costs a 380px phone 48px of its
-// width. Step the gutter down so content keeps its room. A consumer override in
-// their own scope still wins — this only moves the DEFAULT.
+// width. Step the gutter down so content keeps its room. This only moves the
+// DEFAULT: a consumer override in a scope BELOW :root still wins (e.g. a class
+// on their own root element), but an override written as another :root rule is
+// the same (0,1,0) specificity as this one — whichever rule loads last wins.
 @media (max-width: bp.$collapse-md) {
   :root {
     --app-layout-content-padding: var(--space-4);

@@ -1,7 +1,8 @@
 import { forwardRef, useEffect, useRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
-import { useBelowBreakpoint, type CollapseBreakpoint } from '../_internal/collapse';
+import { useBelowBreakpoint } from '../../hooks/useBelowBreakpoint';
+import type { CollapseBreakpoint } from '../_internal/collapse';
 import { useControllableState } from '../_internal/useControllableState';
 import { Drawer } from '../Drawer';
 import styles from './AppLayout.module.scss';

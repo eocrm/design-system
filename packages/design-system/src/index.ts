@@ -395,7 +395,6 @@ export type {
   SortableArrangement,
   CollapseBreakpoint,
 } from './components/Sortable';
-export { useBelowBreakpoint } from './components/_internal/collapse';
 
 export { SortableGroup, moveSortableItem } from './components/SortableGroup';
 export type {
@@ -705,6 +704,9 @@ export {
 // ─── Palette (categorical color set) ──────────────────────────────────────
 export type { PaletteColor } from './palette';
 export { PALETTE_COLORS, paletteTokens } from './palette';
+
+// ─── Hooks ──────────────────────────────────────────────────────────────
+export { useBelowBreakpoint } from './hooks/useBelowBreakpoint';
 
 // ─── Form field primitives (label/control wrapper + form layout) ──────────
 export { Field } from './components/Field';
