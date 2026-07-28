@@ -493,3 +493,155 @@ describe('Rail — scroll box axes', () => {
     expect(scss).toMatch(/\.collapsed\s+\.body\s*\{[^}]*scrollbar-width:\s*none/);
   });
 });
+
+describe('Rail — collapseBelow (viewport override)', () => {
+  // jsdom implements no `window.matchMedia` at all, so every test here installs
+  // its own stub. It's width-driven and fires real `change` events so the
+  // component's subscription path is exercised, not just the initial read.
+  const original = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+
+  afterEach(() => {
+    if (original) Object.defineProperty(window, 'matchMedia', original);
+    else delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+
+  function stubMatchMedia(initialWidth: number) {
+    let width = initialWidth;
+    const listeners = new Set<() => void>();
+    const limit = (query: string) => Number(/max-width:\s*(\d+)px/.exec(query)?.[1] ?? NaN);
+    const stub = (query: string) => ({
+      media: query,
+      get matches() {
+        return width <= limit(query);
+      },
+      addEventListener: (_type: string, listener: () => void) => void listeners.add(listener),
+      removeEventListener: (_type: string, listener: () => void) => void listeners.delete(listener),
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    });
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: stub as unknown as typeof window.matchMedia,
+    });
+    return {
+      resizeTo(next: number) {
+        width = next;
+        act(() => {
+          for (const listener of listeners) listener();
+        });
+      },
+    };
+  }
+
+  const body = (
+    <>
+      <Rail.Section title="Main">
+        <Rail.Item icon={<span data-testid="icon" />} href="/">
+          Dashboard
+        </Rail.Item>
+      </Rail.Section>
+      <Rail.Footer>
+        <Rail.CollapseToggle />
+      </Rail.Footer>
+    </>
+  );
+
+  it('forces the collapsed state below the breakpoint even with collapsed={false}', () => {
+    stubMatchMedia(400);
+    render(
+      <Rail collapsed={false} collapseBelow="sm">
+        {body}
+      </Rail>,
+    );
+    expect(screen.getByRole('navigation')).toHaveAttribute('data-collapsed');
+  });
+
+  it('lets the consumer value govern above the breakpoint', () => {
+    stubMatchMedia(900);
+    render(
+      <Rail collapsed={false} collapseBelow="sm">
+        {body}
+      </Rail>,
+    );
+    expect(screen.getByRole('navigation')).not.toHaveAttribute('data-collapsed');
+  });
+
+  it('collapses and releases as the viewport crosses the breakpoint', () => {
+    const viewport = stubMatchMedia(900);
+    render(
+      <Rail collapsed={false} collapseBelow="md">
+        {body}
+      </Rail>,
+    );
+    const nav = screen.getByRole('navigation');
+    expect(nav).not.toHaveAttribute('data-collapsed');
+    viewport.resizeTo(500);
+    expect(nav).toHaveAttribute('data-collapsed');
+    viewport.resizeTo(900);
+    expect(nav).not.toHaveAttribute('data-collapsed');
+  });
+
+  it('does NOT fire onCollapsedChange when the viewport crosses the breakpoint', () => {
+    const viewport = stubMatchMedia(900);
+    const onCollapsedChange = vi.fn();
+    render(
+      <Rail collapsed={false} onCollapsedChange={onCollapsedChange} collapseBelow="sm">
+        {body}
+      </Rail>,
+    );
+    viewport.resizeTo(400);
+    expect(screen.getByRole('navigation')).toHaveAttribute('data-collapsed');
+    expect(onCollapsedChange).not.toHaveBeenCalled();
+    viewport.resizeTo(900);
+    expect(screen.getByRole('navigation')).not.toHaveAttribute('data-collapsed');
+    expect(onCollapsedChange).not.toHaveBeenCalled();
+  });
+
+  it('leaves the uncontrolled toggle state intact across a narrow → wide round trip', async () => {
+    const user = userEvent.setup();
+    const viewport = stubMatchMedia(900);
+    render(
+      <Rail defaultCollapsed={false} collapseBelow="sm">
+        {body}
+      </Rail>,
+    );
+    const nav = screen.getByRole('navigation');
+
+    // User asks for collapsed while wide.
+    await user.click(screen.getByRole('button', { name: 'Collapse navigation' }));
+    expect(nav).toHaveAttribute('data-collapsed');
+
+    // Narrow and back: the stored choice is still "collapsed".
+    viewport.resizeTo(400);
+    viewport.resizeTo(900);
+    expect(nav).toHaveAttribute('data-collapsed');
+
+    // ...and it is still the consumer's own state, so it can be reversed.
+    await user.click(screen.getByRole('button', { name: 'Expand navigation' }));
+    expect(nav).not.toHaveAttribute('data-collapsed');
+  });
+
+  it('hides the CollapseToggle while the override is active and restores it after', () => {
+    const viewport = stubMatchMedia(900);
+    render(<Rail collapseBelow="sm">{body}</Rail>);
+    expect(screen.getByRole('button', { name: 'Collapse navigation' })).toBeInTheDocument();
+    viewport.resizeTo(400);
+    expect(screen.queryByRole('button', { name: /navigation/i })).not.toBeInTheDocument();
+    viewport.resizeTo(900);
+    expect(screen.getByRole('button', { name: 'Collapse navigation' })).toBeInTheDocument();
+  });
+
+  it('renders without crashing when matchMedia is unavailable (SSR-ish guard)', () => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
+    render(
+      <Rail collapsed={false} collapseBelow="sm">
+        {body}
+      </Rail>,
+    );
+    expect(screen.getByRole('navigation')).not.toHaveAttribute('data-collapsed');
+    expect(screen.getByRole('button', { name: 'Collapse navigation' })).toBeInTheDocument();
+  });
+});

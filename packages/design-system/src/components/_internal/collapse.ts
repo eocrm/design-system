@@ -1,11 +1,35 @@
 import { createContext } from 'react';
 
 /**
- * Container-width threshold for `collapseBelow` on Grid / Sortable (grid
- * arrangement). `sm` 480px / `md` 640px / `lg` 768px — measured against the
- * grid's OWN width (container query), not the viewport.
+ * Shared `collapseBelow` threshold scale: `sm` 480px / `md` 640px / `lg` 768px.
+ *
+ * The scale is shared; **the measurement basis is per-component**:
+ *
+ * - **Container** (`@container (max-width: …)`) for Grid / Sortable (grid
+ *   arrangement) / Split / DashboardCanvas. Collapsing re-templates content
+ *   *inside* a box whose width the collapse doesn't change, so querying the
+ *   box's own width is stable and needs no JS.
+ * - **Viewport** (`matchMedia`) for Rail. A container query there would be
+ *   circular — the rail's own width IS what collapsing changes (240px → 56px),
+ *   so collapsing would keep the query true. Rail's collapsed state also drives
+ *   React behavior (Item tooltips, Group flyouts, section titles), which CSS
+ *   can't express, so the threshold has to exist in JS regardless.
  */
 export type CollapseBreakpoint = 'sm' | 'md' | 'lg';
+
+/**
+ * Pixel value of each breakpoint, for components that evaluate the threshold in
+ * JS (`matchMedia`) rather than in CSS.
+ *
+ * **Keep in sync with `collapse.scss`** (`$collapse-sm` / `-md` / `-lg`) — the
+ * SCSS constants are the CSS-side copy of these same numbers. Both are
+ * inclusive upper bounds: `max-width: 480px` matches AT 480px.
+ */
+export const COLLAPSE_BREAKPOINT_PX: Record<CollapseBreakpoint, number> = {
+  sm: 480,
+  md: 640,
+  lg: 768,
+};
 
 /**
  * Graduated collapse: breakpoint → column count. Below each breakpoint the

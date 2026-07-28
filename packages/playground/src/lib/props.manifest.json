@@ -3546,6 +3546,13 @@
           "description": "Fires whenever the rail toggles, both controlled and uncontrolled. Useful\nfor persisting the state to localStorage or the URL."
         },
         {
+          "name": "collapseBelow",
+          "type": "CollapseBreakpoint",
+          "required": false,
+          "default": "",
+          "description": "Force the icon-only collapsed mode while the **viewport** is at or below a\nwidth threshold: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. Omit for no\nresponsive behavior (the default) — `collapsed` alone governs.\n\nBelow the threshold the rail renders collapsed regardless of `collapsed` /\n`defaultCollapsed`; above it, the consumer's value governs again,\nuntouched. It is a **presentation override, not a user choice**, so\n`onCollapsedChange` does NOT fire when the viewport crosses the threshold\nin either direction — a narrow window can't silently rewrite a persisted\npreference. `<Rail.CollapseToggle>` hides itself while the override is\nactive, since it could not change anything.\n\nUnlike `<Grid collapseBelow>` / `<Split collapseBelow>`, which measure\ntheir own width with a container query, this measures the viewport: the\nrail's own width is exactly what collapsing changes, so a container query\nwould be circular. Same token scale, different basis."
+        },
+        {
           "name": "aria-label",
           "type": "string",
           "required": false,
@@ -4220,7 +4227,7 @@
           "type": "CollapseBreakpoint",
           "required": false,
           "default": "",
-          "description": "Stack the two panes vertically when the SPLIT'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Same scale as `Grid`'s `collapseBelow`. Without it a pinned\n`asideWidth` rail squeezes `main` to nothing on narrow screens.\n\nCollapsed panes stack in **DOM order**, not always aside-first: with\nthe default `side=\"start\"` that's aside → main; with `side=\"end\"` it's\nmain → aside, because that's the order the panes are in the DOM. Forcing\naside-first when collapsed would need CSS `order`, which desynchronizes\nvisual order from tab order — an a11y defect. If you need the aside on top\nwhen stacked, use `side=\"start\"`.\n\n❌ Anti-pattern: a `collapseBelow` split must get its width from its\nparent. `container-type: inline-size` zeroes the split's contribution to\nintrinsic sizing, so in an intrinsic-width context (another `Split`'s\ndefault `auto` aside track, a `Cluster` item, `width: max-content`) it\nrenders at width 0 — give the parent a concrete width instead. The split\nalso becomes the containing block for absolutely-positioned descendants\n(layout containment). Splits without the prop pay none of this."
+          "description": "Stack the two panes vertically when the SPLIT'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Same scale as `Grid`'s `collapseBelow`. Without it a pinned\n`asideWidth` rail squeezes `main` to nothing on narrow screens.\n\nWhen stacked, both panes span the full grid, which means a pinned\n`asideWidth` acts as a FLOOR on their width — the panes are at least\n`asideWidth + gap` wide even if the container is narrower, and overflow\nhorizontally past that point. Keep `asideWidth` comfortably below the\nnarrowest container you expect (e.g. `asideWidth=\"320px\"` inside a 300px\ndrawer still overflows after collapsing).\n\nCollapsed panes stack in **DOM order**, not always aside-first: with\nthe default `side=\"start\"` that's aside → main; with `side=\"end\"` it's\nmain → aside, because that's the order the panes are in the DOM. Forcing\naside-first when collapsed would need CSS `order`, which desynchronizes\nvisual order from tab order — an a11y defect. If you need the aside on top\nwhen stacked, use `side=\"start\"`.\n\n❌ Anti-pattern: a `collapseBelow` split must get its width from its\nparent. `container-type: inline-size` zeroes the split's contribution to\nintrinsic sizing, so in an intrinsic-width context (another `Split`'s\ndefault `auto` aside track, a `Cluster` item, `width: max-content`) it\nrenders at width 0 — give the parent a concrete width instead. The split\nalso becomes the containing block for absolutely-positioned descendants\n(layout containment). Splits without the prop pay none of this."
         }
       ]
     },

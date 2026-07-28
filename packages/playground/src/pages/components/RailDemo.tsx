@@ -108,6 +108,9 @@ const WORKSPACES = [
 export function RailDemo() {
   // Example 3: controlled state driven by a sibling button outside the rail.
   const [controlledCollapsed, setControlledCollapsed] = useState(false);
+  // Example 7: the stored preference behind the `collapseBelow` demo — kept
+  // separate so you can watch the viewport override NOT write to it.
+  const [responsivePref, setResponsivePref] = useState(false);
 
   return (
     <DemoLayout
@@ -1131,6 +1134,116 @@ export function Demo() {
             and by Tab instead.
           </Text>
         </Cluster>
+      </Example>
+
+      <Example
+        title="Responsive — `collapseBelow` forces icon-only on a narrow viewport"
+        description="`collapseBelow` set to `lg` pins the rail to its icon-only mode whenever the **viewport** is 768px or narrower — resize the browser window to see it. Unlike `Grid`/`Split`, which measure their own width with a container query, the rail must measure the viewport: collapsing is what changes the rail's width, so a container query would be circular. The override is presentation only — `onCollapsedChange` never fires for it, so the stored preference below stays exactly where you left it, and governs again as soon as the window widens. The `CollapseToggle` in the footer hides itself while the override is active, since it could not change anything."
+        code={`import { useState } from 'react';
+import { Button, Cluster, Rail, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  // Typically a localStorage-backed preference.
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <Stack gap="md">
+      <Cluster gap="sm" align="center">
+        <Button variant="secondary" size="sm" onClick={() => setCollapsed((c) => !c)}>
+          {collapsed ? 'Expand' : 'Collapse'} rail
+        </Button>
+        <Text tone="muted" size="sm">
+          Stored preference: collapsed={String(collapsed)} — unchanged by the viewport.
+        </Text>
+      </Cluster>
+
+      <RailStage>
+        <Rail collapsed={collapsed} onCollapsedChange={setCollapsed} collapseBelow="lg">
+          <Rail.Header>
+            <BrandMark />
+          </Rail.Header>
+
+          <Rail.Section title="Main">
+            <Rail.Item icon={<Home size={16} />} href="#dashboard">Dashboard</Rail.Item>
+            <Rail.Item icon={<Users size={16} />} href="#contacts">Contacts</Rail.Item>
+          </Rail.Section>
+
+          <Rail.Section title="Operations">
+            <Rail.Group icon={<SettingsIcon size={16} />} label="Settings">
+              <Rail.Item href="#settings-general">General</Rail.Item>
+              <Rail.Item href="#settings-security">Security</Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+
+          <Rail.Spacer />
+
+          <Rail.Footer>
+            {/* Renders nothing while the viewport override is active. */}
+            <Rail.CollapseToggle />
+          </Rail.Footer>
+        </Rail>
+      </RailStage>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="md">
+          <Cluster gap="sm" align="center">
+            <Button variant="secondary" size="sm" onClick={() => setResponsivePref((c) => !c)}>
+              {responsivePref ? 'Expand' : 'Collapse'} rail
+            </Button>
+            <Text tone="muted" size="sm">
+              Stored preference: collapsed={String(responsivePref)} — narrow the window past 768px
+              and the rail collapses anyway, but this value does not move.
+            </Text>
+          </Cluster>
+
+          <RailStage>
+            <Rail
+              collapsed={responsivePref}
+              onCollapsedChange={setResponsivePref}
+              collapseBelow="lg"
+            >
+              <Rail.Header>
+                <BrandMark />
+              </Rail.Header>
+
+              <Rail.Section title="Main">
+                <Rail.Item
+                  icon={<Home size={16} />}
+                  href="#dashboard"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Dashboard
+                </Rail.Item>
+                <Rail.Item
+                  icon={<Users size={16} />}
+                  href="#contacts"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Contacts
+                </Rail.Item>
+              </Rail.Section>
+
+              <Rail.Section title="Operations">
+                <Rail.Group icon={<SettingsIcon size={16} />} label="Settings">
+                  <Rail.Item href="#settings-general" onClick={(e) => e.preventDefault()}>
+                    General
+                  </Rail.Item>
+                  <Rail.Item href="#settings-security" onClick={(e) => e.preventDefault()}>
+                    Security
+                  </Rail.Item>
+                </Rail.Group>
+              </Rail.Section>
+
+              <Rail.Spacer />
+
+              <Rail.Footer>
+                <Rail.CollapseToggle />
+              </Rail.Footer>
+            </Rail>
+          </RailStage>
+        </Stack>
       </Example>
     </DemoLayout>
   );
