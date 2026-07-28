@@ -27,6 +27,19 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
+### [ ] `<Sticky>` — needs an offset that accounts for pinned app chrome
+
+**Filed:** 2026-07-28
+**Mocked in:** n/a — surfaced by branch review (`feat/mobile-shell`), not a mockup. `AppLayout`'s `topBar` is now unconditionally `position: sticky; top: 0` (see `AppLayout.module.scss`); `<Sticky>`'s `top` steps cap at `--sticky-top-xl` (24px), well short of `--topbar-height` (56px). A `<Sticky>` in the main content region — e.g. `<Split aside={<Sticky top="md">…</Sticky>}>` on a contact-detail page — pins BEHIND the bar and is invisible, and no existing `top` step value can clear it.
+
+**What's needed:**
+`<Sticky>` needs a way to know about (or accept an offset for) pinned ancestor chrome, so its effective `top` can clear a pinned `AppLayout` top bar without the consumer hand-computing `--topbar-height` + their own step value. Possibly a `topOffset` prop, or `AppLayout` exposing its chrome height as a token `<Sticky>` can read.
+
+**Current workaround:**
+Documented in `AppLayout`'s `@remarks Scrolling` JSDoc: raise the relevant `--sticky-top-*` token above `--topbar-height` in the consumer's own scope.
+
+**When this ships:** update the JSDoc workaround note in `AppLayout.tsx` to point at the new mechanism instead, then tick this checkbox.
+
 ### [x] `<Logo>` — fixed-size brand-logo / image renderer
 
 **Shipped:** 2026-06-05 — `<Logo>` lib component; Login + AppShell refactored to use it; asset deleted.

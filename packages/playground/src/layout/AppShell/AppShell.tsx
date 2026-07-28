@@ -172,7 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       onSidebarOpenChange={setNavOpen}
       sidebar={
         <Rail
-          collapsed={collapsed}
+          collapsed={collapsed && !isOverlayNav}
           onCollapsedChange={setCollapsed}
           aria-label={inComponents ? 'Component navigation' : 'Mockup navigation'}
           className={styles.appRail}

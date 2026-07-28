@@ -110,8 +110,10 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * The main region ships the canonical shell content gutter by default
  * (`--app-layout-content-padding`, default `var(--space-6)`) — so a DS-only
  * consumer gets padded routed content with **no prop and no raw CSS** (routed
- * pages no longer render flush against the rail / top bar). Need a full-bleed
- * main region? Override the token in your scope —
+ * pages no longer render flush against the rail / top bar). Below a 640px
+ * viewport the default steps down to `var(--space-4)` — `--space-6` on both
+ * sides costs a 380px phone 48px of its width. Need a full-bleed main
+ * region? Override the token in your scope —
  * `--app-layout-content-padding: 0` — no prop required.
  *
  * Migration: a consumer that previously added its own gutter (a
@@ -140,6 +142,11 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * page. For the common "fixed chrome + independently-scrolling content"
  * layout, override the root to a fixed `height: 100vh` (or `100dvh`) via
  * `className` — then `<Rail>` / the main region manage their own overflow.
+ *
+ * A `<Sticky>` placed inside the main region must clear the pinned `topBar`:
+ * `<Sticky>`'s `top` steps top out at `--sticky-top-xl` (24px), shorter than
+ * the top bar, so by default it pins BEHIND the bar. Raise the relevant
+ * `--sticky-top-*` token above `--topbar-height` in your scope to clear it.
  *
  * @remarks Responsive sidebar
  * `sidebarOverlayBelow` moves the sidebar into a left `<Drawer>` below a
@@ -229,7 +236,7 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
       )}
       <div className={styles.body}>
         {topBar != null && <div className={styles.topBar}>{topBar}</div>}
-        <div className={styles.main}>{children}</div>
+        <main className={styles.main}>{children}</main>
       </div>
       {overlayConfigured && (
         <Drawer
