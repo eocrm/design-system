@@ -1,6 +1,6 @@
 import { createRef } from 'react';
-import { render } from '@testing-library/react';
-import { Kanban } from './Kanban';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { Kanban, type KanbanMoveEvent } from './Kanban';
 import { SortableHandle } from '../Sortable/Sortable';
 
 describe('Kanban', () => {
@@ -165,5 +165,272 @@ describe('Kanban', () => {
     expect(consoleWarn).not.toHaveBeenCalled();
     consoleError.mockRestore();
     consoleWarn.mockRestore();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Drop position (#376)
+// ---------------------------------------------------------------------------
+// jsdom lays nothing out — every getBoundingClientRect is 0×0, which leaves
+// dnd-kit unable to resolve ANY drop target. `stubLayout` below fakes a real
+// board: columns side by side, cards stacked inside them, rects derived from
+// each element's CURRENT position in the DOM so a live reorder re-measures the
+// way a browser would. With that in place a real pointer drag (jsdom 29
+// implements PointerEvent, so the PointerSensor activates for real) runs
+// through Kanban's own DndContext.
+
+const COL_W = 100;
+const COL_GAP = 20;
+const CARD_H = 50;
+
+/** Column i occupies x [i*(COL_W+COL_GAP), +COL_W], y [0, height]. Card n
+ *  inside it occupies that x band, y [n*CARD_H, +CARD_H]. */
+function stubLayout(): () => void {
+  const orig = Element.prototype.getBoundingClientRect;
+  Element.prototype.getBoundingClientRect = function (this: Element) {
+    const column = this.closest('[data-col]');
+    if (!column) return orig.call(this);
+    const colIdx = Number(column.getAttribute('data-col'));
+    const left = colIdx * (COL_W + COL_GAP);
+    if (this === column) {
+      const height = Number(column.getAttribute('data-h') ?? 300);
+      return new DOMRect(left, 0, COL_W, height);
+    }
+    const card = this.closest('[data-card]');
+    if (card !== this) return orig.call(this);
+    const idx = Array.from(column.querySelectorAll('[data-card]')).indexOf(this);
+    return new DOMRect(left, idx * CARD_H, COL_W, CARD_H);
+  };
+  return () => {
+    Element.prototype.getBoundingClientRect = orig;
+  };
+}
+
+interface BoardProps {
+  onMove?: (event: KanbanMoveEvent) => void;
+  columns: [string, string[]][];
+  /** Column height — a tall column with few cards has drop-able padding. */
+  height?: number;
+}
+
+function Board({ onMove, columns, height = 300 }: BoardProps) {
+  return (
+    <Kanban onMove={onMove}>
+      {columns.map(([colId, cards], i) => (
+        <Kanban.Column key={colId} id={colId} data-col={i} data-h={height}>
+          {cards.map((cardId) => (
+            <Kanban.Card key={cardId} id={cardId} data-card={cardId}>
+              {cardId}
+            </Kanban.Card>
+          ))}
+        </Kanban.Column>
+      ))}
+    </Kanban>
+  );
+}
+
+/** Presses the card, walks the pointer through `path`, releases at the last
+ *  point. Coordinates are in the stubbed layout's space. The first move only
+ *  trips the sensor's 5px activation constraint — the drag proper starts at
+ *  `path[0]`, which keeps every delta measured from the press point. */
+function drag(cardId: string, path: [number, number][]) {
+  const card = screen.getByText(cardId);
+  const from = card.getBoundingClientRect();
+  const startX = from.left + COL_W / 2;
+  const startY = from.top + CARD_H / 2;
+  fireEvent.pointerDown(card, { clientX: startX, clientY: startY, button: 0, isPrimary: true });
+  fireEvent.pointerMove(document, { clientX: startX, clientY: startY + 10 });
+  for (const [clientX, clientY] of path) fireEvent.pointerMove(document, { clientX, clientY });
+  const [lastX, lastY] = path[path.length - 1];
+  fireEvent.pointerUp(document, { clientX: lastX, clientY: lastY });
+}
+
+/** Centre of column i, at vertical offset y. */
+const at = (col: number, y: number): [number, number] => [col * (COL_W + COL_GAP) + COL_W / 2, y];
+
+describe('Kanban — drop position', () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = stubLayout();
+  });
+  afterEach(() => restore());
+
+  it('#376 reproduction: enters at the top, releases ON the last card, commits that card’s slot', () => {
+    // The exact gesture from the issue: cross the boundary near the top of a
+    // three-card column, travel DOWN, release over a sibling. Before the fix
+    // the slot froze at the crossing and this committed index 0 while the
+    // preview showed the gap further down. `at(1, 140)` sits on b2 in the
+    // live list [a1, b1, b2, b3], so both preview and commit are index 2.
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1', 'b2', 'b3']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 5), at(1, 140)]);
+
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0]).toEqual({
+      cardId: 'a1',
+      from: { columnId: 'a', index: 0 },
+      to: { columnId: 'b', index: 2 },
+    });
+  });
+
+  it('commits the slot the card was RELEASED on, not the one it entered the column at (#376)', () => {
+    // Same crossing, but released past the last card — the append path.
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1', 'b2', 'b3']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 5), at(1, 190)]);
+
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0]).toEqual({
+      cardId: 'a1',
+      from: { columnId: 'a', index: 0 },
+      to: { columnId: 'b', index: 3 },
+    });
+  });
+
+  it('re-evaluates upward too: enters at the bottom, releases on the top card', () => {
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1', 'b2', 'b3']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 190), at(1, 5)]);
+
+    expect(onMove.mock.calls[0][0].to).toEqual({ columnId: 'b', index: 0 });
+  });
+
+  it('appends when released in a sparse column’s padding below the last card', () => {
+    // Tall column, three cards: below them `over` resolves to the column
+    // itself, which the sortable strategy renders with no displacement — so
+    // the card must already be sitting at the end of the live list.
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        height={1000}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1', 'b2', 'b3']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 5), at(1, 980)]);
+
+    expect(onMove.mock.calls[0][0].to).toEqual({ columnId: 'b', index: 3 });
+  });
+
+  it('drops into an empty column at index 0', () => {
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', []],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 100)]);
+
+    expect(onMove.mock.calls[0][0].to).toEqual({ columnId: 'b', index: 0 });
+  });
+
+  it('a same-column reorder still uses arrayMove semantics (no oscillation)', () => {
+    // The dragOver early-return exists for exactly this path — the slot is
+    // resolved once, at dragEnd, from `over`.
+    const onMove = vi.fn();
+    render(<Board onMove={onMove} columns={[['a', ['a1', 'a2', 'a3']]]} />);
+
+    drag('a1', [at(0, 90), at(0, 140)]);
+
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0]).toEqual({
+      cardId: 'a1',
+      from: { columnId: 'a', index: 0 },
+      to: { columnId: 'a', index: 2 },
+    });
+  });
+
+  it('does not fire onMove for a drag that never leaves its own slot', () => {
+    const onMove = vi.fn();
+    render(<Board onMove={onMove} columns={[['a', ['a1', 'a2', 'a3']]]} />);
+
+    drag('a1', [at(0, 30)]);
+
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it('after a round trip, a sibling’s LIVE index wins over its pre-drag index', () => {
+    // a1 → b → back into a, seated at the end, released over a4. a4's pre-drag
+    // index is 3; its index in the live column (a1 removed from the front, then
+    // re-appended) is 2 — and 2 is what the strategy previews. Resolving the
+    // sibling against the pre-drag order would commit 3.
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2', 'a3', 'a4']],
+          ['b', ['b1']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 5), at(0, 140)]);
+
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0]).toEqual({
+      cardId: 'a1',
+      from: { columnId: 'a', index: 0 },
+      to: { columnId: 'a', index: 2 },
+    });
+  });
+
+  it('commits the released slot after a round trip back to the origin column', () => {
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2', 'a3']],
+          ['b', ['b1']],
+        ]}
+      />,
+    );
+
+    // a1 → column b → back into a, released below a3 (the last card).
+    drag('a1', [at(1, 5), at(0, 140)]);
+
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0]).toEqual({
+      cardId: 'a1',
+      from: { columnId: 'a', index: 0 },
+      to: { columnId: 'a', index: 2 },
+    });
   });
 });
