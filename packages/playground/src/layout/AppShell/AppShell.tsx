@@ -248,7 +248,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         </TopBar>
       }
     >
-      {children}
+      {/* AppLayout's content region is a plain div (it can be legitimately
+          nested — demos, docs — so it doesn't claim the landmark itself).
+          AppShell is the one place that's ever the outermost shell, so it
+          owns the page's single <main> landmark. */}
+      <main>{children}</main>
     </AppLayout>
   );
 }

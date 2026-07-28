@@ -111,9 +111,9 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * The main region ships the canonical shell content gutter by default
  * (`--app-layout-content-padding`, default `var(--space-6)`) — so a DS-only
  * consumer gets padded routed content with **no prop and no raw CSS** (routed
- * pages no longer render flush against the rail / top bar). Below a 640px
- * viewport the default steps down to `var(--space-4)` — `--space-6` on both
- * sides costs a 380px phone 48px of its width. Need a full-bleed main
+ * pages no longer render flush against the rail / top bar). At ≤640px
+ * viewport width the default steps down to `var(--space-4)` — `--space-6` on
+ * both sides costs a 380px phone 48px of its width. Need a full-bleed main
  * region? Override the token in your scope —
  * `--app-layout-content-padding: 0` — no prop required.
  *
@@ -237,7 +237,7 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
       )}
       <div className={styles.body}>
         {topBar != null && <div className={styles.topBar}>{topBar}</div>}
-        <main className={styles.main}>{children}</main>
+        <div className={styles.main}>{children}</div>
       </div>
       {overlayConfigured && (
         <Drawer
