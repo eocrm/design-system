@@ -514,8 +514,8 @@ KanbanColumn.displayName = 'KanbanColumn';
  *
  * @remarks Drop position semantics
  * The committed `to.index` is the slot the preview showed at the moment of
- * release — the two cannot drift, because both are read off the same
- * `over`. `verticalListSortingStrategy` renders a column as
+ * release, because both are read off the same `over`. Two documented
+ * exceptions follow below; absent those, they cannot drift. `verticalListSortingStrategy` renders a column as
  * `arrayMove(cards, activeIndex, overIndex)` where
  * `overIndex = cards.indexOf(over.id)`, so the gap the user sees sits at
  * `overIndex`; `onMove` commits that same index. Where `over` is not a card
