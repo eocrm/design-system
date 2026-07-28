@@ -875,7 +875,7 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 </Sortable>
 ```
 
-`collapseBelow` (grid arrangement only) mirrors Grid's `collapseBelow` exactly — `'sm' | 'md' | 'lg'` for a binary collapse to one column, or `{ md: 6, sm: 1 }` for a graduated step-down with item spans clamped per step.
+`collapseBelow` (grid arrangement only) mirrors Grid's `collapseBelow` exactly — `'sm' | 'md' | 'lg'` for a binary collapse to one column, or `{ md: 6, sm: 1 }` for a graduated step-down with item spans clamped per step. The map form wraps the `<ol>` in an extra size-container `<div>`, for the same reason and with the same consequences as Grid's map form (see `<Grid>` below); `ref`, `className`, `style` and spread props stay on the `<ol>`.
 
 **Drag origin** (hybrid): if `<Sortable.Handle>` is present in the Item subtree, only the Handle initiates drag. If no Handle is present, the entire Item is draggable + focusable. A 5px activation distance means short clicks-without-movement on internal buttons / links pass through.
 
@@ -1559,6 +1559,8 @@ Also takes a graduated breakpoint→columns map instead of a single string, for 
 ```tsx
 <Grid columns={12} gap="md" collapseBelow={{ md: 6, sm: 1 }}>
 ```
+
+The map form — and only the map form — renders an extra wrapper `<div>` around the grid element, because re-templating the grid needs the size container on an ancestor (a container query never restyles its own container). `ref`, `className`, `style`, `as` and spread props all stay on the grid element, so the only thing that changes for a consumer is the DOM: a `> child` selector aimed at the Grid from its parent now hits the wrapper, and layout meant for "the Grid" (`flex: 1`, `grid-column`, `align-self` via `className`) lands inside the wrapper where the parent can't see it — put that layout on your own element around the Grid. The string form's DOM is unchanged.
 
 **Anti-patterns:**
 
