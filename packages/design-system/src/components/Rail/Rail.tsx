@@ -9,13 +9,12 @@ import {
   useContext,
   useMemo,
   useState,
-  useSyncExternalStore,
   type HTMLAttributes,
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
-import { COLLAPSE_BREAKPOINT_PX, type CollapseBreakpoint } from '../_internal/collapse';
+import { useBelowBreakpoint, type CollapseBreakpoint } from '../_internal/collapse';
 import { RailHeader } from './RailHeader';
 import { RailFooter } from './RailFooter';
 import { RailSpacer } from './RailSpacer';
@@ -55,46 +54,6 @@ export interface RailContextValue {
    * it. Always `false` when `collapseBelow` is unset.
    */
   collapsedByViewport: boolean;
-}
-
-/**
- * Subscribes to `(max-width: <breakpoint>px)` on the VIEWPORT and reports
- * whether it currently matches. `false` when no breakpoint is given, and on a
- * server / any environment without `matchMedia`.
- *
- * Viewport, not container: the rail's own width is what collapsing changes, so
- * a container query would be self-referential. See `_internal/collapse.ts`.
- */
-function useBelowBreakpoint(breakpoint: CollapseBreakpoint | undefined): boolean {
-  // `max-width` is inclusive, matching the `@container (max-width: …)` form the
-  // SCSS breakpoints use — the rail collapses AT the breakpoint value.
-  const query = breakpoint ? `(max-width: ${COLLAPSE_BREAKPOINT_PX[breakpoint]}px)` : null;
-
-  const [subscribe, getSnapshot] = useMemo(() => {
-    const supported =
-      query !== null && typeof window !== 'undefined' && typeof window.matchMedia === 'function';
-    if (!supported) return [() => () => {}, () => false] as const;
-    const mql = window.matchMedia(query);
-    return [
-      (onStoreChange: () => void) => {
-        // Safari < 13.1 exposes `matchMedia` but no `addEventListener` on the
-        // MediaQueryList — only the deprecated `addListener`. Feature-detecting
-        // `matchMedia` alone would throw here during commit and take the app
-        // down rather than degrading, so detect the subscription API too.
-        if (typeof mql.addEventListener === 'function') {
-          mql.addEventListener('change', onStoreChange);
-          return () => mql.removeEventListener('change', onStoreChange);
-        }
-        mql.addListener(onStoreChange);
-        return () => mql.removeListener(onStoreChange);
-      },
-      () => mql.matches,
-    ] as const;
-  }, [query]);
-
-  // Server snapshot is `false`: SSR has no viewport, so the markup matches the
-  // consumer's own `collapsed` value and the client corrects on hydration.
-  return useSyncExternalStore(subscribe, getSnapshot, () => false);
 }
 
 /**

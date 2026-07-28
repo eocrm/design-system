@@ -4,6 +4,7 @@ import { act, createRef, useState } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { stubMatchMedia } from '../_internal/matchMediaStub';
 import { Rail, useRail } from './Rail';
 
 describe('Rail', () => {
@@ -504,37 +505,6 @@ describe('Rail — collapseBelow (viewport override)', () => {
     if (original) Object.defineProperty(window, 'matchMedia', original);
     else delete (window as { matchMedia?: unknown }).matchMedia;
   });
-
-  function stubMatchMedia(initialWidth: number) {
-    let width = initialWidth;
-    const listeners = new Set<() => void>();
-    const limit = (query: string) => Number(/max-width:\s*(\d+)px/.exec(query)?.[1] ?? NaN);
-    const stub = (query: string) => ({
-      media: query,
-      get matches() {
-        return width <= limit(query);
-      },
-      addEventListener: (_type: string, listener: () => void) => void listeners.add(listener),
-      removeEventListener: (_type: string, listener: () => void) => void listeners.delete(listener),
-      onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      dispatchEvent: () => false,
-    });
-    Object.defineProperty(window, 'matchMedia', {
-      configurable: true,
-      writable: true,
-      value: stub as unknown as typeof window.matchMedia,
-    });
-    return {
-      resizeTo(next: number) {
-        width = next;
-        act(() => {
-          for (const listener of listeners) listener();
-        });
-      },
-    };
-  }
 
   const body = (
     <>

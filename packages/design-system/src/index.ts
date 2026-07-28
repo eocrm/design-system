@@ -395,6 +395,7 @@ export type {
   SortableArrangement,
   CollapseBreakpoint,
 } from './components/Sortable';
+export { useBelowBreakpoint } from './components/_internal/collapse';
 
 export { SortableGroup, moveSortableItem } from './components/SortableGroup';
 export type {
