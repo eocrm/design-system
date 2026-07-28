@@ -12,3 +12,12 @@
   // Override to `transparent` in your scope for a flat content area — no prop.
   --app-layout-content-background: var(--color-bg-subtle);
 }
+
+// Narrow viewports: --space-6 (24px) each side costs a 380px phone 48px of its
+// width. Step the gutter down so content keeps its room. A consumer override in
+// their own scope still wins — this only moves the DEFAULT.
+@media (max-width: 640px) {
+  :root {
+    --app-layout-content-padding: var(--space-4);
+  }
+}
