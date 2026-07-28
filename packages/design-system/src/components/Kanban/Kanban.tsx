@@ -324,20 +324,30 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
   //    a move: this component gets a fresh instance with `boundsRef` back to
   //    null, so its FIRST render clamps against nothing at all.
   //
-  // Hence the write-back below: the (re)measuring render has already committed
-  // its transform with no bound applied, so this effect re-writes the bounded
-  // value. Layout effects run before paint, so nothing unbounded is ever
-  // painted. `transform` is deliberately NOT a dependency — this effect runs
-  // only on the renders that (re)measure, and on those renders the closed-over
-  // `transform` is exactly the one just committed.
+  // The write-back below exists for that first render. Measuring alone can't
+  // fix it: React's mutation phase writes the frame's transform BEFORE refs
+  // attach and layout effects run, so by then the unbounded value is already on
+  // the node and nothing re-reads `boundsRef` until the next render. Only
+  // writing the bounded value back changes what that frame paints, and a layout
+  // effect does it pre-paint. `transform` is deliberately NOT a dependency —
+  // this effect runs only on the renders that (re)measure, and on those the
+  // closed-over `transform` is exactly the one just committed.
   //
-  // Belt-and-braces, honestly: that frame could not be made to inflate
-  // `scrollWidth` in the browser (635 rAF-sampled frames over 14 transits at
-  // max scroll, pointer held outside the board, write-back disabled — a single
-  // distinct `scrollWidth` throughout). dnd-kit is why: on a transit `over` is
-  // the column, so `overIndex` is -1, `displaceItem` is false and `useSortable`
-  // hands the drag source a NULL transform for that frame. The write-back costs
-  // two lines and does not depend on that internal staying true.
+  // Be clear about what it is: on today's dnd-kit it is a NO-OP, not a fix.
+  // `transform` is null on precisely these frames — a re-seat mutates the
+  // SortableContext items, so `itemsHaveChanged` forces `displaceItem` false;
+  // and on a transit `over` is the column, so `overIndex` is -1 and it's false
+  // again. A null transform short-circuits every guard below, so nothing is
+  // written. Matching that, the frame could not be made to inflate
+  // `scrollWidth` in the browser: 635 rAF-sampled frames over 14 transits at
+  // max scroll with the pointer held outside the board, write-back disabled,
+  // yielded a single distinct `scrollWidth`.
+  //
+  // It is kept as insurance against exactly that internal changing. If a
+  // dnd-kit bump ever emits a non-null transform on a re-seat frame, deleting
+  // these lines silently reinstates the runaway — and no test can catch it,
+  // because jsdom lays nothing out, so the clamp's only evidence is a manual
+  // browser drag. Two inert guarded lines against a hand-only regression.
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const boundsRef = useRef<KanbanDragBounds | null>(null);
   useLayoutEffect(() => {
