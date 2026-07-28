@@ -52,9 +52,22 @@
   min-width: 0;
 }
 
-// Top bar over the content column; natural height.
+// Top bar over the content column; natural height. Also sticky (redundant
+// with the <TopBar> primitive's own `position: sticky; top: 0`, which alone
+// isn't enough): a sticky element's range is capped by its containing
+// block's box, and this wrapper's containing block is itself — sized to the
+// bar's own content height by `flex: none`. Without its own sticky here, the
+// wrapper (and the bar riding inside it) unsticks and scrolls away the
+// instant the page scrolls past the bar's own height. Stickying the wrapper
+// against `.body` (which spans the full scrollable column) gives it room to
+// stay pinned for the page's whole height. z-index keeps it painting over
+// scrolled-under content — reuses the lowest elevated tier (`--z-dropdown`)
+// since ordinary page content has no z-index of its own.
 .topBar {
   flex: none;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-dropdown);
 }
 
 // Main content fills the rest of the column. Carries the canonical shell content
