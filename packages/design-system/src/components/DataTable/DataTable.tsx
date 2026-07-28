@@ -73,6 +73,13 @@ export interface DataTableProps<T> {
    *
    * Pinned columns never move under either setting — they are excluded from
    * reordering entirely.
+   *
+   * The two settings also differ on **what a release means when no unpinned
+   * slot is under the column** — over a pinned column, or off the table
+   * entirely. Default: the drop commits the slot the preview is showing. The
+   * opt-out: the drop is discarded, because dnd-kit's own preview retracts (the
+   * header snaps back home) in that situation, and a commit would contradict
+   * it. See the component's `@remarks`.
    */
   dragWholeColumn?: boolean;
   className?: string;
@@ -137,6 +144,21 @@ export interface DataTableProps<T> {
  *   ),
  * });
  * <DataTable instance={instance} aria-label="Deals" />;
+ *
+ * @remarks Column reorder — a drag commits, it does not cancel
+ * A column drag commits wherever the preview parked it, however far the pointer
+ * roams: over a pinned column, past the table's edge, anywhere. There is no
+ * "outside" to release into — the column is clamped to the unpinned band, so
+ * the preview is always showing a real slot and the drop honors it (#383).
+ * **Escape is the only cancel.** This deliberately differs from `<Kanban>`,
+ * where releasing outside the columns cancels (#387): there the pointer can
+ * genuinely aim somewhere else, here it cannot.
+ *
+ * `dragWholeColumn={false}` is the exception. Its preview is dnd-kit's own and
+ * RETRACTS — the dragged header snaps back to its origin and the gap closes —
+ * whenever no unpinned slot is under the column, so a release there is
+ * discarded instead. Both paths follow the same rule: commit what the preview
+ * last showed.
  *
  * @remarks When NOT to use
  * - For a static read-only table without column features — use `<Table>` directly.
@@ -297,9 +319,19 @@ function DataTableInner<T>(
 
   // #383: the last slot in the unpinned band that this drag resolved. Written
   // by the shift driver — nulled at drag start, set on every `onDragOver` whose
-  // target is a band member — and read by BOTH the preview and the drop below.
-  // One value feeding both is what makes them agree by construction instead of
-  // by coincidence.
+  // target is a band member — and read by BOTH the whole-column preview and the
+  // drop below. One value feeding both is what makes them agree by construction
+  // on that path, instead of by coincidence.
+  //
+  // WHOLE-COLUMN MODE ONLY, and that restriction is load-bearing rather than
+  // cautious. On the header-only path the preview is dnd-kit's own, driven by
+  // `overIndex` against `SortableContext items={sortableIds}` — a list that
+  // excludes pinned columns. When the pinned column wins the collision the
+  // index is -1, so every transform including the dragged header's resolves to
+  // null: the header snaps back home and the gap closes. The preview there
+  // RETRACTS its promise, so committing would contradict what the user is
+  // looking at just as badly as discarding does here. That path keeps its
+  // discard, which at least agrees with its own preview.
   //
   // dnd-kit hands us a target the drop cannot use in two situations, and a
   // pinned column produces both:
@@ -321,16 +353,30 @@ function DataTableInner<T>(
   // the promise the preview just made. Falling back to the last band slot keeps
   // it. `reorderRespectingPins` stays as the backstop; this ref can only ever
   // hold a band member, so a cross-boundary move cannot reach it.
+  //
+  // FAILS CLOSED, deliberately. `over` resolves to the dragged column itself at
+  // pickup, and the dragged column is a band member, so the ref seeds with
+  // `activeId`. A drag that never resolves any OTHER band member — a two-column
+  // band whose only other slot is covered by a wide sticky pinned column, say —
+  // therefore falls back to `activeId`, which the guard below reads as "no
+  // move" and the original discard survives. Wrong in the harmless direction:
+  // nothing moves that the user did not aim at.
   const lastSlotIdRef = useRef<string | null>(null);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     const activeId = String(active.id);
     // An out-of-band target is not a slot. When `over` is one, the last slot
-    // the band DID resolve is both the honest answer and the one on screen.
+    // the band DID resolve is both the honest answer and the one on screen —
+    // but only where the whole-column preview is what painted it (see above).
+    //
+    // The raw branch is not dead weight even though `onDragOver` has already
+    // recorded any in-band `over` into the ref: it is the ONLY source on the
+    // header-only path, where the fallback is null by design.
     const overIdRaw = over ? String(over.id) : null;
+    const fallbackId = dragWholeColumn ? lastSlotIdRef.current : null;
     const overId =
-      overIdRaw != null && shiftOrderedIds.includes(overIdRaw) ? overIdRaw : lastSlotIdRef.current;
+      overIdRaw != null && shiftOrderedIds.includes(overIdRaw) ? overIdRaw : fallbackId;
     if (overId == null || activeId === overId) return;
 
     instance.setColumnOrder((prev) => {

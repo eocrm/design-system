@@ -1,6 +1,13 @@
 import { createElement, useRef, type RefObject } from 'react';
 import { render, fireEvent } from '@testing-library/react';
-import { DndContext, useDraggable, MouseSensor, useSensor, useSensors } from '@dnd-kit/core';
+import {
+  DndContext,
+  useDraggable,
+  useDroppable,
+  MouseSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import { applyColumnShifts, measureDragRangeX, useColumnDragShift } from './useColumnDragShift';
 import { shiftVarName, type DragRangeX } from './columnShift';
 
@@ -177,6 +184,16 @@ describe('useColumnDragShift', () => {
     });
   }
 
+  /**
+   * A drop target, so `over` can actually resolve. Without one dnd-kit reports
+   * `over: null` for the whole drag and `lastSlotIdRef` would never be written
+   * — which would make the staleness test below assert nothing.
+   */
+  function Drop() {
+    const { setNodeRef } = useDroppable({ id: 'b' });
+    return createElement('div', { ref: setNodeRef, 'data-testid': 'drop' });
+  }
+
   function Monitor(props: {
     enabled: boolean;
     rootRef: RefObject<HTMLElement | null>;
@@ -199,13 +216,17 @@ describe('useColumnDragShift', () => {
   function Harness({
     enabled,
     onDragActiveChange,
+    slotRef,
   }: {
     enabled: boolean;
     onDragActiveChange: (active: boolean) => void;
+    /** Caller-supplied so a test can read what the hook wrote. */
+    slotRef?: RefObject<string | null>;
   }) {
     const rootRef = useRef<HTMLElement | null>(null);
     const dragRangeRef = useRef<DragRangeX | null>(null);
-    const lastSlotIdRef = useRef<string | null>(null);
+    const ownSlotRef = useRef<string | null>(null);
+    const lastSlotIdRef = slotRef ?? ownSlotRef;
     // distance: 0 so the sensor activates on the first pointer move instead
     // of requiring a real drag-distance threshold jsdom can't produce.
     const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 0 } }));
@@ -228,6 +249,7 @@ describe('useColumnDragShift', () => {
       ),
       createElement(Monitor, { rootRef, enabled, dragRangeRef, lastSlotIdRef, onDragActiveChange }),
       createElement(Handle),
+      createElement(Drop),
     );
   }
 
@@ -287,5 +309,48 @@ describe('useColumnDragShift', () => {
 
     expect(table.style.getPropertyValue(shiftVarName('a'))).toBe('');
     expect(calls).toEqual([true, false]);
+  });
+
+  it('clears the remembered slot at drag START, so no drag inherits the last one', () => {
+    // #383. The slot survives its own drag END on purpose — the drop handler
+    // reads it there, and clearing at start means it never has to care which of
+    // dnd-kit's two end callbacks ran first. The cost is that the clear has to
+    // happen, or the next drag commits to wherever the previous one pointed.
+    //
+    // This has to be asserted at the hook, not through <DataTable>: there, a
+    // second drag resolves `over` to the dragged column itself, which IS a band
+    // member, so the drop takes the raw-`over` branch and the stale ref is
+    // never read. The table-level test would pass with the clear deleted.
+    const slotRef: RefObject<string | null> = { current: null };
+    const { getByTestId } = render(
+      createElement(Harness, { enabled: true, onDragActiveChange: () => {}, slotRef }),
+    );
+    const handle = getByTestId('handle');
+    const drop = getByTestId('drop');
+    stubRects(getByTestId('table'));
+    // jsdom gives every element a zero-area rect, and a zero-area collision
+    // rect intersects nothing — so the drag geometry has to be stubbed too.
+    handle.getBoundingClientRect = () => new DOMRect(0, 0, 50, 32);
+    drop.getBoundingClientRect = () => new DOMRect(50, 0, 50, 32);
+
+    fireEvent.mouseDown(handle, { clientX: 0, clientY: 0, button: 0 });
+    fireEvent.mouseMove(document, { clientX: 0, clientY: 0 });
+    fireEvent.mouseMove(document, { clientX: 60, clientY: 0 });
+    fireEvent.mouseMove(document, { clientX: 61, clientY: 0 });
+    expect(slotRef.current).toBe('b');
+
+    fireEvent.mouseUp(document);
+    // Still set: the drop handler reads it on this very tick.
+    expect(slotRef.current).toBe('b');
+
+    // A second drag that resolves nothing must start from a clean slate. It
+    // moves AWAY from the drop target, so no collision is ever found and the
+    // only thing that can null the ref is the clear in `onDragStart`.
+    fireEvent.mouseDown(handle, { clientX: 0, clientY: 0, button: 0 });
+    fireEvent.mouseMove(document, { clientX: -30, clientY: 0 });
+    fireEvent.mouseMove(document, { clientX: -31, clientY: 0 });
+    expect(slotRef.current).toBeNull();
+
+    fireEvent.mouseUp(document);
   });
 });

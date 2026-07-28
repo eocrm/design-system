@@ -829,14 +829,27 @@ describe('<DataTable> — a drop over a pinned column lands in the band (#383)',
     expect(orderOf(table)).toEqual(['owner', 'name', 'mid']);
   });
 
-  it('commits the same slot on the dragWholeColumn={false} path', () => {
-    // The opt-out changes which mechanism paints the preview, never what a drop
-    // means. Same drag, same landing.
+  it('keeps the discard on the dragWholeColumn={false} path, because that preview retracts', () => {
+    // NOT parity, and deliberately so. The opt-out's preview is dnd-kit's own:
+    // it displaces via `overIndex` against `SortableContext items={sortableIds}`,
+    // which excludes pinned columns, so the moment the pinned column wins the
+    // collision the index is -1 and EVERY transform resolves to null — the
+    // dragged header snaps back home and the gap closes. Committing against a
+    // preview that has just retracted its promise would be the same lie as
+    // discarding against one that still holds it, only pointing the other way.
     const table = renderWithRects(pinnedRightCols, rightRects, { dragWholeColumn: false });
-    dragTo(/drag to reorder name/i, 5000);
+    const header = () => screen.getByRole('columnheader', { name: /name/i });
+
+    dragTo(/drag to reorder name/i, 200); // mid-band: a band slot resolves
+    expect(header().style.transform).toContain('200px');
+
+    fireEvent.pointerMove(document, { clientX: 5000, clientY: 0 });
+    // Parked on the pinned column — the header is back at its origin.
+    expect(header().style.transform).toBe('');
+
     fireEvent.pointerUp(document);
-    expect(orderOf(table)).toEqual(['mid', 'name', 'owner']);
-    // ...and the body was never touched on this path.
+    expect(orderOf(table)).toEqual(['name', 'mid', 'owner']);
+    // ...and the body was never touched on this path either way.
     expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('');
   });
 
