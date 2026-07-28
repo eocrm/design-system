@@ -133,10 +133,13 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  *
  * @remarks Scrolling
  * This is a **page-scroll** shell: `min-height: 100vh` lets it grow with tall
- * content, so the whole window scrolls and the chrome scrolls away with it. For
- * the common "fixed chrome + independently-scrolling content" layout, override
- * the root to a fixed `height: 100vh` (or `100dvh`) via `className` — then
- * `<Rail>` / the main region manage their own overflow.
+ * content, so the whole window scrolls. The `topBar` is always pinned
+ * (`position: sticky`) and never scrolls away, regardless of `sidebarPinned`.
+ * The `sidebar` scrolls away with the page unless `sidebarPinned` is set, in
+ * which case it pins too. Only the main content region ever scrolls with the
+ * page. For the common "fixed chrome + independently-scrolling content"
+ * layout, override the root to a fixed `height: 100vh` (or `100dvh`) via
+ * `className` — then `<Rail>` / the main region manage their own overflow.
  *
  * @remarks Responsive sidebar
  * `sidebarOverlayBelow` moves the sidebar into a left `<Drawer>` below a

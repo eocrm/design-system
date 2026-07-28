@@ -61,13 +61,14 @@
 // instant the page scrolls past the bar's own height. Stickying the wrapper
 // against `.body` (which spans the full scrollable column) gives it room to
 // stay pinned for the page's whole height. z-index keeps it painting over
-// scrolled-under content — reuses the lowest elevated tier (`--z-dropdown`)
-// since ordinary page content has no z-index of its own.
+// scrolled-under content — `--z-app-chrome` sits above unpositioned page
+// content but below every overlay tier (dropdown/popover/modal/toast/
+// tooltip), so it never fights a real overlay for stacking order.
 .topBar {
   flex: none;
   position: sticky;
   top: 0;
-  z-index: var(--z-dropdown);
+  z-index: var(--z-app-chrome);
 }
 
 // Main content fills the rest of the column. Carries the canonical shell content
