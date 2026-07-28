@@ -7,6 +7,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -18,6 +19,7 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
+  getScrollableAncestors,
   useDroppable,
   useSensor,
   useSensors,
@@ -31,7 +33,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { CSS, type Transform } from '@dnd-kit/utilities';
 import clsx from 'clsx';
 import {
   SortableHandle,
@@ -134,6 +136,147 @@ function containsHandle(children: ReactNode): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Drag bounds — the dragged card may not leave the board's scrollable content
+// ---------------------------------------------------------------------------
+
+/**
+ * Where the dragged card sits inside its scroll container, and how big that
+ * container's content is. Everything is expressed in the container's CONTENT
+ * space (origin = scroll offset 0), which is scroll-invariant: the numbers stay
+ * valid while auto-scroll moves the board under the card.
+ *
+ * @internal exported for unit tests; not part of the public API.
+ */
+export interface KanbanDragBounds {
+  /** Card centre, x, in content space. */
+  centerX: number;
+  /** Card centre, y, in content space. */
+  centerY: number;
+  /** Card layout width (untransformed). */
+  width: number;
+  /** Card layout height (untransformed). */
+  height: number;
+  /** `scrollWidth` of the container, measured with the card untransformed. */
+  contentWidth: number;
+  /** `scrollHeight` of the container, measured with the card untransformed. */
+  contentHeight: number;
+}
+
+/**
+ * Measure `node` against its nearest scrollable ancestor.
+ *
+ * The card's own transform (and transition) are stripped for the duration of
+ * the measurement — both readings would otherwise be poisoned by the transform:
+ * `getBoundingClientRect()` returns the TRANSFORMED box, and a card already
+ * hanging past the content edge inflates the very `scrollWidth` we are about to
+ * use as the bound. Stripping makes the measurement a fixed point, so repeated
+ * measurements during one drag cannot ratchet the bound outwards. The
+ * transition goes too: a keyboard drag leaves a real `transition` on the drag
+ * source (a pointer drag does not), and strip-then-restore would otherwise read
+ * as a computed-value change and animate the card back from identity. Both are
+ * restored before the browser paints (this runs in a layout effect), so nothing
+ * is visible.
+ *
+ * Which container: only the NEAREST scrollable ancestor matters — it clips
+ * everything below it, so no ancestor further up ever sees the overhang. Inside
+ * a `<Kanban>` that is always the board. It is whatever else the consumer made
+ * scrollable, though: a `<Kanban.Column>` given `overflow-y: auto` becomes the
+ * nearest scroller for its own cards.
+ *
+ * Returns null when nothing is measurable — no node, or a zero-sized scroll
+ * area, which is every element under jsdom (it lays nothing out). A null bound
+ * means "don't clamp", i.e. the pre-#373 behaviour. Note there is no
+ * "unscrollable" case to bail out of in a real browser:
+ * `getScrollableAncestors` falls back to `document.scrollingElement`, so a card
+ * with no scrollable ancestor is bounded by the page instead.
+ *
+ * @internal exported for unit tests; not part of the public API.
+ */
+export function measureKanbanDragBounds(node: HTMLElement | null): KanbanDragBounds | null {
+  if (!node) return null;
+  const [scroller] = getScrollableAncestors(node, 1);
+  if (!scroller) return null;
+
+  const previousTransform = node.style.transform;
+  const previousTransition = node.style.transition;
+  node.style.transform = 'none';
+  node.style.transition = 'none';
+  const rect = node.getBoundingClientRect();
+  const box = scroller.getBoundingClientRect();
+  const { scrollLeft, scrollTop, scrollWidth, scrollHeight, clientLeft, clientTop } = scroller;
+  node.style.transform = previousTransform;
+  node.style.transition = previousTransition;
+
+  if (scrollWidth === 0 || scrollHeight === 0) return null;
+
+  // Content-space origin: the padding-box corner, un-scrolled. The root
+  // scrolling element is the exception — its OWN box already moves with page
+  // scroll, so `box` is the un-scrolled origin and subtracting the scroll
+  // offset again would count it twice.
+  const isRootScroller = scroller === scroller.ownerDocument.scrollingElement;
+  const originX = box.left + clientLeft - (isRootScroller ? 0 : scrollLeft);
+  const originY = box.top + clientTop - (isRootScroller ? 0 : scrollTop);
+
+  return {
+    centerX: rect.left + rect.width / 2 - originX,
+    centerY: rect.top + rect.height / 2 - originY,
+    width: rect.width,
+    height: rect.height,
+    contentWidth: scrollWidth,
+    contentHeight: scrollHeight,
+  };
+}
+
+/**
+ * Bound `transform` so the transformed card stays inside the scroll
+ * container's content box. Pass-through when either argument is null.
+ *
+ * This is what stops horizontal auto-scroll from running away (#373). The card
+ * is rendered IN FLOW (there is no `DragOverlay`), so a transform that carries
+ * it past the content edge extends the container's `scrollWidth`; dnd-kit's
+ * auto-scroll then chases the edge it just created, which moves the card
+ * further out, which extends the edge again — measured at 8910px of `scrollLeft`
+ * against a real maximum of 597. Clamping the APPLIED transform breaks the loop
+ * at its source: `scrollWidth` never changes, so `scrollLeft` plateaus at the
+ * real maximum and the last column becomes reachable.
+ *
+ * It has to happen here, where the transform is written to the DOM — a
+ * `DndContext` modifier is not enough, because dnd-kit computes
+ * `scrollAdjustedTranslate = modifiedTranslate + scrollAdjustment` and adds the
+ * scroll adjustment AFTER modifiers run (same reason `DataTable` clamps
+ * `event.delta` rather than only its modifier — see `useColumnDragShift`).
+ *
+ * `scaleX` / `scaleY` are honoured because dnd-kit scales the drag source to
+ * the `over` rect; the scaled half-extent, not the layout half-extent, is what
+ * reaches the edge.
+ *
+ * @internal exported for unit tests; not part of the public API.
+ */
+export function clampKanbanTransform(
+  transform: Transform | null,
+  bounds: KanbanDragBounds | null,
+): Transform | null {
+  if (!transform || !bounds) return transform;
+  const halfWidth = (bounds.width * transform.scaleX) / 2;
+  const halfHeight = (bounds.height * transform.scaleY) / 2;
+  return {
+    ...transform,
+    x: clamp(
+      transform.x,
+      halfWidth - bounds.centerX,
+      bounds.contentWidth - halfWidth - bounds.centerX,
+    ),
+    y: clamp(
+      transform.y,
+      halfHeight - bounds.centerY,
+      bounds.contentHeight - halfHeight - bounds.centerY,
+    ),
+  };
+}
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+// ---------------------------------------------------------------------------
 // KanbanCard
 // ---------------------------------------------------------------------------
 
@@ -157,6 +300,8 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
     transform,
     transition,
     isDragging,
+    index,
+    items,
   } = useSortable({ id });
 
   const hasHandle = useMemo(() => containsHandle(children), [children]);
@@ -166,7 +311,58 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
     [listeners, attributes, setActivatorNodeRef],
   );
 
+  // Travel available to the dragged card, in its scroll container's content
+  // space (#373). Re-measured only when the card's LAYOUT position can have
+  // changed, which is never a plain pointer move — while the card only
+  // translates, its layout position and the content size are both constant, so
+  // measuring per move would force a full layout per move for no gain. It
+  // changes in exactly two ways:
+  //  - a live re-seat WITHIN a column (`index` / `items` change, same parent —
+  //    React moves the node), and
+  //  - a live re-seat ACROSS columns, where `KanbanRoot` re-parents the card
+  //    into another `KanbanColumnItemsContext` subtree. That is a remount, not
+  //    a move: this component gets a fresh instance with `boundsRef` back to
+  //    null, so its FIRST render clamps against nothing at all.
+  //
+  // The write-back below exists for that first render. Measuring alone can't
+  // fix it: React's mutation phase writes the frame's transform BEFORE refs
+  // attach and layout effects run, so by then the unbounded value is already on
+  // the node and nothing re-reads `boundsRef` until the next render. Only
+  // writing the bounded value back changes what that frame paints, and a layout
+  // effect does it pre-paint. `transform` is deliberately NOT a dependency —
+  // this effect runs only on the renders that (re)measure, and on those the
+  // closed-over `transform` is exactly the one just committed.
+  //
+  // Be clear about what it is: on today's dnd-kit it is a NO-OP, not a fix.
+  // `transform` is null on precisely these frames — a re-seat mutates the
+  // SortableContext items, so `itemsHaveChanged` forces `displaceItem` false;
+  // and on a transit `over` is the column, so `overIndex` is -1 and it's false
+  // again. A null transform short-circuits every guard below, so nothing is
+  // written. Matching that, the frame could not be made to inflate
+  // `scrollWidth` in the browser: 635 rAF-sampled frames over 14 transits at
+  // max scroll with the pointer held outside the board, write-back disabled,
+  // yielded a single distinct `scrollWidth`.
+  //
+  // It is kept as insurance against exactly that internal changing. If a
+  // dnd-kit bump ever emits a non-null transform on a re-seat frame, deleting
+  // these lines silently reinstates the runaway — and no test can catch it,
+  // because jsdom lays nothing out, so the clamp's only evidence is a manual
+  // browser drag. Two inert guarded lines against a hand-only regression.
+  const nodeRef = useRef<HTMLDivElement | null>(null);
+  const boundsRef = useRef<KanbanDragBounds | null>(null);
+  useLayoutEffect(() => {
+    const node = nodeRef.current;
+    if (!isDragging || !node) {
+      boundsRef.current = null;
+      return;
+    }
+    boundsRef.current = measureKanbanDragBounds(node);
+    const bounded = CSS.Transform.toString(clampKanbanTransform(transform, boundsRef.current));
+    if (bounded) node.style.transform = bounded;
+  }, [isDragging, index, items]);
+
   const setRef = (node: HTMLDivElement | null) => {
+    nodeRef.current = node;
     setNodeRef(node);
     // When no Handle is present, the Card itself is the drag activator.
     if (!hasHandle) setActivatorNodeRef(node);
@@ -178,7 +374,13 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
     <SortableItemContext.Provider value={ctxValue}>
       <div
         ref={setRef}
-        style={{ transform: CSS.Transform.toString(transform), transition }}
+        // Reading the ref during render is deliberate: the bound is written by
+        // the layout effect above and must be applied on the very next pointer
+        // move, without a re-render of its own.
+        style={{
+          transform: CSS.Transform.toString(clampKanbanTransform(transform, boundsRef.current)),
+          transition,
+        }}
         data-dragging={isDragging ? 'true' : undefined}
         className={clsx(styles.card, className)}
         // dnd-kit drag attrs BEFORE {...rest} so consumer rest wins.
@@ -340,6 +542,29 @@ KanbanColumn.displayName = 'KanbanColumn';
  *   → snap back; `onMove` does NOT fire. Note that releasing *outside* the
  *   board is not a cancel: `closestCorners` still resolves the nearest
  *   column, so the card commits there.
+ *
+ * @remarks Auto-scroll and drag bounds
+ * The board is its own horizontal scroll container, so a board wider than its
+ * viewport auto-scrolls while a card is dragged near either edge — that is how
+ * an off-screen column is reached. The dragged card is confined to the board's
+ * scrollable content box (both axes): it stops at the outer edge of the first
+ * and last column instead of following the cursor out of the board. That bound
+ * is load-bearing, not cosmetic. The card is rendered IN FLOW (there is no
+ * `DragOverlay`), so a card carried past the content edge would extend the
+ * board's own `scrollWidth`, and auto-scroll would chase the edge it had just
+ * created — measured at 8910px of `scrollLeft` after 4s against a real maximum
+ * of 597, with the last column permanently out of reach (#373). With the bound
+ * in place `scrollWidth` is constant for the whole drag and `scrollLeft`
+ * plateaus at the real maximum. The same applies vertically at the bottom of a
+ * long column.
+ *
+ * The bound is the card's NEAREST scrolling ancestor, which is the board unless
+ * you make something inside it scroll. Capping a column (`overflow-y: auto` +
+ * `max-height` on `<Kanban.Column>`, a common way to keep a long column from
+ * stretching the board) hands that role to the column, and the dragged card is
+ * then confined to its own column — it will not visibly cross into a
+ * neighbouring one, though the drop still lands wherever the cursor is. Scroll
+ * the board, not the columns, if you want the card to travel with the cursor.
  *
  * @remarks When NOT to use
  * - Single-column drag-to-reorder — use `<Sortable>` instead. It's simpler
