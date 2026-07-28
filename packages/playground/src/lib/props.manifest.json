@@ -151,6 +151,27 @@
           "description": "Pin the sidebar to the viewport: `position: sticky; top: 0; height: 100dvh`\nwith internal overflow scrolling. On pages taller than the viewport the\nsidebar (and a `Rail` inside it — including its `Rail.Footer` /\nCollapseToggle) spans exactly the SCREEN, keeping the footer glued to the\nviewport bottom instead of the page bottom. Default `false` (sidebar\nstretches to the full row/page height — the original behavior).\n\nPrefer this over wrapping the sidebar slot in `Sticky` — the rail pins its\nfooter by filling its own `height: 100%` box, which needs a DEFINITE\nheight to resolve against. `Sticky` sets `align-self: start`, which drops\nthe row stretch that made it definite, so the footer stops pinning.\n\n`100dvh` is always relative to the real browser viewport, never to a\nnested scroll container — so this only pins correctly when AppLayout is\nthe actual outermost, page-scroll shell (its documented top-level use).\nNest it inside another scrollable region and the sidebar will size to\nthe whole window, not that region, and overflow it."
         },
         {
+          "name": "sidebarOverlayBelow",
+          "type": "CollapseBreakpoint",
+          "required": false,
+          "default": "",
+          "description": "Move the sidebar out of the flow and into a left-anchored `<Drawer>` while\nthe **viewport** is at or below a width threshold: `'sm'` 480px / `'md'`\n640px / `'lg'` 768px. Omit for no responsive behavior (the default) — the\nsidebar always renders in the flow.\n\nBelow the threshold the content column claims the full viewport width, and\nthe sidebar is reachable only by opening the drawer. Render your own\ntrigger (a hamburger in the `topBar`) and drive `sidebarOpen` — AppLayout\ndeliberately renders no trigger of its own, since where it belongs in the\nbar is the consumer's call. Use the exported `useBelowBreakpoint` hook to\nshow that trigger only while the overlay mode is active.\n\n`sidebarPinned` is ignored below the threshold: the drawer owns the\nsidebar's box there, and a `sticky; height: 100dvh` wrapper inside it would\nsize the rail to the window instead of the drawer.\n\nMeasures the viewport (`matchMedia`), not a container — the sidebar's\npresence in the row is exactly what the threshold changes, so a container\nquery would be circular. Same scale and same basis as `<Rail collapseBelow>`."
+        },
+        {
+          "name": "sidebarOpen",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Open state of the overlay sidebar. Optional — omit for uncontrolled (the\ndrawer manages its own state and still closes on Esc / backdrop). Has no\neffect unless `sidebarOverlayBelow` is set and the viewport is below it."
+        },
+        {
+          "name": "onSidebarOpenChange",
+          "type": "((open: boolean) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires whenever the overlay sidebar opens or closes — Esc, backdrop click, swipe, or programmatic."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
@@ -1095,7 +1116,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Drag the whole column while reordering, not just its header cell.\n\nDefault `true` — the dragged column's body cells travel with its header,\nand every column the drag displaces shifts its body cells too, so the\nheader row and the body never disagree mid-drag. Costs one CSS-variable\nwrite per shifted column per frame; the cells move on the compositor, so\nthe table body is not re-rendered during pointer movement. It does cost\ntwo full body reconciliations per drag — one at drag start, one at drag\nend — because the drag-active flag is component state and body rows are\nnot memoized; that is the number to weigh for a very large table.\n\nSet `false` for the cheaper preview: only the dragged header cell follows\nthe pointer and the body stays put until drop. Worth it for very large\ntables on low-end hardware, or to restore the previous behavior.\n\nPinned columns never move under either setting — they are excluded from\nreordering entirely."
+          "description": "Drag the whole column while reordering, not just its header cell.\n\nDefault `true` — the dragged column's body cells travel with its header,\nand every column the drag displaces shifts its body cells too, so the\nheader row and the body never disagree mid-drag. Costs one CSS-variable\nwrite per shifted column per frame; the cells move on the compositor, so\nthe table body is not re-rendered during pointer movement. It does cost\ntwo full body reconciliations per drag — one at drag start, one at drag\nend — because the drag-active flag is component state and body rows are\nnot memoized; that is the number to weigh for a very large table.\n\nSet `false` for the cheaper preview: only the dragged header cell follows\nthe pointer and the body stays put until drop. Worth it for very large\ntables on low-end hardware, or to restore the previous behavior.\n\nPinned columns never move under either setting — they are excluded from\nreordering entirely.\n\nThe two settings also differ on **what a release means when no unpinned\nslot is under the column** — over a pinned column, or off the table\nentirely. Default: the drop commits the slot the preview is showing. The\nopt-out: the drop is discarded, because dnd-kit's own preview retracts (the\nheader snaps back home) in that situation, and a commit would contradict\nit. See the component's `@remarks`."
         },
         {
           "name": "className",
@@ -3550,7 +3571,7 @@
           "type": "CollapseBreakpoint",
           "required": false,
           "default": "",
-          "description": "Force the icon-only collapsed mode while the **viewport** is at or below a\nwidth threshold: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. Omit for no\nresponsive behavior (the default) — `collapsed` alone governs.\n\nBelow the threshold the rail renders collapsed regardless of `collapsed` /\n`defaultCollapsed`; above it, the consumer's value governs again,\nuntouched. It is a **presentation override, not a user choice**, so\n`onCollapsedChange` does NOT fire when the viewport crosses the threshold\nin either direction — a narrow window can't silently rewrite a persisted\npreference. `<Rail.CollapseToggle>` hides itself while the override is\nactive, since it could not change anything.\n\nUnlike `<Grid collapseBelow>` / `<Split collapseBelow>`, which measure\ntheir own width with a container query, this measures the viewport: the\nrail's own width is exactly what collapsing changes, so a container query\nwould be circular. Same token scale, different basis."
+          "description": "Force the icon-only collapsed mode while the **viewport** is at or below a\nwidth threshold: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. Omit for no\nresponsive behavior (the default) — `collapsed` alone governs.\n\nBelow the threshold the rail renders collapsed regardless of `collapsed` /\n`defaultCollapsed`; above it, the consumer's value governs again,\nuntouched. It is a **presentation override, not a user choice**, so\n`onCollapsedChange` does NOT fire when the viewport crosses the threshold\nin either direction — a narrow window can't silently rewrite a persisted\npreference. `<Rail.CollapseToggle>` hides itself while the override is\nactive, since it could not change anything.\n\nUnlike `<Grid collapseBelow>` / `<Split collapseBelow>`, which measure\ntheir own width with a container query, this measures the viewport: the\nrail's own width is exactly what collapsing changes, so a container query\nwould be circular. Same token scale, different basis.\n\n⚠️ **Your shell's column track must follow.** The override shrinks the\nrail but is invisible to the layout around it — a shell that sizes its\nrail track from its OWN `collapsed` state will keep a 240px track around a\n56px rail and leave a dead gap on every screen. Key the track off the\nviewport or off the rail instead, both of which work precisely because the\nbasis here is the viewport rather than a container:\n\n```scss\n// Either mirror the breakpoint…"
         },
         {
           "name": "aria-label",

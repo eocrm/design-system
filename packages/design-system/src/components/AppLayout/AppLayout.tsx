@@ -137,6 +137,35 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * the common "fixed chrome + independently-scrolling content" layout, override
  * the root to a fixed `height: 100vh` (or `100dvh`) via `className` — then
  * `<Rail>` / the main region manage their own overflow.
+ *
+ * @remarks Responsive sidebar
+ * `sidebarOverlayBelow` moves the sidebar into a left `<Drawer>` below a
+ * viewport threshold, freeing the content column to claim the full width. It
+ * measures the **viewport** (`matchMedia`), matching `<Rail collapseBelow>` and
+ * unlike `<Grid collapseBelow>`'s container query — the sidebar's presence in
+ * the row is what the threshold changes, so a container query would be
+ * circular. AppLayout renders **no trigger**: put a hamburger in your `topBar`
+ * and gate it on the exported `useBelowBreakpoint` hook, so it appears only
+ * while the overlay is active. `sidebarPinned` is ignored below the threshold.
+ *
+ * The `sidebar` slot renders as a direct child of the overlay `<Drawer>`, NOT
+ * wrapped in `<Drawer.Body>` — so it does not inherit the body's
+ * `overflow-y: auto`. `Drawer`'s `.content` sets no vertical overflow of its
+ * own (`contain: layout paint` only), so a sidebar taller than the drawer
+ * clips with no way to reach the rest. `<Rail>` is safe — its own body scrolls
+ * internally regardless of the parent. A custom non-`Rail` sidebar passed here
+ * needs its own scroll container, especially on short viewports like phone
+ * landscape (~380px tall).
+ *
+ * @remarks Anti-patterns
+ * - ❌ Setting `sidebarOverlayBelow` without rendering a trigger. The sidebar
+ *   becomes unreachable below the threshold — there is no built-in way to open it.
+ * - ❌ Duplicating the threshold as a raw media query in consumer CSS to hide
+ *   the trigger. Use `useBelowBreakpoint(bp)` with the same token so the two
+ *   can't drift.
+ * - ❌ Reaching for `<Rail collapseBelow>` and `sidebarOverlayBelow` together
+ *   at the same breakpoint. The rail would render icon-only inside a drawer
+ *   that already has room for labels. Pick one behavior per width.
  */
 export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLayout(
   {
