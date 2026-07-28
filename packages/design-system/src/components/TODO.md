@@ -27,6 +27,19 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
+### [ ] `<Drawer>` — needs to expose its dialog's DOM id for `aria-controls`
+
+**Filed:** 2026-07-28
+**Mocked in:** n/a — surfaced by branch review (`feat/mobile-shell`), not a mockup. `DrawerRoot` generates an internal `drawerId` via `useId()` for its own overlay-stack bookkeeping, but never applies it as the dialog element's `id` attribute, and never surfaces it to the consumer. A canonical app-shell hamburger (`AppShell.tsx`, `AppLayoutDemo.tsx`) that opens an `AppLayout` `sidebarOverlayBelow` drawer can set `aria-expanded` on itself, but has nothing valid to point `aria-controls` at — `AppLayout` renders the `<Drawer>` internally and exposes no id either.
+
+**What's needed:**
+Either apply `drawerId` as the dialog element's `id` in `Content.tsx` and let `AppLayout` forward it (e.g. via a render-prop or an exposed id on `sidebarOpen`'s companion API), or add an `id` prop to `DrawerProps` that a consumer can set and then reference from their own trigger's `aria-controls`.
+
+**Current workaround:**
+`AppShell.tsx` / `AppLayoutDemo.tsx` set `aria-expanded={navOpen}` on the hamburger and omit `aria-controls` rather than reference an id that doesn't exist in the DOM.
+
+**When this ships:** wire `aria-controls` on both hamburgers to the real dialog id, then tick this checkbox.
+
 ### [ ] `<Sticky>` — needs an offset that accounts for pinned app chrome
 
 **Filed:** 2026-07-28
