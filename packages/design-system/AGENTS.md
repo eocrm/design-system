@@ -941,6 +941,8 @@ Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once pe
 
 **Drop slot**: `to.index` is the slot the preview showed at release — it re-evaluates as the cursor moves inside the target column, not only when the card crosses the boundary (#376). Caveat on `to.columnId`: releasing outside the board is not a cancel; the nearest column wins, so a drop flung past the last column still commits somewhere.
 
+**Overflowing boards auto-scroll**: the board is its own horizontal scroll container, so dragging a card near the left/right edge scrolls it — that is how you reach an off-screen column. The dragged card is confined to the board's scrollable content box on both axes (it stops at the outer edge of the first/last column rather than following the cursor out of the board). That bound is what keeps auto-scroll from running away: the card renders in flow, so an unbounded one would extend the board's own `scrollWidth` and auto-scroll would chase the edge it just created (#373). Nothing to configure.
+
 **Keyboard reorder** works WITHIN a column (Tab to Card/Handle, Space pick up, Arrow keys move, Space drop). Cross-column keyboard moves are NOT supported in v1.
 
 **Anti-patterns**

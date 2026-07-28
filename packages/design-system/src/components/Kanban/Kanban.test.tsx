@@ -1,6 +1,12 @@
 import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Kanban, type KanbanMoveEvent } from './Kanban';
+import {
+  Kanban,
+  clampKanbanTransform,
+  measureKanbanDragBounds,
+  type KanbanDragBounds,
+  type KanbanMoveEvent,
+} from './Kanban';
 import { SortableHandle } from '../Sortable/Sortable';
 
 describe('Kanban', () => {
@@ -431,6 +437,118 @@ describe('Kanban — drop position', () => {
       cardId: 'a1',
       from: { columnId: 'a', index: 0 },
       to: { columnId: 'a', index: 2 },
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Auto-scroll runaway (#373)
+// ---------------------------------------------------------------------------
+// The dragged card is rendered IN FLOW with a pointer-following transform, so a
+// transform that carries it past the scroll container's content edge inflates
+// `scrollWidth`; auto-scroll then chases the edge it just created. Bounding the
+// APPLIED transform is what breaks that loop.
+//
+// jsdom performs no layout and no auto-scroll, so the loop itself is not
+// reproducible here — every rect is 0×0 and `scrollWidth` is 0, which is
+// exactly the "unmeasurable" case the measurement bails out of (the drag tests
+// above therefore still exercise the unclamped path). What IS testable here is
+// the arithmetic and the bail-outs; the empirical evidence lives in the browser
+// check on the issue's own measurement protocol.
+
+const BOUNDS: KanbanDragBounds = {
+  centerX: 150,
+  centerY: 100,
+  width: 100,
+  height: 40,
+  contentWidth: 900,
+  contentHeight: 400,
+};
+
+/** dnd-kit hands the drag source `scaleX`/`scaleY` too — 1 unless the `over`
+ *  rect differs in size from the card's. */
+const t = (x: number, y: number, scaleX = 1, scaleY = 1) => ({ x, y, scaleX, scaleY });
+
+describe('Kanban — drag bounds (#373)', () => {
+  it('passes the transform through untouched when nothing was measured', () => {
+    expect(clampKanbanTransform(t(9999, 9999), null)).toEqual(t(9999, 9999));
+    expect(clampKanbanTransform(null, BOUNDS)).toBeNull();
+  });
+
+  it('leaves a transform that stays inside the content box alone', () => {
+    expect(clampKanbanTransform(t(300, 120), BOUNDS)).toEqual(t(300, 120));
+  });
+
+  it('stops the card at the content right edge instead of extending scrollWidth', () => {
+    // Centre 150 + half-width 50 → the card may travel 900 - 50 - 150 = 700.
+    expect(clampKanbanTransform(t(8910, 0), BOUNDS).x).toBe(700);
+    // …and that is the WHOLE point: 150 + 700 + 50 === contentWidth, so the
+    // card's right edge lands exactly on the content edge, never past it.
+    expect(BOUNDS.centerX + 700 + BOUNDS.width / 2).toBe(BOUNDS.contentWidth);
+  });
+
+  it('stops the card at the content left / top edge', () => {
+    expect(clampKanbanTransform(t(-8910, -8910), BOUNDS)).toEqual(t(-100, -80));
+  });
+
+  it('bounds the vertical axis against scrollHeight (long-column case)', () => {
+    // Centre 100 + half-height 20 → travel 400 - 20 - 100 = 280.
+    expect(clampKanbanTransform(t(0, 8910), BOUNDS).y).toBe(280);
+  });
+
+  it('measures the edge against the SCALED extent, not the layout extent', () => {
+    // dnd-kit scales the drag source to the `over` rect; a 2× card reaches the
+    // edge 50px earlier (half-width 100 instead of 50).
+    expect(clampKanbanTransform(t(8910, 0, 2, 1), BOUNDS).x).toBe(650);
+  });
+
+  it('measure: no node and no layout → no bound (the clamp stays inert)', () => {
+    expect(measureKanbanDragBounds(null)).toBeNull();
+    // A plain jsdom node: no scrollable ancestor, and scrollWidth 0 anyway.
+    const orphan = document.createElement('div');
+    document.body.appendChild(orphan);
+    expect(measureKanbanDragBounds(orphan)).toBeNull();
+  });
+
+  it('measure: converts to content space, strips the card transform, restores it', () => {
+    const scroller = document.createElement('div');
+    scroller.style.overflow = 'auto';
+    const card = document.createElement('div');
+    scroller.appendChild(card);
+    document.body.appendChild(scroller);
+
+    for (const [prop, value] of [
+      ['scrollWidth', 900],
+      ['scrollHeight', 400],
+      ['scrollLeft', 120],
+      ['scrollTop', 30],
+    ] as const) {
+      Object.defineProperty(scroller, prop, { value, configurable: true });
+    }
+    scroller.getBoundingClientRect = () => new DOMRect(0, 0, 500, 300);
+
+    // The card enters the measurement already transformed — the measurement
+    // must not see that transform, or the bound would ratchet outwards every
+    // time it is taken.
+    card.style.transform = 'translate3d(300px, 0, 0)';
+    let transformDuringMeasure: string | undefined;
+    card.getBoundingClientRect = () => {
+      transformDuringMeasure = card.style.transform;
+      return new DOMRect(200, 50, 100, 40);
+    };
+
+    const bounds = measureKanbanDragBounds(card);
+
+    expect(transformDuringMeasure).toBe('none');
+    expect(card.style.transform).toBe('translate3d(300px, 0, 0)');
+    // Content origin = box (0,0) − scroll (120,30). Card centre (250,70).
+    expect(bounds).toEqual({
+      centerX: 370,
+      centerY: 100,
+      width: 100,
+      height: 40,
+      contentWidth: 900,
+      contentHeight: 400,
     });
   });
 });
