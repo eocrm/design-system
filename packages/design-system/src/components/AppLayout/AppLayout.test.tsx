@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import { createRef, useState } from 'react';
 import { AppLayout } from './AppLayout';
 import { stubMatchMedia } from '../_internal/matchMediaStub';
 
@@ -204,5 +204,54 @@ describe('AppLayout sidebarOverlayBelow', () => {
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByTestId('rail').parentElement!.className).toMatch(/sidebar/);
+  });
+
+  it('fires onSidebarOpenChange(false) when the viewport crosses back above the threshold while open (#review-1)', async () => {
+    // Regression: widening past the threshold used to unmount the Drawer
+    // instead of closing it, so state never got reset and focus was never
+    // restored. The reset must happen via a real open->false transition.
+    const mm = stubMatchMedia(500);
+    const onChange = vi.fn();
+    render(
+      <AppLayout
+        sidebar={<nav data-testid="rail">nav</nav>}
+        sidebarOverlayBelow="lg"
+        sidebarOpen
+        onSidebarOpenChange={onChange}
+      >
+        content
+      </AppLayout>,
+    );
+    await screen.findByRole('dialog');
+    mm.resizeTo(1200);
+    expect(onChange).toHaveBeenCalledWith(false);
+  });
+
+  it('does not reopen when the viewport drops back below the threshold after an up-crossing closed it (#review-1)', () => {
+    // Regression: `open` state used to survive the up-crossing, so dropping
+    // back below the threshold re-mounted the drawer already open — no user
+    // action involved. A real (well-behaved) controlled consumer wires
+    // onSidebarOpenChange back into sidebarOpen, so this wrapper does too —
+    // a static `sidebarOpen` literal can't observe the state reset, since a
+    // controlled value that never changes always wins over our onChange.
+    function Wrapper() {
+      const [sidebarOpen, setSidebarOpen] = useState(true);
+      return (
+        <AppLayout
+          sidebar={<nav data-testid="rail">nav</nav>}
+          sidebarOverlayBelow="lg"
+          sidebarOpen={sidebarOpen}
+          onSidebarOpenChange={setSidebarOpen}
+        >
+          content
+        </AppLayout>
+      );
+    }
+    const mm = stubMatchMedia(500);
+    render(<Wrapper />);
+    mm.resizeTo(1200);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    mm.resizeTo(500);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useEffect, useRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { useBelowBreakpoint, type CollapseBreakpoint } from '../_internal/collapse';
@@ -154,6 +154,12 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
 ) {
   const t = useTranslation();
   const overlay = useBelowBreakpoint(sidebarOverlayBelow) && sidebar != null;
+  // Whether the Drawer should exist AT ALL, independent of the live viewport
+  // threshold. Kept mounted across the crossing (see below) rather than
+  // gated on `overlay` — that's what lets a still-mounted DrawerRoot receive
+  // a real open:true→false PROP transition on the up-crossing instead of
+  // being yanked from the tree mid-open.
+  const overlayConfigured = sidebarOverlayBelow != null && sidebar != null;
 
   // Uncontrolled fallback so Esc / backdrop still close the drawer when the
   // consumer passes `sidebarOverlayBelow` without wiring open state.
@@ -162,6 +168,22 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
     defaultValue: false,
     onChange: onSidebarOpenChange,
   });
+
+  // Crossing back above the threshold must CLOSE the drawer via a real prop
+  // transition, not unmount it out from under an open dialog — DrawerRoot's
+  // own focus-restore effect only fires on open:true→false while mounted, so
+  // Drawer stays mounted (above) and gets `open={overlay && open}`, which
+  // flips synchronously in the same render as the crossing. That alone still
+  // leaves `open` state remembering `true`, so re-entering overlay mode later
+  // would reopen it unprompted — this effect resets the state on the
+  // overlay:true→false EDGE only (a ref, not `!overlay`), so it never fights
+  // a controlled consumer legitimately setting `sidebarOpen` while already
+  // above the threshold.
+  const wasOverlay = useRef(overlay);
+  useEffect(() => {
+    if (wasOverlay.current && !overlay) setOpen(false);
+    wasOverlay.current = overlay;
+  }, [overlay, setOpen]);
 
   // Pattern A — props last: AppLayout is a consumer-overridable layout
   // primitive (like Stack/Card), so {...props} wins over our defaults.
@@ -177,9 +199,9 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
         {topBar != null && <div className={styles.topBar}>{topBar}</div>}
         <div className={styles.main}>{children}</div>
       </div>
-      {overlay && (
+      {overlayConfigured && (
         <Drawer
-          open={open}
+          open={overlay && open}
           onOpenChange={setOpen}
           side="left"
           size="sm"
