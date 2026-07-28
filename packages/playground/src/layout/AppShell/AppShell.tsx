@@ -217,7 +217,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 GitHub
               </Rail.Item>
             )}
-            <Rail.CollapseToggle />
+            {!isOverlayNav && <Rail.CollapseToggle />}
           </Rail.Footer>
         </Rail>
       }

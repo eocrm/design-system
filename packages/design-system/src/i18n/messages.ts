@@ -12,7 +12,7 @@ export interface Messages {
   };
   appLayout: {
     /** aria-label on the overlay sidebar dialog (mobile drawer). It has no
-     Drawer.Header, so without this the dialog would be unnamed. */
+     * Drawer.Header, so without this the dialog would be unnamed. */
     sidebar: string;
   };
   confirmationPopover: {

@@ -4,8 +4,9 @@ import { COLLAPSE_BREAKPOINT_PX, type CollapseBreakpoint } from '../components/_
 /**
  * Subscribes to `(max-width: <breakpoint>px)` on the VIEWPORT and reports
  * whether it currently matches. `false` when no breakpoint is given, and on a
- * server / any environment without `matchMedia` (including the first client
- * render, before hydration corrects it — see below).
+ * server / any environment without `matchMedia`. In a client-only render (no
+ * SSR — the CRM's case) the value is correct from the first render; the
+ * server-then-hydrate caveat only applies if you server-render this.
  *
  * Viewport, not container — use this only where a container query would be
  * circular, i.e. where the thing being measured is what the collapse changes:
