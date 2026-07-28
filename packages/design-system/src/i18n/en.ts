@@ -9,6 +9,9 @@ export const en: Messages = {
   alert: {
     dismiss: 'Dismiss',
   },
+  appLayout: {
+    sidebar: 'Sidebar navigation',
+  },
   confirmationPopover: {
     cancel: 'Cancel',
     confirm: 'Confirm',

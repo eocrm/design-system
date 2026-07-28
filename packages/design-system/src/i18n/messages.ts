@@ -10,6 +10,11 @@ export interface Messages {
     /** aria-label on the Alert's dismiss (×) button. */
     dismiss: string;
   };
+  appLayout: {
+    /** aria-label on the overlay sidebar dialog (mobile drawer). It has no
+     Drawer.Header, so without this the dialog would be unnamed. */
+    sidebar: string;
+  };
   confirmationPopover: {
     /** Label on the secondary "Cancel" button inside the confirmation popover. */
     cancel: string;

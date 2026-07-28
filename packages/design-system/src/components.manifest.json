@@ -16,9 +16,11 @@
     "composedBy": []
   },
   "AppLayout": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Layout",
-    "composes": [],
+    "composes": [
+      "Drawer"
+    ],
     "composedBy": []
   },
   "Avatar": {
@@ -247,7 +249,9 @@
     "composes": [
       "Button"
     ],
-    "composedBy": []
+    "composedBy": [
+      "AppLayout"
+    ]
   },
   "DropdownMenu": {
     "tier": "primitive",

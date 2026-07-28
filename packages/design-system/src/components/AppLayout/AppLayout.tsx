@@ -1,5 +1,9 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n';
+import { useBelowBreakpoint, type CollapseBreakpoint } from '../_internal/collapse';
+import { useControllableState } from '../_internal/useControllableState';
+import { Drawer } from '../Drawer';
 import styles from './AppLayout.module.scss';
 
 export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
@@ -33,6 +37,36 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
    * the whole window, not that region, and overflow it.
    */
   sidebarPinned?: boolean;
+  /**
+   * Move the sidebar out of the flow and into a left-anchored `<Drawer>` while
+   * the **viewport** is at or below a width threshold: `'sm'` 480px / `'md'`
+   * 640px / `'lg'` 768px. Omit for no responsive behavior (the default) — the
+   * sidebar always renders in the flow.
+   *
+   * Below the threshold the content column claims the full viewport width, and
+   * the sidebar is reachable only by opening the drawer. Render your own
+   * trigger (a hamburger in the `topBar`) and drive `sidebarOpen` — AppLayout
+   * deliberately renders no trigger of its own, since where it belongs in the
+   * bar is the consumer's call. Use the exported `useBelowBreakpoint` hook to
+   * show that trigger only while the overlay mode is active.
+   *
+   * `sidebarPinned` is ignored below the threshold: the drawer owns the
+   * sidebar's box there, and a `sticky; height: 100dvh` wrapper inside it would
+   * size the rail to the window instead of the drawer.
+   *
+   * Measures the viewport (`matchMedia`), not a container — the sidebar's
+   * presence in the row is exactly what the threshold changes, so a container
+   * query would be circular. Same scale and same basis as `<Rail collapseBelow>`.
+   */
+  sidebarOverlayBelow?: CollapseBreakpoint;
+  /**
+   * Open state of the overlay sidebar. Optional — omit for uncontrolled (the
+   * drawer manages its own state and still closes on Esc / backdrop). Has no
+   * effect unless `sidebarOverlayBelow` is set and the viewport is below it.
+   */
+  sidebarOpen?: boolean;
+  /** Fires whenever the overlay sidebar opens or closes — Esc, backdrop click, swipe, or programmatic. */
+  onSidebarOpenChange?: (open: boolean) => void;
   /** Main content slot — fills the remaining space below the top bar. */
   children: ReactNode;
 }
@@ -105,9 +139,30 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * `<Rail>` / the main region manage their own overflow.
  */
 export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLayout(
-  { topBar, sidebar, sidebarPinned, children, className, ...props },
+  {
+    topBar,
+    sidebar,
+    sidebarPinned,
+    sidebarOverlayBelow,
+    sidebarOpen,
+    onSidebarOpenChange,
+    children,
+    className,
+    ...props
+  },
   ref,
 ) {
+  const t = useTranslation();
+  const overlay = useBelowBreakpoint(sidebarOverlayBelow) && sidebar != null;
+
+  // Uncontrolled fallback so Esc / backdrop still close the drawer when the
+  // consumer passes `sidebarOverlayBelow` without wiring open state.
+  const [open, setOpen] = useControllableState<boolean>({
+    value: sidebarOpen,
+    defaultValue: false,
+    onChange: onSidebarOpenChange,
+  });
+
   // Pattern A — props last: AppLayout is a consumer-overridable layout
   // primitive (like Stack/Card), so {...props} wins over our defaults.
   // Topology: a row of [full-height sidebar | a column of (topBar, main)] — so
@@ -115,13 +170,25 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
   // content column, matching the CRM shell (see playground AppShell).
   return (
     <div ref={ref} className={clsx(styles.root, className)} {...props}>
-      {sidebar != null && (
+      {sidebar != null && !overlay && (
         <div className={clsx(styles.sidebar, sidebarPinned && styles.sidebarPinned)}>{sidebar}</div>
       )}
       <div className={styles.body}>
         {topBar != null && <div className={styles.topBar}>{topBar}</div>}
         <div className={styles.main}>{children}</div>
       </div>
+      {overlay && (
+        <Drawer
+          open={open}
+          onOpenChange={setOpen}
+          side="left"
+          size="sm"
+          className={styles.overlaySidebar}
+          aria-label={t('appLayout.sidebar')}
+        >
+          {sidebar}
+        </Drawer>
+      )}
     </div>
   );
 });

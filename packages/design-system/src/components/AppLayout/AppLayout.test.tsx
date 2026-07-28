@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { AppLayout } from './AppLayout';
+import { stubMatchMedia } from '../_internal/matchMediaStub';
 
 describe('AppLayout', () => {
   it('renders children in a <div> and forwards ref to the root', () => {
@@ -97,5 +99,110 @@ describe('AppLayout sidebarPinned (#324)', () => {
   it('sidebarPinned without a sidebar renders nothing extra', () => {
     const { container } = render(<AppLayout sidebarPinned>content</AppLayout>);
     expect(container.querySelector('[class*="sidebar"]')).toBeNull();
+  });
+});
+
+describe('AppLayout sidebarOverlayBelow', () => {
+  const original = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+
+  afterEach(() => {
+    if (original) Object.defineProperty(window, 'matchMedia', original);
+    else delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+
+  it('renders the sidebar in the flow above the threshold', () => {
+    stubMatchMedia(1200);
+    render(
+      <AppLayout sidebar={<nav data-testid="rail">nav</nav>} sidebarOverlayBelow="lg">
+        content
+      </AppLayout>,
+    );
+    expect(screen.getByTestId('rail')).toBeInTheDocument();
+    // In-flow means no dialog wrapper.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('rail').parentElement!.className).toMatch(/sidebar/);
+  });
+
+  it('moves the sidebar into a left drawer below the threshold', async () => {
+    stubMatchMedia(500);
+    render(
+      <AppLayout sidebar={<nav data-testid="rail">nav</nav>} sidebarOverlayBelow="lg" sidebarOpen>
+        content
+      </AppLayout>,
+    );
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveAttribute('data-side', 'left');
+    expect(dialog).toContainElement(screen.getByTestId('rail'));
+  });
+
+  it('does not apply the pinned wrapper to the drawer-hosted sidebar', async () => {
+    // sidebarPinned sets sticky/100dvh on the IN-FLOW wrapper. Applying it
+    // inside the drawer would size the rail to the window, not the drawer.
+    stubMatchMedia(500);
+    render(
+      <AppLayout
+        sidebar={<nav data-testid="rail">nav</nav>}
+        sidebarOverlayBelow="lg"
+        sidebarPinned
+        sidebarOpen
+      >
+        content
+      </AppLayout>,
+    );
+    await screen.findByRole('dialog');
+    expect(screen.getByTestId('rail').parentElement!.className).not.toMatch(/sidebarPinned/);
+  });
+
+  it('swaps between in-flow and overlay when the viewport crosses the threshold', async () => {
+    const mm = stubMatchMedia(1200);
+    render(
+      <AppLayout sidebar={<nav data-testid="rail">nav</nav>} sidebarOverlayBelow="lg" sidebarOpen>
+        content
+      </AppLayout>,
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    mm.resizeTo(500);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    mm.resizeTo(1200);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('fires onSidebarOpenChange(false) on Escape', async () => {
+    stubMatchMedia(500);
+    const onChange = vi.fn();
+    render(
+      <AppLayout
+        sidebar={<nav data-testid="rail">nav</nav>}
+        sidebarOverlayBelow="lg"
+        sidebarOpen
+        onSidebarOpenChange={onChange}
+      >
+        content
+      </AppLayout>,
+    );
+    await screen.findByRole('dialog');
+    await userEvent.keyboard('{Escape}');
+    expect(onChange).toHaveBeenCalledWith(false);
+  });
+
+  it('names the overlay dialog so it is not an unlabelled dialog', async () => {
+    stubMatchMedia(500);
+    render(
+      <AppLayout sidebar={<nav data-testid="rail">nav</nav>} sidebarOverlayBelow="lg" sidebarOpen>
+        content
+      </AppLayout>,
+    );
+    expect(await screen.findByRole('dialog', { name: 'Sidebar navigation' })).toBeInTheDocument();
+  });
+
+  it('ignores sidebarOpen entirely when sidebarOverlayBelow is unset', () => {
+    stubMatchMedia(320);
+    render(
+      <AppLayout sidebar={<nav data-testid="rail">nav</nav>} sidebarOpen>
+        content
+      </AppLayout>,
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('rail').parentElement!.className).toMatch(/sidebar/);
   });
 });

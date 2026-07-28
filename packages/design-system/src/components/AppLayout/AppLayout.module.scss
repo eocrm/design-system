@@ -70,3 +70,13 @@
   // --color-bg-subtle; override the token to `transparent` for a flat area).
   background: var(--app-layout-content-background);
 }
+
+// Overlay sidebar (sidebarOverlayBelow): the Drawer panel is 320px
+// (--size-drawer-sm, the sanctioned nav-drawer width) but a <Rail> inside sets
+// its own 240px width and would leave a dead strip. Rebinding the rail's own
+// width token — its documented override surface — makes the rail fill the
+// panel instead. Scoped to this class so it can't leak to an in-flow rail.
+.overlaySidebar {
+  --rail-width-expanded: 100%;
+  --rail-width-collapsed: 100%;
+}
