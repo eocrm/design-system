@@ -104,7 +104,11 @@
 // Map form: the step rules re-template the <ol> itself, and a container query
 // never matches its own container — so Sortable.tsx wraps the <ol> in this
 // zero-styling container. Mirrors Grid's `.stepContainer`.
+// `display: grid` so the wrapper stays geometrically transparent — its single
+// child stretches in both axes, keeping the <ol>'s height in a stretch context
+// (a block wrapper would take the stretch itself). Mirrors Grid.
 .stepContainer {
+  display: grid;
   container-type: inline-size;
 }
 

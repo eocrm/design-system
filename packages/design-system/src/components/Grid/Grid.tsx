@@ -76,9 +76,10 @@ interface GridFixedColumns extends GridBaseProps, HTMLAttributes<HTMLElement> {
    * parent. `container-type: inline-size` zeroes the grid's contribution to
    * intrinsic sizing, so in an intrinsic-width context (`Split`'s default
    * `auto` aside track, a `Cluster` item, `width: max-content`) it renders at
-   * width 0 — give the parent a concrete width instead. The grid also becomes
-   * the containing block for absolutely-positioned descendants (layout
-   * containment).
+   * width 0 — give the parent a concrete width instead. Whichever element
+   * carries the containment also becomes the containing block for
+   * absolutely-positioned descendants (layout containment) — the grid itself
+   * for the string form, the wrapper below for the map form.
    *
    * Also accepts a graduated breakpoint→columns map, e.g.
    * `collapseBelow={{ md: 6, sm: 1 }}`: below 640px the grid re-templates to

@@ -86,7 +86,12 @@
 // its own container (Split.module.scss says the same thing). Grid.tsx renders
 // this zero-styling wrapper only for the map form — same trick as
 // DashboardCanvas's `.sizer`.
+// `display: grid` (not the default block) so the wrapper is geometrically
+// transparent: its single child stretches in BOTH axes by default, so a grid
+// that is itself a stretched flex/grid item keeps its height. A block wrapper
+// would take the stretch and leave the grid at content height.
 .stepContainer {
+  display: grid;
   container-type: inline-size;
 }
 
