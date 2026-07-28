@@ -137,3 +137,63 @@ describe('Split', () => {
     expect(el).toHaveAttribute('aria-label', 'settings layout');
   });
 });
+
+// jsdom does not evaluate container queries — same as Grid's collapseBelow
+// tests (#314), the collapse contract is asserted via the emitted classes; the
+// @container rules themselves are verified in the browser.
+describe('Split collapseBelow (#372)', () => {
+  it('adds the collapsible + breakpoint classes when set', () => {
+    const { container } = render(
+      <Split aside={<i />} collapseBelow="sm">
+        x
+      </Split>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.className).toMatch(/collapsible/);
+    expect(el.className).toMatch(/collapseSm/);
+  });
+
+  it('adds no collapse classes when unset — no container-type on plain splits', () => {
+    const { container } = render(<Split aside={<i />}>x</Split>);
+    expect((container.firstElementChild as HTMLElement).className).not.toMatch(/collaps/i);
+  });
+
+  it('collapses on either side, keeping DOM order (aside-first only for side="start")', () => {
+    const cellOrder = (root: Element) =>
+      Array.from(root.children).map((c) =>
+        /aside/.test((c as HTMLElement).className) ? 'aside' : 'main',
+      );
+
+    const start = render(
+      <Split aside={<i />} side="start" collapseBelow="md">
+        x
+      </Split>,
+    );
+    const startRoot = start.container.firstElementChild as HTMLElement;
+    expect(startRoot.className).toMatch(/collapsible/);
+    expect(startRoot.className).toMatch(/collapseMd/);
+    expect(startRoot.className).toMatch(/sideStart/);
+    expect(cellOrder(startRoot)).toEqual(['aside', 'main']);
+
+    const end = render(
+      <Split aside={<i />} side="end" collapseBelow="md">
+        x
+      </Split>,
+    );
+    const endRoot = end.container.firstElementChild as HTMLElement;
+    expect(endRoot.className).toMatch(/collapsible/);
+    expect(endRoot.className).toMatch(/collapseMd/);
+    expect(endRoot.className).toMatch(/sideEnd/);
+    expect(cellOrder(endRoot)).toEqual(['main', 'aside']);
+  });
+
+  it('keeps the pinned aside width custom property while collapsible', () => {
+    const { container } = render(
+      <Split aside={<i />} asideWidth="220px" collapseBelow="sm">
+        x
+      </Split>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.style.getPropertyValue('--split-aside-width')).toBe('220px');
+  });
+});

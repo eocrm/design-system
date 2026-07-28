@@ -1,6 +1,7 @@
 import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import styles from './Split.module.scss';
+import type { CollapseBreakpoint } from '../_internal/collapse';
 
 /** Which side the `aside` pane sits on. RTL-aware (DOM + column order flip together). */
 export type SplitSide = 'start' | 'end';
@@ -40,6 +41,28 @@ export interface SplitProps extends HTMLAttributes<HTMLDivElement> {
    * - `'center'` — panes vertically centered.
    */
   align?: SplitAlign;
+  /**
+   * Stack the two panes vertically when the SPLIT'S OWN width (container
+   * query, not viewport) drops below the preset: `sm` 480px / `md` 640px /
+   * `lg` 768px. Same scale as `Grid`'s `collapseBelow`. Without it a pinned
+   * `asideWidth` rail squeezes `main` to nothing on narrow screens.
+   *
+   * Collapsed panes stack in **DOM order**, not always aside-first: with
+   * the default `side="start"` that's aside → main; with `side="end"` it's
+   * main → aside, because that's the order the panes are in the DOM. Forcing
+   * aside-first when collapsed would need CSS `order`, which desynchronizes
+   * visual order from tab order — an a11y defect. If you need the aside on top
+   * when stacked, use `side="start"`.
+   *
+   * ❌ Anti-pattern: a `collapseBelow` split must get its width from its
+   * parent. `container-type: inline-size` zeroes the split's contribution to
+   * intrinsic sizing, so in an intrinsic-width context (another `Split`'s
+   * default `auto` aside track, a `Cluster` item, `width: max-content`) it
+   * renders at width 0 — give the parent a concrete width instead. The split
+   * also becomes the containing block for absolutely-positioned descendants
+   * (layout containment). Splits without the prop pay none of this.
+   */
+  collapseBelow?: CollapseBreakpoint;
 }
 
 const gapClass: Record<SplitGap, string> = {
@@ -49,6 +72,12 @@ const gapClass: Record<SplitGap, string> = {
   lg: styles.gapLg,
   xl: styles.gapXl,
   '2xl': styles.gap2xl,
+};
+
+const collapseClass: Record<CollapseBreakpoint, string> = {
+  sm: styles.collapseSm,
+  md: styles.collapseMd,
+  lg: styles.collapseLg,
 };
 
 const alignClass: Record<SplitAlign, string> = {
@@ -81,6 +110,12 @@ const alignClass: Record<SplitAlign, string> = {
  *   <Results />
  * </Split>
  *
+ * @example
+ * // Settings screen that stacks on narrow containers (rail on top, DOM order).
+ * <Split aside={<Tabs orientation="vertical" ... />} asideWidth="220px" collapseBelow="sm">
+ *   <SettingsPanel />
+ * </Split>
+ *
  * @remarks When NOT to use
  * - For equal-width columns — use `<Grid columns={2}>`. Split is intentionally
  *   asymmetric (intrinsic aside + filling main).
@@ -93,6 +128,11 @@ const alignClass: Record<SplitAlign, string> = {
  *   shell (`<Rail>` / `<AppLayout sidebar>`); Split's aside is intra-page.
  * - ❌ Expecting `main` to push the layout wider than its container — it has
  *   `min-width: 0`, so its content shrinks/scrolls instead of overflowing.
+ * - ❌ A `collapseBelow` split in an intrinsic-width context (another
+ *   `Split`'s default `auto` aside track, a `Cluster` item,
+ *   `width: max-content`). `container-type: inline-size` makes it contribute
+ *   zero intrinsic width, so it renders at width 0 — give the parent a
+ *   concrete width instead.
  */
 export const Split = forwardRef<HTMLDivElement, SplitProps>(function Split(
   {
@@ -102,6 +142,7 @@ export const Split = forwardRef<HTMLDivElement, SplitProps>(function Split(
     asideWidth = 'auto',
     gap = 'md',
     align = 'start',
+    collapseBelow,
     className,
     style,
     ...props
@@ -118,6 +159,8 @@ export const Split = forwardRef<HTMLDivElement, SplitProps>(function Split(
         side === 'end' ? styles.sideEnd : styles.sideStart,
         gapClass[gap],
         alignClass[align],
+        collapseBelow && styles.collapsible,
+        collapseBelow && collapseClass[collapseBelow],
         className,
       )}
       // asideWidth → custom property the SCSS grid template reads. Consumer
