@@ -23,6 +23,7 @@ import {
   useDroppable,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
@@ -41,7 +42,10 @@ import {
   type SortableItemContextValue,
 } from '../Sortable/Sortable';
 import { useTranslation } from '../../i18n/useTranslation';
-import { containerAwareClosestCorners } from '../Sortable/containerAwareCollision';
+import {
+  containerAwareClosestCorners,
+  isPointerOutsideContainers,
+} from '../Sortable/containerAwareCollision';
 import styles from './Kanban.module.scss';
 
 // ---------------------------------------------------------------------------
@@ -510,8 +514,8 @@ KanbanColumn.displayName = 'KanbanColumn';
  *
  * @remarks Drop position semantics
  * The committed `to.index` is the slot the preview showed at the moment of
- * release — the two cannot drift, because both are read off the same
- * `over`. `verticalListSortingStrategy` renders a column as
+ * release, because both are read off the same `over`. Two documented
+ * exceptions follow below; absent those, they cannot drift. `verticalListSortingStrategy` renders a column as
  * `arrayMove(cards, activeIndex, overIndex)` where
  * `overIndex = cards.indexOf(over.id)`, so the gap the user sees sits at
  * `overIndex`; `onMove` commits that same index. Where `over` is not a card
@@ -539,9 +543,15 @@ KanbanColumn.displayName = 'KanbanColumn';
  *   The commit appends anyway: snapping a dragged-to-the-bottom card back up
  *   reads as a dropped drag.
  * - Release without moving (cursor never left the card's own slot) or Escape
- *   → snap back; `onMove` does NOT fire. Note that releasing *outside* the
- *   board is not a cancel: `closestCorners` still resolves the nearest
- *   column, so the card commits there.
+ *   → snap back; `onMove` does NOT fire.
+ * - Release with the pointer outside the board → same cancel + snap back, no
+ *   `onMove` (#387). "Outside" is measured against the columns' collective
+ *   bounding box, not each column's own rect: releasing in the gutter between
+ *   two columns commits to whichever is nearer, because that is plainly what
+ *   the user meant. Only leaving the band of columns altogether cancels.
+ *   Note the drop target is decided by the POINTER, while the card itself is
+ *   clamped to the board (see below) — so a released card that appears to be
+ *   parked on the last column has still cancelled if the cursor was past it.
  *
  * @remarks Auto-scroll and drag bounds
  * The board is its own horizontal scroll container, so a board wider than its
@@ -707,8 +717,28 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // Drag handlers
   // ------------------------------------------------------------------
   const originRef = useRef<string | number | null>(null);
+
+  // Was the pointer outside every column the last time a drop target was
+  // resolved? `DragEndEvent` carries no pointer position — only `delta`, which
+  // is `translate - nodeRectDelta + scrollAdjustment` and so drifts from the
+  // real pointer by however far the board auto-scrolled and however far a live
+  // re-seat moved the card. Collision detection, on the other hand, is handed
+  // dnd-kit's own `pointerCoordinates` alongside the very rects `over` was
+  // ranked from, so answering the question there and remembering the answer
+  // makes the cancel decision agree with `over` by construction (#387).
+  //
+  // Written during render (collision detection runs in `DndContext`'s render);
+  // that is safe because it is a pure function of the arguments, so a double
+  // render under StrictMode writes the same value.
+  const outsideBoardRef = useRef(false);
+  const collisionDetection = useCallback<CollisionDetection>((args) => {
+    outsideBoardRef.current = isPointerOutsideContainers(args);
+    return containerAwareClosestCorners(args);
+  }, []);
+
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
+      outsideBoardRef.current = false;
       // The column the card started in. Used by handleDragOver to tell a
       // genuine same-column reorder apart from "already transited, still
       // moving inside the destination".
@@ -809,12 +839,18 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       const { active, over } = event;
       const activeId = active.id as string | number;
 
-      // `over` is null only when the collision detection returned nothing at
-      // all — i.e. no droppable was measured. It is NOT "released outside the
-      // board": `containerAwareClosestCorners` falls back to `closestCorners`,
-      // which ranks every measured droppable and always yields one, so a
-      // release far away from the columns still resolves to the nearest.
-      if (!over) {
+      // Two ways a drag ends in nothing, and `over` only reports the first:
+      //  - `over == null` — collision detection returned nothing at all, i.e.
+      //    no droppable was measured.
+      //  - the pointer left the board. `containerAwareClosestCorners` falls
+      //    back to `closestCorners`, which ranks every measured droppable and
+      //    rejects none, so `over` still names the nearest column after a
+      //    release over unrelated page content — a column the user never aimed
+      //    at and never saw highlighted. Committing it silently reassigns the
+      //    card's column (#387), so the pointer test decides instead.
+      // Both snap the card back: dropping `liveItems` re-renders every column
+      // from the consumer's untouched state, and no `onMove` fires.
+      if (!over || outsideBoardRef.current) {
         setLiveItems(null);
         return;
       }
@@ -933,7 +969,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={containerAwareClosestCorners}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
