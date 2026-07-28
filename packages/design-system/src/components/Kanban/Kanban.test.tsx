@@ -442,6 +442,120 @@ describe('Kanban — drop position', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Release outside the board (#387)
+// ---------------------------------------------------------------------------
+// `closestCorners` ranks every measured droppable and rejects none, so `over`
+// names the nearest column even when the card was let go over unrelated page
+// content. The pointer, not `over`, decides whether that is a drop at all.
+
+/** Card ids per column, in DOM order — the board as the user sees it. */
+function boardOrder(): string[][] {
+  return Array.from(document.querySelectorAll('[data-col]')).map((col) =>
+    Array.from(col.querySelectorAll('[data-card]')).map((c) => c.getAttribute('data-card')!),
+  );
+}
+
+describe('Kanban — release outside the board (#387)', () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = stubLayout();
+  });
+  afterEach(() => restore());
+
+  it('cancels: no onMove, no order change, when released past every column', () => {
+    // Columns span x 0..220, y 0..300. The gesture transits into column b
+    // first — so without the cancel this commits a1 into b (the pre-#387
+    // behaviour), which is exactly the silent column reassignment from the
+    // issue.
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1', 'b2']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 100), [600, 500]]);
+
+    expect(onMove).not.toHaveBeenCalled();
+    expect(boardOrder()).toEqual([
+      ['a1', 'a2'],
+      ['b1', 'b2'],
+    ]);
+  });
+
+  it('cancels on each side of the board independently', () => {
+    for (const release of [
+      [600, 100], // right of the last column
+      [-200, 100], // left of the first
+      [150, 900], // below both
+      [150, -300], // above both
+    ] as [number, number][]) {
+      const onMove = vi.fn();
+      const { unmount } = render(
+        <Board
+          onMove={onMove}
+          columns={[
+            ['a', ['a1', 'a2']],
+            ['b', ['b1', 'b2']],
+          ]}
+        />,
+      );
+      drag('a1', [at(1, 100), release]);
+      expect(onMove, `released at ${release.join()}`).not.toHaveBeenCalled();
+      unmount();
+    }
+  });
+
+  it('the gutter between two columns is NOT outside — it commits to the nearer column', () => {
+    // x 100..120 is inside the board's band of columns but inside no column.
+    // Cancelling there would punish a 20px aiming error; `closestCorners`
+    // already resolves it to the adjacent column, and that is what the user
+    // meant.
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1', 'b2']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 100), [110, 100]]);
+
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0].to.columnId).toBe('b');
+  });
+
+  it('#367 guard: a drop in a sparse column’s empty space still commits', () => {
+    // Deep below column b's single card, where the column rect is the only
+    // thing under the pointer. The cancel test is against the COLUMN rects, so
+    // this must be unaffected.
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        height={1000}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 500)]);
+
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0].to).toEqual({ columnId: 'b', index: 1 });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Auto-scroll runaway (#373)
 // ---------------------------------------------------------------------------
 // The dragged card is rendered IN FLOW with a pointer-following transform, so a

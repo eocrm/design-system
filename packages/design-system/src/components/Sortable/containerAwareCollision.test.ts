@@ -3,7 +3,10 @@
 // Archive). First test pins the raw closestCorners misresolution (the bug
 // mechanism); the rest specify containerAwareClosestCorners.
 import { closestCorners, type ClientRect, type DroppableContainer } from '@dnd-kit/core';
-import { containerAwareClosestCorners } from './containerAwareCollision';
+import {
+  containerAwareClosestCorners,
+  isPointerOutsideContainers,
+} from './containerAwareCollision';
 
 type Args = Parameters<typeof containerAwareClosestCorners>[0];
 
@@ -135,5 +138,35 @@ describe('containerAwareClosestCorners', () => {
   it('pointer in the gap between columns → falls back to plain closestCorners', () => {
     const args = buildArgs(pointerAt(266, 300)); // 260..272 is the column gap
     expect(containerAwareClosestCorners(args)).toEqual(closestCorners(args));
+  });
+});
+
+// The columns span x 0..532, y 0..796 collectively.
+describe('isPointerOutsideContainers (#387)', () => {
+  it('pointer past the last column / above the board → outside', () => {
+    expect(isPointerOutsideContainers(buildArgs(pointerAt(900, 300)))).toBe(true);
+    expect(isPointerOutsideContainers(buildArgs(pointerAt(300, 1400)))).toBe(true);
+    expect(isPointerOutsideContainers(buildArgs(pointerAt(-40, 300)))).toBe(true);
+    expect(isPointerOutsideContainers(buildArgs(pointerAt(300, -10)))).toBe(true);
+  });
+
+  it('pointer inside a column, or in the gutter between two, → not outside', () => {
+    expect(isPointerOutsideContainers(buildArgs(IN_EMPTY_ARCHIVE))).toBe(false);
+    // 260..272 is the column gap: inside no column, but inside the band.
+    expect(isPointerOutsideContainers(buildArgs(pointerAt(266, 300)))).toBe(false);
+  });
+
+  it('ignores card rects — a point past the last card but inside the column stays inside', () => {
+    // Cards stop at y 794 and are ≤ 252px wide; the column runs the full 796 ×
+    // 260. Bounding the union by the CARDS would call this outside, which is
+    // exactly the sparse-column drop #367 exists to make work.
+    expect(isPointerOutsideContainers(buildArgs(pointerAt(258, 795)))).toBe(false);
+  });
+
+  it('cannot tell → not outside (keyboard drag, or nothing measured)', () => {
+    expect(isPointerOutsideContainers(buildArgs())).toBe(false); // pointerCoordinates: null
+    const unmeasured = buildArgs(pointerAt(900, 300));
+    unmeasured.droppableRects = new Map() as Args['droppableRects'];
+    expect(isPointerOutsideContainers(unmeasured)).toBe(false);
   });
 });
