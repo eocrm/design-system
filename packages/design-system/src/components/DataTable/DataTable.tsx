@@ -17,6 +17,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type Modifier,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -32,6 +33,7 @@ import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
 import { reorderRespectingPins } from './reorderColumns';
 import { useColumnDragShift } from './useColumnDragShift';
+import { clampX, type DragRangeX } from './columnShift';
 import { useFloatingSurface } from '../_internal/overlay';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
@@ -175,15 +177,17 @@ function ColumnShiftDriver({
   enabled,
   orderedIds,
   widths,
+  dragRangeRef,
   onDragActiveChange,
 }: {
   rootRef: RefObject<HTMLElement | null>;
   enabled: boolean;
   orderedIds: string[];
   widths: Record<string, number>;
+  dragRangeRef: RefObject<DragRangeX | null>;
   onDragActiveChange: (active: boolean) => void;
 }) {
-  useColumnDragShift({ rootRef, enabled, orderedIds, widths, onDragActiveChange });
+  useColumnDragShift({ rootRef, enabled, orderedIds, widths, dragRangeRef, onDragActiveChange });
   return null;
 }
 
@@ -223,6 +227,11 @@ function DataTableInner<T>(
   // their per-column `useSortable({ disabled })` blocks drag activation, but
   // their presence in the items list still makes horizontalListSortingStrategy
   // shift them during another column's drag.
+  // Note this deliberately does NOT mirror HeaderCell's "hide the grip when
+  // there is only one unpinned column" rule. A lone unpinned column stays in
+  // this list while its own `useSortable({ disabled })` blocks activation —
+  // a single-item sorting context is a no-op, and keeping the lists derived
+  // from one filter each is clearer than keeping two conditions in sync.
   const sortableIds = useMemo(
     () => instance.unpinnedColumns.filter((c) => c.enableReorder !== false).map((c) => c.id),
     [instance.unpinnedColumns],
@@ -240,6 +249,41 @@ function DataTableInner<T>(
     () => instance.unpinnedColumns.map((c) => c.id),
     [instance.unpinnedColumns],
   );
+
+  // Travel available to the column being dragged, measured from real header
+  // rects when the drag starts (see `measureDragRangeX`). One measurement, two
+  // readers: `useColumnDragShift` clamps the delta it publishes, and the
+  // modifier below clamps `modifiedTranslate`. Null when no drag is active.
+  const dragRangeRef = useRef<DragRangeX | null>(null);
+
+  // Keep the dragged column inside the unpinned band. Without a clamp the
+  // pointer delta is applied raw, so a column can be dragged past the first or
+  // last slot and off the table entirely — and since `dragWholeColumn` defaults
+  // to true, that drags a full column of body cells over unrelated page content
+  // (#381).
+  //
+  // This modifier covers two things the delta clamp in `useColumnDragShift`
+  // cannot:
+  //  - the COLLISION RECT. dnd-kit derives it as
+  //    `getAdjustedRect(draggingNodeRect, modifiedTranslate)`, so clamping here
+  //    keeps `over` resolving to the last reachable column instead of going
+  //    null once the pointer leaves the table.
+  //  - the HEADER-ONLY path (`dragWholeColumn={false}`), where the header rides
+  //    `useSortable`'s own transform — which is `modifiedTranslate` — and never
+  //    touches this component's shift variables.
+  //
+  // Known residual, deliberately not papered over: on the header-only path this
+  // modifier can still be exceeded by dnd-kit's horizontal auto-scroll, because
+  // `scrollAdjustedTranslate = add(modifiedTranslate, scrollAdjustment)` adds
+  // the scroll adjustment AFTER modifiers run. The default whole-column path is
+  // unaffected — it clamps `delta`, which is already post-adjustment. Fixing
+  // the opt-out path too would mean overriding dnd-kit's auto-scroll.
+  const clampToUnpinnedBand = useCallback<Modifier>(({ transform, active }) => {
+    const range = dragRangeRef.current;
+    if (!active || !range) return transform;
+    return { ...transform, x: clampX(transform.x, range) };
+  }, []);
+  const modifiers = useMemo(() => [clampToUnpinnedBand], [clampToUnpinnedBand]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -302,7 +346,7 @@ function DataTableInner<T>(
   );
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} modifiers={modifiers} onDragEnd={handleDragEnd}>
       {/* #282: register the column-reorder drag as a floating surface while
           active so a host Modal/Drawer yields the Escape that cancels it (the
           drag cancels; the host survives). A leaf probe (not root state) so the
@@ -313,6 +357,7 @@ function DataTableInner<T>(
         enabled={dragWholeColumn}
         orderedIds={shiftOrderedIds}
         widths={instance.columnSizesPx}
+        dragRangeRef={dragRangeRef}
         onDragActiveChange={setDragActive}
       />
       <SortableContext

@@ -66,6 +66,32 @@ export function computeColumnShifts({
 }
 
 /**
+ * How far the active column may travel left and right, in px, relative to
+ * where it started. Produced by `measureDragRangeX` in `useColumnDragShift`
+ * from real header rects — NOT from declared column widths, which understate
+ * the rendered ones whenever the table stretches to fill its scroll wrap.
+ */
+export interface DragRangeX {
+  /**
+   * Lower bound for the x translation, in px. Non-positive under normal
+   * left-to-right layout, where the first slot sits at or left of the active
+   * column's own position.
+   */
+  min: number;
+  /**
+   * Upper bound for the x translation, in px. Non-negative under normal
+   * left-to-right layout, where the last slot sits at or right of the active
+   * column's own position.
+   */
+  max: number;
+}
+
+/** Clamp an x translation into `range`. */
+export function clampX(x: number, range: DragRangeX): number {
+  return Math.min(range.max, Math.max(range.min, x));
+}
+
+/**
  * Turn an arbitrary column id into a fragment that is legal inside a CSS
  * custom-property name. Column ids are consumer-supplied and routinely contain
  * dots, spaces, or non-ASCII text, none of which are safe to interpolate.
