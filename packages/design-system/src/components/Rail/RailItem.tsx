@@ -35,10 +35,11 @@ interface RailItemOwnProps {
 }
 
 /**
- * Polymorphic helper that intersects `RailItemOwnProps` with the underlying
- * element's props (minus the ones we own). Mirrors `<Link>`.
+ * Polymorphic helper that intersects an own-props bag with the underlying
+ * element's props (minus the ones we own). Mirrors `<Link>`. Shared with
+ * `<Rail.Group>`, which uses the same `as` contract for its linkable row.
  */
-type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
+export type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
     ComponentPropsWithoutRef<C>,
     keyof P | 'as'
   >;

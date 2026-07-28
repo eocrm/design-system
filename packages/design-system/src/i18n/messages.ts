@@ -401,6 +401,18 @@ export interface Messages {
     collapse: string;
     /** Default aria-label on the rail's wrapping `<nav>` landmark. */
     navigation: string;
+    /**
+     * aria-label prefix on a linkable `<Rail.Group>`'s chevron button while the
+     * group is closed. Interpolated with the group's own label at the call site
+     * (`Expand Deals`).
+     */
+    expandGroup: string;
+    /**
+     * aria-label prefix on a linkable `<Rail.Group>`'s chevron button while the
+     * group is open. Interpolated with the group's own label at the call site
+     * (`Collapse Deals`).
+     */
+    collapseGroup: string;
   };
   topBar: {
     /** Default aria-label on the wrapping `<header>` landmark. */

@@ -5,9 +5,12 @@ import {
   useId,
   useRef,
   useState,
+  type ElementType,
+  type ForwardedRef,
   type HTMLAttributes,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactElement,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -21,16 +24,35 @@ import {
   type Placement,
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n';
 import { useRail } from './Rail';
+import { type PolymorphicProps } from './RailItem';
 import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Rail.module.scss';
+
+/**
+ * Runs the consumer's handler, then ours. Used only for the handlers that
+ * drive the collapsed-mode flyout on a linkable group — see the comment at
+ * the call site for why those five can't simply lose to `{...rest}`. Ours runs
+ * unconditionally: opening a flyout is not a cancellable default, so a
+ * consumer's `preventDefault()` must not strand the subitems.
+ */
+function composeHandlers<E>(
+  theirs: ((e: E) => void) | undefined,
+  ours: ((e: E) => void) | undefined,
+) {
+  return (e: E) => {
+    theirs?.(e);
+    ours?.(e);
+  };
+}
 
 /** Open-delay for hover-intent before opening the collapsed-mode flyout. */
 const OPEN_DELAY_MS = 80;
 /** Close-grace so the cursor has time to traverse from trigger to flyout. */
 const CLOSE_GRACE_MS = 200;
 
-export interface RailGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
+interface RailGroupOwnProps {
   /**
    * Required leading icon — the only thing visible when the rail is collapsed.
    * Groups always have an icon; subitems don't need one.
@@ -56,6 +78,48 @@ export interface RailGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
 }
 
 /**
+ * Public prop type. Generic `C` defaults to `'div'` — the wrapping element the
+ * group has always rendered, so **omitting `as` is exactly today's API**: the
+ * group is toggle-only and the remaining props land on the wrapper `<div>`.
+ *
+ * Passing `as` (e.g. `as={NavLink}`) opts into the **linkable** shape: the
+ * icon + label become a navigable element of that type with all of its props
+ * available (`to`, `replace`, `end`, …), the chevron becomes its own button,
+ * and the remaining props land on the rendered link rather than the wrapper —
+ * except `className` and `ref`, which stay on the wrapper `<div>` in both
+ * shapes, as they always have.
+ *
+ * Your `onPointerEnter` / `onPointerLeave` / `onFocus` / `onBlur` / `onClick`
+ * on a linkable group are **composed** with the group's own handlers (yours
+ * runs first), not replaced by them: those five are what open the
+ * collapsed-mode flyout, and overriding them would make the subitems
+ * unreachable while the rail is collapsed.
+ */
+export type RailGroupProps<C extends ElementType = 'div'> = PolymorphicProps<C, RailGroupOwnProps>;
+
+/**
+ * Internal generic-preserving signature. React's `forwardRef` strips the
+ * generic from the returned component, so we re-attach it via the cast below.
+ * Unlike `<Rail.Item>`, the ref type is fixed to the wrapper `<div>` — that is
+ * the element the group has always forwarded to, linkable or not.
+ */
+type RailGroupComponent = <C extends ElementType = 'div'>(
+  props: RailGroupProps<C> & { ref?: ForwardedRef<HTMLDivElement> },
+) => ReactElement | null;
+
+/**
+ * Implementation-side props. The generic lives only on the exported
+ * `RailGroupComponent` signature — inlining it on the `forwardRef` render
+ * function would force `C` to widen to the whole `ElementType` union, which
+ * collapses the intersection and drops the required `icon` / `label` /
+ * `children`. `<Rail.Item>` works around that by making its own props
+ * optional; keeping the required ones is worth this extra type instead.
+ */
+type RailGroupImplProps = RailGroupOwnProps & {
+  as?: ElementType;
+} & Omit<HTMLAttributes<HTMLDivElement>, 'children'>;
+
+/**
  * Two-state navigation parent. When the surrounding `<Rail>` is **expanded**,
  * the group renders icon + label + chevron; clicking toggles a list of
  * subitems that drop down inline below the group button. When the rail is
@@ -63,10 +127,25 @@ export interface RailGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
  * anchored to the right of the rail containing the group label as a header
  * and the subitems as a vertical list.
  *
- * **Auto-open**: on mount, if any subitem already has `aria-current="page"`
- * (i.e. the consumer is deep-linked into a subroute), the group defaults to
- * open so the active item is visible. This is uncontrolled-only and one-
- * shot — subsequent navigations don't force the group open. Consumers
+ * **Linkable groups** (`as`): pass `as={NavLink}` (or any routing primitive)
+ * plus its props and the row splits into two hit-targets — the icon + label
+ * navigate, and a separate chevron `<button>` owns the expand/collapse. The
+ * link carries `aria-current="page"` from the router, so the row highlights
+ * like any other item; the chevron carries `aria-expanded` + `aria-controls`
+ * and an accessible name of `Expand <label>` / `Collapse <label>`. Keyboard
+ * order within the row is link, then chevron. **Omitting `as` keeps the
+ * toggle-only shape** — one `<button>` spanning the whole row.
+ *
+ * When the rail is **collapsed** a linkable group has no chevron: the single
+ * icon-sized target navigates on click, and hover (or focus) opens the
+ * flyout, whose header is a link to the same destination so the parent page
+ * stays reachable from inside the panel.
+ *
+ * **Auto-open**: on mount, if the group's own link or any subitem already has
+ * `aria-current="page"` (i.e. the consumer is on the parent page or deep-
+ * linked into a subroute), the group defaults to open so the active branch is
+ * visible. This is uncontrolled-only and one-shot — subsequent navigations
+ * don't force the group open, and manually closing it sticks. Consumers
  * wanting exact sync can pass a controlled `open` prop.
  *
  * **Hover-intent timing**: the flyout opens after a small 80ms delay to
@@ -75,6 +154,7 @@ export interface RailGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
  * panel. Re-entering the trigger or the flyout cancels the pending close.
  *
  * @example
+ * // Toggle-only — the whole row expands/collapses, nothing navigates.
  * <Rail.Section title="Operations">
  *   <Rail.Group icon={<Settings />} label="Settings">
  *     <Rail.Item as={NavLink} to="/settings/general">General</Rail.Item>
@@ -83,14 +163,24 @@ export interface RailGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
  *   </Rail.Group>
  * </Rail.Section>
  *
+ * @example
+ * // Linkable — "Deals" navigates, the chevron reveals the saved views.
+ * <Rail.Group as={NavLink} to="/deals" icon={<Handshake />} label="Deals">
+ *   <Rail.Item as={NavLink} to="/deals?view=open">My open USD</Rail.Item>
+ *   <Rail.Item as={NavLink} to="/deals?view=closing">Closing this month</Rail.Item>
+ * </Rail.Group>
+ *
  * @remarks Anti-patterns
  * - ❌ Nesting `<Rail.Group>` inside another `<Rail.Group>`. v1 supports
  *   only one level — subitems must be leaves.
  * - ❌ Putting non-`<Rail.Item>` children inside a group. Subitems should
  *   match the item shape so the active-state cascade reaches them.
+ * - ❌ Adding a synthetic "All deals" first subitem to get a link to the
+ *   parent page. That's what `as` is for — make the group itself the link.
  */
-export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function RailGroup(
+export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function RailGroup(
   {
+    as,
     icon,
     label,
     open: controlledOpen,
@@ -102,7 +192,14 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
   },
   forwardedRef,
 ) {
+  const t = useTranslation();
   const { collapsed } = useRail();
+
+  // `as` is the opt-in for the linkable two-target row. Without it the group
+  // renders exactly as it always has: one <button> spanning the whole row,
+  // with `rest` landing on the wrapping <div>.
+  const isLink = as !== undefined;
+  const LinkComponent = (as ?? 'div') as ElementType;
 
   // ─── Inline expand state (used when rail is expanded) ─────────────────
   const isControlled = controlledOpen !== undefined;
@@ -119,7 +216,11 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
 
   const toggleOpen = useCallback(() => setOpen(!open), [open, setOpen]);
 
-  // ─── Auto-open when a subitem is active ──────────────────────────────
+  // ─── Auto-open when the group's own link OR a subitem is active ──────
+  // The query below deliberately scans the WHOLE group block, not just
+  // `.subitems`: on a linkable group the row's link lives in the same subtree,
+  // so landing on /deals opens the group and reveals the nested views. Narrow
+  // this to `.subitems` and that behavior silently disappears.
   const groupRef = useRef<HTMLDivElement | null>(null);
   // One-shot guard so we don't re-open the group every render after the
   // consumer manually closed it. Uncontrolled-only by design.
@@ -201,7 +302,9 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
   }, [collapsed, clearOpenTimer, clearCloseTimer]);
 
   // ─── Floating UI for the collapsed-mode flyout ────────────────────────
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  // HTMLElement, not HTMLButtonElement: on a linkable group the collapsed-mode
+  // trigger is the rendered link, not a button.
+  const triggerRef = useRef<HTMLElement | null>(null);
   const placement: Placement = 'right-start';
   const { refs, floatingStyles } = useFloating({
     open: popoverOpen,
@@ -276,7 +379,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
   );
 
   const handlePointerEnter = useCallback(
-    (_e: ReactPointerEvent<HTMLButtonElement>) => {
+    (_e: ReactPointerEvent<HTMLElement>) => {
       if (!collapsed) return;
       scheduleOpen();
     },
@@ -284,7 +387,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
   );
 
   const handlePointerLeave = useCallback(
-    (_e: ReactPointerEvent<HTMLButtonElement>) => {
+    (_e: ReactPointerEvent<HTMLElement>) => {
       if (!collapsed) return;
       scheduleClose();
     },
@@ -301,8 +404,9 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
     scheduleClose();
   }, [collapsed, scheduleClose]);
 
-  // Clicking a subitem inside the flyout should dismiss the flyout — any
-  // navigation should dismiss the floater per spec.
+  // Clicking a subitem inside the flyout — or the linkable group's own
+  // collapsed-mode link — should dismiss the flyout: any navigation should
+  // dismiss the floater per spec.
   const handleFlyoutClick = useCallback(() => {
     if (!collapsed) return;
     clearOpenTimer();
@@ -321,39 +425,110 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
     }
   };
 
-  const setTriggerRef = (node: HTMLButtonElement | null) => {
+  const setTriggerRef = (node: HTMLElement | null) => {
     triggerRef.current = node;
   };
 
+  // The flyout header is a SECOND rendering of the same destination, not a
+  // second instance of the consumer's element — so it carries the navigation
+  // props but not the identifying ones. A duplicated `id` is invalid HTML, and
+  // a duplicated `data-testid` makes `getByTestId` throw on "found multiple"
+  // for any consumer who tagged their group and then collapsed the rail.
+  const headerLinkProps = Object.fromEntries(
+    Object.entries(rest).filter(([key]) => key !== 'id' && !key.startsWith('data-')),
+  );
+
+  const chevron = (
+    <ChevronRight
+      size={14}
+      aria-hidden
+      className={clsx(styles.groupChevron, open && styles.groupChevronOpen)}
+    />
+  );
+
   return (
-    <div ref={setGroupRef} className={clsx(styles.group, className)} {...rest}>
-      <button
-        ref={setTriggerRef}
-        type="button"
-        className={styles.groupTrigger}
-        // Expanded mode: aria-expanded reflects the inline-disclosure state;
-        // collapsed mode: aria-haspopup reflects the flyout (rendered as a
-        // dialog-shaped panel).
-        aria-expanded={collapsed ? undefined : open}
-        aria-controls={collapsed ? undefined : subitemsId}
-        aria-haspopup={collapsed ? 'dialog' : undefined}
-        onClick={handleTriggerClick}
-        onKeyDown={handleTriggerKeyDown}
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
-        onFocus={collapsed ? scheduleOpen : undefined}
-        onBlur={collapsed ? scheduleClose : undefined}
-      >
-        <span className={styles.itemIcon} aria-hidden="true">
-          {icon}
-        </span>
-        <span className={styles.itemLabel}>{label}</span>
-        <ChevronRight
-          size={14}
-          aria-hidden
-          className={clsx(styles.groupChevron, open && styles.groupChevronOpen)}
-        />
-      </button>
+    <div
+      ref={setGroupRef}
+      className={clsx(styles.group, className)}
+      // Toggle-only groups keep their historical contract: `rest` is div props
+      // and lands here. A linkable group's `rest` is the link element's props
+      // (`to`, `end`, …) and lands on the link instead.
+      {...(isLink ? undefined : rest)}
+    >
+      {isLink ? (
+        <div className={styles.groupRow}>
+          {/* The row's link reuses `.item` so hover / focus / the
+              [aria-current="page"] active accent all come for free — it IS an
+              item row, minus the chevron. */}
+          <LinkComponent
+            ref={setTriggerRef}
+            className={styles.item}
+            // Collapsed mode: the single icon-sized target navigates on click
+            // and reveals the children on hover/focus, so it advertises the
+            // flyout rather than an inline disclosure. Expanded mode: the
+            // chevron button below owns aria-expanded / aria-controls.
+            aria-haspopup={collapsed ? 'dialog' : undefined}
+            // {...rest} last so consumer overrides win (Pattern A), matching
+            // <Rail.Item> — EXCEPT these five, which are composed rather than
+            // overridable. They are the collapsed-mode flyout's only trigger:
+            // if a consumer's own `onPointerEnter` (analytics, say) replaced
+            // ours, hover would stop opening the flyout and the subitems would
+            // become unreachable entirely — `.collapsed .subitems` is
+            // `display: none`, so the flyout is the only path to them. Nothing
+            // would warn. Do not "restore consistency" by deleting the
+            // composition and letting the spread win.
+            {...rest}
+            onPointerEnter={composeHandlers(rest.onPointerEnter, handlePointerEnter)}
+            onPointerLeave={composeHandlers(rest.onPointerLeave, handlePointerLeave)}
+            onFocus={composeHandlers(rest.onFocus, collapsed ? scheduleOpen : undefined)}
+            onBlur={composeHandlers(rest.onBlur, collapsed ? scheduleClose : undefined)}
+            onClick={composeHandlers(rest.onClick, collapsed ? handleFlyoutClick : undefined)}
+          >
+            <span className={styles.itemIcon} aria-hidden="true">
+              {icon}
+            </span>
+            <span className={styles.itemLabel}>{label}</span>
+          </LinkComponent>
+          {/* No chevron when collapsed: there is no room for a second target
+              at 56px, and hover already reveals the children. */}
+          {!collapsed && (
+            <button
+              type="button"
+              className={styles.groupChevronButton}
+              aria-expanded={open}
+              aria-controls={subitemsId}
+              aria-label={`${open ? t('rail.collapseGroup') : t('rail.expandGroup')} ${label}`}
+              onClick={toggleOpen}
+            >
+              {chevron}
+            </button>
+          )}
+        </div>
+      ) : (
+        <button
+          ref={setTriggerRef}
+          type="button"
+          className={styles.groupTrigger}
+          // Expanded mode: aria-expanded reflects the inline-disclosure state;
+          // collapsed mode: aria-haspopup reflects the flyout (rendered as a
+          // dialog-shaped panel).
+          aria-expanded={collapsed ? undefined : open}
+          aria-controls={collapsed ? undefined : subitemsId}
+          aria-haspopup={collapsed ? 'dialog' : undefined}
+          onClick={handleTriggerClick}
+          onKeyDown={handleTriggerKeyDown}
+          onPointerEnter={handlePointerEnter}
+          onPointerLeave={handlePointerLeave}
+          onFocus={collapsed ? scheduleOpen : undefined}
+          onBlur={collapsed ? scheduleClose : undefined}
+        >
+          <span className={styles.itemIcon} aria-hidden="true">
+            {icon}
+          </span>
+          <span className={styles.itemLabel}>{label}</span>
+          {chevron}
+        </button>
+      )}
 
       {/* Expanded-mode inline subitems. When the rail is collapsed, .subitems
           is set to display:none via the .collapsed CSS cascade — we still
@@ -401,11 +576,23 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupProps>(function Rai
               }
             }}
           >
-            <div className={styles.flyoutHeader}>{label}</div>
+            {/* A linkable group's flyout header links to the same destination
+                so the parent page stays reachable once the panel is open —
+                collapsed mode has no chevron, so the row's own target is the
+                only other way there. */}
+            <div className={styles.flyoutHeader}>
+              {isLink ? (
+                <LinkComponent className={styles.flyoutHeaderLink} {...headerLinkProps}>
+                  {label}
+                </LinkComponent>
+              ) : (
+                label
+              )}
+            </div>
             <div className={styles.flyoutBody}>{children}</div>
           </div>,
           document.body,
         )}
     </div>
   );
-});
+}) as RailGroupComponent;

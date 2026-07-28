@@ -40,6 +40,12 @@
   --rail-item-fg-active: var(--color-accent);
   --rail-item-icon-size: 18px;
 
+  // Linkable group row (`<Rail.Group as={NavLink}>`) — the gap between the
+  // label link and its sibling chevron button, and the chevron's own padding
+  // (which sets its hit-target size around the 14px glyph).
+  --rail-group-row-gap: var(--space-1);
+  --rail-group-chevron-padding: var(--space-2);
+
   // Sub-item indent (extra left padding so subitems visually nest under
   // their group icon). No --space-7 (28px) exists, so we use --space-6 (24px).
   --rail-subitem-padding-left: var(--space-6);

@@ -252,6 +252,8 @@ export const ru: Messages = {
     expand: 'Развернуть навигацию',
     collapse: 'Свернуть навигацию',
     navigation: 'Главная навигация',
+    expandGroup: 'Развернуть',
+    collapseGroup: 'Свернуть',
   },
   topBar: {
     label: 'Верхняя панель приложения',

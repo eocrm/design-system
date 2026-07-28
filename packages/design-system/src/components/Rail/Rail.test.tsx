@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { act, createRef, useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { Rail, useRail } from './Rail';
@@ -705,5 +705,289 @@ describe('Rail — collapseBelow (viewport override)', () => {
     // Widening reveals the preference the user set while narrow.
     viewport.resizeTo(900);
     expect(screen.getByRole('button')).toHaveTextContent('effective:true byViewport:false');
+  });
+});
+
+describe('Rail — linkable Group (#377)', () => {
+  // The playground and these tests use a plain <a> via `as="a"` rather than a
+  // NavLink: the active state is purely CSS off [aria-current="page"], so a
+  // hard-coded attribute exercises the same contract with no router.
+  function renderLinkGroup(
+    props: {
+      collapsed?: boolean;
+      onClick?: React.MouseEventHandler<HTMLAnchorElement>;
+      onPointerEnter?: React.PointerEventHandler<HTMLAnchorElement>;
+      'aria-current'?: 'page';
+      'data-testid'?: string;
+    } = {},
+  ) {
+    const { collapsed, ...linkProps } = props;
+    return render(
+      <Rail defaultCollapsed={collapsed}>
+        <Rail.Section title="Main">
+          <Rail.Group
+            as="a"
+            href="#/deals"
+            icon={<span aria-hidden />}
+            label="Deals"
+            {...linkProps}
+          >
+            <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+  }
+
+  it('without link props renders exactly one button and toggles as before', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <Rail>
+        <Rail.Section title="Ops">
+          <Rail.Group icon={<span aria-hidden />} label="Settings">
+            <Rail.Item href="/a">Sub A</Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+    // Regression guard for "purely additive": the toggle-only shape is still a
+    // single <button> spanning the row, with no separate chevron target and no
+    // link in the row at all.
+    const buttons = container.querySelectorAll('button');
+    expect(buttons).toHaveLength(1);
+    const trigger = buttons[0];
+    expect(trigger).toHaveAccessibleName(/Settings/);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    await user.click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('with link props splits the row into a link and a chevron button', () => {
+    renderLinkGroup();
+    const link = screen.getByRole('link', { name: 'Deals' });
+    expect(link).toHaveAttribute('href', '#/deals');
+    // aria-expanded belongs to the chevron only — never the link.
+    expect(link).not.toHaveAttribute('aria-expanded');
+    const chevron = screen.getByRole('button', { name: 'Expand Deals' });
+    expect(chevron.getAttribute('aria-expanded')).toBe('false');
+    // Keyboard order within the row: link first, then chevron.
+    expect(link.compareDocumentPosition(chevron) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('the chevron aria-controls the real subitem list and renames per state', async () => {
+    const user = userEvent.setup();
+    renderLinkGroup();
+    const chevron = screen.getByRole('button', { name: 'Expand Deals' });
+    const controlled = document.getElementById(chevron.getAttribute('aria-controls')!);
+    expect(controlled).not.toBeNull();
+    expect(controlled).toHaveTextContent('My open USD');
+    await user.click(chevron);
+    expect(chevron.getAttribute('aria-expanded')).toBe('true');
+    expect(chevron).toHaveAccessibleName('Collapse Deals');
+  });
+
+  it('uses the ru locale for the chevron name', () => {
+    render(
+      <I18nProvider locale="ru">
+        <Rail>
+          <Rail.Section title="Main">
+            <Rail.Group as="a" href="#/deals" icon={<span aria-hidden />} label="Deals">
+              <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button', { name: 'Развернуть Deals' })).toBeInTheDocument();
+  });
+
+  it('clicking the label navigates without toggling', async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn((e: React.MouseEvent) => e.preventDefault());
+    renderLinkGroup({ onClick });
+    await user.click(screen.getByRole('link', { name: 'Deals' }));
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Expand Deals' })).toBeInTheDocument();
+  });
+
+  it('clicking the chevron toggles without navigating', async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn((e: React.MouseEvent) => e.preventDefault());
+    renderLinkGroup({ onClick });
+    await user.click(screen.getByRole('button', { name: 'Expand Deals' }));
+    expect(onClick).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Collapse Deals' })).toBeInTheDocument();
+  });
+
+  it('Enter on the link navigates without toggling', async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn((e: React.MouseEvent) => e.preventDefault());
+    renderLinkGroup({ onClick });
+    screen.getByRole('link', { name: 'Deals' }).focus();
+    await user.keyboard('{Enter}');
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Expand Deals' })).toBeInTheDocument();
+  });
+
+  it.each(['{Enter}', ' '])('%s on the chevron toggles without navigating', async (key) => {
+    const user = userEvent.setup();
+    const onClick = vi.fn((e: React.MouseEvent) => e.preventDefault());
+    renderLinkGroup({ onClick });
+    screen.getByRole('button', { name: 'Expand Deals' }).focus();
+    await user.keyboard(key);
+    expect(onClick).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Collapse Deals' })).toBeInTheDocument();
+  });
+
+  it("auto-opens when the group's OWN link is the current page", () => {
+    renderLinkGroup({ 'aria-current': 'page' });
+    // Landing on /deals reveals the nested saved views — the point of nesting.
+    expect(screen.getByRole('link', { name: 'My open USD' }).closest('[hidden]')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Collapse Deals' })).toBeInTheDocument();
+  });
+
+  it('the own-link auto-open is one-shot — a manual close survives a re-render', async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [tick, setTick] = useState(0);
+      return (
+        <>
+          <button onClick={() => setTick(tick + 1)}>rerender {tick}</button>
+          <Rail>
+            <Rail.Section title="Main">
+              <Rail.Group
+                as="a"
+                href="#/deals"
+                aria-current="page"
+                icon={<span aria-hidden />}
+                label="Deals"
+              >
+                <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+              </Rail.Group>
+            </Rail.Section>
+          </Rail>
+        </>
+      );
+    }
+    render(<Harness />);
+    const chevron = screen.getByRole('button', { name: 'Collapse Deals' });
+    await user.click(chevron);
+    expect(chevron.getAttribute('aria-expanded')).toBe('false');
+    await user.click(screen.getByRole('button', { name: /rerender/ }));
+    // Still closed: the effect must not re-fire now that the user has spoken.
+    expect(chevron.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('forwards ref to the wrapper <div>, not the link, when linkable', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Rail>
+        <Rail.Section title="Main">
+          <Rail.Group ref={ref} as="a" href="#/deals" icon={<span aria-hidden />} label="Deals">
+            <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+    expect(ref.current?.tagName).toBe('DIV');
+    expect(ref.current).toContainElement(screen.getByRole('link', { name: 'Deals' }));
+  });
+
+  it('merges className on the wrapper while the rest of the props follow `as`', () => {
+    const { container } = render(
+      <Rail>
+        <Rail.Section title="Main">
+          <Rail.Group
+            as="a"
+            href="#/deals"
+            className="mine"
+            data-testid="deals-nav"
+            icon={<span aria-hidden />}
+            label="Deals"
+          >
+            <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+    // className merges onto the wrapper (never replaces the group class)...
+    const wrapper = container.querySelector('.mine')!;
+    expect(wrapper.tagName).toBe('DIV');
+    expect(wrapper.className).toMatch(/group/);
+    // ...while everything else lands on the link, which is what `to` / `href`
+    // are for.
+    expect(wrapper).not.toHaveAttribute('href');
+    const link = screen.getByRole('link', { name: 'Deals' });
+    expect(link).toHaveAttribute('data-testid', 'deals-nav');
+  });
+
+  it("composes the consumer's onPointerEnter instead of letting it kill the flyout", () => {
+    // Regression guard: these handlers are the collapsed flyout's ONLY trigger,
+    // and `.collapsed .subitems` is display:none — a consumer's own hover
+    // handler winning would make the subitems unreachable with nothing warning.
+    vi.useFakeTimers();
+    try {
+      const onPointerEnter = vi.fn();
+      renderLinkGroup({ collapsed: true, onPointerEnter });
+      const trigger = screen.getByRole('link', { name: 'Deals' });
+      act(() => {
+        fireEvent.pointerEnter(trigger);
+      });
+      expect(onPointerEnter).toHaveBeenCalledOnce();
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      expect(screen.getByRole('dialog', { name: 'Deals' })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not duplicate identifying attributes onto the flyout header link', () => {
+    vi.useFakeTimers();
+    try {
+      renderLinkGroup({ collapsed: true, 'data-testid': 'deals-nav' });
+      act(() => {
+        fireEvent.pointerEnter(screen.getByTestId('deals-nav'));
+      });
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      const flyout = screen.getByRole('dialog', { name: 'Deals' });
+      // The header is a second rendering of the same destination, not a second
+      // instance of the consumer's element — so getByTestId still resolves.
+      expect(within(flyout).getByRole('link', { name: 'Deals' })).toHaveAttribute(
+        'href',
+        '#/deals',
+      );
+      expect(screen.getByTestId('deals-nav')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('collapsed: no chevron, hover opens the flyout, and its header is a link', () => {
+    vi.useFakeTimers();
+    try {
+      renderLinkGroup({ collapsed: true });
+      // The single 40px target must do the primary action, so there is no
+      // second (chevron) target to compete with it.
+      expect(screen.queryByRole('button', { name: /Deals/ })).toBeNull();
+      const trigger = screen.getByRole('link', { name: 'Deals' });
+      expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+      act(() => {
+        fireEvent.pointerEnter(trigger);
+      });
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      const flyout = screen.getByRole('dialog', { name: 'Deals' });
+      // The header links to the same destination so the parent page stays
+      // reachable once the flyout is open.
+      const header = within(flyout).getByRole('link', { name: 'Deals' });
+      expect(header).toHaveAttribute('href', '#/deals');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
