@@ -330,10 +330,12 @@ KanbanColumn.displayName = 'KanbanColumn';
  *   pre-move index, since nothing re-seated it).
  * - Within-column drop on the source column's own padding past all cards →
  *   appended to the end of the source column. This is the one deliberate
- *   deviation from "commit === preview": `over` is the column, so the
- *   strategy shows the card in its original slot, but snapping a
- *   dragged-to-the-bottom card back to where it started reads as a dropped
- *   drag, so the commit appends instead.
+ *   deviation from "commit === preview": `over` is the column, so the strategy
+ *   displaces nothing and previews the card at whatever slot it currently
+ *   occupies (its original one, or — if it visited another column and came
+ *   back — wherever the return seated it, which can be several slots off).
+ *   The commit appends anyway: snapping a dragged-to-the-bottom card back up
+ *   reads as a dropped drag.
  * - Release without moving (cursor never left the card's own slot) or Escape
  *   → snap back; `onMove` does NOT fire. Note that releasing *outside* the
  *   board is not a cancel: `closestCorners` still resolves the nearest
@@ -537,6 +539,15 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         //     the cursor is past the over card's vertical midpoint (active's
         //     translated rect tracks the cursor centered around it).
         //   - over.id is the column itself (empty drop / padding) → append
+        //
+        // The `isBelow` +1 rarely survives to the commit: the strategy
+        // immediately re-renders the card at `overIndex` and dragEnd commits
+        // from `over`, so both sides of the +1 produce the same drop. It still
+        // decides the seeded slot the frame after transit (while dnd-kit has
+        // transforms disabled to re-measure), and dragEnd's fallbacks — `over`
+        // resolving to the column or to the dragged card itself — commit that
+        // seeded slot verbatim. Keep it; without it the card visibly jumps a
+        // slot on entry.
         let insertAt: number;
         if (overCards.includes(overId)) {
           const overIdx = overCards.indexOf(overId);
@@ -573,10 +584,11 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       const { active, over } = event;
       const activeId = active.id as string | number;
 
-      // Release outside any droppable → cancel + snap back. dnd-kit fires
-      // onDragEnd with over=null when the cursor leaves all droppable areas
-      // before release. Treat that as a cancellation (matches Sortable
-      // semantics and Trello convention).
+      // `over` is null only when the collision detection returned nothing at
+      // all — i.e. no droppable was measured. It is NOT "released outside the
+      // board": `containerAwareClosestCorners` falls back to `closestCorners`,
+      // which ranks every measured droppable and always yields one, so a
+      // release far away from the columns still resolves to the nearest.
       if (!over) {
         setLiveItems(null);
         return;

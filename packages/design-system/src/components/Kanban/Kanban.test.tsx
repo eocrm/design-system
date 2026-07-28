@@ -255,10 +255,35 @@ describe('Kanban — drop position', () => {
   });
   afterEach(() => restore());
 
+  it('#376 reproduction: enters at the top, releases ON the last card, commits that card’s slot', () => {
+    // The exact gesture from the issue: cross the boundary near the top of a
+    // three-card column, travel DOWN, release over a sibling. Before the fix
+    // the slot froze at the crossing and this committed index 0 while the
+    // preview showed the gap further down. `at(1, 140)` sits on b2 in the
+    // live list [a1, b1, b2, b3], so both preview and commit are index 2.
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1', 'b2', 'b3']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 5), at(1, 140)]);
+
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0]).toEqual({
+      cardId: 'a1',
+      from: { columnId: 'a', index: 0 },
+      to: { columnId: 'b', index: 2 },
+    });
+  });
+
   it('commits the slot the card was RELEASED on, not the one it entered the column at (#376)', () => {
-    // Enter "b" at the very top (slot 0), then travel down to the last card
-    // and release there. Before #376 the slot froze at the boundary crossing
-    // and this committed index 0 while the preview showed the bottom slot.
+    // Same crossing, but released past the last card — the append path.
     const onMove = vi.fn();
     render(
       <Board
@@ -358,6 +383,32 @@ describe('Kanban — drop position', () => {
     drag('a1', [at(0, 30)]);
 
     expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it('after a round trip, a sibling’s LIVE index wins over its pre-drag index', () => {
+    // a1 → b → back into a, seated at the end, released over a4. a4's pre-drag
+    // index is 3; its index in the live column (a1 removed from the front, then
+    // re-appended) is 2 — and 2 is what the strategy previews. Resolving the
+    // sibling against the pre-drag order would commit 3.
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2', 'a3', 'a4']],
+          ['b', ['b1']],
+        ]}
+      />,
+    );
+
+    drag('a1', [at(1, 5), at(0, 140)]);
+
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0]).toEqual({
+      cardId: 'a1',
+      from: { columnId: 'a', index: 0 },
+      to: { columnId: 'a', index: 2 },
+    });
   });
 
   it('commits the released slot after a round trip back to the origin column', () => {
