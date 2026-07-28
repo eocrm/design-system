@@ -74,9 +74,19 @@
 }
 
 // --- collapseBelow -----------------------------------------------------
-// Only grids with `collapseBelow` become size containers, so existing grids
-// get zero containment changes.
+// Only grids with the STRING form become size containers themselves, so
+// existing grids get zero containment changes. Safe here because every rule
+// below queries a DESCENDANT (`> *`), never the grid itself.
 .collapsible {
+  container-type: inline-size;
+}
+
+// The map form needs the container on an ANCESTOR instead: its step rules
+// re-template the GRID, and an element is never matched by a query against
+// its own container (Split.module.scss says the same thing). Grid.tsx renders
+// this zero-styling wrapper only for the map form — same trick as
+// DashboardCanvas's `.sizer`.
+.stepContainer {
   container-type: inline-size;
 }
 
@@ -110,9 +120,11 @@
 // Step track templates + per-item clamped spans are computed in Grid.tsx /
 // GridItem.tsx and injected inline (--grid-columns-<bp>, --grid-item-span-<bp>).
 // Declared lg → md → sm so when several steps match at a narrow width the
-// smallest breakpoint wins by source order (equal specificity).
+// smallest breakpoint wins by source order (equal specificity). Queried
+// against `.stepContainer`, the wrapper above; `.grid.stepXx` keeps the same
+// (0,2,0) specificity the old `.collapsible.stepXx` pair had.
 @container (max-width: #{bp.$collapse-lg}) {
-  .collapsible.stepLg {
+  .grid.stepLg {
     grid-template-columns: var(--grid-columns-lg);
 
     > .item {
@@ -123,7 +135,7 @@
 }
 
 @container (max-width: #{bp.$collapse-md}) {
-  .collapsible.stepMd {
+  .grid.stepMd {
     grid-template-columns: var(--grid-columns-md);
 
     > .item {
@@ -134,7 +146,7 @@
 }
 
 @container (max-width: #{bp.$collapse-sm}) {
-  .collapsible.stepSm {
+  .grid.stepSm {
     grid-template-columns: var(--grid-columns-sm);
 
     > .item {
