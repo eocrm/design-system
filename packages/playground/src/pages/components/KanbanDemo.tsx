@@ -71,6 +71,27 @@ const INITIAL_UNEVEN: Record<UnevenColId, CardData[]> = {
   archive: [],
 };
 
+// Eight stages at min-width 260px ≈ 2200px of board — wider than any demo
+// viewport, so this Example always overflows and always auto-scrolls (#373).
+const PIPELINE: [string, CardData[]][] = [
+  [
+    'New',
+    [
+      { id: 'deal-1', title: 'Acme — 40 seats' },
+      { id: 'deal-2', title: 'Globex renewal' },
+    ],
+  ],
+  ['Qualified', [{ id: 'deal-3', title: 'Initech pilot' }]],
+  ['Discovery', [{ id: 'deal-4', title: 'Umbrella — security review' }]],
+  ['Demo', [{ id: 'deal-5', title: 'Stark Industries' }]],
+  ['Proposal', [{ id: 'deal-6', title: 'Wayne Ent. — multi-year' }]],
+  ['Negotiation', [{ id: 'deal-7', title: 'Hooli — legal redlines' }]],
+  ['Closing', [{ id: 'deal-8', title: 'Pied Piper' }]],
+  ['Won', [{ id: 'deal-9', title: 'Cyberdyne' }]],
+];
+
+const INITIAL_PIPELINE: Record<string, CardData[]> = Object.fromEntries(PIPELINE);
+
 function makeMoveHandler<K extends string>(
   setter: React.Dispatch<React.SetStateAction<Record<K, CardData[]>>>,
 ) {
@@ -97,6 +118,8 @@ export function KanbanDemo() {
   const [boardA, setBoardA] = useState<Record<ColId, CardData[]>>(INITIAL_BOARD);
   const [boardB, setBoardB] = useState<Record<ColId, CardData[]>>(INITIAL_BOARD);
   const [boardC, setBoardC] = useState<Record<UnevenColId, CardData[]>>(INITIAL_UNEVEN);
+  const [boardD, setBoardD] = useState<Record<string, CardData[]>>(INITIAL_PIPELINE);
+  const handleMoveD = useCallback(makeMoveHandler(setBoardD), [setBoardD]);
   const [lastMove, setLastMove] = useState<string>('—');
   const handleMoveA = useCallback(makeMoveHandler(setBoardA), [setBoardA]);
   const handleMoveB = useCallback(makeMoveHandler(setBoardB), [setBoardB]);
@@ -449,6 +472,50 @@ export function Demo() {
             Last onMove: {lastMove}
           </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title="Wide board (auto-scroll to an off-screen column)"
+        description="Eight stages, wider than the page. Drag a card to the right edge and hold: the board scrolls until the last column is reached and then STOPS — the card is bounded by the board's scroll content, so it can't extend scrollWidth and send auto-scroll chasing an edge that keeps receding (#373). Drop into a column that started off-screen to confirm."
+        code={`// Nothing to configure — any board wider than its container behaves this way.
+// The dragged card is bounded by the board's scrollable content box, so
+// scrollLeft plateaus at the real maximum instead of running away.
+
+<Kanban onMove={handleMove}>
+  {STAGES.map(([stage, deals]) => (
+    <Kanban.Column key={stage} id={stage}>
+      <Cluster justify="between" align="center">
+        <Title order={3} size="sm">{stage}</Title>
+        <Badge tone="neutral" size="sm">{deals.length}</Badge>
+      </Cluster>
+      {deals.map((deal) => (
+        <Kanban.Card key={deal.id} id={deal.id}>
+          <Card padding="sm">{deal.title}</Card>
+        </Kanban.Card>
+      ))}
+    </Kanban.Column>
+  ))}
+</Kanban>`}
+      >
+        <Kanban onMove={handleMoveD} data-testid="wide-board">
+          {PIPELINE.map(([stage]) => (
+            <Kanban.Column key={stage} id={stage}>
+              <Cluster justify="between" align="center">
+                <Title order={3} size="sm">
+                  {stage}
+                </Title>
+                <Badge tone="neutral" size="sm">
+                  {boardD[stage].length}
+                </Badge>
+              </Cluster>
+              {boardD[stage].map((card) => (
+                <Kanban.Card key={card.id} id={card.id}>
+                  <Card padding="sm">{card.title}</Card>
+                </Kanban.Card>
+              ))}
+            </Kanban.Column>
+          ))}
+        </Kanban>
       </Example>
 
       <Stack gap="xs">
