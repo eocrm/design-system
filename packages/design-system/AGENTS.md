@@ -939,6 +939,8 @@ Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once pe
 
 **Cross-column drag is LIVE**: as the dragged card crosses into a new column, cards in the target column shift to make room in real time. `onMove` still fires only once on release. This is driven by internal Kanban state — consumer's state is untouched until drop, so re-renders are scoped to the Kanban subtree (avoids the measureRect cascade that would happen if mid-drag mutations went through consumer setState).
 
+**Drop slot** = the slot the preview showed at release, for the whole drag — the destination index re-evaluates as the cursor moves inside the target column, not only when it crosses the boundary (#376). Safe to send `to.index` straight to a ranking API.
+
 **Keyboard reorder** works WITHIN a column (Tab to Card/Handle, Space pick up, Arrow keys move, Space drop). Cross-column keyboard moves are NOT supported in v1.
 
 **Anti-patterns**

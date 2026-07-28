@@ -8,6 +8,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type HTMLAttributes,
   type ReactElement,
@@ -306,22 +307,37 @@ KanbanColumn.displayName = 'KanbanColumn';
  * </Kanban>
  *
  * @remarks Drop position semantics
- * - Cross-column drop on a sibling card → the active card lands at that
- *   card's slot if the cursor crossed the column boundary above the over
- *   card's midpoint, or after it if the cursor was past the midpoint
- *   (cursor-position-vs-over-card-midpoint isBelow detection at the moment
- *   of transit). Subsequent within-target-column cursor movement does NOT
- *   re-evaluate the slot — only the cross-boundary moment matters.
+ * The committed `to.index` is the slot the preview showed at the moment of
+ * release — the two cannot drift, because both are read off the same
+ * `over`. `verticalListSortingStrategy` renders a column as
+ * `arrayMove(cards, activeIndex, overIndex)` where
+ * `overIndex = cards.indexOf(over.id)`, so the gap the user sees sits at
+ * `overIndex`; `onMove` commits that same index. Where `over` is not a card
+ * (`overIndex === -1`) the strategy displaces nothing, so the preview is the
+ * card's live slot and that is what gets committed. Concretely:
+ * - Drop on a sibling card → the active card lands at that card's slot in
+ *   the destination as rendered mid-drag. The slot re-evaluates as the
+ *   cursor moves, for the whole drag — not only at the column boundary
+ *   (fixed in #376; before that a cross-column drop committed the entry
+ *   slot while the preview kept tracking the cursor).
  * - Cross-column drop onto an empty column → index 0 of the destination.
  * - Cross-column drop in the column's padding past the last card → appended
- *   to the end of the destination.
+ *   to the end of the destination, re-appended as long as the cursor stays
+ *   in the padding.
  * - Within-column reorder onto a sibling card → arrayMove semantics: the
- *   active card ends at the over card's pre-move index (`from.index` →
- *   `to.index`, where `to.index = initialItems[col].indexOf(overId)`).
+ *   active card ends at the over card's index in the column as currently
+ *   rendered (for a drag that never left its column that's the card's
+ *   pre-move index, since nothing re-seated it).
  * - Within-column drop on the source column's own padding past all cards →
- *   appended to the end of the source column.
- * - Release outside any droppable → cancel + snap back; `onMove` does NOT
- *   fire.
+ *   appended to the end of the source column. This is the one deliberate
+ *   deviation from "commit === preview": `over` is the column, so the
+ *   strategy shows the card in its original slot, but snapping a
+ *   dragged-to-the-bottom card back to where it started reads as a dropped
+ *   drag, so the commit appends instead.
+ * - Release without moving (cursor never left the card's own slot) or Escape
+ *   → snap back; `onMove` does NOT fire. Note that releasing *outside* the
+ *   board is not a cancel: `closestCorners` still resolves the nearest
+ *   column, so the card commits there.
  *
  * @remarks When NOT to use
  * - Single-column drag-to-reorder — use `<Sortable>` instead. It's simpler
@@ -463,14 +479,19 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // ------------------------------------------------------------------
   // Drag handlers
   // ------------------------------------------------------------------
+  const originRef = useRef<string | number | null>(null);
   const handleDragStart = useCallback(
-    (_event: DragStartEvent) => {
+    (event: DragStartEvent) => {
+      // The column the card started in. Used by handleDragOver to tell a
+      // genuine same-column reorder apart from "already transited, still
+      // moving inside the destination".
+      originRef.current = findContainer(event.active.id as string | number, initialItems);
       // Snapshot: shallow-copy each cards array so mutations don't leak into initialItems.
       const snapshot = new Map<string | number, (string | number)[]>();
       for (const [colId, cards] of initialItems) snapshot.set(colId, [...cards]);
       setLiveItems(snapshot);
     },
-    [initialItems],
+    [initialItems, findContainer],
   );
 
   const handleDragOver = useCallback(
@@ -486,15 +507,30 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         const activeContainer = findContainer(activeId, prev);
         const overContainer = findContainer(overId, prev);
         if (activeContainer == null || overContainer == null) return prev;
-        // Within-column reorder is finalized at dragEnd. Updating liveItems
-        // every dragOver here would oscillate when the cursor stays over a
-        // single sibling (the arrayMove would flip the card back and forth).
-        // useSortable's strategy handles the visual reflow during drag.
-        if (activeContainer === overContainer) return prev;
+
+        const isTransit = activeContainer !== overContainer;
+        // Pointer in the padding of the column the card has already transited
+        // into (no card under it). `over` is the column, so the sortable
+        // strategy computes overIndex === -1 and applies NO displacement —
+        // re-appending here is therefore stable (it can't fight a transform)
+        // and it's exactly what the user sees. Cheap to keep in sync.
+        const isForeignAppend =
+          !isTransit && overId === overContainer && overContainer !== originRef.current;
+        // Everything else with active and over in the same column is finalized
+        // at dragEnd from `over` (see handleDragEnd). Re-seating the card here
+        // on every dragOver would oscillate: the insertion re-measures the
+        // rects, which changes `over`, which re-fires this handler — and the
+        // strategy would still displace siblings on top of the new order, so
+        // the commit would drift from the preview again.
+        if (!isTransit && !isForeignAppend) return prev;
 
         const activeCards = prev.get(activeContainer) ?? [];
-        const overCards = prev.get(overContainer) ?? [];
         if (!activeCards.includes(activeId)) return prev;
+        if (isForeignAppend && activeCards[activeCards.length - 1] === activeId) return prev;
+
+        // Slot math runs against the destination WITHOUT the active card, so
+        // the card's own slot is never counted (off-by-one when moving down).
+        const overCards = (prev.get(overContainer) ?? []).filter((id) => id !== activeId);
 
         // Resolve the target slot inside overContainer:
         //   - over.id is a sibling card → use that card's index, plus 1 if
@@ -517,10 +553,12 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         }
 
         const next = new Map(prev);
-        next.set(
-          activeContainer,
-          activeCards.filter((id) => id !== activeId),
-        );
+        if (isTransit) {
+          next.set(
+            activeContainer,
+            activeCards.filter((id) => id !== activeId),
+          );
+        }
         const newOver = [...overCards];
         newOver.splice(insertAt, 0, activeId);
         next.set(overContainer, newOver);
@@ -564,15 +602,16 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         return;
       }
 
-      // Where does active currently live in liveItems? handleDragOver moves
-      // it cross-column only (with isBelow detection determining the slot at
-      // the moment of transit), so:
-      //   - liveColumn !== fromColumn → cross-column drop. The live slot IS
-      //     the drop slot — useSortable's verticalListSortingStrategy renders
-      //     the active card at exactly that slot (no within-target visual
-      //     reflow when overId === activeId), so live === visual === commit.
-      //   - liveColumn === fromColumn → within-column drop. Finalize via
-      //     arrayMove semantics using over.id below.
+      // Where does active currently live in liveItems? handleDragOver seats
+      // it in the destination on transit; the exact slot is resolved HERE,
+      // from `over`, because that's what the user was looking at:
+      // `verticalListSortingStrategy` renders each column as
+      // `arrayMove(liveItems[col], activeIndex, overIndex)` with
+      // `overIndex = liveItems[col].indexOf(over.id)`, so the previewed slot
+      // is `overIndex` whenever `over` is a sibling card, and the card's live
+      // slot when it isn't (`overIndex === -1` → the strategy displaces
+      // nothing). Committing the live slot alone would pin the drop to the
+      // boundary-crossing point (#376).
       let liveColumn: string | number | null = null;
       let liveIdx = -1;
       for (const [colId, cards] of finalItems) {
@@ -588,10 +627,11 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       let toIndex: number;
 
       if (liveColumn != null && liveColumn !== fromColumn) {
-        // Cross-column drop: live slot wins. Keeps the commit consistent with
-        // the visual preview the user saw during drag.
+        // Cross-column drop: the previewed slot wins (see the comment above).
         toColumn = liveColumn;
-        toIndex = liveIdx;
+        const destCards = finalItems.get(liveColumn) ?? [];
+        const overIdx = overId === activeId ? -1 : destCards.indexOf(overId);
+        toIndex = overIdx >= 0 ? overIdx : liveIdx;
       } else if (initialItems.has(overId)) {
         // Within-source-column drop on the column's padding (no card target).
         // Default to "drop at end" so the card lands where the user dragged
@@ -600,19 +640,25 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         const fromCol = initialItems.get(fromColumn) ?? [];
         toIndex = fromCol.length - 1;
       } else if (overId === activeId) {
-        // Cursor still over the active card — barely-moved drag, no real
-        // target. Cancel.
-        setLiveItems(null);
-        return;
+        // Cursor over the dragged card itself. The strategy displaces nothing
+        // (overIndex === activeIndex), so the preview IS the live order —
+        // commit that. A barely-moved drag resolves to its own starting index
+        // and gets dropped by the no-op guard below; a card that came back to
+        // its origin column lands where the preview put it.
+        toColumn = fromColumn;
+        toIndex = liveIdx;
       } else {
         // Within-column drop on a sibling card. arrayMove semantics:
-        //   toIndex = sibling's index in the consumer's pre-move state.
-        // For cross-column drops where the cross-column transit didn't
-        // commit (rare stale-closure case at the very first dragOver), the
-        // sibling may live in a different column — handle that by resolving
-        // the column from initialItems.
+        //   toIndex = sibling's index in the live column — same rule as the
+        // cross-column branch. For a plain same-column drag liveItems is
+        // untouched, so this is the sibling's index in the consumer's
+        // pre-move state; if the card visited another column and came back,
+        // the live order is what the preview showed, so it wins.
+        // For cross-column drops where the transit didn't commit (rare
+        // stale-closure case at the very first dragOver), the sibling may
+        // live in a different column — resolve the column from the card.
         let overCol: string | number | null = null;
-        for (const [colId, cards] of initialItems) {
+        for (const [colId, cards] of finalItems) {
           if (cards.includes(overId)) {
             overCol = colId;
             break;
@@ -623,7 +669,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
           return;
         }
         toColumn = overCol;
-        toIndex = (initialItems.get(toColumn) ?? []).indexOf(overId);
+        toIndex = (finalItems.get(toColumn) ?? []).indexOf(overId);
       }
 
       setLiveItems(null);
