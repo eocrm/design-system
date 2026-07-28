@@ -104,19 +104,19 @@ export const ru: Messages = {
   drag: {
     instructions:
       'Нажмите пробел или Enter, чтобы взять элемент. Пока элемент взят, стрелки перемещают его, пробел или Enter размещает, Escape отменяет.',
-    pickedUp: ({ item }) => `Взято: ${item as string}.`,
+    pickedUp: ({ item }) => `Взято: «${item as string}».`,
     movedOver: ({ item, index, total }) =>
-      `${item as string} — позиция ${index as number} из ${total as number}.`,
+      `«${item as string}» — позиция ${index as number} из ${total as number}.`,
     movedOverIn: ({ item, index, total, container }) =>
-      `${item as string} — позиция ${index as number} из ${total as number}, ${container as string}.`,
-    movedOutside: ({ item }) => `${item as string} — вне области размещения.`,
+      `«${item as string}» — позиция ${index as number} из ${total as number}, «${container as string}».`,
+    movedOutside: ({ item }) => `«${item as string}» — вне области размещения.`,
     dropped: ({ item, index, total }) =>
-      `Размещено: ${item as string}, позиция ${index as number} из ${total as number}.`,
+      `Размещено: «${item as string}», позиция ${index as number} из ${total as number}.`,
     droppedIn: ({ item, index, total, container }) =>
-      `Размещено: ${item as string}, позиция ${index as number} из ${total as number}, ${container as string}.`,
-    droppedNowhere: ({ item }) => `Отпущено: ${item as string}. Ничего не изменилось.`,
-    moved: ({ item }) => `Перемещено: ${item as string}.`,
-    cancelled: ({ item }) => `Перемещение отменено: ${item as string} на прежнем месте.`,
+      `Размещено: «${item as string}», позиция ${index as number} из ${total as number}, «${container as string}».`,
+    droppedNowhere: ({ item }) => `Отпущено: «${item as string}». Ничего не изменилось.`,
+    moved: ({ item }) => `Перемещено: «${item as string}».`,
+    cancelled: ({ item }) => `Перемещение отменено: «${item as string}» на прежнем месте.`,
     unnamed: 'элемент',
     unnamedContainer: ({ index, total }) => `список ${index as number} из ${total as number}`,
   },

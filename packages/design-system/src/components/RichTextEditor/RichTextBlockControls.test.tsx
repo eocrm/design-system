@@ -205,7 +205,7 @@ it('announces the block drag by the block’s own text, in English', () => {
 it('announces the block drag in Russian under locale="ru"', () => {
   const { container } = render(<Harness locale="ru" />);
   dragGutter(container);
-  expect(live()).toBe('Взято: hello.');
+  expect(live()).toBe('Взято: «hello».');
   fireEvent.pointerUp(document, { clientX: 0, clientY: 10 });
-  expect(live()).toBe('Перемещено: hello.');
+  expect(live()).toBe('Перемещено: «hello».');
 });

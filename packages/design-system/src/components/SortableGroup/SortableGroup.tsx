@@ -38,6 +38,7 @@ import {
 } from '../Sortable';
 import { containerAwareClosestCorners } from '../Sortable/containerAwareCollision';
 import {
+  containerName,
   sortableTarget,
   useDragAccessibility,
   type DescribeDragTarget,
@@ -233,9 +234,11 @@ const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableG
   const handleDragCancel = () => setActiveId(null);
 
   // Localized announcements (Hard rule 9, #390). Items name themselves via the
-  // `dragLabel` `<Sortable.Item>` publishes; a container names itself with its
-  // `aria-label`, falling back to its 1-based registration order.
+  // label `<Sortable.Item>` publishes; a container names itself with its
+  // `aria-label` / `aria-labelledby`, falling back to its 1-based registration
+  // order.
   const describeDrag: DescribeDragTarget = (entry, activeId) => {
+    if (!entry) return null;
     const reg = registryRef.current;
     const id = entry.id as Id;
     const cid = reg.has(id) ? id : containerOf(id);
@@ -302,9 +305,10 @@ SortableGroupRoot.displayName = 'SortableGroup';
  * cross-container drops. Children are `<Sortable.Item>`s for the ids in `items`.
  *
  * @remarks
- * Pass `aria-label` with the list's visible heading. It names the `<ol>` for a
- * screen reader AND names the list in drag announcements ("…position 2 of 4 in
- * In review"); without it they fall back to "list 2 of 3".
+ * Name the list — `aria-label` with its visible heading, or `aria-labelledby`
+ * pointing at that heading's element. Either names the `<ol>` for a screen
+ * reader AND names the list in drag announcements ("…position 2 of 4 in In
+ * review"); without one they fall back to "list 2 of 3".
  */
 const SortableGroupContainer = forwardRef<HTMLOListElement, SortableGroupContainerProps>(
   function SortableGroupContainer({ id, items, className, children, ...rest }, ref) {
@@ -315,11 +319,15 @@ const SortableGroupContainer = forwardRef<HTMLOListElement, SortableGroupContain
     const { setNodeRef } = useDroppable({ id });
 
     const contentMap = useMemo(() => itemContentMap(children), [children]);
-    const label = rest['aria-label'];
+    // Resolved in the effect, not during render: `aria-labelledby` names an
+    // element that only exists once the tree is mounted.
+    const ariaLabel = rest['aria-label'];
+    const ariaLabelledBy = rest['aria-labelledby'];
     useEffect(() => {
+      const label = containerName({ 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy });
       group.register(id, { items, itemContent: contentMap, label });
       return () => group.unregister(id);
-    }, [group, id, items, contentMap, label]);
+    }, [group, id, items, contentMap, ariaLabel, ariaLabelledBy]);
 
     const setRefs = useCallback(
       (node: HTMLOListElement | null) => {

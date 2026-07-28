@@ -1,5 +1,5 @@
 import { createRef, type CSSProperties } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Sortable, restrictTransformToRect } from './Sortable';
 
@@ -543,5 +543,55 @@ describe('Sortable — drag announcements', () => {
     expect(live).toBe('Call Acme about renewal, position 2 of 2.');
     expect(dropped).toBe('Dropped Call Acme about renewal at position 2 of 2.');
     expect(`${live}${dropped}`).not.toMatch(/lead-/);
+  });
+});
+
+describe('Sortable — announcements with no resolvable target', () => {
+  // Rects are NOT stubbed here, so jsdom reports every box as zero and dnd-kit's
+  // default rectIntersection matches nothing: `over` is null for the whole drag
+  // and never CHANGES, so no `onDragOver` ever fires. That makes this the one
+  // place the pick-up announcement survives to be asserted in a list component,
+  // and it exercises `drag.droppedNowhere` on release.
+  function dragNowhere(handleLabel: string) {
+    const grip = screen.getByLabelText(handleLabel);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    fireEvent.pointerMove(document, { clientX: 0, clientY: 40 });
+  }
+  const live = () => screen.getByRole('status').textContent;
+
+  it('announces the pick-up, then that nothing moved', () => {
+    render(
+      <Sortable>
+        <Sortable.Item id="lead-1">
+          <Sortable.Handle aria-label="Reorder first" />
+          Call Acme about renewal
+        </Sortable.Item>
+        <Sortable.Item id="lead-2">
+          <Sortable.Handle aria-label="Reorder second" />
+          Send proposal to Globex
+        </Sortable.Item>
+      </Sortable>,
+    );
+    dragNowhere('Reorder first');
+    expect(live()).toBe('Picked up Call Acme about renewal.');
+    fireEvent.pointerUp(document, { clientX: 0, clientY: 40 });
+    expect(live()).toBe('Released Call Acme about renewal. Nothing moved.');
+  });
+
+  it('falls back to “the item” when there is no text and no aria-label', () => {
+    render(
+      <Sortable>
+        <Sortable.Item id="lead-1">
+          <Sortable.Handle aria-label="Reorder first" />
+        </Sortable.Item>
+        <Sortable.Item id="lead-2">
+          <Sortable.Handle aria-label="Reorder second" />
+        </Sortable.Item>
+      </Sortable>,
+    );
+    dragNowhere('Reorder first');
+    expect(live()).toBe('Picked up the item.');
+    fireEvent.pointerUp(document, { clientX: 0, clientY: 40 });
+    expect(live()).toBe('Released the item. Nothing moved.');
   });
 });

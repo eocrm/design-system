@@ -6,33 +6,82 @@
 // in the library passes `accessibility={useDragAccessibility(...)}` instead.
 //
 // Internal — not exported from `src/index.ts`.
-import { isValidElement, useMemo, useRef, type ReactNode } from 'react';
+import { useMemo, useRef, type RefObject } from 'react';
 import type { Active, Announcements, ScreenReaderInstructions } from '@dnd-kit/core';
 import { useTranslation } from '../../i18n';
-
-/**
- * Flatten a children subtree to the text a sighted user reads, so an item can
- * announce itself by name instead of by id. Walks `props.children` only —
- * text rendered by a custom component (which this cannot call) is invisible,
- * and the caller falls back to `drag.unnamed`.
- *
- * It cannot tell decorative markup apart from content, so literal text inside a
- * `<Sortable.Handle>` (`<Sortable.Handle>⠿</Sortable.Handle>`) is included. An
- * icon component — the normal case — contributes nothing, so this is only worth
- * avoiding if you put real words in a handle.
- */
-export function nodeText(node: ReactNode): string {
-  if (node == null || typeof node === 'boolean') return '';
-  if (typeof node === 'string' || typeof node === 'number') return String(node);
-  if (Array.isArray(node)) return node.map(nodeText).join(' ');
-  if (isValidElement(node)) return nodeText((node.props as { children?: ReactNode }).children);
-  return '';
-}
 
 /** Collapse whitespace and cap the length so an announcement stays listenable. */
 export function tidy(text: string): string {
   const flat = text.replace(/\s+/g, ' ').trim();
   return flat.length > 80 ? `${flat.slice(0, 79)}…` : flat;
+}
+
+/**
+ * What a draggable publishes on its dnd-kit `data` so the announcements can
+ * name it. Read with `dragLabelOf`.
+ */
+export interface DragLabelData {
+  /** Consumer's explicit `aria-label`. Wins outright when set. */
+  dragLabel?: string;
+  /** The rendered node to read text from when there is no explicit label. */
+  dragNode?: RefObject<HTMLElement | null>;
+}
+
+/**
+ * The name to announce for a draggable: the consumer's `aria-label` if there is
+ * one, else the node's rendered text.
+ *
+ * Reading the DOM rather than walking the React children is deliberate. A card
+ * with a `<DropdownMenu>` / `<Tooltip>` / `<ConfirmationPopover>` in it has the
+ * closed panel's contents in its children tree but NOT in the document, so a
+ * children walk announces "Draft Q3 OKRs View Archive" while the DOM announces
+ * "Draft Q3 OKRs". Collapsed and portalled subtrees drop out by construction.
+ */
+export function dragLabelOf(data: Record<string, unknown> | undefined): string | undefined {
+  const { dragLabel, dragNode } = (data ?? {}) as DragLabelData;
+  if (typeof dragLabel === 'string' && dragLabel.trim()) return tidy(dragLabel);
+  const node = dragNode?.current;
+  if (!node) return undefined;
+  const text = tidy(domText(node));
+  return text || undefined;
+}
+
+/**
+ * `textContent` for announcements: separates element boundaries with a space
+ * (raw `textContent` glues siblings — "Acme Corp$50,000") and skips
+ * `aria-hidden` subtrees, which are decoration a screen reader is already told
+ * to ignore.
+ */
+function domText(el: Element): string {
+  let out = '';
+  for (const child of el.childNodes) {
+    if (child.nodeType === 3) out += child.nodeValue ?? '';
+    else if (child.nodeType === 1 && (child as Element).getAttribute('aria-hidden') !== 'true')
+      out += ` ${domText(child as Element)}`;
+  }
+  return out;
+}
+
+/**
+ * The accessible name a consumer gave a container (a Kanban column, a
+ * SortableGroup list) — `aria-label`, or the text of whatever `aria-labelledby`
+ * points at, since naming a column by its visible `<Title>` is the natural
+ * choice. Returns undefined when neither is set; the caller falls back to a
+ * positional stand-in.
+ */
+export function containerName(props: {
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
+}): string | undefined {
+  const label = props['aria-label'];
+  if (typeof label === 'string' && label.trim()) return tidy(label);
+  const ids = props['aria-labelledby'];
+  if (!ids || typeof document === 'undefined') return undefined;
+  const text = ids
+    .split(/\s+/)
+    .map((id) => document.getElementById(id)?.textContent ?? '')
+    .join(' ');
+  return text.trim() ? tidy(text) : undefined;
 }
 
 /** The `active` / `over` shape dnd-kit hands to an announcement callback. */
@@ -51,16 +100,16 @@ export interface DragTarget {
 }
 
 /**
- * Default `describe`: the label a component published as `data.dragLabel`, plus
- * the index / items `useSortable` already publishes under `data.sortable`.
- * Returns `null` for anything that is not a sortable item.
+ * Default `describe`: the name from `dragLabelOf`, plus the index / items
+ * `useSortable` already publishes under `data.sortable`. Returns `null` for
+ * anything that is not a sortable item (including a missing entry).
  */
-export function sortableTarget(entry: DragEntry): DragTarget | null {
-  const data = entry.data.current;
+export function sortableTarget(entry: DragEntry | null): DragTarget | null {
+  const data = entry?.data.current;
   const sortable = data?.sortable as { index: number; items: unknown[] } | undefined;
   if (!sortable || sortable.index < 0) return null;
   return {
-    label: typeof data?.dragLabel === 'string' ? data.dragLabel : undefined,
+    label: dragLabelOf(data),
     index: sortable.index + 1,
     total: sortable.items.length,
   };
@@ -70,16 +119,25 @@ export function sortableTarget(entry: DragEntry): DragTarget | null {
  * Describes the slot an `active` / `over` entry names. `activeId` is passed so
  * a container droppable can answer "where would THIS card land in me" — the
  * multi-list components need it to position a drop onto an empty column.
+ *
+ * `entry` is null when dnd-kit resolved no `over` at all. Most components
+ * return null straight back; a component whose drop has its OWN fallback for
+ * that case (DataTable's last-resolved band slot, #383) must answer with that
+ * slot here too, or it announces "nothing moved" about a real reorder.
  */
-export type DescribeDragTarget = (entry: DragEntry, activeId: Active['id']) => DragTarget | null;
+export type DescribeDragTarget = (
+  entry: DragEntry | null,
+  activeId: Active['id'],
+) => DragTarget | null;
 
 /**
  * Build the `accessibility` prop for a `<DndContext>`: localized announcements
  * for the whole drag lifecycle plus localized keyboard instructions.
  *
- * @param describe   Resolves an entry to a human slot. Return `null` when the
- *                   entry names no droppable slot — that announces "not over a
- *                   drop target" / "nothing moved".
+ * @param describe   Resolves an entry (or `null` when there is no `over`) to a
+ *                   human slot. Return `null` when nothing would land anywhere
+ *                   — that announces "not over a drop target" / "nothing
+ *                   moved".
  * @param isRejectedDrop Optional. Consulted on drag end BEFORE `over`: return
  *                   `true` when the component refuses to commit the release, so
  *                   it announces a cancel rather than a drop that never
@@ -102,7 +160,7 @@ export function useDragAccessibility(
 
   return useMemo(() => {
     const nameOf = (entry: DragEntry, activeId: Active['id']) =>
-      tidy(describeRef.current(entry, activeId)?.label ?? '') || t('drag.unnamed');
+      describeRef.current(entry, activeId)?.label || t('drag.unnamed');
 
     const at = (
       key: 'movedOver' | 'dropped',
@@ -125,13 +183,13 @@ export function useDragAccessibility(
         onDragStart: ({ active }) => t('drag.pickedUp', { item: nameOf(active, active.id) }),
         onDragOver: ({ active, over }) => {
           const item = nameOf(active, active.id);
-          const target = over ? describeRef.current(over, active.id) : null;
+          const target = describeRef.current(over, active.id);
           return target ? at('movedOver', item, target) : t('drag.movedOutside', { item });
         },
         onDragEnd: ({ active, over }) => {
           const item = nameOf(active, active.id);
           if (rejectedRef.current?.()) return t('drag.cancelled', { item });
-          const target = over ? describeRef.current(over, active.id) : null;
+          const target = describeRef.current(over, active.id);
           return target ? at('dropped', item, target) : t('drag.droppedNowhere', { item });
         },
         onDragCancel: ({ active }) => t('drag.cancelled', { item: nameOf(active, active.id) }),

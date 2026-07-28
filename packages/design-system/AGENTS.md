@@ -111,17 +111,25 @@ import { I18nProvider } from '@eocrm/design-system';
 **Drag-and-drop announcements** are localized too. Every drag surface (`Sortable`,
 `SortableGroup`, `Kanban`, `DataTable` column reorder, `RichTextEditor` block
 gutter) overrides dnd-kit's English defaults with the `drag.*` messages, and
-names what it drags by its **visible text** rather than its id — "Amount due,
-position 3 of 7", not "col_amount was moved over droppable area col_name". You
-get this for free; the one thing worth doing is giving each **container** an
-accessible name, since the library can't invent one:
+names what it drags by its **rendered text** rather than its id — "Amount due,
+position 3 of 7", not "col_amount was moved over droppable area col_name". Text
+is read from the DOM, so a closed `DropdownMenu` / `Tooltip` / `Popover` inside
+a card contributes nothing, and `aria-hidden` decoration is skipped.
+
+Two things are worth doing yourself:
 
 ```tsx
-<Kanban.Column id="qualified" aria-label="Qualified">     {/* → "…in Qualified" */}
+{/* Name the CONTAINER — the library can't invent one. Either attribute works. */}
+<Kanban.Column id="qualified" aria-label="Qualified">          {/* → "…in Qualified" */}
+<Kanban.Column id="qualified" aria-labelledby="qualified-h">   {/* same, from the heading */}
 <SortableGroup.Container id="review" items={ids} aria-label="In review" />
+
+{/* Override a chatty ITEM. Without this the whole card is read out. */}
+<Kanban.Card id="d-1" aria-label="Acme renewal">…title, owner, due date, badges…</Kanban.Card>
+<Sortable.Item id="f-1" aria-label="Company name">…</Sortable.Item>
 ```
 
-Without it, containers fall back to their position ("column 2 of 3").
+An unnamed container falls back to its position ("column 2 of 3").
 
 ---
 
@@ -902,7 +910,7 @@ const [groups, setGroups] = useState<Record<string, Field[]>>(initial);
 </SortableGroup>;
 ```
 
-- Give each `Container` an `aria-label` — it names the `<ol>` for screen readers AND names the list in drag announcements ("…position 2 of 4 in In review").
+- Give each `Container` an `aria-label` (or `aria-labelledby`) — it names the `<ol>` for screen readers AND names the list in drag announcements ("…position 2 of 4 in In review").
 - Container ids and item ids share dnd-kit's one id namespace — keep them all unique.
 - Each `Container.items` must match its `<Sortable.Item>` child ids (it's the ordering source of truth).
 - Esc-cancel doesn't revert (moves are applied to your state optimistically) — snapshot before drag to undo.
@@ -966,7 +974,8 @@ Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once pe
 **Anti-patterns**
 
 - ❌ Expecting cross-column keyboard reorder. dnd-kit's stock coordinate-getter is per-`SortableContext`. v2 will ship a custom getter that bridges columns.
-- ❌ Leaving `<Kanban.Column>` without an `aria-label`. Screen-reader drag announcements name the destination column from it; without one they fall back to "column 2 of 3". A labelled column also renders as `role="group"` so the name isn't inert.
+- ❌ Leaving `<Kanban.Column>` unnamed. Screen-reader drag announcements name the destination column from its `aria-label` or `aria-labelledby`; without either they fall back to "column 2 of 3". A named column also renders as `role="group"` so the name isn't inert.
+- ❌ A content-heavy `<Kanban.Card>` with no `aria-label`. The card announces itself by its rendered text, so a card carrying title + assignee + due date + badges reads all of it on every drag step. One `aria-label` fixes it.
 - ❌ Interleaving non-`Kanban.Card` children with cards inside a `<Kanban.Column>`. The Root walks each column's children to extract a contiguous card block; if non-cards appear between cards, the rendering re-arranges them awkwardly. Keep header / count badges BEFORE the cards, footer / "Add card" buttons AFTER.
 - ❌ Wrapping `<Kanban.Card>` inside a custom component. The Root walks direct descendants of `<Kanban.Column>` to find cards; nested cards are invisible to it.
 - ❌ Non-stable column / card ids (e.g. array indices). Both must persist across reorders.

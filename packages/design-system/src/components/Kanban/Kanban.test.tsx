@@ -9,6 +9,7 @@ import {
 } from './Kanban';
 import { SortableHandle } from '../Sortable/Sortable';
 import { I18nProvider } from '../../i18n';
+import { DropdownMenu } from '../DropdownMenu';
 
 describe('Kanban', () => {
   it('renders a board region with columns and cards (role="article" only when Handle is present)', () => {
@@ -795,6 +796,80 @@ describe('Kanban — drag announcements (#390)', () => {
     expect(live()).not.toMatch(/task-|col-|droppable area/);
   });
 
+  it('does not read a closed menu inside the card into the card’s name', () => {
+    // The children tree of a card with a `<DropdownMenu>` contains the menu's
+    // items; the DOM does not, because the panel is unmounted while closed.
+    // Announcing from the children tree gave "Draft Q3 OKRs View Archive" —
+    // and a listener has no way to tell that isn't part of the card's name.
+    render(
+      <Kanban>
+        <Kanban.Column id="col-a" aria-label="To do" data-col={0} data-h={300}>
+          <Kanban.Card id="task-1" data-card="task-1">
+            Draft Q3 OKRs
+            <DropdownMenu>
+              <DropdownMenu.Trigger>
+                <button type="button">More</button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content>
+                <DropdownMenu.Item onSelect={() => {}}>View</DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => {}}>Archive</DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu>
+          </Kanban.Card>
+          <Kanban.Card id="task-2" data-card="task-2">
+            Schedule retro
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+
+    press('Draft Q3 OKRs');
+    moveTo(at(0, 60));
+    const live_ = live() ?? '';
+    release(at(0, 60));
+    expect(live_).not.toMatch(/View|Archive/);
+    expect(live_).toMatch(/^Draft Q3 OKRs More, position \d of 2 in To do\.$/);
+  });
+
+  it('an aria-label on the card wins over its rendered text', () => {
+    render(
+      <Kanban>
+        <Kanban.Column id="col-a" aria-label="To do" data-col={0} data-h={300}>
+          <Kanban.Card id="task-1" data-card="task-1" aria-label="Q3 objectives draft">
+            Draft Q3 OKRs · Pavel · due Friday
+          </Kanban.Card>
+          <Kanban.Card id="task-2" data-card="task-2">
+            Schedule retro
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    press('Draft Q3 OKRs · Pavel · due Friday');
+    moveTo(at(0, 60));
+    expect(live()).toMatch(/^Q3 objectives draft, position \d of 2 in To do\.$/);
+    release(at(0, 60));
+  });
+
+  it('names a column from aria-labelledby when that is how it is labelled', () => {
+    render(
+      <Kanban>
+        <Kanban.Column id="col-a" aria-labelledby="head-a" data-col={0} data-h={300}>
+          <h3 id="head-a">Qualified</h3>
+          <Kanban.Card id="task-1" data-card="task-1">
+            Draft Q3 OKRs
+          </Kanban.Card>
+          <Kanban.Card id="task-2" data-card="task-2">
+            Schedule retro
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    press('Draft Q3 OKRs');
+    moveTo(at(0, 60));
+    expect(live()).toMatch(/in Qualified\.$/);
+    release(at(0, 60));
+  });
+
   it('falls back to the column’s board position when it has no aria-label', () => {
     render(<NamedBoard labelled={false} />);
     press('Draft Q3 OKRs');
@@ -821,16 +896,16 @@ describe('Kanban — drag announcements (#390)', () => {
 
     press('Draft Q3 OKRs');
     moveTo(at(1, 20));
-    expect(live()).toMatch(/^Draft Q3 OKRs — позиция \d из \d, Done\.$/);
+    expect(live()).toMatch(/^«Draft Q3 OKRs» — позиция \d из \d, «Done»\.$/);
 
     release(at(1, 20));
-    expect(live()).toMatch(/^Размещено: Draft Q3 OKRs, позиция \d из \d, Done\.$/);
+    expect(live()).toMatch(/^Размещено: «Draft Q3 OKRs», позиция \d из \d, «Done»\.$/);
 
     // …and the cancel path is Russian too.
     press('Draft Q3 OKRs');
     moveTo([600, 500]);
     release([600, 500]);
-    expect(live()).toBe('Перемещение отменено: Draft Q3 OKRs на прежнем месте.');
+    expect(live()).toBe('Перемещение отменено: «Draft Q3 OKRs» на прежнем месте.');
   });
 
   it('localizes the keyboard instructions dnd-kit points every draggable at', () => {

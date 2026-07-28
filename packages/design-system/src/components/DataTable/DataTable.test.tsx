@@ -872,6 +872,39 @@ describe('<DataTable> — a drop over a pinned column lands in the band (#383)',
     expect(orderOf(table)).toEqual(['mid', 'name', 'owner']);
   });
 
+  // --- and the announcement has to agree with the commit (#390) -------------
+  // The announcement resolves `over` through the SAME fallback the drop does.
+  // Reading raw `over` here emits "Released Name. Nothing moved." over each of
+  // the two reorders below — which is the #390 defect with the sign flipped.
+
+  it('announces the slot it commits when a pinned column owns the collision', () => {
+    renderWithRects(pinnedRightCols, rightRects);
+    dragTo(/drag to reorder name/i, 5000);
+    fireEvent.pointerUp(document);
+    // Band is [name, mid]; the commit put 'name' in the last band slot.
+    expect(screen.getByRole('status').textContent).toBe('Dropped Name at position 2 of 2.');
+  });
+
+  it('announces the slot it commits when the release resolves no target at all', () => {
+    renderWithRects(pinnedRightCols, rightRects);
+    dragTo(/drag to reorder name/i, 200, 5000);
+    fireEvent.pointerUp(document);
+    expect(screen.getByRole('status').textContent).toBe('Dropped Name at position 2 of 2.');
+  });
+
+  it('DOES announce "nothing moved" on the dragWholeColumn={false} path, which discards', () => {
+    // The mirror of the two above: that path keeps its discard, so the honest
+    // announcement is the one the others would have been wrong to make.
+    renderWithRects(pinnedRightCols, rightRects, { dragWholeColumn: false });
+    dragTo(/drag to reorder name/i, 200);
+    // Clear of the header row entirely: `over` goes non-null → null, which is
+    // the one transition that fires an `onDragOver` with no target at all.
+    fireEvent.pointerMove(document, { clientX: 200, clientY: 5000 });
+    expect(screen.getByRole('status').textContent).toBe('Name is not over a drop target.');
+    fireEvent.pointerUp(document);
+    expect(screen.getByRole('status').textContent).toBe('Released Name. Nothing moved.');
+  });
+
   it('does not let one drag inherit the previous drag’s target', () => {
     // The remembered slot is cleared at drag START, not at drag end, so a drag
     // that never resolves a slot of its own commits nothing.

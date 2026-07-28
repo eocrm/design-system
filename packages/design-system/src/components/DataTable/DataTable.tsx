@@ -35,7 +35,11 @@ import { reorderRespectingPins } from './reorderColumns';
 import { useColumnDragShift } from './useColumnDragShift';
 import { clampX, type DragRangeX } from './columnShift';
 import { useFloatingSurface } from '../_internal/overlay';
-import { sortableTarget, useDragAccessibility } from '../_internal/dragAnnouncements';
+import {
+  sortableTarget,
+  useDragAccessibility,
+  type DescribeDragTarget,
+} from '../_internal/dragAnnouncements';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -411,11 +415,31 @@ function DataTableInner<T>(
 
   const [dragActive, setDragActive] = useState(false);
 
-  // Localized column-reorder announcements (Hard rule 9). Every droppable in
-  // this context is a header cell inside `SortableContext items={sortableIds}`,
-  // so dnd-kit's own `data.sortable` gives the slot and `HeaderCell` publishes
-  // the header text as `dragLabel` — "Amount, position 3 of 7", not "col-amount".
-  const dragAccessibility = useDragAccessibility(sortableTarget);
+  // Localized column-reorder announcements (Hard rule 9). A band member answers
+  // for itself — dnd-kit's own `data.sortable` gives the slot and `HeaderCell`
+  // publishes the rendered header text — so a drag says "Amount, position 3 of
+  // 7", not "col-amount was moved over droppable area col-name".
+  //
+  // The fallback below is the announcement half of #383, and it must mirror
+  // `handleDragEnd` exactly or it lies about the drop it just described. In
+  // whole-column mode `over` can name something the drop cannot use — a sticky
+  // pinned column covering the band's last slot, or nothing at all after an
+  // auto-scroll desync — and BOTH are observed, not theoretical. `handleDragEnd`
+  // falls back to the last band slot the drag resolved and commits a real
+  // reorder; resolving the announcement from raw `over` would announce
+  // "Released Amount due. Nothing moved." over exactly that reorder, which is
+  // the defect #390 was filed about with the sign flipped.
+  //
+  // No label needed on this path: the announced item name always comes from
+  // `active`, never from the drop target.
+  const describeColumn: DescribeDragTarget = (entry) => {
+    const inBand = sortableTarget(entry);
+    if (inBand) return inBand;
+    const slotId = dragWholeColumn ? lastSlotIdRef.current : null;
+    const slot = slotId == null ? -1 : sortableIds.indexOf(slotId);
+    return slot < 0 ? null : { index: slot + 1, total: sortableIds.length };
+  };
+  const dragAccessibility = useDragAccessibility(describeColumn);
 
   // The shift driver writes custom properties onto the <table> element, so we
   // need our own handle on it while still honouring the consumer's ref.
