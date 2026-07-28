@@ -4,7 +4,7 @@ import { act, createRef, useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
-import { Rail } from './Rail';
+import { Rail, useRail } from './Rail';
 
 describe('Rail', () => {
   it('renders a <nav> landmark with the default aria-label', () => {
@@ -643,5 +643,67 @@ describe('Rail — collapseBelow (viewport override)', () => {
     );
     expect(screen.getByRole('navigation')).not.toHaveAttribute('data-collapsed');
     expect(screen.getByRole('button', { name: 'Collapse navigation' })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['sm', 480],
+    ['md', 640],
+    ['lg', 768],
+  ] as const)('collapses AT the %s breakpoint (%ipx), inclusive', (breakpoint, px) => {
+    // Pins the token→pixel mapping and the inclusive boundary through the
+    // component, not just the map: `max-width` matches AT the value, so a rail
+    // is collapsed at exactly `px` and expanded one pixel above it. Previously
+    // browser-verified only, which regresses silently.
+    const viewport = stubMatchMedia(px);
+    const { container } = render(
+      <Rail collapsed={false} collapseBelow={breakpoint}>
+        <Rail.Section title="Main">
+          <Rail.Item href="/">Home</Rail.Item>
+        </Rail.Section>
+      </Rail>,
+    );
+    const nav = container.querySelector('nav')!;
+    expect(nav).toHaveAttribute('data-collapsed');
+
+    viewport.resizeTo(px + 1);
+    expect(nav).not.toHaveAttribute('data-collapsed');
+  });
+
+  it('a custom toggle still flips the stored preference while the override is active', async () => {
+    // The built-in CollapseToggle hides itself while narrow, so this contract —
+    // documented on the prop — is only reachable through a consumer's own
+    // control calling setCollapsed from context.
+    function CustomToggle() {
+      const { collapsed, collapsedByViewport, setCollapsed } = useRail();
+      return (
+        <button onClick={() => setCollapsed((prev) => !prev)}>
+          {`effective:${collapsed} byViewport:${collapsedByViewport}`}
+        </button>
+      );
+    }
+    const onCollapsedChange = vi.fn();
+    const viewport = stubMatchMedia(400);
+    render(
+      <Rail collapseBelow="sm" defaultCollapsed={false} onCollapsedChange={onCollapsedChange}>
+        <Rail.Section title="Main">
+          <Rail.Item href="/">Home</Rail.Item>
+        </Rail.Section>
+        <Rail.Footer>
+          <CustomToggle />
+        </Rail.Footer>
+      </Rail>,
+    );
+
+    // Narrow: effective collapsed, but the stored preference is still false.
+    expect(screen.getByRole('button')).toHaveTextContent('effective:true byViewport:true');
+
+    // A user press while narrow flips the PREFERENCE (and does fire the
+    // callback — this one IS a user choice, unlike a breakpoint cross).
+    await userEvent.click(screen.getByRole('button'));
+    expect(onCollapsedChange).toHaveBeenCalledExactlyOnceWith(true);
+
+    // Widening reveals the preference the user set while narrow.
+    viewport.resizeTo(900);
+    expect(screen.getByRole('button')).toHaveTextContent('effective:true byViewport:false');
   });
 });

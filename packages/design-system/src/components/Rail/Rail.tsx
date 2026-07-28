@@ -77,8 +77,16 @@ function useBelowBreakpoint(breakpoint: CollapseBreakpoint | undefined): boolean
     const mql = window.matchMedia(query);
     return [
       (onStoreChange: () => void) => {
-        mql.addEventListener('change', onStoreChange);
-        return () => mql.removeEventListener('change', onStoreChange);
+        // Safari < 13.1 exposes `matchMedia` but no `addEventListener` on the
+        // MediaQueryList — only the deprecated `addListener`. Feature-detecting
+        // `matchMedia` alone would throw here during commit and take the app
+        // down rather than degrading, so detect the subscription API too.
+        if (typeof mql.addEventListener === 'function') {
+          mql.addEventListener('change', onStoreChange);
+          return () => mql.removeEventListener('change', onStoreChange);
+        }
+        mql.addListener(onStoreChange);
+        return () => mql.removeListener(onStoreChange);
       },
       () => mql.matches,
     ] as const;
@@ -141,6 +149,20 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
    * their own width with a container query, this measures the viewport: the
    * rail's own width is exactly what collapsing changes, so a container query
    * would be circular. Same token scale, different basis.
+   *
+   * ⚠️ **Your shell's column track must follow.** The override shrinks the
+   * rail but is invisible to the layout around it — a shell that sizes its
+   * rail track from its OWN `collapsed` state will keep a 240px track around a
+   * 56px rail and leave a dead gap on every screen. Key the track off the
+   * viewport or off the rail instead, both of which work precisely because the
+   * basis here is the viewport rather than a container:
+   *
+   * ```scss
+   * // Either mirror the breakpoint…
+   * @media (max-width: 768px) { .shell { grid-template-columns: 56px 1fr; } }
+   * // …or follow the rail's own state attribute, no breakpoint duplication:
+   * .shell:has(nav[data-collapsed]) { grid-template-columns: 56px 1fr; }
+   * ```
    *
    * @example
    * // Persisted preference, plus a hard collapse on phone-width viewports.
