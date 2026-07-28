@@ -948,6 +948,12 @@ describe('<DataTable> — a drop over a pinned column lands in the band (#383)',
     fireEvent.pointerMove(document, { clientX: 160, clientY: 0 });
     fireEvent.pointerUp(document);
     expect(orderOf(table)).toEqual(['stage', 'name', 'owner']);
+    // ...and the announcement has to see it as a slot too (#390). Deciding
+    // "in band" from `sortableIds` — the SortableContext list, which excludes
+    // `enableReorder: false` — announced "Released Name. Nothing moved." over
+    // exactly this reorder. The position is 1-based in the VISIBLE unpinned
+    // band, which is the order asserted on the line above.
+    expect(screen.getByRole('status').textContent).toBe('Dropped Name at position 2 of 3.');
   });
 });
 

@@ -36,7 +36,7 @@ import { useColumnDragShift } from './useColumnDragShift';
 import { clampX, type DragRangeX } from './columnShift';
 import { useFloatingSurface } from '../_internal/overlay';
 import {
-  sortableTarget,
+  dragLabelOf,
   useDragAccessibility,
   type DescribeDragTarget,
 } from '../_internal/dragAnnouncements';
@@ -415,29 +415,45 @@ function DataTableInner<T>(
 
   const [dragActive, setDragActive] = useState(false);
 
-  // Localized column-reorder announcements (Hard rule 9). A band member answers
-  // for itself — dnd-kit's own `data.sortable` gives the slot and `HeaderCell`
-  // publishes the rendered header text — so a drag says "Amount, position 3 of
-  // 7", not "col-amount was moved over droppable area col-name".
+  // Localized column-reorder announcements (Hard rule 9). `HeaderCell` publishes
+  // the rendered header text, so a drag says "Amount, position 3 of 7" instead
+  // of "col-amount was moved over droppable area col-name".
   //
-  // The fallback below is the announcement half of #383, and it must mirror
-  // `handleDragEnd` exactly or it lies about the drop it just described. In
-  // whole-column mode `over` can name something the drop cannot use — a sticky
-  // pinned column covering the band's last slot, or nothing at all after an
-  // auto-scroll desync — and BOTH are observed, not theoretical. `handleDragEnd`
-  // falls back to the last band slot the drag resolved and commits a real
-  // reorder; resolving the announcement from raw `over` would announce
-  // "Released Amount due. Nothing moved." over exactly that reorder, which is
-  // the defect #390 was filed about with the sign flipped.
+  // This resolves the slot exactly the way `handleDragEnd` does, in the SAME
+  // index space, and both halves of that are load-bearing:
   //
-  // No label needed on this path: the announced item name always comes from
-  // `active`, never from the drop target.
+  //  - `shiftOrderedIds`, not `sortableIds`. The two differ by the
+  //    `enableReorder: false` columns: excluded from `SortableContext` (nothing
+  //    to activate) but still droppable, still displaced, and still moved by
+  //    `reorderRespectingPins` — see the comment on `shiftOrderedIds`. Deciding
+  //    "in band" from the SortableContext list therefore calls a legal target
+  //    unusable, and announces "Nothing moved." over a drop that reordered. It
+  //    is also the set the position number belongs in: a listener is being told
+  //    where the column landed among the visible unpinned columns.
+  //  - the same `lastSlotIdRef` fallback (#383). In whole-column mode `over` can
+  //    name something the drop cannot use — a sticky pinned column covering the
+  //    band's last slot, or nothing at all after an auto-scroll desync, both
+  //    observed — and `handleDragEnd` commits the last band slot the drag
+  //    resolved rather than discarding. Announcing from raw `over` would call
+  //    that reorder "nothing", which is the defect #390 was filed about with the
+  //    sign flipped.
+  //
+  // The label is only ever read off `active`; a drop target's is unused.
   const describeColumn: DescribeDragTarget = (entry) => {
-    const inBand = sortableTarget(entry);
-    if (inBand) return inBand;
-    const slotId = dragWholeColumn ? lastSlotIdRef.current : null;
-    const slot = slotId == null ? -1 : sortableIds.indexOf(slotId);
-    return slot < 0 ? null : { index: slot + 1, total: sortableIds.length };
+    const id = entry ? String(entry.id) : null;
+    const slotId =
+      id != null && shiftOrderedIds.includes(id)
+        ? id
+        : dragWholeColumn
+          ? lastSlotIdRef.current
+          : null;
+    const slot = slotId == null ? -1 : shiftOrderedIds.indexOf(slotId);
+    if (slot < 0) return null;
+    return {
+      label: dragLabelOf(entry?.data.current),
+      index: slot + 1,
+      total: shiftOrderedIds.length,
+    };
   };
   const dragAccessibility = useDragAccessibility(describeColumn);
 
