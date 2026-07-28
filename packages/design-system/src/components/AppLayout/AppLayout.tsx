@@ -172,6 +172,9 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * circular. AppLayout renders **no trigger**: put a hamburger in your `topBar`
  * and gate it on the exported `useBelowBreakpoint` hook, so it appears only
  * while the overlay is active. `sidebarPinned` is ignored below the threshold.
+ * The `sidebar` node moves between the in-flow slot and the `Drawer` as the
+ * threshold is crossed, remounting it — a `Rail`'s internal state (expanded
+ * `Rail.Group`s, scroll position) resets each time, by design, not a bug.
  *
  * The `sidebar` slot renders as a direct child of the overlay `<Drawer>`, NOT
  * wrapped in `<Drawer.Body>` — so it does not inherit the body's
