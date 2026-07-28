@@ -263,7 +263,7 @@ export function MemberProfile() {
               title="Profile"
               description="Name and how this person appears across eocrm."
             >
-              <FormRow columns={2}>
+              <FormRow>
                 <Field label="First name" required error={errors.firstName}>
                   <Input
                     value={draft.firstName}
@@ -294,7 +294,7 @@ export function MemberProfile() {
                   onChange={(e) => set('email', e.target.value)}
                 />
               </Field>
-              <FormRow columns={2}>
+              <FormRow>
                 <Field label="Phone" optional>
                   <Input
                     type="tel"
