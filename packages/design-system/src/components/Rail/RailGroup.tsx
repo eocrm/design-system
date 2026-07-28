@@ -30,6 +30,23 @@ import { type PolymorphicProps } from './RailItem';
 import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Rail.module.scss';
 
+/**
+ * Runs the consumer's handler, then ours. Used only for the handlers that
+ * drive the collapsed-mode flyout on a linkable group — see the comment at
+ * the call site for why those five can't simply lose to `{...rest}`. Ours runs
+ * unconditionally: opening a flyout is not a cancellable default, so a
+ * consumer's `preventDefault()` must not strand the subitems.
+ */
+function composeHandlers<E>(
+  theirs: ((e: E) => void) | undefined,
+  ours: ((e: E) => void) | undefined,
+) {
+  return (e: E) => {
+    theirs?.(e);
+    ours?.(e);
+  };
+}
+
 /** Open-delay for hover-intent before opening the collapsed-mode flyout. */
 const OPEN_DELAY_MS = 80;
 /** Close-grace so the cursor has time to traverse from trigger to flyout. */
@@ -68,8 +85,15 @@ interface RailGroupOwnProps {
  * Passing `as` (e.g. `as={NavLink}`) opts into the **linkable** shape: the
  * icon + label become a navigable element of that type with all of its props
  * available (`to`, `replace`, `end`, …), the chevron becomes its own button,
- * and the remaining props land on the rendered link rather than the wrapper.
- * `ref` always points at the wrapper `<div>` either way.
+ * and the remaining props land on the rendered link rather than the wrapper —
+ * except `className` and `ref`, which stay on the wrapper `<div>` in both
+ * shapes, as they always have.
+ *
+ * Your `onPointerEnter` / `onPointerLeave` / `onFocus` / `onBlur` / `onClick`
+ * on a linkable group are **composed** with the group's own handlers (yours
+ * runs first), not replaced by them: those five are what open the
+ * collapsed-mode flyout, and overriding them would make the subitems
+ * unreachable while the rail is collapsed.
  */
 export type RailGroupProps<C extends ElementType = 'div'> = PolymorphicProps<C, RailGroupOwnProps>;
 
@@ -192,7 +216,11 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
 
   const toggleOpen = useCallback(() => setOpen(!open), [open, setOpen]);
 
-  // ─── Auto-open when a subitem is active ──────────────────────────────
+  // ─── Auto-open when the group's own link OR a subitem is active ──────
+  // The query below deliberately scans the WHOLE group block, not just
+  // `.subitems`: on a linkable group the row's link lives in the same subtree,
+  // so landing on /deals opens the group and reveals the nested views. Narrow
+  // this to `.subitems` and that behavior silently disappears.
   const groupRef = useRef<HTMLDivElement | null>(null);
   // One-shot guard so we don't re-open the group every render after the
   // consumer manually closed it. Uncontrolled-only by design.
@@ -401,6 +429,15 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     triggerRef.current = node;
   };
 
+  // The flyout header is a SECOND rendering of the same destination, not a
+  // second instance of the consumer's element — so it carries the navigation
+  // props but not the identifying ones. A duplicated `id` is invalid HTML, and
+  // a duplicated `data-testid` makes `getByTestId` throw on "found multiple"
+  // for any consumer who tagged their group and then collapsed the rail.
+  const headerLinkProps = Object.fromEntries(
+    Object.entries(rest).filter(([key]) => key !== 'id' && !key.startsWith('data-')),
+  );
+
   const chevron = (
     <ChevronRight
       size={14}
@@ -431,14 +468,21 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
             // flyout rather than an inline disclosure. Expanded mode: the
             // chevron button below owns aria-expanded / aria-controls.
             aria-haspopup={collapsed ? 'dialog' : undefined}
-            onPointerEnter={handlePointerEnter}
-            onPointerLeave={handlePointerLeave}
-            onFocus={collapsed ? scheduleOpen : undefined}
-            onBlur={collapsed ? scheduleClose : undefined}
-            onClick={collapsed ? handleFlyoutClick : undefined}
             // {...rest} last so consumer overrides win (Pattern A), matching
-            // <Rail.Item>.
+            // <Rail.Item> — EXCEPT these five, which are composed rather than
+            // overridable. They are the collapsed-mode flyout's only trigger:
+            // if a consumer's own `onPointerEnter` (analytics, say) replaced
+            // ours, hover would stop opening the flyout and the subitems would
+            // become unreachable entirely — `.collapsed .subitems` is
+            // `display: none`, so the flyout is the only path to them. Nothing
+            // would warn. Do not "restore consistency" by deleting the
+            // composition and letting the spread win.
             {...rest}
+            onPointerEnter={composeHandlers(rest.onPointerEnter, handlePointerEnter)}
+            onPointerLeave={composeHandlers(rest.onPointerLeave, handlePointerLeave)}
+            onFocus={composeHandlers(rest.onFocus, collapsed ? scheduleOpen : undefined)}
+            onBlur={composeHandlers(rest.onBlur, collapsed ? scheduleClose : undefined)}
+            onClick={composeHandlers(rest.onClick, collapsed ? handleFlyoutClick : undefined)}
           >
             <span className={styles.itemIcon} aria-hidden="true">
               {icon}
@@ -535,11 +579,10 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
             {/* A linkable group's flyout header links to the same destination
                 so the parent page stays reachable once the panel is open —
                 collapsed mode has no chevron, so the row's own target is the
-                only other way there. `id` is dropped: `rest` is already
-                spread on the row's link and a duplicate id would be invalid. */}
+                only other way there. */}
             <div className={styles.flyoutHeader}>
               {isLink ? (
-                <LinkComponent className={styles.flyoutHeaderLink} {...rest} id={undefined}>
+                <LinkComponent className={styles.flyoutHeaderLink} {...headerLinkProps}>
                   {label}
                 </LinkComponent>
               ) : (

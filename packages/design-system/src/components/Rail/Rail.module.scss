@@ -392,10 +392,15 @@
 }
 
 // A linkable group's flyout header renders its label as a link to the group's
-// own destination. It fills the header row so the whole strip is clickable;
-// the header's padding stays on the wrapper so the hover surface aligns.
+// own destination. The padding moves from the wrapper onto the link so the
+// whole header strip is clickable rather than just the text box.
+.flyoutHeader:has(.flyoutHeaderLink) {
+  padding: 0;
+}
+
 .flyoutHeaderLink {
   display: block;
+  padding: var(--rail-flyout-header-padding);
   color: inherit;
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- anchor reset
   text-decoration: none;

@@ -716,7 +716,9 @@ describe('Rail — linkable Group (#377)', () => {
     props: {
       collapsed?: boolean;
       onClick?: React.MouseEventHandler<HTMLAnchorElement>;
+      onPointerEnter?: React.PointerEventHandler<HTMLAnchorElement>;
       'aria-current'?: 'page';
+      'data-testid'?: string;
     } = {},
   ) {
     const { collapsed, ...linkProps } = props;
@@ -874,6 +876,94 @@ describe('Rail — linkable Group (#377)', () => {
     await user.click(screen.getByRole('button', { name: /rerender/ }));
     // Still closed: the effect must not re-fire now that the user has spoken.
     expect(chevron.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('forwards ref to the wrapper <div>, not the link, when linkable', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Rail>
+        <Rail.Section title="Main">
+          <Rail.Group ref={ref} as="a" href="#/deals" icon={<span aria-hidden />} label="Deals">
+            <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+    expect(ref.current?.tagName).toBe('DIV');
+    expect(ref.current).toContainElement(screen.getByRole('link', { name: 'Deals' }));
+  });
+
+  it('merges className on the wrapper while the rest of the props follow `as`', () => {
+    const { container } = render(
+      <Rail>
+        <Rail.Section title="Main">
+          <Rail.Group
+            as="a"
+            href="#/deals"
+            className="mine"
+            data-testid="deals-nav"
+            icon={<span aria-hidden />}
+            label="Deals"
+          >
+            <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+    // className merges onto the wrapper (never replaces the group class)...
+    const wrapper = container.querySelector('.mine')!;
+    expect(wrapper.tagName).toBe('DIV');
+    expect(wrapper.className).toMatch(/group/);
+    // ...while everything else lands on the link, which is what `to` / `href`
+    // are for.
+    expect(wrapper).not.toHaveAttribute('href');
+    const link = screen.getByRole('link', { name: 'Deals' });
+    expect(link).toHaveAttribute('data-testid', 'deals-nav');
+  });
+
+  it("composes the consumer's onPointerEnter instead of letting it kill the flyout", () => {
+    // Regression guard: these handlers are the collapsed flyout's ONLY trigger,
+    // and `.collapsed .subitems` is display:none — a consumer's own hover
+    // handler winning would make the subitems unreachable with nothing warning.
+    vi.useFakeTimers();
+    try {
+      const onPointerEnter = vi.fn();
+      renderLinkGroup({ collapsed: true, onPointerEnter });
+      const trigger = screen.getByRole('link', { name: 'Deals' });
+      act(() => {
+        fireEvent.pointerEnter(trigger);
+      });
+      expect(onPointerEnter).toHaveBeenCalledOnce();
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      expect(screen.getByRole('dialog', { name: 'Deals' })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not duplicate identifying attributes onto the flyout header link', () => {
+    vi.useFakeTimers();
+    try {
+      renderLinkGroup({ collapsed: true, 'data-testid': 'deals-nav' });
+      act(() => {
+        fireEvent.pointerEnter(screen.getByTestId('deals-nav'));
+      });
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      const flyout = screen.getByRole('dialog', { name: 'Deals' });
+      // The header is a second rendering of the same destination, not a second
+      // instance of the consumer's element — so getByTestId still resolves.
+      expect(within(flyout).getByRole('link', { name: 'Deals' })).toHaveAttribute(
+        'href',
+        '#/deals',
+      );
+      expect(screen.getByTestId('deals-nav')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('collapsed: no chevron, hover opens the flyout, and its header is a link', () => {
