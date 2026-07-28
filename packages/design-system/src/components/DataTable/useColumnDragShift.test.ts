@@ -1,8 +1,27 @@
 import { createElement, useRef, type RefObject } from 'react';
 import { render, fireEvent } from '@testing-library/react';
 import { DndContext, useDraggable, MouseSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { applyColumnShifts, useColumnDragShift } from './useColumnDragShift';
-import { shiftVarName } from './columnShift';
+import { applyColumnShifts, measureDragRangeX, useColumnDragShift } from './useColumnDragShift';
+import { shiftVarName, type DragRangeX } from './columnShift';
+
+/**
+ * Build a detached `<table>` whose header cells carry `data-dt-column-id` and the
+ * given rects. jsdom lays nothing out, so the rects have to be stubbed — which
+ * is exactly the point: `measureDragRangeX` must read rendered geometry, never
+ * the declared `<col>` widths.
+ */
+function tableWithHeaderRects(cells: { id: string; left: number; width: number }[]) {
+  const table = document.createElement('table');
+  const row = document.createElement('tr');
+  for (const { id, left, width } of cells) {
+    const th = document.createElement('th');
+    th.setAttribute('data-dt-column-id', id);
+    th.getBoundingClientRect = () => new DOMRect(left, 0, width, 32);
+    row.appendChild(th);
+  }
+  table.appendChild(row);
+  return table;
+}
 
 describe('applyColumnShifts', () => {
   function makeRoot() {
@@ -63,6 +82,86 @@ describe('applyColumnShifts', () => {
   });
 });
 
+describe('measureDragRangeX', () => {
+  // Three columns rendered 200px wide each, starting at x=0.
+  const cells = [
+    { id: 'a', left: 0, width: 200 },
+    { id: 'b', left: 200, width: 200 },
+    { id: 'c', left: 400, width: 200 },
+  ];
+  const orderedIds = ['a', 'b', 'c'];
+
+  it('gives the first column no room to travel left and the full band to its right', () => {
+    expect(measureDragRangeX(tableWithHeaderRects(cells), orderedIds, 'a')).toEqual({
+      min: 0,
+      max: 400,
+    });
+  });
+
+  it('gives the last column no room to travel right', () => {
+    expect(measureDragRangeX(tableWithHeaderRects(cells), orderedIds, 'c')).toEqual({
+      min: -400,
+      max: 0,
+    });
+  });
+
+  it('bounds a middle column by the real geometry on each side', () => {
+    expect(measureDragRangeX(tableWithHeaderRects(cells), orderedIds, 'b')).toEqual({
+      min: -200,
+      max: 200,
+    });
+  });
+
+  it('reads RENDERED width, not the declared column size', () => {
+    // The regression this function exists for: `table-layout: fixed;
+    // width: max-content; min-width: 100%` stretches columns past their
+    // declared `<col>` width, so a declared-width sum would have stopped 'a'
+    // at 240 (2 x the 120px default) instead of the real 400 — leaving the
+    // last slot unreachable.
+    const range = measureDragRangeX(tableWithHeaderRects(cells), orderedIds, 'a');
+    expect(range.max).toBe(400);
+    expect(range.max).toBeGreaterThan(240);
+  });
+
+  it('measures correctly regardless of where the wrap is scrolled', () => {
+    // Same table, scrolled 1000px left: every rect shifts by the same amount,
+    // so the differences — which is all the range is — are unchanged.
+    const scrolled = cells.map((c) => ({ ...c, left: c.left - 1000 }));
+    expect(measureDragRangeX(tableWithHeaderRects(scrolled), orderedIds, 'a')).toEqual({
+      min: 0,
+      max: 400,
+    });
+  });
+
+  it('pins in place when the active column has no header cell', () => {
+    expect(measureDragRangeX(tableWithHeaderRects(cells), orderedIds, 'zzz')).toEqual({
+      min: 0,
+      max: 0,
+    });
+  });
+
+  it('pins in place on a null root or an empty column list', () => {
+    expect(measureDragRangeX(null, orderedIds, 'a')).toEqual({ min: 0, max: 0 });
+    expect(measureDragRangeX(tableWithHeaderRects(cells), [], 'a')).toEqual({ min: 0, max: 0 });
+  });
+
+  it('handles a column id that would break an unescaped selector', () => {
+    // Column ids are consumer-supplied: dots, spaces and quotes all appear in
+    // real schemas and all are selector metacharacters.
+    const hostile = [
+      { id: 'deal.owner name', left: 0, width: 100 },
+      { id: 'a"b', left: 100, width: 100 },
+    ];
+    expect(
+      measureDragRangeX(
+        tableWithHeaderRects(hostile),
+        ['deal.owner name', 'a"b'],
+        'deal.owner name',
+      ),
+    ).toEqual({ min: 0, max: 100 });
+  });
+});
+
 describe('useColumnDragShift', () => {
   // A draggable handle registered with dnd-kit so a real MouseSensor drag
   // sequence (mousedown -> mousemove -> mouseup) drives actual
@@ -81,6 +180,7 @@ describe('useColumnDragShift', () => {
   function Monitor(props: {
     enabled: boolean;
     rootRef: RefObject<HTMLElement | null>;
+    dragRangeRef: RefObject<DragRangeX | null>;
     onDragActiveChange: (active: boolean) => void;
   }) {
     useColumnDragShift({
@@ -88,6 +188,7 @@ describe('useColumnDragShift', () => {
       enabled: props.enabled,
       orderedIds: ['a', 'b'],
       widths: { a: 50, b: 50 },
+      dragRangeRef: props.dragRangeRef,
       onDragActiveChange: props.onDragActiveChange,
     });
     return null;
@@ -101,17 +202,63 @@ describe('useColumnDragShift', () => {
     onDragActiveChange: (active: boolean) => void;
   }) {
     const rootRef = useRef<HTMLElement | null>(null);
+    const dragRangeRef = useRef<DragRangeX | null>(null);
     // distance: 0 so the sensor activates on the first pointer move instead
     // of requiring a real drag-distance threshold jsdom can't produce.
     const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 0 } }));
     return createElement(
       DndContext,
       { sensors },
-      createElement('table', { ref: rootRef, 'data-testid': 'table' }),
-      createElement(Monitor, { rootRef, enabled, onDragActiveChange }),
+      createElement(
+        'table',
+        { ref: rootRef, 'data-testid': 'table' },
+        createElement(
+          'tbody',
+          null,
+          createElement(
+            'tr',
+            null,
+            createElement('th', { 'data-dt-column-id': 'a' }),
+            createElement('th', { 'data-dt-column-id': 'b' }),
+          ),
+        ),
+      ),
+      createElement(Monitor, { rootRef, enabled, dragRangeRef, onDragActiveChange }),
       createElement(Handle),
     );
   }
+
+  /**
+   * jsdom lays nothing out, so without stubbed rects `measureDragRangeX` would
+   * (correctly) report zero travel and every published shift would be 0px.
+   * Two columns, 50px each: 'a' may travel 0..+50.
+   */
+  function stubRects(table: HTMLElement) {
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.getBoundingClientRect = () => new DOMRect(i * 50, 0, 50, 32);
+    });
+  }
+
+  it('clamps the published delta to the measured range', () => {
+    const { getByTestId } = render(
+      createElement(Harness, { enabled: true, onDragActiveChange: () => {} }),
+    );
+    const handle = getByTestId('handle');
+    const table = getByTestId('table');
+    stubRects(table);
+
+    fireEvent.mouseDown(handle, { clientX: 0, clientY: 0, button: 0 });
+    fireEvent.mouseMove(document, { clientX: 5, clientY: 0 });
+    fireEvent.mouseMove(document, { clientX: 30, clientY: 0 });
+    // Inside the range — published verbatim.
+    expect(table.style.getPropertyValue(shiftVarName('a'))).toBe('30px');
+
+    fireEvent.mouseMove(document, { clientX: 5000, clientY: 0 });
+    // Past it — held at the last slot rather than following the pointer.
+    expect(table.style.getPropertyValue(shiftVarName('a'))).toBe('50px');
+
+    fireEvent.mouseUp(document);
+  });
 
   it('cleans up and reports drag-inactive even when `enabled` flips to false mid-drag', () => {
     // Reproduces the bug: onDragEnd/onDragCancel used to be gated on
@@ -124,6 +271,7 @@ describe('useColumnDragShift', () => {
     );
     const handle = getByTestId('handle');
     const table = getByTestId('table');
+    stubRects(table);
 
     fireEvent.mouseDown(handle, { clientX: 0, clientY: 0, button: 0 });
     // First move activates the sensor (baseline); the second produces delta.

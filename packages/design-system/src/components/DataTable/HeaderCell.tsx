@@ -75,8 +75,13 @@ export function HeaderCell<T>({
     sortDir === 'asc' ? ChevronUp : sortDir === 'desc' ? ChevronDown : ChevronsUpDown;
 
   // dnd-kit sortable — column is its own sortable item. Pinned columns are
-  // locked in place (see the isPinned comment above).
-  const reorderable = column.enableReorder !== false && !isPinned;
+  // locked in place (see the isPinned comment above), and so is a LONE unpinned
+  // column: with no sibling in its band, `reorderRespectingPins` rejects every
+  // drop it could reach, so the drag clamp correctly pins it at zero travel. A
+  // grip that visibly does nothing is worse than no grip, so it hides for the
+  // same reason a pinned column's does.
+  const reorderable =
+    column.enableReorder !== false && !isPinned && instance.unpinnedColumns.length > 1;
   const sortableResult = useSortable({
     id: column.id,
     disabled: !reorderable,
@@ -152,6 +157,10 @@ export function HeaderCell<T>({
     // preserved without the visual side-effect.
     <Table.HeaderCell
       align={column.align ?? 'start'}
+      // Addressable by column id so a drag can measure this cell's REAL
+      // rendered rect (see `measureDragRangeX`). Declared `<col>` widths are
+      // not a substitute — the table stretches past them to fill its wrap.
+      data-dt-column-id={column.id}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(

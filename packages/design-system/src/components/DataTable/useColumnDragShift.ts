@@ -1,6 +1,50 @@
 import { useRef, type RefObject } from 'react';
 import { useDndMonitor } from '@dnd-kit/core';
-import { computeColumnShifts, shiftVarName } from './columnShift';
+import { clampX, computeColumnShifts, shiftVarName, type DragRangeX } from './columnShift';
+
+/**
+ * Measure how far the active column may travel, in px, from the REAL rendered
+ * geometry of the header cells inside `root`.
+ *
+ * Declared widths (`columnSizingPx` / the `<col>` elements) cannot be used for
+ * this. `DataTable.module.scss` sets `table-layout: fixed; width: max-content;
+ * min-width: 100%`, so whenever the column sum is narrower than the scroll wrap
+ * the table stretches and every rendered column is WIDER than declared. Summing
+ * declared widths then under-reports the travel and makes the last slot
+ * unreachable — the exact regression this replaced.
+ *
+ * The bound is the unpinned band, not the table: pinned columns are excluded
+ * from reordering and `reorderRespectingPins` rejects a drop across a pin
+ * boundary, so travelling over a pin would take the column somewhere it can
+ * never land. `orderedIds` is therefore the unpinned columns only.
+ *
+ * All three rects are read in the same instant from the same scrolling
+ * container, so the differences are correct table-space offsets no matter where
+ * the wrap happens to be scrolled.
+ *
+ * Returns a zeroed range (pin in place) when `root` or any of the three header
+ * cells cannot be found — an unmeasurable drag must not be an unbounded one.
+ */
+export function measureDragRangeX(
+  root: HTMLElement | null,
+  orderedIds: string[],
+  activeId: string,
+): DragRangeX {
+  const zero = { min: 0, max: 0 };
+  if (!root || orderedIds.length === 0) return zero;
+
+  // Column ids are consumer-supplied and routinely contain dots, spaces, or
+  // non-ASCII text — CSS.escape is what keeps them legal in a selector.
+  const rectOf = (id: string) =>
+    root.querySelector(`th[data-dt-column-id=${CSS.escape(id)}]`)?.getBoundingClientRect();
+
+  const active = rectOf(activeId);
+  const first = rectOf(orderedIds[0]);
+  const last = rectOf(orderedIds[orderedIds.length - 1]);
+  if (!active || !first || !last) return zero;
+
+  return { min: first.left - active.left, max: last.right - active.right };
+}
 
 /**
  * Write one custom property per shifted column onto `root`, and remove the
@@ -48,6 +92,13 @@ export interface ColumnDragShiftArgs {
   orderedIds: string[];
   /** Rendered width per column id, px. */
   widths: Record<string, number>;
+  /**
+   * Caller-owned slot for the travel range measured at drag start, so the
+   * `DndContext` modifier (which lives in the PARENT of this hook and therefore
+   * cannot read a return value from it) clamps against the same numbers.
+   * Written on drag start, nulled on drag end/cancel.
+   */
+  dragRangeRef: RefObject<DragRangeX | null>;
   /** Called once at drag start (true) and once at drag end/cancel (false). */
   onDragActiveChange: (active: boolean) => void;
 }
@@ -66,17 +117,27 @@ export function useColumnDragShift({
   enabled,
   orderedIds,
   widths,
+  dragRangeRef,
   onDragActiveChange,
 }: ColumnDragShiftArgs): void {
   const writtenRef = useRef<string[]>([]);
 
   const clear = () => {
     writtenRef.current = applyColumnShifts(rootRef.current, {}, writtenRef.current);
+    dragRangeRef.current = null;
     onDragActiveChange(false);
   };
 
   useDndMonitor({
-    onDragStart() {
+    onDragStart(event) {
+      // Measured even when `enabled` is false: the header-only path does not
+      // use this hook's shift variables, but its DndContext modifier reads the
+      // very same range out of `dragRangeRef`.
+      dragRangeRef.current = measureDragRangeX(
+        rootRef.current,
+        orderedIds,
+        String(event.active.id),
+      );
       if (!enabled) return;
       onDragActiveChange(true);
     },
@@ -87,7 +148,19 @@ export function useColumnDragShift({
         activeId: String(event.active.id),
         overId: event.over ? String(event.over.id) : null,
         widths,
-        deltaX: event.delta.x,
+        // Clamping HERE, not only in the modifier, is what actually bounds the
+        // column. dnd-kit computes `delta` as
+        // `scrollAdjustedTranslate = add(modifiedTranslate, scrollAdjustment)`
+        // — the scroll adjustment is added AFTER modifiers run, so a
+        // modifier-only clamp is escaped by horizontal auto-scroll. Worse, it
+        // ran away: the translated header inflated `scrollWidth`, which let
+        // `scrollLeft` grow, which grew `scrollAdjustment`. `delta` is the
+        // post-adjustment value, so clamping it is authoritative and the
+        // feedback loop cannot start.
+        // Fail CLOSED: an unmeasurable drag is a pinned one, never an
+        // unbounded one. Unreachable today (onDragStart always sets the ref)
+        // but the `??` keeps the guarantee if that ever stops being true.
+        deltaX: clampX(event.delta.x, dragRangeRef.current ?? { min: 0, max: 0 }),
       });
       writtenRef.current = applyColumnShifts(rootRef.current, shifts, writtenRef.current);
     },

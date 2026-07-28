@@ -12,7 +12,7 @@
  * covered here is the styling contract (which cells carry a shift transform,
  * which must never, and which columns the driver is told about).
  */
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { DataTable } from './DataTable';
@@ -510,10 +510,19 @@ describe('<DataTable> — whole-column drag preview', () => {
   // PointerSensor (jsdom 29 implements PointerEvent, so `pointerdown` +
   // `pointermove` activate the sensor for real); the others assert the static
   // wiring around it.
+  // Three columns, one pinned — so the two unpinned ones have somewhere to go.
+  // With a single unpinned column the drag clamp (#381) correctly pins it in
+  // place, which would make the shift assertions below vacuous.
+  const pinnedCols: ColumnDef<Row>[] = [
+    { id: 'name', header: 'Name', cell: (r) => r.name },
+    { id: 'amount', header: 'Amount', cell: (r) => r.amount },
+    { id: 'extra', header: 'Extra', cell: () => '—' },
+  ];
+
   function PinnedHarness({ dragWholeColumn }: { dragWholeColumn?: boolean }) {
     const instance = useDataTable<Row>({
       data: rows,
-      columns: cols,
+      columns: pinnedCols,
       getRowId,
       defaultColumnPinning: { left: ['name'], right: [] },
     });
@@ -525,6 +534,20 @@ describe('<DataTable> — whole-column drag preview', () => {
   // All passed for reasons unrelated to their names. The real-drag tests below
   // cover the same ground meaningfully: default-true, the `false` opt-out, and
   // the "transform only on unpinned cells" invariant.)
+
+  /**
+   * Give every header cell a real rect, `width` px wide and laid left to right.
+   *
+   * Mandatory for any drag assertion since #381: the clamp measures the header
+   * cells' RENDERED geometry at drag start, and jsdom reports every rect as
+   * zero — which the clamp correctly reads as "nowhere to go", pinning the
+   * column and making the assertion vacuous.
+   */
+  function stubHeaderRects(table: HTMLElement, width = 120) {
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.getBoundingClientRect = () => new DOMRect(i * width, 0, width, 32);
+    });
+  }
 
   it('exposes the table element to the shift driver via the forwarded ref', () => {
     function RefHarness() {
@@ -556,10 +579,12 @@ describe('<DataTable> — whole-column drag preview', () => {
 
   it('during a real drag, shifts unpinned cells and leaves pinned cells alone', () => {
     render(<PinnedHarness />);
+    const table = screen.getByRole('table');
+    // Unpinned band is ['amount', 'extra'] at x=120 and x=240, so 'amount' may
+    // travel 0..+120 — the 60px drag below lands inside it.
+    stubHeaderRects(table);
     // 'name' is pinned left (no grip); 'amount' is the reorderable column.
     dragAmountColumn();
-
-    const table = screen.getByRole('table');
     // The driver published the offset onto the <table>, never onto an ancestor
     // of a sticky cell as a transform.
     expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('60px');
@@ -619,23 +644,23 @@ describe('<DataTable> — whole-column drag preview', () => {
     // the active column's offset, which would make this assertion vacuous.
     // Give the header cells real rects (each 120px wide, matching the default
     // column size) so collision detection has something to hit.
-    table.querySelectorAll('th').forEach((th, i) => {
-      th.getBoundingClientRect = () => new DOMRect(i * 120, 0, 120, 32);
-    });
+    stubHeaderRects(table);
 
     const grip = screen.getByLabelText(/drag to reorder name/i);
     fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
     // First move clears the 6px activation constraint; the second lands the
     // dragged column squarely on 'owner', two positions to the right.
     fireEvent.pointerMove(document, { clientX: 20, clientY: 0 });
-    fireEvent.pointerMove(document, { clientX: 240, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 200, clientY: 0 });
     // Third move because dnd-kit's `over` lags one frame: the collision found
-    // on the previous move is what the monitor sees on this one.
-    fireEvent.pointerMove(document, { clientX: 250, clientY: 0 });
+    // on the previous move is what the monitor sees on this one. Both moves
+    // stay under the 240px clamp ceiling (#381) — past it the delta stops
+    // changing, dnd-kit emits no further move, and `over` never resolves.
+    fireEvent.pointerMove(document, { clientX: 230, clientY: 0 });
 
     // Sanity: the drag really did resolve a target two columns over, so the
     // displacement assertions below are not vacuous.
-    expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('250px');
+    expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('230px');
     expect(table.style.getPropertyValue(shiftVarName('owner'))).toBe('-120px');
     // The point of the test — the skipped-over non-reorderable column moves by
     // exactly the same amount. With `sortableIds` this reads ''.
@@ -650,9 +675,10 @@ describe('<DataTable> — whole-column drag preview', () => {
     // and no body cell may be transformed. Only the dragged header moves —
     // dnd-kit's historical behavior.
     render(<PinnedHarness dragWholeColumn={false} />);
+    const table = screen.getByRole('table');
+    stubHeaderRects(table);
     dragAmountColumn();
 
-    const table = screen.getByRole('table');
     expect(table.style.getPropertyValue(shiftVarName('amount'))).toBe('');
     expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('');
     expect(screen.getByText('10').closest('td')!.style.transform).toBe('');
@@ -663,5 +689,133 @@ describe('<DataTable> — whole-column drag preview', () => {
     }
 
     fireEvent.pointerUp(document);
+  });
+});
+
+describe('<DataTable> — column drag is clamped to the unpinned band (#381)', () => {
+  // Two clamps, one measured range (taken from the header rects at drag start):
+  //  - `useColumnDragShift` clamps `event.delta.x`, which is what the shift
+  //    variables — and therefore the whole-column preview — are built from.
+  //  - a `DndContext` modifier clamps `modifiedTranslate`, which is the
+  //    collision rect AND the transform the header-only path rides.
+  const threeCols: ColumnDef<Row>[] = [
+    { id: 'name', header: 'Name', cell: (r) => r.name },
+    { id: 'mid', header: 'Mid', cell: () => '—' },
+    { id: 'owner', header: 'Owner', cell: (r) => r.amount },
+  ];
+
+  function ThreeHarness({ dragWholeColumn }: { dragWholeColumn?: boolean }) {
+    const instance = useDataTable<Row>({ data: rows, columns: threeCols, getRowId });
+    return <DataTable instance={instance} aria-label="Three" dragWholeColumn={dragWholeColumn} />;
+  }
+
+  /**
+   * Render with header cells RENDERED 200px wide while their DECLARED size is
+   * the 120px default.
+   *
+   * That gap is the whole point. `table-layout: fixed; width: max-content;
+   * min-width: 100%` makes the table stretch to fill its scroll wrap, so real
+   * columns are wider than the `<col>` elements claim. A clamp built on
+   * declared widths stops the first column at 240px — short of the last slot,
+   * which it can then never reach.
+   */
+  function renderStretched(props: { dragWholeColumn?: boolean } = {}) {
+    render(<ThreeHarness {...props} />);
+    const table = screen.getByRole('table');
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.getBoundingClientRect = () => new DOMRect(i * 200, 0, 200, 32);
+    });
+    return table;
+  }
+
+  /** Drag `columnLabel`'s grip to `clientX`, leaving the pointer down. */
+  function dragTo(columnLabel: RegExp, clientX: number) {
+    const grip = screen.getByLabelText(columnLabel);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    fireEvent.pointerMove(document, { clientX: clientX > 0 ? 20 : -20, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX, clientY: 0 });
+  }
+
+  /**
+   * Assert the column did not move, and that the drag was genuinely running
+   * when it didn't. A fully-clamped drag publishes NO variable rather than
+   * '0px': dnd-kit's move effect is keyed on the (already clamped) translate,
+   * so a translate pinned at 0 emits nothing after the start. Without the
+   * liveness anchor this would also pass if the drag had never activated.
+   */
+  function expectPinnedInPlace(table: HTMLElement, columnId: string, cellText: string) {
+    const published = table.style.getPropertyValue(shiftVarName(columnId));
+    expect(['', '0px']).toContain(published);
+    // Liveness: cells only carry the shift transform while a drag is active.
+    const cell = screen.getAllByText(cellText)[0]!.closest('td')!;
+    expect(cell.style.transform).toBe(`translateX(var(${shiftVarName(columnId)}, 0px))`);
+  }
+
+  it('stops the first column at the LAST slot, measured from rendered widths', () => {
+    // The regression guard for the declared-width clamp: 'name' must travel the
+    // full 400px to reach the last slot. Summing the declared 120px sizes gives
+    // 240 — third of three, with the last slot unreachable.
+    const table = renderStretched();
+    dragTo(/drag to reorder name/i, 5000);
+    expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('400px');
+    fireEvent.pointerUp(document);
+  });
+
+  it('does not let the first column travel left at all', () => {
+    const table = renderStretched();
+    dragTo(/drag to reorder name/i, -5000);
+    expectPinnedInPlace(table, 'name', 'Alpha');
+    fireEvent.pointerUp(document);
+  });
+
+  it('does not let the last column travel right at all', () => {
+    const table = renderStretched();
+    dragTo(/drag to reorder owner/i, 5000);
+    expectPinnedInPlace(table, 'owner', '10');
+    fireEvent.pointerUp(document);
+  });
+
+  it('bounds a middle column by the rendered geometry on each side', () => {
+    const table = renderStretched();
+    dragTo(/drag to reorder mid/i, -5000);
+    expect(table.style.getPropertyValue(shiftVarName('mid'))).toBe('-200px');
+    fireEvent.pointerUp(document);
+
+    cleanup();
+    const table2 = renderStretched();
+    dragTo(/drag to reorder mid/i, 5000);
+    expect(table2.style.getPropertyValue(shiftVarName('mid'))).toBe('200px');
+    fireEvent.pointerUp(document);
+  });
+
+  it('clamps the header transform on the dragWholeColumn={false} path too', () => {
+    // There the header rides dnd-kit's own transform, so the modifier — not the
+    // delta clamp — is what bounds it. Same measured range either way.
+    renderStretched({ dragWholeColumn: false });
+    dragTo(/drag to reorder name/i, 5000);
+    const header = screen.getByRole('columnheader', { name: /name/i });
+    expect(header.style.transform).toContain('400px');
+    expect(header.style.transform).not.toContain('5000px');
+    fireEvent.pointerUp(document);
+  });
+
+  it('hides the grip on a lone unpinned column — it has nowhere to be dropped', () => {
+    // With every other column pinned, `reorderRespectingPins` would reject any
+    // drop this column could reach and the measured range is zero, so the drag
+    // could only ever snap back. A grip that visibly does nothing is worse than
+    // no grip — pinned columns already hide theirs for the same reason.
+    function LoneHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: threeCols,
+        getRowId,
+        defaultColumnPinning: { left: ['name'], right: ['owner'] },
+      });
+      return <DataTable instance={instance} aria-label="Lone" />;
+    }
+    render(<LoneHarness />);
+    expect(screen.queryByLabelText(/drag to reorder mid/i)).toBeNull();
+    // Sanity: the column still renders, it just cannot be picked up.
+    expect(screen.getByRole('columnheader', { name: /mid/i })).toBeInTheDocument();
   });
 });

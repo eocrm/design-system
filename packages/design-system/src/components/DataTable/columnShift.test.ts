@@ -1,4 +1,4 @@
-import { computeColumnShifts, cssIdent, shiftVarName } from './columnShift';
+import { clampX, computeColumnShifts, cssIdent, shiftVarName } from './columnShift';
 
 const orderedIds = ['a', 'b', 'c', 'd'];
 const widths = { a: 100, b: 120, c: 80, d: 60 };
@@ -155,5 +155,26 @@ describe('shiftVarName', () => {
   it('builds a --dt-shift- prefixed custom property name', () => {
     expect(shiftVarName('name')).toBe(`--dt-shift-${cssIdent('name')}`);
     expect(shiftVarName('name').startsWith('--dt-shift-')).toBe(true);
+  });
+});
+
+describe('clampX', () => {
+  const range = { min: -220, max: 60 };
+
+  it('passes through a value inside the range', () => {
+    expect(clampX(-10, range)).toBe(-10);
+  });
+
+  it('clamps an overshoot to the left', () => {
+    expect(clampX(-9999, range)).toBe(-220);
+  });
+
+  it('clamps an overshoot to the right', () => {
+    expect(clampX(9999, range)).toBe(60);
+  });
+
+  it('holds a zero-width range at zero in both directions', () => {
+    expect(clampX(500, { min: 0, max: 0 })).toBe(0);
+    expect(clampX(-500, { min: 0, max: 0 })).toBe(0);
   });
 });
