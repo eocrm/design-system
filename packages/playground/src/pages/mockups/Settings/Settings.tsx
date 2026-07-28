@@ -106,7 +106,7 @@ function SettingRow({ setting, value, onChange, onReset }: SettingRowProps) {
   }
 
   return (
-    <Cluster justify="between" align="start" gap="lg" wrap={false}>
+    <Cluster justify="between" align="start" gap="lg">
       <Stack gap="xs">
         <Cluster gap="sm" align="center">
           <Text as="span" weight="semibold">
