@@ -178,6 +178,7 @@ function ColumnShiftDriver({
   orderedIds,
   widths,
   dragRangeRef,
+  lastSlotIdRef,
   onDragActiveChange,
 }: {
   rootRef: RefObject<HTMLElement | null>;
@@ -185,9 +186,18 @@ function ColumnShiftDriver({
   orderedIds: string[];
   widths: Record<string, number>;
   dragRangeRef: RefObject<DragRangeX | null>;
+  lastSlotIdRef: RefObject<string | null>;
   onDragActiveChange: (active: boolean) => void;
 }) {
-  useColumnDragShift({ rootRef, enabled, orderedIds, widths, dragRangeRef, onDragActiveChange });
+  useColumnDragShift({
+    rootRef,
+    enabled,
+    orderedIds,
+    widths,
+    dragRangeRef,
+    lastSlotIdRef,
+    onDragActiveChange,
+  });
   return null;
 }
 
@@ -285,11 +295,43 @@ function DataTableInner<T>(
   }, []);
   const modifiers = useMemo(() => [clampToUnpinnedBand], [clampToUnpinnedBand]);
 
+  // #383: the last slot in the unpinned band that this drag resolved. Written
+  // by the shift driver — nulled at drag start, set on every `onDragOver` whose
+  // target is a band member — and read by BOTH the preview and the drop below.
+  // One value feeding both is what makes them agree by construction instead of
+  // by coincidence.
+  //
+  // dnd-kit hands us a target the drop cannot use in two situations, and a
+  // pinned column produces both:
+  //
+  //  - `over` IS the pinned column. A boolean `disabled` on `useSortable`
+  //    normalizes to `{ draggable: true, droppable: false }` — it stands the
+  //    DRAGGABLE down and leaves the droppable registered — so a pinned column
+  //    is still a collision target. It is `position: sticky`, so once the table
+  //    is scrolled its rect sits ON TOP of the band's last columns and it wins
+  //    the intersection outright. `reorderRespectingPins` then rejects the move
+  //    as cross-boundary and the drop evaporates.
+  //  - `over` is null, which is where dnd-kit's horizontal auto-scroll lands:
+  //    the scroll adjustment is applied to the translate AFTER modifiers run,
+  //    so the collision rect desyncs from the droppable rects and stops
+  //    intersecting anything at all.
+  //
+  // Either way the column is visibly parked at a valid slot when the user lets
+  // go — #382's clamp holds it inside the band — so discarding the drop breaks
+  // the promise the preview just made. Falling back to the last band slot keeps
+  // it. `reorderRespectingPins` stays as the backstop; this ref can only ever
+  // hold a band member, so a cross-boundary move cannot reach it.
+  const lastSlotIdRef = useRef<string | null>(null);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
     const activeId = String(active.id);
-    const overId = String(over.id);
+    // An out-of-band target is not a slot. When `over` is one, the last slot
+    // the band DID resolve is both the honest answer and the one on screen.
+    const overIdRaw = over ? String(over.id) : null;
+    const overId =
+      overIdRaw != null && shiftOrderedIds.includes(overIdRaw) ? overIdRaw : lastSlotIdRef.current;
+    if (overId == null || activeId === overId) return;
 
     instance.setColumnOrder((prev) => {
       const next = reorderRespectingPins({
@@ -358,6 +400,7 @@ function DataTableInner<T>(
         orderedIds={shiftOrderedIds}
         widths={instance.columnSizesPx}
         dragRangeRef={dragRangeRef}
+        lastSlotIdRef={lastSlotIdRef}
         onDragActiveChange={setDragActive}
       />
       <SortableContext

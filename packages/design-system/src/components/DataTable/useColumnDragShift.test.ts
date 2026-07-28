@@ -181,6 +181,7 @@ describe('useColumnDragShift', () => {
     enabled: boolean;
     rootRef: RefObject<HTMLElement | null>;
     dragRangeRef: RefObject<DragRangeX | null>;
+    lastSlotIdRef: RefObject<string | null>;
     onDragActiveChange: (active: boolean) => void;
   }) {
     useColumnDragShift({
@@ -189,6 +190,7 @@ describe('useColumnDragShift', () => {
       orderedIds: ['a', 'b'],
       widths: { a: 50, b: 50 },
       dragRangeRef: props.dragRangeRef,
+      lastSlotIdRef: props.lastSlotIdRef,
       onDragActiveChange: props.onDragActiveChange,
     });
     return null;
@@ -203,6 +205,7 @@ describe('useColumnDragShift', () => {
   }) {
     const rootRef = useRef<HTMLElement | null>(null);
     const dragRangeRef = useRef<DragRangeX | null>(null);
+    const lastSlotIdRef = useRef<string | null>(null);
     // distance: 0 so the sensor activates on the first pointer move instead
     // of requiring a real drag-distance threshold jsdom can't produce.
     const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 0 } }));
@@ -223,7 +226,7 @@ describe('useColumnDragShift', () => {
           ),
         ),
       ),
-      createElement(Monitor, { rootRef, enabled, dragRangeRef, onDragActiveChange }),
+      createElement(Monitor, { rootRef, enabled, dragRangeRef, lastSlotIdRef, onDragActiveChange }),
       createElement(Handle),
     );
   }

@@ -692,6 +692,219 @@ describe('<DataTable> — whole-column drag preview', () => {
   });
 });
 
+describe('<DataTable> — a drop over a pinned column lands in the band (#383)', () => {
+  /**
+   * The scenario from the issue, reduced to geometry.
+   *
+   * `owner` is pinned right. It is `position: sticky`, so on a scrolled table
+   * its rect sits ON TOP of the band's last columns rather than after them —
+   * that is what the stubs below reproduce, and it is the whole bug. A boolean
+   * `disabled` on `useSortable` normalizes to `{ draggable: true, droppable:
+   * false }`, i.e. it stands down the DRAGGABLE and leaves the droppable
+   * registered, so the pinned column is still a collision target. Park the
+   * dragged column at the band's right edge (#382's clamp puts it exactly
+   * there) and the pinned column wins the intersection outright — a target
+   * `reorderRespectingPins` must reject as cross-boundary.
+   *
+   * The preview collapsed and the drop evaporated. Both now resolve to the last
+   * slot the BAND itself matched, which is the slot on screen.
+   *
+   * Widths are deliberately uneven: the dragged column is narrow and the last
+   * band column is wide, so the clamped collision rect fits inside the pinned
+   * column's rect and cannot also cover most of the band column. Equal widths
+   * make the band column win on area and the bug never appears.
+   */
+  const pinnedRightCols: ColumnDef<Row>[] = [
+    { id: 'name', header: 'Name', cell: (r) => r.name, size: 100 },
+    { id: 'mid', header: 'Mid', cell: () => '—', size: 400 },
+    { id: 'owner', header: 'Owner', cell: (r) => r.amount, size: 100, pin: 'right' },
+  ];
+
+  /** Mirror image: the left-pinned column covers the START of the band. */
+  const pinnedLeftCols: ColumnDef<Row>[] = [
+    { id: 'owner', header: 'Owner', cell: (r) => r.amount, size: 100, pin: 'left' },
+    { id: 'mid', header: 'Mid', cell: () => '—', size: 400 },
+    { id: 'name', header: 'Name', cell: (r) => r.name, size: 100 },
+  ];
+
+  function Harness3({
+    columns,
+    dragWholeColumn,
+  }: {
+    columns: ColumnDef<Row>[];
+    dragWholeColumn?: boolean;
+  }) {
+    const instance = useDataTable<Row>({ data: rows, columns, getRowId });
+    return <DataTable instance={instance} aria-label="Pinned" dragWholeColumn={dragWholeColumn} />;
+  }
+
+  /**
+   * Lay the header cells out by id rather than by index, because the pinned
+   * cell must OVERLAP its neighbours — which an index-derived strip cannot
+   * express, and which is exactly what `position: sticky` does on a scrolled
+   * table.
+   */
+  function renderWithRects(
+    columns: ColumnDef<Row>[],
+    rects: Record<string, [number, number]>,
+    props: { dragWholeColumn?: boolean } = {},
+  ) {
+    render(<Harness3 columns={columns} {...props} />);
+    const table = screen.getByRole('table');
+    table.querySelectorAll('th').forEach((th) => {
+      const [left, right] = rects[th.getAttribute('data-dt-column-id')!]!;
+      th.getBoundingClientRect = () => new DOMRect(left, 0, right - left, 32);
+    });
+    return table;
+  }
+
+  // 'owner' floats over the last 100px of 'mid'.
+  const rightRects: Record<string, [number, number]> = {
+    name: [0, 100],
+    mid: [100, 500],
+    owner: [400, 500],
+  };
+  // ...and here over the FIRST 100px of it.
+  const leftRects: Record<string, [number, number]> = {
+    owner: [100, 200],
+    mid: [100, 500],
+    name: [500, 600],
+  };
+
+  const orderOf = (table: HTMLElement) =>
+    [...table.querySelectorAll('thead th[data-dt-column-id]')].map((th) =>
+      th.getAttribute('data-dt-column-id'),
+    );
+
+  /** Drag `label`'s grip to `clientX` (and optionally `clientY`), pointer down. */
+  function dragTo(label: RegExp, clientX: number, clientY = 0) {
+    const grip = screen.getByLabelText(label);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    // First move clears the 6px activation constraint. The second parks the
+    // column mid-band so a band slot is resolved at all; the third is the one
+    // that carries it onto the pinned column. dnd-kit's `over` lags a frame, so
+    // the middle stop has to be a move of its own.
+    fireEvent.pointerMove(document, { clientX: clientX > 0 ? 20 : -20, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: clientX > 0 ? 200 : -100, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX, clientY });
+  }
+
+  it('holds the previewed gap open while the pinned column owns the collision', () => {
+    // Half one of "the drop equals the preview". `computeColumnShifts` finds no
+    // index for a pinned id, so reading `over` raw returned the dragged
+    // column's own offset alone: both neighbours snapped back and the column
+    // was left overlapping the slot it was about to take.
+    const table = renderWithRects(pinnedRightCols, rightRects);
+    dragTo(/drag to reorder name/i, 5000);
+    // One more frame, nudged on the y axis. Necessary: at the clamp ceiling the
+    // x translate stops changing, so dnd-kit emits no further move and the
+    // variables written on the way in would stand unexamined. A y nudge keeps
+    // the translate changing while the collision stays on the pinned column,
+    // which is what makes the preview recompute with an unusable target.
+    fireEvent.pointerMove(document, { clientX: 5000, clientY: 4 });
+    // Clamped to the band: 'mid' ends at 500, 'name' at 100, so 400px of travel.
+    expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('400px');
+    // The gap is still open at 'mid' — one 'name'-width, from the DECLARED size.
+    expect(table.style.getPropertyValue(shiftVarName('mid'))).toBe('-100px');
+    // And the pinned column is never given an offset at all.
+    expect(table.style.getPropertyValue(shiftVarName('owner'))).toBe('');
+    fireEvent.pointerUp(document);
+  });
+
+  it('commits that slot on release instead of discarding the drop', () => {
+    const table = renderWithRects(pinnedRightCols, rightRects);
+    expect(orderOf(table)).toEqual(['name', 'mid', 'owner']);
+    dragTo(/drag to reorder name/i, 5000);
+    fireEvent.pointerUp(document);
+    // Last slot of the unpinned band — the slot the preview was showing — and
+    // the pinned column has not moved.
+    expect(orderOf(table)).toEqual(['mid', 'name', 'owner']);
+  });
+
+  it('does the same against a left-pinned column', () => {
+    const table = renderWithRects(pinnedLeftCols, leftRects);
+    expect(orderOf(table)).toEqual(['owner', 'mid', 'name']);
+    dragTo(/drag to reorder name/i, -5000);
+    fireEvent.pointerUp(document);
+    expect(orderOf(table)).toEqual(['owner', 'name', 'mid']);
+  });
+
+  it('commits the same slot on the dragWholeColumn={false} path', () => {
+    // The opt-out changes which mechanism paints the preview, never what a drop
+    // means. Same drag, same landing.
+    const table = renderWithRects(pinnedRightCols, rightRects, { dragWholeColumn: false });
+    dragTo(/drag to reorder name/i, 5000);
+    fireEvent.pointerUp(document);
+    expect(orderOf(table)).toEqual(['mid', 'name', 'owner']);
+    // ...and the body was never touched on this path.
+    expect(table.style.getPropertyValue(shiftVarName('name'))).toBe('');
+  });
+
+  it('commits the previewed slot when the release resolves no target at all', () => {
+    // The other way dnd-kit hands back something unusable: `over` null. In a
+    // browser that is what horizontal auto-scroll produces (the scroll
+    // adjustment is applied to the translate AFTER modifiers run, so the
+    // collision rect desyncs from the droppable rects); here, dragging clear of
+    // the header row produces it directly, since only the x axis is clamped.
+    //
+    // Committing — rather than cancelling, the way an outside-the-board Kanban
+    // release does — is what matches the preview: a column drag has one axis and
+    // one legal band, the whole-column preview discards the y translate outright,
+    // so the column stays visibly parked in a slot however far the pointer roams.
+    // Escape is still the way to cancel.
+    const table = renderWithRects(pinnedRightCols, rightRects);
+    dragTo(/drag to reorder name/i, 200, 5000);
+    expect(table.style.getPropertyValue(shiftVarName('mid'))).toBe('-100px');
+    fireEvent.pointerUp(document);
+    expect(orderOf(table)).toEqual(['mid', 'name', 'owner']);
+  });
+
+  it('does not let one drag inherit the previous drag’s target', () => {
+    // The remembered slot is cleared at drag START, not at drag end, so a drag
+    // that never resolves a slot of its own commits nothing.
+    const table = renderWithRects(pinnedRightCols, rightRects);
+    dragTo(/drag to reorder name/i, 5000);
+    fireEvent.pointerUp(document);
+    expect(orderOf(table)).toEqual(['mid', 'name', 'owner']);
+
+    const grip = screen.getByLabelText(/drag to reorder name/i);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    fireEvent.pointerMove(document, { clientX: 20, clientY: 5000 });
+    fireEvent.pointerUp(document);
+    expect(orderOf(table)).toEqual(['mid', 'name', 'owner']);
+  });
+
+  it('still resolves an `enableReorder: false` column as an ordinary slot', () => {
+    // Non-reorderable is NOT the same as non-droppable, and must not become so:
+    // `reorderRespectingPins` moves such a column happily, so its slot is a
+    // legal landing spot and dnd-kit resolves it directly — no fallback needed.
+    // Were it excluded, [stage, name, owner] would be unreachable by dragging.
+    const gapCols: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', cell: (r) => r.name },
+      { id: 'stage', header: 'Stage', cell: () => 'Won', enableReorder: false },
+      { id: 'owner', header: 'Owner', cell: (r) => r.amount },
+    ];
+    function GapHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: gapCols, getRowId });
+      return <DataTable instance={instance} aria-label="Gap" />;
+    }
+    render(<GapHarness />);
+    const table = screen.getByRole('table');
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.getBoundingClientRect = () => new DOMRect(i * 200, 0, 200, 32);
+    });
+    expect(screen.queryByLabelText(/drag to reorder stage/i)).toBeNull();
+
+    const grip = screen.getByLabelText(/drag to reorder name/i);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    fireEvent.pointerMove(document, { clientX: 20, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 150, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 160, clientY: 0 });
+    fireEvent.pointerUp(document);
+    expect(orderOf(table)).toEqual(['stage', 'name', 'owner']);
+  });
+});
+
 describe('<DataTable> — column drag is clamped to the unpinned band (#381)', () => {
   // Two clamps, one measured range (taken from the header rects at drag start):
   //  - `useColumnDragShift` clamps `event.delta.x`, which is what the shift

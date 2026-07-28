@@ -99,6 +99,16 @@ export interface ColumnDragShiftArgs {
    * Written on drag start, nulled on drag end/cancel.
    */
   dragRangeRef: RefObject<DragRangeX | null>;
+  /**
+   * Caller-owned slot for the last member of `orderedIds` this drag resolved as
+   * its target, or null before it resolves one. Written here — nulled at drag
+   * start, set on every `onDragOver` whose target is in the band — and read
+   * both here, to keep the displaced neighbours parked when dnd-kit hands over
+   * something the drop cannot use, and by the drop handler in the parent, so
+   * the commit lands on the slot the preview is showing. See the
+   * `lastSlotIdRef` comment in `DataTable` for what "cannot use" covers.
+   */
+  lastSlotIdRef: RefObject<string | null>;
   /** Called once at drag start (true) and once at drag end/cancel (false). */
   onDragActiveChange: (active: boolean) => void;
 }
@@ -118,6 +128,7 @@ export function useColumnDragShift({
   orderedIds,
   widths,
   dragRangeRef,
+  lastSlotIdRef,
   onDragActiveChange,
 }: ColumnDragShiftArgs): void {
   const writtenRef = useRef<string[]>([]);
@@ -138,15 +149,35 @@ export function useColumnDragShift({
         orderedIds,
         String(event.active.id),
       );
+      // Ungated for the same reason: the drop handler reads this on BOTH paths.
+      // Cleared here rather than at drag end so one drag can never inherit the
+      // previous drag's target, and so the drop handler is free to read it
+      // without depending on which of the two end callbacks dnd-kit runs first.
+      lastSlotIdRef.current = null;
       if (!enabled) return;
       onDragActiveChange(true);
+    },
+    onDragOver(event) {
+      // Band members only. A pinned column is a live droppable (dnd-kit's
+      // boolean `disabled` stands down the draggable alone) and, being sticky,
+      // it covers the band's last columns on a scrolled table — so it wins
+      // collisions it can never accept a drop from.
+      const id = event.over ? String(event.over.id) : null;
+      if (id != null && orderedIds.includes(id)) lastSlotIdRef.current = id;
     },
     onDragMove(event) {
       if (!enabled) return;
       const shifts = computeColumnShifts({
         orderedIds,
         activeId: String(event.active.id),
-        overId: event.over ? String(event.over.id) : null,
+        // #383: the last BAND slot, which is `over` itself whenever `over` is
+        // one — `onDragOver` above has already recorded it. Reading `event.over`
+        // raw is what used to collapse the preview: `computeColumnShifts` finds
+        // no index for an out-of-band id, returns the active column's offset
+        // alone, and every displaced neighbour snaps back, leaving the dragged
+        // column overlapping the slot it is about to take. The drop commits
+        // this same id, so preview and commit cannot disagree.
+        overId: lastSlotIdRef.current,
         widths,
         // Clamping HERE, not only in the modifier, is what actually bounds the
         // column. dnd-kit computes `delta` as
