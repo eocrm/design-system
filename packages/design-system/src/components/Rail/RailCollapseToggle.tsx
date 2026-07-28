@@ -28,6 +28,11 @@ export interface RailCollapseToggleProps extends Omit<
  * Drop this inside a `<Rail.Footer>` for the standard pattern, or anywhere
  * inside the rail for a custom layout.
  *
+ * **Renders nothing while the rail's `collapseBelow` viewport override is
+ * active.** The override pins the collapsed state, so the button could not
+ * change anything — a control that can never do its job is hidden rather than
+ * shown inert (same call as DataTable's drag grip on a single-column table).
+ *
  * @example
  * <Rail.Footer>
  *   <Rail.CollapseToggle />
@@ -36,7 +41,8 @@ export interface RailCollapseToggleProps extends Omit<
 export const RailCollapseToggle = forwardRef<HTMLButtonElement, RailCollapseToggleProps>(
   function RailCollapseToggle({ className, onClick, 'aria-label': ariaLabel, ...rest }, ref) {
     const t = useTranslation();
-    const { collapsed, setCollapsed } = useRail();
+    const { collapsed, setCollapsed, collapsedByViewport } = useRail();
+    if (collapsedByViewport) return null;
     return (
       <Button
         ref={ref}

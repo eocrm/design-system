@@ -9,11 +9,13 @@ import {
   useContext,
   useMemo,
   useState,
+  useSyncExternalStore,
   type HTMLAttributes,
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
+import { COLLAPSE_BREAKPOINT_PX, type CollapseBreakpoint } from '../_internal/collapse';
 import { RailHeader } from './RailHeader';
 import { RailFooter } from './RailFooter';
 import { RailSpacer } from './RailSpacer';
@@ -31,10 +33,68 @@ import styles from './Rail.module.scss';
  * anywhere inside the rail can drive it without going through props.
  */
 export interface RailContextValue {
-  /** Whether the rail is currently in its narrow icon-only state. */
+  /**
+   * Whether the rail is currently in its narrow icon-only state — the
+   * EFFECTIVE state, i.e. what is actually rendered. `true` whenever the
+   * `collapseBelow` viewport override is active, regardless of the
+   * `collapsed` / `defaultCollapsed` value.
+   */
   collapsed: boolean;
-  /** Setter that accepts a value or an updater function. */
+  /**
+   * Setter that accepts a value or an updater function. Writes the consumer's
+   * *preference*, which is what `onCollapsedChange` reports and what governs
+   * again above `collapseBelow` — an updater's `prev` is therefore the
+   * preference, not the viewport-overridden effective state.
+   */
   setCollapsed: (next: boolean | ((prev: boolean) => boolean)) => void;
+  /**
+   * `true` while the `collapseBelow` viewport override is forcing the collapsed
+   * state — i.e. `collapsed` is `true` no matter what the consumer asked for,
+   * and no toggle can change what's rendered. Use it to hide or disable UI that
+   * would try to expand the rail; `<Rail.CollapseToggle>` unmounts itself on
+   * it. Always `false` when `collapseBelow` is unset.
+   */
+  collapsedByViewport: boolean;
+}
+
+/**
+ * Subscribes to `(max-width: <breakpoint>px)` on the VIEWPORT and reports
+ * whether it currently matches. `false` when no breakpoint is given, and on a
+ * server / any environment without `matchMedia`.
+ *
+ * Viewport, not container: the rail's own width is what collapsing changes, so
+ * a container query would be self-referential. See `_internal/collapse.ts`.
+ */
+function useBelowBreakpoint(breakpoint: CollapseBreakpoint | undefined): boolean {
+  // `max-width` is inclusive, matching the `@container (max-width: …)` form the
+  // SCSS breakpoints use — the rail collapses AT the breakpoint value.
+  const query = breakpoint ? `(max-width: ${COLLAPSE_BREAKPOINT_PX[breakpoint]}px)` : null;
+
+  const [subscribe, getSnapshot] = useMemo(() => {
+    const supported =
+      query !== null && typeof window !== 'undefined' && typeof window.matchMedia === 'function';
+    if (!supported) return [() => () => {}, () => false] as const;
+    const mql = window.matchMedia(query);
+    return [
+      (onStoreChange: () => void) => {
+        // Safari < 13.1 exposes `matchMedia` but no `addEventListener` on the
+        // MediaQueryList — only the deprecated `addListener`. Feature-detecting
+        // `matchMedia` alone would throw here during commit and take the app
+        // down rather than degrading, so detect the subscription API too.
+        if (typeof mql.addEventListener === 'function') {
+          mql.addEventListener('change', onStoreChange);
+          return () => mql.removeEventListener('change', onStoreChange);
+        }
+        mql.addListener(onStoreChange);
+        return () => mql.removeListener(onStoreChange);
+      },
+      () => mql.matches,
+    ] as const;
+  }, [query]);
+
+  // Server snapshot is `false`: SSR has no viewport, so the markup matches the
+  // consumer's own `collapsed` value and the client corrects on hydration.
+  return useSyncExternalStore(subscribe, getSnapshot, () => false);
 }
 
 /**
@@ -72,6 +132,43 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
    * for persisting the state to localStorage or the URL.
    */
   onCollapsedChange?: (collapsed: boolean) => void;
+  /**
+   * Force the icon-only collapsed mode while the **viewport** is at or below a
+   * width threshold: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. Omit for no
+   * responsive behavior (the default) — `collapsed` alone governs.
+   *
+   * Below the threshold the rail renders collapsed regardless of `collapsed` /
+   * `defaultCollapsed`; above it, the consumer's value governs again,
+   * untouched. It is a **presentation override, not a user choice**, so
+   * `onCollapsedChange` does NOT fire when the viewport crosses the threshold
+   * in either direction — a narrow window can't silently rewrite a persisted
+   * preference. `<Rail.CollapseToggle>` hides itself while the override is
+   * active, since it could not change anything.
+   *
+   * Unlike `<Grid collapseBelow>` / `<Split collapseBelow>`, which measure
+   * their own width with a container query, this measures the viewport: the
+   * rail's own width is exactly what collapsing changes, so a container query
+   * would be circular. Same token scale, different basis.
+   *
+   * ⚠️ **Your shell's column track must follow.** The override shrinks the
+   * rail but is invisible to the layout around it — a shell that sizes its
+   * rail track from its OWN `collapsed` state will keep a 240px track around a
+   * 56px rail and leave a dead gap on every screen. Key the track off the
+   * viewport or off the rail instead, both of which work precisely because the
+   * basis here is the viewport rather than a container:
+   *
+   * ```scss
+   * // Either mirror the breakpoint…
+   * @media (max-width: 768px) { .shell { grid-template-columns: 56px 1fr; } }
+   * // …or follow the rail's own state attribute, no breakpoint duplication:
+   * .shell:has(nav[data-collapsed]) { grid-template-columns: 56px 1fr; }
+   * ```
+   *
+   * @example
+   * // Persisted preference, plus a hard collapse on phone-width viewports.
+   * <Rail collapsed={pref} onCollapsedChange={setPref} collapseBelow="sm">
+   */
+  collapseBelow?: CollapseBreakpoint;
   /**
    * Accessible label for the wrapping `<nav>` landmark. Defaults to
    * `t('rail.navigation')` so screen readers always announce a name for the
@@ -150,6 +247,22 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
  *   … same children …
  * </Rail>
  *
+ * @example
+ * // Responsive — forced icon-only on phone-width viewports, preference kept.
+ * <Rail collapsed={collapsed} onCollapsedChange={setCollapsed} collapseBelow="sm">
+ *   … same children …
+ * </Rail>
+ *
+ * @remarks Responsive collapse
+ * `collapseBelow` measures the **viewport** (`matchMedia`), not the rail's own
+ * width — unlike `<Grid collapseBelow>` / `<Split collapseBelow>`, which use
+ * container queries. Collapsing is what changes the rail's width, so a
+ * container query would be circular; and collapsed drives React behavior
+ * (tooltips, group flyouts) that CSS can't reach. The override is presentation
+ * only: it never fires `onCollapsedChange` and never writes the consumer's
+ * state, so a preference survives a narrow window untouched. While it's active
+ * `<Rail.CollapseToggle>` renders nothing.
+ *
  * @remarks Scrolling
  * Everything before the first `<Rail.Footer>` renders inside one scroll box;
  * the Footer sits outside it and stays pinned. That box only ever scrolls
@@ -181,6 +294,7 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
     collapsed: controlledCollapsed,
     defaultCollapsed = false,
     onCollapsedChange,
+    collapseBelow,
     'aria-label': ariaLabel,
     className,
     children,
@@ -192,20 +306,31 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
 
   const isControlled = controlledCollapsed !== undefined;
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(defaultCollapsed);
-  const collapsed = isControlled ? (controlledCollapsed as boolean) : uncontrolledCollapsed;
+  // The consumer's preference — controlled prop or internal state. Deliberately
+  // NOT touched by the viewport override: nothing writes it on a breakpoint
+  // cross, so an uncontrolled toggle survives a narrow period and a persisted
+  // controlled value is never rewritten behind the consumer's back.
+  const preferredCollapsed = isControlled
+    ? (controlledCollapsed as boolean)
+    : uncontrolledCollapsed;
+
+  const collapsedByViewport = useBelowBreakpoint(collapseBelow);
+  const collapsed = collapsedByViewport || preferredCollapsed;
 
   const setCollapsed = useCallback<RailContextValue['setCollapsed']>(
     (next) => {
-      const value = typeof next === 'function' ? next(collapsed) : next;
+      // `prev` is the preference, not the effective state, so a custom toggle
+      // rendered while the override is active still flips the stored value.
+      const value = typeof next === 'function' ? next(preferredCollapsed) : next;
       onCollapsedChange?.(value);
       if (!isControlled) setUncontrolledCollapsed(value);
     },
-    [collapsed, isControlled, onCollapsedChange],
+    [preferredCollapsed, isControlled, onCollapsedChange],
   );
 
   const ctx = useMemo<RailContextValue>(
-    () => ({ collapsed, setCollapsed }),
-    [collapsed, setCollapsed],
+    () => ({ collapsed, setCollapsed, collapsedByViewport }),
+    [collapsed, setCollapsed, collapsedByViewport],
   );
 
   // Split children: anything before the FIRST <Rail.Footer> goes into the
