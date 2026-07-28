@@ -155,21 +155,21 @@
           "type": "CollapseBreakpoint",
           "required": false,
           "default": "",
-          "description": "Move the sidebar out of the flow and into a left-anchored `<Drawer>` while\nthe **viewport** is at or below a width threshold: `'sm'` 480px / `'md'`\n640px / `'lg'` 768px. Omit for no responsive behavior (the default) — the\nsidebar always renders in the flow.\n\nBelow the threshold the content column claims the full viewport width, and\nthe sidebar is reachable only by opening the drawer. Render your own\ntrigger (a hamburger in the `topBar`) and drive `sidebarOpen` — AppLayout\ndeliberately renders no trigger of its own, since where it belongs in the\nbar is the consumer's call. Use the exported `useBelowBreakpoint` hook to\nshow that trigger only while the overlay mode is active.\n\n`sidebarPinned` is ignored below the threshold: the drawer owns the\nsidebar's box there, and a `sticky; height: 100dvh` wrapper inside it would\nsize the rail to the window instead of the drawer.\n\nMeasures the viewport (`matchMedia`), not a container — the sidebar's\npresence in the row is exactly what the threshold changes, so a container\nquery would be circular. Same scale and same basis as `<Rail collapseBelow>`."
+          "description": "Move the sidebar out of the flow and into a left-anchored `<Drawer>` while\nthe **viewport** is at or below a width threshold: `'sm'` 480px / `'md'`\n640px / `'lg'` 768px. Omit for no responsive behavior (the default) — the\nsidebar always renders in the flow.\n\nBelow the threshold the content column claims the full viewport width, and\nthe sidebar is reachable only by opening the drawer. Render your own\ntrigger (a hamburger in the `topBar`) and drive it with `sidebarOpen` +\n`onSidebarOpenChange` — AppLayout deliberately renders no trigger of its\nown, since where it belongs in the bar is the consumer's call, which means\nboth props are effectively required together (see `sidebarOpen`'s doc).\nUse the exported `useBelowBreakpoint` hook to show that trigger only while\nthe overlay mode is active.\n\n`sidebarPinned` is ignored below the threshold: the drawer owns the\nsidebar's box there, and a `sticky; height: 100dvh` wrapper inside it would\nsize the rail to the window instead of the drawer.\n\nMeasures the viewport (`matchMedia`), not a container — the sidebar's\npresence in the row is exactly what the threshold changes, so a container\nquery would be circular. Same scale and same basis as `<Rail collapseBelow>`."
         },
         {
           "name": "sidebarOpen",
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Open state of the overlay sidebar. Optional — omit for uncontrolled (the\ndrawer manages its own state and still closes on Esc / backdrop). Has no\neffect unless `sidebarOverlayBelow` is set and the viewport is below it."
+          "description": "Open state of the overlay sidebar. Technically optional, but effectively\nrequired together with `onSidebarOpenChange` whenever `sidebarOverlayBelow`\nis set — AppLayout renders no trigger of its own (see `sidebarOverlayBelow`),\nso with both omitted nothing can ever open the drawer; Esc/backdrop close it,\nbut there's no way in. Has no effect unless `sidebarOverlayBelow` is set and\nthe viewport is below it."
         },
         {
           "name": "onSidebarOpenChange",
           "type": "((open: boolean) => void)",
           "required": false,
           "default": "",
-          "description": "Fires whenever the overlay sidebar opens or closes — Esc, backdrop click, swipe, or programmatic."
+          "description": "Fires whenever the overlay sidebar opens or closes — Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc."
         },
         {
           "name": "children",

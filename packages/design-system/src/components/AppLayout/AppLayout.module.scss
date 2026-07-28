@@ -19,6 +19,15 @@
   // stretching its items to the row's height; don't change this to center/start.
   align-items: stretch;
   min-height: 100vh;
+
+  // Own stacking context so a nested AppLayout's --z-app-chrome topBar can't
+  // tie with (and win tree-order over) an ancestor AppLayout's topBar —
+  // nesting is sanctioned (demos mount several inside the app's own shell;
+  // see the component JSDoc). `isolation` creates a stacking context WITHOUT
+  // creating a containing block, so it doesn't affect portaled overlays
+  // (Modal/Drawer/Popover — those escape to document.body regardless) or any
+  // in-content `position: fixed` element.
+  isolation: isolate;
 }
 
 // Full-height sidebar down the left (stretches to the row height). Sets its own

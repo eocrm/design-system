@@ -484,7 +484,8 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
   // Map form only: the step rules re-template the <ol> itself, and a container
   // query never matches its own container — so the size container has to be a
   // wrapper. `ref`, `className`, `style` and `{...rest}` all stay on the <ol>.
-  const list = collapseMap ? <div className={styles.stepContainer}>{ol}</div> : ol;
+  const list =
+    collapseMap && collapseKeys.length > 0 ? <div className={styles.stepContainer}>{ol}</div> : ol;
 
   const tree = (
     <DndContext
@@ -525,7 +526,7 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
     </DndContext>
   );
 
-  return collapseMap ? (
+  return collapseMap && collapseKeys.length > 0 ? (
     <CollapseColumnsContext.Provider value={collapseMap}>{tree}</CollapseColumnsContext.Provider>
   ) : (
     tree

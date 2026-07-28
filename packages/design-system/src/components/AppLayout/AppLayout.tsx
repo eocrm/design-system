@@ -46,10 +46,12 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
    *
    * Below the threshold the content column claims the full viewport width, and
    * the sidebar is reachable only by opening the drawer. Render your own
-   * trigger (a hamburger in the `topBar`) and drive `sidebarOpen` — AppLayout
-   * deliberately renders no trigger of its own, since where it belongs in the
-   * bar is the consumer's call. Use the exported `useBelowBreakpoint` hook to
-   * show that trigger only while the overlay mode is active.
+   * trigger (a hamburger in the `topBar`) and drive it with `sidebarOpen` +
+   * `onSidebarOpenChange` — AppLayout deliberately renders no trigger of its
+   * own, since where it belongs in the bar is the consumer's call, which means
+   * both props are effectively required together (see `sidebarOpen`'s doc).
+   * Use the exported `useBelowBreakpoint` hook to show that trigger only while
+   * the overlay mode is active.
    *
    * `sidebarPinned` is ignored below the threshold: the drawer owns the
    * sidebar's box there, and a `sticky; height: 100dvh` wrapper inside it would
@@ -61,12 +63,15 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
    */
   sidebarOverlayBelow?: CollapseBreakpoint;
   /**
-   * Open state of the overlay sidebar. Optional — omit for uncontrolled (the
-   * drawer manages its own state and still closes on Esc / backdrop). Has no
-   * effect unless `sidebarOverlayBelow` is set and the viewport is below it.
+   * Open state of the overlay sidebar. Technically optional, but effectively
+   * required together with `onSidebarOpenChange` whenever `sidebarOverlayBelow`
+   * is set — AppLayout renders no trigger of its own (see `sidebarOverlayBelow`),
+   * so with both omitted nothing can ever open the drawer; Esc/backdrop close it,
+   * but there's no way in. Has no effect unless `sidebarOverlayBelow` is set and
+   * the viewport is below it.
    */
   sidebarOpen?: boolean;
-  /** Fires whenever the overlay sidebar opens or closes — Esc, backdrop click, swipe, or programmatic. */
+  /** Fires whenever the overlay sidebar opens or closes — Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc. */
   onSidebarOpenChange?: (open: boolean) => void;
   /** Main content slot — fills the remaining space below the top bar. */
   children: ReactNode;
@@ -230,9 +235,12 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
   // above the threshold.
   const wasOverlay = useRef(overlay);
   useEffect(() => {
-    if (wasOverlay.current && !overlay) setOpen(false);
+    // `&& open` — otherwise every up-crossing fires onSidebarOpenChange(false)
+    // even when the drawer was never opened (setOpen is a no-op value-wise,
+    // but the callback still fires on a resize the consumer didn't ask about).
+    if (wasOverlay.current && !overlay && open) setOpen(false);
     wasOverlay.current = overlay;
-  }, [overlay, setOpen]);
+  }, [overlay, open, setOpen]);
 
   // Pattern A — props last: AppLayout is a consumer-overridable layout
   // primitive (like Stack/Card), so {...props} wins over our defaults.
