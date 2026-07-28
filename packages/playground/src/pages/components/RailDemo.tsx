@@ -809,6 +809,98 @@ export function Demo() {
       </Example>
 
       <Example
+        title="Group that is also a link — label navigates, chevron expands"
+        description={
+          'Pass `as` (plus its props) to `Rail.Group` and the row splits into two hit-targets: ' +
+          'the icon + label navigate to the parent page, and a separate chevron button owns the ' +
+          'expand/collapse (`aria-expanded` + `aria-controls`, named "Expand Deals" / "Collapse ' +
+          'Deals"). This is the Jira / Linear / GitHub shape — no synthetic "All deals" first ' +
+          "subitem needed. Because the group's own link is the current page here, it auto-opens " +
+          'on mount. Collapse the rail and hover the icon: there is no chevron at 56px, so the ' +
+          "single target navigates and hover opens the flyout — whose header links to the group's " +
+          'destination too. Omit `as` and the group behaves exactly as it always has.'
+        }
+        code={`import { type ReactNode } from 'react';
+import { Home, KanbanSquare, Users } from 'lucide-react';
+import { Rail } from '@eocrm/design-system';
+
+// In an app this is <Rail.Group as={NavLink} to="/deals" …> and react-router
+// sets aria-current for you.
+<Rail>
+  <Rail.Section title="Main">
+    <Rail.Item icon={<Home size={16} />} href="#/">
+      Dashboard
+    </Rail.Item>
+
+    <Rail.Group
+      as="a"
+      href="#/deals"
+      aria-current="page"
+      icon={<KanbanSquare size={16} />}
+      label="Deals"
+    >
+      <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+      <Rail.Item href="#/deals?view=closing">Closing this month</Rail.Item>
+      <Rail.Item href="#/deals?view=stale">Stale &gt; 30 days</Rail.Item>
+    </Rail.Group>
+
+    <Rail.Item icon={<Users size={16} />} href="#/contacts">
+      Contacts
+    </Rail.Item>
+  </Rail.Section>
+
+  <Rail.Spacer />
+  <Rail.Footer>
+    <Rail.CollapseToggle />
+  </Rail.Footer>
+</Rail>;`}
+      >
+        <RailStage>
+          <Rail>
+            <Rail.Header>
+              <BrandMark />
+            </Rail.Header>
+            <Rail.Section title="Main">
+              <Rail.Item icon={<Home size={16} />} href="#/">
+                Dashboard
+              </Rail.Item>
+              <Rail.Group
+                as="a"
+                href="#/deals"
+                aria-current="page"
+                icon={<KanbanSquare size={16} />}
+                label="Deals"
+              >
+                <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+                <Rail.Item href="#/deals?view=closing">Closing this month</Rail.Item>
+                <Rail.Item href="#/deals?view=stale">Stale &gt; 30 days</Rail.Item>
+              </Rail.Group>
+              <Rail.Item icon={<Users size={16} />} href="#/contacts">
+                Contacts
+              </Rail.Item>
+            </Rail.Section>
+            <Rail.Section title="Operations">
+              <Rail.Group icon={<SettingsIcon size={16} />} label="Settings">
+                <Rail.Item href="#/settings/general">General</Rail.Item>
+                <Rail.Item href="#/settings/security">Security</Rail.Item>
+              </Rail.Group>
+            </Rail.Section>
+            <Rail.Spacer />
+            <Rail.Footer>
+              <Rail.CollapseToggle />
+            </Rail.Footer>
+          </Rail>
+        </RailStage>
+        <Cluster gap="sm" align="center">
+          <Layers size={14} aria-hidden style={{ color: 'var(--color-fg-muted)' }} />
+          <Text tone="muted" size="sm">
+            "Deals" is a link and a toggle; "Settings" below it is the unchanged toggle-only shape —
+            one button, whole row.
+          </Text>
+        </Cluster>
+      </Example>
+
+      <Example
         title="Items pinned to the bottom — Rail.Spacer pushes anything after it down"
         description="Drop a `<Rail.Spacer />` between the main item list and a secondary section to keep settings / help / sign-out anchored at the rail's bottom edge. The Footer (CollapseToggle, user chip) sits below them and stays put when the item list overflows — not by sticky positioning, but because Rail renders it outside the scroll box entirely."
         code={`import { type ReactNode } from 'react';

@@ -276,9 +276,51 @@
 // Parent-active styling: the group's trigger picks up the active accent
 // when any descendant subitem is current. `:has()` walks the .group block,
 // not the trigger, so both inline subitems and popover subitems light up
-// their parent.
-.group:has([aria-current='page']) .groupTrigger {
+// their parent. On a linkable group the chevron button is the trigger's
+// counterpart — the label link already lights up on its own via
+// `.item[aria-current='page']`.
+.group:has([aria-current='page']) .groupTrigger,
+.group:has([aria-current='page']) .groupChevronButton {
   color: var(--rail-item-fg-active);
+}
+
+// ─── Linkable group row (`<Rail.Group as={NavLink}>`) ───────────────────
+// Two hit-targets on one row: the label link (an `.item`, so it inherits
+// every item visual including the active accent) and the chevron button.
+.groupRow {
+  display: flex;
+  align-items: center;
+  gap: var(--rail-group-row-gap);
+}
+
+.groupRow .item {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// Chevron reset — same button-chrome reset as .groupTrigger, sized down to a
+// square affordance that sits beside the link instead of spanning the row.
+.groupChevronButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--rail-group-chevron-padding);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- native button border reset
+  border: 0;
+  background: transparent;
+  border-radius: var(--rail-item-radius);
+  color: var(--rail-item-fg);
+  cursor: pointer;
+}
+
+.groupChevronButton:hover {
+  background: var(--rail-item-bg-hover);
+}
+
+.groupChevronButton:focus-visible {
+  outline: var(--ring-width) solid var(--ring-accent);
+  outline-offset: -2px;
 }
 
 .groupChevron {
@@ -347,6 +389,25 @@
   font-weight: var(--rail-flyout-header-font-weight);
   color: var(--rail-flyout-header-fg);
   border-bottom: var(--border-width) solid var(--rail-flyout-header-border);
+}
+
+// A linkable group's flyout header renders its label as a link to the group's
+// own destination. It fills the header row so the whole strip is clickable;
+// the header's padding stays on the wrapper so the hover surface aligns.
+.flyoutHeaderLink {
+  display: block;
+  color: inherit;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- anchor reset
+  text-decoration: none;
+}
+
+.flyoutHeaderLink:hover {
+  color: var(--rail-item-fg-active);
+}
+
+.flyoutHeaderLink:focus-visible {
+  outline: var(--ring-width) solid var(--ring-accent);
+  outline-offset: -2px;
 }
 
 .flyoutBody {

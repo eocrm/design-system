@@ -2211,10 +2211,20 @@ import { Home, Users, Settings } from 'lucide-react';
 - **`collapseBelow`** (`'sm'` 480px / `'md'` 640px / `'lg'` 768px, unset by default) — forces the icon-only mode while the **viewport** is at or below that width. Below the threshold the rail is collapsed regardless of `collapsed` / `defaultCollapsed`; above it, the consumer's value governs again. It is a presentation override, not a user choice: **`onCollapsedChange` does not fire** on a breakpoint cross and no consumer state is written, so a persisted preference survives a narrow window untouched. `<Rail.CollapseToggle>` renders nothing while the override is active (it could not change anything). `useRail()` reports the EFFECTIVE `collapsed` plus `collapsedByViewport` for custom chrome that needs to tell the two apart. Same token scale as `<Grid collapseBelow>` / `<Split collapseBelow>` but a **different measurement basis** — those use container queries; the rail must use the viewport, because collapsing is what changes the rail's own width (a container query would be circular) and because collapsed drives React behavior (tooltips, group flyouts) CSS can't reach.
 - ⚠️ **Make your shell's rail track follow the override.** It shrinks the rail but is invisible to the layout around it, so a shell sizing its rail column from its OWN `collapsed` state keeps a 240px track around a 56px rail — a dead gap on every screen. Key the track off the viewport (`@media (max-width: 768px) { .shell { grid-template-columns: 56px 1fr } }`) or off the rail itself (`.shell:has(nav[data-collapsed]) { grid-template-columns: 56px 1fr }`, no breakpoint duplication). Both work only because this basis is the viewport, not a container.
 - **`Rail.Item` is polymorphic** — `as={NavLink}` (or any router primitive) sets `aria-current="page"` on the rendered anchor; Rail's CSS applies the active accent via `[aria-current="page"]` and `:has([aria-current="page"])` selectors. No router dependency in the library.
-- **`Rail.Group`** — renders inline-expanding subitems when the rail is expanded, and a hover-popover (`right-start` placement, 80ms open delay, 200ms close grace) when collapsed — portaled to `document.body` at `--z-popover` and auto-elevating above Modal/Drawer like other floating surfaces. Auto-opens on mount when any subitem is the active route.
+- **`Rail.Group`** — renders inline-expanding subitems when the rail is expanded, and a hover-popover (`right-start` placement, 80ms open delay, 200ms close grace) when collapsed — portaled to `document.body` at `--z-popover` and auto-elevating above Modal/Drawer like other floating surfaces. Auto-opens on mount when the group's own link or any subitem is the active route (one-shot, uncontrolled-only — a manual close sticks).
+- **`Rail.Group` can be a link AND a toggle** — pass `as` (same polymorphic contract as `Rail.Item`) and the row splits into two hit-targets: icon + label navigate and carry `aria-current="page"` (so the row highlights like any item), while a separate chevron `<button>` owns `aria-expanded` + `aria-controls` with an `Expand <label>` / `Collapse <label>` accessible name. Keyboard order is link, then chevron. **Omitting `as` is byte-for-byte today's toggle-only shape** (one `<button>` spanning the row) — the feature is purely additive. Note the spread target moves with `as`: without it the remaining props land on the wrapping `<div>` (unchanged); with it they land on the rendered link, since that is what `to` / `end` / `replace` are for. `ref` always points at the wrapper `<div>` either way. **Collapsed, a linkable group has no chevron** — the single 56px target navigates on click and opens the flyout on hover/focus, and the flyout's header is a link to the same destination so the parent page stays reachable from inside the panel.
+
+  ```tsx
+  <Rail.Group as={NavLink} to="/deals" icon={<Handshake />} label="Deals">
+    <Rail.Item as={NavLink} to="/deals?view=open">
+      My open USD
+    </Rail.Item>
+  </Rail.Group>
+  ```
+
 - **`Rail.Spacer`** — `flex-grow: 1` filler that pushes trailing _sections_ (Settings, Help) to the bottom of the scrolling body. Not needed to pin the footer.
 - **Scrolling** — everything before the first `Rail.Footer` renders in one scroll box; the Footer is extracted out of it and stays pinned on its own, no Spacer required. The box scrolls vertically only — the X axis is clipped, since the rail is fixed-width and labels are meant to clip as it collapses. **Collapsed, the scrollbar is hidden entirely** (`scrollbar-width: none`): a gutter is a quarter of the 56px rail's inner width and shifts every item pill off-center. Wheel/trackpad and scroll-into-view on Tab still scroll it; the bar returns when the rail expands.
-- **i18n**: `rail.expand` / `rail.collapse` (toggle aria-label), `rail.navigation` (default `<nav>` aria-label).
+- **i18n**: `rail.expand` / `rail.collapse` (toggle aria-label), `rail.navigation` (default `<nav>` aria-label), `rail.expandGroup` / `rail.collapseGroup` (prefix for a linkable group's chevron, interpolated with the group label).
 
 #### When NOT to use
 
@@ -2227,6 +2237,7 @@ import { Home, Users, Settings } from 'lucide-react';
 - ❌ Forking width via inline style — rebind the `--rail-width-*` tokens in a parent stylesheet.
 - ❌ Hand-rolling active-state styling. Set `aria-current="page"` on the rendered element (NavLink does this for you) and the CSS handles it.
 - ❌ Multi-level group nesting (groups inside groups). v1 supports one level only.
+- ❌ Adding a synthetic "All deals" first subitem so the parent list stays reachable — that's what `Rail.Group`'s `as` prop is for. Make the group itself the link.
 - ❌ Putting an icon-less top-level item directly inside a section — when the rail collapses there's nothing visible. Items without icons belong inside a `<Rail.Group>`.
 
 ### `<TopBar>` — sticky application top bar

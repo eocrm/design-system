@@ -250,6 +250,8 @@ export const en: Messages = {
     expand: 'Expand navigation',
     collapse: 'Collapse navigation',
     navigation: 'Main navigation',
+    expandGroup: 'Expand',
+    collapseGroup: 'Collapse',
   },
   topBar: {
     label: 'Application top bar',
