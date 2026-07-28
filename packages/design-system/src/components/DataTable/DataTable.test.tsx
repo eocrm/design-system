@@ -872,6 +872,39 @@ describe('<DataTable> — a drop over a pinned column lands in the band (#383)',
     expect(orderOf(table)).toEqual(['mid', 'name', 'owner']);
   });
 
+  // --- and the announcement has to agree with the commit (#390) -------------
+  // The announcement resolves `over` through the SAME fallback the drop does.
+  // Reading raw `over` here emits "Released Name. Nothing moved." over each of
+  // the two reorders below — which is the #390 defect with the sign flipped.
+
+  it('announces the slot it commits when a pinned column owns the collision', () => {
+    renderWithRects(pinnedRightCols, rightRects);
+    dragTo(/drag to reorder name/i, 5000);
+    fireEvent.pointerUp(document);
+    // Band is [name, mid]; the commit put 'name' in the last band slot.
+    expect(screen.getByRole('status').textContent).toBe('Dropped Name at position 2 of 2.');
+  });
+
+  it('announces the slot it commits when the release resolves no target at all', () => {
+    renderWithRects(pinnedRightCols, rightRects);
+    dragTo(/drag to reorder name/i, 200, 5000);
+    fireEvent.pointerUp(document);
+    expect(screen.getByRole('status').textContent).toBe('Dropped Name at position 2 of 2.');
+  });
+
+  it('DOES announce "nothing moved" on the dragWholeColumn={false} path, which discards', () => {
+    // The mirror of the two above: that path keeps its discard, so the honest
+    // announcement is the one the others would have been wrong to make.
+    renderWithRects(pinnedRightCols, rightRects, { dragWholeColumn: false });
+    dragTo(/drag to reorder name/i, 200);
+    // Clear of the header row entirely: `over` goes non-null → null, which is
+    // the one transition that fires an `onDragOver` with no target at all.
+    fireEvent.pointerMove(document, { clientX: 200, clientY: 5000 });
+    expect(screen.getByRole('status').textContent).toBe('Name is not over a drop target.');
+    fireEvent.pointerUp(document);
+    expect(screen.getByRole('status').textContent).toBe('Released Name. Nothing moved.');
+  });
+
   it('does not let one drag inherit the previous drag’s target', () => {
     // The remembered slot is cleared at drag START, not at drag end, so a drag
     // that never resolves a slot of its own commits nothing.
@@ -915,6 +948,12 @@ describe('<DataTable> — a drop over a pinned column lands in the band (#383)',
     fireEvent.pointerMove(document, { clientX: 160, clientY: 0 });
     fireEvent.pointerUp(document);
     expect(orderOf(table)).toEqual(['stage', 'name', 'owner']);
+    // ...and the announcement has to see it as a slot too (#390). Deciding
+    // "in band" from `sortableIds` — the SortableContext list, which excludes
+    // `enableReorder: false` — announced "Released Name. Nothing moved." over
+    // exactly this reorder. The position is 1-based in the VISIBLE unpinned
+    // band, which is the order asserted on the line above.
+    expect(screen.getByRole('status').textContent).toBe('Dropped Name at position 2 of 3.');
   });
 });
 
@@ -1043,5 +1082,45 @@ describe('<DataTable> — column drag is clamped to the unpinned band (#381)', (
     expect(screen.queryByLabelText(/drag to reorder mid/i)).toBeNull();
     // Sanity: the column still renders, it just cannot be picked up.
     expect(screen.getByRole('columnheader', { name: /mid/i })).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Column-reorder announcements (#390)
+// ---------------------------------------------------------------------------
+describe('<DataTable> — drag announcements', () => {
+  // Ids and headers deliberately differ: dnd-kit's default would read
+  // "col_amount", which tells a listener nothing.
+  const labelledCols: ColumnDef<Row>[] = [
+    { id: 'col_name', header: 'Customer', cell: (r) => r.name },
+    { id: 'col_amount', header: 'Amount due', cell: (r) => r.amount },
+    { id: 'col_extra', header: 'Notes', cell: () => '—' },
+  ];
+
+  function Harness() {
+    const instance = useDataTable<Row>({ data: rows, columns: labelledCols, getRowId });
+    return <DataTable instance={instance} aria-label="Labelled" />;
+  }
+
+  it('announces the column header and slot, not the column id', () => {
+    render(<Harness />);
+    const table = screen.getByRole('table');
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.getBoundingClientRect = () => new DOMRect(i * 120, 0, 120, 32);
+    });
+
+    const grip = screen.getByLabelText(/drag to reorder amount due/i);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    fireEvent.pointerMove(document, { clientX: 30, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: -130, clientY: 0 });
+
+    const live = screen.getByRole('status').textContent ?? '';
+    expect(live).toMatch(/^Amount due, position \d of 3\.$/);
+    expect(live).not.toMatch(/col_/);
+
+    fireEvent.pointerUp(document, { clientX: -130, clientY: 0 });
+    expect(screen.getByRole('status').textContent).toMatch(
+      /^Dropped Amount due at position \d of 3\.$/,
+    );
   });
 });

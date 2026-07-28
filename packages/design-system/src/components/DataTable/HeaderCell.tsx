@@ -1,4 +1,4 @@
-import { type KeyboardEvent } from 'react';
+import { useMemo, useRef, type KeyboardEvent } from 'react';
 import clsx from 'clsx';
 import {
   GripVertical,
@@ -16,6 +16,7 @@ import { useResizeHandle } from './useResizeHandle';
 import type { ColumnDef, DataTableInstance } from './types';
 import { getPinStyle } from './pinStyle';
 import { shiftVarName } from './columnShift';
+
 import styles from './HeaderCell.module.scss';
 
 export interface HeaderCellProps<T> {
@@ -82,8 +83,20 @@ export function HeaderCell<T>({
   // same reason a pinned column's does.
   const reorderable =
     column.enableReorder !== false && !isPinned && instance.unpinnedColumns.length > 1;
+
+  const headerContent =
+    typeof column.header === 'function' ? column.header({ column, instance }) : column.header;
+
+  // Screen-reader announcements name the column by its RENDERED header text,
+  // not by `column.id` (#390). The ref goes on the label span rather than the
+  // <th> so the grip and resize chrome — and any menu the header renders —
+  // stay out of it. Ref identity is stable, so the memo never re-runs.
+  const labelRef = useRef<HTMLSpanElement | null>(null);
+  const dragData = useMemo(() => ({ dragNode: labelRef }), []);
+
   const sortableResult = useSortable({
     id: column.id,
+    data: dragData,
     disabled: !reorderable,
     // Whole-column mode only: kill dnd-kit's post-drop FLIP animation. On
     // release `defaultAnimateLayoutChanges` returns true for every column whose
@@ -130,9 +143,6 @@ export function HeaderCell<T>({
       instance.setColumnSizing((prev) => ({ ...prev, [column.id]: next }));
     }
   };
-
-  const headerContent =
-    typeof column.header === 'function' ? column.header({ column, instance }) : column.header;
 
   const pinStyle = getPinStyle(column.id, instance);
   const stickyStyle = pinStyle.position
@@ -209,6 +219,7 @@ export function HeaderCell<T>({
         )}
       >
         <span
+          ref={labelRef}
           className={clsx(styles.label, sortable && styles.sortable)}
           tabIndex={sortable ? 0 : undefined}
           role={sortable ? 'button' : undefined}

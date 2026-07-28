@@ -1,14 +1,17 @@
 // RichTextBlockControls.test.tsx
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { I18nProvider } from '../../i18n';
 import { RichTextBlockControls } from './RichTextBlockControls';
 
-function Harness(props: Partial<React.ComponentProps<typeof RichTextBlockControls>>) {
+function Harness({
+  locale = 'en',
+  ...props
+}: Partial<React.ComponentProps<typeof RichTextBlockControls>> & { locale?: 'en' | 'ru' }) {
   const rootRef = useRef<HTMLDivElement>(null);
   return (
-    <I18nProvider locale="en">
+    <I18nProvider locale={locale}>
       <div ref={rootRef} style={{ position: 'relative' }}>
         <p data-block-id="b1">hello</p>
         <RichTextBlockControls
@@ -172,4 +175,37 @@ it('re-measures the gutter position when blockOrderKey changes (post-drop / inse
     .getByRole('button', { name: 'Insert block below' })
     .closest('[contenteditable="false"]') as HTMLElement;
   expect(gutter.style.top).toBe('40px');
+});
+
+// --- drag announcements (#390) ----------------------------------------------
+// This DndContext registers no droppables — the drop slot is computed from the
+// pointer against the document flow — so `over` is always null and dnd-kit's
+// English defaults would announce "was dropped" with a raw gutter id. It is
+// also the ONE drag surface where the pick-up announcement survives: nothing
+// overwrites it, because the per-move announcement is deliberately silent.
+
+/** Grab the gutter and clear the sensor's 4px activation constraint. */
+function dragGutter(container: HTMLElement) {
+  const gutter = container.querySelector('[contenteditable="false"]') as HTMLElement;
+  fireEvent.pointerDown(gutter, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+  fireEvent.pointerMove(document, { clientX: 0, clientY: 10 });
+}
+const live = () => screen.getByRole('status').textContent;
+
+it('announces the block drag by the block’s own text, in English', () => {
+  const { container } = render(<Harness />);
+  dragGutter(container);
+  expect(live()).toBe('Picked up hello.');
+  fireEvent.pointerMove(document, { clientX: 0, clientY: 30 });
+  expect(live()).toBe('Picked up hello.'); // no droppables → no false "not over a target"
+  fireEvent.pointerUp(document, { clientX: 0, clientY: 30 });
+  expect(live()).toBe('Moved hello.');
+});
+
+it('announces the block drag in Russian under locale="ru"', () => {
+  const { container } = render(<Harness locale="ru" />);
+  dragGutter(container);
+  expect(live()).toBe('Взято: «hello».');
+  fireEvent.pointerUp(document, { clientX: 0, clientY: 10 });
+  expect(live()).toBe('Перемещено: «hello».');
 });

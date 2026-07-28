@@ -41,6 +41,12 @@ import {
   SortableItemContext,
   type SortableItemContextValue,
 } from '../Sortable/Sortable';
+import {
+  containerName,
+  dragLabelOf,
+  useDragAccessibility,
+  type DescribeDragTarget,
+} from '../_internal/dragAnnouncements';
 import { useTranslation } from '../../i18n/useTranslation';
 import {
   containerAwareClosestCorners,
@@ -291,11 +297,23 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
  * If the children subtree contains a `<Kanban.Handle>`, only the Handle
  * initiates drag (the card div gets `role="article"`). Otherwise the whole
  * card is draggable (dnd-kit applies `role="button"`).
+ *
+ * @remarks
+ * Drag announcements name the card by its rendered text. Pass `aria-label` to
+ * override that — worth doing when the card renders a lot besides its title
+ * (assignee, due date, badges), since all of it otherwise gets read out.
  */
 export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function KanbanCard(
   { id, className, children, ...rest },
   ref,
 ) {
+  // Announcement label: the consumer's `aria-label`, else the card's RENDERED
+  // text (so a closed menu inside the card contributes nothing — see
+  // `dragLabelOf`). The same ref is the drag-bounds node ref below.
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const dragLabel = rest['aria-label'];
+  const dragData = useMemo(() => ({ dragLabel, dragNode: cardRef }), [dragLabel]);
+
   const {
     setNodeRef,
     setActivatorNodeRef,
@@ -306,7 +324,7 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
     isDragging,
     index,
     items,
-  } = useSortable({ id });
+  } = useSortable({ id, data: dragData });
 
   const hasHandle = useMemo(() => containsHandle(children), [children]);
 
@@ -352,10 +370,9 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
   // these lines silently reinstates the runaway — and no test can catch it,
   // because jsdom lays nothing out, so the clamp's only evidence is a manual
   // browser drag. Two inert guarded lines against a hand-only regression.
-  const nodeRef = useRef<HTMLDivElement | null>(null);
   const boundsRef = useRef<KanbanDragBounds | null>(null);
   useLayoutEffect(() => {
-    const node = nodeRef.current;
+    const node = cardRef.current;
     if (!isDragging || !node) {
       boundsRef.current = null;
       return;
@@ -366,7 +383,7 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
   }, [isDragging, index, items]);
 
   const setRef = (node: HTMLDivElement | null) => {
-    nodeRef.current = node;
+    cardRef.current = node;
     setNodeRef(node);
     // When no Handle is present, the Card itself is the drag activator.
     if (!hasHandle) setActivatorNodeRef(node);
@@ -413,6 +430,14 @@ KanbanCard.displayName = 'KanbanCard';
  *
  * Column layout (header, footer) goes before / after `<Kanban.Card>` children
  * — keep cards as a contiguous block.
+ *
+ * @remarks
+ * Name the column — `aria-label` with its visible heading, or `aria-labelledby`
+ * pointing at that heading's element. Either one names the column in the drag
+ * announcements a screen reader hears ("…position 2 of 3 in Qualified");
+ * without one they fall back to "column 2 of 3". Because a name is only useful
+ * if the element it sits on has a role, a named column renders as
+ * `role="group"`.
  */
 export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(function KanbanColumn(
   { id, className, children, ...rest },
@@ -444,7 +469,17 @@ export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(functi
   };
 
   return (
-    <div ref={setRef} className={clsx(styles.column, className)} {...rest}>
+    <div
+      ref={setRef}
+      className={clsx(styles.column, className)}
+      {...rest}
+      // A name on a role-less <div> is inert, so a labelled column gets a role
+      // to hang it on. AFTER {...rest} — but only when the consumer didn't
+      // already pick a role — so labelling can't silently do nothing.
+      {...((rest['aria-label'] || rest['aria-labelledby']) && rest.role == null
+        ? { role: 'group' }
+        : {})}
+    >
       <SortableContext
         items={cardIds as (string | number)[]}
         strategy={verticalListSortingStrategy}
@@ -964,10 +999,48 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   }, []);
 
   // ------------------------------------------------------------------
+  // Screen-reader announcements (Hard rule 9, #390)
+  // ------------------------------------------------------------------
+  // Names a card by its own text and a column by the `aria-label` the consumer
+  // put on `<Kanban.Column>` (falling back to its board position), so a drag
+  // says "Acme — 40 seats, position 2 of 3 in Qualified" rather than dnd-kit's
+  // "deal-1 was moved over droppable area col-2". Slots are read from
+  // `effectiveItems` — the order the user is actually looking at mid-drag.
+  const columnLabel = (colId: string | number): string =>
+    containerName(columnElements.get(colId)?.props ?? {}) ??
+    t('kanban.unnamedColumn', {
+      index: columnOrder.indexOf(colId) + 1,
+      total: columnOrder.length,
+    });
+  const describeDrag: DescribeDragTarget = (entry, activeId) => {
+    if (!entry) return null;
+    const id = entry.id as string | number;
+    const isColumn = effectiveItems.has(id);
+    const colId = isColumn ? id : findContainer(id, effectiveItems);
+    if (colId == null) return null;
+    const cards = effectiveItems.get(colId) ?? [];
+    const label = dragLabelOf(entry.data.current);
+    const container = columnLabel(colId);
+    if (!isColumn) return { label, index: cards.indexOf(id) + 1, total: cards.length, container };
+    // `over` is the column itself (empty column, or the padding below the
+    // cards). If the dragged card has already been live-seated here it keeps
+    // its slot; otherwise it would be appended, so count it as one more.
+    const seated = cards.indexOf(activeId as string | number);
+    return seated >= 0
+      ? { label, index: seated + 1, total: cards.length, container }
+      : { label, index: cards.length + 1, total: cards.length + 1, container };
+  };
+  // A release outside the board is a cancel, not a drop — `over` is non-null on
+  // that path (closestCorners rejects nothing), so without this dnd-kit would
+  // announce a drop that handleDragEnd deliberately threw away (#387).
+  const accessibility = useDragAccessibility(describeDrag, () => outsideBoardRef.current);
+
+  // ------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------
   return (
     <DndContext
+      accessibility={accessibility}
       sensors={sensors}
       collisionDetection={collisionDetection}
       onDragStart={handleDragStart}

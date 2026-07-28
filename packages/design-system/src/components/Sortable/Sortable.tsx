@@ -46,6 +46,7 @@ import {
   type CollapseBreakpoint,
   type CollapseColumnsMap,
 } from '../_internal/collapse';
+import { sortableTarget, useDragAccessibility } from '../_internal/dragAnnouncements';
 import styles from './Sortable.module.scss';
 
 /**
@@ -432,8 +433,15 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
   );
   const modifiers = restrictToContainer ? [restrictModifier] : undefined;
 
+  // Localized screen-reader announcements (Hard rule 9). Every droppable here
+  // IS a sortable item, so dnd-kit's own `data.sortable` supplies the slot and
+  // `sortableTarget` needs no help; the item's name comes from the `aria-label`
+  // / rendered text `<Sortable.Item>` publishes below.
+  const accessibility = useDragAccessibility(sortableTarget);
+
   const tree = (
     <DndContext
+      accessibility={accessibility}
       sensors={sensors}
       modifiers={modifiers}
       // Grid: closestCenter is dnd-kit's idiomatic pairing for a 2D sortable
@@ -517,11 +525,24 @@ SortableRoot.displayName = 'Sortable';
  *
  * Under `<Sortable arrangement="grid">`, pass `span` for the item's column
  * span (mirrors `Grid.Item`'s `span`); it's ignored in a list.
+ *
+ * @remarks
+ * Drag announcements name the item by its rendered text. Pass `aria-label` to
+ * override that — worth doing when the item renders a lot of chrome (badges,
+ * timestamps, avatars) and only part of it is the actual name.
  */
 export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(function SortableItem(
   { id, span, className, children, ...rest },
   ref,
 ) {
+  // Announcement label: the consumer's `aria-label`, else the item's RENDERED
+  // text — so a drag says "Review pricing page mocks, position 2 of 3" instead
+  // of dnd-kit's raw id, and a collapsed menu inside the item contributes
+  // nothing (see `dragLabelOf`).
+  const liRef = useRef<HTMLLIElement | null>(null);
+  const dragLabel = rest['aria-label'];
+  const data = useMemo(() => ({ dragLabel, dragNode: liRef }), [dragLabel]);
+
   const {
     setNodeRef,
     setActivatorNodeRef,
@@ -530,7 +551,7 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
     transform,
     transition,
     isDragging,
-  } = useSortable({ id });
+  } = useSortable({ id, data });
 
   const hasHandle = useMemo(() => containsHandle(children), [children]);
 
@@ -542,6 +563,7 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
   );
 
   const setRef = (node: HTMLLIElement | null) => {
+    liRef.current = node;
     setNodeRef(node);
     // When no Handle is present, the Item itself is the drag activator —
     // dnd-kit uses this ref to scope keyboard / pointer events.

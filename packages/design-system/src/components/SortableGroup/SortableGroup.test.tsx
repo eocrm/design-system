@@ -165,6 +165,72 @@ describe('SortableGroup', () => {
     expect(onMove).not.toHaveBeenCalled();
   });
 
+  // --- announcements (#390) -------------------------------------------------
+  // Ids ('x', 'p') and item text ('Renew Acme') differ, so an announcement that
+  // leaked a dnd-kit id would be visible below.
+  function NamedGroup() {
+    return (
+      <SortableGroup>
+        <SortableGroup.Container id="a" items={['x', 'y']} aria-label="Open">
+          <Sortable.Item id="x">
+            <Sortable.Handle aria-label="Reorder first" />
+            Renew Acme
+          </Sortable.Item>
+          <Sortable.Item id="y">
+            <Sortable.Handle aria-label="Reorder second" />
+            Call Globex
+          </Sortable.Item>
+        </SortableGroup.Container>
+        <SortableGroup.Container id="b" items={['p', 'q']}>
+          <Sortable.Item id="p">
+            <Sortable.Handle aria-label="Reorder third" />
+            Invoice Initech
+          </Sortable.Item>
+          <Sortable.Item id="q">
+            <Sortable.Handle aria-label="Reorder fourth" />
+            Ping Hooli
+          </Sortable.Item>
+        </SortableGroup.Container>
+      </SortableGroup>
+    );
+  }
+
+  it('announces the item text and the container aria-label, not the ids', async () => {
+    const restore = stubStackedRects();
+    const user = userEvent.setup();
+    render(<NamedGroup />);
+
+    screen.getByLabelText('Reorder first').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowDown]');
+    const live = screen.getByRole('status').textContent ?? '';
+    await user.keyboard('[Escape]');
+    restore();
+
+    expect(live).toBe('Renew Acme, position 2 of 2 in Open.');
+    expect(screen.getByRole('status').textContent).toBe(
+      'Move cancelled. Renew Acme stayed where it was.',
+    );
+  });
+
+  it('falls back to the container’s position when it has no aria-label', async () => {
+    // No aria-label anywhere, so every container must name itself positionally
+    // — never read out the raw container id.
+    const restore = stubStackedRects();
+    const user = userEvent.setup();
+    render(<Group />);
+
+    screen.getByLabelText('Reorder X').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowDown]');
+    const live = screen.getByRole('status').textContent ?? '';
+    await user.keyboard('[Escape]');
+    restore();
+
+    expect(live).toMatch(/ in list \d of 2\.$/);
+    expect(live).not.toMatch(/ in [ab]\./);
+  });
+
   // NOTE: cross-container drags are NOT exercised here. dnd-kit's
   // sortableKeyboardCoordinates resolves the next droppable from real layout
   // geometry; with jsdom's synthetic stacked rects the keyboard sensor cannot

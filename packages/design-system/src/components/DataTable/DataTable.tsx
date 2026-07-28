@@ -35,6 +35,11 @@ import { reorderRespectingPins } from './reorderColumns';
 import { useColumnDragShift } from './useColumnDragShift';
 import { clampX, type DragRangeX } from './columnShift';
 import { useFloatingSurface } from '../_internal/overlay';
+import {
+  dragLabelOf,
+  useDragAccessibility,
+  type DescribeDragTarget,
+} from '../_internal/dragAnnouncements';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -410,6 +415,48 @@ function DataTableInner<T>(
 
   const [dragActive, setDragActive] = useState(false);
 
+  // Localized column-reorder announcements (Hard rule 9). `HeaderCell` publishes
+  // the rendered header text, so a drag says "Amount, position 3 of 7" instead
+  // of "col-amount was moved over droppable area col-name".
+  //
+  // This resolves the slot exactly the way `handleDragEnd` does, in the SAME
+  // index space, and both halves of that are load-bearing:
+  //
+  //  - `shiftOrderedIds`, not `sortableIds`. The two differ by the
+  //    `enableReorder: false` columns: excluded from `SortableContext` (nothing
+  //    to activate) but still droppable, still displaced, and still moved by
+  //    `reorderRespectingPins` — see the comment on `shiftOrderedIds`. Deciding
+  //    "in band" from the SortableContext list therefore calls a legal target
+  //    unusable, and announces "Nothing moved." over a drop that reordered. It
+  //    is also the set the position number belongs in: a listener is being told
+  //    where the column landed among the visible unpinned columns.
+  //  - the same `lastSlotIdRef` fallback (#383). In whole-column mode `over` can
+  //    name something the drop cannot use — a sticky pinned column covering the
+  //    band's last slot, or nothing at all after an auto-scroll desync, both
+  //    observed — and `handleDragEnd` commits the last band slot the drag
+  //    resolved rather than discarding. Announcing from raw `over` would call
+  //    that reorder "nothing", which is the defect #390 was filed about with the
+  //    sign flipped.
+  //
+  // The label is only ever read off `active`; a drop target's is unused.
+  const describeColumn: DescribeDragTarget = (entry) => {
+    const id = entry ? String(entry.id) : null;
+    const slotId =
+      id != null && shiftOrderedIds.includes(id)
+        ? id
+        : dragWholeColumn
+          ? lastSlotIdRef.current
+          : null;
+    const slot = slotId == null ? -1 : shiftOrderedIds.indexOf(slotId);
+    if (slot < 0) return null;
+    return {
+      label: dragLabelOf(entry?.data.current),
+      index: slot + 1,
+      total: shiftOrderedIds.length,
+    };
+  };
+  const dragAccessibility = useDragAccessibility(describeColumn);
+
   // The shift driver writes custom properties onto the <table> element, so we
   // need our own handle on it while still honouring the consumer's ref.
   const tableRef = useRef<HTMLTableElement | null>(null);
@@ -434,7 +481,12 @@ function DataTableInner<T>(
   );
 
   return (
-    <DndContext sensors={sensors} modifiers={modifiers} onDragEnd={handleDragEnd}>
+    <DndContext
+      accessibility={dragAccessibility}
+      sensors={sensors}
+      modifiers={modifiers}
+      onDragEnd={handleDragEnd}
+    >
       {/* #282: register the column-reorder drag as a floating surface while
           active so a host Modal/Drawer yields the Escape that cancels it (the
           drag cancels; the host survives). A leaf probe (not root state) so the
