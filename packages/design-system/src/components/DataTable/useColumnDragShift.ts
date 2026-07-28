@@ -104,9 +104,11 @@ export interface ColumnDragShiftArgs {
    * its target, or null before it resolves one. Written here — nulled at drag
    * start, set on every `onDragOver` whose target is in the band — and read
    * both here, to keep the displaced neighbours parked when dnd-kit hands over
-   * something the drop cannot use, and by the drop handler in the parent, so
-   * the commit lands on the slot the preview is showing. See the
-   * `lastSlotIdRef` comment in `DataTable` for what "cannot use" covers.
+   * something the drop cannot use, and by the drop handler in the parent — but
+   * there only in whole-column mode, where this ref IS the preview. The
+   * header-only path has its own preview (dnd-kit's strategy), which retracts
+   * in exactly this situation, so it discards instead. See the `lastSlotIdRef`
+   * comment in `DataTable` for what "cannot use" covers.
    */
   lastSlotIdRef: RefObject<string | null>;
   /** Called once at drag start (true) and once at drag end/cancel (false). */
@@ -149,10 +151,13 @@ export function useColumnDragShift({
         orderedIds,
         String(event.active.id),
       );
-      // Ungated for the same reason: the drop handler reads this on BOTH paths.
-      // Cleared here rather than at drag end so one drag can never inherit the
-      // previous drag's target, and so the drop handler is free to read it
-      // without depending on which of the two end callbacks dnd-kit runs first.
+      // Ungated deliberately, even though only the whole-column path reads it:
+      // `dragWholeColumn` can be flipped between drags, so a clear that ran
+      // only while enabled would leave a stale target behind for the first
+      // drag after it is switched back on. Cleared at drag START rather than
+      // at drag end so one drag can never inherit the previous drag's target,
+      // and so the drop handler is free to read it without depending on which
+      // of dnd-kit's two end callbacks runs first.
       lastSlotIdRef.current = null;
       if (!enabled) return;
       onDragActiveChange(true);
