@@ -1,6 +1,16 @@
 import type { ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router';
-import { Bell, Plus, Component, Layers, Monitor, Sun, Moon, type LucideIcon } from 'lucide-react';
+import {
+  Bell,
+  Plus,
+  Component,
+  Layers,
+  Monitor,
+  Sun,
+  Moon,
+  Menu,
+  type LucideIcon,
+} from 'lucide-react';
 import {
   type NavItem,
   mockupItems,
@@ -11,7 +21,16 @@ import {
 } from './navItems';
 import { useState, useEffect, useRef } from 'react';
 import { CommandSearch, type CommandSearchHandle } from './CommandSearch';
-import { Avatar, Logo, Rail, TopBar, Tooltip, useRail } from '@eocrm/design-system';
+import {
+  AppLayout,
+  Avatar,
+  Logo,
+  Rail,
+  TopBar,
+  Tooltip,
+  useBelowBreakpoint,
+  useRail,
+} from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
 import eocrmLogo from '../../assets/eocrm-logo.svg';
 
@@ -89,6 +108,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
   }, [collapsed]);
 
+  // Below 768px the rail lives in an overlay drawer (AppLayout sidebarOverlayBelow).
+  const [navOpen, setNavOpen] = useState(false);
+  const isOverlayNav = useBelowBreakpoint('lg');
+
+  // Close the overlay nav after navigating — otherwise the drawer stays open
+  // over the page the user just chose.
+  useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
+
   // Persisted theme: 'system' (follow OS) | 'light' | 'dark' (forced).
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'system';
@@ -126,7 +155,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so they
   // read like real standalone screens, not pages inside the CRM.
   if (FULL_BLEED_PATHS.has(pathname)) {
-    return <>{children}</>;
+    return <main>{children}</main>;
   }
 
   const inComponents = pathname.startsWith('/components');
@@ -136,10 +165,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     : { to: '/components', label: 'Components', icon: Component };
 
   return (
-    <div className={styles.shell} data-rail-collapsed={collapsed || undefined}>
-      <div className={styles.sidebarWrap}>
+    <AppLayout
+      sidebarPinned
+      sidebarOverlayBelow="lg"
+      sidebarOpen={navOpen}
+      onSidebarOpenChange={setNavOpen}
+      sidebar={
         <Rail
-          collapsed={collapsed}
+          collapsed={collapsed && !isOverlayNav}
           onCollapsedChange={setCollapsed}
           aria-label={inComponents ? 'Component navigation' : 'Mockup navigation'}
           className={styles.appRail}
@@ -184,14 +217,22 @@ export function AppShell({ children }: { children: ReactNode }) {
                 GitHub
               </Rail.Item>
             )}
-            <Rail.CollapseToggle />
+            {!isOverlayNav && <Rail.CollapseToggle />}
           </Rail.Footer>
         </Rail>
-      </div>
-
-      <div className={styles.topbarWrap}>
+      }
+      topBar={
         <TopBar>
           <TopBar.Start>
+            {isOverlayNav && (
+              <TopBar.IconButton
+                aria-label="Open navigation"
+                aria-expanded={navOpen}
+                onClick={() => setNavOpen(true)}
+              >
+                <Menu size={16} />
+              </TopBar.IconButton>
+            )}
             <CommandSearch ref={searchRef} />
           </TopBar.Start>
           <TopBar.End>
@@ -209,9 +250,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Avatar name="Alex Rivera" size="sm" />
           </TopBar.End>
         </TopBar>
-      </div>
-
-      <main className={styles.content}>{children}</main>
-    </div>
+      }
+    >
+      {/* AppLayout's content region is a plain div (it can be legitimately
+          nested — demos, docs — so it doesn't claim the landmark itself).
+          AppShell is the one place that's ever the outermost shell, so it
+          owns the page's single <main> landmark. */}
+      <main>{children}</main>
+    </AppLayout>
   );
 }

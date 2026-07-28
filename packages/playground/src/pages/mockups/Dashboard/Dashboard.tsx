@@ -78,7 +78,7 @@ export function Dashboard() {
         </PageHeader.Actions>
       </PageHeader>
 
-      <Grid columns={3} gap="md">
+      <Grid columns={3} gap="md" collapseBelow={{ md: 2, sm: 1 }}>
         {stats.map(({ label, value, delta, deltaTone, icon: Icon }) => (
           <Card key={label} padding="md" tone="accent">
             <Cluster justify="between" align="start" gap="md" wrap={false}>
@@ -99,7 +99,7 @@ export function Dashboard() {
         ))}
       </Grid>
 
-      <Grid columns={2} gap="md">
+      <Grid columns={2} gap="md" collapseBelow="md">
         <Card>
           <Card.Header
             headerLevel="h2"

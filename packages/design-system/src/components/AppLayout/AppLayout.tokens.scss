@@ -1,4 +1,6 @@
 // AppLayout.tokens.scss — Component-scoped tokens for <AppLayout>.
+@use '../_internal/collapse' as bp;
+
 :root {
   // Padding of the main content region — the canonical shell content gutter, so
   // a DS-only consumer gets the shell padding with no prop and no raw CSS.
@@ -11,4 +13,15 @@
   // off it (matches every playground mockup). Defaults to --color-bg-subtle.
   // Override to `transparent` in your scope for a flat content area — no prop.
   --app-layout-content-background: var(--color-bg-subtle);
+}
+
+// Narrow viewports: --space-6 (24px) each side costs a 380px phone 48px of its
+// width. Step the gutter down so content keeps its room. This only moves the
+// DEFAULT: a consumer override in a scope BELOW :root still wins (e.g. a class
+// on their own root element), but an override written as another :root rule is
+// the same (0,1,0) specificity as this one — whichever rule loads last wins.
+@media (max-width: bp.$collapse-md) {
+  :root {
+    --app-layout-content-padding: var(--space-4);
+  }
 }

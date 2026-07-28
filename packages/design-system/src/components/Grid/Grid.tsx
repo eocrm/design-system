@@ -76,9 +76,10 @@ interface GridFixedColumns extends GridBaseProps, HTMLAttributes<HTMLElement> {
    * parent. `container-type: inline-size` zeroes the grid's contribution to
    * intrinsic sizing, so in an intrinsic-width context (`Split`'s default
    * `auto` aside track, a `Cluster` item, `width: max-content`) it renders at
-   * width 0 — give the parent a concrete width instead. The grid also becomes
-   * the containing block for absolutely-positioned descendants (layout
-   * containment).
+   * width 0 — give the parent a concrete width instead. Whichever element
+   * carries the containment also becomes the containing block for
+   * absolutely-positioned descendants (layout containment) — the grid itself
+   * for the string form, the wrapper below for the map form.
    *
    * Also accepts a graduated breakpoint→columns map, e.g.
    * `collapseBelow={{ md: 6, sm: 1 }}`: below 640px the grid re-templates to
@@ -87,6 +88,16 @@ interface GridFixedColumns extends GridBaseProps, HTMLAttributes<HTMLElement> {
    * from N columns to 1 wastes tablet widths. When several breakpoints match,
    * the smallest wins. Only `Grid.Item` children get span clamping; plain
    * children auto-place into the step's tracks.
+   *
+   * ⚠️ The map form (and ONLY the map form) renders an extra wrapper `<div>`
+   * around the grid element — it carries `container-type: inline-size`,
+   * because re-templating the grid requires querying an ancestor, not the
+   * grid itself. Consequences: a `> child` CSS selector aimed at the grid from
+   * its parent now hits the wrapper instead, and layout the parent applies to
+   * "the Grid" (`flex: 1`, `grid-column`, `align-self` via `className`) lands
+   * on the grid *inside* the wrapper, where the parent's layout can't see it —
+   * put that layout on an element you control around the Grid. `ref`,
+   * `className`, `style`, `as` and all spread props stay on the grid element.
    */
   collapseBelow?: GridCollapseBreakpoint | CollapseColumnsMap;
 }
@@ -183,7 +194,9 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
         gapClass[gap],
         alignItems && alignItemsClass[alignItems],
         justifyItems && justifyItemsClass[justifyItems],
-        collapseBelow && styles.collapsible,
+        // String form only: those rules query descendants, so the grid can be
+        // its own container. The map form's container is the wrapper below.
+        typeof collapseBelow === 'string' && styles.collapsible,
         typeof collapseBelow === 'string' && collapseClass[collapseBelow],
         ...collapseKeys.map((b) => stepClass[b]),
         className,
@@ -193,8 +206,14 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
     />
   );
 
-  return collapseMap ? (
-    <CollapseColumnsContext.Provider value={collapseMap}>{grid}</CollapseColumnsContext.Provider>
+  // Map form only: the step rules re-template the grid itself, and a container
+  // query never matches its own container — so the size container has to be a
+  // wrapper. `ref`, `className`, `style`, `as` and `{...rest}` all stay on the
+  // grid element; the wrapper is a bare div that only carries containment.
+  return collapseMap && collapseKeys.length > 0 ? (
+    <CollapseColumnsContext.Provider value={collapseMap}>
+      <div className={styles.stepContainer}>{grid}</div>
+    </CollapseColumnsContext.Provider>
   ) : (
     grid
   );

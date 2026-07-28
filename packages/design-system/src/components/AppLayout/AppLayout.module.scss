@@ -19,6 +19,15 @@
   // stretching its items to the row's height; don't change this to center/start.
   align-items: stretch;
   min-height: 100vh;
+
+  // Own stacking context so a nested AppLayout's --z-app-chrome topBar can't
+  // tie with (and win tree-order over) an ancestor AppLayout's topBar —
+  // nesting is sanctioned (demos mount several inside the app's own shell;
+  // see the component JSDoc). `isolation` creates a stacking context WITHOUT
+  // creating a containing block, so it doesn't affect portaled overlays
+  // (Modal/Drawer/Popover — those escape to document.body regardless) or any
+  // in-content `position: fixed` element.
+  isolation: isolate;
 }
 
 // Full-height sidebar down the left (stretches to the row height). Sets its own
@@ -52,9 +61,23 @@
   min-width: 0;
 }
 
-// Top bar over the content column; natural height.
+// Top bar over the content column; natural height. Also sticky (redundant
+// with the <TopBar> primitive's own `position: sticky; top: 0`, which alone
+// isn't enough): a sticky element's range is capped by its containing
+// block's box, and this wrapper's containing block is itself — sized to the
+// bar's own content height by `flex: none`. Without its own sticky here, the
+// wrapper (and the bar riding inside it) unsticks and scrolls away the
+// instant the page scrolls past the bar's own height. Stickying the wrapper
+// against `.body` (which spans the full scrollable column) gives it room to
+// stay pinned for the page's whole height. z-index keeps it painting over
+// scrolled-under content — `--z-app-chrome` sits above unpositioned page
+// content but below every overlay tier (dropdown/popover/modal/toast/
+// tooltip), so it never fights a real overlay for stacking order.
 .topBar {
   flex: none;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-app-chrome);
 }
 
 // Main content fills the rest of the column. Carries the canonical shell content
@@ -69,4 +92,14 @@
   // Subtle content canvas so page Cards lift off it (default
   // --color-bg-subtle; override the token to `transparent` for a flat area).
   background: var(--app-layout-content-background);
+}
+
+// Overlay sidebar (sidebarOverlayBelow): the Drawer panel is 320px
+// (--size-drawer-sm, the sanctioned nav-drawer width) but a <Rail> inside sets
+// its own 240px width and would leave a dead strip. Rebinding the rail's own
+// width token — its documented override surface — makes the rail fill the
+// panel instead. Scoped to this class so it can't leak to an in-flow rail.
+.overlaySidebar {
+  --rail-width-expanded: 100%;
+  --rail-width-collapsed: 100%;
 }

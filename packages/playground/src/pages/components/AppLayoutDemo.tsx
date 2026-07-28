@@ -1,6 +1,15 @@
-import { AppLayout, Page, Rail, Stack, Text, Title } from '@eocrm/design-system';
-import { Home, Users } from 'lucide-react';
-import type { ReactNode } from 'react';
+import {
+  AppLayout,
+  Page,
+  Rail,
+  Stack,
+  Text,
+  Title,
+  TopBar,
+  useBelowBreakpoint,
+} from '@eocrm/design-system';
+import { Home, Menu, Users } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -112,6 +121,42 @@ function TallContent() {
         </Text>
       ))}
     </Stack>
+  );
+}
+
+function OverlaySidebarDemo() {
+  const [navOpen, setNavOpen] = useState(false);
+  const isOverlay = useBelowBreakpoint('lg');
+
+  return (
+    <AppLayout
+      sidebarOverlayBelow="lg"
+      sidebarOpen={navOpen}
+      onSidebarOpenChange={setNavOpen}
+      sidebar={<Side />}
+      topBar={
+        <TopBar>
+          <TopBar.Start>
+            {isOverlay && (
+              <TopBar.IconButton
+                aria-label="Open demo navigation"
+                aria-expanded={navOpen}
+                onClick={() => setNavOpen(true)}
+              >
+                <Menu size={16} />
+              </TopBar.IconButton>
+            )}
+          </TopBar.Start>
+        </TopBar>
+      }
+    >
+      <Page>
+        <Title order={2} size="md">
+          Content
+        </Title>
+        <Text tone="muted">Full viewport width once the sidebar goes off-canvas.</Text>
+      </Page>
+    </AppLayout>
   );
 }
 
@@ -408,6 +453,48 @@ export function Demo() {
             </Page>
           </AppLayout>
         </PinnedFrame>
+      </Example>
+
+      <Example
+        title="Responsive sidebar (sidebarOverlayBelow)"
+        description="Below the threshold the sidebar leaves the flow and opens in a left Drawer, so the content column gets the full viewport width. Narrow the browser window under 768px to see it engage — the threshold reads the real viewport, not this framed preview, and the drawer portals to document.body so it covers the page rather than the frame. AppLayout renders no trigger: the hamburger below is the demo's own, gated on useBelowBreakpoint('lg')."
+        code={`function Demo() {
+  const [navOpen, setNavOpen] = useState(false);
+  const isOverlay = useBelowBreakpoint('lg');
+
+  return (
+    <AppLayout
+      sidebarOverlayBelow="lg"
+      sidebarOpen={navOpen}
+      onSidebarOpenChange={setNavOpen}
+      sidebar={<Side />}
+      topBar={
+        <TopBar>
+          <TopBar.Start>
+            {isOverlay && (
+              <TopBar.IconButton
+                aria-label="Open demo navigation"
+                aria-expanded={navOpen}
+                onClick={() => setNavOpen(true)}
+              >
+                <Menu size={16} />
+              </TopBar.IconButton>
+            )}
+          </TopBar.Start>
+        </TopBar>
+      }
+    >
+      <Page>
+        <Title order={2} size="md">Content</Title>
+        <Text tone="muted">Full viewport width once the sidebar goes off-canvas.</Text>
+      </Page>
+    </AppLayout>
+  );
+}`}
+      >
+        <Frame>
+          <OverlaySidebarDemo />
+        </Frame>
       </Example>
     </DemoLayout>
   );

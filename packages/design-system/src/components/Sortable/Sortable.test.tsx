@@ -418,7 +418,6 @@ describe('Sortable collapseBelow (#318)', () => {
       </Sortable>,
     );
     const ol = screen.getByTestId('ol');
-    expect(ol.className).toMatch(/collapsible/);
     expect(ol.className).toMatch(/stepMd/);
     expect(ol.className).toMatch(/stepSm/);
     expect(ol.style.getPropertyValue('--sortable-columns-md')).toBe('repeat(6, minmax(0, 1fr))');
@@ -427,6 +426,30 @@ describe('Sortable collapseBelow (#318)', () => {
     expect(wide.style.getPropertyValue('--sortable-item-span-sm')).toBe('1 / -1');
     const narrow = screen.getByTestId('narrow');
     expect(narrow.style.getPropertyValue('--sortable-item-span-md')).toBe('span 3');
+  });
+
+  // Same mechanism guard as Grid's: jsdom can't evaluate `@container`, so the
+  // regression test is that the size container is an ANCESTOR of the <ol> for
+  // the map form (a query can never restyle its own container) and the <ol>
+  // itself for the string form (those rules only touch `> *`).
+  it('map form renders the size-container wrapper AROUND the <ol>, not on it', () => {
+    render(
+      <Sortable arrangement="grid" collapseBelow={{ md: 6, sm: 1 }} data-testid="ol">
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    const ol = screen.getByTestId('ol');
+    expect(ol.parentElement!.className).toMatch(/stepContainer/);
+    expect(ol.className).not.toMatch(/collapsible/);
+  });
+
+  it('string form wraps the <ol> in nothing', () => {
+    render(
+      <Sortable arrangement="grid" collapseBelow="md" data-testid="ol">
+        <Sortable.Item id="a">A</Sortable.Item>
+      </Sortable>,
+    );
+    expect(screen.getByTestId('ol').parentElement!.className).not.toMatch(/stepContainer/);
   });
 
   it('collapseBelow is inert in list arrangement', () => {

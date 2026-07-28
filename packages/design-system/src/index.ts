@@ -705,6 +705,9 @@ export {
 export type { PaletteColor } from './palette';
 export { PALETTE_COLORS, paletteTokens } from './palette';
 
+// ─── Hooks ──────────────────────────────────────────────────────────────
+export { useBelowBreakpoint } from './hooks/useBelowBreakpoint';
+
 // ─── Form field primitives (label/control wrapper + form layout) ──────────
 export { Field } from './components/Field';
 export type { FieldProps, FieldOrientation, FieldSize, FieldRenderProps } from './components/Field';

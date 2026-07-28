@@ -10,6 +10,9 @@ export const ru: Messages = {
   alert: {
     dismiss: 'Закрыть',
   },
+  appLayout: {
+    sidebar: 'Боковая навигация',
+  },
   confirmationPopover: {
     cancel: 'Отмена',
     confirm: 'Подтвердить',

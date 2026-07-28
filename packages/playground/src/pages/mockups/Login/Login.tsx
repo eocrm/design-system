@@ -91,7 +91,7 @@ export function Login() {
       <Stack gap="lg" align="center">
         <Logo src={eocrmLogo} text="eocrm" size="lg" />
 
-        <Constrain width="md">
+        <Constrain maxWidth="md">
           <Card padding="lg">
             <Stack gap="lg">
               <Stack gap="xs">

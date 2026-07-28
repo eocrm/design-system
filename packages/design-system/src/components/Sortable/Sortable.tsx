@@ -141,6 +141,13 @@ export interface SortableProps extends HTMLAttributes<HTMLOListElement> {
    * ❌ Anti-pattern: a collapsible Sortable must get its width from its
    * parent — `container-type: inline-size` zeroes the list's contribution to
    * intrinsic sizing (same caveat as `Grid`'s `collapseBelow`).
+   *
+   * ⚠️ The map form (and ONLY the map form) wraps the `<ol>` in an extra
+   * `<div>` carrying `container-type: inline-size` — re-templating the `<ol>`
+   * requires querying an ancestor, not the `<ol>` itself. A `> child` selector
+   * aimed at the list from its parent hits that wrapper instead, and layout the
+   * parent applies via `className` lands on the `<ol>` inside it. `ref`,
+   * `className`, `style` and spread props all stay on the `<ol>`.
    */
   collapseBelow?: CollapseBreakpoint | CollapseColumnsMap;
 }
@@ -439,6 +446,47 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
   // / rendered text `<Sortable.Item>` publishes below.
   const accessibility = useDragAccessibility(sortableTarget);
 
+  const ol = (
+    <ol
+      ref={mergeRefs(olRef, ref)}
+      className={clsx(
+        isGrid ? styles.grid : styles.list,
+        // String form only: those rules query descendants, so the <ol> can be
+        // its own container. The map form's container is the wrapper below.
+        typeof collapse === 'string' && styles.collapsible,
+        typeof collapse === 'string' && collapseClass[collapse],
+        ...collapseKeys.map((b) => stepClass[b]),
+        className,
+      )}
+      // In grid mode the <ol> owns the track template; inject the column
+      // count as a custom prop AFTER the consumer's style so it wins
+      // (mirrors Grid's --grid-columns). List mode leaves style untouched.
+      style={
+        isGrid
+          ? {
+              ...style,
+              ...Object.fromEntries(
+                collapseKeys.map((b) => [
+                  `--sortable-columns-${b}`,
+                  collapseTrackTemplate(collapseMap![b]!),
+                ]),
+              ),
+              ['--sortable-columns' as string]: columns,
+            }
+          : style
+      }
+      {...rest}
+    >
+      {children}
+    </ol>
+  );
+
+  // Map form only: the step rules re-template the <ol> itself, and a container
+  // query never matches its own container — so the size container has to be a
+  // wrapper. `ref`, `className`, `style` and `{...rest}` all stay on the <ol>.
+  const list =
+    collapseMap && collapseKeys.length > 0 ? <div className={styles.stepContainer}>{ol}</div> : ol;
+
   const tree = (
     <DndContext
       accessibility={accessibility}
@@ -458,36 +506,7 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
         items={itemIds}
         strategy={isGrid ? rectSortingStrategy : verticalListSortingStrategy}
       >
-        <ol
-          ref={mergeRefs(olRef, ref)}
-          className={clsx(
-            isGrid ? styles.grid : styles.list,
-            collapse && styles.collapsible,
-            typeof collapse === 'string' && collapseClass[collapse],
-            ...collapseKeys.map((b) => stepClass[b]),
-            className,
-          )}
-          // In grid mode the <ol> owns the track template; inject the column
-          // count as a custom prop AFTER the consumer's style so it wins
-          // (mirrors Grid's --grid-columns). List mode leaves style untouched.
-          style={
-            isGrid
-              ? {
-                  ...style,
-                  ...Object.fromEntries(
-                    collapseKeys.map((b) => [
-                      `--sortable-columns-${b}`,
-                      collapseTrackTemplate(collapseMap![b]!),
-                    ]),
-                  ),
-                  ['--sortable-columns' as string]: columns,
-                }
-              : style
-          }
-          {...rest}
-        >
-          {children}
-        </ol>
+        {list}
       </SortableContext>
       {/* The dragged item lives in a portaled, fixed-position overlay that owns
           the drag + drop animation. The list <li> becomes an invisible
@@ -507,7 +526,7 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
     </DndContext>
   );
 
-  return collapseMap ? (
+  return collapseMap && collapseKeys.length > 0 ? (
     <CollapseColumnsContext.Provider value={collapseMap}>{tree}</CollapseColumnsContext.Provider>
   ) : (
     tree

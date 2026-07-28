@@ -875,7 +875,7 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 </Sortable>
 ```
 
-`collapseBelow` (grid arrangement only) mirrors Grid's `collapseBelow` exactly — `'sm' | 'md' | 'lg'` for a binary collapse to one column, or `{ md: 6, sm: 1 }` for a graduated step-down with item spans clamped per step.
+`collapseBelow` (grid arrangement only) mirrors Grid's `collapseBelow` exactly — `'sm' | 'md' | 'lg'` for a binary collapse to one column, or `{ md: 6, sm: 1 }` for a graduated step-down with item spans clamped per step. The map form wraps the `<ol>` in an extra size-container `<div>`, for the same reason and with the same consequences as Grid's map form (see `<Grid>` below); `ref`, `className`, `style` and spread props stay on the `<ol>`.
 
 **Drag origin** (hybrid): if `<Sortable.Handle>` is present in the Item subtree, only the Handle initiates drag. If no Handle is present, the entire Item is draggable + focusable. A 5px activation distance means short clicks-without-movement on internal buttons / links pass through.
 
@@ -1499,11 +1499,13 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 
 - Top-level shell layout, mounted **once** at the app root. Matches the CRM shell topology: a **full-height `sidebar`** down the left, an optional `topBar` **over the content column** (not full window width), and the main `children` below it. Root is `min-height: 100vh`.
 - `topBar`: optional region over the content column (omit for none). `sidebar`: optional full-height left region, intrinsic width (omit for none). `children`: the main content (required).
-- Layout-owning primitive (the `<Page>` / `<Screen>` / `<Rail>` exception to "no layout properties"). Its only own-styling is the main region's gutter + subtle canvas (both token-driven, below); the slots bring their own surfaces. Don't nest inside another `AppLayout` / `<Page>` / `<Screen>`; for a chromeless page use `<Screen>`, for in-page layout use `<Stack>` / `<Cluster>`.
-- **Content padding (default):** the main region ships the canonical shell gutter (`--app-layout-content-padding`, default `var(--space-6)`) — routed content is padded with **no prop and no raw CSS**. For a full-bleed main region, override the token (`--app-layout-content-padding: 0`) in your scope; there is no prop. _Migration:_ if you previously shimmed this gutter with your own `padding: var(--space-6)` wrapper, remove that shim now or the padding doubles.
+- Layout-owning primitive (the `<Page>` / `<Screen>` / `<Rail>` exception to "no layout properties"). Its only own-styling is the main region's gutter + subtle canvas (both token-driven, below); the slots bring their own surfaces. Don't nest inside `<Page>` / `<Screen>`, and don't nest inside another `AppLayout` **in product code** — the only sanctioned AppLayout-in-AppLayout nesting is a demo/documentation preview (see the landmark note below); for a chromeless page use `<Screen>`, for in-page layout use `<Stack>` / `<Cluster>`.
+- **Content padding (default):** the main region ships the canonical shell gutter (`--app-layout-content-padding`, default `var(--space-6)`, stepping down to `var(--space-4)` at ≤640px viewport width) — routed content is padded with **no prop and no raw CSS**. For a full-bleed main region, override the token (`--app-layout-content-padding: 0`) in your scope; there is no prop. Scope the override to a class or `body`, not another `:root` rule — the narrow-viewport step-down is itself a `:root` rule at the same specificity, so two `:root` rules fight on load order below 640px. _Migration:_ if you previously shimmed this gutter with your own `padding: var(--space-6)` wrapper, remove that shim now or the padding doubles.
 - **Content canvas (default):** the main region paints a subtle canvas (`--app-layout-content-background`, default `var(--color-bg-subtle)`) so white `<Card>`s lift off it — matches every mockup, **no prop, no raw CSS**. For a flat content area, override the token (`--app-layout-content-background: transparent`); there is no prop. _Migration:_ if you shimmed your own `background: var(--color-bg-subtle)` on the content region, remove it.
-- **Page-scroll shell:** `min-height: 100vh` means tall content scrolls the whole window (chrome scrolls away). For fixed chrome + independently-scrolling content, override the root to a fixed `height: 100vh` / `100dvh` via `className`.
+- **Page-scroll shell:** `min-height: 100vh` means tall content scrolls the whole window, but the chrome doesn't scroll away with it — `topBar` is always pinned (`position: sticky`), and `sidebar` pins too when `sidebarPinned` is set. Only the main content region scrolls. For fixed chrome + independently-scrolling content, override the root to a fixed `height: 100vh` / `100dvh` via `className`.
 - **`sidebarPinned`** (default `false`): on pages taller than the viewport, pins the sidebar wrapper (`position: sticky; top: 0; height: 100dvh; overflow-y: auto`) so a `Rail`'s footer/`CollapseToggle` stays glued to the viewport bottom instead of scrolling away with the page. Don't reach for wrapping the sidebar slot in `<Sticky>` instead — the Rail pins its footer by filling its own `height: 100%` box, and `Sticky`'s `align-self: start` drops the row stretch that made that height definite, so the footer-pinning doesn't work. `100dvh` is always relative to the real browser viewport, not a nested scroll container — only use it when AppLayout is the outermost, page-scroll shell (its documented top-level use); nested inside another scrollable region, the sidebar sizes to the whole window and overflows it.
+- **`sidebarOverlayBelow`** (default: none): below a **viewport** threshold (`'sm'` 480 / `'md'` 640 / `'lg'` 768) the sidebar leaves the flow and renders in a left `<Drawer>`, so the content column gets the full viewport width — the fix for a 240px rail eating a phone screen. **AppLayout renders no trigger** — put a hamburger in your `topBar` and gate it with the `useBelowBreakpoint` hook (see below) so it only shows while the overlay is active. Because there's no built-in trigger, `sidebarOpen` + `onSidebarOpenChange` are technically optional props but **effectively required together**: with both omitted nothing can ever open the drawer (Esc/backdrop still close it once open, but there's no way in). `sidebarPinned` is ignored below the threshold (the drawer owns the sidebar's box there).
+- The `children` slot renders inside a plain `<div>`, not a `<main>` — `AppLayout` can be nested in a demo or documentation preview (never in product code, see above), so it must not unilaterally claim the page's `main` landmark. The consuming app owns that: wrap your top-level routed content in your own `<main>` once, at your app shell (not per-page), the way the playground's `AppShell` does.
 
 ### `<Grid>` — 2D layout primitive
 
@@ -1559,6 +1561,8 @@ Also takes a graduated breakpoint→columns map instead of a single string, for 
 <Grid columns={12} gap="md" collapseBelow={{ md: 6, sm: 1 }}>
 ```
 
+The map form — and only the map form — renders an extra wrapper `<div>` around the grid element, because re-templating the grid needs the size container on an ancestor (a container query never restyles its own container). `ref`, `className`, `style`, `as` and spread props all stay on the grid element, so the only thing that changes for a consumer is the DOM: a `> child` selector aimed at the Grid from its parent now hits the wrapper, and layout meant for "the Grid" (`flex: 1`, `grid-column`, `align-self` via `className`) lands inside the wrapper where the parent can't see it — put that layout on your own element around the Grid. The string form's DOM is unchanged.
+
 **Anti-patterns:**
 
 - ❌ Grid for a single column of vertical flow — use Stack.
@@ -1566,7 +1570,7 @@ Also takes a graduated breakpoint→columns map instead of a single string, for 
 - ❌ `<Grid columns="auto 1fr">` strings — not supported in v1. For asymmetric / named tracks, use raw CSS Grid via className.
 - ❌ `<Grid as="ul">` with non-`<li>` children. The component doesn't enforce list semantics; consumers must.
 - ❌ Fraction spans (other than `'100%'`) on a Grid whose `columns` isn't 12 — the span is a fixed track count, so it overflows into implicit tracks on a non-12 grid.
-- ❌ A `collapseBelow` grid in an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes the grid contribute zero intrinsic width, so it renders at width 0 — the grid must get its width from its parent; give the aside a concrete width instead. The grid also becomes the containing block for absolutely-positioned descendants (layout containment).
+- ❌ A `collapseBelow` grid in an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes the grid contribute zero intrinsic width, so it renders at width 0 — the grid must get its width from its parent; give the aside a concrete width instead. The element carrying the containment also becomes the containing block for absolutely-positioned descendants (layout containment) — the grid itself for the string form, the wrapper for the map form; same box geometry either way.
 
 ### `<Split>` — master–detail two-pane layout
 
@@ -3272,6 +3276,18 @@ const { days, rangeLabel } = useAgenda(rangeStart, rangeEnd);
 - `Day.key` is `'YYYY-MM-DD'` in local time — safe React key, comparison handle, and event-lookup index.
 - Pure date math + `Intl` formatters live alongside as utility exports: `addDays`, `startOfWeek`, `formatMonth`, `getFirstDayOfWeek`, etc. Use them if you need to derive labels or do date math outside a component.
 
+### `useBelowBreakpoint` — viewport breakpoint hook
+
+```tsx
+import { useBelowBreakpoint } from '@eocrm/design-system';
+
+const isOverlay = useBelowBreakpoint('lg'); // true at ≤768px viewport width
+```
+
+- Lives in `src/hooks/`, imported straight from the package root. `useBelowBreakpoint(breakpoint?: 'sm' | 'md' | 'lg'): boolean` — subscribes to `(max-width: …px)` on the **viewport** (`matchMedia`: `sm` 480 / `md` 640 / `lg` 768) and returns whether it currently matches. `breakpoint` is optional — omit it (or pass `undefined`) and the hook always returns `false`.
+- Returns `false` on the server, and stays `false` until hydration corrects it — only relevant if you server-render this. In a client-only render (no SSR — the CRM's case) the value is correct from the first render.
+- Viewport, not container — use it only where a container query would be circular, i.e. where the thing being measured is what the collapse changes: `<Rail>`'s own width (internal use) and `<AppLayout>`'s overlay-sidebar trigger (`sidebarOverlayBelow` — gate your `topBar` hamburger on this so it shows only while the overlay is active). For content that re-templates inside a box of stable width, use a `collapseBelow` prop (`<Grid>` / `<Split>` / `<Sortable>` / `<DashboardCanvas>`) instead — those use container queries in CSS and need no hook.
+
 ---
 
 ## Tokens (the only "values" you write)
@@ -3296,7 +3312,7 @@ All available as CSS custom properties after you import `global.scss`:
 | Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
 | Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width`                                                                                                                               |
 | Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
-| Layer (z-index) | `--z-dropdown` / `--z-popover` / `--z-modal` / `--z-overlay-floating` / `--z-toast` / `--z-tooltip`                                                                                                 |
+| Layer (z-index) | `--z-app-chrome` / `--z-dropdown` / `--z-popover` / `--z-flowcanvas-maximized` / `--z-modal` / `--z-overlay-floating` / `--z-toast` / `--z-tooltip`                                                 |
 
 ---
 

@@ -91,7 +91,7 @@ export function ContactDetail() {
       <Tabs items={tabs} activeId={activeTab} onChange={setActiveTab} />
 
       {activeTab === 'overview' && (
-        <Grid columns={2} gap="md">
+        <Grid columns={2} gap="md" collapseBelow="md">
           <Stack gap="lg">
             <Card>
               <Card.Header headerLevel="h2">About</Card.Header>

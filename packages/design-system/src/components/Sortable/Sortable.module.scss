@@ -94,9 +94,21 @@
 }
 
 // --- collapseBelow (grid arrangement) ----------------------------------
-// Mirrors Grid's collapseBelow: only collapsible lists become size
-// containers, so existing lists get zero containment changes.
+// Mirrors Grid's collapseBelow: only STRING-form lists become size containers
+// themselves (their rules query `> *`, a descendant), so existing lists get
+// zero containment changes.
 .collapsible {
+  container-type: inline-size;
+}
+
+// Map form: the step rules re-template the <ol> itself, and a container query
+// never matches its own container — so Sortable.tsx wraps the <ol> in this
+// zero-styling container. Mirrors Grid's `.stepContainer`.
+// `display: grid` so the wrapper stays geometrically transparent — its single
+// child stretches in both axes, keeping the <ol>'s height in a stretch context
+// (a block wrapper would take the stretch itself). Mirrors Grid.
+.stepContainer {
+  display: grid;
   container-type: inline-size;
 }
 
@@ -127,9 +139,11 @@
 // Graduated (map) collapse — step templates + per-item clamped spans are
 // computed in Sortable.tsx and injected inline (--sortable-columns-<bp>,
 // --sortable-item-span-<bp>). Declared lg → md → sm so the smallest matching
-// breakpoint wins by source order (equal specificity).
+// breakpoint wins by source order (equal specificity). Queried against
+// `.stepContainer`, the wrapper above; `.grid.stepXx` keeps the same (0,2,0)
+// specificity the old `.collapsible.stepXx` pair had.
 @container (max-width: #{bp.$collapse-lg}) {
-  .collapsible.stepLg {
+  .grid.stepLg {
     grid-template-columns: var(--sortable-columns-lg);
 
     > .item {
@@ -140,7 +154,7 @@
 }
 
 @container (max-width: #{bp.$collapse-md}) {
-  .collapsible.stepMd {
+  .grid.stepMd {
     grid-template-columns: var(--sortable-columns-md);
 
     > .item {
@@ -151,7 +165,7 @@
 }
 
 @container (max-width: #{bp.$collapse-sm}) {
-  .collapsible.stepSm {
+  .grid.stepSm {
     grid-template-columns: var(--sortable-columns-sm);
 
     > .item {

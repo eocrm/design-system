@@ -9,11 +9,13 @@ import { createContext } from 'react';
  *   arrangement) / Split / DashboardCanvas. Collapsing re-templates content
  *   *inside* a box whose width the collapse doesn't change, so querying the
  *   box's own width is stable and needs no JS.
- * - **Viewport** (`matchMedia`) for Rail. A container query there would be
- *   circular — the rail's own width IS what collapsing changes (240px → 56px),
- *   so collapsing would keep the query true. Rail's collapsed state also drives
- *   React behavior (Item tooltips, Group flyouts, section titles), which CSS
- *   can't express, so the threshold has to exist in JS regardless.
+ * - **Viewport** (`matchMedia`, via the `useBelowBreakpoint` hook in
+ *   `src/hooks/`) for Rail and AppLayout's overlay sidebar. A container query
+ *   there would be circular — the thing being measured IS what the collapse
+ *   changes (Rail's own width 240px → 56px; the sidebar's presence in
+ *   AppLayout's row). Rail's collapsed state also drives React behavior (Item
+ *   tooltips, Group flyouts, section titles), which CSS can't express, so the
+ *   threshold has to exist in JS regardless.
  */
 export type CollapseBreakpoint = 'sm' | 'md' | 'lg';
 

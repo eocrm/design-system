@@ -254,14 +254,13 @@ describe('Grid collapseBelow (#314)', () => {
 });
 
 describe('Grid graduated collapse (#318)', () => {
-  it('map form adds collapsible + one step class per breakpoint and injects step templates', () => {
+  it('map form adds one step class per breakpoint and injects step templates', () => {
     render(
       <Grid columns={12} collapseBelow={{ md: 6, sm: 1 }} data-testid="grid">
         <div>a</div>
       </Grid>,
     );
     const el = screen.getByTestId('grid');
-    expect(el.className).toMatch(/collapsible/);
     expect(el.className).toMatch(/stepMd/);
     expect(el.className).toMatch(/stepSm/);
     expect(el.className).not.toMatch(/stepLg/);
@@ -269,6 +268,42 @@ describe('Grid graduated collapse (#318)', () => {
     expect(el.style.getPropertyValue('--grid-columns-md')).toBe('repeat(6, minmax(0, 1fr))');
     expect(el.style.getPropertyValue('--grid-columns-sm')).toBe('repeat(1, minmax(0, 1fr))');
     expect(el.style.getPropertyValue('--grid-columns-lg')).toBe('');
+  });
+
+  // jsdom never evaluates `@container`, so the only thing a unit test can
+  // guard is the MECHANISM: the size container has to be an ancestor of the
+  // grid, because a container query cannot restyle its own container. If the
+  // wrapper goes away (or the grid becomes its own container again) the step
+  // rules silently stop applying in a real browser — exactly the #318 bug.
+  it('map form renders the size-container wrapper AROUND the grid, not on it', () => {
+    render(
+      <Grid columns={3} collapseBelow={{ md: 2, sm: 1 }} data-testid="grid">
+        <div>a</div>
+      </Grid>,
+    );
+    const el = screen.getByTestId('grid');
+    expect(el.parentElement!.className).toMatch(/stepContainer/);
+    expect(el.className).not.toMatch(/collapsible/);
+  });
+
+  it('string form keeps the container on the grid itself — no wrapper', () => {
+    const { container } = render(
+      <Grid columns={3} collapseBelow="md" data-testid="grid">
+        <div>a</div>
+      </Grid>,
+    );
+    const el = screen.getByTestId('grid');
+    expect(el.className).toMatch(/collapsible/);
+    expect(el.parentElement).toBe(container);
+  });
+
+  it('no collapse renders no wrapper', () => {
+    const { container } = render(
+      <Grid columns={3} data-testid="grid">
+        <div>a</div>
+      </Grid>,
+    );
+    expect(screen.getByTestId('grid').parentElement).toBe(container);
   });
 
   it('Grid.Item under a map grid stamps clamped per-breakpoint spans', () => {
