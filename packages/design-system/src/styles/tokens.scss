@@ -358,7 +358,7 @@
   --transition-base: 140ms ease-out;
 
   // Layering — only library-relevant layers are defined here.
-  --z-app-chrome: 100; // AppLayout's pinned top bar (and sidebar, if ever needed) — above unpositioned page content, below every overlay tier
+  --z-app-chrome: 500; // AppLayout's pinned top bar (and sidebar, if ever needed) — must clear every in-content elevation (e.g. Calendar's hovered-event lift, HOVER_Z_INDEX = 100 in TimedEvent.tsx — a JS constant, easy to miss when grepping only .scss), while staying below every overlay tier (--z-dropdown: 1000+)
   --z-dropdown: 1000;
   --z-popover: 1050; // above dropdown, below modal — popover can open from a menu item
   --z-flowcanvas-maximized: 1090; // in-page maximized FlowCanvas — above page content, below modal

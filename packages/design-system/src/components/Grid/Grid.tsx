@@ -210,7 +210,7 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
   // query never matches its own container — so the size container has to be a
   // wrapper. `ref`, `className`, `style`, `as` and `{...rest}` all stay on the
   // grid element; the wrapper is a bare div that only carries containment.
-  return collapseMap ? (
+  return collapseMap && collapseKeys.length > 0 ? (
     <CollapseColumnsContext.Provider value={collapseMap}>
       <div className={styles.stepContainer}>{grid}</div>
     </CollapseColumnsContext.Provider>

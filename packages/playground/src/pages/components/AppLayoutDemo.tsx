@@ -138,7 +138,11 @@ function OverlaySidebarDemo() {
         <TopBar>
           <TopBar.Start>
             {isOverlay && (
-              <TopBar.IconButton aria-label="Open navigation" onClick={() => setNavOpen(true)}>
+              <TopBar.IconButton
+                aria-label="Open demo navigation"
+                aria-expanded={navOpen}
+                onClick={() => setNavOpen(true)}
+              >
                 <Menu size={16} />
               </TopBar.IconButton>
             )}
@@ -468,7 +472,11 @@ export function Demo() {
         <TopBar>
           <TopBar.Start>
             {isOverlay && (
-              <TopBar.IconButton aria-label="Open navigation" onClick={() => setNavOpen(true)}>
+              <TopBar.IconButton
+                aria-label="Open demo navigation"
+                aria-expanded={navOpen}
+                onClick={() => setNavOpen(true)}
+              >
                 <Menu size={16} />
               </TopBar.IconButton>
             )}

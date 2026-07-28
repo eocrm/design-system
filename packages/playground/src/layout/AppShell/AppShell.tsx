@@ -225,7 +225,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         <TopBar>
           <TopBar.Start>
             {isOverlayNav && (
-              <TopBar.IconButton aria-label="Open navigation" onClick={() => setNavOpen(true)}>
+              <TopBar.IconButton
+                aria-label="Open navigation"
+                aria-expanded={navOpen}
+                onClick={() => setNavOpen(true)}
+              >
                 <Menu size={16} />
               </TopBar.IconButton>
             )}
