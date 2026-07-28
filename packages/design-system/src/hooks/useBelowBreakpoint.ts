@@ -15,7 +15,7 @@ import { COLLAPSE_BREAKPOINT_PX, type CollapseBreakpoint } from '../components/_
  * inside a box of stable width, prefer the container-query `collapseBelow`
  * classes instead (see `CollapseBreakpoint`'s doc).
  *
- * The only public hook that lives outside a component directory. Import it directly:
+ * Lives in `src/hooks/`, imported straight from the package root:
  *
  * @example
  * import { useBelowBreakpoint } from '@eocrm/design-system';

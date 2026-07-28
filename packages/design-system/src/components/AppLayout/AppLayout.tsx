@@ -135,18 +135,22 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  *
  * @remarks Landmarks
  * The content region renders a plain `div`, not a `<main>` — `AppLayout`
- * deliberately does not claim the `main` landmark, because it can legitimately
- * be nested (e.g. the `/components/app-layout` demo mounts several instances
- * inside the app's own shell; nested `<main>`s are invalid HTML and an axe
- * violation). The consuming app wraps its routed content in its own `<main>`
- * once, at its top-level shell — see the playground's `AppShell` for the
- * worked example.
+ * deliberately does not claim the `main` landmark, because it can be nested
+ * in a demo or documentation preview (e.g. the `/components/app-layout` demo
+ * mounts several instances inside the app's own shell; nested `<main>`s are
+ * invalid HTML and an axe violation). The consuming app wraps its routed
+ * content in its own `<main>` once, at its top-level shell — see the
+ * playground's `AppShell` for the worked example.
  *
  * @remarks When NOT to use
  * - ❌ For in-page content layout — use `<Stack>` / `<Cluster>` / `<Grid>`.
  * - ❌ For a chromeless full-bleed page (sign-in / 404 / error) — use `<Screen>`.
- * - ❌ Don't nest AppLayout inside another AppLayout, `<Page>`, or `<Screen>`.
- *   It's the top-level shell, mounted once at the app root.
+ * - ❌ Don't nest AppLayout inside another AppLayout **in product code**. It's
+ *   the top-level shell, mounted once at the app root. The only sanctioned
+ *   nesting is demo and documentation previews — which is exactly why the
+ *   content region is a plain `div` and not a `<main>` (see Landmarks above).
+ * - ❌ Don't nest AppLayout inside `<Page>` or `<Screen>` either — same reason,
+ *   no exception.
  *
  * @remarks Scrolling
  * This is a **page-scroll** shell: `min-height: 100vh` lets it grow with tall
