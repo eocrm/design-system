@@ -4214,6 +4214,13 @@
           "required": false,
           "default": "'start'",
           "description": "Cross-axis (vertical) alignment of the panes.\n- `'start'` (default) — panes hug the top.\n- `'stretch'` — `aside` matches `main`'s height (full-height bordered rail).\n- `'center'` — panes vertically centered."
+        },
+        {
+          "name": "collapseBelow",
+          "type": "CollapseBreakpoint",
+          "required": false,
+          "default": "",
+          "description": "Stack the two panes vertically when the SPLIT'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Same scale as `Grid`'s `collapseBelow`. Without it a pinned\n`asideWidth` rail squeezes `main` to nothing on narrow screens.\n\nCollapsed panes stack in **DOM order**, not always aside-first: with\nthe default `side=\"start\"` that's aside → main; with `side=\"end\"` it's\nmain → aside, because that's the order the panes are in the DOM. Forcing\naside-first when collapsed would need CSS `order`, which desynchronizes\nvisual order from tab order — an a11y defect. If you need the aside on top\nwhen stacked, use `side=\"start\"`.\n\n❌ Anti-pattern: a `collapseBelow` split must get its width from its\nparent. `container-type: inline-size` zeroes the split's contribution to\nintrinsic sizing, so in an intrinsic-width context (another `Split`'s\ndefault `auto` aside track, a `Cluster` item, `width: max-content`) it\nrenders at width 0 — give the parent a concrete width instead. The split\nalso becomes the containing block for absolutely-positioned descendants\n(layout containment). Splits without the prop pay none of this."
         }
       ]
     },

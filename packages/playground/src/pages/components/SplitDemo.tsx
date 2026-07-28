@@ -34,8 +34,12 @@ const settingsTabs: TabItem[] = [
 export function SplitDemo() {
   const [section, setSection] = useState('general');
   const [sectionEnd, setSectionEnd] = useState('general');
+  const [sectionCollapse, setSectionCollapse] = useState('general');
+  const [sectionCollapseEnd, setSectionCollapseEnd] = useState('general');
   const active = sections[section];
   const activeEnd = sections[sectionEnd];
+  const activeCollapse = sections[sectionCollapse];
+  const activeCollapseEnd = sections[sectionCollapseEnd];
 
   return (
     <DemoLayout
@@ -196,6 +200,89 @@ export function Demo() {
             </Stack>
           </Card>
         </Split>
+      </Example>
+
+      <Example
+        title="collapseBelow — stacks on narrow containers"
+        description="collapseBelow='sm' stacks the two panes into one column once the SPLIT'S OWN width (container query, not the viewport) drops below 480px — without it a pinned 220px rail squeezes the panel to nothing. Panes stack in DOM order: aside on top for side='start', main on top for side='end' (no CSS order flip, so visual order stays in sync with tab order). Drag each box's resize handle (bottom-right corner) narrower to see it collapse."
+        code={`import { useState } from 'react';
+import { Card, Split, Stack, Tabs } from '@eocrm/design-system';
+
+export function Demo() {
+  const [section, setSection] = useState('general');
+  const active = sections[section];
+
+  return (
+    <Split
+      asideWidth="220px"
+      gap="lg"
+      collapseBelow="sm"
+      aside={
+        <Tabs
+          orientation="vertical"
+          items={settingsTabs}
+          activeId={section}
+          onChange={setSection}
+        />
+      }
+    >
+      <Card padding="md" style={{ color: 'var(--color-fg-muted)' }}>
+        <Stack gap="xs">
+          <strong style={{ color: 'var(--color-fg)' }}>{active.title}</strong>
+          <span>{active.body}</span>
+        </Stack>
+      </Card>
+    </Split>
+  );
+}`}
+      >
+        <Stack gap="lg">
+          <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+            <Split
+              asideWidth="220px"
+              gap="lg"
+              collapseBelow="sm"
+              aside={
+                <Tabs
+                  orientation="vertical"
+                  items={settingsTabs}
+                  activeId={sectionCollapse}
+                  onChange={setSectionCollapse}
+                />
+              }
+            >
+              <Card padding="md" style={{ color: 'var(--color-fg-muted)' }}>
+                <Stack gap="xs">
+                  <strong style={{ color: 'var(--color-fg)' }}>{activeCollapse.title}</strong>
+                  <span>{activeCollapse.body}</span>
+                </Stack>
+              </Card>
+            </Split>
+          </div>
+          <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+            <Split
+              side="end"
+              asideWidth="220px"
+              gap="lg"
+              collapseBelow="sm"
+              aside={
+                <Tabs
+                  orientation="vertical"
+                  items={settingsTabs}
+                  activeId={sectionCollapseEnd}
+                  onChange={setSectionCollapseEnd}
+                />
+              }
+            >
+              <Card padding="md" style={{ color: 'var(--color-fg-muted)' }}>
+                <Stack gap="xs">
+                  <strong style={{ color: 'var(--color-fg)' }}>{activeCollapseEnd.title}</strong>
+                  <span>{activeCollapseEnd.body}</span>
+                </Stack>
+              </Card>
+            </Split>
+          </div>
+        </Stack>
       </Example>
     </DemoLayout>
   );

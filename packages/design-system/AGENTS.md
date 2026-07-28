@@ -1557,7 +1557,18 @@ beside results).
 - `asideWidth`: `'auto'` (default, intrinsic) or a CSS length like `'240px'` to pin the rail.
 - `gap`: `xs`/`sm`/`md` (default)/`lg`/`xl`/`2xl` — same scale as Stack/Cluster/Grid.
 - `align`: `'start'` (default) / `'stretch'` (full-height aside) / `'center'`.
+- `collapseBelow`: `sm` (480px) / `md` (640px) / `lg` (768px) — stack the panes vertically when the SPLIT'S OWN width (container query, not viewport) drops below the preset. Same scale as `Grid`'s `collapseBelow`. Use it whenever `asideWidth` pins a rail, else the rail squeezes `main` to nothing on narrow screens.
 - `main` has `min-width: 0` — long content shrinks/scrolls instead of overflowing.
+
+```tsx
+// Settings screen: 220px vertical Tabs rail that stacks above the panel under 480px.
+<Split aside={<Tabs orientation="vertical" ... />} asideWidth="220px" collapseBelow="sm">
+  <SettingsPanel />
+</Split>
+```
+
+- Collapsed panes stack in **DOM order**: aside → main for `side="start"` (default), main → aside for `side="end"`. No CSS `order` flip — visual order stays in sync with tab order. Need the aside on top when stacked? Use `side="start"`.
+- ❌ A `collapseBelow` split in an intrinsic-width context (another `Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes it contribute zero intrinsic width, so it renders at width 0 — give the parent a concrete width instead. It also becomes the containing block for absolutely-positioned descendants (layout containment). Splits without the prop pay neither cost.
 
 When NOT to use: equal columns → `<Grid columns={2}>`; wrapping peer row → `<Cluster>`; app shell sidebar → `<AppLayout>`/`<Rail>`.
 

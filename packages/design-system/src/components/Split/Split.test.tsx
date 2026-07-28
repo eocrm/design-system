@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { Split } from './Split';
@@ -135,5 +137,88 @@ describe('Split', () => {
     const el = container.firstElementChild as HTMLElement;
     expect(el).toHaveAttribute('data-testid', 'sp');
     expect(el).toHaveAttribute('aria-label', 'settings layout');
+  });
+});
+
+// jsdom does not evaluate container queries — same as Grid's collapseBelow
+// tests (#314), the collapse contract is asserted via the emitted classes; the
+// @container rules themselves are verified in the browser.
+describe('Split collapseBelow (#372)', () => {
+  it('adds the collapsible + breakpoint classes when set', () => {
+    const { container } = render(
+      <Split aside={<i />} collapseBelow="sm">
+        x
+      </Split>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.className).toMatch(/collapsible/);
+    expect(el.className).toMatch(/collapseSm/);
+  });
+
+  it('adds no collapse classes when unset — no container-type on plain splits', () => {
+    const { container } = render(<Split aside={<i />}>x</Split>);
+    expect((container.firstElementChild as HTMLElement).className).not.toMatch(/collaps/i);
+  });
+
+  it('collapses on either side, keeping DOM order (aside-first only for side="start")', () => {
+    const cellOrder = (root: Element) =>
+      Array.from(root.children).map((c) =>
+        /aside/.test((c as HTMLElement).className) ? 'aside' : 'main',
+      );
+
+    const start = render(
+      <Split aside={<i />} side="start" collapseBelow="md">
+        x
+      </Split>,
+    );
+    const startRoot = start.container.firstElementChild as HTMLElement;
+    expect(startRoot.className).toMatch(/collapsible/);
+    expect(startRoot.className).toMatch(/collapseMd/);
+    expect(startRoot.className).toMatch(/sideStart/);
+    expect(cellOrder(startRoot)).toEqual(['aside', 'main']);
+
+    const end = render(
+      <Split aside={<i />} side="end" collapseBelow="md">
+        x
+      </Split>,
+    );
+    const endRoot = end.container.firstElementChild as HTMLElement;
+    expect(endRoot.className).toMatch(/collapsible/);
+    expect(endRoot.className).toMatch(/collapseMd/);
+    expect(endRoot.className).toMatch(/sideEnd/);
+    expect(cellOrder(endRoot)).toEqual(['main', 'aside']);
+  });
+
+  it('keeps the pinned aside width custom property while collapsible', () => {
+    const { container } = render(
+      <Split aside={<i />} asideWidth="220px" collapseBelow="sm">
+        x
+      </Split>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.style.getPropertyValue('--split-aside-width')).toBe('220px');
+  });
+});
+
+describe('Split collapseBelow — the container query can actually match (#372)', () => {
+  // jsdom cannot evaluate @container, so no behavioral test can reach this.
+  // The class-name tests above all pass against a BROKEN implementation: the
+  // first attempt at this feature put the collapse rule on the collapsible
+  // element itself, which can never match — an element does not query its own
+  // size container, so the rule resolves against the nearest ANCESTOR
+  // container (usually none) and silently does nothing. Same class names, same
+  // DOM order, dead CSS. Only a browser caught it.
+  //
+  // So assert the one thing that distinguishes correct from dead: the query's
+  // subject must be the CHILDREN. Same SCSS-source technique DashboardCanvas
+  // and DropdownMenu use for contracts jsdom can't reach.
+  const scss = readFileSync(resolve(__dirname, 'Split.module.scss'), 'utf8');
+
+  it.each(['Sm', 'Md', 'Lg'])('targets children, not itself, at the %s breakpoint', (bp) => {
+    expect(scss).toMatch(new RegExp(`\\.collapsible\\.collapse${bp}\\s*>\\s*\\*\\s*\\{`));
+  });
+
+  it('wraps each collapse rule in a @container query', () => {
+    expect(scss.match(/@container \(max-width:/g)).toHaveLength(3);
   });
 });

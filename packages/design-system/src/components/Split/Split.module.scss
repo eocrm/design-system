@@ -1,4 +1,5 @@
 @use './Split.tokens';
+@use '../_internal/collapse' as bp;
 
 .split {
   display: grid;
@@ -63,4 +64,44 @@
 
 .alignCenter {
   align-items: center;
+}
+
+// --- collapseBelow -----------------------------------------------------
+// Only splits with `collapseBelow` become size containers, so existing splits
+// get zero containment changes (container-type: inline-size zeroes the
+// element's intrinsic-width contribution — see Split.tsx's anti-pattern note).
+.collapsible {
+  container-type: inline-size;
+}
+
+// Below the container threshold both panes span every track, so the split
+// renders as one stacked column — in DOM order (aside-then-main for
+// side="start", main-then-aside for side="end"; no `order` flip, so visual
+// order stays in sync with tab order). Same mechanism as Grid's collapseBelow:
+// the query targets the CHILDREN, because an element can never query its own
+// size container — a rule on `.collapsible` itself would resolve against the
+// nearest ANCESTOR container instead and silently never match. Spanning the
+// children also neutralizes .sideStart / .sideEnd (grid-template-columns is
+// the only thing those set) for both side values at once.
+// Double class (.collapsible.collapseXx) keeps specificity above any
+// single-class consumer rule regardless of CSS bundle emission order.
+@container (max-width: #{bp.$collapse-sm}) {
+  .collapsible.collapseSm > * {
+    // stylelint-disable-next-line property-disallowed-list -- collapse override is Split's own internal grid placement, same sanction as Grid's collapse rules
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: #{bp.$collapse-md}) {
+  .collapsible.collapseMd > * {
+    // stylelint-disable-next-line property-disallowed-list -- collapse override is Split's own internal grid placement, same sanction as Grid's collapse rules
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: #{bp.$collapse-lg}) {
+  .collapsible.collapseLg > * {
+    // stylelint-disable-next-line property-disallowed-list -- collapse override is Split's own internal grid placement, same sanction as Grid's collapse rules
+    grid-column: 1 / -1;
+  }
 }
