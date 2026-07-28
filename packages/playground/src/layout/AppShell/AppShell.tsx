@@ -155,7 +155,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so they
   // read like real standalone screens, not pages inside the CRM.
   if (FULL_BLEED_PATHS.has(pathname)) {
-    return <>{children}</>;
+    return <main>{children}</main>;
   }
 
   const inComponents = pathname.startsWith('/components');

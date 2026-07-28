@@ -128,6 +128,15 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * CSS**. Want a flat (transparent) content area? Override the token in your scope
  * — `--app-layout-content-background: transparent` — no prop required.
  *
+ * @remarks Landmarks
+ * The content region renders a plain `div`, not a `<main>` — `AppLayout`
+ * deliberately does not claim the `main` landmark, because it can legitimately
+ * be nested (e.g. the `/components/app-layout` demo mounts several instances
+ * inside the app's own shell; nested `<main>`s are invalid HTML and an axe
+ * violation). The consuming app wraps its routed content in its own `<main>`
+ * once, at its top-level shell — see the playground's `AppShell` for the
+ * worked example.
+ *
  * @remarks When NOT to use
  * - ❌ For in-page content layout — use `<Stack>` / `<Cluster>` / `<Grid>`.
  * - ❌ For a chromeless full-bleed page (sign-in / 404 / error) — use `<Screen>`.

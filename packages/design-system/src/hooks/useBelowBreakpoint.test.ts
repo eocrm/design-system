@@ -16,7 +16,7 @@ describe('useBelowBreakpoint', () => {
     expect(result.current).toBe(false);
   });
 
-  it('returns true below the threshold and false above it', () => {
+  it('returns true below the threshold', () => {
     stubMatchMedia(700);
     const { result } = renderHook(() => useBelowBreakpoint('lg'));
     expect(result.current).toBe(true);
