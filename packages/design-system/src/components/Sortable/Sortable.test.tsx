@@ -508,3 +508,40 @@ describe('restrictTransformToRect', () => {
     expect(result.scaleY).toBe(0.75);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Drag announcements (#390)
+// ---------------------------------------------------------------------------
+describe('Sortable — drag announcements', () => {
+  it('announces the item’s own text and slot, never its id', async () => {
+    const restore = stubStackedRects();
+    const user = userEvent.setup();
+    render(
+      // Grid arrangement so dnd-kit uses closestCenter: list mode's default
+      // rectIntersection needs real overlap, which jsdom's stubbed rects can't
+      // produce (see the keyboard-reorder test above).
+      <Sortable arrangement="grid" columns={12}>
+        <Sortable.Item id="lead-1" span="50%">
+          <Sortable.Handle aria-label="Reorder first" />
+          Call Acme about renewal
+        </Sortable.Item>
+        <Sortable.Item id="lead-2" span="50%">
+          <Sortable.Handle aria-label="Reorder second" />
+          Send proposal to Globex
+        </Sortable.Item>
+      </Sortable>,
+    );
+
+    screen.getByLabelText('Reorder first').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowDown]');
+    const live = screen.getByRole('status').textContent ?? '';
+    await user.keyboard('[Space]');
+    const dropped = screen.getByRole('status').textContent ?? '';
+    restore();
+
+    expect(live).toBe('Call Acme about renewal, position 2 of 2.');
+    expect(dropped).toBe('Dropped Call Acme about renewal at position 2 of 2.');
+    expect(`${live}${dropped}`).not.toMatch(/lead-/);
+  });
+});

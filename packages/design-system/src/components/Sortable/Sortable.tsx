@@ -46,6 +46,7 @@ import {
   type CollapseBreakpoint,
   type CollapseColumnsMap,
 } from '../_internal/collapse';
+import { nodeText, sortableTarget, useDragAccessibility } from '../_internal/dragAnnouncements';
 import styles from './Sortable.module.scss';
 
 /**
@@ -432,8 +433,15 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
   );
   const modifiers = restrictToContainer ? [restrictModifier] : undefined;
 
+  // Localized screen-reader announcements (Hard rule 9). Every droppable here
+  // IS a sortable item, so dnd-kit's own `data.sortable` supplies the slot and
+  // `sortableTarget` needs no help; the item's text comes from `dragLabel`,
+  // published by `<Sortable.Item>` below.
+  const accessibility = useDragAccessibility(sortableTarget);
+
   const tree = (
     <DndContext
+      accessibility={accessibility}
       sensors={sensors}
       modifiers={modifiers}
       // Grid: closestCenter is dnd-kit's idiomatic pairing for a 2D sortable
@@ -522,6 +530,11 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
   { id, span, className, children, ...rest },
   ref,
 ) {
+  // Announcement label: the item's own visible text, so a drag says "Review
+  // pricing page mocks, position 2 of 3" instead of dnd-kit's raw id.
+  const dragLabel = useMemo(() => nodeText(children), [children]);
+  const data = useMemo(() => ({ dragLabel }), [dragLabel]);
+
   const {
     setNodeRef,
     setActivatorNodeRef,
@@ -530,7 +543,7 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
     transform,
     transition,
     isDragging,
-  } = useSortable({ id });
+  } = useSortable({ id, data });
 
   const hasHandle = useMemo(() => containsHandle(children), [children]);
 

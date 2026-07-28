@@ -162,6 +162,59 @@ export interface Messages {
     /** Default empty-state copy when no rows are rendered. */
     empty: string;
   };
+  /**
+   * Screen-reader copy for every dnd-kit drag surface in the library — Kanban,
+   * Sortable, SortableGroup, DataTable column reorder and the RichTextEditor
+   * block gutter. Passed to `<DndContext accessibility={…}>` so dnd-kit's
+   * hard-coded English defaults never reach a live region.
+   *
+   * `item` and `container` are human labels the component resolves at the call
+   * site (a card's text, a column header, a list's `aria-label`); `index` and
+   * `total` are 1-based slot positions. Nothing here bakes in data.
+   */
+  drag: {
+    /** Visually-hidden keyboard instructions, announced when a draggable takes focus. */
+    instructions: string;
+    /** Announced when a drag starts. */
+    pickedUp: (params: { item: string }) => string;
+    /** Announced when the drop slot changes, in a single-list component (Sortable, DataTable). */
+    movedOver: (params: { item: string; index: number; total: number }) => string;
+    /** Announced when the drop slot changes, in a multi-list component (Kanban, SortableGroup). */
+    movedOverIn: (params: {
+      item: string;
+      index: number;
+      total: number;
+      container: string;
+    }) => string;
+    /** Announced while the drag is over no drop target at all. */
+    movedOutside: (params: { item: string }) => string;
+    /** Announced on a committed drop in a single-list component. */
+    dropped: (params: { item: string; index: number; total: number }) => string;
+    /** Announced on a committed drop into a named list. */
+    droppedIn: (params: {
+      item: string;
+      index: number;
+      total: number;
+      container: string;
+    }) => string;
+    /** Announced when a release resolves to no slot, so nothing moved. */
+    droppedNowhere: (params: { item: string }) => string;
+    /**
+     * Announced on a committed drop by a surface that has no numbered slots to
+     * report — the RichTextEditor block gutter drags against the document flow,
+     * not a list of droppables.
+     */
+    moved: (params: { item: string }) => string;
+    /**
+     * Announced on Escape, and on a release the component itself rejects — a
+     * Kanban card let go outside the board is a cancel, not a drop.
+     */
+    cancelled: (params: { item: string }) => string;
+    /** Stand-in for `item` when the component has no human label for what is being dragged. */
+    unnamed: string;
+    /** Stand-in for `container` when a list has no accessible name; `index` is 1-based. */
+    unnamedContainer: (params: { index: number; total: number }) => string;
+  };
   dashboardCanvas: {
     /** aria-label for the canvas root region. */
     canvas: string;
@@ -367,6 +420,11 @@ export interface Messages {
   kanban: {
     /** aria-label for the Kanban scroll container (the board itself). */
     board: string;
+    /**
+     * Stand-in name for a column in drag announcements when the consumer gave
+     * `<Kanban.Column>` no `aria-label`; `index` is 1-based in board order.
+     */
+    unnamedColumn: (params: { index: number; total: number }) => string;
   };
   modal: {
     /** aria-label for the Modal header's close button. */

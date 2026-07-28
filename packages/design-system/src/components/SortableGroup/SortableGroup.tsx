@@ -37,6 +37,12 @@ import {
   type SortableItemProps,
 } from '../Sortable';
 import { containerAwareClosestCorners } from '../Sortable/containerAwareCollision';
+import {
+  sortableTarget,
+  useDragAccessibility,
+  type DescribeDragTarget,
+} from '../_internal/dragAnnouncements';
+import { useTranslation } from '../../i18n';
 import { type SortableMoveEvent } from './moveSortableItem';
 import styles from './SortableGroup.module.scss';
 
@@ -67,6 +73,8 @@ export interface SortableGroupContainerProps extends Omit<HTMLAttributes<HTMLOLi
 interface ContainerRecord {
   items: Id[];
   itemContent: Map<Id, ReactNode>;
+  /** The container's `aria-label`, used to name it in drag announcements. */
+  label?: string;
 }
 interface GroupContextValue {
   register: (containerId: Id, rec: ContainerRecord) => void;
@@ -138,6 +146,7 @@ function itemContentMap(children: ReactNode): Map<Id, ReactNode> {
  * which forwards to its `<ol>`.
  */
 const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableGroupProps) {
+  const t = useTranslation();
   const [activeId, setActiveId] = useState<Id | null>(null);
   const registryRef = useRef<Map<Id, ContainerRecord>>(new Map());
   const [overlayVersion, setOverlayVersion] = useState(0);
@@ -223,6 +232,31 @@ const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableG
 
   const handleDragCancel = () => setActiveId(null);
 
+  // Localized announcements (Hard rule 9, #390). Items name themselves via the
+  // `dragLabel` `<Sortable.Item>` publishes; a container names itself with its
+  // `aria-label`, falling back to its 1-based registration order.
+  const describeDrag: DescribeDragTarget = (entry, activeId) => {
+    const reg = registryRef.current;
+    const id = entry.id as Id;
+    const cid = reg.has(id) ? id : containerOf(id);
+    const rec = cid == null ? undefined : reg.get(cid);
+    if (cid == null || !rec) return null;
+    const container =
+      rec.label ??
+      t('drag.unnamedContainer', { index: [...reg.keys()].indexOf(cid) + 1, total: reg.size });
+    const base = sortableTarget(entry);
+    // An item: dnd-kit's own sortable data already carries the slot.
+    if (!reg.has(id)) return base && { ...base, container };
+    // The container itself (empty list, or the space below the items): the item
+    // keeps its slot if a cross-container handoff already seated it here, and
+    // is otherwise counted as one more at the end.
+    const seated = rec.items.indexOf(activeId as Id);
+    return seated >= 0
+      ? { index: seated + 1, total: rec.items.length, container }
+      : { index: rec.items.length + 1, total: rec.items.length + 1, container };
+  };
+  const accessibility = useDragAccessibility(describeDrag);
+
   const overlayContent = useMemo<ReactNode>(() => {
     void overlayVersion; // re-read the registry after container (re)registrations
     if (activeId == null) return null;
@@ -238,6 +272,7 @@ const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableG
   return (
     <GroupContext.Provider value={ctx}>
       <DndContext
+        accessibility={accessibility}
         sensors={sensors}
         collisionDetection={containerAwareClosestCorners}
         onDragStart={handleDragStart}
@@ -265,6 +300,11 @@ SortableGroupRoot.displayName = 'SortableGroup';
  * One list inside a `<SortableGroup>`. Renders an `<ol>` (its own
  * `SortableContext`) and registers as a droppable so even an empty list accepts
  * cross-container drops. Children are `<Sortable.Item>`s for the ids in `items`.
+ *
+ * @remarks
+ * Pass `aria-label` with the list's visible heading. It names the `<ol>` for a
+ * screen reader AND names the list in drag announcements ("…position 2 of 4 in
+ * In review"); without it they fall back to "list 2 of 3".
  */
 const SortableGroupContainer = forwardRef<HTMLOListElement, SortableGroupContainerProps>(
   function SortableGroupContainer({ id, items, className, children, ...rest }, ref) {
@@ -275,10 +315,11 @@ const SortableGroupContainer = forwardRef<HTMLOListElement, SortableGroupContain
     const { setNodeRef } = useDroppable({ id });
 
     const contentMap = useMemo(() => itemContentMap(children), [children]);
+    const label = rest['aria-label'];
     useEffect(() => {
-      group.register(id, { items, itemContent: contentMap });
+      group.register(id, { items, itemContent: contentMap, label });
       return () => group.unregister(id);
-    }, [group, id, items, contentMap]);
+    }, [group, id, items, contentMap, label]);
 
     const setRefs = useCallback(
       (node: HTMLOListElement | null) => {

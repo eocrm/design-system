@@ -210,7 +210,7 @@ export function Demo() {
   return (
     <Kanban onMove={handleMove}>
       {(['todo', 'doing', 'done'] as const).map((colId) => (
-        <Kanban.Column key={colId} id={colId}>
+        <Kanban.Column key={colId} id={colId} aria-label={COL_TITLES[colId]}>
           <Cluster justify="between" align="center">
             <Title order={3} size="sm">{COL_TITLES[colId]}</Title>
             <Badge tone="neutral" size="sm">{board[colId].length}</Badge>
@@ -228,7 +228,7 @@ export function Demo() {
       >
         <Kanban onMove={handleMoveA}>
           {(['todo', 'doing', 'done'] as const).map((colId) => (
-            <Kanban.Column key={colId} id={colId}>
+            <Kanban.Column key={colId} id={colId} aria-label={COL_TITLES[colId]}>
               <Cluster justify="between" align="center">
                 <Title order={3} size="sm">
                   {COL_TITLES[colId]}
@@ -320,7 +320,7 @@ export function Demo() {
   return (
     <Kanban onMove={handleMove}>
       {(['todo', 'doing', 'done'] as const).map((colId) => (
-        <Kanban.Column key={colId} id={colId}>
+        <Kanban.Column key={colId} id={colId} aria-label={COL_TITLES[colId]}>
           <Cluster justify="between" align="center">
             <Title order={3} size="sm">{COL_TITLES[colId]}</Title>
             <Badge tone="neutral" size="sm">{board[colId].length}</Badge>
@@ -358,7 +358,7 @@ export function Demo() {
       >
         <Kanban onMove={handleMoveB}>
           {(['todo', 'doing', 'done'] as const).map((colId) => (
-            <Kanban.Column key={colId} id={colId}>
+            <Kanban.Column key={colId} id={colId} aria-label={COL_TITLES[colId]}>
               <Cluster justify="between" align="center">
                 <Title order={3} size="sm">
                   {COL_TITLES[colId]}
@@ -432,7 +432,7 @@ export function Demo() {
   return (
     <Kanban onMove={handleMove}>
       {(['backlog', 'archive'] as const).map((colId) => (
-        <Kanban.Column key={colId} id={colId}>
+        <Kanban.Column key={colId} id={colId} aria-label={colId}>
           <Cluster justify="between" align="center">
             <Title order={3} size="sm">{colId}</Title>
             <Badge tone="neutral" size="sm">{board[colId].length}</Badge>
@@ -451,7 +451,7 @@ export function Demo() {
         <Stack gap="sm">
           <Kanban onMove={handleMoveC} data-testid="uneven-board">
             {(['backlog', 'archive'] as const).map((colId) => (
-              <Kanban.Column key={colId} id={colId}>
+              <Kanban.Column key={colId} id={colId} aria-label={UNEVEN_TITLES[colId]}>
                 <Cluster justify="between" align="center">
                   <Title order={3} size="sm">
                     {UNEVEN_TITLES[colId]}
@@ -483,7 +483,7 @@ export function Demo() {
 
 <Kanban onMove={handleMove}>
   {STAGES.map(([stage, deals]) => (
-    <Kanban.Column key={stage} id={stage}>
+    <Kanban.Column key={stage} id={stage} aria-label={stage}>
       <Cluster justify="between" align="center">
         <Title order={3} size="sm">{stage}</Title>
         <Badge tone="neutral" size="sm">{deals.length}</Badge>
@@ -499,7 +499,7 @@ export function Demo() {
       >
         <Kanban onMove={handleMoveD} data-testid="wide-board">
           {PIPELINE.map(([stage]) => (
-            <Kanban.Column key={stage} id={stage}>
+            <Kanban.Column key={stage} id={stage} aria-label={stage}>
               <Cluster justify="between" align="center">
                 <Title order={3} size="sm">
                   {stage}

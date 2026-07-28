@@ -108,6 +108,21 @@ import { I18nProvider } from '@eocrm/design-system';
 4. In the component, `const t = useTranslation();` then `aria-label={t('component.key')}`. For array messages (months / weekdays), use `useTranslationArray()`.
 5. Never inline an English string — `aria-label="Close"` is a Hard rule 9 violation.
 
+**Drag-and-drop announcements** are localized too. Every drag surface (`Sortable`,
+`SortableGroup`, `Kanban`, `DataTable` column reorder, `RichTextEditor` block
+gutter) overrides dnd-kit's English defaults with the `drag.*` messages, and
+names what it drags by its **visible text** rather than its id — "Amount due,
+position 3 of 7", not "col_amount was moved over droppable area col_name". You
+get this for free; the one thing worth doing is giving each **container** an
+accessible name, since the library can't invent one:
+
+```tsx
+<Kanban.Column id="qualified" aria-label="Qualified">     {/* → "…in Qualified" */}
+<SortableGroup.Container id="review" items={ids} aria-label="In review" />
+```
+
+Without it, containers fall back to their position ("column 2 of 3").
+
 ---
 
 ## Dark theme
@@ -887,6 +902,7 @@ const [groups, setGroups] = useState<Record<string, Field[]>>(initial);
 </SortableGroup>;
 ```
 
+- Give each `Container` an `aria-label` — it names the `<ol>` for screen readers AND names the list in drag announcements ("…position 2 of 4 in In review").
 - Container ids and item ids share dnd-kit's one id namespace — keep them all unique.
 - Each `Container.items` must match its `<Sortable.Item>` child ids (it's the ordering source of truth).
 - Esc-cancel doesn't revert (moves are applied to your state optimistically) — snapshot before drag to undo.
@@ -950,6 +966,7 @@ Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once pe
 **Anti-patterns**
 
 - ❌ Expecting cross-column keyboard reorder. dnd-kit's stock coordinate-getter is per-`SortableContext`. v2 will ship a custom getter that bridges columns.
+- ❌ Leaving `<Kanban.Column>` without an `aria-label`. Screen-reader drag announcements name the destination column from it; without one they fall back to "column 2 of 3". A labelled column also renders as `role="group"` so the name isn't inert.
 - ❌ Interleaving non-`Kanban.Card` children with cards inside a `<Kanban.Column>`. The Root walks each column's children to extract a contiguous card block; if non-cards appear between cards, the rendering re-arranges them awkwardly. Keep header / count badges BEFORE the cards, footer / "Add card" buttons AFTER.
 - ❌ Wrapping `<Kanban.Card>` inside a custom component. The Root walks direct descendants of `<Kanban.Column>` to find cards; nested cards are invisible to it.
 - ❌ Non-stable column / card ids (e.g. array indices). Both must persist across reorders.

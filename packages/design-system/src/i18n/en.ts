@@ -99,6 +99,25 @@ export const en: Messages = {
     pinnedRows: 'Pinned rows',
     empty: 'No data',
   },
+  drag: {
+    instructions:
+      'Press Space or Enter to pick up. While dragging, the arrow keys move the item, Space or Enter drops it, and Escape cancels.',
+    pickedUp: ({ item }) => `Picked up ${item as string}.`,
+    movedOver: ({ item, index, total }) =>
+      `${item as string}, position ${index as number} of ${total as number}.`,
+    movedOverIn: ({ item, index, total, container }) =>
+      `${item as string}, position ${index as number} of ${total as number} in ${container as string}.`,
+    movedOutside: ({ item }) => `${item as string} is not over a drop target.`,
+    dropped: ({ item, index, total }) =>
+      `Dropped ${item as string} at position ${index as number} of ${total as number}.`,
+    droppedIn: ({ item, index, total, container }) =>
+      `Dropped ${item as string} at position ${index as number} of ${total as number} in ${container as string}.`,
+    droppedNowhere: ({ item }) => `Released ${item as string}. Nothing moved.`,
+    moved: ({ item }) => `Moved ${item as string}.`,
+    cancelled: ({ item }) => `Move cancelled. ${item as string} stayed where it was.`,
+    unnamed: 'the item',
+    unnamedContainer: ({ index, total }) => `list ${index as number} of ${total as number}`,
+  },
   dashboardCanvas: {
     canvas: 'Dashboard canvas',
     sectionCollapse: ({ title }) => `Collapse ${title as string} section`,
@@ -226,6 +245,7 @@ export const en: Messages = {
   },
   kanban: {
     board: 'Kanban board',
+    unnamedColumn: ({ index, total }) => `column ${index as number} of ${total as number}`,
   },
   modal: {
     close: 'Close dialog',

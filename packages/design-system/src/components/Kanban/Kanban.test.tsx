@@ -8,6 +8,7 @@ import {
   type KanbanMoveEvent,
 } from './Kanban';
 import { SortableHandle } from '../Sortable/Sortable';
+import { I18nProvider } from '../../i18n';
 
 describe('Kanban', () => {
   it('renders a board region with columns and cards (role="article" only when Handle is present)', () => {
@@ -707,5 +708,145 @@ describe('Kanban — drag bounds (#373)', () => {
     // buggy form would have reported 1080.
     expect(bounds?.centerY).toBe(580);
     expect(bounds?.centerX).toBe(200);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Screen-reader announcements (#390)
+// ---------------------------------------------------------------------------
+// dnd-kit's defaults are hard-coded English and interpolate raw ids. The board
+// overrides them via `accessibility`, so these assert the live region's text —
+// which is what a screen-reader user actually hears.
+
+/** A board whose card text and column names differ from their ids, so an
+ *  announcement that leaked an id would be visible in the assertion. */
+function NamedBoard({ labelled = true }: { labelled?: boolean }) {
+  return (
+    <Kanban>
+      <Kanban.Column
+        id="col-a"
+        aria-label={labelled ? 'To do' : undefined}
+        data-col={0}
+        data-h={300}
+      >
+        <Kanban.Card id="task-1" data-card="task-1">
+          Draft Q3 OKRs
+        </Kanban.Card>
+        <Kanban.Card id="task-2" data-card="task-2">
+          Schedule retro
+        </Kanban.Card>
+      </Kanban.Column>
+      <Kanban.Column
+        id="col-b"
+        aria-label={labelled ? 'Done' : undefined}
+        data-col={1}
+        data-h={300}
+      >
+        <Kanban.Card id="task-3" data-card="task-3">
+          Ship onboarding email
+        </Kanban.Card>
+      </Kanban.Column>
+    </Kanban>
+  );
+}
+
+const live = () => screen.getByRole('status').textContent;
+
+/** Press a card and clear the 5px activation constraint. NOTE: the activating
+ *  move is also a drag move, so what lands in the live region is the drop
+ *  position, not the pick-up. */
+function press(cardText: string) {
+  const card = screen.getByText(cardText);
+  const r = card.getBoundingClientRect();
+  const x = r.left + COL_W / 2;
+  const y = r.top + CARD_H / 2;
+  fireEvent.pointerDown(card, { clientX: x, clientY: y, button: 0, isPrimary: true });
+  fireEvent.pointerMove(document, { clientX: x, clientY: y + 10 });
+}
+const moveTo = ([x, y]: [number, number]) =>
+  fireEvent.pointerMove(document, { clientX: x, clientY: y });
+const release = ([x, y]: [number, number]) =>
+  fireEvent.pointerUp(document, { clientX: x, clientY: y });
+
+describe('Kanban — drag announcements (#390)', () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = stubLayout();
+  });
+  afterEach(() => restore());
+
+  it('names the card and the column, never the ids', () => {
+    render(<NamedBoard />);
+
+    // The pick-up announcement is not observable through a board: dnd-kit
+    // resolves an `over` in the same tick it starts the drag and React batches
+    // both `setAnnouncement` calls into one render, so the position message is
+    // the only text that ever paints. `RichTextBlockControls.test.tsx` asserts
+    // `drag.pickedUp` — that context registers no droppables, so nothing
+    // overwrites it.
+    press('Draft Q3 OKRs');
+    moveTo(at(1, 20));
+    expect(live()).toMatch(/^Draft Q3 OKRs, position \d of \d in Done\.$/);
+
+    release(at(1, 20));
+    expect(live()).toMatch(/^Dropped Draft Q3 OKRs at position \d of \d in Done\.$/);
+
+    // No announcement at any phase leaked a dnd-kit id or its English default.
+    expect(live()).not.toMatch(/task-|col-|droppable area/);
+  });
+
+  it('falls back to the column’s board position when it has no aria-label', () => {
+    render(<NamedBoard labelled={false} />);
+    press('Draft Q3 OKRs');
+    moveTo(at(1, 20));
+    expect(live()).toMatch(/in column 2 of 2\.$/);
+  });
+
+  it('a release outside the board announces a cancel, not a drop (#387)', () => {
+    render(<NamedBoard />);
+    press('Draft Q3 OKRs');
+    moveTo(at(1, 100)); // transit into the second column…
+    expect(live()).toMatch(/^Draft Q3 OKRs, position \d of \d in Done\.$/);
+    moveTo([600, 500]); // …carry it off the board…
+    release([600, 500]); // …and let go over unrelated page content
+    expect(live()).toBe('Move cancelled. Draft Q3 OKRs stayed where it was.');
+  });
+
+  it('announces in Russian under <I18nProvider locale="ru">', () => {
+    render(
+      <I18nProvider locale="ru">
+        <NamedBoard />
+      </I18nProvider>,
+    );
+
+    press('Draft Q3 OKRs');
+    moveTo(at(1, 20));
+    expect(live()).toMatch(/^Draft Q3 OKRs — позиция \d из \d, Done\.$/);
+
+    release(at(1, 20));
+    expect(live()).toMatch(/^Размещено: Draft Q3 OKRs, позиция \d из \d, Done\.$/);
+
+    // …and the cancel path is Russian too.
+    press('Draft Q3 OKRs');
+    moveTo([600, 500]);
+    release([600, 500]);
+    expect(live()).toBe('Перемещение отменено: Draft Q3 OKRs на прежнем месте.');
+  });
+
+  it('localizes the keyboard instructions dnd-kit points every draggable at', () => {
+    const { rerender } = render(<NamedBoard />);
+    const described = () => {
+      const card = screen.getByText('Draft Q3 OKRs');
+      const id = card.getAttribute('aria-describedby')!;
+      return document.getElementById(id)?.textContent ?? '';
+    };
+    expect(described()).toMatch(/^Press Space or Enter to pick up\./);
+
+    rerender(
+      <I18nProvider locale="ru">
+        <NamedBoard />
+      </I18nProvider>,
+    );
+    expect(described()).toMatch(/^Нажмите пробел или Enter/);
   });
 });

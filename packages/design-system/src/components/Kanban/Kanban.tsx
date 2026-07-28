@@ -41,6 +41,11 @@ import {
   SortableItemContext,
   type SortableItemContextValue,
 } from '../Sortable/Sortable';
+import {
+  nodeText,
+  useDragAccessibility,
+  type DescribeDragTarget,
+} from '../_internal/dragAnnouncements';
 import { useTranslation } from '../../i18n/useTranslation';
 import {
   containerAwareClosestCorners,
@@ -413,6 +418,13 @@ KanbanCard.displayName = 'KanbanCard';
  *
  * Column layout (header, footer) goes before / after `<Kanban.Card>` children
  * — keep cards as a contiguous block.
+ *
+ * @remarks
+ * Pass `aria-label` with the column's visible heading. It names the column in
+ * the drag announcements a screen reader hears ("…position 2 of 3 in
+ * Qualified"); without it they fall back to "column 2 of 3". Because the label
+ * is only useful if the element it sits on has a role, a labelled column
+ * renders as `role="group"`.
  */
 export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(function KanbanColumn(
   { id, className, children, ...rest },
@@ -444,7 +456,15 @@ export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(functi
   };
 
   return (
-    <div ref={setRef} className={clsx(styles.column, className)} {...rest}>
+    <div
+      ref={setRef}
+      className={clsx(styles.column, className)}
+      {...rest}
+      // An aria-label on a role-less <div> is inert, so a labelled column gets
+      // a role to hang it on. AFTER {...rest} — but only when the consumer
+      // didn't already pick a role — so labelling can't silently do nothing.
+      {...(rest['aria-label'] && rest.role == null ? { role: 'group' } : {})}
+    >
       <SortableContext
         items={cardIds as (string | number)[]}
         strategy={verticalListSortingStrategy}
@@ -964,10 +984,49 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   }, []);
 
   // ------------------------------------------------------------------
+  // Screen-reader announcements (Hard rule 9, #390)
+  // ------------------------------------------------------------------
+  // Names a card by its own text and a column by the `aria-label` the consumer
+  // put on `<Kanban.Column>` (falling back to its board position), so a drag
+  // says "Acme — 40 seats, position 2 of 3 in Qualified" rather than dnd-kit's
+  // "deal-1 was moved over droppable area col-2". Slots are read from
+  // `effectiveItems` — the order the user is actually looking at mid-drag.
+  const columnLabel = (colId: string | number): string => {
+    const explicit = columnElements.get(colId)?.props['aria-label'];
+    if (typeof explicit === 'string' && explicit) return explicit;
+    return t('kanban.unnamedColumn', {
+      index: columnOrder.indexOf(colId) + 1,
+      total: columnOrder.length,
+    });
+  };
+  const describeDrag: DescribeDragTarget = (entry, activeId) => {
+    const id = entry.id as string | number;
+    const isColumn = effectiveItems.has(id);
+    const colId = isColumn ? id : findContainer(id, effectiveItems);
+    if (colId == null) return null;
+    const cards = effectiveItems.get(colId) ?? [];
+    const label = nodeText(cardElements.get(id)?.props.children);
+    const container = columnLabel(colId);
+    if (!isColumn) return { label, index: cards.indexOf(id) + 1, total: cards.length, container };
+    // `over` is the column itself (empty column, or the padding below the
+    // cards). If the dragged card has already been live-seated here it keeps
+    // its slot; otherwise it would be appended, so count it as one more.
+    const seated = cards.indexOf(activeId as string | number);
+    return seated >= 0
+      ? { label, index: seated + 1, total: cards.length, container }
+      : { label, index: cards.length + 1, total: cards.length + 1, container };
+  };
+  // A release outside the board is a cancel, not a drop — `over` is non-null on
+  // that path (closestCorners rejects nothing), so without this dnd-kit would
+  // announce a drop that handleDragEnd deliberately threw away (#387).
+  const accessibility = useDragAccessibility(describeDrag, () => outsideBoardRef.current);
+
+  // ------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------
   return (
     <DndContext
+      accessibility={accessibility}
       sensors={sensors}
       collisionDetection={collisionDetection}
       onDragStart={handleDragStart}

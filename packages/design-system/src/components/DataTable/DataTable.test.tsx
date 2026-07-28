@@ -1045,3 +1045,43 @@ describe('<DataTable> — column drag is clamped to the unpinned band (#381)', (
     expect(screen.getByRole('columnheader', { name: /mid/i })).toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Column-reorder announcements (#390)
+// ---------------------------------------------------------------------------
+describe('<DataTable> — drag announcements', () => {
+  // Ids and headers deliberately differ: dnd-kit's default would read
+  // "col_amount", which tells a listener nothing.
+  const labelledCols: ColumnDef<Row>[] = [
+    { id: 'col_name', header: 'Customer', cell: (r) => r.name },
+    { id: 'col_amount', header: 'Amount due', cell: (r) => r.amount },
+    { id: 'col_extra', header: 'Notes', cell: () => '—' },
+  ];
+
+  function Harness() {
+    const instance = useDataTable<Row>({ data: rows, columns: labelledCols, getRowId });
+    return <DataTable instance={instance} aria-label="Labelled" />;
+  }
+
+  it('announces the column header and slot, not the column id', () => {
+    render(<Harness />);
+    const table = screen.getByRole('table');
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.getBoundingClientRect = () => new DOMRect(i * 120, 0, 120, 32);
+    });
+
+    const grip = screen.getByLabelText(/drag to reorder amount due/i);
+    fireEvent.pointerDown(grip, { clientX: 0, clientY: 0, button: 0, isPrimary: true });
+    fireEvent.pointerMove(document, { clientX: 30, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: -130, clientY: 0 });
+
+    const live = screen.getByRole('status').textContent ?? '';
+    expect(live).toMatch(/^Amount due, position \d of 3\.$/);
+    expect(live).not.toMatch(/col_/);
+
+    fireEvent.pointerUp(document, { clientX: -130, clientY: 0 });
+    expect(screen.getByRole('status').textContent).toMatch(
+      /^Dropped Amount due at position \d of 3\.$/,
+    );
+  });
+});

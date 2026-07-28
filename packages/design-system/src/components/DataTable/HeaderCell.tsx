@@ -1,4 +1,4 @@
-import { type KeyboardEvent } from 'react';
+import { useMemo, type KeyboardEvent } from 'react';
 import clsx from 'clsx';
 import {
   GripVertical,
@@ -16,6 +16,7 @@ import { useResizeHandle } from './useResizeHandle';
 import type { ColumnDef, DataTableInstance } from './types';
 import { getPinStyle } from './pinStyle';
 import { shiftVarName } from './columnShift';
+import { nodeText } from '../_internal/dragAnnouncements';
 import styles from './HeaderCell.module.scss';
 
 export interface HeaderCellProps<T> {
@@ -82,8 +83,19 @@ export function HeaderCell<T>({
   // same reason a pinned column's does.
   const reorderable =
     column.enableReorder !== false && !isPinned && instance.unpinnedColumns.length > 1;
+
+  const headerContent =
+    typeof column.header === 'function' ? column.header({ column, instance }) : column.header;
+
+  // Screen-reader announcements name the column by its header text, not by
+  // `column.id` (#390). Recomputed with the header itself — a render-function
+  // header is a fresh node every render, so it is keyed on the flattened text.
+  const dragLabel = nodeText(headerContent);
+  const dragData = useMemo(() => ({ dragLabel }), [dragLabel]);
+
   const sortableResult = useSortable({
     id: column.id,
+    data: dragData,
     disabled: !reorderable,
     // Whole-column mode only: kill dnd-kit's post-drop FLIP animation. On
     // release `defaultAnimateLayoutChanges` returns true for every column whose
@@ -130,9 +142,6 @@ export function HeaderCell<T>({
       instance.setColumnSizing((prev) => ({ ...prev, [column.id]: next }));
     }
   };
-
-  const headerContent =
-    typeof column.header === 'function' ? column.header({ column, instance }) : column.header;
 
   const pinStyle = getPinStyle(column.id, instance);
   const stickyStyle = pinStyle.position

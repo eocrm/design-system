@@ -97,7 +97,11 @@ export function Demo() {
                 <Text size="sm" weight="semibold">
                   {groupLabels[gid]}
                 </Text>
-                <SortableGroup.Container id={gid} items={fields.map((f) => f.id)}>
+                <SortableGroup.Container
+                  id={gid}
+                  items={fields.map((f) => f.id)}
+                  aria-label={groupLabels[gid]}
+                >
                   {fields.map((f) => (
                     <Sortable.Item key={f.id} id={f.id}>
                       <Cluster gap="sm" align="center">
@@ -135,7 +139,11 @@ export function Demo() {
                     <Text size="sm" weight="semibold">
                       {GROUP_LABELS[gid]}
                     </Text>
-                    <SortableGroup.Container id={gid} items={fields.map((f) => f.id)}>
+                    <SortableGroup.Container
+                      id={gid}
+                      items={fields.map((f) => f.id)}
+                      aria-label={GROUP_LABELS[gid]}
+                    >
                       {fields.map((f) => (
                         <Sortable.Item key={f.id} id={f.id}>
                           <Cluster gap="sm" align="center">

@@ -1,7 +1,7 @@
 // RichTextBlockControls.tsx — the per-block gutter overlay. Absolutely positioned
 // inside the editor shell (position: relative), aligned to the active block's box.
 // Lives OUTSIDE the contentEditable so it is never editable content.
-import { memo, useCallback, useEffect, useRef, type RefObject } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, type RefObject } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -22,6 +22,7 @@ import { preventSelectionLoss } from './preventSelectionLoss';
 import { computeReflow, type BlockRect, type UnitRange } from './blockReflow';
 import { gapIndexFromY } from './blockDrop';
 import { useShellRelativeRect, useDraggingReporter } from './useOverlayRect';
+import { tidy } from '../_internal/dragAnnouncements';
 import styles from './RichTextEditor.module.scss';
 
 export interface RichTextBlockControlsProps {
@@ -167,6 +168,9 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
   const draggedIdRef = useRef<string | null>(null);
   // The gutter DOM node, so the drag can translate it in lockstep with the lifted row.
   const gutterElRef = useRef<HTMLDivElement | null>(null);
+  // The dragged block's own text, captured at drag start so the announcement can
+  // name it after the reflow has been cleared.
+  const dragLabelRef = useRef('');
 
   // Reports block-drag lifecycle + fires (false) on a mid-drag unmount so nothing
   // leaks (dnd-kit fires neither end nor cancel when the controls unmount).
@@ -240,6 +244,7 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
     });
 
     draggedIdRef.current = activeBlockId;
+    dragLabelRef.current = tidy(nodes[unit.u0].textContent ?? '');
     onMenuOpenChange(false); // a drag should never leave the block menu open
     reportDragging(true);
     dragRef.current = { rects, els: nodes, unit, parentIdx };
@@ -300,10 +305,31 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
     endDrag();
   };
 
+  // Localized announcements (Hard rule 9, #390). This context deliberately does
+  // NOT go through `useDragAccessibility`: it registers no droppables (the drop
+  // slot is computed from the pointer against the document flow), so `over` is
+  // always null and the shared over-driven messages would all be wrong here.
+  // Same `drag.*` copy, three of the five callbacks.
+  const accessibility = useMemo(() => {
+    const item = () => dragLabelRef.current || t('drag.unnamed');
+    return {
+      announcements: {
+        onDragStart: () => t('drag.pickedUp', { item: item() }),
+        // Silent: with no droppables, dnd-kit's per-move announcement would be
+        // a permanent, false "not over a drop target".
+        onDragOver: () => undefined,
+        onDragEnd: () => t('drag.moved', { item: item() }),
+        onDragCancel: () => t('drag.cancelled', { item: item() }),
+      },
+      screenReaderInstructions: { draggable: t('drag.instructions') },
+    };
+  }, [t]);
+
   if (!activeBlockId || top == null) return null;
 
   return (
     <DndContext
+      accessibility={accessibility}
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
