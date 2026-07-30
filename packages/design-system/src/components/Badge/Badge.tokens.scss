@@ -4,20 +4,6 @@
 // Old --color-badge-<tone>-* names are kept as deprecated aliases in
 // tokens.scss — see that file.
 :root {
-  // Per-tone fill (filled variant) — LITERAL hex, moved from tokens.scss
-  --badge-bg-neutral: #f4f5f7;
-  --badge-fg-neutral: #42526e;
-  --badge-bg-info: #deebff;
-  --badge-fg-info: #0747a6;
-  --badge-bg-success: #e3fcef;
-  --badge-fg-success: #006644;
-  --badge-bg-warning: #fffae6;
-  --badge-fg-warning: #974f00;
-  --badge-bg-danger: #ffebe6;
-  --badge-fg-danger: #bf2600;
-  --badge-bg-purple: #eae6ff;
-  --badge-fg-purple: #403294;
-
   // Shape + typography (defaults to existing primitives)
   --badge-radius: var(--radius-sm);
   --badge-font-size: var(--font-size-xs);

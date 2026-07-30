@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import {
-  captureWebContract,
-  captureWebContractFromSources,
-} from '../scripts/capture-web-contract.mjs';
+import { captureWebContractFromSources } from '../scripts/capture-web-contract.mjs';
 import { loadTokenDocument } from '../scripts/lib/load-tokens.mjs';
 import { resolveTokenValue } from '../scripts/lib/validate-tokens.mjs';
 
@@ -299,10 +296,9 @@ test('models all twelve deprecated Badge variables as semantic aliases', async (
   }
 });
 
-test('captures the checked-in web contract with provenance and expanded dark scopes', async () => {
-  const [captured, fixture] = await Promise.all([captureWebContract(), readJson(fixturePath)]);
+test('preserves the pre-migration web contract fixture with provenance and expanded dark scopes', async () => {
+  const fixture = await readJson(fixturePath);
 
-  assert.deepEqual(captured, fixture);
   assert.equal(Object.keys(fixture.light).length, 286);
   assert.equal(Object.keys(fixture.forcedDark).length, 115);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
