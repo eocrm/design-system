@@ -1,4 +1,8 @@
 // Emit Badge component aliases at the global level so consumers can
 // reference them without first rendering a Badge.
 @use '../components/Badge/Badge.tokens';
+
+// Package export subpaths include the extension; omitting it makes Sass
+// resolve the unexported "./styles/_tokens" partial instead.
+// stylelint-disable-next-line scss/load-partial-extension
 @forward '@eocrm/design-tokens/styles/tokens.scss';

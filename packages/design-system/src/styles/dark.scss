@@ -1,1 +1,4 @@
+// Package export subpaths include the extension; omitting it makes Sass
+// resolve the unexported "./styles/_dark" partial instead.
+// stylelint-disable-next-line scss/load-partial-extension
 @forward '@eocrm/design-tokens/styles/dark.scss';
