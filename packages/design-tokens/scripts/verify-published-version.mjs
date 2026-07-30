@@ -1,10 +1,18 @@
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
 import { promisify } from 'node:util';
-import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const execFileAsync = promisify(execFile);
 const npmRegistry = 'https://npm.pkg.github.com';
+const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const coordinates = [
+  '@eocrm/design-tokens',
+  '@eocrm/design-system',
+  'com.eocrm.design:design-tokens-compose',
+];
 
 export async function verifyPublishedVersion(
   version,
@@ -14,27 +22,39 @@ export async function verifyPublishedVersion(
     token = process.env.GITHUB_TOKEN ?? process.env.NODE_AUTH_TOKEN,
     attempts = 12,
     retryDelayMs = 5_000,
+    expected,
+    readPublished,
+    root = defaultRoot,
   } = {},
 ) {
-  if (!actor || !token) {
+  if ((!expected || !readPublished) && (!actor || !token)) {
     throw new Error('GITHUB_ACTOR and GITHUB_TOKEN are required');
   }
+
+  const expectedArtifacts = expected ?? (await readLocalArtifacts(root));
+  const publishedReader =
+    readPublished ??
+    ((coordinate) =>
+      coordinate.startsWith('@')
+        ? readNpmArtifact(coordinate, version, token)
+        : readMavenArtifact(repository, version, actor, token));
 
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const [tokensVersion, designSystemVersion, mavenVersion] = await Promise.all([
-        readNpmVersion('@eocrm/design-tokens', version, token),
-        readNpmVersion('@eocrm/design-system', version, token),
-        readMavenVersion(repository, version, actor, token),
-      ]);
-      for (const [coordinate, actual] of [
-        ['@eocrm/design-tokens', tokensVersion],
-        ['@eocrm/design-system', designSystemVersion],
-        ['com.eocrm.design:design-tokens-compose', mavenVersion],
-      ]) {
-        if (actual !== version) {
-          throw new Error(`${coordinate}: expected ${version}, received ${actual}`);
+      const published = await Promise.all(
+        coordinates.map((coordinate) => publishedReader(coordinate)),
+      );
+      for (const [index, coordinate] of coordinates.entries()) {
+        const actual = published[index];
+        if (actual.version !== version) {
+          throw new Error(`${coordinate}: expected ${version}, received ${actual.version}`);
+        }
+        const expectedIntegrity = expectedArtifacts.get(coordinate);
+        if (actual.integrity !== expectedIntegrity) {
+          throw new Error(
+            `${coordinate}: expected integrity ${expectedIntegrity}, received ${actual.integrity}`,
+          );
         }
       }
       return;
@@ -48,18 +68,62 @@ export async function verifyPublishedVersion(
   throw lastError;
 }
 
-async function readNpmVersion(packageName, version, token) {
-  const { stdout } = await execFileAsync(
-    'npm',
-    ['view', `${packageName}@${version}`, 'version', '--json', `--registry=${npmRegistry}`],
-    {
-      env: { ...process.env, NODE_AUTH_TOKEN: token },
-    },
-  );
-  return JSON.parse(stdout);
+async function readLocalArtifacts(root) {
+  const [tokens, designSystem, pom] = await Promise.all([
+    readNpmPackIntegrity(resolve(root, 'packages/design-tokens')),
+    readNpmPackIntegrity(resolve(root, 'packages/design-system')),
+    readFile(
+      resolve(
+        root,
+        'packages/design-tokens/compose/build/publications/kotlinMultiplatform/pom-default.xml',
+      ),
+    ),
+  ]);
+  return new Map([
+    ['@eocrm/design-tokens', tokens],
+    ['@eocrm/design-system', designSystem],
+    ['com.eocrm.design:design-tokens-compose', sha256(pom)],
+  ]);
 }
 
-async function readMavenVersion(repository, version, actor, token) {
+async function readNpmPackIntegrity(packageRoot) {
+  const { stdout } = await execFileAsync('npm', ['pack', '--dry-run', '--json'], {
+    cwd: packageRoot,
+  });
+  const result = JSON.parse(stdout);
+  if (!Array.isArray(result) || typeof result[0]?.integrity !== 'string') {
+    throw new Error(`npm pack returned no integrity for ${packageRoot}`);
+  }
+  return result[0].integrity;
+}
+
+async function readNpmArtifact(packageName, version, token) {
+  const options = { env: { ...process.env, NODE_AUTH_TOKEN: token } };
+  const [versionResult, integrityResult] = await Promise.all([
+    execFileAsync(
+      'npm',
+      ['view', `${packageName}@${version}`, 'version', '--json', `--registry=${npmRegistry}`],
+      options,
+    ),
+    execFileAsync(
+      'npm',
+      [
+        'view',
+        `${packageName}@${version}`,
+        'dist.integrity',
+        '--json',
+        `--registry=${npmRegistry}`,
+      ],
+      options,
+    ),
+  ]);
+  return {
+    version: JSON.parse(versionResult.stdout),
+    integrity: JSON.parse(integrityResult.stdout),
+  };
+}
+
+async function readMavenArtifact(repository, version, actor, token) {
   const artifact = 'design-tokens-compose';
   const url =
     `https://maven.pkg.github.com/${repository}/com/eocrm/design/` +
@@ -71,10 +135,14 @@ async function readMavenVersion(repository, version, actor, token) {
   if (!response.ok) {
     throw new Error(`Maven registry returned ${response.status} for ${url}`);
   }
-  const pom = await response.text();
-  const match = pom.match(/<version>([^<]+)<\/version>/);
+  const pom = Buffer.from(await response.arrayBuffer());
+  const match = pom.toString('utf8').match(/<version>([^<]+)<\/version>/);
   if (!match) throw new Error(`Maven POM has no version: ${url}`);
-  return match[1];
+  return { version: match[1], integrity: sha256(pom) };
+}
+
+function sha256(content) {
+  return `sha256:${createHash('sha256').update(content).digest('hex')}`;
 }
 
 async function main(arguments_) {

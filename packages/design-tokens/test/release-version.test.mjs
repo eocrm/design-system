@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { verifyPublishedVersion } from '../scripts/verify-published-version.mjs';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const scriptPath = resolve(
@@ -49,6 +50,44 @@ test('rejects invalid versions without modifying any file', async () => {
   } finally {
     await rm(fixture, { recursive: true });
   }
+});
+
+test('accepts already-published artifacts only when their content matches', async () => {
+  const coordinates = [
+    '@eocrm/design-tokens',
+    '@eocrm/design-system',
+    'com.eocrm.design:design-tokens-compose',
+  ];
+  const expected = new Map(coordinates.map((coordinate) => [coordinate, 'sha256:same']));
+
+  await verifyPublishedVersion('1.2.3', {
+    attempts: 1,
+    expected,
+    readPublished: async (coordinate) => ({
+      version: '1.2.3',
+      integrity: expected.get(coordinate),
+    }),
+  });
+});
+
+test('rejects a same-version artifact whose content differs', async () => {
+  const expected = new Map([
+    ['@eocrm/design-tokens', 'sha256:new'],
+    ['@eocrm/design-system', 'sha256:same'],
+    ['com.eocrm.design:design-tokens-compose', 'sha256:same'],
+  ]);
+
+  await assert.rejects(
+    verifyPublishedVersion('1.2.3', {
+      attempts: 1,
+      expected,
+      readPublished: async (coordinate) => ({
+        version: '1.2.3',
+        integrity: coordinate === '@eocrm/design-tokens' ? 'sha256:old' : 'sha256:same',
+      }),
+    }),
+    /@eocrm\/design-tokens: expected integrity sha256:new, received sha256:old/,
+  );
 });
 
 async function createFixture() {
