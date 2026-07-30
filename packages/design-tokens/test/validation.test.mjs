@@ -108,6 +108,63 @@ test('resolves themed aliases to distinct light and dark primitives', () => {
   assert.equal(resolveTokenValue(validated, 'color.surface', 'dark'), '#1d2125');
 });
 
+test('reports a transitive unknown alias at its physical alias edge once', () => {
+  const input = document([
+    token({ id: 'color.a', value: { alias: 'color.b' } }),
+    token({
+      id: 'color.b',
+      value: { alias: 'color.missing' },
+      outputs: { web: { name: '--color-b' } }
+    })
+  ]);
+
+  assert.throws(() => validateTokens(input), (error) => {
+    assert.ok(error instanceof TokenSemanticError);
+    assert.deepEqual(error.issues, [{
+      path: '/tokens/1/value/alias',
+      code: 'unknown-alias',
+      message: 'unknown token alias color.missing'
+    }]);
+    return true;
+  });
+});
+
+test('accepts six- and eight-digit Compose colors but rejects malformed values', () => {
+  for (const value of ['#000000', '#00000080']) {
+    assert.doesNotThrow(() => validateTokens(document([
+      token({ value, outputs: { compose: { group: 'colors', name: 'primary' } } })
+    ])));
+  }
+
+  assert.throws(() => validateTokens(document([
+    token({ value: '#000', outputs: { compose: { group: 'colors', name: 'primary' } } })
+  ])), (error) => {
+    assert.deepEqual(error.issues.map(({ path, code }) => ({ path, code })), [{
+      path: '/tokens/0/value',
+      code: 'invalid-compose-value'
+    }]);
+    return true;
+  });
+});
+
+test('sorts independent semantic issues by path then code', () => {
+  const input = document([
+    token({ id: 'color.a', value: { alias: 'color.missing' }, outputs: {} }),
+    token({ id: 'color.a', outputs: { web: { name: '--color-primary' } } }),
+    token({ id: 'color.c', outputs: { web: { name: '--color-primary' } } })
+  ]);
+
+  assert.throws(() => validateTokens(input), (error) => {
+    assert.deepEqual(error.issues.map(({ path, code }) => ({ path, code })), [
+      { path: '/tokens/0/outputs', code: 'missing-output' },
+      { path: '/tokens/0/value/alias', code: 'unknown-alias' },
+      { path: '/tokens/1/id', code: 'duplicate-id' },
+      { path: '/tokens/2/outputs/web/name', code: 'duplicate-output' }
+    ]);
+    return true;
+  });
+});
+
 test('uses locale-independent Kotlin names', () => {
   assert.equal(toKotlinProperty('color.background-subtle'), 'colorBackgroundSubtle');
   assert.equal(toKotlinType('categorical-palette'), 'CategoricalPalette');

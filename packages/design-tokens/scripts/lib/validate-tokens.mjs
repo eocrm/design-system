@@ -18,7 +18,7 @@ export function validateTokens(document) {
     if (tokensById.has(token.id)) {
       issues.push(issue(`${tokenPath}/id`, 'duplicate-id', `duplicate token id ${token.id}`));
     } else {
-      tokensById.set(token.id, token);
+      tokensById.set(token.id, { token, index });
     }
 
     const outputs = token.outputs ?? {};
@@ -52,8 +52,9 @@ export function validateTokens(document) {
     }
   }
 
+  const inspectedAliasPaths = new Set();
   for (const [index, token] of document.tokens.entries()) {
-    inspectAliases(token.value, token.id, `/tokens/${index}/value`, undefined, tokensById, issues);
+    inspectAliases(token.value, token.id, `/tokens/${index}/value`, undefined, tokensById, issues, inspectedAliasPaths);
   }
 
   for (const [index, token] of document.tokens.entries()) {
@@ -101,30 +102,38 @@ export function resolveTokenValue(document, tokenId, theme) {
   return resolve(tokenId);
 }
 
-function inspectAliases(value, sourceId, path, theme, tokensById, issues, stack = [sourceId]) {
+function inspectAliases(value, sourceId, path, theme, tokensById, issues, inspectedAliasPaths, stack = [sourceId]) {
   if (isThemed(value)) {
-    inspectAliases(value.light, sourceId, `${path}/light`, 'light', tokensById, issues, stack);
-    inspectAliases(value.dark, sourceId, `${path}/dark`, 'dark', tokensById, issues, stack);
+    inspectAliases(value.light, sourceId, `${path}/light`, 'light', tokensById, issues, inspectedAliasPaths, stack);
+    inspectAliases(value.dark, sourceId, `${path}/dark`, 'dark', tokensById, issues, inspectedAliasPaths, stack);
     return;
   }
   if (!isAlias(value)) return;
 
-  const target = tokensById.get(value.alias);
-  if (!target) {
-    issues.push(issue(`${path}/alias`, 'unknown-alias', `unknown token alias ${value.alias}`));
+  const aliasPath = `${path}/alias`;
+  if (inspectedAliasPaths.has(aliasPath)) return;
+  inspectedAliasPaths.add(aliasPath);
+
+  const targetLocation = tokensById.get(value.alias);
+  if (!targetLocation) {
+    issues.push(issue(aliasPath, 'unknown-alias', `unknown token alias ${value.alias}`));
     return;
   }
+  const { token: target, index: targetIndex } = targetLocation;
   if (stack.includes(target.id)) {
     const cycle = [...stack.slice(stack.indexOf(target.id)), target.id];
-    issues.push(issue(`${path}/alias`, 'alias-cycle', `alias cycle: ${cycle.join(' -> ')}`));
+    issues.push(issue(aliasPath, 'alias-cycle', `alias cycle: ${cycle.join(' -> ')}`));
     return;
   }
   if ((theme !== undefined) !== isThemed(target.value)) {
-    issues.push(issue(`${path}/alias`, 'theme-shape', `alias ${value.alias} has an incompatible theme shape`));
+    issues.push(issue(aliasPath, 'theme-shape', `alias ${value.alias} has an incompatible theme shape`));
     return;
   }
   const targetValue = theme === undefined ? target.value : target.value[theme];
-  inspectAliases(targetValue, target.id, path, theme, tokensById, issues, [...stack, target.id]);
+  const targetPath = theme === undefined
+    ? `/tokens/${targetIndex}/value`
+    : `/tokens/${targetIndex}/value/${theme}`;
+  inspectAliases(targetValue, target.id, targetPath, theme, tokensById, issues, inspectedAliasPaths, [...stack, target.id]);
 }
 
 function addUnique(map, key, index, path, code, message, issues) {
@@ -148,7 +157,7 @@ function selectTheme(value, theme) {
 }
 
 function isComposeColor(value) {
-  return typeof value === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value);
+  return typeof value === 'string' && /^#[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?$/.test(value);
 }
 
 function isComposeDimension(value) {
