@@ -132,7 +132,7 @@ Before pushing changes that touch `packages/design-system/**`, you MUST run the 
 
 **When this rule does NOT apply**: changes scoped to `packages/playground/**`, root `README.md`, root `CLAUDE.md`, GitHub workflows, the Makefile, or other non-library files. Push those normally.
 
-The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch.
+The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Each review round requires at least three independent fresh-context agents inheriting the session's currently selected/default model; do not override the reviewer model.
 
 ### 9. Every user-facing string goes through i18n
 

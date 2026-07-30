@@ -1,11 +1,26 @@
 ---
 name: pre-push-review
-description: Use before pushing changes that touch packages/design-system/** (library variant) or packages/playground/src/pages/mockups/** (mockup variant). Runs the mandatory gates-then-review-agent loop until a fresh reviewer says "clean enough to stop". Required by design-system CLAUDE.md Hard rule 8 and playground CLAUDE.md Hard rule 7.
+description: Use before pushing changes that touch packages/design-system/** (library variant) or packages/playground/src/pages/mockups/** (mockup variant). Runs the mandatory gates-then-review-agent loop until three fresh reviewers say "clean enough to stop". Required by design-system CLAUDE.md Hard rule 8 and playground CLAUDE.md Hard rule 7.
 ---
 
 # Pre-push review-fix cycle
 
 Two variants. Pick the one matching what you changed; if a PR touches both, run both.
+
+## Reviewer model and freshness
+
+Each review round uses at least **three independent fresh-context agents**.
+Freshness means the agents receive the review brief and repository state, but
+none of the implementation conversation or another reviewer's reasoning.
+
+Use the session's currently selected/default model and **do not set a model
+override**. Model inheritance is intentional: an Opus session reviews with
+Opus, and a Codex session reviews with its active model. Do not substitute a
+different model based on assumptions about strength, cost, or token usage.
+
+Run the three reviews in parallel when the harness supports it. If fewer than
+three agent slots are available, run them sequentially; they must still be
+separate fresh contexts.
 
 ---
 
@@ -20,16 +35,17 @@ The library is consumed by AI agents who pattern-match against whatever we ship 
 ### The loop
 
 1. **Run gates first** — `npm test`, `npm run typecheck`, `npm run lint:css`, `npm run build`, `npm pack --dry-run -w @eocrm/design-system`. They must all pass before review.
-2. **Spawn a fresh-context review agent** (`general-purpose`) targeted at `packages/design-system/`. Brief it explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell it to read `packages/design-system/CLAUDE.md`, `AGENTS.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`).
+2. **Spawn at least three independent fresh-context review agents** targeted at `packages/design-system/`, inheriting the current session's default model without an override. Brief each explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell each to read `packages/design-system/CLAUDE.md`, `AGENTS.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`).
 3. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
 4. **For every finding you deliberately skip**, leave a one-line explanation in your response so the next reviewer doesn't re-flag it.
 5. **Re-run gates** after fixes.
-6. **Spawn another reviewer** with the same prompt.
-7. **Repeat** until the verdict is `clean enough to stop`.
+6. **Spawn another round of at least three fresh reviewers** with the same prompt and inherited default model.
+7. **Repeat** until every reviewer in the same round returns `clean enough to stop`.
 
 ### Hard exit criteria
 
-- 0 Critical, 0 Important findings (or each remaining one has an explicit documented skip)
+- 0 Critical, 0 Important findings across all three reviewers (or each remaining one has an explicit documented skip)
+- All three fresh reviewers in the final round return `clean enough to stop`
 - All four gates (test, typecheck, lint, build) green
 - `npm pack --dry-run` shows no test files or internal-only paths in the tarball
 
@@ -54,7 +70,7 @@ Mockups are the most visible artifact of the library — they're what a new engi
 ### The loop
 
 1. **Run gates first** — `make test`, `make build` (typecheck + bundle), `make lint`. They must all pass before review.
-2. **Spawn a fresh-context review agent** (`general-purpose`) targeted at the changed mockup file(s). Brief it on these 10 review categories:
+2. **Spawn at least three independent fresh-context review agents** targeted at the changed mockup file(s), inheriting the current session's default model without an override. Brief each on these 10 review categories:
    1. **Hard rule 6 compliance** — no inline `style={...}`, no raw HTML tags, no co-located `.module.scss`. Any escape-hatch mock has a matching entry in `packages/design-system/src/components/TODO.md` AND an inline `{/* TODO: replace when … */}` comment.
    2. **Registry sync** — every library component used in the mockup is listed in that mockup's `usesComponents` array in `registry.ts`. No stale entries (a name listed that's no longer imported).
    3. **Imports** — only from `@eocrm/design-system`, never relative paths into the library (Rule 2). Demo-only deps from Rule 5 stay out.
@@ -71,12 +87,13 @@ Mockups are the most visible artifact of the library — they're what a new engi
 3. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
 4. **For every finding deliberately skipped**, leave a one-line explanation so the next reviewer doesn't re-flag it.
 5. **Re-run gates** after fixes.
-6. **Spawn another reviewer** with the same prompt.
-7. **Repeat** until the verdict is `clean enough to stop`.
+6. **Spawn another round of at least three fresh reviewers** with the same prompt and inherited default model.
+7. **Repeat** until every reviewer in the same round returns `clean enough to stop`.
 
 ### Hard exit criteria
 
-- 0 Critical, 0 Important findings (or each remaining one has an explicit documented skip).
+- 0 Critical, 0 Important findings across all three reviewers (or each remaining one has an explicit documented skip).
+- All three fresh reviewers in the final round return `clean enough to stop`.
 - All three gates (test, build, lint) green.
 - All open TODOs in `packages/design-system/src/components/TODO.md` that the changed mockup touches are either still open with a matching inline comment, OR ticked + the refactor done in this PR.
 
