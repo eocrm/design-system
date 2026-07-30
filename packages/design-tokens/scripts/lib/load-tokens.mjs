@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import schema from '../../src/schema.json' with { type: 'json' };
+import { validateTokens } from './validate-tokens.mjs';
 
 export class TokenValidationError extends Error {
   constructor(errors) {
@@ -22,7 +23,7 @@ export async function loadTokenDocument(path) {
     throw new TokenValidationError(validate.errors ?? []);
   }
 
-  return document;
+  return validateTokens(document);
 }
 
 function formatErrors(errors) {
