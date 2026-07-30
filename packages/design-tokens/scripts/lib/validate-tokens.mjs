@@ -23,7 +23,9 @@ export function validateTokens(document) {
 
     const outputs = token.outputs ?? {};
     if (Object.keys(outputs).length === 0) {
-      issues.push(issue(`${tokenPath}/outputs`, 'missing-output', 'token must declare at least one output'));
+      issues.push(
+        issue(`${tokenPath}/outputs`, 'missing-output', 'token must declare at least one output'),
+      );
     }
 
     if (outputs.web) {
@@ -34,7 +36,7 @@ export function validateTokens(document) {
         `${tokenPath}/outputs/web/name`,
         'duplicate-output',
         `duplicate web output ${outputs.web.name}`,
-        issues
+        issues,
       );
     }
 
@@ -47,31 +49,53 @@ export function validateTokens(document) {
         `${tokenPath}/outputs/compose/name`,
         'duplicate-output',
         `duplicate Compose output ${composeName}`,
-        issues
+        issues,
       );
     }
   }
 
   const inspectedAliasPaths = new Set();
   for (const [index, token] of document.tokens.entries()) {
-    inspectAliases(token.value, token.id, `/tokens/${index}/value`, undefined, tokensById, issues, inspectedAliasPaths);
+    inspectAliases(
+      token.value,
+      token.id,
+      `/tokens/${index}/value`,
+      undefined,
+      tokensById,
+      issues,
+      inspectedAliasPaths,
+    );
   }
 
   for (const [index, token] of document.tokens.entries()) {
     if (!token.outputs?.compose) continue;
-    for (const theme of (isThemed(token.value) ? ['light', 'dark'] : ['light'])) {
+    for (const theme of isThemed(token.value) ? ['light', 'dark'] : ['light']) {
       let value;
       try {
         value = resolveTokenValue(document, token.id, theme);
       } catch {
         continue;
       }
-      const valuePath = isThemed(token.value) ? `/tokens/${index}/value/${theme}` : `/tokens/${index}/value`;
+      const valuePath = isThemed(token.value)
+        ? `/tokens/${index}/value/${theme}`
+        : `/tokens/${index}/value`;
       if (token.type === 'color' && !isComposeColor(value)) {
-        issues.push(issue(valuePath, 'invalid-compose-value', 'Compose colors must resolve to a #RRGGBB hex value'));
+        issues.push(
+          issue(
+            valuePath,
+            'invalid-compose-value',
+            'Compose colors must resolve to a #RRGGBB hex value',
+          ),
+        );
       }
       if (token.type === 'dimension' && !isComposeDimension(value)) {
-        issues.push(issue(valuePath, 'invalid-compose-value', 'Compose dimensions must resolve to a px value'));
+        issues.push(
+          issue(
+            valuePath,
+            'invalid-compose-value',
+            'Compose dimensions must resolve to a px value or numeric zero',
+          ),
+        );
       }
     }
   }
@@ -102,10 +126,37 @@ export function resolveTokenValue(document, tokenId, theme) {
   return resolve(tokenId);
 }
 
-function inspectAliases(value, sourceId, path, theme, tokensById, issues, inspectedAliasPaths, stack = [sourceId]) {
+function inspectAliases(
+  value,
+  sourceId,
+  path,
+  theme,
+  tokensById,
+  issues,
+  inspectedAliasPaths,
+  stack = [sourceId],
+) {
   if (isThemed(value)) {
-    inspectAliases(value.light, sourceId, `${path}/light`, 'light', tokensById, issues, inspectedAliasPaths, stack);
-    inspectAliases(value.dark, sourceId, `${path}/dark`, 'dark', tokensById, issues, inspectedAliasPaths, stack);
+    inspectAliases(
+      value.light,
+      sourceId,
+      `${path}/light`,
+      'light',
+      tokensById,
+      issues,
+      inspectedAliasPaths,
+      stack,
+    );
+    inspectAliases(
+      value.dark,
+      sourceId,
+      `${path}/dark`,
+      'dark',
+      tokensById,
+      issues,
+      inspectedAliasPaths,
+      stack,
+    );
     return;
   }
   if (!isAlias(value)) return;
@@ -126,14 +177,24 @@ function inspectAliases(value, sourceId, path, theme, tokensById, issues, inspec
     return;
   }
   if ((theme !== undefined) !== isThemed(target.value)) {
-    issues.push(issue(aliasPath, 'theme-shape', `alias ${value.alias} has an incompatible theme shape`));
+    issues.push(
+      issue(aliasPath, 'theme-shape', `alias ${value.alias} has an incompatible theme shape`),
+    );
     return;
   }
   const targetValue = theme === undefined ? target.value : target.value[theme];
-  const targetPath = theme === undefined
-    ? `/tokens/${targetIndex}/value`
-    : `/tokens/${targetIndex}/value/${theme}`;
-  inspectAliases(targetValue, target.id, targetPath, theme, tokensById, issues, inspectedAliasPaths, [...stack, target.id]);
+  const targetPath =
+    theme === undefined ? `/tokens/${targetIndex}/value` : `/tokens/${targetIndex}/value/${theme}`;
+  inspectAliases(
+    targetValue,
+    target.id,
+    targetPath,
+    theme,
+    tokensById,
+    issues,
+    inspectedAliasPaths,
+    [...stack, target.id],
+  );
 }
 
 function addUnique(map, key, index, path, code, message, issues) {
@@ -161,7 +222,9 @@ function isComposeColor(value) {
 }
 
 function isComposeDimension(value) {
-  return typeof value === 'string' && /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?px$/.test(value);
+  return (
+    value === 0 || (typeof value === 'string' && /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?px$/.test(value))
+  );
 }
 
 function issue(path, code, message) {

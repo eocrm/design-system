@@ -10,6 +10,218 @@ import { resolveTokenValue } from '../scripts/lib/validate-tokens.mjs';
 
 const tokenSourcePath = new URL('../src/tokens.json', import.meta.url);
 const fixturePath = new URL('./fixtures/current-web-contract.json', import.meta.url);
+const expectedComposeInventory = {
+  colors: [
+    'color.accent',
+    'color.accent.background.subtle',
+    'color.accent.foreground',
+    'color.accent.hover',
+    'color.accent.pressed',
+    'color.accent.subtle.background',
+    'color.background',
+    'color.background.danger.subtle',
+    'color.background.muted',
+    'color.background.subtle',
+    'color.background.sunken',
+    'color.border',
+    'color.border.strong',
+    'color.danger',
+    'color.danger.background.subtle',
+    'color.danger.foreground',
+    'color.danger.hover',
+    'color.foreground',
+    'color.foreground.disabled',
+    'color.foreground.muted',
+    'color.foreground.subtle',
+    'color.info',
+    'color.info.background.subtle',
+    'color.success',
+    'color.success.background.subtle',
+    'color.success.foreground',
+    'color.success.hover',
+    'color.warning',
+    'color.warning.background.subtle',
+    'color.warning.foreground',
+  ],
+  dimensions: [
+    'border.width.default',
+    'border.width.emphasis',
+    'border.width.strong',
+    'radius.full',
+    'radius.large',
+    'radius.medium',
+    'radius.small',
+    'ring.width',
+    'size.control.large',
+    'size.control.medium',
+    'size.control.small',
+    'size.control.xlarge',
+    'size.control.xsmall',
+    'space.0',
+    'space.05',
+    'space.1',
+    'space.10',
+    'space.12',
+    'space.16',
+    'space.2',
+    'space.3',
+    'space.4',
+    'space.5',
+    'space.6',
+    'space.8',
+  ],
+  typography: [
+    'font.size.2xlarge',
+    'font.size.3xlarge',
+    'font.size.large',
+    'font.size.medium',
+    'font.size.small',
+    'font.size.xlarge',
+    'font.size.xsmall',
+    'font.weight.bold',
+    'font.weight.medium',
+    'font.weight.regular',
+    'font.weight.semibold',
+    'line.height.none',
+    'line.height.normal',
+    'line.height.tight',
+  ],
+  semanticTones: [
+    'tone.danger.background',
+    'tone.danger.foreground',
+    'tone.info.background',
+    'tone.info.foreground',
+    'tone.neutral.background',
+    'tone.neutral.foreground',
+    'tone.purple.background',
+    'tone.purple.foreground',
+    'tone.success.background',
+    'tone.success.foreground',
+    'tone.warning.background',
+    'tone.warning.foreground',
+  ],
+  avatarPalette: [
+    'avatar.foreground',
+    'avatar.palette.1',
+    'avatar.palette.2',
+    'avatar.palette.3',
+    'avatar.palette.4',
+    'avatar.palette.5',
+    'avatar.palette.6',
+  ],
+  categoricalPalette: [
+    'palette.amber.background',
+    'palette.amber.foreground',
+    'palette.blue.background',
+    'palette.blue.foreground',
+    'palette.brown.background',
+    'palette.brown.foreground',
+    'palette.charcoal.background',
+    'palette.charcoal.foreground',
+    'palette.coral.background',
+    'palette.coral.foreground',
+    'palette.cyan.background',
+    'palette.cyan.foreground',
+    'palette.emerald.background',
+    'palette.emerald.foreground',
+    'palette.fuchsia.background',
+    'palette.fuchsia.foreground',
+    'palette.gold.background',
+    'palette.gold.foreground',
+    'palette.green.background',
+    'palette.green.foreground',
+    'palette.indigo.background',
+    'palette.indigo.foreground',
+    'palette.lavender.background',
+    'palette.lavender.foreground',
+    'palette.lime.background',
+    'palette.lime.foreground',
+    'palette.magenta.background',
+    'palette.magenta.foreground',
+    'palette.mint.background',
+    'palette.mint.foreground',
+    'palette.navy.background',
+    'palette.navy.foreground',
+    'palette.olive.background',
+    'palette.olive.foreground',
+    'palette.orange.background',
+    'palette.orange.foreground',
+    'palette.pink.background',
+    'palette.pink.foreground',
+    'palette.plum.background',
+    'palette.plum.foreground',
+    'palette.purple.background',
+    'palette.purple.foreground',
+    'palette.red.background',
+    'palette.red.foreground',
+    'palette.rose.background',
+    'palette.rose.foreground',
+    'palette.sky.background',
+    'palette.sky.foreground',
+    'palette.slate.background',
+    'palette.slate.foreground',
+    'palette.stone.background',
+    'palette.stone.foreground',
+    'palette.taupe.background',
+    'palette.taupe.foreground',
+    'palette.teal.background',
+    'palette.teal.foreground',
+    'palette.violet.background',
+    'palette.violet.foreground',
+    'palette.yellow.background',
+    'palette.yellow.foreground',
+  ],
+};
+const expectedDeprecatedBadgeAliases = {
+  'deprecated.badge.danger.background': {
+    target: 'tone.danger.background',
+    web: '--color-badge-danger-bg',
+  },
+  'deprecated.badge.danger.foreground': {
+    target: 'tone.danger.foreground',
+    web: '--color-badge-danger-fg',
+  },
+  'deprecated.badge.info.background': {
+    target: 'tone.info.background',
+    web: '--color-badge-info-bg',
+  },
+  'deprecated.badge.info.foreground': {
+    target: 'tone.info.foreground',
+    web: '--color-badge-info-fg',
+  },
+  'deprecated.badge.neutral.background': {
+    target: 'tone.neutral.background',
+    web: '--color-badge-neutral-bg',
+  },
+  'deprecated.badge.neutral.foreground': {
+    target: 'tone.neutral.foreground',
+    web: '--color-badge-neutral-fg',
+  },
+  'deprecated.badge.purple.background': {
+    target: 'tone.purple.background',
+    web: '--color-badge-purple-bg',
+  },
+  'deprecated.badge.purple.foreground': {
+    target: 'tone.purple.foreground',
+    web: '--color-badge-purple-fg',
+  },
+  'deprecated.badge.success.background': {
+    target: 'tone.success.background',
+    web: '--color-badge-success-bg',
+  },
+  'deprecated.badge.success.foreground': {
+    target: 'tone.success.foreground',
+    web: '--color-badge-success-fg',
+  },
+  'deprecated.badge.warning.background': {
+    target: 'tone.warning.background',
+    web: '--color-badge-warning-bg',
+  },
+  'deprecated.badge.warning.foreground': {
+    target: 'tone.warning.foreground',
+    web: '--color-badge-warning-fg',
+  },
+};
 
 test('loads the authoritative source with representative shared values', async () => {
   const tokens = await loadTokenDocument(tokenSourcePath);
@@ -53,30 +265,38 @@ test('reconstructs every captured declaration value and scope from the dataset',
   });
 });
 
-test('provides every required shared Compose group', async () => {
+test('matches the independently authored Compose inventory exactly', async () => {
   const tokens = await loadTokenDocument(tokenSourcePath);
-  const groups = new Set(tokens.tokens.flatMap((token) => token.outputs.compose?.group ?? []));
-
-  assert.deepEqual([...groups].sort(), [
-    'avatarPalette',
-    'categoricalPalette',
-    'colors',
-    'dimensions',
-    'semanticTones',
-    'typography',
-  ]);
-});
-
-test('models deprecated Badge variables as semantic aliases', async () => {
-  const tokens = await loadTokenDocument(tokenSourcePath);
-  const deprecated = tokens.tokens.find(
-    (token) => token.outputs.web?.name === '--color-badge-danger-bg',
+  const actualInventory = Object.fromEntries(
+    Object.keys(expectedComposeInventory).map((group) => [
+      group,
+      tokens.tokens
+        .filter((token) => token.outputs.compose?.group === group)
+        .map((token) => token.id)
+        .sort(compareCodeUnits),
+    ]),
   );
 
-  assert.deepEqual(deprecated.value, {
-    light: { alias: 'tone.danger.background' },
-    dark: { alias: 'tone.danger.background' },
-  });
+  assert.deepEqual(actualInventory, expectedComposeInventory);
+  assert.equal(Object.values(actualInventory).flat().length, 148);
+});
+
+test('models all twelve deprecated Badge variables as semantic aliases', async () => {
+  const tokens = await loadTokenDocument(tokenSourcePath);
+  const deprecatedTokens = tokens.tokens.filter((token) =>
+    token.id.startsWith('deprecated.badge.'),
+  );
+
+  assert.equal(deprecatedTokens.length, 12);
+  for (const [id, expected] of Object.entries(expectedDeprecatedBadgeAliases)) {
+    const deprecated = deprecatedTokens.find((token) => token.id === id);
+    assert.ok(deprecated, `missing ${id}`);
+    assert.equal(deprecated.outputs.web.name, expected.web);
+    assert.deepEqual(deprecated.value, {
+      light: { alias: expected.target },
+      dark: { alias: expected.target },
+    });
+  }
 });
 
 test('captures the checked-in web contract with provenance and expanded dark scopes', async () => {
@@ -252,4 +472,10 @@ function sortObject(value) {
       return 0;
     }),
   );
+}
+
+function compareCodeUnits(left, right) {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
 }

@@ -29,7 +29,11 @@ export async function loadTokenDocument(path) {
 function formatErrors(errors) {
   return errors
     .slice()
-    .sort((left, right) => compareCodeUnits(left.instancePath, right.instancePath) || compareCodeUnits(left.keyword, right.keyword))
+    .sort(
+      (left, right) =>
+        compareCodeUnits(left.instancePath, right.instancePath) ||
+        compareCodeUnits(left.keyword, right.keyword),
+    )
     .map((error) => `${error.instancePath || '/'}: ${error.message}`)
     .join('\n');
 }

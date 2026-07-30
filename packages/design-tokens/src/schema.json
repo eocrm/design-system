@@ -24,7 +24,17 @@
         "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(\\.[a-z0-9]+)*$" },
         "type": {
           "type": "string",
-          "enum": ["color", "dimension", "number", "fontFamily", "fontWeight", "lineHeight", "duration", "shadow", "css"]
+          "enum": [
+            "color",
+            "dimension",
+            "number",
+            "fontFamily",
+            "fontWeight",
+            "lineHeight",
+            "duration",
+            "shadow",
+            "css"
+          ]
         },
         "value": { "$ref": "#/$defs/value" },
         "outputs": { "$ref": "#/$defs/outputs" }

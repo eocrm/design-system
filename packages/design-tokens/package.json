@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "private": false,
   "type": "module",
-  "files": ["generated", "README.md"],
+  "files": [
+    "generated",
+    "README.md"
+  ],
   "exports": {
     "./styles/tokens.scss": "./generated/web/tokens.scss",
     "./styles/dark.scss": "./generated/web/dark.scss",

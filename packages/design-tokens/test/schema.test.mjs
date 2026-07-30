@@ -13,9 +13,9 @@ const validDocument = (contractVersion) => ({
       id: 'color.primary',
       type: 'color',
       value: '#000000',
-      outputs: { web: { name: '--color-primary' } }
-    }
-  ]
+      outputs: { web: { name: '--color-primary' } },
+    },
+  ],
 });
 
 test('reports every structural schema error with its JSON path', async () => {

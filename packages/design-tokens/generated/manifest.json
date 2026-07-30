@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "0.0.0",
+  "artifacts": {
+    "npm": "@eocrm/design-tokens",
+    "maven": "com.eocrm.design:design-tokens-compose"
+  }
+}
