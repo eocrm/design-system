@@ -19,11 +19,13 @@
 ### Task 1: Add the root compatibility pointer
 
 **Files:**
+
 - Create: `AGENTS.md`
 - Read: `CLAUDE.md`
 - Read: `.claude/skills/`
 
 **Interfaces:**
+
 - Consumes: Existing root and package-level Claude instructions and repository-local Claude skills.
 - Produces: A root discovery file for agents that automatically load `AGENTS.md`.
 
