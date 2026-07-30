@@ -15,6 +15,10 @@
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
+    "tokens:validate": "npm run validate -w @eocrm/design-tokens",
+    "tokens:generate": "npm run generate -w @eocrm/design-tokens",
+    "tokens:check": "npm run check -w @eocrm/design-tokens",
+    "tokens:test": "npm test -w @eocrm/design-tokens",
     "prepare": "husky"
   },
   "devDependencies": {

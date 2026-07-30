@@ -1,0 +1,34 @@
+import { readFile } from 'node:fs/promises';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
+import schema from '../../src/schema.json' with { type: 'json' };
+
+export class TokenValidationError extends Error {
+  constructor(errors) {
+    super(formatErrors(errors));
+    this.name = 'TokenValidationError';
+    this.errors = errors;
+  }
+}
+
+const ajv = new Ajv2020({ allErrors: true, strict: true });
+addFormats(ajv);
+const validate = ajv.compile(schema);
+
+export async function loadTokenDocument(path) {
+  const document = JSON.parse(await readFile(path, 'utf8'));
+
+  if (!validate(document)) {
+    throw new TokenValidationError(validate.errors ?? []);
+  }
+
+  return document;
+}
+
+function formatErrors(errors) {
+  return errors
+    .slice()
+    .sort((left, right) => left.instancePath.localeCompare(right.instancePath) || left.keyword.localeCompare(right.keyword))
+    .map((error) => `${error.instancePath || '/'}: ${error.message}`)
+    .join('\n');
+}
