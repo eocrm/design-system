@@ -69,6 +69,44 @@ export function validateTokens(document) {
 
   for (const [index, token] of document.tokens.entries()) {
     if (!token.outputs?.compose) continue;
+    const groupPath = `/tokens/${index}/outputs/compose/group`;
+    const allowedGroupTypes = new Map([
+      ['avatarPalette', new Set(['color'])],
+      ['categoricalPalette', new Set(['color'])],
+      ['colors', new Set(['color'])],
+      ['dimensions', new Set(['dimension'])],
+      ['semanticTones', new Set(['color'])],
+      ['typography', new Set(['dimension', 'fontWeight', 'lineHeight'])],
+    ]);
+    const groupTypes = allowedGroupTypes.get(token.outputs.compose.group);
+    if (!groupTypes) {
+      issues.push(
+        issue(
+          groupPath,
+          'invalid-compose-group',
+          `unknown Compose output group ${token.outputs.compose.group}`,
+        ),
+      );
+    } else if (!groupTypes.has(token.type)) {
+      issues.push(
+        issue(
+          groupPath,
+          'invalid-compose-group-type',
+          `Compose group ${token.outputs.compose.group} does not support token type ${token.type}`,
+        ),
+      );
+    }
+    const supportedTypes = new Set(['color', 'dimension', 'fontWeight', 'lineHeight']);
+    if (!supportedTypes.has(token.type)) {
+      issues.push(
+        issue(
+          `/tokens/${index}/type`,
+          'invalid-compose-type',
+          `Compose output does not support token type ${token.type}`,
+        ),
+      );
+      continue;
+    }
     for (const theme of isThemed(token.value) ? ['light', 'dark'] : ['light']) {
       let value;
       try {
@@ -94,6 +132,27 @@ export function validateTokens(document) {
             valuePath,
             'invalid-compose-value',
             'Compose dimensions must resolve to a px value or numeric zero',
+          ),
+        );
+      }
+      if (token.type === 'fontWeight' && ![400, 500, 600, 700].includes(value)) {
+        issues.push(
+          issue(
+            valuePath,
+            'invalid-compose-value',
+            'Compose font weights must resolve to 400, 500, 600, or 700',
+          ),
+        );
+      }
+      if (
+        token.type === 'lineHeight' &&
+        !(typeof value === 'number' && Number.isFinite(value) && value > 0)
+      ) {
+        issues.push(
+          issue(
+            valuePath,
+            'invalid-compose-value',
+            'Compose line heights must resolve to a positive unitless number',
           ),
         );
       }

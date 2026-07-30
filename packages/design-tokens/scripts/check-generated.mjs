@@ -6,30 +6,49 @@ import { generate } from './generate.mjs';
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const defaultExpectedRoot = resolve(packageRoot, 'generated');
+const defaultComposeExpectedRoot = resolve(
+  packageRoot,
+  'compose/src/commonMain/kotlin/com/eocrm/design/tokens',
+);
 
-export async function checkGenerated({ expectedRoot = defaultExpectedRoot } = {}) {
-  const actualRoot = await mkdtemp(join(tmpdir(), 'eocrm-token-generated-'));
+export async function checkGenerated({
+  expectedRoot = defaultExpectedRoot,
+  composeExpectedRoot = defaultComposeExpectedRoot,
+} = {}) {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), 'eocrm-token-generated-'));
+  const actualRoot = join(temporaryRoot, 'generated');
+  const actualComposeRoot = join(temporaryRoot, 'compose');
 
   try {
-    await generate({ outputRoot: actualRoot });
-    const [expectedFiles, actualFiles] = await Promise.all([
-      listFiles(expectedRoot),
-      listFiles(actualRoot),
+    await generate({
+      outputRoot: actualRoot,
+      composeOutputRoot: actualComposeRoot,
+    });
+    const [generatedChanges, composeChanges] = await Promise.all([
+      compareRoots(expectedRoot, actualRoot),
+      compareRoots(composeExpectedRoot, actualComposeRoot),
     ]);
-    const fileNames = [...new Set([...expectedFiles, ...actualFiles])].sort(compareCodeUnits);
-    const changed = [];
-
-    for (const name of fileNames) {
-      const [expected, actual] = await Promise.all([
-        readOptional(join(expectedRoot, name)),
-        readOptional(join(actualRoot, name)),
-      ]);
-      if (expected !== actual) changed.push(name);
-    }
-    return changed;
+    return [...generatedChanges, ...composeChanges.map((name) => `compose/${name}`)];
   } finally {
-    await rm(actualRoot, { recursive: true });
+    await rm(temporaryRoot, { recursive: true });
   }
+}
+
+async function compareRoots(expectedRoot, actualRoot) {
+  const [expectedFiles, actualFiles] = await Promise.all([
+    listFiles(expectedRoot),
+    listFiles(actualRoot),
+  ]);
+  const fileNames = [...new Set([...expectedFiles, ...actualFiles])].sort(compareCodeUnits);
+  const changed = [];
+  for (const name of fileNames) {
+    const [expected, actual] = await Promise.all([
+      readOptional(join(expectedRoot, name)),
+      readOptional(join(actualRoot, name)),
+    ]);
+    if (expected !== actual) changed.push(name);
+  }
+  return changed;
 }
 
 async function listFiles(root) {

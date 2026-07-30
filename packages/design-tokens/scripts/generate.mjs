@@ -2,18 +2,29 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadTokenDocument } from './lib/load-tokens.mjs';
+import { renderCompose } from './lib/render-compose.mjs';
 import { renderWeb } from './lib/render-web.mjs';
 
 const defaultSource = new URL('../src/tokens.json', import.meta.url);
 const defaultOutputRoot = new URL('../generated/', import.meta.url);
+const defaultComposeOutputRoot = new URL(
+  '../compose/src/commonMain/kotlin/com/eocrm/design/tokens/',
+  import.meta.url,
+);
 
 export function validateTokenSource(source = defaultSource) {
   return loadTokenDocument(source);
 }
 
-export async function generate({ outputRoot = defaultOutputRoot, source = defaultSource } = {}) {
+export async function generate(options = {}) {
+  const outputRoot = options.outputRoot ?? defaultOutputRoot;
+  const source = options.source ?? defaultSource;
+  const composeOutputRoot =
+    options.composeOutputRoot ??
+    (options.outputRoot === undefined ? defaultComposeOutputRoot : undefined);
   const document = await validateTokenSource(source);
   const { tokensScss, darkScss } = renderWeb(document);
+  const composeFiles = renderCompose(document);
   const manifest = {
     schemaVersion: document.schemaVersion,
     contractVersion: document.contractVersion,
@@ -32,6 +43,13 @@ export async function generate({ outputRoot = defaultOutputRoot, source = defaul
       `${JSON.stringify(manifest, null, 2)}\n`,
     ),
   ]);
+  if (composeOutputRoot !== undefined) {
+    const composeRoot = toDirectoryUrl(composeOutputRoot);
+    await mkdir(composeRoot, { recursive: true });
+    await Promise.all(
+      [...composeFiles].map(([name, content]) => writeFile(new URL(name, composeRoot), content)),
+    );
+  }
 }
 
 async function main(arguments_) {
