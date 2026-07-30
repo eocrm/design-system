@@ -258,6 +258,17 @@ Repository documentation will explain:
   integration or accessibility materially benefits; and
 - semantic consistency does not require pixel-identical rendering.
 
+Before the implementation branch is pushed, README documentation must be
+updated at the appropriate repository and package levels. It must cover:
+
+- the repository's new token-package and generated-output structure;
+- how web consumers use `@eocrm/design-tokens` and the unchanged
+  `@eocrm/design-system` style entry points;
+- the Compose Maven coordinates and GitHub Packages repository URL;
+- consumer authentication requirements;
+- local validation, generation, drift-check, and Gradle commands; and
+- the synchronized npm/Maven versioning and release workflow.
+
 ## Failure reporting
 
 Commands and CI steps distinguish:
@@ -287,6 +298,8 @@ This phase is complete when:
 - CI validates schema, references, deterministic output, drift, web
   compatibility, packaging, and Gradle compilation;
 - existing `@eocrm/design-system` consumer imports remain unchanged; and
+- README files document web and Compose consumption plus contributor commands
+  before the branch is pushed; and
 - release automation publishes both npm packages and the Maven artifact before
   tagging.
 
