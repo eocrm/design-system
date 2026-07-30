@@ -4,10 +4,11 @@
 [![Package](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=package)](https://github.com/eocrm/design-system/pkgs/npm/design-system)
 [![Playground](https://img.shields.io/github/deployments/eocrm/design-system/github-pages?label=playground)](https://eocrm.github.io/design-system/)
 
-React 19 component library for the EOCRM. Source-distributed via GitHub Packages, opinionated tokens, Atlassian-inspired aesthetic, **designed to be consumed primarily by AI coding agents**.
+React 19 component library and shared web/Compose token contract for the EOCRM. Source-distributed via GitHub Packages, opinionated tokens, Atlassian-inspired aesthetic, **designed to be consumed primarily by AI coding agents**.
 
 - **Live playground**: <https://eocrm.github.io/design-system/>
 - **Package**: `@eocrm/design-system` on GitHub Packages
+- **Shared tokens**: `@eocrm/design-tokens` (npm) and `com.eocrm.design:design-tokens-compose` (Maven)
 - **Source distribution**: consumers' bundlers compile `.tsx` and `.module.scss` directly — no build step in the package
 
 ---
@@ -78,7 +79,10 @@ eocrm/design-system/
 │   │   ├── README.md    ← install + bundler notes
 │   │   ├── AGENTS.md    ← agent primer: tokens, components, anti-patterns
 │   │   └── CLAUDE.md    ← rules for modifying the library
+│   ├── design-tokens/   ← validated source + generated npm and Compose contracts
 │   └── playground/      ← dev gallery (deployed to GH Pages, never published to npm)
+├── docs/
+│   └── shared-design-boundary.md ← ownership across tokens, React, and native apps
 ├── .github/workflows/
 │   ├── quality.yml             ← typecheck + test + lint + build (on PR, callable)
 │   ├── release.yml             ← on push to main: quality → publish → deploy-playground
@@ -90,12 +94,16 @@ eocrm/design-system/
 
 ## CI/CD
 
-| Trigger            | What runs                                                                                                                                                                                                                                                               |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pull request**   | `quality.yml` — typecheck + test + lint + build + tarball-contents check                                                                                                                                                                                                |
-| **Push to `main`** | `release.yml` → quality, then **if the library changed**: auto-bumps patch version, publishes `@eocrm/design-system` to GitHub Packages, creates a `vX.Y.Z` git tag. The playground redeploys to GitHub Pages whenever quality passes — even on playground-only changes |
+| Trigger            | What runs                                                                                                                                                                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pull request**   | `quality.yml` — token generation/Gradle checks, typecheck, test, lint, build, and both npm tarball checks                                                                                                                                                             |
+| **Push to `main`** | `release.yml` → quality, then **if a library changed**: publishes both npm packages and the Compose Maven artifact at one version, verifies all three, and creates a `vX.Y.Z` tag. The playground redeploys whenever quality passes — even on playground-only changes |
 
 Every release is gated by quality. There are no manual workflow buttons — the only way to release is to merge to `main`. To force a minor/major bump, edit `BUMP` in `release.yml` on a branch and merge.
+
+See [Shared design ownership](./docs/shared-design-boundary.md) for what belongs
+in the neutral token contract, React library, mobile Compose product, and native
+platform layers.
 
 ---
 
