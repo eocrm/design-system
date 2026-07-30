@@ -126,7 +126,7 @@ The existing 8 components are fully JSDoc'd — match that pattern.
 
 ### 8. Pre-push review-fix cycle (library changes only)
 
-Before pushing changes that touch `packages/design-system/**`, you MUST run the review-fix loop — invoke the **`pre-push-review`** skill (variant A) and follow it exactly. This is not optional, including for one-line SCSS tweaks. The library is consumed by AI agents who pattern-match against whatever we ship — a missing JSDoc, broken ARIA, or token slip propagates to every page they generate.
+Before completing a pull request that touches `packages/design-system/**`, you MUST run the review-fix loop — invoke the **`pre-push-review`** skill (variant A) and follow it exactly. Run baseline gates, open the PR as a draft, then autonomously review, fix, verify, commit, and push until a clean three-reviewer round allows the PR to be marked ready. This is not optional, including for one-line SCSS tweaks. The library is consumed by AI agents who pattern-match against whatever we ship — a missing JSDoc, broken ARIA, or token slip propagates to every page they generate.
 
 **When this rule applies**: any change inside `packages/design-system/` — component code, tests, tokens, SCSS, `package.json`, `AGENTS.md`, `README.md`, or this `CLAUDE.md`.
 

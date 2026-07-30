@@ -1,6 +1,6 @@
 ---
 name: pre-push-review
-description: Use before pushing changes that touch packages/design-system/** (library variant) or packages/playground/src/pages/mockups/** (mockup variant). Runs the mandatory gates-then-review-agent loop until three fresh reviewers say "clean enough to stop". Required by design-system CLAUDE.md Hard rule 8 and playground CLAUDE.md Hard rule 7.
+description: Use when preparing a pull request that touches packages/design-system/** (library variant) or packages/playground/src/pages/mockups/** (mockup variant). Opens a draft PR after baseline gates, then runs the mandatory review-fix loop until three fresh reviewers say "clean enough to stop" before marking it ready. Required by design-system CLAUDE.md Hard rule 8 and playground CLAUDE.md Hard rule 7.
 ---
 
 # Pre-push review-fix cycle
@@ -22,6 +22,23 @@ Run the three reviews in parallel when the harness supports it. If fewer than
 three agent slots are available, run them sequentially; they must still be
 separate fresh contexts.
 
+## Draft-first pull request lifecycle
+
+The review loop runs against a visible draft pull request:
+
+1. Run the variant's baseline gates.
+2. Commit and push the scoped changes, then open a **draft** pull request.
+3. Run the three-reviewer round against the draft PR branch and complete diff.
+4. Fix every load-bearing finding autonomously, rerun affected gates, commit,
+   and push the fixes to the same draft PR.
+5. Repeat with three new fresh-context reviewers after every fix round.
+6. Mark the pull request **ready for review** only when every reviewer in the
+   same final round returns `clean enough to stop` and all exit criteria pass.
+
+Never mark a PR ready while Critical or Important findings remain. Do not stop
+after merely reporting review findings when an in-scope fix can be made safely;
+continue the review-fix loop autonomously.
+
 ---
 
 ## Variant A — library changes (`packages/design-system/**`)
@@ -34,13 +51,14 @@ The library is consumed by AI agents who pattern-match against whatever we ship 
 
 ### The loop
 
-1. **Run gates first** — `npm test`, `npm run typecheck`, `npm run lint:css`, `npm run build`, `npm pack --dry-run -w @eocrm/design-system`. They must all pass before review.
-2. **Spawn at least three independent fresh-context review agents** targeted at `packages/design-system/`, inheriting the current session's default model without an override. Brief each explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell each to read `packages/design-system/CLAUDE.md`, `AGENTS.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`).
-3. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
-4. **For every finding you deliberately skip**, leave a one-line explanation in your response so the next reviewer doesn't re-flag it.
-5. **Re-run gates** after fixes.
-6. **Spawn another round of at least three fresh reviewers** with the same prompt and inherited default model.
-7. **Repeat** until every reviewer in the same round returns `clean enough to stop`.
+1. **Run baseline gates** — `npm test`, `npm run typecheck`, `npm run lint:css`, `npm run build`, `npm pack --dry-run -w @eocrm/design-system`. They must all pass before the draft PR is opened.
+2. **Open the draft PR** — commit and push the scoped branch, then create a draft pull request. All review rounds and fixes target this same draft.
+3. **Spawn at least three independent fresh-context review agents** targeted at `packages/design-system/`, inheriting the current session's default model without an override. Brief each explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell each to read `packages/design-system/CLAUDE.md`, `AGENTS.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`).
+4. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
+5. **For every finding you deliberately skip**, leave a one-line explanation in your response so the next reviewer doesn't re-flag it.
+6. **Re-run affected gates, commit, and push** fixes to the same draft PR.
+7. **Spawn another round of at least three fresh reviewers** with the same prompt and inherited default model.
+8. **Repeat autonomously** until every reviewer in the same round returns `clean enough to stop`, then mark the PR ready for review.
 
 ### Hard exit criteria
 
@@ -69,8 +87,9 @@ Mockups are the most visible artifact of the library — they're what a new engi
 
 ### The loop
 
-1. **Run gates first** — `make test`, `make build` (typecheck + bundle), `make lint`. They must all pass before review.
-2. **Spawn at least three independent fresh-context review agents** targeted at the changed mockup file(s), inheriting the current session's default model without an override. Brief each on these 10 review categories:
+1. **Run baseline gates** — `make test`, `make build` (typecheck + bundle), `make lint`. They must all pass before the draft PR is opened.
+2. **Open the draft PR** — commit and push the scoped branch, then create a draft pull request. All review rounds and fixes target this same draft.
+3. **Spawn at least three independent fresh-context review agents** targeted at the changed mockup file(s), inheriting the current session's default model without an override. Brief each on these 10 review categories:
    1. **Hard rule 6 compliance** — no inline `style={...}`, no raw HTML tags, no co-located `.module.scss`. Any escape-hatch mock has a matching entry in `packages/design-system/src/components/TODO.md` AND an inline `{/* TODO: replace when … */}` comment.
    2. **Registry sync** — every library component used in the mockup is listed in that mockup's `usesComponents` array in `registry.ts`. No stale entries (a name listed that's no longer imported).
    3. **Imports** — only from `@eocrm/design-system`, never relative paths into the library (Rule 2). Demo-only deps from Rule 5 stay out.
@@ -84,11 +103,11 @@ Mockups are the most visible artifact of the library — they're what a new engi
 
    Ask for output as `Critical` / `Important` / `Nice-to-have` / `Regression-watch` + a final verdict line (`clean enough to stop` or `keep iterating`).
 
-3. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
-4. **For every finding deliberately skipped**, leave a one-line explanation so the next reviewer doesn't re-flag it.
-5. **Re-run gates** after fixes.
-6. **Spawn another round of at least three fresh reviewers** with the same prompt and inherited default model.
-7. **Repeat** until every reviewer in the same round returns `clean enough to stop`.
+4. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
+5. **For every finding deliberately skipped**, leave a one-line explanation so the next reviewer doesn't re-flag it.
+6. **Re-run affected gates, commit, and push** fixes to the same draft PR.
+7. **Spawn another round of at least three fresh reviewers** with the same prompt and inherited default model.
+8. **Repeat autonomously** until every reviewer in the same round returns `clean enough to stop`, then mark the PR ready for review.
 
 ### Hard exit criteria
 
