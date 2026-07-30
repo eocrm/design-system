@@ -28,7 +28,13 @@ export async function loadTokenDocument(path) {
 function formatErrors(errors) {
   return errors
     .slice()
-    .sort((left, right) => left.instancePath.localeCompare(right.instancePath) || left.keyword.localeCompare(right.keyword))
+    .sort((left, right) => compareCodeUnits(left.instancePath, right.instancePath) || compareCodeUnits(left.keyword, right.keyword))
     .map((error) => `${error.instancePath || '/'}: ${error.message}`)
     .join('\n');
+}
+
+function compareCodeUnits(left, right) {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
 }
