@@ -5,8 +5,9 @@ name: Release
 #
 # Inside the workflow:
 # - quality runs always
-# - publish runs ONLY if the library actually changed (packages/design-system
-#   or one of the release-related workflow files). Playground-only changes
+# - publish runs ONLY if a library actually changed (packages/design-tokens,
+#   packages/design-system, or one of the release-related workflow files).
+#   Playground-only changes
 #   skip the publish step → no version bump just because a demo page tweaked.
 #   packages/design-system/CLAUDE.md is excluded too — it is the one file in
 #   that package that never reaches the tarball (AGENTS.md, README.md, and
@@ -77,7 +78,7 @@ jobs:
           # not fire because this is an `if` condition.
           if git diff --name-only HEAD^ HEAD \
             | grep -vxF 'packages/design-system/CLAUDE.md' \
-            | grep -qE '^packages/design-system/|^\.github/workflows/(release|quality|deploy-playground)\.yml$'; then
+            | grep -qE '^packages/design-(tokens|system)/|^\.github/workflows/(release|quality|deploy-playground)\.yml$'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "Library changed — publish will run."
           else
@@ -107,6 +108,18 @@ jobs:
           # and wires NODE_AUTH_TOKEN for the publish step below.
           registry-url: "https://npm.pkg.github.com"
           scope: "@eocrm"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-36"
 
       - name: Install
         run: npm ci
@@ -144,31 +157,75 @@ jobs:
           echo "Next version: $NEW"
           echo "value=$NEW" >> "$GITHUB_OUTPUT"
 
-      - name: Set library version
-        working-directory: packages/design-system
-        run: npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
+      - name: Synchronize release version
+        run: |
+          node packages/design-tokens/scripts/set-release-version.mjs \
+            "${{ steps.version.outputs.value }}" \
+            --root "$GITHUB_WORKSPACE"
 
-      - name: Publish to GitHub Packages
+      - name: Verify token contract
+        run: npm run tokens:check
+
+      - name: Publish design tokens to GitHub Packages
+        working-directory: packages/design-tokens
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          npm publish 2>&1 | tee token-publish.out
+          status=${PIPESTATUS[0]}
+          if [ "$status" -eq 0 ]; then
+            echo "Published @eocrm/design-tokens."
+          elif grep -qiE 'E409|cannot publish over existing version|409 Conflict' token-publish.out; then
+            echo "::warning::@eocrm/design-tokens already has this exact version."
+          else
+            exit "$status"
+          fi
+
+      - name: Publish design system to GitHub Packages
         working-directory: packages/design-system
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -uo pipefail
-          # Tolerate a 409 "already published": a prior run may have published
-          # this version but then failed to push its git tag, leaving the
-          # registry ahead of the tags. Because the next version is derived from
-          # tags, every later run otherwise recomputes the SAME version and 409s
-          # forever. Treat 409 as success and proceed to the tag step so the tags
-          # catch up to the registry and the version can advance again.
-          npm publish 2>&1 | tee publish.out
+          npm publish 2>&1 | tee design-system-publish.out
           status=${PIPESTATUS[0]}
           if [ "$status" -eq 0 ]; then
-            echo "Published."
-          elif grep -qiE 'E409|cannot publish over existing version|409 Conflict' publish.out; then
-            echo "::warning::Version already published (409) — proceeding to tag so the tags catch up."
+            echo "Published @eocrm/design-system."
+          elif grep -qiE 'E409|cannot publish over existing version|409 Conflict' design-system-publish.out; then
+            echo "::warning::@eocrm/design-system already has this exact version."
           else
             exit "$status"
           fi
+
+      - name: Publish Compose tokens to GitHub Packages
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          packages/design-tokens/compose/gradlew \
+            --no-daemon \
+            -p packages/design-tokens/compose \
+            -Pversion="${{ steps.version.outputs.value }}" \
+            publish 2>&1 | tee compose-publish.out
+          status=${PIPESTATUS[0]}
+          if [ "$status" -eq 0 ]; then
+            echo "Published com.eocrm.design:design-tokens-compose."
+          elif grep -qiE '409|already exists|already been published' compose-publish.out; then
+            echo "::warning::Compose tokens already have this exact version."
+          else
+            exit "$status"
+          fi
+
+      - name: Verify published artifacts
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node packages/design-tokens/scripts/verify-published-version.mjs \
+            "${{ steps.version.outputs.value }}"
 
       - name: Tag and push
         run: |
@@ -183,10 +240,11 @@ jobs:
           {
             echo "## Published"
             echo ""
-            echo "- Package: \`@eocrm/design-system\`"
+            echo "- npm: \`@eocrm/design-tokens@${{ steps.version.outputs.value }}\`"
+            echo "- npm: \`@eocrm/design-system@${{ steps.version.outputs.value }}\`"
+            echo "- Maven: \`com.eocrm.design:design-tokens-compose:${{ steps.version.outputs.value }}\`"
             echo "- Version: \`${{ steps.version.outputs.value }}\`"
             echo "- Tag: \`v${{ steps.version.outputs.value }}\`"
-            echo "- Registry: https://npm.pkg.github.com"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # Re-deploy the playground so the live site always reflects main. Runs whenever
