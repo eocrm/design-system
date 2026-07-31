@@ -89,9 +89,9 @@ interface RailGroupOwnProps {
  * except `className` and `ref`, which stay on the wrapper `<div>` in both
  * shapes, as they always have.
  *
- * Your `onPointerEnter` / `onPointerLeave` / `onFocus` / `onBlur` / `onClick`
+ * Your `onPointerEnter` / `onPointerLeave` / `onFocus` / `onBlur` / `onClick` / `onKeyDown`
  * on a linkable group are **composed** with the group's own handlers (yours
- * runs first), not replaced by them: those five are what open the
+ * runs first), not replaced by them: those six are what open the
  * collapsed-mode flyout, and overriding them would make the subitems
  * unreachable while the rail is collapsed.
  */
@@ -247,6 +247,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   useFloatingSurface(popoverOpen);
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const focusFlyoutOnOpenRef = useRef(false);
 
   const clearOpenTimer = useCallback(() => {
     if (openTimerRef.current) {
@@ -320,6 +321,24 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   // popovers (#272); its base z sits at --z-popover otherwise.
   const inOverlay = useInOverlay(triggerRef, popoverOpen);
 
+  const focusFirstFlyoutItem = useCallback(() => {
+    refs.floating.current
+      ?.querySelector<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      ?.focus({ preventScroll: true });
+  }, [refs.floating]);
+
+  // A portalled panel sits after #root in DOM order, so native Tab traversal
+  // cannot move from the trigger into it. When keyboard interaction opens the
+  // flyout, move focus to its first interactive element after the portal has
+  // mounted. Escape already restores focus to the trigger below.
+  useEffect(() => {
+    if (!popoverOpen || !focusFlyoutOnOpenRef.current) return;
+    focusFlyoutOnOpenRef.current = false;
+    focusFirstFlyoutItem();
+  }, [popoverOpen, focusFirstFlyoutItem]);
+
   // Close on Escape (a11y).
   useEffect(() => {
     if (!popoverOpen) return;
@@ -365,17 +384,29 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   }, [collapsed, toggleOpen]);
 
   const handleTriggerKeyDown = useCallback(
-    (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    (e: ReactKeyboardEvent<HTMLElement>) => {
+      if (collapsed && e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        clearOpenTimer();
+        clearCloseTimer();
+        if (popoverOpen) {
+          focusFirstFlyoutItem();
+        } else {
+          focusFlyoutOnOpenRef.current = true;
+          setPopoverOpen(true);
+        }
+        return;
+      }
       // In collapsed mode the trigger acts like a popup-haspopup button
       // (Enter / Space opens the popover); in expanded mode native button
       // semantics already cover Enter/Space toggling.
-      if (collapsed && (e.key === 'Enter' || e.key === ' ')) {
+      if (!isLink && collapsed && (e.key === 'Enter' || e.key === ' ')) {
         e.preventDefault();
         clearCloseTimer();
         setPopoverOpen((prev) => !prev);
       }
     },
-    [collapsed, clearCloseTimer],
+    [collapsed, isLink, popoverOpen, focusFirstFlyoutItem, clearOpenTimer, clearCloseTimer],
   );
 
   const handlePointerEnter = useCallback(
@@ -483,6 +514,10 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
             onFocus={composeHandlers(rest.onFocus, collapsed ? scheduleOpen : undefined)}
             onBlur={composeHandlers(rest.onBlur, collapsed ? scheduleClose : undefined)}
             onClick={composeHandlers(rest.onClick, collapsed ? handleFlyoutClick : undefined)}
+            onKeyDown={composeHandlers(
+              rest.onKeyDown,
+              collapsed ? handleTriggerKeyDown : undefined,
+            )}
           >
             <span className={styles.itemIcon} aria-hidden="true">
               {icon}

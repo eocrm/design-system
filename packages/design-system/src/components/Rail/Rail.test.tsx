@@ -960,4 +960,30 @@ describe('Rail — linkable Group (#377)', () => {
       vi.useRealTimers();
     }
   });
+
+  it('collapsed: Tab from the focused group trigger enters the portalled flyout', async () => {
+    const user = userEvent.setup();
+    render(
+      <Rail defaultCollapsed>
+        <Rail.Section title="Main">
+          <Rail.Item href="#/companies" icon={<span aria-hidden />}>
+            Companies
+          </Rail.Item>
+          <Rail.Group as="a" href="#/deals" icon={<span aria-hidden />} label="Deals">
+            <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+          </Rail.Group>
+          <Rail.Item href="#/projects" icon={<span aria-hidden />}>
+            Projects
+          </Rail.Item>
+        </Rail.Section>
+      </Rail>,
+    );
+
+    const trigger = screen.getByRole('link', { name: 'Deals' });
+    trigger.focus();
+    await user.tab();
+
+    const flyout = await screen.findByRole('dialog', { name: 'Deals' });
+    expect(within(flyout).getByRole('link', { name: 'Deals' })).toHaveFocus();
+  });
 });
