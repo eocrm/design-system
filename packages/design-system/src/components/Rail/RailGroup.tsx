@@ -351,36 +351,35 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     );
   }, [isLink, isSequentiallyFocusable]);
 
-  const findNextFocusTarget = useCallback(() => {
+  const findNextFocusTargets = useCallback(() => {
     const trigger = triggerRef.current;
     const group = groupRef.current;
-    if (!trigger || !group) return null;
+    if (!trigger || !group) return [];
     const candidates = Array.from(document.querySelectorAll<HTMLElement>('*'));
     const triggerIndex = candidates.indexOf(trigger);
-    return (
-      candidates.slice(triggerIndex + 1).find((candidate) => {
-        if (group.contains(candidate)) return false;
-        return isSequentiallyFocusable(candidate);
-      }) ?? null
-    );
+    return candidates.slice(triggerIndex + 1).filter((candidate) => {
+      if (group.contains(candidate)) return false;
+      return isSequentiallyFocusable(candidate);
+    });
   }, [isSequentiallyFocusable]);
 
-  const focusFirstFlyoutItem = useCallback(() => {
-    for (const candidate of getFlyoutFocusableItems()) {
+  const focusFirstAvailable = useCallback((candidates: HTMLElement[]) => {
+    for (const candidate of candidates) {
       candidate.focus({ preventScroll: true });
-      if (document.activeElement === candidate) return;
+      if (document.activeElement === candidate) return true;
     }
+    return false;
+  }, []);
+
+  const focusFirstFlyoutItem = useCallback(() => {
+    if (focusFirstAvailable(getFlyoutFocusableItems())) return;
     setPopoverOpen(false);
-    const nextTarget = findNextFocusTarget();
-    if (nextTarget) {
-      nextTarget.focus({ preventScroll: true });
-      if (document.activeElement === nextTarget) return;
-    }
+    if (focusFirstAvailable(findNextFocusTargets())) return;
     // Tab was already cancelled to enter the portal. If no valid destination
     // remains (for example a hidden-only final group), release focus rather
     // than trapping it on the trigger.
     triggerRef.current?.blur();
-  }, [getFlyoutFocusableItems, findNextFocusTarget]);
+  }, [getFlyoutFocusableItems, findNextFocusTargets, focusFirstAvailable]);
 
   // A portalled panel sits after #root in DOM order, so native Tab traversal
   // cannot move from the trigger into it. When keyboard interaction opens the
@@ -530,18 +529,24 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
         return;
       }
       if (!e.shiftKey && target === items.at(-1)) {
-        const nextTarget = findNextFocusTarget();
+        const nextTargets = findNextFocusTargets();
         // If the group is the final page control, preserve native Tab so the
         // browser can move beyond the document instead of trapping focus.
-        if (!nextTarget) return;
+        if (nextTargets.length === 0) return;
         e.preventDefault();
         clearOpenTimer();
         clearCloseTimer();
         setPopoverOpen(false);
-        nextTarget.focus({ preventScroll: true });
+        if (!focusFirstAvailable(nextTargets)) triggerRef.current?.blur();
       }
     },
-    [getFlyoutFocusableItems, findNextFocusTarget, clearOpenTimer, clearCloseTimer],
+    [
+      getFlyoutFocusableItems,
+      findNextFocusTargets,
+      focusFirstAvailable,
+      clearOpenTimer,
+      clearCloseTimer,
+    ],
   );
 
   // Compose the consumer ref with our internal ref so consumers can still

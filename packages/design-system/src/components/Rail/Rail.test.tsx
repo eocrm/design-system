@@ -975,6 +975,9 @@ describe('Rail — linkable Group (#377)', () => {
           <Rail.Item href="#/projects" icon={<span aria-hidden />} tabIndex={-1}>
             Projects
           </Rail.Item>
+          <Rail.Item href="#/stalled" icon={<span aria-hidden />}>
+            Stalled
+          </Rail.Item>
           <Rail.Item href="#/reports" icon={<span aria-hidden />}>
             Reports
           </Rail.Item>
@@ -983,6 +986,7 @@ describe('Rail — linkable Group (#377)', () => {
     );
 
     const trigger = screen.getByRole('link', { name: 'Deals' });
+    vi.spyOn(screen.getByRole('link', { name: 'Stalled' }), 'focus').mockImplementation(() => {});
     trigger.focus();
     await user.tab();
 
