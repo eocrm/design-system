@@ -78,7 +78,13 @@ export interface TabsAction {
  */
 export type TabsActivationMode = 'auto' | 'manual';
 
-/** `aria-orientation` value. `'auto'` adapts to the tablist width. */
+/**
+ * Tablist layout and `aria-orientation` value. Use `'horizontal'` (the
+ * default) for a conventional tab strip or `'vertical'` for a fixed
+ * master–detail rail. `'auto'` starts vertical and switches from vertical to
+ * horizontal when the tablist itself reaches 320px; it is for a `Split` rail
+ * that becomes a full-width strip when the panes stack.
+ */
 export type TabsOrientation = 'horizontal' | 'vertical' | 'auto';
 
 const AUTO_ORIENTATION_BREAKPOINT = 320;
@@ -112,10 +118,12 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * `'horizontal'` (default) — a horizontal strip with a sliding underline.
    * `'vertical'` — a stacked master–detail rail: full-width rows, a left accent
    * bar + tinted background on the active row, and ArrowUp/ArrowDown navigation.
-   * `'auto'` — starts vertical, then switches to horizontal at 320px and back
-   * below that width. Sets `aria-orientation` on the tablist accordingly. Put a
-   * vertical strip in a `Split`'s `aside`, with the detail panel as the `Split`'s
-   * children beside it.
+   * `'auto'` — measures the tablist itself: vertical below 320px and horizontal
+   * at or above 320px. It starts vertical during SSR and whenever
+   * `ResizeObserver` is unavailable. Use it with a collapsing `Split`: the
+   * fixed-width aside remains a vertical rail, then the full-width stacked
+   * tablist becomes horizontal. `aria-orientation`, keyboard navigation, and
+   * presentation always follow the effective orientation.
    */
   orientation?: TabsOrientation;
   /**
@@ -189,11 +197,13 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  * />
  *
  * @example
- * // Vertical master–detail rail with a trailing unsaved-changes badge:
+ * // Responsive master–detail rail with a trailing unsaved-changes badge:
  * <Split
+ *   asideWidth="220px"
+ *   collapseBelow="sm"
  *   aside={
  *     <Tabs
- *       orientation="vertical"
+ *       orientation="auto"
  *       items={[
  *         { id: 'general', label: 'General' },
  *         { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
@@ -223,6 +233,9 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  * - ❌ Using `orientation="vertical"` as a page sidebar / primary navigation.
  *   It is for *intra-page* master–detail section switching, not route changes —
  *   use the app sidebar for navigation.
+ * - ❌ Combining `orientation="auto"` with app-owned viewport measurement.
+ *   Auto mode measures its own tablist, so let it react to the `Split`'s layout
+ *   instead of duplicating breakpoint state in the app.
  * - ❌ Reaching for `action` to switch views. It never sets `activeId` — if
  *   the click should select a tab, add a `TabItem` instead.
  */

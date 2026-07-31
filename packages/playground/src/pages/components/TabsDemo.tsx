@@ -241,8 +241,8 @@ export function Demo() {
       </Example>
 
       <Example
-        title="Vertical (master–detail)"
-        description='orientation="vertical" renders a stacked rail of full-width rows — the active row gets a left accent bar and a subtly tinted background, and ArrowUp/ArrowDown move between rows. Place the rail in a Split beside the detail panel. Best for settings / configuration editors, where each row is a section and the panel reflects the selection.'
+        title="Responsive master–detail"
+        description='orientation="auto" keeps the 220px Split rail vertical, then makes the tabs horizontal after Split stacks them above the detail panel. Below 320px, the tablist stays vertical. Use this composition for settings / configuration editors, where each row is a section and the panel reflects the selection.'
         code={`import { useState } from 'react';
 import { Activity, CreditCard, Settings, Shield } from 'lucide-react';
 import { Badge, Card, Split, Stack, Tabs } from '@eocrm/design-system';
@@ -272,9 +272,11 @@ export function Demo() {
   return (
     <Split
       gap="lg"
+      asideWidth="220px"
+      collapseBelow="sm"
       aside={
         <Tabs
-          orientation="vertical"
+          orientation="auto"
           items={[
             {
               id: 'general',
@@ -311,10 +313,13 @@ export function Demo() {
 }`}
       >
         <Split
+          data-testid="responsive-tabs-split"
           gap="lg"
+          asideWidth="220px"
+          collapseBelow="sm"
           aside={
             <Tabs
-              orientation="vertical"
+              orientation="auto"
               items={[
                 {
                   id: 'general',
