@@ -77,8 +77,17 @@ export interface TabsAction {
  */
 export type TabsActivationMode = 'auto' | 'manual';
 
-/** `aria-orientation` value. Affects how screen readers announce the strip. */
-export type TabsOrientation = 'horizontal' | 'vertical';
+/**
+ * Tablist layout and `aria-orientation` value. Use `'horizontal'` (the
+ * default) for a conventional tab strip or `'vertical'` for a fixed
+ * master–detail rail. `'auto'` starts vertical and switches from vertical to
+ * horizontal when the available tab-strip width reaches 320px; it is for a
+ * `Split` rail that becomes a full-width strip when the panes stack.
+ */
+export type TabsOrientation = 'horizontal' | 'vertical' | 'auto';
+
+const AUTO_ORIENTATION_BREAKPOINT = 320;
+type EffectiveTabsOrientation = Exclude<TabsOrientation, 'auto'>;
 
 export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** The tabs to render. Each item must have a unique `id`. */
@@ -108,8 +117,12 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * `'horizontal'` (default) — a horizontal strip with a sliding underline.
    * `'vertical'` — a stacked master–detail rail: full-width rows, a left accent
    * bar + tinted background on the active row, and ArrowUp/ArrowDown navigation.
-   * Sets `aria-orientation` on the tablist accordingly. Put a vertical strip in a
-   * `Split`'s `aside`, with the detail panel as the `Split`'s children beside it.
+   * `'auto'` — measures available Tabs/tab-strip width: vertical below 320px
+   * and horizontal at or above 320px. It starts vertical during SSR and whenever
+   * `ResizeObserver` is unavailable. Use it with a collapsing `Split`: the
+   * fixed-width aside remains a vertical rail, then the full-width stacked
+   * tablist becomes horizontal. `aria-orientation`, keyboard navigation, and
+   * presentation always follow the effective orientation.
    */
   orientation?: TabsOrientation;
   /**
@@ -143,11 +156,12 @@ function sanitizeId(raw: string): string {
 const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
 /**
- * Tab strip (horizontal or vertical) with optional count chips and leading/
- * trailing adornments. Controlled by the caller — pass `activeId` and
- * `onChange`. Implements the full WAI-ARIA Tabs pattern: roving `tabIndex`,
- * arrow-key navigation (Left/Right when horizontal, Up/Down when vertical) +
- * Home/End, `aria-controls` + `aria-orientation`, and per-tab/per-panel ids.
+ * Responsive tab strip (horizontal, vertical, or automatic) with optional
+ * count chips and leading/trailing adornments. Controlled by the caller —
+ * pass `activeId` and `onChange`. Implements the full WAI-ARIA Tabs pattern:
+ * roving `tabIndex`, arrow-key navigation (Left/Right when horizontal,
+ * Up/Down when vertical) + Home/End, `aria-controls` + `aria-orientation`,
+ * and per-tab/per-panel ids.
  *
  * @example
  * // Basic controlled usage:
@@ -183,11 +197,13 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  * />
  *
  * @example
- * // Vertical master–detail rail with a trailing unsaved-changes badge:
+ * // Responsive master–detail rail with a trailing unsaved-changes badge:
  * <Split
+ *   asideWidth="220px"
+ *   collapseBelow="sm"
  *   aside={
  *     <Tabs
- *       orientation="vertical"
+ *       orientation="auto"
  *       items={[
  *         { id: 'general', label: 'General' },
  *         { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
@@ -217,6 +233,9 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  * - ❌ Using `orientation="vertical"` as a page sidebar / primary navigation.
  *   It is for *intra-page* master–detail section switching, not route changes —
  *   use the app sidebar for navigation.
+ * - ❌ Combining `orientation="auto"` with app-owned viewport measurement.
+ *   Auto mode measures the available Tabs/tab-strip width, so let it react to
+ *   the `Split`'s layout instead of duplicating breakpoint state in the app.
  * - ❌ Reaching for `action` to switch views. It never sets `activeId` — if
  *   the click should select a tab, add a `TabItem` instead.
  */
@@ -238,8 +257,54 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   const reactId = useId();
   const prefix = panelIdPrefix ?? sanitizeId(reactId);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const scrollWrapRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const endContentRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
   const firstMeasureRef = useRef(true);
+  const hasEndContent = endContent != null;
+  const [automaticOrientation, setAutomaticOrientation] =
+    useState<EffectiveTabsOrientation>('vertical');
+  const effectiveOrientation: EffectiveTabsOrientation =
+    orientation === 'auto' ? automaticOrientation : orientation;
+
+  useLayoutEffect(() => {
+    if (orientation !== 'auto') return;
+    // Measure the box that receives the available layout width, rather than
+    // the tablist's intrinsic inline-flex width. With end content, the strip
+    // shares a stable root row with controls at its end, so its horizontal
+    // budget is root width minus the end region's border-box width (including
+    // the gap padding). The end region keeps that footprint in both
+    // orientations, so the same measurement cannot bounce the mode at the
+    // boundary.
+    const root = hasEndContent ? rootRef.current : scrollWrapRef.current;
+    const end = hasEndContent ? endContentRef.current : null;
+    if (!root || (hasEndContent && !end) || typeof ResizeObserver === 'undefined') return;
+
+    let rootWidth = root.getBoundingClientRect().width;
+    let endContentWidth = end?.getBoundingClientRect().width ?? 0;
+    const update = () => {
+      const availableWidth = Math.max(0, rootWidth - endContentWidth);
+      setAutomaticOrientation(
+        availableWidth >= AUTO_ORIENTATION_BREAKPOINT ? 'horizontal' : 'vertical',
+      );
+    };
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // contentRect excludes padding, but the end-content gap consumes real
+        // horizontal strip space. Read the border box from the observed target.
+        const width = entry.target.getBoundingClientRect().width;
+        if (entry.target === root) rootWidth = width;
+        if (entry.target === end) endContentWidth = width;
+      }
+      update();
+    });
+
+    update();
+    observer.observe(root);
+    if (end) observer.observe(end);
+    return () => observer.disconnect();
+  }, [orientation, hasEndContent]);
 
   // Dev-only: warn on duplicate ids. The ref map would silently collapse them
   // and roving tabindex would behave unpredictably. Run as an effect (not in
@@ -283,7 +348,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     const cell = node.parentElement;
     const measureNode = cell && cell.getAttribute('role') === 'presentation' ? cell : node;
 
-    const vertical = orientation === 'vertical';
+    const vertical = effectiveOrientation === 'vertical';
     const write = () => {
       if (vertical) {
         indicator.style.transform = `translateY(${measureNode.offsetTop}px)`;
@@ -310,7 +375,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     }
 
     write();
-  }, [activeId, items, orientation]);
+  }, [activeId, items, effectiveOrientation]);
 
   // Focused tab can drift from activeId in manual activation mode. In auto
   // mode they stay in sync because focusTab also calls onChange.
@@ -347,7 +412,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     const currentIndex = items.findIndex((i) => i.id === effectiveFocusedId);
     // Vertical strips navigate with Up/Down; horizontal with Left/Right. The
     // matching `case nextKey:` below reads the active axis's keys.
-    const vertical = orientation === 'vertical';
+    const vertical = effectiveOrientation === 'vertical';
     const nextKey = vertical ? 'ArrowDown' : 'ArrowRight';
     const prevKey = vertical ? 'ArrowUp' : 'ArrowLeft';
     let nextIndex = -1;
@@ -377,7 +442,11 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     // below the tablist's baseline) from being clipped by the auto-promoted
     // overflow-y.
     <div
-      className={clsx(styles.scrollWrap, orientation === 'vertical' && styles.scrollWrapVertical)}
+      ref={scrollWrapRef}
+      className={clsx(
+        styles.scrollWrap,
+        effectiveOrientation === 'vertical' && styles.scrollWrapVertical,
+      )}
     >
       <div
         // Consumer-controlled props come first so component-owned attrs below
@@ -385,9 +454,13 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
         {...props}
         ref={ref}
         role="tablist"
-        aria-orientation={orientation}
+        aria-orientation={effectiveOrientation}
         onKeyDown={onKeyDown}
-        className={clsx(styles.tabs, orientation === 'vertical' && styles.vertical, className)}
+        className={clsx(
+          styles.tabs,
+          effectiveOrientation === 'vertical' && styles.vertical,
+          className,
+        )}
       >
         {items.map((item) => {
           const active = item.id === activeId;
@@ -468,13 +541,16 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     </div>
   );
 
-  if (endContent == null) return strip;
+  if (!hasEndContent) return strip;
 
   return (
-    <div className={clsx(styles.root, orientation === 'vertical' && styles.rootVertical)}>
+    <div
+      ref={rootRef}
+      className={clsx(styles.root, effectiveOrientation === 'vertical' && styles.rootVertical)}
+    >
       {strip}
       {/* data-tabs-end is an internal test hook (module classes are hashed), not public API. */}
-      <div data-tabs-end="" className={styles.endContent}>
+      <div ref={endContentRef} data-tabs-end="" className={styles.endContent}>
         {endContent}
       </div>
     </div>

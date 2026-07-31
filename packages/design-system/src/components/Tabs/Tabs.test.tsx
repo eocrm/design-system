@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useEffect, useState } from 'react';
 import { Tabs, type TabItem, type TabsAction } from './Tabs';
@@ -10,6 +10,47 @@ const items: TabItem[] = [
 ];
 
 const noop = () => undefined;
+
+interface ResizeObserverHarness {
+  resize: (target: Element, borderBoxWidth: number, contentBoxWidth?: number) => void;
+  observe: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+}
+
+function stubResizeObserver(): ResizeObserverHarness {
+  let callback: ResizeObserverCallback | undefined;
+  const observed = new Set<Element>();
+  const observe = vi.fn();
+  const disconnect = vi.fn();
+  class MockResizeObserver {
+    constructor(cb: ResizeObserverCallback) {
+      callback = cb;
+    }
+    observe = (target: Element) => {
+      observed.add(target);
+      observe(target);
+    };
+    disconnect = disconnect;
+    unobserve = vi.fn();
+  }
+  vi.stubGlobal('ResizeObserver', MockResizeObserver);
+  return {
+    observe,
+    disconnect,
+    resize(target, borderBoxWidth, contentBoxWidth = borderBoxWidth) {
+      if (!observed.has(target)) return;
+      vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+        width: borderBoxWidth,
+      } as DOMRect);
+      act(() => {
+        callback?.(
+          [{ target, contentRect: { width: contentBoxWidth } } as ResizeObserverEntry],
+          null as unknown as ResizeObserver,
+        );
+      });
+    },
+  };
+}
 
 describe('Tabs', () => {
   it('renders a tablist with each item as a tab', () => {
@@ -260,6 +301,176 @@ describe('Tabs', () => {
       render(<Tabs items={items} activeId="a" onChange={noop} orientation="vertical" />);
       expect(screen.getByRole('tablist').className).toMatch(/vertical/);
     });
+  });
+
+  describe('automatic orientation', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('starts vertical and observes the available scroll wrapper, not the forwarded tablist', () => {
+      const observer = stubResizeObserver();
+      const ref = createRef<HTMLDivElement>();
+      render(<Tabs ref={ref} items={items} activeId="a" onChange={noop} orientation="auto" />);
+      const tablist = screen.getByRole('tablist');
+      const scrollWrapper = tablist.parentElement;
+      expect(ref.current).toBe(tablist);
+      expect(scrollWrapper).toBeInstanceOf(HTMLDivElement);
+      expect(observer.observe).toHaveBeenCalledWith(scrollWrapper);
+      expect(observer.observe).not.toHaveBeenCalledWith(ref.current);
+      expect(ref.current).toHaveAttribute('aria-orientation', 'vertical');
+    });
+
+    it('keeps a stable callback ref attached across automatic orientation changes and cleans it up on unmount', () => {
+      const observer = stubResizeObserver();
+      const cleanup = vi.fn();
+      const ref = vi.fn((node: HTMLDivElement | null) => {
+        if (node) return cleanup;
+      });
+      const { unmount } = render(
+        <Tabs ref={ref} items={items} activeId="a" onChange={noop} orientation="auto" />,
+      );
+      const tablist = screen.getByRole('tablist');
+
+      observer.resize(tablist.parentElement as HTMLDivElement, 320);
+
+      expect(ref).toHaveBeenCalledOnce();
+      expect(ref).toHaveBeenCalledWith(tablist);
+
+      unmount();
+
+      expect(cleanup).toHaveBeenCalledOnce();
+    });
+
+    it('observes the stable root and end-content width when endContent shares the available row', () => {
+      const observer = stubResizeObserver();
+      const { container } = render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          endContent={<button type="button">New</button>}
+        />,
+      );
+      const tablist = screen.getByRole('tablist');
+      const root = container.firstElementChild;
+      const endContent = container.querySelector('[data-tabs-end]');
+      expect(root).toBeInstanceOf(HTMLDivElement);
+      expect(endContent).toBeInstanceOf(HTMLDivElement);
+      expect(observer.observe).toHaveBeenCalledWith(root);
+      expect(observer.observe).toHaveBeenCalledWith(endContent);
+      expect(observer.observe).not.toHaveBeenCalledWith(tablist);
+    });
+
+    it('uses root width minus end-content width so a 340px row with 100px end content stays vertical', () => {
+      const observer = stubResizeObserver();
+      const { container } = render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          endContent={<button type="button">New</button>}
+        />,
+      );
+      const root = container.firstElementChild as HTMLDivElement;
+      const endContent = container.querySelector('[data-tabs-end]') as HTMLDivElement;
+
+      // The end region's border box includes the spacing padding needed by the
+      // horizontal row; its content box does not.
+      observer.resize(endContent, 100, 80);
+      observer.resize(root, 340);
+
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+    });
+
+    it('switches at 320px of available strip width and responds to root and end-content resizes', () => {
+      const observer = stubResizeObserver();
+      const { container } = render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          endContent={<button type="button">New</button>}
+        />,
+      );
+      const root = container.firstElementChild as HTMLDivElement;
+      const endContent = container.querySelector('[data-tabs-end]') as HTMLDivElement;
+
+      observer.resize(endContent, 100);
+      observer.resize(root, 420);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
+
+      observer.resize(root, 419);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+
+      observer.resize(root, 420);
+      observer.resize(endContent, 101);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+
+      observer.resize(endContent, 100);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
+    });
+
+    it('disconnects the root-and-end-content observer on unmount', () => {
+      const observer = stubResizeObserver();
+      const { unmount } = render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          endContent={<button type="button">New</button>}
+        />,
+      );
+
+      unmount();
+
+      expect(observer.disconnect).toHaveBeenCalledOnce();
+    });
+
+    it('switches semantics, styling, keyboard axis, and indicator geometry at 320px', async () => {
+      const observer = stubResizeObserver();
+      const onChange = vi.fn();
+      const user = userEvent.setup();
+      const { container } = render(
+        <Tabs items={items} activeId="a" onChange={onChange} orientation="auto" />,
+      );
+      observer.resize(screen.getByRole('tablist').parentElement as HTMLDivElement, 320);
+      const tablist = screen.getByRole('tablist');
+      expect(tablist).toHaveAttribute('aria-orientation', 'horizontal');
+      expect(tablist.className).not.toMatch(/vertical/);
+      screen.getByRole('tab', { name: 'Overview' }).focus();
+      await user.keyboard('{ArrowRight}');
+      expect(onChange).toHaveBeenCalledWith('b');
+      const indicator = container.querySelector('[class*="indicator"]') as HTMLElement;
+      expect(indicator.style.transform).toMatch(/translateX\(/);
+      expect(indicator.style.width).toMatch(/px$/);
+      expect(indicator.style.height).toBe('');
+    });
+
+    it('switches back below 320px and uses vertical arrow navigation', async () => {
+      const observer = stubResizeObserver();
+      const onChange = vi.fn();
+      const user = userEvent.setup();
+      render(<Tabs items={items} activeId="a" onChange={onChange} orientation="auto" />);
+      const scrollWrapper = screen.getByRole('tablist').parentElement as HTMLDivElement;
+      observer.resize(scrollWrapper, 480);
+      observer.resize(scrollWrapper, 319);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+      screen.getByRole('tab', { name: 'Overview' }).focus();
+      await user.keyboard('{ArrowDown}');
+      expect(onChange).toHaveBeenCalledWith('b');
+    });
+
+    it.each(['horizontal', 'vertical'] as const)(
+      'does not observe explicit %s mode',
+      (orientation) => {
+        const observer = stubResizeObserver();
+        render(<Tabs items={items} activeId="a" onChange={noop} orientation={orientation} />);
+        expect(observer.observe).not.toHaveBeenCalled();
+      },
+    );
   });
 
   it('warns in dev when items contains duplicate ids', () => {
