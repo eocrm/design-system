@@ -30,6 +30,10 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "21"
+          cache: "gradle"
+          cache-dependency-path: |
+            packages/design-tokens/compose/**/*.gradle*
+            packages/design-tokens/compose/**/gradle-wrapper.properties
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3

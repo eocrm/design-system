@@ -45,11 +45,12 @@ test('packed Sass entry points resolve through the installed token package', asy
     ]);
     const tokenTarball = await pack(tokenRoot, packDirectory);
     const designSystemTarball = await pack(designSystemRoot, packDirectory);
-    const designSystemPackage = JSON.parse(
-      await readFile(join(designSystemRoot, 'package.json'), 'utf8'),
-    );
+    const [designSystemPackage, tokenPackage] = await Promise.all([
+      readFile(join(designSystemRoot, 'package.json'), 'utf8').then(JSON.parse),
+      readFile(join(tokenRoot, 'package.json'), 'utf8').then(JSON.parse),
+    ]);
 
-    assert.equal(designSystemPackage.dependencies['@eocrm/design-tokens'], '0.0.0');
+    assert.equal(designSystemPackage.dependencies['@eocrm/design-tokens'], tokenPackage.version);
 
     await writeFile(
       join(fixture, 'package.json'),

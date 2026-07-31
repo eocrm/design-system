@@ -114,10 +114,10 @@ test('drift check reports the relative name of every changed generated file', as
   try {
     await generate({ outputRoot: expectedRoot });
     const manifestPath = join(expectedRoot, 'manifest.json');
-    const manifest = await readFile(manifestPath, 'utf8');
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
     await writeFile(
       manifestPath,
-      manifest.replace('"contractVersion": "0.0.0"', '"contractVersion": "9.9.9"'),
+      `${JSON.stringify({ ...manifest, contractVersion: '9.9.9-drift' }, null, 2)}\n`,
     );
 
     assert.deepEqual(await checkGenerated({ expectedRoot }), ['manifest.json']);

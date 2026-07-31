@@ -16,6 +16,7 @@ const stableTagScriptPath = join(
   'packages/design-tokens/scripts/latest-stable-release-tag.mjs',
 );
 const workflowPath = join(repositoryRoot, '.github/workflows/release.yml');
+const qualityWorkflowPath = join(repositoryRoot, '.github/workflows/quality.yml');
 
 test('detects a library change earlier in a multi-commit push', async () => {
   const fixture = await createRepository();
@@ -289,6 +290,31 @@ test('stages Compose publications locally and repairs every Maven file', async (
   assert.match(composeStep, /-Dmaven\.repo\.local="\$RUNNER_TEMP\/compose-maven"/);
   assert.match(composeStep, /repair-compose-publication\.mjs/);
   assert.doesNotMatch(composeStep, /grep -qiE '409/);
+});
+
+test('deploys the playground only after publish succeeds or is skipped', async () => {
+  const workflow = await readFile(workflowPath, 'utf8');
+  const deployJob = workflow.slice(workflow.indexOf('  deploy-playground:'));
+
+  assert.match(deployJob, /needs\.quality\.result == 'success'/);
+  assert.match(deployJob, /needs\.publish\.result == 'success'/);
+  assert.match(deployJob, /needs\.publish\.result == 'skipped'/);
+});
+
+test('caches npm and Gradle dependencies in quality and release jobs', async () => {
+  const [qualityWorkflow, releaseWorkflow] = await Promise.all([
+    readFile(qualityWorkflowPath, 'utf8'),
+    readFile(workflowPath, 'utf8'),
+  ]);
+
+  for (const workflow of [qualityWorkflow, releaseWorkflow]) {
+    assert.match(workflow, /uses: actions\/setup-node@v4[\s\S]*?cache: "npm"/);
+    assert.match(workflow, /uses: actions\/setup-java@v4[\s\S]*?cache: "gradle"/);
+    assert.match(
+      workflow,
+      /cache-dependency-path: \|[\s\S]*?packages\/design-tokens\/compose\/\*\*\/\*\.gradle\*/,
+    );
+  }
 });
 
 async function createRepository() {

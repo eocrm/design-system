@@ -84,6 +84,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: "npm"
           # This writes .npmrc with the @eocrm scope pointed at GitHub Packages
           # and wires NODE_AUTH_TOKEN for the publish step below.
           registry-url: "https://npm.pkg.github.com"
@@ -94,6 +95,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+          cache: "gradle"
+          cache-dependency-path: |
+            packages/design-tokens/compose/**/*.gradle*
+            packages/design-tokens/compose/**/gradle-wrapper.properties
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -223,13 +228,14 @@ jobs:
             echo "- Tag: \`v${{ steps.version.outputs.value }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # Re-deploy the playground so the live site always reflects main. Runs whenever
-  # quality passed — regardless of the publish result (success / skipped /
-  # failure) — so the demo stays current even on playground-only changes and
-  # even if a publish hiccups.
+  # Re-deploy the playground so the live site reflects a successfully released
+  # main, or a main change where publishing was intentionally skipped.
   deploy-playground:
     needs: [quality, publish]
-    if: always() && needs.quality.result == 'success'
+    if: >-
+      always() &&
+      needs.quality.result == 'success' &&
+      (needs.publish.result == 'success' || needs.publish.result == 'skipped')
     uses: ./.github/workflows/deploy-playground.yml
     permissions:
       contents: read
