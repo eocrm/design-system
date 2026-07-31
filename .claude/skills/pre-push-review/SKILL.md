@@ -22,16 +22,29 @@ Run the two reviews in parallel when the harness supports it. If fewer than
 two agent slots are available, run them sequentially; they must still be
 separate fresh contexts.
 
+## Review scope by round
+
+The first round reviews the complete branch diff from its merge base through
+the current head. Record that head as `REVIEWED_HEAD`.
+
+After fixes, each later round reviews only `REVIEWED_HEAD..HEAD`. Give reviewers
+the prior round's blocking findings alongside that scoped diff so they can
+verify each fix and detect breakage introduced by the fix commits. Do not ask
+later rounds to re-review unchanged code from the original branch diff. After
+the round completes, advance `REVIEWED_HEAD` to the head that was reviewed.
+
 ## Draft-first pull request lifecycle
 
 The review loop runs against a visible draft pull request:
 
 1. Run the variant's baseline gates.
 2. Commit and push the scoped changes, then open a **draft** pull request.
-3. Run the two-reviewer round against the draft PR branch and complete diff.
+3. Run the first two-reviewer round against the draft PR's complete branch
+   diff, then record the reviewed head.
 4. Fix every load-bearing finding autonomously, rerun affected gates, commit,
    and push the fixes to the same draft PR.
-5. Repeat with two new fresh-context reviewers after every fix round.
+5. Repeat with two new fresh-context reviewers after every fix round, scoped
+   to commits since the previously reviewed head.
 6. Mark the pull request **ready for review** only when every reviewer in the
    same final round returns `clean enough to stop` and all exit criteria pass.
 
@@ -53,11 +66,11 @@ The library is consumed by AI agents who pattern-match against whatever we ship 
 
 1. **Run baseline gates** — `npm test`, `npm run typecheck`, `npm run lint:css`, `npm run build`, `npm pack --dry-run -w @eocrm/design-system`. They must all pass before the draft PR is opened.
 2. **Open the draft PR** — commit and push the scoped branch, then create a draft pull request. All review rounds and fixes target this same draft.
-3. **Spawn at least two independent fresh-context review agents** targeted at `packages/design-system/`, inheriting the current session's default model without an override. Brief each explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell each to read `packages/design-system/CLAUDE.md`, `AGENTS.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`).
+3. **Spawn at least two independent fresh-context review agents** against the complete branch diff, targeted at `packages/design-system/` and inheriting the current session's default model without an override. Brief each explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell each to read `packages/design-system/CLAUDE.md`, `AGENTS.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`). Record the reviewed head.
 4. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
 5. **For every finding you deliberately skip**, leave a one-line explanation in your response so the next reviewer doesn't re-flag it.
 6. **Re-run affected gates, commit, and push** fixes to the same draft PR.
-7. **Spawn another round of at least two fresh reviewers** with the same prompt and inherited default model.
+7. **Spawn another round of at least two fresh reviewers** with the inherited default model. Give them the prior blocking findings and only the diff since the previously reviewed head; ask them to verify the fixes and inspect that scoped diff for new breakage.
 8. **Repeat autonomously** until every reviewer in the same round returns `clean enough to stop`, then mark the PR ready for review.
 
 ### Hard exit criteria
@@ -89,7 +102,7 @@ Mockups are the most visible artifact of the library — they're what a new engi
 
 1. **Run baseline gates** — `make test`, `make build` (typecheck + bundle), `make lint`. They must all pass before the draft PR is opened.
 2. **Open the draft PR** — commit and push the scoped branch, then create a draft pull request. All review rounds and fixes target this same draft.
-3. **Spawn at least two independent fresh-context review agents** targeted at the changed mockup file(s), inheriting the current session's default model without an override. Brief each on these 10 review categories:
+3. **Spawn at least two independent fresh-context review agents** against the complete branch diff, targeted at the changed mockup file(s), inheriting the current session's default model without an override. Record the reviewed head and brief each on these 10 review categories:
    1. **Hard rule 6 compliance** — no inline `style={...}`, no raw HTML tags, no co-located `.module.scss`. Any escape-hatch mock has a matching entry in `packages/design-system/src/components/TODO.md` AND an inline `{/* TODO: replace when … */}` comment.
    2. **Registry sync** — every library component used in the mockup is listed in that mockup's `usesComponents` array in `registry.ts`. No stale entries (a name listed that's no longer imported).
    3. **Imports** — only from `@eocrm/design-system`, never relative paths into the library (Rule 2). Demo-only deps from Rule 5 stay out.
@@ -106,7 +119,7 @@ Mockups are the most visible artifact of the library — they're what a new engi
 4. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
 5. **For every finding deliberately skipped**, leave a one-line explanation so the next reviewer doesn't re-flag it.
 6. **Re-run affected gates, commit, and push** fixes to the same draft PR.
-7. **Spawn another round of at least two fresh reviewers** with the same prompt and inherited default model.
+7. **Spawn another round of at least two fresh reviewers** with the inherited default model. Give them the prior blocking findings and only the diff since the previously reviewed head; ask them to verify the fixes and inspect that scoped diff for new breakage.
 8. **Repeat autonomously** until every reviewer in the same round returns `clean enough to stop`, then mark the PR ready for review.
 
 ### Hard exit criteria

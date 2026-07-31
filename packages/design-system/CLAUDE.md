@@ -132,7 +132,7 @@ Before completing a pull request that touches `packages/design-system/**`, you M
 
 **When this rule does NOT apply**: changes scoped to `packages/playground/**`, root `README.md`, root `CLAUDE.md`, GitHub workflows, the Makefile, or other non-library files. Push those normally.
 
-The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Each review round requires at least two independent fresh-context agents inheriting the session's currently selected/default model; do not override the reviewer model.
+The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Each review round requires at least two independent fresh-context agents inheriting the session's currently selected/default model; do not override the reviewer model. The first round reviews the complete branch diff. Later rounds review only commits since the previously reviewed head, together with the findings those commits are meant to fix.
 
 ### 9. Every user-facing string goes through i18n
 
