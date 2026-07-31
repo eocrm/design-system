@@ -309,7 +309,10 @@ test('caches npm and Gradle dependencies in quality and release jobs', async () 
     readFile(workflowPath, 'utf8'),
   ]);
 
-  for (const workflow of [qualityWorkflow, releaseWorkflow]) {
+  for (const workflow of [
+    qualityWorkflow,
+    releaseWorkflow.slice(releaseWorkflow.indexOf('  publish:')),
+  ]) {
     const nodeStep = extractWorkflowStep(workflow, 'Setup Node');
     const javaStep = extractWorkflowStep(workflow, 'Setup Java');
     const androidStep = extractWorkflowStep(workflow, 'Setup Android SDK');
