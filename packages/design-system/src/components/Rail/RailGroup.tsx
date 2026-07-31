@@ -51,6 +51,8 @@ function composeHandlers<E>(
 const OPEN_DELAY_MS = 80;
 /** Close-grace so the cursor has time to traverse from trigger to flyout. */
 const CLOSE_GRACE_MS = 200;
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 interface RailGroupOwnProps {
   /**
@@ -248,6 +250,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const focusFlyoutOnOpenRef = useRef(false);
+  const suppressNextTriggerFocusOpenRef = useRef(false);
 
   const clearOpenTimer = useCallback(() => {
     if (openTimerRef.current) {
@@ -321,13 +324,37 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   // popovers (#272); its base z sits at --z-popover otherwise.
   const inOverlay = useInOverlay(triggerRef, popoverOpen);
 
+  const getFlyoutFocusableItems = useCallback(
+    () =>
+      Array.from(refs.floating.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? []),
+    [refs.floating],
+  );
+
+  const findNextFocusTarget = useCallback(() => {
+    const trigger = triggerRef.current;
+    const group = groupRef.current;
+    if (!trigger || !group) return null;
+    const candidates = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    const triggerIndex = candidates.indexOf(trigger);
+    const layoutUnavailable = document.documentElement.getClientRects().length === 0;
+    return (
+      candidates.slice(triggerIndex + 1).find((candidate) => {
+        if (group.contains(candidate)) return false;
+        if (candidate.closest('[hidden]')) return false;
+        return layoutUnavailable || candidate.getClientRects().length > 0;
+      }) ?? null
+    );
+  }, []);
+
   const focusFirstFlyoutItem = useCallback(() => {
-    refs.floating.current
-      ?.querySelector<HTMLElement>(
-        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      )
-      ?.focus({ preventScroll: true });
-  }, [refs.floating]);
+    const first = getFlyoutFocusableItems()[0];
+    if (first) {
+      first.focus({ preventScroll: true });
+      return;
+    }
+    setPopoverOpen(false);
+    findNextFocusTarget()?.focus({ preventScroll: true });
+  }, [getFlyoutFocusableItems, findNextFocusTarget]);
 
   // A portalled panel sits after #root in DOM order, so native Tab traversal
   // cannot move from the trigger into it. When keyboard interaction opens the
@@ -349,6 +376,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
         clearOpenTimer();
         clearCloseTimer();
         setPopoverOpen(false);
+        suppressNextTriggerFocusOpenRef.current = true;
         triggerRef.current?.focus({ preventScroll: true });
       }
     };
@@ -425,6 +453,14 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     [collapsed, scheduleClose],
   );
 
+  const handleTriggerFocus = useCallback(() => {
+    if (suppressNextTriggerFocusOpenRef.current) {
+      suppressNextTriggerFocusOpenRef.current = false;
+      return;
+    }
+    scheduleOpen();
+  }, [scheduleOpen]);
+
   const handleFlyoutPointerEnter = useCallback(() => {
     if (!collapsed) return;
     clearCloseTimer();
@@ -444,6 +480,30 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     clearCloseTimer();
     setPopoverOpen(false);
   }, [collapsed, clearOpenTimer, clearCloseTimer]);
+
+  const handleFlyoutKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== 'Tab') return;
+      const items = getFlyoutFocusableItems();
+      if (items.length === 0) return;
+      const target = e.target as HTMLElement;
+      if (e.shiftKey && target === items[0]) {
+        e.preventDefault();
+        clearCloseTimer();
+        suppressNextTriggerFocusOpenRef.current = true;
+        triggerRef.current?.focus({ preventScroll: true });
+        return;
+      }
+      if (!e.shiftKey && target === items.at(-1)) {
+        e.preventDefault();
+        clearOpenTimer();
+        clearCloseTimer();
+        setPopoverOpen(false);
+        findNextFocusTarget()?.focus({ preventScroll: true });
+      }
+    },
+    [getFlyoutFocusableItems, findNextFocusTarget, clearOpenTimer, clearCloseTimer],
+  );
 
   // Compose the consumer ref with our internal ref so consumers can still
   // attach refs to the group's wrapping <div>.
@@ -511,7 +571,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
             {...rest}
             onPointerEnter={composeHandlers(rest.onPointerEnter, handlePointerEnter)}
             onPointerLeave={composeHandlers(rest.onPointerLeave, handlePointerLeave)}
-            onFocus={composeHandlers(rest.onFocus, collapsed ? scheduleOpen : undefined)}
+            onFocus={composeHandlers(rest.onFocus, collapsed ? handleTriggerFocus : undefined)}
             onBlur={composeHandlers(rest.onBlur, collapsed ? scheduleClose : undefined)}
             onClick={composeHandlers(rest.onClick, collapsed ? handleFlyoutClick : undefined)}
             onKeyDown={composeHandlers(
@@ -554,7 +614,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
           onKeyDown={handleTriggerKeyDown}
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}
-          onFocus={collapsed ? scheduleOpen : undefined}
+          onFocus={collapsed ? handleTriggerFocus : undefined}
           onBlur={collapsed ? scheduleClose : undefined}
         >
           <span className={styles.itemIcon} aria-hidden="true">
@@ -599,6 +659,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
             onPointerEnter={handleFlyoutPointerEnter}
             onPointerLeave={handleFlyoutPointerLeave}
             onClick={handleFlyoutClick}
+            onKeyDown={handleFlyoutKeyDown}
             // Keyboard-tab traversal from the trigger into a subitem fires the
             // trigger's onBlur. Without these handlers, the 200ms close timer
             // would fire and unmount the flyout mid-tab. onFocus on the panel

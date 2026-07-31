@@ -961,7 +961,7 @@ describe('Rail — linkable Group (#377)', () => {
     }
   });
 
-  it('collapsed: Tab from the focused group trigger enters the portalled flyout', async () => {
+  it('collapsed: Tab traverses the portalled flyout then rejoins Rail order', async () => {
     const user = userEvent.setup();
     render(
       <Rail defaultCollapsed>
@@ -985,5 +985,64 @@ describe('Rail — linkable Group (#377)', () => {
 
     const flyout = await screen.findByRole('dialog', { name: 'Deals' });
     expect(within(flyout).getByRole('link', { name: 'Deals' })).toHaveFocus();
+    await user.tab();
+    expect(within(flyout).getByRole('link', { name: 'My open USD' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Projects' })).toHaveFocus();
+  });
+
+  it('collapsed: Shift+Tab from the first flyout item returns to the trigger', async () => {
+    const user = userEvent.setup();
+    renderLinkGroup({ collapsed: true });
+    const trigger = screen.getByRole('link', { name: 'Deals' });
+    trigger.focus();
+    await user.tab();
+    const flyout = await screen.findByRole('dialog', { name: 'Deals' });
+    expect(within(flyout).getByRole('link', { name: 'Deals' })).toHaveFocus();
+
+    await user.tab({ shift: true });
+
+    expect(trigger).toHaveFocus();
+  });
+
+  it('collapsed toggle-only group follows the same trigger → children → next-item order', async () => {
+    const user = userEvent.setup();
+    render(
+      <Rail defaultCollapsed>
+        <Rail.Section title="Main">
+          <Rail.Group icon={<span aria-hidden />} label="Settings">
+            <Rail.Item href="#/general">General</Rail.Item>
+          </Rail.Group>
+          <Rail.Item href="#/projects" icon={<span aria-hidden />}>
+            Projects
+          </Rail.Item>
+        </Rail.Section>
+      </Rail>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Settings' });
+    trigger.focus();
+    await user.tab();
+    const flyout = await screen.findByRole('dialog', { name: 'Settings' });
+    expect(within(flyout).getByRole('link', { name: 'General' })).toHaveFocus();
+
+    await user.tab();
+
+    expect(screen.getByRole('link', { name: 'Projects' })).toHaveFocus();
+  });
+
+  it('collapsed: Escape closes the flyout, restores focus, and does not reopen it', async () => {
+    const user = userEvent.setup();
+    renderLinkGroup({ collapsed: true });
+    const trigger = screen.getByRole('link', { name: 'Deals' });
+    trigger.focus();
+    await user.tab();
+    expect(await screen.findByRole('dialog', { name: 'Deals' })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    expect(trigger).toHaveFocus();
+    expect(screen.queryByRole('dialog', { name: 'Deals' })).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(screen.queryByRole('dialog', { name: 'Deals' })).toBeNull();
   });
 });
