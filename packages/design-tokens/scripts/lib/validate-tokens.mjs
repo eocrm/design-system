@@ -68,6 +68,32 @@ export function validateTokens(document) {
   }
 
   for (const [index, token] of document.tokens.entries()) {
+    if (token.outputs?.compose) continue;
+    for (const theme of isThemed(token.value) ? ['light', 'dark'] : ['light']) {
+      let value;
+      try {
+        value = resolveTokenValue(document, token.id, theme);
+      } catch {
+        continue;
+      }
+      const valuePath = isThemed(token.value)
+        ? `/tokens/${index}/value/${theme}`
+        : `/tokens/${index}/value`;
+      const isOptionalWebOverride =
+        value === null && isThemed(token.value) && token.outputs?.web && !token.outputs?.compose;
+      if (!isOptionalWebOverride && !isValidTokenValue(token.type, value)) {
+        issues.push(
+          issue(
+            valuePath,
+            'invalid-token-value',
+            `${token.type} token has an invalid resolved value`,
+          ),
+        );
+      }
+    }
+  }
+
+  for (const [index, token] of document.tokens.entries()) {
     if (!token.outputs?.compose) continue;
     const groupPath = `/tokens/${index}/outputs/compose/group`;
     const allowedGroupTypes = new Map([
@@ -284,6 +310,44 @@ function isComposeDimension(value) {
   return (
     value === 0 || (typeof value === 'string' && /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?px$/.test(value))
   );
+}
+
+function isValidTokenValue(type, value) {
+  switch (type) {
+    case 'color':
+      return (
+        typeof value === 'string' &&
+        (/^#[0-9A-Fa-f]{3,8}$/.test(value) ||
+          /^(?:rgb|rgba|hsl|hsla|oklch|color)\(/.test(value) ||
+          ['transparent', 'currentColor'].includes(value))
+      );
+    case 'dimension':
+      return (
+        value === 0 ||
+        (typeof value === 'string' &&
+          /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:px|rem|em|%)$/.test(value))
+      );
+    case 'number':
+      return typeof value === 'number' && Number.isFinite(value);
+    case 'fontFamily':
+      return typeof value === 'string' && value.trim().length > 0;
+    case 'fontWeight':
+      return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 1000;
+    case 'lineHeight':
+      return typeof value === 'number' && Number.isFinite(value) && value > 0;
+    case 'duration':
+      return (
+        typeof value === 'string' &&
+        /^(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:ms|s)(?:\s+[A-Za-z][A-Za-z0-9-]*(?:\([^)]*\))?)?$/.test(
+          value,
+        )
+      );
+    case 'shadow':
+    case 'css':
+      return typeof value === 'string' && value.trim().length > 0;
+    default:
+      return false;
+  }
 }
 
 function issue(path, code, message) {

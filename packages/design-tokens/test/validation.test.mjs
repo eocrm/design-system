@@ -226,6 +226,43 @@ test('accepts numeric zero as the only unitless Compose dimension', () => {
   }
 });
 
+test('validates resolved values for every declared token type', () => {
+  const invalidValues = {
+    color: 'potato',
+    dimension: true,
+    number: '12',
+    fontFamily: 42,
+    fontWeight: 5500,
+    lineHeight: 0,
+    duration: 'soon',
+    shadow: false,
+    css: null,
+  };
+
+  for (const [type, value] of Object.entries(invalidValues)) {
+    assert.throws(
+      () =>
+        validateTokens(
+          document([
+            token({
+              id: `example.${type.toLowerCase()}`,
+              type,
+              value,
+              outputs: { web: { name: `--example-${type.toLowerCase()}` } },
+            }),
+          ]),
+        ),
+      (error) => {
+        assert.ok(
+          error.issues.some((issue) => issue.code === 'invalid-token-value'),
+          `${type} should reject ${String(value)}`,
+        );
+        return true;
+      },
+    );
+  }
+});
+
 test('sorts independent semantic issues by path then code', () => {
   const input = document([
     token({ id: 'color.a', value: { alias: 'color.missing' }, outputs: {} }),

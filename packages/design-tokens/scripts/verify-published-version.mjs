@@ -13,6 +13,13 @@ const coordinates = [
   '@eocrm/design-system',
   'com.eocrm.design:design-tokens-compose',
 ];
+const mavenPublications = [
+  ['kotlinMultiplatform', 'design-tokens-compose'],
+  ['android', 'design-tokens-compose-android'],
+  ['jvm', 'design-tokens-compose-jvm'],
+  ['iosArm64', 'design-tokens-compose-iosarm64'],
+  ['iosSimulatorArm64', 'design-tokens-compose-iossimulatorarm64'],
+];
 
 export async function verifyPublishedVersion(
   version,
@@ -69,21 +76,27 @@ export async function verifyPublishedVersion(
 }
 
 async function readLocalArtifacts(root) {
-  const [tokens, designSystem, pom] = await Promise.all([
+  const [tokens, designSystem, maven] = await Promise.all([
     readNpmPackIntegrity(resolve(root, 'packages/design-tokens')),
     readNpmPackIntegrity(resolve(root, 'packages/design-system')),
-    readFile(
-      resolve(
-        root,
-        'packages/design-tokens/compose/build/publications/kotlinMultiplatform/pom-default.xml',
-      ),
-    ),
+    readLocalMavenIntegrity(root),
   ]);
   return new Map([
     ['@eocrm/design-tokens', tokens],
     ['@eocrm/design-system', designSystem],
-    ['com.eocrm.design:design-tokens-compose', sha256(pom)],
+    ['com.eocrm.design:design-tokens-compose', maven],
   ]);
+}
+
+async function readLocalMavenIntegrity(root) {
+  const publicationRoot = resolve(root, 'packages/design-tokens/compose/build/publications');
+  const files = await Promise.all(
+    mavenPublications.flatMap(([publication]) => [
+      readFile(resolve(publicationRoot, publication, 'module.json')),
+      readFile(resolve(publicationRoot, publication, 'pom-default.xml')),
+    ]),
+  );
+  return fingerprint(files);
 }
 
 async function readNpmPackIntegrity(packageRoot) {
@@ -123,26 +136,70 @@ async function readNpmArtifact(packageName, version, token) {
   };
 }
 
-async function readMavenArtifact(repository, version, actor, token) {
-  const artifact = 'design-tokens-compose';
-  const url =
-    `https://maven.pkg.github.com/${repository}/com/eocrm/design/` +
-    `${artifact}/${version}/${artifact}-${version}.pom`;
+export async function readMavenArtifact(repository, version, actor, token) {
   const authorization = Buffer.from(`${actor}:${token}`).toString('base64');
-  const response = await fetch(url, {
-    headers: { Authorization: `Basic ${authorization}` },
-  });
-  if (!response.ok) {
-    throw new Error(`Maven registry returned ${response.status} for ${url}`);
+  const base = `https://maven.pkg.github.com/${repository}/com/eocrm/design`;
+  const headers = { Authorization: `Basic ${authorization}` };
+  const metadata = [];
+  const artifactChecks = [];
+
+  for (const [, artifact] of mavenPublications) {
+    const artifactBase = `${base}/${artifact}/${version}/${artifact}-${version}`;
+    const [module, pom] = await Promise.all([
+      fetchBuffer(`${artifactBase}.module`, headers),
+      fetchBuffer(`${artifactBase}.pom`, headers),
+    ]);
+    metadata.push(module, pom);
+    const document = JSON.parse(module.toString('utf8'));
+    if (document.component?.version !== version) {
+      throw new Error(
+        `${artifact}: expected module version ${version}, received ${document.component?.version}`,
+      );
+    }
+    for (const variant of document.variants ?? []) {
+      for (const file of variant.files ?? []) {
+        if (!file.url || !file.sha256) continue;
+        artifactChecks.push(
+          fetchBuffer(`${base}/${artifact}/${version}/${file.url}`, headers).then((content) => {
+            const actual = sha256Hex(content);
+            if (actual !== file.sha256) {
+              throw new Error(
+                `${artifact}/${file.url}: expected sha256 ${file.sha256}, received ${actual}`,
+              );
+            }
+          }),
+        );
+      }
+    }
   }
-  const pom = Buffer.from(await response.arrayBuffer());
-  const match = pom.toString('utf8').match(/<version>([^<]+)<\/version>/);
-  if (!match) throw new Error(`Maven POM has no version: ${url}`);
-  return { version: match[1], integrity: sha256(pom) };
+  await Promise.all(artifactChecks);
+  return { version, integrity: fingerprint(metadata) };
 }
 
 function sha256(content) {
-  return `sha256:${createHash('sha256').update(content).digest('hex')}`;
+  return `sha256:${sha256Hex(content)}`;
+}
+
+function sha256Hex(content) {
+  return createHash('sha256').update(content).digest('hex');
+}
+
+function fingerprint(files) {
+  const hash = createHash('sha256');
+  for (const file of files) {
+    hash.update(String(file.length));
+    hash.update('\0');
+    hash.update(file);
+  }
+  return `sha256:${hash.digest('hex')}`;
+}
+
+async function fetchBuffer(url, headers) {
+  const response = await fetch(url, { headers });
+  if (!response.ok) {
+    throw new Error(`Maven registry returned ${response.status} for ${url}`);
+  }
+  return Buffer.from(await response.arrayBuffer());
 }
 
 async function main(arguments_) {

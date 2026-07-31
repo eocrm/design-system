@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
-import { verifyPublishedVersion } from '../scripts/verify-published-version.mjs';
+import { readMavenArtifact, verifyPublishedVersion } from '../scripts/verify-published-version.mjs';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const scriptPath = resolve(
@@ -88,6 +88,41 @@ test('rejects a same-version artifact whose content differs', async () => {
     }),
     /@eocrm\/design-tokens: expected integrity sha256:new, received sha256:old/,
   );
+});
+
+test('rejects an incomplete Maven multiplatform publication', async () => {
+  const originalFetch = globalThis.fetch;
+  const module = JSON.stringify({
+    component: { version: '1.2.3' },
+    variants: [
+      {
+        files: [
+          {
+            url: 'contract.jar',
+            sha256: 'b7d937266e14e249149d9a9e89a06e62e8cb057c04697a0d3ab41558412bcb45',
+          },
+        ],
+      },
+    ],
+  });
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith('.module')) {
+      return new Response(module);
+    }
+    if (String(url).endsWith('.pom')) {
+      return new Response('<version>1.2.3</version>');
+    }
+    return new Response('missing', { status: 404 });
+  };
+
+  try {
+    await assert.rejects(
+      readMavenArtifact('eocrm/design-system', '1.2.3', 'actor', 'token'),
+      /Maven registry returned 404.*contract\.jar/,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 async function createFixture() {
