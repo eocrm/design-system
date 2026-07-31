@@ -422,6 +422,62 @@ describe('Rail', () => {
       vi.useRealTimers();
     }
   });
+
+  it('does not repeat a collapsed group subitem label in an automatic Tooltip', () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <Rail defaultCollapsed>
+          <Rail.Section title="Ops">
+            <Rail.Group icon={<span aria-hidden />} label="Settings">
+              <Rail.Item href="/profile">Profile</Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>,
+      );
+
+      fireEvent.pointerEnter(screen.getByRole('button', { name: /Settings/ }));
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+
+      const flyout = screen.getByRole('dialog', { name: 'Settings' });
+      const subitem = within(flyout).getByRole('link', { name: 'Profile' });
+      expect(subitem).toBeVisible();
+      fireEvent.pointerEnter(subitem);
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      expect(screen.queryByRole('tooltip')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the automatic Tooltip for a standalone collapsed item', () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <Rail defaultCollapsed>
+          <Rail.Section title="Main">
+            <Rail.Item icon={<span aria-hidden />} href="/dashboard">
+              Dashboard
+            </Rail.Item>
+          </Rail.Section>
+        </Rail>,
+      );
+
+      fireEvent.pointerEnter(screen.getByRole('link', { name: 'Dashboard' }));
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Dashboard');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('Rail — Group flyout overlay elevation (#273)', () => {

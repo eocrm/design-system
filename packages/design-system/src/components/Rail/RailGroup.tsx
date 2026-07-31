@@ -26,6 +26,7 @@ import {
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { useRail } from './Rail';
+import { RailGroupContext } from './RailGroupContext';
 import { type PolymorphicProps } from './RailItem';
 import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Rail.module.scss';
@@ -582,6 +583,8 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     />
   );
 
+  const groupedChildren = <RailGroupContext.Provider value>{children}</RailGroupContext.Provider>;
+
   return (
     <div
       ref={setGroupRef}
@@ -686,7 +689,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
         // handles the visual hide while keeping the DOM intact for `:has`.
         hidden={!collapsed && !open}
       >
-        {children}
+        {groupedChildren}
       </div>
 
       {/* Collapsed-mode flyout popover. Portaled to document.body, positioned
@@ -730,7 +733,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
                 label
               )}
             </div>
-            <div className={styles.flyoutBody}>{children}</div>
+            <div className={styles.flyoutBody}>{groupedChildren}</div>
           </div>,
           document.body,
         )}
