@@ -29,6 +29,18 @@ Missing any of these = component does not exist as far as the design system is c
 - **Use `Stack` / `Cluster` for layout**, not ad-hoc `display: flex` divs.
 - **Imports in playground always use `@eocrm/design-system`**, never relative paths into the library. Only exception: demo `?raw` source-display imports via the `@lib-source/*` alias.
 
+## Planning proportionality
+
+For small ad-hoc tasks, implement directly without creating a Superpowers
+design spec or implementation-plan document. This includes localized
+documentation, copy, badge, comment, and similarly narrow one-file changes
+whose intended result is already explicit.
+
+Use the full brainstorm → spec → plan workflow only when the work needs design
+decisions, spans multiple coupled changes, or the user explicitly requests a
+written spec or plan. Skipping planning paperwork does not skip relevant tests,
+formatting, verification, or PR/review gates.
+
 ## Git workflow
 
 **Code, configs, and workflows go through PRs — direct pushes to `main` are prohibited.**
