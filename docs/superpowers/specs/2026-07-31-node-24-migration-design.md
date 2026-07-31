@@ -16,6 +16,9 @@ gate must pass on Node 24 without weakening test assertions.
   claim support for untested future majors.
 - Change the Node setup step in `quality.yml`, `release.yml`, and
   `deploy-playground.yml` from Node 22 to Node 24.
+- Add an explicit Node 24 setup step to Release's `detect-library-changes` job
+  before it invokes the repository's Node-based detector; it must not inherit
+  the runner's unspecified system Node.
 - Do not pin an exact patch version. CI and developers should receive Node 24
   maintenance releases without repository churn.
 
