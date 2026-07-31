@@ -51,14 +51,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Need the complete push range, including forced-push ancestry checks.
+          # Need release tags and complete history to detect every unreleased change.
           fetch-depth: 0
 
       - name: Detect library changes
         id: diff
         run: |
           set -euo pipefail
-          changed=$(node packages/design-tokens/scripts/detect-library-changes.mjs "${{ github.event.before }}" "${{ github.sha }}")
+          changed=$(node packages/design-tokens/scripts/detect-library-changes.mjs "${{ github.sha }}")
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
           if [ "$changed" = "true" ]; then
             echo "Library changed — publish will run."

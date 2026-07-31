@@ -320,6 +320,18 @@ function inspectAliases(
       ),
     );
   }
+  // Alias compatibility is deliberately exact: every current alias preserves
+  // its declared type, and each type has distinct validation/rendering semantics.
+  if (source && source.type !== target.type) {
+    issues.push(
+      issue(
+        aliasPath,
+        'incompatible-alias-type',
+        `${source.type} token cannot alias ${target.type} token ${target.id}`,
+      ),
+    );
+    return;
+  }
   if (stack.includes(target.id)) {
     const cycle = [...stack.slice(stack.indexOf(target.id)), target.id];
     issues.push(issue(aliasPath, 'alias-cycle', `alias cycle: ${cycle.join(' -> ')}`));

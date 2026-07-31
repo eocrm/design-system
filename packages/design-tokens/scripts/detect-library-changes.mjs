@@ -1,18 +1,14 @@
 import { spawnSync } from 'node:child_process';
 
-const [before, after] = process.argv.slice(2);
-const zeroSha = '0000000000000000000000000000000000000000';
+const [after] = process.argv.slice(2);
 
-if (!before || !after) {
-  process.stderr.write('usage: node detect-library-changes.mjs <before-sha> <after-sha>\n');
+if (!after) {
+  process.stderr.write('usage: node detect-library-changes.mjs <after-sha>\n');
   process.exitCode = 2;
-} else if (before === zeroSha) {
-  process.stdout.write('true\n');
-} else if (!isAncestor(before, after)) {
-  process.stdout.write('true\n');
 } else {
-  const diff = git('diff', '--name-only', before, after);
-  if (diff.status !== 0) {
+  const latestTag = latestSemanticReleaseTag(after);
+  const diff = latestTag && git('diff', '--name-only', latestTag, after);
+  if (!diff || diff.status !== 0) {
     process.stdout.write('true\n');
   } else {
     const changed = diff.stdout
@@ -28,8 +24,35 @@ if (!before || !after) {
   }
 }
 
-function isAncestor(before, after) {
-  return git('merge-base', '--is-ancestor', before, after).status === 0;
+function latestSemanticReleaseTag(after) {
+  const result = git('tag', '--list', 'v*', '--sort=-v:refname');
+  if (result.status !== 0) return undefined;
+  const tag = result.stdout.split('\n').find((candidate) => isSemanticReleaseTag(candidate));
+  if (!tag) return undefined;
+  const commit = git('rev-parse', '--verify', `${tag}^{commit}`);
+  if (
+    commit.status !== 0 ||
+    git('merge-base', '--is-ancestor', commit.stdout.trim(), after).status !== 0
+  ) {
+    return undefined;
+  }
+  return tag;
+}
+
+function isSemanticReleaseTag(tag) {
+  const match = tag.match(
+    /^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/,
+  );
+  if (!match) return false;
+  return (
+    match[1] === undefined ||
+    match[1]
+      .split('.')
+      .every(
+        (identifier) =>
+          !/^[0-9]+$/.test(identifier) || identifier === '0' || !identifier.startsWith('0'),
+      )
+  );
 }
 
 function git(...args) {

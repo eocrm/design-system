@@ -184,6 +184,70 @@ test('rejects a web alias whose target has no web output at the alias edge', () 
   );
 });
 
+test('rejects direct aliases between different declared token types', () => {
+  const input = document([
+    token({
+      id: 'css.dimension',
+      type: 'css',
+      value: '4px',
+      outputs: { web: { name: '--css-dimension' } },
+    }),
+    token({
+      id: 'space.alias',
+      type: 'dimension',
+      value: { alias: 'css.dimension' },
+      outputs: { web: { name: '--space-alias' } },
+    }),
+  ]);
+
+  assert.throws(
+    () => validateTokens(input),
+    (error) => {
+      assert.ok(error instanceof TokenSemanticError);
+      assert.deepEqual(error.issues, [
+        {
+          path: '/tokens/1/value/alias',
+          code: 'incompatible-alias-type',
+          message: 'dimension token cannot alias css token css.dimension',
+        },
+      ]);
+      return true;
+    },
+  );
+});
+
+test('rejects incompatible alias types at each themed alias path', () => {
+  const input = document([
+    token({
+      id: 'css.color',
+      type: 'css',
+      value: { light: '#ffffff', dark: '#000000' },
+      outputs: { web: { name: '--css-color' } },
+    }),
+    token({
+      id: 'color.alias',
+      type: 'color',
+      value: { light: { alias: 'css.color' }, dark: { alias: 'css.color' } },
+      outputs: { web: { name: '--color-alias' } },
+    }),
+  ]);
+
+  assert.throws(
+    () => validateTokens(input),
+    (error) => {
+      assert.ok(error instanceof TokenSemanticError);
+      assert.deepEqual(
+        error.issues.map(({ path, code }) => ({ path, code })),
+        [
+          { path: '/tokens/1/value/dark/alias', code: 'incompatible-alias-type' },
+          { path: '/tokens/1/value/light/alias', code: 'incompatible-alias-type' },
+        ],
+      );
+      return true;
+    },
+  );
+});
+
 test('accepts six- and eight-digit Compose colors but rejects malformed values', () => {
   for (const value of ['#000000', '#00000080']) {
     assert.doesNotThrow(() =>
