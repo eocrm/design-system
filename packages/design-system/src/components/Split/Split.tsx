@@ -47,12 +47,9 @@ export interface SplitProps extends HTMLAttributes<HTMLDivElement> {
    * `lg` 768px. Same scale as `Grid`'s `collapseBelow`. Without it a pinned
    * `asideWidth` rail squeezes `main` to nothing on narrow screens.
    *
-   * When stacked, both panes span the full grid, which means a pinned
-   * `asideWidth` acts as a FLOOR on their width — the panes are at least
-   * `asideWidth + gap` wide even if the container is narrower, and overflow
-   * horizontally past that point. Keep `asideWidth` comfortably below the
-   * narrowest container you expect (e.g. `asideWidth="320px"` inside a 300px
-   * drawer still overflows after collapsing).
+   * A pinned `asideWidth` is preserved while the panes are side-by-side and
+   * space is available, but can shrink as the container narrows so the stacked
+   * panes stay within the split.
    *
    * Collapsed panes stack in **DOM order**, not always aside-first: with
    * the default `side="start"` that's aside → main; with `side="end"` it's
