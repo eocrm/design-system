@@ -27,4 +27,3 @@ The existing CI badge and playground deployment badge remain unchanged.
   latest-tag endpoint.
 - Confirm each badge links to its corresponding artifact page.
 - Run the repository formatting check.
-

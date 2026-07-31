@@ -1,7 +1,9 @@
 # EOCRM Design System
 
 [![CI](https://img.shields.io/github/actions/workflow/status/eocrm/design-system/release.yml?branch=main&label=ci)](https://github.com/eocrm/design-system/actions/workflows/release.yml)
-[![Package](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=package)](https://github.com/eocrm/design-system/pkgs/npm/design-system)
+[![design-system](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=design-system)](https://github.com/eocrm/design-system/pkgs/npm/design-system)
+[![design-tokens](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=design-tokens)](https://github.com/eocrm/design-system/pkgs/npm/design-tokens)
+[![compose tokens](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=compose%20tokens)](https://github.com/eocrm/design-system/packages)
 [![Playground](https://img.shields.io/github/deployments/eocrm/design-system/github-pages?label=playground)](https://eocrm.github.io/design-system/)
 
 React 19 component library and shared web/Compose token contract for the EOCRM. Source-distributed via GitHub Packages, opinionated tokens, Atlassian-inspired aesthetic, **designed to be consumed primarily by AI coding agents**.
