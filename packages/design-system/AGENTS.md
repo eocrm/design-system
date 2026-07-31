@@ -54,7 +54,7 @@ const darkTokens = useMemo(() => ({ '--color-accent': '#a78bfa' }), []);
 </AppProvider>;
 ```
 
-`tokens` apply in light **and** dark; `darkTokens` refine the dark scope only. They're emitted as a single declarative `<style>` that layers over the [dark theme](#dark-theme) correctly. Any design token can be overridden — see `src/styles/tokens.scss` for the full set.
+`tokens` apply in light **and** dark; `darkTokens` refine the dark scope only. They're emitted as a single declarative `<style>` that layers over the [dark theme](#dark-theme) correctly. Any design token can be overridden — see the generated `@eocrm/design-tokens` Sass contract for the full CSS custom-property set. Contributors change shared values only in `packages/design-tokens/src/tokens.json`; `src/styles/tokens.scss` remains the stable consumer entry point.
 
 ---
 
@@ -2014,7 +2014,7 @@ function TeamChip({ team }: { team: string }) {
 - **Categorical, not semantic.** For status, use `<Badge tone="success" />` etc. Palette colors carry no built-in meaning.
 - Consumers own the **domain → color mapping** (e.g., per-event-namespace, per-team, per-tag). The library provides only the colors and the type surface.
 - `<Checkbox color="violet">` is the one library component that accepts palette colors out-of-the-box — tints the checked / indeterminate fill. Others (Badge, FilterChip) keep their existing semantic-tone unions; consumers build custom chips when they want palette colors.
-- Tokens live in `tokens.scss` as `--color-palette-<name>-bg` and `--color-palette-<name>-fg`.
+- The generated token contract exposes `--color-palette-<name>-bg` and `--color-palette-<name>-fg`; contributors change their source definitions in `packages/design-tokens/src/tokens.json`.
 
 ### `<FilterChip>` — dismissible "active filter" pill
 

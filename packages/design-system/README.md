@@ -2,6 +2,10 @@
 
 React 19 design system for the EOCRM. Source-distributed (consumers' bundlers process `.tsx` and `.module.scss` directly — no compile step in this package).
 
+Its web tokens are generated and versioned by `@eocrm/design-tokens`. Existing
+consumer imports remain unchanged: the design-system Sass entry points forward
+to the token package.
+
 Component contracts live in **JSDoc on the components themselves** — hover any import in your editor. AI agents consuming this package should read **[AGENTS.md](./AGENTS.md)** first.
 
 ---
@@ -192,9 +196,10 @@ Releases are **automatic**. Merging to `main` triggers the `Release` workflow (`
 
 1. Runs the quality gate (typecheck, test, lint, build, tarball-contents check).
 2. If the library actually changed, computes the next version from the latest `v*` git tag (patch bump by default) and refuses if that tag already exists.
-3. Publishes `@eocrm/design-system` to GitHub Packages with `NODE_AUTH_TOKEN = GITHUB_TOKEN`.
-4. Creates and pushes a `v<version>` git tag.
-5. Re-deploys the playground (see below).
+3. Synchronizes `@eocrm/design-tokens`, `@eocrm/design-system`, and the generated token contract to one version.
+4. Publishes the token npm package, then the design-system npm package, then `com.eocrm.design:design-tokens-compose`.
+5. Verifies all three registry versions before creating and pushing the `v<version>` git tag.
+6. Re-deploys the playground (see below).
 
 There is no manual "Run workflow" button — merging to `main` is the only way to release. Playground-only changes skip the publish step (no version bump for a demo tweak) but still redeploy the playground.
 

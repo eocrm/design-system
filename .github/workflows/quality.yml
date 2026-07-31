@@ -25,8 +25,27 @@ jobs:
           node-version: "22"
           cache: "npm"
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36"
+
       - name: Install
         run: npm ci
+
+      - name: Verify design-token contract
+        run: npm run tokens:check
+
+      - name: Verify Compose multiplatform artifact
+        working-directory: packages/design-tokens/compose
+        run: ./gradlew --no-daemon jvmTest testAndroidHostTest assemble
 
       - name: Prettier
         run: npm run format:check
@@ -44,13 +63,49 @@ jobs:
         run: npm run build
 
       - name: Verify tarball contents
-        working-directory: packages/design-system
         run: |
           set -euo pipefail
-          npm pack --dry-run --json > /tmp/pack.json
-          # Fail loudly if test files or internal-only paths leaked.
-          if grep -E '\.test\.(t|j)sx?|\.spec\.|/types/|CLAUDE\.md|tsconfig' /tmp/pack.json; then
-            echo "::error::Tarball contains files that should be excluded"
-            exit 1
-          fi
-          echo "Tarball OK"
+          npm pack --dry-run --json --workspace @eocrm/design-tokens > /tmp/tokens-pack.json
+          npm pack --dry-run --json --workspace @eocrm/design-system > /tmp/design-system-pack.json
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+
+          const checks = [
+            {
+              name: '@eocrm/design-tokens',
+              path: '/tmp/tokens-pack.json',
+              forbidden: [
+                /(?:^|\/)src\//,
+                /(?:^|\/)test\//,
+                /CLAUDE\.md$/,
+                /(?:^|\/)compose\//,
+                /(?:^|\/)scripts\//,
+              ],
+            },
+            {
+              name: '@eocrm/design-system',
+              path: '/tmp/design-system-pack.json',
+              forbidden: [
+                /\.test\.(?:t|j)sx?$/,
+                /\.spec\./,
+                /(?:^|\/)types\//,
+                /CLAUDE\.md$/,
+                /tsconfig/,
+                /(?:^|\/)compose\//,
+              ],
+            },
+          ];
+
+          for (const check of checks) {
+            const [{ files }] = JSON.parse(await readFile(check.path, 'utf8'));
+            const leaked = files
+              .map(({ path }) => path)
+              .filter((path) => check.forbidden.some((pattern) => pattern.test(path)));
+            if (leaked.length > 0) {
+              console.error(`::error::${check.name} tarball leaked:\n${leaked.join('\n')}`);
+              process.exitCode = 1;
+            } else {
+              console.log(`${check.name} tarball OK (${files.length} files)`);
+            }
+          }
+          NODE

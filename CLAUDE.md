@@ -1,9 +1,10 @@
 # CLAUDE.md — repo root
 
-Monorepo for the EOCRM design system. Two packages, managed by npm workspaces.
+Monorepo for the EOCRM design system. Three packages, managed by npm workspaces.
 
 ## Layout
 
+- `packages/design-tokens/` — validated token source plus generated Sass and Kotlin Multiplatform/Compose contracts.
 - `packages/design-system/` — `@eocrm/design-system`. The library that ships to the CRM via GitHub Packages.
 - `packages/playground/` — local dev gallery + demo pages. **Never published.** The most realistic preview of how the library behaves when consumed.
 
@@ -23,10 +24,22 @@ Missing any of these = component does not exist as far as the design system is c
 
 ## Conventions (apply everywhere)
 
-- **Tokens, not raw values.** No raw colors / spacing / radii in any `.module.scss` outside `tokens.scss`. Stylelint enforces with `scale-unlimited/declaration-strict-value`.
+- **Tokens, not raw values.** No raw colors / spacing / radii in any `.module.scss`. Shared token values are edited only in `packages/design-tokens/src/tokens.json`; generated Sass and Kotlin must never be edited directly. Run `npm run tokens:check` after every token change.
 - **Components don't own layout.** No `margin`, `position`, `top/left/right/bottom`, `flex: 1`, `width` (other than `100%` of intrinsic) inside a component's `.module.scss`. Layout is the parent's job. See `packages/design-system/CLAUDE.md` (Rule 4).
 - **Use `Stack` / `Cluster` for layout**, not ad-hoc `display: flex` divs.
 - **Imports in playground always use `@eocrm/design-system`**, never relative paths into the library. Only exception: demo `?raw` source-display imports via the `@lib-source/*` alias.
+
+## Planning proportionality
+
+For small ad-hoc tasks, implement directly without creating a Superpowers
+design spec or implementation-plan document. This includes localized
+documentation, copy, badge, comment, and similarly narrow one-file changes
+whose intended result is already explicit.
+
+Use the full brainstorm → spec → plan workflow only when the work needs design
+decisions, spans multiple coupled changes, or the user explicitly requests a
+written spec or plan. Skipping planning paperwork does not skip relevant tests,
+formatting, verification, or PR/review gates.
 
 ## Git workflow
 

@@ -1,0 +1,30 @@
+{
+  "name": "@eocrm/design-tokens",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "files": [
+    "generated",
+    "README.md"
+  ],
+  "exports": {
+    "./styles/tokens.scss": "./generated/web/tokens.scss",
+    "./styles/dark.scss": "./generated/web/dark.scss",
+    "./manifest.json": "./generated/manifest.json",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "validate": "node scripts/generate.mjs --validate-only",
+    "generate": "node scripts/generate.mjs",
+    "check": "node scripts/check-generated.mjs && node scripts/check-web-compat.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
+}

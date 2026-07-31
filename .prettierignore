@@ -2,6 +2,8 @@
 dist/
 dist-ssr/
 **/dist/
+**/.gradle/
+**/build/
 *.tsbuildinfo
 
 # Dependencies

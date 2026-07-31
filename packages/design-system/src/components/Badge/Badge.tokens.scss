@@ -1,24 +1,18 @@
-// Badge.tokens.scss — Component-scoped tokens for <Badge>. Each tone has
-// its own bg + fg pair (--badge-bg-<tone> / --badge-fg-<tone>). Non-tone
-// tokens cover shape, sizing, and the stripe variant's body + border.
-// Old --color-badge-<tone>-* names are kept as deprecated aliases in
-// tokens.scss — see that file.
+// Badge.tokens.scss — React-owned component tokens for <Badge>.
 :root {
-  // Per-tone fill (filled variant) — LITERAL hex, moved from tokens.scss
-  --badge-bg-neutral: #f4f5f7;
-  --badge-fg-neutral: #42526e;
-  --badge-bg-info: #deebff;
-  --badge-fg-info: #0747a6;
-  --badge-bg-success: #e3fcef;
-  --badge-fg-success: #006644;
-  --badge-bg-warning: #fffae6;
-  --badge-fg-warning: #974f00;
   --badge-bg-danger: #ffebe6;
-  --badge-fg-danger: #bf2600;
+  --badge-bg-info: #deebff;
+  --badge-bg-neutral: #f4f5f7;
   --badge-bg-purple: #eae6ff;
+  --badge-bg-success: #e3fcef;
+  --badge-bg-warning: #fffae6;
+  --badge-fg-danger: #bf2600;
+  --badge-fg-info: #0747a6;
+  --badge-fg-neutral: #42526e;
   --badge-fg-purple: #403294;
+  --badge-fg-success: #006644;
+  --badge-fg-warning: #974f00;
 
-  // Shape + typography (defaults to existing primitives)
   --badge-radius: var(--radius-sm);
   --badge-font-size: var(--font-size-xs);
   --badge-font-weight: var(--font-weight-semibold);
@@ -26,21 +20,12 @@
   --badge-line-height: var(--line-height-none);
   --badge-gap: var(--space-1);
 
-  // Size variants (heights + padding)
   --badge-height-sm: var(--size-badge-sm);
   --badge-height-md: var(--size-badge);
   --badge-padding-x-sm: var(--space-1);
   --badge-padding-x-md: var(--space-2);
-
-  // Optical-centering offset. The line-box is mathematically centered via
-  // align-items: center, but the font's descender space (~15-20% of em-height)
-  // is unused when the badge text has no descender glyphs (cap-letters,
-  // lowercase without g/j/p/q/y). That makes the visible glyphs sit ~1px
-  // below the geometric center. A small padding-bottom shrinks the content
-  // area from the bottom, shifting the line-box up so visible glyphs center.
   --badge-optical-offset-bottom: 1px;
 
-  // Stripe variant (rectangular block with left border)
   --badge-stripe-border-width: var(--border-width-strong);
   --badge-stripe-font-weight: var(--font-weight-medium);
   --badge-stripe-padding-left: var(--space-2);
@@ -48,24 +33,65 @@
   --badge-stripe-bg-neutral: var(--color-bg-muted);
   --badge-stripe-fg-neutral: var(--color-fg);
   --badge-stripe-border-color-neutral: var(--color-fg-muted);
-
   --badge-stripe-bg-info: var(--color-info-bg-subtle);
   --badge-stripe-fg-info: var(--color-info);
   --badge-stripe-border-color-info: var(--color-info);
-
   --badge-stripe-bg-success: var(--color-success-bg-subtle);
   --badge-stripe-fg-success: var(--color-success);
   --badge-stripe-border-color-success: var(--color-success);
-
   --badge-stripe-bg-warning: var(--color-warning-bg-subtle);
   --badge-stripe-fg-warning: var(--color-warning);
   --badge-stripe-border-color-warning: var(--color-warning);
-
   --badge-stripe-bg-danger: var(--color-danger-bg-subtle);
   --badge-stripe-fg-danger: var(--color-danger);
   --badge-stripe-border-color-danger: var(--color-danger);
-
   --badge-stripe-bg-purple: var(--badge-bg-purple);
   --badge-stripe-fg-purple: var(--badge-fg-purple);
   --badge-stripe-border-color-purple: var(--badge-fg-purple);
+
+  // Deprecated public compatibility names.
+  --color-badge-danger-bg: var(--badge-bg-danger);
+  --color-badge-danger-fg: var(--badge-fg-danger);
+  --color-badge-info-bg: var(--badge-bg-info);
+  --color-badge-info-fg: var(--badge-fg-info);
+  --color-badge-neutral-bg: var(--badge-bg-neutral);
+  --color-badge-neutral-fg: var(--badge-fg-neutral);
+  --color-badge-purple-bg: var(--badge-bg-purple);
+  --color-badge-purple-fg: var(--badge-fg-purple);
+  --color-badge-success-bg: var(--badge-bg-success);
+  --color-badge-success-fg: var(--badge-fg-success);
+  --color-badge-warning-bg: var(--badge-bg-warning);
+  --color-badge-warning-fg: var(--badge-fg-warning);
+}
+
+:root[data-theme='dark'] {
+  --badge-bg-danger: #42201d;
+  --badge-bg-info: #16324f;
+  --badge-bg-neutral: #2c333a;
+  --badge-bg-purple: #2b2c4d;
+  --badge-bg-success: #1c3d31;
+  --badge-bg-warning: #3d3216;
+  --badge-fg-danger: #ff9c8f;
+  --badge-fg-info: #9dc3ff;
+  --badge-fg-neutral: #c7d1db;
+  --badge-fg-purple: #b8acf6;
+  --badge-fg-success: #7ee2b8;
+  --badge-fg-warning: #f5cd47;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --badge-bg-danger: #42201d;
+    --badge-bg-info: #16324f;
+    --badge-bg-neutral: #2c333a;
+    --badge-bg-purple: #2b2c4d;
+    --badge-bg-success: #1c3d31;
+    --badge-bg-warning: #3d3216;
+    --badge-fg-danger: #ff9c8f;
+    --badge-fg-info: #9dc3ff;
+    --badge-fg-neutral: #c7d1db;
+    --badge-fg-purple: #b8acf6;
+    --badge-fg-success: #7ee2b8;
+    --badge-fg-warning: #f5cd47;
+  }
 }

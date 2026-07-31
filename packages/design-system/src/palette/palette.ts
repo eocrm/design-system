@@ -6,8 +6,10 @@
  * NOT semantic — use `BadgeTone` (info/success/warning/danger/…)
  * for status. Palette colors carry no meaning beyond visual identity.
  *
- * Tokens live in `src/styles/tokens.scss` under the
+ * The generated `@eocrm/design-tokens` Sass contract exposes the
  * `--color-palette-<name>-bg/--color-palette-<name>-fg` namespace.
+ * Contributors change source definitions in
+ * `packages/design-tokens/src/tokens.json`.
  */
 export type PaletteColor =
   | 'red'

@@ -34,7 +34,7 @@ When adding `src/components/<Name>/`, the same change must add `packages/playgro
 
 ### 3. No raw values in `.module.scss`
 
-Colors, spacing, radii, shadows, font sizes — all via `var(--...)`. If you need a value that isn't a token, **add it to `src/styles/tokens.scss` first**, then use it. Stylelint blocks `color: #fff` and `background: red`-style raw values.
+Colors, spacing, radii, shadows, font sizes — all via `var(--...)`. If you need a shared value that is not a token, add it to `packages/design-tokens/src/tokens.json`, regenerate, and run `npm run tokens:check`. Never edit `src/styles/tokens.scss` or generated token files directly. Stylelint blocks `color: #fff` and `background: red`-style raw values.
 
 **Component tokens layer:** Within a component's `.module.scss`, prefer the component's own tokens (`var(--button-bg)`) over primitives (`var(--color-accent)`) directly. The component tokens live in `Component.tokens.scss` and default to the primitive — so the resolved value is identical, but the SCSS reads as "the button's background" instead of "the accent color we happen to use here." See `docs/superpowers/specs/2026-05-27-component-tokens-design.md` and AGENTS.md's "Theming via component tokens" section. Not enforced by stylelint (yet); convention-only in v1.
 
@@ -126,13 +126,13 @@ The existing 8 components are fully JSDoc'd — match that pattern.
 
 ### 8. Pre-push review-fix cycle (library changes only)
 
-Before pushing changes that touch `packages/design-system/**`, you MUST run the review-fix loop — invoke the **`pre-push-review`** skill (variant A) and follow it exactly. This is not optional, including for one-line SCSS tweaks. The library is consumed by AI agents who pattern-match against whatever we ship — a missing JSDoc, broken ARIA, or token slip propagates to every page they generate.
+Before completing a pull request that touches `packages/design-system/**`, you MUST run the review-fix loop — invoke the **`pre-push-review`** skill (variant A) and follow it exactly. Run baseline gates, open the PR as a draft, then autonomously review, fix, verify, commit, and push until a clean two-reviewer round allows the PR to be marked ready. This is not optional, including for one-line SCSS tweaks. The library is consumed by AI agents who pattern-match against whatever we ship — a missing JSDoc, broken ARIA, or token slip propagates to every page they generate.
 
 **When this rule applies**: any change inside `packages/design-system/` — component code, tests, tokens, SCSS, `package.json`, `AGENTS.md`, `README.md`, or this `CLAUDE.md`.
 
 **When this rule does NOT apply**: changes scoped to `packages/playground/**`, root `README.md`, root `CLAUDE.md`, GitHub workflows, the Makefile, or other non-library files. Push those normally.
 
-The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch.
+The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Each review round requires at least two independent fresh-context agents inheriting the session's currently selected/default model; do not override the reviewer model. The first round reviews the complete branch diff. Later rounds review only commits since the previously reviewed head, together with the findings those commits are meant to fix.
 
 ### 9. Every user-facing string goes through i18n
 
@@ -177,11 +177,15 @@ See `AGENTS.md` "Localization (i18n)" section for the consumer-facing API and ho
 - App-specific business logic — CRM code
 - `react-router`, `prismjs`, `prism-react-renderer`, `@types/prismjs` — playground-only deps. **Never import them from a library file**, even casually. They're not in this package's `dependencies` and will fail in the consumer.
 
-## Adding a token
+## Changing shared tokens
 
 Tokens are CSS custom properties (NOT SCSS variables), so they're theme-able at runtime. Naming: `--<category>-<name>(-<modifier>)`. Examples: `--color-accent-hover`, `--space-3`, `--radius-md`, `--shadow-lg`.
 
-Add to `src/styles/tokens.scss` with a `:root { ... }` declaration. Document its purpose with a SCSS comment if not self-evident.
+Add shared tokens to `packages/design-tokens/src/tokens.json`, including their
+web and/or Compose outputs. Then run `npm run tokens:generate` and
+`npm run tokens:check`, and commit the generated outputs. Do not edit
+`src/styles/tokens.scss`, `packages/design-tokens/generated/**`, or generated
+Kotlin files directly.
 
 ## File layout for a new component
 
