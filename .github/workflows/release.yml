@@ -183,32 +183,16 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -uo pipefail
-          publish_compose_task() {
-            task="$1"
-            log="compose-${task}.out"
-            packages/design-tokens/compose/gradlew \
-              --no-daemon \
-              -p packages/design-tokens/compose \
-              -Pversion="${{ steps.version.outputs.value }}" \
-              "$task" 2>&1 | tee "$log"
-            status=${PIPESTATUS[0]}
-            if [ "$status" -eq 0 ]; then
-              echo "Completed $task."
-            elif grep -qiE '409|already exists|already been published' "$log"; then
-              echo "::warning::$task already has this version; continuing with remaining publications."
-            else
-              exit "$status"
-            fi
-          }
-
-          # Publish independently so a 409 on an existing variant cannot stop
-          # Gradle before it attempts a later, missing variant.
-          publish_compose_task publishAndroidPublicationToGitHubPackagesRepository
-          publish_compose_task publishIosArm64PublicationToGitHubPackagesRepository
-          publish_compose_task publishIosSimulatorArm64PublicationToGitHubPackagesRepository
-          publish_compose_task publishJvmPublicationToGitHubPackagesRepository
-          publish_compose_task publishKotlinMultiplatformPublicationToGitHubPackagesRepository
+          set -euo pipefail
+          packages/design-tokens/compose/gradlew \
+            --no-daemon \
+            -p packages/design-tokens/compose \
+            -Pversion="${{ steps.version.outputs.value }}" \
+            -Dmaven.repo.local="$RUNNER_TEMP/compose-maven" \
+            publishToMavenLocal
+          node packages/design-tokens/scripts/repair-compose-publication.mjs \
+            "$RUNNER_TEMP/compose-maven" \
+            "${{ steps.version.outputs.value }}"
 
       - name: Verify published artifacts
         env:

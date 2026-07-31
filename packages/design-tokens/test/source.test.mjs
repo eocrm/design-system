@@ -7,6 +7,10 @@ import { resolveTokenValue } from '../scripts/lib/validate-tokens.mjs';
 
 const tokenSourcePath = new URL('../src/tokens.json', import.meta.url);
 const fixturePath = new URL('./fixtures/current-web-contract.json', import.meta.url);
+const badgeTokenPath = new URL(
+  '../../design-system/src/components/Badge/Badge.tokens.scss',
+  import.meta.url,
+);
 const expectedComposeInventory = {
   colors: [
     'color.accent',
@@ -246,6 +250,22 @@ test('maps every captured public variable to exactly one web output', async () =
   assert.equal(capturedNames.size, 289);
   assert.equal(webNames.length, 289);
   assert.deepEqual(webNames.slice().sort(), [...capturedNames].sort());
+});
+
+test('does not redeclare shared Badge variables in the component compatibility file', async () => {
+  const [tokens, badgeSource] = await Promise.all([
+    loadTokenDocument(tokenSourcePath),
+    readFile(badgeTokenPath, 'utf8'),
+  ]);
+  const sharedNames = new Set(
+    tokens.tokens.map((token) => token.outputs.web?.name).filter(Boolean),
+  );
+  const componentNames = [...badgeSource.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map(([, name]) => name);
+
+  assert.deepEqual(
+    componentNames.filter((name) => sharedNames.has(name)),
+    [],
+  );
 });
 
 test('reconstructs every captured declaration value and scope from the dataset', async () => {

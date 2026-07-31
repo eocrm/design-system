@@ -112,6 +112,19 @@ test('checks out full history and passes the complete push range to the detector
   );
 });
 
+test('stages Compose publications locally and repairs every Maven file', async () => {
+  const workflow = await readFile(workflowPath, 'utf8');
+  const composeStep = workflow.slice(
+    workflow.indexOf('      - name: Publish Compose tokens'),
+    workflow.indexOf('      - name: Verify published artifacts'),
+  );
+
+  assert.match(composeStep, /publishToMavenLocal/);
+  assert.match(composeStep, /-Dmaven\.repo\.local="\$RUNNER_TEMP\/compose-maven"/);
+  assert.match(composeStep, /repair-compose-publication\.mjs/);
+  assert.doesNotMatch(composeStep, /grep -qiE '409/);
+});
+
 async function createRepository() {
   const fixture = await mkdtemp(join(tmpdir(), 'eocrm-release-diff-'));
   runGit(fixture, 'init', '-qb', 'main');
