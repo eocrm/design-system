@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
-import { mergeRefs } from '../_internal/refs';
 import styles from './Tabs.module.scss';
 
 /** One tab in the tablist. */
@@ -157,11 +156,12 @@ function sanitizeId(raw: string): string {
 const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
 /**
- * Tab strip (horizontal or vertical) with optional count chips and leading/
- * trailing adornments. Controlled by the caller — pass `activeId` and
- * `onChange`. Implements the full WAI-ARIA Tabs pattern: roving `tabIndex`,
- * arrow-key navigation (Left/Right when horizontal, Up/Down when vertical) +
- * Home/End, `aria-controls` + `aria-orientation`, and per-tab/per-panel ids.
+ * Responsive tab strip (horizontal, vertical, or automatic) with optional
+ * count chips and leading/trailing adornments. Controlled by the caller —
+ * pass `activeId` and `onChange`. Implements the full WAI-ARIA Tabs pattern:
+ * roving `tabIndex`, arrow-key navigation (Left/Right when horizontal,
+ * Up/Down when vertical) + Home/End, `aria-controls` + `aria-orientation`,
+ * and per-tab/per-panel ids.
  *
  * @example
  * // Basic controlled usage:
@@ -257,7 +257,6 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   const reactId = useId();
   const prefix = panelIdPrefix ?? sanitizeId(reactId);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const tablistRef = useRef<HTMLDivElement>(null);
   const scrollWrapRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const endContentRef = useRef<HTMLDivElement>(null);
@@ -305,7 +304,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     observer.observe(root);
     if (end) observer.observe(end);
     return () => observer.disconnect();
-  }, [orientation, hasEndContent, endContent]);
+  }, [orientation, hasEndContent]);
 
   // Dev-only: warn on duplicate ids. The ref map would silently collapse them
   // and roving tabindex would behave unpredictably. Run as an effect (not in
@@ -453,7 +452,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
         // Consumer-controlled props come first so component-owned attrs below
         // (role, aria-orientation, onKeyDown, className) always win.
         {...props}
-        ref={mergeRefs(ref, tablistRef)}
+        ref={ref}
         role="tablist"
         aria-orientation={effectiveOrientation}
         onKeyDown={onKeyDown}

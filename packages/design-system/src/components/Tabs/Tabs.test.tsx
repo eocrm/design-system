@@ -319,6 +319,27 @@ describe('Tabs', () => {
       expect(ref.current).toHaveAttribute('aria-orientation', 'vertical');
     });
 
+    it('keeps a stable callback ref attached across automatic orientation changes and cleans it up on unmount', () => {
+      const observer = stubResizeObserver();
+      const cleanup = vi.fn();
+      const ref = vi.fn((node: HTMLDivElement | null) => {
+        if (node) return cleanup;
+      });
+      const { unmount } = render(
+        <Tabs ref={ref} items={items} activeId="a" onChange={noop} orientation="auto" />,
+      );
+      const tablist = screen.getByRole('tablist');
+
+      observer.resize(tablist.parentElement as HTMLDivElement, 320);
+
+      expect(ref).toHaveBeenCalledOnce();
+      expect(ref).toHaveBeenCalledWith(tablist);
+
+      unmount();
+
+      expect(cleanup).toHaveBeenCalledOnce();
+    });
+
     it('observes the stable root and end-content width when endContent shares the available row', () => {
       const observer = stubResizeObserver();
       const { container } = render(
