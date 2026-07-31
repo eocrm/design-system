@@ -75,14 +75,24 @@ steps:
   assert.throws(() => assertWorkflowUsesNode24(workflow, 1, 'version fixture'));
 });
 
+test('rejects node-version outside the setup-node with mapping', () => {
+  const workflow = `
+steps:
+  - name: Setup Node
+    uses: actions/setup-node@v4
+    env:
+      node-version: "24"
+`;
+
+  assert.throws(() => assertWorkflowUsesNode24(workflow, 1, 'env fixture'));
+});
+
 function assertWorkflowUsesNode24(workflow, expectedSteps, path) {
   const setupNodeSteps = extractSetupNodeSteps(workflow);
 
   assert.equal(setupNodeSteps.length, expectedSteps, `${path} actions/setup-node@v4 count`);
   for (const [index, step] of setupNodeSteps.entries()) {
-    const nodeVersions = [...step.matchAll(/^[ \t]*node-version:\s*(.*?)\s*$/gm)].map(
-      (match) => match[1],
-    );
+    const nodeVersions = extractWithNodeVersions(step);
     assert.deepEqual(
       nodeVersions,
       ['"24"'],
@@ -114,4 +124,48 @@ function extractSetupNodeSteps(workflow) {
   }
 
   return steps.filter((step) => /^[ \t]*(?:-\s+)?uses:\s*actions\/setup-node@v4\s*$/m.test(step));
+}
+
+function extractWithNodeVersions(step) {
+  const lines = step.split('\n');
+  const usesLine = lines.find((line) =>
+    /^[ \t]*(?:-\s+)?uses:\s*actions\/setup-node@v4\s*$/.test(line),
+  );
+  const listItemUses = usesLine.match(/^([ \t]*)-\s+uses:/);
+  const fieldIndentation = listItemUses
+    ? listItemUses[1].length + 2
+    : usesLine.match(/^([ \t]*)uses:/)[1].length;
+  const nodeVersions = [];
+
+  for (let start = 0; start < lines.length; start += 1) {
+    const withMapping = lines[start].match(/^([ \t]*)with:\s*$/);
+    if (!withMapping || withMapping[1].length !== fieldIndentation) continue;
+
+    const mappingEntries = [];
+    for (let index = start + 1; index < lines.length; index += 1) {
+      const line = lines[index];
+      if (line.trim() === '' || line.trimStart().startsWith('#')) continue;
+
+      const indentation = line.match(/^[ \t]*/)[0].length;
+      if (indentation <= fieldIndentation) break;
+
+      const entry = line.match(/^([ \t]*)([A-Za-z_][\w-]*):\s*(.*?)\s*$/);
+      if (entry) {
+        mappingEntries.push({
+          indentation: entry[1].length,
+          key: entry[2],
+          value: entry[3],
+        });
+      }
+    }
+
+    const childIndentation = Math.min(...mappingEntries.map((entry) => entry.indentation));
+    nodeVersions.push(
+      ...mappingEntries
+        .filter((entry) => entry.indentation === childIndentation && entry.key === 'node-version')
+        .map((entry) => entry.value),
+    );
+  }
+
+  return nodeVersions;
 }
