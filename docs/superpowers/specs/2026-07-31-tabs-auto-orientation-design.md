@@ -15,14 +15,16 @@ Extend `TabsOrientation` with `'auto'` and support
 
 Automatic orientation is based on the Tabs tablist's own measured inline size:
 
-- below 480px: vertical;
-- at or above 480px: horizontal.
+- below 320px: vertical;
+- at or above 320px: horizontal.
 
 This makes the canonical `Split asideWidth="220px" collapseBelow="sm"`
 composition vertical while side-by-side and horizontal after the aside becomes
-a full-width stacked row. The 480px threshold matches the design system's `sm`
-collapse breakpoint and is intentionally fixed for v1; consumers that need a
-specific axis continue to pass `horizontal` or `vertical`.
+a full-width stacked row. The 320px threshold deliberately sits below the
+design system's 480px `sm` collapse breakpoint: using the same threshold for
+both would leave every sub-480px stacked Split vertical. The threshold is
+intentionally fixed for v1; consumers that need a specific axis continue to
+pass `horizontal` or `vertical`.
 
 ## Runtime behavior
 
@@ -57,15 +59,16 @@ existing defaults and explicit modes remain source- and behavior-compatible.
 Unit tests will provide a controllable `ResizeObserver` test double and prove:
 
 1. auto mode starts vertical;
-2. a width at or above 480px switches ARIA, classes, keyboard axis, and
+2. a width at or above 320px switches ARIA, classes, keyboard axis, and
    indicator geometry to horizontal;
-3. shrinking below 480px switches those behaviors back to vertical;
+3. shrinking below 320px switches those behaviors back to vertical;
 4. explicit horizontal and vertical modes do not create an observer.
 
 The playground demo will compose `Split collapseBelow="sm"` with
-`Tabs orientation="auto"`. Playwright will resize the containing example on
-both sides of 480px and verify the tablist's ARIA orientation and corresponding
-arrow-key behavior.
+`Tabs orientation="auto"`. Playwright will verify that a 220px side rail is
+vertical, then resize the Split below its 480px collapse breakpoint and verify
+that its wider stacked Tabs becomes horizontal with the corresponding arrow-key
+behavior.
 
 ## Non-goals
 
