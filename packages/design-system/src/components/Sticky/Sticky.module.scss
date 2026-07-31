@@ -47,14 +47,20 @@
 
 // Scroll-viewport mode (Rule 4: <Sticky> is a layout primitive — capping its own
 // pinned box + internal overflow is its job, like position:sticky itself). Caps
-// at the dynamic viewport height minus the top offset and an equal bottom gap, so
-// a column taller than the screen scrolls within itself. `overscroll-behavior:
-// contain` stops the page from scroll-chaining when the box hits its end.
+// at the dynamic viewport height minus the top offset and a bottom gap. The
+// bottom gap defaults to the top offset for backward-compatible symmetry, but
+// consumers can override `--sticky-bottom-gap` when the top offset also contains
+// pinned-chrome clearance. `overscroll-behavior: contain` stops the page from
+// scroll-chaining when the box hits its end.
 .scroll {
   // 100vh first as a fallback for browsers without dvh (Safari < 15.4), then the
   // dynamic-viewport unit — mirrors the Modal/Drawer convention.
-  max-height: calc(100vh - (2 * var(--sticky-offset, 0px)));
-  max-height: calc(100dvh - (2 * var(--sticky-offset, 0px)));
+  max-height: calc(
+    100vh - var(--sticky-offset, 0px) - var(--sticky-bottom-gap, var(--sticky-offset, 0px))
+  );
+  max-height: calc(
+    100dvh - var(--sticky-offset, 0px) - var(--sticky-bottom-gap, var(--sticky-offset, 0px))
+  );
   overflow-y: auto;
   overscroll-behavior: contain;
 }
