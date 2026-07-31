@@ -263,6 +263,21 @@ test('validates resolved values for every declared token type', () => {
   }
 });
 
+test('rejects malformed web-only CSS colors', () => {
+  for (const value of ['#12345', '#1234567', 'rgb(', 'hsl(10 20% 30%']) {
+    assert.throws(
+      () => validateTokens(document([token({ value })])),
+      (error) => {
+        assert.ok(
+          error.issues.some((issue) => issue.code === 'invalid-token-value'),
+          value,
+        );
+        return true;
+      },
+    );
+  }
+});
+
 test('sorts independent semantic issues by path then code', () => {
   const input = document([
     token({ id: 'color.a', value: { alias: 'color.missing' }, outputs: {} }),

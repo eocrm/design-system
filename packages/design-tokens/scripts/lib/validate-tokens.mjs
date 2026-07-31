@@ -317,8 +317,8 @@ function isValidTokenValue(type, value) {
     case 'color':
       return (
         typeof value === 'string' &&
-        (/^#[0-9A-Fa-f]{3,8}$/.test(value) ||
-          /^(?:rgb|rgba|hsl|hsla|oklch|color)\(/.test(value) ||
+        (/^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(value) ||
+          /^(?:rgb|rgba|hsl|hsla|oklch|color)\([^()]+\)$/.test(value) ||
           ['transparent', 'currentColor'].includes(value))
       );
     case 'dimension':
