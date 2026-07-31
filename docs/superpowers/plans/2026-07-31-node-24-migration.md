@@ -16,6 +16,10 @@
 - `quality.yml` and `deploy-playground.yml` each contain one Node 24 setup step; `release.yml` contains two, including one before the Node-based change detector.
 - Do not pin a Node 24 patch release.
 - Do not modify or skip existing token tests.
+- Runtime and token behavioral assertions remain unchanged. The existing
+  release workflow-structure cache assertion is deliberately scoped to the
+  publish job because the new detector setup runs only the Node-based detector
+  and must remain uncached.
 - Do not upgrade npm, Gradle, Java, Android, GitHub actions, or application dependencies.
 - Do not change package APIs, generated artifacts, workflow topology, release versioning, or tarball contents.
 
@@ -130,15 +134,16 @@ In each of the following files, replace every `node-version: "22"` with `node-ve
 
 Do not change action versions, caching, triggers, permissions, jobs, or commands.
 
-In `.github/workflows/release.yml`, add this step in the
+In `.github/workflows/release.yml`, add this exact YAML in the
 `detect-library-changes` job immediately after Checkout and before Detect
-library changes:
+library changes. It is shown as text so Prettier does not normalize the
+runtime-contract test's required double quotes:
 
-```yaml
+```text
 - name: Setup Node
   uses: actions/setup-node@v4
   with:
-    node-version: '24'
+    node-version: "24"
 ```
 
 This job invokes `detect-library-changes.mjs`; the explicit setup prevents it

@@ -29,21 +29,13 @@ test('runs every GitHub workflow Node job on Node 24', async () => {
   }
 });
 
-test('sets up Node before detecting release library changes', async () => {
+test('sets up uncached Node before detecting release library changes', async () => {
   const workflow = await readFile(resolve(repositoryRoot, '.github/workflows/release.yml'), 'utf8');
   const detectorJob = workflow.slice(
     workflow.indexOf('  detect-library-changes:'),
     workflow.indexOf('\n  publish:'),
   );
-  const setupNodeSteps = extractSetupNodeSteps(detectorJob);
-  const detectChangesIndex = detectorJob.indexOf('      - name: Detect library changes');
-
-  assert.equal(setupNodeSteps.length, 1, 'release detector actions/setup-node@v4 count');
-  assert.notEqual(detectChangesIndex, -1, 'missing Detect library changes step');
-  assert.ok(
-    detectorJob.indexOf(setupNodeSteps[0]) < detectChangesIndex,
-    'Setup Node must run before Detect library changes',
-  );
+  assertReleaseDetectorSetupNode(detectorJob);
 });
 
 test('rejects setup-node uses hidden by another step name', () => {
@@ -87,10 +79,66 @@ steps:
   assert.throws(() => assertWorkflowUsesNode24(workflow, 1, 'env fixture'));
 });
 
+test('ignores setup-node text embedded in YAML block scalars', () => {
+  const workflow = `
+steps:
+  - name: Setup Node
+    uses: actions/setup-node@v4
+    with:
+      node-version: "24"
+  - name: Inspect fixture
+    run: |
+      - name: Pretend Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "23"
+`;
+
+  assert.doesNotThrow(() => assertWorkflowUsesNode24(workflow, 1, 'scalar fixture'));
+});
+
+test('rejects setup-node action refs other than v4', () => {
+  const workflow = `
+steps:
+  - name: Setup Node
+    uses: actions/setup-node@v3
+    with:
+      node-version: "24"
+`;
+
+  assert.throws(
+    () => assertWorkflowUsesNode24(workflow, 1, 'action ref fixture'),
+    /must use actions\/setup-node@v4/,
+  );
+});
+
+test('rejects cache entries in the release detector Setup Node with mapping', () => {
+  const detectorJob = `
+  detect-library-changes:
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+      - name: Detect library changes
+        run: node packages/design-tokens/scripts/detect-library-changes.mjs "${'${{ github.sha }}'}"
+`;
+
+  assert.throws(() => assertReleaseDetectorSetupNode(detectorJob), /must not configure cache/);
+});
+
 function assertWorkflowUsesNode24(workflow, expectedSteps, path) {
   const setupNodeSteps = extractSetupNodeSteps(workflow);
 
-  assert.equal(setupNodeSteps.length, expectedSteps, `${path} actions/setup-node@v4 count`);
+  for (const [index, step] of setupNodeSteps.entries()) {
+    assert.equal(
+      step.actionRef,
+      'v4',
+      `${path} Setup Node step ${index + 1} must use actions/setup-node@v4`,
+    );
+  }
+  assert.equal(setupNodeSteps.length, expectedSteps, `${path} actions/setup-node count`);
   for (const [index, step] of setupNodeSteps.entries()) {
     const nodeVersions = extractWithNodeVersions(step);
     assert.deepEqual(
@@ -101,8 +149,27 @@ function assertWorkflowUsesNode24(workflow, expectedSteps, path) {
   }
 }
 
+function assertReleaseDetectorSetupNode(detectorJob) {
+  const setupNodeSteps = extractSetupNodeSteps(detectorJob);
+  const detectChangesIndex = detectorJob.indexOf('      - name: Detect library changes');
+
+  assertWorkflowUsesNode24(detectorJob, 1, 'release detector');
+  assert.notEqual(detectChangesIndex, -1, 'missing Detect library changes step');
+  assert.ok(
+    detectorJob.indexOf(setupNodeSteps[0].contents) < detectChangesIndex,
+    'Setup Node must run before Detect library changes',
+  );
+  assert.deepEqual(
+    extractWithMappings(setupNodeSteps[0]).flatMap((mapping) =>
+      mapping.entries.filter((entry) => entry.key === 'cache'),
+    ),
+    [],
+    'release detector Setup Node with mapping must not configure cache',
+  );
+}
+
 function extractSetupNodeSteps(workflow) {
-  const lines = workflow.split('\n');
+  const lines = removeYamlBlockScalarBodies(workflow);
   const steps = [];
 
   for (let start = 0; start < lines.length; start += 1) {
@@ -120,22 +187,32 @@ function extractSetupNodeSteps(workflow) {
       if (nextIndentation <= indentation) break;
       end += 1;
     }
-    steps.push(lines.slice(start, end).join('\n'));
+    const contents = lines.slice(start, end).join('\n');
+    const actionRef = extractSetupNodeActionRef(contents);
+    if (actionRef) steps.push({ actionRef, contents });
   }
 
-  return steps.filter((step) => /^[ \t]*(?:-\s+)?uses:\s*actions\/setup-node@v4\s*$/m.test(step));
+  return steps;
 }
 
 function extractWithNodeVersions(step) {
-  const lines = step.split('\n');
+  return extractWithMappings(step).flatMap((mapping) =>
+    mapping.entries.filter((entry) => entry.key === 'node-version').map((entry) => entry.value),
+  );
+}
+
+function extractWithMappings(step) {
+  const lines = step.contents.split('\n');
   const usesLine = lines.find((line) =>
-    /^[ \t]*(?:-\s+)?uses:\s*actions\/setup-node@v4\s*$/.test(line),
+    /^[ \t]*(?:-\s+)?uses:\s*(?:actions\/setup-node@[^\s#'\"]+|["']actions\/setup-node@[^'\"]+["'])\s*(?:#.*)?$/.test(
+      line,
+    ),
   );
   const listItemUses = usesLine.match(/^([ \t]*)-\s+uses:/);
   const fieldIndentation = listItemUses
     ? listItemUses[1].length + 2
     : usesLine.match(/^([ \t]*)uses:/)[1].length;
-  const nodeVersions = [];
+  const mappings = [];
 
   for (let start = 0; start < lines.length; start += 1) {
     const withMapping = lines[start].match(/^([ \t]*)with:\s*$/);
@@ -160,12 +237,41 @@ function extractWithNodeVersions(step) {
     }
 
     const childIndentation = Math.min(...mappingEntries.map((entry) => entry.indentation));
-    nodeVersions.push(
-      ...mappingEntries
-        .filter((entry) => entry.indentation === childIndentation && entry.key === 'node-version')
-        .map((entry) => entry.value),
-    );
+    mappings.push({
+      entries: mappingEntries.filter((entry) => entry.indentation === childIndentation),
+    });
   }
 
-  return nodeVersions;
+  return mappings;
+}
+
+function extractSetupNodeActionRef(step) {
+  const usesLine = step.match(
+    /^[ \t]*(?:-\s+)?uses:\s*(?:actions\/setup-node@([^\s#'\"]+)|["']actions\/setup-node@([^'\"]+)["'])\s*(?:#.*)?$/m,
+  );
+
+  return usesLine ? (usesLine[1] ?? usesLine[2]) : undefined;
+}
+
+function removeYamlBlockScalarBodies(workflow) {
+  const lines = workflow.split('\n');
+  const nonScalarLines = [];
+  let scalarIndentation;
+
+  for (const line of lines) {
+    const indentation = line.match(/^[ \t]*/)[0].length;
+    if (scalarIndentation !== undefined) {
+      if (line.trim() === '' || indentation > scalarIndentation) continue;
+      scalarIndentation = undefined;
+    }
+
+    nonScalarLines.push(line);
+    if (
+      /^[ \t]*(?:-\s+)?(?:[A-Za-z_][\w-]*|["'][^"']+["']):\s*[>|][+-]?\d*\s*(?:#.*)?$/.test(line)
+    ) {
+      scalarIndentation = indentation;
+    }
+  }
+
+  return nonScalarLines;
 }

@@ -37,6 +37,13 @@ If a genuine runtime-specific failure appears in CI or an unrestricted local
 run, implementation stops for a new diagnosis rather than adding speculative
 environment sanitization.
 
+Runtime and token behavioral assertions remain unchanged. The existing release
+workflow-structure assertion that requires npm and Gradle caches is
+intentionally scoped to the publish job: the newly explicit detector setup is
+uncached because it only runs the Node-based change detector and performs no
+dependency installation. This distinguishes the new detector runtime setup
+from the established publish behavior without weakening either contract.
+
 ## Scope
 
 This migration changes only runtime/tooling configuration. It does not change
