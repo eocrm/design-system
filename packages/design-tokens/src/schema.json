@@ -43,17 +43,21 @@
     },
     "value": {
       "oneOf": [
-        {
-          "anyOf": [
-            { "type": "string" },
-            { "type": "number" },
-            { "type": "boolean" },
-            { "type": "null" }
-          ]
-        },
+        { "$ref": "#/$defs/primitiveValue" },
         { "$ref": "#/$defs/alias" },
         { "$ref": "#/$defs/themeValue" }
       ]
+    },
+    "primitiveValue": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "themeBranchValue": {
+      "oneOf": [{ "$ref": "#/$defs/primitiveValue" }, { "$ref": "#/$defs/alias" }]
     },
     "alias": {
       "type": "object",
@@ -67,8 +71,8 @@
       "type": "object",
       "required": ["light", "dark"],
       "properties": {
-        "light": { "$ref": "#/$defs/value" },
-        "dark": { "$ref": "#/$defs/value" }
+        "light": { "$ref": "#/$defs/themeBranchValue" },
+        "dark": { "$ref": "#/$defs/themeBranchValue" }
       },
       "additionalProperties": false
     },

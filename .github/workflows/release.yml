@@ -26,6 +26,10 @@ on:
       - "packages/**"
       - ".github/workflows/**"
 
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
 permissions:
   contents: write # push the new git tag
   packages: write # publish to GitHub Packages
@@ -47,42 +51,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Need previous commit to diff against.
-          fetch-depth: 2
+          # Need the complete push range, including forced-push ancestry checks.
+          fetch-depth: 0
 
       - name: Detect library changes
         id: diff
         run: |
           set -euo pipefail
-          if ! git rev-parse HEAD^ >/dev/null 2>&1; then
-            # No previous commit (initial push) — treat as a library change.
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "No previous commit — assuming library changed."
-            exit 0
-          fi
-
-          # Library changes include the package itself plus the workflow files
-          # that actually publish it. Quality.yml is here because if the gate
-          # logic changes, we want a real publish run to verify it end-to-end.
-          #
-          # packages/design-system/CLAUDE.md is filtered out first: it is agent
-          # instructions for working IN this repo and is not in package.json's
-          # `files` whitelist, so editing it cannot change the tarball. Note the
-          # other markdown under that package DOES ship (AGENTS.md and README.md
-          # via `files`/npm, src/components/TODO.md via `src`), so only this one
-          # exact path is excluded — not `*.md`.
-          #
-          # If CLAUDE.md is the ONLY changed file, the first grep emits nothing
-          # and exits 1; under `pipefail` the pipeline is non-zero, the `if` is
-          # false, and we correctly fall through to changed=false. `set -e` does
-          # not fire because this is an `if` condition.
-          if git diff --name-only HEAD^ HEAD \
-            | grep -vxF 'packages/design-system/CLAUDE.md' \
-            | grep -qE '^packages/design-(tokens|system)/|^\.github/workflows/(release|quality|deploy-playground)\.yml$'; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+          changed=$(node packages/design-tokens/scripts/detect-library-changes.mjs "${{ github.event.before }}" "${{ github.sha }}")
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          if [ "$changed" = "true" ]; then
             echo "Library changed — publish will run."
           else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Library unchanged — publish will be skipped."
           fi
 

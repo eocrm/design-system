@@ -61,3 +61,16 @@ test('accepts valid semantic versions', async () => {
     await assert.doesNotReject(loadTokenDocument(file));
   }
 });
+
+test('rejects recursively nested themed values', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'eocrm-tokens-schema-'));
+  const file = join(dir, 'nested-theme.json');
+  const input = validDocument('1.2.3');
+  input.tokens[0].value = {
+    light: { light: '#000000', dark: '#111111' },
+    dark: '#222222',
+  };
+  await writeFile(file, JSON.stringify(input));
+
+  await assert.rejects(loadTokenDocument(file), /\/tokens\/0\/value/);
+});

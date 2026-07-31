@@ -310,6 +310,16 @@ function inspectAliases(
     return;
   }
   const { token: target, index: targetIndex } = targetLocation;
+  const source = tokensById.get(sourceId)?.token;
+  if (source?.outputs?.web && !target.outputs?.web) {
+    issues.push(
+      issue(
+        aliasPath,
+        'missing-web-output',
+        `web alias ${value.alias} must target a token with a web output`,
+      ),
+    );
+  }
   if (stack.includes(target.id)) {
     const cycle = [...stack.slice(stack.indexOf(target.id)), target.id];
     issues.push(issue(aliasPath, 'alias-cycle', `alias cycle: ${cycle.join(' -> ')}`));

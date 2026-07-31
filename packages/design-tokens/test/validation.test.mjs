@@ -155,6 +155,35 @@ test('reports a transitive unknown alias at its physical alias edge once', () =>
   );
 });
 
+test('rejects a web alias whose target has no web output at the alias edge', () => {
+  const input = document([
+    token({
+      id: 'color.compose-only',
+      outputs: { compose: { group: 'colors', name: 'composeOnly' } },
+    }),
+    token({
+      id: 'color.web-alias',
+      value: { alias: 'color.compose-only' },
+      outputs: { web: { name: '--color-web-alias' } },
+    }),
+  ]);
+
+  assert.throws(
+    () => validateTokens(input),
+    (error) => {
+      assert.ok(error instanceof TokenSemanticError);
+      assert.deepEqual(error.issues, [
+        {
+          path: '/tokens/1/value/alias',
+          code: 'missing-web-output',
+          message: 'web alias color.compose-only must target a token with a web output',
+        },
+      ]);
+      return true;
+    },
+  );
+});
+
 test('accepts six- and eight-digit Compose colors but rejects malformed values', () => {
   for (const value of ['#000000', '#00000080']) {
     assert.doesNotThrow(() =>
