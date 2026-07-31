@@ -60,6 +60,38 @@ test('uses stable semantic ordering independent of source array order', () => {
         compose: { group: 'avatarPalette', name: 'foreground' },
       },
     },
+    {
+      id: 'space.small',
+      type: 'dimension',
+      value: '4px',
+      outputs: {
+        compose: { group: 'dimensions', name: 'small' },
+      },
+    },
+    {
+      id: 'font.size.small',
+      type: 'dimension',
+      value: '12px',
+      outputs: {
+        compose: { group: 'typography', name: 'sizeSmall' },
+      },
+    },
+    {
+      id: 'tone.info.background',
+      type: 'color',
+      value: '#deebff',
+      outputs: {
+        compose: { group: 'semanticTones', name: 'infoBackground' },
+      },
+    },
+    {
+      id: 'tone.info.foreground',
+      type: 'color',
+      value: '#0747a6',
+      outputs: {
+        compose: { group: 'semanticTones', name: 'infoForeground' },
+      },
+    },
   ];
   const forward = validateTokens({
     schemaVersion: 1,

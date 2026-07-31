@@ -76,6 +76,79 @@ test('renders a complete typed Compose API with stable public names', () => {
   assert.deepEqual(Object.fromEntries(renderCompose(document)), expectedComposeFiles);
 });
 
+test('renders themed dimensions and typography into distinct light and dark instances', () => {
+  const document = validateTokens({
+    schemaVersion: 1,
+    contractVersion: '1.0.0',
+    tokens: [
+      composeToken('color.background', 'color', '#ffffff', 'colors', 'background'),
+      composeToken(
+        'space.adaptive',
+        'dimension',
+        { light: '4px', dark: '8px' },
+        'dimensions',
+        'adaptive',
+      ),
+      composeToken(
+        'font.size.adaptive',
+        'dimension',
+        { light: '12px', dark: '14px' },
+        'typography',
+        'adaptive',
+      ),
+      composeToken('tone.info.background', 'color', '#deebff', 'semanticTones', 'infoBackground'),
+      composeToken('tone.info.foreground', 'color', '#0747a6', 'semanticTones', 'infoForeground'),
+      composeToken('avatar.foreground', 'color', '#ffffff', 'avatarPalette', 'foreground'),
+    ],
+  });
+
+  const output = Object.fromEntries(renderCompose(document));
+
+  assert.match(
+    output['EocrmDimensions.kt'],
+    /eocrmLightDimensions[\s\S]*adaptive = 4\.dp[\s\S]*eocrmDarkDimensions[\s\S]*adaptive = 8\.dp/,
+  );
+  assert.match(
+    output['EocrmTypography.kt'],
+    /eocrmLightTypography[\s\S]*adaptive = 12\.sp[\s\S]*eocrmDarkTypography[\s\S]*adaptive = 14\.sp/,
+  );
+  assert.match(
+    output['EocrmTokenContract.kt'],
+    /EocrmLightTokens[\s\S]*dimensions: EocrmDimensions = eocrmLightDimensions[\s\S]*typography: EocrmTypography = eocrmLightTypography/,
+  );
+  assert.match(
+    output['EocrmTokenContract.kt'],
+    /EocrmDarkTokens[\s\S]*dimensions: EocrmDimensions = eocrmDarkDimensions[\s\S]*typography: EocrmTypography = eocrmDarkTypography/,
+  );
+});
+
+test('reports an actionable Compose boundary error for a valid web-only document', () => {
+  const document = validateTokens({
+    schemaVersion: 1,
+    contractVersion: '1.0.0',
+    tokens: [
+      {
+        id: 'color.web-only',
+        type: 'color',
+        value: '#ffffff',
+        outputs: { web: { name: '--color-web-only' } },
+      },
+    ],
+  });
+
+  assert.throws(
+    () => renderCompose(document),
+    (error) => {
+      assert.equal(error.name, 'ComposeRenderError');
+      assert.equal(
+        error.message,
+        'Compose rendering requires colors, dimensions, typography, semanticTones, and avatarPalette.foreground; missing colors, dimensions, typography, semanticTones, avatarPalette.foreground',
+      );
+      return true;
+    },
+  );
+});
+
 test('rejects Compose values without a safe typed conversion', () => {
   assert.throws(
     () =>

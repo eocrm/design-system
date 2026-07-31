@@ -1,7 +1,25 @@
 import { resolveTokenValue } from './validate-tokens.mjs';
 
+export class ComposeRenderError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'ComposeRenderError';
+  }
+}
+
 export function renderCompose(document) {
   const groups = groupComposeTokens(document);
+  const missing = ['colors', 'dimensions', 'typography', 'semanticTones'].filter(
+    (group) => groups[group].length === 0,
+  );
+  if (!groups.avatarPalette.some((token) => token.composeName === 'foreground')) {
+    missing.push('avatarPalette.foreground');
+  }
+  if (missing.length > 0) {
+    throw new ComposeRenderError(
+      `Compose rendering requires colors, dimensions, typography, semanticTones, and avatarPalette.foreground; missing ${missing.join(', ')}`,
+    );
+  }
   const header = `// GENERATED FILE — DO NOT EDIT.
 // Source: packages/design-tokens/src/tokens.json
 // Schema version: ${document.schemaVersion}
@@ -58,6 +76,12 @@ ${tokens.map((token) => `    public val ${token.composeName}: Color,`).join('\n'
 }
 
 function renderDimensions(header, tokens) {
+  const instances = hasThemedValues(tokens)
+    ? [
+        renderDimensionInstance('eocrmLightDimensions', tokens, 'light'),
+        renderDimensionInstance('eocrmDarkDimensions', tokens, 'dark'),
+      ].join('\n\n')
+    : renderDimensionInstance('eocrmDimensions', tokens, 'light');
   return `${header}package com.eocrm.design.tokens
 
 import androidx.compose.ui.unit.Dp
@@ -67,13 +91,17 @@ public data class EocrmDimensions(
 ${tokens.map((token) => `    public val ${token.composeName}: Dp,`).join('\n')}
 )
 
-internal val eocrmDimensions: EocrmDimensions = EocrmDimensions(
-${tokens.map((token) => `    ${token.composeName} = ${renderDimension(resolve(token, 'light'))},`).join('\n')}
-)
+${instances}
 `;
 }
 
 function renderTypography(header, tokens) {
+  const instances = hasThemedValues(tokens)
+    ? [
+        renderTypographyInstance('eocrmLightTypography', tokens, 'light'),
+        renderTypographyInstance('eocrmDarkTypography', tokens, 'dark'),
+      ].join('\n\n')
+    : renderTypographyInstance('eocrmTypography', tokens, 'light');
   return `${header}package com.eocrm.design.tokens
 
 import androidx.compose.ui.text.font.FontWeight
@@ -85,9 +113,7 @@ public data class EocrmTypography(
 ${tokens.map((token) => `    public val ${token.composeName}: ${typographyType(token)},`).join('\n')}
 )
 
-internal val eocrmTypography: EocrmTypography = EocrmTypography(
-${tokens.map((token) => `    ${token.composeName} = ${renderTypographyValue(token)},`).join('\n')}
-)
+${instances}
 `;
 }
 
@@ -138,8 +164,8 @@ function renderThemeObject(name, theme, groups) {
     public val colors: EocrmColors = EocrmColors(
 ${groups.colors.map((token) => `        ${token.composeName} = ${renderColor(resolve(token, theme))},`).join('\n')}
     )
-    public val dimensions: EocrmDimensions = eocrmDimensions
-    public val typography: EocrmTypography = eocrmTypography
+    public val dimensions: EocrmDimensions = ${instanceName('Dimensions', groups.dimensions, theme)}
+    public val typography: EocrmTypography = ${instanceName('Typography', groups.typography, theme)}
     public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
 ${renderPalettePairs(groups.semanticTones, theme, 8)}
     )
@@ -180,8 +206,20 @@ function typographyType(token) {
   return token.type === 'fontWeight' ? 'FontWeight' : 'TextUnit';
 }
 
-function renderTypographyValue(token) {
-  const value = resolve(token, 'light');
+function renderDimensionInstance(name, tokens, theme) {
+  return `internal val ${name}: EocrmDimensions = EocrmDimensions(
+${tokens.map((token) => `    ${token.composeName} = ${renderDimension(resolve(token, theme))},`).join('\n')}
+)`;
+}
+
+function renderTypographyInstance(name, tokens, theme) {
+  return `internal val ${name}: EocrmTypography = EocrmTypography(
+${tokens.map((token) => `    ${token.composeName} = ${renderTypographyValue(token, theme)},`).join('\n')}
+)`;
+}
+
+function renderTypographyValue(token, theme) {
+  const value = resolve(token, theme);
   if (token.type === 'fontWeight') {
     return `FontWeight.${new Map([
       [400, 'Normal'],
@@ -192,6 +230,22 @@ function renderTypographyValue(token) {
   }
   if (token.type === 'lineHeight') return `${formatNumber(value)}.em`;
   return `${stripPixels(value)}.sp`;
+}
+
+function instanceName(type, tokens, theme) {
+  if (!hasThemedValues(tokens)) return `eocrm${type}`;
+  const themeName = theme === 'light' ? 'Light' : 'Dark';
+  return `eocrm${themeName}${type}`;
+}
+
+function hasThemedValues(tokens) {
+  return tokens.some(
+    (token) =>
+      token.value !== null &&
+      typeof token.value === 'object' &&
+      'light' in token.value &&
+      'dark' in token.value,
+  );
 }
 
 function renderColor(value) {
