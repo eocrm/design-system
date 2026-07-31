@@ -877,13 +877,14 @@ describe('Kanban — drag announcements (#390)', () => {
     expect(live()).toMatch(/in column 2 of 2\.$/);
   });
 
-  it('a release outside the board announces a cancel, not a drop (#387)', () => {
+  it('announces leaving the board before an outside release cancels (#397)', () => {
     render(<NamedBoard />);
     press('Draft Q3 OKRs');
-    moveTo(at(1, 100)); // transit into the second column…
-    expect(live()).toMatch(/^Draft Q3 OKRs, position \d of \d in Done\.$/);
-    moveTo([600, 500]); // …carry it off the board…
-    release([600, 500]); // …and let go over unrelated page content
+    moveTo(at(0, 20)); // resolve the first card as the nearest target…
+    expect(live()).toMatch(/^Draft Q3 OKRs, position \d of \d in To do\.$/);
+    moveTo([COL_W / 2, -50]); // …leave directly above it, so it stays nearest…
+    expect(live()).toBe('Draft Q3 OKRs is not over a drop target.');
+    release([COL_W / 2, -50]); // …and let go over unrelated page content
     expect(live()).toBe('Move cancelled. Draft Q3 OKRs stayed where it was.');
   });
 
