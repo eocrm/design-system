@@ -12,9 +12,8 @@ name: Release
 #   packages/design-system/CLAUDE.md is excluded too — it is the one file in
 #   that package that never reaches the tarball (AGENTS.md, README.md, and
 #   src/components/TODO.md all ship, so those DO warrant a release).
-# - deploy-playground runs whenever quality passed (regardless of the publish
-#   result) — so the live demo always reflects main, even on playground-only
-#   changes.
+# - deploy-playground runs after a successful quality and publish, or when the
+#   change detector succeeds and intentionally skips publishing.
 #
 # To force a major/minor bump, edit BUMP below on a branch and merge — there
 # is no manual UI by design.
@@ -98,6 +97,7 @@ jobs:
           cache: "gradle"
           cache-dependency-path: |
             packages/design-tokens/compose/**/*.gradle*
+            packages/design-tokens/compose/gradle.properties
             packages/design-tokens/compose/**/gradle-wrapper.properties
 
       - name: Setup Android SDK
@@ -231,11 +231,14 @@ jobs:
   # Re-deploy the playground so the live site reflects a successfully released
   # main, or a main change where publishing was intentionally skipped.
   deploy-playground:
-    needs: [quality, publish]
+    needs: [quality, detect-library-changes, publish]
     if: >-
       always() &&
       needs.quality.result == 'success' &&
-      (needs.publish.result == 'success' || needs.publish.result == 'skipped')
+      needs.detect-library-changes.result == 'success' &&
+      (needs.publish.result == 'success' ||
+      (needs.publish.result == 'skipped' &&
+      needs.detect-library-changes.outputs.changed == 'false'))
     uses: ./.github/workflows/deploy-playground.yml
     permissions:
       contents: read

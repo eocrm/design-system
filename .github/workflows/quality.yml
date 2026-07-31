@@ -33,6 +33,7 @@ jobs:
           cache: "gradle"
           cache-dependency-path: |
             packages/design-tokens/compose/**/*.gradle*
+            packages/design-tokens/compose/gradle.properties
             packages/design-tokens/compose/**/gradle-wrapper.properties
 
       - name: Setup Android SDK
