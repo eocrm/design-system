@@ -20,3 +20,6 @@ dist-ssr
 
 # Superpowers brainstorm session artefacts (visual companion mockups, server state)
 .superpowers/
+
+# Isolated implementation worktrees
+.worktrees/
