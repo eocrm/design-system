@@ -16,6 +16,7 @@ const stableTagScriptPath = join(
   'packages/design-tokens/scripts/latest-stable-release-tag.mjs',
 );
 const workflowPath = join(repositoryRoot, '.github/workflows/release.yml');
+const qualityWorkflowPath = join(repositoryRoot, '.github/workflows/quality.yml');
 
 test('detects a library change earlier in a multi-commit push', async () => {
   const fixture = await createRepository();
@@ -290,6 +291,46 @@ test('stages Compose publications locally and repairs every Maven file', async (
   assert.match(composeStep, /repair-compose-publication\.mjs/);
   assert.doesNotMatch(composeStep, /grep -qiE '409/);
 });
+
+test('deploys the playground only after publish succeeds or an intentional no-change skip', async () => {
+  const workflow = await readFile(workflowPath, 'utf8');
+  const deployJob = workflow.slice(workflow.indexOf('  deploy-playground:'));
+  const normalizedJob = deployJob.replace(/\s+/g, ' ');
+
+  assert.match(
+    normalizedJob,
+    /needs: \[quality, detect-library-changes, publish\] if: >- always\(\) && needs\.quality\.result == 'success' && needs\.detect-library-changes\.result == 'success' && \(needs\.publish\.result == 'success' \|\| \(needs\.publish\.result == 'skipped' && needs\.detect-library-changes\.outputs\.changed == 'false'\)\)/,
+  );
+});
+
+test('caches npm and Gradle dependencies in quality and release jobs', async () => {
+  const [qualityWorkflow, releaseWorkflow] = await Promise.all([
+    readFile(qualityWorkflowPath, 'utf8'),
+    readFile(workflowPath, 'utf8'),
+  ]);
+
+  for (const workflow of [qualityWorkflow, releaseWorkflow]) {
+    const nodeStep = extractWorkflowStep(workflow, 'Setup Node');
+    const javaStep = extractWorkflowStep(workflow, 'Setup Java');
+    const androidStep = extractWorkflowStep(workflow, 'Setup Android SDK');
+
+    assert.match(nodeStep, /uses: actions\/setup-node@v4/);
+    assert.match(nodeStep, /cache: "npm"/);
+    assert.match(javaStep, /uses: actions\/setup-java@v4/);
+    assert.match(javaStep, /cache: "gradle"/);
+    assert.match(javaStep, /packages\/design-tokens\/compose\/\*\*\/\*\.gradle\*/);
+    assert.match(javaStep, /packages\/design-tokens\/compose\/gradle\.properties/);
+    assert.match(javaStep, /packages\/design-tokens\/compose\/\*\*\/gradle-wrapper\.properties/);
+    assert.doesNotMatch(androidStep, /cache/i);
+  }
+});
+
+function extractWorkflowStep(workflow, name) {
+  const start = workflow.indexOf(`      - name: ${name}`);
+  const next = workflow.indexOf('\n      - name:', start + 1);
+  assert.notEqual(start, -1, `missing workflow step: ${name}`);
+  return workflow.slice(start, next === -1 ? undefined : next);
+}
 
 async function createRepository() {
   const fixture = await mkdtemp(join(tmpdir(), 'eocrm-release-diff-'));

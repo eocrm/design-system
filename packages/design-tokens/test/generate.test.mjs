@@ -50,6 +50,7 @@ test('generates web artifacts and a stable publication manifest', async () => {
   const outputRoot = await mkdtemp(join(tmpdir(), 'eocrm-token-output-'));
 
   try {
+    const document = await validateTokenSource(tokenSourcePath);
     await generate({ outputRoot });
 
     const [tokensScss, darkScss, manifest] = await Promise.all([
@@ -62,7 +63,7 @@ test('generates web artifacts and a stable publication manifest', async () => {
     assert.match(darkScss, /^\/\/ GENERATED FILE — DO NOT EDIT\.\n/);
     assert.deepEqual(JSON.parse(manifest), {
       schemaVersion: 1,
-      contractVersion: '0.0.0',
+      contractVersion: document.contractVersion,
       artifacts: {
         npm: '@eocrm/design-tokens',
         maven: 'com.eocrm.design:design-tokens-compose',
