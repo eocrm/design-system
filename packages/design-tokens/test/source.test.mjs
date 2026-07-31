@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { captureWebContractFromSources } from '../scripts/capture-web-contract.mjs';
+import { compareWebContracts, parseGeneratedWebContract } from '../scripts/check-web-compat.mjs';
 import { loadTokenDocument } from '../scripts/lib/load-tokens.mjs';
 import { resolveTokenValue } from '../scripts/lib/validate-tokens.mjs';
 
@@ -11,6 +12,8 @@ const badgeTokenPath = new URL(
   '../../design-system/src/components/Badge/Badge.tokens.scss',
   import.meta.url,
 );
+const generatedTokensPath = new URL('../generated/web/tokens.scss', import.meta.url);
+const generatedDarkPath = new URL('../generated/web/dark.scss', import.meta.url);
 const expectedComposeInventory = {
   colors: [
     'color.accent',
@@ -236,9 +239,10 @@ test('loads the authoritative source with representative shared values', async (
 });
 
 test('maps every captured public variable to exactly one web output', async () => {
-  const [tokens, fixture] = await Promise.all([
+  const [tokens, fixture, badgeSource] = await Promise.all([
     loadTokenDocument(tokenSourcePath),
     readJson(fixturePath),
+    readFile(badgeTokenPath, 'utf8'),
   ]);
   const capturedNames = new Set(
     ['light', 'forcedDark', 'systemDark', 'forcedLight'].flatMap((scope) =>
@@ -246,40 +250,67 @@ test('maps every captured public variable to exactly one web output', async () =
     ),
   );
   const webNames = tokens.tokens.flatMap((token) => token.outputs.web?.name ?? []);
+  const componentNames = new Set(
+    [...badgeSource.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map(([, name]) => name),
+  );
+  const duplicateNames = webNames.filter((name) => componentNames.has(name));
+  const combinedNames = new Set([...webNames, ...componentNames]);
 
   assert.equal(capturedNames.size, 289);
-  assert.equal(webNames.length, 289);
-  assert.deepEqual(webNames.slice().sort(), [...capturedNames].sort());
+  assert.equal(webNames.length, 233);
+  assert.equal(componentNames.size, 56);
+  assert.deepEqual(duplicateNames, []);
+  assert.deepEqual([...combinedNames].sort(), [...capturedNames].sort());
 });
 
-test('does not redeclare shared Badge variables in the component compatibility file', async () => {
-  const [tokens, badgeSource] = await Promise.all([
-    loadTokenDocument(tokenSourcePath),
-    readFile(badgeTokenPath, 'utf8'),
-  ]);
-  const sharedNames = new Set(
-    tokens.tokens.map((token) => token.outputs.web?.name).filter(Boolean),
-  );
-  const componentNames = [...badgeSource.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map(([, name]) => name);
-
-  assert.deepEqual(
-    componentNames.filter((name) => sharedNames.has(name)),
-    [],
-  );
-});
-
-test('reconstructs every captured declaration value and scope from the dataset', async () => {
-  const [tokens, fixture] = await Promise.all([
+test('keeps Badge variables component-owned while preserving the combined web contract', async () => {
+  const [tokens, fixture, badgeSource, generatedTokens, generatedDark] = await Promise.all([
     loadTokenDocument(tokenSourcePath),
     readJson(fixturePath),
+    readFile(badgeTokenPath, 'utf8'),
+    readFile(generatedTokensPath, 'utf8'),
+    readFile(generatedDarkPath, 'utf8'),
   ]);
+  const generatedBadgeNames = tokens.tokens
+    .map((token) => token.outputs.web?.name)
+    .filter((name) => name?.startsWith('--badge-'));
+  const componentNames = new Set(
+    [...badgeSource.matchAll(/^\s*(--badge-[a-z0-9-]+):/gm)].map(([, name]) => name),
+  );
+  const requiredBadgeNames = Object.keys(fixture.light)
+    .filter((name) => name.startsWith('--badge-'))
+    .sort();
 
-  assert.deepEqual(projectWebContract(tokens), {
-    light: fixture.light,
-    forcedDark: fixture.forcedDark,
-    systemDark: fixture.systemDark,
-    forcedLight: fixture.forcedLight,
-  });
+  assert.deepEqual(generatedBadgeNames, []);
+  assert.deepEqual([...componentNames].sort(), requiredBadgeNames);
+  assert.deepEqual(
+    compareWebContracts(
+      fixture,
+      parseGeneratedWebContract(generatedTokens, generatedDark, badgeSource),
+    ),
+    { missing: [], extra: [], changed: [] },
+  );
+});
+
+test('reconstructs every neutral declaration value and scope from the dataset', async () => {
+  const [tokens, fixture, badgeSource] = await Promise.all([
+    loadTokenDocument(tokenSourcePath),
+    readJson(fixturePath),
+    readFile(badgeTokenPath, 'utf8'),
+  ]);
+  const componentNames = new Set(
+    [...badgeSource.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map(([, name]) => name),
+  );
+  const neutralFixture = Object.fromEntries(
+    ['light', 'forcedDark', 'systemDark', 'forcedLight'].map((scope) => [
+      scope,
+      Object.fromEntries(
+        Object.entries(fixture[scope]).filter(([name]) => !componentNames.has(name)),
+      ),
+    ]),
+  );
+
+  assert.deepEqual(projectWebContract(tokens), neutralFixture);
 });
 
 test('matches the independently authored Compose inventory exactly', async () => {
@@ -298,21 +329,23 @@ test('matches the independently authored Compose inventory exactly', async () =>
   assert.equal(Object.values(actualInventory).flat().length, 148);
 });
 
-test('models all twelve deprecated Badge variables as semantic aliases', async () => {
-  const tokens = await loadTokenDocument(tokenSourcePath);
-  const deprecatedTokens = tokens.tokens.filter((token) =>
-    token.id.startsWith('deprecated.badge.'),
+test('keeps all twelve deprecated Badge variables as component aliases', async () => {
+  const badgeSource = await readFile(badgeTokenPath, 'utf8');
+  const declarations = new Map(
+    [...badgeSource.matchAll(/^\s*(--[a-z0-9-]+):\s*([^;]+);/gm)].map(([, name, value]) => [
+      name,
+      value,
+    ]),
+  );
+  const deprecatedNames = [...declarations.keys()].filter((name) =>
+    name.startsWith('--color-badge-'),
   );
 
-  assert.equal(deprecatedTokens.length, 12);
+  assert.equal(deprecatedNames.length, 12);
   for (const [id, expected] of Object.entries(expectedDeprecatedBadgeAliases)) {
-    const deprecated = deprecatedTokens.find((token) => token.id === id);
-    assert.ok(deprecated, `missing ${id}`);
-    assert.equal(deprecated.outputs.web.name, expected.web);
-    assert.deepEqual(deprecated.value, {
-      light: { alias: expected.target },
-      dark: { alias: expected.target },
-    });
+    const [, tone, role] = id.match(/^deprecated\.badge\.([^.]+)\.(background|foreground)$/);
+    const target = `--badge-${role === 'background' ? 'bg' : 'fg'}-${tone}`;
+    assert.equal(declarations.get(expected.web), `var(${target})`, id);
   }
 });
 

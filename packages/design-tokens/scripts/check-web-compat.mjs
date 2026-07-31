@@ -28,13 +28,33 @@ export function compareWebContracts(expected, actual) {
   return differences;
 }
 
-export function parseGeneratedWebContract(tokensScss, darkScss) {
-  return {
+export function parseGeneratedWebContract(tokensScss, darkScss, componentScss = '') {
+  const generated = {
     light: declarations(blockBody(tokensScss, ':root')),
     forcedDark: declarations(blockBody(darkScss, ":root[data-theme='dark']")),
     systemDark: declarations(blockBody(darkScss, ":root:not([data-theme='light'])")),
     forcedLight: declarations(blockBody(darkScss, ":root[data-theme='light']")),
   };
+  if (!componentScss) return generated;
+  const component = {
+    light: declarations(blockBody(componentScss, ':root')),
+    forcedDark: declarations(blockBody(componentScss, ":root[data-theme='dark']")),
+    systemDark: declarations(blockBody(componentScss, ":root:not([data-theme='light'])")),
+    forcedLight: {},
+  };
+  return Object.fromEntries(
+    Object.keys(generated).map((scope) => [
+      scope,
+      mergeDeclarations(generated[scope], component[scope], scope),
+    ]),
+  );
+}
+
+function mergeDeclarations(generated, component, scope) {
+  const duplicate = Object.keys(component).find((name) => name in generated);
+  if (duplicate)
+    throw new Error(`duplicate generated and component declaration ${scope} ${duplicate}`);
+  return { ...generated, ...component };
 }
 
 function blockBody(source, selector) {
@@ -70,18 +90,22 @@ function compareCodeUnits(left, right) {
 }
 
 async function main() {
-  const [fixtureSource, tokensScss, darkScss] = await Promise.all([
+  const [fixtureSource, tokensScss, darkScss, badgeScss] = await Promise.all([
     readFile(resolve(packageRoot, 'test/fixtures/current-web-contract.json'), 'utf8'),
     readFile(resolve(packageRoot, 'generated/web/tokens.scss'), 'utf8'),
     readFile(resolve(packageRoot, 'generated/web/dark.scss'), 'utf8'),
+    readFile(
+      resolve(packageRoot, '../design-system/src/components/Badge/Badge.tokens.scss'),
+      'utf8',
+    ),
   ]);
   const expected = JSON.parse(fixtureSource);
-  const actual = parseGeneratedWebContract(tokensScss, darkScss);
+  const actual = parseGeneratedWebContract(tokensScss, darkScss, badgeScss);
   const differences = compareWebContracts(expected, actual);
   const count = Object.values(differences).reduce((sum, entries) => sum + entries.length, 0);
 
   if (count === 0) {
-    process.stdout.write('Generated web tokens match the captured contract.\n');
+    process.stdout.write('Combined web tokens match the captured contract.\n');
     return;
   }
   for (const [category, entries] of Object.entries(differences)) {
