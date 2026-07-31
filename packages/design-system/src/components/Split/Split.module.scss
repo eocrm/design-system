@@ -16,6 +16,22 @@
   grid-template-columns: 1fr var(--split-aside-width, auto);
 }
 
+// Collapsible splits use shrink-safe tracks: the pinned aside width holds
+// while space is available, then both tracks can contract without overflow as
+// the container narrows. The container query cannot re-template its own query
+// container, so this must be set before the children span every track.
+.sideStart.collapsible {
+  grid-template-columns:
+    minmax(0, var(--split-aside-width, auto))
+    minmax(0, 1fr);
+}
+
+.sideEnd.collapsible {
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, var(--split-aside-width, auto));
+}
+
 // Aside cell — intrinsic width comes from the grid track; min-width:0 lets very
 // long aside content shrink rather than blow out the `auto` track. (Also gives
 // the class a real declaration so CSS Modules emits it for the `.aside` hook.)

@@ -221,4 +221,13 @@ describe('Split collapseBelow — the container query can actually match (#372)'
   it('wraps each collapse rule in a @container query', () => {
     expect(scss.match(/@container \(max-width:/g)).toHaveLength(3);
   });
+
+  it('makes both collapsible side templates shrink-safe for pinned aside widths', () => {
+    expect(scss).toMatch(
+      /\.sideStart\.collapsible\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*var\(--split-aside-width,\s*auto\)\)\s+minmax\(0,\s*1fr\)/s,
+    );
+    expect(scss).toMatch(
+      /\.sideEnd\.collapsible\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(0,\s*var\(--split-aside-width,\s*auto\)\)/s,
+    );
+  });
 });
