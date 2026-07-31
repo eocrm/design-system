@@ -11,6 +11,10 @@ const scriptPath = join(
   repositoryRoot,
   'packages/design-tokens/scripts/detect-library-changes.mjs',
 );
+const stableTagScriptPath = join(
+  repositoryRoot,
+  'packages/design-tokens/scripts/latest-stable-release-tag.mjs',
+);
 const workflowPath = join(repositoryRoot, '.github/workflows/release.yml');
 
 test('detects a library change earlier in a multi-commit push', async () => {
@@ -149,6 +153,75 @@ test('rejects release tags with non-semantic numeric prerelease identifiers', as
   }
 });
 
+test('detects changes since the latest stable tag instead of a newer prerelease tag', async () => {
+  const fixture = await createRepository();
+
+  try {
+    commit(fixture, 'stable release');
+    tag(fixture, 'v1.2.3');
+    await write(fixture, 'packages/design-tokens/src/candidate.json', '{}');
+    commit(fixture, 'prerelease candidate');
+    tag(fixture, 'v9.0.0-rc.1');
+    await write(fixture, 'packages/playground/page.txt', 'page');
+    const after = commit(fixture, 'playground');
+
+    const result = detect(fixture, after);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, 'true\n');
+  } finally {
+    await rm(fixture, { recursive: true });
+  }
+});
+
+test('selects the highest stable semantic version and ignores other v-prefixed tags', async () => {
+  const fixture = await createRepository();
+
+  try {
+    commit(fixture, 'base');
+    for (const name of ['v1.9.9', 'v2.0.0', 'v10.0.0', 'vlatest', 'v99.0.0-rc.1']) {
+      tag(fixture, name);
+    }
+
+    const result = latestStableTag(fixture);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, 'v10.0.0\n');
+  } finally {
+    await rm(fixture, { recursive: true });
+  }
+});
+
+test('prints an empty stable tag consistently when only malformed or prerelease tags exist', async () => {
+  const fixture = await createRepository();
+
+  try {
+    commit(fixture, 'base');
+    tag(fixture, 'vlatest');
+    tag(fixture, 'v1.2.3-rc.1');
+
+    const result = latestStableTag(fixture);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '\n');
+  } finally {
+    await rm(fixture, { recursive: true });
+  }
+});
+
+test('fails tag selection instead of treating a Git error as an empty repository', async () => {
+  const fixture = await mkdtemp(join(tmpdir(), 'eocrm-release-not-git-'));
+
+  try {
+    const result = latestStableTag(fixture);
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /not a git repository/);
+  } finally {
+    await rm(fixture, { recursive: true });
+  }
+});
+
 test('falls back conservatively when shallow history omits the release tag', async () => {
   const fixture = await createRepository();
   const cloneRoot = await mkdtemp(join(tmpdir(), 'eocrm-release-shallow-'));
@@ -194,6 +267,17 @@ test('checks out full history and asks the detector about the surviving commit',
   assert.match(detectorJob, /detect-library-changes\.mjs "\$\{\{ github\.sha \}\}"/);
 });
 
+test('uses the shared stable-tag selector to compute the next release version', async () => {
+  const workflow = await readFile(workflowPath, 'utf8');
+  const versionStep = workflow.slice(
+    workflow.indexOf('      - name: Determine next version'),
+    workflow.indexOf('      - name: Synchronize release version'),
+  );
+
+  assert.match(versionStep, /latest-stable-release-tag\.mjs/);
+  assert.doesNotMatch(versionStep, /git tag --list/);
+});
+
 test('stages Compose publications locally and repairs every Maven file', async () => {
   const workflow = await readFile(workflowPath, 'utf8');
   const composeStep = workflow.slice(
@@ -235,6 +319,13 @@ function tag(root, name) {
 
 function detect(root, after) {
   return spawnSync(process.execPath, [scriptPath, after], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+}
+
+function latestStableTag(root) {
+  return spawnSync(process.execPath, [stableTagScriptPath], {
     cwd: root,
     encoding: 'utf8',
   });

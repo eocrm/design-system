@@ -108,10 +108,10 @@ jobs:
         id: version
         run: |
           set -euo pipefail
-          LATEST=$(git tag --list 'v*' --sort=-v:refname | head -n 1 || true)
+          LATEST=$(node packages/design-tokens/scripts/latest-stable-release-tag.mjs)
           if [ -z "${LATEST:-}" ]; then
             CURRENT="0.0.0"
-            echo "No existing v* tag — starting from $CURRENT"
+            echo "No existing stable v* tag — starting from $CURRENT"
           else
             CURRENT="${LATEST#v}"
             echo "Latest version tag: $LATEST (parsed as $CURRENT)"
