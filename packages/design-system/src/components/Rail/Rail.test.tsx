@@ -1049,26 +1049,25 @@ describe('Rail — linkable Group (#377)', () => {
     expect(screen.queryByRole('dialog', { name: 'Deals' })).toBeNull();
   });
 
-  it('collapsed empty final group preserves native Tab traversal', async () => {
+  it('collapsed hidden-only final group does not trap focus on its trigger', async () => {
     const user = userEvent.setup();
     render(
-      <>
-        <Rail defaultCollapsed>
-          <Rail.Section title="Main">
-            <Rail.Group icon={<span aria-hidden />} label="Empty">
-              {null}
-            </Rail.Group>
-          </Rail.Section>
-        </Rail>
-        <button type="button">After navigation</button>
-      </>,
+      <Rail defaultCollapsed>
+        <Rail.Section title="Main">
+          <Rail.Group icon={<span aria-hidden />} label="Empty">
+            <Rail.Item href="#/hidden" style={{ display: 'none' }}>
+              Hidden
+            </Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
     );
     const trigger = screen.getByRole('button', { name: 'Empty' });
     trigger.focus();
 
     await user.tab();
 
-    expect(screen.getByRole('button', { name: 'After navigation' })).toHaveFocus();
+    expect(document.body).toHaveFocus();
     expect(screen.queryByRole('dialog', { name: 'Empty' })).toBeNull();
   });
 });

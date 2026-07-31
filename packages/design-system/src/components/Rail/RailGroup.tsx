@@ -51,8 +51,6 @@ function composeHandlers<E>(
 const OPEN_DELAY_MS = 80;
 /** Close-grace so the cursor has time to traverse from trigger to flyout. */
 const CLOSE_GRACE_MS = 200;
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 interface RailGroupOwnProps {
   /**
@@ -326,6 +324,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
 
   const isSequentiallyFocusable = useCallback((candidate: HTMLElement, checkVisible = true) => {
     if (candidate.tabIndex < 0) return false;
+    if (candidate.matches(':disabled')) return false;
     if (candidate.closest('[hidden], [inert]')) return false;
     if (!checkVisible) return true;
     const style = window.getComputedStyle(candidate);
@@ -336,9 +335,9 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
 
   const getFlyoutFocusableItems = useCallback(
     () =>
-      Array.from(
-        refs.floating.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [],
-      ).filter((candidate) => isSequentiallyFocusable(candidate)),
+      Array.from(refs.floating.current?.querySelectorAll<HTMLElement>('*') ?? []).filter(
+        (candidate) => isSequentiallyFocusable(candidate),
+      ),
     [refs.floating, isSequentiallyFocusable],
   );
 
@@ -347,8 +346,8 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
       return true;
     }
     const inlineSubitems = groupRef.current?.querySelector(`.${styles.subitems}`);
-    return Array.from(inlineSubitems?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? []).some(
-      (candidate) => isSequentiallyFocusable(candidate, false),
+    return Array.from(inlineSubitems?.querySelectorAll<HTMLElement>('*') ?? []).some((candidate) =>
+      isSequentiallyFocusable(candidate, false),
     );
   }, [isLink, isSequentiallyFocusable]);
 
@@ -356,7 +355,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     const trigger = triggerRef.current;
     const group = groupRef.current;
     if (!trigger || !group) return null;
-    const candidates = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    const candidates = Array.from(document.querySelectorAll<HTMLElement>('*'));
     const triggerIndex = candidates.indexOf(trigger);
     return (
       candidates.slice(triggerIndex + 1).find((candidate) => {
@@ -367,13 +366,20 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   }, [isSequentiallyFocusable]);
 
   const focusFirstFlyoutItem = useCallback(() => {
-    const first = getFlyoutFocusableItems()[0];
-    if (first) {
-      first.focus({ preventScroll: true });
-      return;
+    for (const candidate of getFlyoutFocusableItems()) {
+      candidate.focus({ preventScroll: true });
+      if (document.activeElement === candidate) return;
     }
     setPopoverOpen(false);
-    findNextFocusTarget()?.focus({ preventScroll: true });
+    const nextTarget = findNextFocusTarget();
+    if (nextTarget) {
+      nextTarget.focus({ preventScroll: true });
+      if (document.activeElement === nextTarget) return;
+    }
+    // Tab was already cancelled to enter the portal. If no valid destination
+    // remains (for example a hidden-only final group), release focus rather
+    // than trapping it on the trigger.
+    triggerRef.current?.blur();
   }, [getFlyoutFocusableItems, findNextFocusTarget]);
 
   // A portalled panel sits after #root in DOM order, so native Tab traversal
