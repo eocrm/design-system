@@ -324,11 +324,33 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   // popovers (#272); its base z sits at --z-popover otherwise.
   const inOverlay = useInOverlay(triggerRef, popoverOpen);
 
+  const isSequentiallyFocusable = useCallback((candidate: HTMLElement, checkVisible = true) => {
+    if (candidate.tabIndex < 0) return false;
+    if (candidate.closest('[hidden], [inert]')) return false;
+    if (!checkVisible) return true;
+    const style = window.getComputedStyle(candidate);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    const layoutUnavailable = document.documentElement.getClientRects().length === 0;
+    return layoutUnavailable || candidate.getClientRects().length > 0;
+  }, []);
+
   const getFlyoutFocusableItems = useCallback(
     () =>
-      Array.from(refs.floating.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? []),
-    [refs.floating],
+      Array.from(
+        refs.floating.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [],
+      ).filter((candidate) => isSequentiallyFocusable(candidate)),
+    [refs.floating, isSequentiallyFocusable],
   );
+
+  const hasFlyoutFocusTarget = useCallback(() => {
+    if (isLink && triggerRef.current && isSequentiallyFocusable(triggerRef.current, false)) {
+      return true;
+    }
+    const inlineSubitems = groupRef.current?.querySelector(`.${styles.subitems}`);
+    return Array.from(inlineSubitems?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? []).some(
+      (candidate) => isSequentiallyFocusable(candidate, false),
+    );
+  }, [isLink, isSequentiallyFocusable]);
 
   const findNextFocusTarget = useCallback(() => {
     const trigger = triggerRef.current;
@@ -336,15 +358,13 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     if (!trigger || !group) return null;
     const candidates = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
     const triggerIndex = candidates.indexOf(trigger);
-    const layoutUnavailable = document.documentElement.getClientRects().length === 0;
     return (
       candidates.slice(triggerIndex + 1).find((candidate) => {
         if (group.contains(candidate)) return false;
-        if (candidate.closest('[hidden]')) return false;
-        return layoutUnavailable || candidate.getClientRects().length > 0;
+        return isSequentiallyFocusable(candidate);
       }) ?? null
     );
-  }, []);
+  }, [isSequentiallyFocusable]);
 
   const focusFirstFlyoutItem = useCallback(() => {
     const first = getFlyoutFocusableItems()[0];
@@ -414,6 +434,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   const handleTriggerKeyDown = useCallback(
     (e: ReactKeyboardEvent<HTMLElement>) => {
       if (collapsed && e.key === 'Tab' && !e.shiftKey) {
+        if (!hasFlyoutFocusTarget()) return;
         e.preventDefault();
         clearOpenTimer();
         clearCloseTimer();
@@ -434,7 +455,15 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
         setPopoverOpen((prev) => !prev);
       }
     },
-    [collapsed, isLink, popoverOpen, focusFirstFlyoutItem, clearOpenTimer, clearCloseTimer],
+    [
+      collapsed,
+      isLink,
+      popoverOpen,
+      focusFirstFlyoutItem,
+      hasFlyoutFocusTarget,
+      clearOpenTimer,
+      clearCloseTimer,
+    ],
   );
 
   const handlePointerEnter = useCallback(
@@ -495,11 +524,15 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
         return;
       }
       if (!e.shiftKey && target === items.at(-1)) {
+        const nextTarget = findNextFocusTarget();
+        // If the group is the final page control, preserve native Tab so the
+        // browser can move beyond the document instead of trapping focus.
+        if (!nextTarget) return;
         e.preventDefault();
         clearOpenTimer();
         clearCloseTimer();
         setPopoverOpen(false);
-        findNextFocusTarget()?.focus({ preventScroll: true });
+        nextTarget.focus({ preventScroll: true });
       }
     },
     [getFlyoutFocusableItems, findNextFocusTarget, clearOpenTimer, clearCloseTimer],

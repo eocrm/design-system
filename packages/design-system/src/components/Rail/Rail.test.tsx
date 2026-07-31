@@ -972,8 +972,11 @@ describe('Rail — linkable Group (#377)', () => {
           <Rail.Group as="a" href="#/deals" icon={<span aria-hidden />} label="Deals">
             <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
           </Rail.Group>
-          <Rail.Item href="#/projects" icon={<span aria-hidden />}>
+          <Rail.Item href="#/projects" icon={<span aria-hidden />} tabIndex={-1}>
             Projects
+          </Rail.Item>
+          <Rail.Item href="#/reports" icon={<span aria-hidden />}>
+            Reports
           </Rail.Item>
         </Rail.Section>
       </Rail>,
@@ -988,7 +991,7 @@ describe('Rail — linkable Group (#377)', () => {
     await user.tab();
     expect(within(flyout).getByRole('link', { name: 'My open USD' })).toHaveFocus();
     await user.tab();
-    expect(screen.getByRole('link', { name: 'Projects' })).toHaveFocus();
+    expect(screen.getByRole('link', { name: 'Reports' })).toHaveFocus();
   });
 
   it('collapsed: Shift+Tab from the first flyout item returns to the trigger', async () => {
@@ -1044,5 +1047,28 @@ describe('Rail — linkable Group (#377)', () => {
     expect(screen.queryByRole('dialog', { name: 'Deals' })).toBeNull();
     await new Promise((resolve) => setTimeout(resolve, 100));
     expect(screen.queryByRole('dialog', { name: 'Deals' })).toBeNull();
+  });
+
+  it('collapsed empty final group preserves native Tab traversal', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Rail defaultCollapsed>
+          <Rail.Section title="Main">
+            <Rail.Group icon={<span aria-hidden />} label="Empty">
+              {null}
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>
+        <button type="button">After navigation</button>
+      </>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Empty' });
+    trigger.focus();
+
+    await user.tab();
+
+    expect(screen.getByRole('button', { name: 'After navigation' })).toHaveFocus();
+    expect(screen.queryByRole('dialog', { name: 'Empty' })).toBeNull();
   });
 });
