@@ -82,8 +82,8 @@ export type TabsActivationMode = 'auto' | 'manual';
  * Tablist layout and `aria-orientation` value. Use `'horizontal'` (the
  * default) for a conventional tab strip or `'vertical'` for a fixed
  * master–detail rail. `'auto'` starts vertical and switches from vertical to
- * horizontal when the tablist itself reaches 320px; it is for a `Split` rail
- * that becomes a full-width strip when the panes stack.
+ * horizontal when the available tab-strip width reaches 320px; it is for a
+ * `Split` rail that becomes a full-width strip when the panes stack.
  */
 export type TabsOrientation = 'horizontal' | 'vertical' | 'auto';
 
@@ -118,8 +118,8 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * `'horizontal'` (default) — a horizontal strip with a sliding underline.
    * `'vertical'` — a stacked master–detail rail: full-width rows, a left accent
    * bar + tinted background on the active row, and ArrowUp/ArrowDown navigation.
-   * `'auto'` — measures the tablist itself: vertical below 320px and horizontal
-   * at or above 320px. It starts vertical during SSR and whenever
+   * `'auto'` — measures available Tabs/tab-strip width: vertical below 320px
+   * and horizontal at or above 320px. It starts vertical during SSR and whenever
    * `ResizeObserver` is unavailable. Use it with a collapsing `Split`: the
    * fixed-width aside remains a vertical rail, then the full-width stacked
    * tablist becomes horizontal. `aria-orientation`, keyboard navigation, and
@@ -234,8 +234,8 @@ const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'prod
  *   It is for *intra-page* master–detail section switching, not route changes —
  *   use the app sidebar for navigation.
  * - ❌ Combining `orientation="auto"` with app-owned viewport measurement.
- *   Auto mode measures its own tablist, so let it react to the `Split`'s layout
- *   instead of duplicating breakpoint state in the app.
+ *   Auto mode measures the available Tabs/tab-strip width, so let it react to
+ *   the `Split`'s layout instead of duplicating breakpoint state in the app.
  * - ❌ Reaching for `action` to switch views. It never sets `activeId` — if
  *   the click should select a tab, add a `TabItem` instead.
  */
@@ -258,8 +258,11 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   const prefix = panelIdPrefix ?? sanitizeId(reactId);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const tablistRef = useRef<HTMLDivElement>(null);
+  const scrollWrapRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
   const firstMeasureRef = useRef(true);
+  const hasEndContent = endContent != null;
   const [automaticOrientation, setAutomaticOrientation] =
     useState<EffectiveTabsOrientation>('vertical');
   const effectiveOrientation: EffectiveTabsOrientation =
@@ -267,7 +270,12 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
 
   useLayoutEffect(() => {
     if (orientation !== 'auto') return;
-    const node = tablistRef.current;
+    // Measure the box that receives the available layout width, rather than
+    // the tablist's intrinsic inline-flex width. With end content, the outer
+    // row is stable across orientation changes; without it, the scroll wrapper
+    // is the available strip width. This avoids a horizontal tablist's own
+    // overflow feeding back into automatic orientation.
+    const node = hasEndContent ? rootRef.current : scrollWrapRef.current;
     if (!node || typeof ResizeObserver === 'undefined') return;
     const update = (width: number) =>
       setAutomaticOrientation(width >= AUTO_ORIENTATION_BREAKPOINT ? 'horizontal' : 'vertical');
@@ -275,7 +283,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     const observer = new ResizeObserver(([entry]) => update(entry.contentRect.width));
     observer.observe(node);
     return () => observer.disconnect();
-  }, [orientation]);
+  }, [orientation, hasEndContent]);
 
   // Dev-only: warn on duplicate ids. The ref map would silently collapse them
   // and roving tabindex would behave unpredictably. Run as an effect (not in
@@ -413,6 +421,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     // below the tablist's baseline) from being clipped by the auto-promoted
     // overflow-y.
     <div
+      ref={scrollWrapRef}
       className={clsx(
         styles.scrollWrap,
         effectiveOrientation === 'vertical' && styles.scrollWrapVertical,
@@ -511,10 +520,13 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     </div>
   );
 
-  if (endContent == null) return strip;
+  if (!hasEndContent) return strip;
 
   return (
-    <div className={clsx(styles.root, effectiveOrientation === 'vertical' && styles.rootVertical)}>
+    <div
+      ref={rootRef}
+      className={clsx(styles.root, effectiveOrientation === 'vertical' && styles.rootVertical)}
+    >
       {strip}
       {/* data-tabs-end is an internal test hook (module classes are hashed), not public API. */}
       <div data-tabs-end="" className={styles.endContent}>

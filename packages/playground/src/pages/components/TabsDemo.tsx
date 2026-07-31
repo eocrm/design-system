@@ -242,7 +242,7 @@ export function Demo() {
 
       <Example
         title="Responsive master–detail"
-        description='orientation="auto" keeps the 220px Split rail vertical, then makes the tabs horizontal after Split stacks them above the detail panel. Below 320px, the tablist stays vertical. Use this composition for settings / configuration editors, where each row is a section and the panel reflects the selection.'
+        description='orientation="auto" measures available tab-strip width: it keeps the 220px Split rail vertical, then makes the tabs horizontal after Split stacks them above the detail panel. Below 320px, the strip stays vertical. Use this composition for settings / configuration editors, where each row is a section and the panel reflects the selection.'
         code={`import { useState } from 'react';
 import { Activity, CreditCard, Settings, Shield } from 'lucide-react';
 import { Badge, Card, Split, Stack, Tabs } from '@eocrm/design-system';

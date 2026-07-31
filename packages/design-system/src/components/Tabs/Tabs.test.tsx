@@ -298,13 +298,35 @@ describe('Tabs', () => {
   describe('automatic orientation', () => {
     afterEach(() => vi.unstubAllGlobals());
 
-    it('starts vertical and observes the forwarded tablist', () => {
+    it('starts vertical and observes the available scroll wrapper, not the forwarded tablist', () => {
       const observer = stubResizeObserver();
       const ref = createRef<HTMLDivElement>();
       render(<Tabs ref={ref} items={items} activeId="a" onChange={noop} orientation="auto" />);
-      expect(ref.current).toBe(screen.getByRole('tablist'));
-      expect(observer.observe).toHaveBeenCalledWith(ref.current);
+      const tablist = screen.getByRole('tablist');
+      const scrollWrapper = tablist.parentElement;
+      expect(ref.current).toBe(tablist);
+      expect(scrollWrapper).toBeInstanceOf(HTMLDivElement);
+      expect(observer.observe).toHaveBeenCalledWith(scrollWrapper);
+      expect(observer.observe).not.toHaveBeenCalledWith(ref.current);
       expect(ref.current).toHaveAttribute('aria-orientation', 'vertical');
+    });
+
+    it('observes the stable outer root when endContent shares the available row width', () => {
+      const observer = stubResizeObserver();
+      const { container } = render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          endContent={<button type="button">New</button>}
+        />,
+      );
+      const tablist = screen.getByRole('tablist');
+      const root = container.firstElementChild;
+      expect(root).toBeInstanceOf(HTMLDivElement);
+      expect(observer.observe).toHaveBeenCalledWith(root);
+      expect(observer.observe).not.toHaveBeenCalledWith(tablist);
     });
 
     it('switches semantics, styling, keyboard axis, and indicator geometry at 320px', async () => {
