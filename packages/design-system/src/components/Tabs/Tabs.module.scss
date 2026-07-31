@@ -297,17 +297,23 @@
 
 .rootVertical {
   flex-direction: column;
-  align-items: stretch;
+  align-items: flex-start;
 
   // Vertical has no bottom track: the rail is content-height, endContent below.
   .scrollWrap {
     flex: initial;
+    width: 100%;
   }
 
   .endContent {
+    // Keep the horizontal layout footprint used by auto orientation, then
+    // visually cancel the leading gap so this below-the-rail control still
+    // aligns with the tabs. A stable border-box width prevents a 319px/320px
+    // mode flip from changing its own measurement and oscillating.
+    padding-inline-start: var(--tabs-endcontent-gap);
     justify-content: flex-start;
-    padding-inline-start: 0;
     border-bottom: none;
+    transform: translateX(calc(-1 * var(--tabs-endcontent-gap)));
   }
 }
 

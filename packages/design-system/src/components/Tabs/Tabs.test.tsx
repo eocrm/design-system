@@ -12,20 +12,24 @@ const items: TabItem[] = [
 const noop = () => undefined;
 
 interface ResizeObserverHarness {
-  resize: (width: number) => void;
+  resize: (target: Element, borderBoxWidth: number, contentBoxWidth?: number) => void;
   observe: ReturnType<typeof vi.fn>;
   disconnect: ReturnType<typeof vi.fn>;
 }
 
 function stubResizeObserver(): ResizeObserverHarness {
   let callback: ResizeObserverCallback | undefined;
+  const observed = new Set<Element>();
   const observe = vi.fn();
   const disconnect = vi.fn();
   class MockResizeObserver {
     constructor(cb: ResizeObserverCallback) {
       callback = cb;
     }
-    observe = observe;
+    observe = (target: Element) => {
+      observed.add(target);
+      observe(target);
+    };
     disconnect = disconnect;
     unobserve = vi.fn();
   }
@@ -33,10 +37,14 @@ function stubResizeObserver(): ResizeObserverHarness {
   return {
     observe,
     disconnect,
-    resize(width) {
+    resize(target, borderBoxWidth, contentBoxWidth = borderBoxWidth) {
+      if (!observed.has(target)) return;
+      vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+        width: borderBoxWidth,
+      } as DOMRect);
       act(() => {
         callback?.(
-          [{ contentRect: { width } } as ResizeObserverEntry],
+          [{ target, contentRect: { width: contentBoxWidth } } as ResizeObserverEntry],
           null as unknown as ResizeObserver,
         );
       });
@@ -311,7 +319,7 @@ describe('Tabs', () => {
       expect(ref.current).toHaveAttribute('aria-orientation', 'vertical');
     });
 
-    it('observes the stable outer root when endContent shares the available row width', () => {
+    it('observes the stable root and end-content width when endContent shares the available row', () => {
       const observer = stubResizeObserver();
       const { container } = render(
         <Tabs
@@ -324,9 +332,80 @@ describe('Tabs', () => {
       );
       const tablist = screen.getByRole('tablist');
       const root = container.firstElementChild;
+      const endContent = container.querySelector('[data-tabs-end]');
       expect(root).toBeInstanceOf(HTMLDivElement);
+      expect(endContent).toBeInstanceOf(HTMLDivElement);
       expect(observer.observe).toHaveBeenCalledWith(root);
+      expect(observer.observe).toHaveBeenCalledWith(endContent);
       expect(observer.observe).not.toHaveBeenCalledWith(tablist);
+    });
+
+    it('uses root width minus end-content width so a 340px row with 100px end content stays vertical', () => {
+      const observer = stubResizeObserver();
+      const { container } = render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          endContent={<button type="button">New</button>}
+        />,
+      );
+      const root = container.firstElementChild as HTMLDivElement;
+      const endContent = container.querySelector('[data-tabs-end]') as HTMLDivElement;
+
+      // The end region's border box includes the spacing padding needed by the
+      // horizontal row; its content box does not.
+      observer.resize(endContent, 100, 80);
+      observer.resize(root, 340);
+
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+    });
+
+    it('switches at 320px of available strip width and responds to root and end-content resizes', () => {
+      const observer = stubResizeObserver();
+      const { container } = render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          endContent={<button type="button">New</button>}
+        />,
+      );
+      const root = container.firstElementChild as HTMLDivElement;
+      const endContent = container.querySelector('[data-tabs-end]') as HTMLDivElement;
+
+      observer.resize(endContent, 100);
+      observer.resize(root, 420);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
+
+      observer.resize(root, 419);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+
+      observer.resize(root, 420);
+      observer.resize(endContent, 101);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+
+      observer.resize(endContent, 100);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
+    });
+
+    it('disconnects the root-and-end-content observer on unmount', () => {
+      const observer = stubResizeObserver();
+      const { unmount } = render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          endContent={<button type="button">New</button>}
+        />,
+      );
+
+      unmount();
+
+      expect(observer.disconnect).toHaveBeenCalledOnce();
     });
 
     it('switches semantics, styling, keyboard axis, and indicator geometry at 320px', async () => {
@@ -336,7 +415,7 @@ describe('Tabs', () => {
       const { container } = render(
         <Tabs items={items} activeId="a" onChange={onChange} orientation="auto" />,
       );
-      observer.resize(320);
+      observer.resize(screen.getByRole('tablist').parentElement as HTMLDivElement, 320);
       const tablist = screen.getByRole('tablist');
       expect(tablist).toHaveAttribute('aria-orientation', 'horizontal');
       expect(tablist.className).not.toMatch(/vertical/);
@@ -354,8 +433,9 @@ describe('Tabs', () => {
       const onChange = vi.fn();
       const user = userEvent.setup();
       render(<Tabs items={items} activeId="a" onChange={onChange} orientation="auto" />);
-      observer.resize(480);
-      observer.resize(319);
+      const scrollWrapper = screen.getByRole('tablist').parentElement as HTMLDivElement;
+      observer.resize(scrollWrapper, 480);
+      observer.resize(scrollWrapper, 319);
       expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
       screen.getByRole('tab', { name: 'Overview' }).focus();
       await user.keyboard('{ArrowDown}');

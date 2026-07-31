@@ -260,6 +260,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   const tablistRef = useRef<HTMLDivElement>(null);
   const scrollWrapRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const endContentRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
   const firstMeasureRef = useRef(true);
   const hasEndContent = endContent != null;
@@ -271,19 +272,40 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   useLayoutEffect(() => {
     if (orientation !== 'auto') return;
     // Measure the box that receives the available layout width, rather than
-    // the tablist's intrinsic inline-flex width. With end content, the outer
-    // row is stable across orientation changes; without it, the scroll wrapper
-    // is the available strip width. This avoids a horizontal tablist's own
-    // overflow feeding back into automatic orientation.
-    const node = hasEndContent ? rootRef.current : scrollWrapRef.current;
-    if (!node || typeof ResizeObserver === 'undefined') return;
-    const update = (width: number) =>
-      setAutomaticOrientation(width >= AUTO_ORIENTATION_BREAKPOINT ? 'horizontal' : 'vertical');
-    update(node.getBoundingClientRect().width);
-    const observer = new ResizeObserver(([entry]) => update(entry.contentRect.width));
-    observer.observe(node);
+    // the tablist's intrinsic inline-flex width. With end content, the strip
+    // shares a stable root row with controls at its end, so its horizontal
+    // budget is root width minus the end region's border-box width (including
+    // the gap padding). The end region keeps that footprint in both
+    // orientations, so the same measurement cannot bounce the mode at the
+    // boundary.
+    const root = hasEndContent ? rootRef.current : scrollWrapRef.current;
+    const end = hasEndContent ? endContentRef.current : null;
+    if (!root || (hasEndContent && !end) || typeof ResizeObserver === 'undefined') return;
+
+    let rootWidth = root.getBoundingClientRect().width;
+    let endContentWidth = end?.getBoundingClientRect().width ?? 0;
+    const update = () => {
+      const availableWidth = Math.max(0, rootWidth - endContentWidth);
+      setAutomaticOrientation(
+        availableWidth >= AUTO_ORIENTATION_BREAKPOINT ? 'horizontal' : 'vertical',
+      );
+    };
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // contentRect excludes padding, but the end-content gap consumes real
+        // horizontal strip space. Read the border box from the observed target.
+        const width = entry.target.getBoundingClientRect().width;
+        if (entry.target === root) rootWidth = width;
+        if (entry.target === end) endContentWidth = width;
+      }
+      update();
+    });
+
+    update();
+    observer.observe(root);
+    if (end) observer.observe(end);
     return () => observer.disconnect();
-  }, [orientation, hasEndContent]);
+  }, [orientation, hasEndContent, endContent]);
 
   // Dev-only: warn on duplicate ids. The ref map would silently collapse them
   // and roving tabindex would behave unpredictably. Run as an effect (not in
@@ -529,7 +551,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     >
       {strip}
       {/* data-tabs-end is an internal test hook (module classes are hashed), not public API. */}
-      <div data-tabs-end="" className={styles.endContent}>
+      <div ref={endContentRef} data-tabs-end="" className={styles.endContent}>
         {endContent}
       </div>
     </div>
