@@ -36,6 +36,13 @@ function groupComposeTokens(document) {
       });
     }
   }
+  for (const tokens of Object.values(groups)) {
+    tokens.sort((left, right) => {
+      if (left.composeName < right.composeName) return -1;
+      if (left.composeName > right.composeName) return 1;
+      return 0;
+    });
+  }
   return groups;
 }
 

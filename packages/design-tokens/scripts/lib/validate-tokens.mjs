@@ -185,8 +185,62 @@ export function validateTokens(document) {
     }
   }
 
+  validateComposeGroupStructure(document, issues);
+
   if (issues.length > 0) throw new TokenSemanticError(issues);
   return document;
+}
+
+function validateComposeGroupStructure(document, issues) {
+  const grouped = new Map();
+  for (const [index, token] of document.tokens.entries()) {
+    const group = token.outputs?.compose?.group;
+    if (!group) continue;
+    if (!grouped.has(group)) grouped.set(group, []);
+    grouped.get(group).push({ token, index });
+  }
+  for (const group of ['semanticTones', 'categoricalPalette']) {
+    const entries = grouped.get(group) ?? [];
+    const names = new Set(entries.map(({ token }) => token.outputs.compose.name));
+    for (const { token, index } of entries) {
+      const name = token.outputs.compose.name;
+      const suffix = name.endsWith('Background')
+        ? 'Background'
+        : name.endsWith('Foreground')
+          ? 'Foreground'
+          : undefined;
+      if (!suffix) {
+        issues.push(
+          issue(
+            `/tokens/${index}/outputs/compose/name`,
+            'invalid-compose-pair',
+            `${group} names must end in Background or Foreground`,
+          ),
+        );
+        continue;
+      }
+      const counterpart =
+        name.slice(0, -suffix.length) + (suffix === 'Background' ? 'Foreground' : 'Background');
+      if (!names.has(counterpart)) {
+        issues.push(
+          issue(
+            `/tokens/${index}/outputs/compose/name`,
+            'invalid-compose-pair',
+            `${name} is missing counterpart ${counterpart}`,
+          ),
+        );
+      }
+    }
+  }
+  const avatarEntries = grouped.get('avatarPalette') ?? [];
+  if (
+    avatarEntries.length > 0 &&
+    !avatarEntries.some(({ token }) => token.outputs.compose.name === 'foreground')
+  ) {
+    issues.push(
+      issue('/tokens', 'invalid-compose-structure', 'avatarPalette requires a foreground token'),
+    );
+  }
 }
 
 export function resolveTokenValue(document, tokenId, theme) {
@@ -315,12 +369,7 @@ function isComposeDimension(value) {
 function isValidTokenValue(type, value) {
   switch (type) {
     case 'color':
-      return (
-        typeof value === 'string' &&
-        (/^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(value) ||
-          /^(?:rgb|rgba|hsl|hsla|oklch|color)\([^()]+\)$/.test(value) ||
-          ['transparent', 'currentColor'].includes(value))
-      );
+      return isSupportedCssColor(value);
     case 'dimension':
       return (
         value === 0 ||
@@ -348,6 +397,23 @@ function isValidTokenValue(type, value) {
     default:
       return false;
   }
+}
+
+function isSupportedCssColor(value) {
+  if (typeof value !== 'string') return false;
+  if (
+    /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(value) ||
+    ['transparent', 'currentColor'].includes(value)
+  ) {
+    return true;
+  }
+  const rgb = value.match(
+    /^rgb\(\s*([0-9]{1,3})\s+([0-9]{1,3})\s+([0-9]{1,3})(?:\s*\/\s*([0-9]+(?:\.[0-9]+)?)(%)?)?\s*\)$/,
+  );
+  if (!rgb) return false;
+  if (rgb.slice(1, 4).some((channel) => Number(channel) > 255)) return false;
+  if (rgb[4] === undefined) return true;
+  return Number(rgb[4]) <= (rgb[5] === '%' ? 100 : 1);
 }
 
 function issue(path, code, message) {

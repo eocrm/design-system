@@ -264,7 +264,15 @@ test('validates resolved values for every declared token type', () => {
 });
 
 test('rejects malformed web-only CSS colors', () => {
-  for (const value of ['#12345', '#1234567', 'rgb(', 'hsl(10 20% 30%']) {
+  for (const value of [
+    '#12345',
+    '#1234567',
+    'rgb(',
+    'rgb(nope)',
+    'rgb(256 0 0)',
+    'rgb(0 0 0 / 101%)',
+    'hsl(10 20% 30%',
+  ]) {
     assert.throws(
       () => validateTokens(document([token({ value })])),
       (error) => {
@@ -276,6 +284,34 @@ test('rejects malformed web-only CSS colors', () => {
       },
     );
   }
+});
+
+test('rejects incomplete Compose palette structures', () => {
+  const cases = [
+    token({
+      id: 'palette.red.background',
+      value: '#ff0000',
+      outputs: {
+        compose: { group: 'categoricalPalette', name: 'redBackground' },
+      },
+    }),
+    token({
+      id: 'avatar.palette.1',
+      value: '#ff0000',
+      outputs: { compose: { group: 'avatarPalette', name: 'palette1' } },
+    }),
+  ];
+
+  assert.throws(
+    () => validateTokens(document(cases)),
+    (error) => {
+      assert.deepEqual(
+        error.issues.map(({ code }) => code),
+        ['invalid-compose-structure', 'invalid-compose-pair'],
+      );
+      return true;
+    },
+  );
 });
 
 test('sorts independent semantic issues by path then code', () => {

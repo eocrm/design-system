@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { checkGenerated } from '../scripts/check-generated.mjs';
 import { generate } from '../scripts/generate.mjs';
+import { renderCompose } from '../scripts/lib/render-compose.mjs';
 import { renderWeb } from '../scripts/lib/render-web.mjs';
 import { validateTokens } from '../scripts/lib/validate-tokens.mjs';
 
@@ -29,6 +30,50 @@ test('renders identical repository-independent bytes on repeated calls', () => {
   assert.deepEqual(second, first);
   assert.doesNotMatch(output, /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
   assert.doesNotMatch(output, /(?:\/home\/|[A-Z]:\\)/);
+});
+
+test('uses stable semantic ordering independent of source array order', () => {
+  const tokens = [
+    {
+      id: 'color.zebra',
+      type: 'color',
+      value: '#ffffff',
+      outputs: {
+        web: { name: '--color-zebra' },
+        compose: { group: 'colors', name: 'zebra' },
+      },
+    },
+    {
+      id: 'color.alpha',
+      type: 'color',
+      value: '#000000',
+      outputs: {
+        web: { name: '--color-alpha' },
+        compose: { group: 'colors', name: 'alpha' },
+      },
+    },
+    {
+      id: 'avatar.foreground',
+      type: 'color',
+      value: '#ffffff',
+      outputs: {
+        compose: { group: 'avatarPalette', name: 'foreground' },
+      },
+    },
+  ];
+  const forward = validateTokens({
+    schemaVersion: 1,
+    contractVersion: '0.0.0',
+    tokens,
+  });
+  const reversed = validateTokens({
+    schemaVersion: 1,
+    contractVersion: '0.0.0',
+    tokens: tokens.toReversed(),
+  });
+
+  assert.deepEqual(renderWeb(reversed), renderWeb(forward));
+  assert.deepEqual(renderCompose(reversed), renderCompose(forward));
 });
 
 test('drift check reports the relative name of every changed generated file', async () => {

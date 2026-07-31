@@ -158,7 +158,9 @@ export async function readMavenArtifact(repository, version, actor, token) {
     }
     for (const variant of document.variants ?? []) {
       for (const file of variant.files ?? []) {
-        if (!file.url || !file.sha256) continue;
+        if (!file.url || !file.sha256) {
+          throw new Error(`${artifact}: publication metadata file requires url and sha256`);
+        }
         artifactChecks.push(
           fetchBuffer(`${base}/${artifact}/${version}/${file.url}`, headers).then((content) => {
             const actual = sha256Hex(content);

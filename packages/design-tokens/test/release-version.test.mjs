@@ -125,6 +125,25 @@ test('rejects an incomplete Maven multiplatform publication', async () => {
   }
 });
 
+test('rejects Maven metadata without an artifact SHA-256', async () => {
+  const originalFetch = globalThis.fetch;
+  const module = JSON.stringify({
+    component: { version: '1.2.3' },
+    variants: [{ files: [{ url: 'contract.jar' }] }],
+  });
+  globalThis.fetch = async (url) =>
+    new Response(String(url).endsWith('.module') ? module : '<version>1.2.3</version>');
+
+  try {
+    await assert.rejects(
+      readMavenArtifact('eocrm/design-system', '1.2.3', 'actor', 'token'),
+      /publication metadata file requires url and sha256/,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 async function createFixture() {
   const fixture = await mkdtemp(join(tmpdir(), 'eocrm-release-version-'));
   const paths = [

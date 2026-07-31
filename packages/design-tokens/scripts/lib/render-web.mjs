@@ -3,7 +3,9 @@ const HEADER = `// GENERATED FILE — DO NOT EDIT.
 // Schema version: `;
 
 export function renderWeb(document) {
-  const webTokens = document.tokens.filter((token) => token.outputs.web);
+  const webTokens = document.tokens
+    .filter((token) => token.outputs.web)
+    .sort((left, right) => compareCodeUnits(left.outputs.web.name, right.outputs.web.name));
   const webNames = new Map(webTokens.map((token) => [token.id, token.outputs.web.name]));
   const lightDeclarations = webTokens
     .map((token) =>
@@ -72,4 +74,10 @@ function isAlias(value) {
 
 function isThemed(value) {
   return value !== null && typeof value === 'object' && 'light' in value && 'dark' in value;
+}
+
+function compareCodeUnits(left, right) {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
 }
