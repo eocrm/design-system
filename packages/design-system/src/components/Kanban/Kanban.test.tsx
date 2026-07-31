@@ -883,6 +883,7 @@ describe('Kanban — drag announcements (#390)', () => {
     moveTo(at(1, 100)); // transit into the second column…
     expect(live()).toMatch(/^Draft Q3 OKRs, position \d of \d in Done\.$/);
     moveTo([600, 500]); // …carry it off the board…
+    expect(live()).toBe('Draft Q3 OKRs is not over a drop target.');
     release([600, 500]); // …and let go over unrelated page content
     expect(live()).toBe('Move cancelled. Draft Q3 OKRs stayed where it was.');
   });
