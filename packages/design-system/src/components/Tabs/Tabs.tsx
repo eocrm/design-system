@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
+import { mergeRefs } from '../_internal/refs';
 import styles from './Tabs.module.scss';
 
 /** One tab in the tablist. */
@@ -77,8 +78,11 @@ export interface TabsAction {
  */
 export type TabsActivationMode = 'auto' | 'manual';
 
-/** `aria-orientation` value. Affects how screen readers announce the strip. */
-export type TabsOrientation = 'horizontal' | 'vertical';
+/** `aria-orientation` value. `'auto'` adapts to the tablist width. */
+export type TabsOrientation = 'horizontal' | 'vertical' | 'auto';
+
+const AUTO_ORIENTATION_BREAKPOINT = 320;
+type EffectiveTabsOrientation = Exclude<TabsOrientation, 'auto'>;
 
 export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** The tabs to render. Each item must have a unique `id`. */
@@ -108,8 +112,10 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * `'horizontal'` (default) — a horizontal strip with a sliding underline.
    * `'vertical'` — a stacked master–detail rail: full-width rows, a left accent
    * bar + tinted background on the active row, and ArrowUp/ArrowDown navigation.
-   * Sets `aria-orientation` on the tablist accordingly. Put a vertical strip in a
-   * `Split`'s `aside`, with the detail panel as the `Split`'s children beside it.
+   * `'auto'` — starts vertical, then switches to horizontal at 320px and back
+   * below that width. Sets `aria-orientation` on the tablist accordingly. Put a
+   * vertical strip in a `Split`'s `aside`, with the detail panel as the `Split`'s
+   * children beside it.
    */
   orientation?: TabsOrientation;
   /**
@@ -238,8 +244,25 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   const reactId = useId();
   const prefix = panelIdPrefix ?? sanitizeId(reactId);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const tablistRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
   const firstMeasureRef = useRef(true);
+  const [automaticOrientation, setAutomaticOrientation] =
+    useState<EffectiveTabsOrientation>('vertical');
+  const effectiveOrientation: EffectiveTabsOrientation =
+    orientation === 'auto' ? automaticOrientation : orientation;
+
+  useLayoutEffect(() => {
+    if (orientation !== 'auto') return;
+    const node = tablistRef.current;
+    if (!node || typeof ResizeObserver === 'undefined') return;
+    const update = (width: number) =>
+      setAutomaticOrientation(width >= AUTO_ORIENTATION_BREAKPOINT ? 'horizontal' : 'vertical');
+    update(node.getBoundingClientRect().width);
+    const observer = new ResizeObserver(([entry]) => update(entry.contentRect.width));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [orientation]);
 
   // Dev-only: warn on duplicate ids. The ref map would silently collapse them
   // and roving tabindex would behave unpredictably. Run as an effect (not in
@@ -283,7 +306,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     const cell = node.parentElement;
     const measureNode = cell && cell.getAttribute('role') === 'presentation' ? cell : node;
 
-    const vertical = orientation === 'vertical';
+    const vertical = effectiveOrientation === 'vertical';
     const write = () => {
       if (vertical) {
         indicator.style.transform = `translateY(${measureNode.offsetTop}px)`;
@@ -310,7 +333,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     }
 
     write();
-  }, [activeId, items, orientation]);
+  }, [activeId, items, effectiveOrientation]);
 
   // Focused tab can drift from activeId in manual activation mode. In auto
   // mode they stay in sync because focusTab also calls onChange.
@@ -347,7 +370,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     const currentIndex = items.findIndex((i) => i.id === effectiveFocusedId);
     // Vertical strips navigate with Up/Down; horizontal with Left/Right. The
     // matching `case nextKey:` below reads the active axis's keys.
-    const vertical = orientation === 'vertical';
+    const vertical = effectiveOrientation === 'vertical';
     const nextKey = vertical ? 'ArrowDown' : 'ArrowRight';
     const prevKey = vertical ? 'ArrowUp' : 'ArrowLeft';
     let nextIndex = -1;
@@ -377,17 +400,24 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     // below the tablist's baseline) from being clipped by the auto-promoted
     // overflow-y.
     <div
-      className={clsx(styles.scrollWrap, orientation === 'vertical' && styles.scrollWrapVertical)}
+      className={clsx(
+        styles.scrollWrap,
+        effectiveOrientation === 'vertical' && styles.scrollWrapVertical,
+      )}
     >
       <div
         // Consumer-controlled props come first so component-owned attrs below
         // (role, aria-orientation, onKeyDown, className) always win.
         {...props}
-        ref={ref}
+        ref={mergeRefs(ref, tablistRef)}
         role="tablist"
-        aria-orientation={orientation}
+        aria-orientation={effectiveOrientation}
         onKeyDown={onKeyDown}
-        className={clsx(styles.tabs, orientation === 'vertical' && styles.vertical, className)}
+        className={clsx(
+          styles.tabs,
+          effectiveOrientation === 'vertical' && styles.vertical,
+          className,
+        )}
       >
         {items.map((item) => {
           const active = item.id === activeId;
@@ -471,7 +501,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   if (endContent == null) return strip;
 
   return (
-    <div className={clsx(styles.root, orientation === 'vertical' && styles.rootVertical)}>
+    <div className={clsx(styles.root, effectiveOrientation === 'vertical' && styles.rootVertical)}>
       {strip}
       {/* data-tabs-end is an internal test hook (module classes are hashed), not public API. */}
       <div data-tabs-end="" className={styles.endContent}>
