@@ -193,7 +193,8 @@ export function Demo() {
       <Example
         title="Scroll-viewport mode: a sidebar taller than the screen"
         description="With scroll, the pinned box is capped at the viewport height (minus the top offset and a bottom gap) and scrolls its own content — so a sidebar with more items than fit on screen stays fully reachable instead of running off below the fold. The bottom gap defaults to the top offset; set --sticky-bottom-gap when that top offset also includes pinned chrome clearance. Scroll the page: the sidebar pins, and once it hits the bottom its own scrollbar takes over (overscroll-behavior:contain keeps the page from scroll-chaining)."
-        code={`import { Card, Split, Stack, Sticky, Text, Title } from '@eocrm/design-system';
+        code={`import type { CSSProperties } from 'react';
+import { Card, Split, Stack, Sticky, Text, Title } from '@eocrm/design-system';
 
 const sidebarItems = Array.from({ length: 5 }, (_, i) => i + 1);
 const mainRows = [1, 2, 3, 4, 5];
