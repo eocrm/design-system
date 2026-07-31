@@ -960,4 +960,145 @@ describe('Rail — linkable Group (#377)', () => {
       vi.useRealTimers();
     }
   });
+
+  it('collapsed: Tab traverses the portalled flyout then rejoins Rail order', async () => {
+    const user = userEvent.setup();
+    render(
+      <Rail defaultCollapsed>
+        <Rail.Section title="Main">
+          <Rail.Item href="#/companies" icon={<span aria-hidden />}>
+            Companies
+          </Rail.Item>
+          <Rail.Group as="a" href="#/deals" icon={<span aria-hidden />} label="Deals">
+            <Rail.Item href="#/deals?view=open">My open USD</Rail.Item>
+          </Rail.Group>
+          <Rail.Item href="#/projects" icon={<span aria-hidden />} tabIndex={-1}>
+            Projects
+          </Rail.Item>
+          <Rail.Item href="#/stalled" icon={<span aria-hidden />}>
+            Stalled
+          </Rail.Item>
+          <Rail.Item href="#/reports" icon={<span aria-hidden />}>
+            Reports
+          </Rail.Item>
+        </Rail.Section>
+      </Rail>,
+    );
+
+    const trigger = screen.getByRole('link', { name: 'Deals' });
+    vi.spyOn(screen.getByRole('link', { name: 'Stalled' }), 'focus').mockImplementation(() => {});
+    trigger.focus();
+    await user.tab();
+
+    const flyout = await screen.findByRole('dialog', { name: 'Deals' });
+    expect(within(flyout).getByRole('link', { name: 'Deals' })).toHaveFocus();
+    await user.tab();
+    expect(within(flyout).getByRole('link', { name: 'My open USD' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Reports' })).toHaveFocus();
+  });
+
+  it('collapsed: Shift+Tab from the first flyout item returns to the trigger', async () => {
+    const user = userEvent.setup();
+    renderLinkGroup({ collapsed: true });
+    const trigger = screen.getByRole('link', { name: 'Deals' });
+    trigger.focus();
+    await user.tab();
+    const flyout = await screen.findByRole('dialog', { name: 'Deals' });
+    expect(within(flyout).getByRole('link', { name: 'Deals' })).toHaveFocus();
+
+    await user.tab({ shift: true });
+
+    expect(trigger).toHaveFocus();
+  });
+
+  it('collapsed toggle-only group follows the same trigger → children → next-item order', async () => {
+    const user = userEvent.setup();
+    render(
+      <Rail defaultCollapsed>
+        <Rail.Section title="Main">
+          <Rail.Group icon={<span aria-hidden />} label="Settings">
+            <Rail.Item href="#/general">General</Rail.Item>
+          </Rail.Group>
+          <Rail.Item href="#/projects" icon={<span aria-hidden />}>
+            Projects
+          </Rail.Item>
+        </Rail.Section>
+      </Rail>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Settings' });
+    trigger.focus();
+    await user.tab();
+    const flyout = await screen.findByRole('dialog', { name: 'Settings' });
+    const finalItem = within(flyout).getByRole('link', { name: 'General' });
+    expect(finalItem).toHaveFocus();
+
+    await user.tab();
+
+    expect(screen.getByRole('link', { name: 'Projects' })).toHaveFocus();
+  });
+
+  it('collapsed: Escape closes the flyout, restores focus, and does not reopen it', async () => {
+    const user = userEvent.setup();
+    renderLinkGroup({ collapsed: true });
+    const trigger = screen.getByRole('link', { name: 'Deals' });
+    trigger.focus();
+    await user.tab();
+    expect(await screen.findByRole('dialog', { name: 'Deals' })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    expect(trigger).toHaveFocus();
+    expect(screen.queryByRole('dialog', { name: 'Deals' })).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(screen.queryByRole('dialog', { name: 'Deals' })).toBeNull();
+  });
+
+  it('collapsed hidden-only final group does not trap focus on its trigger', async () => {
+    const user = userEvent.setup();
+    render(
+      <Rail defaultCollapsed>
+        <Rail.Section title="Main">
+          <Rail.Group icon={<span aria-hidden />} label="Empty">
+            <Rail.Item href="#/hidden" style={{ display: 'none' }}>
+              Hidden
+            </Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Empty' });
+    trigger.focus();
+
+    await user.tab();
+
+    expect(document.body).toHaveFocus();
+    expect(screen.queryByRole('dialog', { name: 'Empty' })).toBeNull();
+  });
+
+  it('collapsed nonempty final group exits the flyout instead of cycling within it', async () => {
+    const user = userEvent.setup();
+    render(
+      <Rail defaultCollapsed>
+        <Rail.Section title="Main">
+          <Rail.Group icon={<span aria-hidden />} label="Settings">
+            <Rail.Item href="#/general">General</Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Settings' });
+    trigger.focus();
+    await user.tab();
+    const flyout = await screen.findByRole('dialog', { name: 'Settings' });
+    const finalItem = within(flyout).getByRole('link', { name: 'General' });
+    expect(finalItem).toHaveFocus();
+    // No external destination exists, so the component must leave this Tab
+    // uncancelled and let the browser advance beyond the document.
+    expect(fireEvent.keyDown(finalItem, { key: 'Tab' })).toBe(true);
+
+    await user.tab();
+
+    expect(document.body).toHaveFocus();
+  });
 });
