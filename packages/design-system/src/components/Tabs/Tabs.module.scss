@@ -7,6 +7,11 @@
 // `scrollbar-width: thin` used to live here; it now comes from the universal
 // scrollbar reset in styles/reset.scss, which themes every scroller at once.
 .scrollWrap {
+  // A vertical tablist is width:100%. Without an explicit zero minimum, a grid
+  // aside may resolve this wrapper's automatic minimum to the tabs' min-content
+  // width instead of its own track. Keep the wrapper constrained to its
+  // containing block; horizontal tabs still overflow and scroll inside it.
+  min-width: 0;
   overflow-x: auto;
 }
 

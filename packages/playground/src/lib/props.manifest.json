@@ -4489,7 +4489,7 @@
           "type": "TabsOrientation",
           "required": false,
           "default": "'horizontal'",
-          "description": "`'horizontal'` (default) — a horizontal strip with a sliding underline.\n`'vertical'` — a stacked master–detail rail: full-width rows, a left accent\nbar + tinted background on the active row, and ArrowUp/ArrowDown navigation.\nSets `aria-orientation` on the tablist accordingly. Put a vertical strip in a\n`Split`'s `aside`, with the detail panel as the `Split`'s children beside it."
+          "description": "`'horizontal'` (default) — a horizontal strip with a sliding underline.\n`'vertical'` — a stacked master–detail rail: full-width rows, a left accent\nbar + tinted background on the active row, and ArrowUp/ArrowDown navigation.\n`'auto'` — measures the tablist itself: vertical below 320px and horizontal\nat or above 320px. It starts vertical during SSR and whenever\n`ResizeObserver` is unavailable. Use it with a collapsing `Split`: the\nfixed-width aside remains a vertical rail, then the full-width stacked\ntablist becomes horizontal. `aria-orientation`, keyboard navigation, and\npresentation always follow the effective orientation."
         },
         {
           "name": "action",
@@ -4961,7 +4961,7 @@
     "FlowCanvasPoint": "{ x: number; y: number }",
     "PersonDisplaySize": "\"sm\" | \"md\" | \"lg\"",
     "TabsActivationMode": "\"auto\" | \"manual\"",
-    "TabsOrientation": "\"horizontal\" | \"vertical\"",
+    "TabsOrientation": "\"auto\" | \"horizontal\" | \"vertical\"",
     "EmptyStateSize": "\"sm\" | \"md\" | \"lg\"",
     "EmptyStateAlign": "\"start\" | \"center\"",
     "EmptyStateHeadingLevel": "1 | 2 | 3 | 4 | 5 | 6",
