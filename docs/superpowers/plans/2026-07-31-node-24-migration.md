@@ -135,10 +135,10 @@ In `.github/workflows/release.yml`, add this step in the
 library changes:
 
 ```yaml
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
+- name: Setup Node
+  uses: actions/setup-node@v4
+  with:
+    node-version: '24'
 ```
 
 This job invokes `detect-library-changes.mjs`; the explicit setup prevents it
