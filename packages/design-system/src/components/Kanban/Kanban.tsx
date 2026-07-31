@@ -767,7 +767,12 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // render under StrictMode writes the same value.
   const outsideBoardRef = useRef(false);
   const collisionDetection = useCallback<CollisionDetection>((args) => {
-    outsideBoardRef.current = isPointerOutsideContainers(args);
+    const isOutsideBoard = isPointerOutsideContainers(args);
+    outsideBoardRef.current = isOutsideBoard;
+    // Force an `over` transition to null at the board boundary. dnd-kit's
+    // announcement callback only runs when `over.id` changes, so retaining the
+    // nearest collision here would leave screen readers naming a stale column.
+    if (isOutsideBoard) return [];
     return containerAwareClosestCorners(args);
   }, []);
 

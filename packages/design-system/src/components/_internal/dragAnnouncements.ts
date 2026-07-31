@@ -138,11 +138,10 @@ export type DescribeDragTarget = (
  *                   human slot. Return `null` when nothing would land anywhere
  *                   — that announces "not over a drop target" / "nothing
  *                   moved".
- * @param isRejectedDrop Optional. Consulted before describing `over` and again
- *                   on drag end: return `true` when the component refuses to
- *                   commit the current target, so it announces that the item
- *                   is outside during the drag and cancels on release
- *                   (Kanban's outside-the-board release, #390).
+ * @param isRejectedDrop Optional. Consulted on drag end BEFORE `over`: return
+ *                   `true` when the component refuses to commit the release, so
+ *                   it announces a cancel rather than a drop that never
+ *                   happened (Kanban's outside-the-board release, #390).
  */
 export function useDragAccessibility(
   describe: DescribeDragTarget,
@@ -184,7 +183,6 @@ export function useDragAccessibility(
         onDragStart: ({ active }) => t('drag.pickedUp', { item: nameOf(active, active.id) }),
         onDragOver: ({ active, over }) => {
           const item = nameOf(active, active.id);
-          if (rejectedRef.current?.()) return t('drag.movedOutside', { item });
           const target = describeRef.current(over, active.id);
           return target ? at('movedOver', item, target) : t('drag.movedOutside', { item });
         },
