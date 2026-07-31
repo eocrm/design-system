@@ -1030,7 +1030,8 @@ describe('Rail — linkable Group (#377)', () => {
     trigger.focus();
     await user.tab();
     const flyout = await screen.findByRole('dialog', { name: 'Settings' });
-    expect(within(flyout).getByRole('link', { name: 'General' })).toHaveFocus();
+    const finalItem = within(flyout).getByRole('link', { name: 'General' });
+    expect(finalItem).toHaveFocus();
 
     await user.tab();
 
@@ -1073,5 +1074,31 @@ describe('Rail — linkable Group (#377)', () => {
 
     expect(document.body).toHaveFocus();
     expect(screen.queryByRole('dialog', { name: 'Empty' })).toBeNull();
+  });
+
+  it('collapsed nonempty final group exits the flyout instead of cycling within it', async () => {
+    const user = userEvent.setup();
+    render(
+      <Rail defaultCollapsed>
+        <Rail.Section title="Main">
+          <Rail.Group icon={<span aria-hidden />} label="Settings">
+            <Rail.Item href="#/general">General</Rail.Item>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Settings' });
+    trigger.focus();
+    await user.tab();
+    const flyout = await screen.findByRole('dialog', { name: 'Settings' });
+    const finalItem = within(flyout).getByRole('link', { name: 'General' });
+    expect(finalItem).toHaveFocus();
+    // No external destination exists, so the component must leave this Tab
+    // uncancelled and let the browser advance beyond the document.
+    expect(fireEvent.keyDown(finalItem, { key: 'Tab' })).toBe(true);
+
+    await user.tab();
+
+    expect(document.body).toHaveFocus();
   });
 });

@@ -359,9 +359,10 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     const triggerIndex = candidates.indexOf(trigger);
     return candidates.slice(triggerIndex + 1).filter((candidate) => {
       if (group.contains(candidate)) return false;
+      if (refs.floating.current?.contains(candidate)) return false;
       return isSequentiallyFocusable(candidate);
     });
-  }, [isSequentiallyFocusable]);
+  }, [refs.floating, isSequentiallyFocusable]);
 
   const focusFirstAvailable = useCallback((candidates: HTMLElement[]) => {
     for (const candidate of candidates) {
