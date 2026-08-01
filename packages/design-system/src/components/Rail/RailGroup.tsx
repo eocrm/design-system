@@ -26,6 +26,7 @@ import {
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { useRail } from './Rail';
+import { RailGroupContext } from './RailGroupContext';
 import { type PolymorphicProps } from './RailItem';
 import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Rail.module.scss';
@@ -89,9 +90,9 @@ interface RailGroupOwnProps {
  * except `className` and `ref`, which stay on the wrapper `<div>` in both
  * shapes, as they always have.
  *
- * Your `onPointerEnter` / `onPointerLeave` / `onFocus` / `onBlur` / `onClick`
+ * Your `onPointerEnter` / `onPointerLeave` / `onFocus` / `onBlur` / `onClick` / `onKeyDown`
  * on a linkable group are **composed** with the group's own handlers (yours
- * runs first), not replaced by them: those five are what open the
+ * runs first), not replaced by them: those six are what open the
  * collapsed-mode flyout, and overriding them would make the subitems
  * unreachable while the rail is collapsed.
  */
@@ -247,6 +248,8 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   useFloatingSurface(popoverOpen);
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const focusFlyoutOnOpenRef = useRef(false);
+  const suppressNextTriggerFocusOpenRef = useRef(false);
 
   const clearOpenTimer = useCallback(() => {
     if (openTimerRef.current) {
@@ -320,6 +323,76 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   // popovers (#272); its base z sits at --z-popover otherwise.
   const inOverlay = useInOverlay(triggerRef, popoverOpen);
 
+  const isSequentiallyFocusable = useCallback((candidate: HTMLElement, checkVisible = true) => {
+    if (candidate.tabIndex < 0) return false;
+    if (candidate.matches(':disabled')) return false;
+    if (candidate.closest('[hidden], [inert]')) return false;
+    if (!checkVisible) return true;
+    const style = window.getComputedStyle(candidate);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    const layoutUnavailable = document.documentElement.getClientRects().length === 0;
+    return layoutUnavailable || candidate.getClientRects().length > 0;
+  }, []);
+
+  const getFlyoutFocusableItems = useCallback(
+    () =>
+      Array.from(refs.floating.current?.querySelectorAll<HTMLElement>('*') ?? []).filter(
+        (candidate) => isSequentiallyFocusable(candidate),
+      ),
+    [refs.floating, isSequentiallyFocusable],
+  );
+
+  const hasFlyoutFocusTarget = useCallback(() => {
+    if (isLink && triggerRef.current && isSequentiallyFocusable(triggerRef.current, false)) {
+      return true;
+    }
+    const inlineSubitems = groupRef.current?.querySelector(`.${styles.subitems}`);
+    return Array.from(inlineSubitems?.querySelectorAll<HTMLElement>('*') ?? []).some((candidate) =>
+      isSequentiallyFocusable(candidate, false),
+    );
+  }, [isLink, isSequentiallyFocusable]);
+
+  const findNextFocusTargets = useCallback(() => {
+    const trigger = triggerRef.current;
+    const group = groupRef.current;
+    if (!trigger || !group) return [];
+    const candidates = Array.from(document.querySelectorAll<HTMLElement>('*'));
+    const triggerIndex = candidates.indexOf(trigger);
+    return candidates.slice(triggerIndex + 1).filter((candidate) => {
+      if (group.contains(candidate)) return false;
+      if (refs.floating.current?.contains(candidate)) return false;
+      return isSequentiallyFocusable(candidate);
+    });
+  }, [refs.floating, isSequentiallyFocusable]);
+
+  const focusFirstAvailable = useCallback((candidates: HTMLElement[]) => {
+    for (const candidate of candidates) {
+      candidate.focus({ preventScroll: true });
+      if (document.activeElement === candidate) return true;
+    }
+    return false;
+  }, []);
+
+  const focusFirstFlyoutItem = useCallback(() => {
+    if (focusFirstAvailable(getFlyoutFocusableItems())) return;
+    setPopoverOpen(false);
+    if (focusFirstAvailable(findNextFocusTargets())) return;
+    // Tab was already cancelled to enter the portal. If no valid destination
+    // remains (for example a hidden-only final group), release focus rather
+    // than trapping it on the trigger.
+    triggerRef.current?.blur();
+  }, [getFlyoutFocusableItems, findNextFocusTargets, focusFirstAvailable]);
+
+  // A portalled panel sits after #root in DOM order, so native Tab traversal
+  // cannot move from the trigger into it. When keyboard interaction opens the
+  // flyout, move focus to its first interactive element after the portal has
+  // mounted. Escape already restores focus to the trigger below.
+  useEffect(() => {
+    if (!popoverOpen || !focusFlyoutOnOpenRef.current) return;
+    focusFlyoutOnOpenRef.current = false;
+    focusFirstFlyoutItem();
+  }, [popoverOpen, focusFirstFlyoutItem]);
+
   // Close on Escape (a11y).
   useEffect(() => {
     if (!popoverOpen) return;
@@ -330,6 +403,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
         clearOpenTimer();
         clearCloseTimer();
         setPopoverOpen(false);
+        suppressNextTriggerFocusOpenRef.current = true;
         triggerRef.current?.focus({ preventScroll: true });
       }
     };
@@ -365,17 +439,38 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   }, [collapsed, toggleOpen]);
 
   const handleTriggerKeyDown = useCallback(
-    (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    (e: ReactKeyboardEvent<HTMLElement>) => {
+      if (collapsed && e.key === 'Tab' && !e.shiftKey) {
+        if (!hasFlyoutFocusTarget()) return;
+        e.preventDefault();
+        clearOpenTimer();
+        clearCloseTimer();
+        if (popoverOpen) {
+          focusFirstFlyoutItem();
+        } else {
+          focusFlyoutOnOpenRef.current = true;
+          setPopoverOpen(true);
+        }
+        return;
+      }
       // In collapsed mode the trigger acts like a popup-haspopup button
       // (Enter / Space opens the popover); in expanded mode native button
       // semantics already cover Enter/Space toggling.
-      if (collapsed && (e.key === 'Enter' || e.key === ' ')) {
+      if (!isLink && collapsed && (e.key === 'Enter' || e.key === ' ')) {
         e.preventDefault();
         clearCloseTimer();
         setPopoverOpen((prev) => !prev);
       }
     },
-    [collapsed, clearCloseTimer],
+    [
+      collapsed,
+      isLink,
+      popoverOpen,
+      focusFirstFlyoutItem,
+      hasFlyoutFocusTarget,
+      clearOpenTimer,
+      clearCloseTimer,
+    ],
   );
 
   const handlePointerEnter = useCallback(
@@ -393,6 +488,14 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     },
     [collapsed, scheduleClose],
   );
+
+  const handleTriggerFocus = useCallback(() => {
+    if (suppressNextTriggerFocusOpenRef.current) {
+      suppressNextTriggerFocusOpenRef.current = false;
+      return;
+    }
+    scheduleOpen();
+  }, [scheduleOpen]);
 
   const handleFlyoutPointerEnter = useCallback(() => {
     if (!collapsed) return;
@@ -413,6 +516,40 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     clearCloseTimer();
     setPopoverOpen(false);
   }, [collapsed, clearOpenTimer, clearCloseTimer]);
+
+  const handleFlyoutKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== 'Tab') return;
+      const items = getFlyoutFocusableItems();
+      if (items.length === 0) return;
+      const target = e.target as HTMLElement;
+      if (e.shiftKey && target === items[0]) {
+        e.preventDefault();
+        clearCloseTimer();
+        suppressNextTriggerFocusOpenRef.current = true;
+        triggerRef.current?.focus({ preventScroll: true });
+        return;
+      }
+      if (!e.shiftKey && target === items.at(-1)) {
+        const nextTargets = findNextFocusTargets();
+        // If the group is the final page control, preserve native Tab so the
+        // browser can move beyond the document instead of trapping focus.
+        if (nextTargets.length === 0) return;
+        e.preventDefault();
+        clearOpenTimer();
+        clearCloseTimer();
+        setPopoverOpen(false);
+        if (!focusFirstAvailable(nextTargets)) triggerRef.current?.blur();
+      }
+    },
+    [
+      getFlyoutFocusableItems,
+      findNextFocusTargets,
+      focusFirstAvailable,
+      clearOpenTimer,
+      clearCloseTimer,
+    ],
+  );
 
   // Compose the consumer ref with our internal ref so consumers can still
   // attach refs to the group's wrapping <div>.
@@ -445,6 +582,8 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
       className={clsx(styles.groupChevron, open && styles.groupChevronOpen)}
     />
   );
+
+  const groupedChildren = <RailGroupContext.Provider value>{children}</RailGroupContext.Provider>;
 
   return (
     <div
@@ -480,9 +619,13 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
             {...rest}
             onPointerEnter={composeHandlers(rest.onPointerEnter, handlePointerEnter)}
             onPointerLeave={composeHandlers(rest.onPointerLeave, handlePointerLeave)}
-            onFocus={composeHandlers(rest.onFocus, collapsed ? scheduleOpen : undefined)}
+            onFocus={composeHandlers(rest.onFocus, collapsed ? handleTriggerFocus : undefined)}
             onBlur={composeHandlers(rest.onBlur, collapsed ? scheduleClose : undefined)}
             onClick={composeHandlers(rest.onClick, collapsed ? handleFlyoutClick : undefined)}
+            onKeyDown={composeHandlers(
+              rest.onKeyDown,
+              collapsed ? handleTriggerKeyDown : undefined,
+            )}
           >
             <span className={styles.itemIcon} aria-hidden="true">
               {icon}
@@ -519,7 +662,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
           onKeyDown={handleTriggerKeyDown}
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}
-          onFocus={collapsed ? scheduleOpen : undefined}
+          onFocus={collapsed ? handleTriggerFocus : undefined}
           onBlur={collapsed ? scheduleClose : undefined}
         >
           <span className={styles.itemIcon} aria-hidden="true">
@@ -546,7 +689,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
         // handles the visual hide while keeping the DOM intact for `:has`.
         hidden={!collapsed && !open}
       >
-        {children}
+        {groupedChildren}
       </div>
 
       {/* Collapsed-mode flyout popover. Portaled to document.body, positioned
@@ -564,6 +707,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
             onPointerEnter={handleFlyoutPointerEnter}
             onPointerLeave={handleFlyoutPointerLeave}
             onClick={handleFlyoutClick}
+            onKeyDown={handleFlyoutKeyDown}
             // Keyboard-tab traversal from the trigger into a subitem fires the
             // trigger's onBlur. Without these handlers, the 200ms close timer
             // would fire and unmount the flyout mid-tab. onFocus on the panel
@@ -589,7 +733,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
                 label
               )}
             </div>
-            <div className={styles.flyoutBody}>{children}</div>
+            <div className={styles.flyoutBody}>{groupedChildren}</div>
           </div>,
           document.body,
         )}

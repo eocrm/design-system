@@ -9,6 +9,12 @@ const MAIN_ROWS = Array.from({ length: 14 }, (_, i) => i + 1);
 // something to scroll internally (the box caps at the viewport height).
 const SIDEBAR_ITEMS = Array.from({ length: 20 }, (_, i) => i + 1);
 
+const chromeAwareStickyStyle: React.CSSProperties &
+  Record<'--sticky-top-lg' | '--sticky-bottom-gap', string> = {
+  '--sticky-top-lg': 'calc(var(--topbar-height) + var(--space-4))',
+  '--sticky-bottom-gap': 'var(--space-4)',
+};
+
 // A bordered, internally-scrolling box so the sticky behaviour is visible inside
 // the demo (the box is the scroll container the aside pins within).
 const scrollBox: React.CSSProperties = {
@@ -186,11 +192,17 @@ export function Demo() {
 
       <Example
         title="Scroll-viewport mode: a sidebar taller than the screen"
-        description="With scroll, the pinned box is capped at the viewport height (minus the top offset and an equal bottom gap) and scrolls its own content — so a sidebar with more items than fit on screen stays fully reachable instead of running off below the fold. Scroll the page: the sidebar pins, and once it hits the bottom its own scrollbar takes over (overscroll-behavior:contain keeps the page from scroll-chaining). Pair with a non-none top for breathing room."
-        code={`import { Card, Split, Stack, Sticky, Text, Title } from '@eocrm/design-system';
+        description="With scroll, the pinned box is capped at the viewport height (minus the top offset and a bottom gap) and scrolls its own content — so a sidebar with more items than fit on screen stays fully reachable instead of running off below the fold. The bottom gap defaults to the top offset; set --sticky-bottom-gap when that top offset also includes pinned chrome clearance. Scroll the page: the sidebar pins, and once it hits the bottom its own scrollbar takes over (overscroll-behavior:contain keeps the page from scroll-chaining)."
+        code={`import type { CSSProperties } from 'react';
+import { Card, Split, Stack, Sticky, Text, Title } from '@eocrm/design-system';
 
 const sidebarItems = Array.from({ length: 5 }, (_, i) => i + 1);
 const mainRows = [1, 2, 3, 4, 5];
+const chromeAwareStickyStyle: CSSProperties &
+  Record<'--sticky-top-lg' | '--sticky-bottom-gap', string> = {
+  '--sticky-top-lg': 'calc(var(--topbar-height) + var(--space-4))',
+  '--sticky-bottom-gap': 'var(--space-4)',
+};
 
 export function Demo() {
   return (
@@ -200,7 +212,7 @@ export function Demo() {
       gap="lg"
       align="stretch"
       aside={
-        <Sticky top="lg" scroll>
+        <Sticky top="lg" scroll style={chromeAwareStickyStyle}>
           <Stack gap="md">
             {sidebarItems.map((n) => (
               <Card key={n}>
@@ -235,7 +247,7 @@ export function Demo() {
           gap="lg"
           align="stretch"
           aside={
-            <Sticky top="lg" scroll>
+            <Sticky top="lg" scroll style={chromeAwareStickyStyle}>
               <Stack gap="md">
                 {SIDEBAR_ITEMS.map((n) => (
                   <Card key={n}>

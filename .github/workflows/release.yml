@@ -53,6 +53,11 @@ jobs:
           # Need release tags and complete history to detect every unreleased change.
           fetch-depth: 0
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
       - name: Detect library changes
         id: diff
         run: |
@@ -82,7 +87,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
           # This writes .npmrc with the @eocrm scope pointed at GitHub Packages
           # and wires NODE_AUTH_TOKEN for the publish step below.

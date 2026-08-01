@@ -1,9 +1,13 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render } from '@testing-library/react';
 import { createRef } from 'react';
 import { Sticky } from './Sticky';
 import type { StickyTop } from './Sticky';
 
 describe('Sticky', () => {
+  const scss = readFileSync(resolve(__dirname, 'Sticky.module.scss'), 'utf8');
+
   it('renders children in a <div> and forwards ref', () => {
     const ref = createRef<HTMLDivElement>();
     const { container } = render(
@@ -45,6 +49,20 @@ describe('Sticky', () => {
       </Sticky>,
     );
     expect((container.firstChild as HTMLElement).className).toMatch(/scroll/);
+  });
+
+  it('lets the scroll cap override its bottom gap without changing the symmetric default', () => {
+    const normalizedScss = scss
+      .replace(/\s+/g, ' ')
+      .replaceAll('calc( ', 'calc(')
+      .replaceAll(' );', ');');
+    const bottomGap = 'var(--sticky-bottom-gap, var(--sticky-offset, 0px))';
+    expect(normalizedScss).toContain(
+      `max-height: calc(100vh - var(--sticky-offset, 0px) - ${bottomGap});`,
+    );
+    expect(normalizedScss).toContain(
+      `max-height: calc(100dvh - var(--sticky-offset, 0px) - ${bottomGap});`,
+    );
   });
 
   it('merges className and spreads other attrs', () => {

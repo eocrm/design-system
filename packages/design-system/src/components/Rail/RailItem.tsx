@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useContext,
   type ComponentPropsWithRef,
   type ComponentPropsWithoutRef,
   type ElementType,
@@ -9,6 +10,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { useRail } from './Rail';
+import { RailGroupContext } from './RailGroupContext';
 import { Tooltip } from '../Tooltip';
 import styles from './Rail.module.scss';
 
@@ -104,6 +106,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
 ) {
   const Component = (as ?? 'a') as ElementType;
   const { collapsed } = useRail();
+  const insideGroup = useContext(RailGroupContext);
 
   // The polymorphic anchor / NavLink / button receives the className so the
   // CSS `:has([aria-current="page"])` selector can light it up via the
@@ -129,7 +132,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
   // string — only then can we project the label onto the tooltip surface
   // safely. Non-string children (icons, complex nodes) are ignored;
   // consumers can always wrap their item in their own <Tooltip> when needed.
-  if (collapsed && typeof children === 'string') {
+  if (collapsed && typeof children === 'string' && !insideGroup) {
     return (
       <Tooltip content={children} side="right">
         {inner}
