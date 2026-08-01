@@ -6,9 +6,8 @@
   align-items: baseline;
   gap: var(--entity-chip-gap);
 
-  // Asymmetric top/bottom (see EntityChip.tokens.scss) corrects for the
-  // font's ascent/descent metric skew at line-height:1 — visually this reads
-  // as equal ink-to-edge spacing even though the CSS padding values differ.
+  // Equal top/bottom values include the font-metric inset documented in
+  // EntityChip.tokens.scss.
   padding: var(--entity-chip-padding-top) var(--entity-chip-padding-x)
     var(--entity-chip-padding-bottom);
   border: none;
