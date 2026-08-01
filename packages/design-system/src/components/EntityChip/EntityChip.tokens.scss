@@ -25,10 +25,11 @@
   // reads as extra padding on top (see #357). em-relative because the skew
   // scales with the inherited font-size, not a fixed px amount — measured ~3px
   // top/1px bottom ink gap at 14px body size and ~5px/1px at 24px heading
-  // size before this correction; 0.09em brings both within ~0.5px of equal.
+  // size before this correction. Use the corrected inset equally on both
+  // edges so the chip's computed top and bottom padding match exactly.
   --entity-chip-padding-y-shift: 0.09em;
   --entity-chip-padding-top: calc(
-    var(--entity-chip-padding-y) - var(--entity-chip-padding-y-shift)
+    var(--entity-chip-padding-y) + var(--entity-chip-padding-y-shift)
   );
   --entity-chip-padding-bottom: calc(
     var(--entity-chip-padding-y) + var(--entity-chip-padding-y-shift)
