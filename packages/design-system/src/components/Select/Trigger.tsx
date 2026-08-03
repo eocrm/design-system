@@ -789,7 +789,7 @@ function ChipsButtonTrigger(props: TriggerProps) {
     (v) => optionByValue.get(v) ?? { value: v, label: v },
   );
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (props.disabled || props.readOnly) return;
     if (handleNavKey(e)) return;
     if (e.key === ' ') {
@@ -813,29 +813,7 @@ function ChipsButtonTrigger(props: TriggerProps) {
     (selectedOptions.length > 0 ? `Selected: ${labelForAria}` : 'Open select');
 
   return (
-    <div
-      ref={ctx.triggerRef as Ref<HTMLDivElement>}
-      id={ctx.triggerId}
-      role="combobox"
-      tabIndex={props.disabled ? -1 : 0}
-      className={clsx(styles.trigger, styles.triggerChips)}
-      aria-haspopup="listbox"
-      aria-expanded={ctx.open}
-      aria-controls={ctx.open ? ctx.listboxId : undefined}
-      aria-activedescendant={activeOptionId}
-      aria-label={computedAriaLabel}
-      aria-labelledby={props['aria-labelledby']}
-      aria-describedby={props['aria-describedby']}
-      aria-required={props['aria-required']}
-      aria-invalid={props.invalid || undefined}
-      aria-readonly={props.readOnly || undefined}
-      aria-disabled={props.disabled || undefined}
-      onClick={() => {
-        if (props.disabled || props.readOnly) return;
-        ctx.setOpen(!ctx.open);
-      }}
-      onKeyDown={handleKeyDown}
-    >
+    <div className={clsx(styles.trigger, styles.triggerChips)}>
       {selectedOptions.map((o) => {
         const remove = () => {
           if (props.disabled || props.readOnly) return;
@@ -847,8 +825,37 @@ function ChipsButtonTrigger(props: TriggerProps) {
         return <Chip key={o.value} label={o.label} disabled={props.disabled} onRemove={remove} />;
       })}
       {selectedOptions.length === 0 && (
-        <span className={styles.placeholder}>{props.placeholder ?? ''}</span>
+        <span aria-hidden="true" className={styles.placeholder}>
+          {props.placeholder ?? ''}
+        </span>
       )}
+      <input
+        ref={ctx.triggerRef as Ref<HTMLInputElement>}
+        id={ctx.triggerId}
+        type="text"
+        role="combobox"
+        readOnly
+        tabIndex={props.disabled ? -1 : 0}
+        className={styles.chipsInput}
+        aria-haspopup="listbox"
+        aria-expanded={ctx.open}
+        aria-controls={ctx.open ? ctx.listboxId : undefined}
+        aria-activedescendant={activeOptionId}
+        aria-label={computedAriaLabel}
+        aria-labelledby={props['aria-labelledby']}
+        aria-describedby={props['aria-describedby']}
+        aria-required={props['aria-required']}
+        aria-invalid={props.invalid || undefined}
+        aria-readonly={props.readOnly || undefined}
+        aria-disabled={props.disabled || undefined}
+        value=""
+        onChange={() => undefined}
+        onClick={() => {
+          if (props.disabled || props.readOnly) return;
+          ctx.setOpen(!ctx.open);
+        }}
+        onKeyDown={handleKeyDown}
+      />
       {props.clearable && selectedOptions.length > 0 && <ClearButton variant="inline" />}
     </div>
   );

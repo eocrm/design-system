@@ -59,7 +59,7 @@ export interface SelectContextValue<T = unknown> {
 
   // ─── refs ─────────────────────────────────────────────────────────────────
   triggerRef: RefObject<HTMLElement | null>;
-  listboxRef: RefObject<HTMLUListElement | null>;
+  listboxRef: RefObject<HTMLDivElement | null>;
 
   // ─── imperative ───────────────────────────────────────────────────────────
   closeAndFocusTrigger: () => void;

@@ -527,7 +527,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   }, [state.open, activeIndex, rowsWithCreate]);
 
   const triggerRef = useRef<HTMLElement | null>(null);
-  const listboxRef = useRef<HTMLUListElement | null>(null);
+  const listboxRef = useRef<HTMLDivElement | null>(null);
 
   // `clearable` is opt-in: the ✕ clear button defaults OFF and only shows when a
   // consumer explicitly sets `clearable`. `disabled` / `readOnly` always suppress it

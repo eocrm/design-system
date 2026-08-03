@@ -643,7 +643,10 @@ describe('Select — multi-summary-searchable', () => {
     const user = userEvent.setup();
     render(<Select multiple triggerDisplay="summary" searchable options={OPTS} />);
     await user.click(screen.getByRole('combobox'));
-    expect(screen.getByRole('searchbox')).toBeInTheDocument();
+    const searchbox = screen.getByRole('searchbox');
+    expect(searchbox).toBeInTheDocument();
+    expect(searchbox).not.toHaveAttribute('aria-expanded');
+    expect(screen.getByRole('listbox')).not.toContainElement(searchbox);
   });
 
   it('typing into the popover search filters options', async () => {
@@ -676,6 +679,15 @@ describe('Select — multi-chips, non-searchable', () => {
     { value: 'a', label: 'Alpha' },
     { value: 'b', label: 'Beta' },
   ];
+
+  it('keeps chip actions outside the dedicated combobox focus owner', () => {
+    render(<Select multiple options={OPTS} value={['a']} clearable />);
+
+    const combobox = screen.getByRole('combobox');
+    expect(combobox.tagName).toBe('INPUT');
+    expect(combobox).not.toContainElement(screen.getByRole('button', { name: 'Remove Alpha' }));
+    expect(combobox).not.toContainElement(screen.getByRole('button', { name: /clear selection/i }));
+  });
 
   it('renders chips for each selected option inside the trigger', () => {
     render(<Select multiple triggerDisplay="chips" options={OPTS} value={['a', 'b']} />);
