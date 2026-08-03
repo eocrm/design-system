@@ -423,6 +423,34 @@ describe('Rail', () => {
     }
   });
 
+  it('caps a collapsed Group flyout to Floating UI available width', async () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <Rail defaultCollapsed>
+          <Rail.Section title="Main">
+            <Rail.Group icon={<span aria-hidden />} label="Saved views">
+              <Rail.Item href="/long">A very long saved view name</Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>,
+      );
+
+      act(() => fireEvent.pointerEnter(screen.getByRole('button', { name: 'Saved views' })));
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+        await Promise.resolve();
+      });
+
+      // jsdom exposes a zero-width collision viewport. The exact value is less
+      // important than proving the real size middleware projects Floating UI's
+      // available width onto the panel (without it this style is empty).
+      expect(screen.getByRole('dialog', { name: 'Saved views' }).style.maxWidth).toBe('0px');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does not repeat a collapsed group subitem label in an automatic Tooltip', () => {
     vi.useFakeTimers();
     try {
