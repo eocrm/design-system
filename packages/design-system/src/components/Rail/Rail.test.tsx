@@ -423,6 +423,88 @@ describe('Rail', () => {
     }
   });
 
+  it('caps a collapsed Group flyout to Floating UI available width', async () => {
+    const innerWidthDescriptor = Object.getOwnPropertyDescriptor(window, 'innerWidth');
+    const clientWidthDescriptor = Object.getOwnPropertyDescriptor(
+      document.documentElement,
+      'clientWidth',
+    );
+    const clientHeightDescriptor = Object.getOwnPropertyDescriptor(
+      document.documentElement,
+      'clientHeight',
+    );
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 420 });
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 420,
+    });
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 800,
+    });
+    vi.useFakeTimers();
+    try {
+      render(
+        <Rail defaultCollapsed>
+          <Rail.Section title="Main">
+            <Rail.Group icon={<span aria-hidden />} label="Saved views">
+              <Rail.Item href="/long">{'V'.repeat(150)}</Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>,
+      );
+
+      const trigger = screen.getByRole('button', { name: 'Saved views' });
+      trigger.getBoundingClientRect = () =>
+        ({
+          x: 0,
+          y: 0,
+          top: 0,
+          left: 0,
+          right: 56,
+          bottom: 40,
+          width: 56,
+          height: 40,
+          toJSON: () => undefined,
+        }) as DOMRect;
+
+      act(() => fireEvent.pointerEnter(trigger));
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+        await Promise.resolve();
+      });
+
+      const flyout = screen.getByRole('dialog', { name: 'Saved views' });
+      expect(flyout.style.maxWidth).toBe('348px');
+      expect(flyout.style.minWidth).toBe('min(var(--rail-flyout-min-width), 348px)');
+
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 180 });
+      Object.defineProperty(document.documentElement, 'clientWidth', {
+        configurable: true,
+        value: 180,
+      });
+      await act(async () => {
+        window.dispatchEvent(new Event('resize'));
+        await Promise.resolve();
+      });
+      expect(flyout.style.maxWidth).toBe('108px');
+      expect(flyout.style.minWidth).toBe('min(var(--rail-flyout-min-width), 108px)');
+    } finally {
+      vi.useRealTimers();
+      if (innerWidthDescriptor) Object.defineProperty(window, 'innerWidth', innerWidthDescriptor);
+      if (clientWidthDescriptor) {
+        Object.defineProperty(document.documentElement, 'clientWidth', clientWidthDescriptor);
+      } else {
+        delete (document.documentElement as unknown as { clientWidth?: number }).clientWidth;
+      }
+      if (clientHeightDescriptor) {
+        Object.defineProperty(document.documentElement, 'clientHeight', clientHeightDescriptor);
+      } else {
+        delete (document.documentElement as unknown as { clientHeight?: number }).clientHeight;
+      }
+    }
+  });
+
   it('does not repeat a collapsed group subitem label in an automatic Tooltip', () => {
     vi.useFakeTimers();
     try {

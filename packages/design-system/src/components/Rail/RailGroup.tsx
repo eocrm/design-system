@@ -20,6 +20,7 @@ import {
   flip,
   offset,
   shift,
+  size,
   useFloating,
   type Placement,
 } from '@floating-ui/react-dom';
@@ -313,7 +314,21 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     open: popoverOpen,
     placement,
     transform: false,
-    middleware: [offset(8), flip(), shift({ padding: 8 })],
+    middleware: [
+      offset(8),
+      flip(),
+      shift({ padding: 8 }),
+      size({
+        apply({ availableWidth, elements }) {
+          const width = Math.max(0, availableWidth);
+          Object.assign(elements.floating.style, {
+            maxWidth: `${width}px`,
+            minWidth: `min(var(--rail-flyout-min-width), ${width}px)`,
+          });
+        },
+        padding: 8,
+      }),
+    ],
     whileElementsMounted: autoUpdate,
     elements: { reference: triggerRef.current },
   });
