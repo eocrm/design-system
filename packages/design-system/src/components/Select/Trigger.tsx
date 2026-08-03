@@ -351,7 +351,7 @@ function ButtonTrigger(props: TriggerProps) {
   const computedAriaLabel = (() => {
     if (props['aria-label']) return props['aria-label'];
     if (ctx.multiple && label) return `Selected: ${label}`;
-    return undefined;
+    return label || props.placeholder || undefined;
   })();
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
@@ -420,6 +420,7 @@ function ButtonTrigger(props: TriggerProps) {
     <div className={styles.triggerWrap}>
       <button
         type="button"
+        role="combobox"
         id={ctx.triggerId}
         ref={ctx.triggerRef as Ref<HTMLButtonElement>}
         className={clsx(styles.trigger, styles.triggerButton, !hasValue && styles.placeholder)}
@@ -744,7 +745,7 @@ function ChipsInputTrigger(props: TriggerProps) {
 
 // ────────────────────────────────────────────────────────────────────────────
 // ChipsButtonTrigger — multi + chips + !searchable. Renders selected options
-// as removable inline chips inside a div with role="button". Cannot be a
+// as removable inline chips inside a div with role="combobox". Cannot be a
 // native <button> because chip ✕ buttons nest inside it (no <button> in
 // <button>). Outside-click detection still works because Listbox tests
 // `triggerRef.contains(target)` and the wrapper IS the triggerRef.
@@ -752,7 +753,7 @@ function ChipsInputTrigger(props: TriggerProps) {
 
 /**
  * Chips trigger for multi-select without inline search. Wrapper is a
- * keyboard-focusable `<div role="button">` (so the chips' own ✕ buttons
+ * keyboard-focusable `<div role="combobox">` (so the chips' own ✕ buttons
  * can nest). Chip resolution walks `ctx.allRows`, not `ctx.rows`, so the
  * chip list stays stable even if a future hover-search filters the
  * popover — unselected options never show as chips, but selected ones
@@ -815,7 +816,7 @@ function ChipsButtonTrigger(props: TriggerProps) {
     <div
       ref={ctx.triggerRef as Ref<HTMLDivElement>}
       id={ctx.triggerId}
-      role="button"
+      role="combobox"
       tabIndex={props.disabled ? -1 : 0}
       className={clsx(styles.trigger, styles.triggerChips)}
       aria-haspopup="listbox"
@@ -878,6 +879,6 @@ export function Trigger(props: TriggerProps) {
     return ctx.searchable ? <ChipsInputTrigger {...props} /> : <ChipsButtonTrigger {...props} />;
   }
   // Multi-summary (both searchable + non-searchable) renders as the
-  // comma-joined button trigger.
+  // comma-joined select-only combobox trigger.
   return <ButtonTrigger {...props} />;
 }

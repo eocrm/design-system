@@ -383,7 +383,7 @@ describe('Surface-in-surface Escape ordering (#280)', () => {
     );
     expect(screen.getByText('panel body')).toBeInTheDocument();
     // Open the Select nested inside the popover.
-    await user.click(screen.getByRole('button', { name: 'Pick' }));
+    await user.click(screen.getByRole('combobox', { name: 'Pick' }));
     expect(screen.getByRole('listbox')).toBeInTheDocument();
     // First Escape: only the INNERMOST surface (the Select) closes; the popover
     // survives. Before #280 both closed on this one press.

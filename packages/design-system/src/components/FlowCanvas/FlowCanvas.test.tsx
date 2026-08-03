@@ -2308,7 +2308,7 @@ describe('FlowCanvas maximize elevation', () => {
       />,
     );
     // Open the Select — its listbox portals to document.body.
-    fireEvent.click(screen.getByRole('button', { name: 'Node type' }));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Node type' }));
     const listbox = await screen.findByRole('listbox');
     // Registered against [data-flowcanvas-maximized] via OVERLAY_PORTAL_SELECTOR,
     // so it stamps data-in-overlay and elevates above the fixed maximized canvas.

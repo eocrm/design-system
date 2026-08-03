@@ -412,7 +412,7 @@ function InPanelSearchInput() {
     <input
       ref={ref}
       type="text"
-      role="combobox"
+      role="searchbox"
       aria-expanded="true"
       aria-controls={ctx.listboxId}
       aria-activedescendant={activeOptionId}

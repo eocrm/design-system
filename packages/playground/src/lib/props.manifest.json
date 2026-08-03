@@ -3916,7 +3916,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Marks the field as required. The trigger exposes `aria-required=\"true\"` to\nassistive technology, and an empty named selection blocks native form submit."
+          "description": "Marks the field as required. The trigger exposes `aria-required=\"true\"` to\nassistive technology. Hidden inputs still serialize named values, but they do\nnot participate in native constraint validation; validate the selection in\nyour form layer."
         },
         {
           "name": "form",

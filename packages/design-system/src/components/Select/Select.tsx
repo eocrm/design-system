@@ -228,7 +228,9 @@ export interface SelectProps<T = unknown> extends Omit<
   name?: string;
   /**
    * Marks the field as required. The trigger exposes `aria-required="true"` to
-   * assistive technology, and an empty named selection blocks native form submit.
+   * assistive technology. Hidden inputs still serialize named values, but they do
+   * not participate in native constraint validation; validate the selection in
+   * your form layer.
    */
   required?: boolean;
   /** `form` attribute forwarded to the hidden `<input>` elements. */

@@ -27,16 +27,16 @@ describe('Select — Phase 1 scaffold', () => {
 });
 
 describe('Select — single, non-searchable, sync', () => {
-  it('renders a button trigger with placeholder when no value', () => {
+  it('renders a select-only combobox trigger with placeholder when no value', () => {
     render(<Select options={STATUSES} placeholder="Pick one" />);
-    expect(screen.getByRole('button')).toHaveTextContent('Pick one');
+    expect(screen.getByRole('combobox')).toHaveTextContent('Pick one');
   });
 
   it('renders the selected label when value is set', () => {
     render(<Select options={STATUSES} value="pending" />);
     // Two buttons in the DOM once `value` is set: the main trigger and the
     // overlay clear ✕. Filter by accessible name so the trigger is unambiguous.
-    expect(screen.getByRole('button', { name: 'Pending' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Pending' })).toBeInTheDocument();
   });
 });
 
@@ -45,7 +45,7 @@ describe('Select — open/close', () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} placeholder="Pick" />);
     expect(screen.queryByRole('listbox')).toBeNull();
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     expect(screen.getByRole('listbox')).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Active' })).toBeInTheDocument();
   });
@@ -53,7 +53,7 @@ describe('Select — open/close', () => {
   it('listbox renders in a portal at document.body level', async () => {
     const user = userEvent.setup();
     const { container } = render(<Select options={STATUSES} />);
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     const listbox = screen.getByRole('listbox');
     expect(container.contains(listbox)).toBe(false);
   });
@@ -61,7 +61,7 @@ describe('Select — open/close', () => {
   it('closes on second click of trigger', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     await user.click(trigger);
     expect(screen.queryByRole('listbox')).toBeInTheDocument();
     await user.click(trigger);
@@ -71,7 +71,7 @@ describe('Select — open/close', () => {
   it('aria-expanded reflects open state', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     await user.click(trigger);
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
@@ -80,7 +80,7 @@ describe('Select — open/close', () => {
   it('aria-controls points at the listbox id when open', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     await user.click(trigger);
     const listbox = screen.getByRole('listbox');
     expect(trigger.getAttribute('aria-controls')).toBe(listbox.id);
@@ -92,7 +92,7 @@ describe('Select — selection (single)', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<Select options={STATUSES} onChange={onChange} />);
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     await user.click(screen.getByRole('option', { name: 'Pending' }));
     expect(onChange).toHaveBeenCalledWith('pending', STATUSES[1]);
     expect(screen.queryByRole('listbox')).toBeNull();
@@ -113,11 +113,11 @@ describe('Select — selection (single)', () => {
     };
     render(<Wrapper />);
     // Closed + no value → only one button (the trigger w/ placeholder text).
-    expect(screen.getByRole('button')).toHaveTextContent('Pick');
-    await user.click(screen.getByRole('button'));
+    expect(screen.getByRole('combobox')).toHaveTextContent('Pick');
+    await user.click(screen.getByRole('combobox'));
     await user.click(screen.getByRole('option', { name: 'Archived' }));
     // After selection, the clear ✕ also renders, so name-filter the trigger.
-    expect(screen.getByRole('button', { name: 'Archived' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Archived' })).toBeInTheDocument();
   });
 
   it('clicking a disabled option does nothing', async () => {
@@ -128,7 +128,7 @@ describe('Select — selection (single)', () => {
       { value: 'b', label: 'B', disabled: true },
     ];
     render(<Select options={opts} onChange={onChange} />);
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     await user.click(screen.getByRole('option', { name: 'B' }));
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.queryByRole('listbox')).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe('Select — keyboard (single, non-searchable)', () => {
   it('ArrowDown on closed trigger opens with first option active', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     trigger.focus();
     await user.keyboard('{ArrowDown}');
     expect(screen.getByRole('listbox')).toBeInTheDocument();
@@ -150,7 +150,7 @@ describe('Select — keyboard (single, non-searchable)', () => {
   it('ArrowUp on closed trigger opens with last option active', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     trigger.focus();
     await user.keyboard('{ArrowUp}');
     expect(screen.getByRole('listbox')).toBeInTheDocument();
@@ -161,7 +161,7 @@ describe('Select — keyboard (single, non-searchable)', () => {
   it('Enter on closed trigger opens', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{Enter}');
     expect(screen.getByRole('listbox')).toBeInTheDocument();
   });
@@ -169,9 +169,9 @@ describe('Select — keyboard (single, non-searchable)', () => {
   it('ArrowDown moves active row +1', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{ArrowDown}{ArrowDown}');
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('combobox')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'Pending' }).id,
     );
@@ -189,7 +189,7 @@ describe('Select — keyboard (single, non-searchable)', () => {
     try {
       const user = userEvent.setup();
       render(<Select options={STATUSES} />);
-      screen.getByRole('button').focus();
+      screen.getByRole('combobox').focus();
       await user.keyboard('{ArrowDown}'); // open → first option active
       // The open-path scroll waits for Floating UI's isPositioned (scrolling
       // earlier would target the panel while it still sits at the document
@@ -209,14 +209,14 @@ describe('Select — keyboard (single, non-searchable)', () => {
   it('Home jumps to first, End jumps to last', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{ArrowDown}{End}');
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('combobox')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'Archived' }).id,
     );
     await user.keyboard('{Home}');
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('combobox')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'Active' }).id,
     );
@@ -226,7 +226,7 @@ describe('Select — keyboard (single, non-searchable)', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<Select options={STATUSES} onChange={onChange} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
     expect(onChange).toHaveBeenCalledWith('pending', STATUSES[1]);
     expect(screen.queryByRole('listbox')).toBeNull();
@@ -238,7 +238,7 @@ describe('Select — keyboard (single, non-searchable)', () => {
     render(<Select options={STATUSES} value="active" onChange={onChange} />);
     // `value="active"` triggers the clear ✕ overlay, so filter by name to
     // get only the main trigger.
-    const trigger = screen.getByRole('button', { name: 'Active' });
+    const trigger = screen.getByRole('combobox', { name: 'Active' });
     trigger.focus();
     await user.keyboard('{Enter}{ArrowDown}{Escape}');
     expect(screen.queryByRole('listbox')).toBeNull();
@@ -249,7 +249,7 @@ describe('Select — keyboard (single, non-searchable)', () => {
   it('Tab closes and commits', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{Enter}{Tab}');
     expect(screen.queryByRole('listbox')).toBeNull();
   });
@@ -262,9 +262,9 @@ describe('Select — keyboard (single, non-searchable)', () => {
       { value: 'c', label: 'C' },
     ];
     render(<Select options={opts} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{ArrowDown}{ArrowDown}');
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('combobox')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'C' }).id,
     );
@@ -297,10 +297,10 @@ describe('Select — typeahead (non-searchable)', () => {
   it('typing a letter jumps active row to first option starting with it', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     render(<Select options={STATUSES} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{ArrowDown}');
     await user.keyboard('p');
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('combobox')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'Pending' }).id,
     );
@@ -314,10 +314,10 @@ describe('Select — typeahead (non-searchable)', () => {
       { value: '3', label: 'Antelope' },
     ];
     render(<Select options={opts} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{ArrowDown}');
     await user.keyboard('al');
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('combobox')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'Albatross' }).id,
     );
@@ -330,12 +330,12 @@ describe('Select — typeahead (non-searchable)', () => {
       { value: '2', label: 'Banana' },
     ];
     render(<Select options={opts} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{ArrowDown}');
     await user.keyboard('a');
     vi.advanceTimersByTime(600);
     await user.keyboard('b');
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('combobox')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'Banana' }).id,
     );
@@ -349,10 +349,10 @@ describe('Select — typeahead (non-searchable)', () => {
       { value: '3', label: 'Cherry' },
     ];
     render(<Select options={opts} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     // From CLOSED state, typing 'a' must land on Apple (index 0), not skip past it
     await user.keyboard('a');
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('combobox')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'Apple' }).id,
     );
@@ -438,7 +438,7 @@ describe('Select — single, searchable (combobox input)', () => {
   it('re-seeds when a mid-open row shrink strands the cursor out of bounds (#309)', async () => {
     const user = userEvent.setup();
     const { rerender } = render(<Select options={STATUSES} value="archived" />);
-    const trigger = screen.getByRole('button', { name: 'Archived' });
+    const trigger = screen.getByRole('combobox', { name: 'Archived' });
     await user.click(trigger);
     // Open-seed highlights the selection (flat index 2).
     expect(trigger).toHaveAttribute(
@@ -521,7 +521,7 @@ describe('Select — grouped options', () => {
   it('renders group headers in order before their options', async () => {
     const user = userEvent.setup();
     render(<Select options={GROUPED} />);
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     const listbox = screen.getByRole('listbox');
     const headers = listbox.querySelectorAll('[data-group-header]');
     expect(headers).toHaveLength(2);
@@ -532,7 +532,7 @@ describe('Select — grouped options', () => {
   it('group is wrapped in role=group with aria-labelledby to the header id', async () => {
     const user = userEvent.setup();
     render(<Select options={GROUPED} />);
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     const groups = screen.getAllByRole('group');
     expect(groups).toHaveLength(2);
     const header0 = screen.getByText('Active');
@@ -542,9 +542,9 @@ describe('Select — grouped options', () => {
   it('ArrowDown skips group headers', async () => {
     const user = userEvent.setup();
     render(<Select options={GROUPED} />);
-    screen.getByRole('button').focus();
+    screen.getByRole('combobox').focus();
     await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}'); // open + 2 steps
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('combobox')).toHaveAttribute(
       'aria-activedescendant',
       screen.getByRole('option', { name: 'Baz' }).id,
     );
@@ -560,19 +560,19 @@ describe('Select — multi, summary, non-searchable', () => {
 
   it('placeholder shown when nothing selected', () => {
     render(<Select multiple triggerDisplay="summary" options={OWNERS} placeholder="Owners" />);
-    expect(screen.getByRole('button')).toHaveTextContent('Owners');
+    expect(screen.getByRole('combobox')).toHaveTextContent('Owners');
   });
 
   it('renders comma-joined labels when selections exist', () => {
     render(<Select multiple triggerDisplay="summary" options={OWNERS} value={['a', 'c']} />);
-    expect(screen.getByRole('button')).toHaveTextContent('Alex, Cam');
+    expect(screen.getByRole('combobox')).toHaveTextContent('Alex, Cam');
   });
 
   it('clicking a row toggles selection and does NOT close', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<Select multiple triggerDisplay="summary" options={OWNERS} onChange={onChange} />);
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     await user.click(screen.getByRole('option', { name: 'Alex' }));
     expect(onChange).toHaveBeenCalledWith(['a'], [OWNERS[0]]);
     expect(screen.getByRole('listbox')).toBeInTheDocument();
@@ -592,7 +592,7 @@ describe('Select — multi, summary, non-searchable', () => {
         onChange={onChange}
       />,
     );
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     await user.click(screen.getByRole('option', { name: 'Alex' }));
     expect(onChange).toHaveBeenCalledWith([], []);
   });
@@ -600,7 +600,7 @@ describe('Select — multi, summary, non-searchable', () => {
   it('aria-multiselectable=true on the listbox', async () => {
     const user = userEvent.setup();
     render(<Select multiple triggerDisplay="summary" options={OWNERS} />);
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     expect(screen.getByRole('listbox')).toHaveAttribute('aria-multiselectable', 'true');
   });
 });
@@ -613,7 +613,7 @@ describe('Select — multi-summary aria-label', () => {
 
   it('aria-label carries the full label list when summary is truncated visually', () => {
     render(<Select multiple triggerDisplay="summary" options={OPTS} value={['a', 'b']} />);
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     expect(trigger.getAttribute('aria-label')).toContain('Alex');
     expect(trigger.getAttribute('aria-label')).toContain('Bea');
   });
@@ -628,7 +628,7 @@ describe('Select — multi-summary aria-label', () => {
         aria-label="Owners filter"
       />,
     );
-    expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Owners filter');
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-label', 'Owners filter');
   });
 });
 
@@ -642,17 +642,15 @@ describe('Select — multi-summary-searchable', () => {
   it('renders a search input inside the popover when multi+summary+searchable', async () => {
     const user = userEvent.setup();
     render(<Select multiple triggerDisplay="summary" searchable options={OPTS} />);
-    await user.click(screen.getByRole('button'));
-    const inputs = screen.getAllByRole('combobox');
-    expect(inputs).toHaveLength(1);
-    expect(inputs[0].tagName).toBe('INPUT');
+    await user.click(screen.getByRole('combobox'));
+    expect(screen.getByRole('searchbox')).toBeInTheDocument();
   });
 
   it('typing into the popover search filters options', async () => {
     const user = userEvent.setup();
     render(<Select multiple triggerDisplay="summary" searchable options={OPTS} />);
-    await user.click(screen.getByRole('button'));
-    const input = screen.getByRole('combobox');
+    await user.click(screen.getByRole('combobox'));
+    const input = screen.getByRole('searchbox');
     await user.type(input, 'be');
     expect(screen.queryByRole('option', { name: 'Alex' })).toBeNull();
     expect(screen.getByRole('option', { name: 'Bea' })).toBeInTheDocument();
@@ -664,8 +662,8 @@ describe('Select — multi-summary-searchable', () => {
     render(
       <Select multiple triggerDisplay="summary" searchable options={OPTS} onChange={onChange} />,
     );
-    await user.click(screen.getByRole('button'));
-    const input = screen.getByRole('combobox');
+    await user.click(screen.getByRole('combobox'));
+    const input = screen.getByRole('searchbox');
     await user.type(input, 'al');
     await user.click(screen.getByRole('option', { name: 'Alex' }));
     expect(screen.getByRole('listbox')).toBeInTheDocument();
@@ -1065,10 +1063,10 @@ describe('Select — form integration (single)', () => {
   });
 
   it.each([
-    ['single button', {}, 'button'],
+    ['single select-only combobox', {}, 'combobox'],
     ['single searchable input', { searchable: true }, 'combobox'],
     ['multi searchable input', { multiple: true, searchable: true }, 'combobox'],
-    ['multi chips button', { multiple: true }, 'button'],
+    ['multi chips combobox', { multiple: true }, 'combobox'],
   ] as const)('exposes required state on the %s trigger', (_name, triggerProps, role) => {
     const { container } = render(<Select options={STATUSES} required {...triggerProps} />);
 
@@ -1076,11 +1074,16 @@ describe('Select — form integration (single)', () => {
     expect(container.firstElementChild).not.toHaveAttribute('aria-required');
   });
 
-  it('routes an explicit aria-required value to the trigger instead of the roleless wrapper', () => {
-    const { container } = render(<Select options={STATUSES} aria-required="true" />);
+  it('routes explicit aria-required to the combobox instead of the roleless wrapper', () => {
+    const { container, rerender } = render(
+      <Select searchable options={STATUSES} aria-required="true" />,
+    );
 
-    expect(screen.getByRole('button')).toHaveAttribute('aria-required', 'true');
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-required', 'true');
     expect(container.firstElementChild).not.toHaveAttribute('aria-required');
+
+    rerender(<Select searchable options={STATUSES} required aria-required="false" />);
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-required', 'true');
   });
 
   it('FormData picks up the value on submit', () => {
@@ -1168,14 +1171,14 @@ describe('Select — visual states', () => {
 
   it('invalid sets aria-invalid on the trigger and adds the invalid class', () => {
     const { container } = render(<Select options={STATUSES} invalid />);
-    expect(screen.getByRole('button')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
     expect(container.firstElementChild!.className).toMatch(/invalid/);
   });
 
   it('disabled disables the trigger and prevents opening', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} disabled />);
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     expect(trigger).toBeDisabled();
     await user.click(trigger);
     expect(screen.queryByRole('listbox')).toBeNull();
@@ -1184,7 +1187,7 @@ describe('Select — visual states', () => {
   it('readOnly prevents opening on click', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} readOnly value="pending" />);
-    const trigger = screen.getByRole('button');
+    const trigger = screen.getByRole('combobox');
     expect(trigger).toHaveAttribute('aria-readonly', 'true');
     await user.click(trigger);
     expect(screen.queryByRole('listbox')).toBeNull();
@@ -1260,7 +1263,7 @@ describe('Select — clearable', () => {
   it('clear ✕ button is focusable via keyboard', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} defaultValue="active" clearable />);
-    const trigger = screen.getByRole('button', { name: /Active/i });
+    const trigger = screen.getByRole('combobox', { name: /Active/i });
     trigger.focus();
     await user.tab(); // moves to next focusable
     const clearBtn = screen.getByRole('button', { name: /clear selection/i });
@@ -1293,7 +1296,7 @@ describe('Select — render escape hatches', () => {
         value="pending"
       />,
     );
-    await user.click(screen.getByRole('button', { name: /Pending/i }));
+    await user.click(screen.getByRole('combobox', { name: /Pending/i }));
     expect(screen.getByTestId('opt-pending')).toHaveTextContent('Pending★');
     expect(screen.getByTestId('opt-active')).toHaveTextContent('Active☆');
   });
@@ -1302,7 +1305,7 @@ describe('Select — render escape hatches', () => {
     render(
       <Select options={STATUSES} value="pending" renderValue={(opt) => <em>~~{opt.label}~~</em>} />,
     );
-    expect(screen.getByRole('button', { name: /~~Pending~~/ })).toHaveTextContent('~~Pending~~');
+    expect(screen.getByRole('combobox', { name: /Pending/ })).toHaveTextContent('~~Pending~~');
   });
 
   it('renderTag replaces chip rendering', () => {
@@ -1342,14 +1345,14 @@ describe('Select — overlay elevation', () => {
         <Select options={STATUSES} aria-label="Status" />
       </div>,
     );
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     expect(screen.getByRole('listbox')).toHaveAttribute('data-in-overlay', '');
   });
 
   it('does not elevate the listbox at page level', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} aria-label="Status" />);
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('combobox'));
     expect(screen.getByRole('listbox')).not.toHaveAttribute('data-in-overlay');
   });
 });
@@ -1366,6 +1369,6 @@ describe('Select — Field label integration', () => {
         />
       </Field>,
     );
-    expect(screen.getByRole('button', { name: 'Status' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Status' })).toBeInTheDocument();
   });
 });
