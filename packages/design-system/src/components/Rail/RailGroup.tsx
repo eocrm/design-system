@@ -320,7 +320,11 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
       shift({ padding: 8 }),
       size({
         apply({ availableWidth, elements }) {
-          elements.floating.style.maxWidth = `${Math.max(0, availableWidth)}px`;
+          const width = Math.max(0, availableWidth);
+          Object.assign(elements.floating.style, {
+            maxWidth: `${width}px`,
+            minWidth: `min(var(--rail-flyout-min-width), ${width}px)`,
+          });
         },
         padding: 8,
       }),
