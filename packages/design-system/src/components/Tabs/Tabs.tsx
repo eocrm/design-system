@@ -126,6 +126,12 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    */
   orientation?: TabsOrientation;
   /**
+   * Available tab-strip width in px where `orientation="auto"` switches from
+   * vertical to horizontal. Defaults to `320`. Set this per Tabs instance to
+   * align automatic orientation with the surrounding layout's threshold.
+   */
+  autoOrientationBreakpoint?: number;
+  /**
    * A trailing action rendered after the tab items, inside the same strip
    * (e.g. `{ label: 'New deal', icon: <Plus/>, onClick: addDeal }`). Styled
    * tab-like but visibly muted, never becomes the selected tab, and is
@@ -247,6 +253,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     panelIdPrefix,
     activationMode = 'auto',
     orientation = 'horizontal',
+    autoOrientationBreakpoint = AUTO_ORIENTATION_BREAKPOINT,
     action,
     endContent,
     className,
@@ -286,7 +293,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     const update = () => {
       const availableWidth = Math.max(0, rootWidth - endContentWidth);
       setAutomaticOrientation(
-        availableWidth >= AUTO_ORIENTATION_BREAKPOINT ? 'horizontal' : 'vertical',
+        availableWidth >= autoOrientationBreakpoint ? 'horizontal' : 'vertical',
       );
     };
     const observer = new ResizeObserver((entries) => {
@@ -304,7 +311,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     observer.observe(root);
     if (end) observer.observe(end);
     return () => observer.disconnect();
-  }, [orientation, hasEndContent]);
+  }, [orientation, hasEndContent, autoOrientationBreakpoint]);
 
   // Dev-only: warn on duplicate ids. The ref map would silently collapse them
   // and roving tabindex would behave unpredictably. Run as an effect (not in

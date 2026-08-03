@@ -463,6 +463,25 @@ describe('Tabs', () => {
       expect(onChange).toHaveBeenCalledWith('b');
     });
 
+    it('uses a consumer-set auto orientation breakpoint', () => {
+      const observer = stubResizeObserver();
+      render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          autoOrientationBreakpoint={480}
+        />,
+      );
+      const scrollWrapper = screen.getByRole('tablist').parentElement as HTMLDivElement;
+
+      observer.resize(scrollWrapper, 479);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+      observer.resize(scrollWrapper, 480);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
+    });
+
     it.each(['horizontal', 'vertical'] as const)(
       'does not observe explicit %s mode',
       (orientation) => {
