@@ -81,12 +81,12 @@ export type TabsActivationMode = 'auto' | 'manual';
  * Tablist layout and `aria-orientation` value. Use `'horizontal'` (the
  * default) for a conventional tab strip or `'vertical'` for a fixed
  * master–detail rail. `'auto'` starts vertical and switches from vertical to
- * horizontal when the available tab-strip width reaches 320px; it is for a
- * `Split` rail that becomes a full-width strip when the panes stack.
+ * horizontal when the available tab-strip width reaches a configurable
+ * breakpoint (320px by default); it is for a `Split` rail that becomes a
+ * full-width strip when the panes stack.
  */
 export type TabsOrientation = 'horizontal' | 'vertical' | 'auto';
 
-const AUTO_ORIENTATION_BREAKPOINT = 320;
 type EffectiveTabsOrientation = Exclude<TabsOrientation, 'auto'>;
 
 export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
@@ -253,7 +253,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     panelIdPrefix,
     activationMode = 'auto',
     orientation = 'horizontal',
-    autoOrientationBreakpoint = AUTO_ORIENTATION_BREAKPOINT,
+    autoOrientationBreakpoint = 320,
     action,
     endContent,
     className,
