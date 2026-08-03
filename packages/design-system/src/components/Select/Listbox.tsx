@@ -32,7 +32,7 @@ import styles from './Select.module.scss';
  */
 export function Listbox() {
   const ctx = useSelectContext('Listbox');
-  const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
+  const inOverlay = useInOverlay(ctx.triggerRootRef, ctx.open);
   // #274: hosts yield Escape while we're open — our own capture/element
   // handler closes us on the same press instead of the Modal/Drawer.
   const floatingId = useFloatingSurface(ctx.open);
@@ -65,7 +65,7 @@ export function Listbox() {
       }),
     ],
     whileElementsMounted: autoUpdate,
-    elements: { reference: ctx.triggerRef.current },
+    elements: { reference: ctx.triggerRootRef.current },
   });
 
   // Outside-click closes. Capture-phase pointerdown fires before any
@@ -80,14 +80,14 @@ export function Listbox() {
       const target = e.target as Node | null;
       if (!target) return;
       const panel = ctx.listboxRef.current;
-      const trigger = ctx.triggerRef.current;
+      const trigger = ctx.triggerRootRef.current;
       if (panel && panel.contains(target)) return;
       if (trigger && trigger.contains(target)) return;
       ctx.setOpen(false);
     };
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [ctx.open, ctx.listboxRef, ctx.triggerRef, ctx.setOpen]);
+  }, [ctx.open, ctx.listboxRef, ctx.triggerRootRef, ctx.setOpen]);
 
   // Escape closes and returns focus to the trigger. Capture-phase so a
   // future in-panel input (Phase 5/6 search input) can't stop the event

@@ -41,6 +41,12 @@
     box-shadow: 0 0 0 var(--ring-width) var(--select-trigger-ring-focus);
   }
 
+  &:has(> .chipsInput:focus-visible) {
+    outline: none;
+    border-color: var(--select-trigger-border-color-focus);
+    box-shadow: 0 0 0 var(--ring-width) var(--select-trigger-ring-focus);
+  }
+
   &[disabled] {
     color: var(--select-trigger-fg-disabled);
     background: var(--select-trigger-bg-disabled);

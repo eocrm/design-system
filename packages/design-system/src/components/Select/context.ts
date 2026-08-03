@@ -59,6 +59,7 @@ export interface SelectContextValue<T = unknown> {
 
   // ─── refs ─────────────────────────────────────────────────────────────────
   triggerRef: RefObject<HTMLElement | null>;
+  triggerRootRef: RefObject<HTMLElement | null>;
   listboxRef: RefObject<HTMLDivElement | null>;
 
   // ─── imperative ───────────────────────────────────────────────────────────

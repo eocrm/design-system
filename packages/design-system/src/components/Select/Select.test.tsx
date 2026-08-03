@@ -689,6 +689,24 @@ describe('Select — multi-chips, non-searchable', () => {
     expect(combobox).not.toContainElement(screen.getByRole('button', { name: /clear selection/i }));
   });
 
+  it('opens from the full chips wrapper, not only the inline combobox input', async () => {
+    const user = userEvent.setup();
+    render(<Select multiple options={OPTS} value={['a']} />);
+
+    const wrapper = screen.getByRole('combobox').parentElement!;
+    await user.click(wrapper);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('keeps the listbox open when a chip is removed', async () => {
+    const user = userEvent.setup();
+    render(<Select multiple options={OPTS} value={['a']} />);
+
+    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('button', { name: 'Remove Alpha' }));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
   it('renders chips for each selected option inside the trigger', () => {
     render(<Select multiple triggerDisplay="chips" options={OPTS} value={['a', 'b']} />);
     const chips = screen.getAllByRole('button', { name: /Remove/ });
