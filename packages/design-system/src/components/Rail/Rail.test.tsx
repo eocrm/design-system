@@ -992,6 +992,39 @@ describe('Rail — linkable Group (#377)', () => {
     }
   });
 
+  it('does not duplicate current-page markers into the collapsed flyout', () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <Rail defaultCollapsed>
+          <Rail.Section title="Main">
+            <Rail.Group
+              as="a"
+              href="#/deals"
+              aria-current="page"
+              icon={<span aria-hidden />}
+              label="Deals"
+            >
+              <Rail.Item href="#/deals?view=open" aria-current="page">
+                My open USD
+              </Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>,
+      );
+
+      const trigger = screen.getByRole('link', { name: 'Deals' });
+      act(() => fireEvent.pointerEnter(trigger));
+      act(() => vi.advanceTimersByTime(100));
+
+      const flyout = screen.getByRole('dialog', { name: 'Deals' });
+      expect(trigger).toHaveAttribute('aria-current', 'page');
+      expect(flyout.querySelectorAll('[aria-current="page"]')).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('collapsed: no chevron, hover opens the flyout, and its header is a link', () => {
     vi.useFakeTimers();
     try {

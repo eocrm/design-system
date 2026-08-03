@@ -10,7 +10,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { useRail } from './Rail';
-import { RailGroupContext } from './RailGroupContext';
+import { RailGroupContext, RailGroupDuplicateContext } from './RailGroupContext';
 import { Tooltip } from '../Tooltip';
 import styles from './Rail.module.scss';
 
@@ -107,6 +107,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
   const Component = (as ?? 'a') as ElementType;
   const { collapsed } = useRail();
   const insideGroup = useContext(RailGroupContext);
+  const duplicatePresentation = useContext(RailGroupDuplicateContext);
 
   // The polymorphic anchor / NavLink / button receives the className so the
   // CSS `:has([aria-current="page"])` selector can light it up via the
@@ -115,8 +116,17 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
     <Component
       ref={ref}
       className={clsx(styles.item, className)}
-      // {...rest} last so consumer overrides win (Pattern A).
+      // {...rest} last so consumer overrides win (Pattern A), except that the
+      // duplicate-presentation context owns aria-current below.
       {...rest}
+      // A collapsed group's flyout repeats the real rail-side item. `false`
+      // also overrides router components that synthesize `aria-current` from
+      // active route state, so the duplicate never claims to be current.
+      aria-current={
+        duplicatePresentation
+          ? false
+          : (rest as { 'aria-current'?: React.AriaAttributes['aria-current'] })['aria-current']
+      }
     >
       {icon && (
         <span className={styles.itemIcon} aria-hidden="true">
