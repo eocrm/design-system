@@ -55,7 +55,10 @@ export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement>
   align?: DropdownMenuAlign;
   /** Gap in px between trigger and menu. Default `4`. */
   sideOffset?: number;
-  /** Minimum width in px or any CSS length. Defaults to the trigger's width. */
+  /**
+   * Preferred minimum width in px or any CSS length. Defaults to the trigger's
+   * width and is reduced when necessary to keep the menu within the viewport.
+   */
   minWidth?: number | string;
 }
 
