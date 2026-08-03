@@ -55,7 +55,10 @@ export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement>
   align?: DropdownMenuAlign;
   /** Gap in px between trigger and menu. Default `4`. */
   sideOffset?: number;
-  /** Minimum width in px or any CSS length. Defaults to the trigger's width. */
+  /**
+   * Preferred minimum width in px or any CSS length. Defaults to the trigger's
+   * width and is reduced when necessary to keep the menu within the viewport.
+   */
   minWidth?: number | string;
 }
 
@@ -88,13 +91,16 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       flip(),
       shift({ padding: 8 }),
       size({
-        apply({ availableHeight, rects, elements }) {
+        apply({ availableHeight, availableWidth, rects, elements }) {
+          const viewportWidth = Math.max(0, availableWidth);
+          const requestedMinWidth =
+            typeof minWidth === 'number'
+              ? `${minWidth}px`
+              : ((minWidth as string | undefined) ?? `${rects.reference.width}px`);
           Object.assign(elements.floating.style, {
             maxHeight: `${availableHeight}px`,
-            minWidth:
-              typeof minWidth === 'number'
-                ? `${minWidth}px`
-                : ((minWidth as string | undefined) ?? `${rects.reference.width}px`),
+            maxWidth: `${viewportWidth}px`,
+            minWidth: `min(${requestedMinWidth}, ${viewportWidth}px)`,
           });
         },
         padding: 8,
