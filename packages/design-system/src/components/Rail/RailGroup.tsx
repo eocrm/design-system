@@ -728,7 +728,11 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
                 only other way there. */}
             <div className={styles.flyoutHeader}>
               {isLink ? (
-                <LinkComponent className={styles.flyoutHeaderLink} {...headerLinkProps}>
+                <LinkComponent
+                  className={styles.flyoutHeaderLink}
+                  {...headerLinkProps}
+                  aria-current={false}
+                >
                   {label}
                 </LinkComponent>
               ) : (
