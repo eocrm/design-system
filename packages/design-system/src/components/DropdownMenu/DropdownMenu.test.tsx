@@ -237,6 +237,77 @@ describe('DropdownMenu — Content', () => {
     expect(scss).toMatch(/\.content\s*\{[^}]*overflow-y:\s*auto/);
     expect(scss).toMatch(/\.content\s*\{[^}]*overflow-x:\s*hidden/);
   });
+
+  it('caps the content panel to Floating UI available width', async () => {
+    const innerWidthDescriptor = Object.getOwnPropertyDescriptor(window, 'innerWidth');
+    const clientWidthDescriptor = Object.getOwnPropertyDescriptor(
+      document.documentElement,
+      'clientWidth',
+    );
+    const clientHeightDescriptor = Object.getOwnPropertyDescriptor(
+      document.documentElement,
+      'clientHeight',
+    );
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 400 });
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 400,
+    });
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 800,
+    });
+
+    try {
+      const user = userEvent.setup();
+      render(
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button">Open</button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content minWidth={500}>
+            <DropdownMenu.Item onSelect={() => {}}>{'V'.repeat(255)}</DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>,
+      );
+      const trigger = screen.getByRole('button', { name: 'Open' });
+      trigger.getBoundingClientRect = () =>
+        ({
+          x: 8,
+          y: 8,
+          top: 8,
+          left: 8,
+          right: 64,
+          bottom: 48,
+          width: 56,
+          height: 40,
+          toJSON: () => undefined,
+        }) as DOMRect;
+
+      await user.click(trigger);
+      const menu = screen.getByRole('menu');
+      await waitFor(() => expect(menu.style.maxWidth).toBe('384px'));
+      expect(menu.style.minWidth).toBe('calc(384px)');
+    } finally {
+      if (innerWidthDescriptor) Object.defineProperty(window, 'innerWidth', innerWidthDescriptor);
+      if (clientWidthDescriptor) {
+        Object.defineProperty(document.documentElement, 'clientWidth', clientWidthDescriptor);
+      } else {
+        delete (document.documentElement as unknown as { clientWidth?: number }).clientWidth;
+      }
+      if (clientHeightDescriptor) {
+        Object.defineProperty(document.documentElement, 'clientHeight', clientHeightDescriptor);
+      } else {
+        delete (document.documentElement as unknown as { clientHeight?: number }).clientHeight;
+      }
+    }
+  });
+
+  it('allows unbroken item labels to wrap within a width-clamped panel', () => {
+    const scssPath = resolve(__dirname, 'DropdownMenu.module.scss');
+    const scss = readFileSync(scssPath, 'utf8');
+    expect(scss).toMatch(/\.itemLabel\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  });
 });
 
 describe('DropdownMenu — Item / Separator', () => {
