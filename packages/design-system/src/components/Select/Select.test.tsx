@@ -696,6 +696,9 @@ describe('Select — multi-chips, non-searchable', () => {
     const wrapper = screen.getByRole('combobox').parentElement!;
     await user.click(wrapper);
     expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+    await user.click(wrapper);
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
   it('keeps the listbox open when a chip is removed', async () => {

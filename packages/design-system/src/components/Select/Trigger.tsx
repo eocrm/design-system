@@ -813,7 +813,7 @@ function ChipsButtonTrigger(props: TriggerProps) {
   const handleWrapperClick = () => {
     if (props.disabled || props.readOnly) return;
     ctx.triggerRef.current?.focus();
-    if (!ctx.open) ctx.setOpen(true);
+    ctx.setOpen(!ctx.open);
   };
 
   return (
