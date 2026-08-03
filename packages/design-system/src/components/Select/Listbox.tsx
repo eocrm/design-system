@@ -32,7 +32,7 @@ import styles from './Select.module.scss';
  */
 export function Listbox() {
   const ctx = useSelectContext('Listbox');
-  const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
+  const inOverlay = useInOverlay(ctx.triggerRootRef, ctx.open);
   // #274: hosts yield Escape while we're open — our own capture/element
   // handler closes us on the same press instead of the Modal/Drawer.
   const floatingId = useFloatingSurface(ctx.open);
@@ -65,7 +65,7 @@ export function Listbox() {
       }),
     ],
     whileElementsMounted: autoUpdate,
-    elements: { reference: ctx.triggerRef.current },
+    elements: { reference: ctx.triggerRootRef.current },
   });
 
   // Outside-click closes. Capture-phase pointerdown fires before any
@@ -80,14 +80,14 @@ export function Listbox() {
       const target = e.target as Node | null;
       if (!target) return;
       const panel = ctx.listboxRef.current;
-      const trigger = ctx.triggerRef.current;
+      const trigger = ctx.triggerRootRef.current;
       if (panel && panel.contains(target)) return;
       if (trigger && trigger.contains(target)) return;
       ctx.setOpen(false);
     };
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [ctx.open, ctx.listboxRef, ctx.triggerRef, ctx.setOpen]);
+  }, [ctx.open, ctx.listboxRef, ctx.triggerRootRef, ctx.setOpen]);
 
   // Escape closes and returns focus to the trigger. Capture-phase so a
   // future in-panel input (Phase 5/6 search input) can't stop the event
@@ -165,13 +165,8 @@ export function Listbox() {
   }, [ctx.open, isPositioned, ctx.activeIndex]);
 
   return createPortal(
-    <ul
-      ref={mergeRefs<HTMLUListElement>(ctx.listboxRef, refs.setFloating)}
-      id={ctx.listboxId}
-      role="listbox"
-      aria-multiselectable={ctx.multiple || undefined}
-      aria-labelledby={ctx.triggerId}
-      tabIndex={-1}
+    <div
+      ref={mergeRefs<HTMLDivElement>(ctx.listboxRef, refs.setFloating)}
       data-in-overlay={inOverlay ? '' : undefined}
       className={clsx(styles.listbox)}
       style={floatingStyles}
@@ -179,11 +174,21 @@ export function Listbox() {
       {/* In-panel search for multi-summary-searchable mode. Single-mode
           searchable Select keeps the search input AS the trigger
           (ComboboxInputTrigger) since there's no second trigger to compete
-          with; multi-summary needs the trigger to remain a button that
-          shows the summary, so the search input lives inside the panel. */}
+          with; multi-summary keeps a select-only combobox trigger that shows
+          the summary, so this filter is its sibling inside the panel. */}
       {ctx.multiple && ctx.triggerDisplay === 'summary' && ctx.searchable && <InPanelSearchInput />}
-      {renderListboxBody(ctx)}
-    </ul>,
+      <ul
+        id={ctx.listboxId}
+        role="listbox"
+        aria-multiselectable={ctx.multiple || undefined}
+        aria-labelledby={ctx.triggerId}
+        tabIndex={-1}
+        data-in-overlay={inOverlay ? '' : undefined}
+        className={styles.listboxBody}
+      >
+        {renderListboxBody(ctx)}
+      </ul>
+    </div>,
     document.body,
   );
 }
@@ -380,10 +385,10 @@ function renderOptionRow<T>(
 }
 
 /**
- * Search input rendered inside the listbox panel for the multi-summary-
- * searchable variant. The trigger remains a button that shows the
- * comma-joined selection summary; the input lives in the popover so the
- * user can filter without losing the selection summary.
+ * Search input rendered beside the listbox inside the panel for the
+ * multi-summary-searchable variant. The trigger remains a select-only
+ * combobox that shows the comma-joined selection summary; this sibling
+ * searchbox filters without becoming an invalid child of the listbox.
  *
  * Owns its own keyboard handling: ArrowUp/Down cycle the active option,
  * Enter toggles selection, Escape closes and returns focus to the trigger.
@@ -412,8 +417,7 @@ function InPanelSearchInput() {
     <input
       ref={ref}
       type="text"
-      role="combobox"
-      aria-expanded="true"
+      role="searchbox"
       aria-controls={ctx.listboxId}
       aria-activedescendant={activeOptionId}
       aria-autocomplete="list"

@@ -227,8 +227,10 @@ export interface SelectProps<T = unknown> extends Omit<
    */
   name?: string;
   /**
-   * Marks the field as required for native form validation. When `true`, an empty
-   * selection blocks submit.
+   * Marks the field as required. The trigger exposes `aria-required="true"` to
+   * assistive technology. Hidden inputs still serialize named values, but they do
+   * not participate in native constraint validation; validate the selection in
+   * your form layer.
    */
   required?: boolean;
   /** `form` attribute forwarded to the hidden `<input>` elements. */
@@ -317,6 +319,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     name,
     required,
     form,
+    'aria-required': ariaRequired,
     renderOption,
     renderValue,
     renderTag,
@@ -524,7 +527,8 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   }, [state.open, activeIndex, rowsWithCreate]);
 
   const triggerRef = useRef<HTMLElement | null>(null);
-  const listboxRef = useRef<HTMLUListElement | null>(null);
+  const triggerRootRef = useRef<HTMLElement | null>(null);
+  const listboxRef = useRef<HTMLDivElement | null>(null);
 
   // `clearable` is opt-in: the ✕ clear button defaults OFF and only shows when a
   // consumer explicitly sets `clearable`. `disabled` / `readOnly` always suppress it
@@ -562,6 +566,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     getOptionId,
     getGroupHeaderId,
     triggerRef,
+    triggerRootRef,
     listboxRef,
     closeAndFocusTrigger,
     retry: asyncResult.retry,
@@ -598,6 +603,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
           aria-label={props['aria-label']}
           aria-labelledby={props['aria-labelledby']}
           aria-describedby={props['aria-describedby']}
+          aria-required={required ? true : ariaRequired}
         />
         {state.open && <Listbox />}
         <HiddenInputs

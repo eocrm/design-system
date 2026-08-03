@@ -10,8 +10,8 @@ export interface HiddenInputsProps {
 /**
  * Renders the hidden `<input>`(s) so native `FormData` picks up the Select's
  * value. Single mode renders one input. Multi mode renders one per selected
- * value; or, when empty and required, a single empty required input so native
- * validation blocks submit.
+ * value. Hidden inputs are barred from native constraint validation, so
+ * `required` is mirrored as form metadata only; consumers validate separately.
  */
 export function HiddenInputs(props: HiddenInputsProps) {
   if (!props.name) return null;

@@ -398,7 +398,7 @@ describe('Drawer — Escape yields to open floating surfaces (#274)', () => {
   it('first Escape closes only the open Select; the second closes the Drawer', async () => {
     const user = userEvent.setup();
     render(<DrawerWithSelect />);
-    await user.click(screen.getByRole('button', { name: 'Status' }));
+    await user.click(screen.getByRole('combobox', { name: 'Status' }));
     expect(screen.getByRole('listbox')).toBeInTheDocument();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('listbox')).toBeNull();

@@ -26,6 +26,7 @@ export interface TriggerProps {
   'aria-label'?: string;
   'aria-labelledby'?: string;
   'aria-describedby'?: string;
+  'aria-required'?: boolean | 'true' | 'false';
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -350,7 +351,7 @@ function ButtonTrigger(props: TriggerProps) {
   const computedAriaLabel = (() => {
     if (props['aria-label']) return props['aria-label'];
     if (ctx.multiple && label) return `Selected: ${label}`;
-    return undefined;
+    return label || props.placeholder || undefined;
   })();
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
@@ -416,9 +417,10 @@ function ButtonTrigger(props: TriggerProps) {
   })();
 
   return (
-    <div className={styles.triggerWrap}>
+    <div ref={ctx.triggerRootRef as Ref<HTMLDivElement>} className={styles.triggerWrap}>
       <button
         type="button"
+        role="combobox"
         id={ctx.triggerId}
         ref={ctx.triggerRef as Ref<HTMLButtonElement>}
         className={clsx(styles.trigger, styles.triggerButton, !hasValue && styles.placeholder)}
@@ -429,6 +431,7 @@ function ButtonTrigger(props: TriggerProps) {
         aria-label={computedAriaLabel}
         aria-labelledby={props['aria-labelledby']}
         aria-describedby={props['aria-describedby']}
+        aria-required={props['aria-required']}
         aria-invalid={props.invalid || undefined}
         aria-readonly={props.readOnly || undefined}
         disabled={props.disabled}
@@ -552,7 +555,7 @@ function ComboboxInputTrigger(props: TriggerProps) {
   const showClear = props.clearable && selectHasValue(ctx.value, ctx.multiple);
 
   return (
-    <div className={styles.triggerWrap}>
+    <div ref={ctx.triggerRootRef as Ref<HTMLDivElement>} className={styles.triggerWrap}>
       <input
         type="text"
         id={ctx.triggerId}
@@ -569,6 +572,7 @@ function ComboboxInputTrigger(props: TriggerProps) {
         aria-label={props['aria-label']}
         aria-labelledby={props['aria-labelledby']}
         aria-describedby={props['aria-describedby']}
+        aria-required={props['aria-required']}
         aria-invalid={props.invalid || undefined}
         aria-readonly={props.readOnly || undefined}
         autoComplete="off"
@@ -608,8 +612,8 @@ function ComboboxInputTrigger(props: TriggerProps) {
  * Chips trigger with an inline `role="combobox"` input. Wrapper is a plain
  * `<div>` (no role) because the input IS the WAI-ARIA combobox; assigning
  * `role="button"` to the wrapper would create two competing focus targets.
- * Outside-click detection still works — `ctx.triggerRef` points at the
- * wrapper, and `wrapper.contains(input) === true` and `wrapper.contains(chip) === true`.
+ * The visual wrapper owns positioning and outside-click containment while
+ * the input remains the semantic combobox and focus-restoration target.
  *
  * Backspace behaviour: removes the trailing chip ONLY when `ctx.query === ''`.
  * On non-empty input it falls through to the browser's native text-deletion.
@@ -680,15 +684,11 @@ function ChipsInputTrigger(props: TriggerProps) {
     }
   };
 
-  // `ctx.triggerRef` is the wrapper div, NOT the input. This is correct
-  // for outside-click detection (everything inside the wrapper — chips,
-  // ✕ buttons, the input — is "inside the trigger"). The input gets its
-  // own local ref for focus management.
-  const wrapperRef = ctx.triggerRef as Ref<HTMLDivElement>;
+  const inputRefHolder = ctx.triggerRef as MutableRefObject<HTMLInputElement | null>;
 
   return (
     <div
-      ref={wrapperRef}
+      ref={ctx.triggerRootRef as Ref<HTMLDivElement>}
       className={clsx(styles.trigger, styles.triggerChips, styles.triggerChipsInput)}
       onClick={handleWrapperClick}
       onPointerDown={handleWrapperPointerDown}
@@ -707,7 +707,10 @@ function ChipsInputTrigger(props: TriggerProps) {
         return <Chip key={o.value} label={o.label} disabled={props.disabled} onRemove={remove} />;
       })}
       <input
-        ref={inputRef}
+        ref={(node) => {
+          inputRef.current = node;
+          inputRefHolder.current = node;
+        }}
         type="text"
         id={ctx.triggerId}
         role="combobox"
@@ -719,6 +722,7 @@ function ChipsInputTrigger(props: TriggerProps) {
         aria-label={props['aria-label']}
         aria-labelledby={props['aria-labelledby']}
         aria-describedby={props['aria-describedby']}
+        aria-required={props['aria-required']}
         aria-invalid={props.invalid || undefined}
         disabled={props.disabled}
         readOnly={props.readOnly}
@@ -740,16 +744,15 @@ function ChipsInputTrigger(props: TriggerProps) {
 
 // ────────────────────────────────────────────────────────────────────────────
 // ChipsButtonTrigger — multi + chips + !searchable. Renders selected options
-// as removable inline chips inside a div with role="button". Cannot be a
-// native <button> because chip ✕ buttons nest inside it (no <button> in
-// <button>). Outside-click detection still works because Listbox tests
-// `triggerRef.contains(target)` and the wrapper IS the triggerRef.
+// as removable inline chips around a read-only combobox input. The visual
+// wrapper is also the floating anchor and outside-click boundary.
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Chips trigger for multi-select without inline search. Wrapper is a
- * keyboard-focusable `<div role="button">` (so the chips' own ✕ buttons
- * can nest). Chip resolution walks `ctx.allRows`, not `ctx.rows`, so the
+ * Chips trigger for multi-select without inline search. A dedicated read-only
+ * input owns combobox semantics and keyboard focus so chip remove buttons are
+ * siblings rather than descendants of the combobox. Chip resolution walks
+ * `ctx.allRows`, not `ctx.rows`, so the
  * chip list stays stable even if a future hover-search filters the
  * popover — unselected options never show as chips, but selected ones
  * never disappear.
@@ -784,7 +787,7 @@ function ChipsButtonTrigger(props: TriggerProps) {
     (v) => optionByValue.get(v) ?? { value: v, label: v },
   );
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (props.disabled || props.readOnly) return;
     if (handleNavKey(e)) return;
     if (e.key === ' ') {
@@ -807,28 +810,17 @@ function ChipsButtonTrigger(props: TriggerProps) {
     props['aria-label'] ??
     (selectedOptions.length > 0 ? `Selected: ${labelForAria}` : 'Open select');
 
+  const handleWrapperClick = () => {
+    if (props.disabled || props.readOnly) return;
+    ctx.triggerRef.current?.focus();
+    ctx.setOpen(!ctx.open);
+  };
+
   return (
     <div
-      ref={ctx.triggerRef as Ref<HTMLDivElement>}
-      id={ctx.triggerId}
-      role="button"
-      tabIndex={props.disabled ? -1 : 0}
+      ref={ctx.triggerRootRef as Ref<HTMLDivElement>}
       className={clsx(styles.trigger, styles.triggerChips)}
-      aria-haspopup="listbox"
-      aria-expanded={ctx.open}
-      aria-controls={ctx.open ? ctx.listboxId : undefined}
-      aria-activedescendant={activeOptionId}
-      aria-label={computedAriaLabel}
-      aria-labelledby={props['aria-labelledby']}
-      aria-describedby={props['aria-describedby']}
-      aria-invalid={props.invalid || undefined}
-      aria-readonly={props.readOnly || undefined}
-      aria-disabled={props.disabled || undefined}
-      onClick={() => {
-        if (props.disabled || props.readOnly) return;
-        ctx.setOpen(!ctx.open);
-      }}
-      onKeyDown={handleKeyDown}
+      onClick={handleWrapperClick}
     >
       {selectedOptions.map((o) => {
         const remove = () => {
@@ -841,8 +833,33 @@ function ChipsButtonTrigger(props: TriggerProps) {
         return <Chip key={o.value} label={o.label} disabled={props.disabled} onRemove={remove} />;
       })}
       {selectedOptions.length === 0 && (
-        <span className={styles.placeholder}>{props.placeholder ?? ''}</span>
+        <span aria-hidden="true" className={styles.placeholder}>
+          {props.placeholder ?? ''}
+        </span>
       )}
+      <input
+        ref={ctx.triggerRef as Ref<HTMLInputElement>}
+        id={ctx.triggerId}
+        type="text"
+        role="combobox"
+        readOnly
+        tabIndex={props.disabled ? -1 : 0}
+        className={styles.chipsInput}
+        aria-haspopup="listbox"
+        aria-expanded={ctx.open}
+        aria-controls={ctx.open ? ctx.listboxId : undefined}
+        aria-activedescendant={activeOptionId}
+        aria-label={computedAriaLabel}
+        aria-labelledby={props['aria-labelledby']}
+        aria-describedby={props['aria-describedby']}
+        aria-required={props['aria-required']}
+        aria-invalid={props.invalid || undefined}
+        aria-readonly={props.readOnly || undefined}
+        aria-disabled={props.disabled || undefined}
+        value=""
+        onChange={() => undefined}
+        onKeyDown={handleKeyDown}
+      />
       {props.clearable && selectedOptions.length > 0 && <ClearButton variant="inline" />}
     </div>
   );
@@ -873,6 +890,6 @@ export function Trigger(props: TriggerProps) {
     return ctx.searchable ? <ChipsInputTrigger {...props} /> : <ChipsButtonTrigger {...props} />;
   }
   // Multi-summary (both searchable + non-searchable) renders as the
-  // comma-joined button trigger.
+  // comma-joined select-only combobox trigger.
   return <ButtonTrigger {...props} />;
 }
