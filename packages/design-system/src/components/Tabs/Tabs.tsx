@@ -117,18 +117,19 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * `'horizontal'` (default) — a horizontal strip with a sliding underline.
    * `'vertical'` — a stacked master–detail rail: full-width rows, a left accent
    * bar + tinted background on the active row, and ArrowUp/ArrowDown navigation.
-   * `'auto'` — measures available Tabs/tab-strip width: vertical below 320px
-   * and horizontal at or above 320px. It starts vertical during SSR and whenever
-   * `ResizeObserver` is unavailable. Use it with a collapsing `Split`: the
-   * fixed-width aside remains a vertical rail, then the full-width stacked
-   * tablist becomes horizontal. `aria-orientation`, keyboard navigation, and
-   * presentation always follow the effective orientation.
+   * `'auto'` — measures available Tabs/tab-strip width: vertical below
+   * `autoOrientationBreakpoint` and horizontal at or above it. It starts
+   * vertical during SSR and whenever `ResizeObserver` is unavailable. Use it
+   * with a collapsing `Split`: the fixed-width aside remains a vertical rail,
+   * then the full-width stacked tablist becomes horizontal. `aria-orientation`,
+   * keyboard navigation, and presentation always follow the effective orientation.
    */
   orientation?: TabsOrientation;
   /**
    * Available tab-strip width in px where `orientation="auto"` switches from
    * vertical to horizontal. Defaults to `320`. Set this per Tabs instance to
    * align automatic orientation with the surrounding layout's threshold.
+   * @default 320
    */
   autoOrientationBreakpoint?: number;
   /**

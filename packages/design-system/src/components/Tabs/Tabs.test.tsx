@@ -482,6 +482,33 @@ describe('Tabs', () => {
       expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
     });
 
+    it('re-measures when the auto orientation breakpoint changes', () => {
+      const observer = stubResizeObserver();
+      const { rerender } = render(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          autoOrientationBreakpoint={480}
+        />,
+      );
+      const scrollWrapper = screen.getByRole('tablist').parentElement as HTMLDivElement;
+      observer.resize(scrollWrapper, 400);
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+
+      rerender(
+        <Tabs
+          items={items}
+          activeId="a"
+          onChange={noop}
+          orientation="auto"
+          autoOrientationBreakpoint={320}
+        />,
+      );
+      expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
+    });
+
     it.each(['horizontal', 'vertical'] as const)(
       'does not observe explicit %s mode',
       (orientation) => {
