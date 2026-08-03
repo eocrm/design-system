@@ -701,6 +701,21 @@ describe('Select — multi-chips, non-searchable', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
+  it('notifies once per toggle when the inline combobox input is clicked', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(<Select multiple options={OPTS} value={['a']} onOpenChange={onOpenChange} />);
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+    expect(onOpenChange).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).toHaveBeenLastCalledWith(true);
+
+    await user.click(combobox);
+    expect(onOpenChange).toHaveBeenCalledTimes(2);
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
   it('keeps the listbox open when a chip is removed', async () => {
     const user = userEvent.setup();
     render(<Select multiple options={OPTS} value={['a']} />);

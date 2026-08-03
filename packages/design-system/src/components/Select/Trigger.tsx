@@ -858,10 +858,6 @@ function ChipsButtonTrigger(props: TriggerProps) {
         aria-disabled={props.disabled || undefined}
         value=""
         onChange={() => undefined}
-        onClick={() => {
-          if (props.disabled || props.readOnly) return;
-          ctx.setOpen(!ctx.open);
-        }}
         onKeyDown={handleKeyDown}
       />
       {props.clearable && selectedOptions.length > 0 && <ClearButton variant="inline" />}
