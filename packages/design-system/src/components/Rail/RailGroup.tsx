@@ -26,7 +26,7 @@ import {
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { useRail } from './Rail';
-import { RailGroupContext } from './RailGroupContext';
+import { RailGroupContext, RailGroupDuplicateContext } from './RailGroupContext';
 import { type PolymorphicProps } from './RailItem';
 import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Rail.module.scss';
@@ -569,10 +569,12 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   // The flyout header is a SECOND rendering of the same destination, not a
   // second instance of the consumer's element — so it carries the navigation
   // props but not the identifying ones. A duplicated `id` is invalid HTML, and
-  // a duplicated `data-testid` makes `getByTestId` throw on "found multiple"
-  // for any consumer who tagged their group and then collapsed the rail.
+  // a duplicated `data-testid` makes `getByTestId` throw on "found multiple",
+  // while duplicated `aria-current` would expose two current destinations.
   const headerLinkProps = Object.fromEntries(
-    Object.entries(rest).filter(([key]) => key !== 'id' && !key.startsWith('data-')),
+    Object.entries(rest).filter(
+      ([key]) => key !== 'id' && key !== 'aria-current' && !key.startsWith('data-'),
+    ),
   );
 
   const chevron = (
@@ -726,14 +728,22 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
                 only other way there. */}
             <div className={styles.flyoutHeader}>
               {isLink ? (
-                <LinkComponent className={styles.flyoutHeaderLink} {...headerLinkProps}>
+                <LinkComponent
+                  className={styles.flyoutHeaderLink}
+                  {...headerLinkProps}
+                  aria-current={false}
+                >
                   {label}
                 </LinkComponent>
               ) : (
                 label
               )}
             </div>
-            <div className={styles.flyoutBody}>{groupedChildren}</div>
+            <div className={styles.flyoutBody}>
+              <RailGroupDuplicateContext.Provider value>
+                {groupedChildren}
+              </RailGroupDuplicateContext.Provider>
+            </div>
           </div>,
           document.body,
         )}

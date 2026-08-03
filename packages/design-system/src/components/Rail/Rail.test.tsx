@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { act, createRef, useState } from 'react';
+import { act, createRef, forwardRef, useState } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
@@ -987,6 +987,80 @@ describe('Rail — linkable Group (#377)', () => {
         '#/deals',
       );
       expect(screen.getByTestId('deals-nav')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not duplicate current-page markers into the collapsed flyout', () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <Rail defaultCollapsed>
+          <Rail.Section title="Main">
+            <Rail.Group
+              as="a"
+              href="#/deals"
+              aria-current="page"
+              icon={<span aria-hidden />}
+              label="Deals"
+            >
+              <Rail.Item href="#/deals?view=open" aria-current="page">
+                My open USD
+              </Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>,
+      );
+
+      const trigger = screen.getByRole('link', { name: 'Deals' });
+      act(() => fireEvent.pointerEnter(trigger));
+      act(() => vi.advanceTimersByTime(100));
+
+      const flyout = screen.getByRole('dialog', { name: 'Deals' });
+      expect(trigger).toHaveAttribute('aria-current', 'page');
+      expect(flyout.querySelectorAll('[aria-current="page"]')).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('neutralizes current-page markers synthesized by router-like flyout links', () => {
+    vi.useFakeTimers();
+    try {
+      const ActiveLink = forwardRef<HTMLAnchorElement, React.ComponentPropsWithoutRef<'a'>>(
+        function ActiveLink({ 'aria-current': ariaCurrent = 'page', ...props }, ref) {
+          return <a ref={ref} aria-current={ariaCurrent} {...props} />;
+        },
+      );
+
+      render(
+        <Rail defaultCollapsed>
+          <Rail.Section title="Main">
+            <Rail.Group as={ActiveLink} href="#/deals" icon={<span aria-hidden />} label="Deals">
+              <Rail.Item as={ActiveLink} href="#/deals?view=open">
+                My open USD
+              </Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>,
+      );
+
+      const trigger = screen.getByRole('link', { name: 'Deals' });
+      act(() => fireEvent.pointerEnter(trigger));
+      act(() => vi.advanceTimersByTime(100));
+
+      const flyout = screen.getByRole('dialog', { name: 'Deals' });
+      expect(trigger).toHaveAttribute('aria-current', 'page');
+      expect(flyout.querySelectorAll('[aria-current="page"]')).toHaveLength(0);
+      expect(within(flyout).getByRole('link', { name: 'Deals' })).toHaveAttribute(
+        'aria-current',
+        'false',
+      );
+      expect(within(flyout).getByRole('link', { name: 'My open USD' })).toHaveAttribute(
+        'aria-current',
+        'false',
+      );
     } finally {
       vi.useRealTimers();
     }
