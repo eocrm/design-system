@@ -81,12 +81,12 @@ export type TabsActivationMode = 'auto' | 'manual';
  * Tablist layout and `aria-orientation` value. Use `'horizontal'` (the
  * default) for a conventional tab strip or `'vertical'` for a fixed
  * master–detail rail. `'auto'` starts vertical and switches from vertical to
- * horizontal when the available tab-strip width reaches 320px; it is for a
- * `Split` rail that becomes a full-width strip when the panes stack.
+ * horizontal when the available tab-strip width reaches a configurable
+ * breakpoint (320px by default); it is for a `Split` rail that becomes a
+ * full-width strip when the panes stack.
  */
 export type TabsOrientation = 'horizontal' | 'vertical' | 'auto';
 
-const AUTO_ORIENTATION_BREAKPOINT = 320;
 type EffectiveTabsOrientation = Exclude<TabsOrientation, 'auto'>;
 
 export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
@@ -117,14 +117,21 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * `'horizontal'` (default) — a horizontal strip with a sliding underline.
    * `'vertical'` — a stacked master–detail rail: full-width rows, a left accent
    * bar + tinted background on the active row, and ArrowUp/ArrowDown navigation.
-   * `'auto'` — measures available Tabs/tab-strip width: vertical below 320px
-   * and horizontal at or above 320px. It starts vertical during SSR and whenever
-   * `ResizeObserver` is unavailable. Use it with a collapsing `Split`: the
-   * fixed-width aside remains a vertical rail, then the full-width stacked
-   * tablist becomes horizontal. `aria-orientation`, keyboard navigation, and
-   * presentation always follow the effective orientation.
+   * `'auto'` — measures available Tabs/tab-strip width: vertical below
+   * `autoOrientationBreakpoint` and horizontal at or above it. It starts
+   * vertical during SSR and whenever `ResizeObserver` is unavailable. Use it
+   * with a collapsing `Split`: the fixed-width aside remains a vertical rail,
+   * then the full-width stacked tablist becomes horizontal. `aria-orientation`,
+   * keyboard navigation, and presentation always follow the effective orientation.
    */
   orientation?: TabsOrientation;
+  /**
+   * Available tab-strip width in px where `orientation="auto"` switches from
+   * vertical to horizontal. Defaults to `320`. Set this per Tabs instance to
+   * align automatic orientation with the surrounding layout's threshold.
+   * @default 320
+   */
+  autoOrientationBreakpoint?: number;
   /**
    * A trailing action rendered after the tab items, inside the same strip
    * (e.g. `{ label: 'New deal', icon: <Plus/>, onClick: addDeal }`). Styled
@@ -247,6 +254,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     panelIdPrefix,
     activationMode = 'auto',
     orientation = 'horizontal',
+    autoOrientationBreakpoint = 320,
     action,
     endContent,
     className,
@@ -286,7 +294,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     const update = () => {
       const availableWidth = Math.max(0, rootWidth - endContentWidth);
       setAutomaticOrientation(
-        availableWidth >= AUTO_ORIENTATION_BREAKPOINT ? 'horizontal' : 'vertical',
+        availableWidth >= autoOrientationBreakpoint ? 'horizontal' : 'vertical',
       );
     };
     const observer = new ResizeObserver((entries) => {
@@ -304,7 +312,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     observer.observe(root);
     if (end) observer.observe(end);
     return () => observer.disconnect();
-  }, [orientation, hasEndContent]);
+  }, [orientation, hasEndContent, autoOrientationBreakpoint]);
 
   // Dev-only: warn on duplicate ids. The ref map would silently collapse them
   // and roving tabindex would behave unpredictably. Run as an effect (not in
