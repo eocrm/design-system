@@ -227,8 +227,8 @@ export interface SelectProps<T = unknown> extends Omit<
    */
   name?: string;
   /**
-   * Marks the field as required for native form validation. When `true`, an empty
-   * selection blocks submit.
+   * Marks the field as required. The trigger exposes `aria-required="true"` to
+   * assistive technology, and an empty named selection blocks native form submit.
    */
   required?: boolean;
   /** `form` attribute forwarded to the hidden `<input>` elements. */
@@ -317,6 +317,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     name,
     required,
     form,
+    'aria-required': ariaRequired,
     renderOption,
     renderValue,
     renderTag,
@@ -598,6 +599,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
           aria-label={props['aria-label']}
           aria-labelledby={props['aria-labelledby']}
           aria-describedby={props['aria-describedby']}
+          aria-required={required ? true : ariaRequired}
         />
         {state.open && <Listbox />}
         <HiddenInputs

@@ -1064,6 +1064,25 @@ describe('Select — form integration (single)', () => {
     expect(hidden!.required).toBe(true);
   });
 
+  it.each([
+    ['single button', {}, 'button'],
+    ['single searchable input', { searchable: true }, 'combobox'],
+    ['multi searchable input', { multiple: true, searchable: true }, 'combobox'],
+    ['multi chips button', { multiple: true }, 'button'],
+  ] as const)('exposes required state on the %s trigger', (_name, triggerProps, role) => {
+    const { container } = render(<Select options={STATUSES} required {...triggerProps} />);
+
+    expect(screen.getByRole(role)).toHaveAttribute('aria-required', 'true');
+    expect(container.firstElementChild).not.toHaveAttribute('aria-required');
+  });
+
+  it('routes an explicit aria-required value to the trigger instead of the roleless wrapper', () => {
+    const { container } = render(<Select options={STATUSES} aria-required="true" />);
+
+    expect(screen.getByRole('button')).toHaveAttribute('aria-required', 'true');
+    expect(container.firstElementChild).not.toHaveAttribute('aria-required');
+  });
+
   it('FormData picks up the value on submit', () => {
     let captured: FormData | null = null;
     render(

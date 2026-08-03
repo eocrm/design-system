@@ -3916,7 +3916,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Marks the field as required for native form validation. When `true`, an empty\nselection blocks submit."
+          "description": "Marks the field as required. The trigger exposes `aria-required=\"true\"` to\nassistive technology, and an empty named selection blocks native form submit."
         },
         {
           "name": "form",

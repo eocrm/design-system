@@ -26,6 +26,7 @@ export interface TriggerProps {
   'aria-label'?: string;
   'aria-labelledby'?: string;
   'aria-describedby'?: string;
+  'aria-required'?: boolean | 'true' | 'false';
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -429,6 +430,7 @@ function ButtonTrigger(props: TriggerProps) {
         aria-label={computedAriaLabel}
         aria-labelledby={props['aria-labelledby']}
         aria-describedby={props['aria-describedby']}
+        aria-required={props['aria-required']}
         aria-invalid={props.invalid || undefined}
         aria-readonly={props.readOnly || undefined}
         disabled={props.disabled}
@@ -569,6 +571,7 @@ function ComboboxInputTrigger(props: TriggerProps) {
         aria-label={props['aria-label']}
         aria-labelledby={props['aria-labelledby']}
         aria-describedby={props['aria-describedby']}
+        aria-required={props['aria-required']}
         aria-invalid={props.invalid || undefined}
         aria-readonly={props.readOnly || undefined}
         autoComplete="off"
@@ -719,6 +722,7 @@ function ChipsInputTrigger(props: TriggerProps) {
         aria-label={props['aria-label']}
         aria-labelledby={props['aria-labelledby']}
         aria-describedby={props['aria-describedby']}
+        aria-required={props['aria-required']}
         aria-invalid={props.invalid || undefined}
         disabled={props.disabled}
         readOnly={props.readOnly}
@@ -821,6 +825,7 @@ function ChipsButtonTrigger(props: TriggerProps) {
       aria-label={computedAriaLabel}
       aria-labelledby={props['aria-labelledby']}
       aria-describedby={props['aria-describedby']}
+      aria-required={props['aria-required']}
       aria-invalid={props.invalid || undefined}
       aria-readonly={props.readOnly || undefined}
       aria-disabled={props.disabled || undefined}
