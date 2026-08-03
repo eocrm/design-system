@@ -4489,13 +4489,13 @@
           "type": "TabsOrientation",
           "required": false,
           "default": "'horizontal'",
-          "description": "`'horizontal'` (default) — a horizontal strip with a sliding underline.\n`'vertical'` — a stacked master–detail rail: full-width rows, a left accent\nbar + tinted background on the active row, and ArrowUp/ArrowDown navigation.\n`'auto'` — measures available Tabs/tab-strip width: vertical below 320px\nand horizontal at or above 320px. It starts vertical during SSR and whenever\n`ResizeObserver` is unavailable. Use it with a collapsing `Split`: the\nfixed-width aside remains a vertical rail, then the full-width stacked\ntablist becomes horizontal. `aria-orientation`, keyboard navigation, and\npresentation always follow the effective orientation."
+          "description": "`'horizontal'` (default) — a horizontal strip with a sliding underline.\n`'vertical'` — a stacked master–detail rail: full-width rows, a left accent\nbar + tinted background on the active row, and ArrowUp/ArrowDown navigation.\n`'auto'` — measures available Tabs/tab-strip width: vertical below\n`autoOrientationBreakpoint` and horizontal at or above it. It starts\nvertical during SSR and whenever `ResizeObserver` is unavailable. Use it\nwith a collapsing `Split`: the fixed-width aside remains a vertical rail,\nthen the full-width stacked tablist becomes horizontal. `aria-orientation`,\nkeyboard navigation, and presentation always follow the effective orientation."
         },
         {
           "name": "autoOrientationBreakpoint",
           "type": "number",
           "required": false,
-          "default": "",
+          "default": "320",
           "description": "Available tab-strip width in px where `orientation=\"auto\"` switches from\nvertical to horizontal. Defaults to `320`. Set this per Tabs instance to\nalign automatic orientation with the surrounding layout's threshold."
         },
         {
