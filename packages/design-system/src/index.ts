@@ -67,7 +67,12 @@ export type {
 } from './components/Cluster';
 
 export { Constrain } from './components/Constrain';
-export type { ConstrainProps, ConstrainWidth, ConstrainFlex } from './components/Constrain';
+export type {
+  ConstrainProps,
+  ConstrainWidth,
+  ConstrainHeight,
+  ConstrainFlex,
+} from './components/Constrain';
 
 export { Indent } from './components/Indent';
 export type { IndentProps, IndentGutter } from './components/Indent';

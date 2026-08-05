@@ -1,9 +1,42 @@
 import { render } from '@testing-library/react';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
+import { parse, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { Constrain } from './Constrain';
-import type { ConstrainWidth } from './Constrain';
+import type { ConstrainHeight, ConstrainWidth } from './Constrain';
 
 describe('Constrain', () => {
+  it('falls back to static viewport units before dynamic viewport units', () => {
+    const css = compile(resolve(__dirname, 'Constrain.module.scss')).css;
+    const root = parse(css);
+
+    for (const [selector, property] of [
+      ['h-viewport', 'height'],
+      ['minH-viewport', 'min-height'],
+      ['maxH-viewport', 'max-height'],
+    ] as const) {
+      const className = new RegExp(`(?:^|[^\\w-])\\.${selector}(?![\\w-])`);
+      const rules: Rule[] = [];
+      root.walkRules((rule) => {
+        if (rule.selectors.some((candidate) => className.test(candidate))) rules.push(rule);
+      });
+
+      expect(rules).toHaveLength(1);
+      expect(rules[0]?.selector).toBe(`.${selector}`);
+      expect(rules[0]?.parent?.type).toBe('root');
+      expect(rules[0]?.nodes).toHaveLength(2);
+      expect(
+        rules[0]?.nodes.map((node) =>
+          node.type === 'decl' ? [node.prop, node.value, node.important] : [node.type],
+        ),
+      ).toEqual([
+        [property, '100vh', undefined],
+        [property, '100dvh', undefined],
+      ]);
+    }
+  });
+
   it('renders children in a <div> and forwards ref', () => {
     const ref = createRef<HTMLDivElement>();
     const { container } = render(
@@ -26,6 +59,30 @@ describe('Constrain', () => {
     (w) => {
       const { container } = render(<Constrain width={w}>x</Constrain>);
       expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`w-${w}`));
+    },
+  );
+
+  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport'])(
+    'height="%s" applies the h- class',
+    (height) => {
+      const { container } = render(<Constrain height={height}>x</Constrain>);
+      expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`h-${height}`));
+    },
+  );
+
+  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport'])(
+    'minHeight="%s" applies the minH- class',
+    (height) => {
+      const { container } = render(<Constrain minHeight={height}>x</Constrain>);
+      expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`minH-${height}`));
+    },
+  );
+
+  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport'])(
+    'maxHeight="%s" applies the maxH- class',
+    (height) => {
+      const { container } = render(<Constrain maxHeight={height}>x</Constrain>);
+      expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`maxH-${height}`));
     },
   );
 

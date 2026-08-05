@@ -12,6 +12,15 @@
   .maxW-#{$name} {
     max-width: var(--measure-#{$name});
   }
+  .h-#{$name} {
+    height: var(--measure-#{$name});
+  }
+  .minH-#{$name} {
+    min-height: var(--measure-#{$name});
+  }
+  .maxH-#{$name} {
+    max-height: var(--measure-#{$name});
+  }
 }
 
 .w-full {
@@ -24,6 +33,33 @@
 
 .maxW-full {
   max-width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.minH-full {
+  min-height: 100%;
+}
+
+.maxH-full {
+  max-height: 100%;
+}
+
+.h-viewport {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.minH-viewport {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.maxH-viewport {
+  max-height: 100vh;
+  max-height: 100dvh;
 }
 
 .flex-grow {
