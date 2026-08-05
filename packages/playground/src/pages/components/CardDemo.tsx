@@ -5,6 +5,7 @@ import { Badge } from '@eocrm/design-system';
 import { Avatar } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Link } from '@eocrm/design-system';
+import { Constrain } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -55,6 +56,24 @@ export function Demo() {
             lg
           </Card>
         </Cluster>
+      </Example>
+
+      <Example
+        title="Fill a bounded cell"
+        description="Use fill when a Card should occupy the full height of a stretched Grid, Sortable, or DashboardCanvas cell. It also allows the Card to shrink safely in narrow spans."
+        code={`import { Card, Constrain } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Constrain height="xs" maxWidth="sm">
+      <Card fill>Full-height widget card</Card>
+    </Constrain>
+  );
+}`}
+      >
+        <Constrain height="xs" maxWidth="sm">
+          <Card fill>Full-height widget card</Card>
+        </Constrain>
       </Example>
 
       <Example

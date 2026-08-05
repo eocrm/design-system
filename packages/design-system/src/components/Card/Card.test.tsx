@@ -1,5 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
+import { parse, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { Card, type CardPadding, type CardTone } from './Card';
 
 describe('Card', () => {
@@ -153,6 +156,32 @@ describe('Card', () => {
   it('overflow="hidden" explicit is equivalent to default (no modifier)', () => {
     const { container } = render(<Card overflow="hidden">x</Card>);
     expect((container.firstChild as HTMLElement).className).not.toMatch(/overflowVisible/);
+  });
+
+  it('fill adds the full-height modifier class', () => {
+    const { container } = render(<Card fill>x</Card>);
+    expect((container.firstChild as HTMLElement).className).toMatch(/fill/);
+  });
+
+  it('fill owns the full-height and shrink-safe CSS contract', () => {
+    const root = parse(compile(resolve(__dirname, 'Card.module.scss')).css);
+    const rules: Rule[] = [];
+    root.walkRules((rule) => {
+      if (rule.selectors.includes('.fill')) rules.push(rule);
+    });
+
+    expect(rules).toHaveLength(1);
+    expect(rules[0]?.selector).toBe('.fill');
+    expect(rules[0]?.parent?.type).toBe('root');
+    expect(rules[0]?.nodes).toHaveLength(2);
+    expect(
+      rules[0]?.nodes.map((node) =>
+        node.type === 'decl' ? [node.prop, node.value, node.important] : [node.type],
+      ),
+    ).toEqual([
+      ['height', '100%', undefined],
+      ['min-width', '0', undefined],
+    ]);
   });
 });
 
