@@ -56,9 +56,9 @@
   padding: 0 var(--pagination-nav-button-padding-x-md);
 }
 
-// Current-page button — accent palette. Override the `.button` defaults
-// AND `:disabled` (since current is rendered as disabled, but should look
-// "selected," not "unavailable").
+// Current-page button — accent palette. Override the `.button` defaults.
+// The `:disabled` override preserves the selected treatment when the whole
+// Pagination is disabled, rather than making the current page look unavailable.
 .current {
   background: var(--pagination-current-bg);
   border-color: var(--pagination-current-border-color);

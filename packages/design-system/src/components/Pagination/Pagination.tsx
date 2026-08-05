@@ -18,8 +18,9 @@ export interface PaginationProps extends Omit<HTMLAttributes<HTMLElement>, 'onCh
 
   /**
    * Total number of pages. Values `< 1` clamp to `1`. The component still
-   * renders when `pageCount === 1` (single disabled-current button + both
-   * prev/next disabled) so consumers don't have to conditionally hide it.
+   * renders when `pageCount === 1` (single enabled current-page button +
+   * both prev/next disabled) so consumers don't have to conditionally hide
+   * it. The `disabled` prop still disables all three controls.
    */
   pageCount: number;
 

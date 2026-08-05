@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import { createRef, useState } from 'react';
 import { Pagination } from './Pagination';
 
 describe('Pagination', () => {
@@ -85,6 +85,23 @@ describe('Pagination', () => {
     render(<Pagination currentPage={1} pageCount={5} onPageChange={onPageChange} />);
     await user.click(screen.getByRole('button', { name: 'Go to page 3' }));
     expect(onPageChange).toHaveBeenCalledWith(3);
+  });
+
+  it('preserves focus when a controlled update makes the activated page current', async () => {
+    const user = userEvent.setup();
+
+    function ControlledPagination() {
+      const [page, setPage] = useState(1);
+      return <Pagination currentPage={page} pageCount={5} onPageChange={setPage} />;
+    }
+
+    render(<ControlledPagination />);
+    const pageTwo = screen.getByRole('button', { name: 'Go to page 2' });
+    await user.click(pageTwo);
+
+    expect(pageTwo).toHaveFocus();
+    expect(pageTwo).not.toBeDisabled();
+    expect(pageTwo).toHaveAttribute('aria-current', 'page');
   });
 
   it('clicking prev fires onPageChange(currentPage - 1)', async () => {

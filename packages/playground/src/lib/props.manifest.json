@@ -3154,7 +3154,7 @@
           "type": "number",
           "required": true,
           "default": "",
-          "description": "Total number of pages. Values `< 1` clamp to `1`. The component still\nrenders when `pageCount === 1` (single disabled-current button + both\nprev/next disabled) so consumers don't have to conditionally hide it."
+          "description": "Total number of pages. Values `< 1` clamp to `1`. The component still\nrenders when `pageCount === 1` (single enabled current-page button +\nboth prev/next disabled) so consumers don't have to conditionally hide\nit. The `disabled` prop still disables all three controls."
         },
         {
           "name": "onPageChange",
