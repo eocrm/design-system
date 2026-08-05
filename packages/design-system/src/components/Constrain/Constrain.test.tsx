@@ -24,14 +24,15 @@ describe('Constrain', () => {
 
       expect(rules).toHaveLength(1);
       expect(rules[0]?.selector).toBe(`.${selector}`);
+      expect(rules[0]?.parent?.type).toBe('root');
       expect(rules[0]?.nodes).toHaveLength(2);
       expect(
         rules[0]?.nodes.map((node) =>
-          node.type === 'decl' ? [node.prop, node.value] : [node.type],
+          node.type === 'decl' ? [node.prop, node.value, node.important] : [node.type],
         ),
       ).toEqual([
-        [property, '100vh'],
-        [property, '100dvh'],
+        [property, '100vh', undefined],
+        [property, '100dvh', undefined],
       ]);
     }
   });
