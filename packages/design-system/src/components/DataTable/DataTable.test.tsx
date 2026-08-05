@@ -92,6 +92,28 @@ describe('<DataTable>', () => {
     expect(bodyRows.length).toBe(3);
   });
 
+  it('keeps populated rows and their focused controls mounted during a refetch', () => {
+    function RefetchHarness({ loading }: { loading: boolean }) {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        enableRowSelection: true,
+      });
+      return <DataTable instance={instance} aria-label="t" loading={loading} />;
+    }
+
+    const { rerender } = render(<RefetchHarness loading={false} />);
+    const checkbox = screen.getAllByRole('checkbox', { name: /select row/i })[0]!;
+    checkbox.focus();
+
+    rerender(<RefetchHarness loading />);
+
+    expect(checkbox).toHaveFocus();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true');
+  });
+
   it('renders selection auto-column when enableRowSelection is true', () => {
     render(<Harness enableRowSelection />);
     const headerRow = screen.getAllByRole('row')[0]!;

@@ -52,6 +52,11 @@ export interface DataTableProps<T> {
   /** Hover highlight on body rows. Defaults TRUE (DataTable rows are usually interactive). */
   hover?: boolean;
   bordered?: boolean;
+  /**
+   * Marks the table busy. Empty tables show skeleton rows; populated tables
+   * keep their rows mounted during a refetch so focus and local row state are
+   * preserved. Defaults to `false`.
+   */
   loading?: boolean;
   /** Number of skeleton rows when `loading`. Defaults 10. */
   loadingRowCount?: number;
@@ -412,6 +417,8 @@ function DataTableInner<T>(
     (instance.enableRowSelection ? 1 : 0) +
     (instance.hasExpansion ? 1 : 0);
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
+  const hasRenderedRows = instance.data.length > 0 || instance.pinnedRows.length > 0;
+  const showSkeletonRows = loading && !hasRenderedRows;
 
   const [dragActive, setDragActive] = useState(false);
 
@@ -525,6 +532,7 @@ function DataTableInner<T>(
           density={density}
           striped={striped}
           bordered={bordered}
+          aria-busy={loading || undefined}
           aria-rowcount={instance.rowCount}
           className={clsx(styles.root, className)}
           {...rest}
@@ -597,7 +605,7 @@ function DataTableInner<T>(
           )}
 
           <Table.Body>
-            {loading ? (
+            {showSkeletonRows ? (
               <SkeletonRows count={loadingRowCount} totalColCount={totalColCount} />
             ) : dataIsEmpty ? (
               <EmptyRow totalColCount={totalColCount} content={emptyState} />

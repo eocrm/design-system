@@ -635,7 +635,7 @@ function LoadingExample() {
   return (
     <Example
       title="Loading"
-      description="Pass `loading` to render skeleton rows. `loadingRowCount` controls how many (default 10)."
+      description="Pass `loading` to mark the table busy. Empty tables render skeleton rows (`loadingRowCount` defaults to 10); populated tables keep their rows mounted during refetches so keyboard focus is preserved."
       code={`import { Badge, DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
 
 type Deal = {
