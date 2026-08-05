@@ -2923,11 +2923,13 @@ rendering existing reaction counts (the consumer builds that display).
 <Skeleton width={120} />                                    // text line
 <Skeleton variant="circular" width={32} />                  // avatar
 <Skeleton variant="rectangular" width="100%" height={120} /> // image
+<Skeleton loading={isFetching} delay={200} minDuration={300} /> // no flash
 ```
 
 - Three variants: `text` (default, inline, `height=1em`), `circular` (avatar / icon, square when only one dim set), `rectangular` (image / card / button, block).
 - `width` / `height` flow to inline style — `number` becomes `px`, `string` passes through (`'60%'`, `'12rem'`).
 - `animation`: `'pulse'` (default, opacity cycle) / `'none'` (static).
+- Timed visibility: keep Skeleton mounted, drive `loading`, and use `delay` to suppress fast-load flashes plus `minDuration` to prevent a just-shown placeholder from vanishing immediately. All three preserve legacy behavior by default (`loading=true`, both durations `0`). Do not conditionally unmount a timed Skeleton — unmounting bypasses `minDuration`.
 - Pulse is **automatically suppressed** when the user has `prefers-reduced-motion: reduce`.
 - `aria-hidden='true'` by default — Skeleton is decorative. Communicate "loading" from a parent live region (e.g., `aria-busy='true'` on the section being filled).
 - Composes — for a list-row placeholder, render `<Skeleton variant='circular' />` + 2–3 text skeletons + a button-shaped rectangular in a Cluster.

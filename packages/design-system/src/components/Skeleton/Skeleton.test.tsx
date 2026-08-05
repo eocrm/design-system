@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { Skeleton } from './Skeleton';
 
@@ -89,5 +89,59 @@ describe('Skeleton', () => {
     const el = container.firstChild as HTMLElement;
     expect(el.style.width).toBe('100px');
     expect(el.style.marginTop).toBe('4px');
+  });
+
+  it('renders nothing while loading=false', () => {
+    const { container } = render(<Skeleton loading={false} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('waits for delay before rendering', () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<Skeleton delay={200} />);
+      expect(container).toBeEmptyDOMElement();
+
+      act(() => vi.advanceTimersByTime(199));
+      expect(container).toBeEmptyDOMElement();
+
+      act(() => vi.advanceTimersByTime(1));
+      expect(container.firstChild).toBeInstanceOf(HTMLSpanElement);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('never renders when loading finishes inside the delay window', () => {
+    vi.useFakeTimers();
+    try {
+      const { container, rerender } = render(<Skeleton loading delay={200} />);
+      act(() => vi.advanceTimersByTime(100));
+      rerender(<Skeleton loading={false} delay={200} />);
+      act(() => vi.advanceTimersByTime(200));
+
+      expect(container).toBeEmptyDOMElement();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('stays rendered for minDuration after becoming visible', () => {
+    vi.useFakeTimers();
+    try {
+      const { container, rerender } = render(<Skeleton loading delay={100} minDuration={300} />);
+      act(() => vi.advanceTimersByTime(100));
+      expect(container.firstChild).toBeInstanceOf(HTMLSpanElement);
+
+      act(() => vi.advanceTimersByTime(50));
+      rerender(<Skeleton loading={false} delay={100} minDuration={300} />);
+      act(() => vi.advanceTimersByTime(249));
+      expect(container.firstChild).toBeInstanceOf(HTMLSpanElement);
+
+      act(() => vi.advanceTimersByTime(1));
+      expect(container).toBeEmptyDOMElement();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

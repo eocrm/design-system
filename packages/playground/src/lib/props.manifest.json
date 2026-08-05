@@ -4019,6 +4019,27 @@
           "required": false,
           "default": "",
           "description": "Animation. Defaults to `'pulse'`.\n- `'pulse'` — opacity 1 → 0.6 → 1, 1.5s ease-in-out infinite.\n- `'none'` — static. Use when stacking many skeletons to avoid motion\n  overload.\n\nRegardless of this prop, animation is suppressed when the user has\n`prefers-reduced-motion: reduce`."
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Whether the loading placeholder is needed. Defaults to `true`.\nKeep Skeleton mounted and drive this prop when using `minDuration`, so\nthe component can finish its visibility window after loading completes."
+        },
+        {
+          "name": "delay",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Milliseconds to wait before rendering the placeholder. Defaults to `0`.\nA load that finishes inside this window never displays the Skeleton."
+        },
+        {
+          "name": "minDuration",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Minimum milliseconds to remain visible after the placeholder renders.\nDefaults to `0`. Prevents a Skeleton that appears just after `delay`\nfrom disappearing again within a frame or two."
         }
       ]
     },

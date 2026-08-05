@@ -1,4 +1,11 @@
-import { forwardRef, type CSSProperties, type HTMLAttributes } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type HTMLAttributes,
+} from 'react';
 import clsx from 'clsx';
 import styles from './Skeleton.module.scss';
 
@@ -39,11 +46,73 @@ export interface SkeletonProps extends HTMLAttributes<HTMLSpanElement> {
    * `prefers-reduced-motion: reduce`.
    */
   animation?: SkeletonAnimation;
+
+  /**
+   * Whether the loading placeholder is needed. Defaults to `true`.
+   * Keep Skeleton mounted and drive this prop when using `minDuration`, so
+   * the component can finish its visibility window after loading completes.
+   */
+  loading?: boolean;
+
+  /**
+   * Milliseconds to wait before rendering the placeholder. Defaults to `0`.
+   * A load that finishes inside this window never displays the Skeleton.
+   */
+  delay?: number;
+
+  /**
+   * Minimum milliseconds to remain visible after the placeholder renders.
+   * Defaults to `0`. Prevents a Skeleton that appears just after `delay`
+   * from disappearing again within a frame or two.
+   */
+  minDuration?: number;
 }
 
 function toCssSize(value: number | string | undefined): string | undefined {
   if (value === undefined) return undefined;
   return typeof value === 'number' ? `${value}px` : value;
+}
+
+function normalizeDuration(value: number): number {
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function useTimedVisibility(loading: boolean, delay: number, minDuration: number): boolean {
+  const normalizedDelay = normalizeDuration(delay);
+  const normalizedMinDuration = normalizeDuration(minDuration);
+  const [visible, setVisible] = useState(() => loading && normalizedDelay === 0);
+  const shownAt = useRef<number | null>(visible ? Date.now() : null);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    if (loading) {
+      if (!visible) {
+        const show = () => {
+          shownAt.current = Date.now();
+          setVisible(true);
+        };
+        if (normalizedDelay === 0) show();
+        else timer = setTimeout(show, normalizedDelay);
+      }
+    } else if (visible) {
+      const elapsed =
+        shownAt.current === null ? normalizedMinDuration : Date.now() - shownAt.current;
+      const remaining = Math.max(0, normalizedMinDuration - elapsed);
+      const hide = () => {
+        shownAt.current = null;
+        setVisible(false);
+      };
+      if (remaining === 0) hide();
+      else timer = setTimeout(hide, remaining);
+    }
+
+    return () => {
+      if (timer !== undefined) clearTimeout(timer);
+    };
+  }, [loading, normalizedDelay, normalizedMinDuration, visible]);
+
+  return visible;
 }
 
 /**
@@ -66,14 +135,19 @@ function toCssSize(value: number | string | undefined): string | undefined {
  * </Cluster>
  *
  * @example
- * // Many rows — disable animation to avoid motion overload:
- * {Array.from({ length: 20 }).map((_, i) => (
- *   <Skeleton key={i} variant="rectangular" height={32} animation="none" />
- * ))}
+ * // Avoid flashes during quick refetches while guaranteeing a deliberate
+ * // visible window for slower loads. Keep the component mounted:
+ * <Skeleton
+ *   loading={isFetching}
+ *   delay={200}
+ *   minDuration={300}
+ *   variant="rectangular"
+ *   height={32}
+ * />
  *
  * @remarks When NOT to use
- * - When loading takes < 200ms — flashing a skeleton then content jitters
- *   the layout. Render the real content directly.
+ * - For loads expected to resolve quickly, do not show an immediate
+ *   placeholder. Use `delay` so fast loads never display the Skeleton.
  * - For empty states ("No contacts yet"). Use `<EmptyState>` (not yet
  *   shipped) — a skeleton implies "loading," not "nothing here."
  *
@@ -82,11 +156,27 @@ function toCssSize(value: number | string | undefined): string | undefined {
  *   primitive is a leaf — don't pass children.
  * - ❌ Omitting all dimensions on `rectangular`. With no `width`/`height`,
  *   the box has zero size and renders invisibly. Always size it.
+ * - ❌ Conditionally unmounting a timed Skeleton with
+ *   `{loading && <Skeleton minDuration={300} />}`. React removes it before
+ *   the minimum can finish. Keep it mounted and pass `loading={loading}`.
  */
 export const Skeleton = forwardRef<HTMLSpanElement, SkeletonProps>(function Skeleton(
-  { variant = 'text', width, height, animation = 'pulse', className, style, ...props },
+  {
+    variant = 'text',
+    width,
+    height,
+    animation = 'pulse',
+    loading = true,
+    delay = 0,
+    minDuration = 0,
+    className,
+    style,
+    ...props
+  },
   ref,
 ) {
+  const visible = useTimedVisibility(loading, delay, minDuration);
+
   // Default height: text → 1em (sits on baseline), circular → matches width
   // (square), rectangular → undefined (consumer must size).
   let resolvedHeight: string | undefined = toCssSize(height);
@@ -113,7 +203,7 @@ export const Skeleton = forwardRef<HTMLSpanElement, SkeletonProps>(function Skel
   // style live AFTER {...props} so the component's class composition +
   // dimension style win over any consumer-supplied raw className / style
   // (consumer composes via the prop, not by replacing).
-  return (
+  return visible ? (
     <span
       ref={ref}
       aria-hidden="true"
@@ -126,5 +216,5 @@ export const Skeleton = forwardRef<HTMLSpanElement, SkeletonProps>(function Skel
       )}
       style={mergedStyle}
     />
-  );
+  ) : null;
 });
