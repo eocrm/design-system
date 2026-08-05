@@ -1081,7 +1081,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": ""
+          "description": "Marks the table busy. Empty tables show skeleton rows; populated tables\nkeep their rows mounted during a refetch so focus and local row state are\npreserved. Defaults to `false`."
         },
         {
           "name": "loadingRowCount",

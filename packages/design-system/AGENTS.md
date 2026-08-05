@@ -3029,6 +3029,11 @@ backgrounds → `background-image`; icons → lucide / inline SVG.
 
 ### `<DataTable>` — server-driven data table with column features
 
+- `loading` is non-destructive for populated tables: existing rows stay mounted
+  during refetches so focused controls and row-local state survive. Skeleton
+  rows are for the initial empty load only; the table exposes `aria-busy` in
+  both cases.
+
 ```tsx
 const instance = useDataTable<Deal>({
   data,
