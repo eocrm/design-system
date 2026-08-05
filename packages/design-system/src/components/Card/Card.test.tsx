@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
-import { parse, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { Card, type CardPadding, type CardTone } from './Card';
 
@@ -171,23 +170,21 @@ describe('Card', () => {
   });
 
   it('fill owns the full-height and shrink-safe CSS contract', () => {
-    const root = parse(compile(resolve(__dirname, 'Card.module.scss')).css);
-    const rules: Rule[] = [];
-    root.walkRules((rule) => {
-      if (rule.selectors.includes('.fill')) rules.push(rule);
-    });
+    const style = document.createElement('style');
+    style.textContent = compile(resolve(__dirname, 'Card.module.scss')).css;
+    const card = document.createElement('div');
+    card.className = 'card fill';
+    document.head.append(style);
+    document.body.append(card);
 
-    const declarations = new Map<string, { value: string; important: boolean | undefined }>();
-    for (const rule of rules) {
-      for (const node of rule.nodes) {
-        if (node.type === 'decl') {
-          declarations.set(node.prop, { value: node.value, important: node.important });
-        }
-      }
+    try {
+      const computed = getComputedStyle(card);
+      expect(computed.height).toBe('100%');
+      expect(computed.minWidth).toBe('0px');
+    } finally {
+      card.remove();
+      style.remove();
     }
-
-    expect(declarations.get('height')).toEqual({ value: '100%', important: undefined });
-    expect(declarations.get('min-width')).toEqual({ value: '0', important: undefined });
   });
 });
 
