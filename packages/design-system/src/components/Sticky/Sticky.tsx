@@ -22,10 +22,10 @@ export interface StickyProps extends HTMLAttributes<HTMLDivElement> {
    * within the box instead of below the fold). Sets `max-height` to
    * `calc(100dvh - top offset - bottom gap)`, `overflow-y: auto`, and
    * `overscroll-behavior: contain` (page scroll doesn't chain from the box). The
-   * bottom gap defaults to the selected top offset. When that offset also clears
-   * pinned chrome, set `--sticky-bottom-gap` on this element (for example,
-   * `var(--space-4)`) so the chrome height is not subtracted twice. Default
-   * `false`. Pair with a non-`none` `top` to leave breathing room. The cap is
+   * bottom gap defaults to the selected rhythm offset; `top="topbar"` instead
+   * defaults it to the standard content gap so chrome height is not subtracted
+   * twice. Set `--sticky-bottom-gap` on this element to override either default.
+   * Default `false`. Pair with a non-`none` `top` to leave breathing room. The cap is
    * viewport-relative (`dvh`), so this assumes the page (or a viewport-tall
    * ancestor) is the scroll context — not a short fixed-height scroll container.
    */

@@ -162,10 +162,10 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * layout, override the root to a fixed `height: 100vh` (or `100dvh`) via
  * `className` — then `<Rail>` / the main region manage their own overflow.
  *
- * A `<Sticky>` placed inside the main region must clear the pinned `topBar`:
- * `<Sticky>`'s `top` steps top out at `--sticky-top-xl` (24px), shorter than
- * the top bar, so by default it pins BEHIND the bar. Raise the relevant
- * `--sticky-top-*` token above `--topbar-height` in your scope to clear it.
+ * A `<Sticky>` placed inside the main region must clear the pinned `topBar`.
+ * Use `<Sticky top="topbar">`; that dedicated step resolves to the standard
+ * top-bar height plus the normal content gap. Override `--sticky-top-topbar`
+ * when application chrome uses a custom height or clearance.
  *
  * @remarks Responsive sidebar
  * `sidebarOverlayBelow` moves the sidebar into a left `<Drawer>` below a

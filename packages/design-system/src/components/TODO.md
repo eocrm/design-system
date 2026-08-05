@@ -40,7 +40,9 @@ Either apply `drawerId` as the dialog element's `id` in `Content.tsx` and let `A
 
 **When this ships:** wire `aria-controls` on both hamburgers to the real dialog id, then tick this checkbox.
 
-### [ ] `<Sticky>` — needs an offset that accounts for pinned app chrome
+### [x] `<Sticky>` — offset that accounts for pinned app chrome
+
+**Shipped:** 2026-08-05 — `top="topbar"` clears the standard pinned TopBar plus the content gap, with stable globally emitted Sticky token defaults.
 
 **Filed:** 2026-07-28
 **Mocked in:** n/a — surfaced by branch review (`feat/mobile-shell`), not a mockup. `AppLayout`'s `topBar` is now unconditionally `position: sticky; top: 0` (see `AppLayout.module.scss`); `<Sticky>`'s `top` steps cap at `--sticky-top-xl` (24px), well short of `--topbar-height` (56px). A `<Sticky>` in the main content region — e.g. `<Split aside={<Sticky top="md">…</Sticky>}>` on a contact-detail page — pins BEHIND the bar and is invisible, and no existing `top` step value can clear it.
@@ -48,10 +50,10 @@ Either apply `drawerId` as the dialog element's `id` in `Content.tsx` and let `A
 **What's needed:**
 `<Sticky>` needs a way to know about (or accept an offset for) pinned ancestor chrome, so its effective `top` can clear a pinned `AppLayout` top bar without the consumer hand-computing `--topbar-height` + their own step value. Possibly a `topOffset` prop, or `AppLayout` exposing its chrome height as a token `<Sticky>` can read.
 
-**Current workaround:**
-Documented in `AppLayout`'s `@remarks Scrolling` JSDoc: raise the relevant `--sticky-top-*` token above `--topbar-height` in the consumer's own scope.
+**Previous workaround:**
+Rebinding a spacing step such as `--sticky-top-lg` to `--topbar-height` plus a content gap in the consumer's own scope.
 
-**When this ships:** update the JSDoc workaround note in `AppLayout.tsx` to point at the new mechanism instead, then tick this checkbox.
+**Resolution:** use `<Sticky top="topbar">`; `AppLayout`'s scrolling guidance now points to the dedicated step.
 
 ### [x] `<Logo>` — fixed-size brand-logo / image renderer
 
