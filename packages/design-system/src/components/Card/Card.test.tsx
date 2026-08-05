@@ -174,15 +174,21 @@ describe('Card', () => {
     style.textContent = compile(resolve(__dirname, 'Card.module.scss')).css;
     const card = document.createElement('div');
     card.className = 'card fill';
+    const control = document.createElement('div');
+    control.className = 'card';
     document.head.append(style);
-    document.body.append(card);
+    document.body.append(card, control);
 
     try {
       const computed = getComputedStyle(card);
+      const controlComputed = getComputedStyle(control);
       expect(computed.height).toBe('100%');
       expect(computed.minWidth).toBe('0px');
+      expect(controlComputed.height).not.toBe('100%');
+      expect(controlComputed.minWidth).not.toBe('0px');
     } finally {
       card.remove();
+      control.remove();
       style.remove();
     }
   });
