@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
+import { parse, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { Constrain } from './Constrain';
 import type { ConstrainHeight, ConstrainWidth } from './Constrain';
@@ -8,15 +9,30 @@ import type { ConstrainHeight, ConstrainWidth } from './Constrain';
 describe('Constrain', () => {
   it('falls back to static viewport units before dynamic viewport units', () => {
     const css = compile(resolve(__dirname, 'Constrain.module.scss')).css;
+    const root = parse(css);
 
     for (const [selector, property] of [
       ['h-viewport', 'height'],
       ['minH-viewport', 'min-height'],
       ['maxH-viewport', 'max-height'],
     ] as const) {
-      const rules = [...css.matchAll(new RegExp(`^\\.${selector} \\{([^}]*)\\}`, 'gm'))];
+      const className = new RegExp(`(?:^|[^\\w-])\\.${selector}(?![\\w-])`);
+      const rules: Rule[] = [];
+      root.walkRules((rule) => {
+        if (rule.selectors.some((candidate) => className.test(candidate))) rules.push(rule);
+      });
+
       expect(rules).toHaveLength(1);
-      expect(rules[0]?.[1]?.trim()).toBe(`${property}: 100vh;\n  ${property}: 100dvh;`);
+      expect(rules[0]?.selector).toBe(`.${selector}`);
+      expect(rules[0]?.nodes).toHaveLength(2);
+      expect(
+        rules[0]?.nodes.map((node) =>
+          node.type === 'decl' ? [node.prop, node.value] : [node.type],
+        ),
+      ).toEqual([
+        [property, '100vh'],
+        [property, '100dvh'],
+      ]);
     }
   });
 
