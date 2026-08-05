@@ -11,9 +11,3 @@
 // resolve the unexported "./styles/_tokens" partial instead.
 // stylelint-disable-next-line scss/load-partial-extension
 @forward '@eocrm/design-tokens/styles/tokens.scss';
-
-// Base paint exposed between route-level/full-screen surfaces. Keep this in the
-// stable global token entry so a later consumer :root override wins normally.
-:root {
-  --document-background: var(--color-bg-subtle);
-}

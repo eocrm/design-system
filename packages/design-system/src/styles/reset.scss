@@ -39,7 +39,7 @@ body {
   // Matches the base beneath Screen and AppLayout so sibling route swaps do
   // not expose a contrasting frame. Consumers can retone the document without
   // replacing the reset rule by overriding the global token.
-  background: var(--document-background);
+  background: var(--document-background, var(--color-bg-subtle));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
