@@ -74,6 +74,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
    * Fill the containing block's height and allow the Card to shrink within a
    * narrow grid cell. Use in stretched Grid, Sortable, or DashboardCanvas
    * cells whose wrapper already has a definite height. Defaults to `false`.
+   * @default false
    */
   fill?: boolean;
 }

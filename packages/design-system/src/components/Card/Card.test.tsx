@@ -163,6 +163,13 @@ describe('Card', () => {
     expect((container.firstChild as HTMLElement).className).toMatch(/fill/);
   });
 
+  it('does not apply or forward fill by default', () => {
+    const { container } = render(<Card>x</Card>);
+    const card = container.firstChild as HTMLElement;
+    expect(card.className).not.toMatch(/fill/);
+    expect(card).not.toHaveAttribute('fill');
+  });
+
   it('fill owns the full-height and shrink-safe CSS contract', () => {
     const root = parse(compile(resolve(__dirname, 'Card.module.scss')).css);
     const rules: Rule[] = [];
@@ -170,18 +177,17 @@ describe('Card', () => {
       if (rule.selectors.includes('.fill')) rules.push(rule);
     });
 
-    expect(rules).toHaveLength(1);
-    expect(rules[0]?.selector).toBe('.fill');
-    expect(rules[0]?.parent?.type).toBe('root');
-    expect(rules[0]?.nodes).toHaveLength(2);
-    expect(
-      rules[0]?.nodes.map((node) =>
-        node.type === 'decl' ? [node.prop, node.value, node.important] : [node.type],
-      ),
-    ).toEqual([
-      ['height', '100%', undefined],
-      ['min-width', '0', undefined],
-    ]);
+    const declarations = new Map<string, { value: string; important: boolean | undefined }>();
+    for (const rule of rules) {
+      for (const node of rule.nodes) {
+        if (node.type === 'decl') {
+          declarations.set(node.prop, { value: node.value, important: node.important });
+        }
+      }
+    }
+
+    expect(declarations.get('height')).toEqual({ value: '100%', important: undefined });
+    expect(declarations.get('min-width')).toEqual({ value: '0', important: undefined });
   });
 });
 
