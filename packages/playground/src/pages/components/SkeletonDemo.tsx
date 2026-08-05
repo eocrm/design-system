@@ -1,7 +1,35 @@
-import { Card, Cluster, Skeleton, Stack, Table } from '@eocrm/design-system';
+import { useEffect, useRef, useState } from 'react';
+import { Button, Card, Cluster, Skeleton, Stack, Table } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+function TimedVisibilityExample() {
+  const [loading, setLoading] = useState(false);
+  const timerRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(timerRef.current), []);
+
+  const simulateLoad = (duration: number) => {
+    window.clearTimeout(timerRef.current);
+    setLoading(true);
+    timerRef.current = window.setTimeout(() => setLoading(false), duration);
+  };
+
+  return (
+    <Stack gap="md">
+      <Cluster gap="sm">
+        <Button size="sm" onClick={() => simulateLoad(100)} disabled={loading}>
+          Fast load (100ms)
+        </Button>
+        <Button size="sm" onClick={() => simulateLoad(900)} disabled={loading}>
+          Slow load (900ms)
+        </Button>
+      </Cluster>
+      <Skeleton loading={loading} delay={200} minDuration={300} width={200} />
+    </Stack>
+  );
+}
 
 export function SkeletonDemo() {
   return (
@@ -49,6 +77,36 @@ export function Demo() {
           <Skeleton width="60%" />
           <Skeleton width="40%" />
         </Stack>
+      </Example>
+
+      <Example
+        title="Delayed appearance and minimum duration"
+        description="Keep Skeleton mounted and drive loading. The 100ms load finishes inside delay, so nothing flashes; the 900ms load shows after 200ms and remains visible for at least 300ms."
+        code={`import { useState } from 'react';
+import { Button, Skeleton, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  const [loading, setLoading] = useState(false);
+
+  const simulateLoad = (duration) => {
+    setLoading(true);
+    window.setTimeout(() => setLoading(false), duration);
+  };
+
+  return (
+    <Stack gap="md">
+      <Button onClick={() => simulateLoad(900)}>Simulate load</Button>
+      <Skeleton
+        loading={loading}
+        delay={200}
+        minDuration={300}
+        width={200}
+      />
+    </Stack>
+  );
+}`}
+      >
+        <TimedVisibilityExample />
       </Example>
 
       <Example
