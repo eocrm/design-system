@@ -35,7 +35,11 @@ body {
   font-size: var(--font-size-md);
   line-height: var(--line-height-normal);
   color: var(--color-fg);
-  background: var(--color-bg);
+
+  // Matches the base beneath Screen and AppLayout so sibling route swaps do
+  // not expose a contrasting frame. Consumers can retone the document without
+  // replacing the reset rule by overriding the global token.
+  background: var(--document-background);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
