@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { createRef } from 'react';
 import { Constrain } from './Constrain';
-import type { ConstrainWidth } from './Constrain';
+import type { ConstrainHeight, ConstrainWidth } from './Constrain';
 
 describe('Constrain', () => {
   it('renders children in a <div> and forwards ref', () => {
@@ -26,6 +26,30 @@ describe('Constrain', () => {
     (w) => {
       const { container } = render(<Constrain width={w}>x</Constrain>);
       expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`w-${w}`));
+    },
+  );
+
+  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport'])(
+    'height="%s" applies the h- class',
+    (height) => {
+      const { container } = render(<Constrain height={height}>x</Constrain>);
+      expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`h-${height}`));
+    },
+  );
+
+  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport'])(
+    'minHeight="%s" applies the minH- class',
+    (height) => {
+      const { container } = render(<Constrain minHeight={height}>x</Constrain>);
+      expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`minH-${height}`));
+    },
+  );
+
+  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport'])(
+    'maxHeight="%s" applies the maxH- class',
+    (height) => {
+      const { container } = render(<Constrain maxHeight={height}>x</Constrain>);
+      expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`maxH-${height}`));
     },
   );
 

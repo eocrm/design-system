@@ -8,7 +8,7 @@ export function ConstrainDemo() {
     <DemoLayout
       name="Constrain"
       componentName="Constrain"
-      description="Width / flex constraint primitive — the one place layout-sizing props live (Stack/Cluster/Grid are spacing-only). Caps widths and lets a box fill a flex row."
+      description="Size / flex constraint primitive — the one place layout-sizing props live (Stack/Cluster/Grid are spacing-only). Caps either axis and lets a box fill a flex row."
       files={getComponentFiles('Constrain')}
     >
       <Example
@@ -43,6 +43,24 @@ export function Demo() {
             <Input placeholder="maxWidth md (448)" />
           </Constrain>
         </Stack>
+      </Example>
+
+      <Example
+        title="Height bounds"
+        description="The height axis mirrors the named measure scale and adds a dynamic viewport step. Combine height with maxHeight='viewport' to bound fill-parent children without raw CSS."
+        code={`import { Constrain, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Constrain height="xs" maxHeight="viewport">
+      <Text>A child that fills its parent is bounded to 200px, or the viewport when smaller.</Text>
+    </Constrain>
+  );
+}`}
+      >
+        <Constrain height="xs" maxHeight="viewport">
+          <Text>A fill-parent child can use this bounded box without consumer CSS.</Text>
+        </Constrain>
       </Example>
 
       <Example

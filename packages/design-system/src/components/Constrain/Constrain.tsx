@@ -5,6 +5,9 @@ import styles from './Constrain.module.scss';
 /** Named width step → a `--measure-*` token; `'full'` = 100%. */
 export type ConstrainWidth = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
+/** Named height step → a `--measure-*` token; relative steps fill their containing block or viewport. */
+export type ConstrainHeight = ConstrainWidth | 'viewport';
+
 /** How the box behaves as a flex child (`Cluster`/`Stack` item). */
 export type ConstrainFlex = 'grow' | 'shrink' | 'auto' | 'none';
 
@@ -15,6 +18,12 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
   minWidth?: ConstrainWidth;
   /** Maximum width cap — the common case (e.g. a search input at `'sm'`). */
   maxWidth?: ConstrainWidth;
+  /** Fixed height — a named measure, `'full'` (100%), or `'viewport'` (100dvh). */
+  height?: ConstrainHeight;
+  /** Minimum height floor — a named measure, `'full'`, or `'viewport'`. */
+  minHeight?: ConstrainHeight;
+  /** Maximum height cap — a named measure, `'full'`, or `'viewport'`. */
+  maxHeight?: ConstrainHeight;
   /**
    * Flex behavior as a child of a flex row/column.
    * - `'grow'` — fill remaining space (`flex: 1 1 0`) and shrink below content
@@ -29,7 +38,7 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Width / flex constraint primitive. The one place layout-sizing props live —
+ * Size / flex constraint primitive. The one place layout-sizing props live —
  * `Stack`/`Cluster`/`Grid` are spacing-only by design, so when you need to cap a
  * search input's width, floor a column, or let a box fill a flex row, wrap it in
  * `<Constrain>`.
@@ -50,6 +59,12 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
  *   <Button>Upgrade plan</Button>
  * </Cluster>
  *
+ * @example
+ * // Bound a fill-parent canvas without consumer CSS:
+ * <Constrain height="lg" maxHeight="viewport">
+ *   <FlowCanvas nodes={nodes} edges={edges} />
+ * </Constrain>
+ *
  * @remarks When NOT to use
  * - Spacing / arranging children → `<Stack>` / `<Cluster>` / `<Grid>`. Constrain
  *   sizes its own box; it doesn't arrange what's inside.
@@ -57,13 +72,13 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
  * - A full-bleed page shell → `<Screen>`.
  *
  * @remarks Anti-patterns
- * - ❌ Reaching for Constrain to add `margin`/`padding` — it carries width/flex
+ * - ❌ Reaching for Constrain to add `margin`/`padding` — it carries size/flex
  *   only. Spacing comes from the parent layout primitive.
  */
 // `children` is destructured out of `rest` and rendered once below (Stack/Cluster
 // pass children via {...props} instead — both are correct; this is explicit).
 export const Constrain = forwardRef<HTMLDivElement, ConstrainProps>(function Constrain(
-  { width, minWidth, maxWidth, flex, className, children, ...rest },
+  { width, minWidth, maxWidth, height, minHeight, maxHeight, flex, className, children, ...rest },
   ref,
 ) {
   // {...rest} last so consumer overrides win (Pattern A) — Constrain locks no attrs.
@@ -74,6 +89,9 @@ export const Constrain = forwardRef<HTMLDivElement, ConstrainProps>(function Con
         width && styles[`w-${width}`],
         minWidth && styles[`minW-${minWidth}`],
         maxWidth && styles[`maxW-${maxWidth}`],
+        height && styles[`h-${height}`],
+        minHeight && styles[`minH-${minHeight}`],
+        maxHeight && styles[`maxH-${maxHeight}`],
         flex && styles[`flex-${flex}`],
         className,
       )}

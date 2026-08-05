@@ -897,6 +897,27 @@
           "description": "Maximum width cap — the common case (e.g. a search input at `'sm'`)."
         },
         {
+          "name": "height",
+          "type": "ConstrainHeight",
+          "required": false,
+          "default": "",
+          "description": "Fixed height — a named measure, `'full'` (100%), or `'viewport'` (100dvh)."
+        },
+        {
+          "name": "minHeight",
+          "type": "ConstrainHeight",
+          "required": false,
+          "default": "",
+          "description": "Minimum height floor — a named measure, `'full'`, or `'viewport'`."
+        },
+        {
+          "name": "maxHeight",
+          "type": "ConstrainHeight",
+          "required": false,
+          "default": "",
+          "description": "Maximum height cap — a named measure, `'full'`, or `'viewport'`."
+        },
+        {
           "name": "flex",
           "type": "ConstrainFlex",
           "required": false,
@@ -4958,6 +4979,7 @@
     "ClusterJustify": "\"start\" | \"end\" | \"center\" | \"between\"",
     "ClusterAlign": "\"start\" | \"end\" | \"baseline\" | \"center\"",
     "ConstrainWidth": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"full\"",
+    "ConstrainHeight": "ConstrainWidth | \"viewport\"",
     "ConstrainFlex": "\"none\" | \"grow\" | \"shrink\" | \"auto\"",
     "IndentGutter": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "GridGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
