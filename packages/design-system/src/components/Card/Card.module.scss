@@ -21,6 +21,11 @@
   overflow: visible;
 }
 
+.fill {
+  height: 100%;
+  min-width: 0;
+}
+
 // Tone-coded left-stripe via inset box-shadow. Drawn inside the card on top
 // of the existing border, so untoned cards stay pixel-identical to before
 // (no layout shift, no width change). The existing --shadow-sm stays on

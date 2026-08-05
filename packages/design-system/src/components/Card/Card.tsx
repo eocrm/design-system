@@ -70,6 +70,13 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
    * @default 'hidden'
    */
   overflow?: CardOverflow;
+  /**
+   * Fill the containing block's height and allow the Card to shrink within a
+   * narrow grid cell. Use in stretched Grid, Sortable, or DashboardCanvas
+   * cells whose wrapper already has a definite height. Defaults to `false`.
+   * @default false
+   */
+  fill?: boolean;
 }
 
 const paddingClass: Record<CardPadding, string> = {
@@ -147,6 +154,13 @@ function hasCompoundChildren(children: ReactNode): boolean {
  *   <Card padding="md" tone="danger">Churned</Card>
  * </Cluster>
  *
+ * @example
+ * // Fill a bounded dashboard cell without consumer CSS:
+ * <Card fill>
+ *   <Card.Header>Pipeline</Card.Header>
+ *   <Chart />
+ * </Card>
+ *
  * @remarks When NOT to use
  * - As the only child of another Card. **Never nest cards.** If you need to
  *   subdivide, use spacing or a horizontal rule inside one card.
@@ -162,6 +176,8 @@ function hasCompoundChildren(children: ReactNode): boolean {
  *   The default `hidden` exists so square-cornered children (Tables with internal
  *   scroll wrappers, images, full-bleed media) don't show a seam at the rounded
  *   corner.
+ * - ❌ `<Card style={{ height: '100%' }}>` — use `<Card fill>`. The modifier
+ *   also applies the shrink-safe minimum width required in narrow grid cells.
  * - ❌ Adding hover shadows to make Cards "interactive". If the whole card
  *   is clickable, that's a different component (`LinkCard`, not yet shipped).
  * - ❌ Cards nested in Cards. Almost always means your information
@@ -172,7 +188,7 @@ function hasCompoundChildren(children: ReactNode): boolean {
  *   compound API (`Card.Header` / `Card.List` / `Card.ListRow`) instead.
  */
 const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
-  { padding, tone, overflow = 'hidden', className, children, ...props },
+  { padding, tone, overflow = 'hidden', fill = false, className, children, ...props },
   ref,
 ) {
   // Compound subcomponents (Card.Header / Card.List / Card.ListRow) manage
@@ -188,6 +204,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
         styles.card,
         paddingClass[effectivePadding],
         overflow === 'visible' && styles.overflowVisible,
+        fill && styles.fill,
         className,
       )}
       data-tone={tone}

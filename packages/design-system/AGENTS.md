@@ -1282,6 +1282,11 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 
 ### `<Card>` — bordered container
 
+- `fill` makes the Card fill a definite-height parent (`height: 100%`) and
+  applies `min-width: 0` so it can shrink inside narrow Grid, Sortable, and
+  DashboardCanvas cells. It does not create a height by itself; bound the
+  parent (for example with `Constrain height`) when needed.
+
 ```tsx
 <Card padding="md">
   <Stack gap="md">...</Stack>

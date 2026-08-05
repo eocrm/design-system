@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
+import { compile } from 'sass';
 import { Card, type CardPadding, type CardTone } from './Card';
 
 describe('Card', () => {
@@ -153,6 +155,42 @@ describe('Card', () => {
   it('overflow="hidden" explicit is equivalent to default (no modifier)', () => {
     const { container } = render(<Card overflow="hidden">x</Card>);
     expect((container.firstChild as HTMLElement).className).not.toMatch(/overflowVisible/);
+  });
+
+  it('fill adds the full-height modifier class', () => {
+    const { container } = render(<Card fill>x</Card>);
+    expect((container.firstChild as HTMLElement).className).toMatch(/fill/);
+  });
+
+  it('does not apply or forward fill by default', () => {
+    const { container } = render(<Card>x</Card>);
+    const card = container.firstChild as HTMLElement;
+    expect(card.className).not.toMatch(/fill/);
+    expect(card).not.toHaveAttribute('fill');
+  });
+
+  it('fill owns the full-height and shrink-safe CSS contract', () => {
+    const style = document.createElement('style');
+    style.textContent = compile(resolve(__dirname, 'Card.module.scss')).css;
+    const card = document.createElement('div');
+    card.className = 'card fill';
+    const control = document.createElement('div');
+    control.className = 'card';
+    document.head.append(style);
+    document.body.append(card, control);
+
+    try {
+      const computed = getComputedStyle(card);
+      const controlComputed = getComputedStyle(control);
+      expect(computed.height).toBe('100%');
+      expect(computed.minWidth).toBe('0px');
+      expect(controlComputed.height).not.toBe('100%');
+      expect(controlComputed.minWidth).not.toBe('0px');
+    } finally {
+      card.remove();
+      control.remove();
+      style.remove();
+    }
   });
 });
 

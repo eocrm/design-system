@@ -538,6 +538,13 @@
           "required": false,
           "default": "hidden",
           "description": "How the card clips its children at the rounded border.\n- `hidden` (default) — children are clipped to the rounded border. This\n  prevents the visible seam that appears at the corners when a child has\n  square corners (Table's internal scroll wrapper, images, full-bleed\n  media). Overlays in this library (DropdownMenu, Tooltip, Popover, Drawer,\n  Modal) portal to `document.body` and are NOT clipped by this. Focus\n  outlines use CSS `outline`, which is not affected by ancestor overflow.\n- `visible` — opt out of clipping. Use when a direct child needs to\n  overhang the card edge — decorative badges that protrude from a corner,\n  hover-lift transforms whose shadow extends past the card border, etc."
+        },
+        {
+          "name": "fill",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Fill the containing block's height and allow the Card to shrink within a\nnarrow grid cell. Use in stretched Grid, Sortable, or DashboardCanvas\ncells whose wrapper already has a definite height. Defaults to `false`."
         }
       ]
     },
