@@ -7,6 +7,8 @@ import type { StickyTop } from './Sticky';
 
 describe('Sticky', () => {
   const scss = readFileSync(resolve(__dirname, 'Sticky.module.scss'), 'utf8');
+  const tokens = readFileSync(resolve(__dirname, 'Sticky.tokens.scss'), 'utf8');
+  const globalTokens = readFileSync(resolve(__dirname, '../../styles/tokens.scss'), 'utf8');
 
   it('renders children in a <div> and forwards ref', () => {
     const ref = createRef<HTMLDivElement>();
@@ -31,13 +33,26 @@ describe('Sticky', () => {
     expect((container.firstChild as HTMLElement).className).toMatch(/top-none/);
   });
 
-  it.each<StickyTop>(['none', 'xs', 'sm', 'md', 'lg', 'xl'])(
+  it.each<StickyTop>(['none', 'xs', 'sm', 'md', 'lg', 'xl', 'topbar'])(
     'top="%s" applies the top- class',
     (t) => {
       const { container } = render(<Sticky top={t}>x</Sticky>);
       expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(`top-${t}`));
     },
   );
+
+  it('emits Sticky token defaults from the order-stable global token entry', () => {
+    expect(globalTokens).toContain("@use '../components/Sticky/Sticky.tokens';");
+    expect(scss).not.toContain("@use './Sticky.tokens';");
+  });
+
+  it('maps the topbar step to a chrome-aware token', () => {
+    expect(scss).toContain('top: var(--sticky-top-topbar);');
+    expect(scss).toContain('--sticky-offset: var(--sticky-top-topbar);');
+    expect(tokens).toContain(
+      '--sticky-top-topbar: calc(var(--topbar-height, 56px) + var(--space-4));',
+    );
+  });
 
   it('applies the scroll class only when scroll is set', () => {
     const { container, rerender } = render(<Sticky top="lg">x</Sticky>);
@@ -55,8 +70,10 @@ describe('Sticky', () => {
     const normalizedScss = scss
       .replace(/\s+/g, ' ')
       .replaceAll('calc( ', 'calc(')
-      .replaceAll(' );', ');');
-    const bottomGap = 'var(--sticky-bottom-gap, var(--sticky-offset, 0px))';
+      .replaceAll('var( ', 'var(')
+      .replaceAll(' )', ')');
+    const bottomGap =
+      'var(--sticky-bottom-gap, var(--sticky-default-bottom-gap, var(--sticky-offset, 0px)))';
     expect(normalizedScss).toContain(
       `max-height: calc(100vh - var(--sticky-offset, 0px) - ${bottomGap});`,
     );

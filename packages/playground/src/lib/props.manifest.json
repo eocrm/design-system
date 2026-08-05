@@ -4365,14 +4365,14 @@
           "type": "StickyTop",
           "required": false,
           "default": "",
-          "description": "Offset from the top of the scroll container at which the content pins.\nDefaults to `'none'` (`top: 0`, flush). Use a non-zero step to clear a\nsticky header or add breathing room."
+          "description": "Offset from the top of the scroll container at which the content pins.\nDefaults to `'none'` (`top: 0`, flush). Use `'topbar'` inside an AppLayout\nwith pinned TopBar; spacing steps add breathing room without chrome clearance."
         },
         {
           "name": "scroll",
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Cap the pinned box at the viewport height and scroll its content internally,\nso a column TALLER than the screen stays fully reachable (the overflow scrolls\nwithin the box instead of below the fold). Sets `max-height` to\n`calc(100dvh - top offset - bottom gap)`, `overflow-y: auto`, and\n`overscroll-behavior: contain` (page scroll doesn't chain from the box). The\nbottom gap defaults to the selected top offset. When that offset also clears\npinned chrome, set `--sticky-bottom-gap` on this element (for example,\n`var(--space-4)`) so the chrome height is not subtracted twice. Default\n`false`. Pair with a non-`none` `top` to leave breathing room. The cap is\nviewport-relative (`dvh`), so this assumes the page (or a viewport-tall\nancestor) is the scroll context — not a short fixed-height scroll container."
+          "description": "Cap the pinned box at the viewport height and scroll its content internally,\nso a column TALLER than the screen stays fully reachable (the overflow scrolls\nwithin the box instead of below the fold). Sets `max-height` to\n`calc(100dvh - top offset - bottom gap)`, `overflow-y: auto`, and\n`overscroll-behavior: contain` (page scroll doesn't chain from the box). The\nbottom gap defaults to the selected rhythm offset; `top=\"topbar\"` instead\ndefaults it to the standard content gap so chrome height is not subtracted\ntwice. Set `--sticky-bottom-gap` on this element to override either default.\nDefault `false`. Pair with a non-`none` `top` to leave breathing room. The cap is\nviewport-relative (`dvh`), so this assumes the page (or a viewport-tall\nancestor) is the scroll context — not a short fixed-height scroll container."
         },
         {
           "name": "children",
@@ -4996,7 +4996,7 @@
     "SplitSide": "\"start\" | \"end\"",
     "SplitGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "SplitAlign": "\"start\" | \"center\" | \"stretch\"",
-    "StickyTop": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"none\"",
+    "StickyTop": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"none\" | \"topbar\"",
     "MasonryGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "DividerOrientation": "\"horizontal\" | \"vertical\"",
     "DividerVariant": "\"solid\" | \"dashed\"",
