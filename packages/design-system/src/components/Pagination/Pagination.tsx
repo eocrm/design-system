@@ -25,8 +25,7 @@ export interface PaginationProps extends Omit<HTMLAttributes<HTMLElement>, 'onCh
 
   /**
    * Called with the new 1-indexed page when the user clicks prev, next,
-   * or a page number. Not fired when the user clicks the current page
-   * (the button is `disabled`).
+   * or a page number. Not fired when the user clicks the current page.
    */
   onPageChange: (page: number) => void;
 
@@ -111,9 +110,9 @@ function clampSiblings(siblingCount: number): number {
  * @remarks A11y
  * - Wrapper is `<nav aria-label="Pagination">` (override via `aria-label`
  *   when multiple paginations sit on the same page).
- * - The current page is rendered as a disabled `<button>` with
- *   `aria-current="page"` — the W3C ARIA APG pattern for
- *   "current item, not actionable."
+ * - The current page stays focusable and is marked with
+ *   `aria-current="page"`. Activating it is a no-op, so changing pages
+ *   does not disable the focused control and discard keyboard focus.
  * - Prev/next chevron icons get `aria-hidden`; the buttons carry
  *   `aria-label="Previous page" / "Next page"` for screen readers.
  * - Ellipses are decorative `<span aria-hidden>` — not focusable.
@@ -172,10 +171,10 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(function Pagi
             key={item}
             type="button"
             className={clsx(styles.button, styles.pageButton, isCurrent && styles.current)}
-            onClick={() => onPageChange(item)}
-            // Current page is disabled — keeps the button-shaped slot in
-            // the layout AND prevents the no-op same-page click. ARIA APG.
-            disabled={disabled || isCurrent}
+            onClick={() => {
+              if (!isCurrent) onPageChange(item);
+            }}
+            disabled={disabled}
             aria-current={isCurrent ? 'page' : undefined}
             aria-label={
               isCurrent

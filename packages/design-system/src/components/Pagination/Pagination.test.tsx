@@ -50,11 +50,11 @@ describe('Pagination', () => {
     }
   });
 
-  it('marks the current page with aria-current="page" and disables it', () => {
+  it('marks the current page with aria-current="page" and keeps it enabled', () => {
     render(<Pagination currentPage={3} pageCount={5} onPageChange={() => {}} />);
     const current = screen.getByRole('button', { name: /Page 3, current page/ });
     expect(current).toHaveAttribute('aria-current', 'page');
-    expect(current).toBeDisabled();
+    expect(current).not.toBeDisabled();
   });
 
   it('disables prev on page 1', () => {
@@ -103,7 +103,7 @@ describe('Pagination', () => {
     expect(onPageChange).toHaveBeenCalledWith(4);
   });
 
-  it('clicking the (disabled) current page does not fire onPageChange', async () => {
+  it('clicking the current page does not fire onPageChange', async () => {
     const user = userEvent.setup();
     const onPageChange = vi.fn();
     render(<Pagination currentPage={3} pageCount={5} onPageChange={onPageChange} />);

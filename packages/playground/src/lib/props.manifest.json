@@ -3161,7 +3161,7 @@
           "type": "(page: number) => void",
           "required": true,
           "default": "",
-          "description": "Called with the new 1-indexed page when the user clicks prev, next,\nor a page number. Not fired when the user clicks the current page\n(the button is `disabled`)."
+          "description": "Called with the new 1-indexed page when the user clicks prev, next,\nor a page number. Not fired when the user clicks the current page."
         },
         {
           "name": "siblingCount",

@@ -3073,7 +3073,7 @@ const [page, setPage] = useState(1);
 
 - Controlled-only — consumer owns `currentPage`. No internal state.
 - Sibling windowing — `siblingCount` (default `1`) controls how many pages on each side of current. Boundary fixed at 1 (first + last always shown). Slot count stays constant once ellipses kick in (`siblingCount * 2 + 5`) — the row's width doesn't jump as the user clicks.
-- Current page is rendered as a disabled `<button>` with `aria-current="page"` (the W3C ARIA APG pattern for "current item, not actionable").
+- Current page stays focusable and carries `aria-current="page"`; activating it is a no-op. Keeping it enabled preserves keyboard focus when controlled `currentPage` updates after a page change.
 - Sizes: `'sm'` (24px) / `'md'` (32px, default) / `'lg'` (40px) — tracks the Button / Input scale so Pagination sits cleanly next to a `<Button>` in a Cluster.
 - Out-of-range `currentPage` / `pageCount` clamp at render time (defensive — same precedent as `<EmptyState>`'s `clampHeading`).
 - **Not bundled**: page-size selector, count caption ("Showing 11–20 of 240"). Compose those with `<Select>` and text — keeps Pagination focused on navigation. `<DataTable>` (coming) owns its own footer.
