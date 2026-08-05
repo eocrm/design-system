@@ -14,8 +14,12 @@ describe('Constrain', () => {
       ['minH-viewport', 'min-height'],
       ['maxH-viewport', 'max-height'],
     ] as const) {
-      const block = scss.match(new RegExp(`\\.${selector} \\{([^}]*)\\}`))?.[1];
-      expect(block).toContain(`${property}: 100vh;\n  ${property}: 100dvh;`);
+      expect(scss).toMatch(
+        new RegExp(
+          `^\\.${selector} \\{\\n  ${property}: 100vh;\\n  ${property}: 100dvh;\\n\\}$`,
+          'm',
+        ),
+      );
     }
   });
 
