@@ -144,4 +144,27 @@ describe('Skeleton', () => {
       vi.useRealTimers();
     }
   });
+
+  it('settles zero-duration loading transitions during rerender', () => {
+    const { container, rerender } = render(<Skeleton loading={false} />);
+
+    rerender(<Skeleton loading />);
+    expect(container.firstChild).toBeInstanceOf(HTMLSpanElement);
+
+    rerender(<Skeleton loading={false} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('measures a changed delay from the start of the current load', () => {
+    vi.useFakeTimers();
+    try {
+      const { container, rerender } = render(<Skeleton delay={1000} />);
+      act(() => vi.advanceTimersByTime(900));
+
+      rerender(<Skeleton delay={500} />);
+      expect(container.firstChild).toBeInstanceOf(HTMLSpanElement);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

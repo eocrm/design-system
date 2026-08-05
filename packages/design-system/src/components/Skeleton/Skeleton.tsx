@@ -1,6 +1,6 @@
 import {
   forwardRef,
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -81,19 +81,27 @@ function useTimedVisibility(loading: boolean, delay: number, minDuration: number
   const normalizedDelay = normalizeDuration(delay);
   const normalizedMinDuration = normalizeDuration(minDuration);
   const [visible, setVisible] = useState(() => loading && normalizedDelay === 0);
-  const shownAt = useRef<number | null>(visible ? Date.now() : null);
+  const now = Date.now();
+  const shownAt = useRef<number | null>(visible ? now : null);
+  const loadingStartedAt = useRef<number | null>(loading ? now : null);
+  const wasLoading = useRef(loading);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     if (loading) {
+      if (!wasLoading.current || loadingStartedAt.current === null) {
+        loadingStartedAt.current = Date.now();
+      }
       if (!visible) {
         const show = () => {
           shownAt.current = Date.now();
           setVisible(true);
         };
-        if (normalizedDelay === 0) show();
-        else timer = setTimeout(show, normalizedDelay);
+        const elapsed = Date.now() - loadingStartedAt.current;
+        const remaining = Math.max(0, normalizedDelay - elapsed);
+        if (remaining === 0) show();
+        else timer = setTimeout(show, remaining);
       }
     } else if (visible) {
       const elapsed =
@@ -105,7 +113,11 @@ function useTimedVisibility(loading: boolean, delay: number, minDuration: number
       };
       if (remaining === 0) hide();
       else timer = setTimeout(hide, remaining);
+    } else {
+      loadingStartedAt.current = null;
     }
+
+    wasLoading.current = loading;
 
     return () => {
       if (timer !== undefined) clearTimeout(timer);
