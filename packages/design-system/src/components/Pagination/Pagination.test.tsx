@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import { createRef, useState } from 'react';
 import { Pagination } from './Pagination';
 
 describe('Pagination', () => {
@@ -50,11 +50,11 @@ describe('Pagination', () => {
     }
   });
 
-  it('marks the current page with aria-current="page" and disables it', () => {
+  it('marks the current page with aria-current="page" and keeps it enabled', () => {
     render(<Pagination currentPage={3} pageCount={5} onPageChange={() => {}} />);
     const current = screen.getByRole('button', { name: /Page 3, current page/ });
     expect(current).toHaveAttribute('aria-current', 'page');
-    expect(current).toBeDisabled();
+    expect(current).not.toBeDisabled();
   });
 
   it('disables prev on page 1', () => {
@@ -87,6 +87,23 @@ describe('Pagination', () => {
     expect(onPageChange).toHaveBeenCalledWith(3);
   });
 
+  it('preserves focus when a controlled update makes the activated page current', async () => {
+    const user = userEvent.setup();
+
+    function ControlledPagination() {
+      const [page, setPage] = useState(1);
+      return <Pagination currentPage={page} pageCount={5} onPageChange={setPage} />;
+    }
+
+    render(<ControlledPagination />);
+    const pageTwo = screen.getByRole('button', { name: 'Go to page 2' });
+    await user.click(pageTwo);
+
+    expect(pageTwo).toHaveFocus();
+    expect(pageTwo).not.toBeDisabled();
+    expect(pageTwo).toHaveAttribute('aria-current', 'page');
+  });
+
   it('clicking prev fires onPageChange(currentPage - 1)', async () => {
     const user = userEvent.setup();
     const onPageChange = vi.fn();
@@ -103,7 +120,7 @@ describe('Pagination', () => {
     expect(onPageChange).toHaveBeenCalledWith(4);
   });
 
-  it('clicking the (disabled) current page does not fire onPageChange', async () => {
+  it('clicking the current page does not fire onPageChange', async () => {
     const user = userEvent.setup();
     const onPageChange = vi.fn();
     render(<Pagination currentPage={3} pageCount={5} onPageChange={onPageChange} />);

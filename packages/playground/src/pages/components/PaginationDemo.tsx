@@ -63,7 +63,7 @@ export function Demo() {
 
       <Example
         title="Single page"
-        description="Edge case — pageCount=1 still renders (single disabled-current button + both prev/next disabled). Consumer doesn't have to conditionally hide it."
+        description="Edge case — pageCount=1 still renders (single enabled current-page button + both prev/next disabled). Consumer doesn't have to conditionally hide it; the current button becomes disabled only when Pagination itself is disabled."
         code={`import { Pagination } from '@eocrm/design-system';
 
 export function Demo() {

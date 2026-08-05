@@ -3154,14 +3154,14 @@
           "type": "number",
           "required": true,
           "default": "",
-          "description": "Total number of pages. Values `< 1` clamp to `1`. The component still\nrenders when `pageCount === 1` (single disabled-current button + both\nprev/next disabled) so consumers don't have to conditionally hide it."
+          "description": "Total number of pages. Values `< 1` clamp to `1`. The component still\nrenders when `pageCount === 1` (single enabled current-page button +\nboth prev/next disabled) so consumers don't have to conditionally hide\nit. The `disabled` prop still disables all three controls."
         },
         {
           "name": "onPageChange",
           "type": "(page: number) => void",
           "required": true,
           "default": "",
-          "description": "Called with the new 1-indexed page when the user clicks prev, next,\nor a page number. Not fired when the user clicks the current page\n(the button is `disabled`)."
+          "description": "Called with the new 1-indexed page when the user clicks prev, next,\nor a page number. Not fired when the user clicks the current page."
         },
         {
           "name": "siblingCount",
