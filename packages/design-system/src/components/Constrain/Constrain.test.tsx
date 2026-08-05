@@ -9,11 +9,13 @@ describe('Constrain', () => {
   it('falls back to static viewport units before dynamic viewport units', () => {
     const scss = readFileSync(resolve(__dirname, 'Constrain.module.scss'), 'utf8');
 
-    for (const property of ['height', 'min-height', 'max-height']) {
-      expect(scss.indexOf(`${property}: 100vh;`)).toBeGreaterThan(-1);
-      expect(scss.indexOf(`${property}: 100dvh;`)).toBeGreaterThan(
-        scss.indexOf(`${property}: 100vh;`),
-      );
+    for (const [selector, property] of [
+      ['h-viewport', 'height'],
+      ['minH-viewport', 'min-height'],
+      ['maxH-viewport', 'max-height'],
+    ] as const) {
+      const block = scss.match(new RegExp(`\\.${selector} \\{([^}]*)\\}`))?.[1];
+      expect(block).toContain(`${property}: 100vh;\n  ${property}: 100dvh;`);
     }
   });
 
