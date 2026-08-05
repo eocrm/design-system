@@ -48,14 +48,17 @@
 }
 
 .h-viewport {
+  height: 100vh;
   height: 100dvh;
 }
 
 .minH-viewport {
+  min-height: 100vh;
   min-height: 100dvh;
 }
 
 .maxH-viewport {
+  max-height: 100vh;
   max-height: 100dvh;
 }
 

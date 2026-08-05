@@ -130,7 +130,7 @@ Grouped for navigation. Every prop and variant is JSDoc'd at the source — hove
 - `Cluster` — horizontal layout that wraps
 - `Grid` — 2D layout primitive
 - `Masonry` — height-balanced masonry layout
-- `Constrain` — width / flex constraint
+- `Constrain` — width / height / flex constraint
 - `Divider` — separator primitive
 - `Page` — page-root layout primitive
 - `Screen` — full-bleed / centered screen layout

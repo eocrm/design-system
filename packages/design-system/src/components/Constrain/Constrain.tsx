@@ -5,7 +5,7 @@ import styles from './Constrain.module.scss';
 /** Named width step → a `--measure-*` token; `'full'` = 100%. */
 export type ConstrainWidth = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
-/** Named height step → a `--measure-*` token; relative steps fill their containing block or viewport. */
+/** Fixed named measure, `'full'` (containing block), or `'viewport'` (dynamic viewport). */
 export type ConstrainHeight = ConstrainWidth | 'viewport';
 
 /** How the box behaves as a flex child (`Cluster`/`Stack` item). */

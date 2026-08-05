@@ -1,9 +1,22 @@
 import { render } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { Constrain } from './Constrain';
 import type { ConstrainHeight, ConstrainWidth } from './Constrain';
 
 describe('Constrain', () => {
+  it('falls back to static viewport units before dynamic viewport units', () => {
+    const scss = readFileSync(resolve(__dirname, 'Constrain.module.scss'), 'utf8');
+
+    for (const property of ['height', 'min-height', 'max-height']) {
+      expect(scss.indexOf(`${property}: 100vh;`)).toBeGreaterThan(-1);
+      expect(scss.indexOf(`${property}: 100dvh;`)).toBeGreaterThan(
+        scss.indexOf(`${property}: 100vh;`),
+      );
+    }
+  });
+
   it('renders children in a <div> and forwards ref', () => {
     const ref = createRef<HTMLDivElement>();
     const { container } = render(
