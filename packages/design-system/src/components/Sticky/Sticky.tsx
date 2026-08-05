@@ -4,15 +4,16 @@ import styles from './Sticky.module.scss';
 
 /**
  * Offset from the top of the scroll container at which the content pins. Maps to
- * the shared spacing scale (`xs` 4 … `xl` 24 px); `'none'` pins flush (`top: 0`).
+ * the shared spacing scale (`xs` 4 … `xl` 24 px); `'none'` pins flush (`top: 0`),
+ * and `'topbar'` clears the standard TopBar plus the normal content gap.
  */
-export type StickyTop = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type StickyTop = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'topbar';
 
 export interface StickyProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Offset from the top of the scroll container at which the content pins.
-   * Defaults to `'none'` (`top: 0`, flush). Use a non-zero step to clear a
-   * sticky header or add breathing room.
+   * Defaults to `'none'` (`top: 0`, flush). Use `'topbar'` inside an AppLayout
+   * with pinned TopBar; spacing steps add breathing room without chrome clearance.
    */
   top?: StickyTop;
   /**
@@ -60,6 +61,12 @@ export interface StickyProps extends HTMLAttributes<HTMLDivElement> {
  * @example
  * // A standalone sticky filter rail next to a long list.
  * <Sticky top="lg">
+ *   <FilterPanel />
+ * </Sticky>
+ *
+ * @example
+ * // Clear AppLayout's pinned TopBar with the standard content gap:
+ * <Sticky top="topbar" scroll>
  *   <FilterPanel />
  * </Sticky>
  *

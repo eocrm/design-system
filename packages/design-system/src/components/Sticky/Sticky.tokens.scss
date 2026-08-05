@@ -1,10 +1,11 @@
-// Sticky.tokens.scss — component-scoped tokens for <Sticky>. The `top` offset
-// scale mirrors the shared spacing scale (same values as Stack's gap), so a
-// sticky offset lines up with the rest of a page's vertical rhythm.
+// Sticky.tokens.scss — global defaults for <Sticky>. Emitted from the stable
+// styles/tokens.scss entry (not the lazy component module) so later consumer
+// :root overrides win predictably.
 :root {
   --sticky-top-xs: var(--space-1);
   --sticky-top-sm: var(--space-2);
   --sticky-top-md: var(--space-3);
   --sticky-top-lg: var(--space-4);
   --sticky-top-xl: var(--space-6);
+  --sticky-top-topbar: calc(var(--topbar-height, 56px) + var(--space-4));
 }

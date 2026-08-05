@@ -4365,7 +4365,7 @@
           "type": "StickyTop",
           "required": false,
           "default": "",
-          "description": "Offset from the top of the scroll container at which the content pins.\nDefaults to `'none'` (`top: 0`, flush). Use a non-zero step to clear a\nsticky header or add breathing room."
+          "description": "Offset from the top of the scroll container at which the content pins.\nDefaults to `'none'` (`top: 0`, flush). Use `'topbar'` inside an AppLayout\nwith pinned TopBar; spacing steps add breathing room without chrome clearance."
         },
         {
           "name": "scroll",
@@ -4996,7 +4996,7 @@
     "SplitSide": "\"start\" | \"end\"",
     "SplitGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "SplitAlign": "\"start\" | \"center\" | \"stretch\"",
-    "StickyTop": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"none\"",
+    "StickyTop": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"none\" | \"topbar\"",
     "MasonryGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "DividerOrientation": "\"horizontal\" | \"vertical\"",
     "DividerVariant": "\"solid\" | \"dashed\"",
