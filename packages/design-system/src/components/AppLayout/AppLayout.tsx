@@ -182,13 +182,12 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * threshold is crossed, remounting it — a `Rail`'s internal state (expanded
  * `Rail.Group`s, scroll position) resets each time, by design, not a bug.
  *
- * The `sidebar` slot renders as a direct child of the overlay `<Drawer>`, NOT
- * wrapped in `<Drawer.Body>` — so it does not inherit the body's
- * `overflow-y: auto`. `Drawer`'s `.content` sets no vertical overflow of its
- * own (`contain: layout paint` only), so a sidebar taller than the drawer
- * clips with no way to reach the rest. `<Rail>` is safe — its own body scrolls
- * internally regardless of the parent. A custom non-`Rail` sidebar passed here
- * needs its own scroll container, especially on short viewports like phone
+ * The `sidebar` slot renders in a remaining-height wrapper directly below the
+ * overlay `<Drawer.Header>`, NOT in `<Drawer.Body>` — so it does not inherit
+ * the body's `overflow-y: auto`. The wrapper lets a 100%-height `<Rail>` shrink
+ * below its automatic min-content size; the Rail's own body then scrolls while
+ * its footer remains visible. A custom non-`Rail` sidebar still needs its own
+ * height-filling scroll container, especially on short viewports like phone
  * landscape (~380px tall).
  *
  * @remarks Anti-patterns
