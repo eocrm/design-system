@@ -47,8 +47,9 @@ const sizeClass: Record<LogoSize, string> = {
 
 /**
  * Latin lowercase letters that top out at x-height, plus separators that never
- * rise above it (`.` and `,` sit on the baseline; `-` mid-x-height; space has no
- * ink). Deliberately an allowlist rather than "no uppercase": the ascenders
+ * rise above it (`.` sits on the baseline, `,` hangs below it, `-` is
+ * mid-x-height, space has no ink). Deliberately an allowlist rather than "no
+ * uppercase": the ascenders
  * (`b d f h k l t`), the dotted `i`/`j`, digits, and every non-Latin script
  * reach well above x-height. Descenders (`g p q y`) are in the set — the
  * under-edge is the same in both branches, so they're unaffected by the choice.
@@ -103,7 +104,7 @@ function getTextMetric(text: ReactNode): 'cap' | 'ex' {
  * edge from the baseline down to the font's descent, so `--logo-text-gap` is
  * clear space rather than something the descenders eat into. That gap is
  * therefore measured from the descent line, not from the ink: with a
- * descender-free wordmark the visible space runs about double the token.
+ * descender-free wordmark the visible space runs about 1.8–2.3× the token.
  * Browsers without `text-box-trim` (Firefox as of 2026-08) keep the untrimmed
  * leading and `--logo-text-gap` does not apply; the lockup reads looser and
  * taller there, never clipped.
@@ -115,10 +116,11 @@ function getTextMetric(text: ReactNode): 'cap' | 'ex' {
  * playground's Outfit wordmark. The plain side-by-side lockup keeps its height,
  * since the mark sets it. **Position:** the wordmark rises against the mark in
  * every shape, including those whose height is unchanged — side-by-side, its ink
- * centre sat 2.0/2.5/3.0px below the mark's at sm/md/lg and now sits within
- * 0.2px. That is the correction, but it means every lockup with a wordmark moved
- * visually. Size fixed-height brand bars off the mark rather than the lockup;
- * AGENTS.md has the per-shape figures.
+ * centre sat 1.3/2.2/3.0px below the mark's *box* centre at sm/md/lg and now
+ * sits within 0.1px. That is the correction, but it means every lockup with a
+ * wordmark moved visually. All these figures are Chromium + Outfit-600 and are
+ * not pinned by any test; re-measure in your own face. Size fixed-height brand
+ * bars off the mark rather than the lockup; AGENTS.md has the per-shape figures.
  *
  * @example
  * // Mark + wordmark — the common app-header / auth lockup:
