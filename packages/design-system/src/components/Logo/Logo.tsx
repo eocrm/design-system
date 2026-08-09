@@ -46,13 +46,17 @@ const sizeClass: Record<LogoSize, string> = {
 };
 
 /**
- * Latin lowercase letters whose ink stays inside the x-height band, plus the
- * separators that do the same. Deliberately an allowlist rather than "no
- * uppercase": the ascenders (`b d f h k l t`), the dotted `i`/`j`, digits, and
- * every non-Latin script reach above x-height, so trimming to the x-height edge
- * would cut the box above their ink.
+ * Latin lowercase letters whose ink tops out at x-height, plus the separators
+ * that do the same. Deliberately an allowlist rather than "no uppercase": the
+ * ascenders (`b d f h k l t`), the dotted `i`/`j`, digits, and every non-Latin
+ * script reach above x-height, so trimming to the x-height edge would cut the
+ * box above their ink. Descenders (`g p q y`) are in the set — the under-edge
+ * is the same in both branches, so they are unaffected by the choice.
+ *
+ * The lookahead requires at least one letter, so a whitespace- or
+ * punctuation-only wordmark doesn't qualify on a technicality.
  */
-const X_HEIGHT_ONLY = /^[acemnopqrsuvwxyzg\s\-.,]+$/;
+const X_HEIGHT_ONLY = /^(?=.*[acemnopqrsuvwxyzg])[acemnopqrsuvwxyzg\s\-.,]+$/;
 
 /**
  * Which edge the wordmark's text box should be trimmed to. `ex` pulls the box

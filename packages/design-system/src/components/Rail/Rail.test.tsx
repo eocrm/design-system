@@ -633,7 +633,12 @@ describe('Rail — scroll box axes', () => {
   });
 });
 
-describe('Rail — header brand alignment', () => {
+describe('Rail — header brand geometry', () => {
+  // SOURCE PINS, NOT BEHAVIOR CHECKS. jsdom loads no CSS, so these read the
+  // SCSS text — the same fallback the scroll-box tests above use. They catch a
+  // declaration being deleted or flipped; they cannot catch a token that fails
+  // to resolve, or any of the geometry the values are chosen for. The measured
+  // numbers quoted in the comments came from a real browser.
   const scss = readFileSync(resolve(__dirname, 'Rail.module.scss'), 'utf8');
   const tokens = readFileSync(resolve(__dirname, 'Rail.tokens.scss'), 'utf8');
 
@@ -645,28 +650,33 @@ describe('Rail — header brand alignment', () => {
   });
 
   it('insets the header horizontally by the item padding so the brand lines up with the icons', () => {
-    // The brand mark and the item icons must start at the same x. Both sit
-    // inside the rail's own --rail-padding-x, so the header's horizontal inset
-    // has to be the item's, not 0 (brand 12px left of the icons) and not
-    // --space-4 (4px right of them).
+    // Measured: item icons start at --rail-padding-x (8) + --rail-item-padding-x
+    // (12) = 20px. A 0 inset put the brand at 8px (13px off); the older
+    // --space-4 default put it at 27.5px (6.5px off).
     expect(tokens).toMatch(
-      /--rail-header-padding:\s*0\s+var\(--rail-item-padding-x\)\s+var\(--space-2\)/,
+      /--rail-header-padding:\s*0\s+var\(--rail-item-padding-x.*\)\s+var\(--space-2\)/,
     );
   });
 
-  it('centers the brand only while collapsed, and drops the inset that centering would measure against', () => {
+  it('gives the item-padding reference a fallback so the padding cannot collapse wholesale', () => {
+    // An unresolvable var() makes the whole value invalid at computed-value
+    // time, so `padding` falls to its initial 0 — losing the bottom gap as well
+    // and butting the brand into the divider.
+    expect(tokens).toMatch(/var\(--rail-item-padding-x,\s*var\(--space-3\)\)/);
+  });
+
+  it('centers the brand only while collapsed, and drops the inset centering would measure against', () => {
     const rule = scss.match(/\.collapsed\s+\.header\s*\{[^}]*\}/)?.[0] ?? '';
+    // `safe` so an oversized brand start-aligns instead of overflowing both
+    // edges and clipping the mark itself (measured x=-57.5 under plain center).
     expect(rule).toMatch(/justify-content:\s*safe center/);
+    // …preceded by plain `center`, or engines that can't parse `safe` drop the
+    // declaration and fall to flex-start, un-centering every collapsed rail.
+    expect(rule).toMatch(/justify-content:\s*center;[\s\S]*justify-content:\s*safe center/);
     expect(rule).toMatch(/padding-inline:\s*0/);
     // Expanded must stay start-aligned — a bare `.header` rule that centered
     // would knock the brand off the icon column it was just aligned to.
     expect(scss).not.toMatch(/^\.header\s*\{[^}]*justify-content/m);
-  });
-
-  it('uses safe centering so an oversized brand keeps its mark visible', () => {
-    // Plain `center` overflows a too-wide brand past BOTH edges of the 56px
-    // track, clipping the mark itself — the one part that must survive.
-    expect(scss).toMatch(/\.collapsed\s+\.header\s*\{[^}]*justify-content:\s*safe center/);
   });
 });
 

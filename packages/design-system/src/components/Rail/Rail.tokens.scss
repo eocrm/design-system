@@ -23,7 +23,11 @@
   // --rail-padding-x + --rail-item-padding-x from the rail's edge). There is no
   // top inset because --rail-padding-y already supplies it; the bottom gap down
   // to the divider is the header's own.
-  --rail-header-padding: 0 var(--rail-item-padding-x) var(--space-2);
+  // The var() carries its own fallback: an undefined --rail-item-padding-x would
+  // make this whole value invalid at computed-value time, and `padding` would
+  // fall back to its initial 0 — losing the bottom gap too, butting the brand
+  // straight into the divider.
+  --rail-header-padding: 0 var(--rail-item-padding-x, var(--space-3)) var(--space-2);
   --rail-header-divider-width: var(--border-width);
 
   // Section grouping

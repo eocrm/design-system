@@ -8,7 +8,7 @@ export type RailHeaderProps = HTMLAttributes<HTMLDivElement>;
  * Top slot of the rail — typically a logo or brand mark. By default it's a
  * padded brand area with a header→nav divider, matching the canonical rail
  * brand: `--rail-header-padding` (default
- * `0 var(--rail-item-padding-x) var(--space-2)` — the horizontal inset mirrors
+ * `0 var(--rail-item-padding-x, var(--space-3)) var(--space-2)` — the inset mirrors
  * the nav items' so the brand mark starts on the same x as their icons; no top
  * inset because `--rail-padding-y` already supplies one) +
  * `--rail-header-divider-width` (default `var(--border-width)`, color
