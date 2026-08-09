@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
 import { AppLayout } from './AppLayout';
@@ -215,6 +215,48 @@ describe('AppLayout sidebarOverlayBelow', () => {
 
     const closeButton = await screen.findByRole('button', { name: 'Close dialog' });
     await userEvent.click(closeButton);
+    expect(onChange).toHaveBeenCalledWith(false);
+  });
+
+  it('constrains the overlay sidebar to the space below the drawer header', async () => {
+    stubMatchMedia(500);
+    render(
+      <AppLayout sidebar={<nav data-testid="rail">nav</nav>} sidebarOverlayBelow="lg" sidebarOpen>
+        content
+      </AppLayout>,
+    );
+
+    await screen.findByRole('dialog');
+    expect(screen.getByTestId('rail').parentElement?.className).toMatch(/overlaySidebarContent/);
+  });
+
+  it('closes the overlay sidebar when its header is swiped left', async () => {
+    stubMatchMedia(500);
+    const onChange = vi.fn();
+    render(
+      <AppLayout
+        sidebar={<nav>nav</nav>}
+        sidebarOverlayBelow="lg"
+        sidebarOpen
+        onSidebarOpenChange={onChange}
+      >
+        content
+      </AppLayout>,
+    );
+
+    const dialog = await screen.findByRole('dialog', { name: 'Sidebar navigation' });
+    Object.defineProperty(dialog, 'offsetWidth', { configurable: true, value: 320 });
+    const header = screen.getByRole('heading', { name: 'Sidebar navigation' }).parentElement!;
+    const touch = (clientX: number) => ({
+      clientX,
+      clientY: 40,
+      identifier: 0,
+      target: header,
+    });
+    fireEvent.touchStart(header, { touches: [touch(250)], changedTouches: [touch(250)] });
+    fireEvent.touchMove(header, { touches: [touch(80)], changedTouches: [touch(80)] });
+    fireEvent.touchEnd(header, { touches: [], changedTouches: [touch(80)] });
+
     expect(onChange).toHaveBeenCalledWith(false);
   });
 

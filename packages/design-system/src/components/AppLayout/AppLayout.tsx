@@ -275,7 +275,7 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
           aria-label={t('appLayout.sidebar')}
         >
           <Drawer.Header>{t('appLayout.sidebar')}</Drawer.Header>
-          {sidebar}
+          <div className={styles.overlaySidebarContent}>{sidebar}</div>
         </Drawer>
       )}
     </div>
