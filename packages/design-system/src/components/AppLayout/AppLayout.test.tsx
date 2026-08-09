@@ -199,6 +199,25 @@ describe('AppLayout sidebarOverlayBelow', () => {
     expect(await screen.findByRole('dialog', { name: 'Sidebar navigation' })).toBeInTheDocument();
   });
 
+  it('provides a discoverable close control for the overlay sidebar', async () => {
+    stubMatchMedia(500);
+    const onChange = vi.fn();
+    render(
+      <AppLayout
+        sidebar={<nav data-testid="rail">nav</nav>}
+        sidebarOverlayBelow="lg"
+        sidebarOpen
+        onSidebarOpenChange={onChange}
+      >
+        content
+      </AppLayout>,
+    );
+
+    const closeButton = await screen.findByRole('button', { name: 'Close dialog' });
+    await userEvent.click(closeButton);
+    expect(onChange).toHaveBeenCalledWith(false);
+  });
+
   it('ignores sidebarOpen entirely when sidebarOverlayBelow is unset', () => {
     stubMatchMedia(320);
     render(

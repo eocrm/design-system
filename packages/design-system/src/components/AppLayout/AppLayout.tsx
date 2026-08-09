@@ -71,7 +71,7 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
    * the viewport is below it.
    */
   sidebarOpen?: boolean;
-  /** Fires whenever the overlay sidebar opens or closes — Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc. */
+  /** Fires whenever the overlay sidebar opens or closes — close button, Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc. */
   onSidebarOpenChange?: (open: boolean) => void;
   /** Main content slot — fills the remaining space below the top bar. */
   children: ReactNode;
@@ -175,7 +175,9 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * the row is what the threshold changes, so a container query would be
  * circular. AppLayout renders **no trigger**: put a hamburger in your `topBar`
  * and gate it on the exported `useBelowBreakpoint` hook, so it appears only
- * while the overlay is active. `sidebarPinned` is ignored below the threshold.
+ * while the overlay is active. Once open, the drawer includes a visible close
+ * button and its header can be swiped left to dismiss on touch devices.
+ * `sidebarPinned` is ignored below the threshold.
  * The `sidebar` node moves between the in-flow slot and the `Drawer` as the
  * threshold is crossed, remounting it — a `Rail`'s internal state (expanded
  * `Rail.Group`s, scroll position) resets each time, by design, not a bug.
@@ -272,6 +274,7 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
           className={styles.overlaySidebar}
           aria-label={t('appLayout.sidebar')}
         >
+          <Drawer.Header>{t('appLayout.sidebar')}</Drawer.Header>
           {sidebar}
         </Drawer>
       )}
