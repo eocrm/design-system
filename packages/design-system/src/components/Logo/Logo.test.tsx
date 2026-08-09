@@ -77,9 +77,11 @@ describe('Logo', () => {
       expect(edgeOf(text)).toBe('ex');
     });
 
+    // Both use only allowlisted characters, so they pin the lookahead
+    // specifically: without it each one matches and flips to `ex`.
     it.each([
       ['   ', 'whitespace only'],
-      ['—', 'punctuation only'],
+      ['. ,', 'punctuation only'],
     ])('wordmark "%s" trims to cap (%s)', (text) => {
       expect(edgeOf(text)).toBe('cap');
     });

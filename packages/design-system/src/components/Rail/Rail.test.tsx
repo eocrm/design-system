@@ -650,9 +650,10 @@ describe('Rail — header brand geometry', () => {
   });
 
   it('insets the header horizontally by the item padding so the brand lines up with the icons', () => {
-    // Measured: item icons start at --rail-padding-x (8) + --rail-item-padding-x
-    // (12) = 20px. A 0 inset put the brand at 8px (13px off); the older
-    // --space-4 default put it at 27.5px (6.5px off).
+    // The item's content box starts at --rail-padding-x (8) +
+    // --rail-item-padding-x (12) = 20px, and the brand mark has to start there
+    // too. A 0 inset put it at 8px (12px off); the older --space-4 default put
+    // it at 8 + 16 = 24px (4px off).
     expect(tokens).toMatch(
       /--rail-header-padding:\s*0\s+var\(--rail-item-padding-x.*\)\s+var\(--space-2\)/,
     );
@@ -666,17 +667,27 @@ describe('Rail — header brand geometry', () => {
   });
 
   it('centers the brand only while collapsed, and drops the inset centering would measure against', () => {
-    const rule = scss.match(/\.collapsed\s+\.header\s*\{[^}]*\}/)?.[0] ?? '';
-    // `safe` so an oversized brand start-aligns instead of overflowing both
-    // edges and clipping the mark itself (measured x=-57.5 under plain center).
-    expect(rule).toMatch(/justify-content:\s*safe center/);
-    // …preceded by plain `center`, or engines that can't parse `safe` drop the
-    // declaration and fall to flex-start, un-centering every collapsed rail.
-    expect(rule).toMatch(/justify-content:\s*center;[\s\S]*justify-content:\s*safe center/);
+    const rule = scss.match(/^\.collapsed \.header\s*\{[^}]*\}/m)?.[0] ?? '';
+    expect(rule).toMatch(/justify-content:\s*center;/);
     expect(rule).toMatch(/padding-inline:\s*0/);
     // Expanded must stay start-aligned — a bare `.header` rule that centered
     // would knock the brand off the icon column it was just aligned to.
     expect(scss).not.toMatch(/^\.header\s*\{[^}]*justify-content/m);
+  });
+
+  it('upgrades to safe centering through @supports, not a duplicate declaration', () => {
+    // `safe` keeps an oversized brand's mark visible (plain `center` overflows
+    // both edges — measured mark x=-57.5). It has to live in its own rule: a
+    // minifier collapses duplicate properties within a single rule, so the
+    // two-declaration cascade ships as `safe center` alone and an engine that
+    // can't parse it falls all the way to flex-start.
+    expect(scss).toMatch(
+      /@supports \(justify-content: safe center\)\s*\{\s*\.collapsed \.header\s*\{[^}]*justify-content:\s*safe center/,
+    );
+    // The base rule must NOT also carry it, or the minifier has something to
+    // merge again.
+    const base = scss.match(/^\.collapsed \.header\s*\{[^}]*\}/m)?.[0] ?? '';
+    expect(base).not.toMatch(/safe center/);
   });
 });
 

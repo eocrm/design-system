@@ -53,34 +53,42 @@ export function Demo() {
 
       <Example
         title="With a muted subline"
-        description="subtext adds a small muted line under the wordmark — a name + plan lockup. A wordmark with descenders keeps its tails clear of the subline at every size."
-        code={`import logo from '../assets/eocrm-logo.svg';
-import { Logo } from '@eocrm/design-system';
-
-export function Demo() {
-  return <Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />;
-}`}
-      >
-        <Cluster gap="2xl" align="center">
-          <Logo src={eocrmLogo} text="eocrm" subtext="Free trial" size="sm" />
-          <Logo src={eocrmLogo} text="paygo" subtext="Free trial" size="lg" />
-        </Cluster>
-      </Example>
-
-      <Example
-        title="Optical alignment"
-        description="The wordmark is trimmed to its x-height edge when every glyph tops out at x-height (eocrm, acme), and to its cap edge otherwise — a capital, an ascender (b d f h k l t), a dotted i/j, a digit, or a non-Latin script. Nothing to configure; all three are optically centred against the same mark despite sitting on different trim edges."
+        description="subtext adds a small muted line under the wordmark — a name + plan lockup. A wordmark with descenders keeps its tails clear of the subline at every size, on either trim edge."
         code={`import logo from '../assets/eocrm-logo.svg';
 import { Cluster, Logo } from '@eocrm/design-system';
 
 export function Demo() {
   return (
     <Cluster gap="2xl" align="center">
-      {/* x-height edge */}
+      <Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />
+      <Logo src={logo} text="paygo" subtext="Free trial" size="lg" />
+      <Logo src={logo} text="Lockbox" subtext="Free trial" size="lg" />
+    </Cluster>
+  );
+}`}
+      >
+        <Cluster gap="2xl" align="center">
+          <Logo src={eocrmLogo} text="eocrm" subtext="Free trial" size="sm" />
+          <Logo src={eocrmLogo} text="paygo" subtext="Free trial" size="lg" />
+          <Logo src={eocrmLogo} text="Lockbox" subtext="Free trial" size="lg" />
+        </Cluster>
+      </Example>
+
+      <Example
+        title="Optical alignment"
+        description="The wordmark is trimmed to its x-height edge when every glyph tops out at x-height (eocrm), and to its cap edge otherwise — a capital, an ascender (b d f h k l t), a dotted i/j, a digit, or a non-Latin script. Nothing to configure; all three sit on the same optical centre against the mark despite using different trim edges."
+        code={`import logo from '../assets/eocrm-logo.svg';
+import { Cluster, Logo } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="2xl" align="center">
+      {/* x-height edge — every glyph tops out at x-height */}
       <Logo src={logo} text="eocrm" size="lg" />
-      {/* cap edge — ascenders and a digit */}
+      {/* cap edge — the b/k ascenders */}
       <Logo src={logo} text="lockbox" size="lg" />
-      <Logo src={logo} text="web3" size="lg" />
+      {/* cap edge — a digit, with no ascender letter to confound it */}
+      <Logo src={logo} text="nexus7" size="lg" />
     </Cluster>
   );
 }`}
@@ -88,7 +96,7 @@ export function Demo() {
         <Cluster gap="2xl" align="center">
           <Logo src={eocrmLogo} text="eocrm" size="lg" />
           <Logo src={eocrmLogo} text="lockbox" size="lg" />
-          <Logo src={eocrmLogo} text="web3" size="lg" />
+          <Logo src={eocrmLogo} text="nexus7" size="lg" />
         </Cluster>
       </Example>
 

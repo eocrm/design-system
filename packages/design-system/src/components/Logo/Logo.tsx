@@ -98,9 +98,12 @@ function getTextMetric(text: ReactNode): 'cap' | 'ex' {
  * Where `text-box-trim` is supported the lockup trims the wordmark's
  * half-leading and aligns it to its cap edge — or its x-height edge when the
  * wordmark is entirely x-height glyphs, e.g. `text="eocrm"` — so it optically
- * centers against the mark. Browsers without `text-box-trim` (Firefox as of
- * 2026-08) keep the untrimmed leading and `--logo-text-gap` does not apply; the
- * lockup reads slightly looser there, never clipped.
+ * centers against the mark. Adding a `subtext` also moves the wordmark's *under*
+ * edge from the baseline down to the font's descent, so `--logo-text-gap` is
+ * clear space rather than something the descenders eat into; the lockup's
+ * optical centre is unchanged either way. Browsers without `text-box-trim`
+ * (Firefox as of 2026-08) keep the untrimmed leading and `--logo-text-gap` does
+ * not apply; the lockup reads slightly looser there, never clipped.
  *
  * @example
  * // Mark + wordmark — the common app-header / auth lockup:

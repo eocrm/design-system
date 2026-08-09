@@ -77,32 +77,41 @@
 }
 
 // Collapsed = a 56px icon-only track. Center the brand there so the mark lands
-// within a pixel or two of the item icons' axis (they are not exactly equal —
-// the rail's 1px border-right sits inside the 56px, so the icon column's centre
-// is ~1.5px right of the track's). Scoped to the collapsed state on
-// purpose: expanded, the brand is already aligned by --rail-header-padding's
-// horizontal inset, and turning .header into a centering flex row
-// unconditionally would re-flow any consumer header that renders more than one
-// child.
+// within a pixel or two of the item icons' axis. They are not exactly equal:
+// the header's content box is 8..47 (centre 27.5) while the item's 18px icon is
+// flex-shrink: 0 inside a 15px content region, so it start-aligns at 20 and
+// overflows to 38 (centre 29). The rail's 1px border-right accounts for 0.5px of
+// the 1.5px difference; the icon's overflow accounts for the other 1px.
+// Scoped to the collapsed state on purpose: expanded, the brand is already
+// aligned by --rail-header-padding's horizontal inset, and turning .header into
+// a centering flex row unconditionally would re-flow any consumer header that
+// renders more than one child.
 // The horizontal inset is dropped here because it is an *alignment* value for
 // the expanded rail; at 56px it would leave a 15px content box (56 − 2×8 rail
 // padding − 1px border-right − 2×12 header inset) that a 32px mark immediately
 // overflows, and the centering would then be measured against the wrong box.
-// `safe` matters: on a brand too wide for the collapsed track, plain `center`
-// overflows both edges and clips the mark itself — the one part a collapsed rail
-// must keep. `safe` falls back to start alignment exactly in that case, so the
-// mark stays visible and only the trailing wordmark is clipped.
 .collapsed .header {
   display: flex;
-
-  // Two declarations, not one: the `safe` overflow-alignment keyword is younger
-  // than the rest of this rule, and an engine that can't parse it drops the
-  // whole declaration. Without the plain `center` beneath it that leaves
-  // `normal` → flex-start, which un-centers the mark in every collapsed rail —
-  // a worse regression than the oversized-brand case `safe` exists to fix.
   justify-content: center;
-  justify-content: safe center;
   padding-inline: 0;
+}
+
+// `safe` matters: on a brand too wide for the collapsed track, plain `center`
+// overflows both edges and clips the mark itself — the one part a collapsed rail
+// must keep. `safe` start-aligns in exactly that case, so the mark stays visible
+// and only the trailing wordmark is clipped.
+// It has to be a separate @supports rule rather than a second declaration in the
+// block above. A minifier collapses duplicate properties inside one rule, so the
+// usual two-declaration cascade survives review and then dies in the build —
+// verified against this repo's own production bundle, which kept only
+// `justify-content:safe center`. That would leave engines unable to parse `safe`
+// dropping the declaration entirely and falling to flex-start: the mark
+// un-centered in EVERY collapsed rail, a broader regression than the oversized
+// brand this guards against. Across separate rules there is nothing to merge.
+@supports (justify-content: safe center) {
+  .collapsed .header {
+    justify-content: safe center;
+  }
 }
 
 // Wrapper around any <Rail.Footer> children — sits as a flex item BELOW
