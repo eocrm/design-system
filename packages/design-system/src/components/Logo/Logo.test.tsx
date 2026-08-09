@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Logo } from './Logo';
 
 const SRC = '/logo.svg';
@@ -81,6 +83,20 @@ describe('Logo', () => {
       ['мойсклад', 'a non-Latin script'],
     ])('wordmark %s trims to cap (%s)', (text) => {
       expect(edgeOf(text)).toBe('cap');
+    });
+
+    it('puts the wordmark descenders inside its box when a subtext follows', () => {
+      // The `alphabetic` under-edge stops at the baseline, so descender ink
+      // hangs outside the box and eats the gap below it — at size lg the
+      // overhang (5px) exceeds --logo-text-gap (4px) and the tails cross into
+      // the subtext. Only the subtext case switches to the `text` under-edge; a
+      // lone wordmark stays on its baseline so it centers against the mark.
+      const scss = readFileSync(resolve(__dirname, 'Logo.module.scss'), 'utf8');
+      expect(scss).toMatch(/\.textCap:has\(\+ \.subtext\)\s*\{[^}]*text-box-edge:\s*cap text/);
+      expect(scss).toMatch(/\.textEx:has\(\+ \.subtext\)\s*\{[^}]*text-box-edge:\s*ex text/);
+      // …and the un-suffixed rules must still end at the baseline.
+      expect(scss).toMatch(/^\s{2}\.textCap\s*\{[^}]*text-box-edge:\s*cap alphabetic/m);
+      expect(scss).toMatch(/^\s{2}\.textEx\s*\{[^}]*text-box-edge:\s*ex alphabetic/m);
     });
 
     it('falls back to cap for a non-string wordmark', () => {

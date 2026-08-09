@@ -159,7 +159,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const inComponents = pathname.startsWith('/components');
-  const isCollapsed = collapsed && !isOverlayNav;
 
   const switchLink = inComponents
     ? { to: '/mockups', label: 'Mockups', icon: Layers }
@@ -173,7 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       onSidebarOpenChange={setNavOpen}
       sidebar={
         <Rail
-          collapsed={isCollapsed}
+          collapsed={collapsed && !isOverlayNav}
           onCollapsedChange={setCollapsed}
           aria-label={inComponents ? 'Component navigation' : 'Mockup navigation'}
           className={styles.appRail}

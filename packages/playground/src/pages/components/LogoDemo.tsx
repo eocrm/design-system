@@ -53,7 +53,7 @@ export function Demo() {
 
       <Example
         title="With a muted subline"
-        description="subtext adds a small muted line under the wordmark — the app-shell brand lockup (name + plan)."
+        description="subtext adds a small muted line under the wordmark — a name + plan lockup. A wordmark with descenders keeps its tails clear of the subline at every size."
         code={`import logo from '../assets/eocrm-logo.svg';
 import { Logo } from '@eocrm/design-system';
 
@@ -61,7 +61,10 @@ export function Demo() {
   return <Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />;
 }`}
       >
-        <Logo src={eocrmLogo} text="eocrm" subtext="Free trial" size="sm" />
+        <Cluster gap="2xl" align="center">
+          <Logo src={eocrmLogo} text="eocrm" subtext="Free trial" size="sm" />
+          <Logo src={eocrmLogo} text="paygo" subtext="Free trial" size="lg" />
+        </Cluster>
       </Example>
 
       <Example

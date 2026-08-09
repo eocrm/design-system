@@ -70,6 +70,22 @@
     gap: var(--logo-text-gap);
   }
 
+  // A wordmark with a subtext under it needs its descenders inside its own box.
+  // The `alphabetic` under-edge stops at the baseline, so descender ink hangs
+  // outside the box and eats into the gap below it — measured 3px/4px/5px of
+  // overhang at sm/md/lg against a flat 4px gap, i.e. the tails already touch at
+  // md and cross into the subtext at lg. `text` puts the under-edge at the
+  // font's descent instead, so --logo-text-gap is real whitespace at every size.
+  // Scoped to the subtext case: on its own the wordmark should still sit on its
+  // baseline so it optically centers against the mark.
+  .textCap:has(+ .subtext) {
+    text-box-edge: cap text;
+  }
+
+  .textEx:has(+ .subtext) {
+    text-box-edge: ex text;
+  }
+
   // Always cap, never ex: a subtext is sentence-case far more often than not
   // ("Free trial", "Pro (yearly)"), and trimming those to the x-height edge
   // would put the capital's ink outside the box and pull the line up into the

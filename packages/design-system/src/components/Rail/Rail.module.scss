@@ -76,8 +76,10 @@
   overflow: hidden;
 }
 
-// Collapsed = a 56px icon-only track. Center the brand there so the mark sits on
-// the same axis as the item icons below it. Scoped to the collapsed state on
+// Collapsed = a 56px icon-only track. Center the brand there so the mark lands
+// within a pixel or two of the item icons' axis (they are not exactly equal —
+// the rail's 1px border-right sits inside the 56px, so the icon column's centre
+// is ~1.5px right of the track's). Scoped to the collapsed state on
 // purpose: expanded, the brand is already aligned by --rail-header-padding's
 // horizontal inset, and turning .header into a centering flex row
 // unconditionally would re-flow any consumer header that renders more than one
