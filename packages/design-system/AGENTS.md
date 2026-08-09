@@ -294,6 +294,7 @@ When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The 
   size="sm"
   selected={ownerApplied}
   aria-pressed={ownerApplied}
+  onClick={() => setOwnerApplied((value) => !value)}
 >
   Owner: {ownerLabel}
 </Button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { Plus, Filter, ChevronDown } from 'lucide-react';
 import {
@@ -34,6 +34,7 @@ const owners = ['all', 'Alex Rivera', 'Jordan Park', 'Sam Chen', 'Maya Owens'];
 export function Contacts() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [ownerFilter, setOwnerFilter] = useState('all');
+  const statusFilterTriggerRef = useRef<HTMLButtonElement>(null);
   const filteredContacts = contacts.filter(
     (contact) =>
       (statusFilter === 'all' || contact.status === statusFilter) &&
@@ -45,7 +46,7 @@ export function Contacts() {
       <PageHeader>
         <PageHeader.Title>Contacts</PageHeader.Title>
         <PageHeader.Meta>
-          <Text size="sm" tone="muted">
+          <Text size="sm" tone="muted" role="status" aria-live="polite">
             {filteredContacts.length} {filteredContacts.length === 1 ? 'contact' : 'contacts'}
           </Text>
         </PageHeader.Meta>
@@ -69,7 +70,12 @@ export function Contacts() {
           <Cluster gap="sm" wrap={false}>
             <DropdownMenu>
               <DropdownMenu.Trigger>
-                <Button variant="secondary" size="sm" selected={statusFilter !== 'all'}>
+                <Button
+                  ref={statusFilterTriggerRef}
+                  variant="secondary"
+                  size="sm"
+                  selected={statusFilter !== 'all'}
+                >
                   Status: {statusFilterLabel[statusFilter]} <ChevronDown size={12} />
                 </Button>
               </DropdownMenu.Trigger>
@@ -106,6 +112,7 @@ export function Contacts() {
         {filteredContacts.length === 0 ? (
           <EmptyState
             title="No contacts match your filters"
+            headingLevel={2}
             description="Try a different status or owner, or clear the applied filters."
             actions={
               <Button
@@ -113,6 +120,7 @@ export function Contacts() {
                 onClick={() => {
                   setStatusFilter('all');
                   setOwnerFilter('all');
+                  requestAnimationFrame(() => statusFilterTriggerRef.current?.focus());
                 }}
               >
                 Clear filters

@@ -115,7 +115,9 @@ describe('Button', () => {
         Owner: Ada
       </Button>,
     );
-    expect(screen.getByRole('button', { name: 'Owner: Ada' })).toBeDisabled();
+    const button = screen.getByRole('button', { name: 'Owner: Ada' });
+    expect(button).toBeDisabled();
+    expect(button.className).toMatch(/selected/);
   });
 
   it('derives selected hover paint from the selected accent tokens', () => {
