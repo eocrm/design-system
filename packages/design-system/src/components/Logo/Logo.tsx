@@ -103,7 +103,14 @@ function getTextMetric(text: ReactNode): 'cap' | 'ex' {
  * clear space rather than something the descenders eat into; the lockup's
  * optical centre is unchanged either way. Browsers without `text-box-trim`
  * (Firefox as of 2026-08) keep the untrimmed leading and `--logo-text-gap` does
- * not apply; the lockup reads slightly looser there, never clipped.
+ * not apply; the lockup reads looser and taller there, never clipped.
+ *
+ * Because the trim is new, a lockup with a `subtext` or with
+ * `textPlacement="bottom"` is measurably shorter than it used to be on
+ * supporting browsers — `textPlacement="bottom"` at `size="lg"` goes 74.4px →
+ * 59.6px. The plain side-by-side lockup is unchanged, since the mark sets its
+ * height. Size fixed-height brand bars off the mark rather than the lockup; see
+ * the migration note in AGENTS.md.
  *
  * @example
  * // Mark + wordmark — the common app-header / auth lockup:
@@ -119,7 +126,7 @@ function getTextMetric(text: ReactNode): 'cap' | 'ex' {
  * <Logo src={logo} text="eocrm" textPlacement="bottom" />
  *
  * @example
- * // With a small muted subline (the app-shell brand lockup):
+ * // With a small muted subline — a name + plan lockup:
  * <Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />
  *
  * @remarks When NOT to use

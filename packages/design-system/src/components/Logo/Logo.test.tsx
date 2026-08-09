@@ -117,30 +117,48 @@ describe('Logo', () => {
       // Firefox ships neither text-box property. Ungated, the trim would drop
       // while `line-height: 1` stuck, collapsing the line box to the font size
       // so ascenders/descenders overflow and get clipped by Rail.Header.
-      const body = scss.replace(/\/\/.*$/gm, ''); // comments name these too
-      const start = body.indexOf('@supports (text-box-trim: trim-both)');
-      expect(start).toBeGreaterThan(-1);
+      // Strip BOTH comment syntaxes: comments name these properties, and a
+      // block comment containing a brace would also derail the walk below.
+      const body = scss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 
-      // Walk braces to the gate's own close — rules follow it in this file, so
-      // "everything to the last }" would swallow them and prove nothing.
-      let depth = 0;
-      let end = body.length;
-      for (let i = body.indexOf('{', start); i < body.length; i++) {
-        if (body[i] === '{') depth++;
-        else if (body[i] === '}' && --depth === 0) {
-          end = i + 1;
+      // Collect EVERY gate, not just the first — splitting the block in two is a
+      // behavior-identical refactor that must not turn this red.
+      const GATE = '@supports (text-box-trim: trim-both)';
+      let outside = '';
+      let cursor = 0;
+      let gates = 0;
+      for (;;) {
+        const start = body.indexOf(GATE, cursor);
+        if (start === -1) {
+          outside += body.slice(cursor);
           break;
         }
+        gates++;
+        outside += body.slice(cursor, start);
+        let depth = 0;
+        let i = body.indexOf('{', start);
+        for (; i < body.length; i++) {
+          if (body[i] === '{') depth++;
+          else if (body[i] === '}' && --depth === 0) break;
+        }
+        cursor = i + 1;
       }
-      const outside = body.slice(0, start) + body.slice(end);
+      expect(gates).toBeGreaterThan(0);
 
       for (const decl of [
         'text-box-trim:',
         'text-box-edge:',
+        'text-box:', // the shorthand sets both, and would slip a bare check
         'var(--logo-text-gap)',
-        'line-height: 1;', // the semicolon keeps 1.1 / 1.2 out of it
+        // Any line-height that collapses the box to the font size. `1.1`/`1.2`
+        // are the untrimmed fallbacks and must stay outside.
+        /line-height:\s*1(\.0+)?\s*;/,
       ]) {
-        expect({ decl, outsideGate: outside.includes(decl) }).toEqual({ decl, outsideGate: false });
+        const found = typeof decl === 'string' ? outside.includes(decl) : decl.test(outside);
+        expect({ decl: String(decl), outsideGate: found }).toEqual({
+          decl: String(decl),
+          outsideGate: false,
+        });
       }
     });
 

@@ -646,7 +646,10 @@ describe('Rail — header brand geometry', () => {
     // .header is a flex item of .body. At the default flex-shrink: 1 an
     // overflowing item list compresses the header, and because the header also
     // clips overflow the brand is cut off instead of the list scrolling.
-    expect(scss).toMatch(/^\.header\s*\{[^}]*flex-shrink:\s*0/m);
+    // `0\s*;` not `0` — the looser form also matches `flex-shrink: 0.5`, which
+    // compresses the header and clips the brand, i.e. the exact thing this pins
+    // against.
+    expect(scss).toMatch(/^\.header\s*\{[^}]*flex-shrink:\s*0\s*;/m);
   });
 
   it('insets the header horizontally by the item padding so the brand lines up with the icons', () => {
@@ -664,6 +667,16 @@ describe('Rail — header brand geometry', () => {
     // time, so `padding` falls to its initial 0 — losing the bottom gap as well
     // and butting the brand into the divider.
     expect(tokens).toMatch(/var\(--rail-item-padding-x,\s*var\(--space-3\)\)/);
+    // The fallback restates --rail-item-padding-x's own default, so the two can
+    // drift. Pin them together: retuning item density has to update both.
+    const itemDefault = tokens.match(/--rail-item-padding-x:\s*([^;]+);/)?.[1]?.trim();
+    const headerFallback = tokens
+      .match(/--rail-header-padding:[^;]*var\(--rail-item-padding-x,\s*([^)]+\))\)/)?.[1]
+      ?.trim();
+    expect({ itemDefault, headerFallback }).toEqual({
+      itemDefault: 'var(--space-3)',
+      headerFallback: 'var(--space-3)',
+    });
   });
 
   it('centers the brand only while collapsed, and drops the inset centering would measure against', () => {
