@@ -169,7 +169,7 @@
           "type": "((open: boolean) => void)",
           "required": false,
           "default": "",
-          "description": "Fires whenever the overlay sidebar opens or closes — Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc."
+          "description": "Fires whenever the overlay sidebar opens or closes — close button, Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc."
         },
         {
           "name": "children",

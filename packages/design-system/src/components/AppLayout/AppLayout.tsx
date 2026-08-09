@@ -71,7 +71,7 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
    * the viewport is below it.
    */
   sidebarOpen?: boolean;
-  /** Fires whenever the overlay sidebar opens or closes — Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc. */
+  /** Fires whenever the overlay sidebar opens or closes — close button, Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc. */
   onSidebarOpenChange?: (open: boolean) => void;
   /** Main content slot — fills the remaining space below the top bar. */
   children: ReactNode;
@@ -175,18 +175,19 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * the row is what the threshold changes, so a container query would be
  * circular. AppLayout renders **no trigger**: put a hamburger in your `topBar`
  * and gate it on the exported `useBelowBreakpoint` hook, so it appears only
- * while the overlay is active. `sidebarPinned` is ignored below the threshold.
+ * while the overlay is active. Once open, the drawer includes a visible close
+ * button and its header can be swiped left to dismiss on touch devices.
+ * `sidebarPinned` is ignored below the threshold.
  * The `sidebar` node moves between the in-flow slot and the `Drawer` as the
  * threshold is crossed, remounting it — a `Rail`'s internal state (expanded
  * `Rail.Group`s, scroll position) resets each time, by design, not a bug.
  *
- * The `sidebar` slot renders as a direct child of the overlay `<Drawer>`, NOT
- * wrapped in `<Drawer.Body>` — so it does not inherit the body's
- * `overflow-y: auto`. `Drawer`'s `.content` sets no vertical overflow of its
- * own (`contain: layout paint` only), so a sidebar taller than the drawer
- * clips with no way to reach the rest. `<Rail>` is safe — its own body scrolls
- * internally regardless of the parent. A custom non-`Rail` sidebar passed here
- * needs its own scroll container, especially on short viewports like phone
+ * The `sidebar` slot renders in a remaining-height wrapper directly below the
+ * overlay `<Drawer.Header>`, NOT in `<Drawer.Body>` — so it does not inherit
+ * the body's `overflow-y: auto`. The wrapper lets a 100%-height `<Rail>` shrink
+ * below its automatic min-content size; the Rail's own body then scrolls while
+ * its footer remains visible. A custom non-`Rail` sidebar still needs its own
+ * height-filling scroll container, especially on short viewports like phone
  * landscape (~380px tall).
  *
  * @remarks Anti-patterns
@@ -272,7 +273,8 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
           className={styles.overlaySidebar}
           aria-label={t('appLayout.sidebar')}
         >
-          {sidebar}
+          <Drawer.Header>{t('appLayout.sidebar')}</Drawer.Header>
+          <div className={styles.overlaySidebarContent}>{sidebar}</div>
         </Drawer>
       )}
     </div>

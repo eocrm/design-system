@@ -103,3 +103,12 @@
   --rail-width-expanded: 100%;
   --rail-width-collapsed: 100%;
 }
+
+// The Drawer header consumes part of the fixed-height panel. Give the sidebar
+// the remaining block space and allow it to shrink below its automatic
+// min-content size, so a 100%-height Rail keeps its footer inside the panel on
+// short touch viewports.
+.overlaySidebarContent {
+  flex: 1 1 auto;
+  min-height: 0;
+}

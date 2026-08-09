@@ -457,7 +457,7 @@ export function Demo() {
 
       <Example
         title="Responsive sidebar (sidebarOverlayBelow)"
-        description="Below the threshold the sidebar leaves the flow and opens in a left Drawer, so the content column gets the full viewport width. Narrow the browser window under 768px to see it engage — the threshold reads the real viewport, not this framed preview, and the drawer portals to document.body so it covers the page rather than the frame. AppLayout renders no trigger: the hamburger below is the demo's own, gated on useBelowBreakpoint('lg')."
+        description="Below the threshold the sidebar leaves the flow and opens in a left Drawer, so the content column gets the full viewport width. Narrow the browser window under 768px to see it engage — the threshold reads the real viewport, not this framed preview, and the drawer portals to document.body so it covers the page rather than the frame. AppLayout renders no trigger: the hamburger below is the demo's own, gated on useBelowBreakpoint('lg'). Once open, use the built-in close button or swipe the drawer header left to dismiss it."
         code={`function Demo() {
   const [navOpen, setNavOpen] = useState(false);
   const isOverlay = useBelowBreakpoint('lg');
