@@ -46,6 +46,16 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * button will lay out as a normal rectangle with the existing gap.
    */
   iconOnly?: boolean;
+  /**
+   * Controlled persistent state for an independent filter or toolbar trigger.
+   * When supplied, exposes the matching `aria-pressed` value (`true` or
+   * `false`); omit it for ordinary action Buttons so no toggle state is
+   * announced. Selected paint applies only to `secondary` and `ghost` Buttons;
+   * `primary`, `danger`, and `success` retain their intent paint. The consumer
+   * owns the state and updates it from `onClick`; Button never toggles itself.
+   * Defaults to `undefined` (no `aria-pressed` attribute).
+   */
+  selected?: boolean;
 }
 
 /**
@@ -76,6 +86,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * </Cluster>
  *
  * @example
+ * // Persistent filter trigger — state belongs to the consumer.
+ * const [ownerApplied, setOwnerApplied] = useState(false);
+ * <Button
+ *   variant="secondary"
+ *   selected={ownerApplied}
+ *   onClick={() => setOwnerApplied((value) => !value)}
+ * >
+ *   Owner: Ada
+ * </Button>
+ *
+ * @example
  * // Transient success confirmation (~1.5s). The timer is the consumer's
  * // responsibility — the variant is just paint. Track the timer in a ref so
  * // you can clear it on unmount (prevents a setState-after-unmount warning)
@@ -101,6 +122,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *
  * @remarks When NOT to use
  * - Navigation to another URL → use a router-aware `<Link>` (not yet shipped).
+ * - A persistent independent filter or toolbar trigger → use controlled
+ *   `selected` on a `secondary` or `ghost` Button; keep that state in the
+ *   consumer, not inside Button.
  * - Toggle state (on/off) → use `Switch` or `Checkbox` (not yet shipped), not
  *   a Button with internal state.
  * - A clickable table row → make the row itself the interactive surface;
@@ -129,20 +153,33 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *   `iconOnly` with `aria-label="…"`.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', iconOnly = false, className, type = 'button', ...props },
+  {
+    variant = 'primary',
+    size = 'md',
+    iconOnly = false,
+    selected,
+    className,
+    type = 'button',
+    ...props
+  },
   ref,
 ) {
+  const paintsSelected = selected && (variant === 'secondary' || variant === 'ghost');
+
   return (
     <button
       ref={ref}
       type={type}
+      aria-pressed={selected === undefined ? undefined : selected}
       className={clsx(
         styles.button,
         styles[variant],
         styles[size],
         iconOnly && styles.iconOnly,
+        paintsSelected && styles.selected,
         className,
       )}
+      // {...props} last so consumers can override native attributes such as aria-pressed.
       {...props}
     />
   );

@@ -35,6 +35,74 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Saved!' }).className).toMatch(/success/);
   });
 
+  it('applies selected paint only to secondary and ghost variants', () => {
+    render(
+      <>
+        <Button variant="secondary" selected>
+          Owner: Ada
+        </Button>
+        <Button variant="ghost" selected>
+          Assignee: Lin
+        </Button>
+        <Button variant="primary" selected>
+          Save
+        </Button>
+      </>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Owner: Ada' }).className).toMatch(/selected/);
+    expect(screen.getByRole('button', { name: 'Assignee: Lin' }).className).toMatch(/selected/);
+    expect(screen.getByRole('button', { name: 'Save' }).className).not.toMatch(/selected/);
+  });
+
+  it('maps the controlled selected prop to aria-pressed', () => {
+    const { rerender } = render(
+      <Button variant="secondary" selected>
+        Owner: Ada
+      </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Owner: Ada' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    rerender(
+      <Button variant="secondary" selected={false}>
+        Owner: Ada
+      </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Owner: Ada' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('omits aria-pressed when selected is not specified', () => {
+    render(<Button>Save</Button>);
+    expect(screen.getByRole('button', { name: 'Save' })).not.toHaveAttribute('aria-pressed');
+  });
+
+  it('allows an explicit aria-pressed value to override selected', () => {
+    render(
+      <Button selected aria-pressed="mixed">
+        Owner: Ada
+      </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Owner: Ada' })).toHaveAttribute(
+      'aria-pressed',
+      'mixed',
+    );
+  });
+
+  it('keeps a selected button disabled', () => {
+    render(
+      <Button variant="secondary" selected disabled>
+        Owner: Ada
+      </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Owner: Ada' })).toBeDisabled();
+  });
+
   it('merges the className prop with internal classes', () => {
     render(<Button className="external">Hi</Button>);
     const btn = screen.getByRole('button', { name: 'Hi' });
