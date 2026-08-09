@@ -37,6 +37,30 @@ function SaveWithSuccessFlash() {
   );
 }
 
+function AppliedFilters() {
+  const [statusApplied, setStatusApplied] = useState(true);
+  const [ownerApplied, setOwnerApplied] = useState(false);
+
+  return (
+    <Cluster gap="sm">
+      <Button
+        variant="secondary"
+        selected={statusApplied}
+        onClick={() => setStatusApplied((value) => !value)}
+      >
+        Status: Active
+      </Button>
+      <Button
+        variant="ghost"
+        selected={ownerApplied}
+        onClick={() => setOwnerApplied((value) => !value)}
+      >
+        Owner: Alex Rivera
+      </Button>
+    </Cluster>
+  );
+}
+
 export function ButtonDemo() {
   return (
     <DemoLayout
@@ -111,6 +135,39 @@ export function SaveWithSuccessFlash() {
 }`}
       >
         <SaveWithSuccessFlash />
+      </Example>
+
+      <Example
+        title="Applied filters (persistent state)"
+        description="Use selected for a durable, independently applied filter value. It is controlled by the consumer, adds aria-pressed, and paints secondary and ghost Buttons when applied. Click either filter to try it. For transient success feedback use the success variant; for mutually exclusive choices use ButtonGroup."
+        code={`import { useState } from 'react';
+import { Button, Cluster } from '@eocrm/design-system';
+
+export function AppliedFilters() {
+  const [statusApplied, setStatusApplied] = useState(true);
+  const [ownerApplied, setOwnerApplied] = useState(false);
+
+  return (
+    <Cluster gap="sm">
+      <Button
+        variant="secondary"
+        selected={statusApplied}
+        onClick={() => setStatusApplied((value) => !value)}
+      >
+        Status: Active
+      </Button>
+      <Button
+        variant="ghost"
+        selected={ownerApplied}
+        onClick={() => setOwnerApplied((value) => !value)}
+      >
+        Owner: Alex Rivera
+      </Button>
+    </Cluster>
+  );
+}`}
+      >
+        <AppliedFilters />
       </Example>
 
       <Example

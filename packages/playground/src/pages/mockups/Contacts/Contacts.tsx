@@ -63,7 +63,7 @@ export function Contacts() {
           <Cluster gap="sm" wrap={false}>
             <DropdownMenu>
               <DropdownMenu.Trigger>
-                <Button variant="secondary" size="sm">
+                <Button variant="secondary" size="sm" selected={statusFilter !== 'all'}>
                   Status: {statusFilterLabel[statusFilter]} <ChevronDown size={12} />
                 </Button>
               </DropdownMenu.Trigger>
@@ -78,7 +78,7 @@ export function Contacts() {
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenu.Trigger>
-                <Button variant="secondary" size="sm">
+                <Button variant="secondary" size="sm" selected={ownerFilter !== 'all'}>
                   Owner: {ownerFilter === 'all' ? 'All' : ownerFilter} <ChevronDown size={12} />
                 </Button>
               </DropdownMenu.Trigger>
