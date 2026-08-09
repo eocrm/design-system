@@ -91,6 +91,12 @@
   // ("Free trial", "Pro (yearly)"), and trimming those to the x-height edge
   // would put the capital's ink outside the box and pull the line up into the
   // wordmark's descenders.
+  // The under-edge stays `alphabetic` (not `text` like the wordmark's): the
+  // subtext is the last line, so nothing below needs clearing, and a descent-
+  // deep box would just pad the lockup. The trade is that a subtext WITH
+  // descenders puts ~1.6px of ink below the lockup's own bottom edge at sm — it
+  // sits in Rail.Header's bottom padding there, but a consumer clipping a box
+  // sized exactly to the lockup would shave those tails.
   .subtext {
     line-height: 1;
     text-box-trim: trim-both;
