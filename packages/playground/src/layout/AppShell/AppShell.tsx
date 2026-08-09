@@ -87,9 +87,9 @@ function BrandMark() {
   return (
     <div className={styles.brand} data-collapsed={collapsed || undefined}>
       {collapsed ? (
-        <Logo src={eocrmLogo} size="sm" />
+        <Logo src={eocrmLogo} size="md" />
       ) : (
-        <Logo src={eocrmLogo} size="sm" text="eocrm" subtext="Free trial" />
+        <Logo src={eocrmLogo} size="md" text="eocrm" />
       )}
     </div>
   );

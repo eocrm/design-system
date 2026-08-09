@@ -5,9 +5,9 @@
   height: 100%;
 }
 
-// Brand internal layout only. The padding + header→nav divider now come from
-// the DS <Rail.Header> default (--rail-header-padding / --rail-header-divider-width
-// = the canonical rail brand) — was a raw shim here before the DS shipped it.
+// Brand internal layout only. The padding + header→nav divider come from the DS
+// <Rail.Header> default (--rail-header-padding / --rail-header-divider-width =
+// the canonical rail brand) — was a raw shim here before the DS shipped it.
 .brand {
   display: flex;
   align-items: center;

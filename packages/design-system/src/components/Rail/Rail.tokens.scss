@@ -14,11 +14,20 @@
   --rail-border-color: var(--color-border);
   --rail-border-width: var(--border-width);
 
-  // Header (brand area) — padded with a header→nav divider by default, so a
-  // DS-only consumer matches the mockup rail brand (a generous brand block over
-  // a divider) with no raw CSS. Divider color reuses --rail-border-color.
-  // Override either to `0` for a bare header slot.
-  --rail-header-padding: var(--space-4);
+  // Header (brand area) — a brand block over a header→nav divider by default, so
+  // a DS-only consumer matches the mockup rail brand with no raw CSS. Divider
+  // color reuses --rail-border-color. Override either token to `0` for a bare
+  // header slot.
+  // The horizontal inset deliberately mirrors --rail-item-padding-x so the brand
+  // mark starts on the same x as the nav item icons below it (both then sit at
+  // --rail-padding-x + --rail-item-padding-x from the rail's edge). There is no
+  // top inset because --rail-padding-y already supplies it; the bottom gap down
+  // to the divider is the header's own.
+  // The var() carries its own fallback: an undefined --rail-item-padding-x would
+  // make this whole value invalid at computed-value time, and `padding` would
+  // fall back to its initial 0 — losing the bottom gap too, butting the brand
+  // straight into the divider.
+  --rail-header-padding: 0 var(--rail-item-padding-x, var(--space-3)) var(--space-2);
   --rail-header-divider-width: var(--border-width);
 
   // Section grouping

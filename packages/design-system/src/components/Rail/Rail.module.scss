@@ -76,6 +76,46 @@
   overflow: hidden;
 }
 
+// Collapsed = a 56px icon-only track. Center the brand there so the mark lands
+// within a pixel or two of the item icons' axis. They are not exactly equal, and
+// the whole difference is the icon overflowing its row: the header's content box
+// and the item's content region share a centre at 27.5, but the 18px icon is
+// flex-shrink: 0 inside a 15px region, so it start-aligns at 20 and runs to 38 —
+// centre 29, i.e. (18 − 15) / 2 = 1.5px right. The rail's 1px border-right only
+// narrows that region (16 → 15) and so deepens the same overflow; it is not a
+// separate contributor.
+// Scoped to the collapsed state on purpose: expanded, the brand is already
+// aligned by --rail-header-padding's horizontal inset, and turning .header into
+// a centering flex row unconditionally would re-flow any consumer header that
+// renders more than one child.
+// The horizontal inset is dropped here because it is an *alignment* value for
+// the expanded rail; at 56px it would leave a 15px content box (56 − 2×8 rail
+// padding − 1px border-right − 2×12 header inset) that a 32px mark immediately
+// overflows, and the centering would then be measured against the wrong box.
+.collapsed .header {
+  display: flex;
+  justify-content: center;
+  padding-inline: 0;
+}
+
+// `safe` matters: on a brand too wide for the collapsed track, plain `center`
+// overflows both edges and clips the mark itself — the one part a collapsed rail
+// must keep. `safe` start-aligns in exactly that case, so the mark stays visible
+// and only the trailing wordmark is clipped.
+// It has to be a separate @supports rule rather than a second declaration in the
+// block above. A minifier collapses duplicate properties inside one rule, so the
+// usual two-declaration cascade survives review and then dies in the build —
+// verified against this repo's own production bundle, which kept only
+// `justify-content:safe center`. That would leave engines unable to parse `safe`
+// dropping the declaration entirely and falling to flex-start: the mark
+// un-centered in EVERY collapsed rail, a broader regression than the oversized
+// brand this guards against. Across separate rules there is nothing to merge.
+@supports (justify-content: safe center) {
+  .collapsed .header {
+    justify-content: safe center;
+  }
+}
+
 // Wrapper around any <Rail.Footer> children — sits as a flex item BELOW
 // the scrollable .body. Because it's outside the scroll container, it
 // always stays visible at the bottom of the rail without sticky tricks.

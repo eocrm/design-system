@@ -37,6 +37,75 @@
   line-height: 1.2;
 }
 
+// Optical alignment. Half-leading makes a wordmark's *box* taller than its
+// glyphs, so a lockup centered on the box reads as sitting low next to the mark.
+// text-box-trim removes that leading and aligns to the real cap/x-height edges,
+// which lets the block collapse to line-height: 1 and the mark↔wordmark gap
+// become an exact token value.
+// Gated because Firefox ships neither property (as of 2026-08). Ungated, the
+// declarations would drop but `line-height: 1` would stick, collapsing the line
+// box to exactly the font size — ascenders and descenders would then overflow
+// and get clipped by Rail.Header's `overflow: hidden`. Keeping the whole block
+// behind @supports means non-supporting browsers render byte-identically to the
+// pre-trim lockup: looser, never clipped.
+@supports (text-box-trim: trim-both) {
+  .text {
+    line-height: 1;
+    text-box-trim: trim-both;
+  }
+
+  // Trim to the cap edge by default, to the x-height edge for a wordmark whose
+  // glyphs all top out at x-height — see getTextMetric() in Logo.tsx for which
+  // is which, and why neither edge is an ink-tight guarantee.
+  .textCap {
+    text-box-edge: cap alphabetic;
+  }
+
+  .textEx {
+    text-box-edge: ex alphabetic;
+  }
+
+  // Trimmed edges leave the wordmark and subtext touching, so the gap that was
+  // previously supplied by leading now has to be declared.
+  .textBlock {
+    gap: var(--logo-text-gap);
+  }
+
+  // A wordmark with a subtext under it needs its descenders inside its own box.
+  // The `alphabetic` under-edge stops at the baseline, so descender ink hangs
+  // outside the box and eats into the gap below it — `paygo` in Outfit measures
+  // 3.5 / 4.4 / 5.25px of overhang at sm/md/lg against a flat 4px gap, so the
+  // tails already cross into the subtext at md, not just at lg. `text` puts the
+  // under-edge at the font's descent instead, so --logo-text-gap is real
+  // whitespace at every size.
+  // Scoped to the subtext case: on its own the wordmark should still sit on its
+  // baseline so it optically centers against the mark.
+  .textCap:has(+ .subtext) {
+    text-box-edge: cap text;
+  }
+
+  .textEx:has(+ .subtext) {
+    text-box-edge: ex text;
+  }
+
+  // Always cap, never ex: a subtext is sentence-case far more often than not
+  // ("Free trial", "Pro (yearly)"), and trimming those to the x-height edge
+  // would put the capital's ink outside the box and pull the line up into the
+  // wordmark's descenders.
+  // The under-edge stays `alphabetic` (not `text` like the wordmark's): the
+  // subtext is the last line, so nothing below needs clearing, and a descent-
+  // deep box would just pad the lockup. The trade is that a subtext WITH
+  // descenders puts ~2px of ink below the lockup's own bottom edge at sm (its
+  // worst case — at md/lg the taller mark absorbs it). That sits inside
+  // Rail.Header's bottom padding, but a consumer clipping a box sized exactly to
+  // the lockup would shave those tails.
+  .subtext {
+    line-height: 1;
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+  }
+}
+
 .bottom .textBlock {
   align-items: center;
   text-align: center;

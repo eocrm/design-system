@@ -633,6 +633,91 @@ describe('Rail — scroll box axes', () => {
   });
 });
 
+describe('Rail — header brand geometry', () => {
+  // SOURCE PINS, NOT BEHAVIOR CHECKS. jsdom loads no CSS, so these read the
+  // SCSS text — the same fallback the scroll-box tests above use. They catch a
+  // declaration being deleted or flipped; they cannot catch a token that fails
+  // to resolve, or any of the geometry the values are chosen for. The measured
+  // numbers quoted in the comments came from a real browser.
+  const scss = readFileSync(resolve(__dirname, 'Rail.module.scss'), 'utf8');
+  const tokens = readFileSync(resolve(__dirname, 'Rail.tokens.scss'), 'utf8');
+
+  it('keeps the header from shrinking under a long item list', () => {
+    // .header is a flex item of .body. At the default flex-shrink: 1 an
+    // overflowing item list compresses the header, and because the header also
+    // clips overflow the brand is cut off instead of the list scrolling.
+    // `0\s*;` not `0` — the looser form also matches `flex-shrink: 0.5`, which
+    // compresses the header and clips the brand, i.e. the exact thing this pins
+    // against.
+    expect(scss).toMatch(/^\.header\s*\{[^}]*flex-shrink:\s*0\s*;/m);
+  });
+
+  it('insets the header horizontally by the item padding so the brand lines up with the icons', () => {
+    // The item's content box starts at --rail-padding-x (8) +
+    // --rail-item-padding-x (12) = 20px, and the brand mark has to start there
+    // too. A 0 inset put it at 8px (12px off); the older --space-4 default put
+    // it at 8 + 16 = 24px (4px off).
+    expect(tokens).toMatch(
+      /--rail-header-padding:\s*0\s+var\(--rail-item-padding-x.*\)\s+var\(--space-2\)/,
+    );
+  });
+
+  it('gives the item-padding reference a fallback so the padding cannot collapse wholesale', () => {
+    // An unresolvable var() makes the whole value invalid at computed-value
+    // time, so `padding` falls to its initial 0 — losing the bottom gap as well
+    // and butting the brand into the divider.
+    // Presence only — deliberately not pinned to a literal, so a coordinated
+    // retune of the spacing step stays green.
+    expect(tokens).toMatch(/var\(--rail-item-padding-x,\s*[^)]+\)\)/);
+    // The fallback restates --rail-item-padding-x's own default, so the two can
+    // drift. Assert they AGREE rather than that either equals a literal: only
+    // real drift goes red.
+    const itemDefault = tokens.match(/--rail-item-padding-x:\s*([^;]+);/)?.[1]?.trim();
+    const headerFallback = tokens
+      .match(/--rail-header-padding:[^;]*var\(--rail-item-padding-x,\s*([^)]+\))\)/)?.[1]
+      ?.trim();
+    expect(itemDefault).toBeTruthy();
+    expect(headerFallback).toBe(itemDefault);
+  });
+
+  it('centers the brand only while collapsed, and drops the inset centering would measure against', () => {
+    const rule = scss.match(/^\.collapsed \.header\s*\{[^}]*\}/m)?.[0] ?? '';
+    expect(rule).toMatch(/justify-content:\s*center;/);
+    expect(rule).toMatch(/padding-inline:\s*0/);
+    // Expanded must stay start-aligned — a bare `.header` rule that centered
+    // would knock the brand off the icon column it was just aligned to.
+    expect(scss).not.toMatch(/^\.header\s*\{[^}]*justify-content/m);
+  });
+
+  it('upgrades to safe centering through @supports, not a duplicate declaration', () => {
+    // `safe` keeps an oversized brand's mark visible (plain `center` overflows
+    // both edges — measured mark x=-57.5). It has to live in its own rule: a
+    // minifier collapses duplicate properties within a single rule, so the
+    // two-declaration cascade ships as `safe center` alone and an engine that
+    // can't parse it falls all the way to flex-start.
+    // Comments stripped first: `\s` doesn't match them, so an explanatory
+    // comment inside the @supports block would otherwise turn this red for no
+    // behavioral reason.
+    const bare = scss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    expect(bare).toMatch(
+      /@supports \(justify-content: safe center\)\s*\{\s*\.collapsed \.header\s*\{[^}]*justify-content:\s*safe center/,
+    );
+    // The base rule must NOT also carry it, or the minifier has something to
+    // merge again.
+    const base = bare.match(/^\.collapsed \.header\s*\{[^}]*\}/m)?.[0] ?? '';
+    expect(base).not.toMatch(/safe center/);
+    // Two rules of equal specificity, so the upgrade only wins by coming later —
+    // later than EVERY plain `.collapsed .header`, not just the first. Hoisting
+    // the @supports block, or appending another base rule after it, silently
+    // reverts `safe` to plain `center` with the assertions above still green.
+    const lastBaseRule = [...bare.matchAll(/^\.collapsed \.header\s*\{/gm)].pop();
+    expect(lastBaseRule).toBeDefined();
+    expect(bare.indexOf('@supports (justify-content: safe center)')).toBeGreaterThan(
+      lastBaseRule!.index,
+    );
+  });
+});
+
 describe('Rail — collapseBelow (viewport override)', () => {
   // jsdom implements no `window.matchMedia` at all, so every test here installs
   // its own stub. It's width-driven and fires real `change` events so the
