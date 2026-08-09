@@ -706,11 +706,14 @@ describe('Rail — header brand geometry', () => {
     // merge again.
     const base = bare.match(/^\.collapsed \.header\s*\{[^}]*\}/m)?.[0] ?? '';
     expect(base).not.toMatch(/safe center/);
-    // Two rules of equal specificity, so the upgrade only wins by coming later.
-    // Hoisting the @supports block above the base rule silently disables `safe`
-    // while leaving both assertions above green.
+    // Two rules of equal specificity, so the upgrade only wins by coming later —
+    // later than EVERY plain `.collapsed .header`, not just the first. Hoisting
+    // the @supports block, or appending another base rule after it, silently
+    // reverts `safe` to plain `center` with the assertions above still green.
+    const lastBaseRule = [...bare.matchAll(/^\.collapsed \.header\s*\{/gm)].pop();
+    expect(lastBaseRule).toBeDefined();
     expect(bare.indexOf('@supports (justify-content: safe center)')).toBeGreaterThan(
-      bare.search(/^\.collapsed \.header\s*\{/m),
+      lastBaseRule!.index,
     );
   });
 });

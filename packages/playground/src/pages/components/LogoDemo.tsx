@@ -53,7 +53,7 @@ export function Demo() {
 
       <Example
         title="With a muted subline"
-        description="subtext adds a small muted line under the wordmark — a name + plan lockup. A wordmark with descenders keeps its tails clear of the subline at every size, on either trim edge."
+        description="subtext adds a small muted line under the wordmark — a name + plan lockup. A wordmark with descenders keeps its tails clear of the subline on either trim edge: paygo takes the x-height edge, Paygo the cap edge, and both hold the full gap."
         code={`import logo from '../assets/eocrm-logo.svg';
 import { Cluster, Logo } from '@eocrm/design-system';
 
