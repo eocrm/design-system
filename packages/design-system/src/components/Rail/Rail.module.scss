@@ -77,11 +77,13 @@
 }
 
 // Collapsed = a 56px icon-only track. Center the brand there so the mark lands
-// within a pixel or two of the item icons' axis. They are not exactly equal:
-// the header's content box is 8..47 (centre 27.5) while the item's 18px icon is
-// flex-shrink: 0 inside a 15px content region, so it start-aligns at 20 and
-// overflows to 38 (centre 29). The rail's 1px border-right accounts for 0.5px of
-// the 1.5px difference; the icon's overflow accounts for the other 1px.
+// within a pixel or two of the item icons' axis. They are not exactly equal, and
+// the whole difference is the icon overflowing its row: the header's content box
+// and the item's content region share a centre at 27.5, but the 18px icon is
+// flex-shrink: 0 inside a 15px region, so it start-aligns at 20 and runs to 38 —
+// centre 29, i.e. (18 − 15) / 2 = 1.5px right. The rail's 1px border-right only
+// narrows that region (16 → 15) and so deepens the same overflow; it is not a
+// separate contributor.
 // Scoped to the collapsed state on purpose: expanded, the brand is already
 // aligned by --rail-header-padding's horizontal inset, and turning .header into
 // a centering flex row unconditionally would re-flow any consumer header that

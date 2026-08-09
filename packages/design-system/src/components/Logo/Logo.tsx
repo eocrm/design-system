@@ -108,9 +108,10 @@ function getTextMetric(text: ReactNode): 'cap' | 'ex' {
  * Because the trim is new, a lockup with a `subtext` or with
  * `textPlacement="bottom"` is measurably shorter than it used to be on
  * supporting browsers — `textPlacement="bottom"` at `size="lg"` goes 74.4px →
- * 59.6px. The plain side-by-side lockup is unchanged, since the mark sets its
- * height. Size fixed-height brand bars off the mark rather than the lockup; see
- * the migration note in AGENTS.md.
+ * 59.6px in Outfit, and by a font-dependent amount in whatever face you set. The
+ * plain side-by-side lockup is unchanged, since the mark sets its height. Size
+ * fixed-height brand bars off the mark rather than the lockup; see the migration
+ * note in AGENTS.md.
  *
  * @example
  * // Mark + wordmark — the common app-header / auth lockup:

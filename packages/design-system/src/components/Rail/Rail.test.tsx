@@ -666,17 +666,18 @@ describe('Rail — header brand geometry', () => {
     // An unresolvable var() makes the whole value invalid at computed-value
     // time, so `padding` falls to its initial 0 — losing the bottom gap as well
     // and butting the brand into the divider.
-    expect(tokens).toMatch(/var\(--rail-item-padding-x,\s*var\(--space-3\)\)/);
+    // Presence only — deliberately not pinned to a literal, so a coordinated
+    // retune of the spacing step stays green.
+    expect(tokens).toMatch(/var\(--rail-item-padding-x,\s*[^)]+\)\)/);
     // The fallback restates --rail-item-padding-x's own default, so the two can
-    // drift. Pin them together: retuning item density has to update both.
+    // drift. Assert they AGREE rather than that either equals a literal: only
+    // real drift goes red.
     const itemDefault = tokens.match(/--rail-item-padding-x:\s*([^;]+);/)?.[1]?.trim();
     const headerFallback = tokens
       .match(/--rail-header-padding:[^;]*var\(--rail-item-padding-x,\s*([^)]+\))\)/)?.[1]
       ?.trim();
-    expect({ itemDefault, headerFallback }).toEqual({
-      itemDefault: 'var(--space-3)',
-      headerFallback: 'var(--space-3)',
-    });
+    expect(itemDefault).toBeTruthy();
+    expect(headerFallback).toBe(itemDefault);
   });
 
   it('centers the brand only while collapsed, and drops the inset centering would measure against', () => {
@@ -694,13 +695,23 @@ describe('Rail — header brand geometry', () => {
     // minifier collapses duplicate properties within a single rule, so the
     // two-declaration cascade ships as `safe center` alone and an engine that
     // can't parse it falls all the way to flex-start.
-    expect(scss).toMatch(
+    // Comments stripped first: `\s` doesn't match them, so an explanatory
+    // comment inside the @supports block would otherwise turn this red for no
+    // behavioral reason.
+    const bare = scss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    expect(bare).toMatch(
       /@supports \(justify-content: safe center\)\s*\{\s*\.collapsed \.header\s*\{[^}]*justify-content:\s*safe center/,
     );
     // The base rule must NOT also carry it, or the minifier has something to
     // merge again.
-    const base = scss.match(/^\.collapsed \.header\s*\{[^}]*\}/m)?.[0] ?? '';
+    const base = bare.match(/^\.collapsed \.header\s*\{[^}]*\}/m)?.[0] ?? '';
     expect(base).not.toMatch(/safe center/);
+    // Two rules of equal specificity, so the upgrade only wins by coming later.
+    // Hoisting the @supports block above the base rule silently disables `safe`
+    // while leaving both assertions above green.
+    expect(bare.indexOf('@supports (justify-content: safe center)')).toBeGreaterThan(
+      bare.search(/^\.collapsed \.header\s*\{/m),
+    );
   });
 });
 

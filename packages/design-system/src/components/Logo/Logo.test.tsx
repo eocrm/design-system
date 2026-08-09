@@ -94,6 +94,9 @@ describe('Logo', () => {
       ['flow', 'the f/l ascenders'],
       ['minio', 'the dotted i'],
       ['web3', 'a digit'],
+      // web3 alone does not pin the digit branch — its `b` ascender would carry
+      // the assertion. nexus7 is all x-height letters plus the digit.
+      ['nexus7', 'a digit with no ascender to confound it'],
       ['мойсклад', 'a non-Latin script'],
     ])('wordmark %s trims to cap (%s)', (text) => {
       expect(edgeOf(text)).toBe('cap');

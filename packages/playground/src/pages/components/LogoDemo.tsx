@@ -62,7 +62,7 @@ export function Demo() {
     <Cluster gap="2xl" align="center">
       <Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />
       <Logo src={logo} text="paygo" subtext="Free trial" size="lg" />
-      <Logo src={logo} text="Lockbox" subtext="Free trial" size="lg" />
+      <Logo src={logo} text="Paygo" subtext="Free trial" size="lg" />
     </Cluster>
   );
 }`}
@@ -70,7 +70,7 @@ export function Demo() {
         <Cluster gap="2xl" align="center">
           <Logo src={eocrmLogo} text="eocrm" subtext="Free trial" size="sm" />
           <Logo src={eocrmLogo} text="paygo" subtext="Free trial" size="lg" />
-          <Logo src={eocrmLogo} text="Lockbox" subtext="Free trial" size="lg" />
+          <Logo src={eocrmLogo} text="Paygo" subtext="Free trial" size="lg" />
         </Cluster>
       </Example>
 
