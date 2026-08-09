@@ -289,7 +289,12 @@ When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The 
 <Button onClick={save}>Save</Button>
 <Button variant="danger" size="sm">Delete</Button>
 <Button variant="secondary" disabled>Cancel</Button>
-<Button variant="secondary" size="sm" selected={owner !== 'all'}>
+<Button
+  variant="secondary"
+  size="sm"
+  selected={ownerApplied}
+  aria-pressed={ownerApplied}
+>
   Owner: {ownerLabel}
 </Button>
 ```
@@ -297,7 +302,7 @@ When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The 
 - `variant`: `primary` (default — one per section) / `secondary` / `ghost` / `danger` / `success`
 - `size`: `xs` / `sm` / `md` (default) / `lg` — use `xs` for icon-only or dense inline actions; pass `aria-label` when icon-only.
 - `iconOnly`: boolean. Renders a square icon-only button (`aspect-ratio: 1`, tight 4px padding). Width tracks the size's height token. **Always pair with `aria-label`** — there's no other accessible name.
-- `selected`: controlled boolean for a durable applied filter or independent toolbar value. It adds `aria-pressed`; selected paint applies only to `secondary` and `ghost` variants. Keep the state in the consumer. Do not use it for transient success feedback or mutually exclusive `<ButtonGroup>` choices.
+- `selected`: controlled paint for a durable applied filter or independent toolbar value. It paints only `secondary` and `ghost` variants and adds no ARIA semantics. If activating the Button itself toggles that value, also pass the matching native `aria-pressed`; menu/disclosure triggers keep their existing semantics. Keep state in the consumer. Do not use it for transient success feedback or mutually exclusive `<ButtonGroup>` choices.
 - Always renders `<button type="button">` unless you pass `type="submit"`.
 - `variant="success"` is a **transient confirmation state**, not an action intent. Flip to it for ~1.5s after the action resolves, then flip back to `primary`. The timer is the consumer's responsibility — Button stays stateless. Never render a button as `success` on initial mount. Track the timer in a `useRef` and clear on unmount + on rapid re-clicks so the flash doesn't outlive the component or get cut short.
 

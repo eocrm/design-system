@@ -9,6 +9,7 @@ import {
   Cluster,
   Constrain,
   DropdownMenu,
+  EmptyState,
   Input,
   Link,
   Page,
@@ -33,6 +34,11 @@ const owners = ['all', 'Alex Rivera', 'Jordan Park', 'Sam Chen', 'Maya Owens'];
 export function Contacts() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [ownerFilter, setOwnerFilter] = useState('all');
+  const filteredContacts = contacts.filter(
+    (contact) =>
+      (statusFilter === 'all' || contact.status === statusFilter) &&
+      (ownerFilter === 'all' || contact.owner === ownerFilter),
+  );
 
   return (
     <Page>
@@ -40,7 +46,7 @@ export function Contacts() {
         <PageHeader.Title>Contacts</PageHeader.Title>
         <PageHeader.Meta>
           <Text size="sm" tone="muted">
-            {contacts.length} contacts
+            {filteredContacts.length} {filteredContacts.length === 1 ? 'contact' : 'contacts'}
           </Text>
         </PageHeader.Meta>
         <PageHeader.Actions>
@@ -58,7 +64,7 @@ export function Contacts() {
       <Card padding="sm">
         <Cluster justify="between" align="center" gap="md" wrap={false}>
           <Constrain maxWidth="sm">
-            <Input placeholder="Search by name, email, or company…" />
+            <Input aria-label="Search contacts" placeholder="Search by name, email, or company…" />
           </Constrain>
           <Cluster gap="sm" wrap={false}>
             <DropdownMenu>
@@ -97,70 +103,88 @@ export function Contacts() {
       </Card>
 
       <Card padding="none">
-        <Table hover>
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell>
-                <Checkbox aria-label="Select all" />
-              </Table.HeaderCell>
-              <Table.HeaderCell>Name</Table.HeaderCell>
-              <Table.HeaderCell>Company</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>Owner</Table.HeaderCell>
-              <Table.HeaderCell>Last activity</Table.HeaderCell>
-              <Table.HeaderCell />
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {contacts.map((c) => (
-              <Table.Row key={c.id}>
-                <Table.Cell>
-                  <Checkbox aria-label={`Select ${c.name}`} />
-                </Table.Cell>
-                <Table.Cell>
-                  <PersonDisplay size="sm">
-                    <PersonDisplay.Avatar name={c.name} />
-                    <PersonDisplay.Name>
-                      <Link as={RouterLink} to={`/mockups/contacts/${c.id}`} variant="subtle">
-                        {c.name}
-                      </Link>
-                    </PersonDisplay.Name>
-                    <PersonDisplay.Description>{c.title}</PersonDisplay.Description>
-                  </PersonDisplay>
-                </Table.Cell>
-                <Table.Cell>
-                  <Stack gap="xs">
-                    <Text as="span" weight="medium">
-                      {c.company}
-                    </Text>
-                    <Text as="span" size="sm" tone="subtle">
-                      {c.email}
-                    </Text>
-                  </Stack>
-                </Table.Cell>
-                <Table.Cell>
-                  <Badge tone={statusTone[c.status]}>{statusLabel[c.status]}</Badge>
-                </Table.Cell>
-                <Table.Cell>
-                  <PersonDisplay size="sm">
-                    <PersonDisplay.Avatar name={c.owner} />
-                    <PersonDisplay.Name>{c.owner}</PersonDisplay.Name>
-                  </PersonDisplay>
-                </Table.Cell>
-                <Table.Cell>
-                  <Text as="span" size="sm" tone="subtle">
-                    {c.lastActivity}
-                  </Text>
-                </Table.Cell>
-                <Table.Cell align="end">
-                  <Link as={RouterLink} to={`/mockups/contacts/${c.id}`}>
-                    View
-                  </Link>
-                </Table.Cell>
+        {filteredContacts.length === 0 ? (
+          <EmptyState
+            title="No contacts match your filters"
+            description="Try a different status or owner, or clear the applied filters."
+            actions={
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setStatusFilter('all');
+                  setOwnerFilter('all');
+                }}
+              >
+                Clear filters
+              </Button>
+            }
+          />
+        ) : (
+          <Table hover>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>
+                  <Checkbox aria-label="Select all" />
+                </Table.HeaderCell>
+                <Table.HeaderCell>Name</Table.HeaderCell>
+                <Table.HeaderCell>Company</Table.HeaderCell>
+                <Table.HeaderCell>Status</Table.HeaderCell>
+                <Table.HeaderCell>Owner</Table.HeaderCell>
+                <Table.HeaderCell>Last activity</Table.HeaderCell>
+                <Table.HeaderCell />
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
+            </Table.Header>
+            <Table.Body>
+              {filteredContacts.map((c) => (
+                <Table.Row key={c.id}>
+                  <Table.Cell>
+                    <Checkbox aria-label={`Select ${c.name}`} />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <PersonDisplay size="sm">
+                      <PersonDisplay.Avatar name={c.name} />
+                      <PersonDisplay.Name>
+                        <Link as={RouterLink} to={`/mockups/contacts/${c.id}`} variant="subtle">
+                          {c.name}
+                        </Link>
+                      </PersonDisplay.Name>
+                      <PersonDisplay.Description>{c.title}</PersonDisplay.Description>
+                    </PersonDisplay>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Stack gap="xs">
+                      <Text as="span" weight="medium">
+                        {c.company}
+                      </Text>
+                      <Text as="span" size="sm" tone="subtle">
+                        {c.email}
+                      </Text>
+                    </Stack>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Badge tone={statusTone[c.status]}>{statusLabel[c.status]}</Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <PersonDisplay size="sm">
+                      <PersonDisplay.Avatar name={c.owner} />
+                      <PersonDisplay.Name>{c.owner}</PersonDisplay.Name>
+                    </PersonDisplay>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text as="span" size="sm" tone="subtle">
+                      {c.lastActivity}
+                    </Text>
+                  </Table.Cell>
+                  <Table.Cell align="end">
+                    <Link as={RouterLink} to={`/mockups/contacts/${c.id}`}>
+                      View
+                    </Link>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+        )}
       </Card>
 
       <CrossLinks kind="mockup" slug="contacts" />

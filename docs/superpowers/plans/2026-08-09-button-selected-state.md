@@ -4,15 +4,15 @@
 
 **Goal:** Add an accessible persistent selected state to secondary and ghost Buttons and demonstrate it in the playground.
 
-**Architecture:** `Button` remains controlled and stateless. A boolean `selected` prop derives `aria-pressed` and a CSS-module modifier; selectors constrain selected paint to secondary and ghost variants, with component tokens wrapping existing accent primitives.
+**Architecture:** `Button` remains controlled and stateless. A boolean `selected` prop adds only a CSS-module modifier; consumers opt into native `aria-pressed` explicitly for genuine toggle buttons. Selectors constrain selected paint to secondary and ghost variants, with component tokens wrapping existing color primitives.
 
 **Tech Stack:** React 19, TypeScript, CSS Modules/SCSS, Vitest, Testing Library, Vite playground.
 
 ## Global Constraints
 
 - Selected paint applies only to `secondary` and `ghost`; intent variants retain their existing paint.
-- Omitting `selected` must preserve the current DOM by omitting `aria-pressed`.
-- Explicit native `aria-pressed` wins through Button's props-last spread contract.
+- `selected` never derives ARIA semantics.
+- Explicit native `aria-pressed` passes through Button's props-last spread contract.
 - Use Button component tokens in SCSS; do not add raw colors, spacing, radii, or layout ownership.
 - Button owns no selected state and does not toggle itself on click.
 - Any mockup JSX continues to use only exports from `@eocrm/design-system`.
@@ -35,29 +35,16 @@
 
 - [ ] **Step 1: Add failing accessibility and class-scope tests**
 
-Add focused cases to `Button.test.tsx` that render selected secondary, ghost, and primary Buttons. Assert that secondary and ghost class names contain `selected`, primary does not, `selected={true}` yields `aria-pressed="true"`, `selected={false}` yields `aria-pressed="false"`, omission yields no attribute, an explicit `aria-pressed="mixed"` overrides `selected`, and a selected disabled Button remains disabled.
+Add focused cases to `Button.test.tsx` that render every selected variant. Assert that secondary and ghost class names contain `selected`, primary/danger/success do not, `selected={false}` removes selected paint, selected alone does not add `aria-pressed`, an explicit native `aria-pressed` value passes through, and a selected disabled Button remains disabled.
 
 ```tsx
-it('maps the controlled selected prop to aria-pressed', () => {
-  const { rerender } = render(
+it('keeps selected paint separate from native toggle-button semantics', () => {
+  render(
     <Button variant="secondary" selected>
       Owner: Ada
     </Button>,
   );
-  expect(screen.getByRole('button', { name: 'Owner: Ada' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-
-  rerender(
-    <Button variant="secondary" selected={false}>
-      Owner: Ada
-    </Button>,
-  );
-  expect(screen.getByRole('button', { name: 'Owner: Ada' })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  );
+  expect(screen.getByRole('button', { name: 'Owner: Ada' })).not.toHaveAttribute('aria-pressed');
 });
 ```
 
@@ -67,9 +54,9 @@ Run: `npm test --workspace @eocrm/design-system -- Button/Button.test.tsx`
 
 Expected: TypeScript/runtime assertions fail because `selected` is not yet consumed and no selected class is applied.
 
-- [ ] **Step 3: Implement the minimal controlled prop and ARIA derivation**
+- [ ] **Step 3: Implement the minimal controlled paint prop**
 
-Add fully documented `selected?: boolean` to `ButtonProps`. Destructure it without a default so omission can be distinguished from explicit false. Derive ARIA before the props-last spread and restrict the selected class to the approved variants.
+Add fully documented `selected?: boolean` to `ButtonProps`. Destructure it without a default and restrict the selected class to the approved variants. Do not derive ARIA; explicit native attributes continue through the props-last spread.
 
 ```tsx
 const paintsSelected = selected && (variant === 'secondary' || variant === 'ghost');
@@ -77,7 +64,6 @@ const paintsSelected = selected && (variant === 'secondary' || variant === 'ghos
 <button
   ref={ref}
   type={type}
-  aria-pressed={selected === undefined ? undefined : selected}
   className={clsx(
     styles.button,
     styles[variant],
@@ -94,7 +80,7 @@ Keep the existing props-last contract and add the required explanatory JSX comme
 
 - [ ] **Step 4: Add component tokens and scoped selected selectors**
 
-In `Button.tokens.scss`, map selected state tokens to existing accent primitives. In `Button.module.scss`, apply the tokens only to compound selectors so intent variants cannot acquire selected paint.
+In `Button.tokens.scss`, map selected state tokens to existing primitives with AA-safe text and distinct resting/hover backgrounds. In `Button.module.scss`, apply the tokens only to compound selectors so intent variants cannot acquire selected paint.
 
 ```scss
 .secondary.selected,
@@ -142,12 +128,12 @@ git commit -m "feat(Button): add selected state (#442)"
 Add a canonical example and bullets to the existing Button section:
 
 ```tsx
-<Button variant="secondary" size="sm" selected={owner !== 'all'}>
+<Button variant="secondary" size="sm" selected={ownerApplied} aria-pressed={ownerApplied}>
   Owner: {ownerLabel}
 </Button>
 ```
 
-State that `selected` is controlled, adds `aria-pressed`, paints only secondary/ghost, and is for durable applied values rather than transient success or mutually exclusive ButtonGroup choices.
+State that `selected` is controlled paint only, paints secondary/ghost, and is for durable applied values rather than transient success or mutually exclusive ButtonGroup choices. Consumers add native `aria-pressed` only when Button activation toggles the state; menu/disclosure triggers keep their existing semantics.
 
 - [ ] **Step 2: Add an interactive selected-state demo**
 
@@ -158,6 +144,7 @@ const [statusApplied, setStatusApplied] = useState(true);
 <Button
   variant="secondary"
   selected={statusApplied}
+  aria-pressed={statusApplied}
   onClick={() => setStatusApplied((value) => !value)}
 >
   Status: Active
@@ -166,7 +153,7 @@ const [statusApplied, setStatusApplied] = useState(true);
 
 - [ ] **Step 3: Dogfood selected state in the Contacts mockup**
 
-Pass `selected={statusFilter !== 'all'}` and `selected={ownerFilter !== 'all'}` to the corresponding existing secondary Buttons. Do not add raw HTML, inline styles, CSS Modules, or registry changes.
+Pass `selected={statusFilter !== 'all'}` and `selected={ownerFilter !== 'all'}` to the corresponding existing secondary menu Buttons without `aria-pressed`. Filter the displayed rows/count by both values and render the library `EmptyState` for zero matches. Add `EmptyState` to the registry. Do not add raw HTML, inline styles, or CSS Modules.
 
 - [ ] **Step 4: Run formatting and relevant typechecks**
 

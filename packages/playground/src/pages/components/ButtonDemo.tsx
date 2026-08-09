@@ -46,6 +46,7 @@ function AppliedFilters() {
       <Button
         variant="secondary"
         selected={statusApplied}
+        aria-pressed={statusApplied}
         onClick={() => setStatusApplied((value) => !value)}
       >
         Status: Active
@@ -53,6 +54,7 @@ function AppliedFilters() {
       <Button
         variant="ghost"
         selected={ownerApplied}
+        aria-pressed={ownerApplied}
         onClick={() => setOwnerApplied((value) => !value)}
       >
         Owner: Alex Rivera
@@ -139,7 +141,7 @@ export function SaveWithSuccessFlash() {
 
       <Example
         title="Applied filters (persistent state)"
-        description="Use selected for a durable, independently applied filter value. It is controlled by the consumer, adds aria-pressed, and paints secondary and ghost Buttons when applied. Click either filter to try it. For transient success feedback use the success variant; for mutually exclusive choices use ButtonGroup."
+        description="Use selected for durable applied-value paint on secondary and ghost Buttons. It is visual only; these examples also pass aria-pressed because clicking each Button directly toggles its state. Menu and disclosure triggers keep their own semantics. For transient success feedback use the success variant; for mutually exclusive choices use ButtonGroup."
         code={`import { useState } from 'react';
 import { Button, Cluster } from '@eocrm/design-system';
 
@@ -152,6 +154,7 @@ export function AppliedFilters() {
       <Button
         variant="secondary"
         selected={statusApplied}
+        aria-pressed={statusApplied}
         onClick={() => setStatusApplied((value) => !value)}
       >
         Status: Active
@@ -159,6 +162,7 @@ export function AppliedFilters() {
       <Button
         variant="ghost"
         selected={ownerApplied}
+        aria-pressed={ownerApplied}
         onClick={() => setOwnerApplied((value) => !value)}
       >
         Owner: Alex Rivera

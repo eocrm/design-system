@@ -47,13 +47,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    */
   iconOnly?: boolean;
   /**
-   * Controlled persistent state for an independent filter or toolbar trigger.
-   * When supplied, exposes the matching `aria-pressed` value (`true` or
-   * `false`); omit it for ordinary action Buttons so no toggle state is
-   * announced. Selected paint applies only to `secondary` and `ghost` Buttons;
-   * `primary`, `danger`, and `success` retain their intent paint. The consumer
-   * owns the state and updates it from `onClick`; Button never toggles itself.
-   * Defaults to `undefined` (no `aria-pressed` attribute).
+   * Controlled persistent paint for an applied filter or toolbar value.
+   * Selected paint applies only to `secondary` and `ghost` Buttons;
+   * `primary`, `danger`, and `success` retain their intent paint. This prop is
+   * visual only and does not add toggle-button semantics. Pass native
+   * `aria-pressed` explicitly only when activating the Button itself toggles
+   * the selected state; menu and disclosure triggers keep their own semantics.
+   * The consumer owns the state. Defaults to `undefined` (not selected).
    */
   selected?: boolean;
 }
@@ -91,6 +91,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * <Button
  *   variant="secondary"
  *   selected={ownerApplied}
+ *   aria-pressed={ownerApplied}
  *   onClick={() => setOwnerApplied((value) => !value)}
  * >
  *   Owner: Ada
@@ -122,11 +123,10 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *
  * @remarks When NOT to use
  * - Navigation to another URL → use a router-aware `<Link>` (not yet shipped).
- * - A persistent independent filter or toolbar trigger → use controlled
- *   `selected` on a `secondary` or `ghost` Button; keep that state in the
- *   consumer, not inside Button.
  * - Toggle state (on/off) → use `Switch` or `Checkbox` (not yet shipped), not
  *   a Button with internal state.
+ * - Mutually exclusive choices → use `<ButtonGroup>`, which supplies the
+ *   group-level selection semantics.
  * - A clickable table row → make the row itself the interactive surface;
  *   don't nest a button.
  * - On touch-first surfaces, prefer `size="sm"` or larger. `xs` (20px×~28px, or
@@ -151,6 +151,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * - ❌ `<Button iconOnly><X /></Button>` without `aria-label`. The button has
  *   no accessible name; screen readers announce nothing. Always pair
  *   `iconOnly` with `aria-label="…"`.
+ * - ❌ Assuming `selected` adds toggle semantics. It is paint only. Pass
+ *   `aria-pressed` explicitly when activating the Button toggles that state;
+ *   do not add it to menu or disclosure triggers.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
@@ -170,7 +173,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       type={type}
-      aria-pressed={selected === undefined ? undefined : selected}
       className={clsx(
         styles.button,
         styles[variant],
@@ -179,7 +181,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         paintsSelected && styles.selected,
         className,
       )}
-      // {...props} last so consumers can override native attributes such as aria-pressed.
+      // {...props} last so consumers can supply native semantics such as aria-pressed.
       {...props}
     />
   );

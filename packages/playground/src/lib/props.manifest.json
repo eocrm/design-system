@@ -344,6 +344,13 @@
           "required": false,
           "default": "",
           "description": "Render the button as a square icon-only target — `aspect-ratio` is forced\nto 1 so width tracks the size's `height` token (`xs` → 20×20, `sm` → 24×24,\n`md` → 32×32, `lg` → 40×40) and `padding` is tightened to a small inset\n(4px) so the icon has breathing room without changing the outer shape.\n\n**Always pass `aria-label`** when `iconOnly` is set, otherwise the button\nhas no accessible name. Pass a single icon as `children`.\n\nUse for inline density (row controls, chip-adjacent actions, toolbar\naffordances). For an icon + short text label, leave `iconOnly` off — the\nbutton will lay out as a normal rectangle with the existing gap."
+        },
+        {
+          "name": "selected",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Controlled persistent paint for an applied filter or toolbar value.\nSelected paint applies only to `secondary` and `ghost` Buttons;\n`primary`, `danger`, and `success` retain their intent paint. This prop is\nvisual only and does not add toggle-button semantics. Pass native\n`aria-pressed` explicitly only when activating the Button itself toggles\nthe selected state; menu and disclosure triggers keep their own semantics.\nThe consumer owns the state. Defaults to `undefined` (not selected)."
         }
       ]
     },
