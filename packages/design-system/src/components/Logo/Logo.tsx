@@ -45,6 +45,19 @@ const sizeClass: Record<LogoSize, string> = {
   lg: styles.sizeLg,
 };
 
+function getTextMetric(text: ReactNode): 'cap' | 'ex' {
+  if (typeof text !== 'string') {
+    return 'cap';
+  }
+
+  // If there are lowercase letters and no uppercase letters,
+  // align using x-height.
+  const hasLowercase = /\p{Ll}/u.test(text);
+  const hasUppercase = /\p{Lu}/u.test(text);
+
+  return hasLowercase && !hasUppercase ? 'ex' : 'cap';
+}
+
 /**
  * Brand logo lockup: a consumer-supplied mark image (`src`), optionally with a
  * wordmark beside it (default) or below, plus an optional muted subline. The
@@ -86,6 +99,8 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(function Logo(
   // With `text`, the wordmark conveys the name → the mark is decorative (alt="").
   // Mark-only → `label` is the accessible name; absent → decorative.
   const alt = text == null && label ? label : '';
+  const textMetric = getTextMetric(text);
+
   return (
     // Pattern A — props last: Logo is consumer-overridable brand chrome.
     <div
@@ -101,7 +116,9 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(function Logo(
       <img className={styles.mark} src={src} alt={alt} />
       {text != null && (
         <span className={styles.textBlock}>
-          <span className={styles.text}>{text}</span>
+          <span className={clsx(styles.text, textMetric === 'ex' ? styles.textEx : styles.textCap)}>
+            {text}
+          </span>
           {subtext != null && <span className={styles.subtext}>{subtext}</span>}
         </span>
       )}

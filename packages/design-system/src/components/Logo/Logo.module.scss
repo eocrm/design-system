@@ -37,6 +37,46 @@
   line-height: 1.2;
 }
 
+// Optical alignment. Half-leading makes a wordmark's *box* taller than its
+// glyphs, so a lockup centered on the box reads as sitting low next to the mark.
+// text-box-trim removes that leading and aligns to the real cap/x-height edges,
+// which lets the block collapse to line-height: 1 and the mark↔wordmark gap
+// become an exact token value.
+// Gated because Firefox ships neither property (as of 2026-08). Ungated, the
+// declarations would drop but `line-height: 1` would stick, collapsing the line
+// box to exactly the font size — ascenders and descenders would then overflow
+// and get clipped by Rail.Header's `overflow: hidden`. Keeping the whole block
+// behind @supports means non-supporting browsers render byte-identically to the
+// pre-trim lockup: looser, never clipped.
+@supports (text-box-trim: trim-both) {
+  .text {
+    line-height: 1;
+    text-box-trim: trim-both;
+  }
+
+  // Trim to the cap edge for anything with capitals, to the x-height edge for
+  // an all-lowercase wordmark — see getTextMetric() in Logo.tsx.
+  .textCap {
+    text-box-edge: cap alphabetic;
+  }
+
+  .textEx {
+    text-box-edge: ex alphabetic;
+  }
+
+  // Trimmed edges leave the wordmark and subtext touching, so the gap that was
+  // previously supplied by leading now has to be declared.
+  .textBlock {
+    gap: var(--logo-text-gap);
+  }
+
+  .subtext {
+    line-height: 1;
+    text-box-trim: trim-both;
+    text-box-edge: ex alphabetic;
+  }
+}
+
 .bottom .textBlock {
   align-items: center;
   text-align: center;

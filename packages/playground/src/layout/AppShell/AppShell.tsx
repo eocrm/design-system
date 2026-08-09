@@ -87,9 +87,9 @@ function BrandMark() {
   return (
     <div className={styles.brand} data-collapsed={collapsed || undefined}>
       {collapsed ? (
-        <Logo src={eocrmLogo} size="sm" />
+        <Logo src={eocrmLogo} size="md" />
       ) : (
-        <Logo src={eocrmLogo} size="sm" text="eocrm" subtext="Free trial" />
+        <Logo src={eocrmLogo} size="md" text="eocrm" />
       )}
     </div>
   );
@@ -159,6 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const inComponents = pathname.startsWith('/components');
+  const isCollapsed = collapsed && !isOverlayNav;
 
   const switchLink = inComponents
     ? { to: '/mockups', label: 'Mockups', icon: Layers }
@@ -172,7 +173,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       onSidebarOpenChange={setNavOpen}
       sidebar={
         <Rail
-          collapsed={collapsed && !isOverlayNav}
+          collapsed={isCollapsed}
           onCollapsedChange={setCollapsed}
           aria-label={inComponents ? 'Component navigation' : 'Mockup navigation'}
           className={styles.appRail}

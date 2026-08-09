@@ -76,6 +76,16 @@
   overflow: hidden;
 }
 
+// Collapsed = a 56px icon-only track. Center the brand there so the mark sits
+// on the same vertical axis as the item icons below it. Scoped to the collapsed
+// state on purpose: expanded, the brand must stay flush-left with the item
+// icons, and turning .header into a centering flex row unconditionally would
+// also re-flow any consumer header that renders more than one child.
+.collapsed .header {
+  display: flex;
+  justify-content: center;
+}
+
 // Wrapper around any <Rail.Footer> children — sits as a flex item BELOW
 // the scrollable .body. Because it's outside the scroll container, it
 // always stays visible at the bottom of the rail without sticky tricks.

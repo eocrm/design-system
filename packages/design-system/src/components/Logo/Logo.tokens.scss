@@ -1,6 +1,10 @@
 :root {
   // Gap between the mark and the wordmark.
   --logo-gap: var(--space-2);
+
+  // Gap between the wordmark and the subtext. Only applies where text-box-trim
+  // is supported — without it the leading already supplies the separation.
+  --logo-text-gap: var(--space-1);
 }
 
 // Wordmark typography is overridable via --logo-text-font / --logo-text-font-weight
