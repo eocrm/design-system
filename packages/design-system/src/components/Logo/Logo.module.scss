@@ -54,8 +54,9 @@
     text-box-trim: trim-both;
   }
 
-  // Trim to the cap edge for anything with capitals, to the x-height edge for
-  // an all-lowercase wordmark — see getTextMetric() in Logo.tsx.
+  // Trim to the cap edge by default, to the x-height edge for a wordmark whose
+  // glyphs all top out at x-height — see getTextMetric() in Logo.tsx for which
+  // is which, and why neither edge is an ink-tight guarantee.
   .textCap {
     text-box-edge: cap alphabetic;
   }

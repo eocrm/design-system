@@ -68,6 +68,31 @@ export function Demo() {
       </Example>
 
       <Example
+        title="Optical alignment"
+        description="The wordmark is trimmed to its x-height edge when every glyph tops out at x-height (eocrm, acme), and to its cap edge otherwise — a capital, an ascender (b d f h k l t), a dotted i/j, a digit, or a non-Latin script. Nothing to configure; all three are optically centred against the same mark despite sitting on different trim edges."
+        code={`import logo from '../assets/eocrm-logo.svg';
+import { Cluster, Logo } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="2xl" align="center">
+      {/* x-height edge */}
+      <Logo src={logo} text="eocrm" size="lg" />
+      {/* cap edge — ascenders and a digit */}
+      <Logo src={logo} text="lockbox" size="lg" />
+      <Logo src={logo} text="web3" size="lg" />
+    </Cluster>
+  );
+}`}
+      >
+        <Cluster gap="2xl" align="center">
+          <Logo src={eocrmLogo} text="eocrm" size="lg" />
+          <Logo src={eocrmLogo} text="lockbox" size="lg" />
+          <Logo src={eocrmLogo} text="web3" size="lg" />
+        </Cluster>
+      </Example>
+
+      <Example
         title="Sizes"
         description="sm (24) / md (32, default) / lg (40)."
         code={`import logo from '../assets/eocrm-logo.svg';
