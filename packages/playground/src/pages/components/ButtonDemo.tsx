@@ -37,6 +37,32 @@ function SaveWithSuccessFlash() {
   );
 }
 
+function AppliedFilters() {
+  const [statusApplied, setStatusApplied] = useState(true);
+  const [ownerApplied, setOwnerApplied] = useState(false);
+
+  return (
+    <Cluster gap="sm">
+      <Button
+        variant="secondary"
+        selected={statusApplied}
+        aria-pressed={statusApplied}
+        onClick={() => setStatusApplied((value) => !value)}
+      >
+        Status: Active
+      </Button>
+      <Button
+        variant="ghost"
+        selected={ownerApplied}
+        aria-pressed={ownerApplied}
+        onClick={() => setOwnerApplied((value) => !value)}
+      >
+        Owner: Alex Rivera
+      </Button>
+    </Cluster>
+  );
+}
+
 export function ButtonDemo() {
   return (
     <DemoLayout
@@ -111,6 +137,41 @@ export function SaveWithSuccessFlash() {
 }`}
       >
         <SaveWithSuccessFlash />
+      </Example>
+
+      <Example
+        title="Applied filters (persistent state)"
+        description="Use selected for durable applied-value paint on secondary and ghost Buttons. It is visual only; these examples also pass aria-pressed because clicking each Button directly toggles its state. Menu and disclosure triggers keep their own semantics. For transient success feedback use the success variant; for mutually exclusive choices use ButtonGroup."
+        code={`import { useState } from 'react';
+import { Button, Cluster } from '@eocrm/design-system';
+
+export function AppliedFilters() {
+  const [statusApplied, setStatusApplied] = useState(true);
+  const [ownerApplied, setOwnerApplied] = useState(false);
+
+  return (
+    <Cluster gap="sm">
+      <Button
+        variant="secondary"
+        selected={statusApplied}
+        aria-pressed={statusApplied}
+        onClick={() => setStatusApplied((value) => !value)}
+      >
+        Status: Active
+      </Button>
+      <Button
+        variant="ghost"
+        selected={ownerApplied}
+        aria-pressed={ownerApplied}
+        onClick={() => setOwnerApplied((value) => !value)}
+      >
+        Owner: Alex Rivera
+      </Button>
+    </Cluster>
+  );
+}`}
+      >
+        <AppliedFilters />
       </Example>
 
       <Example

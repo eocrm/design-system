@@ -90,6 +90,17 @@
   }
 }
 
+.secondary.selected,
+.ghost.selected {
+  background: var(--button-bg-selected);
+  color: var(--button-fg-selected);
+  border-color: var(--button-border-color-selected);
+
+  &:hover:not(:disabled) {
+    background: var(--button-bg-selected-hover);
+  }
+}
+
 .danger {
   background: var(--button-bg-danger);
   color: var(--button-fg-danger);

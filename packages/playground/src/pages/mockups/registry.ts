@@ -163,6 +163,7 @@ export const MOCKUPS = [
       'Cluster',
       'Constrain',
       'DropdownMenu',
+      'EmptyState',
       'Input',
       'Link',
       'Page',

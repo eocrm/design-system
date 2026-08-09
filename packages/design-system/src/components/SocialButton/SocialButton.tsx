@@ -4,7 +4,7 @@ import { BrandIcon, type BrandName } from '../BrandIcon';
 
 const ICON_SIZE: Record<ButtonSize, number> = { xs: 14, sm: 16, md: 18, lg: 20 };
 
-export interface SocialButtonProps extends Omit<ButtonProps, 'children' | 'iconOnly'> {
+export interface SocialButtonProps extends Omit<ButtonProps, 'children' | 'iconOnly' | 'selected'> {
   /**
    * Which provider's brand mark to show. Tied to `<BrandIcon>`'s set, so it
    * grows as BrandIcon does (today: `'google'` / `'yandex'`).

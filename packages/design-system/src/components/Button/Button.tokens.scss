@@ -54,6 +54,16 @@
   --button-fg-secondary: var(--color-fg);
   --button-border-color-secondary: var(--color-border-strong);
 
+  // Selected (secondary and ghost only)
+  --button-bg-selected: var(--color-accent-bg-subtle);
+  --button-bg-selected-hover: color-mix(
+    in srgb,
+    var(--button-bg-selected),
+    var(--button-border-color-selected) 12%
+  );
+  --button-fg-selected: var(--color-fg);
+  --button-border-color-selected: var(--color-accent);
+
   // Variant: ghost
   --button-bg-ghost: transparent;
   --button-bg-ghost-hover: var(--color-bg-muted);
