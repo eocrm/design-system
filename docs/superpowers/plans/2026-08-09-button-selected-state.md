@@ -22,12 +22,14 @@
 ### Task 1: Button selected API, semantics, and paint
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Button/Button.test.tsx`
 - Modify: `packages/design-system/src/components/Button/Button.tsx`
 - Modify: `packages/design-system/src/components/Button/Button.module.scss`
 - Modify: `packages/design-system/src/components/Button/Button.tokens.scss`
 
 **Interfaces:**
+
 - Consumes: React's native `ButtonHTMLAttributes<HTMLButtonElement>` including `aria-pressed`.
 - Produces: `ButtonProps.selected?: boolean`; selected CSS modifier; `--button-bg-selected`, `--button-bg-selected-hover`, `--button-fg-selected`, and `--button-border-color-selected` tokens.
 
@@ -85,7 +87,7 @@ const paintsSelected = selected && (variant === 'secondary' || variant === 'ghos
     className,
   )}
   {...props}
-/>
+/>;
 ```
 
 Keep the existing props-last contract and add the required explanatory JSX comment. Expand component examples and `@remarks` to establish selected filter triggers as valid and internal toggle state as invalid.
@@ -125,11 +127,13 @@ git commit -m "feat(Button): add selected state (#442)"
 ### Task 2: Consumer guidance and demonstrations
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md`
 - Modify: `packages/playground/src/pages/components/ButtonDemo.tsx`
 - Modify: `packages/playground/src/pages/mockups/Contacts/Contacts.tsx`
 
 **Interfaces:**
+
 - Consumes: `ButtonProps.selected?: boolean` from Task 1.
 - Produces: Canonical selected-filter documentation, an interactive demo, and realistic Contacts filter usage.
 
@@ -182,9 +186,11 @@ git commit -m "docs(Button): demonstrate selected filter triggers (#442)"
 ### Task 3: Repository gates and publication readiness
 
 **Files:**
+
 - Verify: all files changed since `origin/main`
 
 **Interfaces:**
+
 - Consumes: completed Button API and demonstrations from Tasks 1-2.
 - Produces: a gate-clean branch ready for the mandatory pre-push review workflow.
 
