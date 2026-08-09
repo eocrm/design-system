@@ -118,11 +118,13 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Owner: Ada' })).toBeDisabled();
   });
 
-  it('uses distinct hover paint and an AA-safe foreground primitive for selected buttons', () => {
+  it('derives selected hover paint from the selected accent tokens', () => {
     const tokens = readFileSync(resolve(__dirname, 'Button.tokens.scss'), 'utf8');
 
     expect(tokens).toContain('--button-bg-selected: var(--color-accent-bg-subtle);');
-    expect(tokens).toContain('--button-bg-selected-hover: var(--color-info-bg-subtle);');
+    expect(tokens).toMatch(
+      /--button-bg-selected-hover:\s*color-mix\(\s*in srgb,\s*var\(--button-bg-selected\),\s*var\(--button-border-color-selected\) 12%\s*\);/s,
+    );
     expect(tokens).toContain('--button-fg-selected: var(--color-fg);');
   });
 
