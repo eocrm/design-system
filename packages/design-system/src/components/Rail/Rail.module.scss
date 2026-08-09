@@ -76,14 +76,24 @@
   overflow: hidden;
 }
 
-// Collapsed = a 56px icon-only track. Center the brand there so the mark sits
-// on the same vertical axis as the item icons below it. Scoped to the collapsed
-// state on purpose: expanded, the brand must stay flush-left with the item
-// icons, and turning .header into a centering flex row unconditionally would
-// also re-flow any consumer header that renders more than one child.
+// Collapsed = a 56px icon-only track. Center the brand there so the mark sits on
+// the same axis as the item icons below it. Scoped to the collapsed state on
+// purpose: expanded, the brand is already aligned by --rail-header-padding's
+// horizontal inset, and turning .header into a centering flex row
+// unconditionally would re-flow any consumer header that renders more than one
+// child.
+// The horizontal inset is dropped here because it is an *alignment* value for
+// the expanded rail; at 56px it would leave a 16px content box that a 32px mark
+// immediately overflows, and the centering would then be measured against the
+// wrong box.
+// `safe` matters: on a brand too wide for the collapsed track, plain `center`
+// overflows both edges and clips the mark itself — the one part a collapsed rail
+// must keep. `safe` falls back to start alignment exactly in that case, so the
+// mark stays visible and only the trailing wordmark is clipped.
 .collapsed .header {
   display: flex;
-  justify-content: center;
+  justify-content: safe center;
+  padding-inline: 0;
 }
 
 // Wrapper around any <Rail.Footer> children — sits as a flex item BELOW

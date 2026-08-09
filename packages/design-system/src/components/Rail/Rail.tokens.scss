@@ -18,11 +18,12 @@
   // a DS-only consumer matches the mockup rail brand with no raw CSS. Divider
   // color reuses --rail-border-color. Override either token to `0` for a bare
   // header slot.
-  // The default padding is bottom-only: the rail's own --rail-padding-x /
-  // --rail-padding-y already inset the header, so a second inset would push the
-  // brand off the nav items' icon column. The gap down to the divider is the
-  // only spacing the header owns.
-  --rail-header-padding: 0 0 var(--space-2);
+  // The horizontal inset deliberately mirrors --rail-item-padding-x so the brand
+  // mark starts on the same x as the nav item icons below it (both then sit at
+  // --rail-padding-x + --rail-item-padding-x from the rail's edge). There is no
+  // top inset because --rail-padding-y already supplies it; the bottom gap down
+  // to the divider is the header's own.
+  --rail-header-padding: 0 var(--rail-item-padding-x) var(--space-2);
   --rail-header-divider-width: var(--border-width);
 
   // Section grouping

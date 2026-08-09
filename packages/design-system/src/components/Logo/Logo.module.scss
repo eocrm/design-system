@@ -70,10 +70,14 @@
     gap: var(--logo-text-gap);
   }
 
+  // Always cap, never ex: a subtext is sentence-case far more often than not
+  // ("Free trial", "Pro (yearly)"), and trimming those to the x-height edge
+  // would put the capital's ink outside the box and pull the line up into the
+  // wordmark's descenders.
   .subtext {
     line-height: 1;
     text-box-trim: trim-both;
-    text-box-edge: ex alphabetic;
+    text-box-edge: cap alphabetic;
   }
 }
 

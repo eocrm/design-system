@@ -45,17 +45,29 @@ const sizeClass: Record<LogoSize, string> = {
   lg: styles.sizeLg,
 };
 
+/**
+ * Latin lowercase letters whose ink stays inside the x-height band, plus the
+ * separators that do the same. Deliberately an allowlist rather than "no
+ * uppercase": the ascenders (`b d f h k l t`), the dotted `i`/`j`, digits, and
+ * every non-Latin script reach above x-height, so trimming to the x-height edge
+ * would cut the box above their ink.
+ */
+const X_HEIGHT_ONLY = /^[acemnopqrsuvwxyzg\s\-.,]+$/;
+
+/**
+ * Which edge the wordmark's text box should be trimmed to. `ex` pulls the box
+ * down to the x-height so an all-lowercase wordmark optically centers against
+ * the mark; `cap` is the safe choice everywhere else — it can only ever leave a
+ * little headroom, never crop ink.
+ */
 function getTextMetric(text: ReactNode): 'cap' | 'ex' {
+  // A non-string wordmark (an element, a fragment) has no inspectable glyphs,
+  // so fall back to the edge that cannot crop.
   if (typeof text !== 'string') {
     return 'cap';
   }
 
-  // If there are lowercase letters and no uppercase letters,
-  // align using x-height.
-  const hasLowercase = /\p{Ll}/u.test(text);
-  const hasUppercase = /\p{Lu}/u.test(text);
-
-  return hasLowercase && !hasUppercase ? 'ex' : 'cap';
+  return X_HEIGHT_ONLY.test(text) ? 'ex' : 'cap';
 }
 
 /**
@@ -66,6 +78,16 @@ function getTextMetric(text: ReactNode): 'cap' | 'ex' {
  *
  * The wordmark's font + weight are themeable via the `--logo-text-font` /
  * `--logo-text-font-weight` CSS variables (the `subtext` is unaffected).
+ * Spacing is themeable via `--logo-gap` (mark → wordmark, default
+ * `var(--space-2)`) and `--logo-text-gap` (wordmark → `subtext`, default
+ * `var(--space-1)`).
+ *
+ * Where `text-box-trim` is supported the lockup trims the wordmark's
+ * half-leading and aligns it to its cap edge — or its x-height edge when the
+ * wordmark is entirely x-height glyphs, e.g. `text="eocrm"` — so it optically
+ * centers against the mark. Browsers without `text-box-trim` (Firefox as of
+ * 2026-08) keep the untrimmed leading and `--logo-text-gap` does not apply; the
+ * lockup reads slightly looser there, never clipped.
  *
  * @example
  * // Mark + wordmark — the common app-header / auth lockup:

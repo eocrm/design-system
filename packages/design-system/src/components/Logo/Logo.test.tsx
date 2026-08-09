@@ -57,6 +57,40 @@ describe('Logo', () => {
     expect(screen.getByText('Free trial')).toBeInTheDocument();
   });
 
+  describe('wordmark text-box edge', () => {
+    // Which edge the wordmark is trimmed to is the only observable output of
+    // getTextMetric, and `ex` crops any glyph that reaches above the x-height.
+    // `cap` is always safe; `ex` must be reserved for wordmarks that earn it.
+    const edgeOf = (text: string) => {
+      render(<Logo src={SRC} text={text} />);
+      return /textEx/.test(screen.getByText(text).className) ? 'ex' : 'cap';
+    };
+
+    it.each(['eocrm', 'acme', 'nexus', 'osmo'])('x-height-only wordmark %s trims to ex', (text) => {
+      expect(edgeOf(text)).toBe('ex');
+    });
+
+    it.each([
+      ['EOCRM', 'all caps'],
+      ['Acme', 'leading capital'],
+      ['lockbox', 'the b/k ascenders'],
+      ['dropbox', 'the d/b ascenders'],
+      ['flow', 'the f/l ascenders'],
+      ['minio', 'the dotted i'],
+      ['web3', 'a digit'],
+      ['мойсклад', 'a non-Latin script'],
+    ])('wordmark %s trims to cap (%s)', (text) => {
+      expect(edgeOf(text)).toBe('cap');
+    });
+
+    it('falls back to cap for a non-string wordmark', () => {
+      const { container } = render(<Logo src={SRC} text={<i>eocrm</i>} />);
+      const span = container.querySelector('span[class*="text"]:not([class*="textBlock"])');
+      expect(span?.className).toMatch(/textCap/);
+      expect(span?.className).not.toMatch(/textEx/);
+    });
+  });
+
   it('ignores subtext when there is no text', () => {
     render(<Logo src={SRC} subtext="Free trial" />);
     expect(screen.queryByText('Free trial')).not.toBeInTheDocument();

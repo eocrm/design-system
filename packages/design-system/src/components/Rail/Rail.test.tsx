@@ -633,6 +633,43 @@ describe('Rail — scroll box axes', () => {
   });
 });
 
+describe('Rail — header brand alignment', () => {
+  const scss = readFileSync(resolve(__dirname, 'Rail.module.scss'), 'utf8');
+  const tokens = readFileSync(resolve(__dirname, 'Rail.tokens.scss'), 'utf8');
+
+  it('keeps the header from shrinking under a long item list', () => {
+    // .header is a flex item of .body. At the default flex-shrink: 1 an
+    // overflowing item list compresses the header, and because the header also
+    // clips overflow the brand is cut off instead of the list scrolling.
+    expect(scss).toMatch(/^\.header\s*\{[^}]*flex-shrink:\s*0/m);
+  });
+
+  it('insets the header horizontally by the item padding so the brand lines up with the icons', () => {
+    // The brand mark and the item icons must start at the same x. Both sit
+    // inside the rail's own --rail-padding-x, so the header's horizontal inset
+    // has to be the item's, not 0 (brand 12px left of the icons) and not
+    // --space-4 (4px right of them).
+    expect(tokens).toMatch(
+      /--rail-header-padding:\s*0\s+var\(--rail-item-padding-x\)\s+var\(--space-2\)/,
+    );
+  });
+
+  it('centers the brand only while collapsed, and drops the inset that centering would measure against', () => {
+    const rule = scss.match(/\.collapsed\s+\.header\s*\{[^}]*\}/)?.[0] ?? '';
+    expect(rule).toMatch(/justify-content:\s*safe center/);
+    expect(rule).toMatch(/padding-inline:\s*0/);
+    // Expanded must stay start-aligned — a bare `.header` rule that centered
+    // would knock the brand off the icon column it was just aligned to.
+    expect(scss).not.toMatch(/^\.header\s*\{[^}]*justify-content/m);
+  });
+
+  it('uses safe centering so an oversized brand keeps its mark visible', () => {
+    // Plain `center` overflows a too-wide brand past BOTH edges of the 56px
+    // track, clipping the mark itself — the one part that must survive.
+    expect(scss).toMatch(/\.collapsed\s+\.header\s*\{[^}]*justify-content:\s*safe center/);
+  });
+});
+
 describe('Rail — collapseBelow (viewport override)', () => {
   // jsdom implements no `window.matchMedia` at all, so every test here installs
   // its own stub. It's width-driven and fires real `change` events so the

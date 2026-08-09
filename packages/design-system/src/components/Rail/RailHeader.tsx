@@ -7,21 +7,22 @@ export type RailHeaderProps = HTMLAttributes<HTMLDivElement>;
 /**
  * Top slot of the rail — typically a logo or brand mark. By default it's a
  * padded brand area with a header→nav divider, matching the canonical rail
- * brand: `--rail-header-padding` (default `0 0 var(--space-2)` — bottom-only,
- * because the rail's own `--rail-padding-x` / `--rail-padding-y` already inset
- * the header and a second inset would push the brand off the nav items' icon
- * column) + `--rail-header-divider-width` (default `var(--border-width)`, color
+ * brand: `--rail-header-padding` (default
+ * `0 var(--rail-item-padding-x) var(--space-2)` — the horizontal inset mirrors
+ * the nav items' so the brand mark starts on the same x as their icons; no top
+ * inset because `--rail-padding-y` already supplies one) +
+ * `--rail-header-divider-width` (default `var(--border-width)`, color
  * `--rail-border-color`). A DS-only consumer gets the mockup rail brand with
  * **no prop and no raw CSS**. For a bare slot (no padding / no divider),
  * override either token to `0` in your scope — there is no prop.
  *
- * When the rail is collapsed, the header centers its content in the 56px track
- * (so the brand mark sits on the item icons' axis) and has `overflow: hidden`,
- * so anything wider than the collapsed rail is clipped. The consumer is expected
- * to render a smaller version of their brand at collapsed widths (e.g., just the
- * mark, no wordmark) — read the state with `useRail()`. The library doesn't
- * enforce this; we just clip overflow so a stretched logo never visually breaks
- * the rail.
+ * When the rail is collapsed the header drops its horizontal inset and centers
+ * its content in the 56px track, so a mark-sized brand lands on the item icons'
+ * axis. Render a smaller brand at collapsed widths (typically the mark without
+ * the wordmark) — read the state with `useRail()`. A brand too wide for the
+ * track is clipped rather than allowed to stretch the rail; the centering is
+ * `safe`, so in that case it aligns to the start edge and you lose the trailing
+ * end of the brand instead of both sides of it.
  *
  * @example
  * <Rail.Header>
