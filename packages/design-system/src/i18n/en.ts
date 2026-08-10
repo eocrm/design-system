@@ -196,6 +196,7 @@ export const en: Messages = {
     presetColors: 'Preset colors',
     triggerLabel: 'Pick a color',
   },
+  iconPicker: { triggerLabel: 'Pick icon' },
   drawer: {
     close: 'Close dialog',
   },

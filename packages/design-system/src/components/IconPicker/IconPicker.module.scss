@@ -1,0 +1,61 @@
+@use '../../styles/mixins' as *;
+@use './IconPicker.tokens';
+
+.root {
+  display: inline-block;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, var(--icon-picker-cell-size));
+  gap: var(--icon-picker-grid-gap);
+  padding: var(--icon-picker-grid-padding);
+}
+
+.trigger,
+.cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: var(--border-width) solid var(--icon-picker-border);
+  border-radius: var(--icon-picker-radius);
+  background: var(--icon-picker-bg);
+  color: var(--icon-picker-fg);
+  cursor: pointer;
+}
+
+.trigger {
+  width: var(--icon-picker-trigger-size);
+  height: var(--icon-picker-trigger-size);
+}
+
+.cell {
+  width: var(--icon-picker-cell-size);
+  height: var(--icon-picker-cell-size);
+}
+
+.cell:hover {
+  background: var(--icon-picker-hover-bg);
+}
+
+.trigger:focus-visible,
+.cell:focus-visible {
+  @include focus-ring;
+}
+
+.selected {
+  border-color: var(--icon-picker-selected-border);
+  box-shadow: inset 0 0 0 var(--border-width) var(--icon-picker-selected-ring);
+}
+
+.glyph {
+  display: inline-flex;
+  pointer-events: none;
+  font-size: var(--font-size-lg);
+}
+
+.glyph > svg {
+  width: 1em;
+  height: 1em;
+}

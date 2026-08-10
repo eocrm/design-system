@@ -1,0 +1,13 @@
+:root {
+  --icon-picker-trigger-size: var(--size-md);
+  --icon-picker-cell-size: var(--size-lg);
+  --icon-picker-grid-gap: var(--space-1);
+  --icon-picker-grid-padding: var(--space-1);
+  --icon-picker-radius: var(--radius-sm);
+  --icon-picker-border: var(--color-border);
+  --icon-picker-bg: var(--color-bg);
+  --icon-picker-fg: var(--color-fg);
+  --icon-picker-hover-bg: var(--color-bg-muted);
+  --icon-picker-selected-border: var(--color-accent);
+  --icon-picker-selected-ring: var(--color-accent);
+}

@@ -51,6 +51,9 @@ export type {
   HSV,
 } from './components/ColorPicker';
 
+export { IconPicker } from './components/IconPicker';
+export type { IconPickerProps, IconPickerOption } from './components/IconPicker';
+
 export { Stack } from './components/Stack';
 export type { StackProps, StackGap, StackAlign } from './components/Stack';
 
