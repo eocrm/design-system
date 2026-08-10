@@ -271,9 +271,19 @@ function ColumnShiftDriver({
 /** Sorting strategy that moves nothing — see the SortableContext comment. */
 const noopSortingStrategy = () => null;
 
-function ResponsiveScrollWrap({ enabled, children }: { enabled: boolean; children: ReactNode }) {
-  if (!enabled) return children;
-  return <div className={styles.responsiveScrollWrap}>{children}</div>;
+function ResponsiveScrollWrap({
+  collapseBelow,
+  children,
+}: {
+  collapseBelow?: CollapseBreakpoint;
+  children: ReactNode;
+}) {
+  if (!collapseBelow) return children;
+  return (
+    <div className={clsx(styles.responsiveScrollWrap, collapseClass[collapseBelow])}>
+      {children}
+    </div>
+  );
 }
 
 function DataTableInner<T>(
@@ -569,12 +579,14 @@ function DataTableInner<T>(
         //    the dragged column no matter what this strategy says.
         strategy={dragWholeColumn ? noopSortingStrategy : horizontalListSortingStrategy}
       >
-        {/* {...rest} last so consumer overrides win (Pattern A). */}
-        <ResponsiveScrollWrap enabled={responsiveEnabled}>
+        {/* Consumer-native table attributes still override component defaults.
+            `scroll` is the one invariant: it is not public on DataTableProps,
+            and keeping it after the spread also rejects a runtime-only override
+            that would break the instance-owned responsive wrapper. */}
+        <ResponsiveScrollWrap collapseBelow={collapseBelow}>
           <Table
             ref={setTableRef}
             stickyHeader
-            scroll={!responsiveEnabled}
             hover={hover}
             density={density}
             striped={striped}
@@ -583,6 +595,7 @@ function DataTableInner<T>(
             aria-rowcount={instance.rowCount}
             className={clsx(styles.root, className)}
             {...rest}
+            scroll={!responsiveEnabled}
           >
             {caption && <Table.Caption>{caption}</Table.Caption>}
 
@@ -691,10 +704,7 @@ function DataTableInner<T>(
   if (!collapseBelow) return table;
 
   return (
-    <div
-      className={clsx(styles.responsiveContainer, collapseClass[collapseBelow])}
-      data-collapse-below={collapseBelow}
-    >
+    <div className={styles.responsiveContainer} data-collapse-below={collapseBelow}>
       {table}
     </div>
   );

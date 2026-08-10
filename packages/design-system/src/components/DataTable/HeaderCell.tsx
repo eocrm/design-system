@@ -274,9 +274,7 @@ export function HeaderCell<T>({
           aria-hidden={responsiveEnabled ? undefined : true}
           aria-orientation={responsiveEnabled ? 'vertical' : undefined}
           aria-valuemin={responsiveEnabled ? (column.minSize ?? 40) : undefined}
-          aria-valuemax={
-            responsiveEnabled ? (column.maxSize ?? Number.MAX_SAFE_INTEGER) : undefined
-          }
+          aria-valuemax={responsiveEnabled ? column.maxSize : undefined}
           aria-valuenow={responsiveEnabled ? width : undefined}
           aria-valuetext={responsiveEnabled ? `${width}px` : undefined}
           tabIndex={responsiveEnabled ? 0 : undefined}

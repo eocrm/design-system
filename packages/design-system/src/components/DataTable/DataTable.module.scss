@@ -255,32 +255,29 @@
 // consumer cell content. Wide-table state (column sizes, order, and pins) stays
 // intact and becomes visible again when the container widens.
 @mixin stacked-presentation {
-  // DndContext appends accessibility siblings beside the table. The named,
-  // direct scroll wrapper is the instance-ownership boundary for every rule in
-  // this query, so an outer DataTable cannot re-template nested tables.
-  > .responsiveScrollWrap {
-    width: 100%;
-  }
-
-  > .responsiveScrollWrap > .root {
+  // DndContext appends accessibility siblings beside the table. This mixin is
+  // mounted on the named, direct scroll wrapper: the breakpoint target is a
+  // descendant of the size container, and every child selector stays inside
+  // that table instance rather than reaching nested tables.
+  > .root {
     display: block;
     width: 100%;
     min-width: 0;
   }
 
-  > .responsiveScrollWrap > .root > colgroup {
+  > .root > colgroup {
     display: none;
   }
 
-  > .responsiveScrollWrap > .root > :where(caption, thead, tbody) {
+  > .root > :where(caption, thead, tbody) {
     width: 100%;
   }
 
-  > .responsiveScrollWrap > .root > :where(caption, thead) {
+  > .root > :where(caption, thead) {
     display: block;
   }
 
-  > .responsiveScrollWrap > .root > thead > tr {
+  > .root > thead > tr {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
@@ -293,7 +290,7 @@
   // With no retained header item, every cell below is out of flow. Neutralize
   // the row paint as well so expansion-only and plain-data tables do not show
   // an empty compact band.
-  > .responsiveScrollWrap > .root > thead[data-responsive-has-items='false'] > tr {
+  > .root > thead[data-responsive-has-items='false'] > tr {
     gap: 0;
     padding: 0;
     border: 0;
@@ -306,12 +303,11 @@
   // stylelint-disable property-disallowed-list -- Visually hidden header cells
   // retain native table labelling for assistive technology without occupying
   // room in the compact strip.
-  > .responsiveScrollWrap
-    > .root
+  > .root
     > thead
     > tr
     > th[data-responsive-plain-label='true']:not([data-responsive-sortable='true']),
-  > .responsiveScrollWrap > .root > thead > tr > th.autoCell:not([data-responsive-control='true']) {
+  > .root > thead > tr > th.autoCell:not([data-responsive-control='true']) {
     @include visually-hidden;
 
     position: absolute !important;
@@ -321,8 +317,7 @@
   }
   // stylelint-enable property-disallowed-list
 
-  > .responsiveScrollWrap
-    > .root
+  > .root
     > thead
     > tr
     > th:is([data-responsive-control='true'], [data-responsive-retained-header='true']) {
@@ -334,17 +329,17 @@
     white-space: normal;
   }
 
-  > .responsiveScrollWrap > .root > tbody {
+  > .root > tbody {
     display: grid;
     gap: var(--space-3);
     width: 100%;
   }
 
-  > .responsiveScrollWrap > .root > tbody + tbody {
+  > .root > tbody + tbody {
     padding-block-start: var(--space-3);
   }
 
-  > .responsiveScrollWrap > .root > tbody > tr {
+  > .root > tbody > tr {
     display: grid;
     grid-template-columns: repeat(2, min-content) minmax(0, 1fr);
     gap: var(--space-1);
@@ -358,30 +353,30 @@
   // Pinned rows stay tinted across the Table primitive's striped, hover, and
   // selected state selectors. Matching each state keeps the cascade explicit
   // without making the tint globally important.
-  > .responsiveScrollWrap > .root > tbody > tr.pinnedRow,
-  > .responsiveScrollWrap > .root > tbody > tr.pinnedRow:nth-of-type(even),
-  > .responsiveScrollWrap > .root > tbody > tr.pinnedRow:hover,
-  > .responsiveScrollWrap > .root > tbody > tr.pinnedRow[aria-selected='true'],
-  > .responsiveScrollWrap > .root > tbody > tr.pinnedRow[aria-selected='true']:hover {
+  > .root > tbody > tr.pinnedRow,
+  > .root > tbody > tr.pinnedRow:nth-of-type(even),
+  > .root > tbody > tr.pinnedRow:hover,
+  > .root > tbody > tr.pinnedRow[aria-selected='true'],
+  > .root > tbody > tr.pinnedRow[aria-selected='true']:hover {
     background: var(--data-table-pinned-row-bg);
   }
 
-  > .responsiveScrollWrap > .root > tbody > tr > td {
+  > .root > tbody > tr > td {
     border: 0;
   }
 
   // stylelint-disable property-disallowed-list -- Responsive card internals:
   // field/detail cells must span the card grid, and wide-table sticky offsets
   // are inline styles that require !important to neutralize below the query.
-  > .responsiveScrollWrap > .root > tbody > tr > .responsiveDataCell,
-  > .responsiveScrollWrap > .root > tbody > tr > .responsiveFullWidth,
-  > .responsiveScrollWrap > .root > tbody > tr > .expandedDetailCell {
+  > .root > tbody > tr > .responsiveDataCell,
+  > .root > tbody > tr > .responsiveFullWidth,
+  > .root > tbody > tr > .expandedDetailCell {
     grid-column: 1 / -1;
     width: 100%;
   }
 
-  > .responsiveScrollWrap > .root > thead > tr > th,
-  > .responsiveScrollWrap > .root > tbody > tr > td {
+  > .root > thead > tr > th,
+  > .root > tbody > tr > td {
     position: static !important;
     left: auto !important;
     right: auto !important;
@@ -389,7 +384,7 @@
   }
   // stylelint-enable property-disallowed-list
 
-  > .responsiveScrollWrap > .root > tbody > tr > .responsiveDataCell {
+  > .root > tbody > tr > .responsiveDataCell {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     align-items: start;
@@ -401,7 +396,7 @@
     overflow-wrap: anywhere;
   }
 
-  > .responsiveScrollWrap > .root > tbody > tr > .responsiveDataCell > .responsiveVisualLabel {
+  > .root > tbody > tr > .responsiveDataCell > .responsiveVisualLabel {
     display: block;
     color: var(--table-header-fg);
     font-weight: var(--table-header-font-weight);
@@ -412,7 +407,7 @@
   // stylelint-disable property-disallowed-list -- Responsive card internals:
   // the stable value wrapper owns the value grid track, and unlabelled values
   // expand over the absent label track.
-  > .responsiveScrollWrap > .root > tbody > tr > .responsiveDataCell > .responsiveValue {
+  > .root > tbody > tr > .responsiveDataCell > .responsiveValue {
     display: block;
     grid-column: 2;
     min-width: 0;
@@ -421,29 +416,18 @@
     white-space: normal;
   }
 
-  > .responsiveScrollWrap
-    > .root
-    > tbody
-    > tr
-    > .responsiveDataCell
-    > .responsiveVisualLabel:empty {
+  > .root > tbody > tr > .responsiveDataCell > .responsiveVisualLabel:empty {
     display: none;
   }
 
-  > .responsiveScrollWrap
-    > .root
-    > tbody
-    > tr
-    > .responsiveDataCell
-    > .responsiveVisualLabel:empty
-    + .responsiveValue {
+  > .root > tbody > tr > .responsiveDataCell > .responsiveVisualLabel:empty + .responsiveValue {
     grid-column: 1 / -1;
   }
   // stylelint-enable property-disallowed-list
 
   // Auto cells remain compact, unlabelled controls. Transparent pinned-cell
   // paint lets the row's striped, hover, selected, or pinned tone show through.
-  > .responsiveScrollWrap > .root > tbody > tr > .autoCell {
+  > .root > tbody > tr > .autoCell {
     width: auto;
     border: 0;
     background: transparent;
@@ -451,7 +435,7 @@
     white-space: normal;
   }
 
-  > .responsiveScrollWrap > .root > tbody > tr > :is(.pinnedLeft, .pinnedRight) {
+  > .root > tbody > tr > :is(.pinnedLeft, .pinnedRight) {
     background: transparent;
     box-shadow: none;
     z-index: auto;
@@ -459,7 +443,7 @@
 
   // HeaderCell owns separate CSS-module pin classes, so its stable DOM hook is
   // the only safe way to neutralize header pin paint from this module.
-  > .responsiveScrollWrap > .root > thead > tr > th[data-responsive-pinned='true'] {
+  > .root > thead > tr > th[data-responsive-pinned='true'] {
     background: transparent;
     box-shadow: none;
     z-index: auto;
@@ -468,8 +452,7 @@
   // Reordering and resizing describe the wide column layout. The elements use
   // stable data hooks because HeaderCell's CSS-module classes are separately
   // hashed and must never be selected across module boundaries.
-  > .responsiveScrollWrap
-    > .root
+  > .root
     > thead
     > tr
     > th
@@ -480,23 +463,16 @@
     pointer-events: none;
   }
 
-  > .responsiveScrollWrap
-    > .root
-    > thead
-    > tr
-    > th
-    > span
-    > span
-    > [data-responsive-header-content] {
+  > .root > thead > tr > th > span > span > [data-responsive-header-content] {
     padding-right: 0;
   }
 
-  > .responsiveScrollWrap > .root > tbody > :where(.expandedDetailRow, .pinnedRow),
-  > .responsiveScrollWrap > .root > tbody > tr > :where(.responsiveFullWidth, .expandedDetailCell) {
+  > .root > tbody > :where(.expandedDetailRow, .pinnedRow),
+  > .root > tbody > tr > :where(.responsiveFullWidth, .expandedDetailCell) {
     width: 100%;
   }
 
-  > .responsiveScrollWrap > .root > tbody > tr > :where(.responsiveFullWidth, .expandedDetailCell) {
+  > .root > tbody > tr > :where(.responsiveFullWidth, .expandedDetailCell) {
     overflow: visible;
     text-overflow: clip;
     white-space: normal;
@@ -504,19 +480,19 @@
 }
 
 @container (max-width: #{bp.$collapse-sm}) {
-  .collapseSm {
+  .responsiveContainer > .responsiveScrollWrap.collapseSm {
     @include stacked-presentation;
   }
 }
 
 @container (max-width: #{bp.$collapse-md}) {
-  .collapseMd {
+  .responsiveContainer > .responsiveScrollWrap.collapseMd {
     @include stacked-presentation;
   }
 }
 
 @container (max-width: #{bp.$collapse-lg}) {
-  .collapseLg {
+  .responsiveContainer > .responsiveScrollWrap.collapseLg {
     @include stacked-presentation;
   }
 }

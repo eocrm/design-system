@@ -22,6 +22,7 @@ import { Table } from '../Table';
 import { DataTable } from './DataTable';
 import { useDataTable } from './useDataTable';
 import { shiftVarName } from './columnShift';
+import type { DataTableProps } from './DataTable';
 import type { ColumnDef } from './types';
 import styles from './DataTable.module.scss';
 
@@ -100,13 +101,15 @@ describe('DataTable responsive stylesheet', () => {
     });
     expect(queries).toHaveLength(1);
     const query = queries[0]!;
-    const prefix = `.${collapseClass}`;
-    const ownedTable = `${prefix} > .responsiveScrollWrap > .root`;
+    const prefix = `.responsiveContainer > .responsiveScrollWrap.${collapseClass}`;
+    const ownedTable = `${prefix} > .root`;
 
     query.walkRules((rule) => {
       for (const selector of rule.selectors) {
         expect(selector).toMatch(
-          new RegExp(`^\\.${collapseClass} > \\.responsiveScrollWrap(?: > \\.root|$)`),
+          new RegExp(
+            `^\\.responsiveContainer > \\.responsiveScrollWrap\\.${collapseClass}(?: > \\.root|$)`,
+          ),
         );
       }
     });
@@ -418,7 +421,12 @@ describe('<DataTable>', () => {
     const table = screen.getByTestId('deals');
     expect(ref.current).toBe(table);
     expect(table).toHaveClass('consumer-table');
-    expect(container.querySelector('[data-collapse-below="sm"]')).not.toBeNull();
+    const queryContainer = container.querySelector('[data-collapse-below="sm"]')!;
+    const breakpointTarget = queryContainer.firstElementChild!;
+    expect(queryContainer).toHaveClass(styles.responsiveContainer);
+    expect(queryContainer).not.toHaveClass(styles.collapseSm);
+    expect(breakpointTarget).toHaveClass(styles.responsiveScrollWrap, styles.collapseSm);
+    expect(breakpointTarget.parentElement).toBe(queryContainer);
     expect(table.closest('[data-collapse-below]')).not.toBe(table);
   });
 
@@ -438,10 +446,40 @@ describe('<DataTable>', () => {
 
       const { container } = render(<BreakpointHarness />);
       const wrapper = container.querySelector(`[data-collapse-below="${breakpoint}"]`)!;
-      expect(wrapper).toHaveClass(styles.responsiveContainer, className);
+      expect(wrapper).toHaveClass(styles.responsiveContainer);
+      expect(wrapper).not.toHaveClass(className);
+      expect(wrapper.firstElementChild).toHaveClass(styles.responsiveScrollWrap, className);
       expect(screen.getByText('Alpha').closest('td')).toHaveClass(styles.responsiveDataCell);
     },
   );
+
+  it('locks the responsive table to its instance-owned scroll wrapper at runtime', () => {
+    const runtimeOnlyTableProps = { scroll: true } as Record<string, unknown>;
+    function RuntimeScrollHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return (
+        <DataTable
+          {...runtimeOnlyTableProps}
+          instance={instance}
+          aria-label="Locked responsive scroll"
+          collapseBelow="sm"
+        />
+      );
+    }
+
+    render(<RuntimeScrollHarness />);
+
+    const table = screen.getByRole('table', { name: 'Locked responsive scroll' });
+    const responsiveScrollWrap = table.closest(`.${styles.responsiveScrollWrap}`)!;
+    expect(table.parentElement).toBe(responsiveScrollWrap);
+    expect(responsiveScrollWrap.firstElementChild).toBe(table);
+  });
+
+  it('does not expose the Table scroll prop in the public DataTable props', () => {
+    type ScrollIsNotPublic = 'scroll' extends keyof DataTableProps<Row> ? false : true;
+    const scrollIsNotPublic: ScrollIsNotPublic = true;
+    expect(scrollIsNotPublic).toBe(true);
+  });
 
   it('does not render a responsive wrapper unless collapseBelow is provided', () => {
     const { container } = render(<Harness />);
@@ -769,6 +807,7 @@ describe('<DataTable>', () => {
         header: 'String resize name',
         cell: () => 'B',
         enableReorder: false,
+        maxSize: 240,
       },
       {
         id: 'id-fallback',
@@ -788,8 +827,13 @@ describe('<DataTable>', () => {
 
     render(<ResizeNamesHarness />);
 
-    expect(screen.getByRole('separator', { name: 'Preferred resize name' })).toBeInTheDocument();
-    expect(screen.getByRole('separator', { name: 'String resize name' })).toBeInTheDocument();
+    expect(screen.getByRole('separator', { name: 'Preferred resize name' })).not.toHaveAttribute(
+      'aria-valuemax',
+    );
+    expect(screen.getByRole('separator', { name: 'String resize name' })).toHaveAttribute(
+      'aria-valuemax',
+      '240',
+    );
     expect(screen.getByRole('separator', { name: 'id-fallback' })).toBeInTheDocument();
   });
 
@@ -805,9 +849,13 @@ describe('<DataTable>', () => {
       .filter((header) => header.hasAttribute('data-dt-column-id'));
     expect(dataHeaders).toHaveLength(2);
     for (const header of dataHeaders) {
-      expect(header.querySelector('[data-responsive-header-content]')).not.toBeNull();
-      expect(header.querySelector('[data-responsive-drag-grip]')).not.toBeNull();
-      expect(header.querySelector('[data-responsive-resize-handle]')).not.toBeNull();
+      const tableChildrenWrapper = header.firstElementChild?.firstElementChild;
+      const headerContent = header.querySelector('[data-responsive-header-content]');
+      const dragGrip = header.querySelector('[data-responsive-drag-grip]');
+      const resizeHandle = header.querySelector('[data-responsive-resize-handle]');
+      expect(headerContent?.parentElement).toBe(tableChildrenWrapper);
+      expect(dragGrip?.parentElement).toBe(tableChildrenWrapper);
+      expect(resizeHandle?.parentElement).toBe(tableChildrenWrapper);
     }
   });
 
