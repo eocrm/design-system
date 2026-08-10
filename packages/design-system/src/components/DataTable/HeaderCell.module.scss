@@ -144,6 +144,13 @@
   .headerCell:hover & {
     opacity: var(--data-table-header-resize-handle-opacity-visible);
   }
+
+  &:focus-visible {
+    @include focus-ring;
+
+    opacity: var(--data-table-header-resize-handle-opacity-visible);
+    outline-offset: -2px;
+  }
 }
 
 .resizeChevron {

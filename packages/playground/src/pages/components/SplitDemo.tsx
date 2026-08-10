@@ -8,6 +8,7 @@ import { Tabs, type TabItem } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+import { ResizablePreview } from './ResizablePreview';
 
 const sections: Record<string, { title: string; body: string }> = {
   general: { title: 'General', body: 'Workspace name, locale, and default landing page.' },
@@ -237,7 +238,7 @@ export function Demo() {
 }`}
       >
         <Stack gap="lg">
-          <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+          <ResizablePreview>
             <Split
               asideWidth="220px"
               gap="lg"
@@ -258,8 +259,8 @@ export function Demo() {
                 </Stack>
               </Card>
             </Split>
-          </div>
-          <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+          </ResizablePreview>
+          <ResizablePreview>
             <Split
               side="end"
               asideWidth="220px"
@@ -281,7 +282,7 @@ export function Demo() {
                 </Stack>
               </Card>
             </Split>
-          </div>
+          </ResizablePreview>
         </Stack>
       </Example>
     </DemoLayout>

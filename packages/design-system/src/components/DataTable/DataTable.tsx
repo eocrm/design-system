@@ -42,8 +42,15 @@ import {
 } from '../_internal/dragAnnouncements';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
+import type { CollapseBreakpoint } from '../_internal/collapse';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './DataTable.module.scss';
+
+const collapseClass: Record<CollapseBreakpoint, string> = {
+  sm: styles.collapseSm,
+  md: styles.collapseMd,
+  lg: styles.collapseLg,
+};
 
 export interface DataTableProps<T> {
   instance: DataTableInstance<T>;
@@ -62,6 +69,19 @@ export interface DataTableProps<T> {
   loadingRowCount?: number;
   /** Element shown when `data` is empty and not loading. Defaults to a stock <EmptyState>. */
   emptyState?: ReactNode;
+  /**
+   * Stacks responsive data cells below this container-query breakpoint: `sm`
+   * (480px), `md` (640px), or `lg` (768px). Selection, expansion, sorting,
+   * row actions, and column visibility remain usable. Column sizing, pinning,
+   * and ordering state is retained, but resize/reorder controls and sticky pin
+   * presentation are unavailable while stacked and return after widening.
+   *
+   * This adds a wrapper with `container-type: inline-size`, so the breakpoint
+   * measures the table's available container width, not the viewport. Avoid an
+   * intrinsic-width parent such as `width: max-content`: inline-size containment
+   * can make the wrapper contribute zero intrinsic width there.
+   */
+  collapseBelow?: CollapseBreakpoint;
   /** Required for a11y when no caption is provided. */
   'aria-label'?: string;
   caption?: ReactNode;
@@ -118,6 +138,17 @@ export interface DataTableProps<T> {
  * column. If you need multi-line cells, render `<Table>` directly — DataTable
  * is opinionated about row height to keep pin offsets consistent across rows.
  *
+ * **Responsive stack.** Set `collapseBelow` to stack data cells when this
+ * table's containing block is at or below `sm` (480px), `md` (640px), or `lg`
+ * (768px). This is a container query, not a viewport breakpoint, so adjacent
+ * tables can respond independently. The wrapper uses inline-size containment;
+ * do not place it in an intrinsic-width parent (`width: max-content`, for
+ * example), where containment can collapse its intrinsic contribution to zero.
+ * Selection, expansion, sorting, row actions, and column visibility stay
+ * available in the stacked presentation. Column sizing, pinning, and ordering
+ * state is retained, but resize/reorder controls and sticky pin presentation
+ * are unavailable until the container widens again.
+ *
  * @example
  * function Example() {
  *   const instance = useDataTable<Row>({
@@ -141,6 +172,10 @@ export interface DataTableProps<T> {
  *   defaultColumnPinning: { left: ['name'], right: ['actions'] },
  * });
  * <DataTable instance={instance} aria-label="Deals" />;
+ *
+ * @example
+ * // Stack labeled data cells below 640px of available container width.
+ * <DataTable instance={instance} aria-label="Deals" collapseBelow="md" />;
  *
  * @example
  * // Expandable rows — chevron auto-column at left, detail row below on expand:
@@ -236,6 +271,21 @@ function ColumnShiftDriver({
 /** Sorting strategy that moves nothing — see the SortableContext comment. */
 const noopSortingStrategy = () => null;
 
+function ResponsiveScrollWrap({
+  collapseBelow,
+  children,
+}: {
+  collapseBelow?: CollapseBreakpoint;
+  children: ReactNode;
+}) {
+  if (!collapseBelow) return children;
+  return (
+    <div className={clsx(styles.responsiveScrollWrap, collapseClass[collapseBelow])}>
+      {children}
+    </div>
+  );
+}
+
 function DataTableInner<T>(
   {
     instance,
@@ -248,6 +298,7 @@ function DataTableInner<T>(
     emptyState,
     caption,
     dragWholeColumn = true,
+    collapseBelow,
     className,
     ...rest
   }: DataTableProps<T>,
@@ -419,6 +470,10 @@ function DataTableInner<T>(
   const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
   const hasRenderedRows = instance.data.length > 0 || instance.pinnedRows.length > 0;
   const showSkeletonRows = loading && !hasRenderedRows;
+  const responsiveEnabled = collapseBelow != null;
+  const hasResponsiveHeaderItems =
+    instance.enableRowSelection ||
+    renderColumns.some((column) => column.sortable === true || typeof column.header !== 'string');
 
   const [dragActive, setDragActive] = useState(false);
 
@@ -487,7 +542,7 @@ function DataTableInner<T>(
     [ref],
   );
 
-  return (
+  const table = (
     <DndContext
       accessibility={dragAccessibility}
       sensors={sensors}
@@ -524,116 +579,155 @@ function DataTableInner<T>(
         //    the dragged column no matter what this strategy says.
         strategy={dragWholeColumn ? noopSortingStrategy : horizontalListSortingStrategy}
       >
-        {/* {...rest} last so consumer overrides win (Pattern A). */}
-        <Table
-          ref={setTableRef}
-          stickyHeader
-          hover={hover}
-          density={density}
-          striped={striped}
-          bordered={bordered}
-          aria-busy={loading || undefined}
-          aria-rowcount={instance.rowCount}
-          className={clsx(styles.root, className)}
-          {...rest}
-        >
-          {caption && <Table.Caption>{caption}</Table.Caption>}
+        {/* Consumer-native table attributes still override component defaults.
+            `scroll` is the one invariant: it is not public on DataTableProps,
+            and keeping it after the spread also rejects a runtime-only override
+            that would break the instance-owned responsive wrapper. */}
+        <ResponsiveScrollWrap collapseBelow={collapseBelow}>
+          <Table
+            ref={setTableRef}
+            stickyHeader
+            hover={hover}
+            density={density}
+            striped={striped}
+            bordered={bordered}
+            aria-busy={loading || undefined}
+            aria-rowcount={instance.rowCount}
+            className={clsx(styles.root, className)}
+            {...rest}
+            scroll={!responsiveEnabled}
+          >
+            {caption && <Table.Caption>{caption}</Table.Caption>}
 
-          <colgroup>
-            {instance.enableRowSelection && <col style={{ width: AUTO_CELL_WIDTH }} />}
-            {instance.hasExpansion && <col style={{ width: AUTO_CELL_WIDTH }} />}
-            {renderColumns.map((col) => (
-              <col key={col.id} style={{ width: instance.columnSizesPx[col.id] ?? 120 }} />
-            ))}
-          </colgroup>
-
-          <Table.Header>
-            <Table.Row>
-              {instance.enableRowSelection && (
-                <Table.HeaderCell
-                  align="center"
-                  scope="col"
-                  className={clsx(styles.autoCell, styles.autoCellStickyHeader)}
-                  style={{ position: 'sticky', left: 0 }}
-                >
-                  <Checkbox
-                    checked={instance.isAllOnPageSelected()}
-                    indeterminate={instance.isSomeOnPageSelected()}
-                    onChange={() => instance.toggleAllOnPage()}
-                    aria-label={t('dataTable.selectAll')}
-                  />
-                </Table.HeaderCell>
-              )}
-              {instance.hasExpansion && (
-                <Table.HeaderCell
-                  align="center"
-                  scope="col"
-                  className={clsx(styles.autoCell, styles.autoCellStickyHeader)}
-                  style={{
-                    position: 'sticky',
-                    left: instance.enableRowSelection ? AUTO_CELL_WIDTH : 0,
-                  }}
-                  // Empty header — the expand column has no per-column action.
-                  aria-label={t('dataTable.rowExpansion')}
-                />
-              )}
+            <colgroup>
+              {instance.enableRowSelection && <col style={{ width: AUTO_CELL_WIDTH }} />}
+              {instance.hasExpansion && <col style={{ width: AUTO_CELL_WIDTH }} />}
               {renderColumns.map((col) => (
-                <HeaderCell
-                  key={col.id}
-                  column={col}
-                  instance={instance}
-                  dragWholeColumn={dragWholeColumn}
-                  dragActive={dragActive}
-                />
+                <col key={col.id} style={{ width: instance.columnSizesPx[col.id] ?? 120 }} />
               ))}
-            </Table.Row>
-          </Table.Header>
+            </colgroup>
 
-          {instance.pinnedRows.length > 0 && (
-            <Table.Body className={styles.pinnedRowsTbody} aria-label={t('dataTable.pinnedRows')}>
-              {instance.pinnedRows.map((row) => (
-                <BodyRow
-                  key={instance.getRowId(row)}
-                  row={row}
-                  instance={instance}
-                  isPinnedRow
-                  dragWholeColumn={dragWholeColumn}
-                  dragActive={dragActive}
-                />
-              ))}
-            </Table.Body>
-          )}
+            <Table.Header
+              data-responsive-has-items={responsiveEnabled ? hasResponsiveHeaderItems : undefined}
+            >
+              <Table.Row>
+                {instance.enableRowSelection && (
+                  <Table.HeaderCell
+                    align="center"
+                    scope="col"
+                    className={clsx(styles.autoCell, styles.autoCellStickyHeader)}
+                    style={{ position: 'sticky', left: 0 }}
+                    data-responsive-control={responsiveEnabled || undefined}
+                  >
+                    <Checkbox
+                      checked={instance.isAllOnPageSelected()}
+                      indeterminate={instance.isSomeOnPageSelected()}
+                      onChange={() => instance.toggleAllOnPage()}
+                      aria-label={t('dataTable.selectAll')}
+                    />
+                  </Table.HeaderCell>
+                )}
+                {instance.hasExpansion && (
+                  <Table.HeaderCell
+                    align="center"
+                    scope="col"
+                    className={clsx(styles.autoCell, styles.autoCellStickyHeader)}
+                    style={{
+                      position: 'sticky',
+                      left: instance.enableRowSelection ? AUTO_CELL_WIDTH : 0,
+                    }}
+                    // Empty header — the expand column has no per-column action.
+                    aria-label={t('dataTable.rowExpansion')}
+                  />
+                )}
+                {renderColumns.map((col) => (
+                  <HeaderCell
+                    key={col.id}
+                    column={col}
+                    instance={instance}
+                    dragWholeColumn={dragWholeColumn}
+                    dragActive={dragActive}
+                    responsiveEnabled={responsiveEnabled}
+                  />
+                ))}
+              </Table.Row>
+            </Table.Header>
 
-          <Table.Body>
-            {showSkeletonRows ? (
-              <SkeletonRows count={loadingRowCount} totalColCount={totalColCount} />
-            ) : dataIsEmpty ? (
-              <EmptyRow totalColCount={totalColCount} content={emptyState} />
-            ) : (
-              instance.data.map((row) => (
-                <BodyRow
-                  key={instance.getRowId(row)}
-                  row={row}
-                  instance={instance}
-                  dragWholeColumn={dragWholeColumn}
-                  dragActive={dragActive}
-                />
-              ))
+            {instance.pinnedRows.length > 0 && (
+              <Table.Body className={styles.pinnedRowsTbody} aria-label={t('dataTable.pinnedRows')}>
+                {instance.pinnedRows.map((row) => (
+                  <BodyRow
+                    key={instance.getRowId(row)}
+                    row={row}
+                    instance={instance}
+                    isPinnedRow
+                    dragWholeColumn={dragWholeColumn}
+                    dragActive={dragActive}
+                    responsiveEnabled={responsiveEnabled}
+                  />
+                ))}
+              </Table.Body>
             )}
-          </Table.Body>
-        </Table>
+
+            <Table.Body>
+              {showSkeletonRows ? (
+                <SkeletonRows
+                  count={loadingRowCount}
+                  totalColCount={totalColCount}
+                  responsiveEnabled={responsiveEnabled}
+                />
+              ) : dataIsEmpty ? (
+                <EmptyRow
+                  totalColCount={totalColCount}
+                  content={emptyState}
+                  responsiveEnabled={responsiveEnabled}
+                />
+              ) : (
+                instance.data.map((row) => (
+                  <BodyRow
+                    key={instance.getRowId(row)}
+                    row={row}
+                    instance={instance}
+                    dragWholeColumn={dragWholeColumn}
+                    dragActive={dragActive}
+                    responsiveEnabled={responsiveEnabled}
+                  />
+                ))
+              )}
+            </Table.Body>
+          </Table>
+        </ResponsiveScrollWrap>
       </SortableContext>
     </DndContext>
   );
+
+  if (!collapseBelow) return table;
+
+  return (
+    <div className={styles.responsiveContainer} data-collapse-below={collapseBelow}>
+      {table}
+    </div>
+  );
 }
 
-function SkeletonRows({ count, totalColCount }: { count: number; totalColCount: number }) {
+function SkeletonRows({
+  count,
+  totalColCount,
+  responsiveEnabled,
+}: {
+  count: number;
+  totalColCount: number;
+  responsiveEnabled: boolean;
+}) {
   return (
     <>
       {Array.from({ length: count }, (_, i) => (
         <Table.Row key={`sk-${i}`}>
           {Array.from({ length: totalColCount }, (_, j) => (
-            <Table.Cell key={j} className={styles.skeletonCell}>
+            <Table.Cell
+              key={j}
+              className={clsx(styles.skeletonCell, responsiveEnabled && styles.responsiveFullWidth)}
+            >
               <Skeleton variant="text" width="80%" />
             </Table.Cell>
           ))}
@@ -643,11 +737,22 @@ function SkeletonRows({ count, totalColCount }: { count: number; totalColCount: 
   );
 }
 
-function EmptyRow({ totalColCount, content }: { totalColCount: number; content?: ReactNode }) {
+function EmptyRow({
+  totalColCount,
+  content,
+  responsiveEnabled,
+}: {
+  totalColCount: number;
+  content?: ReactNode;
+  responsiveEnabled: boolean;
+}) {
   const t = useTranslation();
   return (
     <Table.Row>
-      <Table.Cell colSpan={totalColCount} className={styles.emptyCell}>
+      <Table.Cell
+        colSpan={totalColCount}
+        className={clsx(styles.emptyCell, responsiveEnabled && styles.responsiveFullWidth)}
+      >
         {content ?? <EmptyState title={t('dataTable.empty')} />}
       </Table.Cell>
     </Table.Row>

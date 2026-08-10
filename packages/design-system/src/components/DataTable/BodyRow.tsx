@@ -17,6 +17,8 @@ export interface BodyRowProps<T> {
   dragWholeColumn?: boolean;
   /** A column drag is currently in progress. */
   dragActive?: boolean;
+  /** Responsive card metadata is enabled for this table. */
+  responsiveEnabled?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export function BodyRow<T>({
   isPinnedRow,
   dragWholeColumn,
   dragActive,
+  responsiveEnabled,
 }: BodyRowProps<T>) {
   const rowId = instance.getRowId(row);
   const selected = instance.rowSelection[rowId] === true;
@@ -132,6 +135,9 @@ export function BodyRow<T>({
         )}
         {renderColumns.map((col) => {
           const pin = getPinStyle(col.id, instance);
+          const responsiveLabel =
+            col.visibilityLabel ?? (typeof col.header === 'string' ? col.header : undefined);
+          const cellContent = col.cell(row, { row, rowId, column: col, instance });
           // The shift variable is applied only while a drag is running: a
           // permanent `translateX(0px)` on every cell would establish a
           // containing block on every cell, trapping any position: fixed
@@ -151,12 +157,22 @@ export function BodyRow<T>({
               key={col.id}
               align={col.align ?? 'start'}
               className={clsx(
+                responsiveEnabled && styles.responsiveDataCell,
                 pin.pinSide === 'left' && styles.pinnedLeft,
                 pin.pinSide === 'right' && styles.pinnedRight,
               )}
               style={cellStyle}
             >
-              {col.cell(row, { row, rowId, column: col, instance })}
+              {responsiveEnabled ? (
+                <>
+                  <span className={styles.responsiveVisualLabel} aria-hidden="true">
+                    {responsiveLabel}
+                  </span>
+                  <div className={styles.responsiveValue}>{cellContent}</div>
+                </>
+              ) : (
+                cellContent
+              )}
             </Table.Cell>
           );
         })}

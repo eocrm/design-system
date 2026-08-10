@@ -6,9 +6,9 @@ import { createContext } from 'react';
  * The scale is shared; **the measurement basis is per-component**:
  *
  * - **Container** (`@container (max-width: …)`) for Grid / Sortable (grid
- *   arrangement) / Split / DashboardCanvas. Collapsing re-templates content
- *   *inside* a box whose width the collapse doesn't change, so querying the
- *   box's own width is stable and needs no JS.
+ *   arrangement) / Split / DashboardCanvas / DataTable. Collapsing re-templates
+ *   content *inside* a box whose width the collapse doesn't change, so querying
+ *   the box's own width is stable and needs no JS.
  * - **Viewport** (`matchMedia`, via the `useBelowBreakpoint` hook in
  *   `src/hooks/`) for Rail and AppLayout's overlay sidebar. A container query
  *   there would be circular — the thing being measured IS what the collapse

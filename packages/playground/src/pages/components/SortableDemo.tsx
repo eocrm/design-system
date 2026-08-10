@@ -15,6 +15,7 @@ import {
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+import { ResizablePreview } from './ResizablePreview';
 
 export function SortableDemo() {
   const [todos, setTodos] = useState([
@@ -586,7 +587,7 @@ export function Demo() {
   );
 }`}
       >
-        <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+        <ResizablePreview>
           <Sortable
             arrangement="grid"
             columns={12}
@@ -609,7 +610,7 @@ export function Demo() {
               </Sortable.Item>
             ))}
           </Sortable>
-        </div>
+        </ResizablePreview>
       </Example>
 
       <Stack gap="xs">
