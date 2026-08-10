@@ -178,14 +178,24 @@ Run the focused test and `npm run stylelint`; expect PASS. Commit production, te
 ### Task 3: Playground proof and consumer guidance
 
 **Files:**
+- Create: `packages/playground/src/pages/components/ResizablePreview.tsx`
+- Create: `packages/playground/src/pages/components/ResizablePreview.module.scss`
 - Modify: `packages/playground/src/pages/components/DataTableDemo.tsx`
+- Modify: `packages/playground/src/pages/components/GridDemo.tsx`
+- Modify: `packages/playground/src/pages/components/SplitDemo.tsx`
+- Modify: `packages/playground/src/pages/components/SortableDemo.tsx`
+- Modify: `packages/playground/src/pages/components/DashboardCanvasDemo.tsx`
 - Modify: `packages/design-system/AGENTS.md`
 
 **Interfaces:**
 - Consumes: `<DataTable collapseBelow="sm">`.
-- Produces: resizable example and published agent-facing guidance.
+- Produces: shared playground resize helper, migrated existing examples, responsive DataTable example, and published agent-facing guidance.
 
-- [ ] **Step 1: Add a realistic responsive demo**
+- [ ] **Step 1: Extract the shared playground resize helper**
+
+Create `ResizablePreview` with `children`, optional `initialWidth`, and ordinary div attributes. Keep `resize: horizontal`, `overflow: auto`, and the optional initial-width custom property in its CSS Module. Use existing playground/design-system tokens for visible paint and no raw colors, spacing, or radii. Migrate every inline horizontal-resize wrapper in Grid, Split, Sortable, and DashboardCanvas demos to the helper; preserve DashboardCanvas's 480px initial width through the typed prop. Confirm `rg "resize: 'horizontal'" packages/playground/src/pages/components -g '*.tsx'` returns no matches.
+
+- [ ] **Step 2: Add a realistic responsive demo**
 
 Add `ResponsiveExample` near `BasicExample`. Reuse `dealColumns`, enable selection and expansion, include `ColumnVisibilityTrigger`, and render:
 
@@ -195,7 +205,7 @@ Add `ResponsiveExample` near `BasicExample`. Reuse `dealColumns`, enable selecti
 
 Use the demo's existing resizable wrapper/classes, not inline layout. The description tells users to resize below 480px and confirms sorting, selection, expansion, actions, and the columns menu remain reachable. Provide a self-contained public-import code sample.
 
-- [ ] **Step 2: Document the contract in AGENTS.md**
+- [ ] **Step 3: Document the contract in AGENTS.md**
 
 Add to the DataTable section:
 
@@ -203,9 +213,9 @@ Add to the DataTable section:
 - **Responsive rows:** `collapseBelow="sm" | "md" | "lg"` re-templates rows as labelled cards based on the DataTable container. Labels use `visibilityLabel`, then a string `header`; give non-text headers a `visibilityLabel` when a visible card label is required. Sorting, selection, expansion, row actions, and `ColumnVisibilityTrigger` remain available. Give the table concrete available width because inline-size containment has no intrinsic-width contribution.
 ```
 
-- [ ] **Step 3: Run the full local gate and commit**
+- [ ] **Step 4: Run the full local gate and commit**
 
-Run `npm run build --workspace @eocrm/playground` and `make check`; expect PASS. Commit the demo and guidance as `docs(DataTable): demonstrate responsive stacking`.
+Run `npm run build --workspace @eocrm/playground` and `make check`; expect PASS. Include the regenerated `packages/playground/src/lib/props.manifest.json` entry for `collapseBelow`. Commit the helper, migrated demos, DataTable demo, manifest, and guidance as `docs(DataTable): demonstrate responsive stacking`.
 
 ### Task 4: Mandatory review, PR, release, and issue closure
 

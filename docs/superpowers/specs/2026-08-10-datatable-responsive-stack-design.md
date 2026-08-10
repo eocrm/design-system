@@ -81,6 +81,8 @@ Unit tests will verify:
 
 Because jsdom does not evaluate container queries, tests assert the DOM and CSS hooks while the stylesheet defines the visual transition. The playground DataTable page will include a resizable example demonstrating the breakpoint and the retained interactions.
 
+The playground currently duplicates inline horizontal-resize wrappers across Grid, Split, Sortable, and DashboardCanvas demos. This change introduces a shared playground-only `ResizablePreview` helper and migrates those existing examples alongside DataTable. The helper owns resize and overflow presentation in one CSS Module; it is not exported by the design-system package.
+
 ## Out of scope
 
 - Per-column responsive priority or `column.collapseBelow`
