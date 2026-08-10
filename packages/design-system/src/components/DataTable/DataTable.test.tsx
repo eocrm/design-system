@@ -827,12 +827,19 @@ describe('<DataTable>', () => {
 
     render(<ResizeNamesHarness />);
 
-    expect(screen.getByRole('separator', { name: 'Preferred resize name' })).not.toHaveAttribute(
-      'aria-valuemax',
+    const defaultRange = screen.getByRole('separator', { name: 'Preferred resize name' });
+    expect(defaultRange).toHaveAttribute('aria-valuemin', '40');
+    expect(defaultRange).toHaveAttribute('aria-valuenow', '120');
+    expect(defaultRange).toHaveAttribute('aria-valuemax', String(Number.MAX_SAFE_INTEGER));
+    expect(Number(defaultRange.getAttribute('aria-valuemax'))).toBeGreaterThanOrEqual(
+      Number(defaultRange.getAttribute('aria-valuenow')),
     );
-    expect(screen.getByRole('separator', { name: 'String resize name' })).toHaveAttribute(
-      'aria-valuemax',
-      '240',
+
+    const explicitRange = screen.getByRole('separator', { name: 'String resize name' });
+    expect(explicitRange).toHaveAttribute('aria-valuenow', '120');
+    expect(explicitRange).toHaveAttribute('aria-valuemax', '240');
+    expect(Number(explicitRange.getAttribute('aria-valuemax'))).toBeGreaterThanOrEqual(
+      Number(explicitRange.getAttribute('aria-valuenow')),
     );
     expect(screen.getByRole('separator', { name: 'id-fallback' })).toBeInTheDocument();
   });
