@@ -42,8 +42,15 @@ import {
 } from '../_internal/dragAnnouncements';
 import { AUTO_CELL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
+import type { CollapseBreakpoint } from '../_internal/collapse';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './DataTable.module.scss';
+
+const collapseClass: Record<CollapseBreakpoint, string> = {
+  sm: styles.collapseSm,
+  md: styles.collapseMd,
+  lg: styles.collapseLg,
+};
 
 export interface DataTableProps<T> {
   instance: DataTableInstance<T>;
@@ -62,6 +69,17 @@ export interface DataTableProps<T> {
   loadingRowCount?: number;
   /** Element shown when `data` is empty and not loading. Defaults to a stock <EmptyState>. */
   emptyState?: ReactNode;
+  /**
+   * Stacks responsive data cells below this container-query breakpoint: `sm`
+   * (480px), `md` (640px), or `lg` (768px). The table keeps selection,
+   * expansion, sorting, resizing, pinning, and column reordering intact.
+   *
+   * This adds a wrapper with `container-type: inline-size`, so the breakpoint
+   * measures the table's available container width, not the viewport. Avoid an
+   * intrinsic-width parent such as `width: max-content`: inline-size containment
+   * can make the wrapper contribute zero intrinsic width there.
+   */
+  collapseBelow?: CollapseBreakpoint;
   /** Required for a11y when no caption is provided. */
   'aria-label'?: string;
   caption?: ReactNode;
@@ -118,6 +136,15 @@ export interface DataTableProps<T> {
  * column. If you need multi-line cells, render `<Table>` directly — DataTable
  * is opinionated about row height to keep pin offsets consistent across rows.
  *
+ * **Responsive stack.** Set `collapseBelow` to stack data cells when this
+ * table's containing block is at or below `sm` (480px), `md` (640px), or `lg`
+ * (768px). This is a container query, not a viewport breakpoint, so adjacent
+ * tables can respond independently. The wrapper uses inline-size containment;
+ * do not place it in an intrinsic-width parent (`width: max-content`, for
+ * example), where containment can collapse its intrinsic contribution to zero.
+ * Selection, expansion, sorting, resizing, pinning, and column reordering stay
+ * available in the stacked presentation.
+ *
  * @example
  * function Example() {
  *   const instance = useDataTable<Row>({
@@ -141,6 +168,10 @@ export interface DataTableProps<T> {
  *   defaultColumnPinning: { left: ['name'], right: ['actions'] },
  * });
  * <DataTable instance={instance} aria-label="Deals" />;
+ *
+ * @example
+ * // Stack labeled data cells below 640px of available container width.
+ * <DataTable instance={instance} aria-label="Deals" collapseBelow="md" />;
  *
  * @example
  * // Expandable rows — chevron auto-column at left, detail row below on expand:
@@ -248,6 +279,7 @@ function DataTableInner<T>(
     emptyState,
     caption,
     dragWholeColumn = true,
+    collapseBelow,
     className,
     ...rest
   }: DataTableProps<T>,
@@ -487,7 +519,7 @@ function DataTableInner<T>(
     [ref],
   );
 
-  return (
+  const table = (
     <DndContext
       accessibility={dragAccessibility}
       sensors={sensors}
@@ -625,6 +657,17 @@ function DataTableInner<T>(
       </SortableContext>
     </DndContext>
   );
+
+  if (!collapseBelow) return table;
+
+  return (
+    <div
+      className={clsx(styles.responsiveContainer, collapseClass[collapseBelow])}
+      data-collapse-below={collapseBelow}
+    >
+      {table}
+    </div>
+  );
 }
 
 function SkeletonRows({ count, totalColCount }: { count: number; totalColCount: number }) {
@@ -633,7 +676,7 @@ function SkeletonRows({ count, totalColCount }: { count: number; totalColCount: 
       {Array.from({ length: count }, (_, i) => (
         <Table.Row key={`sk-${i}`}>
           {Array.from({ length: totalColCount }, (_, j) => (
-            <Table.Cell key={j} className={styles.skeletonCell}>
+            <Table.Cell key={j} className={clsx(styles.skeletonCell, styles.responsiveFullWidth)}>
               <Skeleton variant="text" width="80%" />
             </Table.Cell>
           ))}
@@ -647,7 +690,10 @@ function EmptyRow({ totalColCount, content }: { totalColCount: number; content?:
   const t = useTranslation();
   return (
     <Table.Row>
-      <Table.Cell colSpan={totalColCount} className={styles.emptyCell}>
+      <Table.Cell
+        colSpan={totalColCount}
+        className={clsx(styles.emptyCell, styles.responsiveFullWidth)}
+      >
         {content ?? <EmptyState title={t('dataTable.empty')} />}
       </Table.Cell>
     </Table.Row>

@@ -171,6 +171,7 @@ export function HeaderCell<T>({
       // rendered rect (see `measureDragRangeX`). Declared `<col>` widths are
       // not a substitute — the table stretches past them to fill its wrap.
       data-dt-column-id={column.id}
+      data-responsive-sortable={sortable || undefined}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(

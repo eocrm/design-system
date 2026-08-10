@@ -132,6 +132,8 @@ export function BodyRow<T>({
         )}
         {renderColumns.map((col) => {
           const pin = getPinStyle(col.id, instance);
+          const responsiveLabel =
+            col.visibilityLabel ?? (typeof col.header === 'string' ? col.header : undefined);
           // The shift variable is applied only while a drag is running: a
           // permanent `translateX(0px)` on every cell would establish a
           // containing block on every cell, trapping any position: fixed
@@ -151,10 +153,12 @@ export function BodyRow<T>({
               key={col.id}
               align={col.align ?? 'start'}
               className={clsx(
+                styles.responsiveDataCell,
                 pin.pinSide === 'left' && styles.pinnedLeft,
                 pin.pinSide === 'right' && styles.pinnedRight,
               )}
               style={cellStyle}
+              data-responsive-label={responsiveLabel}
             >
               {col.cell(row, { row, rowId, column: col, instance })}
             </Table.Cell>
