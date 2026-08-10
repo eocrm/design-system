@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type HTMLAttributes,
@@ -12,9 +13,19 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { Popover, type PopoverAlign, type PopoverSide } from '../Popover';
 import styles from './IconPicker.module.scss';
 
-type PopoverPlacement = 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end';
+/** Preferred side and alignment for the IconPicker popover. */
+export type IconPickerPopoverPlacement =
+  | 'top'
+  | 'top-start'
+  | 'top-end'
+  | 'bottom'
+  | 'bottom-start'
+  | 'bottom-end';
 
-const PLACEMENT_MAP: Record<PopoverPlacement, { side: PopoverSide; align: PopoverAlign }> = {
+const PLACEMENT_MAP: Record<
+  IconPickerPopoverPlacement,
+  { side: PopoverSide; align: PopoverAlign }
+> = {
   top: { side: 'top', align: 'center' },
   'top-start': { side: 'top', align: 'start' },
   'top-end': { side: 'top', align: 'end' },
@@ -46,7 +57,7 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
   /** Disables the trigger and prevents the popover from opening. Defaults to `false`. */
   disabled?: boolean;
   /** Preferred popover placement. Defaults to `'bottom-start'`. */
-  popoverPlacement?: PopoverPlacement;
+  popoverPlacement?: IconPickerPopoverPlacement;
   /**
    * Accessible purpose for the trigger. Defaults to the localized
    * `iconPicker.triggerLabel` value and is suffixed with the selected icon name.
@@ -108,6 +119,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   const selectedLabelId = `icon-picker-selected-${useId()}`;
   const selected = options.find((option) => option.value === value);
   const selectedIndex = options.findIndex((option) => option.value === value);
+  const optionValues = options.map((option) => option.value).join('\u0000');
   const unavailable = disabled || options.length === 0;
   const purpose = ariaLabel ?? t('iconPicker.triggerLabel');
   const triggerLabel = selected ? `${purpose}: ${selected.label}` : purpose;
@@ -117,13 +129,26 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
       : ariaLabelledBy
     : undefined;
   const { side, align } = PLACEMENT_MAP[popoverPlacement];
+  const purposeLabelProps = ariaLabelledBy
+    ? { 'aria-labelledby': ariaLabelledBy }
+    : { 'aria-label': purpose };
 
   const focusCell = (index: number) => {
     setActiveIndex(index);
-    const focus = () => cellRefs.current[index]?.focus();
-    focus();
-    requestAnimationFrame(focus);
+    cellRefs.current[index]?.focus();
   };
+
+  useLayoutEffect(() => {
+    if (!open || options.length === 0) return;
+    const nextIndex =
+      selectedIndex >= 0 ? selectedIndex : Math.min(activeIndex, options.length - 1);
+    setActiveIndex(nextIndex);
+    queueMicrotask(() => {
+      if (cellRefs.current[nextIndex]?.isConnected) {
+        cellRefs.current[nextIndex]?.focus({ preventScroll: true });
+      }
+    });
+  }, [open, selectedIndex, optionValues]);
 
   const commit = (option: IconPickerOption) => {
     onChange(option.value);
@@ -134,7 +159,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   const handleOpenChange = (next: boolean) => {
     if (unavailable) return;
     if (next) {
-      focusCell(selectedIndex >= 0 ? selectedIndex : 0);
+      setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
     }
     setOpen(next);
   };
@@ -207,8 +232,8 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
             )}
           </button>
         </Popover.Trigger>
-        <Popover.Content side={side} align={align}>
-          <div className={styles.grid} role="radiogroup">
+        <Popover.Content side={side} align={align} {...purposeLabelProps}>
+          <div className={styles.grid} role="radiogroup" {...purposeLabelProps}>
             {options.map((option, index) => (
               <button
                 key={option.value}

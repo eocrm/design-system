@@ -2344,7 +2344,7 @@
         },
         {
           "name": "popoverPlacement",
-          "type": "PopoverPlacement",
+          "type": "IconPickerPopoverPlacement",
           "required": false,
           "default": "",
           "description": "Preferred popover placement. Defaults to `'bottom-start'`."
@@ -5051,6 +5051,7 @@
     "CardTone": "\"info\" | \"success\" | \"warning\" | \"danger\" | \"accent\"",
     "CardOverflow": "\"hidden\" | \"visible\"",
     "CheckboxSize": "\"sm\" | \"md\" | \"lg\"",
+    "IconPickerPopoverPlacement": "\"top\" | \"top-start\" | \"top-end\" | \"bottom\" | \"bottom-start\" | \"bottom-end\"",
     "StackGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "StackAlign": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "SwitchSize": "\"sm\" | \"md\" | \"lg\"",

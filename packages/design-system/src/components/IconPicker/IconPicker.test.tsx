@@ -47,9 +47,20 @@ it('renders a labelled single-select radio grid', async () => {
   const user = userEvent.setup();
   render(<IconPicker value="flame" options={options} onChange={() => {}} />);
   await user.click(screen.getByRole('button', { name: 'Pick icon: Flame' }));
-  expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+  expect(screen.getByRole('dialog', { name: 'Pick icon' })).toBeInTheDocument();
+  expect(screen.getByRole('radiogroup', { name: 'Pick icon' })).toBeInTheDocument();
   expect(screen.getByRole('radio', { name: 'Flame' })).toHaveAttribute('aria-checked', 'true');
   expect(screen.getByRole('radio', { name: 'Lightning' })).toHaveAttribute('aria-checked', 'false');
+});
+
+it('uses the custom picker purpose to name the dialog and radio grid', async () => {
+  const user = userEvent.setup();
+  render(
+    <IconPicker aria-label="Status icon" value="flame" options={options} onChange={() => {}} />,
+  );
+  await user.click(screen.getByRole('button', { name: 'Status icon: Flame' }));
+  expect(screen.getByRole('dialog', { name: 'Status icon' })).toBeInTheDocument();
+  expect(screen.getByRole('radiogroup', { name: 'Status icon' })).toBeInTheDocument();
 });
 
 it('commits a click and closes', async () => {
@@ -98,6 +109,45 @@ it('seeds focus from the controlled value every time the popover opens', async (
   rerender(<IconPicker value="flag" options={options} onChange={() => {}} />);
   await user.click(screen.getByRole('button', { name: 'Pick icon: Flag' }));
   await waitFor(() => expect(screen.getByRole('radio', { name: 'Flag' })).toHaveFocus());
+});
+
+it('focuses on open and arrow navigation without requestAnimationFrame', async () => {
+  const animationFrame = vi.spyOn(window, 'requestAnimationFrame');
+  const user = userEvent.setup();
+  render(<IconPicker value="flame" options={options} onChange={() => {}} />);
+  await user.click(screen.getByRole('button', { name: 'Pick icon: Flame' }));
+  await waitFor(() => expect(screen.getByRole('radio', { name: 'Flame' })).toHaveFocus());
+  await user.keyboard('{ArrowRight}');
+  expect(screen.getByRole('radio', { name: 'Lightning' })).toHaveFocus();
+  expect(animationFrame).not.toHaveBeenCalled();
+});
+
+it('opens an unmatched value on the first radio without a trigger glyph', async () => {
+  const user = userEvent.setup();
+  render(<IconPicker value="missing" options={options} onChange={() => {}} />);
+  const trigger = screen.getByRole('button', { name: 'Pick icon' });
+  expect(trigger).toBeEmptyDOMElement();
+  await user.click(trigger);
+  await waitFor(() => expect(screen.getByRole('radio', { name: 'Flame' })).toHaveFocus());
+});
+
+it('invokes onChange when the already-selected option is chosen', async () => {
+  const user = userEvent.setup();
+  const onChange = vi.fn();
+  render(<IconPicker value="flame" options={options} onChange={onChange} />);
+  await user.click(screen.getByRole('button', { name: 'Pick icon: Flame' }));
+  await user.click(screen.getByRole('radio', { name: 'Flame' }));
+  expect(onChange).toHaveBeenCalledWith('flame');
+});
+
+it('reseeds the tabbable radio when options change while open', async () => {
+  const user = userEvent.setup();
+  const { rerender } = render(<IconPicker value="flag" options={options} onChange={() => {}} />);
+  await user.click(screen.getByRole('button', { name: 'Pick icon: Flag' }));
+  await waitFor(() => expect(screen.getByRole('radio', { name: 'Flag' })).toHaveFocus());
+  rerender(<IconPicker value="zap" options={options.slice(0, 2)} onChange={() => {}} />);
+  await waitFor(() => expect(screen.getByRole('radio', { name: 'Lightning' })).toHaveFocus());
+  expect(screen.getAllByRole('radio').filter((radio) => radio.tabIndex === 0)).toHaveLength(1);
 });
 
 it('moves spatially and selects with Space', async () => {
@@ -192,6 +242,19 @@ it('forwards trigger descriptions and hides decorative glyphs from assistive tec
     'icon-description',
   );
   expect(screen.getByTestId('flame-icon').parentElement).toHaveAttribute('aria-hidden', 'true');
+});
+
+it('hides custom non-SVG glyph wrappers in the trigger and radio cells', async () => {
+  const user = userEvent.setup();
+  const customOptions: IconPickerOption[] = [
+    { value: 'custom', label: 'Custom', icon: <span data-testid="custom-glyph">★</span> },
+  ];
+  render(<IconPicker value="custom" options={customOptions} onChange={() => {}} />);
+  const triggerGlyph = screen.getByTestId('custom-glyph').parentElement;
+  expect(triggerGlyph).toHaveAttribute('aria-hidden', 'true');
+  await user.click(screen.getByRole('button', { name: 'Pick icon: Custom' }));
+  const glyphs = screen.getAllByTestId('custom-glyph');
+  expect(glyphs[1]?.parentElement).toHaveAttribute('aria-hidden', 'true');
 });
 
 it('renders the selected option with the selected CSS class', async () => {
