@@ -61,6 +61,7 @@ import { FieldDemo } from './pages/components/FieldDemo';
 import { FormRowDemo } from './pages/components/FormRowDemo';
 import { FormSectionDemo } from './pages/components/FormSectionDemo';
 import { ColorPickerDemo } from './pages/components/ColorPickerDemo';
+import { IconPickerDemo } from './pages/components/IconPickerDemo';
 import { StackDemo } from './pages/components/StackDemo';
 import { ClusterDemo } from './pages/components/ClusterDemo';
 import { AvatarDemo } from './pages/components/AvatarDemo';
@@ -185,6 +186,7 @@ export default function App() {
             <Route path="/components/form-row" element={<FormRowDemo />} />
             <Route path="/components/form-section" element={<FormSectionDemo />} />
             <Route path="/components/color-picker" element={<ColorPickerDemo />} />
+            <Route path="/components/icon-picker" element={<IconPickerDemo />} />
             <Route path="/components/stack" element={<StackDemo />} />
             <Route path="/components/cluster" element={<ClusterDemo />} />
             <Route path="/components/avatar" element={<AvatarDemo />} />

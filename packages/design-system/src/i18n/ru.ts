@@ -198,6 +198,7 @@ export const ru: Messages = {
     presetColors: 'Предустановленные цвета',
     triggerLabel: 'Выбрать цвет',
   },
+  iconPicker: { triggerLabel: 'Выбрать значок' },
   drawer: {
     close: 'Закрыть диалог',
   },

@@ -57,6 +57,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     maxWidth,
     className,
     children,
+    'aria-labelledby': ariaLabelledBy,
     ...rest
   },
   forwardedRef,
@@ -84,7 +85,10 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     elements: { reference: ctx.triggerRef.current },
   });
 
-  const resolvedSide = resolvedPlacement.split('-')[0] as PopoverSide;
+  const [resolvedSide, resolvedAlign = 'center'] = resolvedPlacement.split('-') as [
+    PopoverSide,
+    PopoverAlign?,
+  ];
   const staticSide = ({ top: 'bottom', bottom: 'top', left: 'right', right: 'left' } as const)[
     resolvedSide
   ];
@@ -161,9 +165,10 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
       id={ctx.contentId}
       role="dialog"
       aria-modal="false"
-      aria-labelledby={ctx.headingId ?? undefined}
+      aria-labelledby={ctx.headingId ?? ariaLabelledBy}
       tabIndex={-1}
       data-side={resolvedSide}
+      data-align={resolvedAlign}
       data-popover-content=""
       data-in-overlay={inOverlay ? '' : undefined}
       style={{ ...floatingStyles, minWidth: minWidthStyle, maxWidth: maxWidthStyle }}

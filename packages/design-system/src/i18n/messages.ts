@@ -341,6 +341,10 @@ export interface Messages {
     /** aria-label fallback for the default ColorPicker trigger button. */
     triggerLabel: string;
   };
+  iconPicker: {
+    /** Default accessible purpose for the IconPicker trigger. */
+    triggerLabel: string;
+  };
   drawer: {
     /** aria-label for the Drawer header's close button. */
     close: string;

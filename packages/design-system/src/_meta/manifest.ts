@@ -70,6 +70,7 @@ const CLUSTERS: Record<string, string> = {
   FormRow: 'Forms',
   FormSection: 'Forms',
   FileUpload: 'Forms',
+  IconPicker: 'Forms',
   ImageCrop: 'Forms',
   Input: 'Forms',
   Kanban: 'Forms',

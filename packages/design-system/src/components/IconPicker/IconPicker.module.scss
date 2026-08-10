@@ -1,0 +1,75 @@
+@use '../../styles/mixins' as *;
+@use './IconPicker.tokens';
+
+.root {
+  display: inline-block;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, var(--icon-picker-cell-size));
+  gap: var(--icon-picker-grid-gap);
+  padding: var(--icon-picker-grid-padding);
+}
+
+.trigger,
+.cell {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: var(--icon-picker-border-width) solid var(--icon-picker-border);
+  border-radius: var(--icon-picker-radius);
+  background: var(--icon-picker-bg);
+  color: var(--icon-picker-fg);
+  cursor: var(--icon-picker-cursor);
+}
+
+.trigger {
+  width: var(--icon-picker-trigger-size);
+  height: var(--icon-picker-trigger-size);
+}
+
+.cell {
+  width: var(--icon-picker-cell-size);
+  height: var(--icon-picker-cell-size);
+}
+
+.cell:hover {
+  background: var(--icon-picker-hover-bg);
+}
+
+.trigger:disabled {
+  border-color: var(--icon-picker-disabled-border);
+  background: var(--icon-picker-disabled-bg);
+  color: var(--icon-picker-disabled-fg);
+  cursor: var(--icon-picker-cursor-disabled);
+}
+
+.trigger:focus-visible,
+.cell:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--icon-picker-focus-ring-width) var(--icon-picker-focus-ring);
+}
+
+.selected {
+  border-width: var(--icon-picker-selected-border-width);
+  border-color: var(--icon-picker-selected-border);
+  box-shadow: inset 0 0 0 var(--icon-picker-selected-ring-width) var(--icon-picker-selected-ring);
+}
+
+.glyph {
+  display: inline-flex;
+  pointer-events: none;
+  font-size: var(--icon-picker-glyph-size);
+}
+
+.glyph > svg {
+  width: var(--icon-picker-glyph-size);
+  height: var(--icon-picker-glyph-size);
+}
+
+.visuallyHidden {
+  @include visually-hidden;
+}

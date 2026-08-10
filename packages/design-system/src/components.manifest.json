@@ -356,6 +356,14 @@
       "FormRow"
     ]
   },
+  "IconPicker": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Popover"
+    ],
+    "composedBy": []
+  },
   "IconTile": {
     "tier": "primitive",
     "cluster": "Display",
@@ -558,6 +566,7 @@
       "ColorPicker",
       "ConfirmationPopover",
       "EmojiPicker",
+      "IconPicker",
       "OptionsPicker",
       "RichTextEditor"
     ]

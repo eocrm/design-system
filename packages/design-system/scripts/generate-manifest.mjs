@@ -48,6 +48,7 @@ const CLUSTERS = {
   FormRow: 'Forms',
   FormSection: 'Forms',
   FileUpload: 'Forms',
+  IconPicker: 'Forms',
   ImageCrop: 'Forms',
   Input: 'Forms',
   Kanban: 'Forms',

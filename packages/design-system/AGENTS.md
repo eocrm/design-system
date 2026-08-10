@@ -601,6 +601,20 @@ hsvToHex({ h: 240, s: 100, v: 100 }); // '#0000FF'
 - ❌ Wrapping a non-`forwardRef` component in `<ColorPicker.Trigger asChild>`. `<Popover.Trigger>` clones the child to inject the ref; non-forwardRef silently drops it.
 - ❌ Forgetting to wire `disabled` into the consumer's custom trigger element. The picker dims its wrapper and blocks pointer events, but the trigger button's own disabled visuals are the consumer's responsibility.
 
+### `<IconPicker>` — choose one glyph from a consumer catalog
+
+```tsx
+const options = [
+  { value: 'flame', label: 'Flame', icon: <Flame /> },
+  { value: 'zap', label: 'Lightning', icon: <Zap /> },
+];
+<IconPicker value={icon} options={options} onChange={setIcon} />;
+```
+
+- The consumer owns icon values, labels, glyphs, ordering, and controlled state.
+- Use it for compact visual choices; use `Select` when visible option text matters.
+- Labels must be human-readable and values unique. Do not pass icon codes as labels.
+
 ### `<Switch>` — binary toggle
 
 Hand-rolled track + thumb on a native `<input type="checkbox" role="switch">`. The dumb on/off toggle for settings, feature flags, and async persisted state.

@@ -264,7 +264,7 @@ describe('Popover.Heading', () => {
         <Popover.Trigger>
           <button type="button">Open</button>
         </Popover.Trigger>
-        <Popover.Content>
+        <Popover.Content aria-labelledby="consumer-label">
           <Popover.Heading>Filters</Popover.Heading>
         </Popover.Content>
       </Popover>,
@@ -272,6 +272,22 @@ describe('Popover.Heading', () => {
     const dialog = screen.getByRole('dialog');
     const heading = screen.getByRole('heading', { name: 'Filters' });
     expect(dialog.getAttribute('aria-labelledby')).toBe(heading.id);
+  });
+
+  it('preserves Content aria-labelledby when no Popover.Heading exists', () => {
+    render(
+      <Popover defaultOpen>
+        <span id="consumer-label">Icon choice</span>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content aria-labelledby="consumer-label">plain body</Popover.Content>
+      </Popover>,
+    );
+    expect(screen.getByRole('dialog', { name: 'Icon choice' })).toHaveAttribute(
+      'aria-labelledby',
+      'consumer-label',
+    );
   });
 
   it('Content has no aria-labelledby when no Heading is present', () => {

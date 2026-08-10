@@ -39,6 +39,7 @@ export type ComponentName =
   | 'FlowCanvas'
   | 'FormRow'
   | 'FormSection'
+  | 'IconPicker'
   | 'IconTile'
   | 'Image'
   | 'ImageCrop'

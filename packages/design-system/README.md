@@ -108,6 +108,7 @@ Grouped for navigation. Every prop and variant is JSDoc'd at the source — hove
 - `Switch` — binary toggle
 - `Slider` — controlled slider (single + range, horizontal + vertical)
 - `ColorPicker` — controlled HEX color picker (popover + inline)
+- `IconPicker` — controlled icon picker with a popover radio grid
 - `FileUpload` — controlled file picker with dropzone
 - `ImageCrop` — controlled image cropper
 
